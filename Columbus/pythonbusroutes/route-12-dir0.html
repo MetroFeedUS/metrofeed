@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 12 – MCKINLEY/FIELDS | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+    header img {
+      max-height: 60px;
+    }
+    .ad-banner {
+      text-align: center;
+      margin: 1rem auto;
+      background-color: #222;
+      color: #888;
+      padding: 1rem;
+      border: 2px dashed #4dd0e1;
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+    .content-box {
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem;
+      background-color: #1e1e1e;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+    }
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .button-bar a {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+.back-button {
+  background-color: #4dd0e1;
+  color: #0d0d0d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #4dd0e1;
+  text-decoration: none;
+}
+.back-button:hover {
+  background-color: #35c0d6;
+}
+.site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="ad-banner">
+    [Ad Banner Placeholder — 300x250]
+  </div>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+  <button class="back-button" onclick="history.back()">⬅ Back</button>
+  </div>
+
+  <h1>Route 12 – MCKINLEY/FIELDS</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  
+  <script>
+  const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const routeNumber = 12;
+  const direction = parseInt(0);
+
+  const map = L.map('map').setView([45.6, -122.7], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  const shapeOutbound = [
+  [39.990539, -82.99167],
+  [39.99011, -82.9917],
+  [39.98997, -82.99171],
+  [39.989909, -82.99171],
+  [39.98957, -82.991729],
+  [39.989469, -82.991739],
+  [39.98925, -82.99176],
+  [39.98835, -82.99185],
+  [39.988119, -82.99185],
+  [39.98771, -82.99193],
+  [39.98716, -82.991999],
+  [39.9866, -82.99206],
+  [39.986639, -82.993179],
+  [39.986649, -82.993389],
+  [39.986659, -82.99373],
+  [39.986679, -82.994079],
+  [39.9867, -82.99433],
+  [39.9867, -82.994429],
+  [39.98671, -82.994649],
+  [39.98672, -82.99523],
+  [39.986729, -82.99562],
+  [39.986739, -82.995729],
+  [39.986749, -82.995909],
+  [39.986749, -82.99594],
+  [39.986759, -82.996269],
+  [39.98678, -82.996729],
+  [39.9868, -82.99724],
+  [39.986839, -82.998349],
+  [39.986859, -82.99877],
+  [39.98689, -82.999609],
+  [39.9869, -82.999789],
+  [39.986919, -83.00018],
+  [39.986929, -83.00034],
+  [39.986939, -83.00052],
+  [39.986949, -83.000829],
+  [39.986999, -83.00206],
+  [39.98687, -83.00206],
+  [39.986659, -83.002029],
+  [39.986369, -83.00198],
+  [39.985749, -83.001859],
+  [39.98525, -83.001759],
+  [39.98482, -83.001669],
+  [39.98427, -83.00157],
+  [39.984149, -83.001549],
+  [39.98372, -83.001459],
+  [39.98311, -83.00133],
+  [39.98291, -83.00129],
+  [39.982509, -83.00121],
+  [39.982249, -83.00116],
+  [39.981529, -83.00103],
+  [39.98105, -83.00093],
+  [39.98075, -83.000859],
+  [39.98041, -83.00079],
+  [39.979289, -83.00057],
+  [39.979079, -83.00053],
+  [39.978549, -83.00043],
+  [39.97835, -83.00039],
+  [39.978279, -83.000379],
+  [39.97753, -83.000229],
+  [39.97698, -83.00013],
+  [39.97674, -83.00007],
+  [39.976679, -83.000049],
+  [39.97625, -82.99994],
+  [39.975969, -82.99986],
+  [39.97574, -82.999779],
+  [39.97565, -82.99976],
+  [39.975509, -82.99972],
+  [39.97528, -82.999659],
+  [39.97476, -82.999519],
+  [39.97466, -82.9995],
+  [39.97437, -82.99946],
+  [39.97429, -82.99945],
+  [39.973709, -82.999329],
+  [39.973049, -82.99923],
+  [39.97296, -82.99922],
+  [39.97269, -82.999169],
+  [39.972609, -82.999159],
+  [39.97248, -82.99914],
+  [39.971799, -82.99901],
+  [39.97124, -82.998929],
+  [39.97107, -82.998899],
+  [39.97069, -82.99886],
+  [39.97034, -82.99886],
+  [39.970089, -82.99887],
+  [39.96989, -82.998879],
+  [39.969729, -82.998889],
+  [39.969309, -82.99895],
+  [39.969119, -82.998979],
+  [39.969089, -82.998979],
+  [39.96898, -82.999],
+  [39.96872, -82.999019],
+  [39.96851, -82.999029],
+  [39.968299, -82.999019],
+  [39.968, -82.998989],
+  [39.96791, -82.998979],
+  [39.96783, -82.999689],
+  [39.96771, -83.000779],
+  [39.96765, -83.0017],
+  [39.967229, -83.00161],
+  [39.966939, -83.001549],
+  [39.966869, -83.001539],
+  [39.96629, -83.00142],
+  [39.965949, -83.001359],
+  [39.96556, -83.0013],
+  [39.96494, -83.001189],
+  [39.964259, -83.00107],
+  [39.96411, -83.001039],
+  [39.963629, -83.000949],
+  [39.96293, -83.000819],
+  [39.96221, -83.000679],
+  [39.96212, -83.00152],
+  [39.962109, -83.00162],
+  [39.962099, -83.001719],
+  [39.962019, -83.002489],
+  [39.96196, -83.003019],
+  [39.961899, -83.003479],
+  [39.96187, -83.003709],
+  [39.961819, -83.004109],
+  [39.961569, -83.006089],
+  [39.961559, -83.006189],
+  [39.961529, -83.006409],
+  [39.96149, -83.006769],
+  [39.961449, -83.007029],
+  [39.961379, -83.00751],
+  [39.961369, -83.007609],
+  [39.96134, -83.007799],
+  [39.96131, -83.008019],
+  [39.961209, -83.00885],
+  [39.961109, -83.009689],
+  [39.961029, -83.010369],
+  [39.96095, -83.010999],
+  [39.960909, -83.011269],
+  [39.960899, -83.01137],
+  [39.96086, -83.011659],
+  [39.960849, -83.011759],
+  [39.960829, -83.01187],
+  [39.960809, -83.01204],
+  [39.96071, -83.012929],
+  [39.960649, -83.01335],
+  [39.960579, -83.013919],
+  [39.960569, -83.014009],
+  [39.960539, -83.014229],
+  [39.96042, -83.015129],
+  [39.96035, -83.0157],
+  [39.960299, -83.016119],
+  [39.96023, -83.01668],
+  [39.960199, -83.01692],
+  [39.960179, -83.0171],
+  [39.960109, -83.017699],
+  [39.96006, -83.01821],
+  [39.96005, -83.01836],
+  [39.960019, -83.0187],
+  [39.959999, -83.01888],
+  [39.95997, -83.01911],
+  [39.959939, -83.01935],
+  [39.95989, -83.019849],
+  [39.95987, -83.02001],
+  [39.959829, -83.02029],
+  [39.95981, -83.020439],
+  [39.9598, -83.02052],
+  [39.95979, -83.02056],
+  [39.959759, -83.02083],
+  [39.959669, -83.02163],
+  [39.959649, -83.02181],
+  [39.959569, -83.022429],
+  [39.959849, -83.02249],
+  [39.95997, -83.022509],
+  [39.960299, -83.02258],
+  [39.960649, -83.022649],
+  [39.96096, -83.02272],
+  [39.961559, -83.022829],
+  [39.96185, -83.0229],
+  [39.96189, -83.022909],
+  [39.96214, -83.02295],
+  [39.962289, -83.02298],
+  [39.962439, -83.022999],
+  [39.962549, -83.023009],
+  [39.96287, -83.023009],
+  [39.96288, -83.02334],
+  [39.962919, -83.024259],
+  [39.962999, -83.025519],
+  [39.96305, -83.0264],
+  [39.96306, -83.02664],
+  [39.963069, -83.026879],
+  [39.96311, -83.02799],
+  [39.963159, -83.028859],
+  [39.963189, -83.029529],
+  [39.963189, -83.02964],
+  [39.96321, -83.03001],
+  [39.96333, -83.032559],
+  [39.963359, -83.033039],
+  [39.963369, -83.0333],
+  [39.96339, -83.033629],
+  [39.96341, -83.034119],
+  [39.963429, -83.034449],
+  [39.96347, -83.035059],
+  [39.9635, -83.035519],
+  [39.963539, -83.03625],
+  [39.96357, -83.036459],
+  [39.9636, -83.037049],
+  [39.9636, -83.03721],
+  [39.9636, -83.037539],
+  [39.963619, -83.03792],
+  [39.963629, -83.038029],
+  [39.963639, -83.03825],
+  [39.96365, -83.03856],
+  [39.96365, -83.03869],
+  [39.96367, -83.039349],
+  [39.963699, -83.04004],
+  [39.963709, -83.040289],
+  [39.963729, -83.040609],
+  [39.96374, -83.040839],
+  [39.96375, -83.04094],
+  [39.96377, -83.04126],
+  [39.96377, -83.041319],
+  [39.96378, -83.041469],
+  [39.964059, -83.04148],
+  [39.964169, -83.041469],
+  [39.964599, -83.0414]
+];
+
+const stopNames = {
+  "SUM5THS": "SUMMIT ST &amp; E 5TH AVE",
+  "SUM2NDS": "SUMMIT ST &amp; E 2ND AVE",
+  "SUMWARS": "SUMMIT ST &amp; WARREN ST",
+  "BRODAVW": "W BROAD ST &amp; N DAVIS AVE",
+  "BROBELW": "W BROAD ST &amp; BELLE ST",
+  "HIGBROS": "N HIGH ST &amp; W BROAD ST",
+  "5TH6THW": "E 5TH AVE &amp; N 6TH ST",
+  "HIGLONS": "N HIGH ST &amp; W LONG ST",
+  "BROMARW": "W BROAD ST &amp; MARCONI BLVD",
+  "BROSKIW": "W BROAD ST &amp; N SKIDMORE ST",
+  "MCK856W": "856 MCKINLEY AVE",
+  "MCKCYPW": "MCKINLEY AVE &amp; N CYPRESS AVE",
+  "MCKYALW": "MCKINLEY AVE &amp; N YALE AVE",
+  "MCKCENW": "MCKINLEY AVE &amp; N CENTRAL AVE",
+  "MCKTRAW": "MCKINLEY AVE &amp; MCK TRANSPORTATION",
+  "FIE5THS": "FIELDS AVE &amp; E 5TH AVE",
+  "SOUSCON": "N SOUDER AVE &amp; SCOTT ST",
+  "FIEMOBDS": "FIELDS AVE &amp; MOBILITY DR",
+  "5TH4THW": "E 5TH AVE &amp; N 4TH ST",
+  "MCK132W": "1320 MCKINLEY AVE",
+  "SUM3RDS": "SUMMIT ST &amp; E 3RD AVE",
+  "MCKMCKW": "MCKINLEY AVE &amp; MCKINLEY TRANSPORTATION",
+  "1333FIES": "1333 FIELDS AVE",
+  "WBRMAYW": "W BROAD ST &amp; N MAY AVE"
+};
+
+const stops = [
+  { stop_id: "1333FIES", name: "1333 FIELDS AVE", lat: 39.990166, lon: -82.991795, times: ["9:03 AM"] },
+  { stop_id: "FIEMOBDS", name: "FIELDS AVE &amp; MOBILITY DR", lat: 39.988508, lon: -82.991904, times: ["9:03 AM"] },
+  { stop_id: "FIE5THS", name: "FIELDS AVE &amp; E 5TH AVE", lat: 39.98694, lon: -82.992105, times: ["9:03 AM"] },
+  { stop_id: "5TH6THW", name: "E 5TH AVE &amp; N 6TH ST", lat: 39.986829, lon: -82.99677, times: ["9:04 AM"] },
+  { stop_id: "5TH4THW", name: "E 5TH AVE &amp; N 4TH ST", lat: 39.98698, lon: -83.000031, times: ["9:05 AM"] },
+  { stop_id: "SUM5THS", name: "SUMMIT ST &amp; E 5TH AVE", lat: 39.98652, lon: -83.002091, times: ["9:06 AM"] },
+  { stop_id: "SUM3RDS", name: "SUMMIT ST &amp; E 3RD AVE", lat: 39.983305, lon: -83.001442, times: ["9:07 AM"] },
+  { stop_id: "SUM2NDS", name: "SUMMIT ST &amp; E 2ND AVE", lat: 39.982271, lon: -83.001246, times: ["9:07 AM"] },
+  { stop_id: "SUMWARS", name: "SUMMIT ST &amp; WARREN ST", lat: 39.979089, lon: -83.000634, times: ["9:08 AM"] },
+  { stop_id: "HIGLONS", name: "N HIGH ST &amp; W LONG ST", lat: 39.965149, lon: -83.001318, times: ["9:13 AM"] },
+  { stop_id: "HIGBROS", name: "N HIGH ST &amp; W BROAD ST", lat: 39.962784, lon: -83.000898, times: ["9:14 AM"] },
+  { stop_id: "BROMARW", name: "W BROAD ST &amp; MARCONI BLVD", lat: 39.962029, lon: -83.003554, times: ["9:16 AM"] },
+  { stop_id: "BROBELW", name: "W BROAD ST &amp; BELLE ST", lat: 39.961245, lon: -83.009506, times: ["9:16 AM"] },
+  { stop_id: "WBRMAYW", name: "W BROAD ST &amp; N MAY AVE", lat: 39.960555, lon: -83.014857, times: ["9:17 AM"] },
+  { stop_id: "BROSKIW", name: "W BROAD ST &amp; N SKIDMORE ST", lat: 39.96035, lon: -83.016599, times: ["9:18 AM"] },
+  { stop_id: "BRODAVW", name: "W BROAD ST &amp; N DAVIS AVE", lat: 39.959753, lon: -83.021508, times: ["9:19 AM"] },
+  { stop_id: "SOUSCON", name: "N SOUDER AVE &amp; SCOTT ST", lat: 39.961312, lon: -83.022725, times: ["9:19 AM"] },
+  { stop_id: "MCK856W", name: "856 MCKINLEY AVE", lat: 39.962985, lon: -83.02416, times: ["9:19 AM"] },
+  { stop_id: "MCKCYPW", name: "MCKINLEY AVE &amp; N CYPRESS AVE", lat: 39.96322, lon: -83.029077, times: ["9:00 AM"] },
+  { stop_id: "MCKYALW", name: "MCKINLEY AVE &amp; N YALE AVE", lat: 39.963419, lon: -83.032905, times: ["9:00 AM"] },
+  { stop_id: "MCK132W", name: "1320 MCKINLEY AVE", lat: 39.963621, lon: -83.036915, times: ["9:01 AM"] },
+  { stop_id: "MCKCENW", name: "MCKINLEY AVE &amp; N CENTRAL AVE", lat: 39.963739, lon: -83.038928, times: ["9:01 AM"] },
+  { stop_id: "MCKMCKW", name: "MCKINLEY AVE &amp; MCKINLEY TRANSPORTATION", lat: 39.963867, lon: -83.041238, times: ["9:01 AM"] },
+  { stop_id: "MCKTRAW", name: "MCKINLEY AVE &amp; MCK TRANSPORTATION", lat: 39.964411, lon: -83.04135, times: ["9:02 AM"] },
+]
+
+  const polylineOut = L.polyline(shapeOutbound, {
+    color: 'blue',
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(polylineOut.getBounds());
+
+  stops.forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9,
+      weight: 1
+    });
+
+    const popupContent = `
+      <strong>${stop.name}</strong><br>
+      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.addTo(map);
+  });
+
+  let busMarkers = {};
+
+  async function fetchAndDisplay() {
+    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+    const data = await res.json();
+    const buses = (data.resultSet.vehicle || []).filter(v =>
+      v.routeNumber == routeNumber && v.direction == direction
+    );
+
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+
+    if (buses.length === 0) return;
+
+    buses.forEach(bus => {
+      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="text-align:center;">
+            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+          </div>
+        `,
+        iconSize: [40, 30],
+        iconAnchor: [20, 30]
+      });
+
+      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+      busMarkers[bus.vehicleID] = marker;
+    });
+  }
+
+  fetchAndDisplay();
+  setInterval(fetchAndDisplay, 15000);
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>

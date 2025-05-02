@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portland, OR Earthquake Map - MetroFeed</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 4px solid #4dd0e1;
+    }
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+    .adsense-container {
+      margin: 1rem auto;
+      max-width: 336px;
+      text-align: center;
+      border: 2px dashed #0071CE;
+      padding: 1rem;
+      background-color: #111;
+      color: #39ff14;
+      font-size: 0.9rem;
+      border-radius: 6px;
+    }
+    .disclaimer {
+      margin: 1rem auto;
+      max-width: 600px;
+      font-size: 0.85rem;
+      color: #bbbbbb;
+      background-color: #111;
+      border: 1px dashed #444;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+    }
+    #map {
+      height: 600px;
+      width: 100%;
+      max-width: 960px;
+      margin: 1rem auto;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #4dd0e1;
+    }
+    .quake-list {
+      max-width: 960px;
+      margin: 2rem auto;
+      background-color: #111;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #4dd0e1;
+      text-align: left;
+    }
+    .quake-item {
+      margin-bottom: 0.8rem;
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+
+    .home-button {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #4dd0e1;
+    color: #0d0d0d;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    text-decoration: none;
+    z-index: 1000;
+    box-shadow: 0 0 10px #4dd0e1;
+  }
+  .home-button:hover {
+    background-color: #00bcd4;
+    color: #ffffff;
+  }
+</style>
+
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+  </header>
+
+<a href="PortlandHome.html" class="home-button">🏠</a>
+
+
+  <div class="adsense-container">
+    [Sample Ad 300x250] <br>
+    Simulated Google Ad Placeholder
+  </div>
+
+<div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+  ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+</div>
+
+  <main style="text-align: center;">
+    <h2>Portland, OR - Earthquake Map</h2>
+
+    <div class="disclaimer">
+      ⚠️ Earthquake data is provided by <a href="https://earthquake.usgs.gov/" target="_blank" style="color: #4dd0e1;">USGS</a>. MetroFeed displays this public information for convenience only and does not guarantee accuracy, timeliness, or completeness. We are not seismologists — we just show the data.
+    </div>
+
+    <div id="map"></div>
+
+    <div class="quake-list" id="quakeList">
+      Loading recent earthquakes...
+    </div>
+  </main>
+
+  <footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([45.5, -122.7], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    let quakeLayer;
+
+    async function loadEarthquakes() {
+      if (quakeLayer) {
+        map.removeLayer(quakeLayer);
+      }
+
+      const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+      const data = await res.json();
+
+      quakeLayer = L.geoJSON(data, {
+        pointToLayer: (feature, latlng) => {
+          const mag = feature.properties.mag;
+          let color = "#00ff00"; // green
+          if (mag >= 3 && mag < 5) color = "#ffff00"; // yellow
+          else if (mag >= 5) color = "#ff0000"; // red
+
+          return L.circleMarker(latlng, {
+            radius: 4 + mag * 1.5,
+            fillColor: color,
+            color: "#ffffff",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          }).bindPopup(
+            `<b>Magnitude:</b> ${mag}<br><b>Location:</b> ${feature.properties.place}<br><b>Time:</b> ${new Date(feature.properties.time).toLocaleString()}`
+          );
+        }
+      }).addTo(map);
+
+      updateQuakeList(data.features);
+    }
+
+    function updateQuakeList(features) {
+      const list = document.getElementById('quakeList');
+      list.innerHTML = "";
+
+      const sorted = features.sort((a, b) => b.properties.time - a.properties.time).slice(0, 10);
+      sorted.forEach(feature => {
+        const mag = feature.properties.mag;
+        const place = feature.properties.place;
+        const time = new Date(feature.properties.time);
+        const now = new Date();
+        const minsAgo = Math.floor((now - time) / 60000);
+        const agoText = minsAgo < 60 ? `${minsAgo} minutes ago` : `${Math.floor(minsAgo/60)} hours ago`;
+
+        const div = document.createElement('div');
+        div.className = "quake-item";
+        div.innerHTML = `<strong>M${mag.toFixed(1)}</strong> – ${place} – ${agoText}`;
+        list.appendChild(div);
+      });
+    }
+
+    loadEarthquakes();
+    setInterval(loadEarthquakes, 300000); // refresh every 5 minutes
+  </script>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>

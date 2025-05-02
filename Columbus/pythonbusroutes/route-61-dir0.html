@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 61 – GROVE CITY | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+    header img {
+      max-height: 60px;
+    }
+    .ad-banner {
+      text-align: center;
+      margin: 1rem auto;
+      background-color: #222;
+      color: #888;
+      padding: 1rem;
+      border: 2px dashed #4dd0e1;
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+    .content-box {
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem;
+      background-color: #1e1e1e;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+    }
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .button-bar a {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+.back-button {
+  background-color: #4dd0e1;
+  color: #0d0d0d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #4dd0e1;
+  text-decoration: none;
+}
+.back-button:hover {
+  background-color: #35c0d6;
+}
+.site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="ad-banner">
+    [Ad Banner Placeholder — 300x250]
+  </div>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+  <button class="back-button" onclick="history.back()">⬅ Back</button>
+  </div>
+
+  <h1>Route 61 – GROVE CITY</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  
+  <script>
+  const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const routeNumber = 61;
+  const direction = parseInt(0);
+
+  const map = L.map('map').setView([45.6, -122.7], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  const shapeOutbound = [
+  [39.966139, -83.00259],
+  [39.965579, -83.00247],
+  [39.965579, -83.002209],
+  [39.965499, -83.00219],
+  [39.96485, -83.00205],
+  [39.96494, -83.001189],
+  [39.965069, -83.00026],
+  [39.96509, -83.00008],
+  [39.96511, -82.999879],
+  [39.96518, -82.999339],
+  [39.9652, -82.999149],
+  [39.965219, -82.999],
+  [39.965239, -82.99887],
+  [39.965249, -82.998749],
+  [39.96528, -82.998529],
+  [39.964979, -82.99847],
+  [39.964959, -82.99847],
+  [39.96458, -82.998399],
+  [39.96431, -82.998349],
+  [39.96393, -82.99828],
+  [39.96324, -82.998119],
+  [39.962979, -82.998069],
+  [39.96287, -82.99805],
+  [39.962529, -82.997979],
+  [39.96185, -82.99783],
+  [39.96149, -82.997759],
+  [39.961119, -82.99769],
+  [39.96095, -82.99766],
+  [39.960849, -82.997639],
+  [39.96071, -82.99761],
+  [39.960659, -82.9976],
+  [39.960479, -82.99756],
+  [39.95979, -82.99743],
+  [39.95953, -82.99738],
+  [39.95934, -82.997349],
+  [39.959129, -82.997309],
+  [39.95872, -82.99724],
+  [39.95847, -82.997189],
+  [39.958239, -82.99715],
+  [39.957789, -82.997079],
+  [39.957759, -82.997319],
+  [39.957669, -82.99806],
+  [39.95766, -82.99819],
+  [39.957579, -82.998889],
+  [39.95757, -82.99901],
+  [39.95754, -82.99928],
+  [39.95748, -82.999749],
+  [39.956799, -82.99963],
+  [39.956169, -82.999519],
+  [39.95558, -82.99937],
+  [39.955449, -82.999339],
+  [39.955089, -82.999259],
+  [39.954809, -82.999199],
+  [39.95466, -82.999169],
+  [39.954349, -82.999109],
+  [39.95406, -82.999059],
+  [39.953719, -82.998989],
+  [39.95348, -82.998939],
+  [39.953099, -82.99886],
+  [39.95297, -82.998839],
+  [39.952749, -82.998789],
+  [39.95258, -82.998759],
+  [39.952289, -82.998709],
+  [39.9517, -82.998609],
+  [39.95108, -82.99851],
+  [39.95078, -82.99846],
+  [39.950479, -82.998399],
+  [39.94988, -82.99828],
+  [39.949589, -82.998219],
+  [39.94925, -82.998159],
+  [39.949059, -82.998119],
+  [39.949039, -82.99837],
+  [39.94899, -82.998899],
+  [39.94898, -82.999],
+  [39.9489, -82.99989],
+  [39.947979, -82.99971],
+  [39.947689, -82.999649],
+  [39.947399, -82.99959],
+  [39.947169, -82.99955],
+  [39.946869, -82.99949],
+  [39.946059, -82.99932],
+  [39.94524, -82.999169],
+  [39.944189, -82.998939],
+  [39.944079, -82.99891],
+  [39.94331, -82.99874],
+  [39.94288, -82.99865],
+  [39.942579, -82.99859],
+  [39.94217, -82.998519],
+  [39.941929, -82.998449],
+  [39.94164, -82.99832],
+  [39.940869, -82.997939],
+  [39.94061, -82.99784],
+  [39.94035, -82.997769],
+  [39.940119, -82.997709],
+  [39.93962, -82.99761],
+  [39.939409, -82.99752],
+  [39.93938, -82.99796],
+  [39.93937, -82.998339],
+  [39.93937, -82.998539],
+  [39.93937, -82.998699],
+  [39.93938, -82.99913],
+  [39.939399, -83.0003],
+  [39.939399, -83.00058],
+  [39.939409, -83.001219],
+  [39.939399, -83.002359],
+  [39.939399, -83.002659],
+  [39.939399, -83.002979],
+  [39.939389, -83.003559],
+  [39.939409, -83.004479],
+  [39.939419, -83.0048],
+  [39.93944, -83.005559],
+  [39.93944, -83.0057],
+  [39.93945, -83.00607],
+  [39.93947, -83.006819],
+  [39.939479, -83.007119],
+  [39.939489, -83.00724],
+  [39.939499, -83.0075],
+  [39.939509, -83.00764],
+  [39.939519, -83.00786],
+  [39.93953, -83.008159],
+  [39.93953, -83.00827],
+  [39.93954, -83.008429],
+  [39.93955, -83.00867],
+  [39.93955, -83.008789],
+  [39.93956, -83.00903],
+  [39.93956, -83.00917],
+  [39.93956, -83.0093],
+  [39.93956, -83.009729],
+  [39.93956, -83.009999],
+  [39.93956, -83.01026],
+  [39.93929, -83.01015],
+  [39.938979, -83.01003],
+  [39.93856, -83.0099],
+  [39.938309, -83.00984],
+  [39.937949, -83.009779],
+  [39.937609, -83.00975],
+  [39.9373, -83.00975],
+  [39.936979, -83.009779],
+  [39.93639, -83.009869],
+  [39.93612, -83.009909],
+  [39.935899, -83.009909],
+  [39.93577, -83.00989],
+  [39.935619, -83.009859],
+  [39.935349, -83.009919],
+  [39.935069, -83.00998],
+  [39.93478, -83.010039],
+  [39.93397, -83.010219],
+  [39.932839, -83.010459],
+  [39.932499, -83.01053],
+  [39.931839, -83.010669],
+  [39.931399, -83.010759],
+  [39.92981, -83.011089],
+  [39.92901, -83.011259],
+  [39.9283, -83.01141],
+  [39.925639, -83.01196],
+  [39.92273, -83.012569],
+  [39.92202, -83.01272],
+  [39.92147, -83.012839],
+  [39.921069, -83.01294],
+  [39.92048, -83.013099],
+  [39.920069, -83.01323],
+  [39.919689, -83.013369],
+  [39.9192, -83.013559],
+  [39.91903, -83.01363],
+  [39.91868, -83.013789],
+  [39.91838, -83.01394],
+  [39.91802, -83.01413],
+  [39.9177, -83.01431],
+  [39.91741, -83.01449],
+  [39.91724, -83.014589],
+  [39.916909, -83.0148],
+  [39.916749, -83.014899],
+  [39.916659, -83.014959],
+  [39.916089, -83.01539],
+  [39.91563, -83.015769],
+  [39.91517, -83.01615],
+  [39.914919, -83.01638],
+  [39.91473, -83.016569],
+  [39.914409, -83.016889],
+  [39.9139, -83.017389],
+  [39.912389, -83.0189],
+  [39.912, -83.01929],
+  [39.91093, -83.020359],
+  [39.910779, -83.02051],
+  [39.910269, -83.021019],
+  [39.909909, -83.02137],
+  [39.90894, -83.02235],
+  [39.906189, -83.025089],
+  [39.905939, -83.025339],
+  [39.905379, -83.0259],
+  [39.90506, -83.026209],
+  [39.90473, -83.026509],
+  [39.904, -83.027229],
+  [39.902799, -83.02842],
+  [39.90231, -83.028909],
+  [39.902139, -83.029079],
+  [39.900999, -83.03022],
+  [39.90068, -83.03054],
+  [39.90047, -83.030749],
+  [39.90023, -83.03099],
+  [39.898209, -83.033009],
+  [39.89743, -83.03379],
+  [39.89714, -83.034069],
+  [39.89654, -83.034669],
+  [39.895479, -83.03573],
+  [39.89401, -83.0372],
+  [39.89339, -83.037809],
+  [39.89274, -83.03847],
+  [39.89246, -83.038749],
+  [39.892359, -83.038839],
+  [39.89214, -83.039069],
+  [39.89204, -83.039159],
+  [39.89201, -83.03919],
+  [39.891799, -83.0394],
+  [39.89142, -83.03978],
+  [39.890619, -83.04058],
+  [39.890549, -83.040649],
+  [39.8897, -83.041499],
+  [39.889359, -83.041809],
+  [39.88904, -83.04211],
+  [39.88869, -83.04242],
+  [39.888189, -83.042859],
+  [39.88798, -83.043039],
+  [39.887679, -83.04329],
+  [39.887379, -83.04354],
+  [39.886779, -83.044029],
+  [39.886289, -83.04441],
+  [39.885659, -83.0449],
+  [39.884949, -83.045419],
+  [39.88485, -83.04554],
+  [39.884789, -83.04561],
+  [39.88473, -83.04567],
+  [39.88463, -83.04576],
+  [39.88454, -83.045829],
+  [39.884329, -83.04599],
+  [39.88391, -83.0463],
+  [39.883599, -83.04653],
+  [39.883329, -83.046719],
+  [39.883059, -83.046909],
+  [39.882729, -83.047129],
+  [39.88257, -83.04724],
+  [39.8825, -83.04729],
+  [39.882449, -83.04733],
+  [39.88241, -83.04737],
+  [39.88238, -83.047399],
+  [39.882159, -83.047629],
+  [39.881969, -83.047759],
+  [39.88175, -83.047939],
+  [39.8815, -83.048169],
+  [39.881199, -83.048479],
+  [39.880989, -83.048739],
+  [39.880809, -83.048969],
+  [39.880629, -83.049239],
+  [39.880469, -83.04949],
+  [39.88023, -83.049909],
+  [39.88007, -83.05022],
+  [39.87981, -83.05071],
+  [39.8797, -83.05088],
+  [39.8795, -83.05112],
+  [39.879299, -83.0513],
+  [39.87909, -83.051449],
+  [39.878829, -83.051579],
+  [39.87862, -83.05166],
+  [39.87842, -83.051679],
+  [39.878379, -83.05233],
+  [39.87835, -83.052969],
+  [39.87833, -83.053289],
+  [39.878319, -83.05354],
+  [39.878319, -83.053609],
+  [39.878309, -83.05399],
+  [39.878299, -83.054229],
+  [39.878289, -83.054419],
+  [39.878289, -83.05448],
+  [39.878289, -83.054559],
+  [39.878289, -83.0547],
+  [39.87828, -83.054869],
+  [39.87828, -83.054999],
+  [39.87828, -83.055049],
+  [39.87828, -83.05512],
+  [39.878289, -83.05521],
+  [39.878319, -83.05574],
+  [39.87835, -83.056299],
+  [39.87836, -83.05643],
+  [39.87837, -83.056539],
+  [39.878379, -83.05669],
+  [39.878399, -83.057],
+  [39.878409, -83.05719],
+  [39.87845, -83.057839],
+  [39.878469, -83.058059],
+  [39.878479, -83.058279],
+  [39.87852, -83.05881],
+  [39.87854, -83.059089],
+  [39.878589, -83.059919],
+  [39.87861, -83.060279],
+  [39.87864, -83.060719],
+  [39.878659, -83.061069],
+  [39.878679, -83.061399],
+  [39.87869, -83.06151],
+  [39.87869, -83.0616],
+  [39.87871, -83.06186],
+  [39.87872, -83.06199],
+  [39.87873, -83.06222],
+  [39.878739, -83.06236],
+  [39.878749, -83.062519],
+  [39.878759, -83.06263],
+  [39.87879, -83.06298],
+  [39.87888, -83.06357],
+  [39.87898, -83.063949],
+  [39.879029, -83.06408],
+  [39.87907, -83.064189],
+  [39.879109, -83.064309],
+  [39.87923, -83.0646],
+  [39.879029, -83.064859],
+  [39.8789, -83.06469],
+  [39.87881, -83.064489],
+  [39.878749, -83.06421],
+  [39.878669, -83.06397],
+  [39.87862, -83.063909],
+  [39.87854, -83.0639],
+  [39.878229, -83.06393]
+];
+
+const stopNames = {
+  "NORTER3": "SPRING ST TERMINAL BAY 3",
+  "STRHARW": "2096 STRINGTOWN RD",
+  "GRORIDS": "GROVE CITY PARK AND RIDE",
+  "HIGMOUS": "S HIGH ST &amp; W MOUND ST",
+  "3RDGAYS": "N 3RD ST &amp; E GAY ST",
+  "3RDBROS1": "S 3RD ST &amp; E BROAD ST",
+  "3RDTOWS": "S 3RD ST &amp; E TOWN ST",
+  "FROSYCS": "S FRONT ST &amp; SYCAMORE ST",
+  "HIGMAIS2": "S HIGH ST &amp; W MAIN ST"
+};
+
+const stops = [
+  { stop_id: "NORTER3", name: "SPRING ST TERMINAL BAY 3", lat: 39.9658, lon: -83.002408, times: ["5:15 PM"] },
+  { stop_id: "3RDGAYS", name: "N 3RD ST &amp; E GAY ST", lat: 39.964264, lon: -82.998422, times: ["5:17 PM"] },
+  { stop_id: "3RDBROS1", name: "S 3RD ST &amp; E BROAD ST", lat: 39.962074, lon: -82.997987, times: ["5:18 PM"] },
+  { stop_id: "3RDTOWS", name: "S 3RD ST &amp; E TOWN ST", lat: 39.958666, lon: -82.997331, times: ["5:20 PM"] },
+  { stop_id: "HIGMAIS2", name: "S HIGH ST &amp; W MAIN ST", lat: 39.955568, lon: -82.999488, times: ["5:23 PM"] },
+  { stop_id: "HIGMOUS", name: "S HIGH ST &amp; W MOUND ST", lat: 39.954145, lon: -82.999181, times: ["5:25 PM"] },
+  { stop_id: "FROSYCS", name: "S FRONT ST &amp; SYCAMORE ST", lat: 39.94858, lon: -82.999913, times: ["5:26 PM"] },
+  { stop_id: "STRHARW", name: "2096 STRINGTOWN RD", lat: 39.878575, lon: -83.057451, times: ["5:40 PM"] },
+  { stop_id: "GRORIDS", name: "GROVE CITY PARK AND RIDE", lat: 39.878393, lon: -83.063987, times: ["5:42 PM"] },
+]
+
+  const polylineOut = L.polyline(shapeOutbound, {
+    color: 'blue',
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(polylineOut.getBounds());
+
+  stops.forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9,
+      weight: 1
+    });
+
+    const popupContent = `
+      <strong>${stop.name}</strong><br>
+      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.addTo(map);
+  });
+
+  let busMarkers = {};
+
+  async function fetchAndDisplay() {
+    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+    const data = await res.json();
+    const buses = (data.resultSet.vehicle || []).filter(v =>
+      v.routeNumber == routeNumber && v.direction == direction
+    );
+
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+
+    if (buses.length === 0) return;
+
+    buses.forEach(bus => {
+      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="text-align:center;">
+            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+          </div>
+        `,
+        iconSize: [40, 30],
+        iconAnchor: [20, 30]
+      });
+
+      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+      busMarkers[bus.vehicleID] = marker;
+    });
+  }
+
+  fetchAndDisplay();
+  setInterval(fetchAndDisplay, 15000);
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>

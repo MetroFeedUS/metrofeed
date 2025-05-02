@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 34 – MORSE | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+    header img {
+      max-height: 60px;
+    }
+    .ad-banner {
+      text-align: center;
+      margin: 1rem auto;
+      background-color: #222;
+      color: #888;
+      padding: 1rem;
+      border: 2px dashed #4dd0e1;
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+    .content-box {
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem;
+      background-color: #1e1e1e;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+    }
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .button-bar a {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+.back-button {
+  background-color: #4dd0e1;
+  color: #0d0d0d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #4dd0e1;
+  text-decoration: none;
+}
+.back-button:hover {
+  background-color: #35c0d6;
+}
+.site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="ad-banner">
+    [Ad Banner Placeholder — 300x250]
+  </div>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+  <button class="back-button" onclick="history.back()">⬅ Back</button>
+  </div>
+
+  <h1>Route 34 – MORSE</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  
+  <script>
+  const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const routeNumber = 34;
+  const direction = parseInt(0);
+
+  const map = L.map('map').setView([45.6, -122.7], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  const shapeOutbound = [
+  [40.06987, -83.019639],
+  [40.069889, -83.01952],
+  [40.069979, -83.01938],
+  [40.069999, -83.019139],
+  [40.06995, -83.019139],
+  [40.06958, -83.01916],
+  [40.06952, -83.01916],
+  [40.06933, -83.01916],
+  [40.06906, -83.01917],
+  [40.068939, -83.01917],
+  [40.068819, -83.019179],
+  [40.06868, -83.019179],
+  [40.06853, -83.019189],
+  [40.06845, -83.019189],
+  [40.06835, -83.019189],
+  [40.068189, -83.0192],
+  [40.06806, -83.01921],
+  [40.06782, -83.019219],
+  [40.06772, -83.019229],
+  [40.06762, -83.019229],
+  [40.067479, -83.01924],
+  [40.06737, -83.01924],
+  [40.067129, -83.01925],
+  [40.06681, -83.01926],
+  [40.06661, -83.019269],
+  [40.066419, -83.019279],
+  [40.065929, -83.01929],
+  [40.06553, -83.019319],
+  [40.065229, -83.01934],
+  [40.06483, -83.019369],
+  [40.064679, -83.01938],
+  [40.064429, -83.019399],
+  [40.064349, -83.019409],
+  [40.064159, -83.01943],
+  [40.064, -83.01944],
+  [40.063869, -83.019449],
+  [40.063719, -83.019459],
+  [40.063689, -83.019459],
+  [40.063629, -83.01947],
+  [40.06349, -83.01948],
+  [40.063329, -83.01948],
+  [40.06313, -83.019489],
+  [40.06294, -83.019499],
+  [40.062799, -83.01951],
+  [40.06249, -83.01952],
+  [40.062459, -83.01875],
+  [40.062449, -83.01857],
+  [40.062439, -83.01834],
+  [40.062439, -83.01825],
+  [40.06241, -83.017659],
+  [40.062359, -83.016629],
+  [40.062329, -83.01587],
+  [40.06229, -83.01498],
+  [40.06229, -83.014899],
+  [40.062249, -83.01394],
+  [40.06221, -83.01309],
+  [40.062179, -83.0126],
+  [40.062179, -83.01251],
+  [40.06214, -83.011219],
+  [40.062069, -83.009769],
+  [40.06205, -83.0094],
+  [40.062009, -83.008519],
+  [40.061979, -83.00773],
+  [40.06195, -83.00688],
+  [40.06193, -83.00643],
+  [40.061899, -83.005809],
+  [40.061889, -83.005449],
+  [40.06186, -83.00477],
+  [40.061799, -83.003079],
+  [40.06177, -83.001999],
+  [40.061739, -83.00108],
+  [40.061729, -83.000779],
+  [40.061699, -82.99998],
+  [40.06169, -82.99981],
+  [40.06168, -82.999569],
+  [40.061629, -82.998809],
+  [40.061619, -82.998489],
+  [40.061609, -82.99824],
+  [40.0616, -82.99805],
+  [40.0616, -82.997799],
+  [40.06157, -82.99706],
+  [40.061539, -82.99631],
+  [40.061529, -82.995919],
+  [40.061519, -82.99544],
+  [40.061519, -82.995329],
+  [40.06151, -82.99514],
+  [40.06149, -82.994559],
+  [40.061469, -82.994159],
+  [40.061459, -82.99391],
+  [40.061439, -82.9935],
+  [40.061429, -82.99324],
+  [40.06142, -82.992989],
+  [40.0614, -82.99252],
+  [40.061379, -82.99199],
+  [40.061369, -82.991689],
+  [40.06132, -82.990569],
+  [40.061279, -82.98969],
+  [40.061249, -82.98905],
+  [40.06122, -82.98839],
+  [40.06121, -82.988179],
+  [40.061199, -82.98803],
+  [40.061159, -82.987289],
+  [40.06113, -82.98675],
+  [40.06112, -82.98662],
+  [40.061089, -82.986199],
+  [40.061069, -82.9859],
+  [40.06105, -82.98563],
+  [40.061019, -82.9851],
+  [40.060999, -82.9847],
+  [40.06096, -82.984129],
+  [40.06094, -82.9837],
+  [40.060919, -82.983409],
+  [40.06088, -82.982689],
+  [40.060839, -82.982],
+  [40.0608, -82.981389],
+  [40.06077, -82.980879],
+  [40.060739, -82.98037],
+  [40.06069, -82.979629],
+  [40.06069, -82.97952],
+  [40.060659, -82.978949],
+  [40.060659, -82.97888],
+  [40.060649, -82.978769],
+  [40.060639, -82.97844],
+  [40.060629, -82.978329],
+  [40.060629, -82.978279],
+  [40.06061, -82.97794],
+  [40.06058, -82.97736],
+  [40.060559, -82.976919],
+  [40.060549, -82.97672],
+  [40.060549, -82.976649],
+  [40.06052, -82.97606],
+  [40.0605, -82.975579],
+  [40.060479, -82.97515],
+  [40.06043, -82.974129],
+  [40.06041, -82.973559],
+  [40.060379, -82.972799],
+  [40.060359, -82.97222],
+  [40.06035, -82.971879],
+  [40.06034, -82.97159],
+  [40.06032, -82.97092],
+  [40.060299, -82.970039],
+  [40.060289, -82.96976],
+  [40.060279, -82.96913],
+  [40.060279, -82.968879],
+  [40.060269, -82.968419],
+  [40.06026, -82.968159],
+  [40.06024, -82.96759],
+  [40.06024, -82.9675],
+  [40.06022, -82.96695],
+  [40.060209, -82.966489],
+  [40.060189, -82.966039],
+  [40.06015, -82.965179],
+  [40.06013, -82.96475],
+  [40.060109, -82.964369],
+  [40.060089, -82.963879],
+  [40.060029, -82.962609],
+  [40.060019, -82.962399],
+  [40.05999, -82.96183],
+  [40.05997, -82.96124],
+  [40.059909, -82.959829],
+  [40.059839, -82.95842],
+  [40.0598, -82.95768],
+  [40.059759, -82.95698],
+  [40.059739, -82.95665],
+  [40.05971, -82.95615],
+  [40.05969, -82.9558],
+  [40.059669, -82.95531],
+  [40.05963, -82.954619],
+  [40.05961, -82.954299],
+  [40.0596, -82.954109],
+  [40.059579, -82.953889],
+  [40.059569, -82.953719],
+  [40.059559, -82.953479],
+  [40.05953, -82.95301],
+  [40.0595, -82.95243],
+  [40.059489, -82.95224],
+  [40.059479, -82.952039],
+  [40.059459, -82.95167],
+  [40.05945, -82.951459],
+  [40.05945, -82.9514],
+  [40.05943, -82.95104],
+  [40.05941, -82.950739],
+  [40.059389, -82.950419],
+  [40.059379, -82.950199],
+  [40.05936, -82.949879],
+  [40.05935, -82.94958],
+  [40.05933, -82.94928],
+  [40.059309, -82.948839],
+  [40.059299, -82.94861],
+  [40.059279, -82.94833],
+  [40.05926, -82.947939],
+  [40.05924, -82.94766],
+  [40.059219, -82.947229],
+  [40.05916, -82.946059],
+  [40.05915, -82.945839],
+  [40.05914, -82.94559],
+  [40.05914, -82.94545],
+  [40.059129, -82.945169],
+  [40.059109, -82.94469],
+  [40.059109, -82.944659],
+  [40.05909, -82.94414],
+  [40.05909, -82.94406],
+  [40.05908, -82.943909],
+  [40.05907, -82.943629],
+  [40.05905, -82.94321],
+  [40.05905, -82.943089],
+  [40.059039, -82.94276],
+  [40.059039, -82.94266],
+  [40.059019, -82.942179],
+  [40.059009, -82.941999],
+  [40.059009, -82.941969],
+  [40.059, -82.94172],
+  [40.05899, -82.941459],
+  [40.05899, -82.941419],
+  [40.05896, -82.94077],
+  [40.058949, -82.940469],
+  [40.058949, -82.940379],
+  [40.058939, -82.940259],
+  [40.058929, -82.939989],
+  [40.058929, -82.93988],
+  [40.058919, -82.939749],
+  [40.05891, -82.93946],
+  [40.05889, -82.93902],
+  [40.05888, -82.93869],
+  [40.05887, -82.93857],
+  [40.058859, -82.93821],
+  [40.058829, -82.937469],
+  [40.05879, -82.936799],
+  [40.058769, -82.936469],
+  [40.05871, -82.93546],
+  [40.0587, -82.935209],
+  [40.058669, -82.93434],
+  [40.058659, -82.934129],
+  [40.058659, -82.934079],
+  [40.058649, -82.93376],
+  [40.05864, -82.93352],
+  [40.058589, -82.932559],
+  [40.058579, -82.93241],
+  [40.058569, -82.932249],
+  [40.058569, -82.93217],
+  [40.058559, -82.931739],
+  [40.05853, -82.93123],
+  [40.058499, -82.93059],
+  [40.058479, -82.930129],
+  [40.05845, -82.929629],
+  [40.058379, -82.92817],
+  [40.05833, -82.92701],
+  [40.05824, -82.926749],
+  [40.058229, -82.9266],
+  [40.058199, -82.925949],
+  [40.05815, -82.925039],
+  [40.058129, -82.924589],
+  [40.058119, -82.924459],
+  [40.058109, -82.924189],
+  [40.05809, -82.923869],
+  [40.05808, -82.92362],
+  [40.05807, -82.92353],
+  [40.058019, -82.922739],
+  [40.05798, -82.92137],
+  [40.057959, -82.920849],
+  [40.057929, -82.919429],
+  [40.057869, -82.91823],
+  [40.056869, -82.918299],
+  [40.056659, -82.91831],
+  [40.05636, -82.918329],
+  [40.056069, -82.918349],
+  [40.05549, -82.918389],
+  [40.054509, -82.91849],
+  [40.054179, -82.918569],
+  [40.05401, -82.91863],
+  [40.053609, -82.918839],
+  [40.053279, -82.91908],
+  [40.053149, -82.919199],
+  [40.05294, -82.9194],
+  [40.052879, -82.91945],
+  [40.052699, -82.91958],
+  [40.052639, -82.919609],
+  [40.052339, -82.919779],
+  [40.052289, -82.9198],
+  [40.052009, -82.91989],
+  [40.05188, -82.919909],
+  [40.05132, -82.91999],
+  [40.05089, -82.920009],
+  [40.05005, -82.920049],
+  [40.04962, -82.920059],
+  [40.04873, -82.920089],
+  [40.04861, -82.920089],
+  [40.04834, -82.91819],
+  [40.048239, -82.9176],
+  [40.048109, -82.91655],
+  [40.04809, -82.916309],
+  [40.048049, -82.91583],
+  [40.04801, -82.915409],
+  [40.047969, -82.91441],
+  [40.047939, -82.91323],
+  [40.048029, -82.911589],
+  [40.048109, -82.91057],
+  [40.048129, -82.910379],
+  [40.048129, -82.9103],
+  [40.048129, -82.910069],
+  [40.048129, -82.91],
+  [40.048119, -82.90985],
+  [40.04809, -82.909069],
+  [40.04809, -82.908979],
+  [40.04808, -82.908879],
+  [40.04827, -82.90887],
+  [40.04837, -82.90887],
+  [40.049189, -82.90886],
+  [40.049749, -82.90886],
+  [40.050639, -82.90886],
+  [40.051209, -82.90886],
+  [40.0514, -82.90886],
+  [40.05177, -82.908849],
+  [40.052019, -82.908839],
+  [40.05214, -82.908839],
+  [40.0524, -82.90883],
+  [40.052559, -82.90883],
+  [40.052809, -82.908839],
+  [40.053069, -82.90887],
+  [40.05332, -82.90891],
+  [40.053539, -82.908979],
+  [40.05358, -82.908989],
+  [40.053809, -82.909079],
+  [40.053889, -82.909109],
+  [40.054069, -82.90919],
+  [40.054149, -82.90923],
+  [40.054429, -82.9094],
+  [40.054689, -82.90958],
+  [40.054709, -82.90959],
+  [40.05484, -82.90968],
+  [40.054959, -82.90977],
+  [40.055239, -82.909959],
+  [40.05537, -82.91004],
+  [40.055419, -82.910069],
+  [40.055679, -82.910189],
+  [40.05592, -82.91027],
+  [40.05611, -82.910329],
+  [40.05638, -82.91039],
+  [40.056429, -82.9104],
+  [40.056569, -82.910409],
+  [40.05664, -82.910419],
+  [40.056769, -82.910419],
+  [40.056929, -82.910419],
+  [40.05753, -82.910369],
+  [40.05772, -82.91044],
+  [40.05816, -82.910409],
+  [40.058229, -82.910409],
+  [40.058309, -82.9104],
+  [40.05861, -82.910379],
+  [40.05887, -82.91036],
+  [40.059109, -82.910339],
+  [40.05927, -82.910329],
+  [40.05943, -82.91031],
+  [40.059829, -82.910279],
+  [40.06016, -82.910249],
+  [40.060379, -82.910189],
+  [40.060469, -82.91017],
+  [40.060739, -82.910139],
+  [40.060839, -82.910139],
+  [40.060839, -82.909979],
+  [40.060919, -82.90994],
+  [40.06096, -82.909869],
+  [40.060979, -82.90963],
+  [40.060929, -82.909029],
+  [40.060829, -82.90877],
+  [40.060719, -82.908849],
+  [40.0607, -82.909029],
+  [40.060719, -82.90946]
+];
+
+const stopNames = {
+  "HIGFENS": "N HIGH ST &amp; FENWAY RD",
+  "HIG521S": "5211 N HIGH ST",
+  "HIGGRA2S": "N HIGH ST &amp; GRACELAND BLVD 2",
+  "MORFOSE": "MORSE RD &amp; FOSTER ST",
+  "MORELKE": "MORSE RD &amp; ELKS DR",
+  "MORSHAE": "MORSE RD &amp; SHARON AVE",
+  "MORCOLE": "MORSE RD &amp; COLERAIN AVE",
+  "MORKARE1": "MORSE RD &amp; KARL RD",
+  "MORSANE": "MORSE RD &amp; SANDY LANE RD",
+  "MORMAIE": "MORSE RD &amp; MAIZE RD",
+  "MORALME": "MORSE RD &amp; ALMONT DR",
+  "MORHIGE": "MORSE RD &amp; N HIGH ST",
+  "MORTRIE": "MORSE RD &amp; TRINDEL WAY",
+  "STECOLN": "STELZER RD &amp; COLLIERY AVE",
+  "MORCHEE": "MORSE RD &amp; CHESFORD RD",
+  "MORCLEE": "MORSE RD &amp; CLEVELAND AVE",
+  "MORMALE": "MORSE RD &amp; MALIN ST",
+  "MORSUNBE": "MORSE RD &amp; SUNBURY RD",
+  "MORWALE": "MORSE RD &amp; WALFORD ST",
+  "MORTAME": "MORSE RD &amp; TAMARACK BLVD",
+  "MORWESE": "MORSE RD &amp; WESTERVILLE RD",
+  "MORMORS": "MORSE CROSSING &amp; MORSE RD",
+  "MORGOLE": "MORSE RD &amp; GOLDENGATE SQ N",
+  "EASMORE": "EASTON WAY &amp; MORSE CROSSING",
+  "MOR177E": "MORSE RD &amp; NORTHLAND RIDGE BLVD",
+  "MOR415S": "4155 MORSE CROSSING",
+  "MORGRAS": "MORSE CROSSING &amp; EASTON MARKET",
+  "STE418N": "4180 STELZER RD",
+  "MOR2975E": "2975 MORSE RD",
+  "MORINDE": "MORSE RD &amp; INDIANOLA AVE",
+  "EASEASPE": "EASTON WAY &amp; EASTON SQUARE PL",
+  "MORHEATE": "MORSE RD &amp; HEATON RD",
+  "WESHIGW": "WESTVIEW TURNAROUND",
+  "EASCHAE": "EASTON WAY &amp; CHAGRIN DR",
+  "MORCHAE": "MORSE RD &amp; CHATEAU MORSE DR",
+  "STEWORN": "STELZER RD &amp; WORTH AVE",
+  "STEMORN1": "STELZER RD &amp; MORSE RD",
+  "EASTER2": "EASTON TERMINAL BAY 2"
+};
+
+const stops = [
+  { stop_id: "WESHIGW", name: "WESTVIEW TURNAROUND", lat: 40.069979, lon: -83.019601, times: ["9:12 AM"] },
+  { stop_id: "HIG521S", name: "5211 N HIGH ST", lat: 40.06893, lon: -83.019249, times: ["9:13 AM"] },
+  { stop_id: "HIGFENS", name: "N HIGH ST &amp; FENWAY RD", lat: 40.067693, lon: -83.019303, times: ["9:13 AM"] },
+  { stop_id: "HIGGRA2S", name: "N HIGH ST &amp; GRACELAND BLVD 2", lat: 40.064664, lon: -83.019455, times: ["9:14 AM"] },
+  { stop_id: "MORHIGE", name: "MORSE RD &amp; N HIGH ST", lat: 40.062356, lon: -83.018853, times: ["9:01 AM"] },
+  { stop_id: "MORFOSE", name: "MORSE RD &amp; FOSTER ST", lat: 40.06215, lon: -83.01409, times: ["9:01 AM"] },
+  { stop_id: "MORELKE", name: "MORSE RD &amp; ELKS DR", lat: 40.062042, lon: -83.011365, times: ["9:02 AM"] },
+  { stop_id: "MORSHAE", name: "MORSE RD &amp; SHARON AVE", lat: 40.0619, lon: -83.008018, times: ["9:03 AM"] },
+  { stop_id: "MORCOLE", name: "MORSE RD &amp; COLERAIN AVE", lat: 40.061695, lon: -83.003222, times: ["9:03 AM"] },
+  { stop_id: "MORINDE", name: "MORSE RD &amp; INDIANOLA AVE", lat: 40.061612, lon: -83.00075, times: ["9:04 AM"] },
+  { stop_id: "MORSANE", name: "MORSE RD &amp; SANDY LANE RD", lat: 40.061264, lon: -82.992829, times: ["9:05 AM"] },
+  { stop_id: "MORMAIE", name: "MORSE RD &amp; MAIZE RD", lat: 40.061006, lon: -82.986753, times: ["9:06 AM"] },
+  { stop_id: "MORALME", name: "MORSE RD &amp; ALMONT DR", lat: 40.06077, lon: -82.983053, times: ["9:07 AM"] },
+  { stop_id: "MORKARE1", name: "MORSE RD &amp; KARL RD", lat: 40.060366, lon: -82.9764, times: ["9:09 AM"] },
+  { stop_id: "MOR177E", name: "MORSE RD &amp; NORTHLAND RIDGE BLVD", lat: 40.060279, lon: -82.973579, times: ["9:09 AM"] },
+  { stop_id: "MORTAME", name: "MORSE RD &amp; TAMARACK BLVD", lat: 40.060215, lon: -82.970357, times: ["9:10 AM"] },
+  { stop_id: "MORHEATE", name: "MORSE RD &amp; HEATON RD", lat: 40.060111, lon: -82.96684, times: ["9:11 AM"] },
+  { stop_id: "MORWALE", name: "MORSE RD &amp; WALFORD ST", lat: 40.059834, lon: -82.961301, times: ["9:12 AM"] },
+  { stop_id: "MORMALE", name: "MORSE RD &amp; MALIN ST", lat: 40.059649, lon: -82.95714, times: ["9:13 AM"] },
+  { stop_id: "MORCLEE", name: "MORSE RD &amp; CLEVELAND AVE", lat: 40.059373, lon: -82.952229, times: ["9:15 AM"] },
+  { stop_id: "MORGOLE", name: "MORSE RD &amp; GOLDENGATE SQ N", lat: 40.059243, lon: -82.949625, times: ["9:00 AM"] },
+  { stop_id: "MORCHEE", name: "MORSE RD &amp; CHESFORD RD", lat: 40.059039, lon: -82.944934, times: ["9:01 AM"] },
+  { stop_id: "MOR2975E", name: "2975 MORSE RD", lat: 40.058859, lon: -82.941099, times: ["9:01 AM"] },
+  { stop_id: "MORWESE", name: "MORSE RD &amp; WESTERVILLE RD", lat: 40.058635, lon: -82.936686, times: ["9:02 AM"] },
+  { stop_id: "MORCHAE", name: "MORSE RD &amp; CHATEAU MORSE DR", lat: 40.058505, lon: -82.932964, times: ["9:03 AM"] },
+  { stop_id: "MORTRIE", name: "MORSE RD &amp; TRINDEL WAY", lat: 40.058135, lon: -82.92635, times: ["9:04 AM"] },
+  { stop_id: "MORSUNBE", name: "MORSE RD &amp; SUNBURY RD", lat: 40.057925, lon: -82.922176, times: ["9:05 AM"] },
+  { stop_id: "MORMORS", name: "MORSE CROSSING &amp; MORSE RD", lat: 40.056593, lon: -82.918465, times: ["9:06 AM"] },
+  { stop_id: "MOR415S", name: "4155 MORSE CROSSING", lat: 40.055122, lon: -82.91858, times: ["9:06 AM"] },
+  { stop_id: "MORGRAS", name: "MORSE CROSSING &amp; EASTON MARKET", lat: 40.050883, lon: -82.920136, times: ["9:07 AM"] },
+  { stop_id: "EASMORE", name: "EASTON WAY &amp; MORSE CROSSING", lat: 40.048389, lon: -82.919053, times: ["9:08 AM"] },
+  { stop_id: "EASEASPE", name: "EASTON WAY &amp; EASTON SQUARE PL", lat: 40.047968, lon: -82.915598, times: ["9:08 AM"] },
+  { stop_id: "EASCHAE", name: "EASTON WAY &amp; CHAGRIN DR", lat: 40.047889, lon: -82.912797, times: ["9:09 AM"] },
+  { stop_id: "STECOLN", name: "STELZER RD &amp; COLLIERY AVE", lat: 40.052176, lon: -82.908778, times: ["9:11 AM"] },
+  { stop_id: "STEWORN", name: "STELZER RD &amp; WORTH AVE", lat: 40.055218, lon: -82.909875, times: ["9:12 AM"] },
+  { stop_id: "STEMORN1", name: "STELZER RD &amp; MORSE RD", lat: 40.058409, lon: -82.910245, times: ["9:13 AM"] },
+  { stop_id: "STE418N", name: "4180 STELZER RD", lat: 40.05963, lon: -82.910153, times: ["9:14 AM"] },
+  { stop_id: "EASTER2", name: "EASTON TERMINAL BAY 2", lat: 40.060719, lon: -82.909141, times: ["9:15 AM"] },
+]
+
+  const polylineOut = L.polyline(shapeOutbound, {
+    color: 'blue',
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(polylineOut.getBounds());
+
+  stops.forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9,
+      weight: 1
+    });
+
+    const popupContent = `
+      <strong>${stop.name}</strong><br>
+      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.addTo(map);
+  });
+
+  let busMarkers = {};
+
+  async function fetchAndDisplay() {
+    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+    const data = await res.json();
+    const buses = (data.resultSet.vehicle || []).filter(v =>
+      v.routeNumber == routeNumber && v.direction == direction
+    );
+
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+
+    if (buses.length === 0) return;
+
+    buses.forEach(bus => {
+      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="text-align:center;">
+            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+          </div>
+        `,
+        iconSize: [40, 30],
+        iconAnchor: [20, 30]
+      });
+
+      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+      busMarkers[bus.vehicleID] = marker;
+    });
+  }
+
+  fetchAndDisplay();
+  setInterval(fetchAndDisplay, 15000);
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portland, OR Rail Routes - MetroFeed</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 4px solid #4dd0e1;
+    }
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+    main {
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+    h2 {
+      color: #f0f0f0;
+      margin-bottom: 1rem;
+    }
+    .route-list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .route-entry {
+      background-color: #1e1e1e;
+      color: #ffffff;
+      border-radius: 10px;
+      margin: 0.5rem 0;
+      padding: 0.8rem 1.2rem;
+      width: 90%;
+      max-width: 340px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    /* Line Colors */
+    .red-line { box-shadow: 0 0 10px #ff0000; }
+    .blue-line { box-shadow: 0 0 10px #0071ce; }
+    .yellow-line { box-shadow: 0 0 10px #ffcc00; }
+    .green-line { box-shadow: 0 0 10px #00cc66; }
+    .orange-line { box-shadow: 0 0 10px #ff6600; }
+    .silver-line { box-shadow: 0 0 10px #cccccc; }
+    
+     .direction-buttons {
+      margin-top: 0.5rem;
+    }
+    .direction-link {
+      display: inline-block;
+      background-color: #1e1e1e;
+      color: #4dd0e1;
+      font-weight: bold;
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      margin: 0.2rem 0;
+      text-decoration: none;
+      box-shadow: 0 0 5px #4dd0e1;
+    }
+    .direction-link:hover {
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+    }
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+    .home-button {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1000;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+  </header>
+
+  <a href="PortlandHome.html" class="home-button">🏠</a>
+
+  <!-- Simulated AdSense Preview Block -->
+  <div class="adsense-container" style="margin: 1rem auto; max-width: 336px; text-align: center; border: 2px dashed #0071CE; padding: 1rem; background-color: #111; color: #39ff14; font-size: 0.9rem; border-radius: 6px;">
+    [Sample Ad 300x250] <br>
+    This is a simulated Google Ad <br>
+    Placement Preview Box
+  </div>
+
+  <!-- Beta Disclaimer -->
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+
+  <main>
+    <h2>Portland, OR - Rail Routes</h2>
+
+    <div class="route-list" id="railList"></div>
+
+  </main>
+
+  <script>
+    const railList = document.getElementById('railList');
+
+    const rails = [
+      { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
+      { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
+      { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
+      { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
+      { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
+      { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
+
+    ];
+
+    rails.forEach(rail => {
+      const div = document.createElement('div');
+      div.className = `route-entry ${rail.className}`;
+      div.innerHTML = `
+        <div onclick="toggleDirections('${rail.id}')">${rail.label}</div>
+        <div id="directions-${rail.id}" class="direction-buttons" style="display: none;">
+          <a href="Rail routes/route-${rail.id}-dir0.html" class="direction-link">➡ ${rail.dir0}</a><br>
+          ${rail.dir1 ? `<a href="Rail routes/route-${rail.id}-dir1.html" class="direction-link">⬅ ${rail.dir1}</a>` : ''}
+        </div>
+      `;
+      railList.appendChild(div);
+    });
+
+    function toggleDirections(id) {
+      const elem = document.getElementById(`directions-${id}`);
+      elem.style.display = (elem.style.display === 'none') ? 'block' : 'none';
+    }
+  </script>
+
+  <footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 6 – SULLIVANT | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+    header img {
+      max-height: 60px;
+    }
+    .ad-banner {
+      text-align: center;
+      margin: 1rem auto;
+      background-color: #222;
+      color: #888;
+      padding: 1rem;
+      border: 2px dashed #4dd0e1;
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+    .content-box {
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem;
+      background-color: #1e1e1e;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+    }
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .button-bar a {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+.back-button {
+  background-color: #4dd0e1;
+  color: #0d0d0d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #4dd0e1;
+  text-decoration: none;
+}
+.back-button:hover {
+  background-color: #35c0d6;
+}
+.site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="ad-banner">
+    [Ad Banner Placeholder — 300x250]
+  </div>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+  <button class="back-button" onclick="history.back()">⬅ Back</button>
+  </div>
+
+  <h1>Route 6 – SULLIVANT</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  
+  <script>
+  const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const routeNumber = 6;
+  const direction = parseInt(0);
+
+  const map = L.map('map').setView([45.6, -122.7], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  const shapeOutbound = [
+  [39.966139, -83.00259],
+  [39.965579, -83.00247],
+  [39.965579, -83.002209],
+  [39.965499, -83.00219],
+  [39.96485, -83.00205],
+  [39.96494, -83.001189],
+  [39.965069, -83.00026],
+  [39.96509, -83.00008],
+  [39.96511, -82.999879],
+  [39.96518, -82.999339],
+  [39.9652, -82.999149],
+  [39.965219, -82.999],
+  [39.965239, -82.99887],
+  [39.965249, -82.998749],
+  [39.96528, -82.998529],
+  [39.964979, -82.99847],
+  [39.964959, -82.99847],
+  [39.96458, -82.998399],
+  [39.96431, -82.998349],
+  [39.96393, -82.99828],
+  [39.96324, -82.998119],
+  [39.962979, -82.998069],
+  [39.96287, -82.99805],
+  [39.962529, -82.997979],
+  [39.96185, -82.99783],
+  [39.96149, -82.997759],
+  [39.961119, -82.99769],
+  [39.96095, -82.99766],
+  [39.960849, -82.997639],
+  [39.96071, -82.99761],
+  [39.960659, -82.9976],
+  [39.960479, -82.99756],
+  [39.95979, -82.99743],
+  [39.95953, -82.99738],
+  [39.95934, -82.997349],
+  [39.959129, -82.997309],
+  [39.95872, -82.99724],
+  [39.95847, -82.997189],
+  [39.958239, -82.99715],
+  [39.957789, -82.997079],
+  [39.95754, -82.99703],
+  [39.957429, -82.997009],
+  [39.95739, -82.996999],
+  [39.957249, -82.99698],
+  [39.95711, -82.996949],
+  [39.956949, -82.996919],
+  [39.956889, -82.996899],
+  [39.95646, -82.996819],
+  [39.95618, -82.996769],
+  [39.956, -82.996739],
+  [39.95592, -82.996719],
+  [39.95575, -82.996689],
+  [39.95513, -82.996559],
+  [39.9551, -82.996809],
+  [39.955069, -82.997049],
+  [39.95505, -82.997189],
+  [39.95501, -82.99748],
+  [39.954999, -82.9976],
+  [39.954979, -82.99774],
+  [39.95492, -82.99832],
+  [39.954809, -82.999199],
+  [39.954719, -83.000009],
+  [39.954709, -83.00012],
+  [39.95469, -83.00034],
+  [39.954609, -83.00099],
+  [39.95503, -83.00107],
+  [39.955269, -83.00112],
+  [39.95538, -83.001139],
+  [39.955429, -83.00115],
+  [39.95564, -83.001189],
+  [39.955959, -83.00126],
+  [39.955869, -83.002129],
+  [39.95583, -83.00251],
+  [39.95582, -83.00259],
+  [39.955779, -83.002929],
+  [39.955679, -83.003649],
+  [39.95566, -83.003829],
+  [39.955589, -83.004339],
+  [39.955589, -83.00444],
+  [39.955599, -83.004549],
+  [39.955609, -83.004649],
+  [39.95565, -83.0049],
+  [39.955679, -83.005049],
+  [39.955719, -83.005239],
+  [39.955769, -83.00544],
+  [39.955809, -83.005589],
+  [39.95584, -83.0057],
+  [39.956139, -83.006859],
+  [39.9562, -83.0071],
+  [39.956239, -83.007259],
+  [39.95629, -83.00746],
+  [39.956309, -83.007529],
+  [39.95637, -83.00774],
+  [39.956419, -83.007899],
+  [39.956529, -83.00827],
+  [39.95646, -83.008689],
+  [39.956419, -83.009],
+  [39.95639, -83.00927],
+  [39.95637, -83.00944],
+  [39.956349, -83.00966],
+  [39.956319, -83.009949],
+  [39.956259, -83.01053],
+  [39.95621, -83.010989],
+  [39.956039, -83.012469],
+  [39.95592, -83.013369],
+  [39.955921, -83.01337],
+  [39.955889, -83.013628],
+  [39.955889, -83.01363],
+  [39.955809, -83.014329],
+  [39.95576, -83.01475],
+  [39.95564, -83.01575],
+  [39.95558, -83.016269],
+  [39.955529, -83.01673],
+  [39.956059, -83.016839],
+  [39.956679, -83.016969],
+  [39.95665, -83.017249],
+  [39.956609, -83.017609],
+  [39.95656, -83.01798],
+  [39.956519, -83.018289],
+  [39.956499, -83.01844],
+  [39.956439, -83.01889],
+  [39.95638, -83.01942],
+  [39.95636, -83.01969],
+  [39.956349, -83.01975],
+  [39.95629, -83.020259],
+  [39.9562, -83.020939],
+  [39.956139, -83.021519],
+  [39.956059, -83.022239],
+  [39.956049, -83.02232],
+  [39.955449, -83.022119],
+  [39.95487, -83.022009],
+  [39.954339, -83.021889],
+  [39.95377, -83.02177],
+  [39.95322, -83.021649],
+  [39.953169, -83.021929],
+  [39.95296, -83.023049],
+  [39.9527, -83.02447],
+  [39.95249, -83.025669],
+  [39.952379, -83.02622],
+  [39.952269, -83.026789],
+  [39.95216, -83.027369],
+  [39.952162, -83.027367],
+  [39.952056, -83.027929],
+  [39.95206, -83.02793],
+  [39.952019, -83.028129],
+  [39.951849, -83.02906],
+  [39.951739, -83.02965],
+  [39.9517, -83.029839],
+  [39.951639, -83.03018],
+  [39.9516, -83.03045],
+  [39.951559, -83.03068],
+  [39.95142, -83.031369],
+  [39.951299, -83.03194],
+  [39.95107, -83.033269],
+  [39.950859, -83.034349],
+  [39.95063, -83.03549],
+  [39.95062, -83.03553],
+  [39.950579, -83.03572],
+  [39.950479, -83.036369],
+  [39.95043, -83.036689],
+  [39.95036, -83.03707],
+  [39.95033, -83.03721],
+  [39.950289, -83.037449],
+  [39.950229, -83.03771],
+  [39.950219, -83.03775],
+  [39.95016, -83.03814],
+  [39.9501, -83.038479],
+  [39.950039, -83.03882],
+  [39.94998, -83.03909],
+  [39.949939, -83.039289],
+  [39.94988, -83.03969],
+  [39.949779, -83.04023],
+  [39.949759, -83.04032],
+  [39.94954, -83.041589],
+  [39.94953, -83.041639],
+  [39.94928, -83.04296],
+  [39.94908, -83.04396],
+  [39.94907, -83.044],
+  [39.94884, -83.04526],
+  [39.948789, -83.04553],
+  [39.94875, -83.045739],
+  [39.94874, -83.0458],
+  [39.94864, -83.046319],
+  [39.948519, -83.046989],
+  [39.948509, -83.047039],
+  [39.94845, -83.04738],
+  [39.948409, -83.04761],
+  [39.94828, -83.048259],
+  [39.94818, -83.04881],
+  [39.948129, -83.04908],
+  [39.948049, -83.049519],
+  [39.94801, -83.049699],
+  [39.948, -83.049729],
+  [39.947799, -83.05079],
+  [39.947779, -83.050919],
+  [39.947609, -83.05183],
+  [39.94757, -83.05205],
+  [39.94748, -83.052529],
+  [39.947339, -83.053289],
+  [39.947219, -83.0539],
+  [39.947139, -83.054289],
+  [39.947079, -83.054599],
+  [39.947, -83.05506],
+  [39.94692, -83.05551],
+  [39.94682, -83.05606],
+  [39.94674, -83.05647],
+  [39.94659, -83.057259],
+  [39.9465, -83.05772],
+  [39.94641, -83.058249],
+  [39.94637, -83.05845],
+  [39.946339, -83.05859],
+  [39.94629, -83.05889],
+  [39.94605, -83.06015],
+  [39.94602, -83.060319],
+  [39.94594, -83.060719],
+  [39.94583, -83.06127],
+  [39.945639, -83.06231],
+  [39.94548, -83.063189],
+  [39.9454, -83.063589],
+  [39.945349, -83.06385],
+  [39.9453, -83.06411],
+  [39.945189, -83.064719],
+  [39.944989, -83.065759],
+  [39.94495, -83.06596],
+  [39.94484, -83.06651],
+  [39.944709, -83.067249],
+  [39.944639, -83.067609],
+  [39.94459, -83.067869],
+  [39.944539, -83.06813],
+  [39.94448, -83.068459],
+  [39.944459, -83.068589],
+  [39.9444, -83.068899],
+  [39.944349, -83.069169],
+  [39.94431, -83.069349],
+  [39.94423, -83.06979],
+  [39.944169, -83.07014],
+  [39.94412, -83.07041],
+  [39.94404, -83.07082],
+  [39.944009, -83.070969],
+  [39.94397, -83.071199],
+  [39.94394, -83.07136],
+  [39.94388, -83.07163],
+  [39.943819, -83.07194],
+  [39.943749, -83.072329],
+  [39.943739, -83.07262],
+  [39.943729, -83.072919],
+  [39.943729, -83.07315],
+  [39.943709, -83.073579],
+  [39.943709, -83.07365],
+  [39.943709, -83.07369],
+  [39.9437, -83.073899],
+  [39.94369, -83.074209],
+  [39.94369, -83.074359],
+  [39.94369, -83.0745],
+  [39.943649, -83.074889],
+  [39.943639, -83.075029],
+  [39.943639, -83.075109],
+  [39.94361, -83.075709],
+  [39.943559, -83.076739],
+  [39.943539, -83.076969],
+  [39.94352, -83.07753],
+  [39.94351, -83.0777],
+  [39.94349, -83.078179],
+  [39.943469, -83.078489],
+  [39.943449, -83.078859],
+  [39.94342, -83.07942],
+  [39.94341, -83.079659],
+  [39.94341, -83.07983],
+  [39.94341, -83.07991],
+  [39.9434, -83.08001],
+  [39.943389, -83.08019],
+  [39.943369, -83.08059],
+  [39.943369, -83.08071],
+  [39.94334, -83.081189],
+  [39.94333, -83.0814],
+  [39.94331, -83.081689],
+  [39.94323, -83.08343],
+  [39.94322, -83.0837],
+  [39.943209, -83.08392],
+  [39.943189, -83.08423],
+  [39.943179, -83.084399],
+  [39.943179, -83.084429],
+  [39.94316, -83.084739],
+  [39.94315, -83.084939],
+  [39.943119, -83.085639],
+  [39.943099, -83.086139],
+  [39.94305, -83.087179],
+  [39.942999, -83.08833],
+  [39.94298, -83.088619],
+  [39.94297, -83.08883],
+  [39.94297, -83.08892],
+  [39.94296, -83.08909],
+  [39.942939, -83.089559],
+  [39.942899, -83.09013],
+  [39.94286, -83.090729],
+  [39.942849, -83.09085],
+  [39.942839, -83.09116],
+  [39.942819, -83.09144],
+  [39.942809, -83.09171],
+  [39.9428, -83.091909],
+  [39.94278, -83.092219],
+  [39.942759, -83.09273],
+  [39.942729, -83.093249],
+  [39.942719, -83.093429],
+  [39.94271, -83.09363],
+  [39.9427, -83.09382],
+  [39.942669, -83.094279],
+  [39.942649, -83.09471],
+  [39.942639, -83.094819],
+  [39.94262, -83.095319],
+  [39.9426, -83.095639],
+  [39.942559, -83.09634],
+  [39.94252, -83.09701],
+  [39.94252, -83.09706],
+  [39.94251, -83.09728],
+  [39.9425, -83.0975],
+  [39.942459, -83.09828],
+  [39.942449, -83.09837],
+  [39.942449, -83.09844],
+  [39.94243, -83.09889],
+  [39.942389, -83.099689],
+  [39.942389, -83.099769],
+  [39.942379, -83.09993],
+  [39.942379, -83.100009],
+  [39.942369, -83.100309],
+  [39.942359, -83.100449],
+  [39.942359, -83.100539],
+  [39.94234, -83.10084],
+  [39.94233, -83.100949],
+  [39.94233, -83.100989],
+  [39.942309, -83.101309],
+  [39.942299, -83.10151],
+  [39.942289, -83.101619],
+  [39.942269, -83.10201],
+  [39.94226, -83.102199],
+  [39.94225, -83.10242],
+  [39.94224, -83.1029],
+  [39.94224, -83.102969],
+  [39.942209, -83.103509],
+  [39.942199, -83.10376],
+  [39.94218, -83.10417],
+  [39.94214, -83.104949],
+  [39.942129, -83.10515],
+  [39.942109, -83.10542],
+  [39.942099, -83.10566],
+  [39.94208, -83.105989],
+  [39.94205, -83.106659],
+  [39.942029, -83.107],
+  [39.942009, -83.1074],
+  [39.94199, -83.1078],
+  [39.941949, -83.108599],
+  [39.94191, -83.109359],
+  [39.9419, -83.10953],
+  [39.94189, -83.109769],
+  [39.941829, -83.11097],
+  [39.94182, -83.111199],
+  [39.94181, -83.11146],
+  [39.9418, -83.11168],
+  [39.94179, -83.11196],
+  [39.942109, -83.111919],
+  [39.94217, -83.11191],
+  [39.94253, -83.11186],
+  [39.942899, -83.111799],
+  [39.94307, -83.11177],
+  [39.943269, -83.111739],
+  [39.94376, -83.111659],
+  [39.94386, -83.11164],
+  [39.94422, -83.111579],
+  [39.94478, -83.111489],
+  [39.944899, -83.111469],
+  [39.944979, -83.11146],
+  [39.945339, -83.111399],
+  [39.945539, -83.11137],
+  [39.94584, -83.11132],
+  [39.94601, -83.111289],
+  [39.94612, -83.11127],
+  [39.94621, -83.111259],
+  [39.946609, -83.11119],
+  [39.947079, -83.1111],
+  [39.94721, -83.111079],
+  [39.947969, -83.11096],
+  [39.948029, -83.110949],
+  [39.948399, -83.110889],
+  [39.94893, -83.110809],
+  [39.94989, -83.110669],
+  [39.95053, -83.110589],
+  [39.950569, -83.110579],
+  [39.95096, -83.110529],
+  [39.951129, -83.11051],
+  [39.951549, -83.110439],
+  [39.951629, -83.11043],
+  [39.9518, -83.110399],
+  [39.95214, -83.110349],
+  [39.952369, -83.110319],
+  [39.952739, -83.110269],
+  [39.95288, -83.11025],
+  [39.95314, -83.110229],
+  [39.953109, -83.11092],
+  [39.953089, -83.111259],
+  [39.953079, -83.111379],
+  [39.95307, -83.11164],
+  [39.95306, -83.111849],
+  [39.95305, -83.112109],
+  [39.95304, -83.112329],
+  [39.95303, -83.11254],
+  [39.953009, -83.112999],
+  [39.953009, -83.113109],
+  [39.952989, -83.11344],
+  [39.95298, -83.113859],
+  [39.95297, -83.114049],
+  [39.95296, -83.11438],
+  [39.95295, -83.11464],
+  [39.95294, -83.11496],
+  [39.952929, -83.1152],
+  [39.952919, -83.11547],
+  [39.952919, -83.11551],
+  [39.95288, -83.11614],
+  [39.95287, -83.11635],
+  [39.95286, -83.116559],
+  [39.95285, -83.11673],
+  [39.952839, -83.116959],
+  [39.952819, -83.117329],
+  [39.95277, -83.11808],
+  [39.952739, -83.118629],
+  [39.952719, -83.11901],
+  [39.952714, -83.119007],
+  [39.952705, -83.119271],
+  [39.952709, -83.119269],
+  [39.952709, -83.119359],
+  [39.9527, -83.11955],
+  [39.95268, -83.119929],
+  [39.95267, -83.12024],
+  [39.952619, -83.121159],
+  [39.95261, -83.12135],
+  [39.9526, -83.121699],
+  [39.95259, -83.122049],
+  [39.95259, -83.12216],
+  [39.952569, -83.122459],
+  [39.952559, -83.122679],
+  [39.952559, -83.12279],
+  [39.952549, -83.12289],
+  [39.952539, -83.123079],
+  [39.95251, -83.123679],
+  [39.952469, -83.12441],
+  [39.952459, -83.124699],
+  [39.952449, -83.124799],
+  [39.95243, -83.12522],
+  [39.95242, -83.12554],
+  [39.95241, -83.12581],
+  [39.952379, -83.126279],
+  [39.952379, -83.12636],
+  [39.952349, -83.12688],
+  [39.95234, -83.127179],
+  [39.95232, -83.12753],
+  [39.95231, -83.127849],
+  [39.952269, -83.12869],
+  [39.95224, -83.12924],
+  [39.95296, -83.129299],
+  [39.95303, -83.129309],
+  [39.95333, -83.12933],
+  [39.953549, -83.129339],
+  [39.95377, -83.12936],
+  [39.953979, -83.129379],
+  [39.954069, -83.129379],
+  [39.9543, -83.129399],
+  [39.95468, -83.129429],
+  [39.954879, -83.129439],
+  [39.955269, -83.129479]
+];
+
+const stopNames = {
+  "NORTER2": "SPRING ST TERMINAL BAY 2",
+  "BROOLDW": "W BROAD ST &amp; OLD VILLAGE RD",
+  "GEODELN": "GEORGESVILLE RD &amp; INDUSTRIAL MILE",
+  "TOWDAVW": "W TOWN ST &amp; S DAVIS AVE",
+  "SOURICS": "S SOUDER AVE &amp; W RICH ST",
+  "SULMARTW": "SULLIVANT AVE &amp; MARTIN AVE",
+  "SULAVOW": "SULLIVANT AVE &amp; AVONDALE AVE",
+  "SULGLEW": "SULLIVANT AVE &amp; S GLENWOOD AVE",
+  "SULYALW": "SULLIVANT AVE &amp; S YALE AVE",
+  "SULPRIW": "SULLIVANT AVE &amp; S PRINCETON AVE",
+  "SULCENW": "SULLIVANT AVE &amp; S CENTRAL AVE",
+  "SULMARW": "SULLIVANT AVE &amp; MARTHA AVE",
+  "SULCATW": "SULLIVANT AVE &amp; CATHERINE ST",
+  "SULLARW": "SULLIVANT AVE &amp; LARCOMB AVE",
+  "SULNASW": "SULLIVANT AVE &amp; NASHOBA AVE",
+  "SULWREW": "SULLIVANT AVE &amp; WREXHAM AVE",
+  "SULWHIW": "SULLIVANT AVE &amp; WHITETHORNE AVE",
+  "SULCLAW": "SULLIVANT AVE &amp; CLARENDON AVE",
+  "SULWAYW": "SULLIVANT AVE &amp; S WAYNE AVE",
+  "SULTERW": "SULLIVANT AVE &amp; S TERRACE AVE",
+  "SULBURW": "SULLIVANT AVE &amp; S BURGESS AVE",
+  "SULWARW": "SULLIVANT AVE &amp; S WARREN AVE",
+  "SULHAGW": "SULLIVANT AVE &amp; S HAGUE AVE",
+  "SULCHEW": "SULLIVANT AVE &amp; CHESTERSHIRE RD",
+  "SULBINW": "SULLIVANT AVE &amp; BINNS BLVD",
+  "3RDGAYS": "N 3RD ST &amp; E GAY ST",
+  "3RDBROS1": "S 3RD ST &amp; E BROAD ST",
+  "3RDTOWS": "S 3RD ST &amp; E TOWN ST",
+  "3RDMAIS": "S 3RD ST &amp; E MAIN ST",
+  "LONHIGE": "W LONG ST &amp; N HIGH ST",
+  "MOUHIGW3": "W MOUND ST &amp; S HIGH ST",
+  "BRO4158W": "4158 W BROAD ST",
+  "BRO425W": "4250 W BROAD ST",
+  "SULWESW": "SULLIVANT AVE &amp; S WESTGATE AVE",
+  "SULSOUW": "SULLIVANT AVE &amp; S SOUTHAMPTON AVE",
+  "SULWILW": "SULLIVANT AVE &amp; N WILSON RD",
+  "SULWEDW": "SULLIVANT AVE &amp; WEDGEWOOD DR",
+  "SUL385W": "3850 SULLIVANT AVE",
+  "SULATLW": "SULLIVANT AVE &amp; ATLANTA DR",
+  "SULGEOW": "SULLIVANT AVE &amp; GEORGESVILLE RD",
+  "SULDEMW": "SULLIVANT AVE &amp; DEMOREST RD",
+  "SULEXCW": "SULLIVANT AVE &amp; EXCHANGE DR",
+  "FROMOUN": "S FRONT ST &amp; W MOUND ST",
+  "RICGRUW": "W RICH ST &amp; S SKIDMORE ST",
+  "RICMCDW": "W RICH ST &amp; MCDOWELL ST",
+  "RICLUCW": "W RICH ST &amp; LUCAS ST",
+  "SULWHEW1": "SULLIVANT AVE &amp; S WHEATLAND AVE",
+  "MAILUDW": "W MAIN ST &amp; S LUDLOW ST",
+  "GEOCASN": "GEORGESVILLE RD &amp; CASINO SERVICE RD",
+  "BROMURW": "W BROAD ST &amp; N MURRAY HILL RD",
+  "NMURBEAN": "N MURRAY HILL RD &amp; BEACON HILL RD"
+};
+
+const stops = [
+  { stop_id: "NORTER2", name: "SPRING ST TERMINAL BAY 2", lat: 39.96588, lon: -83.00242, times: ["9:15 AM"] },
+  { stop_id: "LONHIGE", name: "W LONG ST &amp; N HIGH ST", lat: 39.964821, lon: -83.001482, times: ["9:17 AM"] },
+  { stop_id: "3RDGAYS", name: "N 3RD ST &amp; E GAY ST", lat: 39.964264, lon: -82.998422, times: ["9:18 AM"] },
+  { stop_id: "3RDBROS1", name: "S 3RD ST &amp; E BROAD ST", lat: 39.962074, lon: -82.997987, times: ["9:20 AM"] },
+  { stop_id: "3RDTOWS", name: "S 3RD ST &amp; E TOWN ST", lat: 39.958666, lon: -82.997331, times: ["9:21 AM"] },
+  { stop_id: "3RDMAIS", name: "S 3RD ST &amp; E MAIN ST", lat: 39.955832, lon: -82.996791, times: ["9:23 AM"] },
+  { stop_id: "MOUHIGW3", name: "W MOUND ST &amp; S HIGH ST", lat: 39.954822, lon: -82.999541, times: ["9:25 AM"] },
+  { stop_id: "FROMOUN", name: "S FRONT ST &amp; W MOUND ST", lat: 39.955359, lon: -83.000994, times: ["9:27 AM"] },
+  { stop_id: "MAILUDW", name: "W MAIN ST &amp; S LUDLOW ST", lat: 39.955902, lon: -83.002011, times: ["9:27 AM"] },
+  { stop_id: "RICLUCW", name: "W RICH ST &amp; LUCAS ST", lat: 39.956276, lon: -83.010774, times: ["9:29 AM"] },
+  { stop_id: "RICMCDW", name: "W RICH ST &amp; MCDOWELL ST", lat: 39.956042, lon: -83.01284, times: ["9:00 AM"] },
+  { stop_id: "RICGRUW", name: "W RICH ST &amp; S SKIDMORE ST", lat: 39.95563, lon: -83.016122, times: ["9:01 AM"] },
+  { stop_id: "TOWDAVW", name: "W TOWN ST &amp; S DAVIS AVE", lat: 39.956209, lon: -83.021405, times: ["9:03 AM"] },
+  { stop_id: "SOURICS", name: "S SOUDER AVE &amp; W RICH ST", lat: 39.955044, lon: -83.022098, times: ["9:04 AM"] },
+  { stop_id: "SULMARTW", name: "SULLIVANT AVE &amp; MARTIN AVE", lat: 39.953043, lon: -83.022941, times: ["9:04 AM"] },
+  { stop_id: "SULAVOW", name: "SULLIVANT AVE &amp; AVONDALE AVE", lat: 39.952557, lon: -83.02554, times: ["9:05 AM"] },
+  { stop_id: "SULGLEW", name: "SULLIVANT AVE &amp; S GLENWOOD AVE", lat: 39.951932, lon: -83.028881, times: ["9:06 AM"] },
+  { stop_id: "SULYALW", name: "SULLIVANT AVE &amp; S YALE AVE", lat: 39.951515, lon: -83.031113, times: ["9:06 AM"] },
+  { stop_id: "SULPRIW", name: "SULLIVANT AVE &amp; S PRINCETON AVE", lat: 39.951061, lon: -83.033609, times: ["9:07 AM"] },
+  { stop_id: "SULCENW", name: "SULLIVANT AVE &amp; S CENTRAL AVE", lat: 39.950553, lon: -83.036315, times: ["9:08 AM"] },
+  { stop_id: "SULMARW", name: "SULLIVANT AVE &amp; MARTHA AVE", lat: 39.949824, lon: -83.040216, times: ["9:08 AM"] },
+  { stop_id: "SULCATW", name: "SULLIVANT AVE &amp; CATHERINE ST", lat: 39.949371, lon: -83.042629, times: ["9:08 AM"] },
+  { stop_id: "SULLARW", name: "SULLIVANT AVE &amp; LARCOMB AVE", lat: 39.9486, lon: -83.046754, times: ["9:09 AM"] },
+  { stop_id: "SULNASW", name: "SULLIVANT AVE &amp; NASHOBA AVE", lat: 39.947986, lon: -83.050079, times: ["9:10 AM"] },
+  { stop_id: "SULWREW", name: "SULLIVANT AVE &amp; WREXHAM AVE", lat: 39.947311, lon: -83.053643, times: ["9:10 AM"] },
+  { stop_id: "SULWHIW", name: "SULLIVANT AVE &amp; WHITETHORNE AVE", lat: 39.946873, lon: -83.055913, times: ["9:10 AM"] },
+  { stop_id: "SULCLAW", name: "SULLIVANT AVE &amp; CLARENDON AVE", lat: 39.946287, lon: -83.059043, times: ["9:11 AM"] },
+  { stop_id: "SULWHEW1", name: "SULLIVANT AVE &amp; S WHEATLAND AVE", lat: 39.945872, lon: -83.061196, times: ["9:11 AM"] },
+  { stop_id: "SULWAYW", name: "SULLIVANT AVE &amp; S WAYNE AVE", lat: 39.945459, lon: -83.063419, times: ["9:12 AM"] },
+  { stop_id: "SULTERW", name: "SULLIVANT AVE &amp; S TERRACE AVE", lat: 39.944921, lon: -83.066232, times: ["9:12 AM"] },
+  { stop_id: "SULBURW", name: "SULLIVANT AVE &amp; S BURGESS AVE", lat: 39.944465, lon: -83.06873, times: ["9:13 AM"] },
+  { stop_id: "SULWARW", name: "SULLIVANT AVE &amp; S WARREN AVE", lat: 39.944017, lon: -83.071077, times: ["9:13 AM"] },
+  { stop_id: "SULHAGW", name: "SULLIVANT AVE &amp; S HAGUE AVE", lat: 39.94376, lon: -83.073472, times: ["9:13 AM"] },
+  { stop_id: "SULCHEW", name: "SULLIVANT AVE &amp; CHESTERSHIRE RD", lat: 39.943652, lon: -83.075583, times: ["9:14 AM"] },
+  { stop_id: "SULBINW", name: "SULLIVANT AVE &amp; BINNS BLVD", lat: 39.943522, lon: -83.077884, times: ["9:14 AM"] },
+  { stop_id: "SULWESW", name: "SULLIVANT AVE &amp; S WESTGATE AVE", lat: 39.943336, lon: -83.082006, times: ["9:15 AM"] },
+  { stop_id: "SULSOUW", name: "SULLIVANT AVE &amp; S SOUTHAMPTON AVE", lat: 39.943075, lon: -83.087514, times: ["9:16 AM"] },
+  { stop_id: "SULDEMW", name: "SULLIVANT AVE &amp; DEMOREST RD", lat: 39.942971, lon: -83.090018, times: ["9:17 AM"] },
+  { stop_id: "SULWILW", name: "SULLIVANT AVE &amp; N WILSON RD", lat: 39.94274, lon: -83.093956, times: ["9:17 AM"] },
+  { stop_id: "SULWEDW", name: "SULLIVANT AVE &amp; WEDGEWOOD DR", lat: 39.942546, lon: -83.09807, times: ["9:18 AM"] },
+  { stop_id: "SUL385W", name: "3850 SULLIVANT AVE", lat: 39.942399, lon: -83.100824, times: ["9:18 AM"] },
+  { stop_id: "SULEXCW", name: "SULLIVANT AVE &amp; EXCHANGE DR", lat: 39.942283, lon: -83.103333, times: ["9:18 AM"] },
+  { stop_id: "SULATLW", name: "SULLIVANT AVE &amp; ATLANTA DR", lat: 39.9421, lon: -83.107079, times: ["9:19 AM"] },
+  { stop_id: "SULGEOW", name: "SULLIVANT AVE &amp; GEORGESVILLE RD", lat: 39.941927, lon: -83.110627, times: ["9:20 AM"] },
+  { stop_id: "GEODELN", name: "GEORGESVILLE RD &amp; INDUSTRIAL MILE", lat: 39.944877, lon: -83.111356, times: ["9:20 AM"] },
+  { stop_id: "GEOCASN", name: "GEORGESVILLE RD &amp; CASINO SERVICE RD", lat: 39.947698, lon: -83.110838, times: ["9:21 AM"] },
+  { stop_id: "BRO4158W", name: "4158 W BROAD ST", lat: 39.953219, lon: -83.112013, times: ["9:22 AM"] },
+  { stop_id: "BRO425W", name: "4250 W BROAD ST", lat: 39.953051, lon: -83.115025, times: ["9:22 AM"] },
+  { stop_id: "BROOLDW", name: "W BROAD ST &amp; OLD VILLAGE RD", lat: 39.95262, lon: -83.124237, times: ["9:23 AM"] },
+  { stop_id: "BROMURW", name: "W BROAD ST &amp; N MURRAY HILL RD", lat: 39.952458, lon: -83.127619, times: ["9:24 AM"] },
+  { stop_id: "NMURBEAN", name: "N MURRAY HILL RD &amp; BEACON HILL RD", lat: 39.955218, lon: -83.129376, times: ["9:25 AM"] },
+]
+
+  const polylineOut = L.polyline(shapeOutbound, {
+    color: 'blue',
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(polylineOut.getBounds());
+
+  stops.forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9,
+      weight: 1
+    });
+
+    const popupContent = `
+      <strong>${stop.name}</strong><br>
+      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.addTo(map);
+  });
+
+  let busMarkers = {};
+
+  async function fetchAndDisplay() {
+    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+    const data = await res.json();
+    const buses = (data.resultSet.vehicle || []).filter(v =>
+      v.routeNumber == routeNumber && v.direction == direction
+    );
+
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+
+    if (buses.length === 0) return;
+
+    buses.forEach(bus => {
+      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="text-align:center;">
+            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+          </div>
+        `,
+        iconSize: [40, 30],
+        iconAnchor: [20, 30]
+      });
+
+      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+      busMarkers[bus.vehicleID] = marker;
+    });
+  }
+
+  fetchAndDisplay();
+  setInterval(fetchAndDisplay, 15000);
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>

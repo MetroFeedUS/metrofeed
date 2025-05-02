@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 75 – ARLINGTON/1ST AVE | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+    header img {
+      max-height: 60px;
+    }
+    .ad-banner {
+      text-align: center;
+      margin: 1rem auto;
+      background-color: #222;
+      color: #888;
+      padding: 1rem;
+      border: 2px dashed #4dd0e1;
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+    .content-box {
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem;
+      background-color: #1e1e1e;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+    }
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .button-bar a {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+.back-button {
+  background-color: #4dd0e1;
+  color: #0d0d0d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #4dd0e1;
+  text-decoration: none;
+}
+.back-button:hover {
+  background-color: #35c0d6;
+}
+.site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="ad-banner">
+    [Ad Banner Placeholder — 300x250]
+  </div>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+  <button class="back-button" onclick="history.back()">⬅ Back</button>
+  </div>
+
+  <h1>Route 75 – ARLINGTON/1ST AVE</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  
+  <script>
+  const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const routeNumber = 75;
+  const direction = parseInt(0);
+
+  const map = L.map('map').setView([45.6, -122.7], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  const shapeOutbound = [
+  [39.95757, -82.99901],
+  [39.956249, -82.998749],
+  [39.95627, -82.998569],
+  [39.95629, -82.99838],
+  [39.956309, -82.998179],
+  [39.956329, -82.998029],
+  [39.95638, -82.997579],
+  [39.95639, -82.99751],
+  [39.956399, -82.997359],
+  [39.95646, -82.996819],
+  [39.956499, -82.996459],
+  [39.95656, -82.99594],
+  [39.95666, -82.995069],
+  [39.957319, -82.995189],
+  [39.95799, -82.99532],
+  [39.958859, -82.995509],
+  [39.958939, -82.99553],
+  [39.959299, -82.995599],
+  [39.959999, -82.995729],
+  [39.960659, -82.995869],
+  [39.961269, -82.99598],
+  [39.96131, -82.99599],
+  [39.96141, -82.996009],
+  [39.96168, -82.996059],
+  [39.96178, -82.99608],
+  [39.962009, -82.99613],
+  [39.962719, -82.996229],
+  [39.96297, -82.996279],
+  [39.963439, -82.996369],
+  [39.96413, -82.996499],
+  [39.964779, -82.99661],
+  [39.965499, -82.996739],
+  [39.965849, -82.996809],
+  [39.966, -82.99684],
+  [39.96611, -82.996859],
+  [39.966319, -82.996899],
+  [39.966489, -82.99693],
+  [39.96654, -82.99694],
+  [39.966779, -82.996989],
+  [39.966759, -82.997309],
+  [39.96673, -82.99751],
+  [39.966679, -82.997899],
+  [39.96665, -82.998169],
+  [39.966589, -82.99877],
+  [39.96656, -82.99909],
+  [39.966509, -82.99953],
+  [39.96644, -83.000189],
+  [39.966399, -83.00052],
+  [39.966339, -83.001009],
+  [39.96629, -83.00142],
+  [39.96617, -83.00233],
+  [39.966139, -83.00259],
+  [39.966069, -83.00324],
+  [39.96663, -83.003349],
+  [39.967139, -83.00345],
+  [39.96816, -83.00363],
+  [39.96881, -83.003739],
+  [39.969449, -83.00387],
+  [39.969719, -83.003919],
+  [39.96988, -83.00395],
+  [39.97005, -83.003979],
+  [39.970179, -83.00404],
+  [39.970289, -83.00409],
+  [39.97069, -83.004289],
+  [39.970809, -83.00435],
+  [39.970919, -83.00441],
+  [39.97121, -83.004549],
+  [39.971379, -83.004639],
+  [39.97148, -83.004689],
+  [39.97152, -83.00534],
+  [39.971529, -83.005409],
+  [39.97159, -83.006099],
+  [39.971619, -83.006759],
+  [39.971619, -83.007429],
+  [39.97161, -83.007719],
+  [39.97159, -83.00796],
+  [39.9715, -83.00853],
+  [39.97148, -83.00867],
+  [39.971459, -83.008829],
+  [39.971449, -83.009009],
+  [39.971459, -83.00925],
+  [39.97148, -83.009469],
+  [39.97157, -83.009949],
+  [39.97177, -83.01096],
+  [39.971799, -83.011119],
+  [39.97186, -83.011399],
+  [39.971919, -83.01169],
+  [39.97202, -83.01218],
+  [39.97213, -83.01269],
+  [39.97249, -83.01444],
+  [39.97256, -83.014739],
+  [39.97269, -83.01512],
+  [39.97276, -83.015309],
+  [39.97294, -83.01557],
+  [39.973169, -83.015889],
+  [39.973349, -83.016129],
+  [39.973519, -83.01637],
+  [39.97373, -83.01669],
+  [39.97385, -83.0169],
+  [39.973969, -83.017149],
+  [39.973989, -83.017209],
+  [39.974069, -83.01741],
+  [39.974139, -83.017659],
+  [39.97418, -83.017929],
+  [39.9742, -83.018189],
+  [39.97421, -83.01836],
+  [39.974219, -83.019179],
+  [39.974229, -83.019359],
+  [39.974229, -83.019459],
+  [39.974229, -83.0196],
+  [39.974239, -83.019999],
+  [39.974259, -83.02043],
+  [39.974259, -83.02083],
+  [39.974259, -83.02092],
+  [39.974259, -83.02119],
+  [39.974259, -83.021289],
+  [39.974259, -83.021439],
+  [39.974259, -83.021879],
+  [39.974239, -83.022159],
+  [39.974219, -83.0225],
+  [39.97421, -83.022789],
+  [39.97419, -83.023099],
+  [39.97418, -83.023329],
+  [39.97418, -83.023449],
+  [39.97418, -83.023549],
+  [39.97419, -83.02397],
+  [39.9742, -83.02452],
+  [39.974229, -83.02514],
+  [39.974249, -83.02555],
+  [39.974259, -83.02573],
+  [39.974259, -83.025839],
+  [39.97427, -83.02608],
+  [39.97429, -83.026599],
+  [39.974309, -83.027099],
+  [39.974329, -83.027559],
+  [39.974329, -83.02761],
+  [39.974329, -83.02781],
+  [39.974339, -83.028049],
+  [39.974349, -83.02821],
+  [39.97437, -83.028589],
+  [39.97439, -83.02906],
+  [39.974709, -83.02905],
+  [39.974769, -83.02905],
+  [39.97491, -83.02905],
+  [39.97509, -83.02905],
+  [39.97518, -83.02905],
+  [39.97521, -83.02905],
+  [39.97529, -83.02906],
+  [39.97536, -83.02906],
+  [39.97544, -83.02906],
+  [39.97553, -83.02906],
+  [39.975589, -83.02906],
+  [39.9758, -83.029079],
+  [39.975869, -83.029089],
+  [39.97616, -83.02914],
+  [39.97655, -83.029219],
+  [39.976579, -83.02923],
+  [39.97682, -83.02932],
+  [39.977219, -83.029489],
+  [39.97743, -83.02959],
+  [39.977579, -83.029659],
+  [39.977729, -83.02977],
+  [39.97797, -83.029929],
+  [39.978019, -83.02997],
+  [39.97826, -83.030169],
+  [39.978489, -83.03036],
+  [39.978759, -83.03067],
+  [39.97917, -83.031119],
+  [39.97953, -83.031479],
+  [39.98004, -83.031869],
+  [39.980009, -83.031959],
+  [39.97978, -83.032499],
+  [39.97978, -83.032739],
+  [39.9798, -83.032999],
+  [39.979819, -83.033449],
+  [39.979839, -83.03438],
+  [39.97985, -83.034619],
+  [39.97995, -83.03541],
+  [39.98014, -83.036019],
+  [39.98032, -83.036419],
+  [39.980459, -83.036689],
+  [39.98061, -83.03693],
+  [39.980999, -83.037409],
+  [39.981099, -83.03757],
+  [39.98132, -83.03801],
+  [39.981449, -83.03842],
+  [39.981529, -83.038759],
+  [39.98159, -83.039169],
+  [39.981619, -83.0396],
+  [39.981639, -83.040159],
+  [39.981719, -83.04184],
+  [39.98178, -83.04345],
+  [39.981819, -83.044329],
+  [39.98184, -83.04468],
+  [39.981899, -83.04503],
+  [39.98192, -83.045419],
+  [39.98192, -83.04549],
+  [39.98195, -83.04589],
+  [39.981959, -83.04635],
+  [39.981959, -83.046579],
+  [39.981959, -83.04692],
+  [39.98195, -83.047939],
+  [39.981969, -83.048209],
+  [39.981989, -83.04836],
+  [39.98201, -83.04859],
+  [39.982069, -83.049249],
+  [39.982089, -83.049659],
+  [39.9821, -83.049909],
+  [39.98213, -83.05048],
+  [39.98213, -83.051679],
+  [39.98219, -83.052929],
+  [39.982239, -83.054199],
+  [39.98228, -83.05543],
+  [39.982359, -83.056749],
+  [39.98239, -83.057429],
+  [39.982419, -83.058099],
+  [39.982419, -83.05818],
+  [39.982799, -83.058159],
+  [39.9857, -83.05791],
+  [39.9858, -83.059869],
+  [39.986759, -83.059949],
+  [39.98714, -83.05997],
+  [39.989439, -83.060089],
+  [39.990339, -83.060169],
+  [39.991339, -83.06024],
+  [39.99256, -83.06034],
+  [39.99326, -83.06039],
+  [39.99498, -83.06057],
+  [39.99499, -83.060489],
+  [39.995039, -83.06043],
+  [39.995099, -83.060409],
+  [39.99516, -83.06043],
+  [39.995209, -83.060489],
+  [39.995219, -83.06057],
+  [39.996479, -83.060639],
+  [39.996909, -83.060679],
+  [39.99723, -83.06075],
+  [39.99753, -83.060849],
+  [39.99796, -83.061039],
+  [39.99814, -83.061129],
+  [39.99833, -83.06123],
+  [39.998739, -83.06146],
+  [39.998799, -83.06151],
+  [39.99914, -83.06178],
+  [39.999439, -83.06205],
+  [39.999809, -83.062379],
+  [40.000599, -83.06307],
+  [40.001249, -83.063689],
+  [40.001799, -83.064179],
+  [40.00202, -83.064409],
+  [40.00219, -83.06469],
+  [40.00227, -83.06484],
+  [40.002399, -83.065179],
+  [40.002589, -83.06591],
+  [40.00271, -83.06623],
+  [40.002879, -83.066609],
+  [40.003029, -83.06681],
+  [40.00415, -83.06785],
+  [40.00435, -83.068059],
+  [40.004659, -83.06843],
+  [40.0048, -83.06862],
+  [40.00506, -83.068999],
+  [40.00526, -83.06934],
+  [40.00532, -83.069409],
+  [40.00551, -83.06957],
+  [40.0058, -83.069619],
+  [40.00626, -83.06974],
+  [40.006539, -83.06983],
+  [40.006999, -83.06996],
+  [40.007279, -83.070029],
+  [40.00757, -83.070119],
+  [40.007889, -83.070209],
+  [40.00883, -83.070069],
+  [40.00902, -83.070039],
+  [40.00946, -83.06997],
+  [40.00982, -83.069899],
+  [40.0101, -83.069859],
+  [40.010319, -83.069859],
+  [40.01038, -83.06983],
+  [40.010429, -83.069799],
+  [40.01046, -83.06978],
+  [40.01049, -83.06975],
+  [40.010529, -83.069709],
+  [40.01055, -83.06969],
+  [40.01058, -83.069669],
+  [40.010609, -83.06966],
+  [40.01063, -83.06966],
+  [40.01085, -83.069539],
+  [40.011329, -83.06933],
+  [40.01171, -83.06916],
+  [40.01182, -83.06911],
+  [40.011939, -83.069049],
+  [40.01208, -83.06897],
+  [40.01219, -83.068899],
+  [40.012309, -83.068809],
+  [40.012589, -83.068549],
+  [40.0129, -83.068269],
+  [40.01318, -83.068019],
+  [40.013229, -83.06798],
+  [40.013289, -83.067919],
+  [40.01345, -83.06777],
+  [40.013669, -83.067569],
+  [40.013849, -83.067419],
+  [40.01406, -83.067239],
+  [40.01451, -83.066839],
+  [40.0146, -83.066759],
+  [40.0147, -83.066669],
+  [40.01488, -83.066519],
+  [40.01497, -83.066439],
+  [40.01523, -83.066209],
+  [40.015559, -83.06591],
+  [40.01585, -83.06565],
+  [40.016019, -83.06551],
+  [40.01623, -83.06534],
+  [40.016469, -83.06514],
+  [40.016639, -83.064999],
+  [40.017429, -83.064309],
+  [40.017609, -83.064139],
+  [40.0182, -83.06362],
+  [40.018599, -83.063239],
+  [40.019, -83.062879],
+  [40.01946, -83.062479],
+  [40.01964, -83.062329],
+  [40.01974, -83.062239],
+  [40.02008, -83.06195],
+  [40.02047, -83.0616],
+  [40.020859, -83.061249],
+  [40.02099, -83.06114],
+  [40.021239, -83.06092],
+  [40.02163, -83.06056],
+  [40.02207, -83.060169],
+  [40.022469, -83.059819],
+  [40.02251, -83.06043],
+  [40.02251, -83.06048],
+  [40.022669, -83.06352],
+  [40.0227, -83.06425],
+  [40.022739, -83.06556],
+  [40.0228, -83.066649],
+  [40.02287, -83.068089],
+  [40.02288, -83.06831],
+  [40.022909, -83.069089],
+  [40.022929, -83.06947],
+  [40.02298, -83.07072],
+  [40.02308, -83.072639],
+  [40.02352, -83.07262],
+  [40.02396, -83.07258],
+  [40.024119, -83.07257],
+  [40.02434, -83.072549],
+  [40.02514, -83.07249],
+  [40.025179, -83.07271],
+  [40.02534, -83.076779],
+  [40.02551, -83.08058],
+  [40.02567, -83.08427],
+  [40.025919, -83.08977],
+  [40.025919, -83.08981],
+  [40.02594, -83.09012],
+  [40.025969, -83.09063]
+];
+
+const stopNames = {
+  "SOUTER3": "COTA TRANSIT TERMINAL BAY 3",
+  "RIDREDW": "RIDGECLIFF RD &amp; REDDING RD",
+  "GOO868W": "868 W GOODALE BLVD",
+  "ARLCHEN": "ARLINGTON AVE &amp; W CHELSEA RD",
+  "ARLCAMN": "ARLINGTON AVE &amp; CAMBRIDGE BLVD",
+  "ARLEDGN": "ARLINGTON AVE &amp; EDGEMONT RD",
+  "ARLMALN": "ARLINGTON AVE &amp; N MALLWAY DR",
+  "ARLTEWN": "ARLINGTON AVE &amp; TEWKSBURY RD",
+  "ARLWICN": "ARLINGTON AVE &amp; WICKFORD RD",
+  "TRELANN": "TREMONT RD &amp; W LANE AVE",
+  "TREWILN": "TREMONT RD &amp; WILSHIRE DR",
+  "TRENORN": "TREMONT RD &amp; NORTHAM RD",
+  "TREFARN": "TREMONT RD &amp; FARLEIGH RD",
+  "TREINCN": "TREMONT RD &amp; INCHCLIFF RD",
+  "TREZOLN": "TREMONT RD &amp; ZOLLINGER RD",
+  "TRELANGN": "TREMONT RD &amp; LANGHAM RD",
+  "RIDTREW": "RIDGECLIFF RD &amp; TREMONT RD",
+  "RIDSOMW": "RIDGECLIFF RD &amp; SOMERFORD RD",
+  "RIDCOLW": "RIDGECLIFF RD &amp; COLCHESTER RD",
+  "4THTOWN": "S 4TH ST &amp; E TOWN ST",
+  "CAM132N": "1320 CAMBRIDGE BLVD",
+  "GOO582W": "582 W GOODALE ST",
+  "GOOYARW": "GOODALE BLVD &amp; YARD ST",
+  "NORGOON": "NORTHWEST BLVD &amp; GOODALE BLVD",
+  "NORBURNW": "NORTHWEST BLVD &amp; BURR AVE",
+  "NORWILLN": "NORTHWEST BLVD &amp; WILLIAMS AVE",
+  "1STNORW": "W 1ST AVE &amp; NORTHWEST BLVD",
+  "1STOXLW": "W 1ST AVE &amp; OXLEY RD",
+  "1STVIRW": "W 1ST AVE &amp; VIRGINIA AVE",
+  "1STAVOW": "W 1ST AVE &amp; AVONDALE AVE",
+  "1STGRAW": "W 1ST AVE &amp; GRANDVIEW AVE",
+  "1STOAKW": "W 1ST AVE &amp; OAKLAND AVE",
+  "1STELMW": "W 1ST AVE &amp; ELMWOOD AVE",
+  "1STGLEW": "W 1ST AVE &amp; GLENN AVE",
+  "1STLINW": "W 1ST AVE &amp; LINCOLN RD",
+  "3RDCAMW": "W 3RD AVE &amp; CAMBRIDGE BLVD",
+  "ARLCARN": "ARLINGTON AVE &amp; CARDIGAN AVE",
+  "SPRFROW": "W SPRING ST &amp; N FRONT ST",
+  "NOTDORW": "NOTTINGHAM RD &amp; S DORCHESTER RD",
+  "NOTKIOW": "NOTTINGHAM RD &amp; KIOKA AVE",
+  "NOTMOUW": "NOTTINGHAM RD &amp; MOUNTVIEW RD",
+  "NOTRAMW": "NOTTINGHAM RD &amp; RAMSGATE RD",
+  "RIDMOUW": "RIDGECLIFF RD &amp; MOUNTVIEW RD",
+  "4THATHN": "N 4TH ST &amp; E GAY ST",
+  "FROSPRN": "N FRONT ST &amp; W SPRING ST",
+  "VINPARW": "VINE ST &amp; N PARK ST",
+  "ARL5THN": "ARLINGTON AVE &amp; W 5TH AVE",
+  "SPR4THW": "E SPRING ST &amp; N 4TH ST",
+  "NOTSUNW": "NOTTINGHAM RD &amp; SUNSET DR",
+  "4THCAPN": "S 4TH ST &amp; E CAPITAL ST"
+};
+
+const stops = [
+  { stop_id: "SOUTER3", name: "COTA TRANSIT TERMINAL BAY 3", lat: 39.957006, lon: -82.998928, times: ["5:00 PM"] },
+  { stop_id: "4THTOWN", name: "S 4TH ST &amp; E TOWN ST", lat: 39.958965, lon: -82.995424, times: ["5:04 PM"] },
+  { stop_id: "4THCAPN", name: "S 4TH ST &amp; E CAPITAL ST", lat: 39.961951, lon: -82.995987, times: ["5:06 PM"] },
+  { stop_id: "4THATHN", name: "N 4TH ST &amp; E GAY ST", lat: 39.963808, lon: -82.996336, times: ["5:07 PM"] },
+  { stop_id: "SPR4THW", name: "E SPRING ST &amp; N 4TH ST", lat: 39.966769, lon: -82.997738, times: ["5:09 PM"] },
+  { stop_id: "SPRFROW", name: "W SPRING ST &amp; N FRONT ST", lat: 39.966198, lon: -83.002659, times: ["5:12 PM"] },
+  { stop_id: "FROSPRN", name: "N FRONT ST &amp; W SPRING ST", lat: 39.966804, lon: -83.003236, times: ["5:12 PM"] },
+  { stop_id: "VINPARW", name: "VINE ST &amp; N PARK ST", lat: 39.971546, lon: -83.005171, times: ["5:13 PM"] },
+  { stop_id: "GOO582W", name: "582 W GOODALE ST", lat: 39.97427, lon: -83.01907, times: ["5:16 PM"] },
+  { stop_id: "GOOYARW", name: "GOODALE BLVD &amp; YARD ST", lat: 39.974283, lon: -83.024355, times: ["5:17 PM"] },
+  { stop_id: "GOO868W", name: "868 W GOODALE BLVD", lat: 39.974388, lon: -83.027011, times: ["5:17 PM"] },
+  { stop_id: "NORGOON", name: "NORTHWEST BLVD &amp; GOODALE BLVD", lat: 39.974748, lon: -83.02899, times: ["5:17 PM"] },
+  { stop_id: "NORBURNW", name: "NORTHWEST BLVD &amp; BURR AVE", lat: 39.976426, lon: -83.029123, times: ["5:18 PM"] },
+  { stop_id: "NORWILLN", name: "NORTHWEST BLVD &amp; WILLIAMS AVE", lat: 39.977917, lon: -83.029786, times: ["5:18 PM"] },
+  { stop_id: "1STNORW", name: "W 1ST AVE &amp; NORTHWEST BLVD", lat: 39.979918, lon: -83.032263, times: ["5:19 PM"] },
+  { stop_id: "1STOXLW", name: "W 1ST AVE &amp; OXLEY RD", lat: 39.979909, lon: -83.034462, times: ["5:19 PM"] },
+  { stop_id: "1STVIRW", name: "W 1ST AVE &amp; VIRGINIA AVE", lat: 39.981255, lon: -83.037798, times: ["5:20 PM"] },
+  { stop_id: "1STAVOW", name: "W 1ST AVE &amp; AVONDALE AVE", lat: 39.981752, lon: -83.041755, times: ["5:21 PM"] },
+  { stop_id: "1STGRAW", name: "W 1ST AVE &amp; GRANDVIEW AVE", lat: 39.9819, lon: -83.044788, times: ["5:21 PM"] },
+  { stop_id: "1STOAKW", name: "W 1ST AVE &amp; OAKLAND AVE", lat: 39.982084, lon: -83.049023, times: ["5:22 PM"] },
+  { stop_id: "1STELMW", name: "W 1ST AVE &amp; ELMWOOD AVE", lat: 39.982187, lon: -83.051568, times: ["5:22 PM"] },
+  { stop_id: "1STGLEW", name: "W 1ST AVE &amp; GLENN AVE", lat: 39.98228, lon: -83.054012, times: ["5:23 PM"] },
+  { stop_id: "1STLINW", name: "W 1ST AVE &amp; LINCOLN RD", lat: 39.982395, lon: -83.05661, times: ["5:23 PM"] },
+  { stop_id: "CAM132N", name: "1320 CAMBRIDGE BLVD", lat: 39.98363, lon: -83.057995, times: ["5:24 PM"] },
+  { stop_id: "3RDCAMW", name: "W 3RD AVE &amp; CAMBRIDGE BLVD", lat: 39.985763, lon: -83.058261, times: ["5:24 PM"] },
+  { stop_id: "ARLCARN", name: "ARLINGTON AVE &amp; CARDIGAN AVE", lat: 39.986528, lon: -83.059826, times: ["5:25 PM"] },
+  { stop_id: "ARL5THN", name: "ARLINGTON AVE &amp; W 5TH AVE", lat: 39.9893, lon: -83.060025, times: ["5:25 PM"] },
+  { stop_id: "ARLCHEN", name: "ARLINGTON AVE &amp; W CHELSEA RD", lat: 39.991205, lon: -83.060178, times: ["5:26 PM"] },
+  { stop_id: "ARLCAMN", name: "ARLINGTON AVE &amp; CAMBRIDGE BLVD", lat: 39.993056, lon: -83.060315, times: ["5:26 PM"] },
+  { stop_id: "ARLEDGN", name: "ARLINGTON AVE &amp; EDGEMONT RD", lat: 39.996421, lon: -83.060571, times: ["5:27 PM"] },
+  { stop_id: "ARLMALN", name: "ARLINGTON AVE &amp; N MALLWAY DR", lat: 39.999068, lon: -83.061655, times: ["5:28 PM"] },
+  { stop_id: "ARLTEWN", name: "ARLINGTON AVE &amp; TEWKSBURY RD", lat: 40.001118, lon: -83.063527, times: ["5:28 PM"] },
+  { stop_id: "ARLWICN", name: "ARLINGTON AVE &amp; WICKFORD RD", lat: 40.002409, lon: -83.065091, times: ["5:29 PM"] },
+  { stop_id: "TRELANN", name: "TREMONT RD &amp; W LANE AVE", lat: 40.007735, lon: -83.070117, times: ["5:30 PM"] },
+  { stop_id: "TREWILN", name: "TREMONT RD &amp; WILSHIRE DR", lat: 40.009977, lon: -83.069814, times: ["5:31 PM"] },
+  { stop_id: "TRENORN", name: "TREMONT RD &amp; NORTHAM RD", lat: 40.012098, lon: -83.068879, times: ["5:31 PM"] },
+  { stop_id: "TREFARN", name: "TREMONT RD &amp; FARLEIGH RD", lat: 40.014795, lon: -83.066479, times: ["5:32 PM"] },
+  { stop_id: "TREINCN", name: "TREMONT RD &amp; INCHCLIFF RD", lat: 40.017481, lon: -83.064131, times: ["5:33 PM"] },
+  { stop_id: "TREZOLN", name: "TREMONT RD &amp; ZOLLINGER RD", lat: 40.0188, lon: -83.062979, times: ["5:33 PM"] },
+  { stop_id: "TRELANGN", name: "TREMONT RD &amp; LANGHAM RD", lat: 40.020779, lon: -83.061179, times: ["5:34 PM"] },
+  { stop_id: "RIDTREW", name: "RIDGECLIFF RD &amp; TREMONT RD", lat: 40.022546, lon: -83.060272, times: ["5:34 PM"] },
+  { stop_id: "RIDSOMW", name: "RIDGECLIFF RD &amp; SOMERFORD RD", lat: 40.022702, lon: -83.063351, times: ["5:35 PM"] },
+  { stop_id: "RIDCOLW", name: "RIDGECLIFF RD &amp; COLCHESTER RD", lat: 40.022841, lon: -83.066518, times: ["5:35 PM"] },
+  { stop_id: "RIDREDW", name: "RIDGECLIFF RD &amp; REDDING RD", lat: 40.023008, lon: -83.070021, times: ["5:36 PM"] },
+  { stop_id: "RIDMOUW", name: "RIDGECLIFF RD &amp; MOUNTVIEW RD", lat: 40.023126, lon: -83.072355, times: ["5:36 PM"] },
+  { stop_id: "NOTMOUW", name: "NOTTINGHAM RD &amp; MOUNTVIEW RD", lat: 40.025249, lon: -83.07301, times: ["5:37 PM"] },
+  { stop_id: "NOTRAMW", name: "NOTTINGHAM RD &amp; RAMSGATE RD", lat: 40.025391, lon: -83.076578, times: ["5:38 PM"] },
+  { stop_id: "NOTDORW", name: "NOTTINGHAM RD &amp; S DORCHESTER RD", lat: 40.025542, lon: -83.080239, times: ["5:38 PM"] },
+  { stop_id: "NOTKIOW", name: "NOTTINGHAM RD &amp; KIOKA AVE", lat: 40.025739, lon: -83.08394, times: ["5:39 PM"] },
+  { stop_id: "NOTSUNW", name: "NOTTINGHAM RD &amp; SUNSET DR", lat: 40.026011, lon: -83.090383, times: ["5:41 PM"] },
+]
+
+  const polylineOut = L.polyline(shapeOutbound, {
+    color: 'blue',
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(polylineOut.getBounds());
+
+  stops.forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9,
+      weight: 1
+    });
+
+    const popupContent = `
+      <strong>${stop.name}</strong><br>
+      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.addTo(map);
+  });
+
+  let busMarkers = {};
+
+  async function fetchAndDisplay() {
+    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+    const data = await res.json();
+    const buses = (data.resultSet.vehicle || []).filter(v =>
+      v.routeNumber == routeNumber && v.direction == direction
+    );
+
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+
+    if (buses.length === 0) return;
+
+    buses.forEach(bus => {
+      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="text-align:center;">
+            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+          </div>
+        `,
+        iconSize: [40, 30],
+        iconAnchor: [20, 30]
+      });
+
+      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+      busMarkers[bus.vehicleID] = marker;
+    });
+  }
+
+  fetchAndDisplay();
+  setInterval(fetchAndDisplay, 15000);
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>

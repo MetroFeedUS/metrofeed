@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 7 – MT VERNON | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+    header img {
+      max-height: 60px;
+    }
+    .ad-banner {
+      text-align: center;
+      margin: 1rem auto;
+      background-color: #222;
+      color: #888;
+      padding: 1rem;
+      border: 2px dashed #4dd0e1;
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+    .content-box {
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem;
+      background-color: #1e1e1e;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+    }
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .button-bar a {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+.back-button {
+  background-color: #4dd0e1;
+  color: #0d0d0d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #4dd0e1;
+  text-decoration: none;
+}
+.back-button:hover {
+  background-color: #35c0d6;
+}
+.site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="ad-banner">
+    [Ad Banner Placeholder — 300x250]
+  </div>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+  <button class="back-button" onclick="history.back()">⬅ Back</button>
+  </div>
+
+  <h1>Route 7 – MT VERNON</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  
+  <script>
+  const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const routeNumber = 7;
+  const direction = parseInt(0);
+
+  const map = L.map('map').setView([45.6, -122.7], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  const shapeOutbound = [
+  [39.95548, -82.993489],
+  [39.95538, -82.99436],
+  [39.95532, -82.99482],
+  [39.955259, -82.99535],
+  [39.955259, -82.99539],
+  [39.955249, -82.99553],
+  [39.955239, -82.99559],
+  [39.955239, -82.995639],
+  [39.95523, -82.995699],
+  [39.95522, -82.995819],
+  [39.9552, -82.995969],
+  [39.955179, -82.996179],
+  [39.95513, -82.996559],
+  [39.9551, -82.996809],
+  [39.955069, -82.997049],
+  [39.95505, -82.997189],
+  [39.95501, -82.99748],
+  [39.954999, -82.9976],
+  [39.954979, -82.99774],
+  [39.95492, -82.99832],
+  [39.954809, -82.999199],
+  [39.954719, -83.000009],
+  [39.954709, -83.00012],
+  [39.95469, -83.00034],
+  [39.954609, -83.00099],
+  [39.95503, -83.00107],
+  [39.955269, -83.00112],
+  [39.95538, -83.001139],
+  [39.955429, -83.00115],
+  [39.95564, -83.001189],
+  [39.955959, -83.00126],
+  [39.956259, -83.001319],
+  [39.956309, -83.00133],
+  [39.956589, -83.00138],
+  [39.95673, -83.001399],
+  [39.95701, -83.001449],
+  [39.95727, -83.001489],
+  [39.957669, -83.00157],
+  [39.95793, -83.00162],
+  [39.958209, -83.001679],
+  [39.958599, -83.00175],
+  [39.95927, -83.00188],
+  [39.95943, -83.00192],
+  [39.959859, -83.001999],
+  [39.959949, -83.002039],
+  [39.960479, -83.00216],
+  [39.96089, -83.00225],
+  [39.961279, -83.00233],
+  [39.96159, -83.002399],
+  [39.961999, -83.002489],
+  [39.962019, -83.002489],
+  [39.962719, -83.00261],
+  [39.963429, -83.00274],
+  [39.96356, -83.002759],
+  [39.964069, -83.002849],
+  [39.96448, -83.002929],
+  [39.96457, -83.00295],
+  [39.96475, -83.002989],
+  [39.96485, -83.00205],
+  [39.96494, -83.001189],
+  [39.965069, -83.00026],
+  [39.96509, -83.00008],
+  [39.96511, -82.999879],
+  [39.96518, -82.999339],
+  [39.9652, -82.999149],
+  [39.965219, -82.999],
+  [39.965239, -82.99887],
+  [39.965249, -82.998749],
+  [39.96528, -82.998529],
+  [39.96538, -82.997639],
+  [39.965409, -82.99739],
+  [39.965499, -82.996739],
+  [39.965519, -82.996549],
+  [39.96554, -82.99635],
+  [39.96556, -82.99607],
+  [39.96557, -82.99589],
+  [39.965579, -82.99577],
+  [39.965619, -82.995419],
+  [39.965679, -82.994889],
+  [39.965779, -82.99406],
+  [39.96581, -82.99378],
+  [39.96583, -82.993569],
+  [39.96592, -82.992849],
+  [39.965939, -82.99269],
+  [39.966, -82.99217],
+  [39.966069, -82.991559],
+  [39.966139, -82.991019],
+  [39.966149, -82.99091],
+  [39.96621, -82.99046],
+  [39.966239, -82.990209],
+  [39.96635, -82.989269],
+  [39.96639, -82.988889],
+  [39.966409, -82.988719],
+  [39.96647, -82.98824],
+  [39.96654, -82.987589],
+  [39.966589, -82.98717],
+  [39.966599, -82.987059],
+  [39.966609, -82.98694],
+  [39.966689, -82.98623],
+  [39.966699, -82.98618],
+  [39.96674, -82.985829],
+  [39.966779, -82.985479],
+  [39.966789, -82.985349],
+  [39.966849, -82.984939],
+  [39.966879, -82.98456],
+  [39.96689, -82.984449],
+  [39.966939, -82.984039],
+  [39.966959, -82.98389],
+  [39.96698, -82.983719],
+  [39.967, -82.983589],
+  [39.967029, -82.98334],
+  [39.967039, -82.9832],
+  [39.967059, -82.98302],
+  [39.96709, -82.98272],
+  [39.967129, -82.9823],
+  [39.96718, -82.981699],
+  [39.96773, -82.98181],
+  [39.96854, -82.981969],
+  [39.968759, -82.982009],
+  [39.968769, -82.98195],
+  [39.96872, -82.981839],
+  [39.968729, -82.981779],
+  [39.968759, -82.981659],
+  [39.96879, -82.981559],
+  [39.968839, -82.98145],
+  [39.9689, -82.981339],
+  [39.96896, -82.981239],
+  [39.969099, -82.9811],
+  [39.969219, -82.981019],
+  [39.96934, -82.980979],
+  [39.969469, -82.98095],
+  [39.969469, -82.98101],
+  [39.969759, -82.981],
+  [39.97013, -82.980989],
+  [39.97032, -82.980939],
+  [39.97049, -82.980849],
+  [39.97053, -82.98082],
+  [39.970639, -82.980719],
+  [39.970749, -82.98059],
+  [39.97088, -82.980309],
+  [39.97094, -82.980119],
+  [39.97097, -82.979939],
+  [39.971009, -82.97975],
+  [39.971019, -82.979639],
+  [39.97113, -82.97907],
+  [39.971259, -82.97835],
+  [39.971289, -82.978199],
+  [39.971459, -82.977279],
+  [39.97152, -82.976929],
+  [39.97166, -82.97614],
+  [39.97175, -82.975629],
+  [39.97179, -82.97541],
+  [39.97195, -82.97447],
+  [39.97203, -82.973959],
+  [39.97214, -82.97331],
+  [39.972179, -82.97309],
+  [39.9723, -82.97237],
+  [39.972339, -82.972149],
+  [39.97256, -82.97097],
+  [39.9726, -82.97074],
+  [39.97267, -82.970359],
+  [39.97277, -82.96979],
+  [39.97284, -82.969419],
+  [39.972989, -82.96853],
+  [39.973069, -82.96809],
+  [39.973179, -82.96751],
+  [39.97337, -82.966489],
+  [39.973499, -82.96574],
+  [39.973719, -82.964329],
+  [39.97374, -82.96426],
+  [39.973899, -82.963299],
+  [39.974, -82.96273],
+  [39.97403, -82.962519],
+  [39.974049, -82.962359],
+  [39.974229, -82.961309],
+  [39.974239, -82.961129],
+  [39.9742, -82.960499],
+  [39.97411, -82.959059],
+  [39.97409, -82.9584],
+  [39.974059, -82.95768],
+  [39.974049, -82.9575],
+  [39.97403, -82.956989],
+  [39.97402, -82.95675],
+  [39.974, -82.95644],
+  [39.973989, -82.956279],
+  [39.97392, -82.954599],
+  [39.973899, -82.954259],
+  [39.97385, -82.95404],
+  [39.97384, -82.953789],
+  [39.973809, -82.95329],
+  [39.973779, -82.953079],
+  [39.973719, -82.95292],
+  [39.97366, -82.952809],
+  [39.97358, -82.9527],
+  [39.973449, -82.952579],
+  [39.973339, -82.952489],
+  [39.97257, -82.951909],
+  [39.97233, -82.951729],
+  [39.97214, -82.95156],
+  [39.97204, -82.951449],
+  [39.97188, -82.951229],
+  [39.971739, -82.950969],
+  [39.971629, -82.95071],
+  [39.97152, -82.95035],
+  [39.97148, -82.950009],
+  [39.971459, -82.94969],
+  [39.971449, -82.94949],
+  [39.971449, -82.94928],
+  [39.97148, -82.949079],
+  [39.972099, -82.948669],
+  [39.97241, -82.94847],
+  [39.97356, -82.94771],
+  [39.973859, -82.94752],
+  [39.97402, -82.94744],
+  [39.97436, -82.94729],
+  [39.97566, -82.94671],
+  [39.976399, -82.946379],
+  [39.977309, -82.945979],
+  [39.977589, -82.94585],
+  [39.97771, -82.945779],
+  [39.97779, -82.94572],
+  [39.977829, -82.945699],
+  [39.97796, -82.945599],
+  [39.978009, -82.945559],
+  [39.978099, -82.94549],
+  [39.97834, -82.94531],
+  [39.978849, -82.944929],
+  [39.978989, -82.94482],
+  [39.979099, -82.94474],
+  [39.979199, -82.944659],
+  [39.979369, -82.944529],
+  [39.97942, -82.9445],
+  [39.97953, -82.94441],
+  [39.97987, -82.944159],
+  [39.98013, -82.94396],
+  [39.98032, -82.943819],
+  [39.98068, -82.94361],
+  [39.98078, -82.94356],
+  [39.981009, -82.943449],
+  [39.98122, -82.943349],
+  [39.981359, -82.943269],
+  [39.98169, -82.943089],
+  [39.98204, -82.942899],
+  [39.982089, -82.94288],
+  [39.982699, -82.94257],
+  [39.983139, -82.94235],
+  [39.98318, -82.942329],
+  [39.98358, -82.94213],
+  [39.983769, -82.94203],
+  [39.984039, -82.9419],
+  [39.98411, -82.941869],
+  [39.98428, -82.941779],
+  [39.98454, -82.941699],
+  [39.984699, -82.94166],
+  [39.98498, -82.94159],
+  [39.98525, -82.94153],
+  [39.98536, -82.941509],
+  [39.985489, -82.94148],
+  [39.9857, -82.94144],
+  [39.985689, -82.941239],
+  [39.985669, -82.940829],
+  [39.98565, -82.940259],
+  [39.98563, -82.939839],
+  [39.98562, -82.93974],
+  [39.985589, -82.93924],
+  [39.985579, -82.938999],
+  [39.98556, -82.938539],
+  [39.98554, -82.938099],
+  [39.985509, -82.937639],
+  [39.98547, -82.93722],
+  [39.985409, -82.936529],
+  [39.985309, -82.935129],
+  [39.98525, -82.934089],
+  [39.985229, -82.93362],
+  [39.98519, -82.932999],
+  [39.98519, -82.93295],
+  [39.98518, -82.932789],
+  [39.985149, -82.932329],
+  [39.9851, -82.93154],
+  [39.98535, -82.931479],
+  [39.98547, -82.93146],
+  [39.98555, -82.931439],
+  [39.985949, -82.931349],
+  [39.986319, -82.93128],
+  [39.986369, -82.93127],
+  [39.98678, -82.93119],
+  [39.987099, -82.931119],
+  [39.987639, -82.93101],
+  [39.98843, -82.930839],
+  [39.988559, -82.930809],
+  [39.988829, -82.930759],
+  [39.98924, -82.930669],
+  [39.989459, -82.930629],
+  [39.989739, -82.930579],
+  [39.99003, -82.93055],
+  [39.99075, -82.930479],
+  [39.99101, -82.93046],
+  [39.9914, -82.93043],
+  [39.991719, -82.930399],
+  [39.99211, -82.930359],
+  [39.992529, -82.93033],
+  [39.994039, -82.930219],
+  [39.99434, -82.930209],
+  [39.99453, -82.930209],
+  [39.99479, -82.9302],
+  [39.99499, -82.9302],
+  [39.995189, -82.93023],
+  [39.995279, -82.93025],
+  [39.995549, -82.93029],
+  [39.99571, -82.93032],
+  [39.995839, -82.93033],
+  [39.99596, -82.93034],
+  [39.996109, -82.93034],
+  [39.996739, -82.930299],
+  [39.99698, -82.93028],
+  [39.99715, -82.930269],
+  [39.997279, -82.930259],
+  [39.99787, -82.930219],
+  [39.998199, -82.9302],
+  [39.998799, -82.93016],
+  [39.998899, -82.93015],
+  [39.99896, -82.93015],
+  [39.9994, -82.930119],
+  [39.99966, -82.93011],
+  [40.000059, -82.930089],
+  [40.00019, -82.930079],
+  [40.00028, -82.93007],
+  [40.000499, -82.93005],
+  [40.00085, -82.930029],
+  [40.00166, -82.92996],
+  [40.00185, -82.929939],
+  [40.00203, -82.92993],
+  [40.00236, -82.929899],
+  [40.00244, -82.92989],
+  [40.003319, -82.92984],
+  [40.00406, -82.9298],
+  [40.004319, -82.92979],
+  [40.00478, -82.929769],
+  [40.004819, -82.929769],
+  [40.00534, -82.929719],
+  [40.00623, -82.929639],
+  [40.006899, -82.929589],
+  [40.008069, -82.92952],
+  [40.008369, -82.929499],
+  [40.008779, -82.92948],
+  [40.00993, -82.92942],
+  [40.010619, -82.92938],
+  [40.010859, -82.929369],
+  [40.01103, -82.929359],
+  [40.01109, -82.929359],
+  [40.01118, -82.92935],
+  [40.011249, -82.92935],
+  [40.01173, -82.929319],
+  [40.012579, -82.92925],
+  [40.013119, -82.929219],
+  [40.013229, -82.92921],
+  [40.01361, -82.9292],
+  [40.014209, -82.929139],
+  [40.014939, -82.929099],
+  [40.01578, -82.929039],
+  [40.01598, -82.929039],
+  [40.01702, -82.928969],
+  [40.018069, -82.9289],
+  [40.01819, -82.92889],
+  [40.018589, -82.928869],
+  [40.01927, -82.928829],
+  [40.01967, -82.9288],
+  [40.0208, -82.92872],
+  [40.021129, -82.928699],
+  [40.0211, -82.928199],
+  [40.02109, -82.92813],
+  [40.02109, -82.928099],
+  [40.021059, -82.927739],
+  [40.021059, -82.92768],
+  [40.021029, -82.92718],
+  [40.02099, -82.92651],
+  [40.020969, -82.92611],
+  [40.020939, -82.92538],
+  [40.020939, -82.9253],
+  [40.0209, -82.924409],
+  [40.020879, -82.92407],
+  [40.020849, -82.92339],
+  [40.020849, -82.92332],
+  [40.02081, -82.922439],
+  [40.020759, -82.921399],
+  [40.02073, -82.92078],
+  [40.020699, -82.920049],
+  [40.02066, -82.91918],
+  [40.02065, -82.918879],
+  [40.020609, -82.918029],
+  [40.020509, -82.915459],
+  [40.02047, -82.91449],
+  [40.02045, -82.914009],
+  [40.020409, -82.913169],
+  [40.02039, -82.91261],
+  [40.02037, -82.91216],
+  [40.020329, -82.911359],
+  [40.02074, -82.911319],
+  [40.020779, -82.911319],
+  [40.02137, -82.911279],
+  [40.0217, -82.91125],
+  [40.022109, -82.9112],
+  [40.022369, -82.91117],
+  [40.02271, -82.911139],
+  [40.02325, -82.911099],
+  [40.024019, -82.91103],
+  [40.02458, -82.91098],
+  [40.02469, -82.910969],
+  [40.02485, -82.910959],
+  [40.02512, -82.91094],
+  [40.025619, -82.9109],
+  [40.02703, -82.910779],
+  [40.02739, -82.91075],
+  [40.028169, -82.910689],
+  [40.02854, -82.91066],
+  [40.02872, -82.910639],
+  [40.02883, -82.91063],
+  [40.029689, -82.91057],
+  [40.030849, -82.910469],
+  [40.031129, -82.91045],
+  [40.031199, -82.91044],
+  [40.03151, -82.910409],
+  [40.031769, -82.91039],
+  [40.032309, -82.910339],
+  [40.03263, -82.9103],
+  [40.0334, -82.91021],
+  [40.03386, -82.910159],
+  [40.034739, -82.910049],
+  [40.034819, -82.91004],
+  [40.03496, -82.91003],
+  [40.03547, -82.909979],
+  [40.035639, -82.909969],
+  [40.036979, -82.90986],
+  [40.038039, -82.90976],
+  [40.038509, -82.90972],
+  [40.038859, -82.909689],
+  [40.03908, -82.90967],
+  [40.03927, -82.909649],
+  [40.039649, -82.909619],
+  [40.040199, -82.909569],
+  [40.04027, -82.909559],
+  [40.04062, -82.909529],
+  [40.04168, -82.909439],
+  [40.04198, -82.90941],
+  [40.04235, -82.909379],
+  [40.042359, -82.91027],
+  [40.042369, -82.910639],
+  [40.04235, -82.911039],
+  [40.04233, -82.91152],
+  [40.04232, -82.91171],
+  [40.04232, -82.911809],
+  [40.04234, -82.91251],
+  [40.042359, -82.91287],
+  [40.04244, -82.914429],
+  [40.04252, -82.91507],
+  [40.04262, -82.915549],
+  [40.042749, -82.91601],
+  [40.042899, -82.91642],
+  [40.04294, -82.916529],
+  [40.04316, -82.91701],
+  [40.043289, -82.91724],
+  [40.043349, -82.91733],
+  [40.04359, -82.917709],
+  [40.043819, -82.918019],
+  [40.043899, -82.918119],
+  [40.04431, -82.91858],
+  [40.044549, -82.91881],
+  [40.044959, -82.919149],
+  [40.045259, -82.91936],
+  [40.045349, -82.919419],
+  [40.04564, -82.919559],
+  [40.04621, -82.91985],
+  [40.046589, -82.919959],
+  [40.04667, -82.91998],
+  [40.04672, -82.919999],
+  [40.046779, -82.920009],
+  [40.047499, -82.920139],
+  [40.048029, -82.92016],
+  [40.04861, -82.920089],
+  [40.04834, -82.91819],
+  [40.048239, -82.9176],
+  [40.048109, -82.91655],
+  [40.04809, -82.916309],
+  [40.048049, -82.91583],
+  [40.04801, -82.915409],
+  [40.047969, -82.91441],
+  [40.047939, -82.91323],
+  [40.048029, -82.911589],
+  [40.048109, -82.91057],
+  [40.048129, -82.910379],
+  [40.048129, -82.9103],
+  [40.048129, -82.910069],
+  [40.048129, -82.91],
+  [40.048119, -82.90985],
+  [40.04809, -82.909069],
+  [40.04809, -82.908979],
+  [40.04808, -82.908879],
+  [40.04827, -82.90887],
+  [40.04837, -82.90887],
+  [40.049189, -82.90886],
+  [40.049749, -82.90886],
+  [40.050639, -82.90886],
+  [40.051209, -82.90886],
+  [40.0514, -82.90886],
+  [40.05177, -82.908849],
+  [40.052019, -82.908839],
+  [40.05214, -82.908839],
+  [40.0524, -82.90883],
+  [40.052559, -82.90883],
+  [40.052809, -82.908839],
+  [40.053069, -82.90887],
+  [40.05332, -82.90891],
+  [40.053539, -82.908979],
+  [40.05358, -82.908989],
+  [40.053809, -82.909079],
+  [40.053889, -82.909109],
+  [40.054069, -82.90919],
+  [40.054149, -82.90923],
+  [40.054429, -82.9094],
+  [40.054689, -82.90958],
+  [40.054709, -82.90959],
+  [40.05484, -82.90968],
+  [40.054959, -82.90977],
+  [40.055239, -82.909959],
+  [40.05537, -82.91004],
+  [40.055419, -82.910069],
+  [40.055679, -82.910189],
+  [40.05592, -82.91027],
+  [40.05611, -82.910329],
+  [40.05638, -82.91039],
+  [40.056429, -82.9104],
+  [40.056569, -82.910409],
+  [40.05664, -82.910419],
+  [40.056769, -82.910419],
+  [40.056929, -82.910419],
+  [40.05753, -82.910369],
+  [40.05772, -82.91044],
+  [40.05816, -82.910409],
+  [40.058229, -82.910409],
+  [40.058309, -82.9104],
+  [40.05861, -82.910379],
+  [40.05887, -82.91036],
+  [40.059109, -82.910339],
+  [40.05927, -82.910329],
+  [40.05943, -82.91031],
+  [40.059829, -82.910279],
+  [40.06016, -82.910249],
+  [40.060379, -82.910189],
+  [40.060469, -82.91017],
+  [40.060739, -82.910139],
+  [40.060839, -82.910139],
+  [40.06113, -82.91013],
+  [40.06112, -82.909529],
+  [40.061109, -82.909119],
+  [40.061109, -82.908889],
+  [40.06105, -82.90865],
+  [40.060989, -82.90851],
+  [40.060829, -82.90877],
+  [40.060719, -82.908849],
+  [40.0607, -82.909029],
+  [40.060719, -82.90946]
+];
+
+const stopNames = {
+  "NORTER3": "SPRING ST TERMINAL BAY 3",
+  "GRESURE": "GREENWAY AVE &amp; SURREY PL",
+  "NELAVAN": "N NELSON RD &amp; AVALON PL",
+  "NELOPPN": "N NELSON RD &amp; MARGARET AVE",
+  "MARHAME": "MARTIN LUTHER KING &amp; HAMILTON AVE",
+  "MOUGARE": "MOUNT VERNON AVE &amp; N GARFIELD AVE",
+  "MOU18TE": "MOUNT VERNON AVE &amp; N 18TH ST",
+  "MOU20TE": "MOUNT VERNON AVE &amp; N 20TH ST",
+  "MOU22NE": "MOUNT VERNON AVE &amp; N 22ND ST",
+  "MOUCHAE": "MOUNT VERNON AVE &amp; N CHAMPION AVE",
+  "MOUBURE": "MOUNT VERNON AVE &amp; BURT ST",
+  "MOUTAYE": "MOUNT VERNON AVE &amp; TAYLOR AVE",
+  "5THCASE": "E 5TH AVE &amp; N CASSADY AVE",
+  "5THALTE": "E 5TH AVE &amp; ALTON AVE",
+  "5THRARE": "E 5TH AVE &amp; RARIG AVE",
+  "7THSTEE": "E 7TH AVE &amp; STELZER RD",
+  "OSB5THS": "OSBORN AVE &amp; E 5TH AVE",
+  "CASCUMN": "CASSADY AVE &amp; CUMBERLAND WOODS DR",
+  "CAS10TN": "N CASSADY AVE &amp; E 10TH AVE",
+  "CAS13TN": "N CASSADY AVE &amp; E 13TH AVE",
+  "CASBAYN": "N CASSADY AVE &amp; BAYLOR AVE",
+  "CASCASN": "N CASSADY AVE &amp; CASSADY VILLAGE TRL",
+  "AGLPENE": "AGLER RD &amp; PENDLETON PL",
+  "5THSTEE": "E 5TH AVE &amp; STERLING AVE",
+  "5THJAME": "E 5TH AVE &amp; N JAMES RD",
+  "5TH7THE": "E 5TH AVE &amp; E 7TH AVE",
+  "5TH370E": "3706 E 5TH AVE",
+  "5TH430E": "4301 E 5TH AVE",
+  "FROGAYN": "N FRONT ST &amp; W GAY ST",
+  "LONHIGE": "W LONG ST &amp; N HIGH ST",
+  "LON4THE": "E LONG ST &amp; N 4TH ST",
+  "LONNORE": "E LONG ST &amp; NORMANDY AVE",
+  "LONCLEE": "E LONG ST &amp; CLEVELAND AVE",
+  "LONWASE": "E LONG ST &amp; N WASHINGTON AVE",
+  "LONJEFE": "E LONG ST &amp; JEFFERSON AVE",
+  "NELOPPN1": "NELSON RD &amp; MILLBROOK WAY",
+  "MOUHIGW3": "W MOUND ST &amp; S HIGH ST",
+  "STEJAMN": "STELZER RD &amp; N JAMES RD",
+  "5THKRUE": "E 5TH AVE &amp; KRUMM AVE",
+  "GREPARE": "GREENWAY AVE &amp; PARKWOOD AVE",
+  "OSB5THN": "OSBORN AVE &amp; E 5TH AVE",
+  "JAMRUHS": "N JAMES RD &amp; RUHL AVE",
+  "RUHVIRW": "RUHL AVE &amp; N VIRGINIA LEE RD",
+  "RUHCHEW": "RUHL AVE &amp; N CHESTERFIELD RD",
+  "RUHGOUW": "RUHL AVE &amp; N GOULD RD",
+  "NELMARN": "N NELSON RD &amp; MARYLAND AVE",
+  "5THNORE": "E 5TH AVE &amp; NORTHVIEW AVE",
+  "CAS5THN": "N CASSADY AVE &amp; E 5TH AVE",
+  "STE6THS": "STELZER RD &amp; E 6TH AVE",
+  "INTSAWW": "INTERNATIONAL GATEWAY &amp; SAWYER RD",
+  "PORGRON": "JOHN GLENN INTERNATIONAL  AIRPORT BAGGAGE CLAIM",
+  "INTSAWE": "INTERNATIONAL GATEWAY &amp; EMPLOYEE LOT",
+  "CAS150N": "1500 N CASSADY AVE",
+  "CASHUDN": "N CASSADY AVE &amp; E HUDSON ST",
+  "STEAGLN": "STELZER RD &amp; AGLER RD",
+  "STEMCCN": "STELZER RD &amp; MCCUTCHEON RD",
+  "STEMONN": "STELZER RD &amp; MONTCLAIR DR",
+  "STECOLN": "STELZER RD &amp; COLLIERY AVE",
+  "ALLOPPE": "3096 ALLEGHENY AVE",
+  "CASDEMN": "N CASSADY AVE &amp; DEMONYE DR",
+  "5TH4569E": "4569 E 5TH AVE",
+  "5THYEAE": "E 5TH AVE &amp; N YEARLING RD",
+  "HAM5THN": "N HAMILTON RD &amp; E 5TH AVE",
+  "STEMIDN": "STELZER RD &amp; MIDDLEMORE DR",
+  "MOR340W": "3400 MORSE CROSSING",
+  "AGL343E": "3433 AGLER RD",
+  "MORSTEW": "MORSE CROSSING &amp; STELZER RD",
+  "JAMALLS": "N JAMES RD &amp; ALLEGHENY AVE",
+  "STECODN": "STELZER RD &amp; CODET RD",
+  "FROTOWN": "S FRONT ST &amp; W TOWN ST",
+  "FROMOUN": "S FRONT ST &amp; W MOUND ST",
+  "5TH470E": "4700 E 5TH AVE",
+  "EASMORE": "EASTON WAY &amp; MORSE CROSSING",
+  "STE418N": "4180 STELZER RD",
+  "STELIFN": "STELZER RD &amp; LIFESTYLE BLVD",
+  "AGLASPE": "AGLER RD &amp; ASHPOINT ST",
+  "MOR342N": "3425 MORSE CROSSING",
+  "EASEASPE": "EASTON WAY &amp; EASTON SQUARE PL",
+  "VACLINIC": "VETERANS ADMINISTRATION CLINIC",
+  "324ALLE": "3243 ALLEGHENY AVE",
+  "GOUALLN": "N GOULD RD &amp; ALLEGHENY AVE",
+  "RUHKELW": "RUHL AVE &amp; N KELLNER RD",
+  "EASCHAE": "EASTON WAY &amp; CHAGRIN DR",
+  "GRECENE": "GREENWAY AVE &amp; CENTAB DR",
+  "318AGL": "3158 AGLER RD",
+  "STEWORN": "STELZER RD &amp; WORTH AVE",
+  "STEMORN1": "STELZER RD &amp; MORSE RD",
+  "3995TH": "3990 E FIFTH AVE",
+  "EASTER9": "EASTON TERMINAL BAY 9",
+  "NELCLIN": "N NELSON RD &amp; CLIFTON AVE",
+  "EMO4THW": "E MOUND ST &amp; S 4TH ST",
+  "STEESPN": "STELZER RD &amp; EASTON SQUARE PL",
+  "500NNELN": "500 N NELSON RD"
+};
+
+const stops = [
+  { stop_id: "EMO4THW", name: "E MOUND ST &amp; S 4TH ST", lat: 39.955465, lon: -82.994144, times: ["9:03 AM"] },
+  { stop_id: "MOUHIGW3", name: "W MOUND ST &amp; S HIGH ST", lat: 39.954822, lon: -82.999541, times: ["9:07 AM"] },
+  { stop_id: "FROMOUN", name: "S FRONT ST &amp; W MOUND ST", lat: 39.955359, lon: -83.000994, times: ["9:07 AM"] },
+  { stop_id: "FROTOWN", name: "S FRONT ST &amp; W TOWN ST", lat: 39.95888, lon: -83.001705, times: ["9:09 AM"] },
+  { stop_id: "FROGAYN", name: "N FRONT ST &amp; W GAY ST", lat: 39.963815, lon: -83.002651, times: ["9:12 AM"] },
+  { stop_id: "LONHIGE", name: "W LONG ST &amp; N HIGH ST", lat: 39.964821, lon: -83.001482, times: ["9:01 AM"] },
+  { stop_id: "LON4THE", name: "E LONG ST &amp; N 4TH ST", lat: 39.965299, lon: -82.996981, times: ["9:02 AM"] },
+  { stop_id: "LONNORE", name: "E LONG ST &amp; NORMANDY AVE", lat: 39.965756, lon: -82.993526, times: ["9:03 AM"] },
+  { stop_id: "LONCLEE", name: "E LONG ST &amp; CLEVELAND AVE", lat: 39.966076, lon: -82.990768, times: ["9:05 AM"] },
+  { stop_id: "LONWASE", name: "E LONG ST &amp; N WASHINGTON AVE", lat: 39.966475, lon: -82.987289, times: ["9:05 AM"] },
+  { stop_id: "LONJEFE", name: "E LONG ST &amp; JEFFERSON AVE", lat: 39.966792, lon: -82.984498, times: ["9:06 AM"] },
+  { stop_id: "MARHAME", name: "MARTIN LUTHER KING &amp; HAMILTON AVE", lat: 39.968754, lon: -82.981547, times: ["9:07 AM"] },
+  { stop_id: "MOUGARE", name: "MOUNT VERNON AVE &amp; N GARFIELD AVE", lat: 39.970936, lon: -82.979484, times: ["9:08 AM"] },
+  { stop_id: "MOU18TE", name: "MOUNT VERNON AVE &amp; N 18TH ST", lat: 39.971631, lon: -82.975808, times: ["9:09 AM"] },
+  { stop_id: "MOU20TE", name: "MOUNT VERNON AVE &amp; N 20TH ST", lat: 39.972029, lon: -82.973538, times: ["9:10 AM"] },
+  { stop_id: "MOU22NE", name: "MOUNT VERNON AVE &amp; N 22ND ST", lat: 39.97246, lon: -82.971175, times: ["9:10 AM"] },
+  { stop_id: "MOUCHAE", name: "MOUNT VERNON AVE &amp; N CHAMPION AVE", lat: 39.972986, lon: -82.968262, times: ["9:10 AM"] },
+  { stop_id: "MOUBURE", name: "MOUNT VERNON AVE &amp; BURT ST", lat: 39.973811, lon: -82.963418, times: ["9:11 AM"] },
+  { stop_id: "MOUTAYE", name: "MOUNT VERNON AVE &amp; TAYLOR AVE", lat: 39.974158, lon: -82.961352, times: ["9:12 AM"] },
+  { stop_id: "GREPARE", name: "GREENWAY AVE &amp; PARKWOOD AVE", lat: 39.974064, lon: -82.958774, times: ["9:12 AM"] },
+  { stop_id: "GRECENE", name: "GREENWAY AVE &amp; CENTAB DR", lat: 39.973904, lon: -82.955548, times: ["9:13 AM"] },
+  { stop_id: "GRESURE", name: "GREENWAY AVE &amp; SURREY PL", lat: 39.973084, lon: -82.952309, times: ["9:13 AM"] },
+  { stop_id: "NELCLIN", name: "N NELSON RD &amp; CLIFTON AVE", lat: 39.971981, lon: -82.948671, times: ["9:14 AM"] },
+  { stop_id: "NELOPPN1", name: "NELSON RD &amp; MILLBROOK WAY", lat: 39.974044, lon: -82.947348, times: ["9:00 AM"] },
+  { stop_id: "NELMARN", name: "N NELSON RD &amp; MARYLAND AVE", lat: 39.976792, lon: -82.946127, times: ["9:00 AM"] },
+  { stop_id: "500NNELN", name: "500 N NELSON RD", lat: 39.978602, lon: -82.945047, times: ["9:01 AM"] },
+  { stop_id: "NELAVAN", name: "N NELSON RD &amp; AVALON PL", lat: 39.98239, lon: -82.942656, times: ["9:02 AM"] },
+  { stop_id: "NELOPPN", name: "N NELSON RD &amp; MARGARET AVE", lat: 39.984446, lon: -82.941632, times: ["9:03 AM"] },
+  { stop_id: "5THNORE", name: "E 5TH AVE &amp; NORTHVIEW AVE", lat: 39.985162, lon: -82.93382, times: ["9:04 AM"] },
+  { stop_id: "CAS5THN", name: "N CASSADY AVE &amp; E 5TH AVE", lat: 39.985856, lon: -82.931311, times: ["9:05 AM"] },
+  { stop_id: "CAS10TN", name: "N CASSADY AVE &amp; E 10TH AVE", lat: 39.989683, lon: -82.930521, times: ["9:06 AM"] },
+  { stop_id: "CAS13TN", name: "N CASSADY AVE &amp; E 13TH AVE", lat: 39.992378, lon: -82.930257, times: ["9:06 AM"] },
+  { stop_id: "CASDEMN", name: "N CASSADY AVE &amp; DEMONYE DR", lat: 39.998007, lon: -82.930074, times: ["9:08 AM"] },
+  { stop_id: "CAS150N", name: "1500 N CASSADY AVE", lat: 40.001015, lon: -82.929892, times: ["9:08 AM"] },
+  { stop_id: "CASCUMN", name: "CASSADY AVE &amp; CUMBERLAND WOODS DR", lat: 40.009748, lon: -82.929369, times: ["9:09 AM"] },
+  { stop_id: "CASHUDN", name: "N CASSADY AVE &amp; E HUDSON ST", lat: 40.011521, lon: -82.929248, times: ["9:10 AM"] },
+  { stop_id: "CASBAYN", name: "N CASSADY AVE &amp; BAYLOR AVE", lat: 40.013894, lon: -82.929095, times: ["9:10 AM"] },
+  { stop_id: "CASCASN", name: "N CASSADY AVE &amp; CASSADY VILLAGE TRL", lat: 40.016826, lon: -82.928908, times: ["9:11 AM"] },
+  { stop_id: "AGLPENE", name: "AGLER RD &amp; PENDLETON PL", lat: 40.020973, lon: -82.926693, times: ["9:12 AM"] },
+  { stop_id: "318AGL", name: "3158 AGLER RD", lat: 40.020818, lon: -82.924035, times: ["9:12 AM"] },
+  { stop_id: "AGL343E", name: "3433 AGLER RD", lat: 40.020607, lon: -82.919012, times: ["9:13 AM"] },
+  { stop_id: "AGLASPE", name: "AGLER RD &amp; ASHPOINT ST", lat: 40.020344, lon: -82.913729, times: ["9:13 AM"] },
+  { stop_id: "STEAGLN", name: "STELZER RD &amp; AGLER RD", lat: 40.021141, lon: -82.911123, times: ["9:14 AM"] },
+  { stop_id: "STELIFN", name: "STELZER RD &amp; LIFESTYLE BLVD", lat: 40.023636, lon: -82.910942, times: ["9:14 AM"] },
+  { stop_id: "STECODN", name: "STELZER RD &amp; CODET RD", lat: 40.025373, lon: -82.910789, times: ["9:15 AM"] },
+  { stop_id: "STEMIDN", name: "STELZER RD &amp; MIDDLEMORE DR", lat: 40.03009, lon: -82.910405, times: ["9:16 AM"] },
+  { stop_id: "STEMCCN", name: "STELZER RD &amp; MCCUTCHEON RD", lat: 40.033899, lon: -82.910005, times: ["9:17 AM"] },
+  { stop_id: "STEESPN", name: "STELZER RD &amp; EASTON SQUARE PL", lat: 40.037557, lon: -82.909651, times: ["9:17 AM"] },
+  { stop_id: "STEMONN", name: "STELZER RD &amp; MONTCLAIR DR", lat: 40.039006, lon: -82.909525, times: ["9:17 AM"] },
+  { stop_id: "MORSTEW", name: "MORSE CROSSING &amp; STELZER RD", lat: 40.042485, lon: -82.91012, times: ["9:18 AM"] },
+  { stop_id: "MOR340W", name: "3400 MORSE CROSSING", lat: 40.043197, lon: -82.916873, times: ["9:19 AM"] },
+  { stop_id: "MOR342N", name: "3425 MORSE CROSSING", lat: 40.04642, lon: -82.919834, times: ["9:20 AM"] },
+  { stop_id: "EASMORE", name: "EASTON WAY &amp; MORSE CROSSING", lat: 40.048389, lon: -82.919053, times: ["9:21 AM"] },
+  { stop_id: "EASEASPE", name: "EASTON WAY &amp; EASTON SQUARE PL", lat: 40.047968, lon: -82.915598, times: ["9:21 AM"] },
+  { stop_id: "EASCHAE", name: "EASTON WAY &amp; CHAGRIN DR", lat: 40.047889, lon: -82.912797, times: ["9:22 AM"] },
+  { stop_id: "STECOLN", name: "STELZER RD &amp; COLLIERY AVE", lat: 40.052176, lon: -82.908778, times: ["9:24 AM"] },
+  { stop_id: "STEWORN", name: "STELZER RD &amp; WORTH AVE", lat: 40.055218, lon: -82.909875, times: ["9:24 AM"] },
+  { stop_id: "STEMORN1", name: "STELZER RD &amp; MORSE RD", lat: 40.058409, lon: -82.910245, times: ["9:25 AM"] },
+  { stop_id: "STE418N", name: "4180 STELZER RD", lat: 40.05963, lon: -82.910153, times: ["9:26 AM"] },
+  { stop_id: "EASTER9", name: "EASTON TERMINAL BAY 9", lat: 40.060719, lon: -82.909141, times: ["9:27 AM"] },
+  { stop_id: "5THCASE", name: "E 5TH AVE &amp; N CASSADY AVE", lat: 39.985007, lon: -82.93113, times: ["9:20 AM"] },
+  { stop_id: "5THALTE", name: "E 5TH AVE &amp; ALTON AVE", lat: 39.984877, lon: -82.926493, times: ["9:21 AM"] },
+  { stop_id: "5THRARE", name: "E 5TH AVE &amp; RARIG AVE", lat: 39.9848, lon: -82.924026, times: ["9:21 AM"] },
+  { stop_id: "5THSTEE", name: "E 5TH AVE &amp; STERLING AVE", lat: 39.98465, lon: -82.91991, times: ["9:22 AM"] },
+  { stop_id: "5THKRUE", name: "E 5TH AVE &amp; KRUMM AVE", lat: 39.984583, lon: -82.917804, times: ["9:22 AM"] },
+  { stop_id: "OSB5THN", name: "OSBORN AVE &amp; E 5TH AVE", lat: 39.985081, lon: -82.912521, times: ["9:23 AM"] },
+  { stop_id: "STE6THS", name: "STELZER RD &amp; E 6TH AVE", lat: 39.985822, lon: -82.914304, times: ["9:24 AM"] },
+  { stop_id: "JAMALLS", name: "N JAMES RD &amp; ALLEGHENY AVE", lat: 39.979685, lon: -82.913206, times: ["9:26 AM"] },
+  { stop_id: "JAMRUHS", name: "N JAMES RD &amp; RUHL AVE", lat: 39.977799, lon: -82.913127, times: ["9:26 AM"] },
+  { stop_id: "RUHKELW", name: "RUHL AVE &amp; N KELLNER RD", lat: 39.977684, lon: -82.913852, times: ["9:27 AM"] },
+  { stop_id: "RUHVIRW", name: "RUHL AVE &amp; N VIRGINIA LEE RD", lat: 39.977913, lon: -82.918134, times: ["9:27 AM"] },
+  { stop_id: "RUHCHEW", name: "RUHL AVE &amp; N CHESTERFIELD RD", lat: 39.978, lon: -82.920009, times: ["9:28 AM"] },
+  { stop_id: "RUHGOUW", name: "RUHL AVE &amp; N GOULD RD", lat: 39.978127, lon: -82.922391, times: ["9:28 AM"] },
+  { stop_id: "GOUALLN", name: "N GOULD RD &amp; ALLEGHENY AVE", lat: 39.980224, lon: -82.922404, times: ["9:29 AM"] },
+  { stop_id: "ALLOPPE", name: "3096 ALLEGHENY AVE", lat: 39.980644, lon: -82.919708, times: ["9:00 AM"] },
+  { stop_id: "324ALLE", name: "3243 ALLEGHENY AVE", lat: 39.980502, lon: -82.917496, times: ["9:00 AM"] },
+  { stop_id: "VACLINIC", name: "VETERANS ADMINISTRATION CLINIC", lat: 39.979987, lon: -82.910267, times: ["9:03 AM"] },
+  { stop_id: "STEJAMN", name: "STELZER RD &amp; N JAMES RD", lat: 39.980229, lon: -82.913087, times: ["9:03 AM"] },
+  { stop_id: "7THSTEE", name: "E 7TH AVE &amp; STELZER RD", lat: 39.98621, lon: -82.913672, times: ["9:04 AM"] },
+  { stop_id: "OSB5THS", name: "OSBORN AVE &amp; E 5TH AVE", lat: 39.984794, lon: -82.912767, times: ["9:05 AM"] },
+  { stop_id: "5THJAME", name: "E 5TH AVE &amp; N JAMES RD", lat: 39.984401, lon: -82.90864, times: ["9:06 AM"] },
+  { stop_id: "5TH7THE", name: "E 5TH AVE &amp; E 7TH AVE", lat: 39.98515, lon: -82.904657, times: ["9:06 AM"] },
+  { stop_id: "5TH370E", name: "3706 E 5TH AVE", lat: 39.985617, lon: -82.899689, times: ["9:07 AM"] },
+  { stop_id: "3995TH", name: "3990 E FIFTH AVE", lat: 39.986285, lon: -82.894103, times: ["9:08 AM"] },
+  { stop_id: "5TH430E", name: "4301 E 5TH AVE", lat: 39.987177, lon: -82.889541, times: ["9:09 AM"] },
+  { stop_id: "5THYEAE", name: "E 5TH AVE &amp; N YEARLING RD", lat: 39.987182, lon: -82.885536, times: ["9:10 AM"] },
+  { stop_id: "5TH470E", name: "4700 E 5TH AVE", lat: 39.986874, lon: -82.879007, times: ["9:10 AM"] },
+  { stop_id: "5TH4569E", name: "4569 E 5TH AVE", lat: 39.98662, lon: -82.873715, times: ["9:11 AM"] },
+  { stop_id: "HAM5THN", name: "N HAMILTON RD &amp; E 5TH AVE", lat: 39.989795, lon: -82.868792, times: ["9:12 AM"] },
+  { stop_id: "INTSAWE", name: "INTERNATIONAL GATEWAY &amp; EMPLOYEE LOT", lat: 39.998405, lon: -82.894562, times: ["9:18 AM"] },
+  { stop_id: "PORGRON", name: "JOHN GLENN INTERNATIONAL  AIRPORT BAGGAGE CLAIM", lat: 39.99863, lon: -82.88505, times: ["9:20 AM"] },
+  { stop_id: "INTSAWW", name: "INTERNATIONAL GATEWAY &amp; SAWYER RD", lat: 39.998723, lon: -82.892622, times: ["9:21 AM"] },
+  { stop_id: "NORTER3", name: "SPRING ST TERMINAL BAY 3", lat: 39.9658, lon: -83.002408, times: ["8:50 PM"] },
+]
+
+  const polylineOut = L.polyline(shapeOutbound, {
+    color: 'blue',
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(polylineOut.getBounds());
+
+  stops.forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9,
+      weight: 1
+    });
+
+    const popupContent = `
+      <strong>${stop.name}</strong><br>
+      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.addTo(map);
+  });
+
+  let busMarkers = {};
+
+  async function fetchAndDisplay() {
+    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+    const data = await res.json();
+    const buses = (data.resultSet.vehicle || []).filter(v =>
+      v.routeNumber == routeNumber && v.direction == direction
+    );
+
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+
+    if (buses.length === 0) return;
+
+    buses.forEach(bus => {
+      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="text-align:center;">
+            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+          </div>
+        `,
+        iconSize: [40, 30],
+        iconAnchor: [20, 30]
+      });
+
+      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+      busMarkers[bus.vehicleID] = marker;
+    });
+  }
+
+  fetchAndDisplay();
+  setInterval(fetchAndDisplay, 15000);
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>

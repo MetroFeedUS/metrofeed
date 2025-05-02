@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 23 – To Gateway Transit Center | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    header {
+      background-color: #0d0d0d;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+    header img {
+      max-height: 60px;
+    }
+    .ad-banner {
+      text-align: center;
+      margin: 1rem auto;
+      background-color: #222;
+      color: #888;
+      padding: 1rem;
+      border: 2px dashed #4dd0e1;
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+    .content-box {
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem;
+      background-color: #1e1e1e;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+    }
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .button-bar a {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+.back-button {
+  background-color: #4dd0e1;
+  color: #0d0d0d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #4dd0e1;
+  text-decoration: none;
+}
+.back-button:hover {
+  background-color: #35c0d6;
+}
+.site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="ad-banner">
+    [Ad Banner Placeholder — 300x250]
+  </div>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+  <button class="back-button" onclick="history.back()">⬅ Back</button>
+  </div>
+
+  <h1>Route 23 – To Gateway Transit Center</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  
+  <script>
+  const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const routeNumber = 23;
+  const direction = parseInt(1);
+
+  const map = L.map('map').setView([45.6, -122.7], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  const shapeOutbound = [
+  [45.55243, -122.510474],
+  [45.552429, -122.51047],
+  [45.552401, -122.510301],
+  [45.552305, -122.510294],
+  [45.551664, -122.510298],
+  [45.551381, -122.51029],
+  [45.551235, -122.510281],
+  [45.551135, -122.510267],
+  [45.551006, -122.510245],
+  [45.550744, -122.510186],
+  [45.550301, -122.510077],
+  [45.550055, -122.510019],
+  [45.549907, -122.509988],
+  [45.549759, -122.509968],
+  [45.549604, -122.509954],
+  [45.549469, -122.509948],
+  [45.549395, -122.509947],
+  [45.548757, -122.509971],
+  [45.548445, -122.509986],
+  [45.548411, -122.509987],
+  [45.548294, -122.509991],
+  [45.548169, -122.51],
+  [45.547646, -122.510065],
+  [45.547403, -122.510084],
+  [45.547114, -122.510091],
+  [45.546258, -122.510124],
+  [45.545598, -122.510145],
+  [45.54508, -122.510162],
+  [45.544607, -122.51018],
+  [45.54433, -122.510192],
+  [45.543239, -122.510228],
+  [45.542284, -122.510258],
+  [45.5421, -122.510265],
+  [45.54198, -122.510266],
+  [45.54172, -122.510247],
+  [45.541567, -122.510241],
+  [45.541351, -122.510232],
+  [45.540912, -122.510231],
+  [45.540691, -122.510233],
+  [45.540668, -122.510234],
+  [45.539625, -122.510266],
+  [45.539628, -122.511241],
+  [45.539628, -122.51141],
+  [45.539639, -122.511528],
+  [45.539657, -122.511628],
+  [45.539937, -122.51249],
+  [45.540084, -122.512942],
+  [45.540123, -122.513053],
+  [45.54016, -122.513196],
+  [45.540173, -122.513321],
+  [45.540172, -122.513824],
+  [45.540181, -122.513934],
+  [45.540362, -122.51495],
+  [45.540496, -122.516055],
+  [45.540532, -122.516383],
+  [45.540736, -122.518195],
+  [45.540746, -122.518333],
+  [45.54075, -122.518459],
+  [45.540746, -122.518602],
+  [45.540729, -122.518737],
+  [45.540692, -122.518892],
+  [45.540562, -122.519304],
+  [45.540531, -122.519411],
+  [45.54051, -122.519535],
+  [45.540493, -122.519686],
+  [45.540485, -122.519831],
+  [45.540489, -122.520191],
+  [45.540491, -122.520364],
+  [45.5405, -122.520585],
+  [45.540508, -122.520733],
+  [45.540528, -122.520895],
+  [45.540552, -122.521036],
+  [45.540589, -122.521204],
+  [45.540802, -122.521948],
+  [45.541218, -122.523424],
+  [45.541281, -122.523646],
+  [45.541321, -122.52377],
+  [45.541362, -122.523894],
+  [45.541804, -122.524702],
+  [45.542158, -122.525331],
+  [45.542205, -122.525427],
+  [45.542239, -122.525508],
+  [45.542287, -122.525684],
+  [45.542302, -122.525849],
+  [45.542383, -122.526902],
+  [45.542394, -122.527035],
+  [45.542034, -122.52704],
+  [45.541357, -122.527055],
+  [45.540889, -122.527065],
+  [45.54063, -122.52707],
+  [45.540566, -122.527072],
+  [45.539666, -122.52709],
+  [45.538742, -122.527109],
+  [45.538638, -122.52711],
+  [45.538556, -122.527112],
+  [45.537874, -122.52713],
+  [45.537315, -122.527139],
+  [45.537212, -122.527141],
+  [45.537214, -122.527924],
+  [45.537212, -122.529076],
+  [45.537212, -122.529772],
+  [45.537212, -122.530543],
+  [45.537212, -122.531056],
+  [45.537214, -122.531879],
+  [45.537214, -122.532223],
+  [45.537214, -122.532318],
+  [45.537214, -122.532865],
+  [45.53721, -122.533384],
+  [45.537212, -122.533763],
+  [45.537213, -122.534329],
+  [45.537213, -122.534631],
+  [45.537213, -122.534803],
+  [45.537213, -122.535076],
+  [45.537211, -122.536946],
+  [45.537211, -122.53735],
+  [45.537211, -122.537603],
+  [45.53758, -122.537598],
+  [45.537771, -122.537595],
+  [45.539508, -122.537563],
+  [45.53982, -122.537557],
+  [45.539885, -122.537555],
+  [45.540018, -122.537553],
+  [45.541273, -122.53753],
+  [45.54275, -122.537502],
+  [45.542751, -122.537765],
+  [45.542762, -122.537859],
+  [45.54278, -122.537962],
+  [45.542813, -122.53808],
+  [45.542884, -122.538303],
+  [45.542908, -122.538422],
+  [45.542924, -122.538543],
+  [45.542927, -122.538657],
+  [45.542926, -122.538876],
+  [45.542921, -122.541428],
+  [45.542928, -122.541523],
+  [45.542945, -122.541606],
+  [45.542973, -122.541683],
+  [45.543016, -122.541771],
+  [45.54313, -122.541938],
+  [45.543174, -122.542018],
+  [45.543207, -122.542095],
+  [45.543239, -122.542198],
+  [45.543261, -122.542306],
+  [45.543271, -122.54239],
+  [45.543273, -122.542403],
+  [45.543275, -122.542561],
+  [45.54327, -122.546103],
+  [45.543266, -122.54757],
+  [45.543266, -122.547715],
+  [45.543154, -122.547787],
+  [45.543091, -122.54784],
+  [45.543017, -122.547912],
+  [45.542937, -122.547998],
+  [45.542821, -122.548127],
+  [45.542417, -122.548588],
+  [45.542328, -122.548685],
+  [45.542275, -122.548738],
+  [45.542204, -122.548804],
+  [45.542122, -122.548865],
+  [45.54211, -122.548873],
+  [45.542071, -122.5489],
+  [45.541977, -122.548948],
+  [45.541898, -122.548975],
+  [45.541816, -122.548993],
+  [45.541731, -122.549003],
+  [45.541618, -122.549007],
+  [45.540841, -122.549012],
+  [45.540147, -122.54902],
+  [45.539588, -122.549022],
+  [45.539564, -122.549023],
+  [45.539493, -122.549025],
+  [45.539433, -122.549027],
+  [45.539216, -122.549028],
+  [45.538834, -122.549031],
+  [45.538433, -122.549033],
+  [45.538174, -122.549036],
+  [45.537502, -122.549044],
+  [45.53727, -122.549045],
+  [45.537162, -122.549045],
+  [45.536818, -122.549048],
+  [45.536145, -122.549054],
+  [45.535488, -122.549062],
+  [45.534832, -122.549067],
+  [45.534223, -122.549069],
+  [45.53415, -122.54907],
+  [45.534151, -122.549335],
+  [45.534151, -122.549465],
+  [45.534155, -122.550381],
+  [45.534156, -122.550715],
+  [45.534157, -122.550916],
+  [45.534159, -122.551345],
+  [45.53416, -122.551605],
+  [45.534163, -122.5524],
+  [45.534164, -122.55258],
+  [45.534164, -122.552778],
+  [45.534164, -122.552815],
+  [45.534165, -122.553032],
+  [45.534166, -122.553287],
+  [45.534167, -122.553535],
+  [45.534169, -122.554047],
+  [45.53417, -122.554206],
+  [45.53417, -122.554301],
+  [45.534172, -122.55465],
+  [45.534175, -122.555476],
+  [45.534176, -122.55572],
+  [45.534179, -122.55653],
+  [45.53418, -122.556788],
+  [45.534181, -122.55713],
+  [45.534182, -122.557282],
+  [45.534182, -122.557417],
+  [45.534179, -122.557508],
+  [45.534174, -122.55763],
+  [45.534171, -122.557709],
+  [45.534153, -122.557886],
+  [45.534131, -122.55806],
+  [45.533903, -122.558063],
+  [45.533629, -122.558066],
+  [45.533538, -122.558063],
+  [45.533186, -122.558066],
+  [45.533121, -122.558067],
+  [45.53309, -122.558067],
+  [45.533005, -122.558068],
+  [45.532947, -122.558069],
+  [45.532791, -122.558072],
+  [45.532051, -122.558083],
+  [45.531766, -122.558086],
+  [45.531407, -122.558089],
+  [45.531357, -122.55809],
+  [45.531275, -122.558091],
+  [45.530888, -122.558096],
+  [45.530683, -122.558098],
+  [45.530643, -122.558099],
+  [45.529991, -122.55811],
+  [45.529903, -122.558111],
+  [45.529679, -122.558113],
+  [45.529486, -122.558114],
+  [45.529487, -122.558267],
+  [45.529484, -122.559244],
+  [45.529483, -122.560035],
+  [45.529482, -122.560464],
+  [45.529481, -122.561113],
+  [45.529488, -122.561828],
+  [45.529477, -122.561942],
+  [45.52947, -122.562054],
+  [45.529468, -122.562594],
+  [45.529467, -122.562813],
+  [45.529466, -122.563],
+  [45.529533, -122.563066],
+  [45.529537, -122.563312],
+  [45.529537, -122.563337],
+  [45.529538, -122.563394],
+  [45.529547, -122.563465],
+  [45.529549, -122.563479],
+  [45.529567, -122.563548],
+  [45.529588, -122.563598],
+  [45.529653, -122.563654],
+  [45.529748, -122.56368],
+  [45.529938, -122.563661],
+  [45.530105, -122.56369],
+  [45.530556, -122.563858]
+];
+
+const stopNames = {
+  "4011": "NE Morris &amp; 111th",
+  "4288": "10000 Block NE Pacific St",
+  "4980": "NE Sacramento &amp; 142nd",
+  "4982": "NE Sacramento &amp; 146th Dr",
+  "4984": "NE Sacramento &amp; Brazee Ct",
+  "4987": "NE Sacramento &amp; 132nd",
+  "4991": "NE Sacramento &amp; 138th Pl",
+  "5034": "NE San Rafael &amp; 125th",
+  "5036": "NE San Rafael &amp; 122nd",
+  "5384": "NE Stanton &amp; 117th",
+  "5385": "NE Stanton &amp; 121st",
+  "6223": "NE Weidler &amp; 106th",
+  "6225": "NE Weidler &amp; 111th",
+  "6513": "NE 102nd &amp; Clackamas",
+  "6523": "1200 Block NE 102nd",
+  "6525": "NE 102nd &amp; Pacific",
+  "6558": "NE 111th &amp; Knott",
+  "6562": "NE 111th &amp; Sacramento",
+  "6564": "NE 111th &amp; San Rafael",
+  "6620": "NE 122nd &amp; Brazee",
+  "6713": "NE 132nd &amp; Brazee",
+  "6715": "NE 132nd &amp; Eugene",
+  "6718": "NE 132nd &amp; San Rafael",
+  "8194": "Gateway TC (drop off only stop)",
+  "8321": "NE Pacific St &amp; The Oregon Clinic",
+  "8589": "NE 148th &amp; 147th",
+  "8592": "NE 148th &amp; Sacramento",
+  "10790": "NE Sandy &amp; 148th",
+  "13141": "NE 148th &amp; Rose Parkway",
+  "13143": "12700 Block NE San Rafael"
+};
+
+const stops = [
+  { stop_id: "10790", name: "NE Sandy &amp; 148th", lat: 45.552337, lon: -122.510506, times: ["6:15 AM"] },
+  { stop_id: "8589", name: "NE 148th &amp; 147th", lat: 45.548408, lon: -122.510076, times: ["6:15 AM"] },
+  { stop_id: "13141", name: "NE 148th &amp; Rose Parkway", lat: 45.545599, lon: -122.510222, times: ["6:16 AM"] },
+  { stop_id: "8592", name: "NE 148th &amp; Sacramento", lat: 45.540671, lon: -122.510365, times: ["6:17 AM"] },
+  { stop_id: "4982", name: "NE Sacramento &amp; 146th Dr", lat: 45.539989, lon: -122.512456, times: ["6:18 AM"] },
+  { stop_id: "4980", name: "NE Sacramento &amp; 142nd", lat: 45.540579, lon: -122.516374, times: ["6:18 AM"] },
+  { stop_id: "4991", name: "NE Sacramento &amp; 138th Pl", lat: 45.540553, lon: -122.520188, times: ["6:19 AM"] },
+  { stop_id: "4984", name: "NE Sacramento &amp; Brazee Ct", lat: 45.541378, lon: -122.523715, times: ["6:19 AM"] },
+  { stop_id: "4987", name: "NE Sacramento &amp; 132nd", lat: 45.542434, lon: -122.526893, times: ["6:20 AM"] },
+  { stop_id: "6713", name: "NE 132nd &amp; Brazee", lat: 45.540627, lon: -122.527146, times: ["6:20 AM"] },
+  { stop_id: "6715", name: "NE 132nd &amp; Eugene", lat: 45.538636, lon: -122.527192, times: ["6:21 AM"] },
+  { stop_id: "6718", name: "NE 132nd &amp; San Rafael", lat: 45.537316, lon: -122.527212, times: ["6:21 AM"] },
+  { stop_id: "13143", name: "12700 Block NE San Rafael", lat: 45.537288, lon: -122.532221, times: ["6:22 AM"] },
+  { stop_id: "5034", name: "NE San Rafael &amp; 125th", lat: 45.537284, lon: -122.53463, times: ["6:22 AM"] },
+  { stop_id: "5036", name: "NE San Rafael &amp; 122nd", lat: 45.537295, lon: -122.53735, times: ["6:23 AM"] },
+  { stop_id: "6620", name: "NE 122nd &amp; Brazee", lat: 45.539816, lon: -122.537391, times: ["6:23 AM"] },
+  { stop_id: "5385", name: "NE Stanton &amp; 121st", lat: 45.542974, lon: -122.538874, times: ["6:24 AM"] },
+  { stop_id: "5384", name: "NE Stanton &amp; 117th", lat: 45.543317, lon: -122.542369, times: ["6:25 AM"] },
+  { stop_id: "4011", name: "NE Morris &amp; 111th", lat: 45.543328, lon: -122.547571, times: ["6:26 AM"] },
+  { stop_id: "6558", name: "NE 111th &amp; Knott", lat: 45.542139, lon: -122.548957, times: ["6:27 AM"] },
+  { stop_id: "6562", name: "NE 111th &amp; Sacramento", lat: 45.539588, lon: -122.549109, times: ["6:27 AM"] },
+  { stop_id: "6564", name: "NE 111th &amp; San Rafael", lat: 45.53727, lon: -122.549119, times: ["6:28 AM"] },
+  { stop_id: "6225", name: "NE Weidler &amp; 111th", lat: 45.534177, lon: -122.549465, times: ["6:29 AM"] },
+  { stop_id: "6223", name: "NE Weidler &amp; 106th", lat: 45.534206, lon: -122.553284, times: ["6:30 AM"] },
+  { stop_id: "6513", name: "NE 102nd &amp; Clackamas", lat: 45.533122, lon: -122.558203, times: ["6:31 AM"] },
+  { stop_id: "6523", name: "1200 Block NE 102nd", lat: 45.531407, lon: -122.558228, times: ["6:32 AM"] },
+  { stop_id: "6525", name: "NE 102nd &amp; Pacific", lat: 45.52968, lon: -122.558243, times: ["6:32 AM"] },
+  { stop_id: "4288", name: "10000 Block NE Pacific St", lat: 45.529563, lon: -122.560465, times: ["6:33 AM"] },
+  { stop_id: "8321", name: "NE Pacific St &amp; The Oregon Clinic", lat: 45.529559, lon: -122.562812, times: ["6:33 AM"] },
+  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["6:34 AM"] },
+]
+
+  const polylineOut = L.polyline(shapeOutbound, {
+    color: 'blue',
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(polylineOut.getBounds());
+
+  stops.forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9,
+      weight: 1
+    });
+
+    const popupContent = `
+      <strong>${stop.name}</strong><br>
+      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.addTo(map);
+  });
+
+  let busMarkers = {};
+
+  async function fetchAndDisplay() {
+    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+    const data = await res.json();
+    const buses = (data.resultSet.vehicle || []).filter(v =>
+      v.routeNumber == routeNumber && v.direction == direction
+    );
+
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+
+    if (buses.length === 0) return;
+
+    buses.forEach(bus => {
+      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="text-align:center;">
+            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+          </div>
+        `,
+        iconSize: [40, 30],
+        iconAnchor: [20, 30]
+      });
+
+      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+      busMarkers[bus.vehicleID] = marker;
+    });
+  }
+
+  fetchAndDisplay();
+  setInterval(fetchAndDisplay, 15000);
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>

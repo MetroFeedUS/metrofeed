@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Traffic Cameras – MetroFeed Portland</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #cccccc;
+  }
+  header {
+    background-color: #0d0d0d;
+    border-top: 4px solid #4dd0e1;
+    border-bottom: 4px solid #4dd0e1;
+    padding: 1rem;
+    text-align: center;
+  }
+  header img {
+    max-width: 200px;
+    height: auto;
+  }
+  
+  h1 {
+    text-align: center;
+    font-size: 1.5rem;
+    color: #f0f0f0;
+    margin-top: 0.5rem;
+  }
+  .camera-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .camera-tile {
+    background-color: #1e1e1e;
+    padding: 0.5rem;
+    border: 1px solid #333;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .camera-tile img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+  }
+  .camera-title {
+    font-size: 0.9rem;
+    color: #4dd0e1;
+    margin-top: 0.5rem;
+  }
+  .vote-buttons {
+    margin-top: 0.5rem;
+  }
+  .vote-buttons button {
+    background-color: transparent;
+    border: none;
+    color: #cccccc;
+    font-size: 1.2rem;
+    margin: 0 0.3rem;
+    cursor: pointer;
+  }
+  .vote-buttons button:hover {
+    color: #4dd0e1;
+  }
+  .attribution {
+    font-size: 0.7rem;
+    color: #888;
+    margin-top: 0.25rem;
+  }
+  .disclaimer {
+    margin: 2rem auto 1rem;
+    font-size: 0.75rem;
+    color: #888;
+    text-align: center;
+    padding: 0.5rem;
+    border-top: 1px solid #333;
+  }
+  .site-footer {
+    text-align: center;
+    margin-bottom: 120px;
+    font-size: 0.85rem;
+    color: #888;
+  }
+  .site-footer a {
+    color: #4dd0e1;
+    text-decoration: none;
+  }
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
+  .home-button {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #4dd0e1;
+    color: #0d0d0d;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    text-decoration: none;
+    z-index: 1000;
+    box-shadow: 0 0 10px #4dd0e1;
+  }
+  .home-button:hover {
+    background-color: #00bcd4;
+    color: #ffffff;
+  }
+</style>
+
+</style>
+
+</head>
+<body>
+
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo">
+  </header>
+
+<a href="PortlandHome.html" class="home-button">🏠</a>
+
+
+<!-- Simulated AdSense Preview Block -->
+  <div class="adsense-container" style="margin: 1rem auto; max-width: 336px; text-align: center; border: 2px dashed #0071CE; padding: 1rem; background-color: #111; color: #39ff14; font-size: 0.9rem; border-radius: 6px;">
+    [Sample Ad 300x250] <br>
+    This is a simulated Google Ad <br>
+    Placement Preview Box
+  </div>
+
+
+<div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+
+  <h1>Live Traffic Cameras – Portland, OR</h1>
+
+  <div class="camera-grid">
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/i20592nd_pid532.jpg" alt="I-205 at 92nd">
+      <div class="camera-title">I-205 at 92nd</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i20592nd', 'up')">👍</button>
+        <button onclick="vote('i20592nd', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/i84lloyd_pid587.jpg" alt="I-84 at Lloyd Blvd">
+      <div class="camera-title">I-84 at Lloyd Blvd</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i84lloyd', 'up')">👍</button>
+        <button onclick="vote('i84lloyd', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/i5terwil_pid573.jpg" alt="I-5 at Terwilliger">
+      <div class="camera-title">I-5 at Terwilliger</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i5terwil', 'up')">👍</button>
+        <button onclick="vote('i5terwil', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/26Zoo_pid498.jpg" alt="US 26 at Zoo Bridge">
+      <div class="camera-title">US 26 at Zoo Bridge</div>
+      <div class="vote-buttons">
+        <button onclick="vote('us26zoo', 'up')">👍</button>
+        <button onclick="vote('us26zoo', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/I-84%20at%20122nd%20WB_pid4578.jpg" alt="I-84 at 122nd WB">
+      <div class="camera-title">I-84 at 122nd WB</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i84_122nd', 'up')">👍</button>
+        <button onclick="vote('i84_122nd', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/I-205%20at%20Glisan%20SB_pid4405.jpg" alt="I-205 at Glisan SB">
+      <div class="camera-title">I-205 at Glisan SB</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i205glisan', 'up')">👍</button>
+        <button onclick="vote('i205glisan', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/i5fremont_pid560.jpg" alt="I-5 at Fremont">
+      <div class="camera-title">I-5 at Fremont</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i5fremont', 'up')">👍</button>
+        <button onclick="vote('i5fremont', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/i84@181st_pid1580.jpg" alt="I-84 at 181st">
+      <div class="camera-title">I-84 at 181st</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i84_181st', 'up')">👍</button>
+        <button onclick="vote('i84_181st', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/i5marine_pid567.jpg" alt="I-5 at Marine Drive">
+      <div class="camera-title">I-5 at Marine Drive</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i5marine', 'up')">👍</button>
+        <button onclick="vote('i5marine', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+    <div class="camera-tile">
+      <img src="http://www.TripCheck.com/roadcams/cams/I-5%20at%20Broadway%20N_pid4737.jpg" alt="I-5 at Broadway N">
+      <div class="camera-title">I-5 at Broadway N</div>
+      <div class="vote-buttons">
+        <button onclick="vote('i5broadway', 'up')">👍</button>
+        <button onclick="vote('i5broadway', 'down')">👎</button>
+      </div>
+      <div class="attribution">Camera courtesy of ODOT</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of the Oregon Department of Transportation (ODOT).
+  </div>
+
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+  <script>
+    // Refresh all images every 5 minutes
+    setInterval(() => {
+      document.querySelectorAll("img").forEach(img => {
+        const url = new URL(img.src);
+        url.searchParams.set('t', Date.now());
+        img.src = url;
+      });
+    }, 300000);
+
+    function vote(camId, type) {
+      const key = `vote_${camId}`;
+      const current = localStorage.getItem(key);
+      if (!current || current !== type) {
+        localStorage.setItem(key, type);
+        alert(`You voted ${type === 'up' ? '👍' : '👎'} for ${camId.replace(/_/g, ' ')}`);
+      } else {
+        alert('You already voted this way.');
+      }
+    }
+  </script>
+
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+</script>
+
+
+</body>
+</html>
