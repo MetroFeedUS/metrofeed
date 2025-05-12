@@ -1,84 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Route 26 – To SW 18th & Salmon | MetroFeed Portland</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Route 26 – To SW 18th & Salmon</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0d0d0d;
-      color: #cccccc;
+    body { 
+      margin: 0; 
+      font-family: 'Segoe UI', sans-serif; 
+      background-color: #0d0d0d; 
+      color: #cccccc; 
+      text-align: center; 
+      padding: 2rem;
     }
-    header {
-      background-color: #0d0d0d;
-      border-bottom: 3px solid #4dd0e1;
-      padding: 1rem;
-      text-align: center;
+    header { 
+      background-color: #0d0d0d; 
+      padding: 1rem; 
+      border-bottom: 4px solid #4dd0e1; 
     }
-    header img {
-      max-height: 60px;
+    header img { 
+      max-width: 200px; 
+      height: auto; 
     }
-    .ad-banner {
-      text-align: center;
-      margin: 1rem auto;
-      background-color: #222;
-      color: #888;
-      padding: 1rem;
-      border: 2px dashed #4dd0e1;
-      font-size: 0.9rem;
-      border-radius: 8px;
+    h1 { 
+      color: #4dd0e1; 
+      margin-top: 2rem;
     }
-    h1 {
-      text-align: center;
-      margin: 1rem 0;
-      font-size: 2rem;
-      color: #f0f0f0;
+    p { 
+      font-size: 1.2rem; 
+      margin-top: 1rem;
     }
-    .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
-    #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
-    }
-    .button-bar {
-      display: flex;
-      justify-content: center;
-      margin: 1rem 0;
-    }
-    .button-bar a {
-      background: #4dd0e1;
+    .back-button {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.6rem 1.2rem;
+      background-color: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
       text-decoration: none;
-      border-radius: 8px;
       font-weight: bold;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #4dd0e1;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
 .site-footer {
       text-align: center;
       margin-top: 3rem;
@@ -93,304 +61,23 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
   </style>
 </head>
 <body>
-  <header>
-    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
-  </header>
 
-  <div class="ad-banner">
-    [Ad Banner Placeholder — 300x250]
-  </div>
+<header>
+  <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+</header>
 
-  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
-    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
-  </div>
-  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
-    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
-  </div>
+<h1>Route 26 – To SW 18th & Salmon</h1>
 
-  <div style="margin: 2rem 0; text-align: center;">
+<p style="font-size: 4rem;">😞</p>
+
+<p>This route is not currently operating today.</p>
+
+<div>
   <button class="back-button" onclick="history.back()">⬅ Back</button>
-  </div>
-
-  <h1>Route 26 – To SW 18th & Salmon</h1>
-
-  <div class="content-box">
-    <div id="map"></div>
-    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
-      Data courtesy of TriMet.
-    </div>
-  </div>
-
-  
-  <script>
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 26;
-  const direction = parseInt(1);
-
-  const map = L.map('map').setView([45.6, -122.7], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
-
-  const shapeOutbound = [
-  [45.538523, -122.719706],
-  [45.538488, -122.719659],
-  [45.538451, -122.719595],
-  [45.53842, -122.719532],
-  [45.538358, -122.719369],
-  [45.538304, -122.719193],
-  [45.538271, -122.719098],
-  [45.538239, -122.719028],
-  [45.538191, -122.718959],
-  [45.537932, -122.718641],
-  [45.537807, -122.718497],
-  [45.537716, -122.718403],
-  [45.537625, -122.718328],
-  [45.537528, -122.718265],
-  [45.537443, -122.718224],
-  [45.537372, -122.718203],
-  [45.537284, -122.718177],
-  [45.537097, -122.71815],
-  [45.537018, -122.718139],
-  [45.536884, -122.718102],
-  [45.536735, -122.71804],
-  [45.536625, -122.717976],
-  [45.536527, -122.717898],
-  [45.536414, -122.717794],
-  [45.536329, -122.717697],
-  [45.536224, -122.71755],
-  [45.536157, -122.717433],
-  [45.536107, -122.71733],
-  [45.536052, -122.717198],
-  [45.536018, -122.717108],
-  [45.53598, -122.716991],
-  [45.535951, -122.716876],
-  [45.535929, -122.716773],
-  [45.535921, -122.716727],
-  [45.535908, -122.716646],
-  [45.535897, -122.716578],
-  [45.535889, -122.716478],
-  [45.53589, -122.716258],
-  [45.535916, -122.7148],
-  [45.535916, -122.714775],
-  [45.535916, -122.71469],
-  [45.53591, -122.714605],
-  [45.535897, -122.714507],
-  [45.53579, -122.713968],
-  [45.535738, -122.713679],
-  [45.535699, -122.713449],
-  [45.53552, -122.712448],
-  [45.535438, -122.712007],
-  [45.535271, -122.711125],
-  [45.535267, -122.711079],
-  [45.535267, -122.711073],
-  [45.535267, -122.711009],
-  [45.535269, -122.710873],
-  [45.535313, -122.70881],
-  [45.535337, -122.707357],
-  [45.535343, -122.707035],
-  [45.535346, -122.706828],
-  [45.535353, -122.706507],
-  [45.535385, -122.704936],
-  [45.535386, -122.704835],
-  [45.535389, -122.704641],
-  [45.53542, -122.70285],
-  [45.53543, -122.7023],
-  [45.535456, -122.700966],
-  [45.535458, -122.700864],
-  [45.535475, -122.700099],
-  [45.535481, -122.699854],
-  [45.535488, -122.69945],
-  [45.535496, -122.69894],
-  [45.535498, -122.698838],
-  [45.5355, -122.698729],
-  [45.535503, -122.698433],
-  [45.535505, -122.698352],
-  [45.535533, -122.696798],
-  [45.535552, -122.695714],
-  [45.535568, -122.694975],
-  [45.535572, -122.694778],
-  [45.5356, -122.693263],
-  [45.535589, -122.693082],
-  [45.535578, -122.692972],
-  [45.535558, -122.692848],
-  [45.535533, -122.692737],
-  [45.535509, -122.692562],
-  [45.535481, -122.692322],
-  [45.535473, -122.692031],
-  [45.535641, -122.690715],
-  [45.535029, -122.690693],
-  [45.534939, -122.69069],
-  [45.534532, -122.690677],
-  [45.534379, -122.690671],
-  [45.534226, -122.690666],
-  [45.534025, -122.69066],
-  [45.533506, -122.690642],
-  [45.5328, -122.690614],
-  [45.532088, -122.69059],
-  [45.531819, -122.690582],
-  [45.531378, -122.690569],
-  [45.531364, -122.690568],
-  [45.530654, -122.690539],
-  [45.530437, -122.69053],
-  [45.529939, -122.690508],
-  [45.529927, -122.690508],
-  [45.529874, -122.690505],
-  [45.52959, -122.690495],
-  [45.529229, -122.690482],
-  [45.528909, -122.690469],
-  [45.528848, -122.690467],
-  [45.528518, -122.690454],
-  [45.52823, -122.690442],
-  [45.527803, -122.690426],
-  [45.527531, -122.690417],
-  [45.527456, -122.690415],
-  [45.527092, -122.690409],
-  [45.527016, -122.690402],
-  [45.526446, -122.690393],
-  [45.526375, -122.690388],
-  [45.526317, -122.690387],
-  [45.525665, -122.690365],
-  [45.525453, -122.690352],
-  [45.525329, -122.690345],
-  [45.525023, -122.690328],
-  [45.524956, -122.690322],
-  [45.524884, -122.690316],
-  [45.524253, -122.690294],
-  [45.524109, -122.690288],
-  [45.523965, -122.690283],
-  [45.52383, -122.690278],
-  [45.523697, -122.690273],
-  [45.523524, -122.690267],
-  [45.52328, -122.690258],
-  [45.523229, -122.690257],
-  [45.523093, -122.690252],
-  [45.523017, -122.690247],
-  [45.522867, -122.690215],
-  [45.522503, -122.690132],
-  [45.522446, -122.69012],
-  [45.522399, -122.690118],
-  [45.522339, -122.690073],
-  [45.522226, -122.690125],
-  [45.522163, -122.690155],
-  [45.522095, -122.690252],
-  [45.521882, -122.690367],
-  [45.521789, -122.690418],
-  [45.521579, -122.690559],
-  [45.521445, -122.690635],
-  [45.520913, -122.69092],
-  [45.520851, -122.690954],
-  [45.520791, -122.690992],
-  [45.520694, -122.691057],
-  [45.520655, -122.691086],
-  [45.52061, -122.691127],
-  [45.520574, -122.691174],
-  [45.520563, -122.691187],
-  [45.520395, -122.691314],
-  [45.520359, -122.691344]
-];
-
-const stopNames = {
-  "4787": "NW Thurman &amp; 21st",
-  "5824": "NW Thurman &amp; Gordon",
-  "5832": "NW Thurman &amp; 26th",
-  "5836": "NW Thurman &amp; 27th",
-  "5840": "NW Thurman &amp; 29th",
-  "5842": "NW Thurman &amp; 32nd",
-  "5844": "NW Thurman &amp; 34th",
-  "6911": "SW 18th &amp; Morrison",
-  "9553": "SW 18th &amp; Salmon",
-  "10808": "NW Thurman &amp; 24th",
-  "14032": "NW Thurman &amp; 23rd",
-  "14033": "NW 19th &amp; Raleigh",
-  "14034": "NW 19th &amp; Marshall",
-  "14035": "NW 19th &amp; Flanders"
-};
-
-const stops = [
-  { stop_id: "5824", name: "NW Thurman &amp; Gordon", lat: 45.538599, lon: -122.719585, times: ["7:42 AM"] },
-  { stop_id: "5844", name: "NW Thurman &amp; 34th", lat: 45.535861, lon: -122.716747, times: ["7:43 AM"] },
-  { stop_id: "5842", name: "NW Thurman &amp; 32nd", lat: 45.535859, lon: -122.714775, times: ["7:43 AM"] },
-  { stop_id: "5840", name: "NW Thurman &amp; 29th", lat: 45.535202, lon: -122.71107, times: ["7:44 AM"] },
-  { stop_id: "5836", name: "NW Thurman &amp; 27th", lat: 45.535293, lon: -122.706505, times: ["7:46 AM"] },
-  { stop_id: "5832", name: "NW Thurman &amp; 26th", lat: 45.535335, lon: -122.704638, times: ["7:46 AM"] },
-  { stop_id: "10808", name: "NW Thurman &amp; 24th", lat: 45.535396, lon: -122.700964, times: ["7:47 AM"] },
-  { stop_id: "14032", name: "NW Thurman &amp; 23rd", lat: 45.535446, lon: -122.698388, times: ["7:48 AM"] },
-  { stop_id: "4787", name: "NW Thurman &amp; 21st", lat: 45.535522, lon: -122.694973, times: ["7:49 AM"] },
-  { stop_id: "14033", name: "NW 19th &amp; Raleigh", lat: 45.534024, lon: -122.690726, times: ["7:51 AM"] },
-  { stop_id: "14034", name: "NW 19th &amp; Marshall", lat: 45.530436, lon: -122.690576, times: ["7:53 AM"] },
-  { stop_id: "14035", name: "NW 19th &amp; Flanders", lat: 45.525424, lon: -122.690417, times: ["7:55 AM"] },
-  { stop_id: "6911", name: "SW 18th &amp; Morrison", lat: 45.52188, lon: -122.690453, times: ["7:58 AM"] },
-  { stop_id: "9553", name: "SW 18th &amp; Salmon", lat: 45.520377, lon: -122.691399, times: ["7:59 AM"] },
-]
-
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
-
-  map.fitBounds(polylineOut.getBounds());
-
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
-
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
-      });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
-  </script>
+</div>
 
 <footer class="site-footer">
   <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
