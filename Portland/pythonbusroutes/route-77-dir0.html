@@ -47,11 +47,13 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      margin: 0;
-    }
+  width: 100%;
+  height: 85vh;
+  border: none;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -95,7 +97,9 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
+body {
+  overflow-y: auto;
+}
   </style>
 </head>
 <body>
@@ -1350,38 +1354,38 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "14365", name: "NW Wilson &amp; 27th", lat: 45.537551, lon: -122.706558, times: ["5:40 AM", "6:07 AM", "6:37 AM"] },
-  { stop_id: "14247", name: "NW Vaughn &amp; 27th", lat: 45.536721, lon: -122.706452, times: ["5:40 AM", "6:07 AM", "6:37 AM"] },
-  { stop_id: "6013", name: "NW Vaughn &amp; 24th", lat: 45.536792, lon: -122.700997, times: ["5:41 AM", "6:08 AM", "6:38 AM"] },
-  { stop_id: "14032", name: "NW Thurman &amp; 23rd", lat: 45.535446, lon: -122.698388, times: ["5:42 AM", "6:09 AM", "6:39 AM"] },
-  { stop_id: "4787", name: "NW Thurman &amp; 21st", lat: 45.535522, lon: -122.694973, times: ["5:43 AM", "6:10 AM", "6:40 AM"] },
-  { stop_id: "13899", name: "NW 21st &amp; Pettygrove", lat: 45.532833, lon: -122.694736, times: ["5:44 AM", "6:11 AM", "6:41 AM"] },
-  { stop_id: "7127", name: "NW 21st &amp; Northrup", lat: 45.531387, lon: -122.69466, times: ["5:44 AM", "6:11 AM", "6:41 AM"] },
-  { stop_id: "7121", name: "NW 21st &amp; Lovejoy", lat: 45.52997, lon: -122.694628, times: ["5:45 AM", "6:12 AM", "6:42 AM"] },
-  { stop_id: "7114", name: "NW 21st &amp; Irving", lat: 45.527818, lon: -122.694539, times: ["5:45 AM", "6:12 AM", "6:42 AM"] },
-  { stop_id: "7112", name: "NW 21st &amp; Glisan", lat: 45.526408, lon: -122.694503, times: ["5:46 AM", "6:13 AM", "6:43 AM"] },
-  { stop_id: "1615", name: "NW Everett &amp; 21st", lat: 45.524833, lon: -122.69398, times: ["5:47 AM", "6:14 AM", "6:44 AM"] },
-  { stop_id: "1611", name: "NW Everett &amp; 19th", lat: 45.5249, lon: -122.690501, times: ["5:48 AM", "6:15 AM", "6:45 AM"] },
-  { stop_id: "1608", name: "NW Everett &amp; 14th", lat: 45.524978, lon: -122.685415, times: ["5:49 AM", "6:16 AM", "6:46 AM"] },
-  { stop_id: "1607", name: "NW Everett &amp; 11th", lat: 45.525051, lon: -122.681893, times: ["5:51 AM", "6:18 AM", "6:48 AM"] },
-  { stop_id: "1606", name: "NW Everett &amp; Broadway", lat: 45.525112, lon: -122.677664, times: ["5:52 AM", "6:19 AM", "6:49 AM"] },
-  { stop_id: "8886", name: "NW Everett &amp; 5th", lat: 45.525182, lon: -122.675622, times: ["5:52 AM", "6:19 AM", "6:49 AM"] },
-  { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["5:53 AM", "6:20 AM", "6:50 AM"] },
-  { stop_id: "11817", name: "Rose Quarter Transit Center", lat: 45.530712, lon: -122.665999, times: ["5:58 AM", "6:25 AM", "6:55 AM"] },
-  { stop_id: "9362", name: "NE Multnomah &amp; 3rd", lat: 45.531017, lon: -122.662817, times: ["5:58 AM", "6:26 AM", "6:56 AM"] },
-  { stop_id: "4042", name: "NE Multnomah &amp; Grand", lat: 45.531419, lon: -122.660179, times: ["5:59 AM", "6:27 AM", "6:57 AM"] },
-  { stop_id: "10866", name: "NE 9th &amp; Halsey", lat: 45.533492, lon: -122.656463, times: ["6:01 AM", "6:29 AM", "6:59 AM"] },
-  { stop_id: "6216", name: "NE Weidler &amp; Lloyd Center", lat: 45.534276, lon: -122.653686, times: ["6:03 AM", "6:31 AM", "7:01 AM"] },
-  { stop_id: "10425", name: "NE Weidler &amp; 15th", lat: 45.534255, lon: -122.650682, times: ["6:03 AM", "6:31 AM", "7:01 AM"] },
-  { stop_id: "6227", name: "NE Weidler &amp; 17th", lat: 45.534266, lon: -122.648682, times: ["6:04 AM", "6:32 AM", "7:02 AM"] },
-  { stop_id: "6235", name: "NE Weidler &amp; 21st", lat: 45.534252, lon: -122.644976, times: ["6:04 AM", "6:33 AM", "7:03 AM"] },
-  { stop_id: "6237", name: "NE Weidler &amp; 22nd", lat: 45.53425, lon: -122.64315, times: ["6:05 AM", "6:33 AM", "7:03 AM"] },
-  { stop_id: "6239", name: "NE Weidler &amp; 24th", lat: 45.534253, lon: -122.641287, times: ["6:05 AM", "6:34 AM", "7:04 AM"] },
-  { stop_id: "636", name: "NE Broadway &amp; 26th", lat: 45.535076, lon: -122.638753, times: ["6:06 AM", "6:34 AM", "7:04 AM"] },
-  { stop_id: "638", name: "NE Broadway &amp; 28th", lat: 45.535069, lon: -122.63638, times: ["6:07 AM", "6:35 AM", "7:05 AM"] },
-  { stop_id: "642", name: "NE Broadway &amp; 32nd", lat: 45.53508, lon: -122.632699, times: ["6:07 AM", "6:36 AM", "7:06 AM"] },
-  { stop_id: "646", name: "NE Broadway &amp; 35th", lat: 45.535066, lon: -122.627798, times: ["6:08 AM", "6:37 AM", "7:07 AM"] },
-  { stop_id: "648", name: "NE Broadway &amp; 37th", lat: 45.535058, lon: -122.625522, times: ["6:09 AM", "6:38 AM", "7:08 AM"] },
+  { stop_id: "14365", name: "NW Wilson &amp; 27th", lat: 45.537551, lon: -122.706558, times: ["6:37 AM", "7:06 AM", "7:39 AM"] },
+  { stop_id: "14247", name: "NW Vaughn &amp; 27th", lat: 45.536721, lon: -122.706452, times: ["6:37 AM", "7:06 AM", "7:39 AM"] },
+  { stop_id: "6013", name: "NW Vaughn &amp; 24th", lat: 45.536792, lon: -122.700997, times: ["6:38 AM", "7:07 AM", "7:40 AM"] },
+  { stop_id: "14032", name: "NW Thurman &amp; 23rd", lat: 45.535446, lon: -122.698388, times: ["6:39 AM", "7:09 AM", "7:42 AM"] },
+  { stop_id: "4787", name: "NW Thurman &amp; 21st", lat: 45.535522, lon: -122.694973, times: ["6:40 AM", "7:09 AM", "7:42 AM"] },
+  { stop_id: "13899", name: "NW 21st &amp; Pettygrove", lat: 45.532833, lon: -122.694736, times: ["6:11 AM", "6:41 AM", "7:10 AM"] },
+  { stop_id: "7127", name: "NW 21st &amp; Northrup", lat: 45.531387, lon: -122.69466, times: ["6:11 AM", "6:41 AM", "7:11 AM"] },
+  { stop_id: "7121", name: "NW 21st &amp; Lovejoy", lat: 45.52997, lon: -122.694628, times: ["6:12 AM", "6:42 AM", "7:12 AM"] },
+  { stop_id: "7114", name: "NW 21st &amp; Irving", lat: 45.527818, lon: -122.694539, times: ["6:12 AM", "6:42 AM", "7:13 AM"] },
+  { stop_id: "7112", name: "NW 21st &amp; Glisan", lat: 45.526408, lon: -122.694503, times: ["6:13 AM", "6:43 AM", "7:13 AM"] },
+  { stop_id: "1615", name: "NW Everett &amp; 21st", lat: 45.524833, lon: -122.69398, times: ["6:14 AM", "6:44 AM", "7:14 AM"] },
+  { stop_id: "1611", name: "NW Everett &amp; 19th", lat: 45.5249, lon: -122.690501, times: ["6:15 AM", "6:45 AM", "7:15 AM"] },
+  { stop_id: "1608", name: "NW Everett &amp; 14th", lat: 45.524978, lon: -122.685415, times: ["6:16 AM", "6:46 AM", "7:17 AM"] },
+  { stop_id: "1607", name: "NW Everett &amp; 11th", lat: 45.525051, lon: -122.681893, times: ["6:18 AM", "6:48 AM", "7:18 AM"] },
+  { stop_id: "1606", name: "NW Everett &amp; Broadway", lat: 45.525112, lon: -122.677664, times: ["6:19 AM", "6:49 AM", "7:20 AM"] },
+  { stop_id: "8886", name: "NW Everett &amp; 5th", lat: 45.525182, lon: -122.675622, times: ["6:19 AM", "6:49 AM", "7:21 AM"] },
+  { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["6:20 AM", "6:50 AM", "7:22 AM"] },
+  { stop_id: "11817", name: "Rose Quarter Transit Center", lat: 45.530712, lon: -122.665999, times: ["6:25 AM", "6:55 AM", "7:27 AM"] },
+  { stop_id: "9362", name: "NE Multnomah &amp; 3rd", lat: 45.531017, lon: -122.662817, times: ["6:26 AM", "6:56 AM", "7:28 AM"] },
+  { stop_id: "4042", name: "NE Multnomah &amp; Grand", lat: 45.531419, lon: -122.660179, times: ["6:27 AM", "6:57 AM", "7:29 AM"] },
+  { stop_id: "10866", name: "NE 9th &amp; Halsey", lat: 45.533492, lon: -122.656463, times: ["6:29 AM", "6:59 AM", "7:31 AM"] },
+  { stop_id: "6216", name: "NE Weidler &amp; Lloyd Center", lat: 45.534276, lon: -122.653686, times: ["6:31 AM", "7:01 AM", "7:33 AM"] },
+  { stop_id: "10425", name: "NE Weidler &amp; 15th", lat: 45.534255, lon: -122.650682, times: ["6:31 AM", "7:01 AM", "7:33 AM"] },
+  { stop_id: "6227", name: "NE Weidler &amp; 17th", lat: 45.534266, lon: -122.648682, times: ["6:32 AM", "7:02 AM", "7:34 AM"] },
+  { stop_id: "6235", name: "NE Weidler &amp; 21st", lat: 45.534252, lon: -122.644976, times: ["6:33 AM", "7:03 AM", "7:35 AM"] },
+  { stop_id: "6237", name: "NE Weidler &amp; 22nd", lat: 45.53425, lon: -122.64315, times: ["6:33 AM", "7:03 AM", "7:35 AM"] },
+  { stop_id: "6239", name: "NE Weidler &amp; 24th", lat: 45.534253, lon: -122.641287, times: ["6:34 AM", "7:04 AM", "7:36 AM"] },
+  { stop_id: "636", name: "NE Broadway &amp; 26th", lat: 45.535076, lon: -122.638753, times: ["6:34 AM", "7:04 AM", "7:36 AM"] },
+  { stop_id: "638", name: "NE Broadway &amp; 28th", lat: 45.535069, lon: -122.63638, times: ["6:35 AM", "7:05 AM", "7:37 AM"] },
+  { stop_id: "642", name: "NE Broadway &amp; 32nd", lat: 45.53508, lon: -122.632699, times: ["6:36 AM", "7:06 AM", "7:38 AM"] },
+  { stop_id: "646", name: "NE Broadway &amp; 35th", lat: 45.535066, lon: -122.627798, times: ["6:37 AM", "7:07 AM", "7:39 AM"] },
+  { stop_id: "648", name: "NE Broadway &amp; 37th", lat: 45.535058, lon: -122.625522, times: ["6:38 AM", "7:08 AM", "7:40 AM"] },
   { stop_id: "14401", name: "NE Halsey &amp; 42nd", lat: 45.533708, lon: -122.619767, times: ["6:11 AM", "6:40 AM", "7:10 AM"] },
   { stop_id: "14402", name: "NE Halsey &amp; 45th", lat: 45.533681, lon: -122.61717, times: ["6:11 AM", "6:40 AM", "7:10 AM"] },
   { stop_id: "2426", name: "NE Halsey &amp; 50th", lat: 45.53368, lon: -122.612027, times: ["6:12 AM", "6:41 AM", "7:12 AM"] },
@@ -1521,27 +1525,18 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
 <script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  if (!localStorage.getItem('cookieConsent')) {
+    document.write(`
+      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+        📢 We use cookies to improve functionality and analyze traffic.
+        By using MetroFeed, you agree to our 
+        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+      </div>
+    `);
   }
 </script>
-
-
-
 
 </body>
 </html>

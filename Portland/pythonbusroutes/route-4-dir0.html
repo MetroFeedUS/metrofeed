@@ -47,11 +47,13 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      margin: 0;
-    }
+  width: 100%;
+  height: 85vh;
+  border: none;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -95,7 +97,9 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
+body {
+  overflow-y: auto;
+}
   </style>
 </head>
 <body>
@@ -874,46 +878,46 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "12791", name: "SW Jefferson &amp; 5th", lat: 45.514806, lon: -122.679535, times: ["5:35 AM", "5:55 AM", "6:10 AM"] },
-  { stop_id: "7789", name: "SW 6th &amp; Salmon", lat: 45.516934, lon: -122.679687, times: ["5:37 AM", "5:57 AM", "6:12 AM"] },
-  { stop_id: "7803", name: "SW 6th &amp; Washington", lat: 45.520244, lon: -122.677859, times: ["5:38 AM", "5:58 AM", "6:13 AM"] },
-  { stop_id: "7751", name: "SW 6th &amp; W Burnside", lat: 45.52288, lon: -122.676415, times: ["5:39 AM", "5:59 AM", "6:14 AM"] },
-  { stop_id: "8886", name: "NW Everett &amp; 5th", lat: 45.525182, lon: -122.675622, times: ["5:41 AM", "6:01 AM", "6:16 AM"] },
-  { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["5:42 AM", "6:02 AM", "6:17 AM"] },
-  { stop_id: "1097", name: "Rose Quarter Transit Center", lat: 45.530669, lon: -122.665646, times: ["5:46 AM", "6:06 AM", "6:21 AM"] },
-  { stop_id: "11480", name: "N Williams &amp; NE Weidler", lat: 45.534238, lon: -122.666586, times: ["5:47 AM", "6:07 AM", "6:22 AM"] },
-  { stop_id: "6357", name: "N Williams &amp; NE Broadway", lat: 45.535809, lon: -122.666638, times: ["5:47 AM", "6:07 AM", "6:22 AM"] },
-  { stop_id: "6370", name: "N Williams &amp; NE Tillamook", lat: 45.538333, lon: -122.666614, times: ["5:48 AM", "6:08 AM", "6:23 AM"] },
-  { stop_id: "6354", name: "N Williams &amp; NE Russell", lat: 45.541358, lon: -122.666587, times: ["5:49 AM", "6:09 AM", "6:24 AM"] },
-  { stop_id: "6362", name: "N Williams &amp; NE Graham", lat: 45.542733, lon: -122.666571, times: ["5:50 AM", "6:10 AM", "6:25 AM"] },
-  { stop_id: "6364", name: "N Williams &amp; NE Morris", lat: 45.544439, lon: -122.666542, times: ["5:50 AM", "6:10 AM", "6:25 AM"] },
-  { stop_id: "6359", name: "N Williams &amp; NE Cook", lat: 45.546972, lon: -122.666597, times: ["5:51 AM", "6:11 AM", "6:26 AM"] },
-  { stop_id: "1841", name: "N Fremont &amp; Gantenbein", lat: 45.548311, lon: -122.668909, times: ["5:52 AM", "6:12 AM", "6:27 AM"] },
-  { stop_id: "10650", name: "N Fremont &amp; Kerby", lat: 45.548323, lon: -122.67206, times: ["5:53 AM", "6:13 AM", "6:28 AM"] },
-  { stop_id: "1843", name: "N Fremont &amp; Albina", lat: 45.547886, lon: -122.674787, times: ["5:53 AM", "6:13 AM", "6:28 AM"] },
-  { stop_id: "3955", name: "N Mississippi &amp; Beech", lat: 45.549466, lon: -122.675464, times: ["5:54 AM", "6:14 AM", "6:29 AM"] },
-  { stop_id: "3958", name: "N Mississippi &amp; Failing", lat: 45.550727, lon: -122.675444, times: ["5:54 AM", "6:14 AM", "6:29 AM"] },
-  { stop_id: "3966", name: "N Mississippi &amp; Mason", lat: 45.553686, lon: -122.675446, times: ["5:55 AM", "6:15 AM", "6:30 AM"] },
-  { stop_id: "3976", name: "N Mississippi &amp; Skidmore", lat: 45.554842, lon: -122.675423, times: ["5:56 AM", "6:16 AM", "6:31 AM"] },
-  { stop_id: "76", name: "N Albina &amp; Blandena", lat: 45.557073, lon: -122.674851, times: ["5:57 AM", "6:17 AM", "6:32 AM"] },
-  { stop_id: "73", name: "N Albina &amp; Alberta", lat: 45.558897, lon: -122.674919, times: ["5:57 AM", "6:17 AM", "6:32 AM"] },
-  { stop_id: "88", name: "N Albina &amp; Killingsworth", lat: 45.562956, lon: -122.674874, times: ["5:59 AM", "6:19 AM", "6:34 AM"] },
-  { stop_id: "71", name: "N Albina &amp; Ainsworth", lat: 45.566631, lon: -122.674812, times: ["6:00 AM", "6:20 AM", "6:35 AM"] },
-  { stop_id: "91", name: "N Albina &amp; Rosa Parks Way", lat: 45.570318, lon: -122.674768, times: ["6:01 AM", "6:21 AM", "6:36 AM"] },
-  { stop_id: "82", name: "N Albina &amp; Dekum", lat: 45.571672, lon: -122.674756, times: ["6:01 AM", "6:21 AM", "6:36 AM"] },
-  { stop_id: "78", name: "N Albina &amp; Bryant", lat: 45.573291, lon: -122.674735, times: ["6:02 AM", "6:22 AM", "6:37 AM"] },
-  { stop_id: "80", name: "N Albina &amp; Buffalo", lat: 45.575048, lon: -122.674715, times: ["6:02 AM", "6:22 AM", "6:37 AM"] },
-  { stop_id: "93", name: "N Albina &amp; Lombard St", lat: 45.576869, lon: -122.674693, times: ["6:03 AM", "6:23 AM", "6:38 AM"] },
-  { stop_id: "3521", name: "N Lombard &amp; Mississippi", lat: 45.577282, lon: -122.676171, times: ["6:03 AM", "6:23 AM", "6:38 AM"] },
-  { stop_id: "3507", name: "N Lombard Transit Center", lat: 45.577232, lon: -122.682701, times: ["6:05 AM", "6:25 AM", "6:40 AM"] },
-  { stop_id: "3485", name: "N Lombard &amp; Denver", lat: 45.577202, lon: -122.686582, times: ["6:05 AM", "6:25 AM", "6:40 AM"] },
-  { stop_id: "1303", name: "N Denver &amp; Watts", lat: 45.581185, lon: -122.686774, times: ["6:06 AM", "6:26 AM", "6:41 AM"] },
-  { stop_id: "3221", name: "N Kilpatrick &amp; Denver", lat: 45.582447, lon: -122.687298, times: ["6:07 AM", "6:27 AM", "6:42 AM"] },
-  { stop_id: "3218", name: "N Kilpatrick &amp; Brandon", lat: 45.582459, lon: -122.68887, times: ["6:07 AM", "6:27 AM", "6:42 AM"] },
-  { stop_id: "2315", name: "N Halleck &amp; Delaware", lat: 45.582691, lon: -122.692288, times: ["6:08 AM", "6:28 AM", "6:43 AM"] },
-  { stop_id: "2317", name: "N Halleck &amp; Peninsular", lat: 45.582772, lon: -122.696988, times: ["6:09 AM", "6:29 AM", "6:44 AM"] },
-  { stop_id: "6384", name: "N Willis &amp; Peninsular", lat: 45.584058, lon: -122.697643, times: ["6:09 AM", "6:29 AM", "6:44 AM"] },
-  { stop_id: "6373", name: "N Willis &amp; Bayard", lat: 45.584085, lon: -122.700326, times: ["6:10 AM", "6:30 AM", "6:45 AM"] },
+  { stop_id: "12791", name: "SW Jefferson &amp; 5th", lat: 45.514806, lon: -122.679535, times: ["6:25 AM", "6:40 AM", "6:55 AM"] },
+  { stop_id: "7789", name: "SW 6th &amp; Salmon", lat: 45.516934, lon: -122.679687, times: ["6:12 AM", "6:27 AM", "6:42 AM"] },
+  { stop_id: "7803", name: "SW 6th &amp; Washington", lat: 45.520244, lon: -122.677859, times: ["6:13 AM", "6:28 AM", "6:43 AM"] },
+  { stop_id: "7751", name: "SW 6th &amp; W Burnside", lat: 45.52288, lon: -122.676415, times: ["6:14 AM", "6:30 AM", "6:45 AM"] },
+  { stop_id: "8886", name: "NW Everett &amp; 5th", lat: 45.525182, lon: -122.675622, times: ["6:16 AM", "6:31 AM", "6:46 AM"] },
+  { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["6:17 AM", "6:32 AM", "6:47 AM"] },
+  { stop_id: "1097", name: "Rose Quarter Transit Center", lat: 45.530669, lon: -122.665646, times: ["6:21 AM", "6:37 AM", "6:52 AM"] },
+  { stop_id: "11480", name: "N Williams &amp; NE Weidler", lat: 45.534238, lon: -122.666586, times: ["6:22 AM", "6:38 AM", "6:53 AM"] },
+  { stop_id: "6357", name: "N Williams &amp; NE Broadway", lat: 45.535809, lon: -122.666638, times: ["6:22 AM", "6:38 AM", "6:53 AM"] },
+  { stop_id: "6370", name: "N Williams &amp; NE Tillamook", lat: 45.538333, lon: -122.666614, times: ["6:23 AM", "6:39 AM", "6:54 AM"] },
+  { stop_id: "6354", name: "N Williams &amp; NE Russell", lat: 45.541358, lon: -122.666587, times: ["6:24 AM", "6:40 AM", "6:55 AM"] },
+  { stop_id: "6362", name: "N Williams &amp; NE Graham", lat: 45.542733, lon: -122.666571, times: ["6:25 AM", "6:41 AM", "6:56 AM"] },
+  { stop_id: "6364", name: "N Williams &amp; NE Morris", lat: 45.544439, lon: -122.666542, times: ["6:10 AM", "6:25 AM", "6:41 AM"] },
+  { stop_id: "6359", name: "N Williams &amp; NE Cook", lat: 45.546972, lon: -122.666597, times: ["6:11 AM", "6:26 AM", "6:42 AM"] },
+  { stop_id: "1841", name: "N Fremont &amp; Gantenbein", lat: 45.548311, lon: -122.668909, times: ["6:12 AM", "6:27 AM", "6:43 AM"] },
+  { stop_id: "10650", name: "N Fremont &amp; Kerby", lat: 45.548323, lon: -122.67206, times: ["6:13 AM", "6:28 AM", "6:44 AM"] },
+  { stop_id: "1843", name: "N Fremont &amp; Albina", lat: 45.547886, lon: -122.674787, times: ["6:13 AM", "6:28 AM", "6:44 AM"] },
+  { stop_id: "3955", name: "N Mississippi &amp; Beech", lat: 45.549466, lon: -122.675464, times: ["6:14 AM", "6:29 AM", "6:45 AM"] },
+  { stop_id: "3958", name: "N Mississippi &amp; Failing", lat: 45.550727, lon: -122.675444, times: ["6:14 AM", "6:29 AM", "6:45 AM"] },
+  { stop_id: "3966", name: "N Mississippi &amp; Mason", lat: 45.553686, lon: -122.675446, times: ["6:15 AM", "6:30 AM", "6:46 AM"] },
+  { stop_id: "3976", name: "N Mississippi &amp; Skidmore", lat: 45.554842, lon: -122.675423, times: ["6:16 AM", "6:31 AM", "6:47 AM"] },
+  { stop_id: "76", name: "N Albina &amp; Blandena", lat: 45.557073, lon: -122.674851, times: ["6:17 AM", "6:32 AM", "6:48 AM"] },
+  { stop_id: "73", name: "N Albina &amp; Alberta", lat: 45.558897, lon: -122.674919, times: ["6:17 AM", "6:32 AM", "6:48 AM"] },
+  { stop_id: "88", name: "N Albina &amp; Killingsworth", lat: 45.562956, lon: -122.674874, times: ["6:19 AM", "6:34 AM", "6:50 AM"] },
+  { stop_id: "71", name: "N Albina &amp; Ainsworth", lat: 45.566631, lon: -122.674812, times: ["6:20 AM", "6:35 AM", "6:51 AM"] },
+  { stop_id: "91", name: "N Albina &amp; Rosa Parks Way", lat: 45.570318, lon: -122.674768, times: ["6:21 AM", "6:36 AM", "6:52 AM"] },
+  { stop_id: "82", name: "N Albina &amp; Dekum", lat: 45.571672, lon: -122.674756, times: ["6:21 AM", "6:36 AM", "6:52 AM"] },
+  { stop_id: "78", name: "N Albina &amp; Bryant", lat: 45.573291, lon: -122.674735, times: ["6:22 AM", "6:37 AM", "6:53 AM"] },
+  { stop_id: "80", name: "N Albina &amp; Buffalo", lat: 45.575048, lon: -122.674715, times: ["6:22 AM", "6:37 AM", "6:53 AM"] },
+  { stop_id: "93", name: "N Albina &amp; Lombard St", lat: 45.576869, lon: -122.674693, times: ["6:23 AM", "6:38 AM", "6:54 AM"] },
+  { stop_id: "3521", name: "N Lombard &amp; Mississippi", lat: 45.577282, lon: -122.676171, times: ["6:23 AM", "6:38 AM", "6:54 AM"] },
+  { stop_id: "3507", name: "N Lombard Transit Center", lat: 45.577232, lon: -122.682701, times: ["6:25 AM", "6:40 AM", "6:56 AM"] },
+  { stop_id: "3485", name: "N Lombard &amp; Denver", lat: 45.577202, lon: -122.686582, times: ["6:25 AM", "6:40 AM", "6:56 AM"] },
+  { stop_id: "1303", name: "N Denver &amp; Watts", lat: 45.581185, lon: -122.686774, times: ["6:26 AM", "6:41 AM", "6:57 AM"] },
+  { stop_id: "3221", name: "N Kilpatrick &amp; Denver", lat: 45.582447, lon: -122.687298, times: ["6:27 AM", "6:42 AM", "6:58 AM"] },
+  { stop_id: "3218", name: "N Kilpatrick &amp; Brandon", lat: 45.582459, lon: -122.68887, times: ["6:27 AM", "6:42 AM", "6:58 AM"] },
+  { stop_id: "2315", name: "N Halleck &amp; Delaware", lat: 45.582691, lon: -122.692288, times: ["6:28 AM", "6:43 AM", "6:59 AM"] },
+  { stop_id: "2317", name: "N Halleck &amp; Peninsular", lat: 45.582772, lon: -122.696988, times: ["6:29 AM", "6:44 AM", "7:00 AM"] },
+  { stop_id: "6384", name: "N Willis &amp; Peninsular", lat: 45.584058, lon: -122.697643, times: ["6:29 AM", "6:44 AM", "7:00 AM"] },
+  { stop_id: "6373", name: "N Willis &amp; Bayard", lat: 45.584085, lon: -122.700326, times: ["6:30 AM", "6:45 AM", "7:01 AM"] },
   { stop_id: "6378", name: "N Willis &amp; Wabash", lat: 45.584067, lon: -122.702762, times: ["6:10 AM", "6:30 AM", "6:45 AM"] },
   { stop_id: "6387", name: "N Willis &amp; Washburne", lat: 45.584071, lon: -122.705598, times: ["6:11 AM", "6:31 AM", "6:46 AM"] },
   { stop_id: "10611", name: "N Willis &amp; Chautauqua", lat: 45.584101, lon: -122.707659, times: ["6:11 AM", "6:31 AM", "6:46 AM"] },
@@ -1014,27 +1018,18 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
 <script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  if (!localStorage.getItem('cookieConsent')) {
+    document.write(`
+      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+        📢 We use cookies to improve functionality and analyze traffic.
+        By using MetroFeed, you agree to our 
+        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+      </div>
+    `);
   }
 </script>
-
-
-
 
 </body>
 </html>

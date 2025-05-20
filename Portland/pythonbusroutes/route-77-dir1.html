@@ -47,11 +47,13 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      margin: 0;
-    }
+  width: 100%;
+  height: 85vh;
+  border: none;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -95,7 +97,9 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
+body {
+  overflow-y: auto;
+}
   </style>
 </head>
 <body>
@@ -1294,53 +1298,53 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9473", name: "NW Frontage Rd &amp; Phoenix Dr", lat: 45.544394, lon: -122.393414, times: ["5:35 AM", "6:03 AM", "6:33 AM"] },
-  { stop_id: "9471", name: "NW Graham/257th &amp; 257th Way", lat: 45.543218, lon: -122.390753, times: ["5:35 AM", "6:03 AM", "6:33 AM"] },
-  { stop_id: "8746", name: "W Columbia River Hwy &amp; NW Graham", lat: 45.54084, lon: -122.391299, times: ["5:36 AM", "6:04 AM", "6:34 AM"] },
-  { stop_id: "2346", name: "SW Halsey &amp; Halsey Loop", lat: 45.539209, lon: -122.396738, times: ["5:37 AM", "6:05 AM", "6:35 AM"] },
-  { stop_id: "10630", name: "SW Halsey &amp; Edgefield Meadows", lat: 45.539056, lon: -122.400211, times: ["5:38 AM", "6:06 AM", "6:36 AM"] },
-  { stop_id: "2340", name: "2100 Block SW Halsey (Edgefield Manor)", lat: 45.538745, lon: -122.406402, times: ["5:39 AM", "6:07 AM", "6:37 AM"] },
-  { stop_id: "2423", name: "NE Halsey &amp; 244th", lat: 45.537994, lon: -122.412407, times: ["5:40 AM", "6:08 AM", "6:38 AM"] },
-  { stop_id: "2333", name: "23900 Block NE Halsey", lat: 45.537572, lon: -122.415814, times: ["5:40 AM", "6:08 AM", "6:38 AM"] },
-  { stop_id: "2420", name: "NE Halsey &amp; 238th", lat: 45.53713, lon: -122.418907, times: ["5:41 AM", "6:09 AM", "6:39 AM"] },
-  { stop_id: "2331", name: "23300 Block NE Halsey", lat: 45.536654, lon: -122.422514, times: ["5:41 AM", "6:09 AM", "6:39 AM"] },
-  { stop_id: "2419", name: "NE Halsey &amp; 230th Ct", lat: 45.53618, lon: -122.426163, times: ["5:42 AM", "6:10 AM", "6:40 AM"] },
-  { stop_id: "13809", name: "NE Halsey &amp; Wood Village Blvd", lat: 45.535837, lon: -122.428602, times: ["5:43 AM", "6:11 AM", "6:41 AM"] },
-  { stop_id: "2342", name: "NE Halsey &amp; Fairview/223rd", lat: 45.535081, lon: -122.434046, times: ["5:44 AM", "6:12 AM", "6:42 AM"] },
-  { stop_id: "2437", name: "NE Halsey &amp; 7th St", lat: 45.534163, lon: -122.44037, times: ["5:45 AM", "6:13 AM", "6:43 AM"] },
-  { stop_id: "2414", name: "NE Halsey &amp; Fairview Parkway", lat: 45.533724, lon: -122.445982, times: ["5:45 AM", "6:14 AM", "6:44 AM"] },
-  { stop_id: "13505", name: "NE Halsey &amp; 208th Pl", lat: 45.533549, lon: -122.449126, times: ["5:46 AM", "6:14 AM", "6:44 AM"] },
-  { stop_id: "2411", name: "NE Halsey &amp; 201st", lat: 45.533668, lon: -122.456948, times: ["5:47 AM", "6:16 AM", "6:46 AM"] },
-  { stop_id: "8825", name: "19800 Block NE Halsey", lat: 45.533693, lon: -122.458982, times: ["5:47 AM", "6:16 AM", "6:46 AM"] },
-  { stop_id: "2326", name: "NE Halsey &amp; 196th", lat: 45.533746, lon: -122.461693, times: ["5:48 AM", "6:17 AM", "6:47 AM"] },
-  { stop_id: "2407", name: "NE Halsey &amp; 192nd", lat: 45.533762, lon: -122.466681, times: ["5:49 AM", "6:17 AM", "6:47 AM"] },
-  { stop_id: "2406", name: "NE Halsey &amp; 186th", lat: 45.533785, lon: -122.471874, times: ["5:50 AM", "6:18 AM", "6:48 AM"] },
-  { stop_id: "8860", name: "NE Halsey &amp; 181st", lat: 45.534809, lon: -122.477689, times: ["5:51 AM", "6:20 AM", "6:50 AM"] },
-  { stop_id: "2349", name: "NE Halsey &amp; 176th", lat: 45.534816, lon: -122.481752, times: ["5:51 AM", "6:20 AM", "6:50 AM"] },
-  { stop_id: "2399", name: "NE Halsey &amp; 172nd", lat: 45.534808, lon: -122.486142, times: ["5:52 AM", "6:21 AM", "6:51 AM"] },
-  { stop_id: "2398", name: "NE Halsey &amp; 169th", lat: 45.534635, lon: -122.488975, times: ["5:52 AM", "6:21 AM", "6:51 AM"] },
-  { stop_id: "2395", name: "NE Halsey &amp; 162nd", lat: 45.534428, lon: -122.495461, times: ["5:53 AM", "6:22 AM", "6:52 AM"] },
-  { stop_id: "13026", name: "NE Halsey &amp; 159th Ct", lat: 45.533771, lon: -122.498859, times: ["5:54 AM", "6:23 AM", "6:53 AM"] },
-  { stop_id: "2390", name: "NE Halsey &amp; 155th", lat: 45.533758, lon: -122.503678, times: ["5:54 AM", "6:24 AM", "6:54 AM"] },
-  { stop_id: "2386", name: "NE Halsey &amp; 148th", lat: 45.533772, lon: -122.509491, times: ["5:55 AM", "6:25 AM", "6:55 AM"] },
-  { stop_id: "2382", name: "NE Halsey &amp; 143rd", lat: 45.533784, lon: -122.51588, times: ["5:56 AM", "6:26 AM", "6:56 AM"] },
-  { stop_id: "14425", name: "NE Halsey &amp; 140th", lat: 45.533737, lon: -122.519594, times: ["5:57 AM", "6:26 AM", "6:56 AM"] },
-  { stop_id: "2379", name: "NE Halsey &amp; 136th Pl", lat: 45.533674, lon: -122.522471, times: ["5:57 AM", "6:27 AM", "6:57 AM"] },
-  { stop_id: "2375", name: "NE Halsey &amp; 132nd", lat: 45.533624, lon: -122.526985, times: ["5:58 AM", "6:28 AM", "6:58 AM"] },
-  { stop_id: "2371", name: "NE Halsey &amp; 128th", lat: 45.533649, lon: -122.531522, times: ["5:59 AM", "6:28 AM", "6:58 AM"] },
-  { stop_id: "2367", name: "NE Halsey &amp; 122nd", lat: 45.53368, lon: -122.538265, times: ["6:00 AM", "6:30 AM", "7:00 AM"] },
-  { stop_id: "2361", name: "NE Halsey &amp; 114th", lat: 45.533617, lon: -122.54485, times: ["6:01 AM", "6:31 AM", "7:01 AM"] },
-  { stop_id: "6225", name: "NE Weidler &amp; 111th", lat: 45.534177, lon: -122.549465, times: ["6:02 AM", "6:32 AM", "7:02 AM"] },
-  { stop_id: "6223", name: "NE Weidler &amp; 106th", lat: 45.534206, lon: -122.553284, times: ["6:02 AM", "6:32 AM", "7:03 AM"] },
-  { stop_id: "10746", name: "NE Weidler &amp; 103rd Pl", lat: 45.534212, lon: -122.556993, times: ["6:03 AM", "6:33 AM", "7:04 AM"] },
-  { stop_id: "2343", name: "NE Halsey &amp; 100th", lat: 45.533647, lon: -122.561263, times: ["6:04 AM", "6:34 AM", "7:05 AM"] },
-  { stop_id: "13883", name: "NE Halsey &amp; 92nd", lat: 45.533551, lon: -122.569167, times: ["6:06 AM", "6:36 AM", "7:06 AM"] },
-  { stop_id: "2459", name: "NE Halsey &amp; 90th", lat: 45.533599, lon: -122.572317, times: ["6:06 AM", "6:36 AM", "7:07 AM"] },
-  { stop_id: "2457", name: "NE Halsey &amp; 86th", lat: 45.533629, lon: -122.574415, times: ["6:07 AM", "6:37 AM", "7:07 AM"] },
-  { stop_id: "10846", name: "NE Jonesmore &amp; 82nd", lat: 45.534031, lon: -122.578772, times: ["6:08 AM", "6:38 AM", "7:09 AM"] },
-  { stop_id: "7916", name: "NE 81st &amp; Clackamas", lat: 45.532743, lon: -122.579926, times: ["6:08 AM", "6:38 AM", "7:09 AM"] },
-  { stop_id: "2455", name: "NE Halsey &amp; 79th", lat: 45.533688, lon: -122.581903, times: ["6:09 AM", "6:39 AM", "7:10 AM"] },
-  { stop_id: "2453", name: "NE Halsey &amp; 76th", lat: 45.533672, lon: -122.585038, times: ["6:10 AM", "6:40 AM", "7:11 AM"] },
+  { stop_id: "9473", name: "NW Frontage Rd &amp; Phoenix Dr", lat: 45.544394, lon: -122.393414, times: ["6:33 AM", "7:07 AM", "7:39 AM"] },
+  { stop_id: "9471", name: "NW Graham/257th &amp; 257th Way", lat: 45.543218, lon: -122.390753, times: ["6:33 AM", "7:07 AM", "7:39 AM"] },
+  { stop_id: "8746", name: "W Columbia River Hwy &amp; NW Graham", lat: 45.54084, lon: -122.391299, times: ["6:34 AM", "7:08 AM", "7:40 AM"] },
+  { stop_id: "2346", name: "SW Halsey &amp; Halsey Loop", lat: 45.539209, lon: -122.396738, times: ["6:35 AM", "7:09 AM", "7:41 AM"] },
+  { stop_id: "10630", name: "SW Halsey &amp; Edgefield Meadows", lat: 45.539056, lon: -122.400211, times: ["6:36 AM", "7:10 AM", "7:42 AM"] },
+  { stop_id: "2340", name: "2100 Block SW Halsey (Edgefield Manor)", lat: 45.538745, lon: -122.406402, times: ["6:37 AM", "7:11 AM", "7:43 AM"] },
+  { stop_id: "2423", name: "NE Halsey &amp; 244th", lat: 45.537994, lon: -122.412407, times: ["6:38 AM", "7:12 AM", "7:44 AM"] },
+  { stop_id: "2333", name: "23900 Block NE Halsey", lat: 45.537572, lon: -122.415814, times: ["6:38 AM", "7:12 AM", "7:44 AM"] },
+  { stop_id: "2420", name: "NE Halsey &amp; 238th", lat: 45.53713, lon: -122.418907, times: ["6:39 AM", "7:13 AM", "7:45 AM"] },
+  { stop_id: "2331", name: "23300 Block NE Halsey", lat: 45.536654, lon: -122.422514, times: ["6:39 AM", "7:13 AM", "7:45 AM"] },
+  { stop_id: "2419", name: "NE Halsey &amp; 230th Ct", lat: 45.53618, lon: -122.426163, times: ["6:10 AM", "6:40 AM", "7:14 AM"] },
+  { stop_id: "13809", name: "NE Halsey &amp; Wood Village Blvd", lat: 45.535837, lon: -122.428602, times: ["6:11 AM", "6:41 AM", "7:15 AM"] },
+  { stop_id: "2342", name: "NE Halsey &amp; Fairview/223rd", lat: 45.535081, lon: -122.434046, times: ["6:12 AM", "6:42 AM", "7:16 AM"] },
+  { stop_id: "2437", name: "NE Halsey &amp; 7th St", lat: 45.534163, lon: -122.44037, times: ["6:13 AM", "6:43 AM", "7:17 AM"] },
+  { stop_id: "2414", name: "NE Halsey &amp; Fairview Parkway", lat: 45.533724, lon: -122.445982, times: ["6:14 AM", "6:44 AM", "7:18 AM"] },
+  { stop_id: "13505", name: "NE Halsey &amp; 208th Pl", lat: 45.533549, lon: -122.449126, times: ["6:14 AM", "6:44 AM", "7:18 AM"] },
+  { stop_id: "2411", name: "NE Halsey &amp; 201st", lat: 45.533668, lon: -122.456948, times: ["6:16 AM", "6:46 AM", "7:20 AM"] },
+  { stop_id: "8825", name: "19800 Block NE Halsey", lat: 45.533693, lon: -122.458982, times: ["6:16 AM", "6:46 AM", "7:20 AM"] },
+  { stop_id: "2326", name: "NE Halsey &amp; 196th", lat: 45.533746, lon: -122.461693, times: ["6:17 AM", "6:47 AM", "7:21 AM"] },
+  { stop_id: "2407", name: "NE Halsey &amp; 192nd", lat: 45.533762, lon: -122.466681, times: ["6:17 AM", "6:47 AM", "7:21 AM"] },
+  { stop_id: "2406", name: "NE Halsey &amp; 186th", lat: 45.533785, lon: -122.471874, times: ["6:18 AM", "6:48 AM", "7:22 AM"] },
+  { stop_id: "8860", name: "NE Halsey &amp; 181st", lat: 45.534809, lon: -122.477689, times: ["6:20 AM", "6:50 AM", "7:24 AM"] },
+  { stop_id: "2349", name: "NE Halsey &amp; 176th", lat: 45.534816, lon: -122.481752, times: ["6:20 AM", "6:50 AM", "7:24 AM"] },
+  { stop_id: "2399", name: "NE Halsey &amp; 172nd", lat: 45.534808, lon: -122.486142, times: ["6:21 AM", "6:51 AM", "7:25 AM"] },
+  { stop_id: "2398", name: "NE Halsey &amp; 169th", lat: 45.534635, lon: -122.488975, times: ["6:21 AM", "6:51 AM", "7:25 AM"] },
+  { stop_id: "2395", name: "NE Halsey &amp; 162nd", lat: 45.534428, lon: -122.495461, times: ["6:22 AM", "6:52 AM", "7:26 AM"] },
+  { stop_id: "13026", name: "NE Halsey &amp; 159th Ct", lat: 45.533771, lon: -122.498859, times: ["6:23 AM", "6:53 AM", "7:27 AM"] },
+  { stop_id: "2390", name: "NE Halsey &amp; 155th", lat: 45.533758, lon: -122.503678, times: ["6:24 AM", "6:54 AM", "7:28 AM"] },
+  { stop_id: "2386", name: "NE Halsey &amp; 148th", lat: 45.533772, lon: -122.509491, times: ["6:25 AM", "6:55 AM", "7:29 AM"] },
+  { stop_id: "2382", name: "NE Halsey &amp; 143rd", lat: 45.533784, lon: -122.51588, times: ["6:26 AM", "6:56 AM", "7:30 AM"] },
+  { stop_id: "14425", name: "NE Halsey &amp; 140th", lat: 45.533737, lon: -122.519594, times: ["6:26 AM", "6:56 AM", "7:30 AM"] },
+  { stop_id: "2379", name: "NE Halsey &amp; 136th Pl", lat: 45.533674, lon: -122.522471, times: ["6:27 AM", "6:57 AM", "7:31 AM"] },
+  { stop_id: "2375", name: "NE Halsey &amp; 132nd", lat: 45.533624, lon: -122.526985, times: ["6:28 AM", "6:58 AM", "7:32 AM"] },
+  { stop_id: "2371", name: "NE Halsey &amp; 128th", lat: 45.533649, lon: -122.531522, times: ["6:28 AM", "6:58 AM", "7:32 AM"] },
+  { stop_id: "2367", name: "NE Halsey &amp; 122nd", lat: 45.53368, lon: -122.538265, times: ["6:30 AM", "7:00 AM", "7:34 AM"] },
+  { stop_id: "2361", name: "NE Halsey &amp; 114th", lat: 45.533617, lon: -122.54485, times: ["6:31 AM", "7:01 AM", "7:35 AM"] },
+  { stop_id: "6225", name: "NE Weidler &amp; 111th", lat: 45.534177, lon: -122.549465, times: ["6:32 AM", "7:02 AM", "7:36 AM"] },
+  { stop_id: "6223", name: "NE Weidler &amp; 106th", lat: 45.534206, lon: -122.553284, times: ["6:32 AM", "7:03 AM", "7:37 AM"] },
+  { stop_id: "10746", name: "NE Weidler &amp; 103rd Pl", lat: 45.534212, lon: -122.556993, times: ["6:33 AM", "7:04 AM", "7:38 AM"] },
+  { stop_id: "2343", name: "NE Halsey &amp; 100th", lat: 45.533647, lon: -122.561263, times: ["6:34 AM", "7:05 AM", "7:39 AM"] },
+  { stop_id: "13883", name: "NE Halsey &amp; 92nd", lat: 45.533551, lon: -122.569167, times: ["6:36 AM", "7:06 AM", "7:40 AM"] },
+  { stop_id: "2459", name: "NE Halsey &amp; 90th", lat: 45.533599, lon: -122.572317, times: ["6:36 AM", "7:07 AM", "7:41 AM"] },
+  { stop_id: "2457", name: "NE Halsey &amp; 86th", lat: 45.533629, lon: -122.574415, times: ["6:37 AM", "7:07 AM", "7:41 AM"] },
+  { stop_id: "10846", name: "NE Jonesmore &amp; 82nd", lat: 45.534031, lon: -122.578772, times: ["6:38 AM", "7:09 AM", "7:43 AM"] },
+  { stop_id: "7916", name: "NE 81st &amp; Clackamas", lat: 45.532743, lon: -122.579926, times: ["6:38 AM", "7:09 AM", "7:43 AM"] },
+  { stop_id: "2455", name: "NE Halsey &amp; 79th", lat: 45.533688, lon: -122.581903, times: ["6:39 AM", "7:10 AM", "7:44 AM"] },
+  { stop_id: "2453", name: "NE Halsey &amp; 76th", lat: 45.533672, lon: -122.585038, times: ["6:40 AM", "7:11 AM", "7:45 AM"] },
   { stop_id: "2451", name: "NE Halsey &amp; 74th", lat: 45.533659, lon: -122.58708, times: ["6:10 AM", "6:40 AM", "7:11 AM"] },
   { stop_id: "2445", name: "NE Halsey &amp; 69th", lat: 45.533685, lon: -122.591525, times: ["6:11 AM", "6:41 AM", "7:12 AM"] },
   { stop_id: "2443", name: "NE Halsey &amp; 66th", lat: 45.533716, lon: -122.595702, times: ["6:12 AM", "6:42 AM", "7:13 AM"] },
@@ -1385,11 +1389,11 @@ const stops = [
   { stop_id: "6014", name: "NW Vaughn &amp; 24th", lat: 45.536956, lon: -122.700749, times: ["6:50 AM", "7:20 AM", "7:53 AM"] },
   { stop_id: "8414", name: "NW Vaughn &amp; 26th", lat: 45.536887, lon: -122.704726, times: ["6:51 AM", "7:21 AM", "7:55 AM"] },
   { stop_id: "14365", name: "NW Wilson &amp; 27th", lat: 45.537551, lon: -122.706558, times: ["6:53 AM", "7:23 AM", "7:57 AM"] },
-  { stop_id: "13975", name: "1200 Block NW Swigert Way", lat: 45.55503, lon: -122.39933, times: ["5:30 AM", "10:36 AM", "6:26 PM"] },
-  { stop_id: "13976", name: "1500 Block NE Graham Rd", lat: 45.55085, lon: -122.388776, times: ["5:31 AM", "10:38 AM", "6:28 PM"] },
-  { stop_id: "13977", name: "900 Block NE Graham Rd", lat: 45.547082, lon: -122.391339, times: ["5:32 AM", "10:39 AM", "6:29 PM"] },
-  { stop_id: "9472", name: "900 Block NW North Frontage Rd", lat: 45.545493, lon: -122.396518, times: ["5:33 AM", "10:40 AM", "6:30 PM"] },
-  { stop_id: "9481", name: "1100 Block NW Frontage Rd", lat: 45.544285, lon: -122.398192, times: ["5:34 AM", "10:41 AM", "6:32 PM"] },
+  { stop_id: "13975", name: "1200 Block NW Swigert Way", lat: 45.55503, lon: -122.39933, times: ["10:36 AM", "6:26 PM", "5:30 AM"] },
+  { stop_id: "13976", name: "1500 Block NE Graham Rd", lat: 45.55085, lon: -122.388776, times: ["10:38 AM", "6:28 PM", "5:31 AM"] },
+  { stop_id: "13977", name: "900 Block NE Graham Rd", lat: 45.547082, lon: -122.391339, times: ["10:39 AM", "6:29 PM", "5:32 AM"] },
+  { stop_id: "9472", name: "900 Block NW North Frontage Rd", lat: 45.545493, lon: -122.396518, times: ["10:40 AM", "6:30 PM", "5:33 AM"] },
+  { stop_id: "9481", name: "1100 Block NW Frontage Rd", lat: 45.544285, lon: -122.398192, times: ["10:41 AM", "6:32 PM", "5:34 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -1463,27 +1467,18 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
 <script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  if (!localStorage.getItem('cookieConsent')) {
+    document.write(`
+      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+        📢 We use cookies to improve functionality and analyze traffic.
+        By using MetroFeed, you agree to our 
+        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+      </div>
+    `);
   }
 </script>
-
-
-
 
 </body>
 </html>

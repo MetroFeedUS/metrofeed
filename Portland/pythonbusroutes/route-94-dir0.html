@@ -47,11 +47,13 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      margin: 0;
-    }
+  width: 100%;
+  height: 85vh;
+  border: none;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -95,7 +97,9 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
+body {
+  overflow-y: auto;
+}
   </style>
 </head>
 <body>
@@ -741,16 +745,16 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "8212", name: "Tigard Transit Center", lat: 45.430458, lon: -122.769278, times: ["6:04 AM", "6:23 AM", "6:43 AM"] },
-  { stop_id: "10180", name: "Tigard Transit Center", lat: 45.430253, lon: -122.76894, times: ["6:04 AM", "6:23 AM", "6:43 AM"] },
-  { stop_id: "14411", name: "9200 Block SW Burnham", lat: 45.429626, lon: -122.771624, times: ["6:05 AM", "6:24 AM", "6:44 AM"] },
-  { stop_id: "4318", name: "SW Pacific Hwy &amp; Walnut", lat: 45.427094, lon: -122.778292, times: ["6:07 AM", "6:26 AM", "6:46 AM"] },
-  { stop_id: "4310", name: "SW Pacific Hwy &amp; School St", lat: 45.424614, lon: -122.781714, times: ["6:07 AM", "6:26 AM", "6:46 AM"] },
-  { stop_id: "4254", name: "13400 Block SW Pacific Hwy", lat: 45.422681, lon: -122.783589, times: ["6:08 AM", "6:27 AM", "6:47 AM"] },
-  { stop_id: "4320", name: "SW Pacific Hwy &amp; Watkins", lat: 45.420941, lon: -122.785253, times: ["6:08 AM", "6:27 AM", "6:47 AM"] },
-  { stop_id: "4286", name: "SW Pacific Hwy &amp; Gaarde/McDonald", lat: 45.418876, lon: -122.787321, times: ["6:09 AM", "6:28 AM", "6:48 AM"] },
-  { stop_id: "4273", name: "SW Pacific Hwy &amp; Canterbury", lat: 45.416906, lon: -122.789276, times: ["6:09 AM", "6:28 AM", "6:48 AM"] },
-  { stop_id: "4271", name: "SW Pacific Hwy &amp; Bull Mtn", lat: 45.414974, lon: -122.791416, times: ["6:10 AM", "6:29 AM", "6:49 AM"] },
+  { stop_id: "8212", name: "Tigard Transit Center", lat: 45.430458, lon: -122.769278, times: ["6:23 AM", "6:43 AM", "7:02 AM"] },
+  { stop_id: "10180", name: "Tigard Transit Center", lat: 45.430253, lon: -122.76894, times: ["6:23 AM", "6:43 AM", "7:02 AM"] },
+  { stop_id: "14411", name: "9200 Block SW Burnham", lat: 45.429626, lon: -122.771624, times: ["6:24 AM", "6:44 AM", "7:03 AM"] },
+  { stop_id: "4318", name: "SW Pacific Hwy &amp; Walnut", lat: 45.427094, lon: -122.778292, times: ["6:26 AM", "6:46 AM", "7:05 AM"] },
+  { stop_id: "4310", name: "SW Pacific Hwy &amp; School St", lat: 45.424614, lon: -122.781714, times: ["6:26 AM", "6:46 AM", "7:05 AM"] },
+  { stop_id: "4254", name: "13400 Block SW Pacific Hwy", lat: 45.422681, lon: -122.783589, times: ["6:27 AM", "6:47 AM", "7:06 AM"] },
+  { stop_id: "4320", name: "SW Pacific Hwy &amp; Watkins", lat: 45.420941, lon: -122.785253, times: ["6:27 AM", "6:47 AM", "7:06 AM"] },
+  { stop_id: "4286", name: "SW Pacific Hwy &amp; Gaarde/McDonald", lat: 45.418876, lon: -122.787321, times: ["6:28 AM", "6:48 AM", "7:07 AM"] },
+  { stop_id: "4273", name: "SW Pacific Hwy &amp; Canterbury", lat: 45.416906, lon: -122.789276, times: ["6:28 AM", "6:48 AM", "7:07 AM"] },
+  { stop_id: "4271", name: "SW Pacific Hwy &amp; Bull Mtn", lat: 45.414974, lon: -122.791416, times: ["6:29 AM", "6:49 AM", "7:08 AM"] },
   { stop_id: "4267", name: "SW Pacific Hwy &amp; Beef Bend", lat: 45.411065, lon: -122.794085, times: ["6:10 AM", "6:29 AM", "6:49 AM"] },
   { stop_id: "8728", name: "SW Pacific Hwy &amp; Royalty Parkway", lat: 45.407861, lon: -122.795352, times: ["6:11 AM", "6:30 AM", "6:50 AM"] },
   { stop_id: "8644", name: "SW Pacific Hwy &amp; Durham", lat: 45.405499, lon: -122.796598, times: ["6:12 AM", "6:31 AM", "6:51 AM"] },
@@ -844,27 +848,18 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
 <script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  if (!localStorage.getItem('cookieConsent')) {
+    document.write(`
+      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+        📢 We use cookies to improve functionality and analyze traffic.
+        By using MetroFeed, you agree to our 
+        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+      </div>
+    `);
   }
 </script>
-
-
-
 
 </body>
 </html>

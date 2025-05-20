@@ -47,11 +47,13 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      margin: 0;
-    }
+  width: 100%;
+  height: 85vh;
+  border: none;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -95,7 +97,9 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
+body {
+  overflow-y: auto;
+}
   </style>
 </head>
 <body>
@@ -486,21 +490,21 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "10752", name: "NW 13th &amp; Lovejoy", lat: 45.529997, lon: -122.684611, times: ["5:54 AM", "6:02 AM", "6:13 AM"] },
-  { stop_id: "10753", name: "NW 11th &amp; Johnson", lat: 45.528742, lon: -122.682374, times: ["5:56 AM", "6:04 AM", "6:15 AM"] },
-  { stop_id: "8989", name: "NW 23rd &amp; Marshall", lat: 45.530612, lon: -122.698688, times: ["5:49 AM", "6:08 AM", "6:22 AM"] },
-  { stop_id: "3596", name: "NW 22nd &amp; Lovejoy", lat: 45.529794, lon: -122.696698, times: ["5:50 AM", "6:09 AM", "6:23 AM"] },
-  { stop_id: "3595", name: "NW 21st &amp; Lovejoy", lat: 45.529833, lon: -122.694676, times: ["5:51 AM", "6:10 AM", "6:24 AM"] },
-  { stop_id: "10751", name: "NW 18th &amp; Lovejoy", lat: 45.529925, lon: -122.689587, times: ["5:52 AM", "6:11 AM", "6:25 AM"] },
-  { stop_id: "10754", name: "NW 11th &amp; Glisan", lat: 45.526605, lon: -122.682297, times: ["5:57 AM", "6:16 AM", "6:30 AM"] },
-  { stop_id: "10756", name: "NW 11th &amp; Couch", lat: 45.523784, lon: -122.682223, times: ["5:59 AM", "6:18 AM", "6:32 AM"] },
-  { stop_id: "9600", name: "SW 11th &amp; Alder", lat: 45.521094, lon: -122.682819, times: ["6:01 AM", "6:20 AM", "6:34 AM"] },
-  { stop_id: "9633", name: "SW 11th &amp; Taylor", lat: 45.519059, lon: -122.683873, times: ["6:02 AM", "6:21 AM", "6:35 AM"] },
-  { stop_id: "10759", name: "SW 11th &amp; Jefferson", lat: 45.516402, lon: -122.685301, times: ["6:04 AM", "6:23 AM", "6:37 AM"] },
-  { stop_id: "10760", name: "SW 11th &amp; Clay", lat: 45.515106, lon: -122.686081, times: ["6:05 AM", "6:24 AM", "6:38 AM"] },
-  { stop_id: "11011", name: "SW Park &amp; Market", lat: 45.513704, lon: -122.683913, times: ["6:06 AM", "6:25 AM", "6:40 AM"] },
-  { stop_id: "10762", name: "SW 5th &amp; Market", lat: 45.512922, lon: -122.681042, times: ["6:07 AM", "6:26 AM", "6:41 AM"] },
-  { stop_id: "10763", name: "SW 5th &amp; Montgomery", lat: 45.511708, lon: -122.681315, times: ["6:09 AM", "6:28 AM", "6:43 AM"] },
+  { stop_id: "10752", name: "NW 13th &amp; Lovejoy", lat: 45.529997, lon: -122.684611, times: ["6:13 AM", "6:19 AM", "6:27 AM"] },
+  { stop_id: "10753", name: "NW 11th &amp; Johnson", lat: 45.528742, lon: -122.682374, times: ["6:15 AM", "6:21 AM", "6:29 AM"] },
+  { stop_id: "8989", name: "NW 23rd &amp; Marshall", lat: 45.530612, lon: -122.698688, times: ["6:22 AM", "6:45 AM", "6:56 AM"] },
+  { stop_id: "3596", name: "NW 22nd &amp; Lovejoy", lat: 45.529794, lon: -122.696698, times: ["6:23 AM", "6:46 AM", "6:57 AM"] },
+  { stop_id: "3595", name: "NW 21st &amp; Lovejoy", lat: 45.529833, lon: -122.694676, times: ["6:24 AM", "6:47 AM", "6:58 AM"] },
+  { stop_id: "10751", name: "NW 18th &amp; Lovejoy", lat: 45.529925, lon: -122.689587, times: ["6:11 AM", "6:25 AM", "6:48 AM"] },
+  { stop_id: "10754", name: "NW 11th &amp; Glisan", lat: 45.526605, lon: -122.682297, times: ["6:16 AM", "6:30 AM", "6:53 AM"] },
+  { stop_id: "10756", name: "NW 11th &amp; Couch", lat: 45.523784, lon: -122.682223, times: ["6:18 AM", "6:32 AM", "6:55 AM"] },
+  { stop_id: "9600", name: "SW 11th &amp; Alder", lat: 45.521094, lon: -122.682819, times: ["6:20 AM", "6:34 AM", "6:57 AM"] },
+  { stop_id: "9633", name: "SW 11th &amp; Taylor", lat: 45.519059, lon: -122.683873, times: ["6:21 AM", "6:35 AM", "6:58 AM"] },
+  { stop_id: "10759", name: "SW 11th &amp; Jefferson", lat: 45.516402, lon: -122.685301, times: ["6:23 AM", "6:37 AM", "7:00 AM"] },
+  { stop_id: "10760", name: "SW 11th &amp; Clay", lat: 45.515106, lon: -122.686081, times: ["6:24 AM", "6:38 AM", "7:01 AM"] },
+  { stop_id: "11011", name: "SW Park &amp; Market", lat: 45.513704, lon: -122.683913, times: ["6:25 AM", "6:40 AM", "7:03 AM"] },
+  { stop_id: "10762", name: "SW 5th &amp; Market", lat: 45.512922, lon: -122.681042, times: ["6:26 AM", "6:41 AM", "7:04 AM"] },
+  { stop_id: "10763", name: "SW 5th &amp; Montgomery", lat: 45.511708, lon: -122.681315, times: ["6:28 AM", "6:43 AM", "7:06 AM"] },
   { stop_id: "12375", name: "SW 3rd &amp; Harrison", lat: 45.510203, lon: -122.679598, times: ["6:11 AM", "6:30 AM", "6:45 AM"] },
   { stop_id: "12377", name: "SW Harrison Street", lat: 45.508792, lon: -122.676574, times: ["6:13 AM", "6:32 AM", "6:47 AM"] },
   { stop_id: "12378", name: "S River Pkwy &amp; Moody", lat: 45.507069, lon: -122.673924, times: ["6:15 AM", "6:34 AM", "6:49 AM"] },
@@ -581,27 +585,18 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
 <script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  if (!localStorage.getItem('cookieConsent')) {
+    document.write(`
+      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+        📢 We use cookies to improve functionality and analyze traffic.
+        By using MetroFeed, you agree to our 
+        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+      </div>
+    `);
   }
 </script>
-
-
-
 
 </body>
 </html>

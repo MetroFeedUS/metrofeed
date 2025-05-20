@@ -47,11 +47,13 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      margin: 0;
-    }
+  width: 100%;
+  height: 85vh;
+  border: none;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -95,7 +97,9 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
+body {
+  overflow-y: auto;
+}
   </style>
 </head>
 <body>
@@ -683,28 +687,28 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "12790", name: "SW Jefferson between 4th &amp; 5th", lat: 45.5147, lon: -122.679167, times: ["5:52 AM", "6:16 AM", "6:41 AM"] },
-  { stop_id: "3049", name: "SW Jefferson &amp; 10th", lat: 45.516026, lon: -122.684087, times: ["5:53 AM", "6:17 AM", "6:42 AM"] },
-  { stop_id: "3051", name: "SW Jefferson &amp; 13th", lat: 45.516849, lon: -122.687154, times: ["5:54 AM", "6:18 AM", "6:43 AM"] },
-  { stop_id: "3052", name: "SW Jefferson &amp; 16th", lat: 45.517636, lon: -122.690111, times: ["5:54 AM", "6:18 AM", "6:44 AM"] },
-  { stop_id: "3054", name: "SW Jefferson &amp; 20th", lat: 45.518415, lon: -122.694078, times: ["5:56 AM", "6:20 AM", "6:46 AM"] },
-  { stop_id: "895", name: "Hwy 26/Canyon Rd Ramp &amp; SW Skyline", lat: 45.509162, lon: -122.73636, times: ["6:01 AM", "6:25 AM", "6:51 AM"] },
-  { stop_id: "10632", name: "SW Canyon &amp; Camelot Ct", lat: 45.504948, lon: -122.747327, times: ["6:02 AM", "6:26 AM", "6:52 AM"] },
-  { stop_id: "10633", name: "SW Canyon &amp; Canyon Crest", lat: 45.50352, lon: -122.749187, times: ["6:03 AM", "6:27 AM", "6:53 AM"] },
-  { stop_id: "885", name: "SW Canyon &amp; Benz Park", lat: 45.501681, lon: -122.752358, times: ["6:03 AM", "6:27 AM", "6:53 AM"] },
-  { stop_id: "890", name: "SW Canyon &amp; Copel", lat: 45.500674, lon: -122.75344, times: ["6:03 AM", "6:27 AM", "6:54 AM"] },
-  { stop_id: "882", name: "7500 Block SW Canyon", lat: 45.498895, lon: -122.754627, times: ["6:04 AM", "6:28 AM", "6:54 AM"] },
-  { stop_id: "883", name: "SW Canyon &amp; Canyon Dr", lat: 45.498446, lon: -122.764453, times: ["6:05 AM", "6:29 AM", "6:55 AM"] },
-  { stop_id: "914", name: "SW Canyon &amp; 87th", lat: 45.498042, lon: -122.767203, times: ["6:05 AM", "6:29 AM", "6:56 AM"] },
-  { stop_id: "12406", name: "SW Canyon &amp; 91st", lat: 45.496454, lon: -122.770404, times: ["6:06 AM", "6:30 AM", "6:56 AM"] },
-  { stop_id: "917", name: "SW Canyon &amp; 93rd", lat: 45.495097, lon: -122.772969, times: ["6:06 AM", "6:30 AM", "6:57 AM"] },
-  { stop_id: "919", name: "SW Canyon &amp; 96th", lat: 45.494098, lon: -122.775745, times: ["6:07 AM", "6:31 AM", "6:57 AM"] },
-  { stop_id: "898", name: "SW Canyon &amp; Walker", lat: 45.493448, lon: -122.779968, times: ["6:07 AM", "6:31 AM", "6:58 AM"] },
-  { stop_id: "904", name: "SW Canyon &amp; 104th", lat: 45.492754, lon: -122.783512, times: ["6:08 AM", "6:32 AM", "6:58 AM"] },
-  { stop_id: "907", name: "SW Canyon &amp; 107th", lat: 45.492101, lon: -122.786756, times: ["6:08 AM", "6:32 AM", "6:59 AM"] },
-  { stop_id: "909", name: "SW Canyon &amp; 110th", lat: 45.491442, lon: -122.789906, times: ["6:08 AM", "6:32 AM", "6:59 AM"] },
-  { stop_id: "910", name: "SW Canyon &amp; 115th", lat: 45.490041, lon: -122.795325, times: ["6:09 AM", "6:33 AM", "7:00 AM"] },
-  { stop_id: "8265", name: "SW Canyon &amp; Red Robin", lat: 45.489307, lon: -122.799158, times: ["6:10 AM", "6:34 AM", "7:00 AM"] },
+  { stop_id: "12790", name: "SW Jefferson between 4th &amp; 5th", lat: 45.5147, lon: -122.679167, times: ["6:16 AM", "6:41 AM", "7:02 AM"] },
+  { stop_id: "3049", name: "SW Jefferson &amp; 10th", lat: 45.516026, lon: -122.684087, times: ["6:17 AM", "6:42 AM", "7:03 AM"] },
+  { stop_id: "3051", name: "SW Jefferson &amp; 13th", lat: 45.516849, lon: -122.687154, times: ["6:18 AM", "6:43 AM", "7:04 AM"] },
+  { stop_id: "3052", name: "SW Jefferson &amp; 16th", lat: 45.517636, lon: -122.690111, times: ["6:18 AM", "6:44 AM", "7:05 AM"] },
+  { stop_id: "3054", name: "SW Jefferson &amp; 20th", lat: 45.518415, lon: -122.694078, times: ["6:20 AM", "6:46 AM", "7:07 AM"] },
+  { stop_id: "895", name: "Hwy 26/Canyon Rd Ramp &amp; SW Skyline", lat: 45.509162, lon: -122.73636, times: ["6:25 AM", "6:51 AM", "7:12 AM"] },
+  { stop_id: "10632", name: "SW Canyon &amp; Camelot Ct", lat: 45.504948, lon: -122.747327, times: ["6:26 AM", "6:52 AM", "7:13 AM"] },
+  { stop_id: "10633", name: "SW Canyon &amp; Canyon Crest", lat: 45.50352, lon: -122.749187, times: ["6:27 AM", "6:53 AM", "7:14 AM"] },
+  { stop_id: "885", name: "SW Canyon &amp; Benz Park", lat: 45.501681, lon: -122.752358, times: ["6:27 AM", "6:53 AM", "7:14 AM"] },
+  { stop_id: "890", name: "SW Canyon &amp; Copel", lat: 45.500674, lon: -122.75344, times: ["6:27 AM", "6:54 AM", "7:15 AM"] },
+  { stop_id: "882", name: "7500 Block SW Canyon", lat: 45.498895, lon: -122.754627, times: ["6:28 AM", "6:54 AM", "7:15 AM"] },
+  { stop_id: "883", name: "SW Canyon &amp; Canyon Dr", lat: 45.498446, lon: -122.764453, times: ["6:29 AM", "6:55 AM", "7:16 AM"] },
+  { stop_id: "914", name: "SW Canyon &amp; 87th", lat: 45.498042, lon: -122.767203, times: ["6:29 AM", "6:56 AM", "7:17 AM"] },
+  { stop_id: "12406", name: "SW Canyon &amp; 91st", lat: 45.496454, lon: -122.770404, times: ["6:30 AM", "6:56 AM", "7:17 AM"] },
+  { stop_id: "917", name: "SW Canyon &amp; 93rd", lat: 45.495097, lon: -122.772969, times: ["6:30 AM", "6:57 AM", "7:18 AM"] },
+  { stop_id: "919", name: "SW Canyon &amp; 96th", lat: 45.494098, lon: -122.775745, times: ["6:31 AM", "6:57 AM", "7:18 AM"] },
+  { stop_id: "898", name: "SW Canyon &amp; Walker", lat: 45.493448, lon: -122.779968, times: ["6:31 AM", "6:58 AM", "7:19 AM"] },
+  { stop_id: "904", name: "SW Canyon &amp; 104th", lat: 45.492754, lon: -122.783512, times: ["6:32 AM", "6:58 AM", "7:19 AM"] },
+  { stop_id: "907", name: "SW Canyon &amp; 107th", lat: 45.492101, lon: -122.786756, times: ["6:32 AM", "6:59 AM", "7:20 AM"] },
+  { stop_id: "909", name: "SW Canyon &amp; 110th", lat: 45.491442, lon: -122.789906, times: ["6:32 AM", "6:59 AM", "7:20 AM"] },
+  { stop_id: "910", name: "SW Canyon &amp; 115th", lat: 45.490041, lon: -122.795325, times: ["6:33 AM", "7:00 AM", "7:21 AM"] },
+  { stop_id: "8265", name: "SW Canyon &amp; Red Robin", lat: 45.489307, lon: -122.799158, times: ["6:34 AM", "7:00 AM", "7:21 AM"] },
   { stop_id: "9654", name: "Beaverton Transit Center", lat: 45.491269, lon: -122.800864, times: ["6:11 AM", "6:35 AM", "7:02 AM"] },
 ]
 
@@ -779,27 +783,18 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
 <script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  if (!localStorage.getItem('cookieConsent')) {
+    document.write(`
+      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+        📢 We use cookies to improve functionality and analyze traffic.
+        By using MetroFeed, you agree to our 
+        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+      </div>
+    `);
   }
 </script>
-
-
-
 
 </body>
 </html>

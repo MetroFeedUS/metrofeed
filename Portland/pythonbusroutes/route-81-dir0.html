@@ -47,11 +47,13 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      margin: 0;
-    }
+  width: 100%;
+  height: 85vh;
+  border: none;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -95,7 +97,9 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
+body {
+  overflow-y: auto;
+}
   </style>
 </head>
 <body>
@@ -659,39 +663,39 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "10857", name: "Gresham Central Transit Center", lat: 45.502718, lon: -122.427108, times: ["5:41 AM", "6:18 AM", "6:52 AM"] },
-  { stop_id: "2253", name: "Gresham Central Transit Center", lat: 45.502592, lon: -122.426486, times: ["5:43 AM", "6:20 AM", "6:54 AM"] },
-  { stop_id: "13211", name: "NE Hood &amp; 5th", lat: 45.501098, lon: -122.428024, times: ["5:43 AM", "6:20 AM", "6:54 AM"] },
-  { stop_id: "13033", name: "NE Hood &amp; 2nd", lat: 45.498613, lon: -122.427832, times: ["5:44 AM", "6:21 AM", "6:55 AM"] },
-  { stop_id: "13474", name: "E Powell &amp; NE Elliott", lat: 45.49792, lon: -122.424876, times: ["5:44 AM", "6:21 AM", "6:55 AM"] },
-  { stop_id: "4520", name: "E Powell &amp; SE Cleveland", lat: 45.497919, lon: -122.421209, times: ["5:45 AM", "6:22 AM", "6:56 AM"] },
-  { stop_id: "4531", name: "E Powell &amp; NE Liberty", lat: 45.497888, lon: -122.418723, times: ["5:45 AM", "6:22 AM", "6:56 AM"] },
-  { stop_id: "4529", name: "E Powell &amp; SE Hogan", lat: 45.497829, lon: -122.414506, times: ["5:46 AM", "6:23 AM", "6:57 AM"] },
-  { stop_id: "14573", name: "SE 3rd &amp; E Powell", lat: 45.495828, lon: -122.411566, times: ["5:47 AM", "6:24 AM", "6:58 AM"] },
-  { stop_id: "13974", name: "SE 3rd &amp; 1st", lat: 45.497235, lon: -122.406978, times: ["5:47 AM", "6:24 AM", "6:58 AM"] },
-  { stop_id: "3102", name: "NE Kane &amp; 2nd Ct", lat: 45.498119, lon: -122.398622, times: ["5:49 AM", "6:26 AM", "7:00 AM"] },
-  { stop_id: "3107", name: "NE Kane &amp; 8th", lat: 45.503185, lon: -122.399787, times: ["5:50 AM", "6:27 AM", "7:01 AM"] },
-  { stop_id: "3092", name: "NE Kane &amp; Division", lat: 45.505463, lon: -122.399766, times: ["5:50 AM", "6:27 AM", "7:01 AM"] },
-  { stop_id: "3097", name: "NE Kane &amp; 15th", lat: 45.508099, lon: -122.399808, times: ["5:51 AM", "6:28 AM", "7:02 AM"] },
-  { stop_id: "3091", name: "NE Kane &amp; 18th Ct", lat: 45.510154, lon: -122.39981, times: ["5:51 AM", "6:28 AM", "7:02 AM"] },
-  { stop_id: "3105", name: "NE Kane &amp; 23rd", lat: 45.513222, lon: -122.399354, times: ["5:52 AM", "6:29 AM", "7:03 AM"] },
-  { stop_id: "10879", name: "NE Kane &amp; 29th, MHCC", lat: 45.516018, lon: -122.398297, times: ["5:53 AM", "6:30 AM", "7:04 AM"] },
-  { stop_id: "8598", name: "SW 257th &amp; SE Stark", lat: 45.519577, lon: -122.398292, times: ["5:54 AM", "6:31 AM", "7:05 AM"] },
-  { stop_id: "8599", name: "SW 257th &amp; 28th", lat: 45.521864, lon: -122.398272, times: ["5:54 AM", "6:31 AM", "7:05 AM"] },
-  { stop_id: "10645", name: "2300 Block SW 257th", lat: 45.524446, lon: -122.398293, times: ["5:55 AM", "6:32 AM", "7:06 AM"] },
-  { stop_id: "9046", name: "SW 257th &amp; Hensley Rd", lat: 45.52658, lon: -122.398328, times: ["5:55 AM", "6:32 AM", "7:06 AM"] },
-  { stop_id: "9092", name: "SW 257th &amp; 16th Way", lat: 45.530246, lon: -122.399135, times: ["5:56 AM", "6:33 AM", "7:07 AM"] },
-  { stop_id: "9094", name: "SW 257th &amp; Cherry Park", lat: 45.533423, lon: -122.399145, times: ["5:57 AM", "6:34 AM", "7:08 AM"] },
-  { stop_id: "9427", name: "SW 257th &amp; Jennings Way", lat: 45.535858, lon: -122.396584, times: ["5:57 AM", "6:34 AM", "7:08 AM"] },
-  { stop_id: "10170", name: "400 Block SW 257th", lat: 45.538111, lon: -122.392757, times: ["5:58 AM", "6:35 AM", "7:09 AM"] },
-  { stop_id: "13532", name: "NW Graham/257th &amp; W Columbia River Hwy", lat: 45.541235, lon: -122.390398, times: ["5:59 AM", "6:36 AM", "7:10 AM"] },
-  { stop_id: "9470", name: "NW Graham/257th &amp; 257th Way", lat: 45.543491, lon: -122.39036, times: ["6:00 AM", "6:37 AM", "7:11 AM"] },
-  { stop_id: "10758", name: "NW Graham/257th &amp; North Frontage Rd", lat: 45.545208, lon: -122.39086, times: ["6:00 AM", "6:37 AM", "7:11 AM"] },
-  { stop_id: "13988", name: "900 Block NE Graham Rd", lat: 45.547038, lon: -122.391187, times: ["6:00 AM", "6:37 AM", "7:12 AM"] },
-  { stop_id: "13989", name: "1500 Block NE Graham Rd", lat: 45.551362, lon: -122.388561, times: ["6:02 AM", "6:39 AM", "7:13 AM"] },
-  { stop_id: "13990", name: "NW Graham &amp; N Entrance Rd", lat: 45.552041, lon: -122.398732, times: ["6:04 AM", "6:41 AM", "7:15 AM"] },
-  { stop_id: "13991", name: "NW Sundial &amp; Rogers Circle", lat: 45.55363, lon: -122.407683, times: ["6:06 AM", "6:43 AM", "7:18 AM"] },
-  { stop_id: "13975", name: "1200 Block NW Swigert Way", lat: 45.55503, lon: -122.39933, times: ["6:08 AM", "6:45 AM", "7:20 AM"] },
+  { stop_id: "10857", name: "Gresham Central Transit Center", lat: 45.502718, lon: -122.427108, times: ["6:18 AM", "6:52 AM", "7:26 AM"] },
+  { stop_id: "2253", name: "Gresham Central Transit Center", lat: 45.502592, lon: -122.426486, times: ["6:20 AM", "6:54 AM", "7:28 AM"] },
+  { stop_id: "13211", name: "NE Hood &amp; 5th", lat: 45.501098, lon: -122.428024, times: ["6:20 AM", "6:54 AM", "7:28 AM"] },
+  { stop_id: "13033", name: "NE Hood &amp; 2nd", lat: 45.498613, lon: -122.427832, times: ["6:21 AM", "6:55 AM", "7:29 AM"] },
+  { stop_id: "13474", name: "E Powell &amp; NE Elliott", lat: 45.49792, lon: -122.424876, times: ["6:21 AM", "6:55 AM", "7:30 AM"] },
+  { stop_id: "4520", name: "E Powell &amp; SE Cleveland", lat: 45.497919, lon: -122.421209, times: ["6:22 AM", "6:56 AM", "7:30 AM"] },
+  { stop_id: "4531", name: "E Powell &amp; NE Liberty", lat: 45.497888, lon: -122.418723, times: ["6:22 AM", "6:56 AM", "7:31 AM"] },
+  { stop_id: "4529", name: "E Powell &amp; SE Hogan", lat: 45.497829, lon: -122.414506, times: ["6:23 AM", "6:57 AM", "7:31 AM"] },
+  { stop_id: "14573", name: "SE 3rd &amp; E Powell", lat: 45.495828, lon: -122.411566, times: ["6:24 AM", "6:58 AM", "7:32 AM"] },
+  { stop_id: "13974", name: "SE 3rd &amp; 1st", lat: 45.497235, lon: -122.406978, times: ["6:24 AM", "6:58 AM", "7:33 AM"] },
+  { stop_id: "3102", name: "NE Kane &amp; 2nd Ct", lat: 45.498119, lon: -122.398622, times: ["6:26 AM", "7:00 AM", "7:34 AM"] },
+  { stop_id: "3107", name: "NE Kane &amp; 8th", lat: 45.503185, lon: -122.399787, times: ["6:27 AM", "7:01 AM", "7:35 AM"] },
+  { stop_id: "3092", name: "NE Kane &amp; Division", lat: 45.505463, lon: -122.399766, times: ["6:27 AM", "7:01 AM", "7:36 AM"] },
+  { stop_id: "3097", name: "NE Kane &amp; 15th", lat: 45.508099, lon: -122.399808, times: ["6:28 AM", "7:02 AM", "7:37 AM"] },
+  { stop_id: "3091", name: "NE Kane &amp; 18th Ct", lat: 45.510154, lon: -122.39981, times: ["6:28 AM", "7:02 AM", "7:37 AM"] },
+  { stop_id: "3105", name: "NE Kane &amp; 23rd", lat: 45.513222, lon: -122.399354, times: ["6:29 AM", "7:03 AM", "7:38 AM"] },
+  { stop_id: "10879", name: "NE Kane &amp; 29th, MHCC", lat: 45.516018, lon: -122.398297, times: ["6:30 AM", "7:04 AM", "7:38 AM"] },
+  { stop_id: "8598", name: "SW 257th &amp; SE Stark", lat: 45.519577, lon: -122.398292, times: ["6:31 AM", "7:05 AM", "7:39 AM"] },
+  { stop_id: "8599", name: "SW 257th &amp; 28th", lat: 45.521864, lon: -122.398272, times: ["6:31 AM", "7:05 AM", "7:40 AM"] },
+  { stop_id: "10645", name: "2300 Block SW 257th", lat: 45.524446, lon: -122.398293, times: ["6:32 AM", "7:06 AM", "7:40 AM"] },
+  { stop_id: "9046", name: "SW 257th &amp; Hensley Rd", lat: 45.52658, lon: -122.398328, times: ["6:32 AM", "7:06 AM", "7:41 AM"] },
+  { stop_id: "9092", name: "SW 257th &amp; 16th Way", lat: 45.530246, lon: -122.399135, times: ["6:33 AM", "7:07 AM", "7:42 AM"] },
+  { stop_id: "9094", name: "SW 257th &amp; Cherry Park", lat: 45.533423, lon: -122.399145, times: ["6:34 AM", "7:08 AM", "7:43 AM"] },
+  { stop_id: "9427", name: "SW 257th &amp; Jennings Way", lat: 45.535858, lon: -122.396584, times: ["6:34 AM", "7:08 AM", "7:43 AM"] },
+  { stop_id: "10170", name: "400 Block SW 257th", lat: 45.538111, lon: -122.392757, times: ["6:35 AM", "7:09 AM", "7:44 AM"] },
+  { stop_id: "13532", name: "NW Graham/257th &amp; W Columbia River Hwy", lat: 45.541235, lon: -122.390398, times: ["6:36 AM", "7:10 AM", "7:45 AM"] },
+  { stop_id: "9470", name: "NW Graham/257th &amp; 257th Way", lat: 45.543491, lon: -122.39036, times: ["6:37 AM", "7:11 AM", "7:46 AM"] },
+  { stop_id: "10758", name: "NW Graham/257th &amp; North Frontage Rd", lat: 45.545208, lon: -122.39086, times: ["6:37 AM", "7:11 AM", "7:46 AM"] },
+  { stop_id: "13988", name: "900 Block NE Graham Rd", lat: 45.547038, lon: -122.391187, times: ["6:37 AM", "7:12 AM", "7:47 AM"] },
+  { stop_id: "13989", name: "1500 Block NE Graham Rd", lat: 45.551362, lon: -122.388561, times: ["6:39 AM", "7:13 AM", "7:48 AM"] },
+  { stop_id: "13990", name: "NW Graham &amp; N Entrance Rd", lat: 45.552041, lon: -122.398732, times: ["6:41 AM", "7:15 AM", "7:50 AM"] },
+  { stop_id: "13991", name: "NW Sundial &amp; Rogers Circle", lat: 45.55363, lon: -122.407683, times: ["6:43 AM", "7:18 AM", "7:53 AM"] },
+  { stop_id: "13975", name: "1200 Block NW Swigert Way", lat: 45.55503, lon: -122.39933, times: ["6:45 AM", "7:20 AM", "7:55 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -765,27 +769,18 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
 <script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  if (!localStorage.getItem('cookieConsent')) {
+    document.write(`
+      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+        📢 We use cookies to improve functionality and analyze traffic.
+        By using MetroFeed, you agree to our 
+        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+      </div>
+    `);
   }
 </script>
-
-
-
 
 </body>
 </html>

@@ -47,11 +47,13 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      margin: 0;
-    }
+  width: 100%;
+  height: 85vh;
+  border: none;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -95,7 +97,9 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
+body {
+  overflow-y: auto;
+}
   </style>
 </head>
 <body>
@@ -543,25 +547,25 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["5:48 AM", "6:08 AM", "6:19 AM"] },
-  { stop_id: "9981", name: "Beaverton Transit Center", lat: 45.49093, lon: -122.801741, times: ["5:50 AM", "6:21 AM", "6:49 AM"] },
-  { stop_id: "12945", name: "SW Lombard &amp; Broadway", lat: 45.488206, lon: -122.801264, times: ["5:50 AM", "6:21 AM", "6:50 AM"] },
-  { stop_id: "342", name: "SW Beaverton-Hillsdale &amp; Griffith", lat: 45.486417, lon: -122.797055, times: ["5:51 AM", "6:22 AM", "6:51 AM"] },
-  { stop_id: "9707", name: "4900 Block SW Griffith Drive", lat: 45.483996, lon: -122.795357, times: ["5:52 AM", "6:23 AM", "6:52 AM"] },
-  { stop_id: "9699", name: "10900 Block SW 5th", lat: 45.483666, lon: -122.789073, times: ["5:54 AM", "6:25 AM", "6:55 AM"] },
-  { stop_id: "9700", name: "SW 5th &amp; Western", lat: 45.483647, lon: -122.782894, times: ["5:56 AM", "6:27 AM", "6:57 AM"] },
-  { stop_id: "9685", name: "SW Arctic Dr &amp; Western Ave", lat: 45.481302, lon: -122.781966, times: ["5:56 AM", "6:27 AM", "6:57 AM"] },
-  { stop_id: "9686", name: "SW Arctic Dr &amp; Harvest Ct", lat: 45.479129, lon: -122.778791, times: ["5:57 AM", "6:28 AM", "6:58 AM"] },
-  { stop_id: "9701", name: "SW Arctic Dr &amp; Allen", lat: 45.474825, lon: -122.778974, times: ["5:58 AM", "6:30 AM", "7:00 AM"] },
-  { stop_id: "9703", name: "10500 Block SW Allen", lat: 45.476709, lon: -122.784726, times: ["5:59 AM", "6:31 AM", "7:01 AM"] },
-  { stop_id: "10499", name: "SW Allen &amp; 107th", lat: 45.476697, lon: -122.78714, times: ["5:59 AM", "6:31 AM", "7:01 AM"] },
-  { stop_id: "9704", name: "SW Allen &amp; King", lat: 45.47669, lon: -122.79361, times: ["6:01 AM", "6:33 AM", "7:03 AM"] },
-  { stop_id: "3455", name: "SW Lombard &amp; Allen", lat: 45.476992, lon: -122.800197, times: ["6:02 AM", "6:34 AM", "7:04 AM"] },
-  { stop_id: "3580", name: "SW Lombard &amp; 12th", lat: 45.478466, lon: -122.800249, times: ["6:03 AM", "6:35 AM", "7:05 AM"] },
-  { stop_id: "3585", name: "SW Lombard &amp; 9th", lat: 45.480428, lon: -122.800217, times: ["6:03 AM", "6:36 AM", "7:06 AM"] },
-  { stop_id: "3583", name: "SW Lombard &amp; 5th", lat: 45.482796, lon: -122.80022, times: ["6:04 AM", "6:37 AM", "7:07 AM"] },
-  { stop_id: "3582", name: "SW Lombard &amp; 2nd", lat: 45.484921, lon: -122.800245, times: ["6:05 AM", "6:38 AM", "7:08 AM"] },
-  { stop_id: "12944", name: "SW Lombard &amp; Broadway", lat: 45.487818, lon: -122.800725, times: ["6:06 AM", "6:39 AM", "7:09 AM"] },
+  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["6:19 AM", "6:41 AM", "6:47 AM"] },
+  { stop_id: "9981", name: "Beaverton Transit Center", lat: 45.49093, lon: -122.801741, times: ["6:21 AM", "6:49 AM", "7:20 AM"] },
+  { stop_id: "12945", name: "SW Lombard &amp; Broadway", lat: 45.488206, lon: -122.801264, times: ["6:21 AM", "6:50 AM", "7:20 AM"] },
+  { stop_id: "342", name: "SW Beaverton-Hillsdale &amp; Griffith", lat: 45.486417, lon: -122.797055, times: ["6:22 AM", "6:51 AM", "7:22 AM"] },
+  { stop_id: "9707", name: "4900 Block SW Griffith Drive", lat: 45.483996, lon: -122.795357, times: ["6:23 AM", "6:52 AM", "7:23 AM"] },
+  { stop_id: "9699", name: "10900 Block SW 5th", lat: 45.483666, lon: -122.789073, times: ["6:25 AM", "6:55 AM", "7:25 AM"] },
+  { stop_id: "9700", name: "SW 5th &amp; Western", lat: 45.483647, lon: -122.782894, times: ["6:27 AM", "6:57 AM", "7:27 AM"] },
+  { stop_id: "9685", name: "SW Arctic Dr &amp; Western Ave", lat: 45.481302, lon: -122.781966, times: ["6:27 AM", "6:57 AM", "7:27 AM"] },
+  { stop_id: "9686", name: "SW Arctic Dr &amp; Harvest Ct", lat: 45.479129, lon: -122.778791, times: ["6:28 AM", "6:58 AM", "7:28 AM"] },
+  { stop_id: "9701", name: "SW Arctic Dr &amp; Allen", lat: 45.474825, lon: -122.778974, times: ["6:30 AM", "7:00 AM", "7:30 AM"] },
+  { stop_id: "9703", name: "10500 Block SW Allen", lat: 45.476709, lon: -122.784726, times: ["6:31 AM", "7:01 AM", "7:31 AM"] },
+  { stop_id: "10499", name: "SW Allen &amp; 107th", lat: 45.476697, lon: -122.78714, times: ["6:31 AM", "7:01 AM", "7:31 AM"] },
+  { stop_id: "9704", name: "SW Allen &amp; King", lat: 45.47669, lon: -122.79361, times: ["6:33 AM", "7:03 AM", "7:33 AM"] },
+  { stop_id: "3455", name: "SW Lombard &amp; Allen", lat: 45.476992, lon: -122.800197, times: ["6:34 AM", "7:04 AM", "7:34 AM"] },
+  { stop_id: "3580", name: "SW Lombard &amp; 12th", lat: 45.478466, lon: -122.800249, times: ["6:35 AM", "7:05 AM", "7:35 AM"] },
+  { stop_id: "3585", name: "SW Lombard &amp; 9th", lat: 45.480428, lon: -122.800217, times: ["6:36 AM", "7:06 AM", "7:36 AM"] },
+  { stop_id: "3583", name: "SW Lombard &amp; 5th", lat: 45.482796, lon: -122.80022, times: ["6:37 AM", "7:07 AM", "7:37 AM"] },
+  { stop_id: "3582", name: "SW Lombard &amp; 2nd", lat: 45.484921, lon: -122.800245, times: ["6:38 AM", "7:08 AM", "7:38 AM"] },
+  { stop_id: "12944", name: "SW Lombard &amp; Broadway", lat: 45.487818, lon: -122.800725, times: ["6:39 AM", "7:09 AM", "7:39 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -635,27 +639,18 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
 <script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  if (!localStorage.getItem('cookieConsent')) {
+    document.write(`
+      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+        📢 We use cookies to improve functionality and analyze traffic.
+        By using MetroFeed, you agree to our 
+        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+      </div>
+    `);
   }
 </script>
-
-
-
 
 </body>
 </html>
