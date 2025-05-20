@@ -2,8 +2,6 @@
 <html lang="en">
 <head>
   
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2219550569810489"
-     crossorigin="anonymous"></script>
 
 <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -43,16 +41,16 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
       border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
+      padding: 0;
+      margin: 0;
       background-color: #1e1e1e;
     }
     #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      margin: 0;
     }
     .button-bar {
       display: flex;
@@ -105,9 +103,6 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
-  <div class="ad-banner">
-    [Ad Banner Placeholder — 300x250]
-  </div>
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +112,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅ Back</button>
+  <button class="back-button" onclick="history.back()">⬅️ Back</button>
   </div>
 
   <h1>Route 79 - To Oregon City Transit Center</h1>
@@ -135,7 +130,16 @@
   const routeNumber = 79;
   const direction = parseInt(0);
 
-  const map = L.map('map').setView([45.6, -122.7], 12);
+  const map = L.map('map', {
+  center: [45.6, -122.7],
+  zoom: 12,
+  maxBounds: [
+    [45.3, -123.1],  // Southwest corner
+    [45.9, -122.3]   // Northeast corner
+  ],
+  maxBoundsViscosity: 1.0,
+  maxZoom: 12
+});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -747,7 +751,7 @@ const stops = [
 
     const popupContent = `
       <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
     `;
 
     marker.bindPopup(popupContent);
@@ -799,10 +803,10 @@ const stops = [
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; padding: 0.75rem; z-index: 1000; font-size: 0.85rem; line-height: 1.4; text-align: left; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
   📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
   <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+  <button onclick="acceptCookies()" style="background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
 </div>
 
 <script>
@@ -818,6 +822,16 @@ const stops = [
   }
 </script>
 
+
+<script src="/ads/ads.js"></script>
+<script>
+  // This script looks for a container with id 'localAdSlot' and inserts an ad
+  if (window.loadLocalAd) {
+    window.loadLocalAd('localAdSlot');
+  } else {
+    console.warn('Ad script not ready or loadLocalAd() not defined');
+  }
+</script>
 
 </body>
 </html>
