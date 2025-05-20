@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 1 - To Hayhurst and Maplewood via Vermont</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -518,47 +520,47 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "6026", name: "SW Vermont &amp; Chestnut", lat: 45.476082, lon: -122.690997, times: ["3:38 PM"] },
-  { stop_id: "6032", name: "SW Vermont &amp; 13th", lat: 45.476097, lon: -122.69364, times: ["3:38 PM"] },
-  { stop_id: "6024", name: "SW Vermont &amp; Bertha", lat: 45.476115, lon: -122.69758, times: ["3:39 PM"] },
-  { stop_id: "6018", name: "2200 Block SW Vermont", lat: 45.476108, lon: -122.699702, times: ["3:40 PM"] },
-  { stop_id: "6034", name: "SW Vermont &amp; 24th", lat: 45.476109, lon: -122.701564, times: ["3:40 PM"] },
-  { stop_id: "966", name: "SW Capitol &amp; 26th", lat: 45.476127, lon: -122.704188, times: ["3:41 PM"] },
-  { stop_id: "6035", name: "SW Vermont &amp; 30th", lat: 45.476155, lon: -122.707509, times: ["3:42 PM"] },
-  { stop_id: "6037", name: "SW Vermont &amp; 32nd", lat: 45.476152, lon: -122.709606, times: ["3:42 PM"] },
-  { stop_id: "13768", name: "SW Vermont &amp; 34th", lat: 45.476186, lon: -122.711952, times: ["3:43 PM"] },
-  { stop_id: "6041", name: "SW Vermont &amp; 37th", lat: 45.476236, lon: -122.715132, times: ["3:44 PM"] },
-  { stop_id: "6043", name: "SW Vermont &amp; 42nd", lat: 45.476274, lon: -122.719913, times: ["3:45 PM"] },
-  { stop_id: "6029", name: "SW Vermont &amp; Idaho Dr", lat: 45.476296, lon: -122.721884, times: ["3:46 PM"] },
-  { stop_id: "6028", name: "SW Vermont &amp; Idaho", lat: 45.476374, lon: -122.724985, times: ["3:46 PM"] },
-  { stop_id: "6047", name: "SW Vermont &amp; 50th", lat: 45.476345, lon: -122.727975, times: ["3:47 PM"] },
-  { stop_id: "6049", name: "SW Vermont &amp; 52nd", lat: 45.476356, lon: -122.730241, times: ["3:47 PM"] },
-  { stop_id: "6050", name: "SW Vermont &amp; 55th", lat: 45.47639, lon: -122.73339, times: ["3:47 PM"] },
-  { stop_id: "6019", name: "5700 Block SW Vermont", lat: 45.476406, lon: -122.735714, times: ["3:48 PM"] },
-  { stop_id: "6051", name: "SW Vermont &amp; 60th", lat: 45.476427, lon: -122.738544, times: ["3:48 PM"] },
-  { stop_id: "6052", name: "SW Vermont &amp; 63rd", lat: 45.476456, lon: -122.741562, times: ["3:49 PM"] },
-  { stop_id: "6030", name: "SW Vermont &amp; Shattuck", lat: 45.476465, lon: -122.74269, times: ["3:49 PM"] },
-  { stop_id: "5222", name: "SW Shattuck &amp; 63rd", lat: 45.477622, lon: -122.741869, times: ["3:50 PM"] },
-  { stop_id: "5221", name: "SW Shattuck &amp; 60th", lat: 45.479287, lon: -122.738677, times: ["3:50 PM"] },
-  { stop_id: "13703", name: "SW Shattuck &amp; 59th Ct", lat: 45.482576, lon: -122.736292, times: ["3:51 PM"] },
-  { stop_id: "863", name: "SW Cameron &amp; Shattuck", lat: 45.483508, lon: -122.734806, times: ["3:52 PM"] },
-  { stop_id: "865", name: "SW Cameron &amp; 53rd", lat: 45.483484, lon: -122.73162, times: ["3:52 PM"] },
-  { stop_id: "862", name: "SW Cameron &amp; Fairvale Ct", lat: 45.483464, lon: -122.72736, times: ["3:53 PM"] },
-  { stop_id: "861", name: "4600 Block SW Cameron", lat: 45.483441, lon: -122.724795, times: ["3:53 PM"] },
-  { stop_id: "7544", name: "SW 45th &amp; Flower Pl", lat: 45.482894, lon: -122.723244, times: ["3:54 PM"] },
-  { stop_id: "7555", name: "SW 45th &amp; Pendleton", lat: 45.481252, lon: -122.723236, times: ["3:54 PM"] },
-  { stop_id: "7549", name: "SW 45th &amp; Illinois", lat: 45.478715, lon: -122.723244, times: ["3:55 PM"] },
-  { stop_id: "7559", name: "SW 45th &amp; Vermont", lat: 45.476636, lon: -122.723237, times: ["3:56 PM"] },
-  { stop_id: "10466", name: "SW 45th &amp; Vermont", lat: 45.475871, lon: -122.723251, times: ["3:56 PM"] },
-  { stop_id: "9328", name: "SW 45th &amp; Nevada", lat: 45.473722, lon: -122.723241, times: ["3:56 PM"] },
-  { stop_id: "7540", name: "SW 45th &amp; Caldew", lat: 45.472195, lon: -122.723234, times: ["3:57 PM"] },
-  { stop_id: "10801", name: "7500 Block SW 45th", lat: 45.470391, lon: -122.723223, times: ["3:57 PM"] },
-  { stop_id: "4052", name: "SW Multnomah &amp; 45th", lat: 45.467527, lon: -122.724015, times: ["3:58 PM"] },
-  { stop_id: "7668", name: "SW 51st &amp; Moss", lat: 45.467968, lon: -122.728705, times: ["3:59 PM"] },
-  { stop_id: "7667", name: "SW 51st &amp; Custer", lat: 45.469664, lon: -122.728688, times: ["4:00 PM"] },
-  { stop_id: "7698", name: "SW 52nd &amp; Maplewood School", lat: 45.470854, lon: -122.730468, times: ["4:01 PM"] },
-  { stop_id: "7700", name: "SW 52nd &amp; Nevada Ct", lat: 45.472839, lon: -122.730516, times: ["4:01 PM"] },
-  { stop_id: "4104", name: "SW Nevada Ct &amp; 54th", lat: 45.472925, lon: -122.732355, times: ["4:02 PM"] },
+  { stop_id: "6026", name: "SW Vermont &amp; Chestnut", lat: 45.476082, lon: -122.690997, times: ["3:38 PM", "3:42 PM"] },
+  { stop_id: "6032", name: "SW Vermont &amp; 13th", lat: 45.476097, lon: -122.69364, times: ["3:38 PM", "3:43 PM"] },
+  { stop_id: "6024", name: "SW Vermont &amp; Bertha", lat: 45.476115, lon: -122.69758, times: ["3:39 PM", "3:44 PM"] },
+  { stop_id: "6018", name: "2200 Block SW Vermont", lat: 45.476108, lon: -122.699702, times: ["3:40 PM", "3:44 PM"] },
+  { stop_id: "6034", name: "SW Vermont &amp; 24th", lat: 45.476109, lon: -122.701564, times: ["3:40 PM", "3:45 PM"] },
+  { stop_id: "966", name: "SW Capitol &amp; 26th", lat: 45.476127, lon: -122.704188, times: ["3:41 PM", "3:46 PM"] },
+  { stop_id: "6035", name: "SW Vermont &amp; 30th", lat: 45.476155, lon: -122.707509, times: ["3:42 PM", "3:47 PM"] },
+  { stop_id: "6037", name: "SW Vermont &amp; 32nd", lat: 45.476152, lon: -122.709606, times: ["3:42 PM", "3:47 PM"] },
+  { stop_id: "13768", name: "SW Vermont &amp; 34th", lat: 45.476186, lon: -122.711952, times: ["3:43 PM", "3:48 PM"] },
+  { stop_id: "6041", name: "SW Vermont &amp; 37th", lat: 45.476236, lon: -122.715132, times: ["3:44 PM", "3:49 PM"] },
+  { stop_id: "6043", name: "SW Vermont &amp; 42nd", lat: 45.476274, lon: -122.719913, times: ["3:45 PM", "3:50 PM"] },
+  { stop_id: "6029", name: "SW Vermont &amp; Idaho Dr", lat: 45.476296, lon: -122.721884, times: ["3:46 PM", "3:51 PM"] },
+  { stop_id: "6028", name: "SW Vermont &amp; Idaho", lat: 45.476374, lon: -122.724985, times: ["3:46 PM", "3:51 PM"] },
+  { stop_id: "6047", name: "SW Vermont &amp; 50th", lat: 45.476345, lon: -122.727975, times: ["3:47 PM", "3:52 PM"] },
+  { stop_id: "6049", name: "SW Vermont &amp; 52nd", lat: 45.476356, lon: -122.730241, times: ["3:47 PM", "3:52 PM"] },
+  { stop_id: "6050", name: "SW Vermont &amp; 55th", lat: 45.47639, lon: -122.73339, times: ["3:47 PM", "3:52 PM"] },
+  { stop_id: "6019", name: "5700 Block SW Vermont", lat: 45.476406, lon: -122.735714, times: ["3:48 PM", "3:53 PM"] },
+  { stop_id: "6051", name: "SW Vermont &amp; 60th", lat: 45.476427, lon: -122.738544, times: ["3:48 PM", "3:53 PM"] },
+  { stop_id: "6052", name: "SW Vermont &amp; 63rd", lat: 45.476456, lon: -122.741562, times: ["3:49 PM", "3:54 PM"] },
+  { stop_id: "6030", name: "SW Vermont &amp; Shattuck", lat: 45.476465, lon: -122.74269, times: ["3:49 PM", "3:54 PM"] },
+  { stop_id: "5222", name: "SW Shattuck &amp; 63rd", lat: 45.477622, lon: -122.741869, times: ["3:50 PM", "3:55 PM"] },
+  { stop_id: "5221", name: "SW Shattuck &amp; 60th", lat: 45.479287, lon: -122.738677, times: ["3:50 PM", "3:55 PM"] },
+  { stop_id: "13703", name: "SW Shattuck &amp; 59th Ct", lat: 45.482576, lon: -122.736292, times: ["3:51 PM", "3:56 PM"] },
+  { stop_id: "863", name: "SW Cameron &amp; Shattuck", lat: 45.483508, lon: -122.734806, times: ["3:52 PM", "3:57 PM"] },
+  { stop_id: "865", name: "SW Cameron &amp; 53rd", lat: 45.483484, lon: -122.73162, times: ["3:52 PM", "3:57 PM"] },
+  { stop_id: "862", name: "SW Cameron &amp; Fairvale Ct", lat: 45.483464, lon: -122.72736, times: ["3:53 PM", "3:58 PM"] },
+  { stop_id: "861", name: "4600 Block SW Cameron", lat: 45.483441, lon: -122.724795, times: ["3:53 PM", "3:58 PM"] },
+  { stop_id: "7544", name: "SW 45th &amp; Flower Pl", lat: 45.482894, lon: -122.723244, times: ["3:54 PM", "3:59 PM"] },
+  { stop_id: "7555", name: "SW 45th &amp; Pendleton", lat: 45.481252, lon: -122.723236, times: ["3:54 PM", "3:59 PM"] },
+  { stop_id: "7549", name: "SW 45th &amp; Illinois", lat: 45.478715, lon: -122.723244, times: ["3:55 PM", "4:00 PM"] },
+  { stop_id: "7559", name: "SW 45th &amp; Vermont", lat: 45.476636, lon: -122.723237, times: ["3:56 PM", "4:01 PM"] },
+  { stop_id: "10466", name: "SW 45th &amp; Vermont", lat: 45.475871, lon: -122.723251, times: ["3:56 PM", "4:01 PM"] },
+  { stop_id: "9328", name: "SW 45th &amp; Nevada", lat: 45.473722, lon: -122.723241, times: ["3:56 PM", "4:01 PM"] },
+  { stop_id: "7540", name: "SW 45th &amp; Caldew", lat: 45.472195, lon: -122.723234, times: ["3:57 PM", "4:02 PM"] },
+  { stop_id: "10801", name: "7500 Block SW 45th", lat: 45.470391, lon: -122.723223, times: ["3:57 PM", "4:02 PM"] },
+  { stop_id: "4052", name: "SW Multnomah &amp; 45th", lat: 45.467527, lon: -122.724015, times: ["3:58 PM", "4:03 PM"] },
+  { stop_id: "7668", name: "SW 51st &amp; Moss", lat: 45.467968, lon: -122.728705, times: ["3:59 PM", "4:04 PM"] },
+  { stop_id: "7667", name: "SW 51st &amp; Custer", lat: 45.469664, lon: -122.728688, times: ["4:00 PM", "4:05 PM"] },
+  { stop_id: "7698", name: "SW 52nd &amp; Maplewood School", lat: 45.470854, lon: -122.730468, times: ["4:01 PM", "4:06 PM"] },
+  { stop_id: "7700", name: "SW 52nd &amp; Nevada Ct", lat: 45.472839, lon: -122.730516, times: ["4:01 PM", "4:06 PM"] },
+  { stop_id: "4104", name: "SW Nevada Ct &amp; 54th", lat: 45.472925, lon: -122.732355, times: ["4:02 PM", "4:07 PM"] },
   { stop_id: "13170", name: "SW Broadway &amp; W Burnside", lat: 45.522894, lon: -122.677232, times: ["3:15 PM"] },
   { stop_id: "7631", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["3:16 PM"] },
   { stop_id: "7625", name: "SW 5th &amp; Morrison", lat: 45.518932, lon: -122.677571, times: ["3:18 PM"] },
@@ -672,15 +674,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

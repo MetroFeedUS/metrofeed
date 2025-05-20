@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 63 - To Portland City Center</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -338,24 +340,24 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "11151", name: "SW Rose Garden Way &amp; Sherwood", lat: 45.51849, lon: -122.706187, times: ["10:00 AM"] },
-  { stop_id: "3279", name: "SW Kingston &amp; Tichner", lat: 45.523319, lon: -122.706647, times: ["8:04 AM"] },
-  { stop_id: "10589", name: "SW Park Pl &amp; Wright", lat: 45.521738, lon: -122.704463, times: ["8:06 AM"] },
-  { stop_id: "6177", name: "SW Sacajawea &amp; Sherwood", lat: 45.521124, lon: -122.702951, times: ["8:06 AM"] },
-  { stop_id: "4341", name: "SW Park Pl &amp; Douglas", lat: 45.521248, lon: -122.70037, times: ["8:07 AM"] },
-  { stop_id: "4350", name: "SW Park Pl &amp; Vista", lat: 45.521243, lon: -122.697871, times: ["8:08 AM"] },
-  { stop_id: "4345", name: "SW Park Pl &amp; King Ave", lat: 45.521233, lon: -122.695556, times: ["8:09 AM"] },
-  { stop_id: "5019", name: "SW Salmon &amp; 20th", lat: 45.520551, lon: -122.693771, times: ["8:09 AM"] },
-  { stop_id: "5006", name: "SW Salmon &amp; 19th", lat: 45.520156, lon: -122.692364, times: ["8:10 AM"] },
-  { stop_id: "5016", name: "SW Salmon &amp; 16th", lat: 45.519497, lon: -122.688994, times: ["8:11 AM"] },
-  { stop_id: "5009", name: "SW Salmon &amp; 10th", lat: 45.518026, lon: -122.683475, times: ["8:13 AM"] },
-  { stop_id: "7807", name: "SW 6th &amp; Yamhill", lat: 45.518199, lon: -122.678975, times: ["8:15 AM"] },
-  { stop_id: "3291", name: "SW Knights &amp; Kingston", lat: 45.512451, lon: -122.7168, times: ["7:57 AM"] },
-  { stop_id: "1624", name: "4000 Block SW Fairview (Arboretum)", lat: 45.515786, lon: -122.715934, times: ["7:59 AM"] },
-  { stop_id: "1636", name: "2900 Block SW Fairview", lat: 45.521405, lon: -122.711467, times: ["8:01 AM"] },
-  { stop_id: "1627", name: "SW Fairview &amp; Bennington", lat: 45.520757, lon: -122.71089, times: ["8:02 AM"] },
-  { stop_id: "1629", name: "SW Fairview &amp; Cascade", lat: 45.518883, lon: -122.712434, times: ["8:02 AM"] },
-  { stop_id: "1633", name: "SW Fairview &amp; Kingston", lat: 45.521354, lon: -122.706979, times: ["8:04 AM"] },
+  { stop_id: "11151", name: "SW Rose Garden Way &amp; Sherwood", lat: 45.51849, lon: -122.706187, times: ["10:00 AM", "11:00 AM", "12:00 PM"] },
+  { stop_id: "3279", name: "SW Kingston &amp; Tichner", lat: 45.523319, lon: -122.706647, times: ["8:04 AM", "9:01 AM", "10:02 AM"] },
+  { stop_id: "10589", name: "SW Park Pl &amp; Wright", lat: 45.521738, lon: -122.704463, times: ["8:06 AM", "9:03 AM", "10:03 AM"] },
+  { stop_id: "6177", name: "SW Sacajawea &amp; Sherwood", lat: 45.521124, lon: -122.702951, times: ["8:06 AM", "9:04 AM", "10:04 AM"] },
+  { stop_id: "4341", name: "SW Park Pl &amp; Douglas", lat: 45.521248, lon: -122.70037, times: ["8:07 AM", "9:05 AM", "10:05 AM"] },
+  { stop_id: "4350", name: "SW Park Pl &amp; Vista", lat: 45.521243, lon: -122.697871, times: ["8:08 AM", "9:06 AM", "10:06 AM"] },
+  { stop_id: "4345", name: "SW Park Pl &amp; King Ave", lat: 45.521233, lon: -122.695556, times: ["8:09 AM", "9:06 AM", "10:06 AM"] },
+  { stop_id: "5019", name: "SW Salmon &amp; 20th", lat: 45.520551, lon: -122.693771, times: ["8:09 AM", "9:07 AM", "10:07 AM"] },
+  { stop_id: "5006", name: "SW Salmon &amp; 19th", lat: 45.520156, lon: -122.692364, times: ["8:10 AM", "9:07 AM", "10:07 AM"] },
+  { stop_id: "5016", name: "SW Salmon &amp; 16th", lat: 45.519497, lon: -122.688994, times: ["8:11 AM", "9:09 AM", "10:09 AM"] },
+  { stop_id: "5009", name: "SW Salmon &amp; 10th", lat: 45.518026, lon: -122.683475, times: ["8:13 AM", "9:11 AM", "10:11 AM"] },
+  { stop_id: "7807", name: "SW 6th &amp; Yamhill", lat: 45.518199, lon: -122.678975, times: ["8:15 AM", "9:13 AM", "10:13 AM"] },
+  { stop_id: "3291", name: "SW Knights &amp; Kingston", lat: 45.512451, lon: -122.7168, times: ["7:57 AM", "8:54 AM"] },
+  { stop_id: "1624", name: "4000 Block SW Fairview (Arboretum)", lat: 45.515786, lon: -122.715934, times: ["7:59 AM", "8:56 AM"] },
+  { stop_id: "1636", name: "2900 Block SW Fairview", lat: 45.521405, lon: -122.711467, times: ["8:01 AM", "8:58 AM"] },
+  { stop_id: "1627", name: "SW Fairview &amp; Bennington", lat: 45.520757, lon: -122.71089, times: ["8:02 AM", "8:59 AM"] },
+  { stop_id: "1629", name: "SW Fairview &amp; Cascade", lat: 45.518883, lon: -122.712434, times: ["8:02 AM", "8:59 AM"] },
+  { stop_id: "1633", name: "SW Fairview &amp; Kingston", lat: 45.521354, lon: -122.706979, times: ["8:04 AM", "9:01 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -449,15 +451,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

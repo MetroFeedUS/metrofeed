@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 55 - To Raleigh Hills</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -980,15 +982,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 53 - Morning Loop</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -535,25 +537,25 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["5:48 AM"] },
-  { stop_id: "9981", name: "Beaverton Transit Center", lat: 45.49093, lon: -122.801741, times: ["5:50 AM"] },
-  { stop_id: "12945", name: "SW Lombard &amp; Broadway", lat: 45.488206, lon: -122.801264, times: ["5:50 AM"] },
-  { stop_id: "342", name: "SW Beaverton-Hillsdale &amp; Griffith", lat: 45.486417, lon: -122.797055, times: ["5:51 AM"] },
-  { stop_id: "9707", name: "4900 Block SW Griffith Drive", lat: 45.483996, lon: -122.795357, times: ["5:52 AM"] },
-  { stop_id: "9699", name: "10900 Block SW 5th", lat: 45.483666, lon: -122.789073, times: ["5:54 AM"] },
-  { stop_id: "9700", name: "SW 5th &amp; Western", lat: 45.483647, lon: -122.782894, times: ["5:56 AM"] },
-  { stop_id: "9685", name: "SW Arctic Dr &amp; Western Ave", lat: 45.481302, lon: -122.781966, times: ["5:56 AM"] },
-  { stop_id: "9686", name: "SW Arctic Dr &amp; Harvest Ct", lat: 45.479129, lon: -122.778791, times: ["5:57 AM"] },
-  { stop_id: "9701", name: "SW Arctic Dr &amp; Allen", lat: 45.474825, lon: -122.778974, times: ["5:58 AM"] },
-  { stop_id: "9703", name: "10500 Block SW Allen", lat: 45.476709, lon: -122.784726, times: ["5:59 AM"] },
-  { stop_id: "10499", name: "SW Allen &amp; 107th", lat: 45.476697, lon: -122.78714, times: ["5:59 AM"] },
-  { stop_id: "9704", name: "SW Allen &amp; King", lat: 45.47669, lon: -122.79361, times: ["6:01 AM"] },
-  { stop_id: "3455", name: "SW Lombard &amp; Allen", lat: 45.476992, lon: -122.800197, times: ["6:02 AM"] },
-  { stop_id: "3580", name: "SW Lombard &amp; 12th", lat: 45.478466, lon: -122.800249, times: ["6:03 AM"] },
-  { stop_id: "3585", name: "SW Lombard &amp; 9th", lat: 45.480428, lon: -122.800217, times: ["6:03 AM"] },
-  { stop_id: "3583", name: "SW Lombard &amp; 5th", lat: 45.482796, lon: -122.80022, times: ["6:04 AM"] },
-  { stop_id: "3582", name: "SW Lombard &amp; 2nd", lat: 45.484921, lon: -122.800245, times: ["6:05 AM"] },
-  { stop_id: "12944", name: "SW Lombard &amp; Broadway", lat: 45.487818, lon: -122.800725, times: ["6:06 AM"] },
+  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["5:48 AM", "6:08 AM", "6:19 AM"] },
+  { stop_id: "9981", name: "Beaverton Transit Center", lat: 45.49093, lon: -122.801741, times: ["5:50 AM", "6:21 AM", "6:49 AM"] },
+  { stop_id: "12945", name: "SW Lombard &amp; Broadway", lat: 45.488206, lon: -122.801264, times: ["5:50 AM", "6:21 AM", "6:50 AM"] },
+  { stop_id: "342", name: "SW Beaverton-Hillsdale &amp; Griffith", lat: 45.486417, lon: -122.797055, times: ["5:51 AM", "6:22 AM", "6:51 AM"] },
+  { stop_id: "9707", name: "4900 Block SW Griffith Drive", lat: 45.483996, lon: -122.795357, times: ["5:52 AM", "6:23 AM", "6:52 AM"] },
+  { stop_id: "9699", name: "10900 Block SW 5th", lat: 45.483666, lon: -122.789073, times: ["5:54 AM", "6:25 AM", "6:55 AM"] },
+  { stop_id: "9700", name: "SW 5th &amp; Western", lat: 45.483647, lon: -122.782894, times: ["5:56 AM", "6:27 AM", "6:57 AM"] },
+  { stop_id: "9685", name: "SW Arctic Dr &amp; Western Ave", lat: 45.481302, lon: -122.781966, times: ["5:56 AM", "6:27 AM", "6:57 AM"] },
+  { stop_id: "9686", name: "SW Arctic Dr &amp; Harvest Ct", lat: 45.479129, lon: -122.778791, times: ["5:57 AM", "6:28 AM", "6:58 AM"] },
+  { stop_id: "9701", name: "SW Arctic Dr &amp; Allen", lat: 45.474825, lon: -122.778974, times: ["5:58 AM", "6:30 AM", "7:00 AM"] },
+  { stop_id: "9703", name: "10500 Block SW Allen", lat: 45.476709, lon: -122.784726, times: ["5:59 AM", "6:31 AM", "7:01 AM"] },
+  { stop_id: "10499", name: "SW Allen &amp; 107th", lat: 45.476697, lon: -122.78714, times: ["5:59 AM", "6:31 AM", "7:01 AM"] },
+  { stop_id: "9704", name: "SW Allen &amp; King", lat: 45.47669, lon: -122.79361, times: ["6:01 AM", "6:33 AM", "7:03 AM"] },
+  { stop_id: "3455", name: "SW Lombard &amp; Allen", lat: 45.476992, lon: -122.800197, times: ["6:02 AM", "6:34 AM", "7:04 AM"] },
+  { stop_id: "3580", name: "SW Lombard &amp; 12th", lat: 45.478466, lon: -122.800249, times: ["6:03 AM", "6:35 AM", "7:05 AM"] },
+  { stop_id: "3585", name: "SW Lombard &amp; 9th", lat: 45.480428, lon: -122.800217, times: ["6:03 AM", "6:36 AM", "7:06 AM"] },
+  { stop_id: "3583", name: "SW Lombard &amp; 5th", lat: 45.482796, lon: -122.80022, times: ["6:04 AM", "6:37 AM", "7:07 AM"] },
+  { stop_id: "3582", name: "SW Lombard &amp; 2nd", lat: 45.484921, lon: -122.800245, times: ["6:05 AM", "6:38 AM", "7:08 AM"] },
+  { stop_id: "12944", name: "SW Lombard &amp; Broadway", lat: 45.487818, lon: -122.800725, times: ["6:06 AM", "6:39 AM", "7:09 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -647,15 +649,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

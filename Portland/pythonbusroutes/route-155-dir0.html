@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 155 - To 172nd</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -503,27 +505,27 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["5:28 AM"] },
-  { stop_id: "12922", name: "Clackamas Town Center Mall", lat: 45.437504, lon: -122.574003, times: ["5:31 AM"] },
-  { stop_id: "11926", name: "SE Bob Schumacher &amp; Monterey", lat: 45.437803, lon: -122.566898, times: ["5:32 AM"] },
-  { stop_id: "11453", name: "10000 Block SE Stevens Rd", lat: 45.434992, lon: -122.562252, times: ["5:33 AM"] },
-  { stop_id: "11520", name: "SE Sunnyside &amp; Stevens", lat: 45.433315, lon: -122.560659, times: ["5:34 AM"] },
-  { stop_id: "8991", name: "SE Sunnyside &amp; 105th", lat: 45.433513, lon: -122.55556, times: ["5:35 AM"] },
-  { stop_id: "11970", name: "SE Sunnyside &amp; Sunnybrook", lat: 45.433565, lon: -122.552389, times: ["5:35 AM"] },
-  { stop_id: "8993", name: "SE Sunnyside &amp; Valley View Ter", lat: 45.43319, lon: -122.548937, times: ["5:35 AM"] },
-  { stop_id: "10580", name: "SE Sunnyside &amp; 117th", lat: 45.431729, lon: -122.544321, times: ["5:36 AM"] },
-  { stop_id: "8995", name: "SE Sunnyside &amp; 119th", lat: 45.429758, lon: -122.540192, times: ["5:37 AM"] },
-  { stop_id: "10203", name: "SE Sunnyside &amp; 122nd", lat: 45.428212, lon: -122.536913, times: ["5:38 AM"] },
-  { stop_id: "10136", name: "SE Sunnyside &amp; 128th", lat: 45.427103, lon: -122.530927, times: ["5:38 AM"] },
-  { stop_id: "10138", name: "SE Sunnyside &amp; 132nd", lat: 45.426532, lon: -122.52707, times: ["5:39 AM"] },
-  { stop_id: "10140", name: "SE Sunnyside &amp; 139th", lat: 45.424973, lon: -122.520874, times: ["5:40 AM"] },
-  { stop_id: "10142", name: "SE Sunnyside &amp; 142nd", lat: 45.424798, lon: -122.516551, times: ["5:40 AM"] },
-  { stop_id: "12924", name: "SE Sunnyside &amp; 147th", lat: 45.424743, lon: -122.512964, times: ["5:41 AM"] },
-  { stop_id: "12901", name: "SE Sunnyside &amp; 152nd", lat: 45.42541, lon: -122.506593, times: ["5:42 AM"] },
-  { stop_id: "13884", name: "SE Sunnyside &amp; 157th", lat: 45.426618, lon: -122.502631, times: ["5:42 AM"] },
-  { stop_id: "13885", name: "SE Sunnyside &amp; 162nd", lat: 45.426869, lon: -122.497262, times: ["5:43 AM"] },
-  { stop_id: "13887", name: "SE 169th &amp; Misty", lat: 45.428972, lon: -122.489458, times: ["5:45 AM"] },
-  { stop_id: "13888", name: "SE 172nd &amp; Sunnyside", lat: 45.426947, lon: -122.485927, times: ["5:46 AM"] },
+  { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["5:28 AM", "5:57 AM", "6:34 AM"] },
+  { stop_id: "12922", name: "Clackamas Town Center Mall", lat: 45.437504, lon: -122.574003, times: ["5:31 AM", "6:00 AM", "6:37 AM"] },
+  { stop_id: "11926", name: "SE Bob Schumacher &amp; Monterey", lat: 45.437803, lon: -122.566898, times: ["5:32 AM", "6:01 AM", "6:39 AM"] },
+  { stop_id: "11453", name: "10000 Block SE Stevens Rd", lat: 45.434992, lon: -122.562252, times: ["5:33 AM", "6:02 AM", "6:40 AM"] },
+  { stop_id: "11520", name: "SE Sunnyside &amp; Stevens", lat: 45.433315, lon: -122.560659, times: ["5:34 AM", "6:03 AM", "6:40 AM"] },
+  { stop_id: "8991", name: "SE Sunnyside &amp; 105th", lat: 45.433513, lon: -122.55556, times: ["5:35 AM", "6:04 AM", "6:41 AM"] },
+  { stop_id: "11970", name: "SE Sunnyside &amp; Sunnybrook", lat: 45.433565, lon: -122.552389, times: ["5:35 AM", "6:04 AM", "6:42 AM"] },
+  { stop_id: "8993", name: "SE Sunnyside &amp; Valley View Ter", lat: 45.43319, lon: -122.548937, times: ["5:35 AM", "6:04 AM", "6:42 AM"] },
+  { stop_id: "10580", name: "SE Sunnyside &amp; 117th", lat: 45.431729, lon: -122.544321, times: ["5:36 AM", "6:05 AM", "6:43 AM"] },
+  { stop_id: "8995", name: "SE Sunnyside &amp; 119th", lat: 45.429758, lon: -122.540192, times: ["5:37 AM", "6:06 AM", "6:44 AM"] },
+  { stop_id: "10203", name: "SE Sunnyside &amp; 122nd", lat: 45.428212, lon: -122.536913, times: ["5:38 AM", "6:07 AM", "6:45 AM"] },
+  { stop_id: "10136", name: "SE Sunnyside &amp; 128th", lat: 45.427103, lon: -122.530927, times: ["5:38 AM", "6:07 AM", "6:45 AM"] },
+  { stop_id: "10138", name: "SE Sunnyside &amp; 132nd", lat: 45.426532, lon: -122.52707, times: ["5:39 AM", "6:08 AM", "6:46 AM"] },
+  { stop_id: "10140", name: "SE Sunnyside &amp; 139th", lat: 45.424973, lon: -122.520874, times: ["5:40 AM", "6:09 AM", "6:47 AM"] },
+  { stop_id: "10142", name: "SE Sunnyside &amp; 142nd", lat: 45.424798, lon: -122.516551, times: ["5:40 AM", "6:09 AM", "6:48 AM"] },
+  { stop_id: "12924", name: "SE Sunnyside &amp; 147th", lat: 45.424743, lon: -122.512964, times: ["5:41 AM", "6:10 AM", "6:48 AM"] },
+  { stop_id: "12901", name: "SE Sunnyside &amp; 152nd", lat: 45.42541, lon: -122.506593, times: ["5:42 AM", "6:11 AM", "6:49 AM"] },
+  { stop_id: "13884", name: "SE Sunnyside &amp; 157th", lat: 45.426618, lon: -122.502631, times: ["5:42 AM", "6:11 AM", "6:50 AM"] },
+  { stop_id: "13885", name: "SE Sunnyside &amp; 162nd", lat: 45.426869, lon: -122.497262, times: ["5:43 AM", "6:12 AM", "6:51 AM"] },
+  { stop_id: "13887", name: "SE 169th &amp; Misty", lat: 45.428972, lon: -122.489458, times: ["5:45 AM", "6:14 AM", "6:52 AM"] },
+  { stop_id: "13888", name: "SE 172nd &amp; Sunnyside", lat: 45.426947, lon: -122.485927, times: ["5:46 AM", "6:15 AM", "6:54 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -617,15 +619,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

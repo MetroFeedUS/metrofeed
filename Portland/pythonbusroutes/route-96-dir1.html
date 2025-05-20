@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 96 - To Portland City Center</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -786,36 +788,36 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "8285", name: "SW Martinazzi &amp; Mohawk", lat: 45.376144, lon: -122.760435, times: ["5:15 AM"] },
-  { stop_id: "8249", name: "SW Martinazzi &amp; Martinazzi Square", lat: 45.38049, lon: -122.758913, times: ["5:16 AM"] },
-  { stop_id: "8250", name: "SW Martinazzi &amp; Tualatin-Sherwood", lat: 45.382093, lon: -122.75856, times: ["5:16 AM"] },
-  { stop_id: "3778", name: "SW Martinazzi &amp; Boones Ferry", lat: 45.384126, lon: -122.758789, times: ["5:17 AM"] },
-  { stop_id: "496", name: "18400 Block SW Boones Ferry Rd", lat: 45.387039, lon: -122.756954, times: ["5:18 AM"] },
-  { stop_id: "570", name: "SW Lower Boones Ferry &amp; Boones Ferry", lat: 45.389237, lon: -122.755057, times: ["5:19 AM"] },
-  { stop_id: "513", name: "SW Lower Boones Ferry &amp; Childs Rd", lat: 45.390038, lon: -122.753063, times: ["5:19 AM"] },
-  { stop_id: "537", name: "18000 Block SW Lower Boones Ferry", lat: 45.391399, lon: -122.751098, times: ["5:19 AM"] },
-  { stop_id: "7879", name: "Tualatin Park &amp; Ride ", lat: 45.394692, lon: -122.748821, times: ["5:21 AM"] },
-  { stop_id: "11944", name: "16800 Block SW 72nd", lat: 45.397666, lon: -122.749002, times: ["5:21 AM"] },
-  { stop_id: "7893", name: "SW 72nd &amp; Upper Boones Ferry", lat: 45.403894, lon: -122.749422, times: ["5:22 AM"] },
-  { stop_id: "10713", name: "S Harbor &amp; River Pkwy", lat: 45.508087, lon: -122.67598, times: ["5:38 AM"] },
-  { stop_id: "11002", name: "S Harbor &amp; Montgomery", lat: 45.509749, lon: -122.67571, times: ["5:38 AM"] },
-  { stop_id: "12789", name: "SW Jefferson &amp; 1st", lat: 45.513751, lon: -122.675585, times: ["5:39 AM"] },
-  { stop_id: "3039", name: "SW Jefferson &amp; Broadway", lat: 45.515359, lon: -122.681597, times: ["5:40 AM"] },
-  { stop_id: "3049", name: "SW Jefferson &amp; 10th", lat: 45.516026, lon: -122.684087, times: ["5:42 AM"] },
-  { stop_id: "13493", name: "10100 Block SW Commerce Circle", lat: 45.33519, lon: -122.775493, times: ["6:00 AM"] },
-  { stop_id: "8389", name: "SW 95th &amp; Commerce Circle", lat: 45.336348, lon: -122.77327, times: ["6:00 AM"] },
-  { stop_id: "521", name: "SW Boones Ferry Rd &amp; Day", lat: 45.340199, lon: -122.773372, times: ["6:01 AM"] },
-  { stop_id: "8892", name: "24300 Block SW Boones Ferry Rd", lat: 45.343824, lon: -122.774217, times: ["6:02 AM"] },
-  { stop_id: "14581", name: "SW Boones Ferry Rd &amp; Salinan", lat: 45.349315, lon: -122.774862, times: ["6:03 AM"] },
-  { stop_id: "543", name: "SW Boones Ferry Rd &amp; Norwood", lat: 45.353321, lon: -122.774579, times: ["6:04 AM"] },
-  { stop_id: "9511", name: "SW Boones Ferry Rd &amp; Iowa Dr", lat: 45.355776, lon: -122.774652, times: ["6:04 AM"] },
-  { stop_id: "531", name: "SW Boones Ferry Rd &amp; Ibach", lat: 45.360177, lon: -122.774571, times: ["6:05 AM"] },
-  { stop_id: "510", name: "SW Boones Ferry Rd &amp; Blake", lat: 45.365253, lon: -122.773011, times: ["6:06 AM"] },
-  { stop_id: "562", name: "SW Boones Ferry Rd &amp; Siletz", lat: 45.369394, lon: -122.772392, times: ["6:07 AM"] },
-  { stop_id: "9353", name: "SW Boones Ferry Rd &amp; Avery", lat: 45.371964, lon: -122.770317, times: ["6:08 AM"] },
-  { stop_id: "502", name: "SW Boones Ferry Rd &amp; Apache", lat: 45.372759, lon: -122.769708, times: ["6:08 AM"] },
-  { stop_id: "5004", name: "SW Sagert &amp; 86th", lat: 45.375235, lon: -122.765776, times: ["6:09 AM"] },
-  { stop_id: "8278", name: "SW Sagert &amp; Tillamook", lat: 45.375284, lon: -122.763408, times: ["6:09 AM"] },
+  { stop_id: "8285", name: "SW Martinazzi &amp; Mohawk", lat: 45.376144, lon: -122.760435, times: ["5:15 AM", "5:43 AM", "6:10 AM"] },
+  { stop_id: "8249", name: "SW Martinazzi &amp; Martinazzi Square", lat: 45.38049, lon: -122.758913, times: ["5:16 AM", "5:44 AM", "6:11 AM"] },
+  { stop_id: "8250", name: "SW Martinazzi &amp; Tualatin-Sherwood", lat: 45.382093, lon: -122.75856, times: ["5:16 AM", "5:44 AM", "6:11 AM"] },
+  { stop_id: "3778", name: "SW Martinazzi &amp; Boones Ferry", lat: 45.384126, lon: -122.758789, times: ["5:17 AM", "5:45 AM", "6:12 AM"] },
+  { stop_id: "496", name: "18400 Block SW Boones Ferry Rd", lat: 45.387039, lon: -122.756954, times: ["5:18 AM", "5:46 AM", "6:13 AM"] },
+  { stop_id: "570", name: "SW Lower Boones Ferry &amp; Boones Ferry", lat: 45.389237, lon: -122.755057, times: ["5:19 AM", "5:47 AM", "6:14 AM"] },
+  { stop_id: "513", name: "SW Lower Boones Ferry &amp; Childs Rd", lat: 45.390038, lon: -122.753063, times: ["5:19 AM", "5:47 AM", "6:14 AM"] },
+  { stop_id: "537", name: "18000 Block SW Lower Boones Ferry", lat: 45.391399, lon: -122.751098, times: ["5:19 AM", "5:47 AM", "6:14 AM"] },
+  { stop_id: "7879", name: "Tualatin Park &amp; Ride ", lat: 45.394692, lon: -122.748821, times: ["5:21 AM", "5:49 AM", "6:16 AM"] },
+  { stop_id: "11944", name: "16800 Block SW 72nd", lat: 45.397666, lon: -122.749002, times: ["5:21 AM", "5:49 AM", "6:16 AM"] },
+  { stop_id: "7893", name: "SW 72nd &amp; Upper Boones Ferry", lat: 45.403894, lon: -122.749422, times: ["5:22 AM", "5:50 AM", "6:17 AM"] },
+  { stop_id: "10713", name: "S Harbor &amp; River Pkwy", lat: 45.508087, lon: -122.67598, times: ["5:38 AM", "6:06 AM", "6:34 AM"] },
+  { stop_id: "11002", name: "S Harbor &amp; Montgomery", lat: 45.509749, lon: -122.67571, times: ["5:38 AM", "6:06 AM", "6:34 AM"] },
+  { stop_id: "12789", name: "SW Jefferson &amp; 1st", lat: 45.513751, lon: -122.675585, times: ["5:39 AM", "6:07 AM", "6:35 AM"] },
+  { stop_id: "3039", name: "SW Jefferson &amp; Broadway", lat: 45.515359, lon: -122.681597, times: ["5:40 AM", "6:08 AM", "6:36 AM"] },
+  { stop_id: "3049", name: "SW Jefferson &amp; 10th", lat: 45.516026, lon: -122.684087, times: ["5:42 AM", "6:10 AM", "6:38 AM"] },
+  { stop_id: "13493", name: "10100 Block SW Commerce Circle", lat: 45.33519, lon: -122.775493, times: ["6:00 AM", "6:23 AM", "6:47 AM"] },
+  { stop_id: "8389", name: "SW 95th &amp; Commerce Circle", lat: 45.336348, lon: -122.77327, times: ["6:00 AM", "6:23 AM", "6:47 AM"] },
+  { stop_id: "521", name: "SW Boones Ferry Rd &amp; Day", lat: 45.340199, lon: -122.773372, times: ["6:01 AM", "6:24 AM", "6:48 AM"] },
+  { stop_id: "8892", name: "24300 Block SW Boones Ferry Rd", lat: 45.343824, lon: -122.774217, times: ["6:02 AM", "6:25 AM", "6:49 AM"] },
+  { stop_id: "14581", name: "SW Boones Ferry Rd &amp; Salinan", lat: 45.349315, lon: -122.774862, times: ["6:03 AM", "6:26 AM", "6:50 AM"] },
+  { stop_id: "543", name: "SW Boones Ferry Rd &amp; Norwood", lat: 45.353321, lon: -122.774579, times: ["6:04 AM", "6:27 AM", "6:51 AM"] },
+  { stop_id: "9511", name: "SW Boones Ferry Rd &amp; Iowa Dr", lat: 45.355776, lon: -122.774652, times: ["6:04 AM", "6:27 AM", "6:52 AM"] },
+  { stop_id: "531", name: "SW Boones Ferry Rd &amp; Ibach", lat: 45.360177, lon: -122.774571, times: ["6:05 AM", "6:28 AM", "6:53 AM"] },
+  { stop_id: "510", name: "SW Boones Ferry Rd &amp; Blake", lat: 45.365253, lon: -122.773011, times: ["6:06 AM", "6:29 AM", "6:54 AM"] },
+  { stop_id: "562", name: "SW Boones Ferry Rd &amp; Siletz", lat: 45.369394, lon: -122.772392, times: ["6:07 AM", "6:30 AM", "6:55 AM"] },
+  { stop_id: "9353", name: "SW Boones Ferry Rd &amp; Avery", lat: 45.371964, lon: -122.770317, times: ["6:08 AM", "6:31 AM", "6:55 AM"] },
+  { stop_id: "502", name: "SW Boones Ferry Rd &amp; Apache", lat: 45.372759, lon: -122.769708, times: ["6:08 AM", "6:31 AM", "6:56 AM"] },
+  { stop_id: "5004", name: "SW Sagert &amp; 86th", lat: 45.375235, lon: -122.765776, times: ["6:09 AM", "6:32 AM", "6:57 AM"] },
+  { stop_id: "8278", name: "SW Sagert &amp; Tillamook", lat: 45.375284, lon: -122.763408, times: ["6:09 AM", "6:32 AM", "6:57 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -909,15 +911,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

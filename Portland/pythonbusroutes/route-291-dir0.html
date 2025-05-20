@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 291 - To Milwaukie</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -845,21 +847,21 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "7601", name: "Union Station/NW 5th &amp; Glisan MAX Stn", lat: 45.526732, lon: -122.675604, times: ["11:33 PM"] },
-  { stop_id: "9303", name: "NW 5th &amp; Couch MAX Station", lat: 45.523885, lon: -122.675498, times: ["11:35 PM"] },
-  { stop_id: "7627", name: "SW 5th &amp; Oak St MAX Station", lat: 45.521573, lon: -122.676178, times: ["11:36 PM"] },
-  { stop_id: "7646", name: "Pioneer Place/SW 5th Ave MAX Station", lat: 45.518255, lon: -122.677934, times: ["11:38 PM"] },
-  { stop_id: "7608", name: "City Hall/SW 5th &amp; Jefferson MAX Station", lat: 45.514914, lon: -122.679742, times: ["11:39 PM"] },
-  { stop_id: "7618", name: "PSU Urban Center/SW 5th &amp; Mill MAX Station", lat: 45.511645, lon: -122.681551, times: ["11:40 PM"] },
-  { stop_id: "3397", name: "300 Block SW Lincoln", lat: 45.507794, lon: -122.680132, times: ["11:42 PM"] },
-  { stop_id: "13732", name: "South Waterfront/S Moody", lat: 45.502797, lon: -122.670872, times: ["11:45 PM"] },
-  { stop_id: "13772", name: "OMSI/SE Water", lat: 45.506493, lon: -122.662291, times: ["11:48 PM"] },
-  { stop_id: "13791", name: "SE Milwaukie &amp; Gideon", lat: 45.502586, lon: -122.65436, times: ["11:49 PM"] },
-  { stop_id: "13704", name: "SE 17th &amp; Rhine", lat: 45.497192, lon: -122.648367, times: ["11:51 PM"] },
-  { stop_id: "6877", name: "SE 17th &amp; Mall", lat: 45.491552, lon: -122.648672, times: ["11:52 PM"] },
-  { stop_id: "7156", name: "SE 23rd &amp; Bybee", lat: 45.474314, lon: -122.641635, times: ["11:56 PM"] },
-  { stop_id: "13770", name: "SE Tacoma Park &amp; Ride", lat: 45.462741, lon: -122.637156, times: ["12:00 AM"] },
-  { stop_id: "8225", name: "SE Jackson &amp; 21st", lat: 45.444827, lon: -122.640491, times: ["12:06 AM"] },
+  { stop_id: "7601", name: "Union Station/NW 5th &amp; Glisan MAX Stn", lat: 45.526732, lon: -122.675604, times: ["11:33 PM", "12:09 AM", "12:43 AM"] },
+  { stop_id: "9303", name: "NW 5th &amp; Couch MAX Station", lat: 45.523885, lon: -122.675498, times: ["11:35 PM", "12:11 AM", "12:45 AM"] },
+  { stop_id: "7627", name: "SW 5th &amp; Oak St MAX Station", lat: 45.521573, lon: -122.676178, times: ["11:36 PM", "12:12 AM", "12:46 AM"] },
+  { stop_id: "7646", name: "Pioneer Place/SW 5th Ave MAX Station", lat: 45.518255, lon: -122.677934, times: ["11:38 PM", "12:14 AM", "12:48 AM"] },
+  { stop_id: "7608", name: "City Hall/SW 5th &amp; Jefferson MAX Station", lat: 45.514914, lon: -122.679742, times: ["11:39 PM", "12:15 AM", "12:49 AM"] },
+  { stop_id: "7618", name: "PSU Urban Center/SW 5th &amp; Mill MAX Station", lat: 45.511645, lon: -122.681551, times: ["11:40 PM", "12:16 AM", "12:50 AM"] },
+  { stop_id: "3397", name: "300 Block SW Lincoln", lat: 45.507794, lon: -122.680132, times: ["11:42 PM", "12:18 AM", "12:52 AM"] },
+  { stop_id: "13732", name: "South Waterfront/S Moody", lat: 45.502797, lon: -122.670872, times: ["11:45 PM", "12:21 AM", "12:55 AM"] },
+  { stop_id: "13772", name: "OMSI/SE Water", lat: 45.506493, lon: -122.662291, times: ["11:48 PM", "12:24 AM", "12:58 AM"] },
+  { stop_id: "13791", name: "SE Milwaukie &amp; Gideon", lat: 45.502586, lon: -122.65436, times: ["11:49 PM", "12:25 AM", "12:59 AM"] },
+  { stop_id: "13704", name: "SE 17th &amp; Rhine", lat: 45.497192, lon: -122.648367, times: ["11:51 PM", "12:27 AM", "1:01 AM"] },
+  { stop_id: "6877", name: "SE 17th &amp; Mall", lat: 45.491552, lon: -122.648672, times: ["11:52 PM", "12:28 AM", "1:02 AM"] },
+  { stop_id: "7156", name: "SE 23rd &amp; Bybee", lat: 45.474314, lon: -122.641635, times: ["11:56 PM", "12:32 AM", "1:06 AM"] },
+  { stop_id: "13770", name: "SE Tacoma Park &amp; Ride", lat: 45.462741, lon: -122.637156, times: ["12:00 AM", "12:36 AM", "1:10 AM"] },
+  { stop_id: "8225", name: "SE Jackson &amp; 21st", lat: 45.444827, lon: -122.640491, times: ["12:06 AM", "12:42 AM", "1:16 AM"] },
   { stop_id: "7136", name: "SE 21st &amp; Washington", lat: 45.442713, lon: -122.639911, times: ["12:06 AM"] },
   { stop_id: "3848", name: "SE McLoughlin &amp; Park Ave", lat: 45.431263, lon: -122.635038, times: ["12:10 AM"] },
   { stop_id: "14484", name: "SE Park Ave &amp; SE Park Ave MAX Station", lat: 45.430321, lon: -122.635561, times: ["12:11 AM"] },
@@ -956,15 +958,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 46 - To Hillsboro Brookwood Library</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -686,44 +688,44 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "8181", name: "Hillsboro Transit Center ", lat: 45.521497, lon: -122.985064, times: ["6:11 AM"] },
-  { stop_id: "9931", name: "300 Block E Main", lat: 45.522659, lon: -122.985446, times: ["6:11 AM"] },
-  { stop_id: "9933", name: "E Main &amp; N 1st", lat: 45.522751, lon: -122.989504, times: ["6:12 AM"] },
-  { stop_id: "9935", name: "N 1st &amp; NE Edison", lat: 45.526464, lon: -122.989602, times: ["6:13 AM"] },
-  { stop_id: "9936", name: "N 1st &amp; NE Grant", lat: 45.52855, lon: -122.98956, times: ["6:13 AM"] },
-  { stop_id: "9937", name: "N 1st &amp; NE Tiffany", lat: 45.531512, lon: -122.989501, times: ["6:14 AM"] },
-  { stop_id: "10169", name: "NW Glencoe &amp; Cody Ct", lat: 45.535111, lon: -122.989812, times: ["6:14 AM"] },
-  { stop_id: "9939", name: "NW Glencoe &amp; NE Cory", lat: 45.53968, lon: -122.995681, times: ["6:15 AM"] },
-  { stop_id: "9938", name: "2800 Block NW Glencoe", lat: 45.540877, lon: -122.995638, times: ["6:15 AM"] },
-  { stop_id: "9940", name: "NW Glencoe &amp; NE Lenox", lat: 45.54427, lon: -122.995546, times: ["6:16 AM"] },
-  { stop_id: "9941", name: "NW Glencoe &amp; NE Milne", lat: 45.548473, lon: -122.995423, times: ["6:16 AM"] },
-  { stop_id: "9942", name: "NE Evergreen &amp; NW Glencoe", lat: 45.549727, lon: -122.994384, times: ["6:17 AM"] },
-  { stop_id: "9943", name: "NE Evergreen &amp; 3rd", lat: 45.549767, lon: -122.98922, times: ["6:17 AM"] },
-  { stop_id: "9944", name: "NE Evergreen &amp; Sunburst", lat: 45.549804, lon: -122.9864, times: ["6:17 AM"] },
-  { stop_id: "10482", name: "NE Evergreen &amp; Evergreen Middle School", lat: 45.549872, lon: -122.983731, times: ["6:18 AM"] },
-  { stop_id: "9945", name: "NE Evergreen &amp; Jackson School Rd", lat: 45.54992, lon: -122.979986, times: ["6:18 AM"] },
-  { stop_id: "9946", name: "NE Evergreen &amp; Jackson Road Loop", lat: 45.549967, lon: -122.973751, times: ["6:19 AM"] },
-  { stop_id: "9947", name: "NE Evergreen &amp; 13th", lat: 45.549948, lon: -122.969595, times: ["6:19 AM"] },
-  { stop_id: "10277", name: "NE 15th &amp; Edgefield", lat: 45.548763, lon: -122.966481, times: ["6:20 AM"] },
-  { stop_id: "10279", name: "NE 15th &amp; Prahl Pkwy", lat: 45.545595, lon: -122.966485, times: ["6:20 AM"] },
-  { stop_id: "9948", name: "NE 15th &amp; Jones Farm Pkwy", lat: 45.542515, lon: -122.966481, times: ["6:21 AM"] },
-  { stop_id: "9949", name: "NE Griffin Oaks &amp; 15th", lat: 45.53999, lon: -122.965265, times: ["6:21 AM"] },
-  { stop_id: "9950", name: "1800 Block NE Griffin Oaks", lat: 45.540046, lon: -122.962114, times: ["6:22 AM"] },
-  { stop_id: "9951", name: "2200 Block NE Griffin Oaks", lat: 45.540039, lon: -122.959648, times: ["6:22 AM"] },
-  { stop_id: "9952", name: "NE 25th &amp; Kathryn", lat: 45.538891, lon: -122.957145, times: ["6:23 AM"] },
-  { stop_id: "9607", name: "NE 25th &amp; Sunrise Lane", lat: 45.537025, lon: -122.957115, times: ["6:23 AM"] },
-  { stop_id: "10289", name: "1200 Block NE 25th", lat: 45.534172, lon: -122.957105, times: ["6:23 AM"] },
-  { stop_id: "10026", name: "NE Cornell &amp; 25th", lat: 45.530569, lon: -122.956322, times: ["6:24 AM"] },
-  { stop_id: "8558", name: "NE Cornell &amp; 34th", lat: 45.532092, lon: -122.947357, times: ["6:25 AM"] },
-  { stop_id: "9953", name: "Hillsboro Airport/Fairgrounds Park &amp; Ride", lat: 45.527198, lon: -122.94588, times: ["6:27 AM"] },
-  { stop_id: "9962", name: "NE 34th &amp; Cornell", lat: 45.531489, lon: -122.94652, times: ["6:49 AM"] },
-  { stop_id: "12884", name: "NE Brookwood &amp; Airport Rd", lat: 45.539589, lon: -122.938562, times: ["6:52 AM"] },
-  { stop_id: "12875", name: "2800 Blk NE Brookwood Pkwy, Library", lat: 45.542688, lon: -122.937027, times: ["6:53 AM"] },
-  { stop_id: "10061", name: "NE Dawson Creek &amp; Brookwood", lat: 45.547081, lon: -122.932369, times: ["6:55 AM"] },
-  { stop_id: "10005", name: "3100 Block NE Dawson Creek", lat: 45.548969, lon: -122.933363, times: ["6:55 AM"] },
-  { stop_id: "10004", name: "NE Evergreen &amp; Brookwood", lat: 45.550744, lon: -122.927202, times: ["6:57 AM"] },
-  { stop_id: "10063", name: "NE Shute Rd &amp; Dawson Creek Dr", lat: 45.544393, lon: -122.926328, times: ["6:59 AM"] },
-  { stop_id: "10278", name: "NE 15th &amp; Edgefield", lat: 45.548558, lon: -122.9663, times: ["6:42 AM"] },
+  { stop_id: "8181", name: "Hillsboro Transit Center ", lat: 45.521497, lon: -122.985064, times: ["6:11 AM", "7:34 AM", "8:42 AM"] },
+  { stop_id: "9931", name: "300 Block E Main", lat: 45.522659, lon: -122.985446, times: ["6:11 AM", "7:34 AM", "8:42 AM"] },
+  { stop_id: "9933", name: "E Main &amp; N 1st", lat: 45.522751, lon: -122.989504, times: ["6:12 AM", "7:35 AM", "8:43 AM"] },
+  { stop_id: "9935", name: "N 1st &amp; NE Edison", lat: 45.526464, lon: -122.989602, times: ["6:13 AM", "7:36 AM", "8:44 AM"] },
+  { stop_id: "9936", name: "N 1st &amp; NE Grant", lat: 45.52855, lon: -122.98956, times: ["6:13 AM", "7:37 AM", "8:45 AM"] },
+  { stop_id: "9937", name: "N 1st &amp; NE Tiffany", lat: 45.531512, lon: -122.989501, times: ["6:14 AM", "7:37 AM", "8:45 AM"] },
+  { stop_id: "10169", name: "NW Glencoe &amp; Cody Ct", lat: 45.535111, lon: -122.989812, times: ["6:14 AM", "7:38 AM", "8:46 AM"] },
+  { stop_id: "9939", name: "NW Glencoe &amp; NE Cory", lat: 45.53968, lon: -122.995681, times: ["6:15 AM", "7:39 AM", "8:47 AM"] },
+  { stop_id: "9938", name: "2800 Block NW Glencoe", lat: 45.540877, lon: -122.995638, times: ["6:15 AM", "7:39 AM", "8:47 AM"] },
+  { stop_id: "9940", name: "NW Glencoe &amp; NE Lenox", lat: 45.54427, lon: -122.995546, times: ["6:16 AM", "7:40 AM", "8:48 AM"] },
+  { stop_id: "9941", name: "NW Glencoe &amp; NE Milne", lat: 45.548473, lon: -122.995423, times: ["6:16 AM", "7:40 AM", "8:48 AM"] },
+  { stop_id: "9942", name: "NE Evergreen &amp; NW Glencoe", lat: 45.549727, lon: -122.994384, times: ["6:17 AM", "7:41 AM", "8:49 AM"] },
+  { stop_id: "9943", name: "NE Evergreen &amp; 3rd", lat: 45.549767, lon: -122.98922, times: ["6:17 AM", "7:41 AM", "8:49 AM"] },
+  { stop_id: "9944", name: "NE Evergreen &amp; Sunburst", lat: 45.549804, lon: -122.9864, times: ["6:17 AM", "7:42 AM", "8:50 AM"] },
+  { stop_id: "10482", name: "NE Evergreen &amp; Evergreen Middle School", lat: 45.549872, lon: -122.983731, times: ["6:18 AM", "7:42 AM", "8:50 AM"] },
+  { stop_id: "9945", name: "NE Evergreen &amp; Jackson School Rd", lat: 45.54992, lon: -122.979986, times: ["6:18 AM", "7:42 AM", "8:50 AM"] },
+  { stop_id: "9946", name: "NE Evergreen &amp; Jackson Road Loop", lat: 45.549967, lon: -122.973751, times: ["6:19 AM", "7:43 AM", "8:51 AM"] },
+  { stop_id: "9947", name: "NE Evergreen &amp; 13th", lat: 45.549948, lon: -122.969595, times: ["6:19 AM", "7:44 AM", "8:52 AM"] },
+  { stop_id: "10277", name: "NE 15th &amp; Edgefield", lat: 45.548763, lon: -122.966481, times: ["6:20 AM", "7:44 AM", "8:52 AM"] },
+  { stop_id: "10279", name: "NE 15th &amp; Prahl Pkwy", lat: 45.545595, lon: -122.966485, times: ["6:20 AM", "7:45 AM", "8:53 AM"] },
+  { stop_id: "9948", name: "NE 15th &amp; Jones Farm Pkwy", lat: 45.542515, lon: -122.966481, times: ["6:21 AM", "7:46 AM", "8:54 AM"] },
+  { stop_id: "9949", name: "NE Griffin Oaks &amp; 15th", lat: 45.53999, lon: -122.965265, times: ["6:21 AM", "7:46 AM", "8:54 AM"] },
+  { stop_id: "9950", name: "1800 Block NE Griffin Oaks", lat: 45.540046, lon: -122.962114, times: ["6:22 AM", "7:47 AM", "8:55 AM"] },
+  { stop_id: "9951", name: "2200 Block NE Griffin Oaks", lat: 45.540039, lon: -122.959648, times: ["6:22 AM", "7:47 AM", "8:55 AM"] },
+  { stop_id: "9952", name: "NE 25th &amp; Kathryn", lat: 45.538891, lon: -122.957145, times: ["6:23 AM", "6:44 AM", "7:48 AM"] },
+  { stop_id: "9607", name: "NE 25th &amp; Sunrise Lane", lat: 45.537025, lon: -122.957115, times: ["6:23 AM", "6:44 AM", "7:48 AM"] },
+  { stop_id: "10289", name: "1200 Block NE 25th", lat: 45.534172, lon: -122.957105, times: ["6:23 AM", "6:44 AM", "7:49 AM"] },
+  { stop_id: "10026", name: "NE Cornell &amp; 25th", lat: 45.530569, lon: -122.956322, times: ["6:24 AM", "6:45 AM", "7:50 AM"] },
+  { stop_id: "8558", name: "NE Cornell &amp; 34th", lat: 45.532092, lon: -122.947357, times: ["6:25 AM", "6:46 AM", "7:51 AM"] },
+  { stop_id: "9953", name: "Hillsboro Airport/Fairgrounds Park &amp; Ride", lat: 45.527198, lon: -122.94588, times: ["6:27 AM", "6:48 AM", "7:53 AM"] },
+  { stop_id: "9962", name: "NE 34th &amp; Cornell", lat: 45.531489, lon: -122.94652, times: ["6:49 AM", "7:54 AM", "9:02 AM"] },
+  { stop_id: "12884", name: "NE Brookwood &amp; Airport Rd", lat: 45.539589, lon: -122.938562, times: ["6:52 AM", "7:58 AM", "9:05 AM"] },
+  { stop_id: "12875", name: "2800 Blk NE Brookwood Pkwy, Library", lat: 45.542688, lon: -122.937027, times: ["6:53 AM", "7:59 AM", "9:06 AM"] },
+  { stop_id: "10061", name: "NE Dawson Creek &amp; Brookwood", lat: 45.547081, lon: -122.932369, times: ["6:55 AM", "8:00 AM", "9:08 AM"] },
+  { stop_id: "10005", name: "3100 Block NE Dawson Creek", lat: 45.548969, lon: -122.933363, times: ["6:55 AM", "8:01 AM", "9:08 AM"] },
+  { stop_id: "10004", name: "NE Evergreen &amp; Brookwood", lat: 45.550744, lon: -122.927202, times: ["6:57 AM", "8:03 AM", "9:10 AM"] },
+  { stop_id: "10063", name: "NE Shute Rd &amp; Dawson Creek Dr", lat: 45.544393, lon: -122.926328, times: ["6:59 AM", "8:05 AM", "9:12 AM"] },
+  { stop_id: "10278", name: "NE 15th &amp; Edgefield", lat: 45.548558, lon: -122.9663, times: ["6:42 AM", "4:55 PM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -817,15 +819,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

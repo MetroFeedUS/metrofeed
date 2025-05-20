@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 153 - To Willamette</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -917,31 +919,31 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "8208", name: "Lake Oswego Transit Center ", lat: 45.420627, lon: -122.66788, times: ["5:53 AM"] },
-  { stop_id: "3", name: "A Ave &amp; Second St", lat: 45.419388, lon: -122.665197, times: ["5:53 AM"] },
-  { stop_id: "5510", name: "N State &amp; Foothills", lat: 45.417547, lon: -122.663423, times: ["5:54 AM"] },
-  { stop_id: "5513", name: "N State &amp; North Shore Rd", lat: 45.415755, lon: -122.663813, times: ["5:54 AM"] },
-  { stop_id: "5511", name: "S State &amp; Middlecrest", lat: 45.413169, lon: -122.66441, times: ["5:55 AM"] },
-  { stop_id: "3812", name: "600 Block McVey", lat: 45.410804, lon: -122.666168, times: ["5:56 AM"] },
-  { stop_id: "3813", name: "McVey &amp; Cornell", lat: 45.408805, lon: -122.672066, times: ["5:57 AM"] },
-  { stop_id: "14487", name: "McVey &amp; Laurel St", lat: 45.407258, lon: -122.676241, times: ["5:58 AM"] },
-  { stop_id: "14488", name: "Stafford &amp; Bergis", lat: 45.400816, lon: -122.683401, times: ["5:59 AM"] },
-  { stop_id: "14489", name: "Hidden Springs &amp; Suncrest Dr", lat: 45.37686, lon: -122.654226, times: ["6:06 AM"] },
-  { stop_id: "14490", name: "Santa Anita &amp; Pimlico", lat: 45.373869, lon: -122.6466, times: ["6:07 AM"] },
-  { stop_id: "14491", name: "Santa Anita &amp; Churchill Downs", lat: 45.371622, lon: -122.645423, times: ["6:08 AM"] },
-  { stop_id: "14492", name: "Salamo &amp; Rosemont", lat: 45.368957, lon: -122.646901, times: ["6:08 AM"] },
-  { stop_id: "10519", name: "Salamo &amp; Day Rd", lat: 45.362824, lon: -122.649117, times: ["6:10 AM"] },
-  { stop_id: "14493", name: "Salamo &amp; Bland Circle", lat: 45.357237, lon: -122.646394, times: ["6:11 AM"] },
-  { stop_id: "10522", name: "Salamo &amp; Barrington Dr", lat: 45.351809, lon: -122.64343, times: ["6:12 AM"] },
-  { stop_id: "9297", name: "Blankenship &amp; Tannler Dr", lat: 45.350054, lon: -122.653809, times: ["6:15 AM"] },
-  { stop_id: "9270", name: "Blankenship &amp; Virginia Lane", lat: 45.351431, lon: -122.656745, times: ["6:15 AM"] },
-  { stop_id: "10548", name: "Blankenship &amp; Debok", lat: 45.352038, lon: -122.658313, times: ["6:15 AM"] },
-  { stop_id: "9276", name: "Blankenship &amp; 19th St", lat: 45.35156, lon: -122.662909, times: ["6:16 AM"] },
-  { stop_id: "9277", name: "Blankenship &amp; Ostman", lat: 45.351394, lon: -122.66663, times: ["6:17 AM"] },
-  { stop_id: "9279", name: "Ostman &amp; Dollar", lat: 45.347831, lon: -122.667069, times: ["6:18 AM"] },
-  { stop_id: "10523", name: "Ostman &amp; Willamette Falls Dr", lat: 45.344527, lon: -122.667062, times: ["6:19 AM"] },
-  { stop_id: "9284", name: "Willamette Falls Dr &amp; 19th St", lat: 45.343419, lon: -122.663277, times: ["6:20 AM"] },
-  { stop_id: "14485", name: "8th Ave &amp; 13th St", lat: 45.345032, lon: -122.655013, times: ["6:22 AM"] },
+  { stop_id: "8208", name: "Lake Oswego Transit Center ", lat: 45.420627, lon: -122.66788, times: ["5:53 AM", "6:50 AM", "7:51 AM"] },
+  { stop_id: "3", name: "A Ave &amp; Second St", lat: 45.419388, lon: -122.665197, times: ["5:53 AM", "6:50 AM", "7:51 AM"] },
+  { stop_id: "5510", name: "N State &amp; Foothills", lat: 45.417547, lon: -122.663423, times: ["5:54 AM", "6:51 AM", "7:52 AM"] },
+  { stop_id: "5513", name: "N State &amp; North Shore Rd", lat: 45.415755, lon: -122.663813, times: ["5:54 AM", "6:51 AM", "7:52 AM"] },
+  { stop_id: "5511", name: "S State &amp; Middlecrest", lat: 45.413169, lon: -122.66441, times: ["5:55 AM", "6:52 AM", "7:53 AM"] },
+  { stop_id: "3812", name: "600 Block McVey", lat: 45.410804, lon: -122.666168, times: ["5:56 AM", "6:53 AM", "7:54 AM"] },
+  { stop_id: "3813", name: "McVey &amp; Cornell", lat: 45.408805, lon: -122.672066, times: ["5:57 AM", "6:54 AM", "7:55 AM"] },
+  { stop_id: "14487", name: "McVey &amp; Laurel St", lat: 45.407258, lon: -122.676241, times: ["5:58 AM", "6:55 AM", "7:56 AM"] },
+  { stop_id: "14488", name: "Stafford &amp; Bergis", lat: 45.400816, lon: -122.683401, times: ["5:59 AM", "6:56 AM", "7:57 AM"] },
+  { stop_id: "14489", name: "Hidden Springs &amp; Suncrest Dr", lat: 45.37686, lon: -122.654226, times: ["6:06 AM", "7:03 AM", "8:05 AM"] },
+  { stop_id: "14490", name: "Santa Anita &amp; Pimlico", lat: 45.373869, lon: -122.6466, times: ["6:07 AM", "7:04 AM", "8:06 AM"] },
+  { stop_id: "14491", name: "Santa Anita &amp; Churchill Downs", lat: 45.371622, lon: -122.645423, times: ["6:08 AM", "7:05 AM", "8:07 AM"] },
+  { stop_id: "14492", name: "Salamo &amp; Rosemont", lat: 45.368957, lon: -122.646901, times: ["6:08 AM", "7:05 AM", "8:07 AM"] },
+  { stop_id: "10519", name: "Salamo &amp; Day Rd", lat: 45.362824, lon: -122.649117, times: ["6:10 AM", "7:07 AM", "8:09 AM"] },
+  { stop_id: "14493", name: "Salamo &amp; Bland Circle", lat: 45.357237, lon: -122.646394, times: ["6:11 AM", "7:08 AM", "8:10 AM"] },
+  { stop_id: "10522", name: "Salamo &amp; Barrington Dr", lat: 45.351809, lon: -122.64343, times: ["6:12 AM", "7:09 AM", "8:11 AM"] },
+  { stop_id: "9297", name: "Blankenship &amp; Tannler Dr", lat: 45.350054, lon: -122.653809, times: ["6:15 AM", "7:12 AM", "8:14 AM"] },
+  { stop_id: "9270", name: "Blankenship &amp; Virginia Lane", lat: 45.351431, lon: -122.656745, times: ["6:15 AM", "7:12 AM", "8:14 AM"] },
+  { stop_id: "10548", name: "Blankenship &amp; Debok", lat: 45.352038, lon: -122.658313, times: ["6:15 AM", "7:12 AM", "8:14 AM"] },
+  { stop_id: "9276", name: "Blankenship &amp; 19th St", lat: 45.35156, lon: -122.662909, times: ["6:16 AM", "7:13 AM", "8:15 AM"] },
+  { stop_id: "9277", name: "Blankenship &amp; Ostman", lat: 45.351394, lon: -122.66663, times: ["6:17 AM", "7:14 AM", "8:16 AM"] },
+  { stop_id: "9279", name: "Ostman &amp; Dollar", lat: 45.347831, lon: -122.667069, times: ["6:18 AM", "7:15 AM", "8:17 AM"] },
+  { stop_id: "10523", name: "Ostman &amp; Willamette Falls Dr", lat: 45.344527, lon: -122.667062, times: ["6:19 AM", "7:16 AM", "8:18 AM"] },
+  { stop_id: "9284", name: "Willamette Falls Dr &amp; 19th St", lat: 45.343419, lon: -122.663277, times: ["6:20 AM", "7:17 AM", "8:19 AM"] },
+  { stop_id: "14485", name: "8th Ave &amp; 13th St", lat: 45.345032, lon: -122.655013, times: ["6:22 AM", "7:19 AM", "8:21 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -1035,15 +1037,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

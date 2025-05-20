@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 37 - To Lake Oswego Transit Center</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -530,29 +532,29 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "7879", name: "Tualatin Park &amp; Ride ", lat: 45.394692, lon: -122.748821, times: ["6:56 AM"] },
-  { stop_id: "13195", name: "SW Lower Boones Ferry &amp; McEwan Rd", lat: 45.396533, lon: -122.743211, times: ["6:57 AM"] },
-  { stop_id: "11780", name: "Boones Ferry Rd &amp; Jean", lat: 45.398774, lon: -122.738758, times: ["6:58 AM"] },
-  { stop_id: "11781", name: "Boones Ferry Rd &amp; Pilkington", lat: 45.401809, lon: -122.733804, times: ["6:59 AM"] },
-  { stop_id: "11782", name: "Boones Ferry Rd &amp; Washington Ct", lat: 45.403895, lon: -122.730556, times: ["6:59 AM"] },
-  { stop_id: "577", name: "Boones Ferry Rd &amp; West Sunset Dr", lat: 45.405246, lon: -122.728455, times: ["7:00 AM"] },
-  { stop_id: "538", name: "Boones Ferry Rd &amp; SW Madrona", lat: 45.406572, lon: -122.726426, times: ["7:00 AM"] },
-  { stop_id: "512", name: "Boones Ferry Rd &amp; Bryant", lat: 45.408375, lon: -122.723345, times: ["7:01 AM"] },
-  { stop_id: "11783", name: "Boones Ferry Rd &amp; Reese Rd", lat: 45.410972, lon: -122.718545, times: ["7:02 AM"] },
-  { stop_id: "11784", name: "Boones Ferry Rd &amp; Mercantile Dr", lat: 45.414238, lon: -122.716514, times: ["7:02 AM"] },
-  { stop_id: "564", name: "Boones Ferry Rd &amp; Spring Lane", lat: 45.416706, lon: -122.714852, times: ["7:03 AM"] },
-  { stop_id: "569", name: "Boones Ferry Rd &amp; Twin Fir", lat: 45.418796, lon: -122.712712, times: ["7:03 AM"] },
-  { stop_id: "554", name: "Boones Ferry Rd &amp; Rainbow", lat: 45.421376, lon: -122.710405, times: ["7:04 AM"] },
-  { stop_id: "1230", name: "Country Club &amp; Sundeleaf", lat: 45.424909, lon: -122.705201, times: ["7:05 AM"] },
-  { stop_id: "1225", name: "2500 Block Country Club", lat: 45.424538, lon: -122.701279, times: ["7:06 AM"] },
-  { stop_id: "1234", name: "Country Club &amp; Wembley Park", lat: 45.423776, lon: -122.698261, times: ["7:06 AM"] },
-  { stop_id: "1232", name: "Country Club &amp; Uplands", lat: 45.423161, lon: -122.69579, times: ["7:07 AM"] },
-  { stop_id: "1228", name: "Country Club &amp; Bridge Ct", lat: 45.422983, lon: -122.693141, times: ["7:07 AM"] },
-  { stop_id: "1224", name: "Country Club &amp; Knaus Rd", lat: 45.422962, lon: -122.689284, times: ["7:08 AM"] },
-  { stop_id: "1222", name: "Country Club &amp; Iron Mtn", lat: 45.422846, lon: -122.679115, times: ["7:09 AM"] },
-  { stop_id: "2", name: "A Ave &amp; Chandler", lat: 45.420609, lon: -122.675671, times: ["7:10 AM"] },
-  { stop_id: "6", name: "A Ave &amp; 8th St", lat: 45.420217, lon: -122.67307, times: ["7:10 AM"] },
-  { stop_id: "8208", name: "Lake Oswego Transit Center ", lat: 45.420627, lon: -122.66788, times: ["7:12 AM"] },
+  { stop_id: "7879", name: "Tualatin Park &amp; Ride ", lat: 45.394692, lon: -122.748821, times: ["6:56 AM", "7:46 AM", "8:40 AM"] },
+  { stop_id: "13195", name: "SW Lower Boones Ferry &amp; McEwan Rd", lat: 45.396533, lon: -122.743211, times: ["6:57 AM", "7:47 AM", "8:41 AM"] },
+  { stop_id: "11780", name: "Boones Ferry Rd &amp; Jean", lat: 45.398774, lon: -122.738758, times: ["6:58 AM", "7:48 AM", "8:42 AM"] },
+  { stop_id: "11781", name: "Boones Ferry Rd &amp; Pilkington", lat: 45.401809, lon: -122.733804, times: ["6:59 AM", "7:49 AM", "8:43 AM"] },
+  { stop_id: "11782", name: "Boones Ferry Rd &amp; Washington Ct", lat: 45.403895, lon: -122.730556, times: ["6:59 AM", "7:49 AM", "8:43 AM"] },
+  { stop_id: "577", name: "Boones Ferry Rd &amp; West Sunset Dr", lat: 45.405246, lon: -122.728455, times: ["7:00 AM", "7:50 AM", "8:44 AM"] },
+  { stop_id: "538", name: "Boones Ferry Rd &amp; SW Madrona", lat: 45.406572, lon: -122.726426, times: ["7:00 AM", "7:50 AM", "8:44 AM"] },
+  { stop_id: "512", name: "Boones Ferry Rd &amp; Bryant", lat: 45.408375, lon: -122.723345, times: ["7:01 AM", "7:51 AM", "8:45 AM"] },
+  { stop_id: "11783", name: "Boones Ferry Rd &amp; Reese Rd", lat: 45.410972, lon: -122.718545, times: ["7:02 AM", "7:52 AM", "8:46 AM"] },
+  { stop_id: "11784", name: "Boones Ferry Rd &amp; Mercantile Dr", lat: 45.414238, lon: -122.716514, times: ["7:02 AM", "7:52 AM", "8:46 AM"] },
+  { stop_id: "564", name: "Boones Ferry Rd &amp; Spring Lane", lat: 45.416706, lon: -122.714852, times: ["7:03 AM", "7:53 AM", "8:47 AM"] },
+  { stop_id: "569", name: "Boones Ferry Rd &amp; Twin Fir", lat: 45.418796, lon: -122.712712, times: ["7:03 AM", "7:54 AM", "8:48 AM"] },
+  { stop_id: "554", name: "Boones Ferry Rd &amp; Rainbow", lat: 45.421376, lon: -122.710405, times: ["7:04 AM", "7:54 AM", "8:48 AM"] },
+  { stop_id: "1230", name: "Country Club &amp; Sundeleaf", lat: 45.424909, lon: -122.705201, times: ["7:05 AM", "7:56 AM", "8:50 AM"] },
+  { stop_id: "1225", name: "2500 Block Country Club", lat: 45.424538, lon: -122.701279, times: ["7:06 AM", "7:56 AM", "8:50 AM"] },
+  { stop_id: "1234", name: "Country Club &amp; Wembley Park", lat: 45.423776, lon: -122.698261, times: ["7:06 AM", "7:57 AM", "8:51 AM"] },
+  { stop_id: "1232", name: "Country Club &amp; Uplands", lat: 45.423161, lon: -122.69579, times: ["7:07 AM", "7:57 AM", "8:51 AM"] },
+  { stop_id: "1228", name: "Country Club &amp; Bridge Ct", lat: 45.422983, lon: -122.693141, times: ["7:07 AM", "7:58 AM", "8:52 AM"] },
+  { stop_id: "1224", name: "Country Club &amp; Knaus Rd", lat: 45.422962, lon: -122.689284, times: ["7:08 AM", "7:58 AM", "8:52 AM"] },
+  { stop_id: "1222", name: "Country Club &amp; Iron Mtn", lat: 45.422846, lon: -122.679115, times: ["7:09 AM", "8:00 AM", "8:54 AM"] },
+  { stop_id: "2", name: "A Ave &amp; Chandler", lat: 45.420609, lon: -122.675671, times: ["7:10 AM", "8:01 AM", "8:55 AM"] },
+  { stop_id: "6", name: "A Ave &amp; 8th St", lat: 45.420217, lon: -122.67307, times: ["7:10 AM", "8:01 AM", "8:55 AM"] },
+  { stop_id: "8208", name: "Lake Oswego Transit Center ", lat: 45.420627, lon: -122.66788, times: ["7:12 AM", "8:03 AM", "8:57 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -646,15 +648,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

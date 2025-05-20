@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 87 - To Gateway Transit Center</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -888,58 +890,58 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "4522", name: "W Powell &amp; SW Duniway", lat: 45.489637, lon: -122.473421, times: ["5:12 AM"] },
-  { stop_id: "2669", name: "SW Highland &amp; 11th St", lat: 45.489144, lon: -122.475366, times: ["5:12 AM"] },
-  { stop_id: "6942", name: "SE 182nd &amp; W Powell", lat: 45.490756, lon: -122.475397, times: ["5:13 AM"] },
-  { stop_id: "6928", name: "SE 182nd &amp; SW 5th Dr", lat: 45.492877, lon: -122.475385, times: ["5:13 AM"] },
-  { stop_id: "6926", name: "SE 182nd &amp; SW 3rd", lat: 45.494915, lon: -122.475422, times: ["5:14 AM"] },
-  { stop_id: "6931", name: "SE 182nd &amp; Haig", lat: 45.497382, lon: -122.475416, times: ["5:14 AM"] },
-  { stop_id: "6930", name: "SE 182nd &amp; Brooklyn Ct", lat: 45.500883, lon: -122.475442, times: ["5:15 AM"] },
-  { stop_id: "6934", name: "SE 182nd &amp; Clinton", lat: 45.502663, lon: -122.475465, times: ["5:16 AM"] },
-  { stop_id: "6936", name: "SE 182nd &amp; Division", lat: 45.505313, lon: -122.475447, times: ["5:17 AM"] },
-  { stop_id: "6924", name: "1900 Block SE 182nd", lat: 45.508162, lon: -122.475482, times: ["5:17 AM"] },
-  { stop_id: "6940", name: "SE 182nd &amp; Mill", lat: 45.510404, lon: -122.47553, times: ["5:18 AM"] },
-  { stop_id: "6939", name: "SE 182nd &amp; Market", lat: 45.512627, lon: -122.475541, times: ["5:19 AM"] },
-  { stop_id: "6913", name: "SE 181st &amp; Yamhill", lat: 45.515905, lon: -122.476026, times: ["5:19 AM"] },
-  { stop_id: "6921", name: "SE 181st &amp; Oak", lat: 45.519778, lon: -122.476987, times: ["5:21 AM"] },
-  { stop_id: "6914", name: "NE 181st &amp; E Burnside", lat: 45.522441, lon: -122.47696, times: ["5:21 AM"] },
-  { stop_id: "6918", name: "NE 181st &amp; Everett Ct", lat: 45.52437, lon: -122.476933, times: ["5:22 AM"] },
-  { stop_id: "6919", name: "NE 181st &amp; Glisan", lat: 45.526263, lon: -122.476909, times: ["5:22 AM"] },
-  { stop_id: "6916", name: "800 Block NE 181st", lat: 45.528845, lon: -122.476883, times: ["5:23 AM"] },
-  { stop_id: "6922", name: "NE 181st &amp; Wasco", lat: 45.531719, lon: -122.477105, times: ["5:24 AM"] },
-  { stop_id: "8581", name: "NE 181st &amp; Halsey", lat: 45.534555, lon: -122.477073, times: ["5:25 AM"] },
-  { stop_id: "8582", name: "NE 181st &amp; San Rafael", lat: 45.536927, lon: -122.477109, times: ["5:25 AM"] },
-  { stop_id: "9266", name: "NE 181st &amp; Wilkes", lat: 45.539764, lon: -122.477087, times: ["5:26 AM"] },
-  { stop_id: "10723", name: "NE 181st &amp; Sandy", lat: 45.545689, lon: -122.477069, times: ["5:28 AM"] },
-  { stop_id: "11015", name: "NE Airport Way &amp; Riverside", lat: 45.553316, lon: -122.480826, times: ["5:29 AM"] },
-  { stop_id: "13200", name: "NE Airport Way &amp; Mason Ct", lat: 45.554086, lon: -122.489742, times: ["5:30 AM"] },
-  { stop_id: "10724", name: "16300 Block NE Airport Way", lat: 45.556495, lon: -122.494559, times: ["5:31 AM"] },
-  { stop_id: "10995", name: "NE Airport Way &amp; 158th", lat: 45.557639, lon: -122.499903, times: ["5:31 AM"] },
-  { stop_id: "10725", name: "15300 Block NE Airport Way", lat: 45.558644, lon: -122.504229, times: ["5:32 AM"] },
-  { stop_id: "10726", name: "NE Airport Way &amp; 148th", lat: 45.559656, lon: -122.509881, times: ["5:33 AM"] },
-  { stop_id: "10727", name: "NE Airport Way &amp; 138th", lat: 45.562038, lon: -122.520794, times: ["5:34 AM"] },
-  { stop_id: "10728", name: "12900 Block NE Airport Way", lat: 45.562959, lon: -122.527996, times: ["5:35 AM"] },
-  { stop_id: "10729", name: "NE Airport Way &amp; 122nd", lat: 45.565478, lon: -122.532915, times: ["5:36 AM"] },
-  { stop_id: "10731", name: "11000 Block NE Holman", lat: 45.568243, lon: -122.548041, times: ["5:39 AM"] },
-  { stop_id: "10732", name: "NE 105th &amp; Simpson", lat: 45.565294, lon: -122.554826, times: ["5:41 AM"] },
-  { stop_id: "10733", name: "NE 105th &amp; Marx", lat: 45.561706, lon: -122.554821, times: ["5:42 AM"] },
-  { stop_id: "10734", name: "NE 105th &amp; Killingsworth", lat: 45.560206, lon: -122.554808, times: ["5:42 AM"] },
-  { stop_id: "13591", name: "NE Sandy &amp; 104th", lat: 45.559038, lon: -122.555448, times: ["5:43 AM"] },
-  { stop_id: "10838", name: "NE 102nd &amp; Prescott", lat: 45.555532, lon: -122.557917, times: ["5:44 AM"] },
-  { stop_id: "10840", name: "NE 102nd &amp; Shaver", lat: 45.552073, lon: -122.557968, times: ["5:45 AM"] },
-  { stop_id: "6505", name: "NE 102nd &amp; Alton", lat: 45.550476, lon: -122.557945, times: ["5:45 AM"] },
-  { stop_id: "6515", name: "NE 102nd &amp; Fremont", lat: 45.548252, lon: -122.557903, times: ["5:46 AM"] },
-  { stop_id: "6520", name: "NE 102nd &amp; Morris St", lat: 45.543309, lon: -122.557986, times: ["5:47 AM"] },
-  { stop_id: "6509", name: "NE 102nd &amp; Brazee", lat: 45.53993, lon: -122.558078, times: ["5:48 AM"] },
-  { stop_id: "6507", name: "NE 102nd &amp; Bell", lat: 45.536608, lon: -122.558133, times: ["5:49 AM"] },
-  { stop_id: "6513", name: "NE 102nd &amp; Clackamas", lat: 45.533122, lon: -122.558203, times: ["5:50 AM"] },
-  { stop_id: "6523", name: "1200 Block NE 102nd", lat: 45.531407, lon: -122.558228, times: ["5:51 AM"] },
-  { stop_id: "6525", name: "NE 102nd &amp; Pacific", lat: 45.52968, lon: -122.558243, times: ["5:51 AM"] },
-  { stop_id: "4288", name: "10000 Block NE Pacific St", lat: 45.529563, lon: -122.560465, times: ["5:52 AM"] },
-  { stop_id: "8321", name: "NE Pacific St &amp; The Oregon Clinic", lat: 45.529559, lon: -122.562812, times: ["5:52 AM"] },
-  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["5:53 AM"] },
-  { stop_id: "13630", name: "Relay Resources", lat: 45.561519, lon: -122.509874, times: ["3:32 PM"] },
-  { stop_id: "9537", name: "5200 Block NE 148th", lat: 45.560869, lon: -122.51041, times: ["3:33 PM"] },
+  { stop_id: "4522", name: "W Powell &amp; SW Duniway", lat: 45.489637, lon: -122.473421, times: ["5:12 AM", "5:40 AM", "6:07 AM"] },
+  { stop_id: "2669", name: "SW Highland &amp; 11th St", lat: 45.489144, lon: -122.475366, times: ["5:12 AM", "5:40 AM", "6:07 AM"] },
+  { stop_id: "6942", name: "SE 182nd &amp; W Powell", lat: 45.490756, lon: -122.475397, times: ["5:13 AM", "5:41 AM", "6:08 AM"] },
+  { stop_id: "6928", name: "SE 182nd &amp; SW 5th Dr", lat: 45.492877, lon: -122.475385, times: ["5:13 AM", "5:41 AM", "6:08 AM"] },
+  { stop_id: "6926", name: "SE 182nd &amp; SW 3rd", lat: 45.494915, lon: -122.475422, times: ["5:14 AM", "5:42 AM", "6:09 AM"] },
+  { stop_id: "6931", name: "SE 182nd &amp; Haig", lat: 45.497382, lon: -122.475416, times: ["5:14 AM", "5:42 AM", "6:09 AM"] },
+  { stop_id: "6930", name: "SE 182nd &amp; Brooklyn Ct", lat: 45.500883, lon: -122.475442, times: ["5:15 AM", "5:43 AM", "6:10 AM"] },
+  { stop_id: "6934", name: "SE 182nd &amp; Clinton", lat: 45.502663, lon: -122.475465, times: ["5:16 AM", "5:44 AM", "6:11 AM"] },
+  { stop_id: "6936", name: "SE 182nd &amp; Division", lat: 45.505313, lon: -122.475447, times: ["5:17 AM", "5:45 AM", "6:12 AM"] },
+  { stop_id: "6924", name: "1900 Block SE 182nd", lat: 45.508162, lon: -122.475482, times: ["5:17 AM", "5:45 AM", "6:12 AM"] },
+  { stop_id: "6940", name: "SE 182nd &amp; Mill", lat: 45.510404, lon: -122.47553, times: ["5:18 AM", "5:46 AM", "6:13 AM"] },
+  { stop_id: "6939", name: "SE 182nd &amp; Market", lat: 45.512627, lon: -122.475541, times: ["5:19 AM", "5:47 AM", "6:14 AM"] },
+  { stop_id: "6913", name: "SE 181st &amp; Yamhill", lat: 45.515905, lon: -122.476026, times: ["5:19 AM", "5:47 AM", "6:14 AM"] },
+  { stop_id: "6921", name: "SE 181st &amp; Oak", lat: 45.519778, lon: -122.476987, times: ["5:21 AM", "5:49 AM", "6:16 AM"] },
+  { stop_id: "6914", name: "NE 181st &amp; E Burnside", lat: 45.522441, lon: -122.47696, times: ["5:21 AM", "5:49 AM", "6:16 AM"] },
+  { stop_id: "6918", name: "NE 181st &amp; Everett Ct", lat: 45.52437, lon: -122.476933, times: ["5:22 AM", "5:50 AM", "6:17 AM"] },
+  { stop_id: "6919", name: "NE 181st &amp; Glisan", lat: 45.526263, lon: -122.476909, times: ["5:22 AM", "5:50 AM", "6:17 AM"] },
+  { stop_id: "6916", name: "800 Block NE 181st", lat: 45.528845, lon: -122.476883, times: ["5:23 AM", "5:51 AM", "6:18 AM"] },
+  { stop_id: "6922", name: "NE 181st &amp; Wasco", lat: 45.531719, lon: -122.477105, times: ["5:24 AM", "5:52 AM", "6:19 AM"] },
+  { stop_id: "8581", name: "NE 181st &amp; Halsey", lat: 45.534555, lon: -122.477073, times: ["5:25 AM", "5:53 AM", "6:20 AM"] },
+  { stop_id: "8582", name: "NE 181st &amp; San Rafael", lat: 45.536927, lon: -122.477109, times: ["5:25 AM", "5:53 AM", "6:20 AM"] },
+  { stop_id: "9266", name: "NE 181st &amp; Wilkes", lat: 45.539764, lon: -122.477087, times: ["5:26 AM", "5:54 AM", "6:21 AM"] },
+  { stop_id: "10723", name: "NE 181st &amp; Sandy", lat: 45.545689, lon: -122.477069, times: ["5:28 AM", "5:56 AM", "6:23 AM"] },
+  { stop_id: "11015", name: "NE Airport Way &amp; Riverside", lat: 45.553316, lon: -122.480826, times: ["5:29 AM", "5:57 AM", "6:24 AM"] },
+  { stop_id: "13200", name: "NE Airport Way &amp; Mason Ct", lat: 45.554086, lon: -122.489742, times: ["5:30 AM", "5:58 AM", "6:25 AM"] },
+  { stop_id: "10724", name: "16300 Block NE Airport Way", lat: 45.556495, lon: -122.494559, times: ["5:31 AM", "5:59 AM", "6:26 AM"] },
+  { stop_id: "10995", name: "NE Airport Way &amp; 158th", lat: 45.557639, lon: -122.499903, times: ["5:31 AM", "6:00 AM", "6:27 AM"] },
+  { stop_id: "10725", name: "15300 Block NE Airport Way", lat: 45.558644, lon: -122.504229, times: ["5:32 AM", "6:00 AM", "6:27 AM"] },
+  { stop_id: "10726", name: "NE Airport Way &amp; 148th", lat: 45.559656, lon: -122.509881, times: ["5:33 AM", "6:01 AM", "6:28 AM"] },
+  { stop_id: "10727", name: "NE Airport Way &amp; 138th", lat: 45.562038, lon: -122.520794, times: ["5:34 AM", "6:03 AM", "6:30 AM"] },
+  { stop_id: "10728", name: "12900 Block NE Airport Way", lat: 45.562959, lon: -122.527996, times: ["5:35 AM", "6:04 AM", "6:31 AM"] },
+  { stop_id: "10729", name: "NE Airport Way &amp; 122nd", lat: 45.565478, lon: -122.532915, times: ["5:36 AM", "6:05 AM", "6:32 AM"] },
+  { stop_id: "10731", name: "11000 Block NE Holman", lat: 45.568243, lon: -122.548041, times: ["5:39 AM", "6:08 AM", "6:35 AM"] },
+  { stop_id: "10732", name: "NE 105th &amp; Simpson", lat: 45.565294, lon: -122.554826, times: ["5:41 AM", "6:10 AM", "6:37 AM"] },
+  { stop_id: "10733", name: "NE 105th &amp; Marx", lat: 45.561706, lon: -122.554821, times: ["5:42 AM", "6:11 AM", "6:38 AM"] },
+  { stop_id: "10734", name: "NE 105th &amp; Killingsworth", lat: 45.560206, lon: -122.554808, times: ["5:42 AM", "6:11 AM", "6:38 AM"] },
+  { stop_id: "13591", name: "NE Sandy &amp; 104th", lat: 45.559038, lon: -122.555448, times: ["5:43 AM", "6:12 AM", "6:39 AM"] },
+  { stop_id: "10838", name: "NE 102nd &amp; Prescott", lat: 45.555532, lon: -122.557917, times: ["5:44 AM", "6:13 AM", "6:40 AM"] },
+  { stop_id: "10840", name: "NE 102nd &amp; Shaver", lat: 45.552073, lon: -122.557968, times: ["5:45 AM", "6:14 AM", "6:41 AM"] },
+  { stop_id: "6505", name: "NE 102nd &amp; Alton", lat: 45.550476, lon: -122.557945, times: ["5:45 AM", "6:14 AM", "6:42 AM"] },
+  { stop_id: "6515", name: "NE 102nd &amp; Fremont", lat: 45.548252, lon: -122.557903, times: ["5:46 AM", "6:15 AM", "6:43 AM"] },
+  { stop_id: "6520", name: "NE 102nd &amp; Morris St", lat: 45.543309, lon: -122.557986, times: ["5:47 AM", "6:16 AM", "6:44 AM"] },
+  { stop_id: "6509", name: "NE 102nd &amp; Brazee", lat: 45.53993, lon: -122.558078, times: ["5:48 AM", "6:17 AM", "6:45 AM"] },
+  { stop_id: "6507", name: "NE 102nd &amp; Bell", lat: 45.536608, lon: -122.558133, times: ["5:49 AM", "6:18 AM", "6:46 AM"] },
+  { stop_id: "6513", name: "NE 102nd &amp; Clackamas", lat: 45.533122, lon: -122.558203, times: ["5:50 AM", "6:19 AM", "6:47 AM"] },
+  { stop_id: "6523", name: "1200 Block NE 102nd", lat: 45.531407, lon: -122.558228, times: ["5:51 AM", "6:20 AM", "6:48 AM"] },
+  { stop_id: "6525", name: "NE 102nd &amp; Pacific", lat: 45.52968, lon: -122.558243, times: ["5:51 AM", "6:20 AM", "6:48 AM"] },
+  { stop_id: "4288", name: "10000 Block NE Pacific St", lat: 45.529563, lon: -122.560465, times: ["5:52 AM", "6:21 AM", "6:49 AM"] },
+  { stop_id: "8321", name: "NE Pacific St &amp; The Oregon Clinic", lat: 45.529559, lon: -122.562812, times: ["5:52 AM", "6:21 AM", "6:49 AM"] },
+  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["5:53 AM", "6:22 AM", "6:50 AM"] },
+  { stop_id: "13630", name: "Relay Resources", lat: 45.561519, lon: -122.509874, times: ["3:32 PM", "4:01 PM", "4:30 PM"] },
+  { stop_id: "9537", name: "5200 Block NE 148th", lat: 45.560869, lon: -122.51041, times: ["3:33 PM", "4:02 PM", "4:31 PM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -1033,15 +1035,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>

@@ -103,6 +103,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -112,7 +113,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅️ Back</button>
+  <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 288 - To Willow Creek TC or Rose Quarter TC</h1>
@@ -133,12 +134,13 @@
   const map = L.map('map', {
   center: [45.6, -122.7],
   zoom: 12,
+  minZoom: 12,
+  maxZoom: 18,
   maxBounds: [
     [45.3, -123.1],  // Southwest corner
     [45.9, -122.3]   // Northeast corner
   ],
-  maxBoundsViscosity: 1.0,
-  maxZoom: 12
+  maxBoundsViscosity: 1.0
 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -693,15 +695,15 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "14012", name: "SW Adams &amp; W Main", lat: 45.52241, lon: -122.991147, times: ["1:05 AM"] },
-  { stop_id: "14551", name: "SE Washington &amp; 3rd", lat: 45.521287, lon: -122.985714, times: ["1:06 AM"] },
-  { stop_id: "14013", name: "SE Washington &amp; 8th", lat: 45.5212, lon: -122.976751, times: ["1:07 AM"] },
-  { stop_id: "14014", name: "SE 12th &amp; E Main", lat: 45.52158, lon: -122.969998, times: ["1:09 AM"] },
-  { stop_id: "14552", name: "NE Veterans Dr &amp; 34th", lat: 45.528372, lon: -122.947246, times: ["1:15 AM"] },
-  { stop_id: "10028", name: "NE Cornell &amp; 48th", lat: 45.533439, lon: -122.93412, times: ["1:18 AM"] },
-  { stop_id: "14486", name: "NE Cherry Dr &amp; Orenco Station Loop", lat: 45.531319, lon: -122.916177, times: ["1:22 AM"] },
-  { stop_id: "14553", name: "NE Quatama &amp; NW Sunbird", lat: 45.522125, lon: -122.889189, times: ["1:27 AM"] },
-  { stop_id: "9870", name: "Willow Creek Transit Center ", lat: 45.51743, lon: -122.870457, times: ["12:50 AM"] },
+  { stop_id: "14012", name: "SW Adams &amp; W Main", lat: 45.52241, lon: -122.991147, times: ["1:05 AM", "1:35 AM", "2:05 AM"] },
+  { stop_id: "14551", name: "SE Washington &amp; 3rd", lat: 45.521287, lon: -122.985714, times: ["1:06 AM", "1:36 AM", "2:06 AM"] },
+  { stop_id: "14013", name: "SE Washington &amp; 8th", lat: 45.5212, lon: -122.976751, times: ["1:07 AM", "1:37 AM", "2:07 AM"] },
+  { stop_id: "14014", name: "SE 12th &amp; E Main", lat: 45.52158, lon: -122.969998, times: ["1:09 AM", "1:39 AM", "2:09 AM"] },
+  { stop_id: "14552", name: "NE Veterans Dr &amp; 34th", lat: 45.528372, lon: -122.947246, times: ["1:15 AM", "1:45 AM", "2:15 AM"] },
+  { stop_id: "10028", name: "NE Cornell &amp; 48th", lat: 45.533439, lon: -122.93412, times: ["1:18 AM", "1:48 AM", "2:18 AM"] },
+  { stop_id: "14486", name: "NE Cherry Dr &amp; Orenco Station Loop", lat: 45.531319, lon: -122.916177, times: ["1:22 AM", "1:52 AM", "2:22 AM"] },
+  { stop_id: "14553", name: "NE Quatama &amp; NW Sunbird", lat: 45.522125, lon: -122.889189, times: ["1:27 AM", "1:57 AM", "2:27 AM"] },
+  { stop_id: "9870", name: "Willow Creek Transit Center ", lat: 45.51743, lon: -122.870457, times: ["12:50 AM", "1:34 AM", "2:04 AM"] },
   { stop_id: "14554", name: "W Baseline &amp; Baseline/Jenkins", lat: 45.511598, lon: -122.849246, times: ["12:54 AM"] },
   { stop_id: "14555", name: "SW Jenkins &amp; Merlo Rd", lat: 45.507516, lon: -122.841051, times: ["12:55 AM"] },
   { stop_id: "14556", name: "SW 153rd &amp; 154th Terrace", lat: 45.499679, lon: -122.834832, times: ["12:58 AM"] },
@@ -811,15 +813,7 @@ const stops = [
 </script>
 
 
-<script src="/ads/ads.js"></script>
-<script>
-  // This script looks for a container with id 'localAdSlot' and inserts an ad
-  if (window.loadLocalAd) {
-    window.loadLocalAd('localAdSlot');
-  } else {
-    console.warn('Ad script not ready or loadLocalAd() not defined');
-  }
-</script>
+
 
 </body>
 </html>
