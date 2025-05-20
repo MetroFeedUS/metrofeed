@@ -2,9 +2,6 @@
 <html lang="en">
 <head>
   
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2219550569810489"
-     crossorigin="anonymous"></script>
-
 <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portland, OR Rail Routes - MetroFeed</title>
@@ -174,26 +171,26 @@ if (document.referrer === "" && performance.navigation.type === 0) {
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
- if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
+<div id="cookie-banner" style="display:none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+  📢 We use cookies to improve functionality and analyze traffic.
+  By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.<br>
+  <button onclick="acceptCookies()" style="margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
+</div>
+
 <script>
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
+  function acceptCookies() {
+    localStorage.setItem("cookieConsent", "true");
+    document.getElementById("cookie-banner").style.display = "none";
   }
+
+  window.onload = function () {
+    if (!localStorage.getItem("cookieConsent")) {
+      const banner = document.getElementById("cookie-banner");
+      if (banner) banner.style.display = "block";
+    }
+  };
 </script>
-
-
 
 </body>
 </html>
