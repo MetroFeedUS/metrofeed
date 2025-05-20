@@ -169,7 +169,7 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
   </header>
 
-<a href="../index.html" class="home-button">🏠</a>
+<a href="../index.html" class="home-button">🏙️</a>
 
 
   <!-- Simulated AdSense Preview Block -->
@@ -203,7 +203,13 @@
 
 
   <script>
-    // Show install banner every 3 days if not already installed
+   
+if (document.referrer === "" && performance.navigation.type === 0) {
+    // No referrer + user opened directly = likely a bookmark
+    window.location.href = "/index.html";
+  }
+
+ // Show install banner every 3 days if not already installed
     const daysBetweenPrompts = 3;
     const lastPrompt = localStorage.getItem('lastInstallPrompt');
     const now = Date.now();

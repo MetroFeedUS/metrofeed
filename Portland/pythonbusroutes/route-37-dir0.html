@@ -127,6 +127,12 @@
 
   
   <script>
+  
+  if (document.referrer === "" && performance.navigation.type === 0) {
+    // No referrer + user opened directly = likely a bookmark
+    window.location.href = "/index.html";
+  }
+
   const apiKey = "2C4447D4A42083BCD84DE3B8E";
   const routeNumber = 37;
   const direction = parseInt(0);

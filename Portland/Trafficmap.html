@@ -195,7 +195,13 @@
 </div>
 
 <script>
-  function acceptCookies() {
+  
+if (document.referrer === "" && performance.navigation.type === 0) {
+    // No referrer + user opened directly = likely a bookmark
+    window.location.href = "/index.html";
+  }
+
+   function acceptCookies() {
     localStorage.setItem('cookieConsent', 'true');
     document.getElementById('cookie-banner').style.display = 'none';
   }

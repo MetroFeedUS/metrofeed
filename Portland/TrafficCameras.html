@@ -248,6 +248,12 @@
 </footer>
 
   <script>
+    
+if (document.referrer === "" && performance.navigation.type === 0) {
+    // No referrer + user opened directly = likely a bookmark
+    window.location.href = "/index.html";
+  }
+
     // Refresh all images every 5 minutes
     setInterval(() => {
       document.querySelectorAll("img").forEach(img => {

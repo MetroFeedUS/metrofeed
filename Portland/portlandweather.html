@@ -128,6 +128,12 @@
   </div>
 
   <script>
+   
+if (document.referrer === "" && performance.navigation.type === 0) {
+    // No referrer + user opened directly = likely a bookmark
+    window.location.href = "/index.html";
+  }
+
     const alertUrl = 'https://api.weather.gov/alerts/active?zone=ORZ006';
 
     fetch(alertUrl)

@@ -67,6 +67,12 @@
   </main>
 
   <script>
+    
+ if (document.referrer === "" && performance.navigation.type === 0) {
+    // No referrer + user opened directly = likely a bookmark
+    window.location.href = "/index.html";
+  }
+
     const routeList = document.getElementById('routeList');
     const searchInput = document.getElementById('routeSearch');
 
