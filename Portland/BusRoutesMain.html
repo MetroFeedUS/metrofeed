@@ -73,6 +73,22 @@
     window.location.href = "/index.html";
   }
 
+ const favoriteCity = localStorage.getItem('favoriteCity');
+  if (favoriteCity) {
+    console.log("Favorite city:", favoriteCity);
+
+    const header = document.querySelector("h1");
+    if (header) {
+      const tag = document.createElement("div");
+      tag.textContent = `⭐ Favorite City: ${favoriteCity}`;
+      tag.style.fontSize = "1rem";
+      tag.style.color = "#ffcc00";
+      tag.style.marginBottom = "1rem";
+      header.insertAdjacentElement("afterend", tag);
+    }
+  }
+
+
     const routeList = document.getElementById('routeList');
     const searchInput = document.getElementById('routeSearch');
 

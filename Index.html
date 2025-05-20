@@ -4,15 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed</title>
-  
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2219550569810489"
-     crossorigin="anonymous"></script>
 
-
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2219550569810489"
-     crossorigin="anonymous"></script>
-
-<style>
+  <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -33,6 +26,15 @@
       padding: 2rem;
       text-align: center;
     }
+    #citySearch {
+      margin: 1rem auto;
+      padding: 0.5rem;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
     .city-list {
       display: flex;
       flex-direction: column;
@@ -44,11 +46,11 @@
       padding: 1.5rem 3rem;
       font-size: 1.2rem;
       font-weight: bold;
-      background-color: #FF5C00; /* orange */
+      background-color: #FF5C00;
       color: #fff;
       text-decoration: none;
       border-radius: 12px;
-      box-shadow: 0 0 10px #0071CE; /* blue accent */
+      box-shadow: 0 0 10px #0071CE;
       transition: transform 0.2s ease-in-out;
       width: 200px;
     }
@@ -56,74 +58,104 @@
       transform: scale(1.05);
       box-shadow: 0 0 20px #0071CE;
     }
-
     .disabled-link {
-      pointer-events: none; /* No clicking */
-      opacity: 0.5;         /* See-through/faded look */
-      cursor: not-allowed;  /* Mouse shows 'stop' sign */
+      pointer-events: none;
+      opacity: 0.5;
+      cursor: not-allowed;
     }
-.site-footer {
-    text-align: center;
-    margin-top: 2rem;
-    margin-bottom: 120px;
-    font-size: 0.8rem;
-    color: #0071CE;
-  }
-  .site-footer a {
-    color: #0071CE;
-    text-decoration: none;
-  }
-  .site-footer a:hover {
-    text-decoration: underline;
-  }
+    .fav-btn {
+      margin-left: 0.5rem;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: gold;
+    }
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.8rem;
+      color: #0071CE;
+    }
+    .site-footer a {
+      color: #0071CE;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedMainLogo.png" alt="MetroFeed Logo" />
   </header>
- 
-<div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
-  ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
-</div>
 
- <main>
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+
+  <main>
     <h2>Choose Your City</h2>
-    <div class="city-list">
-      <a href="Portland/PortlandHome.html" class="city-link">Portland, OR</a>
-      <a href="#" class="city-link disabled-link">Coming Soon</a>
-      <a href="#" class="city-link disabled-link">Coming Soon</a>
+    <input type="text" id="citySearch" placeholder="Search cities..." />
+    <div class="city-list" id="cityList">
+      <a href="Portland/PortlandHome.html" class="city-link" data-city="Portland">Portland, OR <span class="fav-btn" data-city="Portland">⭐</span></a>
+      <a href="#" class="city-link disabled-link" data-city="Boston">Coming Soon</a>
+      <a href="#" class="city-link disabled-link" data-city="Chicago">Coming Soon</a>
     </div>
   </main>
 
-  <!-- Footer with links -->
- <footer class="site-footer">
+  <footer class="site-footer">
     <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
     <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
     <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
     <a href="privacy.html">Privacy Policy</a>
-
   </footer>
 
-<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
-  📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
-  <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
-</div>
+  <div id="cookie-banner" style="display: none; position: fixed; bottom: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 1rem; z-index: 1000; font-size: 0.9rem;">
+    📢 We use cookies for personalized ads and analytics. By using MetroFeed, you agree to our 
+    <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.
+    <button onclick="acceptCookies()" style="margin-left: 1rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">OK</button>
+  </div>
 
-<script>
-  function acceptCookies() {
-    localStorage.setItem('cookieConsent', 'true');
-    document.getElementById('cookie-banner').style.display = 'none';
-  }
-
-  window.onload = function() {
-    if (!localStorage.getItem('cookieConsent')) {
-      document.getElementById('cookie-banner').style.display = 'block';
+  <script>
+    function acceptCookies() {
+      localStorage.setItem('cookieConsent', 'true');
+      document.getElementById('cookie-banner').style.display = 'none';
     }
-  }
-</script>
 
+    window.onload = function () {
+      if (!localStorage.getItem('cookieConsent')) {
+        document.getElementById('cookie-banner').style.display = 'block';
+      }
 
+      // Search functionality
+      const searchInput = document.getElementById('citySearch');
+      const cityLinks = document.querySelectorAll('.city-link');
+
+      searchInput.addEventListener('input', () => {
+        const term = searchInput.value.toLowerCase();
+        cityLinks.forEach(link => {
+          const city = link.getAttribute('data-city').toLowerCase();
+          link.style.display = city.includes(term) ? 'block' : 'none';
+        });
+      });
+
+      // Favorite city handling
+      const favorite = localStorage.getItem('favoriteCity');
+      if (favorite) {
+        const cityList = document.getElementById('cityList');
+        const fav = Array.from(cityList.children).find(el => el.dataset.city === favorite);
+        if (fav) cityList.prepend(fav);
+      }
+
+      document.querySelectorAll('.fav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const city = e.target.dataset.city;
+          localStorage.setItem('favoriteCity', city);
+          window.location.reload();
+        });
+      });
+    }
+  </script>
 </body>
 </html>
