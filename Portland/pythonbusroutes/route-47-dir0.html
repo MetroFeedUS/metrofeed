@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -997,19 +1005,19 @@ const stops = [
   { stop_id: "10044", name: "NE Century &amp; Orenco Ridge", lat: 45.52195, lon: -122.914809, times: ["6:50 AM", "7:18 AM", "7:50 AM", "8:17 AM", "8:46 AM", "9:17 AM", "9:51 AM", "10:26 AM"] },
   { stop_id: "11771", name: "E Main &amp; NE 63rd", lat: 45.520206, lon: -122.917079, times: ["6:51 AM", "7:19 AM", "7:51 AM", "8:18 AM", "8:47 AM", "9:18 AM", "9:52 AM", "10:27 AM"] },
   { stop_id: "10045", name: "E Main &amp; SE 58th Ct", lat: 45.520017, lon: -122.921603, times: ["6:51 AM", "7:19 AM", "7:51 AM", "8:18 AM", "8:47 AM", "9:18 AM", "9:52 AM", "10:27 AM"] },
-  { stop_id: "10046", name: "E Main &amp; NE 53rd", lat: 45.52002, lon: -122.928828, times: ["6:10 AM", "6:52 AM", "7:20 AM", "7:52 AM", "8:19 AM", "8:48 AM", "9:19 AM", "9:53 AM"] },
-  { stop_id: "10047", name: "E Main &amp; NE 49th", lat: 45.52, lon: -122.932054, times: ["6:10 AM", "6:52 AM", "7:21 AM", "7:53 AM", "8:20 AM", "8:49 AM", "9:20 AM", "9:54 AM"] },
-  { stop_id: "260", name: "E Main &amp; NE Brookwood", lat: 45.520039, lon: -122.937267, times: ["6:11 AM", "6:53 AM", "7:21 AM", "7:53 AM", "8:20 AM", "8:50 AM", "9:20 AM", "9:54 AM"] },
-  { stop_id: "305", name: "E Main &amp; NE 40th", lat: 45.520004, lon: -122.941122, times: ["6:11 AM", "6:53 AM", "7:22 AM", "7:54 AM", "8:21 AM", "8:50 AM", "9:21 AM", "9:55 AM"] },
-  { stop_id: "301", name: "E Main &amp; NE 37th", lat: 45.520013, lon: -122.944319, times: ["6:12 AM", "6:54 AM", "7:22 AM", "7:54 AM", "8:21 AM", "8:51 AM", "9:21 AM", "9:55 AM"] },
-  { stop_id: "288", name: "E Main &amp; NE 32nd", lat: 45.520017, lon: -122.949544, times: ["6:12 AM", "6:54 AM", "7:23 AM", "7:55 AM", "8:22 AM", "8:51 AM", "9:22 AM", "9:56 AM"] },
-  { stop_id: "3718", name: "E Main &amp; SE 26th", lat: 45.520923, lon: -122.955499, times: ["6:13 AM", "6:55 AM", "7:24 AM", "7:56 AM", "8:23 AM", "8:52 AM", "9:23 AM", "9:57 AM"] },
-  { stop_id: "3716", name: "E Main &amp; SE 24th", lat: 45.521081, lon: -122.957843, times: ["6:14 AM", "6:56 AM", "7:24 AM", "7:56 AM", "8:23 AM", "8:52 AM", "9:23 AM", "9:57 AM"] },
-  { stop_id: "3711", name: "E Main &amp; SE 18th", lat: 45.521478, lon: -122.96358, times: ["6:14 AM", "6:56 AM", "7:25 AM", "7:57 AM", "8:24 AM", "8:53 AM", "9:24 AM", "9:58 AM"] },
-  { stop_id: "3687", name: "E Main &amp; NE 12th", lat: 45.521973, lon: -122.970598, times: ["6:15 AM", "6:57 AM", "7:26 AM", "7:58 AM", "8:25 AM", "8:54 AM", "9:25 AM", "9:59 AM"] },
-  { stop_id: "13255", name: "SE 10th &amp; Washington", lat: 45.521546, lon: -122.974041, times: ["6:16 AM", "6:58 AM", "7:27 AM", "7:59 AM", "8:26 AM", "8:56 AM", "9:26 AM", "10:00 AM"] },
-  { stop_id: "310", name: "SE Baseline St &amp; 9th", lat: 45.520061, lon: -122.97539, times: ["6:17 AM", "6:59 AM", "7:28 AM", "8:00 AM", "8:28 AM", "8:57 AM", "9:27 AM", "10:01 AM"] },
-  { stop_id: "308", name: "SE Baseline St &amp; 7th", lat: 45.520081, lon: -122.97865, times: ["6:18 AM", "7:00 AM", "7:29 AM", "8:01 AM", "8:29 AM", "8:58 AM", "9:28 AM", "10:02 AM"] },
+  { stop_id: "10046", name: "E Main &amp; NE 53rd", lat: 45.52002, lon: -122.928828, times: ["6:52 AM", "7:20 AM", "7:52 AM", "8:19 AM", "8:48 AM", "9:19 AM", "9:53 AM", "10:28 AM"] },
+  { stop_id: "10047", name: "E Main &amp; NE 49th", lat: 45.52, lon: -122.932054, times: ["6:52 AM", "7:21 AM", "7:53 AM", "8:20 AM", "8:49 AM", "9:20 AM", "9:54 AM", "10:29 AM"] },
+  { stop_id: "260", name: "E Main &amp; NE Brookwood", lat: 45.520039, lon: -122.937267, times: ["6:53 AM", "7:21 AM", "7:53 AM", "8:20 AM", "8:50 AM", "9:20 AM", "9:54 AM", "10:29 AM"] },
+  { stop_id: "305", name: "E Main &amp; NE 40th", lat: 45.520004, lon: -122.941122, times: ["6:53 AM", "7:22 AM", "7:54 AM", "8:21 AM", "8:50 AM", "9:21 AM", "9:55 AM", "10:30 AM"] },
+  { stop_id: "301", name: "E Main &amp; NE 37th", lat: 45.520013, lon: -122.944319, times: ["6:54 AM", "7:22 AM", "7:54 AM", "8:21 AM", "8:51 AM", "9:21 AM", "9:55 AM", "10:30 AM"] },
+  { stop_id: "288", name: "E Main &amp; NE 32nd", lat: 45.520017, lon: -122.949544, times: ["6:54 AM", "7:23 AM", "7:55 AM", "8:22 AM", "8:51 AM", "9:22 AM", "9:56 AM", "10:31 AM"] },
+  { stop_id: "3718", name: "E Main &amp; SE 26th", lat: 45.520923, lon: -122.955499, times: ["6:55 AM", "7:24 AM", "7:56 AM", "8:23 AM", "8:52 AM", "9:23 AM", "9:57 AM", "10:32 AM"] },
+  { stop_id: "3716", name: "E Main &amp; SE 24th", lat: 45.521081, lon: -122.957843, times: ["6:56 AM", "7:24 AM", "7:56 AM", "8:23 AM", "8:52 AM", "9:23 AM", "9:57 AM", "10:32 AM"] },
+  { stop_id: "3711", name: "E Main &amp; SE 18th", lat: 45.521478, lon: -122.96358, times: ["6:56 AM", "7:25 AM", "7:57 AM", "8:24 AM", "8:53 AM", "9:24 AM", "9:58 AM", "10:33 AM"] },
+  { stop_id: "3687", name: "E Main &amp; NE 12th", lat: 45.521973, lon: -122.970598, times: ["6:57 AM", "7:26 AM", "7:58 AM", "8:25 AM", "8:54 AM", "9:25 AM", "9:59 AM", "10:34 AM"] },
+  { stop_id: "13255", name: "SE 10th &amp; Washington", lat: 45.521546, lon: -122.974041, times: ["6:58 AM", "7:27 AM", "7:59 AM", "8:26 AM", "8:56 AM", "9:26 AM", "10:00 AM", "10:35 AM"] },
+  { stop_id: "310", name: "SE Baseline St &amp; 9th", lat: 45.520061, lon: -122.97539, times: ["6:59 AM", "7:28 AM", "8:00 AM", "8:28 AM", "8:57 AM", "9:27 AM", "10:01 AM", "10:36 AM"] },
+  { stop_id: "308", name: "SE Baseline St &amp; 7th", lat: 45.520081, lon: -122.97865, times: ["7:00 AM", "7:29 AM", "8:01 AM", "8:29 AM", "8:58 AM", "9:28 AM", "10:02 AM", "10:37 AM"] },
   { stop_id: "307", name: "SE Baseline St &amp; 5th", lat: 45.520114, lon: -122.982407, times: ["6:19 AM", "7:01 AM", "7:30 AM", "8:02 AM", "8:30 AM", "8:59 AM", "9:29 AM", "10:03 AM"] },
   { stop_id: "280", name: "SE Baseline St &amp; 2nd", lat: 45.520168, lon: -122.987847, times: ["6:21 AM", "7:03 AM", "7:32 AM", "8:04 AM", "8:32 AM", "9:01 AM", "9:31 AM", "10:05 AM"] },
   { stop_id: "9955", name: "Hillsboro Transit Center ", lat: 45.521505, lon: -122.98544, times: ["6:23 AM", "7:05 AM", "7:34 AM", "8:06 AM", "9:03 AM", "9:33 AM", "10:07 AM", "10:42 AM"] },

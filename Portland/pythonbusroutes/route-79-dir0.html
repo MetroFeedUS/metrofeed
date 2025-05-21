@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -752,7 +760,7 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["6:17 AM", "6:37 AM", "7:17 AM", "7:36 AM", "8:16 AM", "8:56 AM", "9:36 AM", "10:15 AM"] },
+  { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["6:37 AM", "7:17 AM", "7:36 AM", "8:16 AM", "8:56 AM", "9:36 AM", "10:15 AM", "10:55 AM"] },
   { stop_id: "12922", name: "Clackamas Town Center Mall", lat: 45.437504, lon: -122.574003, times: ["6:20 AM", "6:40 AM", "7:20 AM", "7:39 AM", "8:19 AM", "8:59 AM", "9:39 AM", "10:18 AM"] },
   { stop_id: "8006", name: "SE 82nd &amp; McBride ", lat: 45.435937, lon: -122.579251, times: ["6:21 AM", "6:41 AM", "7:21 AM", "7:40 AM", "8:20 AM", "9:00 AM", "9:40 AM", "10:20 AM"] },
   { stop_id: "8050", name: "SE 82nd &amp; Sunnyside Dr", lat: 45.433746, lon: -122.579366, times: ["6:22 AM", "6:42 AM", "7:22 AM", "7:41 AM", "8:21 AM", "9:01 AM", "9:41 AM", "10:20 AM"] },

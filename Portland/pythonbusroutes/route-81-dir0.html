@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -694,7 +702,7 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "10857", name: "Gresham Central Transit Center", lat: 45.502718, lon: -122.427108, times: ["6:18 AM", "6:52 AM", "7:26 AM", "8:01 AM", "8:36 AM", "9:11 AM", "9:46 AM", "10:21 AM"] },
+  { stop_id: "10857", name: "Gresham Central Transit Center", lat: 45.502718, lon: -122.427108, times: ["6:52 AM", "7:26 AM", "8:01 AM", "8:36 AM", "9:11 AM", "9:46 AM", "10:21 AM", "10:56 AM"] },
   { stop_id: "2253", name: "Gresham Central Transit Center", lat: 45.502592, lon: -122.426486, times: ["6:20 AM", "6:54 AM", "7:28 AM", "8:03 AM", "8:38 AM", "9:13 AM", "9:48 AM", "10:23 AM"] },
   { stop_id: "13211", name: "NE Hood &amp; 5th", lat: 45.501098, lon: -122.428024, times: ["6:20 AM", "6:54 AM", "7:28 AM", "8:03 AM", "8:38 AM", "9:13 AM", "9:48 AM", "10:23 AM"] },
   { stop_id: "13033", name: "NE Hood &amp; 2nd", lat: 45.498613, lon: -122.427832, times: ["6:21 AM", "6:55 AM", "7:29 AM", "8:04 AM", "8:39 AM", "9:14 AM", "9:49 AM", "10:24 AM"] },

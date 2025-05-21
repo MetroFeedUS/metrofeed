@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -1521,18 +1529,18 @@ const stops = [
   { stop_id: "5176", name: "SW Scholls Ferry &amp; Heather", lat: 45.46744, lon: -122.776909, times: ["7:15 AM", "7:43 AM", "8:13 AM", "8:44 AM", "9:16 AM", "9:46 AM", "10:16 AM", "10:45 AM"] },
   { stop_id: "5180", name: "SW Scholls Ferry &amp; Marjorie", lat: 45.465214, lon: -122.778066, times: ["7:16 AM", "7:44 AM", "8:14 AM", "8:45 AM", "9:16 AM", "9:47 AM", "10:17 AM", "10:46 AM"] },
   { stop_id: "5159", name: "7700 Block SW Scholls Ferry", lat: 45.463841, lon: -122.778834, times: ["7:16 AM", "7:45 AM", "8:14 AM", "8:46 AM", "9:17 AM", "9:47 AM", "10:17 AM", "10:46 AM"] },
-  { stop_id: "5169", name: "SW Scholls Ferry &amp; Crystal", lat: 45.462247, lon: -122.779673, times: ["6:10 AM", "7:17 AM", "7:45 AM", "8:15 AM", "8:46 AM", "9:17 AM", "9:48 AM", "10:18 AM"] },
-  { stop_id: "5167", name: "SW Scholls Ferry &amp; Crestwood", lat: 45.460717, lon: -122.780441, times: ["6:11 AM", "7:17 AM", "7:46 AM", "8:15 AM", "8:47 AM", "9:18 AM", "9:48 AM", "10:18 AM"] },
-  { stop_id: "5161", name: "8600 Block SW Scholls Ferry", lat: 45.458022, lon: -122.781936, times: ["6:11 AM", "7:18 AM", "7:47 AM", "8:17 AM", "8:48 AM", "9:19 AM", "9:49 AM", "10:19 AM"] },
-  { stop_id: "6125", name: "SW Eliander &amp; One Embassy Centre", lat: 45.455116, lon: -122.780496, times: ["6:12 AM", "7:19 AM", "7:48 AM", "8:18 AM", "8:49 AM", "9:20 AM", "9:50 AM", "10:20 AM"] },
-  { stop_id: "9652", name: "Washington Square Transit Center", lat: 45.452445, lon: -122.778785, times: ["6:14 AM", "7:21 AM", "7:50 AM", "8:20 AM", "8:51 AM", "9:22 AM", "9:52 AM", "10:22 AM"] },
-  { stop_id: "9221", name: "SW Palmblad &amp; Hall Blvd", lat: 45.45369, lon: -122.776277, times: ["6:15 AM", "7:22 AM", "7:51 AM", "8:21 AM", "8:52 AM", "9:23 AM", "9:53 AM", "10:23 AM"] },
-  { stop_id: "2282", name: "SW Hall &amp; Greenburg", lat: 45.453013, lon: -122.773643, times: ["6:15 AM", "7:22 AM", "7:51 AM", "8:21 AM", "8:52 AM", "9:23 AM", "9:53 AM", "10:23 AM"] },
-  { stop_id: "2312", name: "SW Hall &amp; 91st", lat: 45.451909, lon: -122.770246, times: ["6:16 AM", "7:23 AM", "7:52 AM", "8:22 AM", "8:53 AM", "9:24 AM", "9:54 AM", "10:24 AM"] },
-  { stop_id: "2308", name: "SW Hall &amp; 88th", lat: 45.451117, lon: -122.767695, times: ["6:16 AM", "7:24 AM", "7:53 AM", "8:23 AM", "8:54 AM", "9:24 AM", "9:54 AM", "10:24 AM"] },
-  { stop_id: "2299", name: "SW Hall &amp; Washington", lat: 45.450363, lon: -122.765567, times: ["6:17 AM", "7:24 AM", "7:53 AM", "8:23 AM", "8:54 AM", "9:25 AM", "9:55 AM", "10:25 AM"] },
-  { stop_id: "13581", name: "9900 Block SW Hall", lat: 45.447796, lon: -122.765609, times: ["6:18 AM", "7:25 AM", "7:54 AM", "8:24 AM", "8:55 AM", "9:26 AM", "9:56 AM", "10:26 AM"] },
-  { stop_id: "14466", name: "SW Locust &amp; 87th", lat: 45.446679, lon: -122.766591, times: ["6:18 AM", "7:26 AM", "7:55 AM", "8:25 AM", "8:56 AM", "9:26 AM", "9:56 AM", "10:26 AM"] },
+  { stop_id: "5169", name: "SW Scholls Ferry &amp; Crystal", lat: 45.462247, lon: -122.779673, times: ["7:17 AM", "7:45 AM", "8:15 AM", "8:46 AM", "9:17 AM", "9:48 AM", "10:18 AM", "10:47 AM"] },
+  { stop_id: "5167", name: "SW Scholls Ferry &amp; Crestwood", lat: 45.460717, lon: -122.780441, times: ["7:17 AM", "7:46 AM", "8:15 AM", "8:47 AM", "9:18 AM", "9:48 AM", "10:18 AM", "10:47 AM"] },
+  { stop_id: "5161", name: "8600 Block SW Scholls Ferry", lat: 45.458022, lon: -122.781936, times: ["7:18 AM", "7:47 AM", "8:17 AM", "8:48 AM", "9:19 AM", "9:49 AM", "10:19 AM", "10:48 AM"] },
+  { stop_id: "6125", name: "SW Eliander &amp; One Embassy Centre", lat: 45.455116, lon: -122.780496, times: ["7:19 AM", "7:48 AM", "8:18 AM", "8:49 AM", "9:20 AM", "9:50 AM", "10:20 AM", "10:49 AM"] },
+  { stop_id: "9652", name: "Washington Square Transit Center", lat: 45.452445, lon: -122.778785, times: ["7:21 AM", "7:50 AM", "8:20 AM", "8:51 AM", "9:22 AM", "9:52 AM", "10:22 AM", "10:51 AM"] },
+  { stop_id: "9221", name: "SW Palmblad &amp; Hall Blvd", lat: 45.45369, lon: -122.776277, times: ["7:22 AM", "7:51 AM", "8:21 AM", "8:52 AM", "9:23 AM", "9:53 AM", "10:23 AM", "10:52 AM"] },
+  { stop_id: "2282", name: "SW Hall &amp; Greenburg", lat: 45.453013, lon: -122.773643, times: ["7:22 AM", "7:51 AM", "8:21 AM", "8:52 AM", "9:23 AM", "9:53 AM", "10:23 AM", "10:52 AM"] },
+  { stop_id: "2312", name: "SW Hall &amp; 91st", lat: 45.451909, lon: -122.770246, times: ["7:23 AM", "7:52 AM", "8:22 AM", "8:53 AM", "9:24 AM", "9:54 AM", "10:24 AM", "10:53 AM"] },
+  { stop_id: "2308", name: "SW Hall &amp; 88th", lat: 45.451117, lon: -122.767695, times: ["7:24 AM", "7:53 AM", "8:23 AM", "8:54 AM", "9:24 AM", "9:54 AM", "10:24 AM", "10:54 AM"] },
+  { stop_id: "2299", name: "SW Hall &amp; Washington", lat: 45.450363, lon: -122.765567, times: ["7:24 AM", "7:53 AM", "8:23 AM", "8:54 AM", "9:25 AM", "9:55 AM", "10:25 AM", "10:54 AM"] },
+  { stop_id: "13581", name: "9900 Block SW Hall", lat: 45.447796, lon: -122.765609, times: ["7:25 AM", "7:54 AM", "8:24 AM", "8:55 AM", "9:26 AM", "9:56 AM", "10:26 AM", "10:55 AM"] },
+  { stop_id: "14466", name: "SW Locust &amp; 87th", lat: 45.446679, lon: -122.766591, times: ["7:26 AM", "7:55 AM", "8:25 AM", "8:56 AM", "9:26 AM", "9:56 AM", "10:26 AM", "10:56 AM"] },
   { stop_id: "12404", name: "SW Greenburg &amp; Washington Square Rd", lat: 45.446077, lon: -122.77652, times: ["6:20 AM", "7:28 AM", "7:57 AM", "8:27 AM", "8:58 AM", "9:28 AM", "9:58 AM", "10:28 AM"] },
   { stop_id: "2233", name: "SW Greenburg &amp; Center", lat: 45.434029, lon: -122.76857, times: ["6:25 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM", "9:33 AM", "10:03 AM", "10:33 AM"] },
   { stop_id: "14410", name: "SW Main between Scoffins and Commercial", lat: 45.431698, lon: -122.769545, times: ["6:26 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM", "9:34 AM", "10:04 AM", "10:34 AM"] },

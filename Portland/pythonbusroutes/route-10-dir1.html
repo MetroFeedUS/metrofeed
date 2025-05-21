@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -1006,18 +1014,18 @@ const stops = [
   { stop_id: "2565", name: "SE Harold &amp; 97th", lat: 45.482735, lon: -122.563179, times: ["6:39 AM", "7:09 AM", "7:47 AM", "8:46 AM", "9:37 AM", "10:22 AM", "11:17 AM", "12:10 PM"] },
   { stop_id: "2563", name: "SE Harold &amp; 92nd", lat: 45.48285, lon: -122.567677, times: ["6:40 AM", "7:10 AM", "7:48 AM", "8:47 AM", "9:38 AM", "10:23 AM", "11:18 AM", "12:11 PM"] },
   { stop_id: "13757", name: "SE Ellis &amp; 89th", lat: 45.482306, lon: -122.570758, times: ["6:41 AM", "7:11 AM", "7:49 AM", "8:48 AM", "9:39 AM", "10:24 AM", "11:19 AM", "12:12 PM"] },
-  { stop_id: "1598", name: "SE Ellis &amp; 86th Ave", lat: 45.482281, lon: -122.574795, times: ["6:10 AM", "6:41 AM", "7:11 AM", "7:49 AM", "8:48 AM", "9:39 AM", "10:24 AM", "11:19 AM"] },
-  { stop_id: "1596", name: "SE Ellis &amp; Foster", lat: 45.482292, lon: -122.57717, times: ["6:11 AM", "6:42 AM", "7:12 AM", "7:50 AM", "8:49 AM", "9:40 AM", "10:25 AM", "11:20 AM"] },
-  { stop_id: "1818", name: "SE Foster &amp; 82nd", lat: 45.483182, lon: -122.579641, times: ["6:12 AM", "6:43 AM", "7:13 AM", "7:48 AM", "7:51 AM", "8:50 AM", "9:41 AM", "10:26 AM"] },
-  { stop_id: "2562", name: "SE 79th &amp; Harold", lat: 45.483168, lon: -122.58245, times: ["6:13 AM", "6:44 AM", "7:14 AM", "7:49 AM", "7:52 AM", "8:51 AM", "9:42 AM", "10:27 AM"] },
-  { stop_id: "2558", name: "SE Harold &amp; 74th", lat: 45.483118, lon: -122.586552, times: ["6:14 AM", "6:45 AM", "7:15 AM", "7:50 AM", "7:53 AM", "8:52 AM", "9:43 AM", "10:28 AM"] },
-  { stop_id: "2554", name: "SE Harold &amp; 72nd", lat: 45.483107, lon: -122.589053, times: ["6:14 AM", "6:45 AM", "7:16 AM", "7:51 AM", "7:54 AM", "8:52 AM", "9:43 AM", "10:28 AM"] },
-  { stop_id: "2553", name: "SE Harold &amp; 69th", lat: 45.4831, lon: -122.59272, times: ["6:15 AM", "6:46 AM", "7:17 AM", "7:52 AM", "7:55 AM", "8:53 AM", "9:44 AM", "10:29 AM"] },
-  { stop_id: "8404", name: "SE Harold &amp; 67th", lat: 45.483094, lon: -122.594286, times: ["6:15 AM", "6:46 AM", "7:17 AM", "7:52 AM", "7:55 AM", "8:53 AM", "9:44 AM", "10:29 AM"] },
-  { stop_id: "8422", name: "SE Harold &amp; 64th", lat: 45.4831, lon: -122.597429, times: ["6:16 AM", "6:47 AM", "7:18 AM", "7:53 AM", "7:56 AM", "8:54 AM", "9:45 AM", "10:30 AM"] },
-  { stop_id: "2549", name: "SE Harold &amp; 62nd", lat: 45.483091, lon: -122.599444, times: ["6:17 AM", "6:48 AM", "7:18 AM", "7:53 AM", "7:57 AM", "8:55 AM", "9:46 AM", "10:31 AM"] },
-  { stop_id: "2547", name: "SE Harold &amp; 60th", lat: 45.483079, lon: -122.60201, times: ["6:17 AM", "6:48 AM", "7:19 AM", "7:54 AM", "7:58 AM", "8:55 AM", "9:46 AM", "10:31 AM"] },
-  { stop_id: "2545", name: "SE Harold &amp; 57th", lat: 45.483107, lon: -122.605101, times: ["6:18 AM", "6:49 AM", "7:20 AM", "7:55 AM", "7:59 AM", "8:56 AM", "9:47 AM", "10:32 AM"] },
+  { stop_id: "1598", name: "SE Ellis &amp; 86th Ave", lat: 45.482281, lon: -122.574795, times: ["6:41 AM", "7:11 AM", "7:49 AM", "8:48 AM", "9:39 AM", "10:24 AM", "11:19 AM", "12:12 PM"] },
+  { stop_id: "1596", name: "SE Ellis &amp; Foster", lat: 45.482292, lon: -122.57717, times: ["6:42 AM", "7:12 AM", "7:50 AM", "8:49 AM", "9:40 AM", "10:25 AM", "11:20 AM", "12:13 PM"] },
+  { stop_id: "1818", name: "SE Foster &amp; 82nd", lat: 45.483182, lon: -122.579641, times: ["6:43 AM", "7:13 AM", "7:48 AM", "7:51 AM", "8:50 AM", "9:41 AM", "10:26 AM", "11:21 AM"] },
+  { stop_id: "2562", name: "SE 79th &amp; Harold", lat: 45.483168, lon: -122.58245, times: ["6:44 AM", "7:14 AM", "7:49 AM", "7:52 AM", "8:51 AM", "9:42 AM", "10:27 AM", "11:21 AM"] },
+  { stop_id: "2558", name: "SE Harold &amp; 74th", lat: 45.483118, lon: -122.586552, times: ["6:45 AM", "7:15 AM", "7:50 AM", "7:53 AM", "8:52 AM", "9:43 AM", "10:28 AM", "11:22 AM"] },
+  { stop_id: "2554", name: "SE Harold &amp; 72nd", lat: 45.483107, lon: -122.589053, times: ["6:45 AM", "7:16 AM", "7:51 AM", "7:54 AM", "8:52 AM", "9:43 AM", "10:28 AM", "11:23 AM"] },
+  { stop_id: "2553", name: "SE Harold &amp; 69th", lat: 45.4831, lon: -122.59272, times: ["6:46 AM", "7:17 AM", "7:52 AM", "7:55 AM", "8:53 AM", "9:44 AM", "10:29 AM", "11:24 AM"] },
+  { stop_id: "8404", name: "SE Harold &amp; 67th", lat: 45.483094, lon: -122.594286, times: ["6:46 AM", "7:17 AM", "7:52 AM", "7:55 AM", "8:53 AM", "9:44 AM", "10:29 AM", "11:24 AM"] },
+  { stop_id: "8422", name: "SE Harold &amp; 64th", lat: 45.4831, lon: -122.597429, times: ["6:47 AM", "7:18 AM", "7:53 AM", "7:56 AM", "8:54 AM", "9:45 AM", "10:30 AM", "11:25 AM"] },
+  { stop_id: "2549", name: "SE Harold &amp; 62nd", lat: 45.483091, lon: -122.599444, times: ["6:48 AM", "7:18 AM", "7:53 AM", "7:57 AM", "8:55 AM", "9:46 AM", "10:31 AM", "11:25 AM"] },
+  { stop_id: "2547", name: "SE Harold &amp; 60th", lat: 45.483079, lon: -122.60201, times: ["6:48 AM", "7:19 AM", "7:54 AM", "7:58 AM", "8:55 AM", "9:46 AM", "10:31 AM", "11:26 AM"] },
+  { stop_id: "2545", name: "SE Harold &amp; 57th", lat: 45.483107, lon: -122.605101, times: ["6:49 AM", "7:20 AM", "7:55 AM", "7:59 AM", "8:56 AM", "9:47 AM", "10:32 AM", "11:26 AM"] },
   { stop_id: "2541", name: "SE Harold &amp; 52nd", lat: 45.483099, lon: -122.608537, times: ["6:19 AM", "6:50 AM", "7:21 AM", "7:56 AM", "8:00 AM", "8:57 AM", "9:48 AM", "10:33 AM"] },
   { stop_id: "5535", name: "SE Steele &amp; 52nd", lat: 45.484751, lon: -122.609105, times: ["6:19 AM", "6:50 AM", "7:22 AM", "7:57 AM", "8:01 AM", "8:57 AM", "9:48 AM", "10:33 AM"] },
   { stop_id: "5533", name: "SE Steele &amp; 50th", lat: 45.484749, lon: -122.611685, times: ["6:20 AM", "6:51 AM", "7:23 AM", "7:58 AM", "8:01 AM", "8:58 AM", "9:49 AM", "10:34 AM"] },

@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -591,7 +599,7 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "4429", name: "PCC Rock Creek Main Stop", lat: 45.565999, lon: -122.859421, times: ["6:19 AM", "7:19 AM", "8:19 AM", "9:19 AM", "10:19 AM", "11:20 AM", "12:20 PM", "1:20 PM"] },
+  { stop_id: "4429", name: "PCC Rock Creek Main Stop", lat: 45.565999, lon: -122.859421, times: ["7:19 AM", "8:19 AM", "9:19 AM", "10:19 AM", "11:20 AM", "12:20 PM", "1:20 PM", "2:38 PM"] },
   { stop_id: "14088", name: "NW Springville &amp; Concordia Ct", lat: 45.562942, lon: -122.859142, times: ["6:20 AM", "7:20 AM", "8:20 AM", "9:20 AM", "10:20 AM", "11:21 AM", "12:21 PM", "1:21 PM"] },
   { stop_id: "10103", name: "NW Springville &amp; 173rd", lat: 45.56291, lon: -122.856081, times: ["6:20 AM", "7:20 AM", "8:20 AM", "9:20 AM", "10:20 AM", "11:21 AM", "12:21 PM", "1:21 PM"] },
   { stop_id: "10101", name: "NW Springville &amp; 165th Terrace", lat: 45.564046, lon: -122.847863, times: ["6:21 AM", "7:21 AM", "8:22 AM", "9:21 AM", "10:21 AM", "11:22 AM", "12:23 PM", "1:23 PM"] },

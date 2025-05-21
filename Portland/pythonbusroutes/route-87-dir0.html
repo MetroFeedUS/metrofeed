@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -946,16 +954,16 @@ const stops = [
   { stop_id: "14194", name: "NE Holman &amp; 112th", lat: 45.568129, lon: -122.547138, times: ["6:36 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:34 AM", "9:05 AM", "9:36 AM", "10:06 AM"] },
   { stop_id: "9108", name: "NE Airport Way &amp; Ainsworth Circle", lat: 45.56708, lon: -122.542864, times: ["6:37 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:35 AM", "9:06 AM", "9:37 AM", "10:07 AM"] },
   { stop_id: "10716", name: "NE Airport Way &amp; Win Sivers Drive", lat: 45.567236, lon: -122.538107, times: ["6:38 AM", "7:07 AM", "7:37 AM", "8:07 AM", "8:36 AM", "9:07 AM", "9:38 AM", "10:08 AM"] },
-  { stop_id: "9110", name: "NE Airport Way &amp; 122nd", lat: 45.565148, lon: -122.532777, times: ["6:11 AM", "6:40 AM", "7:09 AM", "7:39 AM", "8:09 AM", "8:38 AM", "9:09 AM", "9:40 AM"] },
-  { stop_id: "10717", name: "13100 Block NE Airport Way", lat: 45.562619, lon: -122.527475, times: ["6:11 AM", "6:41 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:39 AM", "9:09 AM", "9:40 AM"] },
-  { stop_id: "9112", name: "NE Airport Way &amp; 138th", lat: 45.56182, lon: -122.521542, times: ["6:12 AM", "6:42 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:40 AM", "9:10 AM", "9:41 AM"] },
-  { stop_id: "13630", name: "Relay Resources", lat: 45.561519, lon: -122.509874, times: ["6:15 AM", "6:45 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:43 AM", "5:45 AM"] },
-  { stop_id: "9537", name: "5200 Block NE 148th", lat: 45.560869, lon: -122.51041, times: ["6:15 AM", "6:45 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:43 AM", "5:45 AM"] },
-  { stop_id: "10718", name: "NE Airport Way &amp; 148th", lat: 45.559438, lon: -122.509394, times: ["6:15 AM", "6:45 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:43 AM", "9:12 AM", "9:43 AM"] },
-  { stop_id: "10719", name: "NE Airport Way &amp; 152nd Pl", lat: 45.558789, lon: -122.505891, times: ["6:16 AM", "6:46 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:44 AM", "9:12 AM", "9:43 AM"] },
-  { stop_id: "10994", name: "NE Airport Way &amp; 158th", lat: 45.557314, lon: -122.499476, times: ["6:16 AM", "6:46 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:44 AM", "9:13 AM", "9:44 AM"] },
-  { stop_id: "10720", name: "16400 Block NE Airport Way", lat: 45.556459, lon: -122.495494, times: ["6:17 AM", "6:47 AM", "7:16 AM", "7:46 AM", "8:16 AM", "8:45 AM", "9:14 AM", "9:45 AM"] },
-  { stop_id: "13201", name: "NE Airport Way &amp; Mason Ct", lat: 45.553802, lon: -122.489805, times: ["6:18 AM", "6:48 AM", "7:17 AM", "7:47 AM", "8:17 AM", "8:46 AM", "9:15 AM", "9:46 AM"] },
+  { stop_id: "9110", name: "NE Airport Way &amp; 122nd", lat: 45.565148, lon: -122.532777, times: ["6:40 AM", "7:09 AM", "7:39 AM", "8:09 AM", "8:38 AM", "9:09 AM", "9:40 AM", "10:10 AM"] },
+  { stop_id: "10717", name: "13100 Block NE Airport Way", lat: 45.562619, lon: -122.527475, times: ["6:41 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:39 AM", "9:09 AM", "9:40 AM", "10:10 AM"] },
+  { stop_id: "9112", name: "NE Airport Way &amp; 138th", lat: 45.56182, lon: -122.521542, times: ["6:42 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:40 AM", "9:10 AM", "9:41 AM", "10:11 AM"] },
+  { stop_id: "13630", name: "Relay Resources", lat: 45.561519, lon: -122.509874, times: ["6:45 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:43 AM", "5:45 AM", "6:15 AM"] },
+  { stop_id: "9537", name: "5200 Block NE 148th", lat: 45.560869, lon: -122.51041, times: ["6:45 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:43 AM", "5:45 AM", "6:15 AM"] },
+  { stop_id: "10718", name: "NE Airport Way &amp; 148th", lat: 45.559438, lon: -122.509394, times: ["6:45 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:43 AM", "9:12 AM", "9:43 AM", "10:13 AM"] },
+  { stop_id: "10719", name: "NE Airport Way &amp; 152nd Pl", lat: 45.558789, lon: -122.505891, times: ["6:46 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:44 AM", "9:12 AM", "9:43 AM", "10:13 AM"] },
+  { stop_id: "10994", name: "NE Airport Way &amp; 158th", lat: 45.557314, lon: -122.499476, times: ["6:46 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:44 AM", "9:13 AM", "9:44 AM", "10:14 AM"] },
+  { stop_id: "10720", name: "16400 Block NE Airport Way", lat: 45.556459, lon: -122.495494, times: ["6:47 AM", "7:16 AM", "7:46 AM", "8:16 AM", "8:45 AM", "9:14 AM", "9:45 AM", "10:15 AM"] },
+  { stop_id: "13201", name: "NE Airport Way &amp; Mason Ct", lat: 45.553802, lon: -122.489805, times: ["6:48 AM", "7:17 AM", "7:47 AM", "8:17 AM", "8:46 AM", "9:15 AM", "9:46 AM", "10:16 AM"] },
   { stop_id: "11014", name: "NE Airport Way &amp; Riverside", lat: 45.553094, lon: -122.481264, times: ["6:19 AM", "6:49 AM", "7:18 AM", "7:48 AM", "8:18 AM", "8:47 AM", "9:16 AM", "9:47 AM"] },
   { stop_id: "10721", name: "NE Airport Way &amp; Sandy Blvd", lat: 45.546312, lon: -122.477303, times: ["6:21 AM", "6:51 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:49 AM", "9:18 AM", "9:49 AM"] },
   { stop_id: "10699", name: "2900 Block NE 181st", lat: 45.544075, lon: -122.477486, times: ["6:21 AM", "6:51 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:49 AM", "9:18 AM", "9:49 AM"] },

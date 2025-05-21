@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -674,21 +682,21 @@ const stops = [
   { stop_id: "6203", name: "SE Webster &amp; Mabel", lat: 45.407307, lon: -122.589094, times: ["7:07 AM", "8:06 AM", "8:49 AM", "9:29 AM", "10:09 AM", "10:49 AM", "11:29 AM", "12:08 PM"] },
   { stop_id: "13801", name: "SE Webster &amp; Dolinda", lat: 45.402381, lon: -122.5855, times: ["7:09 AM", "8:08 AM", "8:51 AM", "9:31 AM", "10:11 AM", "10:51 AM", "11:31 AM", "12:10 PM"] },
   { stop_id: "13149", name: "17100 Block SE Webster", lat: 45.398926, lon: -122.586052, times: ["7:09 AM", "8:08 AM", "8:51 AM", "9:31 AM", "10:11 AM", "10:51 AM", "11:31 AM", "12:10 PM"] },
-  { stop_id: "6201", name: "Webster &amp; Los Verdes", lat: 45.396229, lon: -122.585794, times: ["6:10 AM", "7:10 AM", "8:09 AM", "8:52 AM", "9:32 AM", "10:12 AM", "10:52 AM", "11:32 AM"] },
-  { stop_id: "6198", name: "Webster &amp; Kraxberger Middle School", lat: 45.394878, lon: -122.585029, times: ["6:10 AM", "7:10 AM", "8:10 AM", "8:53 AM", "9:33 AM", "10:13 AM", "10:53 AM", "11:33 AM"] },
-  { stop_id: "6194", name: "Webster &amp; Clayton", lat: 45.39311, lon: -122.583676, times: ["6:11 AM", "7:11 AM", "8:10 AM", "8:53 AM", "9:33 AM", "10:13 AM", "10:53 AM", "11:33 AM"] },
-  { stop_id: "13153", name: "Webster &amp; Cason", lat: 45.390502, lon: -122.584171, times: ["6:12 AM", "7:12 AM", "8:11 AM", "8:54 AM", "9:34 AM", "10:14 AM", "10:54 AM", "11:34 AM"] },
-  { stop_id: "6206", name: "Webster &amp; Oatfield", lat: 45.3883, lon: -122.585507, times: ["6:12 AM", "7:12 AM", "8:11 AM", "8:54 AM", "9:34 AM", "10:14 AM", "10:54 AM", "11:34 AM"] },
-  { stop_id: "4164", name: "Oatfield &amp; E Hereford", lat: 45.386147, lon: -122.585052, times: ["6:13 AM", "7:13 AM", "8:12 AM", "8:55 AM", "9:35 AM", "10:15 AM", "10:55 AM", "11:35 AM"] },
-  { stop_id: "4154", name: "Oatfield &amp; E Exeter", lat: 45.384607, lon: -122.584294, times: ["6:13 AM", "7:13 AM", "8:12 AM", "8:55 AM", "9:35 AM", "10:15 AM", "10:55 AM", "11:35 AM"] },
-  { stop_id: "1256", name: "E Dartmouth &amp; Cornell", lat: 45.382533, lon: -122.587971, times: ["6:14 AM", "7:14 AM", "8:14 AM", "8:57 AM", "9:37 AM", "10:17 AM", "10:57 AM", "11:37 AM"] },
-  { stop_id: "1258", name: "E Dartmouth &amp; Harvard Ave", lat: 45.38147, lon: -122.591201, times: ["6:15 AM", "7:15 AM", "8:14 AM", "8:57 AM", "9:37 AM", "10:17 AM", "10:57 AM", "11:37 AM"] },
-  { stop_id: "1259", name: "E Dartmouth &amp; Portland Ave", lat: 45.380404, lon: -122.594471, times: ["6:15 AM", "7:15 AM", "8:15 AM", "8:58 AM", "9:38 AM", "10:18 AM", "10:58 AM", "11:38 AM"] },
-  { stop_id: "4456", name: "Portland Ave &amp; W Arlington", lat: 45.378495, lon: -122.593539, times: ["6:16 AM", "7:16 AM", "8:15 AM", "8:58 AM", "9:38 AM", "10:18 AM", "10:58 AM", "11:38 AM"] },
-  { stop_id: "126", name: "W Arlington &amp; Bellevue", lat: 45.377864, lon: -122.594889, times: ["6:16 AM", "7:16 AM", "8:16 AM", "8:59 AM", "9:39 AM", "10:19 AM", "10:59 AM", "11:39 AM"] },
-  { stop_id: "124", name: "W Arlington &amp; Beatrice", lat: 45.377232, lon: -122.596822, times: ["6:17 AM", "7:17 AM", "8:16 AM", "8:59 AM", "9:39 AM", "10:19 AM", "10:59 AM", "11:39 AM"] },
-  { stop_id: "122", name: "W Arlington &amp; Barton", lat: 45.3766, lon: -122.598664, times: ["6:17 AM", "7:17 AM", "8:17 AM", "9:00 AM", "9:40 AM", "10:20 AM", "11:00 AM", "11:40 AM"] },
-  { stop_id: "135", name: "W Arlington &amp; McLoughlin", lat: 45.37596, lon: -122.600892, times: ["6:17 AM", "7:17 AM", "8:17 AM", "9:00 AM", "9:40 AM", "10:20 AM", "11:00 AM", "11:40 AM"] },
+  { stop_id: "6201", name: "Webster &amp; Los Verdes", lat: 45.396229, lon: -122.585794, times: ["7:10 AM", "8:09 AM", "8:52 AM", "9:32 AM", "10:12 AM", "10:52 AM", "11:32 AM", "12:11 PM"] },
+  { stop_id: "6198", name: "Webster &amp; Kraxberger Middle School", lat: 45.394878, lon: -122.585029, times: ["7:10 AM", "8:10 AM", "8:53 AM", "9:33 AM", "10:13 AM", "10:53 AM", "11:33 AM", "12:12 PM"] },
+  { stop_id: "6194", name: "Webster &amp; Clayton", lat: 45.39311, lon: -122.583676, times: ["7:11 AM", "8:10 AM", "8:53 AM", "9:33 AM", "10:13 AM", "10:53 AM", "11:33 AM", "12:12 PM"] },
+  { stop_id: "13153", name: "Webster &amp; Cason", lat: 45.390502, lon: -122.584171, times: ["7:12 AM", "8:11 AM", "8:54 AM", "9:34 AM", "10:14 AM", "10:54 AM", "11:34 AM", "12:13 PM"] },
+  { stop_id: "6206", name: "Webster &amp; Oatfield", lat: 45.3883, lon: -122.585507, times: ["7:12 AM", "8:11 AM", "8:54 AM", "9:34 AM", "10:14 AM", "10:54 AM", "11:34 AM", "12:14 PM"] },
+  { stop_id: "4164", name: "Oatfield &amp; E Hereford", lat: 45.386147, lon: -122.585052, times: ["7:13 AM", "8:12 AM", "8:55 AM", "9:35 AM", "10:15 AM", "10:55 AM", "11:35 AM", "12:14 PM"] },
+  { stop_id: "4154", name: "Oatfield &amp; E Exeter", lat: 45.384607, lon: -122.584294, times: ["7:13 AM", "8:12 AM", "8:55 AM", "9:35 AM", "10:15 AM", "10:55 AM", "11:35 AM", "12:15 PM"] },
+  { stop_id: "1256", name: "E Dartmouth &amp; Cornell", lat: 45.382533, lon: -122.587971, times: ["7:14 AM", "8:14 AM", "8:57 AM", "9:37 AM", "10:17 AM", "10:57 AM", "11:37 AM", "12:16 PM"] },
+  { stop_id: "1258", name: "E Dartmouth &amp; Harvard Ave", lat: 45.38147, lon: -122.591201, times: ["7:15 AM", "8:14 AM", "8:57 AM", "9:37 AM", "10:17 AM", "10:57 AM", "11:37 AM", "12:17 PM"] },
+  { stop_id: "1259", name: "E Dartmouth &amp; Portland Ave", lat: 45.380404, lon: -122.594471, times: ["7:15 AM", "8:15 AM", "8:58 AM", "9:38 AM", "10:18 AM", "10:58 AM", "11:38 AM", "12:17 PM"] },
+  { stop_id: "4456", name: "Portland Ave &amp; W Arlington", lat: 45.378495, lon: -122.593539, times: ["7:16 AM", "8:15 AM", "8:58 AM", "9:38 AM", "10:18 AM", "10:58 AM", "11:38 AM", "12:18 PM"] },
+  { stop_id: "126", name: "W Arlington &amp; Bellevue", lat: 45.377864, lon: -122.594889, times: ["7:16 AM", "8:16 AM", "8:59 AM", "9:39 AM", "10:19 AM", "10:59 AM", "11:39 AM", "12:18 PM"] },
+  { stop_id: "124", name: "W Arlington &amp; Beatrice", lat: 45.377232, lon: -122.596822, times: ["7:17 AM", "8:16 AM", "8:59 AM", "9:39 AM", "10:19 AM", "10:59 AM", "11:39 AM", "12:19 PM"] },
+  { stop_id: "122", name: "W Arlington &amp; Barton", lat: 45.3766, lon: -122.598664, times: ["7:17 AM", "8:17 AM", "9:00 AM", "9:40 AM", "10:20 AM", "11:00 AM", "11:40 AM", "12:19 PM"] },
+  { stop_id: "135", name: "W Arlington &amp; McLoughlin", lat: 45.37596, lon: -122.600892, times: ["7:17 AM", "8:17 AM", "9:00 AM", "9:40 AM", "10:20 AM", "11:00 AM", "11:40 AM", "12:20 PM"] },
   { stop_id: "3831", name: "McLoughlin &amp; Clackamette Dr", lat: 45.368444, lon: -122.601337, times: ["6:19 AM", "7:19 AM", "8:19 AM", "9:02 AM", "9:42 AM", "10:22 AM", "11:02 AM", "11:42 AM"] },
   { stop_id: "8760", name: "Oregon City Transit Center ", lat: 45.360169, lon: -122.604689, times: ["6:22 AM", "7:22 AM", "8:22 AM", "9:05 AM", "9:45 AM", "10:25 AM", "11:05 AM", "11:45 AM"] },
 ]

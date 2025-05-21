@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -1315,11 +1323,11 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "10856", name: "Parkrose/ Sumner Transit Center", lat: 45.558736, lon: -122.564507, times: ["6:16 AM", "6:30 AM", "6:44 AM", "6:58 AM", "7:09 AM", "7:22 AM", "7:35 AM", "7:48 AM"] },
-  { stop_id: "5052", name: "NE Sandy &amp; Prescott", lat: 45.555583, lon: -122.571189, times: ["6:17 AM", "6:31 AM", "6:45 AM", "6:59 AM", "7:10 AM", "7:23 AM", "7:36 AM", "7:49 AM"] },
-  { stop_id: "5144", name: "NE Sandy &amp; 88th", lat: 45.554977, lon: -122.572663, times: ["6:17 AM", "6:31 AM", "6:45 AM", "6:59 AM", "7:10 AM", "7:23 AM", "7:36 AM", "7:49 AM"] },
-  { stop_id: "5140", name: "NE Sandy &amp; 86th", lat: 45.553924, lon: -122.575235, times: ["6:18 AM", "6:32 AM", "6:46 AM", "7:00 AM", "7:11 AM", "7:24 AM", "7:37 AM", "7:50 AM"] },
-  { stop_id: "5139", name: "NE Sandy &amp; 82nd", lat: 45.552618, lon: -122.578432, times: ["6:19 AM", "6:33 AM", "6:47 AM", "7:01 AM", "7:12 AM", "7:25 AM", "7:38 AM", "7:51 AM"] },
+  { stop_id: "10856", name: "Parkrose/ Sumner Transit Center", lat: 45.558736, lon: -122.564507, times: ["6:30 AM", "6:44 AM", "6:58 AM", "7:09 AM", "7:22 AM", "7:35 AM", "7:48 AM", "8:05 AM"] },
+  { stop_id: "5052", name: "NE Sandy &amp; Prescott", lat: 45.555583, lon: -122.571189, times: ["6:31 AM", "6:45 AM", "6:59 AM", "7:10 AM", "7:23 AM", "7:36 AM", "7:49 AM", "8:06 AM"] },
+  { stop_id: "5144", name: "NE Sandy &amp; 88th", lat: 45.554977, lon: -122.572663, times: ["6:31 AM", "6:45 AM", "6:59 AM", "7:10 AM", "7:23 AM", "7:36 AM", "7:49 AM", "8:06 AM"] },
+  { stop_id: "5140", name: "NE Sandy &amp; 86th", lat: 45.553924, lon: -122.575235, times: ["6:32 AM", "6:46 AM", "7:00 AM", "7:11 AM", "7:24 AM", "7:37 AM", "7:50 AM", "8:07 AM"] },
+  { stop_id: "5139", name: "NE Sandy &amp; 82nd", lat: 45.552618, lon: -122.578432, times: ["6:33 AM", "6:47 AM", "7:01 AM", "7:12 AM", "7:25 AM", "7:38 AM", "7:51 AM", "8:08 AM"] },
   { stop_id: "5136", name: "NE Sandy &amp; 79th", lat: 45.551186, lon: -122.581954, times: ["6:19 AM", "6:33 AM", "6:47 AM", "7:01 AM", "7:12 AM", "7:25 AM", "7:39 AM", "7:52 AM"] },
   { stop_id: "5133", name: "NE Sandy &amp; 77th", lat: 45.550508, lon: -122.583591, times: ["6:20 AM", "6:34 AM", "6:48 AM", "7:02 AM", "7:13 AM", "7:26 AM", "7:39 AM", "7:52 AM"] },
   { stop_id: "5127", name: "NE Sandy &amp; 74th", lat: 45.549292, lon: -122.586699, times: ["6:20 AM", "6:34 AM", "6:49 AM", "7:03 AM", "7:14 AM", "7:27 AM", "7:40 AM", "7:54 AM"] },
@@ -1330,19 +1338,19 @@ const stops = [
   { stop_id: "5113", name: "NE Sandy &amp; 62nd", lat: 45.544391, lon: -122.599273, times: ["6:23 AM", "6:37 AM", "6:52 AM", "7:06 AM", "7:17 AM", "7:30 AM", "7:44 AM", "7:58 AM"] },
   { stop_id: "5107", name: "NE Sandy &amp; 59th", lat: 45.543213, lon: -122.602319, times: ["6:24 AM", "6:38 AM", "6:52 AM", "7:06 AM", "7:18 AM", "7:31 AM", "7:45 AM", "7:59 AM"] },
   { stop_id: "5105", name: "NE Sandy &amp; 57th", lat: 45.542137, lon: -122.605079, times: ["6:25 AM", "6:39 AM", "6:53 AM", "7:07 AM", "7:19 AM", "7:32 AM", "7:46 AM", "8:00 AM"] },
-  { stop_id: "5103", name: "NE Sandy &amp; 54th", lat: 45.541247, lon: -122.607347, times: ["6:10 AM", "6:25 AM", "6:39 AM", "6:54 AM", "7:08 AM", "7:19 AM", "7:32 AM", "7:47 AM"] },
-  { stop_id: "5100", name: "NE Sandy &amp; 52nd", lat: 45.540064, lon: -122.610418, times: ["6:11 AM", "6:26 AM", "6:40 AM", "6:54 AM", "7:08 AM", "7:20 AM", "7:33 AM", "7:48 AM"] },
-  { stop_id: "5098", name: "NE Sandy &amp; 50th", lat: 45.539433, lon: -122.612217, times: ["6:11 AM", "6:26 AM", "6:40 AM", "6:55 AM", "7:09 AM", "7:21 AM", "7:34 AM", "7:48 AM"] },
-  { stop_id: "5093", name: "NE Sandy &amp; 47th", lat: 45.538534, lon: -122.614806, times: ["6:12 AM", "6:27 AM", "6:41 AM", "6:55 AM", "7:09 AM", "7:21 AM", "7:34 AM", "7:49 AM"] },
-  { stop_id: "10834", name: "NE Sandy &amp; 44th", lat: 45.536976, lon: -122.61823, times: ["6:12 AM", "6:27 AM", "6:41 AM", "6:56 AM", "7:10 AM", "7:22 AM", "7:35 AM", "7:50 AM"] },
-  { stop_id: "9756", name: "NE Sandy &amp; 42nd", lat: 45.53605, lon: -122.620214, times: ["6:13 AM", "6:28 AM", "6:42 AM", "6:57 AM", "7:11 AM", "7:23 AM", "7:36 AM", "7:51 AM"] },
-  { stop_id: "11313", name: "NE Sandy &amp; Cesar Chavez Blvd", lat: 45.535039, lon: -122.622754, times: ["6:14 AM", "6:29 AM", "6:43 AM", "6:58 AM", "7:12 AM", "7:24 AM", "7:37 AM", "7:52 AM"] },
-  { stop_id: "5081", name: "NE Sandy &amp; 35th", lat: 45.532691, lon: -122.628436, times: ["6:15 AM", "6:30 AM", "6:44 AM", "6:59 AM", "7:13 AM", "7:25 AM", "7:38 AM", "7:53 AM"] },
-  { stop_id: "5080", name: "NE Sandy &amp; 33rd", lat: 45.531875, lon: -122.63045, times: ["6:15 AM", "6:30 AM", "6:45 AM", "7:00 AM", "7:14 AM", "7:26 AM", "7:39 AM", "7:54 AM"] },
-  { stop_id: "5077", name: "NE Sandy &amp; 31st", lat: 45.530785, lon: -122.63324, times: ["6:16 AM", "6:31 AM", "6:45 AM", "7:00 AM", "7:14 AM", "7:27 AM", "7:40 AM", "7:55 AM"] },
-  { stop_id: "5069", name: "NE Sandy &amp; 28th", lat: 45.52938, lon: -122.63686, times: ["6:17 AM", "6:32 AM", "6:46 AM", "7:01 AM", "7:15 AM", "7:28 AM", "7:41 AM", "7:56 AM"] },
-  { stop_id: "5068", name: "NE Sandy &amp; 26th", lat: 45.528232, lon: -122.6398, times: ["6:17 AM", "6:32 AM", "6:47 AM", "7:02 AM", "7:16 AM", "7:29 AM", "7:42 AM", "7:57 AM"] },
-  { stop_id: "5067", name: "NE Sandy &amp; 24th", lat: 45.527695, lon: -122.641209, times: ["6:18 AM", "6:33 AM", "6:47 AM", "7:02 AM", "7:16 AM", "7:29 AM", "7:43 AM", "7:58 AM"] },
+  { stop_id: "5103", name: "NE Sandy &amp; 54th", lat: 45.541247, lon: -122.607347, times: ["6:25 AM", "6:39 AM", "6:54 AM", "7:08 AM", "7:19 AM", "7:32 AM", "7:47 AM", "8:01 AM"] },
+  { stop_id: "5100", name: "NE Sandy &amp; 52nd", lat: 45.540064, lon: -122.610418, times: ["6:26 AM", "6:40 AM", "6:54 AM", "7:08 AM", "7:20 AM", "7:33 AM", "7:48 AM", "8:02 AM"] },
+  { stop_id: "5098", name: "NE Sandy &amp; 50th", lat: 45.539433, lon: -122.612217, times: ["6:26 AM", "6:40 AM", "6:55 AM", "7:09 AM", "7:21 AM", "7:34 AM", "7:48 AM", "8:03 AM"] },
+  { stop_id: "5093", name: "NE Sandy &amp; 47th", lat: 45.538534, lon: -122.614806, times: ["6:27 AM", "6:41 AM", "6:55 AM", "7:09 AM", "7:21 AM", "7:34 AM", "7:49 AM", "8:04 AM"] },
+  { stop_id: "10834", name: "NE Sandy &amp; 44th", lat: 45.536976, lon: -122.61823, times: ["6:27 AM", "6:41 AM", "6:56 AM", "7:10 AM", "7:22 AM", "7:35 AM", "7:50 AM", "8:05 AM"] },
+  { stop_id: "9756", name: "NE Sandy &amp; 42nd", lat: 45.53605, lon: -122.620214, times: ["6:28 AM", "6:42 AM", "6:57 AM", "7:11 AM", "7:23 AM", "7:36 AM", "7:51 AM", "8:06 AM"] },
+  { stop_id: "11313", name: "NE Sandy &amp; Cesar Chavez Blvd", lat: 45.535039, lon: -122.622754, times: ["6:29 AM", "6:43 AM", "6:58 AM", "7:12 AM", "7:24 AM", "7:37 AM", "7:52 AM", "8:07 AM"] },
+  { stop_id: "5081", name: "NE Sandy &amp; 35th", lat: 45.532691, lon: -122.628436, times: ["6:30 AM", "6:44 AM", "6:59 AM", "7:13 AM", "7:25 AM", "7:38 AM", "7:53 AM", "8:08 AM"] },
+  { stop_id: "5080", name: "NE Sandy &amp; 33rd", lat: 45.531875, lon: -122.63045, times: ["6:30 AM", "6:45 AM", "7:00 AM", "7:14 AM", "7:26 AM", "7:39 AM", "7:54 AM", "8:09 AM"] },
+  { stop_id: "5077", name: "NE Sandy &amp; 31st", lat: 45.530785, lon: -122.63324, times: ["6:31 AM", "6:45 AM", "7:00 AM", "7:14 AM", "7:27 AM", "7:40 AM", "7:55 AM", "8:10 AM"] },
+  { stop_id: "5069", name: "NE Sandy &amp; 28th", lat: 45.52938, lon: -122.63686, times: ["6:32 AM", "6:46 AM", "7:01 AM", "7:15 AM", "7:28 AM", "7:41 AM", "7:56 AM", "8:11 AM"] },
+  { stop_id: "5068", name: "NE Sandy &amp; 26th", lat: 45.528232, lon: -122.6398, times: ["6:32 AM", "6:47 AM", "7:02 AM", "7:16 AM", "7:29 AM", "7:42 AM", "7:57 AM", "8:12 AM"] },
+  { stop_id: "5067", name: "NE Sandy &amp; 24th", lat: 45.527695, lon: -122.641209, times: ["6:33 AM", "6:47 AM", "7:02 AM", "7:16 AM", "7:29 AM", "7:43 AM", "7:58 AM", "8:13 AM"] },
   { stop_id: "5063", name: "NE Sandy &amp; 20th", lat: 45.526155, lon: -122.645089, times: ["6:19 AM", "6:34 AM", "6:48 AM", "7:03 AM", "7:17 AM", "7:30 AM", "7:44 AM", "7:59 AM"] },
   { stop_id: "5062", name: "NE Sandy &amp; 18th", lat: 45.525106, lon: -122.647926, times: ["6:19 AM", "6:34 AM", "6:49 AM", "7:04 AM", "7:18 AM", "7:31 AM", "7:45 AM", "8:00 AM"] },
   { stop_id: "5060", name: "NE Sandy &amp; 16th", lat: 45.524581, lon: -122.649367, times: ["6:20 AM", "6:35 AM", "6:49 AM", "7:04 AM", "7:18 AM", "7:31 AM", "7:45 AM", "8:00 AM"] },
@@ -1351,11 +1359,11 @@ const stops = [
   { stop_id: "13329", name: "NE Couch &amp; 7th Ave", lat: 45.523691, lon: -122.658549, times: ["6:22 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:21 AM", "7:34 AM", "7:48 AM", "8:03 AM"] },
   { stop_id: "13330", name: "NE Couch &amp; M L King", lat: 45.523699, lon: -122.661535, times: ["6:22 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:21 AM", "7:34 AM", "7:48 AM", "8:03 AM"] },
   { stop_id: "689", name: "W Burnside &amp; Burnside Bridge", lat: 45.52325, lon: -122.671007, times: ["6:25 AM", "6:40 AM", "6:55 AM", "7:10 AM", "7:24 AM", "7:37 AM", "7:51 AM", "8:06 AM"] },
-  { stop_id: "7631", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["6:12 AM", "6:27 AM", "6:42 AM", "6:57 AM", "7:12 AM", "7:26 AM", "7:39 AM", "7:53 AM"] },
-  { stop_id: "7625", name: "SW 5th &amp; Morrison", lat: 45.518932, lon: -122.677571, times: ["6:15 AM", "6:30 AM", "6:45 AM", "7:00 AM", "7:15 AM", "7:29 AM", "7:42 AM", "7:56 AM"] },
-  { stop_id: "7612", name: "SW 5th &amp; Madison", lat: 45.515682, lon: -122.679352, times: ["6:16 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:30 AM", "7:43 AM", "7:57 AM"] },
-  { stop_id: "7616", name: "SW 5th &amp; Market", lat: 45.512954, lon: -122.680837, times: ["6:17 AM", "6:32 AM", "6:47 AM", "7:03 AM", "7:18 AM", "7:32 AM", "7:45 AM", "7:59 AM"] },
-  { stop_id: "10491", name: "SW 5th &amp; Hall", lat: 45.510277, lon: -122.682286, times: ["6:18 AM", "6:33 AM", "6:48 AM", "7:04 AM", "7:19 AM", "7:33 AM", "7:46 AM", "8:00 AM"] },
+  { stop_id: "7631", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["6:27 AM", "6:42 AM", "6:57 AM", "7:12 AM", "7:26 AM", "7:39 AM", "7:53 AM", "8:08 AM"] },
+  { stop_id: "7625", name: "SW 5th &amp; Morrison", lat: 45.518932, lon: -122.677571, times: ["6:30 AM", "6:45 AM", "7:00 AM", "7:15 AM", "7:29 AM", "7:42 AM", "7:56 AM", "8:11 AM"] },
+  { stop_id: "7612", name: "SW 5th &amp; Madison", lat: 45.515682, lon: -122.679352, times: ["6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:30 AM", "7:43 AM", "7:57 AM", "8:12 AM"] },
+  { stop_id: "7616", name: "SW 5th &amp; Market", lat: 45.512954, lon: -122.680837, times: ["6:32 AM", "6:47 AM", "7:03 AM", "7:18 AM", "7:32 AM", "7:45 AM", "7:59 AM", "8:14 AM"] },
+  { stop_id: "10491", name: "SW 5th &amp; Hall", lat: 45.510277, lon: -122.682286, times: ["6:33 AM", "6:48 AM", "7:04 AM", "7:19 AM", "7:33 AM", "7:46 AM", "8:00 AM", "8:15 AM"] },
   { stop_id: "7588", name: "SW 5th &amp; Broadway", lat: 45.507079, lon: -122.68385, times: ["6:20 AM", "6:35 AM", "6:50 AM", "7:06 AM", "7:21 AM", "7:35 AM", "7:48 AM", "8:02 AM"] },
   { stop_id: "7591", name: "SW 5th &amp; Caruthers", lat: 45.505566, lon: -122.68329, times: ["6:21 AM", "6:36 AM", "6:51 AM", "7:07 AM", "7:22 AM", "7:36 AM", "7:49 AM", "8:03 AM"] },
   { stop_id: "175", name: "SW Barbur &amp; Hooker", lat: 45.502494, lon: -122.68204, times: ["6:21 AM", "6:36 AM", "6:51 AM", "7:07 AM", "7:22 AM", "7:36 AM", "7:49 AM", "8:03 AM"] },
@@ -1364,17 +1372,17 @@ const stops = [
   { stop_id: "173", name: "SW Barbur &amp; Hamilton", lat: 45.491037, lon: -122.678566, times: ["6:23 AM", "6:38 AM", "6:53 AM", "7:09 AM", "7:24 AM", "7:38 AM", "7:51 AM", "8:05 AM"] },
   { stop_id: "155", name: "4900 Block SW Barbur", lat: 45.487059, lon: -122.682757, times: ["6:24 AM", "6:39 AM", "6:54 AM", "7:10 AM", "7:25 AM", "7:39 AM", "7:52 AM", "8:06 AM"] },
   { stop_id: "181", name: "SW Barbur &amp; Parkhill Dr", lat: 45.476747, lon: -122.679797, times: ["6:25 AM", "6:40 AM", "6:55 AM", "7:11 AM", "7:27 AM", "7:41 AM", "7:54 AM", "8:08 AM"] },
-  { stop_id: "207", name: "SW Barbur &amp; 3rd", lat: 45.471567, lon: -122.680911, times: ["6:10 AM", "6:26 AM", "6:41 AM", "6:56 AM", "7:12 AM", "7:28 AM", "7:42 AM", "7:55 AM"] },
-  { stop_id: "191", name: "SW Barbur &amp; Terwilliger", lat: 45.471217, lon: -122.686158, times: ["6:11 AM", "6:27 AM", "6:42 AM", "6:57 AM", "7:13 AM", "7:29 AM", "7:43 AM", "7:56 AM"] },
-  { stop_id: "199", name: "SW Barbur &amp; Bertha", lat: 45.470468, lon: -122.689602, times: ["6:11 AM", "6:27 AM", "6:42 AM", "6:57 AM", "7:13 AM", "7:29 AM", "7:43 AM", "7:56 AM"] },
-  { stop_id: "200", name: "SW Barbur &amp; 13th", lat: 45.468799, lon: -122.692526, times: ["6:12 AM", "6:28 AM", "6:43 AM", "6:58 AM", "7:14 AM", "7:30 AM", "7:44 AM", "7:57 AM"] },
-  { stop_id: "201", name: "SW Barbur &amp; Evans", lat: 45.467022, lon: -122.695625, times: ["6:12 AM", "6:28 AM", "6:43 AM", "6:58 AM", "7:14 AM", "7:30 AM", "7:45 AM", "7:58 AM"] },
-  { stop_id: "170", name: "SW Barbur &amp; Capitol Hill", lat: 45.465719, lon: -122.697895, times: ["6:13 AM", "6:29 AM", "6:44 AM", "6:59 AM", "7:15 AM", "7:31 AM", "7:45 AM", "7:58 AM"] },
-  { stop_id: "10844", name: "SW Barbur &amp; Spring Garden", lat: 45.463752, lon: -122.701299, times: ["6:14 AM", "6:30 AM", "6:45 AM", "7:00 AM", "7:16 AM", "7:32 AM", "7:46 AM", "7:59 AM"] },
-  { stop_id: "165", name: "SW Barbur &amp; Barbur Ct", lat: 45.462404, lon: -122.703653, times: ["6:14 AM", "6:30 AM", "6:45 AM", "7:00 AM", "7:16 AM", "7:32 AM", "7:47 AM", "8:00 AM"] },
-  { stop_id: "187", name: "SW Barbur &amp; Primrose", lat: 45.45963, lon: -122.708465, times: ["6:15 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:17 AM", "7:33 AM", "7:48 AM", "8:01 AM"] },
-  { stop_id: "163", name: "SW Barbur &amp; Alice", lat: 45.458449, lon: -122.710493, times: ["6:16 AM", "6:32 AM", "6:47 AM", "7:02 AM", "7:18 AM", "7:34 AM", "7:48 AM", "8:01 AM"] },
-  { stop_id: "8213", name: "Barbur Transit Center ", lat: 45.454468, lon: -122.717673, times: ["6:18 AM", "6:34 AM", "6:49 AM", "7:04 AM", "7:20 AM", "7:36 AM", "7:51 AM", "8:04 AM"] },
+  { stop_id: "207", name: "SW Barbur &amp; 3rd", lat: 45.471567, lon: -122.680911, times: ["6:26 AM", "6:41 AM", "6:56 AM", "7:12 AM", "7:28 AM", "7:42 AM", "7:55 AM", "8:09 AM"] },
+  { stop_id: "191", name: "SW Barbur &amp; Terwilliger", lat: 45.471217, lon: -122.686158, times: ["6:27 AM", "6:42 AM", "6:57 AM", "7:13 AM", "7:29 AM", "7:43 AM", "7:56 AM", "8:10 AM"] },
+  { stop_id: "199", name: "SW Barbur &amp; Bertha", lat: 45.470468, lon: -122.689602, times: ["6:27 AM", "6:42 AM", "6:57 AM", "7:13 AM", "7:29 AM", "7:43 AM", "7:56 AM", "8:10 AM"] },
+  { stop_id: "200", name: "SW Barbur &amp; 13th", lat: 45.468799, lon: -122.692526, times: ["6:28 AM", "6:43 AM", "6:58 AM", "7:14 AM", "7:30 AM", "7:44 AM", "7:57 AM", "8:11 AM"] },
+  { stop_id: "201", name: "SW Barbur &amp; Evans", lat: 45.467022, lon: -122.695625, times: ["6:28 AM", "6:43 AM", "6:58 AM", "7:14 AM", "7:30 AM", "7:45 AM", "7:58 AM", "8:12 AM"] },
+  { stop_id: "170", name: "SW Barbur &amp; Capitol Hill", lat: 45.465719, lon: -122.697895, times: ["6:29 AM", "6:44 AM", "6:59 AM", "7:15 AM", "7:31 AM", "7:45 AM", "7:58 AM", "8:12 AM"] },
+  { stop_id: "10844", name: "SW Barbur &amp; Spring Garden", lat: 45.463752, lon: -122.701299, times: ["6:30 AM", "6:45 AM", "7:00 AM", "7:16 AM", "7:32 AM", "7:46 AM", "7:59 AM", "8:13 AM"] },
+  { stop_id: "165", name: "SW Barbur &amp; Barbur Ct", lat: 45.462404, lon: -122.703653, times: ["6:30 AM", "6:45 AM", "7:00 AM", "7:16 AM", "7:32 AM", "7:47 AM", "8:00 AM", "8:14 AM"] },
+  { stop_id: "187", name: "SW Barbur &amp; Primrose", lat: 45.45963, lon: -122.708465, times: ["6:31 AM", "6:46 AM", "7:01 AM", "7:17 AM", "7:33 AM", "7:48 AM", "8:01 AM", "8:15 AM"] },
+  { stop_id: "163", name: "SW Barbur &amp; Alice", lat: 45.458449, lon: -122.710493, times: ["6:32 AM", "6:47 AM", "7:02 AM", "7:18 AM", "7:34 AM", "7:48 AM", "8:01 AM", "8:15 AM"] },
+  { stop_id: "8213", name: "Barbur Transit Center ", lat: 45.454468, lon: -122.717673, times: ["6:34 AM", "6:49 AM", "7:04 AM", "7:20 AM", "7:36 AM", "7:51 AM", "8:04 AM", "8:18 AM"] },
   { stop_id: "10845", name: "SW Barbur &amp; Huber", lat: 45.452942, lon: -122.723053, times: ["6:19 AM", "6:35 AM", "6:50 AM", "7:05 AM", "7:21 AM", "7:37 AM", "7:52 AM", "8:05 AM"] },
   { stop_id: "178", name: "SW Barbur &amp; Luradel", lat: 45.45104, lon: -122.727302, times: ["6:20 AM", "6:36 AM", "6:51 AM", "7:06 AM", "7:22 AM", "7:38 AM", "7:53 AM", "8:06 AM"] },
   { stop_id: "152", name: "10700 Block SW Barbur", lat: 45.447685, lon: -122.729368, times: ["6:21 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:23 AM", "7:39 AM", "7:54 AM", "8:07 AM"] },

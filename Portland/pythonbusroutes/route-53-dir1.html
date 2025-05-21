@@ -33,12 +33,13 @@
     }
 
     .ad-banner img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-
+  width: 100%;
+  max-width: 970px;
+  height: auto;
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
     .home-button {
       position: fixed;
       top: 120px;
@@ -131,6 +132,13 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+@media (max-width: 600px) {
+  .ad-banner img {
+    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+  }
+}
+
   </style>
 </head>
 
@@ -578,7 +586,7 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["6:19 AM", "6:41 AM", "6:47 AM", "7:11 AM", "7:18 AM", "7:41 AM", "7:47 AM", "8:10 AM"] },
+  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["6:41 AM", "6:47 AM", "7:11 AM", "7:18 AM", "7:41 AM", "7:47 AM", "8:10 AM", "8:29 AM"] },
   { stop_id: "9981", name: "Beaverton Transit Center", lat: 45.49093, lon: -122.801741, times: ["6:21 AM", "6:49 AM", "7:20 AM", "7:49 AM", "8:31 AM", "5:50 AM"] },
   { stop_id: "12945", name: "SW Lombard &amp; Broadway", lat: 45.488206, lon: -122.801264, times: ["6:21 AM", "6:50 AM", "7:20 AM", "7:49 AM", "8:31 AM", "5:50 AM"] },
   { stop_id: "342", name: "SW Beaverton-Hillsdale &amp; Griffith", lat: 45.486417, lon: -122.797055, times: ["6:22 AM", "6:51 AM", "7:22 AM", "7:51 AM", "8:33 AM", "5:51 AM"] },
