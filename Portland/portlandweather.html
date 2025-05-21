@@ -1,82 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#000000" />
   <title>Portland, OR Weather - MetroFeed</title>
   <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #0d0d0d;
-    color: #cccccc;
-    overflow-y: auto;
-
-  }
-  header {
-    background-color: #0d0d0d;
-    padding: 1rem;
-    text-align: center;
-    border-bottom: 4px solid #4dd0e1;
-  }
-  header img {
-    max-width: 200px;
-    height: auto;
-  }
-  .sidebar-ad {
-    display: none;
-  }
-  #radar {
-  width: 100%;
-  min-height: 70vh;
-  max-height: 85vh;
-  border: none;
-  display: block;
-  margin: 0 auto;
-}
-
-  @media (max-width: 768px) {
-    #radar {
-      height: 80vh;
+    html {
+      scroll-behavior: smooth;
     }
-  }
-  .site-footer {
-    text-align: center;
-    margin-top: 2rem;
-    margin-bottom: 120px;
-    font-size: 0.8rem;
-    color: #888;
-  }
-  .site-footer a {
-    color: #4dd0e1;
-    text-decoration: none;
-  }
-  .site-footer a:hover {
-    text-decoration: underline;
-  }
-  .home-button {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background-color: #4dd0e1;
-    color: #0d0d0d;
-    padding: 0.5rem 1rem;
-    font-weight: bold;
-    border-radius: 8px;
-    text-decoration: none;
-    z-index: 1000;
-    box-shadow: 0 0 10px #4dd0e1;
-  }
-  .home-button:hover {
-    background-color: #00bcd4;
-    color: #ffffff;
-  }
-</style>
-
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      overflow-y: auto;
+    }
+    header {
+      background-color: #0d0d0d;
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 4px solid #4dd0e1;
+    }
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+    .sidebar-ad {
+      display: none;
+    }
+    #radar {
+      width: 100%;
+      min-height: 70vh;
+      max-height: 85vh;
+      border: none;
+      display: block;
+      margin: 0 auto;
+    }
+    @media (max-width: 768px) {
+      #radar {
+        height: 80vh;
+      }
+    }
+    .button-bar {
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .button-bar .back-button {
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .button-bar .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+    .home-button {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1000;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+  </style>
 </head>
 <body>
 
@@ -84,24 +102,29 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
   </header>
 
-<a href="PortlandHome.html" class="home-button">🏠</a>
-
+  <a href="PortlandHome.html" class="home-button">🏠</a>
 
   <div style="background-color: #111; color: #ccc; padding: 0.75rem 1rem; text-align: center; font-size: 0.9rem; border-bottom: 1px solid #333;">
     <strong>Disclaimer:</strong> This site is for entertainment purposes only. All weather data is sourced from the <a href="https://www.weather.gov" target="_blank" style="color: #1DA1F2; text-decoration: none;">National Weather Service (NWS)</a>. For official updates, visit weather.gov.
   </div>
   
-<div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
 
   <div style="padding: 1rem; max-width: 95%; margin: 1rem auto;">
     <details style="background:#111; border:2px solid #F7630C; border-radius:8px; padding:1rem;">
-      <summary style="color:#F7630C; font-weight:bold; font-size:1.2rem; cursor:pointer;">⚠️ Weather Alerts (Tap to View)</summary>
+      <summary style="color:#F7630C; font-weight:bold; font-size:1.2rem; cursor:pointer;">
+        ⚠️ Weather Alerts (Tap to View)
+      </summary>
       <div id="alertBox" style="margin-top: 1rem; color: #ccc;">Checking for alerts...</div>
     </details>
   </div>
 
+  <!-- Jump to Forecast button -->
+  <div class="button-bar">
+    <a href="#forecast-section" class="back-button">Jump to Forecast</a>
+  </div>
 
   <iframe
     id="radar"
@@ -118,19 +141,18 @@
     <div><span style="width: 12px; height: 12px; background: rgba(255,165,0,0.8); display: inline-block; margin-right: 6px;"></span>Special Weather Statement</div>
   </div>
 
-  <div class="forecast" id="forecast" style="padding: 1rem; max-width: 400px; margin: 2rem auto 0; background-color: #111; border-radius: 8px; border: 2px solid #0071CE;">
+  <!-- Forecast container with updated ID -->
+  <div class="forecast" id="forecast-section" style="padding: 1rem; max-width: 400px; margin: 2rem auto 0; background-color: #111; border-radius: 8px; border: 2px solid #0071CE;">
     Loading 7-day forecast...
   </div>
 
   <script>
-   
-if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      // No referrer + user opened directly = likely a bookmark
+      window.location.href = "/index.html";
+    }
 
     const alertUrl = 'https://api.weather.gov/alerts/active?zone=ORZ006';
-
     fetch(alertUrl)
       .then(res => res.json())
       .then(data => {
@@ -145,18 +167,17 @@ if (document.referrer === "" && performance.navigation.type === 0) {
           <div style="margin-top:0.5rem; color:#ccc; font-size:0.95rem;">${alert.headline || alert.description}</div>
         `;
       })
-      .catch(err => {
+      .catch(() => {
         document.getElementById('alertBox').textContent = '⚠️ Unable to load alert data.';
       });
 
     // Auto-refresh radar every 5 minutes
-    setInterval(function() {
+    setInterval(() => {
       document.getElementById('radar').src += '';
     }, 300000);
 
-    // 7-Day Forecast
+    // 7-Day Forecast logic (unchanged)
     const apiUrl = 'https://api.weather.gov/points/45.5152,-122.6784';
-
     function getEmoji(forecast) {
       forecast = forecast.toLowerCase();
       if (forecast.includes('thunder')) return '⛈️';
@@ -181,9 +202,8 @@ if (document.referrer === "" && performance.navigation.type === 0) {
       .then(res => res.json())
       .then(data => {
         const periods = data.properties.periods.slice(0, 7);
-        const forecastEl = document.getElementById('forecast');
+        const forecastEl = document.getElementById('forecast-section');
         forecastEl.innerHTML = '<h2 style="color:#F7630C; font-size:1.2rem; margin-bottom:0.75rem;">7-Day Forecast</h2>';
-
         periods.forEach(period => {
           const emoji = getEmoji(period.shortForecast);
           const el = document.createElement('div');
@@ -202,33 +222,34 @@ if (document.referrer === "" && performance.navigation.type === 0) {
           forecastEl.appendChild(el);
         });
       })
-      .catch(err => {
-        console.error(err);
-        document.getElementById('forecast').textContent = 'Failed to load forecast.';
+      .catch(() => {
+        document.getElementById('forecast-section').textContent = 'Failed to load forecast.';
       });
 
-    setInterval(() => location.reload(), 1800000); // every 30 minutes
+    // Refresh entire page every 30 minutes
+    setInterval(() => location.reload(), 1800000);
   </script>
 
-<!-- Footer -->
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
+  <!-- Footer -->
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 
 </body>
 </html>

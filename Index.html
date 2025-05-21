@@ -113,6 +113,11 @@
   <a href="privacy.html">Privacy Policy</a>
 </footer>
 
+<div class="view-counter">
+  Views: <span id="view-counter">…</span>
+</div>
+
+
 <!-- Cookie Banner -->
 <div id="cookie-banner" style="display:none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
   📢 We use cookies to improve functionality and analyze traffic.
@@ -165,6 +170,12 @@
       });
     });
   };
-</script>
+
+ fetch('https://api.countapi.xyz/update/metrofeed/portland-home/?amount=1')
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('view-counter').innerText = data.value;
+    })
+    .catch(console.error);</script>
 </body>
 </html>
