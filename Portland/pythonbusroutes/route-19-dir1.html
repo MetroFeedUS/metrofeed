@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 19 - To Gateway Transit Center | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
     header {
       background-color: #0d0d0d;
@@ -47,43 +46,33 @@
       background-color: #1e1e1e;
     }
     #map {
-  width: 100%;
-  height: 85vh;
-  border: none;
-  margin: 0 auto;
-  display: block;
-  border-radius: 8px;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
@@ -97,17 +86,12 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-body {
-  overflow-y: auto;
-}
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
-
-  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +101,7 @@ body {
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 19 - To Gateway Transit Center</h1>
@@ -129,34 +113,28 @@ body {
     </div>
   </div>
 
-  
   <script>
-  
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 19;
-  const direction = parseInt(1);
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 19;
+    const direction = parseInt(1);
 
-  const map = L.map('map', {
-  center: [45.6, -122.7],
-  zoom: 12,
-  minZoom: 12,
-  maxZoom: 18,
-  maxBounds: [
-    [45.3, -123.1],  // Southwest corner
-    [45.9, -122.3]   // Northeast corner
-  ],
-  maxBoundsViscosity: 1.0
-});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.468331, -122.565331],
   [45.468321, -122.565272],
   [45.468276, -122.565119],
@@ -1449,189 +1427,182 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "13145", name: "Flavel &amp; I-205 Overpass", lat: 45.468261, lon: -122.565355, times: ["5:54 AM", "6:21 AM", "6:50 AM"] },
-  { stop_id: "4039", name: "SE Mt Scott &amp; Aspen Summit", lat: 45.466812, lon: -122.564031, times: ["5:54 AM", "6:21 AM", "6:50 AM"] },
-  { stop_id: "4032", name: "10000 Block SE Mt Scott", lat: 45.465679, lon: -122.560037, times: ["5:54 AM", "6:21 AM", "6:50 AM"] },
-  { stop_id: "4036", name: "SE Mt Scott &amp; 105th", lat: 45.464555, lon: -122.556094, times: ["5:55 AM", "6:22 AM", "6:51 AM"] },
-  { stop_id: "6567", name: "SE 112th &amp; Mt Scott Blvd", lat: 45.464525, lon: -122.547953, times: ["5:56 AM", "6:23 AM", "6:52 AM"] },
-  { stop_id: "4037", name: "SE Mt Scott &amp; 105th", lat: 45.464681, lon: -122.555854, times: ["5:57 AM", "6:24 AM", "6:53 AM"] },
-  { stop_id: "4035", name: "SE Mt Scott &amp; 103rd", lat: 45.465148, lon: -122.557683, times: ["5:57 AM", "6:24 AM", "6:53 AM"] },
-  { stop_id: "4033", name: "9900 Block SE Mt Scott", lat: 45.465826, lon: -122.560206, times: ["5:57 AM", "6:24 AM", "6:53 AM"] },
-  { stop_id: "4040", name: "SE Mt Scott &amp; 98th", lat: 45.466424, lon: -122.562681, times: ["5:58 AM", "6:25 AM", "6:54 AM"] },
-  { stop_id: "10307", name: "SE Flavel &amp; 92nd (MAX Stn)", lat: 45.468462, lon: -122.567216, times: ["5:59 AM", "6:26 AM", "6:55 AM"] },
-  { stop_id: "1765", name: "SE Flavel &amp; 92nd", lat: 45.468498, lon: -122.56901, times: ["10:19 PM", "11:04 PM", "11:45 PM"] },
-  { stop_id: "1729", name: "8800 Block SE Flavel", lat: 45.468557, lon: -122.571621, times: ["10:19 PM", "11:04 PM", "11:45 PM"] },
-  { stop_id: "1762", name: "SE Flavel &amp; 86th", lat: 45.468636, lon: -122.57512, times: ["10:20 PM", "11:05 PM", "11:46 PM"] },
-  { stop_id: "1760", name: "SE Flavel &amp; 83rd", lat: 45.468707, lon: -122.577881, times: ["10:20 PM", "11:05 PM", "11:46 PM"] },
-  { stop_id: "7982", name: "SE 82nd &amp; Ogden", lat: 45.471206, lon: -122.578939, times: ["10:21 PM", "11:06 PM", "11:47 PM"] },
-  { stop_id: "7970", name: "SE 82nd &amp; Glenwood", lat: 45.473885, lon: -122.578952, times: ["10:22 PM", "11:07 PM", "11:48 PM"] },
-  { stop_id: "1551", name: "SE Duke &amp; 81st", lat: 45.475934, lon: -122.579988, times: ["10:23 PM", "11:08 PM", "11:49 PM"] },
-  { stop_id: "1529", name: "SE Duke &amp; 78th", lat: 45.475927, lon: -122.582908, times: ["10:23 PM", "11:08 PM", "11:49 PM"] },
-  { stop_id: "1547", name: "SE Duke &amp; 74th", lat: 45.475953, lon: -122.586654, times: ["10:24 PM", "11:09 PM", "11:50 PM"] },
-  { stop_id: "1545", name: "SE Duke &amp; 72nd", lat: 45.475942, lon: -122.589773, times: ["10:24 PM", "11:09 PM", "11:50 PM"] },
-  { stop_id: "1541", name: "SE Duke &amp; 67th", lat: 45.475922, lon: -122.594428, times: ["10:25 PM", "11:10 PM", "11:51 PM"] },
-  { stop_id: "1538", name: "SE Duke &amp; 65th", lat: 45.4759, lon: -122.596935, times: ["10:26 PM", "11:11 PM", "11:52 PM"] },
-  { stop_id: "1534", name: "SE Duke &amp; 60th", lat: 45.475894, lon: -122.602078, times: ["10:27 PM", "11:12 PM", "11:53 PM"] },
-  { stop_id: "1532", name: "SE Duke &amp; 57th", lat: 45.475893, lon: -122.605117, times: ["10:27 PM", "11:12 PM", "11:53 PM"] },
-  { stop_id: "1530", name: "SE Duke &amp; 52nd", lat: 45.475892, lon: -122.60813, times: ["10:28 PM", "11:13 PM", "11:54 PM"] },
-  { stop_id: "7719", name: "SE 52nd &amp; Tolman", lat: 45.477421, lon: -122.608633, times: ["10:28 PM", "11:13 PM", "11:54 PM"] },
-  { stop_id: "6421", name: "SE Woodstock &amp; 51st", lat: 45.479238, lon: -122.609912, times: ["10:29 PM", "11:14 PM", "11:55 PM"] },
-  { stop_id: "6420", name: "SE Woodstock &amp; 49th", lat: 45.479248, lon: -122.612192, times: ["10:30 PM", "11:15 PM", "11:56 PM"] },
-  { stop_id: "6416", name: "SE Woodstock &amp; 46th", lat: 45.479227, lon: -122.615285, times: ["10:30 PM", "11:15 PM", "11:56 PM"] },
-  { stop_id: "6414", name: "SE Woodstock &amp; 43rd", lat: 45.479245, lon: -122.618335, times: ["10:31 PM", "11:16 PM", "11:57 PM"] },
-  { stop_id: "6412", name: "SE Woodstock &amp; 41st", lat: 45.47926, lon: -122.620365, times: ["10:31 PM", "11:16 PM", "11:57 PM"] },
-  { stop_id: "6409", name: "SE Woodstock &amp; Cesar Chavez Blvd", lat: 45.479262, lon: -122.622455, times: ["10:32 PM", "11:17 PM", "11:58 PM"] },
-  { stop_id: "6408", name: "3600 Block SE Woodstock", lat: 45.479274, lon: -122.625864, times: ["10:32 PM", "11:17 PM", "11:58 PM"] },
-  { stop_id: "6406", name: "SE Woodstock &amp; 34th", lat: 45.479374, lon: -122.628166, times: ["10:33 PM", "11:18 PM", "11:59 PM"] },
-  { stop_id: "6403", name: "SE Woodstock &amp; 32nd", lat: 45.479275, lon: -122.630306, times: ["10:33 PM", "11:18 PM", "11:59 PM"] },
-  { stop_id: "6400", name: "3000 Block SE Woodstock", lat: 45.479308, lon: -122.63242, times: ["10:34 PM", "11:19 PM", "12:00 AM"] },
-  { stop_id: "10189", name: "SE 28th &amp; Carlton", lat: 45.477256, lon: -122.634547, times: ["10:35 PM", "11:20 PM", "12:01 AM"] },
-  { stop_id: "7295", name: "SE 28th &amp; Tolman", lat: 45.475128, lon: -122.634462, times: ["10:35 PM", "11:20 PM", "12:01 AM"] },
-  { stop_id: "859", name: "2400 Block SE Bybee", lat: 45.474429, lon: -122.637518, times: ["10:36 PM", "11:21 PM", "12:02 AM"] },
-  { stop_id: "13782", name: "SE Bybee &amp; Bybee Blvd MAX Station", lat: 45.474312, lon: -122.640158, times: ["10:36 PM", "11:21 PM", "12:02 AM"] },
-  { stop_id: "855", name: "SE Bybee &amp; 23rd", lat: 45.474231, lon: -122.641275, times: ["10:36 PM", "11:21 PM", "12:02 AM"] },
-  { stop_id: "853", name: "SE Bybee &amp; 22nd", lat: 45.474141, lon: -122.642694, times: ["10:37 PM", "11:22 PM", "12:03 AM"] },
-  { stop_id: "838", name: "SE Bybee &amp; Milwaukie", lat: 45.473797, lon: -122.648402, times: ["10:38 PM", "11:23 PM", "12:04 AM"] },
-  { stop_id: "3912", name: "SE Milwaukie &amp; Claybourne", lat: 45.47544, lon: -122.648873, times: ["10:38 PM", "11:23 PM", "12:04 AM"] },
-  { stop_id: "3947", name: "SE Milwaukie &amp; Tolman", lat: 45.477059, lon: -122.649063, times: ["10:38 PM", "11:23 PM", "12:04 AM"] },
-  { stop_id: "3940", name: "SE Milwaukie &amp; Ramona", lat: 45.480763, lon: -122.649477, times: ["10:39 PM", "11:24 PM", "12:05 AM"] },
-  { stop_id: "3922", name: "SE Milwaukie &amp; Insley", lat: 45.484167, lon: -122.649513, times: ["10:40 PM", "11:25 PM", "12:06 AM"] },
-  { stop_id: "3933", name: "SE Milwaukie &amp; Mitchell", lat: 45.486102, lon: -122.649833, times: ["10:40 PM", "11:25 PM", "12:06 AM"] },
-  { stop_id: "3929", name: "SE Milwaukie &amp; Long", lat: 45.488855, lon: -122.650702, times: ["10:41 PM", "11:26 PM", "12:07 AM"] },
-  { stop_id: "3932", name: "SE Milwaukie &amp; Mall", lat: 45.491215, lon: -122.651461, times: ["10:41 PM", "11:26 PM", "12:07 AM"] },
-  { stop_id: "3908", name: "SE Milwaukie &amp; Center", lat: 45.494515, lon: -122.652879, times: ["10:42 PM", "11:27 PM", "12:08 AM"] },
-  { stop_id: "3917", name: "SE Milwaukie &amp; Haig", lat: 45.498128, lon: -122.653948, times: ["10:43 PM", "11:28 PM", "12:09 AM"] },
-  { stop_id: "4538", name: "SE Powell &amp; Milwaukie", lat: 45.501412, lon: -122.654679, times: ["10:44 PM", "11:29 PM", "12:10 AM"] },
-  { stop_id: "13825", name: "SE 7th &amp; Tilikum Way", lat: 45.505582, lon: -122.658631, times: ["10:46 PM", "11:31 PM", "12:12 AM"] },
-  { stop_id: "13773", name: "OMSI/SE Water", lat: 45.506602, lon: -122.663155, times: ["10:47 PM", "11:32 PM", "12:13 AM"] },
-  { stop_id: "13733", name: "South Waterfront/S Moody", lat: 45.502618, lon: -122.671791, times: ["10:50 PM", "11:35 PM", "12:16 AM"] },
-  { stop_id: "3398", name: "SW Lincoln &amp; 1st", lat: 45.508043, lon: -122.679711, times: ["10:54 PM", "11:39 PM", "12:19 AM"] },
-  { stop_id: "13780", name: "SW Hall &amp; 5th", lat: 45.510133, lon: -122.682088, times: ["10:11 PM", "10:56 PM", "11:41 PM"] },
-  { stop_id: "7772", name: "SW 6th &amp; Market", lat: 45.512943, lon: -122.681811, times: ["10:12 PM", "10:57 PM", "11:42 PM"] },
-  { stop_id: "7765", name: "SW 6th &amp; Jefferson", lat: 45.514866, lon: -122.680761, times: ["10:13 PM", "10:58 PM", "11:43 PM"] },
-  { stop_id: "7800", name: "SW 6th &amp; Taylor", lat: 45.517604, lon: -122.679316, times: ["10:15 PM", "11:00 PM", "11:45 PM"] },
-  { stop_id: "7797", name: "SW 6th &amp; Harvey Milk", lat: 45.520931, lon: -122.677521, times: ["10:16 PM", "11:01 PM", "11:46 PM"] },
-  { stop_id: "792", name: "W Burnside &amp; SW 6th", lat: 45.522948, lon: -122.676635, times: ["10:17 PM", "11:02 PM", "11:47 PM"] },
-  { stop_id: "9526", name: "W Burnside &amp; SW 2nd", lat: 45.523009, lon: -122.672529, times: ["10:18 PM", "11:03 PM", "11:48 PM"] },
-  { stop_id: "704", name: "E Burnside &amp; NE Grand", lat: 45.522869, lon: -122.660911, times: ["10:22 PM", "11:07 PM", "11:52 PM"] },
-  { stop_id: "820", name: "E Burnside &amp; SE 8th Ave", lat: 45.522847, lon: -122.657843, times: ["10:22 PM", "11:07 PM", "11:52 PM"] },
-  { stop_id: "13327", name: "E Burnside &amp; SE 12th Ave", lat: 45.522823, lon: -122.653824, times: ["10:24 PM", "11:09 PM", "11:54 PM"] },
-  { stop_id: "6839", name: "NE 16th &amp; Sandy", lat: 45.52422, lon: -122.649464, times: ["10:25 PM", "11:10 PM", "11:55 PM"] },
-  { stop_id: "5061", name: "NE Sandy &amp; 18th", lat: 45.524971, lon: -122.647784, times: ["10:25 PM", "11:10 PM", "11:55 PM"] },
-  { stop_id: "5044", name: "NE Sandy &amp; Flanders", lat: 45.525564, lon: -122.646165, times: ["10:25 PM", "11:10 PM", "11:55 PM"] },
-  { stop_id: "13193", name: "NE Glisan &amp; 24th", lat: 45.526391, lon: -122.64116, times: ["10:26 PM", "11:11 PM", "11:56 PM"] },
-  { stop_id: "2105", name: "NE Glisan &amp; 28th", lat: 45.526378, lon: -122.636887, times: ["10:27 PM", "11:12 PM", "11:57 PM"] },
-  { stop_id: "2106", name: "NE Glisan &amp; 30th", lat: 45.526373, lon: -122.634198, times: ["10:28 PM", "11:13 PM", "11:58 PM"] },
-  { stop_id: "2108", name: "NE Glisan &amp; 32nd", lat: 45.526374, lon: -122.631819, times: ["10:28 PM", "11:13 PM", "11:58 PM"] },
-  { stop_id: "2003", name: "NE Glisan &amp; Laurelhurst", lat: 45.526374, lon: -122.627268, times: ["10:29 PM", "11:14 PM", "11:59 PM"] },
-  { stop_id: "2001", name: "NE Glisan &amp; Laddington", lat: 45.526356, lon: -122.625243, times: ["10:29 PM", "11:14 PM", "11:59 PM"] },
-  { stop_id: "2110", name: "NE Glisan &amp; Cesar Chavez Blvd", lat: 45.526042, lon: -122.622953, times: ["10:30 PM", "11:15 PM", "12:00 AM"] },
-  { stop_id: "2114", name: "NE Glisan &amp; 43rd", lat: 45.526342, lon: -122.61897, times: ["10:30 PM", "11:15 PM", "12:00 AM"] },
-  { stop_id: "13737", name: "NE Glisan &amp; 45th", lat: 45.526334, lon: -122.616283, times: ["10:30 PM", "11:15 PM", "12:00 AM"] },
-  { stop_id: "2119", name: "NE Glisan &amp; 49th", lat: 45.526425, lon: -122.612514, times: ["10:31 PM", "11:16 PM", "12:01 AM"] },
-  { stop_id: "2122", name: "NE Glisan &amp; 53rd", lat: 45.52642, lon: -122.609026, times: ["10:32 PM", "11:17 PM", "12:02 AM"] },
-  { stop_id: "2124", name: "NE Glisan &amp; 56th", lat: 45.526414, lon: -122.606055, times: ["10:32 PM", "11:17 PM", "12:02 AM"] },
-  { stop_id: "2127", name: "NE Glisan &amp; 60th", lat: 45.526405, lon: -122.60243, times: ["10:33 PM", "11:18 PM", "12:03 AM"] },
-  { stop_id: "2130", name: "NE Glisan &amp; 62nd", lat: 45.526393, lon: -122.599688, times: ["10:33 PM", "11:18 PM", "12:03 AM"] },
-  { stop_id: "2131", name: "NE Glisan &amp; 65th", lat: 45.52639, lon: -122.597215, times: ["10:34 PM", "11:18 PM", "12:03 AM"] },
-  { stop_id: "2134", name: "NE Glisan &amp; 67th", lat: 45.526386, lon: -122.594587, times: ["10:34 PM", "11:19 PM", "12:04 AM"] },
-  { stop_id: "2138", name: "NE Glisan &amp; 71st", lat: 45.526361, lon: -122.589995, times: ["10:35 PM", "11:20 PM", "12:05 AM"] },
-  { stop_id: "2139", name: "NE Glisan &amp; 73rd", lat: 45.526359, lon: -122.587314, times: ["10:36 PM", "11:20 PM", "12:05 AM"] },
-  { stop_id: "2144", name: "NE Glisan &amp; 78th", lat: 45.526352, lon: -122.583732, times: ["10:36 PM", "11:21 PM", "12:06 AM"] },
-  { stop_id: "2147", name: "NE Glisan &amp; 82nd", lat: 45.526336, lon: -122.578558, times: ["10:38 PM", "11:22 PM", "12:07 AM"] },
-  { stop_id: "2151", name: "NE Glisan &amp; 86th", lat: 45.526306, lon: -122.575076, times: ["10:38 PM", "11:22 PM", "12:07 AM"] },
-  { stop_id: "2155", name: "NE Glisan &amp; 92nd", lat: 45.526289, lon: -122.569427, times: ["10:39 PM", "11:23 PM", "12:08 AM"] },
-  { stop_id: "2158", name: "NE Glisan &amp; 94th", lat: 45.526233, lon: -122.567167, times: ["10:40 PM", "11:24 PM", "12:09 AM"] },
-  { stop_id: "8140", name: "NE 99th &amp; Glisan", lat: 45.526812, lon: -122.561888, times: ["10:41 PM", "11:25 PM", "12:10 AM"] },
-  { stop_id: "8321", name: "NE Pacific St &amp; The Oregon Clinic", lat: 45.529559, lon: -122.562812, times: ["10:42 PM", "11:26 PM", "12:11 AM"] },
-  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["10:43 PM", "11:27 PM", "12:12 AM"] },
-  { stop_id: "7172", name: "SE 23rd &amp; Tolman (Union Manor)", lat: 45.477582, lon: -122.642189, times: ["9:14 AM", "10:14 AM", "11:14 AM"] },
+  { stop_id: "13145", name: "Flavel &amp; I-205 Overpass", lat: 45.468261, lon: -122.565355, times: ["5:54 AM", "6:21 AM", "6:50 AM", "7:18 AM", "7:49 AM", "8:19 AM", "8:48 AM", "9:20 AM"] },
+  { stop_id: "4039", name: "SE Mt Scott &amp; Aspen Summit", lat: 45.466812, lon: -122.564031, times: ["5:54 AM", "6:21 AM", "6:50 AM", "7:18 AM", "7:49 AM", "8:19 AM", "8:48 AM", "9:20 AM"] },
+  { stop_id: "4032", name: "10000 Block SE Mt Scott", lat: 45.465679, lon: -122.560037, times: ["5:54 AM", "6:21 AM", "6:50 AM", "7:18 AM", "7:49 AM", "8:19 AM", "8:48 AM", "9:20 AM"] },
+  { stop_id: "4036", name: "SE Mt Scott &amp; 105th", lat: 45.464555, lon: -122.556094, times: ["5:55 AM", "6:22 AM", "6:51 AM", "7:19 AM", "7:50 AM", "8:20 AM", "8:49 AM", "9:21 AM"] },
+  { stop_id: "6567", name: "SE 112th &amp; Mt Scott Blvd", lat: 45.464525, lon: -122.547953, times: ["5:56 AM", "6:23 AM", "6:52 AM", "7:20 AM", "7:51 AM", "8:21 AM", "8:50 AM", "9:22 AM"] },
+  { stop_id: "4037", name: "SE Mt Scott &amp; 105th", lat: 45.464681, lon: -122.555854, times: ["5:57 AM", "6:24 AM", "6:53 AM", "7:21 AM", "7:52 AM", "8:22 AM", "8:51 AM", "9:23 AM"] },
+  { stop_id: "4035", name: "SE Mt Scott &amp; 103rd", lat: 45.465148, lon: -122.557683, times: ["5:57 AM", "6:24 AM", "6:53 AM", "7:21 AM", "7:52 AM", "8:22 AM", "8:51 AM", "9:23 AM"] },
+  { stop_id: "4033", name: "9900 Block SE Mt Scott", lat: 45.465826, lon: -122.560206, times: ["5:57 AM", "6:24 AM", "6:53 AM", "7:21 AM", "7:52 AM", "8:22 AM", "8:51 AM", "9:23 AM"] },
+  { stop_id: "4040", name: "SE Mt Scott &amp; 98th", lat: 45.466424, lon: -122.562681, times: ["5:58 AM", "6:25 AM", "6:54 AM", "7:22 AM", "7:53 AM", "8:23 AM", "8:52 AM", "9:24 AM"] },
+  { stop_id: "10307", name: "SE Flavel &amp; 92nd (MAX Stn)", lat: 45.468462, lon: -122.567216, times: ["5:59 AM", "6:26 AM", "6:55 AM", "7:23 AM", "7:54 AM", "8:24 AM", "8:53 AM", "9:25 AM"] },
+  { stop_id: "1765", name: "SE Flavel &amp; 92nd", lat: 45.468498, lon: -122.56901, times: ["11:45 PM", "4:42 AM", "5:31 AM", "5:59 AM", "6:26 AM", "6:55 AM", "7:23 AM", "7:54 AM"] },
+  { stop_id: "1729", name: "8800 Block SE Flavel", lat: 45.468557, lon: -122.571621, times: ["11:45 PM", "4:42 AM", "5:31 AM", "5:59 AM", "6:26 AM", "6:55 AM", "7:23 AM", "7:54 AM"] },
+  { stop_id: "1762", name: "SE Flavel &amp; 86th", lat: 45.468636, lon: -122.57512, times: ["11:46 PM", "4:43 AM", "5:32 AM", "6:00 AM", "6:27 AM", "6:56 AM", "7:24 AM", "7:55 AM"] },
+  { stop_id: "1760", name: "SE Flavel &amp; 83rd", lat: 45.468707, lon: -122.577881, times: ["11:46 PM", "4:43 AM", "5:32 AM", "6:01 AM", "6:28 AM", "6:57 AM", "7:25 AM", "7:56 AM"] },
+  { stop_id: "7982", name: "SE 82nd &amp; Ogden", lat: 45.471206, lon: -122.578939, times: ["11:47 PM", "4:44 AM", "5:33 AM", "6:02 AM", "6:29 AM", "6:58 AM", "7:26 AM", "7:57 AM"] },
+  { stop_id: "7970", name: "SE 82nd &amp; Glenwood", lat: 45.473885, lon: -122.578952, times: ["11:48 PM", "4:45 AM", "5:34 AM", "6:03 AM", "6:30 AM", "6:59 AM", "7:27 AM", "7:58 AM"] },
+  { stop_id: "1551", name: "SE Duke &amp; 81st", lat: 45.475934, lon: -122.579988, times: ["11:49 PM", "4:46 AM", "5:35 AM", "6:04 AM", "6:31 AM", "7:00 AM", "7:28 AM", "7:59 AM"] },
+  { stop_id: "1529", name: "SE Duke &amp; 78th", lat: 45.475927, lon: -122.582908, times: ["11:49 PM", "4:46 AM", "5:35 AM", "6:04 AM", "6:31 AM", "7:00 AM", "7:28 AM", "7:59 AM"] },
+  { stop_id: "1547", name: "SE Duke &amp; 74th", lat: 45.475953, lon: -122.586654, times: ["11:50 PM", "4:47 AM", "5:36 AM", "6:05 AM", "6:32 AM", "7:01 AM", "7:29 AM", "8:00 AM"] },
+  { stop_id: "1545", name: "SE Duke &amp; 72nd", lat: 45.475942, lon: -122.589773, times: ["11:50 PM", "4:47 AM", "5:37 AM", "6:06 AM", "6:33 AM", "7:02 AM", "7:30 AM", "8:01 AM"] },
+  { stop_id: "1541", name: "SE Duke &amp; 67th", lat: 45.475922, lon: -122.594428, times: ["11:10 PM", "11:51 PM", "4:48 AM", "5:38 AM", "6:07 AM", "6:34 AM", "7:03 AM", "7:31 AM"] },
+  { stop_id: "1538", name: "SE Duke &amp; 65th", lat: 45.4759, lon: -122.596935, times: ["11:11 PM", "11:52 PM", "4:49 AM", "5:38 AM", "6:07 AM", "6:34 AM", "7:03 AM", "7:31 AM"] },
+  { stop_id: "1534", name: "SE Duke &amp; 60th", lat: 45.475894, lon: -122.602078, times: ["11:12 PM", "11:53 PM", "4:50 AM", "5:39 AM", "6:08 AM", "6:36 AM", "7:05 AM", "7:33 AM"] },
+  { stop_id: "1532", name: "SE Duke &amp; 57th", lat: 45.475893, lon: -122.605117, times: ["11:12 PM", "11:53 PM", "4:50 AM", "5:40 AM", "6:09 AM", "6:36 AM", "7:05 AM", "7:33 AM"] },
+  { stop_id: "1530", name: "SE Duke &amp; 52nd", lat: 45.475892, lon: -122.60813, times: ["11:13 PM", "11:54 PM", "4:51 AM", "5:40 AM", "6:09 AM", "6:37 AM", "7:06 AM", "7:34 AM"] },
+  { stop_id: "7719", name: "SE 52nd &amp; Tolman", lat: 45.477421, lon: -122.608633, times: ["11:13 PM", "11:54 PM", "4:51 AM", "5:41 AM", "6:10 AM", "6:38 AM", "7:07 AM", "7:35 AM"] },
+  { stop_id: "6421", name: "SE Woodstock &amp; 51st", lat: 45.479238, lon: -122.609912, times: ["11:14 PM", "11:55 PM", "4:52 AM", "5:42 AM", "6:11 AM", "6:39 AM", "7:08 AM", "7:36 AM"] },
+  { stop_id: "6420", name: "SE Woodstock &amp; 49th", lat: 45.479248, lon: -122.612192, times: ["11:15 PM", "11:56 PM", "4:53 AM", "5:42 AM", "6:11 AM", "6:39 AM", "7:08 AM", "7:36 AM"] },
+  { stop_id: "6416", name: "SE Woodstock &amp; 46th", lat: 45.479227, lon: -122.615285, times: ["11:15 PM", "11:56 PM", "4:53 AM", "5:43 AM", "6:12 AM", "6:40 AM", "7:09 AM", "7:37 AM"] },
+  { stop_id: "6414", name: "SE Woodstock &amp; 43rd", lat: 45.479245, lon: -122.618335, times: ["11:16 PM", "11:57 PM", "4:54 AM", "5:44 AM", "6:13 AM", "6:41 AM", "7:10 AM", "7:38 AM"] },
+  { stop_id: "6412", name: "SE Woodstock &amp; 41st", lat: 45.47926, lon: -122.620365, times: ["11:16 PM", "11:57 PM", "4:54 AM", "5:44 AM", "6:13 AM", "6:41 AM", "7:10 AM", "7:38 AM"] },
+  { stop_id: "6409", name: "SE Woodstock &amp; Cesar Chavez Blvd", lat: 45.479262, lon: -122.622455, times: ["11:17 PM", "11:58 PM", "4:55 AM", "5:45 AM", "6:14 AM", "6:42 AM", "7:11 AM", "7:39 AM"] },
+  { stop_id: "6408", name: "3600 Block SE Woodstock", lat: 45.479274, lon: -122.625864, times: ["11:17 PM", "11:58 PM", "4:55 AM", "5:45 AM", "6:14 AM", "6:42 AM", "7:11 AM", "7:39 AM"] },
+  { stop_id: "6406", name: "SE Woodstock &amp; 34th", lat: 45.479374, lon: -122.628166, times: ["11:18 PM", "11:59 PM", "4:56 AM", "5:46 AM", "6:15 AM", "6:43 AM", "7:12 AM", "7:40 AM"] },
+  { stop_id: "6403", name: "SE Woodstock &amp; 32nd", lat: 45.479275, lon: -122.630306, times: ["11:18 PM", "11:59 PM", "4:56 AM", "5:46 AM", "6:15 AM", "6:43 AM", "7:12 AM", "7:40 AM"] },
+  { stop_id: "6400", name: "3000 Block SE Woodstock", lat: 45.479308, lon: -122.63242, times: ["11:19 PM", "12:00 AM", "4:57 AM", "5:47 AM", "6:16 AM", "6:44 AM", "7:13 AM", "7:41 AM"] },
+  { stop_id: "10189", name: "SE 28th &amp; Carlton", lat: 45.477256, lon: -122.634547, times: ["11:20 PM", "12:01 AM", "4:58 AM", "5:48 AM", "6:17 AM", "6:45 AM", "7:14 AM", "7:42 AM"] },
+  { stop_id: "7295", name: "SE 28th &amp; Tolman", lat: 45.475128, lon: -122.634462, times: ["11:20 PM", "12:01 AM", "4:58 AM", "5:48 AM", "6:17 AM", "6:45 AM", "7:14 AM", "7:42 AM"] },
+  { stop_id: "859", name: "2400 Block SE Bybee", lat: 45.474429, lon: -122.637518, times: ["11:21 PM", "12:02 AM", "4:59 AM", "5:49 AM", "6:18 AM", "6:46 AM", "7:15 AM", "7:43 AM"] },
+  { stop_id: "13782", name: "SE Bybee &amp; Bybee Blvd MAX Station", lat: 45.474312, lon: -122.640158, times: ["11:21 PM", "12:02 AM", "5:00 AM", "5:50 AM", "6:19 AM", "6:47 AM", "7:16 AM", "7:44 AM"] },
+  { stop_id: "855", name: "SE Bybee &amp; 23rd", lat: 45.474231, lon: -122.641275, times: ["11:21 PM", "12:02 AM", "5:00 AM", "5:50 AM", "6:19 AM", "6:47 AM", "7:16 AM", "7:44 AM"] },
+  { stop_id: "853", name: "SE Bybee &amp; 22nd", lat: 45.474141, lon: -122.642694, times: ["11:22 PM", "12:03 AM", "5:00 AM", "5:50 AM", "6:19 AM", "6:47 AM", "7:16 AM", "7:44 AM"] },
+  { stop_id: "838", name: "SE Bybee &amp; Milwaukie", lat: 45.473797, lon: -122.648402, times: ["11:23 PM", "12:04 AM", "5:02 AM", "5:52 AM", "6:21 AM", "6:49 AM", "7:18 AM", "7:46 AM"] },
+  { stop_id: "3912", name: "SE Milwaukie &amp; Claybourne", lat: 45.47544, lon: -122.648873, times: ["11:23 PM", "12:04 AM", "5:02 AM", "5:52 AM", "6:21 AM", "6:49 AM", "7:18 AM", "7:46 AM"] },
+  { stop_id: "3947", name: "SE Milwaukie &amp; Tolman", lat: 45.477059, lon: -122.649063, times: ["11:23 PM", "12:04 AM", "5:02 AM", "5:52 AM", "6:22 AM", "6:50 AM", "7:19 AM", "7:47 AM"] },
+  { stop_id: "3940", name: "SE Milwaukie &amp; Ramona", lat: 45.480763, lon: -122.649477, times: ["11:24 PM", "12:05 AM", "5:03 AM", "5:53 AM", "6:23 AM", "6:51 AM", "7:20 AM", "7:48 AM"] },
+  { stop_id: "3922", name: "SE Milwaukie &amp; Insley", lat: 45.484167, lon: -122.649513, times: ["11:25 PM", "12:06 AM", "5:04 AM", "5:54 AM", "6:24 AM", "6:52 AM", "7:21 AM", "7:50 AM"] },
+  { stop_id: "3933", name: "SE Milwaukie &amp; Mitchell", lat: 45.486102, lon: -122.649833, times: ["11:25 PM", "12:06 AM", "5:05 AM", "5:55 AM", "6:24 AM", "6:53 AM", "7:22 AM", "7:50 AM"] },
+  { stop_id: "3929", name: "SE Milwaukie &amp; Long", lat: 45.488855, lon: -122.650702, times: ["11:26 PM", "12:07 AM", "5:05 AM", "5:55 AM", "6:25 AM", "6:53 AM", "7:23 AM", "7:51 AM"] },
+  { stop_id: "3932", name: "SE Milwaukie &amp; Mall", lat: 45.491215, lon: -122.651461, times: ["11:26 PM", "12:07 AM", "5:06 AM", "5:56 AM", "6:26 AM", "6:54 AM", "7:24 AM", "7:52 AM"] },
+  { stop_id: "3908", name: "SE Milwaukie &amp; Center", lat: 45.494515, lon: -122.652879, times: ["11:27 PM", "12:08 AM", "5:07 AM", "5:57 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:54 AM"] },
+  { stop_id: "3917", name: "SE Milwaukie &amp; Haig", lat: 45.498128, lon: -122.653948, times: ["11:28 PM", "12:09 AM", "5:08 AM", "5:58 AM", "6:28 AM", "6:56 AM", "7:26 AM", "7:55 AM"] },
+  { stop_id: "4538", name: "SE Powell &amp; Milwaukie", lat: 45.501412, lon: -122.654679, times: ["11:29 PM", "12:10 AM", "5:09 AM", "5:59 AM", "6:29 AM", "6:58 AM", "7:28 AM", "7:57 AM"] },
+  { stop_id: "13825", name: "SE 7th &amp; Tilikum Way", lat: 45.505582, lon: -122.658631, times: ["11:31 PM", "12:12 AM", "5:11 AM", "6:01 AM", "6:31 AM", "7:00 AM", "7:30 AM", "7:59 AM"] },
+  { stop_id: "13773", name: "OMSI/SE Water", lat: 45.506602, lon: -122.663155, times: ["11:32 PM", "12:13 AM", "5:12 AM", "6:02 AM", "6:32 AM", "7:01 AM", "7:31 AM", "8:00 AM"] },
+  { stop_id: "13733", name: "South Waterfront/S Moody", lat: 45.502618, lon: -122.671791, times: ["11:35 PM", "12:16 AM", "5:15 AM", "6:05 AM", "6:35 AM", "7:04 AM", "7:34 AM", "8:03 AM"] },
+  { stop_id: "3398", name: "SW Lincoln &amp; 1st", lat: 45.508043, lon: -122.679711, times: ["11:39 PM", "12:19 AM", "5:19 AM", "6:09 AM", "6:39 AM", "7:08 AM", "7:38 AM", "8:08 AM"] },
+  { stop_id: "13780", name: "SW Hall &amp; 5th", lat: 45.510133, lon: -122.682088, times: ["11:41 PM", "12:21 AM", "5:21 AM", "6:11 AM", "6:41 AM", "7:10 AM", "7:40 AM", "8:10 AM"] },
+  { stop_id: "7772", name: "SW 6th &amp; Market", lat: 45.512943, lon: -122.681811, times: ["11:42 PM", "12:22 AM", "5:22 AM", "6:12 AM", "6:42 AM", "7:12 AM", "7:42 AM", "8:12 AM"] },
+  { stop_id: "7765", name: "SW 6th &amp; Jefferson", lat: 45.514866, lon: -122.680761, times: ["11:43 PM", "12:23 AM", "5:23 AM", "6:13 AM", "6:43 AM", "7:13 AM", "7:43 AM", "8:13 AM"] },
+  { stop_id: "7800", name: "SW 6th &amp; Taylor", lat: 45.517604, lon: -122.679316, times: ["11:45 PM", "12:25 AM", "12:32 AM", "1:08 AM", "5:25 AM", "5:32 AM", "6:15 AM", "6:45 AM"] },
+  { stop_id: "7797", name: "SW 6th &amp; Harvey Milk", lat: 45.520931, lon: -122.677521, times: ["11:46 PM", "12:33 AM", "1:09 AM", "5:33 AM", "6:16 AM", "6:46 AM", "7:16 AM", "7:46 AM"] },
+  { stop_id: "792", name: "W Burnside &amp; SW 6th", lat: 45.522948, lon: -122.676635, times: ["11:47 PM", "12:34 AM", "1:10 AM", "5:34 AM", "6:17 AM", "6:47 AM", "7:17 AM", "7:47 AM"] },
+  { stop_id: "9526", name: "W Burnside &amp; SW 2nd", lat: 45.523009, lon: -122.672529, times: ["11:48 PM", "12:35 AM", "1:11 AM", "5:35 AM", "6:18 AM", "6:48 AM", "7:18 AM", "7:48 AM"] },
+  { stop_id: "704", name: "E Burnside &amp; NE Grand", lat: 45.522869, lon: -122.660911, times: ["11:52 PM", "12:39 AM", "1:14 AM", "5:38 AM", "6:21 AM", "6:51 AM", "7:22 AM", "7:52 AM"] },
+  { stop_id: "820", name: "E Burnside &amp; SE 8th Ave", lat: 45.522847, lon: -122.657843, times: ["11:52 PM", "12:39 AM", "1:15 AM", "5:39 AM", "6:22 AM", "6:52 AM", "7:22 AM", "7:52 AM"] },
+  { stop_id: "13327", name: "E Burnside &amp; SE 12th Ave", lat: 45.522823, lon: -122.653824, times: ["11:54 PM", "12:41 AM", "1:16 AM", "5:40 AM", "6:23 AM", "6:53 AM", "7:24 AM", "7:54 AM"] },
+  { stop_id: "6839", name: "NE 16th &amp; Sandy", lat: 45.52422, lon: -122.649464, times: ["11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM", "6:54 AM", "7:25 AM", "7:55 AM"] },
+  { stop_id: "5061", name: "NE Sandy &amp; 18th", lat: 45.524971, lon: -122.647784, times: ["11:10 PM", "11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM", "6:54 AM", "7:25 AM"] },
+  { stop_id: "5044", name: "NE Sandy &amp; Flanders", lat: 45.525564, lon: -122.646165, times: ["11:10 PM", "11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM", "6:55 AM", "7:26 AM"] },
+  { stop_id: "13193", name: "NE Glisan &amp; 24th", lat: 45.526391, lon: -122.64116, times: ["11:11 PM", "11:56 PM", "12:43 AM", "1:18 AM", "5:42 AM", "6:25 AM", "6:56 AM", "7:27 AM"] },
+  { stop_id: "2105", name: "NE Glisan &amp; 28th", lat: 45.526378, lon: -122.636887, times: ["11:12 PM", "11:57 PM", "12:44 AM", "1:19 AM", "5:43 AM", "6:26 AM", "6:57 AM", "7:28 AM"] },
+  { stop_id: "2106", name: "NE Glisan &amp; 30th", lat: 45.526373, lon: -122.634198, times: ["11:13 PM", "11:58 PM", "12:45 AM", "1:20 AM", "5:44 AM", "6:27 AM", "6:57 AM", "7:28 AM"] },
+  { stop_id: "2108", name: "NE Glisan &amp; 32nd", lat: 45.526374, lon: -122.631819, times: ["11:13 PM", "11:58 PM", "12:45 AM", "1:20 AM", "5:44 AM", "6:27 AM", "6:58 AM", "7:29 AM"] },
+  { stop_id: "2003", name: "NE Glisan &amp; Laurelhurst", lat: 45.526374, lon: -122.627268, times: ["11:14 PM", "11:59 PM", "12:46 AM", "1:21 AM", "5:45 AM", "6:28 AM", "6:59 AM", "7:30 AM"] },
+  { stop_id: "2001", name: "NE Glisan &amp; Laddington", lat: 45.526356, lon: -122.625243, times: ["11:14 PM", "11:59 PM", "12:46 AM", "1:21 AM", "5:45 AM", "6:28 AM", "6:59 AM", "7:30 AM"] },
+  { stop_id: "2110", name: "NE Glisan &amp; Cesar Chavez Blvd", lat: 45.526042, lon: -122.622953, times: ["11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM", "7:00 AM", "7:31 AM"] },
+  { stop_id: "2114", name: "NE Glisan &amp; 43rd", lat: 45.526342, lon: -122.61897, times: ["11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM", "7:00 AM", "7:31 AM"] },
+  { stop_id: "13737", name: "NE Glisan &amp; 45th", lat: 45.526334, lon: -122.616283, times: ["11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM", "7:00 AM", "7:32 AM"] },
+  { stop_id: "2119", name: "NE Glisan &amp; 49th", lat: 45.526425, lon: -122.612514, times: ["11:16 PM", "12:01 AM", "12:48 AM", "1:23 AM", "5:47 AM", "6:30 AM", "7:01 AM", "7:33 AM"] },
+  { stop_id: "2122", name: "NE Glisan &amp; 53rd", lat: 45.52642, lon: -122.609026, times: ["11:17 PM", "12:02 AM", "12:49 AM", "1:24 AM", "5:48 AM", "6:31 AM", "7:02 AM", "7:33 AM"] },
+  { stop_id: "2124", name: "NE Glisan &amp; 56th", lat: 45.526414, lon: -122.606055, times: ["11:17 PM", "12:02 AM", "12:49 AM", "1:24 AM", "5:48 AM", "6:31 AM", "7:02 AM", "7:34 AM"] },
+  { stop_id: "2127", name: "NE Glisan &amp; 60th", lat: 45.526405, lon: -122.60243, times: ["11:18 PM", "12:03 AM", "12:50 AM", "1:25 AM", "5:49 AM", "6:32 AM", "7:03 AM", "7:35 AM"] },
+  { stop_id: "2130", name: "NE Glisan &amp; 62nd", lat: 45.526393, lon: -122.599688, times: ["11:18 PM", "12:03 AM", "12:50 AM", "1:25 AM", "5:49 AM", "6:32 AM", "7:03 AM", "7:35 AM"] },
+  { stop_id: "2131", name: "NE Glisan &amp; 65th", lat: 45.52639, lon: -122.597215, times: ["11:18 PM", "12:03 AM", "12:50 AM", "1:25 AM", "5:49 AM", "6:32 AM", "7:03 AM", "7:35 AM"] },
+  { stop_id: "2134", name: "NE Glisan &amp; 67th", lat: 45.526386, lon: -122.594587, times: ["11:19 PM", "12:04 AM", "12:51 AM", "1:26 AM", "5:50 AM", "6:33 AM", "7:04 AM", "7:36 AM"] },
+  { stop_id: "2138", name: "NE Glisan &amp; 71st", lat: 45.526361, lon: -122.589995, times: ["11:20 PM", "12:05 AM", "12:52 AM", "1:27 AM", "5:51 AM", "6:34 AM", "7:05 AM", "7:37 AM"] },
+  { stop_id: "2139", name: "NE Glisan &amp; 73rd", lat: 45.526359, lon: -122.587314, times: ["11:20 PM", "12:05 AM", "12:52 AM", "1:27 AM", "5:51 AM", "6:34 AM", "7:05 AM", "7:37 AM"] },
+  { stop_id: "2144", name: "NE Glisan &amp; 78th", lat: 45.526352, lon: -122.583732, times: ["11:21 PM", "12:06 AM", "12:53 AM", "1:28 AM", "5:52 AM", "6:35 AM", "7:06 AM", "7:38 AM"] },
+  { stop_id: "2147", name: "NE Glisan &amp; 82nd", lat: 45.526336, lon: -122.578558, times: ["11:22 PM", "12:07 AM", "12:54 AM", "1:29 AM", "5:53 AM", "6:36 AM", "7:07 AM", "7:39 AM"] },
+  { stop_id: "2151", name: "NE Glisan &amp; 86th", lat: 45.526306, lon: -122.575076, times: ["11:22 PM", "12:07 AM", "12:54 AM", "1:29 AM", "5:53 AM", "6:36 AM", "7:07 AM", "7:39 AM"] },
+  { stop_id: "2155", name: "NE Glisan &amp; 92nd", lat: 45.526289, lon: -122.569427, times: ["11:23 PM", "12:08 AM", "12:55 AM", "1:30 AM", "5:54 AM", "6:37 AM", "7:09 AM", "7:41 AM"] },
+  { stop_id: "2158", name: "NE Glisan &amp; 94th", lat: 45.526233, lon: -122.567167, times: ["11:24 PM", "12:09 AM", "12:56 AM", "1:31 AM", "5:55 AM", "6:38 AM", "7:09 AM", "7:41 AM"] },
+  { stop_id: "8140", name: "NE 99th &amp; Glisan", lat: 45.526812, lon: -122.561888, times: ["11:25 PM", "12:10 AM", "12:57 AM", "1:32 AM", "5:56 AM", "6:39 AM", "7:11 AM", "7:43 AM"] },
+  { stop_id: "8321", name: "NE Pacific St &amp; The Oregon Clinic", lat: 45.529559, lon: -122.562812, times: ["11:26 PM", "12:11 AM", "12:58 AM", "1:33 AM", "5:57 AM", "6:40 AM", "7:12 AM", "7:44 AM"] },
+  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["11:27 PM", "12:12 AM", "12:59 AM", "1:34 AM", "5:58 AM", "6:41 AM", "7:13 AM", "7:45 AM"] },
+  { stop_id: "7172", name: "SE 23rd &amp; Tolman (Union Manor)", lat: 45.477582, lon: -122.642189, times: ["9:14 AM", "10:14 AM", "11:14 AM", "12:14 PM", "1:14 PM", "2:14 PM"] },
   { stop_id: "7640", name: "SW 5th &amp; Taylor", lat: 45.517603, lon: -122.678292, times: ["1:04 AM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
+    // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
 
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
-    `;
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({
+          html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
-
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 </body>
 </html>

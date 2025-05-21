@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 43 - To Tigard Transit Center | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
     header {
       background-color: #0d0d0d;
@@ -47,43 +46,33 @@
       background-color: #1e1e1e;
     }
     #map {
-  width: 100%;
-  height: 85vh;
-  border: none;
-  margin: 0 auto;
-  display: block;
-  border-radius: 8px;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
@@ -97,17 +86,12 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-body {
-  overflow-y: auto;
-}
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
-
-  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +101,7 @@ body {
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 43 - To Tigard Transit Center</h1>
@@ -129,34 +113,28 @@ body {
     </div>
   </div>
 
-  
   <script>
-  
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 43;
-  const direction = parseInt(0);
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 43;
+    const direction = parseInt(0);
 
-  const map = L.map('map', {
-  center: [45.6, -122.7],
-  zoom: 12,
-  minZoom: 12,
-  maxZoom: 18,
-  maxBounds: [
-    [45.3, -123.1],  // Southwest corner
-    [45.9, -122.3]   // Northeast corner
-  ],
-  maxBoundsViscosity: 1.0
-});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.499398, -122.685589],
   [45.499399, -122.685587],
   [45.499429, -122.685535],
@@ -1367,146 +1345,139 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "5028", name: "SW Sam Jackson Pk &amp; OHSU", lat: 45.499332, lon: -122.685535, times: ["11:02 PM", "12:05 AM", "5:57 AM"] },
-  { stop_id: "5027", name: "SW Sam Jackson Pk &amp; Campus Dr", lat: 45.500295, lon: -122.684265, times: ["11:02 PM", "12:05 AM", "5:57 AM"] },
-  { stop_id: "11010", name: "SW Terwilliger &amp; Campus", lat: 45.499288, lon: -122.682745, times: ["11:05 PM", "12:08 AM", "6:00 AM"] },
-  { stop_id: "5782", name: "SW Terwilliger &amp; Bancroft", lat: 45.492615, lon: -122.68147, times: ["11:07 PM", "12:10 AM", "6:02 AM"] },
-  { stop_id: "5783", name: "SW Terwilliger &amp; Bancroft Terrace", lat: 45.491927, lon: -122.685087, times: ["11:08 PM", "12:11 AM", "6:03 AM"] },
-  { stop_id: "5812", name: "SW Terwilliger &amp; Westwood", lat: 45.482977, lon: -122.683574, times: ["10:10 PM", "11:10 PM", "12:13 AM"] },
-  { stop_id: "8450", name: "SW Terwilliger &amp; Cheltenham", lat: 45.481213, lon: -122.683255, times: ["10:11 PM", "11:11 PM", "12:14 AM"] },
-  { stop_id: "5789", name: "SW Terwilliger &amp; Capitol Hwy", lat: 45.480392, lon: -122.687065, times: ["10:11 PM", "11:11 PM", "12:14 AM"] },
-  { stop_id: "955", name: "SW Capitol &amp; Sunset", lat: 45.478896, lon: -122.693219, times: ["10:13 PM", "11:13 PM", "12:16 AM"] },
-  { stop_id: "14404", name: "SW Bertha &amp; Capitol Hill Rd", lat: 45.474713, lon: -122.695955, times: ["10:14 PM", "11:14 PM", "12:17 AM"] },
-  { stop_id: "467", name: "1400 Block SW Bertha", lat: 45.470914, lon: -122.693601, times: ["10:15 PM", "11:15 PM", "12:18 AM"] },
-  { stop_id: "11211", name: "SW Bertha &amp; Barbur", lat: 45.471017, lon: -122.689111, times: ["10:16 PM", "11:16 PM", "12:19 AM"] },
-  { stop_id: "5808", name: "SW Terwilliger &amp; 6th", lat: 45.467279, lon: -122.684654, times: ["10:17 PM", "11:17 PM", "12:20 AM"] },
-  { stop_id: "5816", name: "SW Terwilliger &amp; Carson", lat: 45.464059, lon: -122.683843, times: ["10:18 PM", "11:18 PM", "12:21 AM"] },
-  { stop_id: "5749", name: "SW Taylors Ferry &amp; 7th", lat: 45.463069, lon: -122.685361, times: ["10:19 PM", "11:19 PM", "12:22 AM"] },
-  { stop_id: "5708", name: "SW Taylors Ferry &amp; 10th", lat: 45.463514, lon: -122.688418, times: ["10:19 PM", "11:19 PM", "12:22 AM"] },
-  { stop_id: "5709", name: "SW Taylors Ferry &amp; 11th", lat: 45.463099, lon: -122.689804, times: ["10:19 PM", "11:19 PM", "12:22 AM"] },
-  { stop_id: "5316", name: "SW Spring Garden &amp; 14th", lat: 45.463545, lon: -122.692857, times: ["10:20 PM", "11:20 PM", "12:23 AM"] },
-  { stop_id: "5318", name: "SW Spring Garden &amp; 17th", lat: 45.463549, lon: -122.695531, times: ["10:20 PM", "11:20 PM", "12:23 AM"] },
-  { stop_id: "5319", name: "SW 19th &amp; Spring Garden", lat: 45.464017, lon: -122.697246, times: ["10:21 PM", "11:21 PM", "12:24 AM"] },
-  { stop_id: "10844", name: "SW Barbur &amp; Spring Garden", lat: 45.463752, lon: -122.701299, times: ["10:22 PM", "11:22 PM", "12:25 AM"] },
-  { stop_id: "165", name: "SW Barbur &amp; Barbur Ct", lat: 45.462404, lon: -122.703653, times: ["10:23 PM", "11:23 PM", "12:26 AM"] },
-  { stop_id: "187", name: "SW Barbur &amp; Primrose", lat: 45.45963, lon: -122.708465, times: ["10:24 PM", "11:24 PM", "12:27 AM"] },
-  { stop_id: "163", name: "SW Barbur &amp; Alice", lat: 45.458449, lon: -122.710493, times: ["10:24 PM", "11:24 PM", "12:27 AM"] },
-  { stop_id: "212", name: "Barbur Transit Center", lat: 45.454552, lon: -122.71739, times: ["10:27 PM", "11:27 PM", "12:30 AM"] },
-  { stop_id: "5697", name: "SW Taylors Ferry &amp; Capitol Hwy", lat: 45.454705, lon: -122.720215, times: ["10:27 PM", "11:27 PM", "12:30 AM"] },
-  { stop_id: "5726", name: "SW Taylors Ferry &amp; 46th", lat: 45.45477, lon: -122.724655, times: ["10:28 PM", "11:28 PM", "12:31 AM"] },
-  { stop_id: "5728", name: "SW Taylors Ferry &amp; 48th", lat: 45.454773, lon: -122.725786, times: ["10:28 PM", "11:28 PM", "12:31 AM"] },
-  { stop_id: "5730", name: "SW Taylors Ferry &amp; 49th", lat: 45.45479, lon: -122.727186, times: ["10:28 PM", "11:28 PM", "12:31 AM"] },
-  { stop_id: "5732", name: "SW Taylors Ferry &amp; 52nd", lat: 45.454804, lon: -122.730452, times: ["10:29 PM", "11:29 PM", "12:32 AM"] },
-  { stop_id: "5734", name: "SW Taylors Ferry &amp; 53rd", lat: 45.454813, lon: -122.731489, times: ["10:29 PM", "11:29 PM", "12:32 AM"] },
-  { stop_id: "5736", name: "SW Taylors Ferry &amp; 55th", lat: 45.454888, lon: -122.733288, times: ["10:29 PM", "11:29 PM", "12:32 AM"] },
-  { stop_id: "5738", name: "SW Taylors Ferry &amp; 57th", lat: 45.454863, lon: -122.735701, times: ["10:30 PM", "11:30 PM", "12:33 AM"] },
-  { stop_id: "5740", name: "SW Taylors Ferry &amp; 60th", lat: 45.454898, lon: -122.738045, times: ["10:30 PM", "11:30 PM", "12:33 AM"] },
-  { stop_id: "5743", name: "SW Taylors Ferry &amp; 62nd", lat: 45.454913, lon: -122.741279, times: ["10:30 PM", "11:30 PM", "12:33 AM"] },
-  { stop_id: "13578", name: "6500 Block SW Taylors Ferry", lat: 45.45495, lon: -122.744275, times: ["10:31 PM", "11:31 PM", "12:34 AM"] },
-  { stop_id: "5747", name: "SW Taylors Ferry &amp; 69th", lat: 45.454955, lon: -122.747051, times: ["10:31 PM", "11:31 PM", "12:34 AM"] },
-  { stop_id: "5693", name: "7100 Block SW Taylors Ferry", lat: 45.453862, lon: -122.750288, times: ["10:32 PM", "11:32 PM", "12:35 AM"] },
-  { stop_id: "12387", name: "SW Taylors Ferry &amp; Picasso Pl", lat: 45.454446, lon: -122.752871, times: ["10:33 PM", "11:33 PM", "12:36 AM"] },
-  { stop_id: "8387", name: "SW Taylors Ferry &amp; 76th Pl", lat: 45.454971, lon: -122.754683, times: ["10:33 PM", "11:33 PM", "12:36 AM"] },
-  { stop_id: "5696", name: "SW Taylors Ferry &amp; 78th Pl", lat: 45.455016, lon: -122.756886, times: ["10:33 PM", "11:33 PM", "12:36 AM"] },
-  { stop_id: "5754", name: "SW Taylors Ferry &amp; 80th", lat: 45.455009, lon: -122.758884, times: ["10:34 PM", "11:34 PM", "12:37 AM"] },
-  { stop_id: "7904", name: "SW 80th &amp; Birch", lat: 45.453761, lon: -122.759075, times: ["10:34 PM", "11:34 PM", "12:37 AM"] },
-  { stop_id: "7906", name: "SW 80th &amp; Cedarcrest", lat: 45.452476, lon: -122.759082, times: ["10:34 PM", "11:34 PM", "12:37 AM"] },
-  { stop_id: "7910", name: "SW 80th &amp; Elmwood", lat: 45.450523, lon: -122.75909, times: ["10:34 PM", "11:34 PM", "12:37 AM"] },
-  { stop_id: "7912", name: "SW 80th &amp; Landau", lat: 45.447749, lon: -122.759102, times: ["10:35 PM", "11:35 PM", "12:38 AM"] },
-  { stop_id: "7914", name: "SW 80th &amp; Locust", lat: 45.446737, lon: -122.759085, times: ["10:35 PM", "11:35 PM", "12:38 AM"] },
-  { stop_id: "3441", name: "SW Locust &amp; 82nd", lat: 45.446648, lon: -122.761758, times: ["10:36 PM", "11:36 PM", "12:39 AM"] },
-  { stop_id: "3438", name: "SW Locust &amp; Hall", lat: 45.446675, lon: -122.76482, times: ["10:36 PM", "11:36 PM", "12:39 AM"] },
-  { stop_id: "12404", name: "SW Greenburg &amp; Washington Square Rd", lat: 45.446077, lon: -122.77652, times: ["10:38 PM", "11:38 PM", "12:41 AM"] },
-  { stop_id: "2233", name: "SW Greenburg &amp; Center", lat: 45.434029, lon: -122.76857, times: ["10:42 PM", "11:42 PM", "12:45 AM"] },
-  { stop_id: "14412", name: "12000 Block SW Hall", lat: 45.432686, lon: -122.764875, times: ["10:43 PM", "11:43 PM", "12:46 AM"] },
-  { stop_id: "13930", name: "SW Hall &amp; Hunziker/Scoffins", lat: 45.430238, lon: -122.764749, times: ["10:43 PM", "11:43 PM", "12:46 AM"] },
-  { stop_id: "1122", name: "SW Commercial &amp; Hall", lat: 45.428655, lon: -122.766448, times: ["10:44 PM", "11:44 PM", "12:47 AM"] },
-  { stop_id: "8211", name: "Tigard Transit Center ", lat: 45.43029, lon: -122.76936, times: ["10:45 PM", "11:45 PM", "12:48 AM"] },
+  { stop_id: "5028", name: "SW Sam Jackson Pk &amp; OHSU", lat: 45.499332, lon: -122.685535, times: ["12:05 AM", "5:57 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM", "8:55 AM"] },
+  { stop_id: "5027", name: "SW Sam Jackson Pk &amp; Campus Dr", lat: 45.500295, lon: -122.684265, times: ["12:05 AM", "5:57 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM", "8:55 AM"] },
+  { stop_id: "11010", name: "SW Terwilliger &amp; Campus", lat: 45.499288, lon: -122.682745, times: ["12:08 AM", "6:00 AM", "6:29 AM", "6:59 AM", "7:29 AM", "7:59 AM", "8:29 AM", "8:59 AM"] },
+  { stop_id: "5782", name: "SW Terwilliger &amp; Bancroft", lat: 45.492615, lon: -122.68147, times: ["12:10 AM", "6:02 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM"] },
+  { stop_id: "5783", name: "SW Terwilliger &amp; Bancroft Terrace", lat: 45.491927, lon: -122.685087, times: ["12:11 AM", "6:03 AM", "6:32 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM"] },
+  { stop_id: "5812", name: "SW Terwilliger &amp; Westwood", lat: 45.482977, lon: -122.683574, times: ["11:10 PM", "12:13 AM", "6:05 AM", "6:34 AM", "7:04 AM", "7:34 AM", "8:04 AM", "8:34 AM"] },
+  { stop_id: "8450", name: "SW Terwilliger &amp; Cheltenham", lat: 45.481213, lon: -122.683255, times: ["11:11 PM", "12:14 AM", "6:06 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:35 AM"] },
+  { stop_id: "5789", name: "SW Terwilliger &amp; Capitol Hwy", lat: 45.480392, lon: -122.687065, times: ["11:11 PM", "12:14 AM", "6:06 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:35 AM"] },
+  { stop_id: "955", name: "SW Capitol &amp; Sunset", lat: 45.478896, lon: -122.693219, times: ["11:13 PM", "12:16 AM", "6:08 AM", "6:37 AM", "7:07 AM", "7:37 AM", "8:07 AM", "8:37 AM"] },
+  { stop_id: "14404", name: "SW Bertha &amp; Capitol Hill Rd", lat: 45.474713, lon: -122.695955, times: ["11:14 PM", "12:17 AM", "6:09 AM", "6:38 AM", "7:08 AM", "7:38 AM", "8:08 AM", "8:38 AM"] },
+  { stop_id: "467", name: "1400 Block SW Bertha", lat: 45.470914, lon: -122.693601, times: ["11:15 PM", "12:18 AM", "6:10 AM", "6:39 AM", "7:09 AM", "7:39 AM", "8:09 AM", "8:39 AM"] },
+  { stop_id: "11211", name: "SW Bertha &amp; Barbur", lat: 45.471017, lon: -122.689111, times: ["11:16 PM", "12:19 AM", "6:11 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:40 AM"] },
+  { stop_id: "5808", name: "SW Terwilliger &amp; 6th", lat: 45.467279, lon: -122.684654, times: ["11:17 PM", "12:20 AM", "6:13 AM", "6:42 AM", "7:12 AM", "7:42 AM", "8:12 AM", "8:42 AM"] },
+  { stop_id: "5816", name: "SW Terwilliger &amp; Carson", lat: 45.464059, lon: -122.683843, times: ["11:18 PM", "12:21 AM", "6:14 AM", "6:43 AM", "7:13 AM", "7:43 AM", "8:13 AM", "8:43 AM"] },
+  { stop_id: "5749", name: "SW Taylors Ferry &amp; 7th", lat: 45.463069, lon: -122.685361, times: ["11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:44 AM"] },
+  { stop_id: "5708", name: "SW Taylors Ferry &amp; 10th", lat: 45.463514, lon: -122.688418, times: ["11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:44 AM"] },
+  { stop_id: "5709", name: "SW Taylors Ferry &amp; 11th", lat: 45.463099, lon: -122.689804, times: ["11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:44 AM"] },
+  { stop_id: "5316", name: "SW Spring Garden &amp; 14th", lat: 45.463545, lon: -122.692857, times: ["11:20 PM", "12:23 AM", "6:16 AM", "6:45 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:45 AM"] },
+  { stop_id: "5318", name: "SW Spring Garden &amp; 17th", lat: 45.463549, lon: -122.695531, times: ["11:20 PM", "12:23 AM", "6:17 AM", "6:46 AM", "7:16 AM", "7:46 AM", "8:16 AM", "8:46 AM"] },
+  { stop_id: "5319", name: "SW 19th &amp; Spring Garden", lat: 45.464017, lon: -122.697246, times: ["11:21 PM", "12:24 AM", "6:17 AM", "6:46 AM", "7:16 AM", "7:46 AM", "8:16 AM", "8:46 AM"] },
+  { stop_id: "10844", name: "SW Barbur &amp; Spring Garden", lat: 45.463752, lon: -122.701299, times: ["11:22 PM", "12:25 AM", "6:19 AM", "6:48 AM", "7:18 AM", "7:48 AM", "8:18 AM", "8:48 AM"] },
+  { stop_id: "165", name: "SW Barbur &amp; Barbur Ct", lat: 45.462404, lon: -122.703653, times: ["11:23 PM", "12:26 AM", "6:19 AM", "6:48 AM", "7:18 AM", "7:48 AM", "8:18 AM", "8:48 AM"] },
+  { stop_id: "187", name: "SW Barbur &amp; Primrose", lat: 45.45963, lon: -122.708465, times: ["11:24 PM", "12:27 AM", "6:21 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:50 AM"] },
+  { stop_id: "163", name: "SW Barbur &amp; Alice", lat: 45.458449, lon: -122.710493, times: ["11:24 PM", "12:27 AM", "6:21 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:50 AM"] },
+  { stop_id: "212", name: "Barbur Transit Center", lat: 45.454552, lon: -122.71739, times: ["11:27 PM", "12:30 AM", "6:24 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:23 AM", "8:53 AM"] },
+  { stop_id: "5697", name: "SW Taylors Ferry &amp; Capitol Hwy", lat: 45.454705, lon: -122.720215, times: ["11:27 PM", "12:30 AM", "6:24 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:23 AM", "8:53 AM"] },
+  { stop_id: "5726", name: "SW Taylors Ferry &amp; 46th", lat: 45.45477, lon: -122.724655, times: ["11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM"] },
+  { stop_id: "5728", name: "SW Taylors Ferry &amp; 48th", lat: 45.454773, lon: -122.725786, times: ["11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM"] },
+  { stop_id: "5730", name: "SW Taylors Ferry &amp; 49th", lat: 45.45479, lon: -122.727186, times: ["11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM"] },
+  { stop_id: "5732", name: "SW Taylors Ferry &amp; 52nd", lat: 45.454804, lon: -122.730452, times: ["11:29 PM", "12:32 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM", "8:55 AM"] },
+  { stop_id: "5734", name: "SW Taylors Ferry &amp; 53rd", lat: 45.454813, lon: -122.731489, times: ["11:29 PM", "12:32 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM", "8:55 AM"] },
+  { stop_id: "5736", name: "SW Taylors Ferry &amp; 55th", lat: 45.454888, lon: -122.733288, times: ["11:29 PM", "12:32 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM", "8:56 AM"] },
+  { stop_id: "5738", name: "SW Taylors Ferry &amp; 57th", lat: 45.454863, lon: -122.735701, times: ["11:30 PM", "12:33 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM", "8:56 AM"] },
+  { stop_id: "5740", name: "SW Taylors Ferry &amp; 60th", lat: 45.454898, lon: -122.738045, times: ["11:30 PM", "12:33 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM", "8:56 AM"] },
+  { stop_id: "5743", name: "SW Taylors Ferry &amp; 62nd", lat: 45.454913, lon: -122.741279, times: ["11:30 PM", "12:33 AM", "6:28 AM", "6:57 AM", "7:27 AM", "7:57 AM", "8:27 AM", "8:57 AM"] },
+  { stop_id: "13578", name: "6500 Block SW Taylors Ferry", lat: 45.45495, lon: -122.744275, times: ["11:31 PM", "12:34 AM", "6:29 AM", "6:58 AM", "7:28 AM", "7:58 AM", "8:28 AM", "8:58 AM"] },
+  { stop_id: "5747", name: "SW Taylors Ferry &amp; 69th", lat: 45.454955, lon: -122.747051, times: ["11:31 PM", "12:34 AM", "6:29 AM", "6:58 AM", "7:28 AM", "7:58 AM", "8:28 AM", "8:58 AM"] },
+  { stop_id: "5693", name: "7100 Block SW Taylors Ferry", lat: 45.453862, lon: -122.750288, times: ["11:32 PM", "12:35 AM", "6:30 AM", "6:59 AM", "7:29 AM", "7:59 AM", "8:29 AM", "8:59 AM"] },
+  { stop_id: "12387", name: "SW Taylors Ferry &amp; Picasso Pl", lat: 45.454446, lon: -122.752871, times: ["11:33 PM", "12:36 AM", "6:30 AM", "6:59 AM", "7:29 AM", "7:59 AM", "8:29 AM", "8:59 AM"] },
+  { stop_id: "8387", name: "SW Taylors Ferry &amp; 76th Pl", lat: 45.454971, lon: -122.754683, times: ["11:33 PM", "12:36 AM", "6:31 AM", "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM"] },
+  { stop_id: "5696", name: "SW Taylors Ferry &amp; 78th Pl", lat: 45.455016, lon: -122.756886, times: ["11:33 PM", "12:36 AM", "6:31 AM", "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM"] },
+  { stop_id: "5754", name: "SW Taylors Ferry &amp; 80th", lat: 45.455009, lon: -122.758884, times: ["11:34 PM", "12:37 AM", "6:32 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM"] },
+  { stop_id: "7904", name: "SW 80th &amp; Birch", lat: 45.453761, lon: -122.759075, times: ["11:34 PM", "12:37 AM", "6:32 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM"] },
+  { stop_id: "7906", name: "SW 80th &amp; Cedarcrest", lat: 45.452476, lon: -122.759082, times: ["11:34 PM", "12:37 AM", "6:32 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM"] },
+  { stop_id: "7910", name: "SW 80th &amp; Elmwood", lat: 45.450523, lon: -122.75909, times: ["11:34 PM", "12:37 AM", "6:33 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM"] },
+  { stop_id: "7912", name: "SW 80th &amp; Landau", lat: 45.447749, lon: -122.759102, times: ["11:35 PM", "12:38 AM", "6:33 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM"] },
+  { stop_id: "7914", name: "SW 80th &amp; Locust", lat: 45.446737, lon: -122.759085, times: ["11:35 PM", "12:38 AM", "6:33 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM"] },
+  { stop_id: "3441", name: "SW Locust &amp; 82nd", lat: 45.446648, lon: -122.761758, times: ["11:36 PM", "12:39 AM", "6:34 AM", "7:03 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM"] },
+  { stop_id: "3438", name: "SW Locust &amp; Hall", lat: 45.446675, lon: -122.76482, times: ["11:36 PM", "12:39 AM", "6:34 AM", "7:03 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM"] },
+  { stop_id: "12404", name: "SW Greenburg &amp; Washington Square Rd", lat: 45.446077, lon: -122.77652, times: ["11:38 PM", "12:41 AM", "6:37 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM"] },
+  { stop_id: "2233", name: "SW Greenburg &amp; Center", lat: 45.434029, lon: -122.76857, times: ["11:42 PM", "12:45 AM", "6:41 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:40 AM", "9:10 AM"] },
+  { stop_id: "14412", name: "12000 Block SW Hall", lat: 45.432686, lon: -122.764875, times: ["11:43 PM", "12:46 AM", "6:42 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:41 AM", "9:11 AM"] },
+  { stop_id: "13930", name: "SW Hall &amp; Hunziker/Scoffins", lat: 45.430238, lon: -122.764749, times: ["11:43 PM", "12:46 AM", "6:42 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:41 AM", "9:11 AM"] },
+  { stop_id: "1122", name: "SW Commercial &amp; Hall", lat: 45.428655, lon: -122.766448, times: ["11:44 PM", "12:47 AM", "6:43 AM", "7:12 AM", "7:42 AM", "8:12 AM", "8:42 AM", "9:12 AM"] },
+  { stop_id: "8211", name: "Tigard Transit Center ", lat: 45.43029, lon: -122.76936, times: ["11:45 PM", "12:48 AM", "6:44 AM", "7:13 AM", "7:43 AM", "8:13 AM", "8:43 AM", "9:13 AM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
+    // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
 
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
-    `;
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({
+          html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
-
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 </body>
 </html>

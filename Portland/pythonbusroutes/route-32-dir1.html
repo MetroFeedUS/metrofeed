@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 32 - To Oregon City Transit Center or Milwaukie | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
     header {
       background-color: #0d0d0d;
@@ -47,43 +46,33 @@
       background-color: #1e1e1e;
     }
     #map {
-  width: 100%;
-  height: 85vh;
-  border: none;
-  margin: 0 auto;
-  display: block;
-  border-radius: 8px;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
@@ -97,17 +86,12 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-body {
-  overflow-y: auto;
-}
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
-
-  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +101,7 @@ body {
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 32 - To Oregon City Transit Center or Milwaukie</h1>
@@ -129,34 +113,28 @@ body {
     </div>
   </div>
 
-  
   <script>
-  
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 32;
-  const direction = parseInt(1);
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 32;
+    const direction = parseInt(1);
 
-  const map = L.map('map', {
-  center: [45.6, -122.7],
-  zoom: 12,
-  minZoom: 12,
-  maxZoom: 18,
-  maxBounds: [
-    [45.3, -123.1],  // Southwest corner
-    [45.9, -122.3]   // Northeast corner
-  ],
-  maxBoundsViscosity: 1.0
-});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.322033, -122.575376],
   [45.322264, -122.575165],
   [45.322301, -122.575229],
@@ -1139,168 +1117,161 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "14019", name: "Clackamas Community College", lat: 45.322016, lon: -122.575339, times: ["6:07 AM", "6:39 AM", "7:33 AM"] },
-  { stop_id: "14169", name: "Meyers Rd &amp; High School Ave", lat: 45.318708, lon: -122.567026, times: ["6:09 AM", "6:41 AM", "7:35 AM"] },
-  { stop_id: "14170", name: "Meyers Rd &amp; Sophia Ct", lat: 45.318713, lon: -122.560059, times: ["6:10 AM", "6:42 AM", "7:36 AM"] },
-  { stop_id: "14421", name: "Beavercreek &amp; Clairmont Dr", lat: 45.327038, lon: -122.566574, times: ["6:12 AM", "6:44 AM", "7:38 AM"] },
-  { stop_id: "14370", name: "S Beavercreek &amp; Maplelane", lat: 45.331343, lon: -122.572291, times: ["6:13 AM", "6:45 AM", "7:40 AM"] },
-  { stop_id: "9580", name: "Beavercreek &amp; Hwy 213", lat: 45.332337, lon: -122.576657, times: ["6:14 AM", "6:46 AM", "7:40 AM"] },
-  { stop_id: "9755", name: "Beavercreek &amp; Fir", lat: 45.332639, lon: -122.578702, times: ["6:14 AM", "6:46 AM", "7:41 AM"] },
-  { stop_id: "9578", name: "1700 Block Beavercreek Rd", lat: 45.333145, lon: -122.58315, times: ["6:15 AM", "6:47 AM", "7:41 AM"] },
-  { stop_id: "9579", name: "1600 Block Beavercreek Rd", lat: 45.333889, lon: -122.586543, times: ["6:15 AM", "6:47 AM", "7:42 AM"] },
-  { stop_id: "11473", name: "1400 Block Molalla", lat: 45.335254, lon: -122.589452, times: ["6:16 AM", "6:48 AM", "7:43 AM"] },
-  { stop_id: "13993", name: "Molalla &amp; Warner-Milne", lat: 45.337089, lon: -122.590885, times: ["6:16 AM", "6:48 AM", "7:43 AM"] },
-  { stop_id: "3984", name: "Molalla &amp; Hillcrest", lat: 45.338894, lon: -122.592283, times: ["6:17 AM", "6:49 AM", "7:43 AM"] },
-  { stop_id: "13187", name: "Molalla &amp; Harris", lat: 45.340798, lon: -122.593763, times: ["6:17 AM", "6:49 AM", "7:44 AM"] },
-  { stop_id: "3983", name: "Molalla &amp; Hilda", lat: 45.342578, lon: -122.595118, times: ["6:18 AM", "6:50 AM", "7:44 AM"] },
-  { stop_id: "11932", name: "Molalla &amp; Mountain View", lat: 45.343837, lon: -122.596085, times: ["6:18 AM", "6:50 AM", "7:45 AM"] },
-  { stop_id: "11482", name: "500 Block Molalla", lat: 45.346735, lon: -122.596555, times: ["6:19 AM", "6:51 AM", "7:45 AM"] },
-  { stop_id: "3990", name: "Molalla &amp; Pearl", lat: 45.348734, lon: -122.596559, times: ["6:19 AM", "6:51 AM", "7:46 AM"] },
-  { stop_id: "3994", name: "Molalla &amp; Willamette", lat: 45.350731, lon: -122.596604, times: ["6:19 AM", "6:51 AM", "7:46 AM"] },
-  { stop_id: "1323", name: "Division &amp; Buchanan", lat: 45.351632, lon: -122.594258, times: ["6:20 AM", "6:52 AM", "7:47 AM"] },
-  { stop_id: "1351", name: "Division &amp; Selma", lat: 45.35159, lon: -122.591213, times: ["6:20 AM", "6:52 AM", "7:47 AM"] },
-  { stop_id: "1343", name: "Division &amp; Morton", lat: 45.352719, lon: -122.588305, times: ["6:21 AM", "6:53 AM", "7:48 AM"] },
-  { stop_id: "1385", name: "Division &amp; 13th", lat: 45.354517, lon: -122.588305, times: ["6:21 AM", "6:53 AM", "7:48 AM"] },
-  { stop_id: "1404", name: "Division &amp; 15th", lat: 45.356193, lon: -122.588276, times: ["6:22 AM", "6:54 AM", "7:49 AM"] },
-  { stop_id: "6841", name: "16th &amp; Taylor", lat: 45.358718, lon: -122.589948, times: ["6:23 AM", "6:55 AM", "7:50 AM"] },
-  { stop_id: "6835", name: "16th &amp; Harrison", lat: 45.359463, lon: -122.591444, times: ["6:23 AM", "6:55 AM", "7:50 AM"] },
-  { stop_id: "6837", name: "16th &amp; Jackson", lat: 45.360332, lon: -122.59316, times: ["6:24 AM", "6:56 AM", "7:51 AM"] },
-  { stop_id: "3024", name: "Jackson &amp; 15th", lat: 45.359446, lon: -122.594285, times: ["6:24 AM", "6:56 AM", "7:51 AM"] },
-  { stop_id: "3020", name: "Jackson &amp; 12th", lat: 45.357466, lon: -122.596304, times: ["6:25 AM", "6:57 AM", "7:52 AM"] },
-  { stop_id: "8509", name: "Jackson &amp; 9th", lat: 45.35537, lon: -122.598374, times: ["6:26 AM", "6:58 AM", "7:53 AM"] },
-  { stop_id: "8098", name: "9th &amp; Monroe", lat: 45.356115, lon: -122.599949, times: ["6:26 AM", "6:58 AM", "7:53 AM"] },
-  { stop_id: "8094", name: "9th &amp; Jefferson", lat: 45.357, lon: -122.60169, times: ["6:27 AM", "6:59 AM", "7:54 AM"] },
-  { stop_id: "8100", name: "9th &amp; Washington", lat: 45.35785, lon: -122.603401, times: ["6:27 AM", "6:59 AM", "7:54 AM"] },
-  { stop_id: "8759", name: "Oregon City Transit Center", lat: 45.360143, lon: -122.604394, times: ["6:30 AM", "7:02 AM", "7:57 AM"] },
-  { stop_id: "3842", name: "McLoughlin &amp; Oregon City Shopping Center", lat: 45.368845, lon: -122.600901, times: ["6:32 AM", "7:04 AM", "7:59 AM"] },
-  { stop_id: "121", name: "W Arlington &amp; Barton", lat: 45.376432, lon: -122.598823, times: ["6:34 AM", "7:06 AM", "8:01 AM"] },
-  { stop_id: "123", name: "W Arlington &amp; Beatrice", lat: 45.377061, lon: -122.596965, times: ["6:35 AM", "7:07 AM", "8:02 AM"] },
-  { stop_id: "125", name: "W Arlington &amp; Bellevue", lat: 45.3777, lon: -122.595057, times: ["6:35 AM", "7:07 AM", "8:02 AM"] },
-  { stop_id: "136", name: "W Arlington &amp; Portland Ave", lat: 45.378217, lon: -122.593418, times: ["6:36 AM", "7:08 AM", "8:03 AM"] },
-  { stop_id: "14569", name: "200 Block E Arlington", lat: 45.379067, lon: -122.59088, times: ["6:36 AM", "7:08 AM", "8:03 AM"] },
-  { stop_id: "131", name: "E Arlington &amp; Cornell", lat: 45.380385, lon: -122.586848, times: ["6:36 AM", "7:08 AM", "8:03 AM"] },
-  { stop_id: "140", name: "E Arlington &amp; 82nd Dr", lat: 45.381391, lon: -122.583812, times: ["6:37 AM", "7:09 AM", "8:04 AM"] },
-  { stop_id: "10700", name: "Oatfield &amp; E Exeter", lat: 45.384309, lon: -122.583907, times: ["6:37 AM", "7:09 AM", "8:04 AM"] },
-  { stop_id: "13252", name: "Oatfield &amp; E Hereford", lat: 45.386466, lon: -122.58497, times: ["6:38 AM", "7:10 AM", "8:05 AM"] },
-  { stop_id: "13458", name: "Oatfield &amp; Webster", lat: 45.388165, lon: -122.586235, times: ["6:38 AM", "7:10 AM", "8:05 AM"] },
-  { stop_id: "4145", name: "Oatfield &amp; Stone Oaks Ct", lat: 45.390223, lon: -122.588432, times: ["6:39 AM", "7:11 AM", "8:06 AM"] },
-  { stop_id: "4191", name: "Oatfield &amp; Ridgegate", lat: 45.39222, lon: -122.590763, times: ["6:39 AM", "7:11 AM", "8:06 AM"] },
-  { stop_id: "4187", name: "Oatfield &amp; Park Way", lat: 45.393895, lon: -122.594257, times: ["6:40 AM", "7:12 AM", "8:07 AM"] },
-  { stop_id: "4182", name: "Oatfield &amp; Oakridge", lat: 45.395034, lon: -122.59617, times: ["6:40 AM", "7:12 AM", "8:07 AM"] },
-  { stop_id: "4169", name: "SE Oatfield &amp; Jennings", lat: 45.397161, lon: -122.600352, times: ["6:41 AM", "7:13 AM", "8:08 AM"] },
-  { stop_id: "4147", name: "SE Oatfield &amp; Clayson", lat: 45.399102, lon: -122.60333, times: ["6:41 AM", "7:13 AM", "8:08 AM"] },
-  { stop_id: "4174", name: "SE Oatfield &amp; McNary", lat: 45.400489, lon: -122.605848, times: ["6:41 AM", "7:13 AM", "8:08 AM"] },
-  { stop_id: "4139", name: "16800 Block SE Oatfield", lat: 45.401883, lon: -122.608374, times: ["6:42 AM", "7:14 AM", "8:09 AM"] },
-  { stop_id: "4195", name: "SE Oatfield &amp; Roethe", lat: 45.403499, lon: -122.610833, times: ["6:42 AM", "7:14 AM", "8:09 AM"] },
-  { stop_id: "4180", name: "SE Oatfield &amp; Oakland", lat: 45.405158, lon: -122.613012, times: ["6:43 AM", "7:15 AM", "8:10 AM"] },
-  { stop_id: "4177", name: "SE Oatfield &amp; Naef", lat: 45.406279, lon: -122.614459, times: ["6:43 AM", "7:15 AM", "8:10 AM"] },
-  { stop_id: "4143", name: "SE Oatfield &amp; Allan", lat: 45.407135, lon: -122.615712, times: ["6:43 AM", "7:15 AM", "8:10 AM"] },
-  { stop_id: "4200", name: "SE Oatfield &amp; Thiessen", lat: 45.408155, lon: -122.617195, times: ["6:43 AM", "7:15 AM", "8:10 AM"] },
-  { stop_id: "4190", name: "SE Oatfield &amp; Raymond", lat: 45.409384, lon: -122.619103, times: ["6:44 AM", "7:16 AM", "8:11 AM"] },
-  { stop_id: "4150", name: "SE Oatfield &amp; Concord", lat: 45.411285, lon: -122.621179, times: ["6:44 AM", "7:16 AM", "8:11 AM"] },
-  { stop_id: "4193", name: "SE Oatfield &amp; Risley", lat: 45.413923, lon: -122.624094, times: ["6:45 AM", "7:17 AM", "8:12 AM"] },
-  { stop_id: "4184", name: "SE Oatfield &amp; Oatfield Ct", lat: 45.415174, lon: -122.62549, times: ["6:45 AM", "7:17 AM", "8:12 AM"] },
-  { stop_id: "4137", name: "SE Oatfield &amp; Oak Grove", lat: 45.417444, lon: -122.627866, times: ["6:46 AM", "7:18 AM", "8:13 AM"] },
-  { stop_id: "4166", name: "SE Oatfield &amp; Hill", lat: 45.419253, lon: -122.629012, times: ["6:46 AM", "7:18 AM", "8:13 AM"] },
-  { stop_id: "4188", name: "SE Oatfield &amp; Pinehurst", lat: 45.421296, lon: -122.629673, times: ["6:47 AM", "7:19 AM", "8:14 AM"] },
-  { stop_id: "13186", name: "13800 Block SE Oatfield", lat: 45.422981, lon: -122.630256, times: ["6:47 AM", "7:19 AM", "8:14 AM"] },
-  { stop_id: "4173", name: "SE Oatfield &amp; Loeffelman Rd", lat: 45.425705, lon: -122.631215, times: ["6:48 AM", "7:20 AM", "8:15 AM"] },
-  { stop_id: "4199", name: "SE Oatfield &amp; Silver Springs", lat: 45.427856, lon: -122.63195, times: ["6:49 AM", "7:21 AM", "8:16 AM"] },
-  { stop_id: "4186", name: "SE Oatfield &amp; Park", lat: 45.430116, lon: -122.632614, times: ["6:49 AM", "7:22 AM", "8:17 AM"] },
-  { stop_id: "4142", name: "SE Oatfield &amp; Aldercrest", lat: 45.431511, lon: -122.63039, times: ["6:50 AM", "7:23 AM", "8:18 AM"] },
-  { stop_id: "4161", name: "SE Oatfield &amp; Guilford", lat: 45.43484, lon: -122.629692, times: ["6:51 AM", "7:24 AM", "8:19 AM"] },
-  { stop_id: "3321", name: "SE Lake &amp; 33rd Pl", lat: 45.436517, lon: -122.62994, times: ["6:52 AM", "7:25 AM", "8:20 AM"] },
-  { stop_id: "3350", name: "SE Lake &amp; 31st Pl", lat: 45.437388, lon: -122.631949, times: ["6:53 AM", "7:25 AM", "8:20 AM"] },
-  { stop_id: "3347", name: "SE Lake &amp; 28th", lat: 45.43839, lon: -122.634247, times: ["6:53 AM", "7:26 AM", "8:21 AM"] },
-  { stop_id: "3345", name: "SE Lake &amp; 23rd", lat: 45.440117, lon: -122.638097, times: ["6:54 AM", "7:27 AM", "8:22 AM"] },
-  { stop_id: "13776", name: "SE 21st &amp; Adams", lat: 45.441578, lon: -122.639487, times: ["6:55 AM", "7:27 AM", "8:22 AM"] },
-  { stop_id: "8225", name: "SE Jackson &amp; 21st", lat: 45.444827, lon: -122.640491, times: ["6:57 AM", "7:30 AM", "8:25 AM"] },
+  { stop_id: "14019", name: "Clackamas Community College", lat: 45.322016, lon: -122.575339, times: ["6:07 AM", "6:39 AM", "7:33 AM", "8:08 AM", "8:38 AM", "9:40 AM", "10:43 AM", "11:35 AM"] },
+  { stop_id: "14169", name: "Meyers Rd &amp; High School Ave", lat: 45.318708, lon: -122.567026, times: ["6:09 AM", "6:41 AM", "7:35 AM", "8:10 AM", "8:40 AM", "9:42 AM", "10:45 AM", "11:37 AM"] },
+  { stop_id: "14170", name: "Meyers Rd &amp; Sophia Ct", lat: 45.318713, lon: -122.560059, times: ["6:10 AM", "6:42 AM", "7:36 AM", "8:11 AM", "8:41 AM", "9:43 AM", "10:46 AM", "11:38 AM"] },
+  { stop_id: "14421", name: "Beavercreek &amp; Clairmont Dr", lat: 45.327038, lon: -122.566574, times: ["6:12 AM", "6:44 AM", "7:38 AM", "8:13 AM", "8:43 AM", "9:45 AM", "10:48 AM", "11:41 AM"] },
+  { stop_id: "14370", name: "S Beavercreek &amp; Maplelane", lat: 45.331343, lon: -122.572291, times: ["6:13 AM", "6:45 AM", "7:40 AM", "8:15 AM", "8:45 AM", "9:47 AM", "10:50 AM", "11:42 AM"] },
+  { stop_id: "9580", name: "Beavercreek &amp; Hwy 213", lat: 45.332337, lon: -122.576657, times: ["6:14 AM", "6:46 AM", "7:40 AM", "8:15 AM", "8:45 AM", "9:47 AM", "10:50 AM", "11:43 AM"] },
+  { stop_id: "9755", name: "Beavercreek &amp; Fir", lat: 45.332639, lon: -122.578702, times: ["6:14 AM", "6:46 AM", "7:41 AM", "8:16 AM", "8:46 AM", "9:48 AM", "10:51 AM", "11:43 AM"] },
+  { stop_id: "9578", name: "1700 Block Beavercreek Rd", lat: 45.333145, lon: -122.58315, times: ["6:15 AM", "6:47 AM", "7:41 AM", "8:16 AM", "8:46 AM", "9:48 AM", "10:51 AM", "11:44 AM"] },
+  { stop_id: "9579", name: "1600 Block Beavercreek Rd", lat: 45.333889, lon: -122.586543, times: ["6:15 AM", "6:47 AM", "7:42 AM", "8:17 AM", "8:47 AM", "9:49 AM", "10:52 AM", "11:45 AM"] },
+  { stop_id: "11473", name: "1400 Block Molalla", lat: 45.335254, lon: -122.589452, times: ["6:16 AM", "6:48 AM", "7:43 AM", "8:18 AM", "8:48 AM", "9:50 AM", "10:53 AM", "11:45 AM"] },
+  { stop_id: "13993", name: "Molalla &amp; Warner-Milne", lat: 45.337089, lon: -122.590885, times: ["6:16 AM", "6:48 AM", "7:43 AM", "8:18 AM", "8:48 AM", "9:50 AM", "10:53 AM", "11:46 AM"] },
+  { stop_id: "3984", name: "Molalla &amp; Hillcrest", lat: 45.338894, lon: -122.592283, times: ["6:17 AM", "6:49 AM", "7:43 AM", "8:18 AM", "8:48 AM", "9:50 AM", "10:53 AM", "11:46 AM"] },
+  { stop_id: "13187", name: "Molalla &amp; Harris", lat: 45.340798, lon: -122.593763, times: ["6:17 AM", "6:49 AM", "7:44 AM", "8:19 AM", "8:49 AM", "9:51 AM", "10:54 AM", "11:47 AM"] },
+  { stop_id: "3983", name: "Molalla &amp; Hilda", lat: 45.342578, lon: -122.595118, times: ["6:18 AM", "6:50 AM", "7:44 AM", "8:19 AM", "8:49 AM", "9:51 AM", "10:54 AM", "11:47 AM"] },
+  { stop_id: "11932", name: "Molalla &amp; Mountain View", lat: 45.343837, lon: -122.596085, times: ["6:18 AM", "6:50 AM", "7:45 AM", "8:20 AM", "8:50 AM", "9:52 AM", "10:55 AM", "11:47 AM"] },
+  { stop_id: "11482", name: "500 Block Molalla", lat: 45.346735, lon: -122.596555, times: ["6:19 AM", "6:51 AM", "7:45 AM", "8:20 AM", "8:50 AM", "9:52 AM", "10:55 AM", "11:48 AM"] },
+  { stop_id: "3990", name: "Molalla &amp; Pearl", lat: 45.348734, lon: -122.596559, times: ["6:19 AM", "6:51 AM", "7:46 AM", "8:21 AM", "8:51 AM", "9:53 AM", "10:56 AM", "11:49 AM"] },
+  { stop_id: "3994", name: "Molalla &amp; Willamette", lat: 45.350731, lon: -122.596604, times: ["6:19 AM", "6:51 AM", "7:46 AM", "8:21 AM", "8:51 AM", "9:53 AM", "10:56 AM", "11:49 AM"] },
+  { stop_id: "1323", name: "Division &amp; Buchanan", lat: 45.351632, lon: -122.594258, times: ["6:20 AM", "6:52 AM", "7:47 AM", "8:22 AM", "8:52 AM", "9:54 AM", "10:57 AM", "11:50 AM"] },
+  { stop_id: "1351", name: "Division &amp; Selma", lat: 45.35159, lon: -122.591213, times: ["6:20 AM", "6:52 AM", "7:47 AM", "8:22 AM", "8:52 AM", "9:54 AM", "10:57 AM", "11:50 AM"] },
+  { stop_id: "1343", name: "Division &amp; Morton", lat: 45.352719, lon: -122.588305, times: ["6:21 AM", "6:53 AM", "7:48 AM", "8:23 AM", "8:53 AM", "9:55 AM", "10:58 AM", "11:51 AM"] },
+  { stop_id: "1385", name: "Division &amp; 13th", lat: 45.354517, lon: -122.588305, times: ["6:21 AM", "6:53 AM", "7:48 AM", "8:23 AM", "8:53 AM", "9:55 AM", "10:58 AM", "11:51 AM"] },
+  { stop_id: "1404", name: "Division &amp; 15th", lat: 45.356193, lon: -122.588276, times: ["6:22 AM", "6:54 AM", "7:49 AM", "8:24 AM", "8:54 AM", "9:56 AM", "10:59 AM", "11:52 AM"] },
+  { stop_id: "6841", name: "16th &amp; Taylor", lat: 45.358718, lon: -122.589948, times: ["6:23 AM", "6:55 AM", "7:50 AM", "8:25 AM", "8:55 AM", "9:57 AM", "11:00 AM", "11:53 AM"] },
+  { stop_id: "6835", name: "16th &amp; Harrison", lat: 45.359463, lon: -122.591444, times: ["6:23 AM", "6:55 AM", "7:50 AM", "8:25 AM", "8:55 AM", "9:57 AM", "11:00 AM", "11:53 AM"] },
+  { stop_id: "6837", name: "16th &amp; Jackson", lat: 45.360332, lon: -122.59316, times: ["6:24 AM", "6:56 AM", "7:51 AM", "8:26 AM", "8:56 AM", "9:58 AM", "11:01 AM", "11:54 AM"] },
+  { stop_id: "3024", name: "Jackson &amp; 15th", lat: 45.359446, lon: -122.594285, times: ["6:24 AM", "6:56 AM", "7:51 AM", "8:26 AM", "8:56 AM", "9:58 AM", "11:01 AM", "11:54 AM"] },
+  { stop_id: "3020", name: "Jackson &amp; 12th", lat: 45.357466, lon: -122.596304, times: ["6:25 AM", "6:57 AM", "7:52 AM", "8:27 AM", "8:57 AM", "9:59 AM", "11:02 AM", "11:55 AM"] },
+  { stop_id: "8509", name: "Jackson &amp; 9th", lat: 45.35537, lon: -122.598374, times: ["6:26 AM", "6:58 AM", "7:53 AM", "8:28 AM", "8:58 AM", "10:00 AM", "11:03 AM", "11:56 AM"] },
+  { stop_id: "8098", name: "9th &amp; Monroe", lat: 45.356115, lon: -122.599949, times: ["6:26 AM", "6:58 AM", "7:53 AM", "8:28 AM", "8:58 AM", "10:00 AM", "11:03 AM", "11:56 AM"] },
+  { stop_id: "8094", name: "9th &amp; Jefferson", lat: 45.357, lon: -122.60169, times: ["6:27 AM", "6:59 AM", "7:54 AM", "8:29 AM", "8:59 AM", "10:01 AM", "11:04 AM", "11:57 AM"] },
+  { stop_id: "8100", name: "9th &amp; Washington", lat: 45.35785, lon: -122.603401, times: ["6:27 AM", "6:59 AM", "7:54 AM", "8:29 AM", "8:59 AM", "10:01 AM", "11:04 AM", "11:57 AM"] },
+  { stop_id: "8759", name: "Oregon City Transit Center", lat: 45.360143, lon: -122.604394, times: ["6:30 AM", "7:02 AM", "7:57 AM", "8:32 AM", "9:02 AM", "10:04 AM", "11:07 AM", "12:00 PM"] },
+  { stop_id: "3842", name: "McLoughlin &amp; Oregon City Shopping Center", lat: 45.368845, lon: -122.600901, times: ["6:32 AM", "7:04 AM", "7:59 AM", "8:34 AM", "9:04 AM", "10:06 AM", "11:09 AM", "12:02 PM"] },
+  { stop_id: "121", name: "W Arlington &amp; Barton", lat: 45.376432, lon: -122.598823, times: ["6:34 AM", "7:06 AM", "8:01 AM", "8:36 AM", "9:06 AM", "10:08 AM", "11:11 AM", "12:04 PM"] },
+  { stop_id: "123", name: "W Arlington &amp; Beatrice", lat: 45.377061, lon: -122.596965, times: ["6:35 AM", "7:07 AM", "8:02 AM", "8:37 AM", "9:07 AM", "10:09 AM", "11:12 AM", "12:05 PM"] },
+  { stop_id: "125", name: "W Arlington &amp; Bellevue", lat: 45.3777, lon: -122.595057, times: ["6:35 AM", "7:07 AM", "8:02 AM", "8:37 AM", "9:07 AM", "10:09 AM", "11:12 AM", "12:05 PM"] },
+  { stop_id: "136", name: "W Arlington &amp; Portland Ave", lat: 45.378217, lon: -122.593418, times: ["6:36 AM", "7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM"] },
+  { stop_id: "14569", name: "200 Block E Arlington", lat: 45.379067, lon: -122.59088, times: ["6:36 AM", "7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM"] },
+  { stop_id: "131", name: "E Arlington &amp; Cornell", lat: 45.380385, lon: -122.586848, times: ["6:36 AM", "7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM"] },
+  { stop_id: "140", name: "E Arlington &amp; 82nd Dr", lat: 45.381391, lon: -122.583812, times: ["6:37 AM", "7:09 AM", "8:04 AM", "8:39 AM", "9:09 AM", "10:11 AM", "11:14 AM", "12:07 PM"] },
+  { stop_id: "10700", name: "Oatfield &amp; E Exeter", lat: 45.384309, lon: -122.583907, times: ["6:37 AM", "7:09 AM", "8:04 AM", "8:39 AM", "9:09 AM", "10:11 AM", "11:14 AM", "12:07 PM"] },
+  { stop_id: "13252", name: "Oatfield &amp; E Hereford", lat: 45.386466, lon: -122.58497, times: ["6:38 AM", "7:10 AM", "8:05 AM", "8:40 AM", "9:10 AM", "10:12 AM", "11:15 AM", "12:08 PM"] },
+  { stop_id: "13458", name: "Oatfield &amp; Webster", lat: 45.388165, lon: -122.586235, times: ["6:38 AM", "7:10 AM", "8:05 AM", "8:40 AM", "9:10 AM", "10:12 AM", "11:15 AM", "12:08 PM"] },
+  { stop_id: "4145", name: "Oatfield &amp; Stone Oaks Ct", lat: 45.390223, lon: -122.588432, times: ["6:39 AM", "7:11 AM", "8:06 AM", "8:41 AM", "9:11 AM", "10:13 AM", "11:16 AM", "12:09 PM"] },
+  { stop_id: "4191", name: "Oatfield &amp; Ridgegate", lat: 45.39222, lon: -122.590763, times: ["6:39 AM", "7:11 AM", "8:06 AM", "8:41 AM", "9:11 AM", "10:13 AM", "11:16 AM", "12:09 PM"] },
+  { stop_id: "4187", name: "Oatfield &amp; Park Way", lat: 45.393895, lon: -122.594257, times: ["6:40 AM", "7:12 AM", "8:07 AM", "8:42 AM", "9:12 AM", "10:14 AM", "11:17 AM", "12:10 PM"] },
+  { stop_id: "4182", name: "Oatfield &amp; Oakridge", lat: 45.395034, lon: -122.59617, times: ["6:40 AM", "7:12 AM", "8:07 AM", "8:42 AM", "9:12 AM", "10:14 AM", "11:17 AM", "12:10 PM"] },
+  { stop_id: "4169", name: "SE Oatfield &amp; Jennings", lat: 45.397161, lon: -122.600352, times: ["6:41 AM", "7:13 AM", "8:08 AM", "8:43 AM", "9:13 AM", "10:15 AM", "11:18 AM", "12:11 PM"] },
+  { stop_id: "4147", name: "SE Oatfield &amp; Clayson", lat: 45.399102, lon: -122.60333, times: ["6:41 AM", "7:13 AM", "8:08 AM", "8:43 AM", "9:13 AM", "10:15 AM", "11:18 AM", "12:11 PM"] },
+  { stop_id: "4174", name: "SE Oatfield &amp; McNary", lat: 45.400489, lon: -122.605848, times: ["6:41 AM", "7:13 AM", "8:08 AM", "8:43 AM", "9:13 AM", "10:15 AM", "11:18 AM", "12:11 PM"] },
+  { stop_id: "4139", name: "16800 Block SE Oatfield", lat: 45.401883, lon: -122.608374, times: ["6:42 AM", "7:14 AM", "8:09 AM", "8:44 AM", "9:14 AM", "10:16 AM", "11:19 AM", "12:12 PM"] },
+  { stop_id: "4195", name: "SE Oatfield &amp; Roethe", lat: 45.403499, lon: -122.610833, times: ["6:42 AM", "7:14 AM", "8:09 AM", "8:44 AM", "9:14 AM", "10:16 AM", "11:19 AM", "12:12 PM"] },
+  { stop_id: "4180", name: "SE Oatfield &amp; Oakland", lat: 45.405158, lon: -122.613012, times: ["6:43 AM", "7:15 AM", "8:10 AM", "8:45 AM", "9:15 AM", "10:17 AM", "11:20 AM", "12:13 PM"] },
+  { stop_id: "4177", name: "SE Oatfield &amp; Naef", lat: 45.406279, lon: -122.614459, times: ["6:43 AM", "7:15 AM", "8:10 AM", "8:45 AM", "9:15 AM", "10:17 AM", "11:20 AM", "12:13 PM"] },
+  { stop_id: "4143", name: "SE Oatfield &amp; Allan", lat: 45.407135, lon: -122.615712, times: ["6:43 AM", "7:15 AM", "8:10 AM", "8:45 AM", "9:15 AM", "10:17 AM", "11:20 AM", "12:13 PM"] },
+  { stop_id: "4200", name: "SE Oatfield &amp; Thiessen", lat: 45.408155, lon: -122.617195, times: ["6:43 AM", "7:15 AM", "8:10 AM", "8:45 AM", "9:15 AM", "10:17 AM", "11:20 AM", "12:13 PM"] },
+  { stop_id: "4190", name: "SE Oatfield &amp; Raymond", lat: 45.409384, lon: -122.619103, times: ["6:44 AM", "7:16 AM", "8:11 AM", "8:46 AM", "9:16 AM", "10:18 AM", "11:21 AM", "12:14 PM"] },
+  { stop_id: "4150", name: "SE Oatfield &amp; Concord", lat: 45.411285, lon: -122.621179, times: ["6:44 AM", "7:16 AM", "8:11 AM", "8:46 AM", "9:16 AM", "10:18 AM", "11:21 AM", "12:14 PM"] },
+  { stop_id: "4193", name: "SE Oatfield &amp; Risley", lat: 45.413923, lon: -122.624094, times: ["6:45 AM", "7:17 AM", "8:12 AM", "8:47 AM", "9:17 AM", "10:19 AM", "11:22 AM", "12:15 PM"] },
+  { stop_id: "4184", name: "SE Oatfield &amp; Oatfield Ct", lat: 45.415174, lon: -122.62549, times: ["6:45 AM", "7:17 AM", "8:12 AM", "8:47 AM", "9:17 AM", "10:19 AM", "11:22 AM", "12:15 PM"] },
+  { stop_id: "4137", name: "SE Oatfield &amp; Oak Grove", lat: 45.417444, lon: -122.627866, times: ["6:46 AM", "7:18 AM", "8:13 AM", "8:48 AM", "9:18 AM", "10:20 AM", "11:23 AM", "12:16 PM"] },
+  { stop_id: "4166", name: "SE Oatfield &amp; Hill", lat: 45.419253, lon: -122.629012, times: ["6:46 AM", "7:18 AM", "8:13 AM", "8:48 AM", "9:18 AM", "10:20 AM", "11:23 AM", "12:16 PM"] },
+  { stop_id: "4188", name: "SE Oatfield &amp; Pinehurst", lat: 45.421296, lon: -122.629673, times: ["6:47 AM", "7:19 AM", "8:14 AM", "8:49 AM", "9:19 AM", "10:21 AM", "11:24 AM", "12:17 PM"] },
+  { stop_id: "13186", name: "13800 Block SE Oatfield", lat: 45.422981, lon: -122.630256, times: ["6:47 AM", "7:19 AM", "8:14 AM", "8:49 AM", "9:19 AM", "10:21 AM", "11:24 AM", "12:17 PM"] },
+  { stop_id: "4173", name: "SE Oatfield &amp; Loeffelman Rd", lat: 45.425705, lon: -122.631215, times: ["6:48 AM", "7:20 AM", "8:15 AM", "8:50 AM", "9:20 AM", "10:22 AM", "11:25 AM", "12:18 PM"] },
+  { stop_id: "4199", name: "SE Oatfield &amp; Silver Springs", lat: 45.427856, lon: -122.63195, times: ["6:49 AM", "7:21 AM", "8:16 AM", "8:51 AM", "9:21 AM", "10:23 AM", "11:26 AM", "12:19 PM"] },
+  { stop_id: "4186", name: "SE Oatfield &amp; Park", lat: 45.430116, lon: -122.632614, times: ["6:49 AM", "7:22 AM", "8:17 AM", "8:52 AM", "9:22 AM", "10:24 AM", "11:27 AM", "12:20 PM"] },
+  { stop_id: "4142", name: "SE Oatfield &amp; Aldercrest", lat: 45.431511, lon: -122.63039, times: ["6:50 AM", "7:23 AM", "8:18 AM", "8:53 AM", "9:23 AM", "10:25 AM", "11:28 AM", "12:21 PM"] },
+  { stop_id: "4161", name: "SE Oatfield &amp; Guilford", lat: 45.43484, lon: -122.629692, times: ["6:51 AM", "7:24 AM", "8:19 AM", "8:54 AM", "9:24 AM", "10:26 AM", "11:29 AM", "12:22 PM"] },
+  { stop_id: "3321", name: "SE Lake &amp; 33rd Pl", lat: 45.436517, lon: -122.62994, times: ["6:52 AM", "7:25 AM", "8:20 AM", "8:54 AM", "9:25 AM", "10:27 AM", "11:30 AM", "12:23 PM"] },
+  { stop_id: "3350", name: "SE Lake &amp; 31st Pl", lat: 45.437388, lon: -122.631949, times: ["6:53 AM", "7:25 AM", "8:20 AM", "8:55 AM", "9:25 AM", "10:27 AM", "11:30 AM", "12:23 PM"] },
+  { stop_id: "3347", name: "SE Lake &amp; 28th", lat: 45.43839, lon: -122.634247, times: ["6:53 AM", "7:26 AM", "8:21 AM", "8:56 AM", "9:26 AM", "10:28 AM", "11:31 AM", "12:24 PM"] },
+  { stop_id: "3345", name: "SE Lake &amp; 23rd", lat: 45.440117, lon: -122.638097, times: ["6:54 AM", "7:27 AM", "8:22 AM", "8:57 AM", "9:27 AM", "10:29 AM", "11:32 AM", "12:25 PM"] },
+  { stop_id: "13776", name: "SE 21st &amp; Adams", lat: 45.441578, lon: -122.639487, times: ["6:55 AM", "7:27 AM", "8:22 AM", "8:57 AM", "9:27 AM", "10:29 AM", "11:32 AM", "12:25 PM"] },
+  { stop_id: "8225", name: "SE Jackson &amp; 21st", lat: 45.444827, lon: -122.640491, times: ["6:57 AM", "7:30 AM", "8:25 AM", "9:30 AM", "10:32 AM", "11:35 AM", "12:28 PM", "1:35 PM"] },
   { stop_id: "8223", name: "SE Jackson &amp; Main St", lat: 45.444896, lon: -122.641269, times: ["8:59 AM", "2:30 PM", "7:33 PM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
+    // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
 
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
-    `;
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({
+          html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
-
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 </body>
 </html>

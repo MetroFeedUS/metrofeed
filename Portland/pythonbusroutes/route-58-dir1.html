@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 58 - To Portland City Center | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
     header {
       background-color: #0d0d0d;
@@ -47,43 +46,33 @@
       background-color: #1e1e1e;
     }
     #map {
-  width: 100%;
-  height: 85vh;
-  border: none;
-  margin: 0 auto;
-  display: block;
-  border-radius: 8px;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
@@ -97,17 +86,12 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-body {
-  overflow-y: auto;
-}
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
-
-  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +101,7 @@ body {
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 58 - To Portland City Center</h1>
@@ -129,34 +113,28 @@ body {
     </div>
   </div>
 
-  
   <script>
-  
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 58;
-  const direction = parseInt(1);
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 58;
+    const direction = parseInt(1);
 
-  const map = L.map('map', {
-  center: [45.6, -122.7],
-  zoom: 12,
-  minZoom: 12,
-  maxZoom: 18,
-  maxBounds: [
-    [45.3, -123.1],  // Southwest corner
-    [45.9, -122.3]   // Northeast corner
-  ],
-  maxBoundsViscosity: 1.0
-});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.491216, -122.800746],
   [45.491124, -122.800829],
   [45.491068, -122.800924],
@@ -701,114 +679,107 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9654", name: "Beaverton Transit Center", lat: 45.491269, lon: -122.800864, times: ["5:51 AM", "6:16 AM", "6:35 AM"] },
-  { stop_id: "8169", name: "Beaverton Transit Center", lat: 45.490746, lon: -122.801309, times: ["5:53 AM", "6:18 AM", "6:37 AM"] },
-  { stop_id: "8271", name: "SW Canyon &amp; Broadway", lat: 45.489292, lon: -122.797944, times: ["5:53 AM", "6:18 AM", "6:37 AM"] },
-  { stop_id: "13042", name: "SW Canyon &amp; 115th Ave", lat: 45.489923, lon: -122.794848, times: ["5:54 AM", "6:19 AM", "6:38 AM"] },
-  { stop_id: "908", name: "SW Canyon &amp; 110th", lat: 45.491149, lon: -122.789972, times: ["5:55 AM", "6:20 AM", "6:39 AM"] },
-  { stop_id: "906", name: "SW Canyon &amp; 107th", lat: 45.491826, lon: -122.787028, times: ["5:55 AM", "6:20 AM", "6:39 AM"] },
-  { stop_id: "12405", name: "SW Canyon &amp; 103rd", lat: 45.49265, lon: -122.782949, times: ["5:56 AM", "6:21 AM", "6:40 AM"] },
-  { stop_id: "899", name: "SW Canyon &amp; Walker", lat: 45.493334, lon: -122.779414, times: ["5:56 AM", "6:21 AM", "6:40 AM"] },
-  { stop_id: "920", name: "SW Canyon &amp; 96th", lat: 45.493968, lon: -122.77539, times: ["5:57 AM", "6:22 AM", "6:41 AM"] },
-  { stop_id: "918", name: "SW Canyon &amp; 93rd", lat: 45.495081, lon: -122.7725, times: ["5:57 AM", "6:22 AM", "6:42 AM"] },
-  { stop_id: "915", name: "SW Canyon &amp; 91st", lat: 45.496029, lon: -122.770705, times: ["5:57 AM", "6:22 AM", "6:42 AM"] },
-  { stop_id: "913", name: "SW Canyon &amp; 87th", lat: 45.498074, lon: -122.766204, times: ["5:58 AM", "6:23 AM", "6:43 AM"] },
-  { stop_id: "893", name: "SW Canyon &amp; Linden", lat: 45.497797, lon: -122.755623, times: ["6:00 AM", "6:25 AM", "6:44 AM"] },
-  { stop_id: "892", name: "SW Canyon &amp; Jade", lat: 45.500321, lon: -122.753355, times: ["6:00 AM", "6:25 AM", "6:45 AM"] },
-  { stop_id: "912", name: "SW Canyon &amp; 73rd", lat: 45.501477, lon: -122.752277, times: ["6:01 AM", "6:26 AM", "6:45 AM"] },
-  { stop_id: "10634", name: "SW Canyon &amp; Canyon Crest", lat: 45.503232, lon: -122.749198, times: ["6:01 AM", "6:26 AM", "6:46 AM"] },
-  { stop_id: "9338", name: "SW Canyon &amp; Camelot Ct", lat: 45.504674, lon: -122.747134, times: ["6:02 AM", "6:27 AM", "6:46 AM"] },
-  { stop_id: "894", name: "Hwy 26 On Ramp &amp; SW Skyline", lat: 45.508206, lon: -122.735568, times: ["6:04 AM", "6:29 AM", "6:49 AM"] },
-  { stop_id: "10168", name: "SW Columbia &amp; 18th", lat: 45.517468, lon: -122.692772, times: ["6:09 AM", "6:34 AM", "6:55 AM"] },
-  { stop_id: "1111", name: "SW Columbia &amp; 12th", lat: 45.515871, lon: -122.686848, times: ["6:11 AM", "6:36 AM", "6:57 AM"] },
-  { stop_id: "1108", name: "SW Columbia &amp; Park Ave", lat: 45.514919, lon: -122.683248, times: ["6:12 AM", "6:37 AM", "6:58 AM"] },
-  { stop_id: "12793", name: "SW Columbia between 6th &amp; 5th", lat: 45.51421, lon: -122.680655, times: ["6:13 AM", "6:38 AM", "6:59 AM"] },
-  { stop_id: "12790", name: "SW Jefferson between 4th &amp; 5th", lat: 45.5147, lon: -122.679167, times: ["6:16 AM", "6:41 AM", "7:02 AM"] },
+  { stop_id: "9654", name: "Beaverton Transit Center", lat: 45.491269, lon: -122.800864, times: ["5:51 AM", "6:16 AM", "6:35 AM", "7:02 AM", "7:24 AM", "7:46 AM", "8:14 AM", "8:43 AM"] },
+  { stop_id: "8169", name: "Beaverton Transit Center", lat: 45.490746, lon: -122.801309, times: ["5:53 AM", "6:18 AM", "6:37 AM", "7:04 AM", "7:26 AM", "7:48 AM", "8:16 AM", "8:45 AM"] },
+  { stop_id: "8271", name: "SW Canyon &amp; Broadway", lat: 45.489292, lon: -122.797944, times: ["5:53 AM", "6:18 AM", "6:37 AM", "7:04 AM", "7:26 AM", "7:49 AM", "8:17 AM", "8:46 AM"] },
+  { stop_id: "13042", name: "SW Canyon &amp; 115th Ave", lat: 45.489923, lon: -122.794848, times: ["5:54 AM", "6:19 AM", "6:38 AM", "7:05 AM", "7:27 AM", "7:49 AM", "8:17 AM", "8:46 AM"] },
+  { stop_id: "908", name: "SW Canyon &amp; 110th", lat: 45.491149, lon: -122.789972, times: ["5:55 AM", "6:20 AM", "6:39 AM", "7:06 AM", "7:28 AM", "7:50 AM", "8:18 AM", "8:47 AM"] },
+  { stop_id: "906", name: "SW Canyon &amp; 107th", lat: 45.491826, lon: -122.787028, times: ["5:55 AM", "6:20 AM", "6:39 AM", "7:06 AM", "7:28 AM", "7:50 AM", "8:18 AM", "8:47 AM"] },
+  { stop_id: "12405", name: "SW Canyon &amp; 103rd", lat: 45.49265, lon: -122.782949, times: ["5:56 AM", "6:21 AM", "6:40 AM", "7:07 AM", "7:29 AM", "7:51 AM", "8:19 AM", "8:48 AM"] },
+  { stop_id: "899", name: "SW Canyon &amp; Walker", lat: 45.493334, lon: -122.779414, times: ["5:56 AM", "6:21 AM", "6:40 AM", "7:07 AM", "7:29 AM", "7:52 AM", "8:20 AM", "8:49 AM"] },
+  { stop_id: "920", name: "SW Canyon &amp; 96th", lat: 45.493968, lon: -122.77539, times: ["5:57 AM", "6:22 AM", "6:41 AM", "7:08 AM", "7:30 AM", "7:52 AM", "8:20 AM", "8:49 AM"] },
+  { stop_id: "918", name: "SW Canyon &amp; 93rd", lat: 45.495081, lon: -122.7725, times: ["5:57 AM", "6:22 AM", "6:42 AM", "7:09 AM", "7:31 AM", "7:53 AM", "8:21 AM", "8:50 AM"] },
+  { stop_id: "915", name: "SW Canyon &amp; 91st", lat: 45.496029, lon: -122.770705, times: ["5:57 AM", "6:22 AM", "6:42 AM", "7:09 AM", "7:31 AM", "7:53 AM", "8:21 AM", "8:50 AM"] },
+  { stop_id: "913", name: "SW Canyon &amp; 87th", lat: 45.498074, lon: -122.766204, times: ["5:58 AM", "6:23 AM", "6:43 AM", "7:10 AM", "7:32 AM", "7:54 AM", "8:22 AM", "8:51 AM"] },
+  { stop_id: "893", name: "SW Canyon &amp; Linden", lat: 45.497797, lon: -122.755623, times: ["6:00 AM", "6:25 AM", "6:44 AM", "7:11 AM", "7:33 AM", "7:56 AM", "8:24 AM", "8:53 AM"] },
+  { stop_id: "892", name: "SW Canyon &amp; Jade", lat: 45.500321, lon: -122.753355, times: ["6:00 AM", "6:25 AM", "6:45 AM", "7:12 AM", "7:34 AM", "7:57 AM", "8:25 AM", "8:54 AM"] },
+  { stop_id: "912", name: "SW Canyon &amp; 73rd", lat: 45.501477, lon: -122.752277, times: ["6:01 AM", "6:26 AM", "6:45 AM", "7:12 AM", "7:34 AM", "7:57 AM", "8:25 AM", "8:54 AM"] },
+  { stop_id: "10634", name: "SW Canyon &amp; Canyon Crest", lat: 45.503232, lon: -122.749198, times: ["6:01 AM", "6:26 AM", "6:46 AM", "7:13 AM", "7:35 AM", "7:58 AM", "8:26 AM", "8:55 AM"] },
+  { stop_id: "9338", name: "SW Canyon &amp; Camelot Ct", lat: 45.504674, lon: -122.747134, times: ["6:02 AM", "6:27 AM", "6:46 AM", "7:13 AM", "7:35 AM", "7:58 AM", "8:26 AM", "8:55 AM"] },
+  { stop_id: "894", name: "Hwy 26 On Ramp &amp; SW Skyline", lat: 45.508206, lon: -122.735568, times: ["6:04 AM", "6:29 AM", "6:49 AM", "7:16 AM", "7:38 AM", "8:01 AM", "8:29 AM", "8:58 AM"] },
+  { stop_id: "10168", name: "SW Columbia &amp; 18th", lat: 45.517468, lon: -122.692772, times: ["6:09 AM", "6:34 AM", "6:55 AM", "7:22 AM", "7:45 AM", "8:08 AM", "8:36 AM", "9:06 AM"] },
+  { stop_id: "1111", name: "SW Columbia &amp; 12th", lat: 45.515871, lon: -122.686848, times: ["6:11 AM", "6:36 AM", "6:57 AM", "7:24 AM", "7:47 AM", "8:10 AM", "8:38 AM", "9:08 AM"] },
+  { stop_id: "1108", name: "SW Columbia &amp; Park Ave", lat: 45.514919, lon: -122.683248, times: ["6:12 AM", "6:37 AM", "6:58 AM", "7:25 AM", "7:49 AM", "8:12 AM", "8:40 AM", "9:10 AM"] },
+  { stop_id: "12793", name: "SW Columbia between 6th &amp; 5th", lat: 45.51421, lon: -122.680655, times: ["6:13 AM", "6:38 AM", "6:59 AM", "7:26 AM", "7:50 AM", "8:13 AM", "8:41 AM", "9:11 AM"] },
+  { stop_id: "12790", name: "SW Jefferson between 4th &amp; 5th", lat: 45.5147, lon: -122.679167, times: ["6:16 AM", "6:41 AM", "7:02 AM", "7:29 AM", "7:53 AM", "8:16 AM", "8:44 AM", "9:14 AM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
+    // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
 
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
-    `;
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({
+          html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
-
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 </body>
 </html>

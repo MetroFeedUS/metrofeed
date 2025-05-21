@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 156 - To Clackamas Town Center | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
     header {
       background-color: #0d0d0d;
@@ -47,43 +46,33 @@
       background-color: #1e1e1e;
     }
     #map {
-  width: 100%;
-  height: 85vh;
-  border: none;
-  margin: 0 auto;
-  display: block;
-  border-radius: 8px;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
@@ -97,17 +86,12 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-body {
-  overflow-y: auto;
-}
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
-
-  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +101,7 @@ body {
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 156 - To Clackamas Town Center</h1>
@@ -129,34 +113,28 @@ body {
     </div>
   </div>
 
-  
   <script>
-  
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 156;
-  const direction = parseInt(1);
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 156;
+    const direction = parseInt(1);
 
-  const map = L.map('map', {
-  center: [45.6, -122.7],
-  zoom: 12,
-  minZoom: 12,
-  maxZoom: 18,
-  maxBounds: [
-    [45.3, -123.1],  // Southwest corner
-    [45.9, -122.3]   // Northeast corner
-  ],
-  maxBoundsViscosity: 1.0
-});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.422681, -122.51233],
   [45.422689, -122.51229],
   [45.422703, -122.512253],
@@ -873,120 +851,113 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "10148", name: "SE Oregon Trail Dr &amp; Hines", lat: 45.422645, lon: -122.512318, times: ["5:59 AM", "7:15 AM", "8:35 AM"] },
-  { stop_id: "10219", name: "SE Oregon Trail Dr &amp; 152nd", lat: 45.422957, lon: -122.507258, times: ["5:59 AM", "7:15 AM", "8:35 AM"] },
-  { stop_id: "10221", name: "SE 152nd &amp; Territory Dr", lat: 45.419996, lon: -122.507123, times: ["6:00 AM", "7:16 AM", "8:36 AM"] },
-  { stop_id: "10297", name: "SE 152nd &amp; Sedona Drive", lat: 45.41439, lon: -122.505587, times: ["6:01 AM", "7:17 AM", "8:37 AM"] },
-  { stop_id: "10223", name: "SE 152nd &amp; Morning Way", lat: 45.410909, lon: -122.507955, times: ["6:01 AM", "7:18 AM", "8:38 AM"] },
-  { stop_id: "2909", name: "Hwy 212/224 &amp; 142nd", lat: 45.4103, lon: -122.517349, times: ["6:03 AM", "7:20 AM", "8:39 AM"] },
-  { stop_id: "8830", name: "Hwy 212/224 &amp; SE 135th", lat: 45.410615, lon: -122.524389, times: ["6:04 AM", "7:21 AM", "8:40 AM"] },
-  { stop_id: "10225", name: "13300 Block SE Hubbard", lat: 45.414112, lon: -122.527719, times: ["6:04 AM", "7:22 AM", "8:41 AM"] },
-  { stop_id: "9008", name: "SE Hubbard &amp; 128th", lat: 45.414075, lon: -122.531692, times: ["6:05 AM", "7:22 AM", "8:42 AM"] },
-  { stop_id: "10227", name: "SE Hubbard &amp; 125th", lat: 45.414066, lon: -122.53482, times: ["6:05 AM", "7:23 AM", "8:42 AM"] },
-  { stop_id: "10229", name: "SE 122nd &amp; Mountain Sun Dr", lat: 45.416478, lon: -122.537862, times: ["6:06 AM", "7:24 AM", "8:43 AM"] },
-  { stop_id: "11952", name: "SE 122nd &amp; Summers Lane", lat: 45.418371, lon: -122.537855, times: ["6:06 AM", "7:24 AM", "8:43 AM"] },
-  { stop_id: "10231", name: "SE 122nd &amp; Echo Valley", lat: 45.420884, lon: -122.537937, times: ["6:07 AM", "7:25 AM", "8:44 AM"] },
-  { stop_id: "8998", name: "SE Mather &amp; 122nd", lat: 45.424997, lon: -122.538714, times: ["6:08 AM", "7:26 AM", "8:45 AM"] },
-  { stop_id: "8999", name: "SE Mather &amp; 119th Ct", lat: 45.425021, lon: -122.541113, times: ["6:08 AM", "7:26 AM", "8:45 AM"] },
-  { stop_id: "10204", name: "SE Mather &amp; Cedar Park Dr", lat: 45.425033, lon: -122.543665, times: ["6:08 AM", "7:26 AM", "8:45 AM"] },
-  { stop_id: "9000", name: "SE Mather &amp; Cranberry Loop", lat: 45.421005, lon: -122.547899, times: ["6:10 AM", "7:28 AM", "8:47 AM"] },
-  { stop_id: "9001", name: "11000 Block SE Mather", lat: 45.420298, lon: -122.550295, times: ["6:10 AM", "7:28 AM", "8:47 AM"] },
-  { stop_id: "9002", name: "10500 Block SE Mather", lat: 45.419838, lon: -122.55519, times: ["6:11 AM", "7:29 AM", "8:48 AM"] },
-  { stop_id: "9007", name: "14000 Block SE 97th", lat: 45.422122, lon: -122.559352, times: ["6:12 AM", "7:30 AM", "8:49 AM"] },
-  { stop_id: "9004", name: "SE 97th &amp; Lawnfield", lat: 45.424182, lon: -122.56114, times: ["6:13 AM", "7:31 AM", "8:50 AM"] },
-  { stop_id: "9005", name: "SE 97th &amp; Talbert Dr", lat: 45.426711, lon: -122.562681, times: ["6:14 AM", "7:32 AM", "8:51 AM"] },
-  { stop_id: "11929", name: "SE Sunnyside &amp; 105th", lat: 45.433785, lon: -122.555089, times: ["6:17 AM", "7:35 AM", "8:54 AM"] },
-  { stop_id: "13077", name: "Kaiser Sunnyside Medical Center", lat: 45.432104, lon: -122.560692, times: ["6:19 AM", "7:37 AM", "8:56 AM"] },
-  { stop_id: "11454", name: "10100 Block SE Stevens Rd", lat: 45.435165, lon: -122.562105, times: ["6:20 AM", "7:38 AM", "8:57 AM"] },
-  { stop_id: "11927", name: "SE Bob Schumacher &amp; Monterey", lat: 45.437295, lon: -122.566418, times: ["6:21 AM", "7:39 AM", "8:58 AM"] },
-  { stop_id: "12921", name: "Clackamas Town Center Mall", lat: 45.43731, lon: -122.573312, times: ["6:24 AM", "7:43 AM", "9:02 AM"] },
-  { stop_id: "13247", name: "Clackamas Town Center TC", lat: 45.435538, lon: -122.568155, times: ["6:26 AM", "7:45 AM", "9:04 AM"] },
-  { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["6:27 AM", "7:46 AM", "9:05 AM"] },
+  { stop_id: "10148", name: "SE Oregon Trail Dr &amp; Hines", lat: 45.422645, lon: -122.512318, times: ["5:59 AM", "7:15 AM", "8:35 AM", "9:55 AM", "11:15 AM", "12:35 PM", "1:55 PM", "3:15 PM"] },
+  { stop_id: "10219", name: "SE Oregon Trail Dr &amp; 152nd", lat: 45.422957, lon: -122.507258, times: ["5:59 AM", "7:15 AM", "8:35 AM", "9:55 AM", "11:15 AM", "12:35 PM", "1:55 PM", "3:15 PM"] },
+  { stop_id: "10221", name: "SE 152nd &amp; Territory Dr", lat: 45.419996, lon: -122.507123, times: ["6:00 AM", "7:16 AM", "8:36 AM", "9:56 AM", "11:16 AM", "12:36 PM", "1:56 PM", "3:16 PM"] },
+  { stop_id: "10297", name: "SE 152nd &amp; Sedona Drive", lat: 45.41439, lon: -122.505587, times: ["6:01 AM", "7:17 AM", "8:37 AM", "9:57 AM", "11:17 AM", "12:37 PM", "1:57 PM", "3:17 PM"] },
+  { stop_id: "10223", name: "SE 152nd &amp; Morning Way", lat: 45.410909, lon: -122.507955, times: ["6:01 AM", "7:18 AM", "8:38 AM", "9:58 AM", "11:18 AM", "12:38 PM", "1:58 PM", "3:18 PM"] },
+  { stop_id: "2909", name: "Hwy 212/224 &amp; 142nd", lat: 45.4103, lon: -122.517349, times: ["6:03 AM", "7:20 AM", "8:39 AM", "9:59 AM", "11:19 AM", "12:39 PM", "1:59 PM", "3:20 PM"] },
+  { stop_id: "8830", name: "Hwy 212/224 &amp; SE 135th", lat: 45.410615, lon: -122.524389, times: ["6:04 AM", "7:21 AM", "8:40 AM", "10:00 AM", "11:20 AM", "12:40 PM", "2:00 PM", "3:21 PM"] },
+  { stop_id: "10225", name: "13300 Block SE Hubbard", lat: 45.414112, lon: -122.527719, times: ["6:04 AM", "7:22 AM", "8:41 AM", "10:01 AM", "11:21 AM", "12:41 PM", "2:01 PM", "3:22 PM"] },
+  { stop_id: "9008", name: "SE Hubbard &amp; 128th", lat: 45.414075, lon: -122.531692, times: ["6:05 AM", "7:22 AM", "8:42 AM", "10:02 AM", "11:22 AM", "12:42 PM", "2:02 PM", "3:22 PM"] },
+  { stop_id: "10227", name: "SE Hubbard &amp; 125th", lat: 45.414066, lon: -122.53482, times: ["6:05 AM", "7:23 AM", "8:42 AM", "10:02 AM", "11:22 AM", "12:42 PM", "2:02 PM", "3:23 PM"] },
+  { stop_id: "10229", name: "SE 122nd &amp; Mountain Sun Dr", lat: 45.416478, lon: -122.537862, times: ["6:06 AM", "7:24 AM", "8:43 AM", "10:03 AM", "11:23 AM", "12:43 PM", "2:03 PM", "3:24 PM"] },
+  { stop_id: "11952", name: "SE 122nd &amp; Summers Lane", lat: 45.418371, lon: -122.537855, times: ["6:06 AM", "7:24 AM", "8:43 AM", "10:03 AM", "11:23 AM", "12:43 PM", "2:03 PM", "3:24 PM"] },
+  { stop_id: "10231", name: "SE 122nd &amp; Echo Valley", lat: 45.420884, lon: -122.537937, times: ["6:07 AM", "7:25 AM", "8:44 AM", "10:04 AM", "11:24 AM", "12:44 PM", "2:04 PM", "3:25 PM"] },
+  { stop_id: "8998", name: "SE Mather &amp; 122nd", lat: 45.424997, lon: -122.538714, times: ["6:08 AM", "7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM"] },
+  { stop_id: "8999", name: "SE Mather &amp; 119th Ct", lat: 45.425021, lon: -122.541113, times: ["6:08 AM", "7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM"] },
+  { stop_id: "10204", name: "SE Mather &amp; Cedar Park Dr", lat: 45.425033, lon: -122.543665, times: ["6:08 AM", "7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM"] },
+  { stop_id: "9000", name: "SE Mather &amp; Cranberry Loop", lat: 45.421005, lon: -122.547899, times: ["6:10 AM", "7:28 AM", "8:47 AM", "10:07 AM", "11:27 AM", "12:47 PM", "2:07 PM", "3:28 PM"] },
+  { stop_id: "9001", name: "11000 Block SE Mather", lat: 45.420298, lon: -122.550295, times: ["6:10 AM", "7:28 AM", "8:47 AM", "10:07 AM", "11:27 AM", "12:47 PM", "2:07 PM", "3:28 PM"] },
+  { stop_id: "9002", name: "10500 Block SE Mather", lat: 45.419838, lon: -122.55519, times: ["6:11 AM", "7:29 AM", "8:48 AM", "10:08 AM", "11:28 AM", "12:48 PM", "2:08 PM", "3:29 PM"] },
+  { stop_id: "9007", name: "14000 Block SE 97th", lat: 45.422122, lon: -122.559352, times: ["6:12 AM", "7:30 AM", "8:49 AM", "10:09 AM", "11:29 AM", "12:49 PM", "2:09 PM", "3:30 PM"] },
+  { stop_id: "9004", name: "SE 97th &amp; Lawnfield", lat: 45.424182, lon: -122.56114, times: ["6:13 AM", "7:31 AM", "8:50 AM", "10:10 AM", "11:30 AM", "12:50 PM", "2:10 PM", "3:31 PM"] },
+  { stop_id: "9005", name: "SE 97th &amp; Talbert Dr", lat: 45.426711, lon: -122.562681, times: ["6:14 AM", "7:32 AM", "8:51 AM", "10:11 AM", "11:31 AM", "12:51 PM", "2:11 PM", "3:32 PM"] },
+  { stop_id: "11929", name: "SE Sunnyside &amp; 105th", lat: 45.433785, lon: -122.555089, times: ["6:17 AM", "7:35 AM", "8:54 AM", "10:14 AM", "11:34 AM", "12:54 PM", "2:14 PM", "3:35 PM"] },
+  { stop_id: "13077", name: "Kaiser Sunnyside Medical Center", lat: 45.432104, lon: -122.560692, times: ["6:19 AM", "7:37 AM", "8:56 AM", "10:16 AM", "11:36 AM", "12:56 PM", "2:16 PM", "3:37 PM"] },
+  { stop_id: "11454", name: "10100 Block SE Stevens Rd", lat: 45.435165, lon: -122.562105, times: ["6:20 AM", "7:38 AM", "8:57 AM", "10:17 AM", "11:37 AM", "12:57 PM", "2:17 PM", "3:38 PM"] },
+  { stop_id: "11927", name: "SE Bob Schumacher &amp; Monterey", lat: 45.437295, lon: -122.566418, times: ["6:21 AM", "7:39 AM", "8:58 AM", "10:18 AM", "11:38 AM", "12:58 PM", "2:18 PM", "3:40 PM"] },
+  { stop_id: "12921", name: "Clackamas Town Center Mall", lat: 45.43731, lon: -122.573312, times: ["6:24 AM", "7:43 AM", "9:02 AM", "10:22 AM", "11:42 AM", "1:02 PM", "2:22 PM", "3:44 PM"] },
+  { stop_id: "13247", name: "Clackamas Town Center TC", lat: 45.435538, lon: -122.568155, times: ["6:26 AM", "7:45 AM", "9:04 AM", "10:24 AM", "11:44 AM", "1:04 PM", "2:24 PM", "3:46 PM"] },
+  { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["6:27 AM", "7:46 AM", "9:05 AM", "10:25 AM", "11:45 AM", "1:05 PM", "2:25 PM", "3:47 PM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
+    // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
 
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
-    `;
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({
+          html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
-
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 </body>
 </html>

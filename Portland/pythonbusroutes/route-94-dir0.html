@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 94 - To Sherwood | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
     header {
       background-color: #0d0d0d;
@@ -47,43 +46,33 @@
       background-color: #1e1e1e;
     }
     #map {
-  width: 100%;
-  height: 85vh;
-  border: none;
-  margin: 0 auto;
-  display: block;
-  border-radius: 8px;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
@@ -97,17 +86,12 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-body {
-  overflow-y: auto;
-}
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
-
-  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +101,7 @@ body {
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 94 - To Sherwood</h1>
@@ -129,34 +113,28 @@ body {
     </div>
   </div>
 
-  
   <script>
-  
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 94;
-  const direction = parseInt(0);
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 94;
+    const direction = parseInt(0);
 
-  const map = L.map('map', {
-  center: [45.6, -122.7],
-  zoom: 12,
-  minZoom: 12,
-  maxZoom: 18,
-  maxBounds: [
-    [45.3, -123.1],  // Southwest corner
-    [45.9, -122.3]   // Northeast corner
-  ],
-  maxBoundsViscosity: 1.0
-});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.430517, -122.769196],
   [45.430433, -122.769078],
   [45.430294, -122.768882],
@@ -745,121 +723,114 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "8212", name: "Tigard Transit Center", lat: 45.430458, lon: -122.769278, times: ["10:19 PM", "11:01 PM", "11:47 PM"] },
-  { stop_id: "10180", name: "Tigard Transit Center", lat: 45.430253, lon: -122.76894, times: ["10:19 PM", "11:01 PM", "11:47 PM"] },
-  { stop_id: "14411", name: "9200 Block SW Burnham", lat: 45.429626, lon: -122.771624, times: ["10:20 PM", "11:02 PM", "11:48 PM"] },
-  { stop_id: "4318", name: "SW Pacific Hwy &amp; Walnut", lat: 45.427094, lon: -122.778292, times: ["10:22 PM", "11:04 PM", "11:49 PM"] },
-  { stop_id: "4310", name: "SW Pacific Hwy &amp; School St", lat: 45.424614, lon: -122.781714, times: ["10:22 PM", "11:04 PM", "11:50 PM"] },
-  { stop_id: "4254", name: "13400 Block SW Pacific Hwy", lat: 45.422681, lon: -122.783589, times: ["10:23 PM", "11:05 PM", "11:50 PM"] },
-  { stop_id: "4320", name: "SW Pacific Hwy &amp; Watkins", lat: 45.420941, lon: -122.785253, times: ["10:23 PM", "11:05 PM", "11:51 PM"] },
-  { stop_id: "4286", name: "SW Pacific Hwy &amp; Gaarde/McDonald", lat: 45.418876, lon: -122.787321, times: ["10:24 PM", "11:06 PM", "11:51 PM"] },
-  { stop_id: "4273", name: "SW Pacific Hwy &amp; Canterbury", lat: 45.416906, lon: -122.789276, times: ["10:24 PM", "11:06 PM", "11:51 PM"] },
-  { stop_id: "4271", name: "SW Pacific Hwy &amp; Bull Mtn", lat: 45.414974, lon: -122.791416, times: ["10:25 PM", "11:07 PM", "11:52 PM"] },
-  { stop_id: "4267", name: "SW Pacific Hwy &amp; Beef Bend", lat: 45.411065, lon: -122.794085, times: ["10:25 PM", "11:07 PM", "11:53 PM"] },
-  { stop_id: "8728", name: "SW Pacific Hwy &amp; Royalty Parkway", lat: 45.407861, lon: -122.795352, times: ["10:26 PM", "11:08 PM", "11:53 PM"] },
-  { stop_id: "8644", name: "SW Pacific Hwy &amp; Durham", lat: 45.405499, lon: -122.796598, times: ["10:27 PM", "11:09 PM", "11:54 PM"] },
-  { stop_id: "4257", name: "16400 Block SW Pacific Hwy", lat: 45.400439, lon: -122.798757, times: ["10:27 PM", "11:09 PM", "11:54 PM"] },
-  { stop_id: "4258", name: "SW Pacific Hwy &amp; Fischer", lat: 45.397506, lon: -122.799018, times: ["10:27 PM", "11:09 PM", "11:54 PM"] },
-  { stop_id: "4260", name: "SW Pacific Hwy &amp; 124th", lat: 45.389197, lon: -122.805967, times: ["10:29 PM", "11:11 PM", "11:56 PM"] },
-  { stop_id: "4300", name: "SW Pacific Hwy &amp; Pacific Dr", lat: 45.386851, lon: -122.810296, times: ["10:29 PM", "11:11 PM", "11:56 PM"] },
-  { stop_id: "4277", name: "SW Pacific Hwy &amp; Cipole", lat: 45.384576, lon: -122.817475, times: ["10:30 PM", "11:12 PM", "11:57 PM"] },
-  { stop_id: "12743", name: "Pacific Hwy &amp; Tualatin Rvr Refuge", lat: 45.380487, lon: -122.831711, times: ["10:31 PM", "11:13 PM", "11:58 PM"] },
-  { stop_id: "9519", name: "SW Pacific Hwy &amp; Langer Farms Pkwy", lat: 45.373216, lon: -122.83913, times: ["10:32 PM", "11:14 PM", "11:59 PM"] },
-  { stop_id: "9186", name: "SW Tualatin-Sherwood Rd &amp; Pacific Hwy", lat: 45.368691, lon: -122.841715, times: ["10:33 PM", "11:15 PM", "12:00 AM"] },
-  { stop_id: "9187", name: "SW Tualatin-Sherwood Rd &amp; Baler", lat: 45.36797, lon: -122.839664, times: ["10:33 PM", "11:15 PM", "12:00 AM"] },
-  { stop_id: "13546", name: "SW Langer &amp; Holland", lat: 45.3674, lon: -122.841417, times: ["10:34 PM", "11:16 PM", "12:01 AM"] },
-  { stop_id: "9188", name: "SW Langer &amp; Sherwood Plaza", lat: 45.367891, lon: -122.844499, times: ["10:34 PM", "11:16 PM", "12:01 AM"] },
-  { stop_id: "9189", name: "16400 Block SW Langer", lat: 45.366394, lon: -122.846741, times: ["10:35 PM", "11:17 PM", "12:02 AM"] },
-  { stop_id: "5248", name: "SW Sherwood Blvd &amp; NW 12th St", lat: 45.364661, lon: -122.846731, times: ["10:35 PM", "11:17 PM", "12:02 AM"] },
-  { stop_id: "5246", name: "N Sherwood Blvd &amp; NW Gleneagle", lat: 45.362849, lon: -122.846267, times: ["10:36 PM", "11:18 PM", "12:03 AM"] },
-  { stop_id: "5245", name: "21900 Block N Sherwood Blvd", lat: 45.359568, lon: -122.842787, times: ["10:37 PM", "11:19 PM", "12:04 AM"] },
-  { stop_id: "4451", name: "SW Pine &amp; 2nd", lat: 45.357534, lon: -122.841956, times: ["10:38 PM", "11:20 PM", "12:05 AM"] },
-  { stop_id: "14108", name: "SW 1st &amp; Pine", lat: 45.357109, lon: -122.84083, times: ["10:40 PM", "11:22 PM", "12:07 AM"] },
+  { stop_id: "8212", name: "Tigard Transit Center", lat: 45.430458, lon: -122.769278, times: ["11:47 PM", "12:18 AM", "1:04 AM", "6:04 AM", "6:23 AM", "6:43 AM", "7:02 AM", "7:21 AM"] },
+  { stop_id: "10180", name: "Tigard Transit Center", lat: 45.430253, lon: -122.76894, times: ["11:47 PM", "12:18 AM", "1:04 AM", "6:04 AM", "6:23 AM", "6:43 AM", "7:02 AM", "7:21 AM"] },
+  { stop_id: "14411", name: "9200 Block SW Burnham", lat: 45.429626, lon: -122.771624, times: ["11:48 PM", "12:19 AM", "1:05 AM", "6:05 AM", "6:24 AM", "6:44 AM", "7:03 AM", "7:22 AM"] },
+  { stop_id: "4318", name: "SW Pacific Hwy &amp; Walnut", lat: 45.427094, lon: -122.778292, times: ["11:49 PM", "12:20 AM", "1:06 AM", "6:07 AM", "6:26 AM", "6:46 AM", "7:05 AM", "7:24 AM"] },
+  { stop_id: "4310", name: "SW Pacific Hwy &amp; School St", lat: 45.424614, lon: -122.781714, times: ["11:50 PM", "12:21 AM", "1:07 AM", "6:07 AM", "6:26 AM", "6:46 AM", "7:05 AM", "7:24 AM"] },
+  { stop_id: "4254", name: "13400 Block SW Pacific Hwy", lat: 45.422681, lon: -122.783589, times: ["11:50 PM", "12:21 AM", "1:07 AM", "6:08 AM", "6:27 AM", "6:47 AM", "7:06 AM", "7:25 AM"] },
+  { stop_id: "4320", name: "SW Pacific Hwy &amp; Watkins", lat: 45.420941, lon: -122.785253, times: ["11:51 PM", "12:22 AM", "1:08 AM", "6:08 AM", "6:27 AM", "6:47 AM", "7:06 AM", "7:25 AM"] },
+  { stop_id: "4286", name: "SW Pacific Hwy &amp; Gaarde/McDonald", lat: 45.418876, lon: -122.787321, times: ["11:51 PM", "12:22 AM", "1:08 AM", "6:09 AM", "6:28 AM", "6:48 AM", "7:07 AM", "7:26 AM"] },
+  { stop_id: "4273", name: "SW Pacific Hwy &amp; Canterbury", lat: 45.416906, lon: -122.789276, times: ["11:51 PM", "12:22 AM", "1:08 AM", "6:09 AM", "6:28 AM", "6:48 AM", "7:07 AM", "7:26 AM"] },
+  { stop_id: "4271", name: "SW Pacific Hwy &amp; Bull Mtn", lat: 45.414974, lon: -122.791416, times: ["11:52 PM", "12:23 AM", "1:09 AM", "6:10 AM", "6:29 AM", "6:49 AM", "7:08 AM", "7:27 AM"] },
+  { stop_id: "4267", name: "SW Pacific Hwy &amp; Beef Bend", lat: 45.411065, lon: -122.794085, times: ["11:53 PM", "12:24 AM", "1:10 AM", "6:10 AM", "6:29 AM", "6:49 AM", "7:08 AM", "7:27 AM"] },
+  { stop_id: "8728", name: "SW Pacific Hwy &amp; Royalty Parkway", lat: 45.407861, lon: -122.795352, times: ["11:53 PM", "12:24 AM", "1:10 AM", "6:11 AM", "6:30 AM", "6:50 AM", "7:09 AM", "7:28 AM"] },
+  { stop_id: "8644", name: "SW Pacific Hwy &amp; Durham", lat: 45.405499, lon: -122.796598, times: ["11:54 PM", "12:25 AM", "1:11 AM", "6:12 AM", "6:31 AM", "6:51 AM", "7:10 AM", "7:29 AM"] },
+  { stop_id: "4257", name: "16400 Block SW Pacific Hwy", lat: 45.400439, lon: -122.798757, times: ["11:54 PM", "6:12 AM", "6:31 AM", "6:51 AM", "7:10 AM", "7:29 AM", "7:49 AM", "8:09 AM"] },
+  { stop_id: "4258", name: "SW Pacific Hwy &amp; Fischer", lat: 45.397506, lon: -122.799018, times: ["11:54 PM", "6:13 AM", "6:32 AM", "6:52 AM", "7:11 AM", "7:30 AM", "7:50 AM", "8:10 AM"] },
+  { stop_id: "4260", name: "SW Pacific Hwy &amp; 124th", lat: 45.389197, lon: -122.805967, times: ["11:11 PM", "11:56 PM", "6:14 AM", "6:33 AM", "6:53 AM", "7:13 AM", "7:32 AM", "7:52 AM"] },
+  { stop_id: "4300", name: "SW Pacific Hwy &amp; Pacific Dr", lat: 45.386851, lon: -122.810296, times: ["11:11 PM", "11:56 PM", "6:15 AM", "6:34 AM", "6:54 AM", "7:13 AM", "7:32 AM", "7:52 AM"] },
+  { stop_id: "4277", name: "SW Pacific Hwy &amp; Cipole", lat: 45.384576, lon: -122.817475, times: ["11:12 PM", "11:57 PM", "6:16 AM", "6:35 AM", "6:55 AM", "7:14 AM", "7:33 AM", "7:53 AM"] },
+  { stop_id: "12743", name: "Pacific Hwy &amp; Tualatin Rvr Refuge", lat: 45.380487, lon: -122.831711, times: ["11:13 PM", "11:58 PM", "6:17 AM", "6:36 AM", "6:56 AM", "7:16 AM", "7:35 AM", "7:55 AM"] },
+  { stop_id: "9519", name: "SW Pacific Hwy &amp; Langer Farms Pkwy", lat: 45.373216, lon: -122.83913, times: ["11:14 PM", "11:59 PM", "6:19 AM", "6:38 AM", "6:58 AM", "7:17 AM", "7:36 AM", "7:56 AM"] },
+  { stop_id: "9186", name: "SW Tualatin-Sherwood Rd &amp; Pacific Hwy", lat: 45.368691, lon: -122.841715, times: ["11:15 PM", "12:00 AM", "6:20 AM", "6:39 AM", "6:59 AM", "7:19 AM", "7:38 AM", "7:58 AM"] },
+  { stop_id: "9187", name: "SW Tualatin-Sherwood Rd &amp; Baler", lat: 45.36797, lon: -122.839664, times: ["11:15 PM", "12:00 AM", "6:20 AM", "6:39 AM", "6:59 AM", "7:19 AM", "7:38 AM", "7:58 AM"] },
+  { stop_id: "13546", name: "SW Langer &amp; Holland", lat: 45.3674, lon: -122.841417, times: ["11:16 PM", "12:01 AM", "6:21 AM", "6:40 AM", "7:00 AM", "7:20 AM", "7:39 AM", "7:59 AM"] },
+  { stop_id: "9188", name: "SW Langer &amp; Sherwood Plaza", lat: 45.367891, lon: -122.844499, times: ["11:16 PM", "12:01 AM", "6:21 AM", "6:41 AM", "7:01 AM", "7:21 AM", "7:40 AM", "8:00 AM"] },
+  { stop_id: "9189", name: "16400 Block SW Langer", lat: 45.366394, lon: -122.846741, times: ["11:17 PM", "12:02 AM", "6:22 AM", "6:42 AM", "7:02 AM", "7:22 AM", "7:41 AM", "8:01 AM"] },
+  { stop_id: "5248", name: "SW Sherwood Blvd &amp; NW 12th St", lat: 45.364661, lon: -122.846731, times: ["11:17 PM", "12:02 AM", "6:22 AM", "6:42 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM"] },
+  { stop_id: "5246", name: "N Sherwood Blvd &amp; NW Gleneagle", lat: 45.362849, lon: -122.846267, times: ["11:18 PM", "12:03 AM", "6:23 AM", "6:43 AM", "7:03 AM", "7:23 AM", "7:42 AM", "8:02 AM"] },
+  { stop_id: "5245", name: "21900 Block N Sherwood Blvd", lat: 45.359568, lon: -122.842787, times: ["11:19 PM", "12:04 AM", "6:24 AM", "6:44 AM", "7:04 AM", "7:24 AM", "7:44 AM", "8:04 AM"] },
+  { stop_id: "4451", name: "SW Pine &amp; 2nd", lat: 45.357534, lon: -122.841956, times: ["11:20 PM", "12:05 AM", "6:25 AM", "6:45 AM", "7:05 AM", "7:25 AM", "7:45 AM", "8:05 AM"] },
+  { stop_id: "14108", name: "SW 1st &amp; Pine", lat: 45.357109, lon: -122.84083, times: ["11:22 PM", "12:07 AM", "6:27 AM", "6:47 AM", "7:07 AM", "7:27 AM", "7:47 AM", "8:07 AM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
+    // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
 
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
-    `;
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({
+          html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
-
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 </body>
 </html>

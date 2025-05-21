@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 37 - To Lake Oswego Transit Center | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
     header {
       background-color: #0d0d0d;
@@ -47,43 +46,33 @@
       background-color: #1e1e1e;
     }
     #map {
-  width: 100%;
-  height: 85vh;
-  border: none;
-  margin: 0 auto;
-  display: block;
-  border-radius: 8px;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
@@ -97,17 +86,12 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-body {
-  overflow-y: auto;
-}
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
-
-  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +101,7 @@ body {
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 37 - To Lake Oswego Transit Center</h1>
@@ -129,34 +113,28 @@ body {
     </div>
   </div>
 
-  
   <script>
-  
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 37;
-  const direction = parseInt(1);
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 37;
+    const direction = parseInt(1);
 
-  const map = L.map('map', {
-  center: [45.6, -122.7],
-  zoom: 12,
-  minZoom: 12,
-  maxZoom: 18,
-  maxBounds: [
-    [45.3, -123.1],  // Southwest corner
-    [45.9, -122.3]   // Northeast corner
-  ],
-  maxBoundsViscosity: 1.0
-});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.394675, -122.748992],
   [45.394805, -122.749022],
   [45.394906, -122.749067],
@@ -542,114 +520,107 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "7879", name: "Tualatin Park &amp; Ride ", lat: 45.394692, lon: -122.748821, times: ["6:56 AM", "7:46 AM", "8:40 AM"] },
-  { stop_id: "13195", name: "SW Lower Boones Ferry &amp; McEwan Rd", lat: 45.396533, lon: -122.743211, times: ["6:57 AM", "7:47 AM", "8:41 AM"] },
-  { stop_id: "11780", name: "Boones Ferry Rd &amp; Jean", lat: 45.398774, lon: -122.738758, times: ["6:58 AM", "7:48 AM", "8:42 AM"] },
-  { stop_id: "11781", name: "Boones Ferry Rd &amp; Pilkington", lat: 45.401809, lon: -122.733804, times: ["6:59 AM", "7:49 AM", "8:43 AM"] },
-  { stop_id: "11782", name: "Boones Ferry Rd &amp; Washington Ct", lat: 45.403895, lon: -122.730556, times: ["6:59 AM", "7:49 AM", "8:43 AM"] },
-  { stop_id: "577", name: "Boones Ferry Rd &amp; West Sunset Dr", lat: 45.405246, lon: -122.728455, times: ["7:00 AM", "7:50 AM", "8:44 AM"] },
-  { stop_id: "538", name: "Boones Ferry Rd &amp; SW Madrona", lat: 45.406572, lon: -122.726426, times: ["7:00 AM", "7:50 AM", "8:44 AM"] },
-  { stop_id: "512", name: "Boones Ferry Rd &amp; Bryant", lat: 45.408375, lon: -122.723345, times: ["7:01 AM", "7:51 AM", "8:45 AM"] },
-  { stop_id: "11783", name: "Boones Ferry Rd &amp; Reese Rd", lat: 45.410972, lon: -122.718545, times: ["7:02 AM", "7:52 AM", "8:46 AM"] },
-  { stop_id: "11784", name: "Boones Ferry Rd &amp; Mercantile Dr", lat: 45.414238, lon: -122.716514, times: ["7:02 AM", "7:52 AM", "8:46 AM"] },
-  { stop_id: "564", name: "Boones Ferry Rd &amp; Spring Lane", lat: 45.416706, lon: -122.714852, times: ["7:03 AM", "7:53 AM", "8:47 AM"] },
-  { stop_id: "569", name: "Boones Ferry Rd &amp; Twin Fir", lat: 45.418796, lon: -122.712712, times: ["7:03 AM", "7:54 AM", "8:48 AM"] },
-  { stop_id: "554", name: "Boones Ferry Rd &amp; Rainbow", lat: 45.421376, lon: -122.710405, times: ["7:04 AM", "7:54 AM", "8:48 AM"] },
-  { stop_id: "1230", name: "Country Club &amp; Sundeleaf", lat: 45.424909, lon: -122.705201, times: ["7:05 AM", "7:56 AM", "8:50 AM"] },
-  { stop_id: "1225", name: "2500 Block Country Club", lat: 45.424538, lon: -122.701279, times: ["7:06 AM", "7:56 AM", "8:50 AM"] },
-  { stop_id: "1234", name: "Country Club &amp; Wembley Park", lat: 45.423776, lon: -122.698261, times: ["7:06 AM", "7:57 AM", "8:51 AM"] },
-  { stop_id: "1232", name: "Country Club &amp; Uplands", lat: 45.423161, lon: -122.69579, times: ["7:07 AM", "7:57 AM", "8:51 AM"] },
-  { stop_id: "1228", name: "Country Club &amp; Bridge Ct", lat: 45.422983, lon: -122.693141, times: ["7:07 AM", "7:58 AM", "8:52 AM"] },
-  { stop_id: "1224", name: "Country Club &amp; Knaus Rd", lat: 45.422962, lon: -122.689284, times: ["7:08 AM", "7:58 AM", "8:52 AM"] },
-  { stop_id: "1222", name: "Country Club &amp; Iron Mtn", lat: 45.422846, lon: -122.679115, times: ["7:09 AM", "8:00 AM", "8:54 AM"] },
-  { stop_id: "2", name: "A Ave &amp; Chandler", lat: 45.420609, lon: -122.675671, times: ["7:10 AM", "8:01 AM", "8:55 AM"] },
-  { stop_id: "6", name: "A Ave &amp; 8th St", lat: 45.420217, lon: -122.67307, times: ["7:10 AM", "8:01 AM", "8:55 AM"] },
-  { stop_id: "8208", name: "Lake Oswego Transit Center ", lat: 45.420627, lon: -122.66788, times: ["7:12 AM", "8:03 AM", "8:57 AM"] },
+  { stop_id: "7879", name: "Tualatin Park &amp; Ride ", lat: 45.394692, lon: -122.748821, times: ["6:56 AM", "7:46 AM", "8:40 AM", "3:21 PM", "4:19 PM", "5:09 PM"] },
+  { stop_id: "13195", name: "SW Lower Boones Ferry &amp; McEwan Rd", lat: 45.396533, lon: -122.743211, times: ["6:57 AM", "7:47 AM", "8:41 AM", "3:22 PM", "4:20 PM", "5:10 PM"] },
+  { stop_id: "11780", name: "Boones Ferry Rd &amp; Jean", lat: 45.398774, lon: -122.738758, times: ["6:58 AM", "7:48 AM", "8:42 AM", "3:23 PM", "4:21 PM", "5:11 PM"] },
+  { stop_id: "11781", name: "Boones Ferry Rd &amp; Pilkington", lat: 45.401809, lon: -122.733804, times: ["6:59 AM", "7:49 AM", "8:43 AM", "3:24 PM", "4:22 PM", "5:12 PM"] },
+  { stop_id: "11782", name: "Boones Ferry Rd &amp; Washington Ct", lat: 45.403895, lon: -122.730556, times: ["6:59 AM", "7:49 AM", "8:43 AM", "3:25 PM", "4:23 PM", "5:13 PM"] },
+  { stop_id: "577", name: "Boones Ferry Rd &amp; West Sunset Dr", lat: 45.405246, lon: -122.728455, times: ["7:00 AM", "7:50 AM", "8:44 AM", "3:25 PM", "4:23 PM", "5:13 PM"] },
+  { stop_id: "538", name: "Boones Ferry Rd &amp; SW Madrona", lat: 45.406572, lon: -122.726426, times: ["7:00 AM", "7:50 AM", "8:44 AM", "3:26 PM", "4:24 PM", "5:14 PM"] },
+  { stop_id: "512", name: "Boones Ferry Rd &amp; Bryant", lat: 45.408375, lon: -122.723345, times: ["7:01 AM", "7:51 AM", "8:45 AM", "3:26 PM", "4:24 PM", "5:14 PM"] },
+  { stop_id: "11783", name: "Boones Ferry Rd &amp; Reese Rd", lat: 45.410972, lon: -122.718545, times: ["7:02 AM", "7:52 AM", "8:46 AM", "3:28 PM", "4:26 PM", "5:16 PM"] },
+  { stop_id: "11784", name: "Boones Ferry Rd &amp; Mercantile Dr", lat: 45.414238, lon: -122.716514, times: ["7:02 AM", "7:52 AM", "8:46 AM", "3:28 PM", "4:26 PM", "5:16 PM"] },
+  { stop_id: "564", name: "Boones Ferry Rd &amp; Spring Lane", lat: 45.416706, lon: -122.714852, times: ["7:03 AM", "7:53 AM", "8:47 AM", "3:29 PM", "4:27 PM", "5:17 PM"] },
+  { stop_id: "569", name: "Boones Ferry Rd &amp; Twin Fir", lat: 45.418796, lon: -122.712712, times: ["7:03 AM", "7:54 AM", "8:48 AM", "3:30 PM", "4:28 PM", "5:18 PM"] },
+  { stop_id: "554", name: "Boones Ferry Rd &amp; Rainbow", lat: 45.421376, lon: -122.710405, times: ["7:04 AM", "7:54 AM", "8:48 AM", "3:30 PM", "4:28 PM", "5:19 PM"] },
+  { stop_id: "1230", name: "Country Club &amp; Sundeleaf", lat: 45.424909, lon: -122.705201, times: ["7:05 AM", "7:56 AM", "8:50 AM", "3:32 PM", "4:30 PM", "5:20 PM"] },
+  { stop_id: "1225", name: "2500 Block Country Club", lat: 45.424538, lon: -122.701279, times: ["7:06 AM", "7:56 AM", "8:50 AM", "3:32 PM", "4:30 PM", "5:21 PM"] },
+  { stop_id: "1234", name: "Country Club &amp; Wembley Park", lat: 45.423776, lon: -122.698261, times: ["7:06 AM", "7:57 AM", "8:51 AM", "3:33 PM", "4:31 PM", "5:21 PM"] },
+  { stop_id: "1232", name: "Country Club &amp; Uplands", lat: 45.423161, lon: -122.69579, times: ["7:07 AM", "7:57 AM", "8:51 AM", "3:33 PM", "4:31 PM", "5:22 PM"] },
+  { stop_id: "1228", name: "Country Club &amp; Bridge Ct", lat: 45.422983, lon: -122.693141, times: ["7:07 AM", "7:58 AM", "8:52 AM", "3:34 PM", "4:32 PM", "5:22 PM"] },
+  { stop_id: "1224", name: "Country Club &amp; Knaus Rd", lat: 45.422962, lon: -122.689284, times: ["7:08 AM", "7:58 AM", "8:52 AM", "3:34 PM", "4:32 PM", "5:23 PM"] },
+  { stop_id: "1222", name: "Country Club &amp; Iron Mtn", lat: 45.422846, lon: -122.679115, times: ["7:09 AM", "8:00 AM", "8:54 AM", "3:36 PM", "4:34 PM", "5:25 PM"] },
+  { stop_id: "2", name: "A Ave &amp; Chandler", lat: 45.420609, lon: -122.675671, times: ["7:10 AM", "8:01 AM", "8:55 AM", "3:37 PM", "4:35 PM", "5:26 PM"] },
+  { stop_id: "6", name: "A Ave &amp; 8th St", lat: 45.420217, lon: -122.67307, times: ["7:10 AM", "8:01 AM", "8:55 AM", "3:37 PM", "4:35 PM", "5:26 PM"] },
+  { stop_id: "8208", name: "Lake Oswego Transit Center ", lat: 45.420627, lon: -122.66788, times: ["7:12 AM", "8:03 AM", "8:57 AM", "3:39 PM", "4:37 PM", "5:28 PM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
+    // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
 
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
-    `;
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({
+          html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
-
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 </body>
 </html>

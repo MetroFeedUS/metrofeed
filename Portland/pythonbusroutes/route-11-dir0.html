@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 11 - To Vancouver Way & Middlefield | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
     header {
       background-color: #0d0d0d;
@@ -47,43 +46,33 @@
       background-color: #1e1e1e;
     }
     #map {
-  width: 100%;
-  height: 85vh;
-  border: none;
-  margin: 0 auto;
-  display: block;
-  border-radius: 8px;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
-
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
@@ -97,17 +86,12 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-body {
-  overflow-y: auto;
-}
   </style>
 </head>
 <body>
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
-
-  
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
@@ -117,7 +101,7 @@ body {
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 11 - To Vancouver Way & Middlefield</h1>
@@ -129,34 +113,28 @@ body {
     </div>
   </div>
 
-  
   <script>
-  
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 11;
-  const direction = parseInt(0);
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 11;
+    const direction = parseInt(0);
 
-  const map = L.map('map', {
-  center: [45.6, -122.7],
-  zoom: 12,
-  minZoom: 12,
-  maxZoom: 18,
-  maxBounds: [
-    [45.3, -123.1],  // Southwest corner
-    [45.9, -122.3]   // Northeast corner
-  ],
-  maxBoundsViscosity: 1.0
-});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.58736, -122.752127],
   [45.587297, -122.752168],
   [45.587055, -122.752324],
@@ -990,132 +968,125 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "14215", name: "N Richmond &amp; Princeton", lat: 45.587387, lon: -122.75221, times: ["6:00 AM", "6:53 AM", "7:55 AM"] },
-  { stop_id: "4817", name: "N Richmond &amp; Syracuse", lat: 45.587592, lon: -122.751862, times: ["6:01 AM", "6:54 AM", "7:56 AM"] },
-  { stop_id: "10177", name: "N Ivanhoe &amp; Leavitt", lat: 45.589485, lon: -122.754788, times: ["6:02 AM", "6:55 AM", "7:57 AM"] },
-  { stop_id: "3008", name: "N Ivanhoe &amp; Baltimore", lat: 45.590694, lon: -122.756521, times: ["6:02 AM", "6:55 AM", "7:58 AM"] },
-  { stop_id: "11934", name: "N Ivanhoe &amp; New York", lat: 45.592164, lon: -122.757933, times: ["6:03 AM", "6:56 AM", "7:58 AM"] },
-  { stop_id: "11936", name: "N St Louis &amp; Central", lat: 45.593867, lon: -122.755506, times: ["6:04 AM", "6:57 AM", "7:59 AM"] },
-  { stop_id: "5376", name: "N St Louis &amp; Smith", lat: 45.59484, lon: -122.75354, times: ["6:05 AM", "6:58 AM", "8:00 AM"] },
-  { stop_id: "5373", name: "N St Louis &amp; New York", lat: 45.595604, lon: -122.751935, times: ["6:05 AM", "6:58 AM", "8:01 AM"] },
-  { stop_id: "11007", name: "N Fessenden &amp; Seneca", lat: 45.596548, lon: -122.749858, times: ["6:06 AM", "6:59 AM", "8:01 AM"] },
-  { stop_id: "1714", name: "N Fessenden &amp; Richmond", lat: 45.596122, lon: -122.746717, times: ["6:06 AM", "6:59 AM", "8:02 AM"] },
-  { stop_id: "1699", name: "N Fessenden &amp; Allegheny", lat: 45.595446, lon: -122.743864, times: ["6:07 AM", "7:00 AM", "8:03 AM"] },
-  { stop_id: "10614", name: "N Fessenden &amp; Tioga", lat: 45.594856, lon: -122.741381, times: ["6:08 AM", "7:01 AM", "8:03 AM"] },
-  { stop_id: "1703", name: "N Fessenden &amp; Burr", lat: 45.594162, lon: -122.738439, times: ["6:08 AM", "7:01 AM", "8:04 AM"] },
-  { stop_id: "1712", name: "N Fessenden &amp; Midway", lat: 45.593412, lon: -122.735186, times: ["6:09 AM", "7:02 AM", "8:05 AM"] },
-  { stop_id: "11824", name: "N Macrum &amp; Powers", lat: 45.593995, lon: -122.730244, times: ["6:11 AM", "7:04 AM", "8:07 AM"] },
-  { stop_id: "11825", name: "N Columbia Blvd &amp; Oregonian", lat: 45.595413, lon: -122.732285, times: ["6:11 AM", "7:04 AM", "8:07 AM"] },
-  { stop_id: "11826", name: "N Columbia Blvd &amp; Bank", lat: 45.596955, lon: -122.736203, times: ["6:11 AM", "7:04 AM", "8:07 AM"] },
-  { stop_id: "11827", name: "N Columbia Blvd &amp; Upland Dr", lat: 45.600823, lon: -122.742327, times: ["6:12 AM", "7:05 AM", "8:08 AM"] },
-  { stop_id: "11828", name: "N Columbia Blvd &amp; Swift", lat: 45.603598, lon: -122.749144, times: ["6:13 AM", "7:06 AM", "8:09 AM"] },
-  { stop_id: "11850", name: "9500 Block N Columbia Blvd", lat: 45.608505, lon: -122.758927, times: ["6:15 AM", "7:08 AM", "8:10 AM"] },
-  { stop_id: "13526", name: "N Columbia Blvd &amp; Lombard (Burgard)", lat: 45.612458, lon: -122.762611, times: ["6:15 AM", "7:08 AM", "8:11 AM"] },
-  { stop_id: "3540", name: "13200 Block N Columbia", lat: 45.619386, lon: -122.771344, times: ["6:17 AM", "7:10 AM", "8:13 AM"] },
-  { stop_id: "9308", name: "N Columbia &amp; Ramsey", lat: 45.623616, lon: -122.771502, times: ["6:18 AM", "7:11 AM", "8:13 AM"] },
-  { stop_id: "9434", name: "14500 Block N Columbia", lat: 45.630388, lon: -122.77174, times: ["6:19 AM", "7:12 AM", "8:14 AM"] },
-  { stop_id: "10163", name: "N Columbia &amp; Terminal 5 Access Rd", lat: 45.63503, lon: -122.769803, times: ["6:20 AM", "7:13 AM", "8:15 AM"] },
-  { stop_id: "9197", name: "N Columbia &amp; Simmons", lat: 45.637387, lon: -122.766248, times: ["6:20 AM", "7:13 AM", "8:16 AM"] },
-  { stop_id: "9439", name: "N Marine &amp; Leadbetter", lat: 45.63624, lon: -122.756287, times: ["6:21 AM", "7:14 AM", "8:17 AM"] },
-  { stop_id: "13520", name: "N Leadbetter &amp; Bybee Lake Ct", lat: 45.630885, lon: -122.753469, times: ["6:23 AM", "7:16 AM", "8:18 AM"] },
-  { stop_id: "9334", name: "N Marine &amp; Leadbetter", lat: 45.62984, lon: -122.744663, times: ["6:24 AM", "7:17 AM", "8:19 AM"] },
-  { stop_id: "9440", name: "N Marine &amp; Bybee Lake Road", lat: 45.627641, lon: -122.740693, times: ["6:24 AM", "7:17 AM", "8:20 AM"] },
-  { stop_id: "9441", name: "6100 Block N Marine", lat: 45.62487, lon: -122.735681, times: ["6:25 AM", "7:18 AM", "8:20 AM"] },
-  { stop_id: "9199", name: "5900 Block N Marine", lat: 45.622832, lon: -122.731849, times: ["6:26 AM", "7:19 AM", "8:21 AM"] },
-  { stop_id: "9200", name: "5700 Block N Marine", lat: 45.620579, lon: -122.727698, times: ["6:26 AM", "7:19 AM", "8:21 AM"] },
-  { stop_id: "9442", name: "5300 Block N Marine", lat: 45.618628, lon: -122.723434, times: ["6:27 AM", "7:20 AM", "8:22 AM"] },
-  { stop_id: "12465", name: "N Marine &amp; Portland Rd", lat: 45.613326, lon: -122.703591, times: ["6:29 AM", "7:22 AM", "8:24 AM"] },
-  { stop_id: "10477", name: "2600 Block N Marine", lat: 45.609982, lon: -122.69438, times: ["6:30 AM", "7:23 AM", "8:25 AM"] },
-  { stop_id: "11829", name: "N Marine &amp; Pier 99 St", lat: 45.606526, lon: -122.684989, times: ["6:32 AM", "7:25 AM", "8:27 AM"] },
-  { stop_id: "9478", name: "1000 Block N Marine", lat: 45.602999, lon: -122.67708, times: ["6:34 AM", "7:27 AM", "8:29 AM"] },
-  { stop_id: "9444", name: "N Marine &amp; Gantenbein", lat: 45.601746, lon: -122.669467, times: ["6:35 AM", "7:28 AM", "8:30 AM"] },
-  { stop_id: "13818", name: "10400 Block NE 6th Dr", lat: 45.598352, lon: -122.660276, times: ["6:36 AM", "7:29 AM", "8:31 AM"] },
-  { stop_id: "9477", name: "NE Middlefield Rd &amp; N Vancouver Way", lat: 45.59585, lon: -122.667541, times: ["6:39 AM", "7:32 AM", "8:34 AM"] },
+  { stop_id: "14215", name: "N Richmond &amp; Princeton", lat: 45.587387, lon: -122.75221, times: ["6:00 AM", "6:53 AM", "7:55 AM", "2:54 PM", "3:53 PM", "5:01 PM", "6:17 PM", "7:04 PM"] },
+  { stop_id: "4817", name: "N Richmond &amp; Syracuse", lat: 45.587592, lon: -122.751862, times: ["6:01 AM", "6:54 AM", "7:56 AM", "2:55 PM", "3:54 PM", "5:02 PM", "6:18 PM", "7:05 PM"] },
+  { stop_id: "10177", name: "N Ivanhoe &amp; Leavitt", lat: 45.589485, lon: -122.754788, times: ["6:02 AM", "6:55 AM", "7:57 AM", "2:56 PM", "3:55 PM", "5:03 PM", "6:19 PM", "7:06 PM"] },
+  { stop_id: "3008", name: "N Ivanhoe &amp; Baltimore", lat: 45.590694, lon: -122.756521, times: ["6:02 AM", "6:55 AM", "7:58 AM", "2:57 PM", "3:56 PM", "5:04 PM", "6:20 PM", "7:06 PM"] },
+  { stop_id: "11934", name: "N Ivanhoe &amp; New York", lat: 45.592164, lon: -122.757933, times: ["6:03 AM", "6:56 AM", "7:58 AM", "2:57 PM", "3:57 PM", "5:05 PM", "6:20 PM", "7:07 PM"] },
+  { stop_id: "11936", name: "N St Louis &amp; Central", lat: 45.593867, lon: -122.755506, times: ["6:04 AM", "6:57 AM", "7:59 AM", "2:58 PM", "3:58 PM", "5:06 PM", "6:21 PM", "7:08 PM"] },
+  { stop_id: "5376", name: "N St Louis &amp; Smith", lat: 45.59484, lon: -122.75354, times: ["6:05 AM", "6:58 AM", "8:00 AM", "2:59 PM", "3:59 PM", "5:07 PM", "6:22 PM", "7:09 PM"] },
+  { stop_id: "5373", name: "N St Louis &amp; New York", lat: 45.595604, lon: -122.751935, times: ["6:05 AM", "6:58 AM", "8:01 AM", "3:00 PM", "3:59 PM", "5:07 PM", "6:23 PM", "7:09 PM"] },
+  { stop_id: "11007", name: "N Fessenden &amp; Seneca", lat: 45.596548, lon: -122.749858, times: ["6:06 AM", "6:59 AM", "8:01 AM", "3:00 PM", "4:00 PM", "5:08 PM", "6:23 PM", "7:10 PM"] },
+  { stop_id: "1714", name: "N Fessenden &amp; Richmond", lat: 45.596122, lon: -122.746717, times: ["6:06 AM", "6:59 AM", "8:02 AM", "3:01 PM", "4:01 PM", "5:09 PM", "6:24 PM", "7:10 PM"] },
+  { stop_id: "1699", name: "N Fessenden &amp; Allegheny", lat: 45.595446, lon: -122.743864, times: ["6:07 AM", "7:00 AM", "8:03 AM", "3:02 PM", "4:01 PM", "5:09 PM", "6:25 PM", "7:11 PM"] },
+  { stop_id: "10614", name: "N Fessenden &amp; Tioga", lat: 45.594856, lon: -122.741381, times: ["6:08 AM", "7:01 AM", "8:03 AM", "3:02 PM", "4:02 PM", "5:10 PM", "6:25 PM", "7:12 PM"] },
+  { stop_id: "1703", name: "N Fessenden &amp; Burr", lat: 45.594162, lon: -122.738439, times: ["6:08 AM", "7:01 AM", "8:04 AM", "3:03 PM", "4:03 PM", "5:11 PM", "6:26 PM", "7:12 PM"] },
+  { stop_id: "1712", name: "N Fessenden &amp; Midway", lat: 45.593412, lon: -122.735186, times: ["6:09 AM", "7:02 AM", "8:05 AM", "3:04 PM", "4:04 PM", "5:12 PM", "6:27 PM", "7:13 PM"] },
+  { stop_id: "11824", name: "N Macrum &amp; Powers", lat: 45.593995, lon: -122.730244, times: ["6:11 AM", "7:04 AM", "8:07 AM", "3:06 PM", "4:06 PM", "5:14 PM", "6:29 PM", "7:15 PM"] },
+  { stop_id: "11825", name: "N Columbia Blvd &amp; Oregonian", lat: 45.595413, lon: -122.732285, times: ["6:11 AM", "7:04 AM", "8:07 AM", "3:06 PM", "4:06 PM", "5:14 PM", "6:29 PM", "7:15 PM"] },
+  { stop_id: "11826", name: "N Columbia Blvd &amp; Bank", lat: 45.596955, lon: -122.736203, times: ["6:11 AM", "7:04 AM", "8:07 AM", "3:06 PM", "4:06 PM", "5:14 PM", "6:29 PM", "7:15 PM"] },
+  { stop_id: "11827", name: "N Columbia Blvd &amp; Upland Dr", lat: 45.600823, lon: -122.742327, times: ["6:12 AM", "7:05 AM", "8:08 AM", "3:07 PM", "4:07 PM", "5:15 PM", "6:30 PM", "7:16 PM"] },
+  { stop_id: "11828", name: "N Columbia Blvd &amp; Swift", lat: 45.603598, lon: -122.749144, times: ["6:13 AM", "7:06 AM", "8:09 AM", "3:08 PM", "4:08 PM", "5:16 PM", "6:31 PM", "7:17 PM"] },
+  { stop_id: "11850", name: "9500 Block N Columbia Blvd", lat: 45.608505, lon: -122.758927, times: ["6:15 AM", "7:08 AM", "8:10 AM", "3:10 PM", "4:10 PM", "5:17 PM", "6:32 PM", "7:18 PM"] },
+  { stop_id: "13526", name: "N Columbia Blvd &amp; Lombard (Burgard)", lat: 45.612458, lon: -122.762611, times: ["6:15 AM", "7:08 AM", "8:11 AM", "3:10 PM", "4:10 PM", "5:18 PM", "6:33 PM", "7:19 PM"] },
+  { stop_id: "3540", name: "13200 Block N Columbia", lat: 45.619386, lon: -122.771344, times: ["6:17 AM", "7:10 AM", "8:13 AM", "3:12 PM", "4:12 PM", "5:20 PM", "6:35 PM", "7:20 PM"] },
+  { stop_id: "9308", name: "N Columbia &amp; Ramsey", lat: 45.623616, lon: -122.771502, times: ["6:18 AM", "7:11 AM", "8:13 AM", "3:13 PM", "4:13 PM", "5:20 PM", "6:35 PM", "7:21 PM"] },
+  { stop_id: "9434", name: "14500 Block N Columbia", lat: 45.630388, lon: -122.77174, times: ["6:19 AM", "7:12 AM", "8:14 AM", "3:14 PM", "4:14 PM", "5:21 PM", "6:36 PM", "7:22 PM"] },
+  { stop_id: "10163", name: "N Columbia &amp; Terminal 5 Access Rd", lat: 45.63503, lon: -122.769803, times: ["6:20 AM", "7:13 AM", "8:15 AM", "3:15 PM", "4:15 PM", "5:22 PM", "6:37 PM", "7:23 PM"] },
+  { stop_id: "9197", name: "N Columbia &amp; Simmons", lat: 45.637387, lon: -122.766248, times: ["6:20 AM", "7:13 AM", "8:16 AM", "3:15 PM", "4:15 PM", "5:23 PM", "6:38 PM", "7:23 PM"] },
+  { stop_id: "9439", name: "N Marine &amp; Leadbetter", lat: 45.63624, lon: -122.756287, times: ["6:21 AM", "7:14 AM", "8:17 AM", "3:16 PM", "4:16 PM", "5:24 PM", "6:39 PM", "7:24 PM"] },
+  { stop_id: "13520", name: "N Leadbetter &amp; Bybee Lake Ct", lat: 45.630885, lon: -122.753469, times: ["6:23 AM", "7:16 AM", "8:18 AM", "3:18 PM", "4:18 PM", "5:25 PM", "6:40 PM", "7:25 PM"] },
+  { stop_id: "9334", name: "N Marine &amp; Leadbetter", lat: 45.62984, lon: -122.744663, times: ["6:24 AM", "7:17 AM", "8:19 AM", "3:19 PM", "4:19 PM", "5:26 PM", "6:41 PM", "7:26 PM"] },
+  { stop_id: "9440", name: "N Marine &amp; Bybee Lake Road", lat: 45.627641, lon: -122.740693, times: ["6:24 AM", "7:17 AM", "8:20 AM", "3:19 PM", "4:19 PM", "5:27 PM", "6:42 PM", "7:27 PM"] },
+  { stop_id: "9441", name: "6100 Block N Marine", lat: 45.62487, lon: -122.735681, times: ["6:25 AM", "7:18 AM", "8:20 AM", "3:20 PM", "4:20 PM", "5:27 PM", "6:42 PM", "7:28 PM"] },
+  { stop_id: "9199", name: "5900 Block N Marine", lat: 45.622832, lon: -122.731849, times: ["6:26 AM", "7:19 AM", "8:21 AM", "3:21 PM", "4:21 PM", "5:28 PM", "6:43 PM", "7:28 PM"] },
+  { stop_id: "9200", name: "5700 Block N Marine", lat: 45.620579, lon: -122.727698, times: ["6:26 AM", "7:19 AM", "8:21 AM", "3:21 PM", "4:21 PM", "5:28 PM", "6:43 PM", "7:29 PM"] },
+  { stop_id: "9442", name: "5300 Block N Marine", lat: 45.618628, lon: -122.723434, times: ["6:27 AM", "7:20 AM", "8:22 AM", "3:22 PM", "4:22 PM", "5:29 PM", "6:44 PM", "7:29 PM"] },
+  { stop_id: "12465", name: "N Marine &amp; Portland Rd", lat: 45.613326, lon: -122.703591, times: ["6:29 AM", "7:22 AM", "8:24 AM", "3:24 PM", "4:24 PM", "5:31 PM", "6:46 PM", "7:31 PM"] },
+  { stop_id: "10477", name: "2600 Block N Marine", lat: 45.609982, lon: -122.69438, times: ["6:30 AM", "7:23 AM", "8:25 AM", "3:25 PM", "4:25 PM", "5:32 PM", "6:47 PM", "7:32 PM"] },
+  { stop_id: "11829", name: "N Marine &amp; Pier 99 St", lat: 45.606526, lon: -122.684989, times: ["6:32 AM", "7:25 AM", "8:27 AM", "3:27 PM", "4:27 PM", "5:34 PM", "6:49 PM", "7:34 PM"] },
+  { stop_id: "9478", name: "1000 Block N Marine", lat: 45.602999, lon: -122.67708, times: ["6:34 AM", "7:27 AM", "8:29 AM", "3:29 PM", "4:29 PM", "5:36 PM", "6:51 PM", "7:36 PM"] },
+  { stop_id: "9444", name: "N Marine &amp; Gantenbein", lat: 45.601746, lon: -122.669467, times: ["6:35 AM", "7:28 AM", "8:30 AM", "3:30 PM", "4:30 PM", "5:37 PM", "6:52 PM", "7:37 PM"] },
+  { stop_id: "13818", name: "10400 Block NE 6th Dr", lat: 45.598352, lon: -122.660276, times: ["6:36 AM", "7:29 AM", "8:31 AM", "3:31 PM", "4:31 PM", "5:38 PM", "6:53 PM", "7:38 PM"] },
+  { stop_id: "9477", name: "NE Middlefield Rd &amp; N Vancouver Way", lat: 45.59585, lon: -122.667541, times: ["6:39 AM", "7:32 AM", "8:34 AM", "3:34 PM", "4:34 PM", "5:41 PM", "6:56 PM", "7:41 PM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
+    // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
 
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.slice(0, 3).join("<br>") : "No scheduled times"}
-    `;
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
-  });
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  let busMarkers = {};
-
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({
+          html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  if (!localStorage.getItem('cookieConsent')) {
-    document.write(`
-      <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-        📢 We use cookies to improve functionality and analyze traffic.
-        By using MetroFeed, you agree to our 
-        <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-        <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-      </div>
-    `);
-  }
-</script>
-
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
 </body>
 </html>
