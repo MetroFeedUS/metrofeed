@@ -1,150 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <title>Live Traffic Cameras – MetroFeed Portland</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
- body {
-  padding-top: 120px; /* push content below the fixed banner */
-}
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
 
-.ad-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: #222;
-  padding: 0.5rem 0;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  text-align: center;
-}
-.ad-banner img {
-  max-width: 970px;
-  width: 100%;
-  height: auto;
-  display: inline-block;
-}
-@media (max-width: 480px) {
-  .ad-banner {
-    padding: 0.25rem 0;
-  }
-}
+    body {
+      padding-top: 120px;
+    }
 
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0.5rem 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      text-align: center;
+    }
 
- html, body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #0d0d0d;
-    color: #cccccc;
-  }
-  header {
-    background-color: #0d0d0d;
-    border-top: 4px solid #4dd0e1;
-    border-bottom: 4px solid #4dd0e1;
-    padding: 1rem;
-    text-align: center;
-  }
-  header img {
-    max-width: 200px;
-    height: auto;
-  }
-  
-  h1 {
-    text-align: center;
-    font-size: 1.5rem;
-    color: #f0f0f0;
-    margin-top: 0.5rem;
-  }
-  .camera-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-  }
-  .camera-tile {
-    background-color: #1e1e1e;
-    padding: 0.5rem;
-    border: 1px solid #333;
-    border-radius: 8px;
-    text-align: center;
-  }
-  .camera-tile img {
-    width: 100%;
-    height: auto;
-    border-radius: 6px;
-  }
-  .camera-title {
-    font-size: 0.9rem;
-    color: #4dd0e1;
-    margin-top: 0.5rem;
-  }
-  .vote-buttons {
-    margin-top: 0.5rem;
-  }
-  .vote-buttons button {
-    background-color: transparent;
-    border: none;
-    color: #cccccc;
-    font-size: 1.2rem;
-    margin: 0 0.3rem;
-    cursor: pointer;
-  }
-  .vote-buttons button:hover {
-    color: #4dd0e1;
-  }
-  .attribution {
-    font-size: 0.7rem;
-    color: #888;
-    margin-top: 0.25rem;
-  }
-  .disclaimer {
-    margin: 2rem auto 1rem;
-    font-size: 0.75rem;
-    color: #888;
-    text-align: center;
-    padding: 0.5rem;
-    border-top: 1px solid #333;
-  }
-  .site-footer {
-    text-align: center;
-    margin-bottom: 120px;
-    font-size: 0.85rem;
-    color: #888;
-  }
-  .site-footer a {
-    color: #4dd0e1;
-    text-decoration: none;
-  }
-  .site-footer a:hover {
-    text-decoration: underline;
-  }
-  .home-button {
-    position: fixed;
-    top: 130px;
-    left: 10px;
-    background-color: #4dd0e1;
-    color: #0d0d0d;
-    padding: 0.5rem 1rem;
-    font-weight: bold;
-    border-radius: 8px;
-    text-decoration: none;
-    z-index: 1000;
-    box-shadow: 0 0 10px #4dd0e1;
-  }
-  .home-button:hover {
-    background-color: #00bcd4;
-    color: #ffffff;
-  }
-</style>
+    .ad-banner img {
+      max-width: 970px;
+      width: 100%;
+      height: auto;
+      display: inline-block;
+    }
 
-</style>
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 4px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
 
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      color: #f0f0f0;
+      margin-top: 0.5rem;
+    }
+
+    .camera-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .camera-tile {
+      background-color: #1e1e1e;
+      padding: 0.5rem;
+      border: 1px solid #333;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .camera-tile img {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+
+    .camera-title {
+      font-size: 0.9rem;
+      color: #4dd0e1;
+      margin-top: 0.5rem;
+    }
+
+    .vote-buttons {
+      margin-top: 0.5rem;
+    }
+
+    .vote-buttons button {
+      background-color: transparent;
+      border: none;
+      color: #cccccc;
+      font-size: 1.2rem;
+      margin: 0 0.3rem;
+      cursor: pointer;
+    }
+
+    .vote-buttons button:hover {
+      color: #4dd0e1;
+    }
+
+    .attribution {
+      font-size: 0.7rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+
+    .disclaimer {
+      margin: 2rem auto 1rem;
+      font-size: 0.75rem;
+      color: #888;
+      text-align: center;
+      padding: 0.5rem;
+      border-top: 1px solid #333;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .home-button {
+      position: fixed;
+      top: 130px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1000;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    @media (max-width: 480px) {
+      .ad-banner {
+        padding: 0.25rem 0;
+      }
+    }
+  </style>
 </head>
 <body>
+
 
  <div class="ad-banner">
     <a href="advertise.html" target="_blank">

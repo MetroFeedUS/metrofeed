@@ -1,136 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <title>Portland, OR Traffic - MetroFeed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#000000" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
-  body {
-  padding-top: 120px; /* push content below the fixed banner */
-}
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
 
-.ad-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: #222;
-  padding: 0.5rem 0;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  text-align: center;
-}
-.ad-banner img {
-  max-width: 970px;
-  width: 100%;
-  height: auto;
-  display: inline-block;
-}
-@media (max-width: 480px) {
-  .ad-banner {
-    padding: 0.25rem 0;
-  }
-}
+    body {
+      padding-top: 120px; /* push content below the fixed banner */
+    }
 
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0.5rem 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      text-align: center;
+    }
 
-html, body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #0d0d0d;
-    color: #cccccc;
-  }
-  header {
-    background-color: #0d0d0d;
-    padding: 1rem;
-    text-align: center;
-    border-bottom: 4px solid #4dd0e1;
-  }
-  header img {
-    max-width: 200px;
-    height: auto;
-  }
-  .adsense-container {
-    margin: 1rem auto 0.5rem;
-    max-width: 336px;
-    text-align: center;
-    border: 2px dashed #4dd0e1;
-    padding: 1rem;
-    background-color: #1e1e1e;
-    color: #39ff14;
-    font-size: 0.9rem;
-    border-radius: 6px;
-  }
- 
-  #map {
-    height: calc(100vh - 64px - 250px);
-    width: 100%;
-  }
-  .attribution {
-    position: absolute;
-    bottom: 6px;
-    right: 10px;
-    color: #888;
-    font-size: 10px;
-    z-index: 1000;
-  }
-  .disclaimer {
-    margin: 1rem auto;
-    max-width: 600px;
-    font-size: 0.75rem;
-    color: #aaa;
-    text-align: center;
-    padding: 0.5rem 1rem;
-    background-color: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 6px;
-  }
-  .page-title {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    color: #f0f0f0;
-  }
-  .site-footer {
-    text-align: center;
-    margin-top: 2rem;
-    margin-bottom: 120px;
-    font-size: 0.8rem;
-    color: #888;
-  }
-  .site-footer a {
-    color: #4dd0e1;
-    text-decoration: none;
-  }
-  .site-footer a:hover {
-    text-decoration: underline;
-  }
-  .home-button {
-    position: fixed;
-    top: 130px;
-    left: 10px;
-    background-color: #4dd0e1;
-    color: #0d0d0d;
-    padding: 0.5rem 1rem;
-    font-weight: bold;
-    border-radius: 8px;
-    text-decoration: none;
-    z-index: 1000;
-    box-shadow: 0 0 10px #4dd0e1;
-  }
-  .home-button:hover {
-    background-color: #00bcd4;
-    color: #ffffff;
-  }
-</style>
+    .ad-banner img {
+      max-width: 970px;
+      width: 100%;
+      height: auto;
+      display: inline-block;
+    }
 
+    @media (max-width: 480px) {
+      .ad-banner {
+        padding: 0.25rem 0;
+      }
+    }
+
+    header {
+      background-color: #0d0d0d;
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 4px solid #4dd0e1;
+    }
+
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    #map {
+      height: calc(100vh - 64px - 250px);
+      width: 100%;
+    }
+
+    .attribution {
+      position: absolute;
+      bottom: 6px;
+      right: 10px;
+      color: #888;
+      font-size: 10px;
+      z-index: 1000;
+    }
+
+    .disclaimer {
+      margin: 1rem auto;
+      max-width: 600px;
+      font-size: 0.75rem;
+      color: #aaa;
+      text-align: center;
+      padding: 0.5rem 1rem;
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      color: #f0f0f0;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .home-button {
+      position: fixed;
+      top: 130px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1000;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+  </style>
 </head>
+
 <body>
 
  <div class="ad-banner">
