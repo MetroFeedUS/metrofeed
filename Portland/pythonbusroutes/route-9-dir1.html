@@ -7,70 +7,82 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
-  padding-top: 120px; /* push content below the fixed banner */
-}
-
-.ad-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: #222;
-  padding: 0.5rem 0;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  text-align: center;
-}
-.ad-banner img {
-  max-width: 970px;
-  width: 100%;
-  height: auto;
-  display: inline-block;
-}
-@media (max-width: 480px) {
-  .ad-banner {
-    padding: 0.25rem 0;
-  }
-}
-body {
+    html, body {
       margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
       overflow-y: auto;
     }
+
+    body {
+      padding-top: 100px;
+    }
+
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0.5rem 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .ad-banner img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
       padding: 1rem;
       text-align: center;
     }
+
     header img {
       max-height: 60px;
     }
-    .ad-banner {
-      text-align: center;
-      margin: 1rem auto;
-      background-color: #222;
-      color: #888;
-      padding: 1rem;
-      border: 2px dashed #4dd0e1;
-      font-size: 0.9rem;
-      border-radius: 8px;
-    }
+
     h1 {
       text-align: center;
       margin: 1rem 0;
       font-size: 2rem;
       color: #f0f0f0;
     }
+
     .content-box {
       border-radius: 12px;
       padding: 0;
       margin: 0;
       background-color: #1e1e1e;
     }
+
     #map {
       width: 100%;
       height: 85vh;
@@ -79,11 +91,13 @@ body {
       display: block;
       border-radius: 8px;
     }
+
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
+
     .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
@@ -95,9 +109,11 @@ body {
       cursor: pointer;
       box-shadow: 0 0 10px #4dd0e1;
     }
+
     .back-button:hover {
       background-color: #35c0d6;
     }
+
     .site-footer {
       text-align: center;
       margin-top: 3rem;
@@ -105,15 +121,18 @@ body {
       font-size: 0.85rem;
       color: #aaa;
     }
+
     .site-footer a {
       color: #00BFFF;
       text-decoration: none;
     }
+
     .site-footer a:hover {
       text-decoration: underline;
     }
   </style>
 </head>
+
 <body>
  
  <div class="ad-banner">
@@ -1309,7 +1328,7 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "12757", name: "NE 10th &amp; Hood (Gresham Central TC)", lat: 45.502929, lon: -122.42814, times: ["4:02 AM", "4:32 AM", "4:47 AM", "5:03 AM", "5:16 AM", "5:46 AM", "6:01 AM", "6:15 AM"] },
+  { stop_id: "12757", name: "NE 10th &amp; Hood (Gresham Central TC)", lat: 45.502929, lon: -122.42814, times: ["4:32 AM", "4:47 AM", "5:03 AM", "5:16 AM", "5:46 AM", "6:01 AM", "6:15 AM", "6:28 AM"] },
   { stop_id: "10858", name: "Gresham Central Transit Center ", lat: 45.50287, lon: -122.42659, times: ["4:04 AM", "4:34 AM", "4:49 AM", "5:05 AM", "5:18 AM", "5:33 AM", "5:48 AM", "6:03 AM"] },
   { stop_id: "7605", name: "NE 5th &amp; Hood", lat: 45.501069, lon: -122.4278, times: ["4:04 AM", "4:34 AM", "4:49 AM", "5:05 AM", "5:18 AM", "5:33 AM", "5:48 AM", "6:03 AM"] },
   { stop_id: "13033", name: "NE Hood &amp; 2nd", lat: 45.498613, lon: -122.427832, times: ["4:05 AM", "4:35 AM", "4:50 AM", "5:06 AM", "5:19 AM", "5:34 AM", "5:49 AM", "6:04 AM"] },

@@ -7,70 +7,82 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
-  padding-top: 120px; /* push content below the fixed banner */
-}
-
-.ad-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: #222;
-  padding: 0.5rem 0;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  text-align: center;
-}
-.ad-banner img {
-  max-width: 970px;
-  width: 100%;
-  height: auto;
-  display: inline-block;
-}
-@media (max-width: 480px) {
-  .ad-banner {
-    padding: 0.25rem 0;
-  }
-}
-body {
+    html, body {
       margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
       overflow-y: auto;
     }
+
+    body {
+      padding-top: 100px;
+    }
+
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0.5rem 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .ad-banner img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
       padding: 1rem;
       text-align: center;
     }
+
     header img {
       max-height: 60px;
     }
-    .ad-banner {
-      text-align: center;
-      margin: 1rem auto;
-      background-color: #222;
-      color: #888;
-      padding: 1rem;
-      border: 2px dashed #4dd0e1;
-      font-size: 0.9rem;
-      border-radius: 8px;
-    }
+
     h1 {
       text-align: center;
       margin: 1rem 0;
       font-size: 2rem;
       color: #f0f0f0;
     }
+
     .content-box {
       border-radius: 12px;
       padding: 0;
       margin: 0;
       background-color: #1e1e1e;
     }
+
     #map {
       width: 100%;
       height: 85vh;
@@ -79,11 +91,13 @@ body {
       display: block;
       border-radius: 8px;
     }
+
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
+
     .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
@@ -95,9 +109,11 @@ body {
       cursor: pointer;
       box-shadow: 0 0 10px #4dd0e1;
     }
+
     .back-button:hover {
       background-color: #35c0d6;
     }
+
     .site-footer {
       text-align: center;
       margin-top: 3rem;
@@ -105,15 +121,18 @@ body {
       font-size: 0.85rem;
       color: #aaa;
     }
+
     .site-footer a {
       color: #00BFFF;
       text-decoration: none;
     }
+
     .site-footer a:hover {
       text-decoration: underline;
     }
   </style>
 </head>
+
 <body>
  
  <div class="ad-banner">
@@ -2029,13 +2048,13 @@ const stops = [
   { stop_id: "13449", name: "Civic Drive MAX Station", lat: 45.508293, lon: -122.441843, times: ["4:42 AM", "5:15 AM", "5:36 AM", "5:59 AM", "6:14 AM", "6:29 AM", "6:45 AM", "6:59 AM"] },
   { stop_id: "8362", name: "Ruby Junction/E 197th Ave MAX Station", lat: 45.516502, lon: -122.461119, times: ["4:07 AM", "4:23 AM", "4:45 AM", "4:56 AM", "5:05 AM", "5:10 AM", "5:17 AM", "5:27 AM"] },
   { stop_id: "8363", name: "Rockwood/E 188th Ave MAX Station", lat: 45.520723, lon: -122.471093, times: ["4:09 AM", "4:25 AM", "4:47 AM", "4:57 AM", "5:06 AM", "5:11 AM", "5:20 AM", "5:28 AM"] },
-  { stop_id: "8364", name: "E 181st Ave MAX Station", lat: 45.522065, lon: -122.478074, times: ["3:45 AM", "4:10 AM", "4:26 AM", "4:48 AM", "4:59 AM", "5:08 AM", "5:13 AM", "5:21 AM"] },
-  { stop_id: "8365", name: "E 172nd Ave MAX Station", lat: 45.52214, lon: -122.48714, times: ["3:47 AM", "4:12 AM", "4:28 AM", "4:50 AM", "5:01 AM", "5:09 AM", "5:15 AM", "5:23 AM"] },
-  { stop_id: "8366", name: "E 162nd Ave MAX Station", lat: 45.522235, lon: -122.497432, times: ["3:49 AM", "4:14 AM", "4:30 AM", "4:52 AM", "5:03 AM", "5:11 AM", "5:16 AM", "5:25 AM"] },
-  { stop_id: "8367", name: "E 148th Ave MAX Station", lat: 45.522344, lon: -122.511614, times: ["3:46 AM", "3:51 AM", "4:16 AM", "4:32 AM", "4:54 AM", "5:05 AM", "5:13 AM", "5:19 AM"] },
-  { stop_id: "8368", name: "E 122nd Ave MAX Station", lat: 45.522556, lon: -122.538704, times: ["3:49 AM", "3:54 AM", "4:19 AM", "4:35 AM", "4:57 AM", "5:08 AM", "5:17 AM", "5:22 AM"] },
-  { stop_id: "8369", name: "E 102nd Ave MAX Station", lat: 45.522691, lon: -122.559244, times: ["3:52 AM", "3:57 AM", "4:22 AM", "4:38 AM", "5:00 AM", "5:11 AM", "5:19 AM", "5:24 AM"] },
-  { stop_id: "8370", name: "Gateway/NE 99th Ave TC MAX Station", lat: 45.530839, lon: -122.563627, times: ["3:55 AM", "4:00 AM", "4:25 AM", "4:41 AM", "5:03 AM", "5:16 AM", "5:23 AM", "5:29 AM"] },
+  { stop_id: "8364", name: "E 181st Ave MAX Station", lat: 45.522065, lon: -122.478074, times: ["4:10 AM", "4:26 AM", "4:48 AM", "4:59 AM", "5:08 AM", "5:13 AM", "5:21 AM", "5:30 AM"] },
+  { stop_id: "8365", name: "E 172nd Ave MAX Station", lat: 45.52214, lon: -122.48714, times: ["4:12 AM", "4:28 AM", "4:50 AM", "5:01 AM", "5:09 AM", "5:15 AM", "5:23 AM", "5:32 AM"] },
+  { stop_id: "8366", name: "E 162nd Ave MAX Station", lat: 45.522235, lon: -122.497432, times: ["4:14 AM", "4:30 AM", "4:52 AM", "5:03 AM", "5:11 AM", "5:16 AM", "5:25 AM", "5:33 AM"] },
+  { stop_id: "8367", name: "E 148th Ave MAX Station", lat: 45.522344, lon: -122.511614, times: ["4:16 AM", "4:32 AM", "4:54 AM", "5:05 AM", "5:13 AM", "5:19 AM", "5:27 AM", "5:36 AM"] },
+  { stop_id: "8368", name: "E 122nd Ave MAX Station", lat: 45.522556, lon: -122.538704, times: ["4:19 AM", "4:35 AM", "4:57 AM", "5:08 AM", "5:17 AM", "5:22 AM", "5:30 AM", "5:39 AM"] },
+  { stop_id: "8369", name: "E 102nd Ave MAX Station", lat: 45.522691, lon: -122.559244, times: ["4:22 AM", "4:38 AM", "5:00 AM", "5:11 AM", "5:19 AM", "5:24 AM", "5:33 AM", "5:41 AM"] },
+  { stop_id: "8370", name: "Gateway/NE 99th Ave TC MAX Station", lat: 45.530839, lon: -122.563627, times: ["4:25 AM", "4:41 AM", "5:03 AM", "5:16 AM", "5:23 AM", "5:29 AM", "5:36 AM", "5:46 AM"] },
   { stop_id: "8371", name: "NE 82nd Ave MAX Station", lat: 45.533478, lon: -122.578437, times: ["4:03 AM", "4:28 AM", "5:06 AM", "5:39 AM", "5:51 AM", "6:00 AM", "6:23 AM", "6:24 AM"] },
   { stop_id: "8372", name: "NE 60th Ave MAX Station", lat: 45.528491, lon: -122.603342, times: ["4:06 AM", "4:31 AM", "5:09 AM", "5:42 AM", "5:54 AM", "6:02 AM", "6:26 AM", "6:27 AM"] },
   { stop_id: "8373", name: "Hollywood/NE 42nd Ave MAX Station", lat: 45.532957, lon: -122.621367, times: ["4:08 AM", "4:33 AM", "5:11 AM", "5:44 AM", "5:56 AM", "6:05 AM", "6:29 AM", "6:29 AM"] },
