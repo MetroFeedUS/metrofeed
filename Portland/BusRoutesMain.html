@@ -6,7 +6,35 @@
   <title>Portland, OR Transit - MetroFeed</title>
  
 <style>
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
+   body {
+  padding-top: 120px; /* push content below the fixed banner */
+}
+
+.ad-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #222;
+  padding: 0.5rem 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  text-align: center;
+}
+.ad-banner img {
+  max-width: 970px;
+  width: 100%;
+  height: auto;
+  display: inline-block;
+}
+@media (max-width: 480px) {
+  .ad-banner {
+    padding: 0.25rem 0;
+  }
+}
+ 
+
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
     header { background-color: #0d0d0d; padding: 1rem; text-align: center; border-bottom: 4px solid #4dd0e1; }
     header img { max-width: 200px; height: auto; }
     main { padding: 2rem 1rem; text-align: center; }
@@ -25,7 +53,7 @@
     .site-footer { text-align: center; margin-top: 2rem; margin-bottom: 120px; font-size: 0.8rem; color: #888; }
     .site-footer a { color: #4dd0e1; text-decoration: none; }
     .site-footer a:hover { text-decoration: underline; }
-    .home-button { position: fixed; top: 10px; left: 10px; background-color: #4dd0e1; color: #0d0d0d; padding: 0.5rem 1rem; font-weight: bold; border-radius: 8px; text-decoration: none; z-index: 1000; box-shadow: 0 0 10px #4dd0e1; }
+    .home-button { position: fixed; top: 130px; left: 10px; background-color: #4dd0e1; color: #0d0d0d; padding: 0.5rem 1rem; font-weight: bold; border-radius: 8px; text-decoration: none; z-index: 1000; box-shadow: 0 0 10px #4dd0e1; }
     .home-button:hover { background-color: #00bcd4; color: #ffffff; }  
 
 
@@ -33,7 +61,14 @@
 </head>
 
 <body>
-  <header>
+  
+ <div class="ad-banner">
+    <a href="advertise.html" target="_blank">
+      <img src="assets/ad-placeholder.png" alt="Advertise Here">
+    </a>
+  </div>
+
+<header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
   </header>
 

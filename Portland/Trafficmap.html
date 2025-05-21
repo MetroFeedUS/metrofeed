@@ -9,7 +9,35 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-  html, body {
+  body {
+  padding-top: 120px; /* push content below the fixed banner */
+}
+
+.ad-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #222;
+  padding: 0.5rem 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  text-align: center;
+}
+.ad-banner img {
+  max-width: 970px;
+  width: 100%;
+  height: auto;
+  display: inline-block;
+}
+@media (max-width: 480px) {
+  .ad-banner {
+    padding: 0.25rem 0;
+  }
+}
+
+
+html, body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', sans-serif;
@@ -85,7 +113,7 @@
   }
   .home-button {
     position: fixed;
-    top: 10px;
+    top: 130px;
     left: 10px;
     background-color: #4dd0e1;
     color: #0d0d0d;
@@ -104,6 +132,12 @@
 
 </head>
 <body>
+
+ <div class="ad-banner">
+    <a href="advertise.html" target="_blank">
+      <img src="assets/ad-placeholder.png" alt="Advertise Here">
+    </a>
+  </div>
 
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
