@@ -1,249 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portland, OR - MetroFeed</title>
- <style>
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #0d0d0d;
-    color: #cccccc;
-  }
-  header {
-    background-color: #0d0d0d;
-    padding: 1rem;
-    text-align: center;
-    border-bottom: 4px solid #4dd0e1;
-  }
-  header img {
-    max-width: 200px;
-    height: auto;
-  }
-  main {
-    padding: 2rem;
-    text-align: center;
-  }
-  .section-link {
-    display: block;
-    margin: 1rem auto;
-    padding: 1.5rem 3rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    background-color: #4dd0e1;
-    color: #0d0d0d;
-    text-decoration: none;
-    border-radius: 12px;
-    box-shadow: 0 0 10px #4dd0e1;
-    transition: transform 0.2s ease-in-out;
-    width: 90%;
-    max-width: 300px;
-  }
-  .section-link:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px #4dd0e1;
-  }
-  .sidebar-ad {
-    position: fixed;
-    right: 10px;
-    bottom: 10px;
-    background-color: #1e1e1e;
-    color: #39ff14;
-    padding: 1rem;
-    font-size: 0.9rem;
-    border: 2px dashed #4dd0e1;
-    border-radius: 8px;
-    width: 160px;
-    text-align: center;
-    z-index: 999;
-  }
-  @media (max-width: 768px) {
-    .sidebar-ad {
-      position: static;
-      margin: 2rem auto 0;
+
+  <style>
+    /* 1) reserve a spot for the fixed banner */
+    body {
+      margin: 0;
+      padding-top: 120px;           /* adjust to banner height */
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
     }
-    .section-link {
-      padding: 1rem 1.5rem;
-      font-size: 1rem;
+
+    /* 2) floating top banner */
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0.5rem 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    .ad-banner img {
+      max-width: 970px;
+      width: 100%;
+      height: auto;
+      display: inline-block;
+    }
+    @media (max-width: 480px) {
+      .ad-banner {
+        padding: 0.25rem 0;
+      }
+    }
+
+    /* --- your existing styles below --- */
+    header {
+      background-color: #0d0d0d;
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 4px solid #4dd0e1;
+    }
+    header img {
+      max-width: 200px;
+      height: auto;
     }
     main {
-      padding: 1rem;
+      padding: 2rem;
+      text-align: center;
     }
-  }
-  .site-footer {
-    text-align: center;
-    margin-top: 2rem;
-    margin-bottom: 120px;
-    font-size: 0.8rem;
-    color: #888;
-  }
-  .site-footer a {
-    color: #4dd0e1;
-    text-decoration: none;
-  }
-  .site-footer a:hover {
-    text-decoration: underline;
-  }
-  #installPrompt {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #1e1e1e;
-    color: #ffffff;
-    padding: 1.5rem;
-    text-align: center;
-    border: 2px solid #4dd0e1;
-    border-radius: 12px;
-    max-width: 90%;
-    width: 320px;
-    z-index: 10000;
-    box-shadow: 0 0 10px #4dd0e1;
-  }
-  #installPrompt button {
-    display: block;
-    margin: 0.5rem auto;
-    padding: 0.6rem 1.2rem;
-    background-color: #4dd0e1;
-    color: #0d0d0d;
-    border: none;
-    border-radius: 6px;
-    font-size: 1rem;
-    cursor: pointer;
-    width: 90%;
-    max-width: 240px;
-  }
+    .section-link {
+      display: block;
+      margin: 1rem auto;
+      padding: 1.5rem 3rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      text-decoration: none;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #4dd0e1;
+      transition: transform 0.2s ease-in-out;
+      width: 90%;
+      max-width: 300px;
+    }
+    .section-link:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #4dd0e1;
+    }
+    .sidebar-ad {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      background-color: #1e1e1e;
+      color: #39ff14;
+      padding: 1rem;
+      font-size: 0.9rem;
+      border: 2px dashed #4dd0e1;
+      border-radius: 8px;
+      width: 160px;
+      text-align: center;
+      z-index: 999;
+    }
+    @media (max-width: 768px) {
+      .sidebar-ad {
+        position: static;
+        margin: 2rem auto 0;
+      }
+      .section-link {
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+      }
+      main {
+        padding: 1rem;
+      }
+    }
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+    #installPrompt {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1e1e1e;
+      color: #fff;
+      padding: 1.5rem;
+      text-align: center;
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      max-width: 90%;
+      width: 320px;
+      z-index: 10000;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+    #installPrompt button {
+      display: block;
+      margin: 0.5rem auto;
+      padding: 0.6rem 1.2rem;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 90%;
+      max-width: 240px;
+    }
     .home-button {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background-color: #4dd0e1;
-    color: #0d0d0d;
-    padding: 0.5rem 1rem;
-    font-weight: bold;
-    border-radius: 8px;
-    text-decoration: none;
-    z-index: 1000;
-    box-shadow: 0 0 10px #4dd0e1;
-  }
-  .home-button:hover {
-    background-color: #00bcd4;
-    color: #ffffff;
-  }
-<style>
-  body {
-    padding-bottom: 100px;
-  }
-</style>
-
-</style>
-
-</style>
-
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1000;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #fff;
+    }
+  </style>
 </head>
+
 <body>
- <div id="installPrompt">
+  <!-- 3) Floating banner at top -->
+  <div class="ad-banner">
+    <a href="advertise.html" target="_blank">
+      <img src="assets/ad-placeholder.png" alt="Advertise Here">
+    </a>
+  </div>
+
+  <div id="installPrompt">
     <strong>📲 Add MetroFeed Portland to your home screen</strong><br>
-    <small>Use MetroFeed like an app for faster access!</small>
-    <br><br>
-
-    <a href="AndroidInstructions.html">
-        <button>Android Instructions</button>
-    </a>
-
-    <a href="AppleInstructions.html">
-        <button>Apple Instructions</button>
-    </a>
-
+    <small>Use MetroFeed like an app for faster access!</small><br><br>
+    <a href="AndroidInstructions.html"><button>Android Instructions</button></a>
+    <a href="AppleInstructions.html"><button>Apple Instructions</button></a>
     <button onclick="document.getElementById('installPrompt').style.display='none'">Later</button>
-</div>
-
-
-<div class="ad-banner" style="
-     text-align: center;
-     margin: 2rem auto;
-     padding: 1rem;
-     background: #222;
-     border: 2px dashed #4dd0e1;
-     border-radius: 8px;
-     max-width: 728px;
-">
-  <a href="advertise.html" target="_blank">
-    <img 
-      src="assets/ad-placeholder.png" 
-      alt="Advertise here" 
-      style="width:100%; height:auto;"
-    >
-  </a>
-</div>
-
+  </div>
 
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
   </header>
 
-<a href="../index.html" class="home-button">🌐</a>
+  <a href="../index.html" class="home-button">🌐</a>
 
-<div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+  <div class="disclaimer" style="margin:1rem auto 0.5rem;max-width:600px;font-size:0.8rem;color:#bbb;text-align:center;padding:0.5rem 1rem;background:#111;border:1px dashed #444;border-radius:6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
 
- <main>
-  <h2>Portland, OR Dashboard</h2>
-  <a href="BusRoutesMain.html" class="section-link">Bus Routes</a>
-  <a href="railroutes.html" class="section-link">Rail Routes</a>
-  <a href="Trafficmap.html" class="section-link">Traffic Map</a>
-  <a href="TrafficCameras.html" class="section-link">Traffic Cams</a>
-  <a href="portlandweather.html" class="section-link">Weather</a>
-  <a href="portland-earthquake.html" class="section-link">Earthquakes</a>
-  <div style="height: 2rem;"></div>
-</main>
+  <main>
+    <h2>Portland, OR Dashboard</h2>
+    <a href="BusRoutesMain.html" class="section-link">Bus Routes</a>
+    <a href="railroutes.html" class="section-link">Rail Routes</a>
+    <a href="Trafficmap.html" class="section-link">Traffic Map</a>
+    <a href="TrafficCameras.html" class="section-link">Traffic Cams</a>
+    <a href="portlandweather.html" class="section-link">Weather</a>
+    <a href="portland-earthquake.html" class="section-link">Earthquakes</a>
+    <div style="height:2rem;"></div>
+  </main>
 
   <script>
-
- // Show install banner every 3 days if not already installed
+    // Show install banner every 3 days
     const daysBetweenPrompts = 3;
     const lastPrompt = localStorage.getItem('lastInstallPrompt');
     const now = Date.now();
-    if (!window.matchMedia('(display-mode: standalone)').matches && (!lastPrompt || now - parseInt(lastPrompt) > daysBetweenPrompts * 24 * 60 * 60 * 1000)) {
+    if (!window.matchMedia('(display-mode: standalone)').matches
+        && (!lastPrompt || now - parseInt(lastPrompt) > daysBetweenPrompts * 86400000)) {
       window.addEventListener('load', () => {
         document.getElementById('installPrompt').style.display = 'block';
         localStorage.setItem('lastInstallPrompt', now.toString());
       });
     }
   </script>
- <!-- Footer -->
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
 
-<div id="cookie-banner" style="display:none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-  📢 We use cookies to improve functionality and analyze traffic.
-  By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.<br>
-  <button onclick="acceptCookies()" style="margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
+  <!-- Footer -->
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<script>
-  function acceptCookies() {
-    localStorage.setItem("cookieConsent", "true");
-    document.getElementById("cookie-banner").style.display = "none";
-  }
+  <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#333;color:#fff;padding:1rem;z-index:1000;font-size:0.9rem;line-height:1.4;text-align:center;">
+    📢 We use cookies to improve functionality and analyze traffic.
+    By using MetroFeed, you agree to our 
+    <a href="privacy.html" style="color:#4dd0e1;text-decoration:underline;">Privacy Policy</a>.<br>
+    <button onclick="acceptCookies()" style="margin-top:0.5rem;background:#4dd0e1;color:#000;border:none;padding:0.5rem 1rem;border-radius:5px;cursor:pointer;font-weight:bold;">OK</button>
+  </div>
 
-  window.onload = function () {
-    if (!localStorage.getItem("cookieConsent")) {
-      const banner = document.getElementById("cookie-banner");
-      if (banner) banner.style.display = "block";
+  <script>
+    function acceptCookies() {
+      localStorage.setItem("cookieConsent", "true");
+      document.getElementById("cookie-banner").style.display = "none";
     }
-  };
-</script>
-
+    window.onload = () => {
+      if (!localStorage.getItem("cookieConsent")) {
+        document.getElementById("cookie-banner").style.display = "block";
+      }
+    };
+  </script>
 </body>
 </html>
