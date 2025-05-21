@@ -135,9 +135,11 @@
 
 @media (max-width: 600px) {
   .ad-banner img {
-    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+    transform: scaleY(1.3);
+    transform-origin: top;
   }
 }
+
 
   </style>
 </head>
@@ -1178,7 +1180,7 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "14019", name: "Clackamas Community College", lat: 45.322016, lon: -122.575339, times: ["6:39 AM", "7:33 AM", "8:08 AM", "8:38 AM", "9:40 AM", "10:43 AM", "11:35 AM", "12:42 PM"] },
+  { stop_id: "14019", name: "Clackamas Community College", lat: 45.322016, lon: -122.575339, times: ["7:33 AM", "8:08 AM", "8:38 AM", "9:40 AM", "10:43 AM", "11:35 AM", "12:42 PM", "1:38 PM"] },
   { stop_id: "14169", name: "Meyers Rd &amp; High School Ave", lat: 45.318708, lon: -122.567026, times: ["6:41 AM", "7:35 AM", "8:10 AM", "8:40 AM", "9:42 AM", "10:45 AM", "11:37 AM", "12:44 PM"] },
   { stop_id: "14170", name: "Meyers Rd &amp; Sophia Ct", lat: 45.318713, lon: -122.560059, times: ["6:42 AM", "7:36 AM", "8:11 AM", "8:41 AM", "9:43 AM", "10:46 AM", "11:38 AM", "12:45 PM"] },
   { stop_id: "14421", name: "Beavercreek &amp; Clairmont Dr", lat: 45.327038, lon: -122.566574, times: ["6:44 AM", "7:38 AM", "8:13 AM", "8:43 AM", "9:45 AM", "10:48 AM", "11:41 AM", "12:48 PM"] },
@@ -1194,34 +1196,34 @@ const stops = [
   { stop_id: "3983", name: "Molalla &amp; Hilda", lat: 45.342578, lon: -122.595118, times: ["6:50 AM", "7:44 AM", "8:19 AM", "8:49 AM", "9:51 AM", "10:54 AM", "11:47 AM", "12:54 PM"] },
   { stop_id: "11932", name: "Molalla &amp; Mountain View", lat: 45.343837, lon: -122.596085, times: ["6:50 AM", "7:45 AM", "8:20 AM", "8:50 AM", "9:52 AM", "10:55 AM", "11:47 AM", "12:54 PM"] },
   { stop_id: "11482", name: "500 Block Molalla", lat: 45.346735, lon: -122.596555, times: ["6:51 AM", "7:45 AM", "8:20 AM", "8:50 AM", "9:52 AM", "10:55 AM", "11:48 AM", "12:55 PM"] },
-  { stop_id: "3990", name: "Molalla &amp; Pearl", lat: 45.348734, lon: -122.596559, times: ["6:19 AM", "6:51 AM", "7:46 AM", "8:21 AM", "8:51 AM", "9:53 AM", "10:56 AM", "11:49 AM"] },
-  { stop_id: "3994", name: "Molalla &amp; Willamette", lat: 45.350731, lon: -122.596604, times: ["6:19 AM", "6:51 AM", "7:46 AM", "8:21 AM", "8:51 AM", "9:53 AM", "10:56 AM", "11:49 AM"] },
-  { stop_id: "1323", name: "Division &amp; Buchanan", lat: 45.351632, lon: -122.594258, times: ["6:20 AM", "6:52 AM", "7:47 AM", "8:22 AM", "8:52 AM", "9:54 AM", "10:57 AM", "11:50 AM"] },
-  { stop_id: "1351", name: "Division &amp; Selma", lat: 45.35159, lon: -122.591213, times: ["6:20 AM", "6:52 AM", "7:47 AM", "8:22 AM", "8:52 AM", "9:54 AM", "10:57 AM", "11:50 AM"] },
-  { stop_id: "1343", name: "Division &amp; Morton", lat: 45.352719, lon: -122.588305, times: ["6:21 AM", "6:53 AM", "7:48 AM", "8:23 AM", "8:53 AM", "9:55 AM", "10:58 AM", "11:51 AM"] },
-  { stop_id: "1385", name: "Division &amp; 13th", lat: 45.354517, lon: -122.588305, times: ["6:21 AM", "6:53 AM", "7:48 AM", "8:23 AM", "8:53 AM", "9:55 AM", "10:58 AM", "11:51 AM"] },
-  { stop_id: "1404", name: "Division &amp; 15th", lat: 45.356193, lon: -122.588276, times: ["6:22 AM", "6:54 AM", "7:49 AM", "8:24 AM", "8:54 AM", "9:56 AM", "10:59 AM", "11:52 AM"] },
-  { stop_id: "6841", name: "16th &amp; Taylor", lat: 45.358718, lon: -122.589948, times: ["6:23 AM", "6:55 AM", "7:50 AM", "8:25 AM", "8:55 AM", "9:57 AM", "11:00 AM", "11:53 AM"] },
-  { stop_id: "6835", name: "16th &amp; Harrison", lat: 45.359463, lon: -122.591444, times: ["6:23 AM", "6:55 AM", "7:50 AM", "8:25 AM", "8:55 AM", "9:57 AM", "11:00 AM", "11:53 AM"] },
-  { stop_id: "6837", name: "16th &amp; Jackson", lat: 45.360332, lon: -122.59316, times: ["6:24 AM", "6:56 AM", "7:51 AM", "8:26 AM", "8:56 AM", "9:58 AM", "11:01 AM", "11:54 AM"] },
-  { stop_id: "3024", name: "Jackson &amp; 15th", lat: 45.359446, lon: -122.594285, times: ["6:24 AM", "6:56 AM", "7:51 AM", "8:26 AM", "8:56 AM", "9:58 AM", "11:01 AM", "11:54 AM"] },
-  { stop_id: "3020", name: "Jackson &amp; 12th", lat: 45.357466, lon: -122.596304, times: ["6:25 AM", "6:57 AM", "7:52 AM", "8:27 AM", "8:57 AM", "9:59 AM", "11:02 AM", "11:55 AM"] },
-  { stop_id: "8509", name: "Jackson &amp; 9th", lat: 45.35537, lon: -122.598374, times: ["6:26 AM", "6:58 AM", "7:53 AM", "8:28 AM", "8:58 AM", "10:00 AM", "11:03 AM", "11:56 AM"] },
-  { stop_id: "8098", name: "9th &amp; Monroe", lat: 45.356115, lon: -122.599949, times: ["6:26 AM", "6:58 AM", "7:53 AM", "8:28 AM", "8:58 AM", "10:00 AM", "11:03 AM", "11:56 AM"] },
-  { stop_id: "8094", name: "9th &amp; Jefferson", lat: 45.357, lon: -122.60169, times: ["6:27 AM", "6:59 AM", "7:54 AM", "8:29 AM", "8:59 AM", "10:01 AM", "11:04 AM", "11:57 AM"] },
-  { stop_id: "8100", name: "9th &amp; Washington", lat: 45.35785, lon: -122.603401, times: ["6:27 AM", "6:59 AM", "7:54 AM", "8:29 AM", "8:59 AM", "10:01 AM", "11:04 AM", "11:57 AM"] },
-  { stop_id: "8759", name: "Oregon City Transit Center", lat: 45.360143, lon: -122.604394, times: ["6:30 AM", "7:02 AM", "7:57 AM", "8:32 AM", "9:02 AM", "10:04 AM", "11:07 AM", "12:00 PM"] },
-  { stop_id: "3842", name: "McLoughlin &amp; Oregon City Shopping Center", lat: 45.368845, lon: -122.600901, times: ["6:32 AM", "7:04 AM", "7:59 AM", "8:34 AM", "9:04 AM", "10:06 AM", "11:09 AM", "12:02 PM"] },
-  { stop_id: "121", name: "W Arlington &amp; Barton", lat: 45.376432, lon: -122.598823, times: ["6:34 AM", "7:06 AM", "8:01 AM", "8:36 AM", "9:06 AM", "10:08 AM", "11:11 AM", "12:04 PM"] },
-  { stop_id: "123", name: "W Arlington &amp; Beatrice", lat: 45.377061, lon: -122.596965, times: ["6:35 AM", "7:07 AM", "8:02 AM", "8:37 AM", "9:07 AM", "10:09 AM", "11:12 AM", "12:05 PM"] },
-  { stop_id: "125", name: "W Arlington &amp; Bellevue", lat: 45.3777, lon: -122.595057, times: ["6:35 AM", "7:07 AM", "8:02 AM", "8:37 AM", "9:07 AM", "10:09 AM", "11:12 AM", "12:05 PM"] },
-  { stop_id: "136", name: "W Arlington &amp; Portland Ave", lat: 45.378217, lon: -122.593418, times: ["6:36 AM", "7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM"] },
-  { stop_id: "14569", name: "200 Block E Arlington", lat: 45.379067, lon: -122.59088, times: ["6:36 AM", "7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM"] },
-  { stop_id: "131", name: "E Arlington &amp; Cornell", lat: 45.380385, lon: -122.586848, times: ["6:36 AM", "7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM"] },
-  { stop_id: "140", name: "E Arlington &amp; 82nd Dr", lat: 45.381391, lon: -122.583812, times: ["6:37 AM", "7:09 AM", "8:04 AM", "8:39 AM", "9:09 AM", "10:11 AM", "11:14 AM", "12:07 PM"] },
-  { stop_id: "10700", name: "Oatfield &amp; E Exeter", lat: 45.384309, lon: -122.583907, times: ["6:37 AM", "7:09 AM", "8:04 AM", "8:39 AM", "9:09 AM", "10:11 AM", "11:14 AM", "12:07 PM"] },
-  { stop_id: "13252", name: "Oatfield &amp; E Hereford", lat: 45.386466, lon: -122.58497, times: ["6:38 AM", "7:10 AM", "8:05 AM", "8:40 AM", "9:10 AM", "10:12 AM", "11:15 AM", "12:08 PM"] },
-  { stop_id: "13458", name: "Oatfield &amp; Webster", lat: 45.388165, lon: -122.586235, times: ["6:38 AM", "7:10 AM", "8:05 AM", "8:40 AM", "9:10 AM", "10:12 AM", "11:15 AM", "12:08 PM"] },
+  { stop_id: "3990", name: "Molalla &amp; Pearl", lat: 45.348734, lon: -122.596559, times: ["6:51 AM", "7:46 AM", "8:21 AM", "8:51 AM", "9:53 AM", "10:56 AM", "11:49 AM", "12:56 PM"] },
+  { stop_id: "3994", name: "Molalla &amp; Willamette", lat: 45.350731, lon: -122.596604, times: ["6:51 AM", "7:46 AM", "8:21 AM", "8:51 AM", "9:53 AM", "10:56 AM", "11:49 AM", "12:56 PM"] },
+  { stop_id: "1323", name: "Division &amp; Buchanan", lat: 45.351632, lon: -122.594258, times: ["6:52 AM", "7:47 AM", "8:22 AM", "8:52 AM", "9:54 AM", "10:57 AM", "11:50 AM", "12:57 PM"] },
+  { stop_id: "1351", name: "Division &amp; Selma", lat: 45.35159, lon: -122.591213, times: ["6:52 AM", "7:47 AM", "8:22 AM", "8:52 AM", "9:54 AM", "10:57 AM", "11:50 AM", "12:57 PM"] },
+  { stop_id: "1343", name: "Division &amp; Morton", lat: 45.352719, lon: -122.588305, times: ["6:53 AM", "7:48 AM", "8:23 AM", "8:53 AM", "9:55 AM", "10:58 AM", "11:51 AM", "12:58 PM"] },
+  { stop_id: "1385", name: "Division &amp; 13th", lat: 45.354517, lon: -122.588305, times: ["6:53 AM", "7:48 AM", "8:23 AM", "8:53 AM", "9:55 AM", "10:58 AM", "11:51 AM", "12:58 PM"] },
+  { stop_id: "1404", name: "Division &amp; 15th", lat: 45.356193, lon: -122.588276, times: ["6:54 AM", "7:49 AM", "8:24 AM", "8:54 AM", "9:56 AM", "10:59 AM", "11:52 AM", "12:59 PM"] },
+  { stop_id: "6841", name: "16th &amp; Taylor", lat: 45.358718, lon: -122.589948, times: ["6:55 AM", "7:50 AM", "8:25 AM", "8:55 AM", "9:57 AM", "11:00 AM", "11:53 AM", "1:00 PM"] },
+  { stop_id: "6835", name: "16th &amp; Harrison", lat: 45.359463, lon: -122.591444, times: ["6:55 AM", "7:50 AM", "8:25 AM", "8:55 AM", "9:57 AM", "11:00 AM", "11:53 AM", "1:00 PM"] },
+  { stop_id: "6837", name: "16th &amp; Jackson", lat: 45.360332, lon: -122.59316, times: ["6:56 AM", "7:51 AM", "8:26 AM", "8:56 AM", "9:58 AM", "11:01 AM", "11:54 AM", "1:01 PM"] },
+  { stop_id: "3024", name: "Jackson &amp; 15th", lat: 45.359446, lon: -122.594285, times: ["6:56 AM", "7:51 AM", "8:26 AM", "8:56 AM", "9:58 AM", "11:01 AM", "11:54 AM", "1:01 PM"] },
+  { stop_id: "3020", name: "Jackson &amp; 12th", lat: 45.357466, lon: -122.596304, times: ["6:57 AM", "7:52 AM", "8:27 AM", "8:57 AM", "9:59 AM", "11:02 AM", "11:55 AM", "1:02 PM"] },
+  { stop_id: "8509", name: "Jackson &amp; 9th", lat: 45.35537, lon: -122.598374, times: ["6:58 AM", "7:53 AM", "8:28 AM", "8:58 AM", "10:00 AM", "11:03 AM", "11:56 AM", "1:03 PM"] },
+  { stop_id: "8098", name: "9th &amp; Monroe", lat: 45.356115, lon: -122.599949, times: ["6:58 AM", "7:53 AM", "8:28 AM", "8:58 AM", "10:00 AM", "11:03 AM", "11:56 AM", "1:03 PM"] },
+  { stop_id: "8094", name: "9th &amp; Jefferson", lat: 45.357, lon: -122.60169, times: ["6:59 AM", "7:54 AM", "8:29 AM", "8:59 AM", "10:01 AM", "11:04 AM", "11:57 AM", "1:04 PM"] },
+  { stop_id: "8100", name: "9th &amp; Washington", lat: 45.35785, lon: -122.603401, times: ["6:59 AM", "7:54 AM", "8:29 AM", "8:59 AM", "10:01 AM", "11:04 AM", "11:57 AM", "1:04 PM"] },
+  { stop_id: "8759", name: "Oregon City Transit Center", lat: 45.360143, lon: -122.604394, times: ["7:02 AM", "7:57 AM", "8:32 AM", "9:02 AM", "10:04 AM", "11:07 AM", "12:00 PM", "1:07 PM"] },
+  { stop_id: "3842", name: "McLoughlin &amp; Oregon City Shopping Center", lat: 45.368845, lon: -122.600901, times: ["7:04 AM", "7:59 AM", "8:34 AM", "9:04 AM", "10:06 AM", "11:09 AM", "12:02 PM", "1:09 PM"] },
+  { stop_id: "121", name: "W Arlington &amp; Barton", lat: 45.376432, lon: -122.598823, times: ["7:06 AM", "8:01 AM", "8:36 AM", "9:06 AM", "10:08 AM", "11:11 AM", "12:04 PM", "1:11 PM"] },
+  { stop_id: "123", name: "W Arlington &amp; Beatrice", lat: 45.377061, lon: -122.596965, times: ["7:07 AM", "8:02 AM", "8:37 AM", "9:07 AM", "10:09 AM", "11:12 AM", "12:05 PM", "1:12 PM"] },
+  { stop_id: "125", name: "W Arlington &amp; Bellevue", lat: 45.3777, lon: -122.595057, times: ["7:07 AM", "8:02 AM", "8:37 AM", "9:07 AM", "10:09 AM", "11:12 AM", "12:05 PM", "1:12 PM"] },
+  { stop_id: "136", name: "W Arlington &amp; Portland Ave", lat: 45.378217, lon: -122.593418, times: ["7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM", "1:13 PM"] },
+  { stop_id: "14569", name: "200 Block E Arlington", lat: 45.379067, lon: -122.59088, times: ["7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM", "1:13 PM"] },
+  { stop_id: "131", name: "E Arlington &amp; Cornell", lat: 45.380385, lon: -122.586848, times: ["7:08 AM", "8:03 AM", "8:38 AM", "9:08 AM", "10:10 AM", "11:13 AM", "12:06 PM", "1:13 PM"] },
+  { stop_id: "140", name: "E Arlington &amp; 82nd Dr", lat: 45.381391, lon: -122.583812, times: ["7:09 AM", "8:04 AM", "8:39 AM", "9:09 AM", "10:11 AM", "11:14 AM", "12:07 PM", "1:14 PM"] },
+  { stop_id: "10700", name: "Oatfield &amp; E Exeter", lat: 45.384309, lon: -122.583907, times: ["7:09 AM", "8:04 AM", "8:39 AM", "9:09 AM", "10:11 AM", "11:14 AM", "12:07 PM", "1:14 PM"] },
+  { stop_id: "13252", name: "Oatfield &amp; E Hereford", lat: 45.386466, lon: -122.58497, times: ["7:10 AM", "8:05 AM", "8:40 AM", "9:10 AM", "10:12 AM", "11:15 AM", "12:08 PM", "1:15 PM"] },
+  { stop_id: "13458", name: "Oatfield &amp; Webster", lat: 45.388165, lon: -122.586235, times: ["7:10 AM", "8:05 AM", "8:40 AM", "9:10 AM", "10:12 AM", "11:15 AM", "12:08 PM", "1:15 PM"] },
   { stop_id: "4145", name: "Oatfield &amp; Stone Oaks Ct", lat: 45.390223, lon: -122.588432, times: ["6:39 AM", "7:11 AM", "8:06 AM", "8:41 AM", "9:11 AM", "10:13 AM", "11:16 AM", "12:09 PM"] },
   { stop_id: "4191", name: "Oatfield &amp; Ridgegate", lat: 45.39222, lon: -122.590763, times: ["6:39 AM", "7:11 AM", "8:06 AM", "8:41 AM", "9:11 AM", "10:13 AM", "11:16 AM", "12:09 PM"] },
   { stop_id: "4187", name: "Oatfield &amp; Park Way", lat: 45.393895, lon: -122.594257, times: ["6:40 AM", "7:12 AM", "8:07 AM", "8:42 AM", "9:12 AM", "10:14 AM", "11:17 AM", "12:10 PM"] },

@@ -135,9 +135,11 @@
 
 @media (max-width: 600px) {
   .ad-banner img {
-    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+    transform: scaleY(1.3);
+    transform-origin: top;
   }
 }
+
 
   </style>
 </head>
@@ -1596,12 +1598,12 @@ const stopNames = {
 
 const stops = [
   { stop_id: "8951", name: "SW 49th &amp; PCC Sylvania Entrance", lat: 45.439908, lon: -122.727261, times: ["4:53 AM", "5:51 AM"] },
-  { stop_id: "7579", name: "SW 49th &amp; Hidalgo", lat: 45.439958, lon: -122.726933, times: ["6:35 AM", "7:24 AM", "7:55 AM", "8:13 AM", "8:59 AM", "9:33 AM", "10:08 AM", "10:42 AM"] },
-  { stop_id: "7578", name: "SW 49th &amp; Coronado", lat: 45.44245, lon: -122.726944, times: ["6:35 AM", "7:24 AM", "7:56 AM", "8:13 AM", "8:59 AM", "9:33 AM", "10:08 AM", "10:42 AM"] },
-  { stop_id: "952", name: "SW Capitol &amp; Pomona", lat: 45.445688, lon: -122.726293, times: ["6:36 AM", "7:25 AM", "7:57 AM", "8:14 AM", "9:00 AM", "9:34 AM", "10:09 AM", "10:43 AM"] },
-  { stop_id: "932", name: "SW Capitol &amp; Dickinson", lat: 45.447706, lon: -122.724976, times: ["6:37 AM", "7:26 AM", "7:58 AM", "8:15 AM", "9:01 AM", "9:35 AM", "10:10 AM", "10:44 AM"] },
-  { stop_id: "937", name: "SW Capitol &amp; Galeburn", lat: 45.449205, lon: -122.724093, times: ["6:37 AM", "7:26 AM", "7:58 AM", "8:15 AM", "9:01 AM", "9:35 AM", "10:10 AM", "10:44 AM"] },
-  { stop_id: "923", name: "SW Capitol &amp; Barbur", lat: 45.452927, lon: -122.721441, times: ["6:38 AM", "7:27 AM", "8:00 AM", "8:16 AM", "9:02 AM", "9:36 AM", "10:11 AM", "10:45 AM"] },
+  { stop_id: "7579", name: "SW 49th &amp; Hidalgo", lat: 45.439958, lon: -122.726933, times: ["7:24 AM", "7:55 AM", "8:13 AM", "8:59 AM", "9:33 AM", "10:08 AM", "10:42 AM", "11:16 AM"] },
+  { stop_id: "7578", name: "SW 49th &amp; Coronado", lat: 45.44245, lon: -122.726944, times: ["7:24 AM", "7:56 AM", "8:13 AM", "8:59 AM", "9:33 AM", "10:08 AM", "10:42 AM", "11:16 AM"] },
+  { stop_id: "952", name: "SW Capitol &amp; Pomona", lat: 45.445688, lon: -122.726293, times: ["7:25 AM", "7:57 AM", "8:14 AM", "9:00 AM", "9:34 AM", "10:09 AM", "10:43 AM", "11:17 AM"] },
+  { stop_id: "932", name: "SW Capitol &amp; Dickinson", lat: 45.447706, lon: -122.724976, times: ["7:26 AM", "7:58 AM", "8:15 AM", "9:01 AM", "9:35 AM", "10:10 AM", "10:44 AM", "11:18 AM"] },
+  { stop_id: "937", name: "SW Capitol &amp; Galeburn", lat: 45.449205, lon: -122.724093, times: ["7:26 AM", "7:58 AM", "8:15 AM", "9:01 AM", "9:35 AM", "10:10 AM", "10:44 AM", "11:18 AM"] },
+  { stop_id: "923", name: "SW Capitol &amp; Barbur", lat: 45.452927, lon: -122.721441, times: ["7:27 AM", "8:00 AM", "8:16 AM", "9:02 AM", "9:36 AM", "10:11 AM", "10:45 AM", "11:19 AM"] },
   { stop_id: "10935", name: "SW Capitol &amp; Taylors Ferry", lat: 45.454952, lon: -122.720121, times: ["6:39 AM", "7:28 AM", "8:00 AM", "8:17 AM", "9:03 AM", "9:37 AM", "10:12 AM", "10:46 AM"] },
   { stop_id: "922", name: "SW Capitol &amp; Alice", lat: 45.458495, lon: -122.718951, times: ["6:40 AM", "7:29 AM", "8:02 AM", "8:18 AM", "9:04 AM", "9:38 AM", "10:13 AM", "10:47 AM"] },
   { stop_id: "934", name: "SW Capitol &amp; Dolph Ct/41st", lat: 45.461732, lon: -122.719029, times: ["6:40 AM", "7:29 AM", "8:03 AM", "8:18 AM", "9:04 AM", "9:38 AM", "10:13 AM", "10:47 AM"] },
@@ -1627,22 +1629,22 @@ const stops = [
   { stop_id: "12763", name: "SW 4th &amp; Hall", lat: 45.509479, lon: -122.681344, times: ["6:58 AM", "7:48 AM", "8:24 AM", "8:38 AM", "9:23 AM", "9:57 AM", "10:32 AM", "11:06 AM"] },
   { stop_id: "7772", name: "SW 6th &amp; Market", lat: 45.512943, lon: -122.681811, times: ["7:00 AM", "7:50 AM", "8:26 AM", "8:40 AM", "9:26 AM", "10:00 AM", "10:35 AM", "11:09 AM"] },
   { stop_id: "11486", name: "SW 6th &amp; Columbia", lat: 45.514267, lon: -122.681095, times: ["7:01 AM", "7:51 AM", "8:27 AM", "8:41 AM", "9:26 AM", "10:00 AM", "10:35 AM", "11:09 AM"] },
-  { stop_id: "7789", name: "SW 6th &amp; Salmon", lat: 45.516934, lon: -122.679687, times: ["6:20 AM", "7:03 AM", "7:53 AM", "8:29 AM", "8:43 AM", "9:28 AM", "10:02 AM", "10:37 AM"] },
-  { stop_id: "7803", name: "SW 6th &amp; Washington", lat: 45.520244, lon: -122.677859, times: ["6:22 AM", "7:05 AM", "7:55 AM", "8:31 AM", "8:45 AM", "9:31 AM", "10:05 AM", "10:40 AM"] },
-  { stop_id: "7751", name: "SW 6th &amp; W Burnside", lat: 45.52288, lon: -122.676415, times: ["6:23 AM", "7:06 AM", "7:57 AM", "8:33 AM", "8:47 AM", "9:33 AM", "10:07 AM", "10:42 AM"] },
-  { stop_id: "8886", name: "NW Everett &amp; 5th", lat: 45.525182, lon: -122.675622, times: ["6:25 AM", "7:08 AM", "7:59 AM", "8:49 AM", "9:35 AM", "10:09 AM", "10:44 AM", "11:18 AM"] },
-  { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["6:27 AM", "7:10 AM", "8:01 AM", "8:51 AM", "9:37 AM", "10:11 AM", "10:46 AM", "11:20 AM"] },
-  { stop_id: "1097", name: "Rose Quarter Transit Center", lat: 45.530669, lon: -122.665646, times: ["6:31 AM", "7:14 AM", "8:05 AM", "8:55 AM", "9:41 AM", "10:15 AM", "10:50 AM", "11:24 AM"] },
-  { stop_id: "11480", name: "N Williams &amp; NE Weidler", lat: 45.534238, lon: -122.666586, times: ["6:32 AM", "7:15 AM", "8:06 AM", "8:56 AM", "9:42 AM", "10:16 AM", "10:51 AM", "11:25 AM"] },
-  { stop_id: "6357", name: "N Williams &amp; NE Broadway", lat: 45.535809, lon: -122.666638, times: ["6:32 AM", "7:15 AM", "8:06 AM", "8:56 AM", "9:42 AM", "10:16 AM", "10:51 AM", "11:25 AM"] },
-  { stop_id: "6370", name: "N Williams &amp; NE Tillamook", lat: 45.538333, lon: -122.666614, times: ["6:33 AM", "7:16 AM", "8:07 AM", "8:57 AM", "9:43 AM", "10:17 AM", "10:52 AM", "11:26 AM"] },
-  { stop_id: "6354", name: "N Williams &amp; NE Russell", lat: 45.541358, lon: -122.666587, times: ["6:34 AM", "7:17 AM", "8:08 AM", "8:58 AM", "9:44 AM", "10:18 AM", "10:53 AM", "11:27 AM"] },
-  { stop_id: "6362", name: "N Williams &amp; NE Graham", lat: 45.542733, lon: -122.666571, times: ["6:35 AM", "7:18 AM", "8:09 AM", "8:59 AM", "9:45 AM", "10:19 AM", "10:54 AM", "11:28 AM"] },
-  { stop_id: "6364", name: "N Williams &amp; NE Morris", lat: 45.544439, lon: -122.666542, times: ["6:36 AM", "7:19 AM", "8:10 AM", "9:00 AM", "9:46 AM", "10:20 AM", "10:55 AM", "11:29 AM"] },
-  { stop_id: "6359", name: "N Williams &amp; NE Cook", lat: 45.546972, lon: -122.666597, times: ["6:36 AM", "7:19 AM", "8:10 AM", "9:00 AM", "9:46 AM", "10:20 AM", "10:55 AM", "11:29 AM"] },
-  { stop_id: "6360", name: "N Williams &amp; NE Fremont", lat: 45.548509, lon: -122.666586, times: ["6:37 AM", "7:20 AM", "8:11 AM", "9:01 AM", "9:47 AM", "10:21 AM", "10:56 AM", "11:30 AM"] },
-  { stop_id: "6366", name: "N Williams &amp; NE Shaver", lat: 45.551939, lon: -122.666617, times: ["6:38 AM", "7:21 AM", "8:12 AM", "9:02 AM", "9:48 AM", "10:22 AM", "10:57 AM", "11:31 AM"] },
-  { stop_id: "6367", name: "N Williams &amp; NE Skidmore", lat: 45.554491, lon: -122.666645, times: ["6:38 AM", "7:21 AM", "8:12 AM", "9:03 AM", "9:49 AM", "10:23 AM", "10:58 AM", "11:32 AM"] },
+  { stop_id: "7789", name: "SW 6th &amp; Salmon", lat: 45.516934, lon: -122.679687, times: ["7:03 AM", "7:53 AM", "8:29 AM", "8:43 AM", "9:28 AM", "10:02 AM", "10:37 AM", "11:11 AM"] },
+  { stop_id: "7803", name: "SW 6th &amp; Washington", lat: 45.520244, lon: -122.677859, times: ["7:05 AM", "7:55 AM", "8:31 AM", "8:45 AM", "9:31 AM", "10:05 AM", "10:40 AM", "11:14 AM"] },
+  { stop_id: "7751", name: "SW 6th &amp; W Burnside", lat: 45.52288, lon: -122.676415, times: ["7:06 AM", "7:57 AM", "8:33 AM", "8:47 AM", "9:33 AM", "10:07 AM", "10:42 AM", "11:16 AM"] },
+  { stop_id: "8886", name: "NW Everett &amp; 5th", lat: 45.525182, lon: -122.675622, times: ["7:08 AM", "7:59 AM", "8:49 AM", "9:35 AM", "10:09 AM", "10:44 AM", "11:18 AM", "11:52 AM"] },
+  { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["7:10 AM", "8:01 AM", "8:51 AM", "9:37 AM", "10:11 AM", "10:46 AM", "11:20 AM", "11:54 AM"] },
+  { stop_id: "1097", name: "Rose Quarter Transit Center", lat: 45.530669, lon: -122.665646, times: ["7:14 AM", "8:05 AM", "8:55 AM", "9:41 AM", "10:15 AM", "10:50 AM", "11:24 AM", "11:58 AM"] },
+  { stop_id: "11480", name: "N Williams &amp; NE Weidler", lat: 45.534238, lon: -122.666586, times: ["7:15 AM", "8:06 AM", "8:56 AM", "9:42 AM", "10:16 AM", "10:51 AM", "11:25 AM", "11:59 AM"] },
+  { stop_id: "6357", name: "N Williams &amp; NE Broadway", lat: 45.535809, lon: -122.666638, times: ["7:15 AM", "8:06 AM", "8:56 AM", "9:42 AM", "10:16 AM", "10:51 AM", "11:25 AM", "11:59 AM"] },
+  { stop_id: "6370", name: "N Williams &amp; NE Tillamook", lat: 45.538333, lon: -122.666614, times: ["7:16 AM", "8:07 AM", "8:57 AM", "9:43 AM", "10:17 AM", "10:52 AM", "11:26 AM", "12:00 PM"] },
+  { stop_id: "6354", name: "N Williams &amp; NE Russell", lat: 45.541358, lon: -122.666587, times: ["7:17 AM", "8:08 AM", "8:58 AM", "9:44 AM", "10:18 AM", "10:53 AM", "11:27 AM", "12:01 PM"] },
+  { stop_id: "6362", name: "N Williams &amp; NE Graham", lat: 45.542733, lon: -122.666571, times: ["7:18 AM", "8:09 AM", "8:59 AM", "9:45 AM", "10:19 AM", "10:54 AM", "11:28 AM", "12:02 PM"] },
+  { stop_id: "6364", name: "N Williams &amp; NE Morris", lat: 45.544439, lon: -122.666542, times: ["7:19 AM", "8:10 AM", "9:00 AM", "9:46 AM", "10:20 AM", "10:55 AM", "11:29 AM", "12:03 PM"] },
+  { stop_id: "6359", name: "N Williams &amp; NE Cook", lat: 45.546972, lon: -122.666597, times: ["7:19 AM", "8:10 AM", "9:00 AM", "9:46 AM", "10:20 AM", "10:55 AM", "11:29 AM", "12:03 PM"] },
+  { stop_id: "6360", name: "N Williams &amp; NE Fremont", lat: 45.548509, lon: -122.666586, times: ["7:20 AM", "8:11 AM", "9:01 AM", "9:47 AM", "10:21 AM", "10:56 AM", "11:30 AM", "12:04 PM"] },
+  { stop_id: "6366", name: "N Williams &amp; NE Shaver", lat: 45.551939, lon: -122.666617, times: ["7:21 AM", "8:12 AM", "9:02 AM", "9:48 AM", "10:22 AM", "10:57 AM", "11:31 AM", "12:05 PM"] },
+  { stop_id: "6367", name: "N Williams &amp; NE Skidmore", lat: 45.554491, lon: -122.666645, times: ["7:21 AM", "8:12 AM", "9:03 AM", "9:49 AM", "10:23 AM", "10:58 AM", "11:32 AM", "12:06 PM"] },
   { stop_id: "6371", name: "N Williams &amp; NE Wygant", lat: 45.557559, lon: -122.666617, times: ["6:39 AM", "7:22 AM", "8:13 AM", "9:04 AM", "9:50 AM", "10:24 AM", "10:59 AM", "11:33 AM"] },
   { stop_id: "6355", name: "N Williams &amp; NE Alberta", lat: 45.558999, lon: -122.666601, times: ["6:40 AM", "7:23 AM", "8:14 AM", "9:04 AM", "9:50 AM", "10:24 AM", "10:59 AM", "11:33 AM"] },
   { stop_id: "10463", name: "N Williams &amp; Emerson", lat: 45.561597, lon: -122.666828, times: ["6:41 AM", "7:24 AM", "8:15 AM", "9:05 AM", "9:51 AM", "10:25 AM", "11:00 AM", "11:34 AM"] },
@@ -1678,7 +1680,7 @@ const stops = [
   { stop_id: "9576", name: "N Lombard &amp; Reno", lat: 45.598029, lon: -122.761159, times: ["7:01 AM", "7:45 AM", "8:36 AM", "9:28 AM", "10:14 AM", "10:48 AM", "11:23 AM", "11:57 AM"] },
   { stop_id: "9432", name: "N Lombard &amp; Weyerhauser", lat: 45.599937, lon: -122.762273, times: ["7:02 AM", "7:46 AM", "8:37 AM", "9:29 AM", "10:15 AM", "10:49 AM", "11:24 AM", "11:58 AM"] },
   { stop_id: "10095", name: "Pier Park", lat: 45.602109, lon: -122.762344, times: ["7:03 AM", "7:47 AM", "8:38 AM", "9:30 AM", "10:16 AM", "10:50 AM", "11:25 AM", "12:33 PM"] },
-  { stop_id: "4431", name: "PCC Sylvania Main Stop", lat: 45.437955, lon: -122.730177, times: ["6:34 AM", "7:23 AM", "7:54 AM", "8:12 AM", "8:58 AM", "9:32 AM", "10:07 AM", "10:41 AM"] },
+  { stop_id: "4431", name: "PCC Sylvania Main Stop", lat: 45.437955, lon: -122.730177, times: ["7:23 AM", "7:54 AM", "8:12 AM", "8:58 AM", "9:32 AM", "10:07 AM", "10:41 AM", "11:15 AM"] },
   { stop_id: "10697", name: "Pier Park", lat: 45.602148, lon: -122.762435, times: ["11:59 AM", "5:44 PM", "9:31 PM", "10:19 PM"] },
 ]
 

@@ -135,9 +135,11 @@
 
 @media (max-width: 600px) {
   .ad-banner img {
-    max-height: 180px; /* 👈 Optional: Let it grow taller on mobile */
+    transform: scaleY(1.3);
+    transform-origin: top;
   }
 }
+
 
   </style>
 </head>
@@ -792,22 +794,22 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "10752", name: "NW 13th &amp; Lovejoy", lat: 45.529997, lon: -122.684611, times: ["6:27 AM", "6:52 AM", "6:10 AM"] },
-  { stop_id: "13606", name: "NW 9th &amp; Lovejoy", lat: 45.530059, lon: -122.680499, times: ["6:29 AM", "6:54 AM", "7:10 AM", "7:12 AM", "7:26 AM", "7:29 AM", "7:50 AM", "7:52 AM"] },
-  { stop_id: "13607", name: "N Weidler &amp; Ross", lat: 45.534433, lon: -122.669221, times: ["6:33 AM", "6:58 AM", "7:16 AM", "7:33 AM", "7:56 AM", "8:16 AM", "8:33 AM", "8:56 AM"] },
-  { stop_id: "13608", name: "NE Weidler &amp; 2nd (Streetcar)", lat: 45.534426, lon: -122.663835, times: ["6:34 AM", "6:59 AM", "7:17 AM", "7:34 AM", "7:57 AM", "8:17 AM", "8:34 AM", "8:57 AM"] },
-  { stop_id: "13609", name: "NE Weidler &amp; Grand", lat: 45.53441, lon: -122.660223, times: ["6:36 AM", "7:01 AM", "7:19 AM", "7:36 AM", "7:59 AM", "8:19 AM", "8:36 AM", "8:59 AM"] },
-  { stop_id: "13610", name: "NE 7th &amp; Halsey", lat: 45.533339, lon: -122.658607, times: ["6:20 AM", "6:37 AM", "7:02 AM", "7:20 AM", "7:37 AM", "8:00 AM", "8:20 AM", "8:37 AM"] },
-  { stop_id: "13611", name: "NE 7th &amp; Holladay", lat: 45.530714, lon: -122.658623, times: ["6:22 AM", "6:39 AM", "7:04 AM", "7:22 AM", "7:39 AM", "8:02 AM", "8:22 AM", "8:39 AM"] },
-  { stop_id: "13612", name: "NE Oregon &amp; Grand", lat: 45.528685, lon: -122.660504, times: ["6:24 AM", "6:41 AM", "7:06 AM", "7:24 AM", "7:41 AM", "8:04 AM", "8:24 AM", "8:41 AM"] },
-  { stop_id: "5912", name: "NE M L King &amp; Hoyt", lat: 45.527377, lon: -122.661806, times: ["6:25 AM", "6:42 AM", "7:07 AM", "7:25 AM", "7:42 AM", "8:05 AM", "8:25 AM", "8:42 AM"] },
-  { stop_id: "5901", name: "NE M L King &amp; E Burnside", lat: 45.523368, lon: -122.661841, times: ["6:29 AM", "6:46 AM", "7:09 AM", "7:29 AM", "7:46 AM", "8:09 AM", "8:29 AM", "8:46 AM"] },
-  { stop_id: "13613", name: "SE M L King &amp; Stark", lat: 45.519102, lon: -122.661874, times: ["6:30 AM", "6:47 AM", "7:10 AM", "7:30 AM", "7:47 AM", "8:10 AM", "8:30 AM", "8:47 AM"] },
-  { stop_id: "13584", name: "SE M L King &amp; Morrison", lat: 45.51696, lon: -122.661919, times: ["6:31 AM", "6:48 AM", "7:11 AM", "7:31 AM", "7:48 AM", "8:11 AM", "8:31 AM", "8:48 AM"] },
-  { stop_id: "13585", name: "SE M L King &amp; Taylor", lat: 45.514669, lon: -122.661902, times: ["6:32 AM", "6:49 AM", "7:12 AM", "7:32 AM", "7:49 AM", "8:12 AM", "8:32 AM", "8:49 AM"] },
-  { stop_id: "13614", name: "SE M L King &amp; Hawthorne", lat: 45.512514, lon: -122.661954, times: ["6:33 AM", "6:50 AM", "7:13 AM", "7:33 AM", "7:50 AM", "8:13 AM", "8:33 AM", "8:50 AM"] },
-  { stop_id: "5933", name: "SE M L King &amp; Mill", lat: 45.509644, lon: -122.661974, times: ["6:34 AM", "6:51 AM", "7:14 AM", "7:34 AM", "7:51 AM", "8:14 AM", "8:34 AM", "8:51 AM"] },
-  { stop_id: "13709", name: "SE Water/OMSI (Streetcar)", lat: 45.506951, lon: -122.663364, times: ["6:37 AM", "6:54 AM", "7:17 AM", "7:37 AM", "7:54 AM", "8:17 AM", "8:37 AM", "8:54 AM"] },
+  { stop_id: "10752", name: "NW 13th &amp; Lovejoy", lat: 45.529997, lon: -122.684611, times: ["6:52 AM", "6:10 AM", "6:27 AM"] },
+  { stop_id: "13606", name: "NW 9th &amp; Lovejoy", lat: 45.530059, lon: -122.680499, times: ["6:54 AM", "7:10 AM", "7:12 AM", "7:26 AM", "7:29 AM", "7:50 AM", "7:52 AM", "8:10 AM"] },
+  { stop_id: "13607", name: "N Weidler &amp; Ross", lat: 45.534433, lon: -122.669221, times: ["6:58 AM", "7:16 AM", "7:33 AM", "7:56 AM", "8:16 AM", "8:33 AM", "8:56 AM", "9:15 AM"] },
+  { stop_id: "13608", name: "NE Weidler &amp; 2nd (Streetcar)", lat: 45.534426, lon: -122.663835, times: ["6:59 AM", "7:17 AM", "7:34 AM", "7:57 AM", "8:17 AM", "8:34 AM", "8:57 AM", "9:16 AM"] },
+  { stop_id: "13609", name: "NE Weidler &amp; Grand", lat: 45.53441, lon: -122.660223, times: ["7:01 AM", "7:19 AM", "7:36 AM", "7:59 AM", "8:19 AM", "8:36 AM", "8:59 AM", "9:18 AM"] },
+  { stop_id: "13610", name: "NE 7th &amp; Halsey", lat: 45.533339, lon: -122.658607, times: ["7:02 AM", "7:20 AM", "7:37 AM", "8:00 AM", "8:20 AM", "8:37 AM", "9:00 AM", "9:19 AM"] },
+  { stop_id: "13611", name: "NE 7th &amp; Holladay", lat: 45.530714, lon: -122.658623, times: ["7:04 AM", "7:22 AM", "7:39 AM", "8:02 AM", "8:22 AM", "8:39 AM", "9:02 AM", "9:21 AM"] },
+  { stop_id: "13612", name: "NE Oregon &amp; Grand", lat: 45.528685, lon: -122.660504, times: ["6:41 AM", "7:06 AM", "7:24 AM", "7:41 AM", "8:04 AM", "8:24 AM", "8:41 AM", "9:04 AM"] },
+  { stop_id: "5912", name: "NE M L King &amp; Hoyt", lat: 45.527377, lon: -122.661806, times: ["6:42 AM", "7:07 AM", "7:25 AM", "7:42 AM", "8:05 AM", "8:25 AM", "8:42 AM", "9:05 AM"] },
+  { stop_id: "5901", name: "NE M L King &amp; E Burnside", lat: 45.523368, lon: -122.661841, times: ["6:46 AM", "7:09 AM", "7:29 AM", "7:46 AM", "8:09 AM", "8:29 AM", "8:46 AM", "9:09 AM"] },
+  { stop_id: "13613", name: "SE M L King &amp; Stark", lat: 45.519102, lon: -122.661874, times: ["6:47 AM", "7:10 AM", "7:30 AM", "7:47 AM", "8:10 AM", "8:30 AM", "8:47 AM", "9:10 AM"] },
+  { stop_id: "13584", name: "SE M L King &amp; Morrison", lat: 45.51696, lon: -122.661919, times: ["6:48 AM", "7:11 AM", "7:31 AM", "7:48 AM", "8:11 AM", "8:31 AM", "8:48 AM", "9:11 AM"] },
+  { stop_id: "13585", name: "SE M L King &amp; Taylor", lat: 45.514669, lon: -122.661902, times: ["6:49 AM", "7:12 AM", "7:32 AM", "7:49 AM", "8:12 AM", "8:32 AM", "8:49 AM", "9:12 AM"] },
+  { stop_id: "13614", name: "SE M L King &amp; Hawthorne", lat: 45.512514, lon: -122.661954, times: ["6:50 AM", "7:13 AM", "7:33 AM", "7:50 AM", "8:13 AM", "8:33 AM", "8:50 AM", "9:13 AM"] },
+  { stop_id: "5933", name: "SE M L King &amp; Mill", lat: 45.509644, lon: -122.661974, times: ["6:51 AM", "7:14 AM", "7:34 AM", "7:51 AM", "8:14 AM", "8:34 AM", "8:51 AM", "9:14 AM"] },
+  { stop_id: "13709", name: "SE Water/OMSI (Streetcar)", lat: 45.506951, lon: -122.663364, times: ["6:54 AM", "7:17 AM", "7:37 AM", "7:54 AM", "8:17 AM", "8:37 AM", "8:54 AM", "9:17 AM"] },
   { stop_id: "13602", name: "S Moody &amp; Meade North", lat: 45.503287, lon: -122.672734, times: ["6:44 AM", "7:00 AM", "7:24 AM", "7:44 AM", "8:01 AM", "8:25 AM", "8:43 AM", "8:58 AM"] },
   { stop_id: "12379", name: "S River Pkwy &amp; Moody", lat: 45.507139, lon: -122.67414, times: ["6:46 AM", "7:02 AM", "7:26 AM", "7:46 AM", "8:03 AM", "8:27 AM", "8:45 AM", "9:00 AM"] },
   { stop_id: "12380", name: "SW Harrison Street", lat: 45.50895, lon: -122.676531, times: ["6:47 AM", "7:03 AM", "7:27 AM", "7:47 AM", "8:04 AM", "8:28 AM", "8:46 AM", "9:01 AM"] },
