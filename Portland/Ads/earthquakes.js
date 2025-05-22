@@ -1,0 +1,1 @@
+document.write('<a href="https://metrofeedus.com/portland/advertise"><img src="Portland/Assets/ad-placeholder.png" alt="Ad"></a>');
