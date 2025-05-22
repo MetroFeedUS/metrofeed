@@ -1,0 +1,1 @@
+document.currentScript.parentElement.innerHTML = '<a href="https://metrofeedus.com/portland/advertise"><img src="Portland/Assets/railroutead.png" alt="Ad"></a>';
