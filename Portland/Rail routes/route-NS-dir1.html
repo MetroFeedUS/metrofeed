@@ -1,26 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2219550569810489"
+     crossorigin="anonymous"></script>
+
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route NS - To South Waterfront | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
-      overflow-y: auto;
     }
-
-    body {
-      padding-top: 100px;
+    header {
+      background-color: #0d0d0d;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
     }
-
-    .ad-banner {
+    header img {
+      max-height: 60px;
+    }
+     .ad-banner {
       position: fixed;
       top: 0;
       left: 0;
@@ -40,101 +46,68 @@
       display: block;
       margin: 0 auto;
     }
-
-    .home-button {
-      position: fixed;
-      top: 120px;
-      left: 10px;
-      background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
-      z-index: 1001;
-      box-shadow: 0 0 10px #4dd0e1;
-    }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
-    }
-
-    header {
-      background-color: #0d0d0d;
-      border-top: 4px solid #4dd0e1;
-      border-bottom: 3px solid #4dd0e1;
-      padding: 1rem;
-      text-align: center;
-    }
-
-    header img {
-      max-height: 60px;
-    }
-
     h1 {
       text-align: center;
       margin: 1rem 0;
       font-size: 2rem;
       color: #f0f0f0;
     }
-
     .content-box {
+      border: 2px solid #4dd0e1;
       border-radius: 12px;
-      padding: 0;
-      margin: 0;
+      padding: 1rem;
+      margin: 1rem;
       background-color: #1e1e1e;
     }
-
     #map {
       width: 100%;
-      height: 85vh;
-      border: none;
-      margin: 0 auto;
-      display: block;
+      height: 400px;
       border-radius: 8px;
     }
-
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-
-    .button-bar a, .back-button {
+    .button-bar a {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.6rem 1.2rem;
+      padding: 0.5rem 1rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 0 10px #4dd0e1;
     }
 
-    .back-button:hover {
-      background-color: #35c0d6;
-    }
-
-    .site-footer {
+.back-button {
+  background-color: #4dd0e1;
+  color: #0d0d0d;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #4dd0e1;
+  text-decoration: none;
+}
+.back-button:hover {
+  background-color: #35c0d6;
+}
+.site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
       font-size: 0.85rem;
       color: #aaa;
     }
-
     .site-footer a {
       color: #00BFFF;
       text-decoration: none;
     }
-
     .site-footer a:hover {
       text-decoration: underline;
     }
-
-    @media (max-width: 600px) {
+  @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
         padding-bottom: 1rem;
@@ -142,14 +115,15 @@
     }
   </style>
 </head>
-
 <body>
+ 
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
     <iframe src="Portland/Ads/route-NS-dir1-ad.html" style="border:none; width:100%; height:120px;"></iframe>
   </div>
 
-  <header>
+
+ <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
@@ -161,7 +135,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
+  <button class="back-button" onclick="history.back()">⬅ Back</button>
   </div>
 
   <h1>Route NS - To South Waterfront</h1>
@@ -173,15 +147,445 @@
     </div>
   </div>
 
-  <!-- [map and vehicle JS untouched] -->
-  <!-- [cookie notice + footer untouched] -->
+  
+  <script>
+  const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const routeNumber = NS;
+  const direction = parseInt(1);
 
-  <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-    <a href="privacy.html">Privacy Policy</a>
-  </footer>
+  const map = L.map('map').setView([45.6, -122.7], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  const shapeOutbound = [
+  [45.530616, -122.698645],
+  [45.530509, -122.698641],
+  [45.529861, -122.698617],
+  [45.529795, -122.698615],
+  [45.529797, -122.698521],
+  [45.529829, -122.696699],
+  [45.529831, -122.696579],
+  [45.529848, -122.695614],
+  [45.529858, -122.695054],
+  [45.529865, -122.694675],
+  [45.529867, -122.694562],
+  [45.529872, -122.694286],
+  [45.529874, -122.694157],
+  [45.529883, -122.693661],
+  [45.529892, -122.693166],
+  [45.529903, -122.692534],
+  [45.529918, -122.691699],
+  [45.529939, -122.690508],
+  [45.52995, -122.689891],
+  [45.529953, -122.689699],
+  [45.529955, -122.689588],
+  [45.529956, -122.689502],
+  [45.529959, -122.689402],
+  [45.529975, -122.688475],
+  [45.529982, -122.688069],
+  [45.529992, -122.687512],
+  [45.529993, -122.687457],
+  [45.530005, -122.686789],
+  [45.530011, -122.686456],
+  [45.530029, -122.685433],
+  [45.530029, -122.685249],
+  [45.530037, -122.684614],
+  [45.530039, -122.684534],
+  [45.530041, -122.68442],
+  [45.530044, -122.684307],
+  [45.530061, -122.683403],
+  [45.530072, -122.682702],
+  [45.530059, -122.682647],
+  [45.53005, -122.682622],
+  [45.530037, -122.682588],
+  [45.530022, -122.682555],
+  [45.530005, -122.682523],
+  [45.529988, -122.682496],
+  [45.529979, -122.682482],
+  [45.529962, -122.682461],
+  [45.529942, -122.682441],
+  [45.5299, -122.682402],
+  [45.529875, -122.682379],
+  [45.529617, -122.682371],
+  [45.529364, -122.68236],
+  [45.528746, -122.682336],
+  [45.528657, -122.682333],
+  [45.528301, -122.682319],
+  [45.527237, -122.68228],
+  [45.527095, -122.682274],
+  [45.52661, -122.682257],
+  [45.526591, -122.682256],
+  [45.526524, -122.682254],
+  [45.526461, -122.682253],
+  [45.525813, -122.682229],
+  [45.525173, -122.682202],
+  [45.5251, -122.6822],
+  [45.524868, -122.682192],
+  [45.524388, -122.682175],
+  [45.523786, -122.682151],
+  [45.523745, -122.68215],
+  [45.523674, -122.682149],
+  [45.52361, -122.682149],
+  [45.523036, -122.682125],
+  [45.522961, -122.682123],
+  [45.522369, -122.682104],
+  [45.522294, -122.682098],
+  [45.522259, -122.682096],
+  [45.522226, -122.682097],
+  [45.522197, -122.682103],
+  [45.522176, -122.682113],
+  [45.52162, -122.682409],
+  [45.521553, -122.682445],
+  [45.521064, -122.682711],
+  [45.521014, -122.682738],
+  [45.520949, -122.682772],
+  [45.520891, -122.682802],
+  [45.520303, -122.683129],
+  [45.520271, -122.683145],
+  [45.520269, -122.683146],
+  [45.520232, -122.683165],
+  [45.520191, -122.683186],
+  [45.519704, -122.68345],
+  [45.51967, -122.683467],
+  [45.519636, -122.683485],
+  [45.519633, -122.683486],
+  [45.519596, -122.683506],
+  [45.51904, -122.683802],
+  [45.518952, -122.68385],
+  [45.518891, -122.683882],
+  [45.518534, -122.684074],
+  [45.518432, -122.68413],
+  [45.518345, -122.684176],
+  [45.518287, -122.68422],
+  [45.518021, -122.684364],
+  [45.517813, -122.684477],
+  [45.517773, -122.684499],
+  [45.517619, -122.684582],
+  [45.517124, -122.68485],
+  [45.516388, -122.685249],
+  [45.516274, -122.68531],
+  [45.516101, -122.685404],
+  [45.515617, -122.685666],
+  [45.515073, -122.685961],
+  [45.515065, -122.685966],
+  [45.51495, -122.686028],
+  [45.514523, -122.686259],
+  [45.514377, -122.686338],
+  [45.514281, -122.68639],
+  [45.514039, -122.685482],
+  [45.514005, -122.685353],
+  [45.513995, -122.685318],
+  [45.513747, -122.684383],
+  [45.513728, -122.684315],
+  [45.513631, -122.68395],
+  [45.513606, -122.683852],
+  [45.513343, -122.682864],
+  [45.513107, -122.681976],
+  [45.513078, -122.68187],
+  [45.513071, -122.681843],
+  [45.513044, -122.681739],
+  [45.512868, -122.68108],
+  [45.512862, -122.681056],
+  [45.512839, -122.680971],
+  [45.512821, -122.680902],
+  [45.512802, -122.680831],
+  [45.512796, -122.68081],
+  [45.512727, -122.680848],
+  [45.512371, -122.68104],
+  [45.512133, -122.68117],
+  [45.512001, -122.681241],
+  [45.511727, -122.681389],
+  [45.511705, -122.681401],
+  [45.511595, -122.681461],
+  [45.511468, -122.68153],
+  [45.51143, -122.681381],
+  [45.511413, -122.681359],
+  [45.511389, -122.681317],
+  [45.511353, -122.681236],
+  [45.511334, -122.681159],
+  [45.51126, -122.680862],
+  [45.511253, -122.680841],
+  [45.511244, -122.680819],
+  [45.511235, -122.680797],
+  [45.511219, -122.680774],
+  [45.511206, -122.680756],
+  [45.511192, -122.680742],
+  [45.511179, -122.68073],
+  [45.511177, -122.680728],
+  [45.511163, -122.680718],
+  [45.511148, -122.68071],
+  [45.511133, -122.680703],
+  [45.511115, -122.680697],
+  [45.511095, -122.680694],
+  [45.511077, -122.680694],
+  [45.511058, -122.680698],
+  [45.511041, -122.680702],
+  [45.511002, -122.680723],
+  [45.510814, -122.680827],
+  [45.510744, -122.680863],
+  [45.510708, -122.680881],
+  [45.510686, -122.680887],
+  [45.510662, -122.68089],
+  [45.510638, -122.680888],
+  [45.510613, -122.68088],
+  [45.510595, -122.680873],
+  [45.510573, -122.680866],
+  [45.510543, -122.680883],
+  [45.510474, -122.68077],
+  [45.510168, -122.679619],
+  [45.509972, -122.678882],
+  [45.50976, -122.678091],
+  [45.50953, -122.677233],
+  [45.5095, -122.677118],
+  [45.50946, -122.676975],
+  [45.509417, -122.676838],
+  [45.509404, -122.676809],
+  [45.509387, -122.676777],
+  [45.509368, -122.676749],
+  [45.509333, -122.676706],
+  [45.509297, -122.676674],
+  [45.509264, -122.676652],
+  [45.509225, -122.676634],
+  [45.509188, -122.676625],
+  [45.50915, -122.676621],
+  [45.508798, -122.676635],
+  [45.50878, -122.676636],
+  [45.508725, -122.676635],
+  [45.50855, -122.676642],
+  [45.508326, -122.676648],
+  [45.508045, -122.676635],
+  [45.507686, -122.676605],
+  [45.50763, -122.676595],
+  [45.50758, -122.676576],
+  [45.507548, -122.676557],
+  [45.507519, -122.676536],
+  [45.507483, -122.6765],
+  [45.507448, -122.676453],
+  [45.507425, -122.676415],
+  [45.507399, -122.676356],
+  [45.50738, -122.676289],
+  [45.507367, -122.676233],
+  [45.507362, -122.676181],
+  [45.507357, -122.676111],
+  [45.507358, -122.676013],
+  [45.50736, -122.675842],
+  [45.507361, -122.675454],
+  [45.50736, -122.675381],
+  [45.507353, -122.675242],
+  [45.507343, -122.675155],
+  [45.507329, -122.675065],
+  [45.507315, -122.67499],
+  [45.507292, -122.674902],
+  [45.507162, -122.674418],
+  [45.507144, -122.674346],
+  [45.507107, -122.674205],
+  [45.507038, -122.673942],
+  [45.506943, -122.673582],
+  [45.506893, -122.673415],
+  [45.506886, -122.673392],
+  [45.506872, -122.6734],
+  [45.506804, -122.673438],
+  [45.506768, -122.673457],
+  [45.506697, -122.673494],
+  [45.506145, -122.673793],
+  [45.505974, -122.673886],
+  [45.505906, -122.673922],
+  [45.505827, -122.673959],
+  [45.505753, -122.673986],
+  [45.505665, -122.674009],
+  [45.505595, -122.674023],
+  [45.505506, -122.674027],
+  [45.50544, -122.674026],
+  [45.505338, -122.674013],
+  [45.505249, -122.673987],
+  [45.505193, -122.673967],
+  [45.505146, -122.673946],
+  [45.505098, -122.673923],
+  [45.505074, -122.673881],
+  [45.505036, -122.673814],
+  [45.504993, -122.673784],
+  [45.504617, -122.673536],
+  [45.504496, -122.67346],
+  [45.504381, -122.67339],
+  [45.50396, -122.673177],
+  [45.503579, -122.672986],
+  [45.503487, -122.672938],
+  [45.503419, -122.672901],
+  [45.503344, -122.672859],
+  [45.503191, -122.672769],
+  [45.503134, -122.672732],
+  [45.502693, -122.672452],
+  [45.50255, -122.672361],
+  [45.502533, -122.672351],
+  [45.502427, -122.672285],
+  [45.502372, -122.672248],
+  [45.502326, -122.672218],
+  [45.50229, -122.672196],
+  [45.502165, -122.672116],
+  [45.502125, -122.672091],
+  [45.501996, -122.672015],
+  [45.501865, -122.671945],
+  [45.501773, -122.671901],
+  [45.501687, -122.671867],
+  [45.501597, -122.671833],
+  [45.501493, -122.671798],
+  [45.501376, -122.671765],
+  [45.501277, -122.671743],
+  [45.501154, -122.671717],
+  [45.50105, -122.671704],
+  [45.500956, -122.671698],
+  [45.500844, -122.671696],
+  [45.50069, -122.671699],
+  [45.499996, -122.671726],
+  [45.49984, -122.671732],
+  [45.499629, -122.671743],
+  [45.499551, -122.671753],
+  [45.499336, -122.671767],
+  [45.499199, -122.671775],
+  [45.499076, -122.67178],
+  [45.498969, -122.671785],
+  [45.498644, -122.671796],
+  [45.498572, -122.671802],
+  [45.498504, -122.671808],
+  [45.498211, -122.671823],
+  [45.497933, -122.671831],
+  [45.497862, -122.671836],
+  [45.497795, -122.671837],
+  [45.497313, -122.671856],
+  [45.497147, -122.671863],
+  [45.496646, -122.671877],
+  [45.49643, -122.671883],
+  [45.496185, -122.671893],
+  [45.495007, -122.671939],
+  [45.494297, -122.67196],
+  [45.494044, -122.671961],
+  [45.494029, -122.67196],
+  [45.493965, -122.671961],
+  [45.493964, -122.671872],
+  [45.493955, -122.671375]
+];
+
+const stopNames = {
+  "3595": "NW 21st &amp; Lovejoy",
+  "3596": "NW 22nd &amp; Lovejoy",
+  "8989": "NW 23rd &amp; Marshall",
+  "9600": "SW 11th &amp; Alder",
+  "9633": "SW 11th &amp; Taylor",
+  "10751": "NW 18th &amp; Lovejoy",
+  "10752": "NW 13th &amp; Lovejoy",
+  "10753": "NW 11th &amp; Johnson",
+  "10754": "NW 11th &amp; Glisan",
+  "10756": "NW 11th &amp; Couch",
+  "10759": "SW 11th &amp; Jefferson",
+  "10760": "SW 11th &amp; Clay",
+  "10762": "SW 5th &amp; Market",
+  "10763": "SW 5th &amp; Montgomery",
+  "11011": "SW Park &amp; Market",
+  "12375": "SW 3rd &amp; Harrison",
+  "12377": "SW Harrison Street",
+  "12378": "S River Pkwy &amp; Moody",
+  "12760": "S Moody &amp; Gibbs",
+  "12880": "S Moody &amp; Gaines",
+  "12881": "S Lowell &amp; Bond",
+  "13601": "S Moody &amp; Meade South"
+};
+
+const stops = [
+  { stop_id: "10752", name: "NW 13th &amp; Lovejoy", lat: 45.529997, lon: -122.684611, times: ["5:54 AM", "6:02 AM", "6:13 AM", "6:19 AM", "6:27 AM", "6:45 AM", "6:50 AM", "7:01 AM"] },
+  { stop_id: "10753", name: "NW 11th &amp; Johnson", lat: 45.528742, lon: -122.682374, times: ["5:56 AM", "6:04 AM", "6:15 AM", "6:21 AM", "6:29 AM", "6:47 AM", "6:52 AM", "7:03 AM"] },
+  { stop_id: "8989", name: "NW 23rd &amp; Marshall", lat: 45.530612, lon: -122.698688, times: ["5:49 AM", "6:08 AM", "6:22 AM", "6:45 AM", "6:56 AM", "7:12 AM", "7:28 AM", "7:37 AM"] },
+  { stop_id: "3596", name: "NW 22nd &amp; Lovejoy", lat: 45.529794, lon: -122.696698, times: ["5:50 AM", "6:09 AM", "6:23 AM", "6:46 AM", "6:57 AM", "7:13 AM", "7:29 AM", "7:38 AM"] },
+  { stop_id: "3595", name: "NW 21st &amp; Lovejoy", lat: 45.529833, lon: -122.694676, times: ["5:51 AM", "6:10 AM", "6:24 AM", "6:47 AM", "6:58 AM", "7:14 AM", "7:30 AM", "7:39 AM"] },
+  { stop_id: "10751", name: "NW 18th &amp; Lovejoy", lat: 45.529925, lon: -122.689587, times: ["5:52 AM", "6:11 AM", "6:25 AM", "6:48 AM", "6:59 AM", "7:16 AM", "7:32 AM", "7:41 AM"] },
+  { stop_id: "10754", name: "NW 11th &amp; Glisan", lat: 45.526605, lon: -122.682297, times: ["5:57 AM", "6:16 AM", "6:30 AM", "6:53 AM", "7:04 AM", "7:21 AM", "7:37 AM", "7:46 AM"] },
+  { stop_id: "10756", name: "NW 11th &amp; Couch", lat: 45.523784, lon: -122.682223, times: ["5:59 AM", "6:18 AM", "6:32 AM", "6:55 AM", "7:06 AM", "7:23 AM", "7:39 AM", "7:48 AM"] },
+  { stop_id: "9600", name: "SW 11th &amp; Alder", lat: 45.521094, lon: -122.682819, times: ["6:01 AM", "6:20 AM", "6:34 AM", "6:57 AM", "7:08 AM", "7:25 AM", "7:41 AM", "7:50 AM"] },
+  { stop_id: "9633", name: "SW 11th &amp; Taylor", lat: 45.519059, lon: -122.683873, times: ["6:02 AM", "6:21 AM", "6:35 AM", "6:58 AM", "7:09 AM", "7:26 AM", "7:42 AM", "7:51 AM"] },
+  { stop_id: "10759", name: "SW 11th &amp; Jefferson", lat: 45.516402, lon: -122.685301, times: ["6:04 AM", "6:23 AM", "6:37 AM", "7:00 AM", "7:11 AM", "7:28 AM", "7:44 AM", "7:53 AM"] },
+  { stop_id: "10760", name: "SW 11th &amp; Clay", lat: 45.515106, lon: -122.686081, times: ["6:05 AM", "6:24 AM", "6:38 AM", "7:01 AM", "7:12 AM", "7:29 AM", "7:45 AM", "7:54 AM"] },
+  { stop_id: "11011", name: "SW Park &amp; Market", lat: 45.513704, lon: -122.683913, times: ["6:06 AM", "6:25 AM", "6:40 AM", "7:03 AM", "7:14 AM", "7:31 AM", "7:47 AM", "7:56 AM"] },
+  { stop_id: "10762", name: "SW 5th &amp; Market", lat: 45.512922, lon: -122.681042, times: ["6:07 AM", "6:26 AM", "6:41 AM", "7:04 AM", "7:15 AM", "7:32 AM", "7:48 AM", "7:57 AM"] },
+  { stop_id: "10763", name: "SW 5th &amp; Montgomery", lat: 45.511708, lon: -122.681315, times: ["6:09 AM", "6:28 AM", "6:43 AM", "7:06 AM", "7:17 AM", "7:34 AM", "7:50 AM", "7:59 AM"] },
+  { stop_id: "12375", name: "SW 3rd &amp; Harrison", lat: 45.510203, lon: -122.679598, times: ["6:11 AM", "6:30 AM", "6:45 AM", "7:08 AM", "7:19 AM", "7:36 AM", "7:52 AM", "8:01 AM"] },
+  { stop_id: "12377", name: "SW Harrison Street", lat: 45.508792, lon: -122.676574, times: ["6:13 AM", "6:32 AM", "6:47 AM", "7:10 AM", "7:21 AM", "7:38 AM", "7:54 AM", "8:03 AM"] },
+  { stop_id: "12378", name: "S River Pkwy &amp; Moody", lat: 45.507069, lon: -122.673924, times: ["6:15 AM", "6:34 AM", "6:49 AM", "7:12 AM", "7:23 AM", "7:40 AM", "7:56 AM", "8:05 AM"] },
+  { stop_id: "13601", name: "S Moody &amp; Meade South", lat: 45.503115, lon: -122.672793, times: ["6:16 AM", "6:35 AM", "6:50 AM", "7:13 AM", "7:24 AM", "7:41 AM", "7:57 AM", "8:06 AM"] },
+  { stop_id: "12760", name: "S Moody &amp; Gibbs", lat: 45.499337, lon: -122.671815, times: ["6:18 AM", "6:37 AM", "6:52 AM", "7:15 AM", "7:26 AM", "7:43 AM", "7:59 AM", "8:08 AM"] },
+  { stop_id: "12880", name: "S Moody &amp; Gaines", lat: 45.496182, lon: -122.671942, times: ["6:19 AM", "6:38 AM", "6:53 AM", "7:16 AM", "7:27 AM", "7:44 AM", "8:00 AM", "8:09 AM"] },
+  { stop_id: "12881", name: "S Lowell &amp; Bond", lat: 45.493891, lon: -122.671376, times: ["6:21 AM", "6:40 AM", "6:55 AM", "7:18 AM", "7:32 AM", "7:48 AM", "8:02 AM", "8:12 AM"] },
+]
+
+  const polylineOut = L.polyline(shapeOutbound, {
+    color: 'blue',
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  map.fitBounds(polylineOut.getBounds());
+
+  stops.forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9,
+      weight: 1
+    });
+
+    const popupContent = `
+      <strong>${stop.name}</strong><br>
+      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.addTo(map);
+  });
+
+  let busMarkers = {};
+
+  async function fetchAndDisplay() {
+    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+    const data = await res.json();
+    const buses = (data.resultSet.vehicle || []).filter(v =>
+      v.routeNumber == routeNumber && v.direction == direction
+    );
+
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+
+    if (buses.length === 0) return;
+
+    buses.forEach(bus => {
+      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="text-align:center;">
+            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+          </div>
+        `,
+        iconSize: [40, 30],
+        iconAnchor: [20, 30]
+      });
+
+      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+      busMarkers[bus.vehicleID] = marker;
+    });
+  }
+
+  fetchAndDisplay();
+  setInterval(fetchAndDisplay, 15000);
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
 
   <script>
     if (!localStorage.getItem('cookieConsent')) {
@@ -194,6 +598,8 @@
         </div>
       `);
     }
-  </script>
+</script>
+
+
 </body>
 </html>
