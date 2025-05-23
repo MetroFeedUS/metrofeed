@@ -32,17 +32,17 @@
       left: 0;
       width: 100%;
       background: #222;
-      padding: 0.5rem 0;
+      padding: 0;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
       text-align: center;
     }
 
     .ad-banner img {
       width: 100%;
       max-width: 728px;
-      height: auto;
-      max-height: 90px;
+      height: 90px;
+      
       display: block;
       margin: 0 auto;
     }
@@ -60,10 +60,16 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
-    }
+  width: 100vw;
+  min-width: 100vw;
+  height: 400px;
+  border-radius: 0;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -110,7 +116,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-bottom: rem;
       }
     }
   </style>
@@ -119,7 +125,7 @@
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-156-dir1-ad.html" style="border:none; width:100%; height:120px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-156-dir1-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
 
 
@@ -153,7 +159,31 @@
   const routeNumber = 156;
   const direction = parseInt(1);
 
-  const map = L.map('map').setView([45.6, -122.7], 12);
+  // --- Set map bounds and zoom limits ---
+  const bounds = L.latLngBounds(
+    [45.40, -122.85], // SW
+    [45.65, -122.45]  // NE
+  );
+
+  const map = L.map('map', {
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0,
+    minZoom: 12,   // Don't allow zooming out past city
+    maxZoom: 19,   // Allow good zoom in
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true
+  }).setView([45.52, -122.68], 13);
+
+  map.setMaxBounds(bounds);
+
+// Keep map locked in bounds if user somehow escapes
+map.on('moveend', function() {
+  if (!bounds.contains(map.getCenter())) {
+    map.panInsideBounds(bounds, { animate: true });
+  }
+});
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -875,23 +905,23 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "10148", name: "SE Oregon Trail Dr &amp; Hines", lat: 45.422645, lon: -122.512318, times: ["5:59 AM", "7:15 AM", "8:35 AM", "9:55 AM", "11:15 AM", "12:35 PM", "1:55 PM", "3:15 PM"] },
-  { stop_id: "10219", name: "SE Oregon Trail Dr &amp; 152nd", lat: 45.422957, lon: -122.507258, times: ["5:59 AM", "7:15 AM", "8:35 AM", "9:55 AM", "11:15 AM", "12:35 PM", "1:55 PM", "3:15 PM"] },
-  { stop_id: "10221", name: "SE 152nd &amp; Territory Dr", lat: 45.419996, lon: -122.507123, times: ["6:00 AM", "7:16 AM", "8:36 AM", "9:56 AM", "11:16 AM", "12:36 PM", "1:56 PM", "3:16 PM"] },
-  { stop_id: "10297", name: "SE 152nd &amp; Sedona Drive", lat: 45.41439, lon: -122.505587, times: ["6:01 AM", "7:17 AM", "8:37 AM", "9:57 AM", "11:17 AM", "12:37 PM", "1:57 PM", "3:17 PM"] },
-  { stop_id: "10223", name: "SE 152nd &amp; Morning Way", lat: 45.410909, lon: -122.507955, times: ["6:01 AM", "7:18 AM", "8:38 AM", "9:58 AM", "11:18 AM", "12:38 PM", "1:58 PM", "3:18 PM"] },
-  { stop_id: "2909", name: "Hwy 212/224 &amp; 142nd", lat: 45.4103, lon: -122.517349, times: ["6:03 AM", "7:20 AM", "8:39 AM", "9:59 AM", "11:19 AM", "12:39 PM", "1:59 PM", "3:20 PM"] },
-  { stop_id: "8830", name: "Hwy 212/224 &amp; SE 135th", lat: 45.410615, lon: -122.524389, times: ["6:04 AM", "7:21 AM", "8:40 AM", "10:00 AM", "11:20 AM", "12:40 PM", "2:00 PM", "3:21 PM"] },
-  { stop_id: "10225", name: "13300 Block SE Hubbard", lat: 45.414112, lon: -122.527719, times: ["6:04 AM", "7:22 AM", "8:41 AM", "10:01 AM", "11:21 AM", "12:41 PM", "2:01 PM", "3:22 PM"] },
-  { stop_id: "9008", name: "SE Hubbard &amp; 128th", lat: 45.414075, lon: -122.531692, times: ["6:05 AM", "7:22 AM", "8:42 AM", "10:02 AM", "11:22 AM", "12:42 PM", "2:02 PM", "3:22 PM"] },
-  { stop_id: "10227", name: "SE Hubbard &amp; 125th", lat: 45.414066, lon: -122.53482, times: ["6:05 AM", "7:23 AM", "8:42 AM", "10:02 AM", "11:22 AM", "12:42 PM", "2:02 PM", "3:23 PM"] },
-  { stop_id: "10229", name: "SE 122nd &amp; Mountain Sun Dr", lat: 45.416478, lon: -122.537862, times: ["6:06 AM", "7:24 AM", "8:43 AM", "10:03 AM", "11:23 AM", "12:43 PM", "2:03 PM", "3:24 PM"] },
-  { stop_id: "11952", name: "SE 122nd &amp; Summers Lane", lat: 45.418371, lon: -122.537855, times: ["6:06 AM", "7:24 AM", "8:43 AM", "10:03 AM", "11:23 AM", "12:43 PM", "2:03 PM", "3:24 PM"] },
-  { stop_id: "10231", name: "SE 122nd &amp; Echo Valley", lat: 45.420884, lon: -122.537937, times: ["6:07 AM", "7:25 AM", "8:44 AM", "10:04 AM", "11:24 AM", "12:44 PM", "2:04 PM", "3:25 PM"] },
-  { stop_id: "8998", name: "SE Mather &amp; 122nd", lat: 45.424997, lon: -122.538714, times: ["6:08 AM", "7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM"] },
-  { stop_id: "8999", name: "SE Mather &amp; 119th Ct", lat: 45.425021, lon: -122.541113, times: ["6:08 AM", "7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM"] },
-  { stop_id: "10204", name: "SE Mather &amp; Cedar Park Dr", lat: 45.425033, lon: -122.543665, times: ["6:08 AM", "7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM"] },
-  { stop_id: "9000", name: "SE Mather &amp; Cranberry Loop", lat: 45.421005, lon: -122.547899, times: ["6:10 AM", "7:28 AM", "8:47 AM", "10:07 AM", "11:27 AM", "12:47 PM", "2:07 PM", "3:28 PM"] },
+  { stop_id: "10148", name: "SE Oregon Trail Dr &amp; Hines", lat: 45.422645, lon: -122.512318, times: ["7:15 AM", "8:35 AM", "9:55 AM", "11:15 AM", "12:35 PM", "1:55 PM", "3:15 PM", "4:36 PM"] },
+  { stop_id: "10219", name: "SE Oregon Trail Dr &amp; 152nd", lat: 45.422957, lon: -122.507258, times: ["7:15 AM", "8:35 AM", "9:55 AM", "11:15 AM", "12:35 PM", "1:55 PM", "3:15 PM", "4:36 PM"] },
+  { stop_id: "10221", name: "SE 152nd &amp; Territory Dr", lat: 45.419996, lon: -122.507123, times: ["7:16 AM", "8:36 AM", "9:56 AM", "11:16 AM", "12:36 PM", "1:56 PM", "3:16 PM", "4:37 PM"] },
+  { stop_id: "10297", name: "SE 152nd &amp; Sedona Drive", lat: 45.41439, lon: -122.505587, times: ["7:17 AM", "8:37 AM", "9:57 AM", "11:17 AM", "12:37 PM", "1:57 PM", "3:17 PM", "4:38 PM"] },
+  { stop_id: "10223", name: "SE 152nd &amp; Morning Way", lat: 45.410909, lon: -122.507955, times: ["7:18 AM", "8:38 AM", "9:58 AM", "11:18 AM", "12:38 PM", "1:58 PM", "3:18 PM", "4:39 PM"] },
+  { stop_id: "2909", name: "Hwy 212/224 &amp; 142nd", lat: 45.4103, lon: -122.517349, times: ["7:20 AM", "8:39 AM", "9:59 AM", "11:19 AM", "12:39 PM", "1:59 PM", "3:20 PM", "4:40 PM"] },
+  { stop_id: "8830", name: "Hwy 212/224 &amp; SE 135th", lat: 45.410615, lon: -122.524389, times: ["7:21 AM", "8:40 AM", "10:00 AM", "11:20 AM", "12:40 PM", "2:00 PM", "3:21 PM", "4:41 PM"] },
+  { stop_id: "10225", name: "13300 Block SE Hubbard", lat: 45.414112, lon: -122.527719, times: ["7:22 AM", "8:41 AM", "10:01 AM", "11:21 AM", "12:41 PM", "2:01 PM", "3:22 PM", "4:42 PM"] },
+  { stop_id: "9008", name: "SE Hubbard &amp; 128th", lat: 45.414075, lon: -122.531692, times: ["7:22 AM", "8:42 AM", "10:02 AM", "11:22 AM", "12:42 PM", "2:02 PM", "3:22 PM", "4:43 PM"] },
+  { stop_id: "10227", name: "SE Hubbard &amp; 125th", lat: 45.414066, lon: -122.53482, times: ["7:23 AM", "8:42 AM", "10:02 AM", "11:22 AM", "12:42 PM", "2:02 PM", "3:23 PM", "4:43 PM"] },
+  { stop_id: "10229", name: "SE 122nd &amp; Mountain Sun Dr", lat: 45.416478, lon: -122.537862, times: ["7:24 AM", "8:43 AM", "10:03 AM", "11:23 AM", "12:43 PM", "2:03 PM", "3:24 PM", "4:44 PM"] },
+  { stop_id: "11952", name: "SE 122nd &amp; Summers Lane", lat: 45.418371, lon: -122.537855, times: ["7:24 AM", "8:43 AM", "10:03 AM", "11:23 AM", "12:43 PM", "2:03 PM", "3:24 PM", "4:44 PM"] },
+  { stop_id: "10231", name: "SE 122nd &amp; Echo Valley", lat: 45.420884, lon: -122.537937, times: ["7:25 AM", "8:44 AM", "10:04 AM", "11:24 AM", "12:44 PM", "2:04 PM", "3:25 PM", "4:45 PM"] },
+  { stop_id: "8998", name: "SE Mather &amp; 122nd", lat: 45.424997, lon: -122.538714, times: ["7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM", "4:46 PM"] },
+  { stop_id: "8999", name: "SE Mather &amp; 119th Ct", lat: 45.425021, lon: -122.541113, times: ["7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM", "4:46 PM"] },
+  { stop_id: "10204", name: "SE Mather &amp; Cedar Park Dr", lat: 45.425033, lon: -122.543665, times: ["7:26 AM", "8:45 AM", "10:05 AM", "11:25 AM", "12:45 PM", "2:05 PM", "3:26 PM", "4:46 PM"] },
+  { stop_id: "9000", name: "SE Mather &amp; Cranberry Loop", lat: 45.421005, lon: -122.547899, times: ["7:28 AM", "8:47 AM", "10:07 AM", "11:27 AM", "12:47 PM", "2:07 PM", "3:28 PM", "4:48 PM"] },
   { stop_id: "9001", name: "11000 Block SE Mather", lat: 45.420298, lon: -122.550295, times: ["6:10 AM", "7:28 AM", "8:47 AM", "10:07 AM", "11:27 AM", "12:47 PM", "2:07 PM", "3:28 PM"] },
   { stop_id: "9002", name: "10500 Block SE Mather", lat: 45.419838, lon: -122.55519, times: ["6:11 AM", "7:29 AM", "8:48 AM", "10:08 AM", "11:28 AM", "12:48 PM", "2:08 PM", "3:29 PM"] },
   { stop_id: "9007", name: "14000 Block SE 97th", lat: 45.422122, lon: -122.559352, times: ["6:12 AM", "7:30 AM", "8:49 AM", "10:09 AM", "11:29 AM", "12:49 PM", "2:09 PM", "3:30 PM"] },

@@ -32,17 +32,17 @@
       left: 0;
       width: 100%;
       background: #222;
-      padding: 0.5rem 0;
+      padding: 0;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
       text-align: center;
     }
 
     .ad-banner img {
       width: 100%;
       max-width: 728px;
-      height: auto;
-      max-height: 90px;
+      height: 90px;
+      
       display: block;
       margin: 0 auto;
     }
@@ -60,10 +60,16 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
-    }
+  width: 100vw;
+  min-width: 100vw;
+  height: 400px;
+  border-radius: 0;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -110,7 +116,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-bottom: rem;
       }
     }
   </style>
@@ -119,7 +125,7 @@
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-58-dir0-ad.html" style="border:none; width:100%; height:120px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-58-dir0-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
 
 
@@ -153,7 +159,31 @@
   const routeNumber = 58;
   const direction = parseInt(0);
 
-  const map = L.map('map').setView([45.6, -122.7], 12);
+  // --- Set map bounds and zoom limits ---
+  const bounds = L.latLngBounds(
+    [45.40, -122.85], // SW
+    [45.65, -122.45]  // NE
+  );
+
+  const map = L.map('map', {
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0,
+    minZoom: 12,   // Don't allow zooming out past city
+    maxZoom: 19,   // Allow good zoom in
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true
+  }).setView([45.52, -122.68], 13);
+
+  map.setMaxBounds(bounds);
+
+// Keep map locked in bounds if user somehow escapes
+map.on('moveend', function() {
+  if (!bounds.contains(map.getCenter())) {
+    map.panInsideBounds(bounds, { animate: true });
+  }
+});
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -689,28 +719,28 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "12790", name: "SW Jefferson between 4th &amp; 5th", lat: 45.5147, lon: -122.679167, times: ["5:52 AM", "6:16 AM", "6:41 AM", "7:02 AM", "7:29 AM", "7:53 AM", "8:16 AM", "8:44 AM"] },
-  { stop_id: "3049", name: "SW Jefferson &amp; 10th", lat: 45.516026, lon: -122.684087, times: ["5:53 AM", "6:17 AM", "6:42 AM", "7:03 AM", "7:30 AM", "7:54 AM", "8:17 AM", "8:45 AM"] },
-  { stop_id: "3051", name: "SW Jefferson &amp; 13th", lat: 45.516849, lon: -122.687154, times: ["5:54 AM", "6:18 AM", "6:43 AM", "7:04 AM", "7:31 AM", "7:55 AM", "8:18 AM", "8:46 AM"] },
-  { stop_id: "3052", name: "SW Jefferson &amp; 16th", lat: 45.517636, lon: -122.690111, times: ["5:54 AM", "6:18 AM", "6:44 AM", "7:05 AM", "7:32 AM", "7:56 AM", "8:19 AM", "8:47 AM"] },
-  { stop_id: "3054", name: "SW Jefferson &amp; 20th", lat: 45.518415, lon: -122.694078, times: ["5:56 AM", "6:20 AM", "6:46 AM", "7:07 AM", "7:34 AM", "7:58 AM", "8:21 AM", "8:49 AM"] },
-  { stop_id: "895", name: "Hwy 26/Canyon Rd Ramp &amp; SW Skyline", lat: 45.509162, lon: -122.73636, times: ["6:01 AM", "6:25 AM", "6:51 AM", "7:12 AM", "7:39 AM", "8:03 AM", "8:26 AM", "8:54 AM"] },
-  { stop_id: "10632", name: "SW Canyon &amp; Camelot Ct", lat: 45.504948, lon: -122.747327, times: ["6:02 AM", "6:26 AM", "6:52 AM", "7:13 AM", "7:41 AM", "8:05 AM", "8:28 AM", "8:56 AM"] },
-  { stop_id: "10633", name: "SW Canyon &amp; Canyon Crest", lat: 45.50352, lon: -122.749187, times: ["6:03 AM", "6:27 AM", "6:53 AM", "7:14 AM", "7:41 AM", "8:05 AM", "8:28 AM", "8:56 AM"] },
-  { stop_id: "885", name: "SW Canyon &amp; Benz Park", lat: 45.501681, lon: -122.752358, times: ["6:03 AM", "6:27 AM", "6:53 AM", "7:14 AM", "7:42 AM", "8:06 AM", "8:29 AM", "8:57 AM"] },
-  { stop_id: "890", name: "SW Canyon &amp; Copel", lat: 45.500674, lon: -122.75344, times: ["6:03 AM", "6:27 AM", "6:54 AM", "7:15 AM", "7:42 AM", "8:06 AM", "8:29 AM", "8:57 AM"] },
-  { stop_id: "882", name: "7500 Block SW Canyon", lat: 45.498895, lon: -122.754627, times: ["6:04 AM", "6:28 AM", "6:54 AM", "7:15 AM", "7:42 AM", "8:06 AM", "8:29 AM", "8:57 AM"] },
-  { stop_id: "883", name: "SW Canyon &amp; Canyon Dr", lat: 45.498446, lon: -122.764453, times: ["6:05 AM", "6:29 AM", "6:55 AM", "7:16 AM", "7:44 AM", "8:08 AM", "8:31 AM", "8:59 AM"] },
-  { stop_id: "914", name: "SW Canyon &amp; 87th", lat: 45.498042, lon: -122.767203, times: ["6:05 AM", "6:29 AM", "6:56 AM", "7:17 AM", "7:44 AM", "8:08 AM", "8:31 AM", "8:59 AM"] },
-  { stop_id: "12406", name: "SW Canyon &amp; 91st", lat: 45.496454, lon: -122.770404, times: ["6:06 AM", "6:30 AM", "6:56 AM", "7:17 AM", "7:45 AM", "8:09 AM", "8:32 AM", "9:00 AM"] },
-  { stop_id: "917", name: "SW Canyon &amp; 93rd", lat: 45.495097, lon: -122.772969, times: ["6:06 AM", "6:30 AM", "6:57 AM", "7:18 AM", "7:45 AM", "8:09 AM", "8:32 AM", "9:00 AM"] },
-  { stop_id: "919", name: "SW Canyon &amp; 96th", lat: 45.494098, lon: -122.775745, times: ["6:07 AM", "6:31 AM", "6:57 AM", "7:18 AM", "7:46 AM", "8:10 AM", "8:33 AM", "9:01 AM"] },
-  { stop_id: "898", name: "SW Canyon &amp; Walker", lat: 45.493448, lon: -122.779968, times: ["6:07 AM", "6:31 AM", "6:58 AM", "7:19 AM", "7:46 AM", "8:10 AM", "8:33 AM", "9:01 AM"] },
-  { stop_id: "904", name: "SW Canyon &amp; 104th", lat: 45.492754, lon: -122.783512, times: ["6:08 AM", "6:32 AM", "6:58 AM", "7:19 AM", "7:47 AM", "8:11 AM", "8:34 AM", "9:02 AM"] },
-  { stop_id: "907", name: "SW Canyon &amp; 107th", lat: 45.492101, lon: -122.786756, times: ["6:08 AM", "6:32 AM", "6:59 AM", "7:20 AM", "7:47 AM", "8:11 AM", "8:34 AM", "9:02 AM"] },
-  { stop_id: "909", name: "SW Canyon &amp; 110th", lat: 45.491442, lon: -122.789906, times: ["6:08 AM", "6:32 AM", "6:59 AM", "7:20 AM", "7:48 AM", "8:12 AM", "8:35 AM", "9:03 AM"] },
-  { stop_id: "910", name: "SW Canyon &amp; 115th", lat: 45.490041, lon: -122.795325, times: ["6:09 AM", "6:33 AM", "7:00 AM", "7:21 AM", "7:49 AM", "8:13 AM", "8:36 AM", "9:04 AM"] },
-  { stop_id: "8265", name: "SW Canyon &amp; Red Robin", lat: 45.489307, lon: -122.799158, times: ["6:10 AM", "6:34 AM", "7:00 AM", "7:21 AM", "7:49 AM", "8:13 AM", "8:36 AM", "9:04 AM"] },
+  { stop_id: "12790", name: "SW Jefferson between 4th &amp; 5th", lat: 45.5147, lon: -122.679167, times: ["6:16 AM", "6:41 AM", "7:02 AM", "7:29 AM", "7:53 AM", "8:16 AM", "8:44 AM", "9:14 AM"] },
+  { stop_id: "3049", name: "SW Jefferson &amp; 10th", lat: 45.516026, lon: -122.684087, times: ["6:17 AM", "6:42 AM", "7:03 AM", "7:30 AM", "7:54 AM", "8:17 AM", "8:45 AM", "9:15 AM"] },
+  { stop_id: "3051", name: "SW Jefferson &amp; 13th", lat: 45.516849, lon: -122.687154, times: ["6:18 AM", "6:43 AM", "7:04 AM", "7:31 AM", "7:55 AM", "8:18 AM", "8:46 AM", "9:16 AM"] },
+  { stop_id: "3052", name: "SW Jefferson &amp; 16th", lat: 45.517636, lon: -122.690111, times: ["6:18 AM", "6:44 AM", "7:05 AM", "7:32 AM", "7:56 AM", "8:19 AM", "8:47 AM", "9:17 AM"] },
+  { stop_id: "3054", name: "SW Jefferson &amp; 20th", lat: 45.518415, lon: -122.694078, times: ["6:20 AM", "6:46 AM", "7:07 AM", "7:34 AM", "7:58 AM", "8:21 AM", "8:49 AM", "9:19 AM"] },
+  { stop_id: "895", name: "Hwy 26/Canyon Rd Ramp &amp; SW Skyline", lat: 45.509162, lon: -122.73636, times: ["6:25 AM", "6:51 AM", "7:12 AM", "7:39 AM", "8:03 AM", "8:26 AM", "8:54 AM", "9:24 AM"] },
+  { stop_id: "10632", name: "SW Canyon &amp; Camelot Ct", lat: 45.504948, lon: -122.747327, times: ["6:26 AM", "6:52 AM", "7:13 AM", "7:41 AM", "8:05 AM", "8:28 AM", "8:56 AM", "9:26 AM"] },
+  { stop_id: "10633", name: "SW Canyon &amp; Canyon Crest", lat: 45.50352, lon: -122.749187, times: ["6:27 AM", "6:53 AM", "7:14 AM", "7:41 AM", "8:05 AM", "8:28 AM", "8:56 AM", "9:26 AM"] },
+  { stop_id: "885", name: "SW Canyon &amp; Benz Park", lat: 45.501681, lon: -122.752358, times: ["6:27 AM", "6:53 AM", "7:14 AM", "7:42 AM", "8:06 AM", "8:29 AM", "8:57 AM", "9:27 AM"] },
+  { stop_id: "890", name: "SW Canyon &amp; Copel", lat: 45.500674, lon: -122.75344, times: ["6:27 AM", "6:54 AM", "7:15 AM", "7:42 AM", "8:06 AM", "8:29 AM", "8:57 AM", "9:27 AM"] },
+  { stop_id: "882", name: "7500 Block SW Canyon", lat: 45.498895, lon: -122.754627, times: ["6:28 AM", "6:54 AM", "7:15 AM", "7:42 AM", "8:06 AM", "8:29 AM", "8:57 AM", "9:27 AM"] },
+  { stop_id: "883", name: "SW Canyon &amp; Canyon Dr", lat: 45.498446, lon: -122.764453, times: ["6:29 AM", "6:55 AM", "7:16 AM", "7:44 AM", "8:08 AM", "8:31 AM", "8:59 AM", "9:29 AM"] },
+  { stop_id: "914", name: "SW Canyon &amp; 87th", lat: 45.498042, lon: -122.767203, times: ["6:29 AM", "6:56 AM", "7:17 AM", "7:44 AM", "8:08 AM", "8:31 AM", "8:59 AM", "9:29 AM"] },
+  { stop_id: "12406", name: "SW Canyon &amp; 91st", lat: 45.496454, lon: -122.770404, times: ["6:30 AM", "6:56 AM", "7:17 AM", "7:45 AM", "8:09 AM", "8:32 AM", "9:00 AM", "9:30 AM"] },
+  { stop_id: "917", name: "SW Canyon &amp; 93rd", lat: 45.495097, lon: -122.772969, times: ["6:30 AM", "6:57 AM", "7:18 AM", "7:45 AM", "8:09 AM", "8:32 AM", "9:00 AM", "9:30 AM"] },
+  { stop_id: "919", name: "SW Canyon &amp; 96th", lat: 45.494098, lon: -122.775745, times: ["6:31 AM", "6:57 AM", "7:18 AM", "7:46 AM", "8:10 AM", "8:33 AM", "9:01 AM", "9:31 AM"] },
+  { stop_id: "898", name: "SW Canyon &amp; Walker", lat: 45.493448, lon: -122.779968, times: ["6:31 AM", "6:58 AM", "7:19 AM", "7:46 AM", "8:10 AM", "8:33 AM", "9:01 AM", "9:31 AM"] },
+  { stop_id: "904", name: "SW Canyon &amp; 104th", lat: 45.492754, lon: -122.783512, times: ["6:32 AM", "6:58 AM", "7:19 AM", "7:47 AM", "8:11 AM", "8:34 AM", "9:02 AM", "9:32 AM"] },
+  { stop_id: "907", name: "SW Canyon &amp; 107th", lat: 45.492101, lon: -122.786756, times: ["6:32 AM", "6:59 AM", "7:20 AM", "7:47 AM", "8:11 AM", "8:34 AM", "9:02 AM", "9:32 AM"] },
+  { stop_id: "909", name: "SW Canyon &amp; 110th", lat: 45.491442, lon: -122.789906, times: ["6:32 AM", "6:59 AM", "7:20 AM", "7:48 AM", "8:12 AM", "8:35 AM", "9:03 AM", "9:33 AM"] },
+  { stop_id: "910", name: "SW Canyon &amp; 115th", lat: 45.490041, lon: -122.795325, times: ["6:33 AM", "7:00 AM", "7:21 AM", "7:49 AM", "8:13 AM", "8:36 AM", "9:04 AM", "9:34 AM"] },
+  { stop_id: "8265", name: "SW Canyon &amp; Red Robin", lat: 45.489307, lon: -122.799158, times: ["6:34 AM", "7:00 AM", "7:21 AM", "7:49 AM", "8:13 AM", "8:36 AM", "9:04 AM", "9:34 AM"] },
   { stop_id: "9654", name: "Beaverton Transit Center", lat: 45.491269, lon: -122.800864, times: ["6:11 AM", "6:35 AM", "7:02 AM", "7:23 AM", "7:51 AM", "8:15 AM", "8:38 AM", "9:06 AM"] },
 ]
 

@@ -32,17 +32,17 @@
       left: 0;
       width: 100%;
       background: #222;
-      padding: 0.5rem 0;
+      padding: 0;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
       text-align: center;
     }
 
     .ad-banner img {
       width: 100%;
       max-width: 728px;
-      height: auto;
-      max-height: 90px;
+      height: 90px;
+      
       display: block;
       margin: 0 auto;
     }
@@ -60,10 +60,16 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
-    }
+  width: 100vw;
+  min-width: 100vw;
+  height: 400px;
+  border-radius: 0;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -110,7 +116,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-bottom: rem;
       }
     }
   </style>
@@ -119,7 +125,7 @@
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-200-dir1-ad.html" style="border:none; width:100%; height:120px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-200-dir1-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
 
 
@@ -153,7 +159,31 @@
   const routeNumber = 200;
   const direction = parseInt(1);
 
-  const map = L.map('map').setView([45.6, -122.7], 12);
+  // --- Set map bounds and zoom limits ---
+  const bounds = L.latLngBounds(
+    [45.40, -122.85], // SW
+    [45.65, -122.45]  // NE
+  );
+
+  const map = L.map('map', {
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0,
+    minZoom: 12,   // Don't allow zooming out past city
+    maxZoom: 19,   // Allow good zoom in
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true
+  }).setView([45.52, -122.68], 13);
+
+  map.setMaxBounds(bounds);
+
+// Keep map locked in bounds if user somehow escapes
+map.on('moveend', function() {
+  if (!bounds.contains(map.getCenter())) {
+    map.panInsideBounds(bounds, { animate: true });
+  }
+});
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -1167,29 +1197,29 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "13132", name: "Clackamas Town Center TC MAX Station", lat: 45.435721, lon: -122.567769, times: ["5:58 AM", "6:13 AM", "6:28 AM", "6:43 AM", "6:58 AM", "7:13 AM", "7:28 AM", "7:43 AM"] },
-  { stop_id: "13133", name: "SE Fuller Rd MAX Station", lat: 45.453637, lon: -122.573656, times: ["6:00 AM", "6:16 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:31 AM", "7:46 AM"] },
-  { stop_id: "13134", name: "SE Flavel St MAX Station", lat: 45.468068, lon: -122.566542, times: ["6:03 AM", "6:18 AM", "6:33 AM", "6:48 AM", "7:03 AM", "7:18 AM", "7:33 AM", "7:48 AM"] },
-  { stop_id: "13135", name: "Lents/SE Foster Rd MAX Station", lat: 45.480686, lon: -122.566745, times: ["6:05 AM", "6:20 AM", "6:35 AM", "6:50 AM", "7:05 AM", "7:20 AM", "7:35 AM", "7:50 AM"] },
-  { stop_id: "13136", name: "SE Holgate Blvd MAX Station", lat: 45.491369, lon: -122.566229, times: ["6:07 AM", "6:22 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:22 AM", "7:37 AM", "7:52 AM"] },
-  { stop_id: "13137", name: "SE Powell Blvd MAX Station", lat: 45.495991, lon: -122.566198, times: ["6:08 AM", "6:24 AM", "6:39 AM", "6:54 AM", "7:09 AM", "7:24 AM", "7:39 AM", "7:54 AM"] },
+  { stop_id: "13132", name: "Clackamas Town Center TC MAX Station", lat: 45.435721, lon: -122.567769, times: ["6:13 AM", "6:28 AM", "6:43 AM", "6:58 AM", "7:13 AM", "7:28 AM", "7:43 AM", "7:58 AM"] },
+  { stop_id: "13133", name: "SE Fuller Rd MAX Station", lat: 45.453637, lon: -122.573656, times: ["6:16 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:31 AM", "7:46 AM", "8:01 AM"] },
+  { stop_id: "13134", name: "SE Flavel St MAX Station", lat: 45.468068, lon: -122.566542, times: ["6:18 AM", "6:33 AM", "6:48 AM", "7:03 AM", "7:18 AM", "7:33 AM", "7:48 AM", "8:03 AM"] },
+  { stop_id: "13135", name: "Lents/SE Foster Rd MAX Station", lat: 45.480686, lon: -122.566745, times: ["6:20 AM", "6:35 AM", "6:50 AM", "7:05 AM", "7:20 AM", "7:35 AM", "7:50 AM", "8:05 AM"] },
+  { stop_id: "13136", name: "SE Holgate Blvd MAX Station", lat: 45.491369, lon: -122.566229, times: ["6:22 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:22 AM", "7:37 AM", "7:52 AM", "8:07 AM"] },
+  { stop_id: "13137", name: "SE Powell Blvd MAX Station", lat: 45.495991, lon: -122.566198, times: ["6:24 AM", "6:39 AM", "6:54 AM", "7:09 AM", "7:24 AM", "7:39 AM", "7:54 AM", "8:09 AM"] },
   { stop_id: "13138", name: "SE Division St MAX Station", lat: 45.503608, lon: -122.566584, times: ["6:10 AM", "6:25 AM", "6:40 AM", "6:55 AM", "7:10 AM", "7:25 AM", "7:40 AM", "7:55 AM"] },
   { stop_id: "13139", name: "SE Main St MAX Station", lat: 45.514525, lon: -122.564413, times: ["6:12 AM", "6:28 AM", "6:43 AM", "6:58 AM", "7:13 AM", "7:28 AM", "7:43 AM", "7:58 AM"] },
-  { stop_id: "8370", name: "Gateway/NE 99th Ave TC MAX Station", lat: 45.530839, lon: -122.563627, times: ["5:23 AM", "6:01 AM", "6:16 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:31 AM"] },
-  { stop_id: "8371", name: "NE 82nd Ave MAX Station", lat: 45.533478, lon: -122.578437, times: ["5:25 AM", "6:03 AM", "6:19 AM", "6:34 AM", "6:49 AM", "7:04 AM", "7:19 AM", "7:34 AM"] },
-  { stop_id: "8372", name: "NE 60th Ave MAX Station", lat: 45.528491, lon: -122.603342, times: ["5:28 AM", "6:06 AM", "6:21 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:22 AM", "7:37 AM"] },
-  { stop_id: "8373", name: "Hollywood/NE 42nd Ave MAX Station", lat: 45.532957, lon: -122.621367, times: ["5:30 AM", "6:08 AM", "6:24 AM", "6:39 AM", "6:54 AM", "7:09 AM", "7:24 AM", "7:39 AM"] },
-  { stop_id: "8374", name: "Lloyd Center/NE 11th Ave MAX Station", lat: 45.530146, lon: -122.654335, times: ["5:34 AM", "6:12 AM", "6:28 AM", "6:43 AM", "6:58 AM", "7:13 AM", "7:28 AM", "7:43 AM"] },
-  { stop_id: "8375", name: "NE 7th Ave MAX Station", lat: 45.53015, lon: -122.658277, times: ["5:35 AM", "6:14 AM", "6:29 AM", "6:44 AM", "6:59 AM", "7:14 AM", "7:29 AM", "7:44 AM"] },
-  { stop_id: "8376", name: "Convention Center MAX Station", lat: 45.530138, lon: -122.66254, times: ["5:37 AM", "6:15 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:31 AM", "7:46 AM"] },
-  { stop_id: "8377", name: "Rose Quarter TC MAX Station", lat: 45.530235, lon: -122.665557, times: ["5:38 AM", "6:17 AM", "6:32 AM", "6:47 AM", "7:02 AM", "7:17 AM", "7:32 AM", "7:47 AM"] },
-  { stop_id: "7601", name: "Union Station/NW 5th &amp; Glisan MAX Stn", lat: 45.526732, lon: -122.675604, times: ["5:43 AM", "6:21 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:22 AM", "7:37 AM", "7:52 AM"] },
-  { stop_id: "9303", name: "NW 5th &amp; Couch MAX Station", lat: 45.523885, lon: -122.675498, times: ["5:45 AM", "6:23 AM", "6:38 AM", "6:54 AM", "7:09 AM", "7:24 AM", "7:39 AM", "7:54 AM"] },
-  { stop_id: "7627", name: "SW 5th &amp; Oak St MAX Station", lat: 45.521573, lon: -122.676178, times: ["5:46 AM", "6:24 AM", "6:40 AM", "6:55 AM", "7:10 AM", "7:25 AM", "7:40 AM", "7:55 AM"] },
-  { stop_id: "7646", name: "Pioneer Place/SW 5th Ave MAX Station", lat: 45.518255, lon: -122.677934, times: ["5:48 AM", "6:26 AM", "6:42 AM", "6:57 AM", "7:12 AM", "7:27 AM", "7:42 AM", "7:57 AM"] },
-  { stop_id: "7608", name: "City Hall/SW 5th &amp; Jefferson MAX Station", lat: 45.514914, lon: -122.679742, times: ["5:50 AM", "6:29 AM", "6:44 AM", "6:59 AM", "7:14 AM", "7:29 AM", "7:44 AM", "7:59 AM"] },
-  { stop_id: "7618", name: "PSU Urban Center/SW 5th &amp; Mill MAX Station", lat: 45.511645, lon: -122.681551, times: ["5:52 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:31 AM", "7:46 AM", "8:01 AM"] },
-  { stop_id: "7606", name: "PSU South/SW 5th &amp; Jackson MAX Stn", lat: 45.508979, lon: -122.682999, times: ["5:54 AM", "6:32 AM", "6:48 AM", "7:03 AM", "7:18 AM", "7:33 AM", "7:48 AM", "8:03 AM"] },
+  { stop_id: "8370", name: "Gateway/NE 99th Ave TC MAX Station", lat: 45.530839, lon: -122.563627, times: ["6:16 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:31 AM", "7:46 AM", "8:01 AM"] },
+  { stop_id: "8371", name: "NE 82nd Ave MAX Station", lat: 45.533478, lon: -122.578437, times: ["6:19 AM", "6:34 AM", "6:49 AM", "7:04 AM", "7:19 AM", "7:34 AM", "7:49 AM", "8:04 AM"] },
+  { stop_id: "8372", name: "NE 60th Ave MAX Station", lat: 45.528491, lon: -122.603342, times: ["6:21 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:22 AM", "7:37 AM", "7:52 AM", "8:07 AM"] },
+  { stop_id: "8373", name: "Hollywood/NE 42nd Ave MAX Station", lat: 45.532957, lon: -122.621367, times: ["6:24 AM", "6:39 AM", "6:54 AM", "7:09 AM", "7:24 AM", "7:39 AM", "7:54 AM", "8:09 AM"] },
+  { stop_id: "8374", name: "Lloyd Center/NE 11th Ave MAX Station", lat: 45.530146, lon: -122.654335, times: ["6:12 AM", "6:28 AM", "6:43 AM", "6:58 AM", "7:13 AM", "7:28 AM", "7:43 AM", "7:58 AM"] },
+  { stop_id: "8375", name: "NE 7th Ave MAX Station", lat: 45.53015, lon: -122.658277, times: ["6:14 AM", "6:29 AM", "6:44 AM", "6:59 AM", "7:14 AM", "7:29 AM", "7:44 AM", "7:59 AM"] },
+  { stop_id: "8376", name: "Convention Center MAX Station", lat: 45.530138, lon: -122.66254, times: ["6:15 AM", "6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:31 AM", "7:46 AM", "8:01 AM"] },
+  { stop_id: "8377", name: "Rose Quarter TC MAX Station", lat: 45.530235, lon: -122.665557, times: ["6:17 AM", "6:32 AM", "6:47 AM", "7:02 AM", "7:17 AM", "7:32 AM", "7:47 AM", "8:02 AM"] },
+  { stop_id: "7601", name: "Union Station/NW 5th &amp; Glisan MAX Stn", lat: 45.526732, lon: -122.675604, times: ["6:21 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:22 AM", "7:37 AM", "7:52 AM", "8:07 AM"] },
+  { stop_id: "9303", name: "NW 5th &amp; Couch MAX Station", lat: 45.523885, lon: -122.675498, times: ["6:23 AM", "6:38 AM", "6:54 AM", "7:09 AM", "7:24 AM", "7:39 AM", "7:54 AM", "8:09 AM"] },
+  { stop_id: "7627", name: "SW 5th &amp; Oak St MAX Station", lat: 45.521573, lon: -122.676178, times: ["6:24 AM", "6:40 AM", "6:55 AM", "7:10 AM", "7:25 AM", "7:40 AM", "7:55 AM", "8:10 AM"] },
+  { stop_id: "7646", name: "Pioneer Place/SW 5th Ave MAX Station", lat: 45.518255, lon: -122.677934, times: ["6:26 AM", "6:42 AM", "6:57 AM", "7:12 AM", "7:27 AM", "7:42 AM", "7:57 AM", "8:12 AM"] },
+  { stop_id: "7608", name: "City Hall/SW 5th &amp; Jefferson MAX Station", lat: 45.514914, lon: -122.679742, times: ["6:29 AM", "6:44 AM", "6:59 AM", "7:14 AM", "7:29 AM", "7:44 AM", "7:59 AM", "8:14 AM"] },
+  { stop_id: "7618", name: "PSU Urban Center/SW 5th &amp; Mill MAX Station", lat: 45.511645, lon: -122.681551, times: ["6:31 AM", "6:46 AM", "7:01 AM", "7:16 AM", "7:31 AM", "7:46 AM", "8:01 AM", "8:16 AM"] },
+  { stop_id: "7606", name: "PSU South/SW 5th &amp; Jackson MAX Stn", lat: 45.508979, lon: -122.682999, times: ["6:32 AM", "6:48 AM", "7:03 AM", "7:18 AM", "7:33 AM", "7:48 AM", "8:03 AM", "8:18 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {

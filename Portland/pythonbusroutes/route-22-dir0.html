@@ -32,17 +32,17 @@
       left: 0;
       width: 100%;
       background: #222;
-      padding: 0.5rem 0;
+      padding: 0;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
       text-align: center;
     }
 
     .ad-banner img {
       width: 100%;
       max-width: 728px;
-      height: auto;
-      max-height: 90px;
+      height: 90px;
+      
       display: block;
       margin: 0 auto;
     }
@@ -60,10 +60,16 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
-    }
+  width: 100vw;
+  min-width: 100vw;
+  height: 400px;
+  border-radius: 0;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -110,7 +116,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-bottom: rem;
       }
     }
   </style>
@@ -119,7 +125,7 @@
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-22-dir0-ad.html" style="border:none; width:100%; height:120px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-22-dir0-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
 
 
@@ -153,7 +159,31 @@
   const routeNumber = 22;
   const direction = parseInt(0);
 
-  const map = L.map('map').setView([45.6, -122.7], 12);
+  // --- Set map bounds and zoom limits ---
+  const bounds = L.latLngBounds(
+    [45.40, -122.85], // SW
+    [45.65, -122.45]  // NE
+  );
+
+  const map = L.map('map', {
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0,
+    minZoom: 12,   // Don't allow zooming out past city
+    maxZoom: 19,   // Allow good zoom in
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true
+  }).setView([45.52, -122.68], 13);
+
+  map.setMaxBounds(bounds);
+
+// Keep map locked in bounds if user somehow escapes
+map.on('moveend', function() {
+  if (!bounds.contains(map.getCenter())) {
+    map.panInsideBounds(bounds, { animate: true });
+  }
+});
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -411,32 +441,32 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["5:54 AM", "6:22 AM", "6:51 AM", "7:21 AM", "7:50 AM", "8:20 AM", "8:50 AM", "9:21 AM"] },
-  { stop_id: "10864", name: "Gateway Transit Center ", lat: 45.5299, lon: -122.563177, times: ["5:56 AM", "6:24 AM", "6:53 AM", "7:23 AM", "7:52 AM", "8:22 AM", "8:52 AM", "9:23 AM"] },
-  { stop_id: "4287", name: "10000 Block NE Pacific St", lat: 45.529407, lon: -122.560866, times: ["5:56 AM", "6:24 AM", "6:53 AM", "7:23 AM", "7:52 AM", "8:22 AM", "8:52 AM", "9:23 AM"] },
-  { stop_id: "6522", name: "1200 Block NE 102nd", lat: 45.531609, lon: -122.55794, times: ["5:57 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:53 AM", "8:23 AM", "8:53 AM", "9:24 AM"] },
-  { stop_id: "6531", name: "NE 102nd &amp; Weidler", lat: 45.533937, lon: -122.557906, times: ["5:58 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:54 AM", "8:24 AM", "8:54 AM", "9:25 AM"] },
-  { stop_id: "6530", name: "NE 102nd &amp; Tillamook", lat: 45.537436, lon: -122.557861, times: ["5:58 AM", "6:26 AM", "6:55 AM", "7:26 AM", "7:55 AM", "8:25 AM", "8:55 AM", "9:26 AM"] },
-  { stop_id: "6508", name: "NE 102nd &amp; Brazee", lat: 45.540159, lon: -122.557809, times: ["5:59 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM", "8:56 AM", "9:26 AM"] },
-  { stop_id: "14075", name: "NE 102nd &amp; Morris St", lat: 45.543249, lon: -122.5577, times: ["6:00 AM", "6:28 AM", "6:57 AM", "7:27 AM", "7:57 AM", "8:27 AM", "8:57 AM", "9:27 AM"] },
-  { stop_id: "6514", name: "NE 102nd &amp; Fremont", lat: 45.548415, lon: -122.55761, times: ["6:01 AM", "6:29 AM", "6:58 AM", "7:29 AM", "7:58 AM", "8:28 AM", "8:58 AM", "9:29 AM"] },
-  { stop_id: "6506", name: "NE 102nd &amp; Beech", lat: 45.550213, lon: -122.557672, times: ["6:02 AM", "6:30 AM", "6:59 AM", "7:29 AM", "7:59 AM", "8:29 AM", "8:59 AM", "9:29 AM"] },
-  { stop_id: "6528", name: "NE 102nd &amp; Shaver", lat: 45.551539, lon: -122.557669, times: ["6:02 AM", "6:30 AM", "6:59 AM", "7:30 AM", "7:59 AM", "8:29 AM", "8:59 AM", "9:30 AM"] },
-  { stop_id: "5226", name: "NE Shaver &amp; 105th", lat: 45.551707, lon: -122.554842, times: ["6:02 AM", "6:30 AM", "6:59 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM"] },
-  { stop_id: "5228", name: "NE Shaver &amp; 109th", lat: 45.551705, lon: -122.550766, times: ["6:03 AM", "6:31 AM", "7:00 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:31 AM"] },
-  { stop_id: "5230", name: "NE Shaver &amp; 112th", lat: 45.551696, lon: -122.547652, times: ["6:04 AM", "6:32 AM", "7:01 AM", "7:32 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:32 AM"] },
-  { stop_id: "5232", name: "NE Shaver &amp; 114th", lat: 45.551701, lon: -122.545314, times: ["6:04 AM", "6:32 AM", "7:01 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM", "9:32 AM"] },
-  { stop_id: "8471", name: "NE Shaver &amp; Parkrose Middle School", lat: 45.551694, lon: -122.540536, times: ["6:05 AM", "6:33 AM", "7:02 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM", "9:33 AM"] },
-  { stop_id: "5234", name: "NE Shaver &amp; 122nd", lat: 45.551607, lon: -122.537468, times: ["6:06 AM", "6:34 AM", "7:03 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM", "9:34 AM"] },
-  { stop_id: "6683", name: "NE 125th Pl &amp; Shaver", lat: 45.552154, lon: -122.534504, times: ["6:06 AM", "6:34 AM", "7:03 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM", "9:34 AM"] },
-  { stop_id: "6682", name: "NE 125th Pl &amp; Riverwood 40", lat: 45.553025, lon: -122.533474, times: ["6:06 AM", "6:35 AM", "7:04 AM", "7:35 AM", "8:05 AM", "8:35 AM", "9:05 AM", "9:35 AM"] },
-  { stop_id: "4772", name: "12600 Block NE Prescott Dr", lat: 45.555008, lon: -122.532298, times: ["6:07 AM", "6:35 AM", "7:05 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM"] },
-  { stop_id: "4774", name: "NE Prescott Dr &amp; 129th Pl", lat: 45.554878, lon: -122.530893, times: ["6:07 AM", "6:36 AM", "7:05 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM"] },
-  { stop_id: "4776", name: "NE Prescott Dr &amp; 131st Pl", lat: 45.554545, lon: -122.529024, times: ["6:07 AM", "6:36 AM", "7:05 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM"] },
-  { stop_id: "6719", name: "NE 133rd &amp; Shaver", lat: 45.552454, lon: -122.525872, times: ["6:08 AM", "6:37 AM", "7:07 AM", "7:38 AM", "8:08 AM", "8:38 AM", "9:08 AM", "9:38 AM"] },
-  { stop_id: "5223", name: "NE Shaver &amp; 135th", lat: 45.552645, lon: -122.524266, times: ["6:09 AM", "6:37 AM", "7:07 AM", "7:38 AM", "8:08 AM", "8:38 AM", "9:08 AM", "9:38 AM"] },
-  { stop_id: "10454", name: "NE Shaver &amp; 141st", lat: 45.552351, lon: -122.520022, times: ["6:09 AM", "6:38 AM", "7:08 AM", "7:39 AM", "8:09 AM", "8:39 AM", "9:09 AM", "9:39 AM"] },
-  { stop_id: "6748", name: "NE 141st &amp; Failing", lat: 45.551175, lon: -122.519367, times: ["6:10 AM", "6:39 AM", "7:09 AM", "7:40 AM", "8:10 AM", "8:40 AM", "9:10 AM", "9:40 AM"] },
+  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["6:22 AM", "6:51 AM", "7:21 AM", "7:50 AM", "8:20 AM", "8:50 AM", "9:21 AM", "9:51 AM"] },
+  { stop_id: "10864", name: "Gateway Transit Center ", lat: 45.5299, lon: -122.563177, times: ["6:24 AM", "6:53 AM", "7:23 AM", "7:52 AM", "8:22 AM", "8:52 AM", "9:23 AM", "9:53 AM"] },
+  { stop_id: "4287", name: "10000 Block NE Pacific St", lat: 45.529407, lon: -122.560866, times: ["6:24 AM", "6:53 AM", "7:23 AM", "7:52 AM", "8:22 AM", "8:52 AM", "9:23 AM", "9:53 AM"] },
+  { stop_id: "6522", name: "1200 Block NE 102nd", lat: 45.531609, lon: -122.55794, times: ["6:25 AM", "6:54 AM", "7:24 AM", "7:53 AM", "8:23 AM", "8:53 AM", "9:24 AM", "9:54 AM"] },
+  { stop_id: "6531", name: "NE 102nd &amp; Weidler", lat: 45.533937, lon: -122.557906, times: ["6:26 AM", "6:55 AM", "7:25 AM", "7:54 AM", "8:24 AM", "8:54 AM", "9:25 AM", "9:55 AM"] },
+  { stop_id: "6530", name: "NE 102nd &amp; Tillamook", lat: 45.537436, lon: -122.557861, times: ["6:26 AM", "6:55 AM", "7:26 AM", "7:55 AM", "8:25 AM", "8:55 AM", "9:26 AM", "9:56 AM"] },
+  { stop_id: "6508", name: "NE 102nd &amp; Brazee", lat: 45.540159, lon: -122.557809, times: ["6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM", "8:56 AM", "9:26 AM", "9:56 AM"] },
+  { stop_id: "14075", name: "NE 102nd &amp; Morris St", lat: 45.543249, lon: -122.5577, times: ["6:28 AM", "6:57 AM", "7:27 AM", "7:57 AM", "8:27 AM", "8:57 AM", "9:27 AM", "9:57 AM"] },
+  { stop_id: "6514", name: "NE 102nd &amp; Fremont", lat: 45.548415, lon: -122.55761, times: ["6:29 AM", "6:58 AM", "7:29 AM", "7:58 AM", "8:28 AM", "8:58 AM", "9:29 AM", "9:59 AM"] },
+  { stop_id: "6506", name: "NE 102nd &amp; Beech", lat: 45.550213, lon: -122.557672, times: ["6:30 AM", "6:59 AM", "7:29 AM", "7:59 AM", "8:29 AM", "8:59 AM", "9:29 AM", "9:59 AM"] },
+  { stop_id: "6528", name: "NE 102nd &amp; Shaver", lat: 45.551539, lon: -122.557669, times: ["6:30 AM", "6:59 AM", "7:30 AM", "7:59 AM", "8:29 AM", "8:59 AM", "9:30 AM", "10:00 AM"] },
+  { stop_id: "5226", name: "NE Shaver &amp; 105th", lat: 45.551707, lon: -122.554842, times: ["6:30 AM", "6:59 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM", "10:00 AM"] },
+  { stop_id: "5228", name: "NE Shaver &amp; 109th", lat: 45.551705, lon: -122.550766, times: ["6:31 AM", "7:00 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:31 AM", "10:01 AM"] },
+  { stop_id: "5230", name: "NE Shaver &amp; 112th", lat: 45.551696, lon: -122.547652, times: ["6:32 AM", "7:01 AM", "7:32 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:32 AM", "10:02 AM"] },
+  { stop_id: "5232", name: "NE Shaver &amp; 114th", lat: 45.551701, lon: -122.545314, times: ["6:32 AM", "7:01 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM", "9:32 AM", "10:02 AM"] },
+  { stop_id: "8471", name: "NE Shaver &amp; Parkrose Middle School", lat: 45.551694, lon: -122.540536, times: ["6:33 AM", "7:02 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM", "9:33 AM", "10:03 AM"] },
+  { stop_id: "5234", name: "NE Shaver &amp; 122nd", lat: 45.551607, lon: -122.537468, times: ["6:34 AM", "7:03 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM", "9:34 AM", "10:04 AM"] },
+  { stop_id: "6683", name: "NE 125th Pl &amp; Shaver", lat: 45.552154, lon: -122.534504, times: ["6:34 AM", "7:03 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM", "9:34 AM", "10:04 AM"] },
+  { stop_id: "6682", name: "NE 125th Pl &amp; Riverwood 40", lat: 45.553025, lon: -122.533474, times: ["6:35 AM", "7:04 AM", "7:35 AM", "8:05 AM", "8:35 AM", "9:05 AM", "9:35 AM", "10:05 AM"] },
+  { stop_id: "4772", name: "12600 Block NE Prescott Dr", lat: 45.555008, lon: -122.532298, times: ["6:35 AM", "7:05 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM", "10:06 AM"] },
+  { stop_id: "4774", name: "NE Prescott Dr &amp; 129th Pl", lat: 45.554878, lon: -122.530893, times: ["6:36 AM", "7:05 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM", "10:06 AM"] },
+  { stop_id: "4776", name: "NE Prescott Dr &amp; 131st Pl", lat: 45.554545, lon: -122.529024, times: ["6:36 AM", "7:05 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM", "10:06 AM"] },
+  { stop_id: "6719", name: "NE 133rd &amp; Shaver", lat: 45.552454, lon: -122.525872, times: ["6:37 AM", "7:07 AM", "7:38 AM", "8:08 AM", "8:38 AM", "9:08 AM", "9:38 AM", "10:08 AM"] },
+  { stop_id: "5223", name: "NE Shaver &amp; 135th", lat: 45.552645, lon: -122.524266, times: ["6:37 AM", "7:07 AM", "7:38 AM", "8:08 AM", "8:38 AM", "9:08 AM", "9:38 AM", "10:08 AM"] },
+  { stop_id: "10454", name: "NE Shaver &amp; 141st", lat: 45.552351, lon: -122.520022, times: ["6:38 AM", "7:08 AM", "7:39 AM", "8:09 AM", "8:39 AM", "9:09 AM", "9:39 AM", "10:09 AM"] },
+  { stop_id: "6748", name: "NE 141st &amp; Failing", lat: 45.551175, lon: -122.519367, times: ["6:39 AM", "7:09 AM", "7:40 AM", "8:10 AM", "8:40 AM", "9:10 AM", "9:40 AM", "10:10 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {

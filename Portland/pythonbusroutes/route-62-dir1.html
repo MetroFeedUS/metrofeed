@@ -32,17 +32,17 @@
       left: 0;
       width: 100%;
       background: #222;
-      padding: 0.5rem 0;
+      padding: 0;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
       text-align: center;
     }
 
     .ad-banner img {
       width: 100%;
       max-width: 728px;
-      height: auto;
-      max-height: 90px;
+      height: 90px;
+      
       display: block;
       margin: 0 auto;
     }
@@ -60,10 +60,16 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
-    }
+  width: 100vw;
+  min-width: 100vw;
+  height: 400px;
+  border-radius: 0;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -110,7 +116,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-bottom: rem;
       }
     }
   </style>
@@ -119,7 +125,7 @@
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-62-dir1-ad.html" style="border:none; width:100%; height:120px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-62-dir1-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
 
 
@@ -153,7 +159,31 @@
   const routeNumber = 62;
   const direction = parseInt(1);
 
-  const map = L.map('map').setView([45.6, -122.7], 12);
+  // --- Set map bounds and zoom limits ---
+  const bounds = L.latLngBounds(
+    [45.40, -122.85], // SW
+    [45.65, -122.45]  // NE
+  );
+
+  const map = L.map('map', {
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0,
+    minZoom: 12,   // Don't allow zooming out past city
+    maxZoom: 19,   // Allow good zoom in
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true
+  }).setView([45.52, -122.68], 13);
+
+  map.setMaxBounds(bounds);
+
+// Keep map locked in bounds if user somehow escapes
+map.on('moveend', function() {
+  if (!bounds.contains(map.getCenter())) {
+    map.panInsideBounds(bounds, { animate: true });
+  }
+});
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -1054,64 +1084,64 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9650", name: "Washington Square Transit Center ", lat: 45.4527, lon: -122.77881, times: ["5:18 AM", "5:56 AM", "6:29 AM", "7:08 AM", "7:49 AM", "8:32 AM", "9:14 AM", "9:55 AM"] },
-  { stop_id: "6126", name: "9000 Block SW Washington Square Rd", lat: 45.454405, lon: -122.782806, times: ["5:18 AM", "5:56 AM", "6:29 AM", "7:09 AM", "7:50 AM", "8:33 AM", "9:15 AM", "9:56 AM"] },
-  { stop_id: "9169", name: "SW Scholls Ferry &amp; Progress Park &amp; Ride", lat: 45.454744, lon: -122.783758, times: ["5:19 AM", "5:57 AM", "6:30 AM", "7:09 AM", "7:50 AM", "8:33 AM", "9:15 AM", "9:56 AM"] },
-  { stop_id: "5164", name: "SW Scholls Ferry &amp; Cascade", lat: 45.449512, lon: -122.786515, times: ["5:20 AM", "5:58 AM", "6:31 AM", "7:10 AM", "7:51 AM", "8:34 AM", "9:16 AM", "9:57 AM"] },
-  { stop_id: "5189", name: "SW Scholls Ferry &amp; Nimbus", lat: 45.44721, lon: -122.790352, times: ["5:21 AM", "5:59 AM", "6:32 AM", "7:11 AM", "7:52 AM", "8:35 AM", "9:17 AM", "9:58 AM"] },
-  { stop_id: "9038", name: "SW Scholls Ferry &amp; Springwood", lat: 45.445755, lon: -122.794007, times: ["5:21 AM", "6:00 AM", "6:33 AM", "7:12 AM", "7:53 AM", "8:36 AM", "9:18 AM", "9:59 AM"] },
-  { stop_id: "5166", name: "SW Scholls Ferry &amp; Conestoga", lat: 45.445291, lon: -122.796134, times: ["5:21 AM", "6:00 AM", "6:33 AM", "7:12 AM", "7:53 AM", "8:36 AM", "9:18 AM", "9:59 AM"] },
-  { stop_id: "8619", name: "SW Scholls Ferry &amp; Boones Bend Dr", lat: 45.444224, lon: -122.800804, times: ["5:22 AM", "6:01 AM", "6:34 AM", "7:13 AM", "7:54 AM", "8:37 AM", "9:19 AM", "10:00 AM"] },
-  { stop_id: "8620", name: "SW Scholls Ferry &amp; 125th", lat: 45.443739, lon: -122.80593, times: ["5:23 AM", "6:01 AM", "6:34 AM", "7:14 AM", "7:55 AM", "8:38 AM", "9:20 AM", "10:01 AM"] },
-  { stop_id: "8621", name: "SW Scholls Ferry &amp; 130th", lat: 45.442865, lon: -122.811126, times: ["5:24 AM", "6:02 AM", "6:35 AM", "7:15 AM", "7:56 AM", "8:39 AM", "9:21 AM", "10:02 AM"] },
-  { stop_id: "8622", name: "SW Scholls Ferry &amp; 135th", lat: 45.441497, lon: -122.816163, times: ["5:24 AM", "6:03 AM", "6:36 AM", "7:16 AM", "7:57 AM", "8:40 AM", "9:22 AM", "10:03 AM"] },
-  { stop_id: "8673", name: "SW Scholls Ferry &amp; Davies", lat: 45.439877, lon: -122.82132, times: ["5:25 AM", "6:04 AM", "6:37 AM", "7:17 AM", "7:58 AM", "8:41 AM", "9:23 AM", "10:04 AM"] },
-  { stop_id: "11521", name: "SW Scholls Ferry &amp; Murray", lat: 45.438627, lon: -122.825468, times: ["5:26 AM", "6:04 AM", "6:37 AM", "7:17 AM", "7:58 AM", "8:41 AM", "9:23 AM", "10:04 AM"] },
-  { stop_id: "8625", name: "SW Murray &amp; Teal Blvd", lat: 45.440382, lon: -122.825758, times: ["5:26 AM", "6:05 AM", "6:38 AM", "7:18 AM", "7:59 AM", "8:42 AM", "9:24 AM", "10:05 AM"] },
-  { stop_id: "8626", name: "SW Murray &amp; Osprey Dr", lat: 45.443187, lon: -122.825799, times: ["5:27 AM", "6:06 AM", "6:39 AM", "7:19 AM", "8:00 AM", "8:43 AM", "9:25 AM", "10:06 AM"] },
-  { stop_id: "8627", name: "SW Murray &amp; Weir Rd", lat: 45.447904, lon: -122.825836, times: ["5:27 AM", "6:06 AM", "6:39 AM", "7:19 AM", "8:00 AM", "8:43 AM", "9:25 AM", "10:06 AM"] },
-  { stop_id: "9324", name: "SW Murray &amp; Brockman", lat: 45.453449, lon: -122.825842, times: ["5:28 AM", "6:07 AM", "6:40 AM", "7:20 AM", "8:01 AM", "8:44 AM", "9:26 AM", "10:07 AM"] },
-  { stop_id: "8629", name: "SW Murray &amp; Maverick Ter", lat: 45.455942, lon: -122.82595, times: ["5:28 AM", "6:07 AM", "6:40 AM", "7:21 AM", "8:02 AM", "8:45 AM", "9:26 AM", "10:07 AM"] },
-  { stop_id: "8630", name: "SW Murray &amp; Sexton Mtn Dr", lat: 45.460447, lon: -122.825835, times: ["5:29 AM", "6:08 AM", "6:41 AM", "7:22 AM", "8:03 AM", "8:46 AM", "9:27 AM", "10:08 AM"] },
-  { stop_id: "8631", name: "SW Murray &amp; Hargis", lat: 45.462377, lon: -122.825842, times: ["5:30 AM", "6:09 AM", "6:42 AM", "7:22 AM", "8:03 AM", "8:46 AM", "9:28 AM", "10:09 AM"] },
-  { stop_id: "8632", name: "SW Murray &amp; Hart", lat: 45.466009, lon: -122.82591, times: ["5:30 AM", "6:09 AM", "6:42 AM", "7:23 AM", "8:04 AM", "8:47 AM", "9:28 AM", "10:09 AM"] },
-  { stop_id: "8633", name: "SW Murray &amp; Barlow", lat: 45.469333, lon: -122.825957, times: ["5:31 AM", "6:10 AM", "6:43 AM", "7:23 AM", "8:04 AM", "8:47 AM", "9:29 AM", "10:10 AM"] },
-  { stop_id: "8634", name: "SW Murray &amp; 22nd", lat: 45.472406, lon: -122.825962, times: ["5:31 AM", "6:10 AM", "6:43 AM", "7:24 AM", "8:05 AM", "8:48 AM", "9:29 AM", "10:10 AM"] },
-  { stop_id: "8635", name: "SW Murray &amp; Allen", lat: 45.475243, lon: -122.825872, times: ["5:32 AM", "6:11 AM", "6:44 AM", "7:25 AM", "8:06 AM", "8:49 AM", "9:30 AM", "10:11 AM"] },
-  { stop_id: "4065", name: "SW Murray &amp; Bonnie Brae", lat: 45.478404, lon: -122.825938, times: ["5:32 AM", "6:11 AM", "6:45 AM", "7:26 AM", "8:07 AM", "8:50 AM", "9:31 AM", "10:12 AM"] },
-  { stop_id: "4095", name: "SW Murray &amp; 6th", lat: 45.481644, lon: -122.825956, times: ["5:33 AM", "6:12 AM", "6:46 AM", "7:27 AM", "8:08 AM", "8:51 AM", "9:32 AM", "10:13 AM"] },
-  { stop_id: "4069", name: "SW Murray &amp; Farmington", lat: 45.486336, lon: -122.82593, times: ["5:35 AM", "6:14 AM", "6:47 AM", "7:28 AM", "8:09 AM", "8:52 AM", "9:33 AM", "10:14 AM"] },
-  { stop_id: "4087", name: "SW Murray &amp; Tualatin Valley Hwy", lat: 45.489178, lon: -122.82599, times: ["5:35 AM", "6:14 AM", "6:48 AM", "7:29 AM", "8:10 AM", "8:53 AM", "9:34 AM", "10:15 AM"] },
-  { stop_id: "4060", name: "3900 Block SW Murray", lat: 45.491747, lon: -122.825963, times: ["5:36 AM", "6:15 AM", "6:49 AM", "7:30 AM", "8:11 AM", "8:54 AM", "9:35 AM", "10:16 AM"] },
-  { stop_id: "10599", name: "SW Murray &amp; Millikan Way", lat: 45.494081, lon: -122.826014, times: ["5:37 AM", "6:16 AM", "6:50 AM", "7:31 AM", "8:12 AM", "8:55 AM", "9:36 AM", "10:17 AM"] },
-  { stop_id: "9465", name: "14100 Block SW Millikan", lat: 45.493404, lon: -122.822349, times: ["5:38 AM", "6:17 AM", "6:51 AM", "7:32 AM", "8:13 AM", "8:56 AM", "9:37 AM", "10:18 AM"] },
-  { stop_id: "9957", name: "Millikan Way MAX Station/Park and Ride", lat: 45.495156, lon: -122.821675, times: ["5:42 AM", "6:21 AM", "6:55 AM", "7:36 AM", "8:17 AM", "9:00 AM", "9:41 AM", "10:22 AM"] },
-  { stop_id: "9466", name: "13900 Block SW Millikan", lat: 45.49275, lon: -122.81988, times: ["5:43 AM", "6:22 AM", "6:56 AM", "7:37 AM", "8:18 AM", "9:01 AM", "9:42 AM", "10:23 AM"] },
-  { stop_id: "3892", name: "13500 Block SW Millikan", lat: 45.492133, lon: -122.817566, times: ["5:43 AM", "6:22 AM", "6:56 AM", "7:37 AM", "8:18 AM", "9:01 AM", "9:42 AM", "10:23 AM"] },
-  { stop_id: "11851", name: "SW Hocken &amp; Cedar Hills Xing Entrance", lat: 45.496026, lon: -122.812391, times: ["5:44 AM", "6:23 AM", "6:57 AM", "7:39 AM", "8:20 AM", "9:03 AM", "9:44 AM", "10:25 AM"] },
-  { stop_id: "13325", name: "2800 Block SW Hocken", lat: 45.499294, lon: -122.813692, times: ["5:45 AM", "6:24 AM", "6:58 AM", "7:40 AM", "8:21 AM", "9:04 AM", "9:45 AM", "10:26 AM"] },
-  { stop_id: "3062", name: "SW Jenkins &amp; Ecole", lat: 45.501616, lon: -122.817564, times: ["5:46 AM", "6:25 AM", "6:59 AM", "7:41 AM", "8:22 AM", "9:05 AM", "9:46 AM", "10:27 AM"] },
-  { stop_id: "3063", name: "SW Jenkins &amp; Briggs", lat: 45.50251, lon: -122.821015, times: ["5:47 AM", "6:26 AM", "7:00 AM", "7:41 AM", "8:22 AM", "9:05 AM", "9:46 AM", "10:27 AM"] },
-  { stop_id: "8443", name: "SW Jenkins &amp; Meridian", lat: 45.503112, lon: -122.82338, times: ["5:47 AM", "6:26 AM", "7:00 AM", "7:42 AM", "8:23 AM", "9:06 AM", "9:47 AM", "10:28 AM"] },
-  { stop_id: "13640", name: "SW Jenkins &amp; Murray", lat: 45.503875, lon: -122.82618, times: ["5:48 AM", "6:27 AM", "7:01 AM", "7:42 AM", "8:23 AM", "9:06 AM", "9:47 AM", "10:28 AM"] },
-  { stop_id: "10132", name: "SW Murray &amp; Nike", lat: 45.507178, lon: -122.824454, times: ["5:48 AM", "6:27 AM", "7:01 AM", "7:43 AM", "8:24 AM", "9:07 AM", "9:48 AM", "10:29 AM"] },
-  { stop_id: "4090", name: "SW Murray &amp; Walker", lat: 45.511258, lon: -122.8211, times: ["5:50 AM", "6:29 AM", "7:03 AM", "7:45 AM", "8:26 AM", "9:09 AM", "9:50 AM", "10:31 AM"] },
-  { stop_id: "4066", name: "SW Murray &amp; Butner", lat: 45.515383, lon: -122.818014, times: ["5:51 AM", "6:30 AM", "7:04 AM", "7:46 AM", "8:27 AM", "9:10 AM", "9:51 AM", "10:32 AM"] },
-  { stop_id: "4077", name: "SW Murray &amp; Linda", lat: 45.517636, lon: -122.817053, times: ["5:51 AM", "6:30 AM", "7:04 AM", "7:46 AM", "8:27 AM", "9:10 AM", "9:51 AM", "10:32 AM"] },
-  { stop_id: "9623", name: "SW Murray &amp; NW Milburn", lat: 45.519832, lon: -122.815854, times: ["5:52 AM", "6:31 AM", "7:05 AM", "7:47 AM", "8:28 AM", "9:11 AM", "9:52 AM", "10:33 AM"] },
-  { stop_id: "4085", name: "NW Murray &amp; Science Park Dr", lat: 45.525549, lon: -122.814348, times: ["5:53 AM", "6:32 AM", "7:06 AM", "7:48 AM", "8:30 AM", "9:13 AM", "9:54 AM", "10:35 AM"] },
-  { stop_id: "1163", name: "NW Cornell &amp; Dale", lat: 45.525675, lon: -122.812785, times: ["5:54 AM", "6:33 AM", "7:07 AM", "7:49 AM", "8:30 AM", "9:13 AM", "9:54 AM", "10:35 AM"] },
-  { stop_id: "8828", name: "13000 Block NW Cornell", lat: 45.524933, lon: -122.811073, times: ["5:54 AM", "6:33 AM", "7:07 AM", "7:49 AM", "8:31 AM", "9:14 AM", "9:55 AM", "10:36 AM"] },
-  { stop_id: "1171", name: "NW Cornell &amp; Barnes", lat: 45.524857, lon: -122.808571, times: ["5:54 AM", "6:33 AM", "7:08 AM", "7:50 AM", "8:31 AM", "9:14 AM", "9:55 AM", "10:36 AM"] },
-  { stop_id: "1183", name: "NW Cornell &amp; Saltzman", lat: 45.525222, lon: -122.806784, times: ["5:55 AM", "6:34 AM", "7:08 AM", "7:50 AM", "8:31 AM", "9:14 AM", "9:55 AM", "10:36 AM"] },
-  { stop_id: "1160", name: "12200 Block NW Cornell", lat: 45.526431, lon: -122.802223, times: ["5:56 AM", "6:35 AM", "7:09 AM", "7:51 AM", "8:32 AM", "9:15 AM", "9:56 AM", "10:37 AM"] },
-  { stop_id: "1200", name: "NW Cornell &amp; 119th", lat: 45.526925, lon: -122.799916, times: ["5:56 AM", "6:35 AM", "7:09 AM", "7:51 AM", "8:33 AM", "9:16 AM", "9:57 AM", "10:38 AM"] },
-  { stop_id: "13465", name: "NW Cornell &amp; 118th", lat: 45.526771, lon: -122.797066, times: ["5:56 AM", "6:35 AM", "7:10 AM", "7:52 AM", "8:33 AM", "9:16 AM", "9:57 AM", "10:38 AM"] },
-  { stop_id: "1196", name: "NW Cornell &amp; Cedar Hills Blvd", lat: 45.526346, lon: -122.793466, times: ["5:57 AM", "6:36 AM", "7:11 AM", "7:53 AM", "8:34 AM", "9:17 AM", "9:58 AM", "10:39 AM"] },
-  { stop_id: "10152", name: "NW Cedar Hills &amp; Leahy", lat: 45.522616, lon: -122.792885, times: ["5:58 AM", "6:37 AM", "7:12 AM", "7:54 AM", "8:35 AM", "9:18 AM", "9:59 AM", "10:40 AM"] },
-  { stop_id: "10749", name: "SW Cedar Hills &amp; Celeste", lat: 45.518832, lon: -122.791573, times: ["5:59 AM", "6:38 AM", "7:13 AM", "7:55 AM", "8:37 AM", "9:20 AM", "10:01 AM", "10:42 AM"] },
-  { stop_id: "9627", name: "SW Barnes &amp; Cedar Hills Blvd", lat: 45.515216, lon: -122.789725, times: ["6:00 AM", "6:39 AM", "7:14 AM", "7:56 AM", "8:38 AM", "9:21 AM", "10:02 AM", "10:43 AM"] },
-  { stop_id: "9625", name: "Sunset Transit Center", lat: 45.510149, lon: -122.781938, times: ["6:04 AM", "6:43 AM", "7:18 AM", "8:00 AM", "8:42 AM", "9:25 AM", "10:06 AM", "10:47 AM"] },
+  { stop_id: "9650", name: "Washington Square Transit Center ", lat: 45.4527, lon: -122.77881, times: ["6:29 AM", "7:08 AM", "7:49 AM", "8:32 AM", "9:14 AM", "9:55 AM", "10:37 AM", "11:18 AM"] },
+  { stop_id: "6126", name: "9000 Block SW Washington Square Rd", lat: 45.454405, lon: -122.782806, times: ["6:29 AM", "7:09 AM", "7:50 AM", "8:33 AM", "9:15 AM", "9:56 AM", "10:38 AM", "11:19 AM"] },
+  { stop_id: "9169", name: "SW Scholls Ferry &amp; Progress Park &amp; Ride", lat: 45.454744, lon: -122.783758, times: ["6:30 AM", "7:09 AM", "7:50 AM", "8:33 AM", "9:15 AM", "9:56 AM", "10:38 AM", "11:19 AM"] },
+  { stop_id: "5164", name: "SW Scholls Ferry &amp; Cascade", lat: 45.449512, lon: -122.786515, times: ["6:31 AM", "7:10 AM", "7:51 AM", "8:34 AM", "9:16 AM", "9:57 AM", "10:39 AM", "11:20 AM"] },
+  { stop_id: "5189", name: "SW Scholls Ferry &amp; Nimbus", lat: 45.44721, lon: -122.790352, times: ["6:32 AM", "7:11 AM", "7:52 AM", "8:35 AM", "9:17 AM", "9:58 AM", "10:40 AM", "11:21 AM"] },
+  { stop_id: "9038", name: "SW Scholls Ferry &amp; Springwood", lat: 45.445755, lon: -122.794007, times: ["6:33 AM", "7:12 AM", "7:53 AM", "8:36 AM", "9:18 AM", "9:59 AM", "10:41 AM", "11:22 AM"] },
+  { stop_id: "5166", name: "SW Scholls Ferry &amp; Conestoga", lat: 45.445291, lon: -122.796134, times: ["6:33 AM", "7:12 AM", "7:53 AM", "8:36 AM", "9:18 AM", "9:59 AM", "10:41 AM", "11:22 AM"] },
+  { stop_id: "8619", name: "SW Scholls Ferry &amp; Boones Bend Dr", lat: 45.444224, lon: -122.800804, times: ["6:34 AM", "7:13 AM", "7:54 AM", "8:37 AM", "9:19 AM", "10:00 AM", "10:42 AM", "11:23 AM"] },
+  { stop_id: "8620", name: "SW Scholls Ferry &amp; 125th", lat: 45.443739, lon: -122.80593, times: ["6:34 AM", "7:14 AM", "7:55 AM", "8:38 AM", "9:20 AM", "10:01 AM", "10:43 AM", "11:24 AM"] },
+  { stop_id: "8621", name: "SW Scholls Ferry &amp; 130th", lat: 45.442865, lon: -122.811126, times: ["6:35 AM", "7:15 AM", "7:56 AM", "8:39 AM", "9:21 AM", "10:02 AM", "10:44 AM", "11:25 AM"] },
+  { stop_id: "8622", name: "SW Scholls Ferry &amp; 135th", lat: 45.441497, lon: -122.816163, times: ["6:36 AM", "7:16 AM", "7:57 AM", "8:40 AM", "9:22 AM", "10:03 AM", "10:45 AM", "11:26 AM"] },
+  { stop_id: "8673", name: "SW Scholls Ferry &amp; Davies", lat: 45.439877, lon: -122.82132, times: ["6:37 AM", "7:17 AM", "7:58 AM", "8:41 AM", "9:23 AM", "10:04 AM", "10:46 AM", "11:27 AM"] },
+  { stop_id: "11521", name: "SW Scholls Ferry &amp; Murray", lat: 45.438627, lon: -122.825468, times: ["6:37 AM", "7:17 AM", "7:58 AM", "8:41 AM", "9:23 AM", "10:04 AM", "10:46 AM", "11:27 AM"] },
+  { stop_id: "8625", name: "SW Murray &amp; Teal Blvd", lat: 45.440382, lon: -122.825758, times: ["6:38 AM", "7:18 AM", "7:59 AM", "8:42 AM", "9:24 AM", "10:05 AM", "10:47 AM", "11:28 AM"] },
+  { stop_id: "8626", name: "SW Murray &amp; Osprey Dr", lat: 45.443187, lon: -122.825799, times: ["6:39 AM", "7:19 AM", "8:00 AM", "8:43 AM", "9:25 AM", "10:06 AM", "10:48 AM", "11:29 AM"] },
+  { stop_id: "8627", name: "SW Murray &amp; Weir Rd", lat: 45.447904, lon: -122.825836, times: ["6:39 AM", "7:19 AM", "8:00 AM", "8:43 AM", "9:25 AM", "10:06 AM", "10:48 AM", "11:29 AM"] },
+  { stop_id: "9324", name: "SW Murray &amp; Brockman", lat: 45.453449, lon: -122.825842, times: ["6:40 AM", "7:20 AM", "8:01 AM", "8:44 AM", "9:26 AM", "10:07 AM", "10:49 AM", "11:30 AM"] },
+  { stop_id: "8629", name: "SW Murray &amp; Maverick Ter", lat: 45.455942, lon: -122.82595, times: ["6:40 AM", "7:21 AM", "8:02 AM", "8:45 AM", "9:26 AM", "10:07 AM", "10:49 AM", "11:31 AM"] },
+  { stop_id: "8630", name: "SW Murray &amp; Sexton Mtn Dr", lat: 45.460447, lon: -122.825835, times: ["6:41 AM", "7:22 AM", "8:03 AM", "8:46 AM", "9:27 AM", "10:08 AM", "10:50 AM", "11:32 AM"] },
+  { stop_id: "8631", name: "SW Murray &amp; Hargis", lat: 45.462377, lon: -122.825842, times: ["6:42 AM", "7:22 AM", "8:03 AM", "8:46 AM", "9:28 AM", "10:09 AM", "10:51 AM", "11:32 AM"] },
+  { stop_id: "8632", name: "SW Murray &amp; Hart", lat: 45.466009, lon: -122.82591, times: ["6:42 AM", "7:23 AM", "8:04 AM", "8:47 AM", "9:28 AM", "10:09 AM", "10:51 AM", "11:33 AM"] },
+  { stop_id: "8633", name: "SW Murray &amp; Barlow", lat: 45.469333, lon: -122.825957, times: ["6:43 AM", "7:23 AM", "8:04 AM", "8:47 AM", "9:29 AM", "10:10 AM", "10:52 AM", "11:33 AM"] },
+  { stop_id: "8634", name: "SW Murray &amp; 22nd", lat: 45.472406, lon: -122.825962, times: ["6:10 AM", "6:43 AM", "7:24 AM", "8:05 AM", "8:48 AM", "9:29 AM", "10:10 AM", "10:52 AM"] },
+  { stop_id: "8635", name: "SW Murray &amp; Allen", lat: 45.475243, lon: -122.825872, times: ["6:11 AM", "6:44 AM", "7:25 AM", "8:06 AM", "8:49 AM", "9:30 AM", "10:11 AM", "10:53 AM"] },
+  { stop_id: "4065", name: "SW Murray &amp; Bonnie Brae", lat: 45.478404, lon: -122.825938, times: ["6:11 AM", "6:45 AM", "7:26 AM", "8:07 AM", "8:50 AM", "9:31 AM", "10:12 AM", "10:54 AM"] },
+  { stop_id: "4095", name: "SW Murray &amp; 6th", lat: 45.481644, lon: -122.825956, times: ["6:12 AM", "6:46 AM", "7:27 AM", "8:08 AM", "8:51 AM", "9:32 AM", "10:13 AM", "10:55 AM"] },
+  { stop_id: "4069", name: "SW Murray &amp; Farmington", lat: 45.486336, lon: -122.82593, times: ["6:14 AM", "6:47 AM", "7:28 AM", "8:09 AM", "8:52 AM", "9:33 AM", "10:14 AM", "10:56 AM"] },
+  { stop_id: "4087", name: "SW Murray &amp; Tualatin Valley Hwy", lat: 45.489178, lon: -122.82599, times: ["6:14 AM", "6:48 AM", "7:29 AM", "8:10 AM", "8:53 AM", "9:34 AM", "10:15 AM", "10:57 AM"] },
+  { stop_id: "4060", name: "3900 Block SW Murray", lat: 45.491747, lon: -122.825963, times: ["6:15 AM", "6:49 AM", "7:30 AM", "8:11 AM", "8:54 AM", "9:35 AM", "10:16 AM", "10:58 AM"] },
+  { stop_id: "10599", name: "SW Murray &amp; Millikan Way", lat: 45.494081, lon: -122.826014, times: ["6:16 AM", "6:50 AM", "7:31 AM", "8:12 AM", "8:55 AM", "9:36 AM", "10:17 AM", "10:59 AM"] },
+  { stop_id: "9465", name: "14100 Block SW Millikan", lat: 45.493404, lon: -122.822349, times: ["6:17 AM", "6:51 AM", "7:32 AM", "8:13 AM", "8:56 AM", "9:37 AM", "10:18 AM", "11:00 AM"] },
+  { stop_id: "9957", name: "Millikan Way MAX Station/Park and Ride", lat: 45.495156, lon: -122.821675, times: ["6:21 AM", "6:55 AM", "7:36 AM", "8:17 AM", "9:00 AM", "9:41 AM", "10:22 AM", "11:04 AM"] },
+  { stop_id: "9466", name: "13900 Block SW Millikan", lat: 45.49275, lon: -122.81988, times: ["6:22 AM", "6:56 AM", "7:37 AM", "8:18 AM", "9:01 AM", "9:42 AM", "10:23 AM", "11:05 AM"] },
+  { stop_id: "3892", name: "13500 Block SW Millikan", lat: 45.492133, lon: -122.817566, times: ["6:22 AM", "6:56 AM", "7:37 AM", "8:18 AM", "9:01 AM", "9:42 AM", "10:23 AM", "11:05 AM"] },
+  { stop_id: "11851", name: "SW Hocken &amp; Cedar Hills Xing Entrance", lat: 45.496026, lon: -122.812391, times: ["6:23 AM", "6:57 AM", "7:39 AM", "8:20 AM", "9:03 AM", "9:44 AM", "10:25 AM", "11:07 AM"] },
+  { stop_id: "13325", name: "2800 Block SW Hocken", lat: 45.499294, lon: -122.813692, times: ["6:24 AM", "6:58 AM", "7:40 AM", "8:21 AM", "9:04 AM", "9:45 AM", "10:26 AM", "11:08 AM"] },
+  { stop_id: "3062", name: "SW Jenkins &amp; Ecole", lat: 45.501616, lon: -122.817564, times: ["6:25 AM", "6:59 AM", "7:41 AM", "8:22 AM", "9:05 AM", "9:46 AM", "10:27 AM", "11:09 AM"] },
+  { stop_id: "3063", name: "SW Jenkins &amp; Briggs", lat: 45.50251, lon: -122.821015, times: ["6:26 AM", "7:00 AM", "7:41 AM", "8:22 AM", "9:05 AM", "9:46 AM", "10:27 AM", "11:09 AM"] },
+  { stop_id: "8443", name: "SW Jenkins &amp; Meridian", lat: 45.503112, lon: -122.82338, times: ["6:26 AM", "7:00 AM", "7:42 AM", "8:23 AM", "9:06 AM", "9:47 AM", "10:28 AM", "11:10 AM"] },
+  { stop_id: "13640", name: "SW Jenkins &amp; Murray", lat: 45.503875, lon: -122.82618, times: ["6:27 AM", "7:01 AM", "7:42 AM", "8:23 AM", "9:06 AM", "9:47 AM", "10:28 AM", "11:10 AM"] },
+  { stop_id: "10132", name: "SW Murray &amp; Nike", lat: 45.507178, lon: -122.824454, times: ["6:27 AM", "7:01 AM", "7:43 AM", "8:24 AM", "9:07 AM", "9:48 AM", "10:29 AM", "11:11 AM"] },
+  { stop_id: "4090", name: "SW Murray &amp; Walker", lat: 45.511258, lon: -122.8211, times: ["6:29 AM", "7:03 AM", "7:45 AM", "8:26 AM", "9:09 AM", "9:50 AM", "10:31 AM", "11:13 AM"] },
+  { stop_id: "4066", name: "SW Murray &amp; Butner", lat: 45.515383, lon: -122.818014, times: ["6:30 AM", "7:04 AM", "7:46 AM", "8:27 AM", "9:10 AM", "9:51 AM", "10:32 AM", "11:14 AM"] },
+  { stop_id: "4077", name: "SW Murray &amp; Linda", lat: 45.517636, lon: -122.817053, times: ["6:30 AM", "7:04 AM", "7:46 AM", "8:27 AM", "9:10 AM", "9:51 AM", "10:32 AM", "11:14 AM"] },
+  { stop_id: "9623", name: "SW Murray &amp; NW Milburn", lat: 45.519832, lon: -122.815854, times: ["6:31 AM", "7:05 AM", "7:47 AM", "8:28 AM", "9:11 AM", "9:52 AM", "10:33 AM", "11:15 AM"] },
+  { stop_id: "4085", name: "NW Murray &amp; Science Park Dr", lat: 45.525549, lon: -122.814348, times: ["6:32 AM", "7:06 AM", "7:48 AM", "8:30 AM", "9:13 AM", "9:54 AM", "10:35 AM", "11:17 AM"] },
+  { stop_id: "1163", name: "NW Cornell &amp; Dale", lat: 45.525675, lon: -122.812785, times: ["6:33 AM", "7:07 AM", "7:49 AM", "8:30 AM", "9:13 AM", "9:54 AM", "10:35 AM", "11:17 AM"] },
+  { stop_id: "8828", name: "13000 Block NW Cornell", lat: 45.524933, lon: -122.811073, times: ["6:33 AM", "7:07 AM", "7:49 AM", "8:31 AM", "9:14 AM", "9:55 AM", "10:36 AM", "11:18 AM"] },
+  { stop_id: "1171", name: "NW Cornell &amp; Barnes", lat: 45.524857, lon: -122.808571, times: ["6:33 AM", "7:08 AM", "7:50 AM", "8:31 AM", "9:14 AM", "9:55 AM", "10:36 AM", "11:18 AM"] },
+  { stop_id: "1183", name: "NW Cornell &amp; Saltzman", lat: 45.525222, lon: -122.806784, times: ["6:34 AM", "7:08 AM", "7:50 AM", "8:31 AM", "9:14 AM", "9:55 AM", "10:36 AM", "11:18 AM"] },
+  { stop_id: "1160", name: "12200 Block NW Cornell", lat: 45.526431, lon: -122.802223, times: ["6:35 AM", "7:09 AM", "7:51 AM", "8:32 AM", "9:15 AM", "9:56 AM", "10:37 AM", "11:19 AM"] },
+  { stop_id: "1200", name: "NW Cornell &amp; 119th", lat: 45.526925, lon: -122.799916, times: ["6:35 AM", "7:09 AM", "7:51 AM", "8:33 AM", "9:16 AM", "9:57 AM", "10:38 AM", "11:20 AM"] },
+  { stop_id: "13465", name: "NW Cornell &amp; 118th", lat: 45.526771, lon: -122.797066, times: ["6:35 AM", "7:10 AM", "7:52 AM", "8:33 AM", "9:16 AM", "9:57 AM", "10:38 AM", "11:20 AM"] },
+  { stop_id: "1196", name: "NW Cornell &amp; Cedar Hills Blvd", lat: 45.526346, lon: -122.793466, times: ["6:36 AM", "7:11 AM", "7:53 AM", "8:34 AM", "9:17 AM", "9:58 AM", "10:39 AM", "11:21 AM"] },
+  { stop_id: "10152", name: "NW Cedar Hills &amp; Leahy", lat: 45.522616, lon: -122.792885, times: ["6:37 AM", "7:12 AM", "7:54 AM", "8:35 AM", "9:18 AM", "9:59 AM", "10:40 AM", "11:22 AM"] },
+  { stop_id: "10749", name: "SW Cedar Hills &amp; Celeste", lat: 45.518832, lon: -122.791573, times: ["6:38 AM", "7:13 AM", "7:55 AM", "8:37 AM", "9:20 AM", "10:01 AM", "10:42 AM", "11:24 AM"] },
+  { stop_id: "9627", name: "SW Barnes &amp; Cedar Hills Blvd", lat: 45.515216, lon: -122.789725, times: ["6:39 AM", "7:14 AM", "7:56 AM", "8:38 AM", "9:21 AM", "10:02 AM", "10:43 AM", "11:25 AM"] },
+  { stop_id: "9625", name: "Sunset Transit Center", lat: 45.510149, lon: -122.781938, times: ["6:43 AM", "7:18 AM", "8:00 AM", "8:42 AM", "9:25 AM", "10:06 AM", "10:47 AM", "11:29 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {

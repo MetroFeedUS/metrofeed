@@ -32,17 +32,17 @@
       left: 0;
       width: 100%;
       background: #222;
-      padding: 0.5rem 0;
+      padding: 0;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
       text-align: center;
     }
 
     .ad-banner img {
       width: 100%;
       max-width: 728px;
-      height: auto;
-      max-height: 90px;
+      height: 90px;
+      
       display: block;
       margin: 0 auto;
     }
@@ -60,10 +60,16 @@
       background-color: #1e1e1e;
     }
     #map {
-      width: 100%;
-      height: 400px;
-      border-radius: 8px;
-    }
+  width: 100vw;
+  min-width: 100vw;
+  height: 400px;
+  border-radius: 0;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
     .button-bar {
       display: flex;
       justify-content: center;
@@ -110,7 +116,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-bottom: rem;
       }
     }
   </style>
@@ -119,7 +125,7 @@
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-53-dir1-ad.html" style="border:none; width:100%; height:120px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-53-dir1-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
 
 
@@ -153,7 +159,31 @@
   const routeNumber = 53;
   const direction = parseInt(1);
 
-  const map = L.map('map').setView([45.6, -122.7], 12);
+  // --- Set map bounds and zoom limits ---
+  const bounds = L.latLngBounds(
+    [45.40, -122.85], // SW
+    [45.65, -122.45]  // NE
+  );
+
+  const map = L.map('map', {
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0,
+    minZoom: 12,   // Don't allow zooming out past city
+    maxZoom: 19,   // Allow good zoom in
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true
+  }).setView([45.52, -122.68], 13);
+
+  map.setMaxBounds(bounds);
+
+// Keep map locked in bounds if user somehow escapes
+map.on('moveend', function() {
+  if (!bounds.contains(map.getCenter())) {
+    map.panInsideBounds(bounds, { animate: true });
+  }
+});
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -549,25 +579,25 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["5:48 AM", "6:08 AM", "6:19 AM", "6:41 AM", "6:47 AM", "7:11 AM", "7:18 AM", "7:41 AM"] },
-  { stop_id: "9981", name: "Beaverton Transit Center", lat: 45.49093, lon: -122.801741, times: ["5:50 AM", "6:21 AM", "6:49 AM", "7:20 AM", "7:49 AM", "8:31 AM"] },
-  { stop_id: "12945", name: "SW Lombard &amp; Broadway", lat: 45.488206, lon: -122.801264, times: ["5:50 AM", "6:21 AM", "6:50 AM", "7:20 AM", "7:49 AM", "8:31 AM"] },
-  { stop_id: "342", name: "SW Beaverton-Hillsdale &amp; Griffith", lat: 45.486417, lon: -122.797055, times: ["5:51 AM", "6:22 AM", "6:51 AM", "7:22 AM", "7:51 AM", "8:33 AM"] },
-  { stop_id: "9707", name: "4900 Block SW Griffith Drive", lat: 45.483996, lon: -122.795357, times: ["5:52 AM", "6:23 AM", "6:52 AM", "7:23 AM", "7:52 AM", "8:34 AM"] },
-  { stop_id: "9699", name: "10900 Block SW 5th", lat: 45.483666, lon: -122.789073, times: ["5:54 AM", "6:25 AM", "6:55 AM", "7:25 AM", "7:54 AM", "8:36 AM"] },
-  { stop_id: "9700", name: "SW 5th &amp; Western", lat: 45.483647, lon: -122.782894, times: ["5:56 AM", "6:27 AM", "6:57 AM", "7:27 AM", "7:56 AM", "8:38 AM"] },
-  { stop_id: "9685", name: "SW Arctic Dr &amp; Western Ave", lat: 45.481302, lon: -122.781966, times: ["5:56 AM", "6:27 AM", "6:57 AM", "7:27 AM", "7:56 AM", "8:38 AM"] },
-  { stop_id: "9686", name: "SW Arctic Dr &amp; Harvest Ct", lat: 45.479129, lon: -122.778791, times: ["5:57 AM", "6:28 AM", "6:58 AM", "7:28 AM", "7:57 AM", "8:39 AM"] },
-  { stop_id: "9701", name: "SW Arctic Dr &amp; Allen", lat: 45.474825, lon: -122.778974, times: ["5:58 AM", "6:30 AM", "7:00 AM", "7:30 AM", "7:59 AM", "8:40 AM"] },
-  { stop_id: "9703", name: "10500 Block SW Allen", lat: 45.476709, lon: -122.784726, times: ["5:59 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:00 AM", "8:41 AM"] },
-  { stop_id: "10499", name: "SW Allen &amp; 107th", lat: 45.476697, lon: -122.78714, times: ["5:59 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:00 AM", "8:41 AM"] },
-  { stop_id: "9704", name: "SW Allen &amp; King", lat: 45.47669, lon: -122.79361, times: ["6:01 AM", "6:33 AM", "7:03 AM", "7:33 AM", "8:02 AM", "8:43 AM"] },
-  { stop_id: "3455", name: "SW Lombard &amp; Allen", lat: 45.476992, lon: -122.800197, times: ["6:02 AM", "6:34 AM", "7:04 AM", "7:34 AM", "8:03 AM", "8:44 AM"] },
-  { stop_id: "3580", name: "SW Lombard &amp; 12th", lat: 45.478466, lon: -122.800249, times: ["6:03 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:04 AM", "8:45 AM"] },
-  { stop_id: "3585", name: "SW Lombard &amp; 9th", lat: 45.480428, lon: -122.800217, times: ["6:03 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:05 AM", "8:46 AM"] },
-  { stop_id: "3583", name: "SW Lombard &amp; 5th", lat: 45.482796, lon: -122.80022, times: ["6:04 AM", "6:37 AM", "7:07 AM", "7:37 AM", "8:06 AM", "8:47 AM"] },
-  { stop_id: "3582", name: "SW Lombard &amp; 2nd", lat: 45.484921, lon: -122.800245, times: ["6:05 AM", "6:38 AM", "7:08 AM", "7:38 AM", "8:07 AM", "8:48 AM"] },
-  { stop_id: "12944", name: "SW Lombard &amp; Broadway", lat: 45.487818, lon: -122.800725, times: ["6:06 AM", "6:39 AM", "7:09 AM", "7:39 AM", "8:08 AM", "8:49 AM"] },
+  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["6:19 AM", "6:41 AM", "6:47 AM", "7:11 AM", "7:18 AM", "7:41 AM", "7:47 AM", "8:10 AM"] },
+  { stop_id: "9981", name: "Beaverton Transit Center", lat: 45.49093, lon: -122.801741, times: ["6:21 AM", "6:49 AM", "7:20 AM", "7:49 AM", "8:31 AM", "5:50 AM"] },
+  { stop_id: "12945", name: "SW Lombard &amp; Broadway", lat: 45.488206, lon: -122.801264, times: ["6:21 AM", "6:50 AM", "7:20 AM", "7:49 AM", "8:31 AM", "5:50 AM"] },
+  { stop_id: "342", name: "SW Beaverton-Hillsdale &amp; Griffith", lat: 45.486417, lon: -122.797055, times: ["6:22 AM", "6:51 AM", "7:22 AM", "7:51 AM", "8:33 AM", "5:51 AM"] },
+  { stop_id: "9707", name: "4900 Block SW Griffith Drive", lat: 45.483996, lon: -122.795357, times: ["6:23 AM", "6:52 AM", "7:23 AM", "7:52 AM", "8:34 AM", "5:52 AM"] },
+  { stop_id: "9699", name: "10900 Block SW 5th", lat: 45.483666, lon: -122.789073, times: ["6:25 AM", "6:55 AM", "7:25 AM", "7:54 AM", "8:36 AM", "5:54 AM"] },
+  { stop_id: "9700", name: "SW 5th &amp; Western", lat: 45.483647, lon: -122.782894, times: ["6:27 AM", "6:57 AM", "7:27 AM", "7:56 AM", "8:38 AM", "5:56 AM"] },
+  { stop_id: "9685", name: "SW Arctic Dr &amp; Western Ave", lat: 45.481302, lon: -122.781966, times: ["6:27 AM", "6:57 AM", "7:27 AM", "7:56 AM", "8:38 AM", "5:56 AM"] },
+  { stop_id: "9686", name: "SW Arctic Dr &amp; Harvest Ct", lat: 45.479129, lon: -122.778791, times: ["6:28 AM", "6:58 AM", "7:28 AM", "7:57 AM", "8:39 AM", "5:57 AM"] },
+  { stop_id: "9701", name: "SW Arctic Dr &amp; Allen", lat: 45.474825, lon: -122.778974, times: ["6:30 AM", "7:00 AM", "7:30 AM", "7:59 AM", "8:40 AM", "5:58 AM"] },
+  { stop_id: "9703", name: "10500 Block SW Allen", lat: 45.476709, lon: -122.784726, times: ["6:31 AM", "7:01 AM", "7:31 AM", "8:00 AM", "8:41 AM", "5:59 AM"] },
+  { stop_id: "10499", name: "SW Allen &amp; 107th", lat: 45.476697, lon: -122.78714, times: ["6:31 AM", "7:01 AM", "7:31 AM", "8:00 AM", "8:41 AM", "5:59 AM"] },
+  { stop_id: "9704", name: "SW Allen &amp; King", lat: 45.47669, lon: -122.79361, times: ["6:33 AM", "7:03 AM", "7:33 AM", "8:02 AM", "8:43 AM", "6:01 AM"] },
+  { stop_id: "3455", name: "SW Lombard &amp; Allen", lat: 45.476992, lon: -122.800197, times: ["6:34 AM", "7:04 AM", "7:34 AM", "8:03 AM", "8:44 AM", "6:02 AM"] },
+  { stop_id: "3580", name: "SW Lombard &amp; 12th", lat: 45.478466, lon: -122.800249, times: ["6:35 AM", "7:05 AM", "7:35 AM", "8:04 AM", "8:45 AM", "6:03 AM"] },
+  { stop_id: "3585", name: "SW Lombard &amp; 9th", lat: 45.480428, lon: -122.800217, times: ["6:36 AM", "7:06 AM", "7:36 AM", "8:05 AM", "8:46 AM", "6:03 AM"] },
+  { stop_id: "3583", name: "SW Lombard &amp; 5th", lat: 45.482796, lon: -122.80022, times: ["6:37 AM", "7:07 AM", "7:37 AM", "8:06 AM", "8:47 AM", "6:04 AM"] },
+  { stop_id: "3582", name: "SW Lombard &amp; 2nd", lat: 45.484921, lon: -122.800245, times: ["6:38 AM", "7:08 AM", "7:38 AM", "8:07 AM", "8:48 AM", "6:05 AM"] },
+  { stop_id: "12944", name: "SW Lombard &amp; Broadway", lat: 45.487818, lon: -122.800725, times: ["6:39 AM", "7:09 AM", "7:39 AM", "8:08 AM", "8:49 AM", "6:06 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
