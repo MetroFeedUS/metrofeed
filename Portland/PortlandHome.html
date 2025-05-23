@@ -6,7 +6,6 @@
   <title>Portland, OR - MetroFeed</title>
 
   <style>
-    /* 1) reserve a spot for the fixed banner */
     html, body {
       margin: 0;
       padding: 0;
@@ -19,7 +18,6 @@
       padding-top: 100px;
     }
 
-    /* 2) floating top banner */
     .ad-banner {
       position: fixed;
       top: 0;
@@ -33,14 +31,14 @@
     }
 
     .ad-banner img {
-  width: 100%;
-  max-width: 970px;
-  height: auto;
-  max-height: 120px; /* 👈 Caps desktop height */
-  display: block;
-  margin: 0 auto;
-}
-    /* --- your existing styles below --- */
+      width: 100%;
+      max-width: 728px;
+      height: auto;
+      max-height: 90px;
+      display: block;
+      margin: 0 auto;
+    }
+
     header {
       background-color: #0d0d0d;
       padding: 1rem;
@@ -95,11 +93,12 @@
       z-index: 999;
     }
 
- @media (max-width: 600px) {
-  .ad-banner {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-  }
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+
       .section-link {
         padding: 1rem 1.5rem;
         font-size: 1rem;
@@ -179,12 +178,12 @@
     }
   </style>
 </head>
+<body>
 
-<div class="ad-banner">
-  <script src="Portland/Ads/PortlandHome.js"></script>
-</div>
-
-
+  <!-- 🟦 Static Banner Ad -->
+  <div class="ad-banner">
+    <script src="Portland/Ads/PortlandHome.js"></script>
+  </div>
 
   <div id="installPrompt">
     <strong>📲 Add MetroFeed Portland to your home screen</strong><br>
@@ -216,7 +215,6 @@
   </main>
 
   <script>
-    // Show install banner every 3 days
     const daysBetweenPrompts = 3;
     const lastPrompt = localStorage.getItem('lastInstallPrompt');
     const now = Date.now();
@@ -229,7 +227,6 @@
     }
   </script>
 
-  <!-- Footer -->
   <footer class="site-footer">
     <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
     <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
