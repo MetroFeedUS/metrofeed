@@ -1,39 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2219550569810489"
-     crossorigin="anonymous"></script>
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 17 - To Holgate & 122nd | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-     
- body {
+    html, body {
       margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
 
     body {
-      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+      padding-top: 120px;
     }
 
-    header {
-      background-color: #0d0d0d;
-      border-top: 4px solid #4dd0e1;
-      border-bottom: 4px solid #4dd0e1;
-      padding: 1rem;
-      text-align: center;
-    }
-    header img {
-      max-height: 60px;
-    }
-     .ad-banner {
+    .ad-banner {
       position: fixed;
       top: 0;
       left: 0;
@@ -46,97 +33,123 @@
     }
 
     .ad-banner img {
-      width: 100%;
-      max-width: 728px;
-      height: 90px;
-      
-      display: block;
-      margin: 0 auto;
+  width: 100%;
+  max-width: 728px;
+
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
     }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
     h1 {
       text-align: center;
       margin: 1rem 0;
       font-size: 2rem;
       color: #f0f0f0;
     }
-   
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
     #map {
-  width: 100vw;
-  min-width: 100vw;
-  height: 400px;
-  border-radius: 0;
-  margin-left: 50%;
-  transform: translateX(-50%);
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
 
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
       font-size: 0.85rem;
       color: #aaa;
     }
+
     .site-footer a {
       color: #00BFFF;
       text-decoration: none;
     }
+
     .site-footer a:hover {
       text-decoration: underline;
     }
-  @media (max-width: 600px) {
-      .ad-banner {
-        padding-top: 1rem;
-        padding-bottom: rem;
-      }
-    }
 
-/* --- Border Nuker --- */
-#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
-  border: none !important;
-  box-shadow: none !important;
-  background-clip: padding-box;
+@media (max-width: 600px) {
+  .ad-banner {
+    padding-top: 1rem;
+    padding-bottom: 0rem;
+  }
 }
+
 
   </style>
 </head>
+
 <body>
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
     <iframe src="https://metrofeedus.com/portland/Ads/route-17-dir0-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
-
 
  <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
@@ -150,7 +163,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅ Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 17 - To Holgate & 122nd</h1>
@@ -162,42 +175,28 @@
     </div>
   </div>
 
-  
   <script>
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 17;
-  const direction = parseInt(0);
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  // --- Set map bounds and zoom limits ---
-  const bounds = L.latLngBounds(
-    [45.40, -122.85], // SW
-    [45.65, -122.45]  // NE
-  );
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 17;
+    const direction = parseInt(0);
 
-  const map = L.map('map', {
-    maxBounds: bounds,
-    maxBoundsViscosity: 1.0,
-    minZoom: 12,   // Don't allow zooming out past city
-    maxZoom: 19,   // Allow good zoom in
-    zoomControl: true,
-    scrollWheelZoom: true,
-    dragging: true
-  }).setView([45.52, -122.68], 13);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  map.setMaxBounds(bounds);
-
-// Keep map locked in bounds if user somehow escapes
-map.on('moveend', function() {
-  if (!bounds.contains(map.getCenter())) {
-    map.panInsideBounds(bounds, { animate: true });
-  }
-});
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
-
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.571882, -122.636428],
   [45.571882, -122.636259],
   [45.571883, -122.636001],
@@ -1285,23 +1284,23 @@ const stops = [
   { stop_id: "7236", name: "NE 27th &amp; Ainsworth", lat: 45.566516, lon: -122.638227, times: ["11:57 PM", "4:59 AM", "6:14 AM", "6:44 AM", "7:10 AM", "7:39 AM", "8:10 AM", "8:40 AM"] },
   { stop_id: "7249", name: "NE 27th &amp; Jarrett", lat: 45.564532, lon: -122.638235, times: ["11:57 PM", "4:59 AM", "6:14 AM", "6:44 AM", "7:11 AM", "7:40 AM", "8:11 AM", "8:41 AM"] },
   { stop_id: "7251", name: "NE 27th &amp; Killingsworth", lat: 45.562833, lon: -122.638208, times: ["11:58 PM", "5:00 AM", "6:15 AM", "6:45 AM", "7:11 AM", "7:41 AM", "8:12 AM", "8:42 AM"] },
-  { stop_id: "7261", name: "NE 27th &amp; Sumner", lat: 45.560385, lon: -122.63794, times: ["11:22 PM", "11:59 PM", "5:01 AM", "6:16 AM", "6:46 AM", "7:12 AM", "7:42 AM", "8:13 AM"] },
-  { stop_id: "7237", name: "NE 27th &amp; Alberta", lat: 45.55883, lon: -122.637962, times: ["11:22 PM", "11:59 PM", "5:01 AM", "6:16 AM", "6:46 AM", "7:13 AM", "7:43 AM", "8:14 AM"] },
-  { stop_id: "7266", name: "NE 27th &amp; Wygant", lat: 45.557603, lon: -122.63797, times: ["11:23 PM", "12:00 AM", "5:01 AM", "6:17 AM", "6:47 AM", "7:13 AM", "7:43 AM", "8:14 AM"] },
-  { stop_id: "7257", name: "NE 27th &amp; Prescott", lat: 45.555497, lon: -122.637967, times: ["11:23 PM", "12:00 AM", "5:02 AM", "6:17 AM", "6:47 AM", "7:14 AM", "7:44 AM", "8:15 AM"] },
-  { stop_id: "5253", name: "NE Skidmore &amp; 29th", lat: 45.554276, lon: -122.636003, times: ["11:24 PM", "12:01 AM", "5:03 AM", "6:18 AM", "6:48 AM", "7:15 AM", "7:45 AM", "8:16 AM"] },
-  { stop_id: "7310", name: "NE 29th &amp; Bryce", lat: 45.551989, lon: -122.635983, times: ["11:25 PM", "12:02 AM", "5:03 AM", "6:19 AM", "6:49 AM", "7:16 AM", "7:46 AM", "8:17 AM"] },
-  { stop_id: "7307", name: "NE 29th &amp; Alameda", lat: 45.550414, lon: -122.636023, times: ["11:26 PM", "12:03 AM", "5:04 AM", "6:20 AM", "6:50 AM", "7:17 AM", "7:46 AM", "8:17 AM"] },
-  { stop_id: "4812", name: "NE Regents &amp; Ridgewood Dr", lat: 45.549899, lon: -122.639003, times: ["11:27 PM", "12:04 AM", "5:05 AM", "6:21 AM", "6:51 AM", "7:18 AM", "7:47 AM", "8:18 AM"] },
-  { stop_id: "7191", name: "NE 24th &amp; Fremont", lat: 45.548387, lon: -122.641179, times: ["11:28 PM", "12:05 AM", "5:06 AM", "6:22 AM", "6:52 AM", "7:19 AM", "7:49 AM", "8:20 AM"] },
-  { stop_id: "7196", name: "NE 24th &amp; Klickitat", lat: 45.54678, lon: -122.641186, times: ["11:28 PM", "12:05 AM", "5:06 AM", "6:22 AM", "6:52 AM", "7:19 AM", "7:49 AM", "8:20 AM"] },
-  { stop_id: "7202", name: "NE 24th &amp; Siskiyou", lat: 45.545233, lon: -122.641191, times: ["11:28 PM", "12:05 AM", "5:07 AM", "6:23 AM", "6:53 AM", "7:20 AM", "7:50 AM", "8:21 AM"] },
-  { stop_id: "7198", name: "NE 24th &amp; Knott", lat: 45.542183, lon: -122.641225, times: ["11:29 PM", "12:06 AM", "5:07 AM", "6:23 AM", "6:53 AM", "7:21 AM", "7:51 AM", "8:22 AM"] },
-  { stop_id: "7205", name: "NE 24th &amp; Thompson", lat: 45.539046, lon: -122.641239, times: ["11:30 PM", "12:07 AM", "5:08 AM", "6:24 AM", "6:54 AM", "7:22 AM", "7:52 AM", "8:23 AM"] },
-  { stop_id: "7193", name: "NE 24th &amp; Hancock", lat: 45.536503, lon: -122.641248, times: ["11:31 PM", "12:08 AM", "5:09 AM", "6:25 AM", "6:55 AM", "7:23 AM", "7:53 AM", "8:24 AM"] },
-  { stop_id: "635", name: "NE Broadway &amp; 24th", lat: 45.535122, lon: -122.641606, times: ["11:31 PM", "12:08 AM", "5:10 AM", "6:26 AM", "6:56 AM", "7:23 AM", "7:53 AM", "8:24 AM"] },
-  { stop_id: "634", name: "NE Broadway &amp; 21st", lat: 45.535099, lon: -122.645338, times: ["11:32 PM", "12:09 AM", "5:11 AM", "6:27 AM", "6:57 AM", "7:24 AM", "7:54 AM", "8:25 AM"] },
-  { stop_id: "631", name: "NE Broadway &amp; 16th", lat: 45.535116, lon: -122.649857, times: ["11:33 PM", "12:10 AM", "5:12 AM", "6:28 AM", "6:58 AM", "7:26 AM", "7:56 AM", "8:27 AM"] },
+  { stop_id: "7261", name: "NE 27th &amp; Sumner", lat: 45.560385, lon: -122.63794, times: ["11:59 PM", "5:01 AM", "6:16 AM", "6:46 AM", "7:12 AM", "7:42 AM", "8:13 AM", "8:43 AM"] },
+  { stop_id: "7237", name: "NE 27th &amp; Alberta", lat: 45.55883, lon: -122.637962, times: ["11:59 PM", "5:01 AM", "6:16 AM", "6:46 AM", "7:13 AM", "7:43 AM", "8:14 AM", "8:44 AM"] },
+  { stop_id: "7266", name: "NE 27th &amp; Wygant", lat: 45.557603, lon: -122.63797, times: ["12:00 AM", "5:01 AM", "6:17 AM", "6:47 AM", "7:13 AM", "7:43 AM", "8:14 AM", "8:44 AM"] },
+  { stop_id: "7257", name: "NE 27th &amp; Prescott", lat: 45.555497, lon: -122.637967, times: ["12:00 AM", "5:02 AM", "6:17 AM", "6:47 AM", "7:14 AM", "7:44 AM", "8:15 AM", "8:45 AM"] },
+  { stop_id: "5253", name: "NE Skidmore &amp; 29th", lat: 45.554276, lon: -122.636003, times: ["12:01 AM", "5:03 AM", "6:18 AM", "6:48 AM", "7:15 AM", "7:45 AM", "8:16 AM", "8:46 AM"] },
+  { stop_id: "7310", name: "NE 29th &amp; Bryce", lat: 45.551989, lon: -122.635983, times: ["12:02 AM", "5:03 AM", "6:19 AM", "6:49 AM", "7:16 AM", "7:46 AM", "8:17 AM", "8:47 AM"] },
+  { stop_id: "7307", name: "NE 29th &amp; Alameda", lat: 45.550414, lon: -122.636023, times: ["12:03 AM", "5:04 AM", "6:20 AM", "6:50 AM", "7:17 AM", "7:46 AM", "8:17 AM", "8:47 AM"] },
+  { stop_id: "4812", name: "NE Regents &amp; Ridgewood Dr", lat: 45.549899, lon: -122.639003, times: ["12:04 AM", "5:05 AM", "6:21 AM", "6:51 AM", "7:18 AM", "7:47 AM", "8:18 AM", "8:48 AM"] },
+  { stop_id: "7191", name: "NE 24th &amp; Fremont", lat: 45.548387, lon: -122.641179, times: ["12:05 AM", "5:06 AM", "6:22 AM", "6:52 AM", "7:19 AM", "7:49 AM", "8:20 AM", "8:50 AM"] },
+  { stop_id: "7196", name: "NE 24th &amp; Klickitat", lat: 45.54678, lon: -122.641186, times: ["12:05 AM", "5:06 AM", "6:22 AM", "6:52 AM", "7:19 AM", "7:49 AM", "8:20 AM", "8:50 AM"] },
+  { stop_id: "7202", name: "NE 24th &amp; Siskiyou", lat: 45.545233, lon: -122.641191, times: ["12:05 AM", "5:07 AM", "6:23 AM", "6:53 AM", "7:20 AM", "7:50 AM", "8:21 AM", "8:51 AM"] },
+  { stop_id: "7198", name: "NE 24th &amp; Knott", lat: 45.542183, lon: -122.641225, times: ["12:06 AM", "5:07 AM", "6:23 AM", "6:53 AM", "7:21 AM", "7:51 AM", "8:22 AM", "8:52 AM"] },
+  { stop_id: "7205", name: "NE 24th &amp; Thompson", lat: 45.539046, lon: -122.641239, times: ["12:07 AM", "5:08 AM", "6:24 AM", "6:54 AM", "7:22 AM", "7:52 AM", "8:23 AM", "8:53 AM"] },
+  { stop_id: "7193", name: "NE 24th &amp; Hancock", lat: 45.536503, lon: -122.641248, times: ["12:08 AM", "5:09 AM", "6:25 AM", "6:55 AM", "7:23 AM", "7:53 AM", "8:24 AM", "8:54 AM"] },
+  { stop_id: "635", name: "NE Broadway &amp; 24th", lat: 45.535122, lon: -122.641606, times: ["12:08 AM", "5:10 AM", "6:26 AM", "6:56 AM", "7:23 AM", "7:53 AM", "8:24 AM", "8:54 AM"] },
+  { stop_id: "634", name: "NE Broadway &amp; 21st", lat: 45.535099, lon: -122.645338, times: ["12:09 AM", "5:11 AM", "6:27 AM", "6:57 AM", "7:24 AM", "7:54 AM", "8:25 AM", "8:55 AM"] },
+  { stop_id: "631", name: "NE Broadway &amp; 16th", lat: 45.535116, lon: -122.649857, times: ["12:10 AM", "5:12 AM", "6:28 AM", "6:58 AM", "7:26 AM", "7:56 AM", "8:27 AM", "8:57 AM"] },
   { stop_id: "629", name: "NE Broadway &amp; 12th", lat: 45.535103, lon: -122.653405, times: ["11:34 PM", "12:11 AM", "5:13 AM", "6:29 AM", "6:59 AM", "7:27 AM", "7:57 AM", "8:28 AM"] },
   { stop_id: "656", name: "NE Broadway &amp; 9th", lat: 45.535135, lon: -122.656399, times: ["11:34 PM", "12:11 AM", "5:13 AM", "6:29 AM", "6:59 AM", "7:27 AM", "7:57 AM", "8:28 AM"] },
   { stop_id: "655", name: "NE Broadway &amp; 7th", lat: 45.535152, lon: -122.658953, times: ["11:35 PM", "12:12 AM", "5:14 AM", "6:30 AM", "7:00 AM", "7:28 AM", "7:58 AM", "8:29 AM"] },
@@ -1317,16 +1316,16 @@ const stops = [
   { stop_id: "7602", name: "SW 5th &amp; Harrison", lat: 45.510939, lon: -122.681923, times: ["11:50 PM", "12:34 AM", "5:34 AM", "6:07 AM", "6:45 AM", "7:16 AM", "7:45 AM", "8:00 AM"] },
   { stop_id: "3397", name: "300 Block SW Lincoln", lat: 45.507794, lon: -122.680132, times: ["11:52 PM", "12:36 AM", "5:36 AM", "6:09 AM", "6:47 AM", "7:18 AM", "7:47 AM", "8:02 AM"] },
   { stop_id: "13732", name: "South Waterfront/S Moody", lat: 45.502797, lon: -122.670872, times: ["11:56 PM", "12:39 AM", "5:39 AM", "6:12 AM", "6:51 AM", "7:22 AM", "7:51 AM", "8:06 AM"] },
-  { stop_id: "13772", name: "OMSI/SE Water", lat: 45.506493, lon: -122.662291, times: ["11:22 PM", "11:57 PM", "12:40 AM", "5:40 AM", "6:13 AM", "6:52 AM", "7:23 AM", "7:52 AM"] },
-  { stop_id: "13778", name: "SE Division Pl &amp; 8th", lat: 45.504815, lon: -122.658124, times: ["11:24 PM", "11:59 PM", "12:42 AM", "5:42 AM", "6:15 AM", "6:54 AM", "7:25 AM", "7:54 AM"] },
-  { stop_id: "13791", name: "SE Milwaukie &amp; Gideon", lat: 45.502586, lon: -122.65436, times: ["11:25 PM", "12:00 AM", "12:43 AM", "5:43 AM", "6:16 AM", "6:55 AM", "7:26 AM", "7:55 AM"] },
-  { stop_id: "13792", name: "SE Powell &amp; 12th", lat: 45.500809, lon: -122.653283, times: ["11:27 PM", "12:02 AM", "12:45 AM", "5:45 AM", "6:18 AM", "6:57 AM", "7:28 AM", "7:57 AM"] },
-  { stop_id: "13704", name: "SE 17th &amp; Rhine", lat: 45.497192, lon: -122.648367, times: ["11:28 PM", "12:03 AM", "12:46 AM", "5:46 AM", "6:19 AM", "6:58 AM", "7:29 AM", "7:58 AM"] },
-  { stop_id: "6850", name: "SE 17th &amp; Center", lat: 45.494104, lon: -122.648671, times: ["11:29 PM", "12:04 AM", "12:47 AM", "5:47 AM", "6:20 AM", "6:59 AM", "7:30 AM", "7:59 AM"] },
-  { stop_id: "6877", name: "SE 17th &amp; Mall", lat: 45.491552, lon: -122.648672, times: ["11:29 PM", "12:04 AM", "12:47 AM", "5:47 AM", "6:20 AM", "6:59 AM", "7:30 AM", "7:59 AM"] },
-  { stop_id: "2712", name: "SE Holgate &amp; 26th", lat: 45.49021, lon: -122.639722, times: ["11:31 PM", "12:06 AM", "12:49 AM", "5:49 AM", "6:22 AM", "7:01 AM", "7:32 AM", "8:01 AM"] },
-  { stop_id: "2714", name: "SE Holgate &amp; 28th", lat: 45.490252, lon: -122.637184, times: ["11:32 PM", "12:07 AM", "12:50 AM", "5:50 AM", "6:23 AM", "7:02 AM", "7:33 AM", "8:02 AM"] },
-  { stop_id: "2718", name: "SE Holgate &amp; 32nd", lat: 45.490537, lon: -122.632921, times: ["11:33 PM", "12:08 AM", "12:51 AM", "5:51 AM", "6:24 AM", "7:03 AM", "7:34 AM", "8:03 AM"] },
+  { stop_id: "13772", name: "OMSI/SE Water", lat: 45.506493, lon: -122.662291, times: ["11:57 PM", "12:40 AM", "5:40 AM", "6:13 AM", "6:52 AM", "7:23 AM", "7:52 AM", "8:07 AM"] },
+  { stop_id: "13778", name: "SE Division Pl &amp; 8th", lat: 45.504815, lon: -122.658124, times: ["11:59 PM", "12:42 AM", "5:42 AM", "6:15 AM", "6:54 AM", "7:25 AM", "7:54 AM", "8:09 AM"] },
+  { stop_id: "13791", name: "SE Milwaukie &amp; Gideon", lat: 45.502586, lon: -122.65436, times: ["12:00 AM", "12:43 AM", "5:43 AM", "6:16 AM", "6:55 AM", "7:26 AM", "7:55 AM", "8:10 AM"] },
+  { stop_id: "13792", name: "SE Powell &amp; 12th", lat: 45.500809, lon: -122.653283, times: ["12:02 AM", "12:45 AM", "5:45 AM", "6:18 AM", "6:57 AM", "7:28 AM", "7:57 AM", "8:12 AM"] },
+  { stop_id: "13704", name: "SE 17th &amp; Rhine", lat: 45.497192, lon: -122.648367, times: ["12:03 AM", "12:46 AM", "5:46 AM", "6:19 AM", "6:58 AM", "7:29 AM", "7:58 AM", "8:13 AM"] },
+  { stop_id: "6850", name: "SE 17th &amp; Center", lat: 45.494104, lon: -122.648671, times: ["12:04 AM", "12:47 AM", "5:47 AM", "6:20 AM", "6:59 AM", "7:30 AM", "7:59 AM", "8:14 AM"] },
+  { stop_id: "6877", name: "SE 17th &amp; Mall", lat: 45.491552, lon: -122.648672, times: ["12:04 AM", "12:47 AM", "5:47 AM", "6:20 AM", "6:59 AM", "7:30 AM", "7:59 AM", "8:14 AM"] },
+  { stop_id: "2712", name: "SE Holgate &amp; 26th", lat: 45.49021, lon: -122.639722, times: ["12:06 AM", "12:49 AM", "5:49 AM", "6:22 AM", "7:01 AM", "7:32 AM", "8:01 AM", "8:16 AM"] },
+  { stop_id: "2714", name: "SE Holgate &amp; 28th", lat: 45.490252, lon: -122.637184, times: ["12:07 AM", "12:50 AM", "5:50 AM", "6:23 AM", "7:02 AM", "7:33 AM", "8:02 AM", "8:17 AM"] },
+  { stop_id: "2718", name: "SE Holgate &amp; 32nd", lat: 45.490537, lon: -122.632921, times: ["12:08 AM", "12:51 AM", "5:51 AM", "6:24 AM", "7:03 AM", "7:34 AM", "8:03 AM", "8:18 AM"] },
   { stop_id: "2720", name: "SE Holgate &amp; 34th", lat: 45.490234, lon: -122.629511, times: ["11:33 PM", "12:08 AM", "12:51 AM", "5:51 AM", "6:24 AM", "7:03 AM", "7:34 AM", "8:03 AM"] },
   { stop_id: "2722", name: "SE Holgate &amp; 36th", lat: 45.490248, lon: -122.626789, times: ["11:34 PM", "12:09 AM", "12:52 AM", "5:52 AM", "6:25 AM", "7:04 AM", "7:35 AM", "8:04 AM"] },
   { stop_id: "2726", name: "SE Holgate &amp; Cesar Chavez Blvd", lat: 45.490239, lon: -122.623465, times: ["11:35 PM", "12:10 AM", "12:53 AM", "5:53 AM", "6:26 AM", "7:05 AM", "7:36 AM", "8:05 AM"] },
@@ -1358,24 +1357,11 @@ const stops = [
   { stop_id: "2703", name: "SE Holgate &amp; 122nd", lat: 45.489521, lon: -122.537062, times: ["11:51 PM", "12:26 AM", "1:08 AM", "6:09 AM", "6:42 AM", "7:22 AM", "7:54 AM", "8:24 AM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
-
- stops.forEach(stop => {
-  const marker = L.circleMarker([stop.lat, stop.lon], {
-    radius: 6,
-    color: '#4dd0e1',
-    fillColor: '#4dd0e1',
-    fillOpacity: 0.9,
-    weight: 1
-  });
-
- // 1. Get current time in PT
+    // 1. Get current time in PT
     const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
     const datePT = nowPT.toDateString();
 
@@ -1399,51 +1385,43 @@ const stops = [
       .addTo(map);
     });
 
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-  let busMarkers = {};
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+	   html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
   <script>
     if (!localStorage.getItem('cookieConsent')) {
@@ -1456,8 +1434,6 @@ const stops = [
         </div>
       `);
     }
-</script>
-
-
+  </script>
 </body>
 </html>

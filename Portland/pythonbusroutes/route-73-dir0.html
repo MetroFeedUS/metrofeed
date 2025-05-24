@@ -1,39 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2219550569810489"
-     crossorigin="anonymous"></script>
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 73 - To Foster & 94th | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-     
- body {
+    html, body {
       margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
 
     body {
-      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+      padding-top: 120px;
     }
 
-    header {
-      background-color: #0d0d0d;
-      border-top: 4px solid #4dd0e1;
-      border-bottom: 4px solid #4dd0e1;
-      padding: 1rem;
-      text-align: center;
-    }
-    header img {
-      max-height: 60px;
-    }
-     .ad-banner {
+    .ad-banner {
       position: fixed;
       top: 0;
       left: 0;
@@ -46,97 +33,123 @@
     }
 
     .ad-banner img {
-      width: 100%;
-      max-width: 728px;
-      height: 90px;
-      
-      display: block;
-      margin: 0 auto;
+  width: 100%;
+  max-width: 728px;
+
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
     }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
     h1 {
       text-align: center;
       margin: 1rem 0;
       font-size: 2rem;
       color: #f0f0f0;
     }
-   
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
     #map {
-  width: 100vw;
-  min-width: 100vw;
-  height: 400px;
-  border-radius: 0;
-  margin-left: 50%;
-  transform: translateX(-50%);
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
 
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
       font-size: 0.85rem;
       color: #aaa;
     }
+
     .site-footer a {
       color: #00BFFF;
       text-decoration: none;
     }
+
     .site-footer a:hover {
       text-decoration: underline;
     }
-  @media (max-width: 600px) {
-      .ad-banner {
-        padding-top: 1rem;
-        padding-bottom: rem;
-      }
-    }
 
-/* --- Border Nuker --- */
-#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
-  border: none !important;
-  box-shadow: none !important;
-  background-clip: padding-box;
+@media (max-width: 600px) {
+  .ad-banner {
+    padding-top: 1rem;
+    padding-bottom: 0rem;
+  }
 }
+
 
   </style>
 </head>
+
 <body>
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
     <iframe src="https://metrofeedus.com/portland/Ads/route-73-dir0-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
-
 
  <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
@@ -150,7 +163,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅ Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 73 - To Foster & 94th</h1>
@@ -162,42 +175,28 @@
     </div>
   </div>
 
-  
   <script>
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 73;
-  const direction = parseInt(0);
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  // --- Set map bounds and zoom limits ---
-  const bounds = L.latLngBounds(
-    [45.40, -122.85], // SW
-    [45.65, -122.45]  // NE
-  );
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 73;
+    const direction = parseInt(0);
 
-  const map = L.map('map', {
-    maxBounds: bounds,
-    maxBoundsViscosity: 1.0,
-    minZoom: 12,   // Don't allow zooming out past city
-    maxZoom: 19,   // Allow good zoom in
-    zoomControl: true,
-    scrollWheelZoom: true,
-    dragging: true
-  }).setView([45.52, -122.68], 13);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  map.setMaxBounds(bounds);
-
-// Keep map locked in bounds if user somehow escapes
-map.on('moveend', function() {
-  if (!bounds.contains(map.getCenter())) {
-    map.panInsideBounds(bounds, { animate: true });
-  }
-});
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
-
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.558262, -122.565211],
   [45.558233, -122.565225],
   [45.558158, -122.565241],
@@ -716,22 +715,22 @@ const stops = [
   { stop_id: "4725", name: "10600 Block NE Prescott", lat: 45.555329, lon: -122.552746, times: ["11:51 PM", "5:04 AM", "5:27 AM", "5:45 AM", "6:00 AM", "6:15 AM", "6:31 AM", "6:48 AM"] },
   { stop_id: "4733", name: "NE Prescott &amp; 110th", lat: 45.555318, lon: -122.549834, times: ["11:51 PM", "5:05 AM", "5:28 AM", "5:46 AM", "6:01 AM", "6:16 AM", "6:31 AM", "6:48 AM"] },
   { stop_id: "4735", name: "NE Prescott &amp; 112th", lat: 45.555326, lon: -122.547684, times: ["11:52 PM", "5:05 AM", "5:28 AM", "5:46 AM", "6:01 AM", "6:16 AM", "6:32 AM", "6:49 AM"] },
-  { stop_id: "4737", name: "NE Prescott &amp; 115th", lat: 45.555324, lon: -122.543883, times: ["11:22 PM", "11:52 PM", "5:06 AM", "5:29 AM", "5:47 AM", "6:02 AM", "6:17 AM", "6:32 AM"] },
-  { stop_id: "4739", name: "NE Prescott &amp; 118th", lat: 45.555321, lon: -122.541498, times: ["11:23 PM", "11:53 PM", "5:06 AM", "5:29 AM", "5:47 AM", "6:02 AM", "6:17 AM", "6:33 AM"] },
-  { stop_id: "4741", name: "NE Prescott &amp; 121st Pl", lat: 45.555218, lon: -122.538414, times: ["11:23 PM", "11:53 PM", "5:07 AM", "5:30 AM", "5:48 AM", "6:03 AM", "6:18 AM", "6:33 AM"] },
-  { stop_id: "5250", name: "NE Skidmore &amp; 122nd", lat: 45.553513, lon: -122.537809, times: ["11:24 PM", "11:54 PM", "5:07 AM", "5:30 AM", "5:48 AM", "6:03 AM", "6:18 AM", "6:34 AM"] },
-  { stop_id: "6672", name: "NE 122nd &amp; Shaver", lat: 45.552134, lon: -122.537412, times: ["11:25 PM", "11:55 PM", "5:08 AM", "5:31 AM", "5:49 AM", "6:04 AM", "6:19 AM", "6:35 AM"] },
-  { stop_id: "6613", name: "3600 Block NE 122nd", lat: 45.549051, lon: -122.537468, times: ["11:25 PM", "11:55 PM", "5:08 AM", "5:31 AM", "5:49 AM", "6:04 AM", "6:19 AM", "6:35 AM"] },
-  { stop_id: "6674", name: "NE 122nd &amp; Stanton", lat: 45.54287, lon: -122.537639, times: ["11:27 PM", "11:57 PM", "5:10 AM", "5:33 AM", "5:51 AM", "6:06 AM", "6:21 AM", "6:37 AM"] },
-  { stop_id: "6667", name: "NE 122nd &amp; Sacramento", lat: 45.539594, lon: -122.537701, times: ["11:27 PM", "11:57 PM", "5:10 AM", "5:33 AM", "5:52 AM", "6:07 AM", "6:22 AM", "6:38 AM"] },
-  { stop_id: "6671", name: "NE 122nd &amp; San Rafael", lat: 45.53699, lon: -122.537728, times: ["11:28 PM", "11:58 PM", "5:11 AM", "5:34 AM", "5:53 AM", "6:08 AM", "6:23 AM", "6:39 AM"] },
-  { stop_id: "6617", name: "NE 122nd &amp; Halsey", lat: 45.534562, lon: -122.537789, times: ["11:29 PM", "11:59 PM", "5:12 AM", "5:35 AM", "5:53 AM", "6:08 AM", "6:23 AM", "6:39 AM"] },
-  { stop_id: "9642", name: "NE 122nd &amp; Multnomah", lat: 45.531781, lon: -122.537831, times: ["11:29 PM", "11:59 PM", "5:12 AM", "5:35 AM", "5:54 AM", "6:09 AM", "6:24 AM", "6:40 AM"] },
-  { stop_id: "6649", name: "700 Block NE 122nd", lat: 45.527718, lon: -122.537885, times: ["11:30 PM", "12:00 AM", "5:13 AM", "5:36 AM", "5:55 AM", "6:10 AM", "6:25 AM", "6:41 AM"] },
-  { stop_id: "6610", name: "NE 122nd &amp; Davis", lat: 45.524636, lon: -122.537923, times: ["11:31 PM", "12:01 AM", "5:14 AM", "5:37 AM", "5:56 AM", "6:11 AM", "6:26 AM", "6:42 AM"] },
-  { stop_id: "6623", name: "SE 122nd &amp; Burnside", lat: 45.522066, lon: -122.537947, times: ["11:32 PM", "12:02 AM", "5:15 AM", "5:38 AM", "5:57 AM", "6:12 AM", "6:27 AM", "6:43 AM"] },
-  { stop_id: "6653", name: "SE 122nd &amp; Oak", lat: 45.519968, lon: -122.537923, times: ["11:32 PM", "12:02 AM", "5:15 AM", "5:38 AM", "5:57 AM", "6:12 AM", "6:27 AM", "6:43 AM"] },
-  { stop_id: "9219", name: "SE 122nd &amp; Stark", lat: 45.518382, lon: -122.537925, times: ["11:33 PM", "12:03 AM", "5:15 AM", "5:38 AM", "5:57 AM", "6:12 AM", "6:27 AM", "6:43 AM"] },
+  { stop_id: "4737", name: "NE Prescott &amp; 115th", lat: 45.555324, lon: -122.543883, times: ["11:52 PM", "5:06 AM", "5:29 AM", "5:47 AM", "6:02 AM", "6:17 AM", "6:32 AM", "6:49 AM"] },
+  { stop_id: "4739", name: "NE Prescott &amp; 118th", lat: 45.555321, lon: -122.541498, times: ["11:53 PM", "5:06 AM", "5:29 AM", "5:47 AM", "6:02 AM", "6:17 AM", "6:33 AM", "6:50 AM"] },
+  { stop_id: "4741", name: "NE Prescott &amp; 121st Pl", lat: 45.555218, lon: -122.538414, times: ["11:53 PM", "5:07 AM", "5:30 AM", "5:48 AM", "6:03 AM", "6:18 AM", "6:33 AM", "6:50 AM"] },
+  { stop_id: "5250", name: "NE Skidmore &amp; 122nd", lat: 45.553513, lon: -122.537809, times: ["11:54 PM", "5:07 AM", "5:30 AM", "5:48 AM", "6:03 AM", "6:18 AM", "6:34 AM", "6:51 AM"] },
+  { stop_id: "6672", name: "NE 122nd &amp; Shaver", lat: 45.552134, lon: -122.537412, times: ["11:55 PM", "5:08 AM", "5:31 AM", "5:49 AM", "6:04 AM", "6:19 AM", "6:35 AM", "6:52 AM"] },
+  { stop_id: "6613", name: "3600 Block NE 122nd", lat: 45.549051, lon: -122.537468, times: ["11:55 PM", "5:08 AM", "5:31 AM", "5:49 AM", "6:04 AM", "6:19 AM", "6:35 AM", "6:52 AM"] },
+  { stop_id: "6674", name: "NE 122nd &amp; Stanton", lat: 45.54287, lon: -122.537639, times: ["11:57 PM", "5:10 AM", "5:33 AM", "5:51 AM", "6:06 AM", "6:21 AM", "6:37 AM", "6:54 AM"] },
+  { stop_id: "6667", name: "NE 122nd &amp; Sacramento", lat: 45.539594, lon: -122.537701, times: ["11:57 PM", "5:10 AM", "5:33 AM", "5:52 AM", "6:07 AM", "6:22 AM", "6:38 AM", "6:55 AM"] },
+  { stop_id: "6671", name: "NE 122nd &amp; San Rafael", lat: 45.53699, lon: -122.537728, times: ["11:58 PM", "5:11 AM", "5:34 AM", "5:53 AM", "6:08 AM", "6:23 AM", "6:39 AM", "6:56 AM"] },
+  { stop_id: "6617", name: "NE 122nd &amp; Halsey", lat: 45.534562, lon: -122.537789, times: ["11:59 PM", "5:12 AM", "5:35 AM", "5:53 AM", "6:08 AM", "6:23 AM", "6:39 AM", "6:56 AM"] },
+  { stop_id: "9642", name: "NE 122nd &amp; Multnomah", lat: 45.531781, lon: -122.537831, times: ["11:59 PM", "5:12 AM", "5:35 AM", "5:54 AM", "6:09 AM", "6:24 AM", "6:40 AM", "6:57 AM"] },
+  { stop_id: "6649", name: "700 Block NE 122nd", lat: 45.527718, lon: -122.537885, times: ["12:00 AM", "5:13 AM", "5:36 AM", "5:55 AM", "6:10 AM", "6:25 AM", "6:41 AM", "6:58 AM"] },
+  { stop_id: "6610", name: "NE 122nd &amp; Davis", lat: 45.524636, lon: -122.537923, times: ["12:01 AM", "5:14 AM", "5:37 AM", "5:56 AM", "6:11 AM", "6:26 AM", "6:42 AM", "6:59 AM"] },
+  { stop_id: "6623", name: "SE 122nd &amp; Burnside", lat: 45.522066, lon: -122.537947, times: ["12:02 AM", "5:15 AM", "5:38 AM", "5:57 AM", "6:12 AM", "6:27 AM", "6:43 AM", "7:00 AM"] },
+  { stop_id: "6653", name: "SE 122nd &amp; Oak", lat: 45.519968, lon: -122.537923, times: ["12:02 AM", "5:15 AM", "5:38 AM", "5:57 AM", "6:12 AM", "6:27 AM", "6:43 AM", "7:00 AM"] },
+  { stop_id: "9219", name: "SE 122nd &amp; Stark", lat: 45.518382, lon: -122.537925, times: ["12:03 AM", "5:15 AM", "5:38 AM", "5:57 AM", "6:12 AM", "6:27 AM", "6:43 AM", "7:00 AM"] },
   { stop_id: "6650", name: "SE 122nd &amp; Midland Library (Morrison)", lat: 45.516343, lon: -122.537902, times: ["11:33 PM", "12:03 AM", "5:16 AM", "5:39 AM", "5:58 AM", "6:13 AM", "6:28 AM", "6:44 AM"] },
   { stop_id: "6643", name: "1300 Block SE 122nd", lat: 45.513644, lon: -122.537852, times: ["11:34 PM", "12:04 AM", "5:16 AM", "5:39 AM", "5:59 AM", "6:14 AM", "6:29 AM", "6:45 AM"] },
   { stop_id: "6646", name: "SE 122nd &amp; Market", lat: 45.511705, lon: -122.537854, times: ["11:35 PM", "12:05 AM", "5:17 AM", "5:40 AM", "5:59 AM", "6:14 AM", "6:29 AM", "6:45 AM"] },
@@ -758,24 +757,11 @@ const stops = [
   { stop_id: "14002", name: "9200 Block SE Foster", lat: 45.479666, lon: -122.567799, times: ["11:48 PM", "12:18 AM", "5:29 AM", "5:52 AM", "6:13 AM", "6:28 AM", "6:43 AM", "6:59 AM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
-
- stops.forEach(stop => {
-  const marker = L.circleMarker([stop.lat, stop.lon], {
-    radius: 6,
-    color: '#4dd0e1',
-    fillColor: '#4dd0e1',
-    fillOpacity: 0.9,
-    weight: 1
-  });
-
- // 1. Get current time in PT
+    // 1. Get current time in PT
     const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
     const datePT = nowPT.toDateString();
 
@@ -799,51 +785,43 @@ const stops = [
       .addTo(map);
     });
 
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-  let busMarkers = {};
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+	   html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
   <script>
     if (!localStorage.getItem('cookieConsent')) {
@@ -856,8 +834,6 @@ const stops = [
         </div>
       `);
     }
-</script>
-
-
+  </script>
 </body>
 </html>

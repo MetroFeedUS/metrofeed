@@ -1,39 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2219550569810489"
-     crossorigin="anonymous"></script>
-
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 12 - To Parkrose/Sumner Transit Center | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-     
- body {
+    html, body {
       margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
+      overflow-y: auto;
     }
 
     body {
-      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+      padding-top: 120px;
     }
 
-    header {
-      background-color: #0d0d0d;
-      border-top: 4px solid #4dd0e1;
-      border-bottom: 4px solid #4dd0e1;
-      padding: 1rem;
-      text-align: center;
-    }
-    header img {
-      max-height: 60px;
-    }
-     .ad-banner {
+    .ad-banner {
       position: fixed;
       top: 0;
       left: 0;
@@ -46,97 +33,123 @@
     }
 
     .ad-banner img {
-      width: 100%;
-      max-width: 728px;
-      height: 90px;
-      
-      display: block;
-      margin: 0 auto;
+  width: 100%;
+  max-width: 728px;
+
+  max-height: 120px; /* 👈 Caps desktop height */
+  display: block;
+  margin: 0 auto;
+}
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
     }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
     h1 {
       text-align: center;
       margin: 1rem 0;
       font-size: 2rem;
       color: #f0f0f0;
     }
-   
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
     #map {
-  width: 100vw;
-  min-width: 100vw;
-  height: 400px;
-  border-radius: 0;
-  margin-left: 50%;
-  transform: translateX(-50%);
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
     .button-bar {
       display: flex;
       justify-content: center;
       margin: 1rem 0;
     }
-    .button-bar a {
+
+    .button-bar a, .back-button {
       background: #4dd0e1;
       color: #0d0d0d;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
     }
 
-.back-button {
-  background-color: #4dd0e1;
-  color: #0d0d0d;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #4dd0e1;
-  text-decoration: none;
-}
-.back-button:hover {
-  background-color: #35c0d6;
-}
-.site-footer {
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
       text-align: center;
       margin-top: 3rem;
       margin-bottom: 120px;
       font-size: 0.85rem;
       color: #aaa;
     }
+
     .site-footer a {
       color: #00BFFF;
       text-decoration: none;
     }
+
     .site-footer a:hover {
       text-decoration: underline;
     }
-  @media (max-width: 600px) {
-      .ad-banner {
-        padding-top: 1rem;
-        padding-bottom: rem;
-      }
-    }
 
-/* --- Border Nuker --- */
-#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
-  border: none !important;
-  box-shadow: none !important;
-  background-clip: padding-box;
+@media (max-width: 600px) {
+  .ad-banner {
+    padding-top: 1rem;
+    padding-bottom: 0rem;
+  }
 }
+
 
   </style>
 </head>
+
 <body>
  
   <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
     <iframe src="https://metrofeedus.com/portland/Ads/route-12-dir1-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
   </div>
-
 
  <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
@@ -150,7 +163,7 @@
   </div>
 
   <div style="margin: 2rem 0; text-align: center;">
-  <button class="back-button" onclick="history.back()">⬅ Back</button>
+    <button class="back-button" onclick="history.back()">Back</button>
   </div>
 
   <h1>Route 12 - To Parkrose/Sumner Transit Center</h1>
@@ -162,42 +175,28 @@
     </div>
   </div>
 
-  
   <script>
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const routeNumber = 12;
-  const direction = parseInt(1);
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
 
-  // --- Set map bounds and zoom limits ---
-  const bounds = L.latLngBounds(
-    [45.40, -122.85], // SW
-    [45.65, -122.45]  // NE
-  );
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 12;
+    const direction = parseInt(1);
 
-  const map = L.map('map', {
-    maxBounds: bounds,
-    maxBoundsViscosity: 1.0,
-    minZoom: 12,   // Don't allow zooming out past city
-    maxZoom: 19,   // Allow good zoom in
-    zoomControl: true,
-    scrollWheelZoom: true,
-    dragging: true
-  }).setView([45.52, -122.68], 13);
+    // Initialize map
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-  map.setMaxBounds(bounds);
-
-// Keep map locked in bounds if user somehow escapes
-map.on('moveend', function() {
-  if (!bounds.contains(map.getCenter())) {
-    map.panInsideBounds(bounds, { animate: true });
-  }
-});
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
-
-  const shapeOutbound = [
+    // Injected shape & stop data
+    const shapeOutbound = [
   [45.430038, -122.76913],
   [45.430033, -122.769094],
   [45.430041, -122.769036],
@@ -1328,19 +1327,19 @@ const stops = [
   { stop_id: "154", name: "11100 Block SW Barbur", lat: 45.444873, lon: -122.733515, times: ["11:59 PM", "5:01 AM", "5:41 AM", "6:00 AM", "6:15 AM", "6:30 AM", "6:45 AM", "7:00 AM"] },
   { stop_id: "210", name: "SW Barbur &amp; 53rd", lat: 45.446239, lon: -122.730142, times: ["12:00 AM", "5:02 AM", "5:42 AM", "6:01 AM", "6:16 AM", "6:31 AM", "6:45 AM", "7:00 AM"] },
   { stop_id: "179", name: "SW Barbur &amp; Luradel", lat: 45.450895, lon: -122.727084, times: ["12:01 AM", "5:03 AM", "5:43 AM", "6:02 AM", "6:17 AM", "6:32 AM", "6:47 AM", "7:02 AM"] },
-  { stop_id: "168", name: "SW Barbur &amp; Capitol Hwy", lat: 45.453229, lon: -122.721559, times: ["11:22 PM", "12:02 AM", "5:04 AM", "5:44 AM", "6:03 AM", "6:18 AM", "6:33 AM", "6:48 AM"] },
-  { stop_id: "212", name: "Barbur Transit Center", lat: 45.454552, lon: -122.71739, times: ["11:23 PM", "12:03 AM", "5:05 AM", "5:45 AM", "6:04 AM", "6:19 AM", "6:34 AM", "6:49 AM"] },
-  { stop_id: "162", name: "SW Barbur &amp; Alice", lat: 45.458724, lon: -122.709491, times: ["11:24 PM", "12:04 AM", "5:06 AM", "5:46 AM", "6:05 AM", "6:20 AM", "6:35 AM", "6:50 AM"] },
-  { stop_id: "208", name: "SW Barbur &amp; 30th", lat: 45.459913, lon: -122.707433, times: ["11:25 PM", "12:04 AM", "5:06 AM", "5:46 AM", "6:05 AM", "6:20 AM", "6:35 AM", "6:50 AM"] },
-  { stop_id: "159", name: "SW Barbur &amp; 26th Ave", lat: 45.462586, lon: -122.702772, times: ["11:26 PM", "12:05 AM", "5:07 AM", "5:47 AM", "6:06 AM", "6:21 AM", "6:36 AM", "6:51 AM"] },
-  { stop_id: "11031", name: "SW Barbur &amp; 22nd", lat: 45.464181, lon: -122.699936, times: ["11:26 PM", "12:06 AM", "5:07 AM", "5:48 AM", "6:07 AM", "6:22 AM", "6:37 AM", "6:52 AM"] },
-  { stop_id: "202", name: "SW Barbur &amp; 19th", lat: 45.465585, lon: -122.697572, times: ["11:27 PM", "12:06 AM", "5:08 AM", "5:48 AM", "6:07 AM", "6:22 AM", "6:37 AM", "6:52 AM"] },
-  { stop_id: "180", name: "SW Barbur &amp; Moss", lat: 45.467494, lon: -122.694279, times: ["11:28 PM", "12:07 AM", "5:08 AM", "5:49 AM", "6:08 AM", "6:23 AM", "6:38 AM", "6:53 AM"] },
-  { stop_id: "11271", name: "SW Barbur &amp; 13th", lat: 45.468708, lon: -122.692126, times: ["11:28 PM", "12:07 AM", "5:08 AM", "5:49 AM", "6:08 AM", "6:23 AM", "6:38 AM", "6:53 AM"] },
-  { stop_id: "10848", name: "SW Barbur &amp; Bertha", lat: 45.470622, lon: -122.688578, times: ["11:29 PM", "12:08 AM", "5:09 AM", "5:50 AM", "6:09 AM", "6:24 AM", "6:39 AM", "6:54 AM"] },
-  { stop_id: "193", name: "SW Barbur &amp; Terwilliger", lat: 45.470919, lon: -122.684976, times: ["11:30 PM", "12:09 AM", "5:10 AM", "5:51 AM", "6:10 AM", "6:25 AM", "6:40 AM", "6:55 AM"] },
-  { stop_id: "203", name: "SW Barbur &amp; 2nd", lat: 45.471449, lon: -122.680575, times: ["11:30 PM", "12:09 AM", "5:10 AM", "5:51 AM", "6:10 AM", "6:25 AM", "6:40 AM", "6:55 AM"] },
-  { stop_id: "182", name: "SW Barbur &amp; Parkhill", lat: 45.47748, lon: -122.679657, times: ["11:31 PM", "12:10 AM", "5:11 AM", "5:52 AM", "6:11 AM", "6:26 AM", "6:41 AM", "6:56 AM"] },
+  { stop_id: "168", name: "SW Barbur &amp; Capitol Hwy", lat: 45.453229, lon: -122.721559, times: ["12:02 AM", "5:04 AM", "5:44 AM", "6:03 AM", "6:18 AM", "6:33 AM", "6:48 AM", "7:03 AM"] },
+  { stop_id: "212", name: "Barbur Transit Center", lat: 45.454552, lon: -122.71739, times: ["12:03 AM", "5:05 AM", "5:45 AM", "6:04 AM", "6:19 AM", "6:34 AM", "6:49 AM", "7:04 AM"] },
+  { stop_id: "162", name: "SW Barbur &amp; Alice", lat: 45.458724, lon: -122.709491, times: ["12:04 AM", "5:06 AM", "5:46 AM", "6:05 AM", "6:20 AM", "6:35 AM", "6:50 AM", "7:05 AM"] },
+  { stop_id: "208", name: "SW Barbur &amp; 30th", lat: 45.459913, lon: -122.707433, times: ["12:04 AM", "5:06 AM", "5:46 AM", "6:05 AM", "6:20 AM", "6:35 AM", "6:50 AM", "7:05 AM"] },
+  { stop_id: "159", name: "SW Barbur &amp; 26th Ave", lat: 45.462586, lon: -122.702772, times: ["12:05 AM", "5:07 AM", "5:47 AM", "6:06 AM", "6:21 AM", "6:36 AM", "6:51 AM", "7:06 AM"] },
+  { stop_id: "11031", name: "SW Barbur &amp; 22nd", lat: 45.464181, lon: -122.699936, times: ["12:06 AM", "5:07 AM", "5:48 AM", "6:07 AM", "6:22 AM", "6:37 AM", "6:52 AM", "7:07 AM"] },
+  { stop_id: "202", name: "SW Barbur &amp; 19th", lat: 45.465585, lon: -122.697572, times: ["12:06 AM", "5:08 AM", "5:48 AM", "6:07 AM", "6:22 AM", "6:37 AM", "6:52 AM", "7:07 AM"] },
+  { stop_id: "180", name: "SW Barbur &amp; Moss", lat: 45.467494, lon: -122.694279, times: ["12:07 AM", "5:08 AM", "5:49 AM", "6:08 AM", "6:23 AM", "6:38 AM", "6:53 AM", "7:08 AM"] },
+  { stop_id: "11271", name: "SW Barbur &amp; 13th", lat: 45.468708, lon: -122.692126, times: ["12:07 AM", "5:08 AM", "5:49 AM", "6:08 AM", "6:23 AM", "6:38 AM", "6:53 AM", "7:08 AM"] },
+  { stop_id: "10848", name: "SW Barbur &amp; Bertha", lat: 45.470622, lon: -122.688578, times: ["12:08 AM", "5:09 AM", "5:50 AM", "6:09 AM", "6:24 AM", "6:39 AM", "6:54 AM", "7:09 AM"] },
+  { stop_id: "193", name: "SW Barbur &amp; Terwilliger", lat: 45.470919, lon: -122.684976, times: ["12:09 AM", "5:10 AM", "5:51 AM", "6:10 AM", "6:25 AM", "6:40 AM", "6:55 AM", "7:10 AM"] },
+  { stop_id: "203", name: "SW Barbur &amp; 2nd", lat: 45.471449, lon: -122.680575, times: ["12:09 AM", "5:10 AM", "5:51 AM", "6:10 AM", "6:25 AM", "6:40 AM", "6:55 AM", "7:10 AM"] },
+  { stop_id: "182", name: "SW Barbur &amp; Parkhill", lat: 45.47748, lon: -122.679657, times: ["12:10 AM", "5:11 AM", "5:52 AM", "6:11 AM", "6:26 AM", "6:41 AM", "6:56 AM", "7:11 AM"] },
   { stop_id: "156", name: "4900 Block SW Barbur", lat: 45.487677, lon: -122.682515, times: ["11:34 PM", "12:13 AM", "5:13 AM", "5:54 AM", "6:14 AM", "6:29 AM", "6:44 AM", "6:59 AM"] },
   { stop_id: "172", name: "S Barbur &amp; SW Hamilton", lat: 45.491186, lon: -122.677725, times: ["11:35 PM", "12:14 AM", "5:14 AM", "5:55 AM", "6:15 AM", "6:30 AM", "6:45 AM", "7:00 AM"] },
   { stop_id: "177", name: "SW Barbur &amp; Lane", lat: 45.495933, lon: -122.678004, times: ["11:36 PM", "12:15 AM", "5:15 AM", "5:56 AM", "6:16 AM", "6:31 AM", "6:46 AM", "7:01 AM"] },
@@ -1376,39 +1375,26 @@ const stops = [
   { stop_id: "5104", name: "NE Sandy &amp; 57th", lat: 45.542033, lon: -122.604775, times: ["12:06 AM", "12:51 AM", "1:50 AM", "5:50 AM", "6:24 AM", "6:44 AM", "6:59 AM", "7:15 AM"] },
   { stop_id: "5110", name: "NE Sandy &amp; 60th", lat: 45.543429, lon: -122.601191, times: ["12:07 AM", "12:52 AM", "1:51 AM", "5:51 AM", "6:25 AM", "6:45 AM", "7:00 AM", "7:16 AM"] },
   { stop_id: "5112", name: "NE Sandy &amp; 62nd", lat: 45.544318, lon: -122.598962, times: ["12:07 AM", "12:52 AM", "1:51 AM", "5:51 AM", "6:25 AM", "6:45 AM", "7:00 AM", "7:16 AM"] },
-  { stop_id: "5115", name: "NE Sandy &amp; 65th", lat: 45.545222, lon: -122.596615, times: ["11:22 PM", "12:08 AM", "12:53 AM", "1:51 AM", "5:52 AM", "6:26 AM", "6:46 AM", "7:01 AM"] },
-  { stop_id: "5118", name: "NE Sandy &amp; 67th", lat: 45.546087, lon: -122.594429, times: ["11:22 PM", "12:08 AM", "12:53 AM", "1:52 AM", "5:52 AM", "6:26 AM", "6:46 AM", "7:01 AM"] },
-  { stop_id: "5123", name: "NE Sandy &amp; 70th", lat: 45.547462, lon: -122.590888, times: ["11:23 PM", "12:09 AM", "12:54 AM", "1:52 AM", "5:53 AM", "6:27 AM", "6:47 AM", "7:02 AM"] },
-  { stop_id: "5045", name: "NE Sandy &amp; Fremont", lat: 45.547992, lon: -122.589533, times: ["11:23 PM", "12:09 AM", "12:54 AM", "1:53 AM", "5:53 AM", "6:27 AM", "6:47 AM", "7:02 AM"] },
-  { stop_id: "10795", name: "NE Sandy &amp; 74th", lat: 45.549183, lon: -122.586501, times: ["11:24 PM", "12:10 AM", "12:55 AM", "1:53 AM", "5:54 AM", "6:28 AM", "6:48 AM", "7:03 AM"] },
-  { stop_id: "5132", name: "NE Sandy &amp; 77th", lat: 45.55022, lon: -122.58392, times: ["11:24 PM", "12:10 AM", "12:55 AM", "1:54 AM", "5:54 AM", "6:28 AM", "6:48 AM", "7:03 AM"] },
-  { stop_id: "5135", name: "NE Sandy &amp; 79th", lat: 45.551282, lon: -122.581257, times: ["11:25 PM", "12:11 AM", "12:56 AM", "1:54 AM", "5:55 AM", "6:29 AM", "6:49 AM", "7:04 AM"] },
-  { stop_id: "5138", name: "NE Sandy &amp; 82nd", lat: 45.552551, lon: -122.57812, times: ["11:26 PM", "12:12 AM", "12:57 AM", "1:55 AM", "5:56 AM", "6:30 AM", "6:50 AM", "7:05 AM"] },
-  { stop_id: "5046", name: "NE Sandy &amp; The Grotto", lat: 45.553435, lon: -122.575984, times: ["11:26 PM", "12:12 AM", "12:57 AM", "1:55 AM", "5:56 AM", "6:30 AM", "6:50 AM", "7:05 AM"] },
-  { stop_id: "13651", name: "NE Sandy &amp; 87th", lat: 45.55457, lon: -122.573172, times: ["11:27 PM", "12:13 AM", "12:58 AM", "1:56 AM", "5:57 AM", "6:31 AM", "6:51 AM", "7:06 AM"] },
-  { stop_id: "5051", name: "NE Sandy &amp; Prescott", lat: 45.555982, lon: -122.569704, times: ["11:28 PM", "12:13 AM", "12:58 AM", "1:56 AM", "5:58 AM", "6:32 AM", "6:52 AM", "7:07 AM"] },
-  { stop_id: "10853", name: "Parkrose/ Sumner Transit Center", lat: 45.558368, lon: -122.564954, times: ["11:29 PM", "12:15 AM", "1:00 AM", "5:59 AM", "6:33 AM", "6:53 AM", "7:08 AM", "7:24 AM"] },
+  { stop_id: "5115", name: "NE Sandy &amp; 65th", lat: 45.545222, lon: -122.596615, times: ["12:08 AM", "12:53 AM", "1:51 AM", "5:52 AM", "6:26 AM", "6:46 AM", "7:01 AM", "7:17 AM"] },
+  { stop_id: "5118", name: "NE Sandy &amp; 67th", lat: 45.546087, lon: -122.594429, times: ["12:08 AM", "12:53 AM", "1:52 AM", "5:52 AM", "6:26 AM", "6:46 AM", "7:01 AM", "7:17 AM"] },
+  { stop_id: "5123", name: "NE Sandy &amp; 70th", lat: 45.547462, lon: -122.590888, times: ["12:09 AM", "12:54 AM", "1:52 AM", "5:53 AM", "6:27 AM", "6:47 AM", "7:02 AM", "7:18 AM"] },
+  { stop_id: "5045", name: "NE Sandy &amp; Fremont", lat: 45.547992, lon: -122.589533, times: ["12:09 AM", "12:54 AM", "1:53 AM", "5:53 AM", "6:27 AM", "6:47 AM", "7:02 AM", "7:18 AM"] },
+  { stop_id: "10795", name: "NE Sandy &amp; 74th", lat: 45.549183, lon: -122.586501, times: ["12:10 AM", "12:55 AM", "1:53 AM", "5:54 AM", "6:28 AM", "6:48 AM", "7:03 AM", "7:19 AM"] },
+  { stop_id: "5132", name: "NE Sandy &amp; 77th", lat: 45.55022, lon: -122.58392, times: ["12:10 AM", "12:55 AM", "1:54 AM", "5:54 AM", "6:28 AM", "6:48 AM", "7:03 AM", "7:19 AM"] },
+  { stop_id: "5135", name: "NE Sandy &amp; 79th", lat: 45.551282, lon: -122.581257, times: ["12:11 AM", "12:56 AM", "1:54 AM", "5:55 AM", "6:29 AM", "6:49 AM", "7:04 AM", "7:20 AM"] },
+  { stop_id: "5138", name: "NE Sandy &amp; 82nd", lat: 45.552551, lon: -122.57812, times: ["12:12 AM", "12:57 AM", "1:55 AM", "5:56 AM", "6:30 AM", "6:50 AM", "7:05 AM", "7:21 AM"] },
+  { stop_id: "5046", name: "NE Sandy &amp; The Grotto", lat: 45.553435, lon: -122.575984, times: ["12:12 AM", "12:57 AM", "1:55 AM", "5:56 AM", "6:30 AM", "6:50 AM", "7:05 AM", "7:21 AM"] },
+  { stop_id: "13651", name: "NE Sandy &amp; 87th", lat: 45.55457, lon: -122.573172, times: ["12:13 AM", "12:58 AM", "1:56 AM", "5:57 AM", "6:31 AM", "6:51 AM", "7:06 AM", "7:22 AM"] },
+  { stop_id: "5051", name: "NE Sandy &amp; Prescott", lat: 45.555982, lon: -122.569704, times: ["12:13 AM", "12:58 AM", "1:56 AM", "5:58 AM", "6:32 AM", "6:52 AM", "7:07 AM", "7:23 AM"] },
+  { stop_id: "10853", name: "Parkrose/ Sumner Transit Center", lat: 45.558368, lon: -122.564954, times: ["12:15 AM", "1:00 AM", "5:59 AM", "6:33 AM", "6:53 AM", "7:08 AM", "7:24 AM", "7:41 AM"] },
   { stop_id: "10856", name: "Parkrose/ Sumner Transit Center", lat: 45.558736, lon: -122.564507, times: ["1:58 AM"] },
 ]
 
-  const polylineOut = L.polyline(shapeOutbound, {
-    color: 'blue',
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
+    // Draw route polyline
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
 
-  map.fitBounds(polylineOut.getBounds());
-
- stops.forEach(stop => {
-  const marker = L.circleMarker([stop.lat, stop.lon], {
-    radius: 6,
-    color: '#4dd0e1',
-    fillColor: '#4dd0e1',
-    fillOpacity: 0.9,
-    weight: 1
-  });
-
- // 1. Get current time in PT
+    // 1. Get current time in PT
     const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
     const datePT = nowPT.toDateString();
 
@@ -1432,51 +1418,43 @@ const stops = [
       .addTo(map);
     });
 
+    // Bus markers fetch
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-  let busMarkers = {};
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
 
-  async function fetchAndDisplay() {
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(v =>
-      v.routeNumber == routeNumber && v.direction == direction
-    );
-
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-
-    if (buses.length === 0) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="text-align:center;">
-            <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-          </div>
-        `,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+	   html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
       });
-
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
-    });
-  }
-
-  fetchAndDisplay();
-  setInterval(fetchAndDisplay, 15000);
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
   </script>
 
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
   <script>
     if (!localStorage.getItem('cookieConsent')) {
@@ -1489,8 +1467,6 @@ const stops = [
         </div>
       `);
     }
-</script>
-
-
+  </script>
 </body>
 </html>
