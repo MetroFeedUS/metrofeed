@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portland, OR - MetroFeed</title>
 
+<link rel="manifest" href="/manifest.json">
+
+
   <style>
     html, body {
       margin: 0;
@@ -186,13 +189,14 @@
 </div>
 
 
-  <div id="installPrompt">
-    <strong>📲 Add MetroFeed Portland to your home screen</strong><br>
-    <small>Use MetroFeed like an app for faster access!</small><br><br>
-    <a href="AndroidInstructions.html"><button>Android Instructions</button></a>
-    <a href="AppleInstructions.html"><button>Apple Instructions</button></a>
-    <button onclick="document.getElementById('installPrompt').style.display='none'">Later</button>
-  </div>
+ <div id="installPrompt">
+  <strong>📲 Add MetroFeed Portland to your home screen</strong><br>
+  <small>Use MetroFeed like an app for faster access!</small><br><br>
+  <a href="AndroidInstructions.html"><button>Android Instructions</button></a>
+  <a href="AppleInstructions.html"><button>Apple Instructions</button></a>
+  <button onclick="document.getElementById('installPrompt').style.display='none'">Later</button>
+  <button onclick="localStorage.setItem('neverShowInstallPrompt', 'true'); document.getElementById('installPrompt').style.display='none'">Done / Don’t ask again</button>
+</div>
 
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
@@ -216,16 +220,20 @@
   </main>
 
   <script>
-    const daysBetweenPrompts = 3;
-    const lastPrompt = localStorage.getItem('lastInstallPrompt');
-    const now = Date.now();
-    if (!window.matchMedia('(display-mode: standalone)').matches
-        && (!lastPrompt || now - parseInt(lastPrompt) > daysBetweenPrompts * 86400000)) {
-      window.addEventListener('load', () => {
-        document.getElementById('installPrompt').style.display = 'block';
-        localStorage.setItem('lastInstallPrompt', now.toString());
-      });
-    }
+   const daysBetweenPrompts = 3;
+const lastPrompt = localStorage.getItem('lastInstallPrompt');
+const neverShow = localStorage.getItem('neverShowInstallPrompt');
+const now = Date.now();
+
+if (!window.matchMedia('(display-mode: standalone)').matches
+    && !neverShow
+    && (!lastPrompt || now - parseInt(lastPrompt) > daysBetweenPrompts * 86400000)) {
+  window.addEventListener('load', () => {
+    document.getElementById('installPrompt').style.display = 'block';
+    localStorage.setItem('lastInstallPrompt', now.toString());
+  });
+}
+
   </script>
 
   <footer class="site-footer">
