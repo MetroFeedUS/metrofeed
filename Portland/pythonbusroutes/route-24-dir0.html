@@ -20,11 +20,12 @@
     }
 
     body {
-      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+      padding-top: 100px; /* Keep consistent spacing below fixed banner */
     }
 
     header {
       background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
       border-bottom: 3px solid #4dd0e1;
       padding: 1rem;
       text-align: center;
@@ -122,7 +123,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: rem;
+        padding-bottom: 0rem;
       }
     }
 
@@ -1027,7 +1028,7 @@ const stops = [
 
   map.fitBounds(polylineOut.getBounds());
 
-  stops.forEach(stop => {
+ stops.forEach(stop => {
   const marker = L.circleMarker([stop.lat, stop.lon], {
     radius: 6,
     color: '#4dd0e1',
@@ -1045,28 +1046,14 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      let cleanTime = timeStr.trim(); // Remove spaces
+      let cleanTime = timeStr.trim();
       let [h, m] = cleanTime.split(":");
-      // Pad single-digit hours/minutes
-      h = h.padStart(2, "0");
-      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-
-      // Debugging log: see what times are being compared
-      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
-
-      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(cleanTime);
-      }
-    });
-  }</span>`);
-        foundNext = true;
-      } else {
-        highlightedTimes.push(timeStr);
       }
     });
   }

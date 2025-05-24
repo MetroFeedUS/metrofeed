@@ -20,11 +20,12 @@
     }
 
     body {
-      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+      padding-top: 100px; /* Keep consistent spacing below fixed banner */
     }
 
     header {
       background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
       border-bottom: 3px solid #4dd0e1;
       padding: 1rem;
       text-align: center;
@@ -122,7 +123,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: rem;
+        padding-bottom: 0rem;
       }
     }
 
@@ -980,12 +981,12 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9955", name: "Hillsboro Transit Center ", lat: 45.521505, lon: -122.98544, times: ["9:44 PM", "5:32 AM", "6:01 AM", "6:19 AM", "6:36 AM", "7:04 AM", "7:32 AM", "8:04 AM"] },
-  { stop_id: "4123", name: "SE Oak &amp; 7th", lat: 45.518689, lon: -122.979251, times: ["9:46 PM", "5:34 AM", "6:03 AM", "6:21 AM", "6:38 AM", "7:06 AM", "7:35 AM", "8:06 AM"] },
-  { stop_id: "6502", name: "SE 10th &amp; Baseline", lat: 45.51986, lon: -122.97376, times: ["9:48 PM", "5:36 AM", "6:05 AM", "6:23 AM", "6:40 AM", "7:08 AM", "7:37 AM", "8:08 AM"] },
-  { stop_id: "8552", name: "SE 10th &amp; E Main", lat: 45.521748, lon: -122.973727, times: ["9:48 PM", "5:36 AM", "6:06 AM", "6:24 AM", "6:41 AM", "7:09 AM", "7:38 AM", "8:09 AM"] },
-  { stop_id: "3688", name: "E Main &amp; SE 12th", lat: 45.521752, lon: -122.969518, times: ["9:50 PM", "5:38 AM", "6:07 AM", "6:25 AM", "6:42 AM", "7:11 AM", "7:39 AM", "8:11 AM"] },
-  { stop_id: "3712", name: "E Main &amp; SE 18th", lat: 45.521313, lon: -122.96333, times: ["9:50 PM", "5:38 AM", "6:08 AM", "6:26 AM", "6:43 AM", "7:11 AM", "7:40 AM", "8:11 AM"] },
+  { stop_id: "9955", name: "Hillsboro Transit Center ", lat: 45.521505, lon: -122.98544, times: ["5:32 AM", "6:01 AM", "6:19 AM", "6:36 AM", "7:04 AM", "7:32 AM", "8:04 AM", "8:41 AM"] },
+  { stop_id: "4123", name: "SE Oak &amp; 7th", lat: 45.518689, lon: -122.979251, times: ["5:34 AM", "6:03 AM", "6:21 AM", "6:38 AM", "7:06 AM", "7:35 AM", "8:06 AM", "8:43 AM"] },
+  { stop_id: "6502", name: "SE 10th &amp; Baseline", lat: 45.51986, lon: -122.97376, times: ["5:36 AM", "6:05 AM", "6:23 AM", "6:40 AM", "7:08 AM", "7:37 AM", "8:08 AM", "8:45 AM"] },
+  { stop_id: "8552", name: "SE 10th &amp; E Main", lat: 45.521748, lon: -122.973727, times: ["5:36 AM", "6:06 AM", "6:24 AM", "6:41 AM", "7:09 AM", "7:38 AM", "8:09 AM", "8:46 AM"] },
+  { stop_id: "3688", name: "E Main &amp; SE 12th", lat: 45.521752, lon: -122.969518, times: ["5:38 AM", "6:07 AM", "6:25 AM", "6:42 AM", "7:11 AM", "7:39 AM", "8:11 AM", "8:48 AM"] },
+  { stop_id: "3712", name: "E Main &amp; SE 18th", lat: 45.521313, lon: -122.96333, times: ["5:38 AM", "6:08 AM", "6:26 AM", "6:43 AM", "7:11 AM", "7:40 AM", "8:11 AM", "8:48 AM"] },
   { stop_id: "3717", name: "E Main &amp; SE 24th", lat: 45.520955, lon: -122.958296, times: ["9:51 PM", "5:39 AM", "6:08 AM", "6:26 AM", "6:43 AM", "7:12 AM", "7:41 AM", "8:12 AM"] },
   { stop_id: "3719", name: "E Main &amp; SE 28th", lat: 45.520702, lon: -122.954745, times: ["9:51 PM", "5:39 AM", "6:09 AM", "6:27 AM", "6:44 AM", "7:12 AM", "7:41 AM", "8:12 AM"] },
   { stop_id: "13548", name: "E Main &amp; SE 33rd ", lat: 45.519857, lon: -122.949101, times: ["9:52 PM", "5:40 AM", "6:09 AM", "6:27 AM", "6:44 AM", "7:13 AM", "7:42 AM", "8:13 AM"] },
@@ -1036,7 +1037,7 @@ const stops = [
 
   map.fitBounds(polylineOut.getBounds());
 
-  stops.forEach(stop => {
+ stops.forEach(stop => {
   const marker = L.circleMarker([stop.lat, stop.lon], {
     radius: 6,
     color: '#4dd0e1',
@@ -1054,28 +1055,14 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      let cleanTime = timeStr.trim(); // Remove spaces
+      let cleanTime = timeStr.trim();
       let [h, m] = cleanTime.split(":");
-      // Pad single-digit hours/minutes
-      h = h.padStart(2, "0");
-      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-
-      // Debugging log: see what times are being compared
-      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
-
-      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(cleanTime);
-      }
-    });
-  }</span>`);
-        foundNext = true;
-      } else {
-        highlightedTimes.push(timeStr);
       }
     });
   }

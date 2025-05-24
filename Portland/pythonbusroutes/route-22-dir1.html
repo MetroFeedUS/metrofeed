@@ -20,11 +20,12 @@
     }
 
     body {
-      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+      padding-top: 100px; /* Keep consistent spacing below fixed banner */
     }
 
     header {
       background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
       border-bottom: 3px solid #4dd0e1;
       padding: 1rem;
       text-align: center;
@@ -122,7 +123,7 @@
   @media (max-width: 600px) {
       .ad-banner {
         padding-top: 1rem;
-        padding-bottom: rem;
+        padding-bottom: 0rem;
       }
     }
 
@@ -620,11 +621,11 @@ const stops = [
   { stop_id: "6509", name: "NE 102nd &amp; Brazee", lat: 45.53993, lon: -122.558078, times: ["5:44 AM", "6:29 AM", "7:00 AM", "7:31 AM", "8:02 AM", "8:32 AM", "9:02 AM", "9:32 AM"] },
   { stop_id: "6507", name: "NE 102nd &amp; Bell", lat: 45.536608, lon: -122.558133, times: ["5:45 AM", "6:30 AM", "7:01 AM", "7:32 AM", "8:03 AM", "8:33 AM", "9:03 AM", "9:33 AM"] },
   { stop_id: "6513", name: "NE 102nd &amp; Clackamas", lat: 45.533122, lon: -122.558203, times: ["5:45 AM", "6:31 AM", "7:02 AM", "7:33 AM", "8:04 AM", "8:34 AM", "9:05 AM", "9:34 AM"] },
-  { stop_id: "6523", name: "1200 Block NE 102nd", lat: 45.531407, lon: -122.558228, times: ["9:32 PM", "5:46 AM", "6:32 AM", "7:03 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:05 AM"] },
-  { stop_id: "6525", name: "NE 102nd &amp; Pacific", lat: 45.52968, lon: -122.558243, times: ["9:32 PM", "5:46 AM", "6:32 AM", "7:03 AM", "7:34 AM", "8:05 AM", "8:35 AM", "9:06 AM"] },
-  { stop_id: "4288", name: "10000 Block NE Pacific St", lat: 45.529563, lon: -122.560465, times: ["9:33 PM", "5:47 AM", "6:33 AM", "7:04 AM", "7:35 AM", "8:06 AM", "8:36 AM", "9:06 AM"] },
-  { stop_id: "8321", name: "NE Pacific St &amp; The Oregon Clinic", lat: 45.529559, lon: -122.562812, times: ["9:33 PM", "5:47 AM", "6:33 AM", "7:04 AM", "7:35 AM", "8:06 AM", "8:36 AM", "9:07 AM"] },
-  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["9:34 PM", "5:48 AM", "6:34 AM", "7:05 AM", "7:36 AM", "8:07 AM", "8:37 AM", "9:08 AM"] },
+  { stop_id: "6523", name: "1200 Block NE 102nd", lat: 45.531407, lon: -122.558228, times: ["5:46 AM", "6:32 AM", "7:03 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:05 AM", "9:34 AM"] },
+  { stop_id: "6525", name: "NE 102nd &amp; Pacific", lat: 45.52968, lon: -122.558243, times: ["5:46 AM", "6:32 AM", "7:03 AM", "7:34 AM", "8:05 AM", "8:35 AM", "9:06 AM", "9:35 AM"] },
+  { stop_id: "4288", name: "10000 Block NE Pacific St", lat: 45.529563, lon: -122.560465, times: ["5:47 AM", "6:33 AM", "7:04 AM", "7:35 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM"] },
+  { stop_id: "8321", name: "NE Pacific St &amp; The Oregon Clinic", lat: 45.529559, lon: -122.562812, times: ["5:47 AM", "6:33 AM", "7:04 AM", "7:35 AM", "8:06 AM", "8:36 AM", "9:07 AM", "9:36 AM"] },
+  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["5:48 AM", "6:34 AM", "7:05 AM", "7:36 AM", "8:07 AM", "8:37 AM", "9:08 AM", "9:37 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -635,7 +636,7 @@ const stops = [
 
   map.fitBounds(polylineOut.getBounds());
 
-  stops.forEach(stop => {
+ stops.forEach(stop => {
   const marker = L.circleMarker([stop.lat, stop.lon], {
     radius: 6,
     color: '#4dd0e1',
@@ -653,28 +654,14 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      let cleanTime = timeStr.trim(); // Remove spaces
+      let cleanTime = timeStr.trim();
       let [h, m] = cleanTime.split(":");
-      // Pad single-digit hours/minutes
-      h = h.padStart(2, "0");
-      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-
-      // Debugging log: see what times are being compared
-      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
-
-      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(cleanTime);
-      }
-    });
-  }</span>`);
-        foundNext = true;
-      } else {
-        highlightedTimes.push(timeStr);
       }
     });
   }
