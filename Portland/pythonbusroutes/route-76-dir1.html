@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1326,13 +1334,13 @@ const stops = [
   { stop_id: "2230", name: "SW Greenburg &amp; Cascade", lat: 45.441509, lon: -122.778914, times: ["9:36 PM", "10:07 PM", "10:37 PM", "11:35 PM", "6:32 AM", "6:52 AM", "7:07 AM", "7:22 AM"] },
   { stop_id: "12403", name: "SW Greenburg &amp; Washington Square Rd", lat: 45.446196, lon: -122.776126, times: ["9:38 PM", "10:09 PM", "10:39 PM", "11:36 PM", "6:34 AM", "6:54 AM", "7:09 AM", "7:24 AM"] },
   { stop_id: "8835", name: "SW Greenburg &amp; Lehman", lat: 45.449003, lon: -122.775117, times: ["9:39 PM", "10:10 PM", "10:40 PM", "11:37 PM", "6:35 AM", "6:55 AM", "7:10 AM", "7:25 AM"] },
-  { stop_id: "13589", name: "SW Summit Dr &amp; Palmblad", lat: 45.451507, lon: -122.775995, times: ["9:10 PM", "9:40 PM", "10:11 PM", "10:41 PM", "11:38 PM", "6:36 AM", "6:56 AM", "7:11 AM"] },
-  { stop_id: "9650", name: "Washington Square Transit Center ", lat: 45.4527, lon: -122.77881, times: ["9:12 PM", "9:42 PM", "10:13 PM", "10:43 PM", "11:40 PM", "6:38 AM", "6:58 AM", "7:13 AM"] },
-  { stop_id: "6175", name: "SW Eliander &amp; One Embassy Centre", lat: 45.454727, lon: -122.780345, times: ["9:12 PM", "9:42 PM", "10:13 PM", "10:43 PM", "11:40 PM", "6:38 AM", "6:58 AM", "7:13 AM"] },
-  { stop_id: "2295", name: "SW Hall &amp; Scholls Ferry", lat: 45.456837, lon: -122.78214, times: ["9:13 PM", "9:43 PM", "10:14 PM", "10:44 PM", "11:41 PM", "6:39 AM", "6:59 AM", "7:14 AM"] },
-  { stop_id: "13481", name: "8300 Block SW Hall", lat: 45.459121, lon: -122.787817, times: ["9:14 PM", "9:44 PM", "10:15 PM", "10:45 PM", "11:42 PM", "6:40 AM", "7:01 AM", "7:16 AM"] },
-  { stop_id: "2275", name: "SW Hall &amp; Creekside", lat: 45.46066, lon: -122.793525, times: ["9:15 PM", "9:45 PM", "10:16 PM", "10:46 PM", "11:43 PM", "6:42 AM", "7:02 AM", "7:17 AM"] },
-  { stop_id: "2284", name: "SW Hall &amp; Greenway", lat: 45.461662, lon: -122.797117, times: ["9:16 PM", "9:46 PM", "10:17 PM", "10:47 PM", "11:44 PM", "6:42 AM", "7:03 AM", "7:18 AM"] },
+  { stop_id: "13589", name: "SW Summit Dr &amp; Palmblad", lat: 45.451507, lon: -122.775995, times: ["9:40 PM", "10:11 PM", "10:41 PM", "11:38 PM", "6:36 AM", "6:56 AM", "7:11 AM", "7:26 AM"] },
+  { stop_id: "9650", name: "Washington Square Transit Center ", lat: 45.4527, lon: -122.77881, times: ["9:42 PM", "10:13 PM", "10:43 PM", "11:40 PM", "6:38 AM", "6:58 AM", "7:13 AM", "7:28 AM"] },
+  { stop_id: "6175", name: "SW Eliander &amp; One Embassy Centre", lat: 45.454727, lon: -122.780345, times: ["9:42 PM", "10:13 PM", "10:43 PM", "11:40 PM", "6:38 AM", "6:58 AM", "7:13 AM", "7:28 AM"] },
+  { stop_id: "2295", name: "SW Hall &amp; Scholls Ferry", lat: 45.456837, lon: -122.78214, times: ["9:43 PM", "10:14 PM", "10:44 PM", "11:41 PM", "6:39 AM", "6:59 AM", "7:14 AM", "7:29 AM"] },
+  { stop_id: "13481", name: "8300 Block SW Hall", lat: 45.459121, lon: -122.787817, times: ["9:44 PM", "10:15 PM", "10:45 PM", "11:42 PM", "6:40 AM", "7:01 AM", "7:16 AM", "7:31 AM"] },
+  { stop_id: "2275", name: "SW Hall &amp; Creekside", lat: 45.46066, lon: -122.793525, times: ["9:45 PM", "10:16 PM", "10:46 PM", "11:43 PM", "6:42 AM", "7:02 AM", "7:17 AM", "7:32 AM"] },
+  { stop_id: "2284", name: "SW Hall &amp; Greenway", lat: 45.461662, lon: -122.797117, times: ["9:46 PM", "10:17 PM", "10:47 PM", "11:44 PM", "6:42 AM", "7:03 AM", "7:18 AM", "7:33 AM"] },
   { stop_id: "2291", name: "SW Hall &amp; Ridgecrest", lat: 45.462211, lon: -122.798956, times: ["9:16 PM", "9:46 PM", "10:17 PM", "10:47 PM", "11:44 PM", "6:43 AM", "7:03 AM", "7:18 AM"] },
   { stop_id: "2262", name: "7800 Block SW Hall", lat: 45.463353, lon: -122.801429, times: ["9:16 PM", "9:46 PM", "10:17 PM", "10:47 PM", "11:44 PM", "6:43 AM", "7:04 AM", "7:19 AM"] },
   { stop_id: "2277", name: "SW Hall &amp; Cresmoor", lat: 45.464207, lon: -122.803089, times: ["9:17 PM", "9:47 PM", "10:18 PM", "10:48 PM", "11:45 PM", "6:44 AM", "7:05 AM", "7:20 AM"] },
@@ -1365,22 +1373,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

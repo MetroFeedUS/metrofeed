@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1024,12 +1032,12 @@ const stops = [
   { stop_id: "6779", name: "NE 15th &amp; Weidler", lat: 45.534453, lon: -122.650588, times: ["9:39 PM", "10:10 PM", "10:40 PM", "11:10 PM", "11:41 PM", "5:10 AM", "5:43 AM", "5:56 AM"] },
   { stop_id: "6789", name: "NE 15th &amp; Halsey", lat: 45.533238, lon: -122.650564, times: ["9:39 PM", "10:10 PM", "10:40 PM", "11:10 PM", "11:41 PM", "5:10 AM", "5:44 AM", "5:57 AM"] },
   { stop_id: "6818", name: "NE 16th &amp; Multnomah", lat: 45.531857, lon: -122.649632, times: ["9:40 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:42 PM", "5:11 AM", "5:44 AM", "5:57 AM"] },
-  { stop_id: "4045", name: "NE Multnomah &amp; 13th", lat: 45.531571, lon: -122.65235, times: ["9:10 PM", "9:41 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:43 PM", "5:12 AM", "5:46 AM"] },
-  { stop_id: "4044", name: "NE Multnomah &amp; 11th", lat: 45.531575, lon: -122.654436, times: ["9:11 PM", "9:42 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:44 PM", "5:13 AM", "5:46 AM"] },
-  { stop_id: "10876", name: "NE Multnomah &amp; 9th", lat: 45.531573, lon: -122.657075, times: ["9:11 PM", "9:42 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:44 PM", "5:13 AM", "5:47 AM"] },
-  { stop_id: "4043", name: "NE Multnomah &amp; Grand", lat: 45.531586, lon: -122.660482, times: ["9:12 PM", "9:43 PM", "10:14 PM", "10:44 PM", "11:14 PM", "11:45 PM", "5:14 AM", "5:48 AM"] },
-  { stop_id: "11492", name: "NE Multnomah &amp; 3rd", lat: 45.531159, lon: -122.66293, times: ["9:13 PM", "9:44 PM", "10:15 PM", "10:45 PM", "11:15 PM", "11:46 PM", "5:15 AM", "5:49 AM"] },
-  { stop_id: "2592", name: "Rose Quarter Transit Center", lat: 45.530005, lon: -122.666476, times: ["9:15 PM", "9:46 PM", "10:17 PM", "10:47 PM", "11:17 PM", "11:48 PM", "5:17 AM", "5:51 AM"] },
+  { stop_id: "4045", name: "NE Multnomah &amp; 13th", lat: 45.531571, lon: -122.65235, times: ["9:41 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:43 PM", "5:12 AM", "5:46 AM", "5:59 AM"] },
+  { stop_id: "4044", name: "NE Multnomah &amp; 11th", lat: 45.531575, lon: -122.654436, times: ["9:42 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:44 PM", "5:13 AM", "5:46 AM", "5:59 AM"] },
+  { stop_id: "10876", name: "NE Multnomah &amp; 9th", lat: 45.531573, lon: -122.657075, times: ["9:42 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:44 PM", "5:13 AM", "5:47 AM", "6:00 AM"] },
+  { stop_id: "4043", name: "NE Multnomah &amp; Grand", lat: 45.531586, lon: -122.660482, times: ["9:43 PM", "10:14 PM", "10:44 PM", "11:14 PM", "11:45 PM", "5:14 AM", "5:48 AM", "6:01 AM"] },
+  { stop_id: "11492", name: "NE Multnomah &amp; 3rd", lat: 45.531159, lon: -122.66293, times: ["9:44 PM", "10:15 PM", "10:45 PM", "11:15 PM", "11:46 PM", "5:15 AM", "5:49 AM", "6:02 AM"] },
+  { stop_id: "2592", name: "Rose Quarter Transit Center", lat: 45.530005, lon: -122.666476, times: ["9:46 PM", "10:17 PM", "10:47 PM", "11:17 PM", "11:48 PM", "5:17 AM", "5:51 AM", "6:04 AM"] },
   { stop_id: "9311", name: "NW Glisan &amp; 3rd", lat: 45.526817, lon: -122.674106, times: ["9:16 PM", "9:47 PM", "10:18 PM", "10:48 PM", "11:18 PM", "11:49 PM", "5:18 AM", "5:52 AM"] },
   { stop_id: "9301", name: "NW 5th &amp; Davis", lat: 45.524705, lon: -122.675552, times: ["9:18 PM", "9:49 PM", "10:20 PM", "10:50 PM", "11:20 PM", "11:51 PM", "5:20 AM", "5:42 AM"] },
   { stop_id: "7631", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["9:20 PM", "9:51 PM", "10:22 PM", "10:52 PM", "11:22 PM", "11:53 PM", "5:22 AM", "5:43 AM"] },
@@ -1045,10 +1053,10 @@ const stops = [
   { stop_id: "5975", name: "Portland VA Medical Center", lat: 45.497058, lon: -122.683271, times: ["9:37 PM", "10:07 PM", "10:38 PM", "11:08 PM", "11:38 PM", "12:08 AM", "5:46 AM", "5:59 AM"] },
   { stop_id: "1947", name: "SW Gaines &amp; 6th", lat: 45.495927, lon: -122.686706, times: ["9:39 PM", "10:09 PM", "10:39 PM", "11:09 PM", "11:39 PM", "12:09 AM", "5:47 AM", "6:01 AM"] },
   { stop_id: "1949", name: "SW Gaines &amp; 9th", lat: 45.496921, lon: -122.689252, times: ["9:39 PM", "10:09 PM", "10:40 PM", "11:10 PM", "11:40 PM", "12:10 AM", "5:48 AM", "6:01 AM"] },
-  { stop_id: "1945", name: "SW Gaines &amp; 11th", lat: 45.497023, lon: -122.691222, times: ["9:10 PM", "9:40 PM", "10:10 PM", "10:40 PM", "11:10 PM", "11:40 PM", "12:10 AM", "5:48 AM"] },
-  { stop_id: "6548", name: "SW 11th &amp; Gibbs", lat: 45.49898, lon: -122.691148, times: ["9:11 PM", "9:41 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:41 PM", "12:11 AM", "5:49 AM"] },
-  { stop_id: "5032", name: "SW Sam Jackson Pk &amp; US Veterans", lat: 45.499042, lon: -122.687161, times: ["9:12 PM", "9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:42 PM", "12:12 AM", "5:50 AM"] },
-  { stop_id: "5028", name: "SW Sam Jackson Pk &amp; OHSU", lat: 45.499332, lon: -122.685535, times: ["9:13 PM", "9:43 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:43 PM", "12:13 AM", "5:51 AM"] },
+  { stop_id: "1945", name: "SW Gaines &amp; 11th", lat: 45.497023, lon: -122.691222, times: ["9:40 PM", "10:10 PM", "10:40 PM", "11:10 PM", "11:40 PM", "12:10 AM", "5:48 AM", "6:02 AM"] },
+  { stop_id: "6548", name: "SW 11th &amp; Gibbs", lat: 45.49898, lon: -122.691148, times: ["9:41 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:41 PM", "12:11 AM", "5:49 AM", "6:03 AM"] },
+  { stop_id: "5032", name: "SW Sam Jackson Pk &amp; US Veterans", lat: 45.499042, lon: -122.687161, times: ["9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:42 PM", "12:12 AM", "5:50 AM", "6:04 AM"] },
+  { stop_id: "5028", name: "SW Sam Jackson Pk &amp; OHSU", lat: 45.499332, lon: -122.685535, times: ["9:43 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:43 PM", "12:13 AM", "5:51 AM", "6:05 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -1060,22 +1068,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

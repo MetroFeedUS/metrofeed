@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1331,11 +1339,11 @@ const stops = [
   { stop_id: "10848", name: "SW Barbur &amp; Bertha", lat: 45.470622, lon: -122.688578, times: ["9:54 PM", "10:42 PM", "11:29 PM", "12:08 AM", "5:09 AM", "5:50 AM", "6:09 AM", "6:24 AM"] },
   { stop_id: "193", name: "SW Barbur &amp; Terwilliger", lat: 45.470919, lon: -122.684976, times: ["9:55 PM", "10:43 PM", "11:30 PM", "12:09 AM", "5:10 AM", "5:51 AM", "6:10 AM", "6:25 AM"] },
   { stop_id: "203", name: "SW Barbur &amp; 2nd", lat: 45.471449, lon: -122.680575, times: ["9:55 PM", "10:43 PM", "11:30 PM", "12:09 AM", "5:10 AM", "5:51 AM", "6:10 AM", "6:25 AM"] },
-  { stop_id: "182", name: "SW Barbur &amp; Parkhill", lat: 45.47748, lon: -122.679657, times: ["9:10 PM", "9:56 PM", "10:44 PM", "11:31 PM", "12:10 AM", "5:11 AM", "5:52 AM", "6:11 AM"] },
-  { stop_id: "156", name: "4900 Block SW Barbur", lat: 45.487677, lon: -122.682515, times: ["9:13 PM", "9:59 PM", "10:47 PM", "11:34 PM", "12:13 AM", "5:13 AM", "5:54 AM", "6:14 AM"] },
-  { stop_id: "172", name: "S Barbur &amp; SW Hamilton", lat: 45.491186, lon: -122.677725, times: ["9:14 PM", "10:00 PM", "10:48 PM", "11:35 PM", "12:14 AM", "5:14 AM", "5:55 AM", "6:15 AM"] },
-  { stop_id: "177", name: "SW Barbur &amp; Lane", lat: 45.495933, lon: -122.678004, times: ["9:15 PM", "10:01 PM", "10:49 PM", "11:36 PM", "12:15 AM", "5:15 AM", "5:56 AM", "6:16 AM"] },
-  { stop_id: "195", name: "SW Barbur &amp; Whitaker", lat: 45.499066, lon: -122.679787, times: ["9:15 PM", "10:01 PM", "10:49 PM", "11:36 PM", "12:15 AM", "5:16 AM", "5:57 AM", "6:16 AM"] },
+  { stop_id: "182", name: "SW Barbur &amp; Parkhill", lat: 45.47748, lon: -122.679657, times: ["9:56 PM", "10:44 PM", "11:31 PM", "12:10 AM", "5:11 AM", "5:52 AM", "6:11 AM", "6:26 AM"] },
+  { stop_id: "156", name: "4900 Block SW Barbur", lat: 45.487677, lon: -122.682515, times: ["9:59 PM", "10:47 PM", "11:34 PM", "12:13 AM", "5:13 AM", "5:54 AM", "6:14 AM", "6:29 AM"] },
+  { stop_id: "172", name: "S Barbur &amp; SW Hamilton", lat: 45.491186, lon: -122.677725, times: ["10:00 PM", "10:48 PM", "11:35 PM", "12:14 AM", "5:14 AM", "5:55 AM", "6:15 AM", "6:30 AM"] },
+  { stop_id: "177", name: "SW Barbur &amp; Lane", lat: 45.495933, lon: -122.678004, times: ["10:01 PM", "10:49 PM", "11:36 PM", "12:15 AM", "5:15 AM", "5:56 AM", "6:16 AM", "6:31 AM"] },
+  { stop_id: "195", name: "SW Barbur &amp; Whitaker", lat: 45.499066, lon: -122.679787, times: ["10:01 PM", "10:49 PM", "11:36 PM", "12:15 AM", "5:16 AM", "5:57 AM", "6:16 AM", "6:31 AM"] },
   { stop_id: "174", name: "SW Barbur &amp; Hooker", lat: 45.502083, lon: -122.681478, times: ["9:16 PM", "10:02 PM", "10:50 PM", "11:37 PM", "12:16 AM", "5:16 AM", "5:57 AM", "6:17 AM"] },
   { stop_id: "12762", name: "SW 4th &amp; Caruthers", lat: 45.505518, lon: -122.681879, times: ["9:17 PM", "10:03 PM", "10:51 PM", "11:38 PM", "12:17 AM", "5:17 AM", "5:58 AM", "6:18 AM"] },
   { stop_id: "12763", name: "SW 4th &amp; Hall", lat: 45.509479, lon: -122.681344, times: ["9:18 PM", "10:04 PM", "10:52 PM", "11:39 PM", "12:18 AM", "5:18 AM", "5:59 AM", "6:19 AM"] },
@@ -1375,10 +1383,10 @@ const stops = [
   { stop_id: "5132", name: "NE Sandy &amp; 77th", lat: 45.55022, lon: -122.58392, times: ["9:50 PM", "10:36 PM", "11:24 PM", "12:10 AM", "12:55 AM", "1:54 AM", "5:54 AM", "6:28 AM"] },
   { stop_id: "5135", name: "NE Sandy &amp; 79th", lat: 45.551282, lon: -122.581257, times: ["9:51 PM", "10:37 PM", "11:25 PM", "12:11 AM", "12:56 AM", "1:54 AM", "5:55 AM", "6:29 AM"] },
   { stop_id: "5138", name: "NE Sandy &amp; 82nd", lat: 45.552551, lon: -122.57812, times: ["9:52 PM", "10:38 PM", "11:26 PM", "12:12 AM", "12:57 AM", "1:55 AM", "5:56 AM", "6:30 AM"] },
-  { stop_id: "5046", name: "NE Sandy &amp; The Grotto", lat: 45.553435, lon: -122.575984, times: ["9:10 PM", "9:52 PM", "10:38 PM", "11:26 PM", "12:12 AM", "12:57 AM", "1:55 AM", "5:56 AM"] },
-  { stop_id: "13651", name: "NE Sandy &amp; 87th", lat: 45.55457, lon: -122.573172, times: ["9:11 PM", "9:53 PM", "10:39 PM", "11:27 PM", "12:13 AM", "12:58 AM", "1:56 AM", "5:57 AM"] },
-  { stop_id: "5051", name: "NE Sandy &amp; Prescott", lat: 45.555982, lon: -122.569704, times: ["9:12 PM", "9:54 PM", "10:40 PM", "11:28 PM", "12:13 AM", "12:58 AM", "1:56 AM", "5:58 AM"] },
-  { stop_id: "10853", name: "Parkrose/ Sumner Transit Center", lat: 45.558368, lon: -122.564954, times: ["9:14 PM", "9:56 PM", "10:42 PM", "11:29 PM", "12:15 AM", "1:00 AM", "5:59 AM", "6:33 AM"] },
+  { stop_id: "5046", name: "NE Sandy &amp; The Grotto", lat: 45.553435, lon: -122.575984, times: ["9:52 PM", "10:38 PM", "11:26 PM", "12:12 AM", "12:57 AM", "1:55 AM", "5:56 AM", "6:30 AM"] },
+  { stop_id: "13651", name: "NE Sandy &amp; 87th", lat: 45.55457, lon: -122.573172, times: ["9:53 PM", "10:39 PM", "11:27 PM", "12:13 AM", "12:58 AM", "1:56 AM", "5:57 AM", "6:31 AM"] },
+  { stop_id: "5051", name: "NE Sandy &amp; Prescott", lat: 45.555982, lon: -122.569704, times: ["9:54 PM", "10:40 PM", "11:28 PM", "12:13 AM", "12:58 AM", "1:56 AM", "5:58 AM", "6:32 AM"] },
+  { stop_id: "10853", name: "Parkrose/ Sumner Transit Center", lat: 45.558368, lon: -122.564954, times: ["9:56 PM", "10:42 PM", "11:29 PM", "12:15 AM", "1:00 AM", "5:59 AM", "6:33 AM", "6:53 AM"] },
   { stop_id: "10856", name: "Parkrose/ Sumner Transit Center", lat: 45.558736, lon: -122.564507, times: ["1:58 AM"] },
 ]
 
@@ -1391,22 +1399,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1368,8 +1376,8 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["9:14 PM", "10:02 PM", "11:02 PM", "11:57 PM", "12:36 AM", "4:56 AM", "5:44 AM", "6:12 AM"] },
-  { stop_id: "10864", name: "Gateway Transit Center ", lat: 45.5299, lon: -122.563177, times: ["9:16 PM", "10:04 PM", "11:04 PM", "11:59 PM", "12:38 AM", "4:58 AM", "5:46 AM", "6:14 AM"] },
+  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["10:02 PM", "11:02 PM", "11:57 PM", "12:36 AM", "4:56 AM", "5:44 AM", "6:12 AM", "6:37 AM"] },
+  { stop_id: "10864", name: "Gateway Transit Center ", lat: 45.5299, lon: -122.563177, times: ["10:04 PM", "11:04 PM", "11:59 PM", "12:38 AM", "4:58 AM", "5:46 AM", "6:14 AM", "6:39 AM"] },
   { stop_id: "8141", name: "NE 99th &amp; Glisan", lat: 45.526546, lon: -122.562085, times: ["9:17 PM", "10:05 PM", "11:05 PM", "12:00 AM", "12:39 AM", "4:59 AM", "5:47 AM", "6:15 AM"] },
   { stop_id: "2156", name: "NE Glisan &amp; 92nd", lat: 45.526436, lon: -122.568526, times: ["9:18 PM", "10:06 PM", "11:06 PM", "12:01 AM", "12:40 AM", "5:00 AM", "5:48 AM", "6:16 AM"] },
   { stop_id: "2153", name: "NE Glisan &amp; 90th", lat: 45.52644, lon: -122.571165, times: ["9:19 PM", "10:06 PM", "11:06 PM", "12:01 AM", "12:40 AM", "5:00 AM", "5:49 AM", "6:17 AM"] },
@@ -1428,18 +1436,18 @@ const stops = [
   { stop_id: "13781", name: "SE Bybee &amp; Bybee Blvd MAX Station", lat: 45.474182, lon: -122.63978, times: ["10:09 PM", "10:54 PM", "11:54 PM", "12:52 AM", "5:51 AM", "6:38 AM", "7:09 AM", "7:39 AM"] },
   { stop_id: "858", name: "SE Bybee &amp; 27th", lat: 45.474305, lon: -122.63597, times: ["10:09 PM", "10:54 PM", "11:54 PM", "12:52 AM", "5:51 AM", "6:38 AM", "7:09 AM", "7:39 AM"] },
   { stop_id: "7294", name: "SE 28th &amp; Tolman", lat: 45.47493, lon: -122.634323, times: ["10:09 PM", "10:54 PM", "11:54 PM", "12:52 AM", "5:51 AM", "6:38 AM", "7:09 AM", "7:39 AM"] },
-  { stop_id: "7286", name: "SE 28th &amp; Martins", lat: 45.477599, lon: -122.633981, times: ["9:10 PM", "10:10 PM", "10:55 PM", "11:55 PM", "12:53 AM", "5:52 AM", "6:39 AM", "7:10 AM"] },
-  { stop_id: "6399", name: "SE Woodstock &amp; Moreland Ln", lat: 45.479159, lon: -122.632605, times: ["9:11 PM", "10:11 PM", "10:56 PM", "11:56 PM", "12:54 AM", "5:53 AM", "6:40 AM", "7:11 AM"] },
-  { stop_id: "6402", name: "SE Woodstock &amp; 32nd", lat: 45.479086, lon: -122.630606, times: ["9:11 PM", "10:11 PM", "10:56 PM", "11:56 PM", "12:54 AM", "5:53 AM", "6:40 AM", "7:11 AM"] },
-  { stop_id: "6405", name: "SE Woodstock &amp; 34th", lat: 45.479187, lon: -122.628434, times: ["9:11 PM", "10:11 PM", "10:56 PM", "11:56 PM", "12:54 AM", "5:53 AM", "6:40 AM", "7:11 AM"] },
-  { stop_id: "6407", name: "SE Woodstock &amp; 36th", lat: 45.479154, lon: -122.626799, times: ["9:11 PM", "10:11 PM", "10:56 PM", "11:56 PM", "12:54 AM", "5:53 AM", "6:40 AM", "7:11 AM"] },
-  { stop_id: "8243", name: "SE Woodstock &amp; 38th", lat: 45.479126, lon: -122.623703, times: ["9:12 PM", "10:12 PM", "10:57 PM", "11:57 PM", "12:55 AM", "5:54 AM", "6:41 AM", "7:12 AM"] },
-  { stop_id: "6411", name: "SE Woodstock &amp; 41st", lat: 45.479118, lon: -122.62071, times: ["9:13 PM", "10:13 PM", "10:58 PM", "11:58 PM", "12:56 AM", "5:55 AM", "6:42 AM", "7:13 AM"] },
-  { stop_id: "6413", name: "SE Woodstock &amp; 43rd", lat: 45.479089, lon: -122.618621, times: ["9:13 PM", "10:13 PM", "10:58 PM", "11:58 PM", "12:56 AM", "5:55 AM", "6:42 AM", "7:13 AM"] },
-  { stop_id: "6415", name: "SE Woodstock &amp; 46th", lat: 45.479125, lon: -122.615658, times: ["9:13 PM", "10:13 PM", "10:58 PM", "11:58 PM", "12:56 AM", "5:55 AM", "6:42 AM", "7:13 AM"] },
-  { stop_id: "6419", name: "SE Woodstock &amp; 49th", lat: 45.479107, lon: -122.61211, times: ["9:14 PM", "10:14 PM", "10:59 PM", "11:59 PM", "12:57 AM", "5:56 AM", "6:43 AM", "7:14 AM"] },
-  { stop_id: "10484", name: "SE Woodstock &amp; 51st", lat: 45.479086, lon: -122.60961, times: ["9:15 PM", "10:15 PM", "11:00 PM", "11:59 PM", "12:57 AM", "5:57 AM", "6:44 AM", "7:15 AM"] },
-  { stop_id: "7718", name: "SE 52nd &amp; Carlton", lat: 45.47782, lon: -122.608805, times: ["9:15 PM", "10:15 PM", "11:00 PM", "12:00 AM", "12:58 AM", "5:57 AM", "6:44 AM", "7:15 AM"] },
+  { stop_id: "7286", name: "SE 28th &amp; Martins", lat: 45.477599, lon: -122.633981, times: ["10:10 PM", "10:55 PM", "11:55 PM", "12:53 AM", "5:52 AM", "6:39 AM", "7:10 AM", "7:40 AM"] },
+  { stop_id: "6399", name: "SE Woodstock &amp; Moreland Ln", lat: 45.479159, lon: -122.632605, times: ["10:11 PM", "10:56 PM", "11:56 PM", "12:54 AM", "5:53 AM", "6:40 AM", "7:11 AM", "7:41 AM"] },
+  { stop_id: "6402", name: "SE Woodstock &amp; 32nd", lat: 45.479086, lon: -122.630606, times: ["10:11 PM", "10:56 PM", "11:56 PM", "12:54 AM", "5:53 AM", "6:40 AM", "7:11 AM", "7:41 AM"] },
+  { stop_id: "6405", name: "SE Woodstock &amp; 34th", lat: 45.479187, lon: -122.628434, times: ["10:11 PM", "10:56 PM", "11:56 PM", "12:54 AM", "5:53 AM", "6:40 AM", "7:11 AM", "7:41 AM"] },
+  { stop_id: "6407", name: "SE Woodstock &amp; 36th", lat: 45.479154, lon: -122.626799, times: ["10:11 PM", "10:56 PM", "11:56 PM", "12:54 AM", "5:53 AM", "6:40 AM", "7:11 AM", "7:41 AM"] },
+  { stop_id: "8243", name: "SE Woodstock &amp; 38th", lat: 45.479126, lon: -122.623703, times: ["10:12 PM", "10:57 PM", "11:57 PM", "12:55 AM", "5:54 AM", "6:41 AM", "7:12 AM", "7:42 AM"] },
+  { stop_id: "6411", name: "SE Woodstock &amp; 41st", lat: 45.479118, lon: -122.62071, times: ["10:13 PM", "10:58 PM", "11:58 PM", "12:56 AM", "5:55 AM", "6:42 AM", "7:13 AM", "7:43 AM"] },
+  { stop_id: "6413", name: "SE Woodstock &amp; 43rd", lat: 45.479089, lon: -122.618621, times: ["10:13 PM", "10:58 PM", "11:58 PM", "12:56 AM", "5:55 AM", "6:42 AM", "7:13 AM", "7:43 AM"] },
+  { stop_id: "6415", name: "SE Woodstock &amp; 46th", lat: 45.479125, lon: -122.615658, times: ["10:13 PM", "10:58 PM", "11:58 PM", "12:56 AM", "5:55 AM", "6:42 AM", "7:13 AM", "7:44 AM"] },
+  { stop_id: "6419", name: "SE Woodstock &amp; 49th", lat: 45.479107, lon: -122.61211, times: ["10:14 PM", "10:59 PM", "11:59 PM", "12:57 AM", "5:56 AM", "6:43 AM", "7:14 AM", "7:44 AM"] },
+  { stop_id: "10484", name: "SE Woodstock &amp; 51st", lat: 45.479086, lon: -122.60961, times: ["10:15 PM", "11:00 PM", "11:59 PM", "12:57 AM", "5:57 AM", "6:44 AM", "7:15 AM", "7:45 AM"] },
+  { stop_id: "7718", name: "SE 52nd &amp; Carlton", lat: 45.47782, lon: -122.608805, times: ["10:15 PM", "11:00 PM", "12:00 AM", "12:58 AM", "5:57 AM", "6:44 AM", "7:15 AM", "7:46 AM"] },
   { stop_id: "1528", name: "5400 Block SE Duke", lat: 45.475762, lon: -122.607504, times: ["9:16 PM", "10:16 PM", "11:01 PM", "12:01 AM", "12:59 AM", "5:58 AM", "6:45 AM", "7:16 AM"] },
   { stop_id: "1531", name: "SE Duke &amp; 57th", lat: 45.475765, lon: -122.604529, times: ["9:17 PM", "10:17 PM", "11:02 PM", "12:01 AM", "12:59 AM", "5:59 AM", "6:46 AM", "7:17 AM"] },
   { stop_id: "1540", name: "SE Duke &amp; 60th", lat: 45.47574, lon: -122.602381, times: ["9:17 PM", "10:17 PM", "11:02 PM", "12:02 AM", "1:00 AM", "5:59 AM", "6:46 AM", "7:17 AM"] },
@@ -1477,22 +1485,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

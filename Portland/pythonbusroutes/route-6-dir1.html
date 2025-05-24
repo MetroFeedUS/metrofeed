@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1081,11 +1089,11 @@ const stopNames = {
 const stops = [
   { stop_id: "1026", name: "Jantzen Beach Main Stop", lat: 45.610836, lon: -122.68139, times: ["9:34 PM", "10:09 PM", "10:38 PM", "11:11 PM", "11:40 PM", "4:40 AM", "5:01 AM", "5:16 AM"] },
   { stop_id: "13748", name: "12100 N Pavilion", lat: 45.612309, lon: -122.684608, times: ["9:35 PM", "10:10 PM", "10:39 PM", "11:12 PM", "11:41 PM", "4:41 AM", "5:02 AM", "5:16 AM"] },
-  { stop_id: "12918", name: "Delta Park/Vanport", lat: 45.596301, lon: -122.685445, times: ["9:12 PM", "9:39 PM", "10:14 PM", "10:43 PM", "11:16 PM", "11:45 PM", "4:45 AM", "5:06 AM"] },
-  { stop_id: "14586", name: "1700 Block N Schmeer", lat: 45.589483, lon: -122.683488, times: ["9:13 PM", "10:15 PM", "11:17 PM", "5:22 AM", "5:47 AM", "6:15 AM", "6:40 AM", "7:04 AM"] },
-  { stop_id: "14587", name: "1100 Block N Schmeer", lat: 45.589467, lon: -122.679532, times: ["9:14 PM", "10:16 PM", "11:18 PM", "5:22 AM", "5:47 AM", "6:15 AM", "6:40 AM", "7:04 AM"] },
-  { stop_id: "14588", name: "N Schmeer &amp; Horseshoe", lat: 45.589023, lon: -122.675863, times: ["9:15 PM", "10:17 PM", "11:19 PM", "5:23 AM", "5:48 AM", "6:16 AM", "6:41 AM", "7:05 AM"] },
-  { stop_id: "14589", name: "500 Block N Schmeer", lat: 45.58806, lon: -122.672916, times: ["9:15 PM", "10:17 PM", "11:19 PM", "5:23 AM", "5:48 AM", "6:16 AM", "6:41 AM", "7:05 AM"] },
+  { stop_id: "12918", name: "Delta Park/Vanport", lat: 45.596301, lon: -122.685445, times: ["9:39 PM", "10:14 PM", "10:43 PM", "11:16 PM", "11:45 PM", "4:45 AM", "5:06 AM", "5:20 AM"] },
+  { stop_id: "14586", name: "1700 Block N Schmeer", lat: 45.589483, lon: -122.683488, times: ["10:15 PM", "11:17 PM", "5:22 AM", "5:47 AM", "6:15 AM", "6:40 AM", "7:04 AM", "7:23 AM"] },
+  { stop_id: "14587", name: "1100 Block N Schmeer", lat: 45.589467, lon: -122.679532, times: ["10:16 PM", "11:18 PM", "5:22 AM", "5:47 AM", "6:15 AM", "6:40 AM", "7:04 AM", "7:23 AM"] },
+  { stop_id: "14588", name: "N Schmeer &amp; Horseshoe", lat: 45.589023, lon: -122.675863, times: ["10:17 PM", "11:19 PM", "5:23 AM", "5:48 AM", "6:16 AM", "6:41 AM", "7:05 AM", "7:24 AM"] },
+  { stop_id: "14589", name: "500 Block N Schmeer", lat: 45.58806, lon: -122.672916, times: ["10:17 PM", "11:19 PM", "5:23 AM", "5:48 AM", "6:16 AM", "6:41 AM", "7:05 AM", "7:24 AM"] },
   { stop_id: "9450", name: "9000 Block NE Vancouver Way", lat: 45.58725, lon: -122.663455, times: ["9:16 PM", "10:18 PM", "11:20 PM", "5:24 AM", "5:49 AM", "6:17 AM", "6:42 AM", "7:06 AM"] },
   { stop_id: "9479", name: "NE Vancouver Way &amp; Gertz Rd", lat: 45.589994, lon: -122.662041, times: ["9:16 PM", "10:18 PM", "11:20 PM", "5:24 AM", "5:49 AM", "6:17 AM", "6:42 AM", "7:06 AM"] },
   { stop_id: "9438", name: "NE Vancouver Way &amp; Freightliner", lat: 45.592423, lon: -122.663659, times: ["9:17 PM", "10:19 PM", "11:21 PM", "5:25 AM", "5:50 AM", "6:18 AM", "6:43 AM", "7:07 AM"] },
@@ -1115,19 +1123,19 @@ const stops = [
   { stop_id: "5914", name: "NE M L King &amp; Hancock", lat: 45.536754, lon: -122.661755, times: ["9:36 PM", "10:06 PM", "10:37 PM", "11:07 PM", "11:38 PM", "12:08 AM", "5:08 AM", "5:28 AM"] },
   { stop_id: "5960", name: "NE M L King &amp; Weidler", lat: 45.53398, lon: -122.661777, times: ["9:37 PM", "10:07 PM", "10:38 PM", "11:08 PM", "11:39 PM", "12:09 AM", "5:09 AM", "5:29 AM"] },
   { stop_id: "5958", name: "NE M L King &amp; Wasco", lat: 45.532317, lon: -122.661784, times: ["9:38 PM", "10:08 PM", "10:39 PM", "11:09 PM", "11:40 PM", "12:10 AM", "5:10 AM", "5:30 AM"] },
-  { stop_id: "5917", name: "NE M L King &amp; Holladay", lat: 45.530184, lon: -122.661798, times: ["9:11 PM", "9:39 PM", "10:09 PM", "10:40 PM", "11:10 PM", "11:41 PM", "12:11 AM", "5:11 AM"] },
-  { stop_id: "5912", name: "NE M L King &amp; Hoyt", lat: 45.527377, lon: -122.661806, times: ["9:11 PM", "9:39 PM", "10:09 PM", "10:40 PM", "11:10 PM", "11:41 PM", "12:11 AM", "5:11 AM"] },
-  { stop_id: "5901", name: "NE M L King &amp; E Burnside", lat: 45.523368, lon: -122.661841, times: ["9:13 PM", "9:41 PM", "10:11 PM", "10:42 PM", "11:12 PM", "11:43 PM", "12:13 AM", "5:13 AM"] },
-  { stop_id: "13613", name: "SE M L King &amp; Stark", lat: 45.519102, lon: -122.661874, times: ["9:14 PM", "9:42 PM", "10:12 PM", "10:43 PM", "11:13 PM", "11:44 PM", "12:14 AM", "5:14 AM"] },
-  { stop_id: "13584", name: "SE M L King &amp; Morrison", lat: 45.51696, lon: -122.661919, times: ["9:15 PM", "9:43 PM", "10:13 PM", "10:44 PM", "11:14 PM", "11:44 PM", "12:14 AM", "5:15 AM"] },
+  { stop_id: "5917", name: "NE M L King &amp; Holladay", lat: 45.530184, lon: -122.661798, times: ["9:39 PM", "10:09 PM", "10:40 PM", "11:10 PM", "11:41 PM", "12:11 AM", "5:11 AM", "5:31 AM"] },
+  { stop_id: "5912", name: "NE M L King &amp; Hoyt", lat: 45.527377, lon: -122.661806, times: ["9:39 PM", "10:09 PM", "10:40 PM", "11:10 PM", "11:41 PM", "12:11 AM", "5:11 AM", "5:31 AM"] },
+  { stop_id: "5901", name: "NE M L King &amp; E Burnside", lat: 45.523368, lon: -122.661841, times: ["9:41 PM", "10:11 PM", "10:42 PM", "11:12 PM", "11:43 PM", "12:13 AM", "5:13 AM", "5:33 AM"] },
+  { stop_id: "13613", name: "SE M L King &amp; Stark", lat: 45.519102, lon: -122.661874, times: ["9:42 PM", "10:12 PM", "10:43 PM", "11:13 PM", "11:44 PM", "12:14 AM", "5:14 AM", "5:34 AM"] },
+  { stop_id: "13584", name: "SE M L King &amp; Morrison", lat: 45.51696, lon: -122.661919, times: ["9:43 PM", "10:13 PM", "10:44 PM", "11:14 PM", "11:44 PM", "12:14 AM", "5:15 AM", "5:35 AM"] },
   { stop_id: "2643", name: "Hawthorne Bridge Ramp &amp; SE M L King", lat: 45.512311, lon: -122.661453, times: ["9:16 PM", "9:44 PM", "10:14 PM", "10:45 PM", "11:15 PM", "11:46 PM", "12:16 AM", "5:16 AM"] },
   { stop_id: "2642", name: "Hawthorne Bridge", lat: 45.513021, lon: -122.666184, times: ["9:18 PM", "9:46 PM", "10:16 PM", "10:47 PM", "11:17 PM", "11:47 PM", "12:17 AM", "5:18 AM"] },
   { stop_id: "11956", name: "SW Main &amp; 2nd", lat: 45.515274, lon: -122.675621, times: ["9:20 PM", "9:48 PM", "10:18 PM", "10:49 PM", "11:19 PM", "11:49 PM", "12:19 AM", "5:20 AM"] },
   { stop_id: "12790", name: "SW Jefferson between 4th &amp; 5th", lat: 45.5147, lon: -122.679167, times: ["9:22 PM", "9:50 PM", "10:20 PM", "10:51 PM", "11:21 PM", "11:51 PM", "12:21 AM", "5:22 AM"] },
   { stop_id: "3049", name: "SW Jefferson &amp; 10th", lat: 45.516026, lon: -122.684087, times: ["9:24 PM", "9:52 PM", "10:22 PM", "10:52 PM", "11:22 PM", "11:52 PM", "12:22 AM", "5:23 AM"] },
-  { stop_id: "3051", name: "SW Jefferson &amp; 13th", lat: 45.516849, lon: -122.687154, times: ["9:10 PM", "9:25 PM", "9:53 PM", "10:23 PM", "10:53 PM", "11:23 PM", "11:53 PM", "12:23 AM"] },
-  { stop_id: "14408", name: "SW Jefferson &amp; 17th", lat: 45.517712, lon: -122.691216, times: ["9:12 PM", "9:27 PM", "9:55 PM", "10:25 PM", "10:55 PM", "11:25 PM", "11:55 PM", "12:25 AM"] },
-  { stop_id: "1114", name: "SW 18th &amp; Goose Hollow MAX Station", lat: 45.517577, lon: -122.693099, times: ["9:13 PM", "9:28 PM", "9:56 PM", "10:26 PM", "10:56 PM", "11:26 PM", "11:56 PM", "12:26 AM"] },
+  { stop_id: "3051", name: "SW Jefferson &amp; 13th", lat: 45.516849, lon: -122.687154, times: ["9:25 PM", "9:53 PM", "10:23 PM", "10:53 PM", "11:23 PM", "11:53 PM", "12:23 AM", "5:24 AM"] },
+  { stop_id: "14408", name: "SW Jefferson &amp; 17th", lat: 45.517712, lon: -122.691216, times: ["9:27 PM", "9:55 PM", "10:25 PM", "10:55 PM", "11:25 PM", "11:55 PM", "12:25 AM", "5:26 AM"] },
+  { stop_id: "1114", name: "SW 18th &amp; Goose Hollow MAX Station", lat: 45.517577, lon: -122.693099, times: ["9:28 PM", "9:56 PM", "10:26 PM", "10:56 PM", "11:26 PM", "11:56 PM", "12:26 AM", "5:27 AM"] },
   { stop_id: "2648", name: "N Hayden Meadows Dr &amp; Whitaker", lat: 45.592797, lon: -122.680456, times: ["9:41 PM", "10:45 PM", "11:46 PM", "4:46 AM", "5:07 AM", "5:33 AM", "5:59 AM", "6:24 AM"] },
   { stop_id: "9862", name: "1100 Block N Hayden Meadows Dr", lat: 45.594606, lon: -122.678533, times: ["9:41 PM", "10:45 PM", "11:47 PM", "4:47 AM", "5:08 AM", "5:34 AM", "6:00 AM", "6:25 AM"] },
   { stop_id: "13905", name: "N Hayden Meadows Dr &amp; Kerby", lat: 45.596641, lon: -122.674647, times: ["9:42 PM", "10:46 PM", "11:47 PM", "4:47 AM", "5:08 AM", "5:34 AM", "6:00 AM", "6:25 AM"] },
@@ -1149,22 +1157,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

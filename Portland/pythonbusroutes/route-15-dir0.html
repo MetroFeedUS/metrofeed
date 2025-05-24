@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -911,11 +919,11 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["9:11 PM", "9:51 PM", "10:31 PM", "11:06 PM", "11:43 PM", "4:40 AM", "5:22 AM", "5:42 AM"] },
-  { stop_id: "10864", name: "Gateway Transit Center ", lat: 45.5299, lon: -122.563177, times: ["9:13 PM", "9:53 PM", "10:33 PM", "11:08 PM", "11:45 PM", "4:42 AM", "5:24 AM", "5:44 AM"] },
-  { stop_id: "4287", name: "10000 Block NE Pacific St", lat: 45.529407, lon: -122.560866, times: ["9:13 PM", "9:53 PM", "10:33 PM", "11:08 PM", "11:45 PM", "4:42 AM", "5:24 AM", "5:44 AM"] },
-  { stop_id: "6517", name: "NE 102nd &amp; Glisan", lat: 45.525802, lon: -122.558308, times: ["9:15 PM", "9:55 PM", "10:35 PM", "11:10 PM", "11:47 PM", "4:44 AM", "5:26 AM", "5:46 AM"] },
-  { stop_id: "6503", name: "100 Block NE 102nd", lat: 45.524029, lon: -122.558376, times: ["9:16 PM", "9:56 PM", "10:36 PM", "11:11 PM", "11:48 PM", "4:45 AM", "5:27 AM", "5:47 AM"] },
+  { stop_id: "8194", name: "Gateway TC (drop off only stop)", lat: 45.530568, lon: -122.563773, times: ["9:51 PM", "10:31 PM", "11:06 PM", "11:43 PM", "4:40 AM", "5:22 AM", "5:42 AM", "5:59 AM"] },
+  { stop_id: "10864", name: "Gateway Transit Center ", lat: 45.5299, lon: -122.563177, times: ["9:53 PM", "10:33 PM", "11:08 PM", "11:45 PM", "4:42 AM", "5:24 AM", "5:44 AM", "6:01 AM"] },
+  { stop_id: "4287", name: "10000 Block NE Pacific St", lat: 45.529407, lon: -122.560866, times: ["9:53 PM", "10:33 PM", "11:08 PM", "11:45 PM", "4:42 AM", "5:24 AM", "5:44 AM", "6:01 AM"] },
+  { stop_id: "6517", name: "NE 102nd &amp; Glisan", lat: 45.525802, lon: -122.558308, times: ["9:55 PM", "10:35 PM", "11:10 PM", "11:47 PM", "4:44 AM", "5:26 AM", "5:46 AM", "6:03 AM"] },
+  { stop_id: "6503", name: "100 Block NE 102nd", lat: 45.524029, lon: -122.558376, times: ["9:56 PM", "10:36 PM", "11:11 PM", "11:48 PM", "4:45 AM", "5:27 AM", "5:47 AM", "6:04 AM"] },
   { stop_id: "6511", name: "SE 102nd &amp; Burnside", lat: 45.522332, lon: -122.55844, times: ["9:16 PM", "9:56 PM", "10:36 PM", "11:11 PM", "11:48 PM", "4:45 AM", "5:27 AM", "5:47 AM"] },
   { stop_id: "6526", name: "SE 102nd &amp; Pine", lat: 45.520217, lon: -122.558496, times: ["9:17 PM", "9:57 PM", "10:37 PM", "11:12 PM", "11:49 PM", "4:46 AM", "5:28 AM", "5:48 AM"] },
   { stop_id: "6529", name: "SE 102nd &amp; Washington", lat: 45.518703, lon: -122.558526, times: ["9:18 PM", "9:58 PM", "10:38 PM", "11:13 PM", "11:50 PM", "4:47 AM", "5:29 AM", "5:49 AM"] },
@@ -963,9 +971,9 @@ const stops = [
   { stop_id: "4029", name: "Morrison Bridge", lat: 45.517351, lon: -122.66601, times: ["9:47 PM", "10:27 PM", "11:07 PM", "11:41 PM", "12:16 AM", "5:15 AM", "5:57 AM", "6:17 AM"] },
   { stop_id: "6158", name: "SW Washington &amp; 3rd", lat: 45.519574, lon: -122.674554, times: ["9:49 PM", "10:29 PM", "11:09 PM", "11:43 PM", "12:18 AM", "5:17 AM", "5:59 AM", "6:19 AM"] },
   { stop_id: "6160", name: "SW Washington &amp; 5th Ave", lat: 45.520126, lon: -122.676586, times: ["9:50 PM", "10:30 PM", "11:10 PM", "11:44 PM", "12:19 AM", "12:35 AM", "5:18 AM", "5:33 AM"] },
-  { stop_id: "6169", name: "SW Washington &amp; 9th", lat: 45.521236, lon: -122.680765, times: ["9:11 PM", "9:51 PM", "10:31 PM", "11:11 PM", "11:45 PM", "12:36 AM", "5:34 AM", "6:01 AM"] },
-  { stop_id: "9598", name: "SW Morrison &amp; 12th", lat: 45.52055, lon: -122.683933, times: ["9:13 PM", "9:53 PM", "10:33 PM", "11:13 PM", "11:47 PM", "12:37 AM", "5:35 AM", "6:03 AM"] },
-  { stop_id: "9599", name: "SW Morrison &amp; 17th", lat: 45.522041, lon: -122.689477, times: ["9:16 PM", "9:56 PM", "10:36 PM", "11:15 PM", "11:49 PM", "12:39 AM", "5:37 AM", "6:05 AM"] },
+  { stop_id: "6169", name: "SW Washington &amp; 9th", lat: 45.521236, lon: -122.680765, times: ["9:51 PM", "10:31 PM", "11:11 PM", "11:45 PM", "12:36 AM", "5:34 AM", "6:01 AM", "6:21 AM"] },
+  { stop_id: "9598", name: "SW Morrison &amp; 12th", lat: 45.52055, lon: -122.683933, times: ["9:53 PM", "10:33 PM", "11:13 PM", "11:47 PM", "12:37 AM", "5:35 AM", "6:03 AM", "6:23 AM"] },
+  { stop_id: "9599", name: "SW Morrison &amp; 17th", lat: 45.522041, lon: -122.689477, times: ["9:56 PM", "10:36 PM", "11:15 PM", "11:49 PM", "12:39 AM", "5:37 AM", "6:05 AM", "6:25 AM"] },
   { stop_id: "735", name: "W Burnside &amp; NW 19th", lat: 45.523088, lon: -122.689959, times: ["9:16 PM", "9:56 PM", "10:36 PM", "11:15 PM", "11:49 PM", "12:39 AM", "5:37 AM", "6:05 AM"] },
   { stop_id: "742", name: "W Burnside &amp; NW 20th Pl", lat: 45.523215, lon: -122.692841, times: ["9:17 PM", "9:57 PM", "10:37 PM", "11:16 PM", "11:50 PM", "12:40 AM", "5:38 AM", "6:06 AM"] },
   { stop_id: "747", name: "W Burnside &amp; NW King", lat: 45.523317, lon: -122.694954, times: ["9:18 PM", "9:58 PM", "10:38 PM", "11:17 PM", "11:51 PM", "12:40 AM", "5:39 AM", "6:07 AM"] },
@@ -1005,22 +1013,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

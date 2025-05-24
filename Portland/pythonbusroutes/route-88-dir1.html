@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -909,18 +917,18 @@ const stops = [
   { stop_id: "1692", name: "SW Farmington &amp; 192nd", lat: 45.471799, lon: -122.87411, times: ["9:38 PM", "10:38 PM", "5:37 AM", "6:07 AM", "6:37 AM", "7:09 AM", "7:40 AM", "8:10 AM"] },
   { stop_id: "1690", name: "SW Farmington &amp; 188th Ct", lat: 45.47328, lon: -122.870723, times: ["9:39 PM", "10:39 PM", "5:38 AM", "6:08 AM", "6:38 AM", "7:10 AM", "7:41 AM", "8:11 AM"] },
   { stop_id: "10166", name: "SW Farmington &amp; 185th", lat: 45.47548, lon: -122.866867, times: ["9:40 PM", "10:40 PM", "5:39 AM", "6:09 AM", "6:39 AM", "7:11 AM", "7:42 AM", "8:12 AM"] },
-  { stop_id: "1642", name: "18200 Block SW Farmington", lat: 45.47658, lon: -122.864429, times: ["9:10 PM", "9:40 PM", "10:40 PM", "5:39 AM", "6:09 AM", "6:39 AM", "7:11 AM", "7:42 AM"] },
-  { stop_id: "1688", name: "SW Farmington &amp; 179th", lat: 45.478081, lon: -122.861086, times: ["9:10 PM", "9:40 PM", "10:40 PM", "5:39 AM", "6:10 AM", "6:40 AM", "7:12 AM", "7:43 AM"] },
-  { stop_id: "1658", name: "SW Farmington &amp; Remington Dr", lat: 45.479391, lon: -122.858041, times: ["9:11 PM", "9:41 PM", "10:41 PM", "5:40 AM", "6:10 AM", "6:40 AM", "7:12 AM", "7:43 AM"] },
-  { stop_id: "1652", name: "SW Farmington &amp; Kinnaman", lat: 45.480539, lon: -122.855603, times: ["9:11 PM", "9:41 PM", "10:41 PM", "5:40 AM", "6:11 AM", "6:41 AM", "7:13 AM", "7:44 AM"] },
-  { stop_id: "10443", name: "SW 170th &amp; Division", lat: 45.481136, lon: -122.85166, times: ["9:12 PM", "9:42 PM", "10:42 PM", "5:25 AM", "5:41 AM", "6:11 AM", "6:41 AM", "7:13 AM"] },
-  { stop_id: "9676", name: "SW 170th &amp; Rosa Place", lat: 45.47897, lon: -122.851693, times: ["9:13 PM", "9:43 PM", "10:43 PM", "5:25 AM", "5:42 AM", "6:12 AM", "6:42 AM", "7:14 AM"] },
-  { stop_id: "9677", name: "SW 170th &amp; Oak", lat: 45.475344, lon: -122.851926, times: ["9:13 PM", "9:43 PM", "10:43 PM", "5:26 AM", "5:42 AM", "6:13 AM", "6:43 AM", "7:15 AM"] },
-  { stop_id: "9675", name: "SW 170th &amp; Ivy Glenn", lat: 45.473021, lon: -122.851934, times: ["9:14 PM", "9:44 PM", "10:44 PM", "5:26 AM", "5:43 AM", "6:13 AM", "6:43 AM", "7:15 AM"] },
-  { stop_id: "10273", name: "SW 170th &amp; Timberland Dr", lat: 45.47135, lon: -122.851939, times: ["9:14 PM", "9:44 PM", "10:44 PM", "5:27 AM", "5:43 AM", "6:13 AM", "6:43 AM", "7:15 AM"] },
-  { stop_id: "9678", name: "SW 170th &amp; Cynthia", lat: 45.46868, lon: -122.851922, times: ["9:15 PM", "9:45 PM", "10:45 PM", "5:27 AM", "5:44 AM", "6:14 AM", "6:44 AM", "7:16 AM"] },
-  { stop_id: "9679", name: "SW Bany &amp; Tallac Way", lat: 45.466855, lon: -122.850669, times: ["9:15 PM", "9:45 PM", "10:45 PM", "5:28 AM", "5:44 AM", "6:15 AM", "6:45 AM", "7:17 AM"] },
-  { stop_id: "9680", name: "SW Hart &amp; 165th", lat: 45.465576, lon: -122.845674, times: ["9:16 PM", "9:46 PM", "10:46 PM", "5:29 AM", "5:45 AM", "6:15 AM", "6:45 AM", "7:17 AM"] },
+  { stop_id: "1642", name: "18200 Block SW Farmington", lat: 45.47658, lon: -122.864429, times: ["9:40 PM", "10:40 PM", "5:39 AM", "6:09 AM", "6:39 AM", "7:11 AM", "7:42 AM", "8:12 AM"] },
+  { stop_id: "1688", name: "SW Farmington &amp; 179th", lat: 45.478081, lon: -122.861086, times: ["9:40 PM", "10:40 PM", "5:39 AM", "6:10 AM", "6:40 AM", "7:12 AM", "7:43 AM", "8:13 AM"] },
+  { stop_id: "1658", name: "SW Farmington &amp; Remington Dr", lat: 45.479391, lon: -122.858041, times: ["9:41 PM", "10:41 PM", "5:40 AM", "6:10 AM", "6:40 AM", "7:12 AM", "7:43 AM", "8:13 AM"] },
+  { stop_id: "1652", name: "SW Farmington &amp; Kinnaman", lat: 45.480539, lon: -122.855603, times: ["9:41 PM", "10:41 PM", "5:40 AM", "6:11 AM", "6:41 AM", "7:13 AM", "7:44 AM", "8:14 AM"] },
+  { stop_id: "10443", name: "SW 170th &amp; Division", lat: 45.481136, lon: -122.85166, times: ["9:42 PM", "10:42 PM", "5:25 AM", "5:41 AM", "6:11 AM", "6:41 AM", "7:13 AM", "7:45 AM"] },
+  { stop_id: "9676", name: "SW 170th &amp; Rosa Place", lat: 45.47897, lon: -122.851693, times: ["9:43 PM", "10:43 PM", "5:25 AM", "5:42 AM", "6:12 AM", "6:42 AM", "7:14 AM", "7:45 AM"] },
+  { stop_id: "9677", name: "SW 170th &amp; Oak", lat: 45.475344, lon: -122.851926, times: ["9:43 PM", "10:43 PM", "5:26 AM", "5:42 AM", "6:13 AM", "6:43 AM", "7:15 AM", "7:46 AM"] },
+  { stop_id: "9675", name: "SW 170th &amp; Ivy Glenn", lat: 45.473021, lon: -122.851934, times: ["9:44 PM", "10:44 PM", "5:26 AM", "5:43 AM", "6:13 AM", "6:43 AM", "7:15 AM", "7:47 AM"] },
+  { stop_id: "10273", name: "SW 170th &amp; Timberland Dr", lat: 45.47135, lon: -122.851939, times: ["9:44 PM", "10:44 PM", "5:27 AM", "5:43 AM", "6:13 AM", "6:43 AM", "7:15 AM", "7:47 AM"] },
+  { stop_id: "9678", name: "SW 170th &amp; Cynthia", lat: 45.46868, lon: -122.851922, times: ["9:45 PM", "10:45 PM", "5:27 AM", "5:44 AM", "6:14 AM", "6:44 AM", "7:16 AM", "7:48 AM"] },
+  { stop_id: "9679", name: "SW Bany &amp; Tallac Way", lat: 45.466855, lon: -122.850669, times: ["9:45 PM", "10:45 PM", "5:28 AM", "5:44 AM", "6:15 AM", "6:45 AM", "7:17 AM", "7:48 AM"] },
+  { stop_id: "9680", name: "SW Hart &amp; 165th", lat: 45.465576, lon: -122.845674, times: ["9:46 PM", "10:46 PM", "5:29 AM", "5:45 AM", "6:15 AM", "6:45 AM", "7:17 AM", "7:49 AM"] },
   { stop_id: "9681", name: "SW Hart &amp; 161st", lat: 45.46559, lon: -122.842247, times: ["9:16 PM", "9:46 PM", "10:46 PM", "5:29 AM", "5:45 AM", "6:16 AM", "6:46 AM", "7:18 AM"] },
   { stop_id: "9682", name: "SW Hart &amp; 157th", lat: 45.465585, lon: -122.839124, times: ["9:17 PM", "9:47 PM", "10:47 PM", "5:29 AM", "5:46 AM", "6:16 AM", "6:46 AM", "7:18 AM"] },
   { stop_id: "9683", name: "SW Hart &amp; 155th", lat: 45.465572, lon: -122.835889, times: ["9:17 PM", "9:47 PM", "10:47 PM", "5:30 AM", "5:46 AM", "6:17 AM", "6:47 AM", "7:19 AM"] },
@@ -956,22 +964,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1069,12 +1077,12 @@ const stops = [
   { stop_id: "3947", name: "SE Milwaukie &amp; Tolman", lat: 45.477059, lon: -122.649063, times: ["9:37 PM", "10:19 PM", "5:14 AM", "6:08 AM", "6:38 AM", "7:07 AM", "7:27 AM", "7:46 AM"] },
   { stop_id: "3940", name: "SE Milwaukie &amp; Ramona", lat: 45.480763, lon: -122.649477, times: ["9:38 PM", "10:20 PM", "5:15 AM", "6:09 AM", "6:39 AM", "7:08 AM", "7:28 AM", "7:48 AM"] },
   { stop_id: "3922", name: "SE Milwaukie &amp; Insley", lat: 45.484167, lon: -122.649513, times: ["9:39 PM", "10:21 PM", "5:16 AM", "6:10 AM", "6:40 AM", "7:09 AM", "7:29 AM", "7:49 AM"] },
-  { stop_id: "3933", name: "SE Milwaukie &amp; Mitchell", lat: 45.486102, lon: -122.649833, times: ["9:10 PM", "9:39 PM", "10:21 PM", "5:16 AM", "6:10 AM", "6:40 AM", "7:10 AM", "7:30 AM"] },
-  { stop_id: "3929", name: "SE Milwaukie &amp; Long", lat: 45.488855, lon: -122.650702, times: ["9:11 PM", "9:40 PM", "10:22 PM", "5:17 AM", "6:11 AM", "6:41 AM", "7:11 AM", "7:31 AM"] },
-  { stop_id: "3932", name: "SE Milwaukie &amp; Mall", lat: 45.491215, lon: -122.651461, times: ["9:12 PM", "9:41 PM", "10:23 PM", "5:18 AM", "6:12 AM", "6:42 AM", "7:11 AM", "7:31 AM"] },
-  { stop_id: "3908", name: "SE Milwaukie &amp; Center", lat: 45.494515, lon: -122.652879, times: ["9:13 PM", "9:42 PM", "10:24 PM", "5:19 AM", "6:13 AM", "6:43 AM", "7:12 AM", "7:32 AM"] },
-  { stop_id: "3917", name: "SE Milwaukie &amp; Haig", lat: 45.498128, lon: -122.653948, times: ["9:14 PM", "9:43 PM", "10:25 PM", "5:20 AM", "6:14 AM", "6:44 AM", "7:13 AM", "7:33 AM"] },
-  { stop_id: "13792", name: "SE Powell &amp; 12th", lat: 45.500809, lon: -122.653283, times: ["9:15 PM", "9:44 PM", "10:26 PM", "5:21 AM", "6:15 AM", "6:45 AM", "7:15 AM", "7:35 AM"] },
+  { stop_id: "3933", name: "SE Milwaukie &amp; Mitchell", lat: 45.486102, lon: -122.649833, times: ["9:39 PM", "10:21 PM", "5:16 AM", "6:10 AM", "6:40 AM", "7:10 AM", "7:30 AM", "7:49 AM"] },
+  { stop_id: "3929", name: "SE Milwaukie &amp; Long", lat: 45.488855, lon: -122.650702, times: ["9:40 PM", "10:22 PM", "5:17 AM", "6:11 AM", "6:41 AM", "7:11 AM", "7:31 AM", "7:50 AM"] },
+  { stop_id: "3932", name: "SE Milwaukie &amp; Mall", lat: 45.491215, lon: -122.651461, times: ["9:41 PM", "10:23 PM", "5:18 AM", "6:12 AM", "6:42 AM", "7:11 AM", "7:31 AM", "7:51 AM"] },
+  { stop_id: "3908", name: "SE Milwaukie &amp; Center", lat: 45.494515, lon: -122.652879, times: ["9:42 PM", "10:24 PM", "5:19 AM", "6:13 AM", "6:43 AM", "7:12 AM", "7:32 AM", "7:52 AM"] },
+  { stop_id: "3917", name: "SE Milwaukie &amp; Haig", lat: 45.498128, lon: -122.653948, times: ["9:43 PM", "10:25 PM", "5:20 AM", "6:14 AM", "6:44 AM", "7:13 AM", "7:33 AM", "7:53 AM"] },
+  { stop_id: "13792", name: "SE Powell &amp; 12th", lat: 45.500809, lon: -122.653283, times: ["9:44 PM", "10:26 PM", "5:21 AM", "6:15 AM", "6:45 AM", "7:15 AM", "7:35 AM", "7:55 AM"] },
   { stop_id: "14477", name: "SE 21st &amp; Powell", lat: 45.499727, lon: -122.644556, times: ["9:17 PM", "9:46 PM", "10:28 PM", "5:23 AM", "6:17 AM", "6:47 AM", "7:17 AM", "7:37 AM"] },
   { stop_id: "3301", name: "SE Ladd &amp; Division", lat: 45.505364, lon: -122.645603, times: ["9:19 PM", "9:48 PM", "10:30 PM", "5:25 AM", "6:19 AM", "6:50 AM", "7:20 AM", "7:40 AM"] },
   { stop_id: "3307", name: "SE Ladd &amp; Lavender", lat: 45.506795, lon: -122.647262, times: ["9:20 PM", "9:49 PM", "10:31 PM", "5:26 AM", "6:20 AM", "6:51 AM", "7:21 AM", "7:41 AM"] },
@@ -1101,17 +1109,17 @@ const stops = [
   { stop_id: "7392", name: "NE 33rd &amp; Schuyler", lat: 45.535699, lon: -122.630553, times: ["9:39 PM", "10:08 PM", "10:50 PM", "5:44 AM", "6:40 AM", "7:11 AM", "7:42 AM", "8:03 AM"] },
   { stop_id: "7402", name: "NE 33rd &amp; US Grant Pl", lat: 45.538173, lon: -122.630596, times: ["9:39 PM", "10:08 PM", "10:50 PM", "5:44 AM", "6:40 AM", "7:11 AM", "7:42 AM", "8:03 AM"] },
   { stop_id: "7365", name: "NE 33rd &amp; Brazee", lat: 45.539931, lon: -122.630606, times: ["9:39 PM", "10:08 PM", "10:50 PM", "5:44 AM", "6:40 AM", "7:11 AM", "7:43 AM", "8:04 AM"] },
-  { stop_id: "7385", name: "NE 33rd &amp; Knott", lat: 45.542332, lon: -122.630608, times: ["9:10 PM", "9:40 PM", "10:09 PM", "10:51 PM", "5:45 AM", "6:41 AM", "7:12 AM", "7:44 AM"] },
-  { stop_id: "7399", name: "NE 33rd &amp; Stanton", lat: 45.54378, lon: -122.630603, times: ["9:10 PM", "9:40 PM", "10:09 PM", "10:51 PM", "5:45 AM", "6:41 AM", "7:12 AM", "7:44 AM"] },
-  { stop_id: "7395", name: "NE 33rd &amp; Siskiyou", lat: 45.545911, lon: -122.630606, times: ["9:11 PM", "9:41 PM", "10:10 PM", "10:52 PM", "5:46 AM", "6:42 AM", "7:13 AM", "7:45 AM"] },
-  { stop_id: "7373", name: "NE 33rd &amp; Alameda", lat: 45.548816, lon: -122.630615, times: ["9:12 PM", "9:42 PM", "10:11 PM", "10:53 PM", "5:47 AM", "6:43 AM", "7:14 AM", "7:46 AM"] },
-  { stop_id: "7393", name: "NE 33rd &amp; Shaver", lat: 45.55169, lon: -122.630615, times: ["9:12 PM", "9:42 PM", "10:11 PM", "10:53 PM", "5:47 AM", "6:43 AM", "7:14 AM", "7:46 AM"] },
-  { stop_id: "7398", name: "NE 33rd &amp; Skidmore", lat: 45.553844, lon: -122.6306, times: ["9:13 PM", "9:43 PM", "10:12 PM", "10:54 PM", "5:48 AM", "6:44 AM", "7:15 AM", "7:47 AM"] },
-  { stop_id: "7390", name: "NE 33rd &amp; Prescott", lat: 45.555075, lon: -122.630592, times: ["9:13 PM", "9:43 PM", "10:12 PM", "10:54 PM", "5:48 AM", "6:44 AM", "7:15 AM", "7:47 AM"] },
-  { stop_id: "7364", name: "NE 33rd &amp; Alberta Ct", lat: 45.5582, lon: -122.630588, times: ["9:14 PM", "9:44 PM", "10:13 PM", "10:55 PM", "5:49 AM", "6:45 AM", "7:16 AM", "7:48 AM"] },
-  { stop_id: "7404", name: "NE 33rd &amp; Webster", lat: 45.559709, lon: -122.63059, times: ["9:15 PM", "9:45 PM", "10:14 PM", "10:56 PM", "5:50 AM", "6:46 AM", "7:17 AM", "7:49 AM"] },
-  { stop_id: "7371", name: "NE 33rd &amp; Emerson", lat: 45.561419, lon: -122.630587, times: ["9:15 PM", "9:45 PM", "10:14 PM", "10:56 PM", "5:50 AM", "6:46 AM", "7:17 AM", "7:49 AM"] },
-  { stop_id: "7383", name: "NE 33rd &amp; Killingsworth", lat: 45.562596, lon: -122.630582, times: ["9:16 PM", "9:46 PM", "10:15 PM", "10:57 PM", "5:51 AM", "6:47 AM", "7:18 AM", "7:50 AM"] },
+  { stop_id: "7385", name: "NE 33rd &amp; Knott", lat: 45.542332, lon: -122.630608, times: ["9:40 PM", "10:09 PM", "10:51 PM", "5:45 AM", "6:41 AM", "7:12 AM", "7:44 AM", "8:05 AM"] },
+  { stop_id: "7399", name: "NE 33rd &amp; Stanton", lat: 45.54378, lon: -122.630603, times: ["9:40 PM", "10:09 PM", "10:51 PM", "5:45 AM", "6:41 AM", "7:12 AM", "7:44 AM", "8:05 AM"] },
+  { stop_id: "7395", name: "NE 33rd &amp; Siskiyou", lat: 45.545911, lon: -122.630606, times: ["9:41 PM", "10:10 PM", "10:52 PM", "5:46 AM", "6:42 AM", "7:13 AM", "7:45 AM", "8:06 AM"] },
+  { stop_id: "7373", name: "NE 33rd &amp; Alameda", lat: 45.548816, lon: -122.630615, times: ["9:42 PM", "10:11 PM", "10:53 PM", "5:47 AM", "6:43 AM", "7:14 AM", "7:46 AM", "8:07 AM"] },
+  { stop_id: "7393", name: "NE 33rd &amp; Shaver", lat: 45.55169, lon: -122.630615, times: ["9:42 PM", "10:11 PM", "10:53 PM", "5:47 AM", "6:43 AM", "7:14 AM", "7:46 AM", "8:07 AM"] },
+  { stop_id: "7398", name: "NE 33rd &amp; Skidmore", lat: 45.553844, lon: -122.6306, times: ["9:43 PM", "10:12 PM", "10:54 PM", "5:48 AM", "6:44 AM", "7:15 AM", "7:47 AM", "8:08 AM"] },
+  { stop_id: "7390", name: "NE 33rd &amp; Prescott", lat: 45.555075, lon: -122.630592, times: ["9:43 PM", "10:12 PM", "10:54 PM", "5:48 AM", "6:44 AM", "7:15 AM", "7:47 AM", "8:08 AM"] },
+  { stop_id: "7364", name: "NE 33rd &amp; Alberta Ct", lat: 45.5582, lon: -122.630588, times: ["9:44 PM", "10:13 PM", "10:55 PM", "5:49 AM", "6:45 AM", "7:16 AM", "7:48 AM", "8:09 AM"] },
+  { stop_id: "7404", name: "NE 33rd &amp; Webster", lat: 45.559709, lon: -122.63059, times: ["9:45 PM", "10:14 PM", "10:56 PM", "5:50 AM", "6:46 AM", "7:17 AM", "7:49 AM", "8:10 AM"] },
+  { stop_id: "7371", name: "NE 33rd &amp; Emerson", lat: 45.561419, lon: -122.630587, times: ["9:45 PM", "10:14 PM", "10:56 PM", "5:50 AM", "6:46 AM", "7:17 AM", "7:49 AM", "8:10 AM"] },
+  { stop_id: "7383", name: "NE 33rd &amp; Killingsworth", lat: 45.562596, lon: -122.630582, times: ["9:46 PM", "10:15 PM", "10:57 PM", "5:51 AM", "6:47 AM", "7:18 AM", "7:50 AM", "8:11 AM"] },
   { stop_id: "7380", name: "NE 33rd &amp; Jarrett", lat: 45.564568, lon: -122.630583, times: ["9:16 PM", "9:46 PM", "10:15 PM", "10:57 PM", "5:51 AM", "6:47 AM", "7:18 AM", "7:50 AM"] },
   { stop_id: "7362", name: "NE 33rd &amp; Ainsworth", lat: 45.566212, lon: -122.630571, times: ["9:16 PM", "9:46 PM", "10:15 PM", "10:57 PM", "5:51 AM", "6:47 AM", "7:18 AM", "7:50 AM"] },
   { stop_id: "7378", name: "NE 33rd &amp; Holman", lat: 45.568167, lon: -122.630569, times: ["9:17 PM", "9:47 PM", "10:16 PM", "10:58 PM", "5:52 AM", "6:48 AM", "7:19 AM", "7:51 AM"] },
@@ -1144,22 +1152,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

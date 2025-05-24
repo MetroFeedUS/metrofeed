@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -960,7 +968,7 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["9:14 PM", "9:45 PM", "10:35 PM", "5:12 AM", "5:44 AM", "6:14 AM", "6:43 AM", "7:13 AM"] },
+  { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["9:45 PM", "10:35 PM", "5:12 AM", "5:44 AM", "6:14 AM", "6:43 AM", "7:13 AM", "7:43 AM"] },
   { stop_id: "12922", name: "Clackamas Town Center Mall", lat: 45.437504, lon: -122.574003, times: ["9:17 PM", "9:48 PM", "10:38 PM", "5:15 AM", "5:47 AM", "6:17 AM", "6:46 AM", "7:16 AM"] },
   { stop_id: "8659", name: "SE 90th &amp; Monterey", lat: 45.438792, lon: -122.570899, times: ["9:18 PM", "9:49 PM", "10:39 PM", "5:16 AM", "5:48 AM", "6:18 AM", "6:47 AM", "7:17 AM"] },
   { stop_id: "8677", name: "SE 90th &amp; Causey", lat: 45.441028, lon: -122.571117, times: ["9:18 PM", "9:49 PM", "10:39 PM", "5:16 AM", "5:48 AM", "6:18 AM", "6:47 AM", "7:17 AM"] },
@@ -996,12 +1004,12 @@ const stops = [
   { stop_id: "7713", name: "SE 52nd &amp; Schiller", lat: 45.48783, lon: -122.608748, times: ["9:38 PM", "10:08 PM", "10:58 PM", "5:36 AM", "6:08 AM", "6:38 AM", "7:07 AM", "7:37 AM"] },
   { stop_id: "7692", name: "SE 52nd &amp; Holgate", lat: 45.489981, lon: -122.608898, times: ["9:39 PM", "10:09 PM", "10:59 PM", "5:37 AM", "6:09 AM", "6:39 AM", "7:08 AM", "7:38 AM"] },
   { stop_id: "7669", name: "SE 52nd &amp; Boise", lat: 45.492294, lon: -122.608924, times: ["9:40 PM", "10:10 PM", "11:00 PM", "5:38 AM", "6:10 AM", "6:40 AM", "7:09 AM", "7:39 AM"] },
-  { stop_id: "7683", name: "SE 52nd &amp; Foster", lat: 45.495348, lon: -122.608942, times: ["9:11 PM", "9:41 PM", "10:11 PM", "11:01 PM", "5:39 AM", "6:11 AM", "6:41 AM", "7:10 AM"] },
-  { stop_id: "7704", name: "SE 52nd &amp; Powell", lat: 45.497162, lon: -122.608957, times: ["9:12 PM", "9:42 PM", "10:12 PM", "11:02 PM", "5:40 AM", "6:12 AM", "6:42 AM", "7:11 AM"] },
-  { stop_id: "7685", name: "SE 52nd &amp; Franklin", lat: 45.499245, lon: -122.608956, times: ["9:13 PM", "9:43 PM", "10:13 PM", "11:03 PM", "5:41 AM", "6:13 AM", "6:43 AM", "7:12 AM"] },
-  { stop_id: "7722", name: "SE 52nd &amp; Taggart Ct", lat: 45.501797, lon: -122.608938, times: ["9:13 PM", "9:43 PM", "10:13 PM", "11:03 PM", "5:41 AM", "6:13 AM", "6:43 AM", "7:12 AM"] },
-  { stop_id: "7678", name: "SE 52nd &amp; Division", lat: 45.505143, lon: -122.608907, times: ["9:15 PM", "9:45 PM", "10:15 PM", "11:05 PM", "5:43 AM", "6:15 AM", "6:45 AM", "7:14 AM"] },
-  { stop_id: "7695", name: "SE 52nd &amp; Lincoln", lat: 45.507889, lon: -122.608977, times: ["9:15 PM", "9:45 PM", "10:15 PM", "11:05 PM", "5:43 AM", "6:15 AM", "6:45 AM", "7:14 AM"] },
+  { stop_id: "7683", name: "SE 52nd &amp; Foster", lat: 45.495348, lon: -122.608942, times: ["9:41 PM", "10:11 PM", "11:01 PM", "5:39 AM", "6:11 AM", "6:41 AM", "7:10 AM", "7:40 AM"] },
+  { stop_id: "7704", name: "SE 52nd &amp; Powell", lat: 45.497162, lon: -122.608957, times: ["9:42 PM", "10:12 PM", "11:02 PM", "5:40 AM", "6:12 AM", "6:42 AM", "7:11 AM", "7:41 AM"] },
+  { stop_id: "7685", name: "SE 52nd &amp; Franklin", lat: 45.499245, lon: -122.608956, times: ["9:43 PM", "10:13 PM", "11:03 PM", "5:41 AM", "6:13 AM", "6:43 AM", "7:12 AM", "7:42 AM"] },
+  { stop_id: "7722", name: "SE 52nd &amp; Taggart Ct", lat: 45.501797, lon: -122.608938, times: ["9:43 PM", "10:13 PM", "11:03 PM", "5:41 AM", "6:13 AM", "6:43 AM", "7:12 AM", "7:42 AM"] },
+  { stop_id: "7678", name: "SE 52nd &amp; Division", lat: 45.505143, lon: -122.608907, times: ["9:45 PM", "10:15 PM", "11:05 PM", "5:43 AM", "6:15 AM", "6:45 AM", "7:14 AM", "7:44 AM"] },
+  { stop_id: "7695", name: "SE 52nd &amp; Lincoln", lat: 45.507889, lon: -122.608977, times: ["9:45 PM", "10:15 PM", "11:05 PM", "5:43 AM", "6:15 AM", "6:45 AM", "7:14 AM", "7:44 AM"] },
   { stop_id: "3403", name: "SE Lincoln &amp; 57th", lat: 45.508005, lon: -122.605104, times: ["9:16 PM", "9:46 PM", "10:16 PM", "11:06 PM", "5:44 AM", "6:16 AM", "6:46 AM", "7:15 AM"] },
   { stop_id: "13249", name: "SE 60th &amp; Harrison", lat: 45.508498, lon: -122.601722, times: ["9:17 PM", "9:47 PM", "10:17 PM", "11:07 PM", "5:45 AM", "6:17 AM", "6:47 AM", "7:16 AM"] },
   { stop_id: "7823", name: "SE 60th &amp; Hawthorne", lat: 45.511844, lon: -122.601801, times: ["9:19 PM", "9:49 PM", "10:19 PM", "11:09 PM", "5:47 AM", "6:19 AM", "6:49 AM", "7:18 AM"] },
@@ -1030,7 +1038,7 @@ const stops = [
   { stop_id: "4762", name: "NE Prescott &amp; 85th", lat: 45.555344, lon: -122.575768, times: ["9:35 PM", "10:05 PM", "10:35 PM", "11:25 PM", "6:04 AM", "6:36 AM", "7:06 AM", "7:36 AM"] },
   { stop_id: "4764", name: "NE Prescott &amp; 88th", lat: 45.555631, lon: -122.572423, times: ["9:36 PM", "10:06 PM", "10:36 PM", "11:26 PM", "6:05 AM", "6:37 AM", "7:07 AM", "7:36 AM"] },
   { stop_id: "5051", name: "NE Sandy &amp; Prescott", lat: 45.555982, lon: -122.569704, times: ["9:37 PM", "10:07 PM", "10:37 PM", "11:27 PM", "6:06 AM", "6:38 AM", "7:08 AM", "7:37 AM"] },
-  { stop_id: "10850", name: "Parkrose/ Sumner Transit Center ", lat: 45.558282, lon: -122.565304, times: ["9:11 PM", "9:39 PM", "10:09 PM", "10:39 PM", "6:08 AM", "6:40 AM", "7:10 AM", "7:40 AM"] },
+  { stop_id: "10850", name: "Parkrose/ Sumner Transit Center ", lat: 45.558282, lon: -122.565304, times: ["9:39 PM", "10:09 PM", "10:39 PM", "6:08 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM"] },
   { stop_id: "10853", name: "Parkrose/ Sumner Transit Center", lat: 45.558368, lon: -122.564954, times: ["11:29 PM", "1:16 PM", "1:37 PM", "2:19 PM", "2:40 PM"] },
 ]
 
@@ -1043,22 +1051,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

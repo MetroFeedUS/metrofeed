@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -916,15 +924,15 @@ const stops = [
   { stop_id: "12945", name: "SW Lombard &amp; Broadway", lat: 45.488206, lon: -122.801264, times: ["9:48 PM", "10:17 PM", "5:30 AM", "6:07 AM", "6:33 AM", "7:03 AM", "7:33 AM", "8:03 AM"] },
   { stop_id: "8491", name: "SW Lombard &amp; 2nd", lat: 45.48529, lon: -122.800386, times: ["9:49 PM", "10:18 PM", "5:31 AM", "6:08 AM", "6:34 AM", "7:04 AM", "7:34 AM", "8:04 AM"] },
   { stop_id: "3584", name: "SW Lombard &amp; 5th", lat: 45.483046, lon: -122.800391, times: ["9:50 PM", "10:19 PM", "5:32 AM", "6:09 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM"] },
-  { stop_id: "3586", name: "SW Lombard &amp; 9th", lat: 45.480798, lon: -122.800392, times: ["9:11 PM", "9:51 PM", "10:20 PM", "5:32 AM", "6:09 AM", "6:36 AM", "7:06 AM", "7:36 AM"] },
-  { stop_id: "3581", name: "SW Lombard &amp; 12th", lat: 45.478516, lon: -122.800403, times: ["9:11 PM", "9:51 PM", "10:21 PM", "5:33 AM", "6:10 AM", "6:36 AM", "7:06 AM", "7:36 AM"] },
-  { stop_id: "3454", name: "SW Lombard &amp; Allen", lat: 45.476717, lon: -122.8004, times: ["9:12 PM", "9:52 PM", "10:21 PM", "5:34 AM", "6:11 AM", "6:37 AM", "7:07 AM", "7:37 AM"] },
-  { stop_id: "103", name: "SW Allen &amp; Hall", lat: 45.476549, lon: -122.805243, times: ["9:14 PM", "9:54 PM", "10:23 PM", "5:35 AM", "6:12 AM", "6:39 AM", "7:09 AM", "7:39 AM"] },
-  { stop_id: "108", name: "SW Allen &amp; Taralynn", lat: 45.476526, lon: -122.809236, times: ["9:14 PM", "9:54 PM", "10:23 PM", "5:35 AM", "6:12 AM", "6:39 AM", "7:09 AM", "7:39 AM"] },
-  { stop_id: "101", name: "SW Allen &amp; Erickson", lat: 45.476537, lon: -122.81232, times: ["9:14 PM", "9:54 PM", "10:23 PM", "5:35 AM", "6:12 AM", "6:39 AM", "7:10 AM", "7:40 AM"] },
-  { stop_id: "105", name: "SW Allen &amp; Menlo", lat: 45.476573, lon: -122.817003, times: ["9:15 PM", "9:55 PM", "10:24 PM", "5:36 AM", "6:13 AM", "6:40 AM", "7:10 AM", "7:40 AM"] },
-  { stop_id: "112", name: "SW Allen &amp; Wilson", lat: 45.476545, lon: -122.819677, times: ["9:15 PM", "9:55 PM", "10:24 PM", "5:36 AM", "6:13 AM", "6:40 AM", "7:11 AM", "7:41 AM"] },
-  { stop_id: "114", name: "SW Allen &amp; 141st", lat: 45.476557, lon: -122.821376, times: ["9:16 PM", "9:56 PM", "10:25 PM", "5:37 AM", "6:14 AM", "6:41 AM", "7:11 AM", "7:41 AM"] },
+  { stop_id: "3586", name: "SW Lombard &amp; 9th", lat: 45.480798, lon: -122.800392, times: ["9:51 PM", "10:20 PM", "5:32 AM", "6:09 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM"] },
+  { stop_id: "3581", name: "SW Lombard &amp; 12th", lat: 45.478516, lon: -122.800403, times: ["9:51 PM", "10:21 PM", "5:33 AM", "6:10 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM"] },
+  { stop_id: "3454", name: "SW Lombard &amp; Allen", lat: 45.476717, lon: -122.8004, times: ["9:52 PM", "10:21 PM", "5:34 AM", "6:11 AM", "6:37 AM", "7:07 AM", "7:37 AM", "8:07 AM"] },
+  { stop_id: "103", name: "SW Allen &amp; Hall", lat: 45.476549, lon: -122.805243, times: ["9:54 PM", "10:23 PM", "5:35 AM", "6:12 AM", "6:39 AM", "7:09 AM", "7:39 AM", "8:09 AM"] },
+  { stop_id: "108", name: "SW Allen &amp; Taralynn", lat: 45.476526, lon: -122.809236, times: ["9:54 PM", "10:23 PM", "5:35 AM", "6:12 AM", "6:39 AM", "7:09 AM", "7:39 AM", "8:09 AM"] },
+  { stop_id: "101", name: "SW Allen &amp; Erickson", lat: 45.476537, lon: -122.81232, times: ["9:54 PM", "10:23 PM", "5:35 AM", "6:12 AM", "6:39 AM", "7:10 AM", "7:40 AM", "8:10 AM"] },
+  { stop_id: "105", name: "SW Allen &amp; Menlo", lat: 45.476573, lon: -122.817003, times: ["9:55 PM", "10:24 PM", "5:36 AM", "6:13 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM"] },
+  { stop_id: "112", name: "SW Allen &amp; Wilson", lat: 45.476545, lon: -122.819677, times: ["9:55 PM", "10:24 PM", "5:36 AM", "6:13 AM", "6:40 AM", "7:11 AM", "7:41 AM", "8:11 AM"] },
+  { stop_id: "114", name: "SW Allen &amp; 141st", lat: 45.476557, lon: -122.821376, times: ["9:56 PM", "10:25 PM", "5:37 AM", "6:14 AM", "6:41 AM", "7:11 AM", "7:41 AM", "8:11 AM"] },
   { stop_id: "8604", name: "SW Murray &amp; Allen", lat: 45.475671, lon: -122.826272, times: ["9:16 PM", "9:56 PM", "10:25 PM", "5:37 AM", "6:14 AM", "6:41 AM", "7:12 AM", "7:42 AM"] },
   { stop_id: "8605", name: "SW Murray &amp; Davis", lat: 45.473754, lon: -122.82627, times: ["9:17 PM", "9:57 PM", "10:26 PM", "5:38 AM", "6:15 AM", "6:42 AM", "7:12 AM", "7:42 AM"] },
   { stop_id: "8606", name: "SW Murray &amp; Kilchis", lat: 45.471837, lon: -122.826336, times: ["9:17 PM", "9:57 PM", "10:26 PM", "5:38 AM", "6:15 AM", "6:42 AM", "7:13 AM", "7:43 AM"] },
@@ -968,7 +976,7 @@ const stops = [
   { stop_id: "278", name: "W Baseline Rd &amp; SW 194th", lat: 45.515974, lon: -122.875877, times: ["9:40 PM", "10:20 PM", "10:49 PM", "6:01 AM", "6:39 AM", "7:08 AM", "7:40 AM", "8:10 AM"] },
   { stop_id: "269", name: "W Baseline Rd &amp; SW Willow Creek Dr", lat: 45.516157, lon: -122.871055, times: ["9:41 PM", "10:21 PM", "10:50 PM", "6:02 AM", "6:40 AM", "7:09 AM", "7:41 AM", "8:11 AM"] },
   { stop_id: "10464", name: "W Baseline &amp; SW 185th", lat: 45.515523, lon: -122.867812, times: ["9:41 PM", "10:21 PM", "10:50 PM", "6:03 AM", "6:41 AM", "7:09 AM", "7:41 AM", "8:11 AM"] },
-  { stop_id: "9621", name: "Willow Creek Transit Center", lat: 45.5174, lon: -122.8703, times: ["9:12 PM", "9:44 PM", "10:24 PM", "10:53 PM", "6:06 AM", "6:44 AM", "7:13 AM", "7:45 AM"] },
+  { stop_id: "9621", name: "Willow Creek Transit Center", lat: 45.5174, lon: -122.8703, times: ["9:44 PM", "10:24 PM", "10:53 PM", "6:06 AM", "6:44 AM", "7:13 AM", "7:45 AM", "8:15 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -980,22 +988,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

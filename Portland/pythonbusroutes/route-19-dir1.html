@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1538,10 +1546,10 @@ const stops = [
   { stop_id: "13773", name: "OMSI/SE Water", lat: 45.506602, lon: -122.663155, times: ["10:02 PM", "10:47 PM", "11:32 PM", "12:13 AM", "5:12 AM", "6:02 AM", "6:32 AM", "7:01 AM"] },
   { stop_id: "13733", name: "South Waterfront/S Moody", lat: 45.502618, lon: -122.671791, times: ["10:05 PM", "10:50 PM", "11:35 PM", "12:16 AM", "5:15 AM", "6:05 AM", "6:35 AM", "7:04 AM"] },
   { stop_id: "3398", name: "SW Lincoln &amp; 1st", lat: 45.508043, lon: -122.679711, times: ["10:09 PM", "10:54 PM", "11:39 PM", "12:19 AM", "5:19 AM", "6:09 AM", "6:39 AM", "7:08 AM"] },
-  { stop_id: "13780", name: "SW Hall &amp; 5th", lat: 45.510133, lon: -122.682088, times: ["9:10 PM", "10:11 PM", "10:56 PM", "11:41 PM", "12:21 AM", "5:21 AM", "6:11 AM", "6:41 AM"] },
-  { stop_id: "7772", name: "SW 6th &amp; Market", lat: 45.512943, lon: -122.681811, times: ["9:12 PM", "10:12 PM", "10:57 PM", "11:42 PM", "12:22 AM", "5:22 AM", "6:12 AM", "6:42 AM"] },
-  { stop_id: "7765", name: "SW 6th &amp; Jefferson", lat: 45.514866, lon: -122.680761, times: ["9:13 PM", "10:13 PM", "10:58 PM", "11:43 PM", "12:23 AM", "5:23 AM", "6:13 AM", "6:43 AM"] },
-  { stop_id: "7800", name: "SW 6th &amp; Taylor", lat: 45.517604, lon: -122.679316, times: ["9:15 PM", "10:15 PM", "11:00 PM", "11:45 PM", "12:25 AM", "12:32 AM", "1:08 AM", "5:25 AM"] },
+  { stop_id: "13780", name: "SW Hall &amp; 5th", lat: 45.510133, lon: -122.682088, times: ["10:11 PM", "10:56 PM", "11:41 PM", "12:21 AM", "5:21 AM", "6:11 AM", "6:41 AM", "7:10 AM"] },
+  { stop_id: "7772", name: "SW 6th &amp; Market", lat: 45.512943, lon: -122.681811, times: ["10:12 PM", "10:57 PM", "11:42 PM", "12:22 AM", "5:22 AM", "6:12 AM", "6:42 AM", "7:12 AM"] },
+  { stop_id: "7765", name: "SW 6th &amp; Jefferson", lat: 45.514866, lon: -122.680761, times: ["10:13 PM", "10:58 PM", "11:43 PM", "12:23 AM", "5:23 AM", "6:13 AM", "6:43 AM", "7:13 AM"] },
+  { stop_id: "7800", name: "SW 6th &amp; Taylor", lat: 45.517604, lon: -122.679316, times: ["10:15 PM", "11:00 PM", "11:45 PM", "12:25 AM", "12:32 AM", "1:08 AM", "5:25 AM", "5:32 AM"] },
   { stop_id: "7797", name: "SW 6th &amp; Harvey Milk", lat: 45.520931, lon: -122.677521, times: ["9:16 PM", "10:16 PM", "11:01 PM", "11:46 PM", "12:33 AM", "1:09 AM", "5:33 AM", "6:16 AM"] },
   { stop_id: "792", name: "W Burnside &amp; SW 6th", lat: 45.522948, lon: -122.676635, times: ["9:17 PM", "10:17 PM", "11:02 PM", "11:47 PM", "12:34 AM", "1:10 AM", "5:34 AM", "6:17 AM"] },
   { stop_id: "9526", name: "W Burnside &amp; SW 2nd", lat: 45.523009, lon: -122.672529, times: ["9:18 PM", "10:18 PM", "11:03 PM", "11:48 PM", "12:35 AM", "1:11 AM", "5:35 AM", "6:18 AM"] },
@@ -1590,22 +1598,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -570,16 +578,16 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "6748", name: "NE 141st &amp; Failing", lat: 45.551175, lon: -122.519367, times: ["9:11 PM", "5:25 AM", "6:10 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:40 AM"] },
-  { stop_id: "6747", name: "NE 141st &amp; Beech", lat: 45.549472, lon: -122.517839, times: ["9:11 PM", "5:25 AM", "6:10 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:40 AM"] },
-  { stop_id: "6749", name: "NE 141st &amp; Fremont", lat: 45.547925, lon: -122.517858, times: ["9:12 PM", "5:26 AM", "6:11 AM", "6:41 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:41 AM"] },
-  { stop_id: "1853", name: "NE Fremont &amp; 138th", lat: 45.5479, lon: -122.521158, times: ["9:12 PM", "5:26 AM", "6:11 AM", "6:41 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:41 AM"] },
-  { stop_id: "6720", name: "NE 135th &amp; Fremont", lat: 45.547732, lon: -122.523712, times: ["9:13 PM", "5:27 AM", "6:12 AM", "6:42 AM", "7:12 AM", "7:42 AM", "8:12 AM", "8:42 AM"] },
-  { stop_id: "6722", name: "NE 135th &amp; Rose Parkway", lat: 45.545671, lon: -122.523602, times: ["9:13 PM", "5:27 AM", "6:12 AM", "6:42 AM", "7:12 AM", "7:42 AM", "8:12 AM", "8:42 AM"] },
-  { stop_id: "4955", name: "13600 Block NE Rose Parkway", lat: 45.544874, lon: -122.521752, times: ["9:14 PM", "5:28 AM", "6:13 AM", "6:43 AM", "7:13 AM", "7:43 AM", "8:13 AM", "8:43 AM"] },
-  { stop_id: "4958", name: "NE Rose Parkway &amp; 141st", lat: 45.544573, lon: -122.517746, times: ["9:15 PM", "5:29 AM", "6:14 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:44 AM"] },
-  { stop_id: "4960", name: "NE Rose Parkway &amp; 143rd", lat: 45.544248, lon: -122.515984, times: ["9:15 PM", "5:29 AM", "6:14 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:44 AM"] },
-  { stop_id: "6755", name: "NE 143rd &amp; Fremont Ct", lat: 45.546733, lon: -122.515439, times: ["9:16 PM", "5:30 AM", "6:15 AM", "6:45 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:45 AM"] },
+  { stop_id: "6748", name: "NE 141st &amp; Failing", lat: 45.551175, lon: -122.519367, times: ["5:25 AM", "6:10 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:40 AM", "9:10 AM"] },
+  { stop_id: "6747", name: "NE 141st &amp; Beech", lat: 45.549472, lon: -122.517839, times: ["5:25 AM", "6:10 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:40 AM", "9:10 AM"] },
+  { stop_id: "6749", name: "NE 141st &amp; Fremont", lat: 45.547925, lon: -122.517858, times: ["5:26 AM", "6:11 AM", "6:41 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:41 AM", "9:11 AM"] },
+  { stop_id: "1853", name: "NE Fremont &amp; 138th", lat: 45.5479, lon: -122.521158, times: ["5:26 AM", "6:11 AM", "6:41 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:41 AM", "9:11 AM"] },
+  { stop_id: "6720", name: "NE 135th &amp; Fremont", lat: 45.547732, lon: -122.523712, times: ["5:27 AM", "6:12 AM", "6:42 AM", "7:12 AM", "7:42 AM", "8:12 AM", "8:42 AM", "9:12 AM"] },
+  { stop_id: "6722", name: "NE 135th &amp; Rose Parkway", lat: 45.545671, lon: -122.523602, times: ["5:27 AM", "6:12 AM", "6:42 AM", "7:12 AM", "7:42 AM", "8:12 AM", "8:42 AM", "9:12 AM"] },
+  { stop_id: "4955", name: "13600 Block NE Rose Parkway", lat: 45.544874, lon: -122.521752, times: ["5:28 AM", "6:13 AM", "6:43 AM", "7:13 AM", "7:43 AM", "8:13 AM", "8:43 AM", "9:13 AM"] },
+  { stop_id: "4958", name: "NE Rose Parkway &amp; 141st", lat: 45.544573, lon: -122.517746, times: ["5:29 AM", "6:14 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:44 AM", "9:14 AM"] },
+  { stop_id: "4960", name: "NE Rose Parkway &amp; 143rd", lat: 45.544248, lon: -122.515984, times: ["5:29 AM", "6:14 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM", "8:44 AM", "9:14 AM"] },
+  { stop_id: "6755", name: "NE 143rd &amp; Fremont Ct", lat: 45.546733, lon: -122.515439, times: ["5:30 AM", "6:15 AM", "6:45 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:45 AM", "9:15 AM"] },
   { stop_id: "1919", name: "NE Fremont Ct &amp; 145th", lat: 45.546272, lon: -122.514011, times: ["9:16 PM", "5:30 AM", "6:15 AM", "6:45 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:45 AM"] },
   { stop_id: "6765", name: "NE 145th &amp; Fremont", lat: 45.547505, lon: -122.513353, times: ["9:16 PM", "5:30 AM", "6:15 AM", "6:45 AM", "7:15 AM", "7:45 AM", "8:15 AM", "8:45 AM"] },
   { stop_id: "6750", name: "NE 141st &amp; Milton Ct", lat: 45.549065, lon: -122.517677, times: ["9:18 PM", "5:32 AM", "6:17 AM", "6:47 AM", "7:17 AM", "7:47 AM", "8:17 AM", "8:47 AM"] },
@@ -622,22 +630,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

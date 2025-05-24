@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1300,9 +1308,9 @@ const stops = [
   { stop_id: "633", name: "NE Broadway &amp; 2nd", lat: 45.535165, lon: -122.663511, times: ["9:40 PM", "10:21 PM", "11:00 PM", "11:36 PM", "12:13 AM", "5:15 AM", "6:31 AM", "7:02 AM"] },
   { stop_id: "627", name: "N Broadway &amp; Vancouver", lat: 45.535198, lon: -122.667504, times: ["9:41 PM", "10:22 PM", "11:02 PM", "11:38 PM", "12:15 AM", "5:16 AM", "6:33 AM", "7:03 AM"] },
   { stop_id: "12374", name: "N Broadway &amp; Benton", lat: 45.534201, lon: -122.670244, times: ["9:42 PM", "10:23 PM", "11:02 PM", "11:38 PM", "12:15 AM", "5:17 AM", "6:33 AM", "7:04 AM"] },
-  { stop_id: "14166", name: "NW Irving &amp; 6th", lat: 45.528002, lon: -122.676978, times: ["9:11 PM", "9:46 PM", "10:27 PM", "11:06 PM", "11:42 PM", "12:19 AM", "5:20 AM", "5:58 AM"] },
-  { stop_id: "9301", name: "NW 5th &amp; Davis", lat: 45.524705, lon: -122.675552, times: ["9:13 PM", "9:48 PM", "10:29 PM", "11:08 PM", "11:44 PM", "12:21 AM", "5:21 AM", "6:00 AM"] },
-  { stop_id: "7636", name: "SW 5th &amp; Harvey Milk", lat: 45.520945, lon: -122.676484, times: ["9:15 PM", "9:50 PM", "10:31 PM", "11:10 PM", "11:46 PM", "12:23 AM", "5:23 AM", "6:03 AM"] },
+  { stop_id: "14166", name: "NW Irving &amp; 6th", lat: 45.528002, lon: -122.676978, times: ["9:46 PM", "10:27 PM", "11:06 PM", "11:42 PM", "12:19 AM", "5:20 AM", "5:58 AM", "6:37 AM"] },
+  { stop_id: "9301", name: "NW 5th &amp; Davis", lat: 45.524705, lon: -122.675552, times: ["9:48 PM", "10:29 PM", "11:08 PM", "11:44 PM", "12:21 AM", "5:21 AM", "6:00 AM", "6:39 AM"] },
+  { stop_id: "7636", name: "SW 5th &amp; Harvey Milk", lat: 45.520945, lon: -122.676484, times: ["9:50 PM", "10:31 PM", "11:10 PM", "11:46 PM", "12:23 AM", "5:23 AM", "6:03 AM", "6:41 AM"] },
   { stop_id: "7640", name: "SW 5th &amp; Taylor", lat: 45.517603, lon: -122.678292, times: ["9:16 PM", "9:51 PM", "10:32 PM", "11:11 PM", "11:47 PM", "12:25 AM", "12:32 AM", "5:25 AM"] },
   { stop_id: "7594", name: "SW 5th &amp; Columbia", lat: 45.514297, lon: -122.680113, times: ["9:18 PM", "9:53 PM", "10:34 PM", "11:13 PM", "11:49 PM", "12:33 AM", "5:33 AM", "6:05 AM"] },
   { stop_id: "7602", name: "SW 5th &amp; Harrison", lat: 45.510939, lon: -122.681923, times: ["9:20 PM", "9:55 PM", "10:36 PM", "11:15 PM", "11:50 PM", "12:34 AM", "5:34 AM", "6:07 AM"] },
@@ -1322,17 +1330,17 @@ const stops = [
   { stop_id: "2722", name: "SE Holgate &amp; 36th", lat: 45.490248, lon: -122.626789, times: ["9:39 PM", "10:14 PM", "10:55 PM", "11:34 PM", "12:09 AM", "12:52 AM", "5:52 AM", "6:25 AM"] },
   { stop_id: "2726", name: "SE Holgate &amp; Cesar Chavez Blvd", lat: 45.490239, lon: -122.623465, times: ["9:40 PM", "10:15 PM", "10:56 PM", "11:35 PM", "12:10 AM", "12:53 AM", "5:53 AM", "6:26 AM"] },
   { stop_id: "2728", name: "SE Holgate &amp; 41st", lat: 45.490227, lon: -122.61982, times: ["9:40 PM", "10:15 PM", "10:56 PM", "11:35 PM", "12:10 AM", "12:53 AM", "5:53 AM", "6:26 AM"] },
-  { stop_id: "2732", name: "SE Holgate &amp; 45th", lat: 45.490234, lon: -122.615972, times: ["9:10 PM", "9:41 PM", "10:16 PM", "10:57 PM", "11:36 PM", "12:11 AM", "12:54 AM", "5:54 AM"] },
-  { stop_id: "2734", name: "SE Holgate &amp; 47th", lat: 45.490243, lon: -122.613995, times: ["9:10 PM", "9:41 PM", "10:16 PM", "10:57 PM", "11:36 PM", "12:11 AM", "12:54 AM", "5:54 AM"] },
-  { stop_id: "2736", name: "SE Holgate &amp; 49th", lat: 45.490234, lon: -122.612025, times: ["9:11 PM", "9:42 PM", "10:17 PM", "10:58 PM", "11:37 PM", "12:12 AM", "12:55 AM", "5:55 AM"] },
-  { stop_id: "2738", name: "SE Holgate &amp; 52nd", lat: 45.490235, lon: -122.608499, times: ["9:11 PM", "9:42 PM", "10:17 PM", "10:58 PM", "11:37 PM", "12:12 AM", "12:55 AM", "5:55 AM"] },
-  { stop_id: "2740", name: "SE Holgate &amp; 56th", lat: 45.490229, lon: -122.605773, times: ["9:12 PM", "9:43 PM", "10:18 PM", "10:59 PM", "11:38 PM", "12:13 AM", "12:56 AM", "5:56 AM"] },
-  { stop_id: "2742", name: "SE Holgate &amp; 58th", lat: 45.490232, lon: -122.604074, times: ["9:12 PM", "9:43 PM", "10:18 PM", "10:59 PM", "11:38 PM", "12:13 AM", "12:56 AM", "5:56 AM"] },
-  { stop_id: "2746", name: "SE Holgate &amp; 62nd", lat: 45.490212, lon: -122.599126, times: ["9:13 PM", "9:44 PM", "10:19 PM", "11:00 PM", "11:39 PM", "12:14 AM", "12:57 AM", "5:57 AM"] },
-  { stop_id: "2749", name: "SE Holgate &amp; 65th", lat: 45.490271, lon: -122.596041, times: ["9:14 PM", "9:44 PM", "10:19 PM", "11:00 PM", "11:39 PM", "12:14 AM", "12:57 AM", "5:57 AM"] },
-  { stop_id: "2750", name: "SE Holgate &amp; 67th", lat: 45.49021, lon: -122.593908, times: ["9:14 PM", "9:45 PM", "10:20 PM", "11:01 PM", "11:40 PM", "12:15 AM", "12:58 AM", "5:58 AM"] },
-  { stop_id: "2752", name: "SE Holgate &amp; 70th", lat: 45.490204, lon: -122.591399, times: ["9:15 PM", "9:45 PM", "10:20 PM", "11:01 PM", "11:40 PM", "12:15 AM", "12:58 AM", "5:58 AM"] },
-  { stop_id: "2754", name: "SE Holgate &amp; 72nd", lat: 45.490181, lon: -122.589403, times: ["9:15 PM", "9:46 PM", "10:21 PM", "11:02 PM", "11:41 PM", "12:16 AM", "12:59 AM", "5:59 AM"] },
+  { stop_id: "2732", name: "SE Holgate &amp; 45th", lat: 45.490234, lon: -122.615972, times: ["9:41 PM", "10:16 PM", "10:57 PM", "11:36 PM", "12:11 AM", "12:54 AM", "5:54 AM", "6:27 AM"] },
+  { stop_id: "2734", name: "SE Holgate &amp; 47th", lat: 45.490243, lon: -122.613995, times: ["9:41 PM", "10:16 PM", "10:57 PM", "11:36 PM", "12:11 AM", "12:54 AM", "5:54 AM", "6:27 AM"] },
+  { stop_id: "2736", name: "SE Holgate &amp; 49th", lat: 45.490234, lon: -122.612025, times: ["9:42 PM", "10:17 PM", "10:58 PM", "11:37 PM", "12:12 AM", "12:55 AM", "5:55 AM", "6:28 AM"] },
+  { stop_id: "2738", name: "SE Holgate &amp; 52nd", lat: 45.490235, lon: -122.608499, times: ["9:42 PM", "10:17 PM", "10:58 PM", "11:37 PM", "12:12 AM", "12:55 AM", "5:55 AM", "6:28 AM"] },
+  { stop_id: "2740", name: "SE Holgate &amp; 56th", lat: 45.490229, lon: -122.605773, times: ["9:43 PM", "10:18 PM", "10:59 PM", "11:38 PM", "12:13 AM", "12:56 AM", "5:56 AM", "6:29 AM"] },
+  { stop_id: "2742", name: "SE Holgate &amp; 58th", lat: 45.490232, lon: -122.604074, times: ["9:43 PM", "10:18 PM", "10:59 PM", "11:38 PM", "12:13 AM", "12:56 AM", "5:56 AM", "6:29 AM"] },
+  { stop_id: "2746", name: "SE Holgate &amp; 62nd", lat: 45.490212, lon: -122.599126, times: ["9:44 PM", "10:19 PM", "11:00 PM", "11:39 PM", "12:14 AM", "12:57 AM", "5:57 AM", "6:30 AM"] },
+  { stop_id: "2749", name: "SE Holgate &amp; 65th", lat: 45.490271, lon: -122.596041, times: ["9:44 PM", "10:19 PM", "11:00 PM", "11:39 PM", "12:14 AM", "12:57 AM", "5:57 AM", "6:30 AM"] },
+  { stop_id: "2750", name: "SE Holgate &amp; 67th", lat: 45.49021, lon: -122.593908, times: ["9:45 PM", "10:20 PM", "11:01 PM", "11:40 PM", "12:15 AM", "12:58 AM", "5:58 AM", "6:31 AM"] },
+  { stop_id: "2752", name: "SE Holgate &amp; 70th", lat: 45.490204, lon: -122.591399, times: ["9:45 PM", "10:20 PM", "11:01 PM", "11:40 PM", "12:15 AM", "12:58 AM", "5:58 AM", "6:31 AM"] },
+  { stop_id: "2754", name: "SE Holgate &amp; 72nd", lat: 45.490181, lon: -122.589403, times: ["9:46 PM", "10:21 PM", "11:02 PM", "11:41 PM", "12:16 AM", "12:59 AM", "5:59 AM", "6:32 AM"] },
   { stop_id: "2757", name: "SE Holgate &amp; 75th", lat: 45.490192, lon: -122.5862, times: ["9:16 PM", "9:46 PM", "10:21 PM", "11:02 PM", "11:41 PM", "12:16 AM", "12:59 AM", "5:59 AM"] },
   { stop_id: "2758", name: "SE Holgate &amp; 77th", lat: 45.490191, lon: -122.584226, times: ["9:16 PM", "9:46 PM", "10:21 PM", "11:02 PM", "11:41 PM", "12:16 AM", "12:59 AM", "5:59 AM"] },
   { stop_id: "2760", name: "SE Holgate &amp; 79th", lat: 45.490195, lon: -122.582174, times: ["9:17 PM", "9:47 PM", "10:22 PM", "11:03 PM", "11:42 PM", "12:17 AM", "1:00 AM", "6:00 AM"] },
@@ -1358,22 +1366,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

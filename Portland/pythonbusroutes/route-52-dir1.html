@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -911,14 +919,14 @@ const stops = [
   { stop_id: "1688", name: "SW Farmington &amp; 179th", lat: 45.478081, lon: -122.861086, times: ["9:59 PM", "10:49 PM", "11:38 PM", "5:30 AM", "6:29 AM", "7:02 AM", "7:27 AM", "7:59 AM"] },
   { stop_id: "1658", name: "SW Farmington &amp; Remington Dr", lat: 45.479391, lon: -122.858041, times: ["9:59 PM", "10:49 PM", "11:38 PM", "5:31 AM", "6:30 AM", "7:02 AM", "7:28 AM", "8:00 AM"] },
   { stop_id: "1652", name: "SW Farmington &amp; Kinnaman", lat: 45.480539, lon: -122.855603, times: ["9:59 PM", "10:49 PM", "11:38 PM", "5:31 AM", "6:30 AM", "7:03 AM", "7:29 AM", "8:01 AM"] },
-  { stop_id: "1683", name: "SW Farmington &amp; 170th", lat: 45.48194, lon: -122.850688, times: ["9:10 PM", "10:00 PM", "10:50 PM", "11:39 PM", "5:32 AM", "6:31 AM", "7:04 AM", "7:30 AM"] },
-  { stop_id: "1679", name: "SW Farmington &amp; 165th", lat: 45.483289, lon: -122.846038, times: ["9:11 PM", "10:01 PM", "10:51 PM", "11:40 PM", "5:33 AM", "6:32 AM", "7:05 AM", "7:31 AM"] },
-  { stop_id: "1675", name: "SW Farmington &amp; 160th", lat: 45.483845, lon: -122.841169, times: ["9:12 PM", "10:02 PM", "10:52 PM", "11:41 PM", "5:34 AM", "6:33 AM", "7:06 AM", "7:32 AM"] },
-  { stop_id: "1640", name: "SW Farmington &amp; 156th", lat: 45.484255, lon: -122.837361, times: ["9:12 PM", "10:02 PM", "10:52 PM", "11:41 PM", "5:34 AM", "6:34 AM", "7:07 AM", "7:33 AM"] },
-  { stop_id: "1672", name: "SW Farmington &amp; 153rd", lat: 45.484656, lon: -122.834386, times: ["9:13 PM", "10:03 PM", "10:53 PM", "11:42 PM", "5:35 AM", "6:34 AM", "7:08 AM", "7:34 AM"] },
-  { stop_id: "1671", name: "SW Farmington &amp; 149th", lat: 45.485181, lon: -122.830306, times: ["9:14 PM", "10:04 PM", "10:54 PM", "11:43 PM", "5:36 AM", "6:36 AM", "7:09 AM", "7:35 AM"] },
-  { stop_id: "1661", name: "SW Farmington &amp; Murray", lat: 45.485649, lon: -122.826406, times: ["9:15 PM", "10:05 PM", "10:55 PM", "11:44 PM", "5:37 AM", "6:37 AM", "7:10 AM", "7:36 AM"] },
-  { stop_id: "1669", name: "SW Farmington &amp; 142nd", lat: 45.48633, lon: -122.821762, times: ["9:16 PM", "10:06 PM", "10:56 PM", "11:45 PM", "5:38 AM", "6:38 AM", "7:11 AM", "7:38 AM"] },
+  { stop_id: "1683", name: "SW Farmington &amp; 170th", lat: 45.48194, lon: -122.850688, times: ["10:00 PM", "10:50 PM", "11:39 PM", "5:32 AM", "6:31 AM", "7:04 AM", "7:30 AM", "8:02 AM"] },
+  { stop_id: "1679", name: "SW Farmington &amp; 165th", lat: 45.483289, lon: -122.846038, times: ["10:01 PM", "10:51 PM", "11:40 PM", "5:33 AM", "6:32 AM", "7:05 AM", "7:31 AM", "8:03 AM"] },
+  { stop_id: "1675", name: "SW Farmington &amp; 160th", lat: 45.483845, lon: -122.841169, times: ["10:02 PM", "10:52 PM", "11:41 PM", "5:34 AM", "6:33 AM", "7:06 AM", "7:32 AM", "8:04 AM"] },
+  { stop_id: "1640", name: "SW Farmington &amp; 156th", lat: 45.484255, lon: -122.837361, times: ["10:02 PM", "10:52 PM", "11:41 PM", "5:34 AM", "6:34 AM", "7:07 AM", "7:33 AM", "8:05 AM"] },
+  { stop_id: "1672", name: "SW Farmington &amp; 153rd", lat: 45.484656, lon: -122.834386, times: ["10:03 PM", "10:53 PM", "11:42 PM", "5:35 AM", "6:34 AM", "7:08 AM", "7:34 AM", "8:06 AM"] },
+  { stop_id: "1671", name: "SW Farmington &amp; 149th", lat: 45.485181, lon: -122.830306, times: ["10:04 PM", "10:54 PM", "11:43 PM", "5:36 AM", "6:36 AM", "7:09 AM", "7:35 AM", "8:07 AM"] },
+  { stop_id: "1661", name: "SW Farmington &amp; Murray", lat: 45.485649, lon: -122.826406, times: ["10:05 PM", "10:55 PM", "11:44 PM", "5:37 AM", "6:37 AM", "7:10 AM", "7:36 AM", "8:08 AM"] },
+  { stop_id: "1669", name: "SW Farmington &amp; 142nd", lat: 45.48633, lon: -122.821762, times: ["10:06 PM", "10:56 PM", "11:45 PM", "5:38 AM", "6:38 AM", "7:11 AM", "7:38 AM", "8:10 AM"] },
   { stop_id: "13917", name: "SW Farmington &amp; Rose Ln", lat: 45.486769, lon: -122.818512, times: ["9:17 PM", "10:07 PM", "10:57 PM", "11:46 PM", "5:39 AM", "6:39 AM", "7:12 AM", "7:39 AM"] },
   { stop_id: "1650", name: "SW Farmington &amp; Hocken", lat: 45.487309, lon: -122.814214, times: ["9:18 PM", "10:08 PM", "10:58 PM", "11:47 PM", "5:40 AM", "6:40 AM", "7:14 AM", "7:40 AM"] },
   { stop_id: "1646", name: "SW Farmington &amp; Erickson", lat: 45.487335, lon: -122.811513, times: ["9:18 PM", "10:08 PM", "10:58 PM", "11:47 PM", "5:41 AM", "6:41 AM", "7:14 AM", "7:41 AM"] },
@@ -940,22 +948,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

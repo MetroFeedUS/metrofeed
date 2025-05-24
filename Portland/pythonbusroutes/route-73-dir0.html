@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -728,16 +736,16 @@ const stops = [
   { stop_id: "6646", name: "SE 122nd &amp; Market", lat: 45.511705, lon: -122.537854, times: ["9:37 PM", "10:07 PM", "10:37 PM", "11:07 PM", "11:35 PM", "12:05 AM", "5:17 AM", "5:40 AM"] },
   { stop_id: "14599", name: "SE 122nd &amp; Stephens", lat: 45.509127, lon: -122.537841, times: ["9:37 PM", "10:07 PM", "10:37 PM", "11:07 PM", "11:35 PM", "12:05 AM", "5:17 AM", "5:40 AM"] },
   { stop_id: "6631", name: "SE 122nd &amp; Division", lat: 45.503329, lon: -122.537811, times: ["9:39 PM", "10:09 PM", "10:39 PM", "11:09 PM", "11:37 PM", "12:07 AM", "5:19 AM", "5:42 AM"] },
-  { stop_id: "6676", name: "SE 122nd &amp; Woodward Pl", lat: 45.500651, lon: -122.537814, times: ["9:10 PM", "9:40 PM", "10:10 PM", "10:40 PM", "11:10 PM", "11:38 PM", "12:08 AM", "5:19 AM"] },
-  { stop_id: "8843", name: "SE 122nd &amp; Powell", lat: 45.497446, lon: -122.537811, times: ["9:11 PM", "9:41 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:39 PM", "12:09 AM", "5:20 AM"] },
-  { stop_id: "6668", name: "SE 122nd &amp; Rhone", lat: 45.495977, lon: -122.537807, times: ["9:12 PM", "9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:40 PM", "12:10 AM", "5:21 AM"] },
-  { stop_id: "6625", name: "SE 122nd &amp; Bush", lat: 45.494104, lon: -122.537829, times: ["9:12 PM", "9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:40 PM", "12:10 AM", "5:21 AM"] },
-  { stop_id: "6619", name: "SE 122nd &amp; Boise", lat: 45.492115, lon: -122.537848, times: ["9:12 PM", "9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:40 PM", "12:10 AM", "5:21 AM"] },
-  { stop_id: "6636", name: "SE 122nd &amp; Holgate", lat: 45.489232, lon: -122.53788, times: ["9:13 PM", "9:43 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:41 PM", "12:11 AM", "5:22 AM"] },
-  { stop_id: "13775", name: "SE 122nd &amp; Raymond", lat: 45.485741, lon: -122.538016, times: ["9:14 PM", "9:44 PM", "10:14 PM", "10:43 PM", "11:13 PM", "11:41 PM", "12:11 AM", "5:22 AM"] },
-  { stop_id: "6634", name: "SE 122nd &amp; Harold", lat: 45.483376, lon: -122.538105, times: ["9:15 PM", "9:44 PM", "10:14 PM", "10:44 PM", "11:14 PM", "11:42 PM", "12:12 AM", "5:23 AM"] },
-  { stop_id: "6662", name: "SE 122nd &amp; Reedway", lat: 45.481607, lon: -122.53801, times: ["9:15 PM", "9:45 PM", "10:15 PM", "10:44 PM", "11:14 PM", "11:42 PM", "12:12 AM", "5:23 AM"] },
-  { stop_id: "6658", name: "SE 122nd &amp; Ramona", lat: 45.480199, lon: -122.537415, times: ["9:15 PM", "9:45 PM", "10:15 PM", "10:45 PM", "11:15 PM", "11:43 PM", "12:13 AM", "5:24 AM"] },
+  { stop_id: "6676", name: "SE 122nd &amp; Woodward Pl", lat: 45.500651, lon: -122.537814, times: ["9:40 PM", "10:10 PM", "10:40 PM", "11:10 PM", "11:38 PM", "12:08 AM", "5:19 AM", "5:42 AM"] },
+  { stop_id: "8843", name: "SE 122nd &amp; Powell", lat: 45.497446, lon: -122.537811, times: ["9:41 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:39 PM", "12:09 AM", "5:20 AM", "5:43 AM"] },
+  { stop_id: "6668", name: "SE 122nd &amp; Rhone", lat: 45.495977, lon: -122.537807, times: ["9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:40 PM", "12:10 AM", "5:21 AM", "5:44 AM"] },
+  { stop_id: "6625", name: "SE 122nd &amp; Bush", lat: 45.494104, lon: -122.537829, times: ["9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:40 PM", "12:10 AM", "5:21 AM", "5:44 AM"] },
+  { stop_id: "6619", name: "SE 122nd &amp; Boise", lat: 45.492115, lon: -122.537848, times: ["9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:40 PM", "12:10 AM", "5:21 AM", "5:44 AM"] },
+  { stop_id: "6636", name: "SE 122nd &amp; Holgate", lat: 45.489232, lon: -122.53788, times: ["9:43 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:41 PM", "12:11 AM", "5:22 AM", "5:45 AM"] },
+  { stop_id: "13775", name: "SE 122nd &amp; Raymond", lat: 45.485741, lon: -122.538016, times: ["9:44 PM", "10:14 PM", "10:43 PM", "11:13 PM", "11:41 PM", "12:11 AM", "5:22 AM", "5:45 AM"] },
+  { stop_id: "6634", name: "SE 122nd &amp; Harold", lat: 45.483376, lon: -122.538105, times: ["9:44 PM", "10:14 PM", "10:44 PM", "11:14 PM", "11:42 PM", "12:12 AM", "5:23 AM", "5:46 AM"] },
+  { stop_id: "6662", name: "SE 122nd &amp; Reedway", lat: 45.481607, lon: -122.53801, times: ["9:45 PM", "10:15 PM", "10:44 PM", "11:14 PM", "11:42 PM", "12:12 AM", "5:23 AM", "5:46 AM"] },
+  { stop_id: "6658", name: "SE 122nd &amp; Ramona", lat: 45.480199, lon: -122.537415, times: ["9:45 PM", "10:15 PM", "10:45 PM", "11:15 PM", "11:43 PM", "12:13 AM", "5:24 AM", "5:47 AM"] },
   { stop_id: "1787", name: "SE Foster &amp; 122nd", lat: 45.476637, lon: -122.537626, times: ["9:16 PM", "9:46 PM", "10:16 PM", "10:45 PM", "11:15 PM", "11:43 PM", "12:13 AM", "5:24 AM"] },
   { stop_id: "13032", name: "SE Foster &amp; 120th", lat: 45.47661, lon: -122.539648, times: ["9:17 PM", "9:46 PM", "10:16 PM", "10:46 PM", "11:16 PM", "11:44 PM", "12:14 AM", "5:25 AM"] },
   { stop_id: "1774", name: "11600 Block SE Foster", lat: 45.476552, lon: -122.544543, times: ["9:17 PM", "9:47 PM", "10:17 PM", "10:46 PM", "11:16 PM", "11:44 PM", "12:14 AM", "5:25 AM"] },
@@ -758,22 +766,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

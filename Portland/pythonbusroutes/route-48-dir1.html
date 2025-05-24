@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1043,12 +1051,12 @@ const stops = [
   { stop_id: "8558", name: "NE Cornell &amp; 34th", lat: 45.532092, lon: -122.947357, times: ["9:38 PM", "10:08 PM", "10:38 PM", "11:08 PM", "11:38 PM", "5:08 AM", "5:38 AM", "5:53 AM"] },
   { stop_id: "10193", name: "NE Cornell &amp; Brookwood Pkwy", lat: 45.532514, lon: -122.93827, times: ["9:39 PM", "10:09 PM", "10:39 PM", "11:09 PM", "11:39 PM", "5:09 AM", "5:39 AM", "5:54 AM"] },
   { stop_id: "10028", name: "NE Cornell &amp; 48th", lat: 45.533439, lon: -122.93412, times: ["9:39 PM", "10:09 PM", "10:39 PM", "11:09 PM", "11:39 PM", "5:09 AM", "5:39 AM", "5:54 AM"] },
-  { stop_id: "13858", name: "NE Cornell &amp; Elam Young East", lat: 45.533593, lon: -122.922925, times: ["9:11 PM", "9:41 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:41 PM", "5:11 AM", "5:41 AM"] },
-  { stop_id: "8649", name: "NE Cornell &amp; Orenco Station Pkwy", lat: 45.533886, lon: -122.91711, times: ["9:11 PM", "9:41 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:41 PM", "5:11 AM", "5:41 AM"] },
-  { stop_id: "8561", name: "NE Cornell &amp; Century", lat: 45.534128, lon: -122.910709, times: ["9:12 PM", "9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:42 PM", "5:12 AM", "5:42 AM"] },
-  { stop_id: "10031", name: "NE Cornell &amp; Walbridge", lat: 45.534953, lon: -122.907903, times: ["9:13 PM", "9:43 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:43 PM", "5:13 AM", "5:43 AM"] },
-  { stop_id: "10030", name: "NE Cornell &amp; Butler", lat: 45.537431, lon: -122.90537, times: ["9:14 PM", "9:43 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:43 PM", "5:13 AM", "5:43 AM"] },
-  { stop_id: "10029", name: "NE Cornell &amp; Cornelius Pass", lat: 45.539516, lon: -122.898456, times: ["9:15 PM", "9:45 PM", "10:15 PM", "10:45 PM", "11:15 PM", "11:45 PM", "5:15 AM", "5:45 AM"] },
+  { stop_id: "13858", name: "NE Cornell &amp; Elam Young East", lat: 45.533593, lon: -122.922925, times: ["9:41 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:41 PM", "5:11 AM", "5:41 AM", "5:56 AM"] },
+  { stop_id: "8649", name: "NE Cornell &amp; Orenco Station Pkwy", lat: 45.533886, lon: -122.91711, times: ["9:41 PM", "10:11 PM", "10:41 PM", "11:11 PM", "11:41 PM", "5:11 AM", "5:41 AM", "5:56 AM"] },
+  { stop_id: "8561", name: "NE Cornell &amp; Century", lat: 45.534128, lon: -122.910709, times: ["9:42 PM", "10:12 PM", "10:42 PM", "11:12 PM", "11:42 PM", "5:12 AM", "5:42 AM", "5:57 AM"] },
+  { stop_id: "10031", name: "NE Cornell &amp; Walbridge", lat: 45.534953, lon: -122.907903, times: ["9:43 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:43 PM", "5:13 AM", "5:43 AM", "5:58 AM"] },
+  { stop_id: "10030", name: "NE Cornell &amp; Butler", lat: 45.537431, lon: -122.90537, times: ["9:43 PM", "10:13 PM", "10:43 PM", "11:13 PM", "11:43 PM", "5:13 AM", "5:43 AM", "5:58 AM"] },
+  { stop_id: "10029", name: "NE Cornell &amp; Cornelius Pass", lat: 45.539516, lon: -122.898456, times: ["9:45 PM", "10:15 PM", "10:45 PM", "11:15 PM", "11:45 PM", "5:15 AM", "5:45 AM", "6:00 AM"] },
   { stop_id: "10025", name: "NE Cornell &amp; Aloclek", lat: 45.53917, lon: -122.893216, times: ["9:16 PM", "9:45 PM", "10:15 PM", "10:45 PM", "11:15 PM", "11:45 PM", "5:15 AM", "5:45 AM"] },
   { stop_id: "10023", name: "NE Cornell &amp; John Olsen Ave", lat: 45.537977, lon: -122.887855, times: ["9:17 PM", "9:46 PM", "10:16 PM", "10:46 PM", "11:16 PM", "11:46 PM", "5:16 AM", "5:46 AM"] },
   { stop_id: "10022", name: "NE Cornell &amp; Overlook Dr", lat: 45.537014, lon: -122.884504, times: ["9:17 PM", "9:47 PM", "10:17 PM", "10:47 PM", "11:17 PM", "11:47 PM", "5:17 AM", "5:47 AM"] },
@@ -1079,7 +1087,7 @@ const stops = [
   { stop_id: "247", name: "SW Barnes &amp; W Stark", lat: 45.519695, lon: -122.801206, times: ["9:34 PM", "10:03 PM", "10:32 PM", "11:02 PM", "11:32 PM", "12:02 AM", "5:32 AM", "6:04 AM"] },
   { stop_id: "9532", name: "SW Barnes &amp; 117th", lat: 45.517232, lon: -122.796654, times: ["9:35 PM", "10:04 PM", "10:33 PM", "11:03 PM", "11:33 PM", "12:03 AM", "5:33 AM", "6:05 AM"] },
   { stop_id: "9627", name: "SW Barnes &amp; Cedar Hills Blvd", lat: 45.515216, lon: -122.789725, times: ["9:37 PM", "10:06 PM", "10:35 PM", "11:05 PM", "11:35 PM", "12:05 AM", "5:35 AM", "6:06 AM"] },
-  { stop_id: "9971", name: "Sunset Transit Center ", lat: 45.509903, lon: -122.781084, times: ["9:11 PM", "9:40 PM", "10:09 PM", "10:38 PM", "11:08 PM", "11:38 PM", "12:08 AM", "5:38 AM"] },
+  { stop_id: "9971", name: "Sunset Transit Center ", lat: 45.509903, lon: -122.781084, times: ["9:40 PM", "10:09 PM", "10:38 PM", "11:08 PM", "11:38 PM", "12:08 AM", "5:38 AM", "6:10 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -1091,22 +1099,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

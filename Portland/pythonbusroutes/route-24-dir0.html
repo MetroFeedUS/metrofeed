@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -997,10 +1005,10 @@ const stops = [
   { stop_id: "14031", name: "N Kerby &amp; Graham", lat: 45.542618, lon: -122.67182, times: ["6:54 AM", "7:52 AM", "8:17 AM", "8:42 AM", "9:07 AM", "9:36 AM", "10:07 AM", "10:37 AM"] },
   { stop_id: "14032", name: "NW Thurman &amp; 23rd", lat: 45.535446, lon: -122.698388, times: ["7:01 AM", "8:00 AM", "8:25 AM", "8:50 AM", "9:15 AM", "9:44 AM", "10:14 AM", "10:44 AM"] },
   { stop_id: "4787", name: "NW Thurman &amp; 21st", lat: 45.535522, lon: -122.694973, times: ["7:01 AM", "8:00 AM", "8:25 AM", "8:50 AM", "9:15 AM", "9:44 AM", "10:14 AM", "10:44 AM"] },
-  { stop_id: "14033", name: "NW 19th &amp; Raleigh", lat: 45.534024, lon: -122.690726, times: ["9:11 PM", "7:03 AM", "8:02 AM", "8:27 AM", "8:52 AM", "9:17 AM", "9:46 AM", "10:16 AM"] },
-  { stop_id: "14034", name: "NW 19th &amp; Marshall", lat: 45.530436, lon: -122.690576, times: ["9:12 PM", "7:04 AM", "8:03 AM", "8:28 AM", "8:53 AM", "9:18 AM", "9:47 AM", "10:17 AM"] },
-  { stop_id: "14035", name: "NW 19th &amp; Flanders", lat: 45.525424, lon: -122.690417, times: ["9:14 PM", "7:06 AM", "8:06 AM", "8:31 AM", "8:56 AM", "9:21 AM", "9:50 AM", "10:20 AM"] },
-  { stop_id: "6911", name: "SW 18th &amp; Morrison", lat: 45.52188, lon: -122.690453, times: ["9:16 PM", "7:08 AM", "8:08 AM", "8:33 AM", "8:58 AM", "9:23 AM", "9:52 AM", "10:22 AM"] },
+  { stop_id: "14033", name: "NW 19th &amp; Raleigh", lat: 45.534024, lon: -122.690726, times: ["7:03 AM", "8:02 AM", "8:27 AM", "8:52 AM", "9:17 AM", "9:46 AM", "10:16 AM", "10:46 AM"] },
+  { stop_id: "14034", name: "NW 19th &amp; Marshall", lat: 45.530436, lon: -122.690576, times: ["7:04 AM", "8:03 AM", "8:28 AM", "8:53 AM", "9:18 AM", "9:47 AM", "10:17 AM", "10:47 AM"] },
+  { stop_id: "14035", name: "NW 19th &amp; Flanders", lat: 45.525424, lon: -122.690417, times: ["7:06 AM", "8:06 AM", "8:31 AM", "8:56 AM", "9:21 AM", "9:50 AM", "10:20 AM", "10:50 AM"] },
+  { stop_id: "6911", name: "SW 18th &amp; Morrison", lat: 45.52188, lon: -122.690453, times: ["7:08 AM", "8:08 AM", "8:33 AM", "8:58 AM", "9:23 AM", "9:52 AM", "10:22 AM", "10:52 AM"] },
   { stop_id: "9553", name: "SW 18th &amp; Salmon", lat: 45.520377, lon: -122.691399, times: ["9:17 PM", "7:09 AM", "8:09 AM", "8:34 AM", "8:59 AM", "9:24 AM", "9:53 AM", "10:23 AM"] },
   { stop_id: "10168", name: "SW Columbia &amp; 18th", lat: 45.517468, lon: -122.692772, times: ["9:20 PM", "7:12 AM", "8:12 AM", "8:37 AM", "9:02 AM", "9:27 AM", "9:56 AM", "10:26 AM"] },
 ]
@@ -1014,22 +1022,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

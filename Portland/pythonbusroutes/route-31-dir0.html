@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -667,14 +675,14 @@ const stops = [
   { stop_id: "11963", name: "SE Johnson &amp; Lake", lat: 45.421087, lon: -122.581682, times: ["9:53 PM", "6:03 AM", "7:02 AM", "8:00 AM", "8:43 AM", "9:24 AM", "10:04 AM", "10:44 AM"] },
   { stop_id: "11964", name: "14400 Block SE Johnson", lat: 45.41834, lon: -122.580127, times: ["9:53 PM", "6:03 AM", "7:03 AM", "8:01 AM", "8:44 AM", "9:25 AM", "10:05 AM", "10:45 AM"] },
   { stop_id: "11965", name: "SE Johnson &amp; Thiessen", lat: 45.416226, lon: -122.578918, times: ["9:54 PM", "6:04 AM", "7:03 AM", "8:02 AM", "8:45 AM", "9:25 AM", "10:05 AM", "10:45 AM"] },
-  { stop_id: "14041", name: "SE Thiessen &amp; Topaz", lat: 45.416176, lon: -122.584896, times: ["9:10 PM", "9:54 PM", "6:04 AM", "7:04 AM", "8:03 AM", "8:46 AM", "9:26 AM", "10:06 AM"] },
-  { stop_id: "14042", name: "SE Thiessen &amp; Anna Marie Ct", lat: 45.416184, lon: -122.589767, times: ["9:11 PM", "9:55 PM", "6:05 AM", "7:05 AM", "8:03 AM", "8:46 AM", "9:27 AM", "10:07 AM"] },
-  { stop_id: "6212", name: "SE Webster &amp; Thiessen", lat: 45.415174, lon: -122.592536, times: ["9:12 PM", "9:56 PM", "6:06 AM", "7:05 AM", "8:04 AM", "8:47 AM", "9:27 AM", "10:07 AM"] },
-  { stop_id: "6205", name: "SE Webster &amp; Molt St", lat: 45.412608, lon: -122.591081, times: ["9:12 PM", "9:56 PM", "6:06 AM", "7:06 AM", "8:05 AM", "8:48 AM", "9:28 AM", "10:08 AM"] },
-  { stop_id: "6192", name: "SE Webster &amp; Clackamas", lat: 45.41032, lon: -122.590343, times: ["9:13 PM", "9:57 PM", "6:07 AM", "7:07 AM", "8:05 AM", "8:48 AM", "9:29 AM", "10:09 AM"] },
-  { stop_id: "6203", name: "SE Webster &amp; Mabel", lat: 45.407307, lon: -122.589094, times: ["9:13 PM", "9:57 PM", "6:07 AM", "7:07 AM", "8:06 AM", "8:49 AM", "9:29 AM", "10:09 AM"] },
-  { stop_id: "13801", name: "SE Webster &amp; Dolinda", lat: 45.402381, lon: -122.5855, times: ["9:15 PM", "9:59 PM", "6:09 AM", "7:09 AM", "8:08 AM", "8:51 AM", "9:31 AM", "10:11 AM"] },
-  { stop_id: "13149", name: "17100 Block SE Webster", lat: 45.398926, lon: -122.586052, times: ["9:15 PM", "9:59 PM", "6:09 AM", "7:09 AM", "8:08 AM", "8:51 AM", "9:31 AM", "10:11 AM"] },
+  { stop_id: "14041", name: "SE Thiessen &amp; Topaz", lat: 45.416176, lon: -122.584896, times: ["9:54 PM", "6:04 AM", "7:04 AM", "8:03 AM", "8:46 AM", "9:26 AM", "10:06 AM", "10:46 AM"] },
+  { stop_id: "14042", name: "SE Thiessen &amp; Anna Marie Ct", lat: 45.416184, lon: -122.589767, times: ["9:55 PM", "6:05 AM", "7:05 AM", "8:03 AM", "8:46 AM", "9:27 AM", "10:07 AM", "10:47 AM"] },
+  { stop_id: "6212", name: "SE Webster &amp; Thiessen", lat: 45.415174, lon: -122.592536, times: ["9:56 PM", "6:06 AM", "7:05 AM", "8:04 AM", "8:47 AM", "9:27 AM", "10:07 AM", "10:47 AM"] },
+  { stop_id: "6205", name: "SE Webster &amp; Molt St", lat: 45.412608, lon: -122.591081, times: ["9:56 PM", "6:06 AM", "7:06 AM", "8:05 AM", "8:48 AM", "9:28 AM", "10:08 AM", "10:48 AM"] },
+  { stop_id: "6192", name: "SE Webster &amp; Clackamas", lat: 45.41032, lon: -122.590343, times: ["9:57 PM", "6:07 AM", "7:07 AM", "8:05 AM", "8:48 AM", "9:29 AM", "10:09 AM", "10:49 AM"] },
+  { stop_id: "6203", name: "SE Webster &amp; Mabel", lat: 45.407307, lon: -122.589094, times: ["9:57 PM", "6:07 AM", "7:07 AM", "8:06 AM", "8:49 AM", "9:29 AM", "10:09 AM", "10:49 AM"] },
+  { stop_id: "13801", name: "SE Webster &amp; Dolinda", lat: 45.402381, lon: -122.5855, times: ["9:59 PM", "6:09 AM", "7:09 AM", "8:08 AM", "8:51 AM", "9:31 AM", "10:11 AM", "10:51 AM"] },
+  { stop_id: "13149", name: "17100 Block SE Webster", lat: 45.398926, lon: -122.586052, times: ["9:59 PM", "6:09 AM", "7:09 AM", "8:08 AM", "8:51 AM", "9:31 AM", "10:11 AM", "10:51 AM"] },
   { stop_id: "6201", name: "Webster &amp; Los Verdes", lat: 45.396229, lon: -122.585794, times: ["9:16 PM", "10:00 PM", "6:10 AM", "7:10 AM", "8:09 AM", "8:52 AM", "9:32 AM", "10:12 AM"] },
   { stop_id: "6198", name: "Webster &amp; Kraxberger Middle School", lat: 45.394878, lon: -122.585029, times: ["9:16 PM", "10:00 PM", "6:10 AM", "7:10 AM", "8:10 AM", "8:53 AM", "9:33 AM", "10:13 AM"] },
   { stop_id: "6194", name: "Webster &amp; Clayton", lat: 45.39311, lon: -122.583676, times: ["9:17 PM", "10:01 PM", "6:11 AM", "7:11 AM", "8:10 AM", "8:53 AM", "9:33 AM", "10:13 AM"] },
@@ -703,22 +711,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 

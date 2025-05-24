@@ -53,12 +53,12 @@
       color: #f0f0f0;
     }
     .content-box {
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem;
-      background-color: #1e1e1e;
-    }
+  /* border: 2px solid #4dd0e1; */
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #1e1e1e;
+}
     #map {
   width: 100vw;
   min-width: 100vw;
@@ -119,6 +119,14 @@
         padding-bottom: rem;
       }
     }
+
+/* --- Border Nuker --- */
+#map, .leaflet-container, .content-box, .bus-panel, .next-stop-popup, .leaflet-pane, .leaflet-marker-icon, .leaflet-popup-content {
+  border: none !important;
+  box-shadow: none !important;
+  background-clip: padding-box;
+}
+
   </style>
 </head>
 <body>
@@ -1378,9 +1386,9 @@ const stops = [
   { stop_id: "7604", name: "5th &amp; High St", lat: 45.355714, lon: -122.608082, times: ["9:48 PM", "10:21 PM", "10:58 PM", "11:33 PM", "12:06 AM", "5:28 AM", "6:07 AM", "6:45 AM"] },
   { stop_id: "14056", name: "High St &amp; 2nd", lat: 45.353731, lon: -122.61039, times: ["9:49 PM", "10:22 PM", "10:59 PM", "11:34 PM", "12:07 AM", "5:29 AM", "6:08 AM", "6:46 AM"] },
   { stop_id: "2663", name: "S High &amp; 1st St", lat: 45.352608, lon: -122.611518, times: ["9:49 PM", "10:22 PM", "10:59 PM", "11:34 PM", "12:07 AM", "5:29 AM", "6:08 AM", "6:46 AM"] },
-  { stop_id: "7101", name: "S 2nd &amp; Tumwater", lat: 45.351484, lon: -122.61352, times: ["9:10 PM", "9:50 PM", "10:23 PM", "11:00 PM", "11:35 PM", "12:08 AM", "5:30 AM", "6:09 AM"] },
-  { stop_id: "14133", name: "Main &amp; 8th St", lat: 45.358218, lon: -122.607503, times: ["9:14 PM", "9:53 PM", "10:26 PM", "11:03 PM", "11:38 PM", "12:11 AM", "5:33 AM", "6:12 AM"] },
-  { stop_id: "8758", name: "Oregon City Transit Center ", lat: 45.360269, lon: -122.604529, times: ["9:16 PM", "9:55 PM", "10:28 PM", "11:05 PM", "11:40 PM", "12:13 AM", "5:35 AM", "6:14 AM"] },
+  { stop_id: "7101", name: "S 2nd &amp; Tumwater", lat: 45.351484, lon: -122.61352, times: ["9:50 PM", "10:23 PM", "11:00 PM", "11:35 PM", "12:08 AM", "5:30 AM", "6:09 AM", "6:47 AM"] },
+  { stop_id: "14133", name: "Main &amp; 8th St", lat: 45.358218, lon: -122.607503, times: ["9:53 PM", "10:26 PM", "11:03 PM", "11:38 PM", "12:11 AM", "5:33 AM", "6:12 AM", "6:50 AM"] },
+  { stop_id: "8758", name: "Oregon City Transit Center ", lat: 45.360269, lon: -122.604529, times: ["9:55 PM", "10:28 PM", "11:05 PM", "11:40 PM", "12:13 AM", "5:35 AM", "6:14 AM", "6:52 AM"] },
   { stop_id: "3842", name: "McLoughlin &amp; Oregon City Shopping Center", lat: 45.368845, lon: -122.600901, times: ["9:17 PM", "9:56 PM", "10:29 PM", "11:06 PM", "11:41 PM", "12:14 AM", "5:36 AM", "6:15 AM"] },
   { stop_id: "10328", name: "McLoughlin &amp; W Arlington", lat: 45.376226, lon: -122.601755, times: ["9:19 PM", "9:58 PM", "10:30 PM", "11:07 PM", "11:42 PM", "12:15 AM", "5:38 AM", "6:17 AM"] },
   { stop_id: "10327", name: "SE McLoughlin &amp; W Gloucester", lat: 45.379774, lon: -122.603875, times: ["9:20 PM", "9:59 PM", "10:31 PM", "11:08 PM", "11:43 PM", "12:16 AM", "5:39 AM", "6:18 AM"] },
@@ -1423,12 +1431,12 @@ const stops = [
   { stop_id: "3234", name: "SE King &amp; Linwood", lat: 45.447877, lon: -122.598559, times: ["9:46 PM", "10:25 PM", "10:57 PM", "11:33 PM", "12:07 AM", "12:40 AM", "6:04 AM", "6:44 AM"] },
   { stop_id: "3250", name: "SE King &amp; 66th", lat: 45.447861, lon: -122.595347, times: ["9:46 PM", "10:25 PM", "10:57 PM", "11:33 PM", "12:07 AM", "12:40 AM", "6:04 AM", "6:44 AM"] },
   { stop_id: "3230", name: "SE King &amp; Bell", lat: 45.447822, lon: -122.592957, times: ["9:47 PM", "10:26 PM", "10:58 PM", "11:34 PM", "12:08 AM", "12:41 AM", "6:05 AM", "6:45 AM"] },
-  { stop_id: "3224", name: "7100 Block SE King", lat: 45.446985, lon: -122.590273, times: ["9:10 PM", "9:47 PM", "10:26 PM", "10:58 PM", "11:34 PM", "12:08 AM", "12:41 AM", "6:05 AM"] },
-  { stop_id: "3251", name: "SE King &amp; 74th", lat: 45.446987, lon: -122.587335, times: ["9:11 PM", "9:48 PM", "10:27 PM", "10:59 PM", "11:35 PM", "12:09 AM", "12:42 AM", "6:06 AM"] },
-  { stop_id: "3226", name: "7900 Block SE King", lat: 45.44696, lon: -122.582217, times: ["9:12 PM", "9:49 PM", "10:28 PM", "10:59 PM", "11:35 PM", "12:09 AM", "12:42 AM", "6:06 AM"] },
-  { stop_id: "7990", name: "SE 82nd &amp; King", lat: 45.446585, lon: -122.579071, times: ["9:13 PM", "9:50 PM", "10:29 PM", "11:00 PM", "11:36 PM", "12:10 AM", "12:43 AM", "6:07 AM"] },
-  { stop_id: "7921", name: "SE 82nd &amp; Monroe/Boyer", lat: 45.444217, lon: -122.579068, times: ["9:14 PM", "9:50 PM", "10:29 PM", "11:01 PM", "11:37 PM", "12:11 AM", "12:44 AM", "6:08 AM"] },
-  { stop_id: "7942", name: "SE 82nd &amp; Causey", lat: 45.441549, lon: -122.579109, times: ["9:15 PM", "9:51 PM", "10:30 PM", "11:01 PM", "11:37 PM", "12:11 AM", "12:44 AM", "6:08 AM"] },
+  { stop_id: "3224", name: "7100 Block SE King", lat: 45.446985, lon: -122.590273, times: ["9:47 PM", "10:26 PM", "10:58 PM", "11:34 PM", "12:08 AM", "12:41 AM", "6:05 AM", "6:45 AM"] },
+  { stop_id: "3251", name: "SE King &amp; 74th", lat: 45.446987, lon: -122.587335, times: ["9:48 PM", "10:27 PM", "10:59 PM", "11:35 PM", "12:09 AM", "12:42 AM", "6:06 AM", "6:46 AM"] },
+  { stop_id: "3226", name: "7900 Block SE King", lat: 45.44696, lon: -122.582217, times: ["9:49 PM", "10:28 PM", "10:59 PM", "11:35 PM", "12:09 AM", "12:42 AM", "6:06 AM", "6:46 AM"] },
+  { stop_id: "7990", name: "SE 82nd &amp; King", lat: 45.446585, lon: -122.579071, times: ["9:50 PM", "10:29 PM", "11:00 PM", "11:36 PM", "12:10 AM", "12:43 AM", "6:07 AM", "6:47 AM"] },
+  { stop_id: "7921", name: "SE 82nd &amp; Monroe/Boyer", lat: 45.444217, lon: -122.579068, times: ["9:50 PM", "10:29 PM", "11:01 PM", "11:37 PM", "12:11 AM", "12:44 AM", "6:08 AM", "6:48 AM"] },
+  { stop_id: "7942", name: "SE 82nd &amp; Causey", lat: 45.441549, lon: -122.579109, times: ["9:51 PM", "10:30 PM", "11:01 PM", "11:37 PM", "12:11 AM", "12:44 AM", "6:08 AM", "6:48 AM"] },
   { stop_id: "12921", name: "Clackamas Town Center Mall", lat: 45.43731, lon: -122.573312, times: ["9:18 PM", "9:54 PM", "10:33 PM", "11:04 PM", "11:40 PM", "12:14 AM", "12:47 AM", "6:11 AM"] },
   { stop_id: "13247", name: "Clackamas Town Center TC", lat: 45.435538, lon: -122.568155, times: ["9:20 PM", "9:56 PM", "10:35 PM", "11:06 PM", "11:42 PM", "12:16 AM", "12:49 AM", "6:13 AM"] },
   { stop_id: "13248", name: "Clackamas Town Center Transit Center", lat: 45.435666, lon: -122.568707, times: ["9:21 PM", "9:57 PM", "10:36 PM", "11:07 PM", "11:43 PM", "12:17 AM", "12:50 AM", "6:14 AM"] },
@@ -1443,22 +1451,45 @@ const stops = [
   map.fitBounds(polylineOut.getBounds());
 
   stops.forEach(stop => {
-    const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 6,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9,
-      weight: 1
-    });
-
-    const popupContent = `
-      <strong>${stop.name}</strong><br>
-      ${stop.times && stop.times.length ? stop.times.join("<br>") : "No scheduled times"}
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(map);
+  const marker = L.circleMarker([stop.lat, stop.lon], {
+    radius: 6,
+    color: '#4dd0e1',
+    fillColor: '#4dd0e1',
+    fillOpacity: 0.9,
+    weight: 1
   });
+
+  // Get current Portland time in minutes since midnight
+  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+
+  let highlightedTimes = [];
+  let foundNext = false;
+
+  if (stop.times && stop.times.length) {
+    stop.times.forEach(timeStr => {
+      // Assume timeStr is "HH:MM"
+      let [h, m] = timeStr.split(":");
+      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+      // Highlight only the next upcoming time in Portland
+      if (!foundNext && schedMins >= nowMins) {
+        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(timeStr);
+      }
+    });
+  }
+
+  const popupContent = `
+    <strong>${stop.name}</strong><br>
+    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(map);
+});
+
 
   let busMarkers = {};
 
