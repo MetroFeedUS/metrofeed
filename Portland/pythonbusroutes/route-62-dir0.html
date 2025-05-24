@@ -33,13 +33,12 @@
     }
 
     .ad-banner img {
-  width: 100%;
-  max-width: 728px;
-
-  max-height: 120px; /* 👈 Caps desktop height */
-  display: block;
-  margin: 0 auto;
-}
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
     .home-button {
       position: fixed;
       top: 120px;
@@ -133,25 +132,21 @@
       text-decoration: underline;
     }
 
-@media (max-width: 600px) {
-  .ad-banner {
-    padding-top: 1rem;
-    padding-bottom: 0rem;
-  }
-}
-
-
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
   </style>
 </head>
 
 <body>
- 
-  <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-62-dir0-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-62-dir0-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
   </div>
 
- <header>
+  <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
@@ -184,7 +179,6 @@
     const routeNumber = 62;
     const direction = parseInt(0);
 
-    // Initialize map
     const map = L.map('map', {
       center: [45.6, -122.7],
       zoom: 12,
@@ -195,7 +189,6 @@
     });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    // Injected shape & stop data
     const shapeOutbound = [
   [45.510082, -122.781988],
   [45.510158, -122.782197],
@@ -1113,22 +1106,29 @@ const stops = [
   { stop_id: "9650", name: "Washington Square Transit Center ", lat: 45.4527, lon: -122.77881, times: ["7:03 AM", "8:23 AM", "9:06 AM", "9:53 AM", "10:33 AM", "11:17 AM", "12:00 PM", "12:44 PM"] },
 ]
 
-    // Draw route polyline
     const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
     map.fitBounds(polylineOut.getBounds());
 
-    // 1. Get current time in PT
     const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    const datePT = nowPT.toDateString();
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
 
-    // 2. Add stops with highlighted next time
     stops.forEach(stop => {
-      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
-      const nextIdx = stamps.findIndex(ts => ts > nowPT);
-      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
-        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
-      }).join('<br>');
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
 
       L.circleMarker([stop.lat, stop.lon], {
         radius: 6,
@@ -1137,11 +1137,10 @@ const stops = [
         fillOpacity: 0.9,
         weight: 1
       })
-      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
       .addTo(map);
     });
 
-    // Bus markers fetch
     let busMarkers = {};
     async function fetchAndDisplay() {
       const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
@@ -1156,7 +1155,7 @@ const stops = [
         if (!bus.latitude || !bus.longitude || !bus.blockID) return;
         const icon = L.divIcon({    
            className: '',
-	   html: `
+           html: `
             <div style="text-align:center;">
               <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
               <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
