@@ -11,12 +11,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
+     
+ body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
+
+    body {
+      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
@@ -576,9 +582,9 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "13888", name: "SE 172nd &amp; Sunnyside", lat: 45.426947, lon: -122.485927, times: ["9:30 PM", "10:16 PM", "11:02 PM", "5:46 AM", "6:15 AM", "6:54 AM", "7:25 AM", "7:59 AM"] },
-  { stop_id: "13889", name: "SE Sunnyside &amp; 169th", lat: 45.426976, lon: -122.489235, times: ["9:30 PM", "10:16 PM", "11:02 PM", "5:46 AM", "6:15 AM", "6:54 AM", "7:25 AM", "7:59 AM"] },
-  { stop_id: "13890", name: "SE Sunnyside &amp; 162nd", lat: 45.42709, lon: -122.497345, times: ["9:31 PM", "10:17 PM", "11:03 PM", "5:47 AM", "6:16 AM", "6:55 AM", "7:26 AM", "8:01 AM"] },
+  { stop_id: "13888", name: "SE 172nd &amp; Sunnyside", lat: 45.426947, lon: -122.485927, times: ["10:16 PM", "11:02 PM", "5:46 AM", "6:15 AM", "6:54 AM", "7:25 AM", "7:59 AM", "8:30 AM"] },
+  { stop_id: "13889", name: "SE Sunnyside &amp; 169th", lat: 45.426976, lon: -122.489235, times: ["10:16 PM", "11:02 PM", "5:46 AM", "6:15 AM", "6:54 AM", "7:25 AM", "7:59 AM", "8:30 AM"] },
+  { stop_id: "13890", name: "SE Sunnyside &amp; 162nd", lat: 45.42709, lon: -122.497345, times: ["10:17 PM", "11:03 PM", "5:47 AM", "6:16 AM", "6:55 AM", "7:26 AM", "8:01 AM", "8:32 AM"] },
   { stop_id: "12902", name: "SE Sunnyside &amp; 157th", lat: 45.426984, lon: -122.501339, times: ["9:32 PM", "10:18 PM", "11:03 PM", "5:47 AM", "6:17 AM", "6:56 AM", "7:27 AM", "8:01 AM"] },
   { stop_id: "12903", name: "SE Sunnyside &amp; 152nd", lat: 45.425259, lon: -122.507814, times: ["9:32 PM", "10:18 PM", "11:04 PM", "5:48 AM", "6:17 AM", "6:56 AM", "7:28 AM", "8:02 AM"] },
   { stop_id: "12923", name: "SE Sunnyside &amp; Misty Dr", lat: 45.425009, lon: -122.513078, times: ["9:33 PM", "10:19 PM", "11:05 PM", "5:49 AM", "6:18 AM", "6:57 AM", "7:29 AM", "8:03 AM"] },
@@ -626,12 +632,25 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      // Assume timeStr is "HH:MM"
-      let [h, m] = timeStr.split(":");
+      let cleanTime = timeStr.trim(); // Remove spaces
+      let [h, m] = cleanTime.split(":");
+      // Pad single-digit hours/minutes
+      h = h.padStart(2, "0");
+      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      // Highlight only the next upcoming time in Portland
+
+      // Debugging log: see what times are being compared
+      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
+
+      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(cleanTime);
+      }
+    });
+  }</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(timeStr);

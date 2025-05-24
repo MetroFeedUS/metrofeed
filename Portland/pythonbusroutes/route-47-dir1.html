@@ -11,12 +11,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
+     
+ body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
+
+    body {
+      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
@@ -1017,9 +1023,9 @@ const stops = [
   { stop_id: "7025", name: "NW 185th &amp; NE Walker", lat: 45.527369, lon: -122.867633, times: ["10:12 PM", "6:03 AM", "6:34 AM", "6:52 AM", "7:10 AM", "7:26 AM", "7:41 AM", "7:57 AM"] },
   { stop_id: "7021", name: "700 Block NW 185th", lat: 45.524991, lon: -122.867673, times: ["10:12 PM", "6:03 AM", "6:34 AM", "6:52 AM", "7:11 AM", "7:27 AM", "7:42 AM", "7:58 AM"] },
   { stop_id: "6991", name: "NW 185th &amp; NE Holly St", lat: 45.522979, lon: -122.867681, times: ["10:13 PM", "6:04 AM", "6:35 AM", "6:53 AM", "7:12 AM", "7:28 AM", "7:43 AM", "7:59 AM"] },
-  { stop_id: "6975", name: "NW 185th &amp; NE Heritage Pkwy", lat: 45.520441, lon: -122.867653, times: ["9:16 PM", "10:14 PM", "6:05 AM", "6:36 AM", "6:54 AM", "7:13 AM", "7:29 AM", "7:44 AM"] },
-  { stop_id: "7006", name: "SW 185th &amp; SE Edgeway Dr", lat: 45.518095, lon: -122.867631, times: ["9:17 PM", "10:15 PM", "6:06 AM", "6:37 AM", "6:55 AM", "7:14 AM", "7:30 AM", "7:45 AM"] },
-  { stop_id: "9871", name: "Willow Creek Transit Center ", lat: 45.517356, lon: -122.869793, times: ["9:19 PM", "10:17 PM", "6:08 AM", "6:39 AM", "6:57 AM", "7:16 AM", "7:32 AM", "7:47 AM"] },
+  { stop_id: "6975", name: "NW 185th &amp; NE Heritage Pkwy", lat: 45.520441, lon: -122.867653, times: ["10:14 PM", "6:05 AM", "6:36 AM", "6:54 AM", "7:13 AM", "7:29 AM", "7:44 AM", "8:00 AM"] },
+  { stop_id: "7006", name: "SW 185th &amp; SE Edgeway Dr", lat: 45.518095, lon: -122.867631, times: ["10:15 PM", "6:06 AM", "6:37 AM", "6:55 AM", "7:14 AM", "7:30 AM", "7:45 AM", "8:01 AM"] },
+  { stop_id: "9871", name: "Willow Creek Transit Center ", lat: 45.517356, lon: -122.869793, times: ["10:17 PM", "6:08 AM", "6:39 AM", "6:57 AM", "7:16 AM", "7:32 AM", "7:47 AM", "8:03 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -1048,12 +1054,25 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      // Assume timeStr is "HH:MM"
-      let [h, m] = timeStr.split(":");
+      let cleanTime = timeStr.trim(); // Remove spaces
+      let [h, m] = cleanTime.split(":");
+      // Pad single-digit hours/minutes
+      h = h.padStart(2, "0");
+      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      // Highlight only the next upcoming time in Portland
+
+      // Debugging log: see what times are being compared
+      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
+
+      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(cleanTime);
+      }
+    });
+  }</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(timeStr);

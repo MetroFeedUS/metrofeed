@@ -11,12 +11,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
+     
+ body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
+
+    body {
+      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
@@ -927,13 +933,13 @@ const stops = [
   { stop_id: "1671", name: "SW Farmington &amp; 149th", lat: 45.485181, lon: -122.830306, times: ["10:04 PM", "10:54 PM", "11:43 PM", "5:36 AM", "6:36 AM", "7:09 AM", "7:35 AM", "8:07 AM"] },
   { stop_id: "1661", name: "SW Farmington &amp; Murray", lat: 45.485649, lon: -122.826406, times: ["10:05 PM", "10:55 PM", "11:44 PM", "5:37 AM", "6:37 AM", "7:10 AM", "7:36 AM", "8:08 AM"] },
   { stop_id: "1669", name: "SW Farmington &amp; 142nd", lat: 45.48633, lon: -122.821762, times: ["10:06 PM", "10:56 PM", "11:45 PM", "5:38 AM", "6:38 AM", "7:11 AM", "7:38 AM", "8:10 AM"] },
-  { stop_id: "13917", name: "SW Farmington &amp; Rose Ln", lat: 45.486769, lon: -122.818512, times: ["9:17 PM", "10:07 PM", "10:57 PM", "11:46 PM", "5:39 AM", "6:39 AM", "7:12 AM", "7:39 AM"] },
-  { stop_id: "1650", name: "SW Farmington &amp; Hocken", lat: 45.487309, lon: -122.814214, times: ["9:18 PM", "10:08 PM", "10:58 PM", "11:47 PM", "5:40 AM", "6:40 AM", "7:14 AM", "7:40 AM"] },
-  { stop_id: "1646", name: "SW Farmington &amp; Erickson", lat: 45.487335, lon: -122.811513, times: ["9:18 PM", "10:08 PM", "10:58 PM", "11:47 PM", "5:41 AM", "6:41 AM", "7:14 AM", "7:41 AM"] },
-  { stop_id: "1665", name: "SW Farmington &amp; Watson", lat: 45.487053, lon: -122.806231, times: ["9:19 PM", "10:09 PM", "10:59 PM", "11:48 PM", "5:42 AM", "6:42 AM", "7:16 AM", "7:43 AM"] },
-  { stop_id: "11810", name: "SW Farmington &amp; Hall", lat: 45.486766, lon: -122.803382, times: ["9:20 PM", "10:10 PM", "11:00 PM", "11:49 PM", "5:43 AM", "6:43 AM", "7:17 AM", "7:44 AM"] },
-  { stop_id: "12944", name: "SW Lombard &amp; Broadway", lat: 45.487818, lon: -122.800725, times: ["9:21 PM", "10:11 PM", "11:01 PM", "11:50 PM", "5:44 AM", "6:45 AM", "7:18 AM", "7:45 AM"] },
-  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["9:23 PM", "10:13 PM", "11:03 PM", "11:52 PM", "5:46 AM", "6:47 AM", "7:21 AM", "7:48 AM"] },
+  { stop_id: "13917", name: "SW Farmington &amp; Rose Ln", lat: 45.486769, lon: -122.818512, times: ["10:07 PM", "10:57 PM", "11:46 PM", "5:39 AM", "6:39 AM", "7:12 AM", "7:39 AM", "8:11 AM"] },
+  { stop_id: "1650", name: "SW Farmington &amp; Hocken", lat: 45.487309, lon: -122.814214, times: ["10:08 PM", "10:58 PM", "11:47 PM", "5:40 AM", "6:40 AM", "7:14 AM", "7:40 AM", "8:12 AM"] },
+  { stop_id: "1646", name: "SW Farmington &amp; Erickson", lat: 45.487335, lon: -122.811513, times: ["10:08 PM", "10:58 PM", "11:47 PM", "5:41 AM", "6:41 AM", "7:14 AM", "7:41 AM", "8:13 AM"] },
+  { stop_id: "1665", name: "SW Farmington &amp; Watson", lat: 45.487053, lon: -122.806231, times: ["10:09 PM", "10:59 PM", "11:48 PM", "5:42 AM", "6:42 AM", "7:16 AM", "7:43 AM", "8:15 AM"] },
+  { stop_id: "11810", name: "SW Farmington &amp; Hall", lat: 45.486766, lon: -122.803382, times: ["10:10 PM", "11:00 PM", "11:49 PM", "5:43 AM", "6:43 AM", "7:17 AM", "7:44 AM", "8:16 AM"] },
+  { stop_id: "12944", name: "SW Lombard &amp; Broadway", lat: 45.487818, lon: -122.800725, times: ["10:11 PM", "11:01 PM", "11:50 PM", "5:44 AM", "6:45 AM", "7:18 AM", "7:45 AM", "8:17 AM"] },
+  { stop_id: "9985", name: "Beaverton Transit Center", lat: 45.491385, lon: -122.801308, times: ["10:13 PM", "11:03 PM", "11:52 PM", "5:46 AM", "6:47 AM", "7:21 AM", "7:48 AM", "8:20 AM"] },
   { stop_id: "13700", name: "PCC Rock Creek Layover", lat: 45.565759, lon: -122.85846, times: ["9:33 PM", "10:24 PM", "6:55 AM", "8:28 AM", "8:58 AM", "9:30 AM", "10:02 AM", "10:32 AM"] },
   { stop_id: "4429", name: "PCC Rock Creek Main Stop", lat: 45.565999, lon: -122.859421, times: ["9:34 PM", "10:25 PM", "6:56 AM", "7:27 AM", "7:58 AM", "8:29 AM", "8:59 AM", "9:31 AM"] },
   { stop_id: "7026", name: "NW 185th &amp; West Union", lat: 45.558515, lon: -122.867388, times: ["11:15 PM"] },
@@ -965,12 +971,25 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      // Assume timeStr is "HH:MM"
-      let [h, m] = timeStr.split(":");
+      let cleanTime = timeStr.trim(); // Remove spaces
+      let [h, m] = cleanTime.split(":");
+      // Pad single-digit hours/minutes
+      h = h.padStart(2, "0");
+      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      // Highlight only the next upcoming time in Portland
+
+      // Debugging log: see what times are being compared
+      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
+
+      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(cleanTime);
+      }
+    });
+  }</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(timeStr);

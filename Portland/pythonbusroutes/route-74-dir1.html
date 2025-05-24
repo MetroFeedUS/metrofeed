@@ -11,12 +11,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
+     
+ body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
+
+    body {
+      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
@@ -553,15 +559,15 @@ const stops = [
   { stop_id: "13951", name: "SE 162nd &amp; Main", lat: 45.513462, lon: -122.49669, times: ["10:14 PM", "6:04 AM", "6:35 AM", "6:57 AM", "7:17 AM", "7:37 AM", "7:57 AM", "8:17 AM"] },
   { stop_id: "13953", name: "SE 162nd &amp; Mill", lat: 45.510008, lon: -122.496689, times: ["10:15 PM", "6:05 AM", "6:35 AM", "6:57 AM", "7:17 AM", "7:38 AM", "7:58 AM", "8:18 AM"] },
   { stop_id: "13954", name: "SE 162nd &amp; Grant", lat: 45.506806, lon: -122.496744, times: ["10:16 PM", "6:06 AM", "6:36 AM", "6:58 AM", "7:18 AM", "7:38 AM", "7:58 AM", "8:18 AM"] },
-  { stop_id: "13955", name: "SE 162nd &amp; Division", lat: 45.503944, lon: -122.49681, times: ["9:16 PM", "10:16 PM", "6:06 AM", "6:37 AM", "6:59 AM", "7:19 AM", "7:39 AM", "7:59 AM"] },
-  { stop_id: "13956", name: "SE 162nd &amp; Tibbetts", lat: 45.499854, lon: -122.497003, times: ["9:17 PM", "10:17 PM", "6:07 AM", "6:38 AM", "7:00 AM", "7:20 AM", "7:40 AM", "8:00 AM"] },
-  { stop_id: "13957", name: "SE Powell &amp; 162nd", lat: 45.494563, lon: -122.496025, times: ["9:18 PM", "10:18 PM", "6:08 AM", "6:39 AM", "7:01 AM", "7:21 AM", "7:41 AM", "8:01 AM"] },
-  { stop_id: "4610", name: "SE Powell &amp; Naegeli", lat: 45.493735, lon: -122.492021, times: ["9:19 PM", "10:19 PM", "6:09 AM", "6:39 AM", "7:01 AM", "7:21 AM", "7:42 AM", "8:02 AM"] },
-  { stop_id: "4612", name: "SE Powell &amp; 168th", lat: 45.493226, lon: -122.489534, times: ["9:19 PM", "10:19 PM", "6:09 AM", "6:40 AM", "7:02 AM", "7:22 AM", "7:43 AM", "8:03 AM"] },
-  { stop_id: "4534", name: "SE Powell &amp; Meadowland Center", lat: 45.492655, lon: -122.486984, times: ["9:19 PM", "10:19 PM", "6:09 AM", "6:40 AM", "7:02 AM", "7:22 AM", "7:43 AM", "8:03 AM"] },
-  { stop_id: "4615", name: "SE Powell &amp; 174th", lat: 45.492085, lon: -122.483874, times: ["9:20 PM", "10:20 PM", "6:10 AM", "6:41 AM", "7:03 AM", "7:23 AM", "7:44 AM", "8:04 AM"] },
-  { stop_id: "8812", name: "4700 Block W Powell", lat: 45.491307, lon: -122.480318, times: ["9:20 PM", "10:20 PM", "6:10 AM", "6:41 AM", "7:03 AM", "7:23 AM", "7:44 AM", "8:04 AM"] },
-  { stop_id: "4522", name: "W Powell &amp; SW Duniway", lat: 45.489637, lon: -122.473421, times: ["9:22 PM", "10:22 PM", "6:12 AM", "6:43 AM", "7:05 AM", "7:25 AM", "7:46 AM", "8:06 AM"] },
+  { stop_id: "13955", name: "SE 162nd &amp; Division", lat: 45.503944, lon: -122.49681, times: ["10:16 PM", "6:06 AM", "6:37 AM", "6:59 AM", "7:19 AM", "7:39 AM", "7:59 AM", "8:19 AM"] },
+  { stop_id: "13956", name: "SE 162nd &amp; Tibbetts", lat: 45.499854, lon: -122.497003, times: ["10:17 PM", "6:07 AM", "6:38 AM", "7:00 AM", "7:20 AM", "7:40 AM", "8:00 AM", "8:20 AM"] },
+  { stop_id: "13957", name: "SE Powell &amp; 162nd", lat: 45.494563, lon: -122.496025, times: ["10:18 PM", "6:08 AM", "6:39 AM", "7:01 AM", "7:21 AM", "7:41 AM", "8:01 AM", "8:21 AM"] },
+  { stop_id: "4610", name: "SE Powell &amp; Naegeli", lat: 45.493735, lon: -122.492021, times: ["10:19 PM", "6:09 AM", "6:39 AM", "7:01 AM", "7:21 AM", "7:42 AM", "8:02 AM", "8:22 AM"] },
+  { stop_id: "4612", name: "SE Powell &amp; 168th", lat: 45.493226, lon: -122.489534, times: ["10:19 PM", "6:09 AM", "6:40 AM", "7:02 AM", "7:22 AM", "7:43 AM", "8:03 AM", "8:23 AM"] },
+  { stop_id: "4534", name: "SE Powell &amp; Meadowland Center", lat: 45.492655, lon: -122.486984, times: ["10:19 PM", "6:09 AM", "6:40 AM", "7:02 AM", "7:22 AM", "7:43 AM", "8:03 AM", "8:23 AM"] },
+  { stop_id: "4615", name: "SE Powell &amp; 174th", lat: 45.492085, lon: -122.483874, times: ["10:20 PM", "6:10 AM", "6:41 AM", "7:03 AM", "7:23 AM", "7:44 AM", "8:04 AM", "8:24 AM"] },
+  { stop_id: "8812", name: "4700 Block W Powell", lat: 45.491307, lon: -122.480318, times: ["10:20 PM", "6:10 AM", "6:41 AM", "7:03 AM", "7:23 AM", "7:44 AM", "8:04 AM", "8:24 AM"] },
+  { stop_id: "4522", name: "W Powell &amp; SW Duniway", lat: 45.489637, lon: -122.473421, times: ["10:22 PM", "6:12 AM", "6:43 AM", "7:05 AM", "7:25 AM", "7:46 AM", "8:06 AM", "8:26 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -590,12 +596,25 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      // Assume timeStr is "HH:MM"
-      let [h, m] = timeStr.split(":");
+      let cleanTime = timeStr.trim(); // Remove spaces
+      let [h, m] = cleanTime.split(":");
+      // Pad single-digit hours/minutes
+      h = h.padStart(2, "0");
+      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      // Highlight only the next upcoming time in Portland
+
+      // Debugging log: see what times are being compared
+      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
+
+      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(cleanTime);
+      }
+    });
+  }</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(timeStr);

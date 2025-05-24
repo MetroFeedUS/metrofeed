@@ -11,12 +11,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
+     
+ body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
+
+    body {
+      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
@@ -1351,28 +1357,28 @@ const stops = [
   { stop_id: "2419", name: "NE Halsey &amp; 230th Ct", lat: 45.53618, lon: -122.426163, times: ["9:47 PM", "10:22 PM", "5:42 AM", "6:10 AM", "6:40 AM", "7:14 AM", "7:46 AM", "8:16 AM"] },
   { stop_id: "13809", name: "NE Halsey &amp; Wood Village Blvd", lat: 45.535837, lon: -122.428602, times: ["9:48 PM", "10:23 PM", "5:43 AM", "6:11 AM", "6:41 AM", "7:15 AM", "7:47 AM", "8:17 AM"] },
   { stop_id: "2342", name: "NE Halsey &amp; Fairview/223rd", lat: 45.535081, lon: -122.434046, times: ["9:49 PM", "10:24 PM", "5:44 AM", "6:12 AM", "6:42 AM", "7:16 AM", "7:48 AM", "8:18 AM"] },
-  { stop_id: "2437", name: "NE Halsey &amp; 7th St", lat: 45.534163, lon: -122.44037, times: ["9:17 PM", "9:50 PM", "10:25 PM", "5:45 AM", "6:13 AM", "6:43 AM", "7:17 AM", "7:49 AM"] },
-  { stop_id: "2414", name: "NE Halsey &amp; Fairview Parkway", lat: 45.533724, lon: -122.445982, times: ["9:17 PM", "9:50 PM", "10:25 PM", "5:45 AM", "6:14 AM", "6:44 AM", "7:18 AM", "7:50 AM"] },
-  { stop_id: "13505", name: "NE Halsey &amp; 208th Pl", lat: 45.533549, lon: -122.449126, times: ["9:18 PM", "9:51 PM", "10:26 PM", "5:46 AM", "6:14 AM", "6:44 AM", "7:18 AM", "7:50 AM"] },
-  { stop_id: "2411", name: "NE Halsey &amp; 201st", lat: 45.533668, lon: -122.456948, times: ["9:19 PM", "9:52 PM", "10:27 PM", "5:47 AM", "6:16 AM", "6:46 AM", "7:20 AM", "7:52 AM"] },
-  { stop_id: "8825", name: "19800 Block NE Halsey", lat: 45.533693, lon: -122.458982, times: ["9:19 PM", "9:52 PM", "10:27 PM", "5:47 AM", "6:16 AM", "6:46 AM", "7:20 AM", "7:52 AM"] },
-  { stop_id: "2326", name: "NE Halsey &amp; 196th", lat: 45.533746, lon: -122.461693, times: ["9:20 PM", "9:53 PM", "10:28 PM", "5:48 AM", "6:17 AM", "6:47 AM", "7:21 AM", "7:53 AM"] },
-  { stop_id: "2407", name: "NE Halsey &amp; 192nd", lat: 45.533762, lon: -122.466681, times: ["9:21 PM", "9:54 PM", "10:29 PM", "5:49 AM", "6:17 AM", "6:47 AM", "7:21 AM", "7:53 AM"] },
-  { stop_id: "2406", name: "NE Halsey &amp; 186th", lat: 45.533785, lon: -122.471874, times: ["9:22 PM", "9:55 PM", "10:30 PM", "5:50 AM", "6:18 AM", "6:48 AM", "7:22 AM", "7:54 AM"] },
-  { stop_id: "8860", name: "NE Halsey &amp; 181st", lat: 45.534809, lon: -122.477689, times: ["9:23 PM", "9:56 PM", "10:31 PM", "5:51 AM", "6:20 AM", "6:50 AM", "7:24 AM", "7:56 AM"] },
-  { stop_id: "2349", name: "NE Halsey &amp; 176th", lat: 45.534816, lon: -122.481752, times: ["9:23 PM", "9:56 PM", "10:31 PM", "5:51 AM", "6:20 AM", "6:50 AM", "7:24 AM", "7:56 AM"] },
-  { stop_id: "2399", name: "NE Halsey &amp; 172nd", lat: 45.534808, lon: -122.486142, times: ["9:24 PM", "9:57 PM", "10:32 PM", "5:52 AM", "6:21 AM", "6:51 AM", "7:25 AM", "7:57 AM"] },
-  { stop_id: "2398", name: "NE Halsey &amp; 169th", lat: 45.534635, lon: -122.488975, times: ["9:24 PM", "9:57 PM", "10:32 PM", "5:52 AM", "6:21 AM", "6:51 AM", "7:25 AM", "7:57 AM"] },
-  { stop_id: "2395", name: "NE Halsey &amp; 162nd", lat: 45.534428, lon: -122.495461, times: ["9:25 PM", "9:58 PM", "10:33 PM", "5:53 AM", "6:22 AM", "6:52 AM", "7:26 AM", "7:58 AM"] },
-  { stop_id: "13026", name: "NE Halsey &amp; 159th Ct", lat: 45.533771, lon: -122.498859, times: ["9:26 PM", "9:59 PM", "10:34 PM", "5:54 AM", "6:23 AM", "6:53 AM", "7:27 AM", "7:59 AM"] },
-  { stop_id: "2390", name: "NE Halsey &amp; 155th", lat: 45.533758, lon: -122.503678, times: ["9:26 PM", "9:59 PM", "10:34 PM", "5:54 AM", "6:24 AM", "6:54 AM", "7:28 AM", "8:00 AM"] },
-  { stop_id: "2386", name: "NE Halsey &amp; 148th", lat: 45.533772, lon: -122.509491, times: ["9:27 PM", "10:00 PM", "10:35 PM", "5:55 AM", "6:25 AM", "6:55 AM", "7:29 AM", "8:01 AM"] },
-  { stop_id: "2382", name: "NE Halsey &amp; 143rd", lat: 45.533784, lon: -122.51588, times: ["9:28 PM", "10:01 PM", "10:36 PM", "5:56 AM", "6:26 AM", "6:56 AM", "7:30 AM", "8:02 AM"] },
-  { stop_id: "14425", name: "NE Halsey &amp; 140th", lat: 45.533737, lon: -122.519594, times: ["9:29 PM", "10:02 PM", "10:37 PM", "5:57 AM", "6:26 AM", "6:56 AM", "7:30 AM", "8:02 AM"] },
-  { stop_id: "2379", name: "NE Halsey &amp; 136th Pl", lat: 45.533674, lon: -122.522471, times: ["9:29 PM", "10:02 PM", "10:37 PM", "5:57 AM", "6:27 AM", "6:57 AM", "7:31 AM", "8:03 AM"] },
-  { stop_id: "2375", name: "NE Halsey &amp; 132nd", lat: 45.533624, lon: -122.526985, times: ["9:30 PM", "10:03 PM", "10:38 PM", "5:58 AM", "6:28 AM", "6:58 AM", "7:32 AM", "8:04 AM"] },
-  { stop_id: "2371", name: "NE Halsey &amp; 128th", lat: 45.533649, lon: -122.531522, times: ["9:31 PM", "10:04 PM", "10:39 PM", "5:59 AM", "6:28 AM", "6:58 AM", "7:32 AM", "8:04 AM"] },
-  { stop_id: "2367", name: "NE Halsey &amp; 122nd", lat: 45.53368, lon: -122.538265, times: ["9:32 PM", "10:05 PM", "10:40 PM", "6:00 AM", "6:30 AM", "7:00 AM", "7:34 AM", "8:06 AM"] },
+  { stop_id: "2437", name: "NE Halsey &amp; 7th St", lat: 45.534163, lon: -122.44037, times: ["9:50 PM", "10:25 PM", "5:45 AM", "6:13 AM", "6:43 AM", "7:17 AM", "7:49 AM", "8:19 AM"] },
+  { stop_id: "2414", name: "NE Halsey &amp; Fairview Parkway", lat: 45.533724, lon: -122.445982, times: ["9:50 PM", "10:25 PM", "5:45 AM", "6:14 AM", "6:44 AM", "7:18 AM", "7:50 AM", "8:20 AM"] },
+  { stop_id: "13505", name: "NE Halsey &amp; 208th Pl", lat: 45.533549, lon: -122.449126, times: ["9:51 PM", "10:26 PM", "5:46 AM", "6:14 AM", "6:44 AM", "7:18 AM", "7:50 AM", "8:20 AM"] },
+  { stop_id: "2411", name: "NE Halsey &amp; 201st", lat: 45.533668, lon: -122.456948, times: ["9:52 PM", "10:27 PM", "5:47 AM", "6:16 AM", "6:46 AM", "7:20 AM", "7:52 AM", "8:22 AM"] },
+  { stop_id: "8825", name: "19800 Block NE Halsey", lat: 45.533693, lon: -122.458982, times: ["9:52 PM", "10:27 PM", "5:47 AM", "6:16 AM", "6:46 AM", "7:20 AM", "7:52 AM", "8:22 AM"] },
+  { stop_id: "2326", name: "NE Halsey &amp; 196th", lat: 45.533746, lon: -122.461693, times: ["9:53 PM", "10:28 PM", "5:48 AM", "6:17 AM", "6:47 AM", "7:21 AM", "7:53 AM", "8:23 AM"] },
+  { stop_id: "2407", name: "NE Halsey &amp; 192nd", lat: 45.533762, lon: -122.466681, times: ["9:54 PM", "10:29 PM", "5:49 AM", "6:17 AM", "6:47 AM", "7:21 AM", "7:53 AM", "8:23 AM"] },
+  { stop_id: "2406", name: "NE Halsey &amp; 186th", lat: 45.533785, lon: -122.471874, times: ["9:55 PM", "10:30 PM", "5:50 AM", "6:18 AM", "6:48 AM", "7:22 AM", "7:54 AM", "8:24 AM"] },
+  { stop_id: "8860", name: "NE Halsey &amp; 181st", lat: 45.534809, lon: -122.477689, times: ["9:56 PM", "10:31 PM", "5:51 AM", "6:20 AM", "6:50 AM", "7:24 AM", "7:56 AM", "8:26 AM"] },
+  { stop_id: "2349", name: "NE Halsey &amp; 176th", lat: 45.534816, lon: -122.481752, times: ["9:56 PM", "10:31 PM", "5:51 AM", "6:20 AM", "6:50 AM", "7:24 AM", "7:56 AM", "8:26 AM"] },
+  { stop_id: "2399", name: "NE Halsey &amp; 172nd", lat: 45.534808, lon: -122.486142, times: ["9:57 PM", "10:32 PM", "5:52 AM", "6:21 AM", "6:51 AM", "7:25 AM", "7:57 AM", "8:27 AM"] },
+  { stop_id: "2398", name: "NE Halsey &amp; 169th", lat: 45.534635, lon: -122.488975, times: ["9:57 PM", "10:32 PM", "5:52 AM", "6:21 AM", "6:51 AM", "7:25 AM", "7:57 AM", "8:27 AM"] },
+  { stop_id: "2395", name: "NE Halsey &amp; 162nd", lat: 45.534428, lon: -122.495461, times: ["9:58 PM", "10:33 PM", "5:53 AM", "6:22 AM", "6:52 AM", "7:26 AM", "7:58 AM", "8:28 AM"] },
+  { stop_id: "13026", name: "NE Halsey &amp; 159th Ct", lat: 45.533771, lon: -122.498859, times: ["9:59 PM", "10:34 PM", "5:54 AM", "6:23 AM", "6:53 AM", "7:27 AM", "7:59 AM", "8:29 AM"] },
+  { stop_id: "2390", name: "NE Halsey &amp; 155th", lat: 45.533758, lon: -122.503678, times: ["9:59 PM", "10:34 PM", "5:54 AM", "6:24 AM", "6:54 AM", "7:28 AM", "8:00 AM", "8:30 AM"] },
+  { stop_id: "2386", name: "NE Halsey &amp; 148th", lat: 45.533772, lon: -122.509491, times: ["10:00 PM", "10:35 PM", "5:55 AM", "6:25 AM", "6:55 AM", "7:29 AM", "8:01 AM", "8:31 AM"] },
+  { stop_id: "2382", name: "NE Halsey &amp; 143rd", lat: 45.533784, lon: -122.51588, times: ["10:01 PM", "10:36 PM", "5:56 AM", "6:26 AM", "6:56 AM", "7:30 AM", "8:02 AM", "8:32 AM"] },
+  { stop_id: "14425", name: "NE Halsey &amp; 140th", lat: 45.533737, lon: -122.519594, times: ["10:02 PM", "10:37 PM", "5:57 AM", "6:26 AM", "6:56 AM", "7:30 AM", "8:02 AM", "8:32 AM"] },
+  { stop_id: "2379", name: "NE Halsey &amp; 136th Pl", lat: 45.533674, lon: -122.522471, times: ["10:02 PM", "10:37 PM", "5:57 AM", "6:27 AM", "6:57 AM", "7:31 AM", "8:03 AM", "8:33 AM"] },
+  { stop_id: "2375", name: "NE Halsey &amp; 132nd", lat: 45.533624, lon: -122.526985, times: ["10:03 PM", "10:38 PM", "5:58 AM", "6:28 AM", "6:58 AM", "7:32 AM", "8:04 AM", "8:34 AM"] },
+  { stop_id: "2371", name: "NE Halsey &amp; 128th", lat: 45.533649, lon: -122.531522, times: ["10:04 PM", "10:39 PM", "5:59 AM", "6:28 AM", "6:58 AM", "7:32 AM", "8:04 AM", "8:34 AM"] },
+  { stop_id: "2367", name: "NE Halsey &amp; 122nd", lat: 45.53368, lon: -122.538265, times: ["10:05 PM", "10:40 PM", "6:00 AM", "6:30 AM", "7:00 AM", "7:34 AM", "8:06 AM", "8:36 AM"] },
   { stop_id: "2361", name: "NE Halsey &amp; 114th", lat: 45.533617, lon: -122.54485, times: ["9:33 PM", "10:06 PM", "10:41 PM", "6:01 AM", "6:31 AM", "7:01 AM", "7:35 AM", "8:07 AM"] },
   { stop_id: "6225", name: "NE Weidler &amp; 111th", lat: 45.534177, lon: -122.549465, times: ["9:33 PM", "10:06 PM", "10:41 PM", "6:02 AM", "6:32 AM", "7:02 AM", "7:36 AM", "8:08 AM"] },
   { stop_id: "6223", name: "NE Weidler &amp; 106th", lat: 45.534206, lon: -122.553284, times: ["9:34 PM", "10:07 PM", "10:42 PM", "6:02 AM", "6:32 AM", "7:03 AM", "7:37 AM", "8:09 AM"] },
@@ -1397,19 +1403,19 @@ const stops = [
   { stop_id: "7571", name: "NE 47th &amp; Halsey", lat: 45.534127, lon: -122.614876, times: ["9:46 PM", "10:19 PM", "10:54 PM", "6:16 AM", "6:46 AM", "7:17 AM", "7:52 AM", "8:24 AM"] },
   { stop_id: "650", name: "NE Broadway &amp; 44th", lat: 45.535188, lon: -122.617752, times: ["9:47 PM", "10:20 PM", "10:55 PM", "6:17 AM", "6:47 AM", "7:18 AM", "7:53 AM", "8:25 AM"] },
   { stop_id: "14403", name: "NE 42nd &amp; Weidler", lat: 45.534579, lon: -122.620372, times: ["9:48 PM", "10:21 PM", "10:56 PM", "6:18 AM", "6:48 AM", "7:19 AM", "7:54 AM", "8:26 AM"] },
-  { stop_id: "7484", name: "NE Cesar Chavez Blvd &amp; Sandy", lat: 45.534699, lon: -122.622777, times: ["9:17 PM", "9:49 PM", "10:22 PM", "10:57 PM", "6:19 AM", "6:49 AM", "7:20 AM", "7:55 AM"] },
-  { stop_id: "649", name: "NE Broadway &amp; 37th", lat: 45.535232, lon: -122.624789, times: ["9:18 PM", "9:50 PM", "10:23 PM", "10:58 PM", "6:20 AM", "6:50 AM", "7:21 AM", "7:56 AM"] },
-  { stop_id: "647", name: "NE Broadway &amp; 35th", lat: 45.535239, lon: -122.628275, times: ["9:19 PM", "9:51 PM", "10:24 PM", "10:59 PM", "6:21 AM", "6:51 AM", "7:22 AM", "7:58 AM"] },
-  { stop_id: "644", name: "NE Broadway &amp; 33rd", lat: 45.535239, lon: -122.63115, times: ["9:20 PM", "9:52 PM", "10:25 PM", "11:00 PM", "6:22 AM", "6:52 AM", "7:23 AM", "7:59 AM"] },
-  { stop_id: "639", name: "NE Broadway &amp; 28th", lat: 45.535262, lon: -122.636596, times: ["9:22 PM", "9:54 PM", "10:26 PM", "11:01 PM", "6:23 AM", "6:53 AM", "7:25 AM", "8:01 AM"] },
-  { stop_id: "637", name: "NE Broadway &amp; 26th", lat: 45.535238, lon: -122.639566, times: ["9:23 PM", "9:55 PM", "10:27 PM", "11:02 PM", "6:24 AM", "6:54 AM", "7:26 AM", "8:02 AM"] },
-  { stop_id: "635", name: "NE Broadway &amp; 24th", lat: 45.535122, lon: -122.641606, times: ["9:24 PM", "9:56 PM", "10:28 PM", "11:03 PM", "6:25 AM", "6:55 AM", "7:27 AM", "8:02 AM"] },
-  { stop_id: "634", name: "NE Broadway &amp; 21st", lat: 45.535099, lon: -122.645338, times: ["9:25 PM", "9:57 PM", "10:29 PM", "11:04 PM", "6:26 AM", "6:56 AM", "7:28 AM", "8:04 AM"] },
-  { stop_id: "631", name: "NE Broadway &amp; 16th", lat: 45.535116, lon: -122.649857, times: ["9:26 PM", "9:58 PM", "10:30 PM", "11:05 PM", "6:27 AM", "6:57 AM", "7:29 AM", "8:05 AM"] },
-  { stop_id: "629", name: "NE Broadway &amp; 12th", lat: 45.535103, lon: -122.653405, times: ["9:28 PM", "10:00 PM", "10:32 PM", "11:07 PM", "6:29 AM", "6:59 AM", "7:31 AM", "8:07 AM"] },
-  { stop_id: "10867", name: "NE 9th &amp; Weidler", lat: 45.534439, lon: -122.656687, times: ["9:29 PM", "10:01 PM", "10:33 PM", "11:08 PM", "6:30 AM", "7:00 AM", "7:32 AM", "8:08 AM"] },
-  { stop_id: "10876", name: "NE Multnomah &amp; 9th", lat: 45.531573, lon: -122.657075, times: ["9:30 PM", "10:02 PM", "10:34 PM", "11:09 PM", "6:31 AM", "7:01 AM", "7:33 AM", "8:10 AM"] },
-  { stop_id: "4043", name: "NE Multnomah &amp; Grand", lat: 45.531586, lon: -122.660482, times: ["9:31 PM", "10:03 PM", "10:35 PM", "11:10 PM", "6:32 AM", "7:02 AM", "7:34 AM", "8:11 AM"] },
+  { stop_id: "7484", name: "NE Cesar Chavez Blvd &amp; Sandy", lat: 45.534699, lon: -122.622777, times: ["9:49 PM", "10:22 PM", "10:57 PM", "6:19 AM", "6:49 AM", "7:20 AM", "7:55 AM", "8:27 AM"] },
+  { stop_id: "649", name: "NE Broadway &amp; 37th", lat: 45.535232, lon: -122.624789, times: ["9:50 PM", "10:23 PM", "10:58 PM", "6:20 AM", "6:50 AM", "7:21 AM", "7:56 AM", "8:28 AM"] },
+  { stop_id: "647", name: "NE Broadway &amp; 35th", lat: 45.535239, lon: -122.628275, times: ["9:51 PM", "10:24 PM", "10:59 PM", "6:21 AM", "6:51 AM", "7:22 AM", "7:58 AM", "8:30 AM"] },
+  { stop_id: "644", name: "NE Broadway &amp; 33rd", lat: 45.535239, lon: -122.63115, times: ["9:52 PM", "10:25 PM", "11:00 PM", "6:22 AM", "6:52 AM", "7:23 AM", "7:59 AM", "8:31 AM"] },
+  { stop_id: "639", name: "NE Broadway &amp; 28th", lat: 45.535262, lon: -122.636596, times: ["9:54 PM", "10:26 PM", "11:01 PM", "6:23 AM", "6:53 AM", "7:25 AM", "8:01 AM", "8:33 AM"] },
+  { stop_id: "637", name: "NE Broadway &amp; 26th", lat: 45.535238, lon: -122.639566, times: ["9:55 PM", "10:27 PM", "11:02 PM", "6:24 AM", "6:54 AM", "7:26 AM", "8:02 AM", "8:34 AM"] },
+  { stop_id: "635", name: "NE Broadway &amp; 24th", lat: 45.535122, lon: -122.641606, times: ["9:56 PM", "10:28 PM", "11:03 PM", "6:25 AM", "6:55 AM", "7:27 AM", "8:02 AM", "8:34 AM"] },
+  { stop_id: "634", name: "NE Broadway &amp; 21st", lat: 45.535099, lon: -122.645338, times: ["9:57 PM", "10:29 PM", "11:04 PM", "6:26 AM", "6:56 AM", "7:28 AM", "8:04 AM", "8:36 AM"] },
+  { stop_id: "631", name: "NE Broadway &amp; 16th", lat: 45.535116, lon: -122.649857, times: ["9:58 PM", "10:30 PM", "11:05 PM", "6:27 AM", "6:57 AM", "7:29 AM", "8:05 AM", "8:37 AM"] },
+  { stop_id: "629", name: "NE Broadway &amp; 12th", lat: 45.535103, lon: -122.653405, times: ["10:00 PM", "10:32 PM", "11:07 PM", "6:29 AM", "6:59 AM", "7:31 AM", "8:07 AM", "8:39 AM"] },
+  { stop_id: "10867", name: "NE 9th &amp; Weidler", lat: 45.534439, lon: -122.656687, times: ["10:01 PM", "10:33 PM", "11:08 PM", "6:30 AM", "7:00 AM", "7:32 AM", "8:08 AM", "8:40 AM"] },
+  { stop_id: "10876", name: "NE Multnomah &amp; 9th", lat: 45.531573, lon: -122.657075, times: ["10:02 PM", "10:34 PM", "11:09 PM", "6:31 AM", "7:01 AM", "7:33 AM", "8:10 AM", "8:42 AM"] },
+  { stop_id: "4043", name: "NE Multnomah &amp; Grand", lat: 45.531586, lon: -122.660482, times: ["10:03 PM", "10:35 PM", "11:10 PM", "6:32 AM", "7:02 AM", "7:34 AM", "8:11 AM", "8:43 AM"] },
   { stop_id: "11492", name: "NE Multnomah &amp; 3rd", lat: 45.531159, lon: -122.66293, times: ["9:32 PM", "10:04 PM", "10:36 PM", "11:11 PM", "6:33 AM", "7:03 AM", "7:35 AM", "8:12 AM"] },
   { stop_id: "2592", name: "Rose Quarter Transit Center", lat: 45.530005, lon: -122.666476, times: ["9:34 PM", "10:06 PM", "10:38 PM", "11:13 PM", "6:35 AM", "7:05 AM", "7:37 AM", "8:14 AM"] },
   { stop_id: "9311", name: "NW Glisan &amp; 3rd", lat: 45.526817, lon: -122.674106, times: ["9:36 PM", "10:08 PM", "10:40 PM", "11:15 PM", "6:37 AM", "7:07 AM", "7:39 AM", "8:17 AM"] },
@@ -1423,12 +1429,12 @@ const stops = [
   { stop_id: "7113", name: "NW 21st &amp; Irving", lat: 45.527648, lon: -122.694407, times: ["9:43 PM", "10:14 PM", "10:46 PM", "11:21 PM", "6:43 AM", "7:13 AM", "7:46 AM", "8:23 AM"] },
   { stop_id: "7122", name: "NW 21st &amp; Lovejoy", lat: 45.530114, lon: -122.694475, times: ["9:44 PM", "10:15 PM", "10:47 PM", "11:22 PM", "6:44 AM", "7:14 AM", "7:47 AM", "8:25 AM"] },
   { stop_id: "7128", name: "NW 21st &amp; Northrup", lat: 45.531208, lon: -122.694535, times: ["9:44 PM", "10:15 PM", "10:47 PM", "11:22 PM", "6:44 AM", "7:14 AM", "7:47 AM", "8:25 AM"] },
-  { stop_id: "7130", name: "NW 21st &amp; Pettygrove", lat: 45.532916, lon: -122.694588, times: ["9:16 PM", "9:45 PM", "10:16 PM", "10:48 PM", "11:23 PM", "6:45 AM", "7:15 AM", "7:48 AM"] },
-  { stop_id: "14040", name: "NW Thurman &amp; 21st", lat: 45.535621, lon: -122.695164, times: ["9:18 PM", "9:46 PM", "10:17 PM", "10:49 PM", "11:24 PM", "6:47 AM", "7:17 AM", "7:50 AM"] },
-  { stop_id: "7169", name: "NW 23rd &amp; Thurman", lat: 45.535752, lon: -122.698714, times: ["9:19 PM", "9:48 PM", "10:19 PM", "10:51 PM", "11:26 PM", "6:48 AM", "7:18 AM", "7:52 AM"] },
-  { stop_id: "6014", name: "NW Vaughn &amp; 24th", lat: 45.536956, lon: -122.700749, times: ["9:21 PM", "9:49 PM", "10:20 PM", "10:52 PM", "11:27 PM", "6:50 AM", "7:20 AM", "7:53 AM"] },
-  { stop_id: "8414", name: "NW Vaughn &amp; 26th", lat: 45.536887, lon: -122.704726, times: ["9:22 PM", "9:51 PM", "10:22 PM", "10:54 PM", "11:29 PM", "6:51 AM", "7:21 AM", "7:55 AM"] },
-  { stop_id: "14365", name: "NW Wilson &amp; 27th", lat: 45.537551, lon: -122.706558, times: ["9:24 PM", "9:52 PM", "10:23 PM", "10:55 PM", "11:30 PM", "6:53 AM", "7:23 AM", "7:57 AM"] },
+  { stop_id: "7130", name: "NW 21st &amp; Pettygrove", lat: 45.532916, lon: -122.694588, times: ["9:45 PM", "10:16 PM", "10:48 PM", "11:23 PM", "6:45 AM", "7:15 AM", "7:48 AM", "8:26 AM"] },
+  { stop_id: "14040", name: "NW Thurman &amp; 21st", lat: 45.535621, lon: -122.695164, times: ["9:46 PM", "10:17 PM", "10:49 PM", "11:24 PM", "6:47 AM", "7:17 AM", "7:50 AM", "8:28 AM"] },
+  { stop_id: "7169", name: "NW 23rd &amp; Thurman", lat: 45.535752, lon: -122.698714, times: ["9:48 PM", "10:19 PM", "10:51 PM", "11:26 PM", "6:48 AM", "7:18 AM", "7:52 AM", "8:30 AM"] },
+  { stop_id: "6014", name: "NW Vaughn &amp; 24th", lat: 45.536956, lon: -122.700749, times: ["9:49 PM", "10:20 PM", "10:52 PM", "11:27 PM", "6:50 AM", "7:20 AM", "7:53 AM", "8:31 AM"] },
+  { stop_id: "8414", name: "NW Vaughn &amp; 26th", lat: 45.536887, lon: -122.704726, times: ["9:51 PM", "10:22 PM", "10:54 PM", "11:29 PM", "6:51 AM", "7:21 AM", "7:55 AM", "8:33 AM"] },
+  { stop_id: "14365", name: "NW Wilson &amp; 27th", lat: 45.537551, lon: -122.706558, times: ["9:52 PM", "10:23 PM", "10:55 PM", "11:30 PM", "6:53 AM", "7:23 AM", "7:57 AM", "8:35 AM"] },
   { stop_id: "13975", name: "1200 Block NW Swigert Way", lat: 45.55503, lon: -122.39933, times: ["5:30 AM", "10:36 AM", "6:26 PM"] },
   { stop_id: "13976", name: "1500 Block NE Graham Rd", lat: 45.55085, lon: -122.388776, times: ["5:31 AM", "10:38 AM", "6:28 PM"] },
   { stop_id: "13977", name: "900 Block NE Graham Rd", lat: 45.547082, lon: -122.391339, times: ["5:32 AM", "10:39 AM", "6:29 PM"] },
@@ -1462,12 +1468,25 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      // Assume timeStr is "HH:MM"
-      let [h, m] = timeStr.split(":");
+      let cleanTime = timeStr.trim(); // Remove spaces
+      let [h, m] = cleanTime.split(":");
+      // Pad single-digit hours/minutes
+      h = h.padStart(2, "0");
+      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      // Highlight only the next upcoming time in Portland
+
+      // Debugging log: see what times are being compared
+      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
+
+      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(cleanTime);
+      }
+    });
+  }</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(timeStr);

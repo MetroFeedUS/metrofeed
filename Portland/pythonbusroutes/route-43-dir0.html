@@ -11,12 +11,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
+     
+ body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
+
+    body {
+      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
@@ -1419,29 +1425,29 @@ const stops = [
   { stop_id: "14404", name: "SW Bertha &amp; Capitol Hill Rd", lat: 45.474713, lon: -122.695955, times: ["10:14 PM", "11:14 PM", "12:17 AM", "6:09 AM", "6:38 AM", "7:08 AM", "7:38 AM", "8:08 AM"] },
   { stop_id: "467", name: "1400 Block SW Bertha", lat: 45.470914, lon: -122.693601, times: ["10:15 PM", "11:15 PM", "12:18 AM", "6:10 AM", "6:39 AM", "7:09 AM", "7:39 AM", "8:09 AM"] },
   { stop_id: "11211", name: "SW Bertha &amp; Barbur", lat: 45.471017, lon: -122.689111, times: ["10:16 PM", "11:16 PM", "12:19 AM", "6:11 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM"] },
-  { stop_id: "5808", name: "SW Terwilliger &amp; 6th", lat: 45.467279, lon: -122.684654, times: ["9:17 PM", "10:17 PM", "11:17 PM", "12:20 AM", "6:13 AM", "6:42 AM", "7:12 AM", "7:42 AM"] },
-  { stop_id: "5816", name: "SW Terwilliger &amp; Carson", lat: 45.464059, lon: -122.683843, times: ["9:18 PM", "10:18 PM", "11:18 PM", "12:21 AM", "6:14 AM", "6:43 AM", "7:13 AM", "7:43 AM"] },
-  { stop_id: "5749", name: "SW Taylors Ferry &amp; 7th", lat: 45.463069, lon: -122.685361, times: ["9:19 PM", "10:19 PM", "11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM"] },
-  { stop_id: "5708", name: "SW Taylors Ferry &amp; 10th", lat: 45.463514, lon: -122.688418, times: ["9:19 PM", "10:19 PM", "11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM"] },
-  { stop_id: "5709", name: "SW Taylors Ferry &amp; 11th", lat: 45.463099, lon: -122.689804, times: ["9:19 PM", "10:19 PM", "11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM"] },
-  { stop_id: "5316", name: "SW Spring Garden &amp; 14th", lat: 45.463545, lon: -122.692857, times: ["9:20 PM", "10:20 PM", "11:20 PM", "12:23 AM", "6:16 AM", "6:45 AM", "7:15 AM", "7:45 AM"] },
-  { stop_id: "5318", name: "SW Spring Garden &amp; 17th", lat: 45.463549, lon: -122.695531, times: ["9:21 PM", "10:20 PM", "11:20 PM", "12:23 AM", "6:17 AM", "6:46 AM", "7:16 AM", "7:46 AM"] },
-  { stop_id: "5319", name: "SW 19th &amp; Spring Garden", lat: 45.464017, lon: -122.697246, times: ["9:21 PM", "10:21 PM", "11:21 PM", "12:24 AM", "6:17 AM", "6:46 AM", "7:16 AM", "7:46 AM"] },
-  { stop_id: "10844", name: "SW Barbur &amp; Spring Garden", lat: 45.463752, lon: -122.701299, times: ["9:23 PM", "10:22 PM", "11:22 PM", "12:25 AM", "6:19 AM", "6:48 AM", "7:18 AM", "7:48 AM"] },
-  { stop_id: "165", name: "SW Barbur &amp; Barbur Ct", lat: 45.462404, lon: -122.703653, times: ["9:23 PM", "10:23 PM", "11:23 PM", "12:26 AM", "6:19 AM", "6:48 AM", "7:18 AM", "7:48 AM"] },
-  { stop_id: "187", name: "SW Barbur &amp; Primrose", lat: 45.45963, lon: -122.708465, times: ["9:25 PM", "10:24 PM", "11:24 PM", "12:27 AM", "6:21 AM", "6:50 AM", "7:20 AM", "7:50 AM"] },
-  { stop_id: "163", name: "SW Barbur &amp; Alice", lat: 45.458449, lon: -122.710493, times: ["9:25 PM", "10:24 PM", "11:24 PM", "12:27 AM", "6:21 AM", "6:50 AM", "7:20 AM", "7:50 AM"] },
-  { stop_id: "212", name: "Barbur Transit Center", lat: 45.454552, lon: -122.71739, times: ["9:28 PM", "10:27 PM", "11:27 PM", "12:30 AM", "6:24 AM", "6:53 AM", "7:23 AM", "7:53 AM"] },
-  { stop_id: "5697", name: "SW Taylors Ferry &amp; Capitol Hwy", lat: 45.454705, lon: -122.720215, times: ["9:28 PM", "10:27 PM", "11:27 PM", "12:30 AM", "6:24 AM", "6:53 AM", "7:23 AM", "7:53 AM"] },
-  { stop_id: "5726", name: "SW Taylors Ferry &amp; 46th", lat: 45.45477, lon: -122.724655, times: ["9:29 PM", "10:28 PM", "11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM"] },
-  { stop_id: "5728", name: "SW Taylors Ferry &amp; 48th", lat: 45.454773, lon: -122.725786, times: ["9:29 PM", "10:28 PM", "11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM"] },
-  { stop_id: "5730", name: "SW Taylors Ferry &amp; 49th", lat: 45.45479, lon: -122.727186, times: ["9:29 PM", "10:28 PM", "11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM"] },
-  { stop_id: "5732", name: "SW Taylors Ferry &amp; 52nd", lat: 45.454804, lon: -122.730452, times: ["9:30 PM", "10:29 PM", "11:29 PM", "12:32 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:55 AM"] },
-  { stop_id: "5734", name: "SW Taylors Ferry &amp; 53rd", lat: 45.454813, lon: -122.731489, times: ["9:30 PM", "10:29 PM", "11:29 PM", "12:32 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:55 AM"] },
-  { stop_id: "5736", name: "SW Taylors Ferry &amp; 55th", lat: 45.454888, lon: -122.733288, times: ["9:30 PM", "10:29 PM", "11:29 PM", "12:32 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM"] },
-  { stop_id: "5738", name: "SW Taylors Ferry &amp; 57th", lat: 45.454863, lon: -122.735701, times: ["9:31 PM", "10:30 PM", "11:30 PM", "12:33 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM"] },
-  { stop_id: "5740", name: "SW Taylors Ferry &amp; 60th", lat: 45.454898, lon: -122.738045, times: ["9:31 PM", "10:30 PM", "11:30 PM", "12:33 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM"] },
-  { stop_id: "5743", name: "SW Taylors Ferry &amp; 62nd", lat: 45.454913, lon: -122.741279, times: ["9:31 PM", "10:30 PM", "11:30 PM", "12:33 AM", "6:28 AM", "6:57 AM", "7:27 AM", "7:57 AM"] },
+  { stop_id: "5808", name: "SW Terwilliger &amp; 6th", lat: 45.467279, lon: -122.684654, times: ["10:17 PM", "11:17 PM", "12:20 AM", "6:13 AM", "6:42 AM", "7:12 AM", "7:42 AM", "8:12 AM"] },
+  { stop_id: "5816", name: "SW Terwilliger &amp; Carson", lat: 45.464059, lon: -122.683843, times: ["10:18 PM", "11:18 PM", "12:21 AM", "6:14 AM", "6:43 AM", "7:13 AM", "7:43 AM", "8:13 AM"] },
+  { stop_id: "5749", name: "SW Taylors Ferry &amp; 7th", lat: 45.463069, lon: -122.685361, times: ["10:19 PM", "11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM"] },
+  { stop_id: "5708", name: "SW Taylors Ferry &amp; 10th", lat: 45.463514, lon: -122.688418, times: ["10:19 PM", "11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM"] },
+  { stop_id: "5709", name: "SW Taylors Ferry &amp; 11th", lat: 45.463099, lon: -122.689804, times: ["10:19 PM", "11:19 PM", "12:22 AM", "6:15 AM", "6:44 AM", "7:14 AM", "7:44 AM", "8:14 AM"] },
+  { stop_id: "5316", name: "SW Spring Garden &amp; 14th", lat: 45.463545, lon: -122.692857, times: ["10:20 PM", "11:20 PM", "12:23 AM", "6:16 AM", "6:45 AM", "7:15 AM", "7:45 AM", "8:15 AM"] },
+  { stop_id: "5318", name: "SW Spring Garden &amp; 17th", lat: 45.463549, lon: -122.695531, times: ["10:20 PM", "11:20 PM", "12:23 AM", "6:17 AM", "6:46 AM", "7:16 AM", "7:46 AM", "8:16 AM"] },
+  { stop_id: "5319", name: "SW 19th &amp; Spring Garden", lat: 45.464017, lon: -122.697246, times: ["10:21 PM", "11:21 PM", "12:24 AM", "6:17 AM", "6:46 AM", "7:16 AM", "7:46 AM", "8:16 AM"] },
+  { stop_id: "10844", name: "SW Barbur &amp; Spring Garden", lat: 45.463752, lon: -122.701299, times: ["10:22 PM", "11:22 PM", "12:25 AM", "6:19 AM", "6:48 AM", "7:18 AM", "7:48 AM", "8:18 AM"] },
+  { stop_id: "165", name: "SW Barbur &amp; Barbur Ct", lat: 45.462404, lon: -122.703653, times: ["10:23 PM", "11:23 PM", "12:26 AM", "6:19 AM", "6:48 AM", "7:18 AM", "7:48 AM", "8:18 AM"] },
+  { stop_id: "187", name: "SW Barbur &amp; Primrose", lat: 45.45963, lon: -122.708465, times: ["10:24 PM", "11:24 PM", "12:27 AM", "6:21 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:20 AM"] },
+  { stop_id: "163", name: "SW Barbur &amp; Alice", lat: 45.458449, lon: -122.710493, times: ["10:24 PM", "11:24 PM", "12:27 AM", "6:21 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:20 AM"] },
+  { stop_id: "212", name: "Barbur Transit Center", lat: 45.454552, lon: -122.71739, times: ["10:27 PM", "11:27 PM", "12:30 AM", "6:24 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:23 AM"] },
+  { stop_id: "5697", name: "SW Taylors Ferry &amp; Capitol Hwy", lat: 45.454705, lon: -122.720215, times: ["10:27 PM", "11:27 PM", "12:30 AM", "6:24 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:23 AM"] },
+  { stop_id: "5726", name: "SW Taylors Ferry &amp; 46th", lat: 45.45477, lon: -122.724655, times: ["10:28 PM", "11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM"] },
+  { stop_id: "5728", name: "SW Taylors Ferry &amp; 48th", lat: 45.454773, lon: -122.725786, times: ["10:28 PM", "11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM"] },
+  { stop_id: "5730", name: "SW Taylors Ferry &amp; 49th", lat: 45.45479, lon: -122.727186, times: ["10:28 PM", "11:28 PM", "12:31 AM", "6:25 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM"] },
+  { stop_id: "5732", name: "SW Taylors Ferry &amp; 52nd", lat: 45.454804, lon: -122.730452, times: ["10:29 PM", "11:29 PM", "12:32 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM"] },
+  { stop_id: "5734", name: "SW Taylors Ferry &amp; 53rd", lat: 45.454813, lon: -122.731489, times: ["10:29 PM", "11:29 PM", "12:32 AM", "6:26 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM"] },
+  { stop_id: "5736", name: "SW Taylors Ferry &amp; 55th", lat: 45.454888, lon: -122.733288, times: ["10:29 PM", "11:29 PM", "12:32 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM"] },
+  { stop_id: "5738", name: "SW Taylors Ferry &amp; 57th", lat: 45.454863, lon: -122.735701, times: ["10:30 PM", "11:30 PM", "12:33 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM"] },
+  { stop_id: "5740", name: "SW Taylors Ferry &amp; 60th", lat: 45.454898, lon: -122.738045, times: ["10:30 PM", "11:30 PM", "12:33 AM", "6:27 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM"] },
+  { stop_id: "5743", name: "SW Taylors Ferry &amp; 62nd", lat: 45.454913, lon: -122.741279, times: ["10:30 PM", "11:30 PM", "12:33 AM", "6:28 AM", "6:57 AM", "7:27 AM", "7:57 AM", "8:27 AM"] },
   { stop_id: "13578", name: "6500 Block SW Taylors Ferry", lat: 45.45495, lon: -122.744275, times: ["9:32 PM", "10:31 PM", "11:31 PM", "12:34 AM", "6:29 AM", "6:58 AM", "7:28 AM", "7:58 AM"] },
   { stop_id: "5747", name: "SW Taylors Ferry &amp; 69th", lat: 45.454955, lon: -122.747051, times: ["9:32 PM", "10:31 PM", "11:31 PM", "12:34 AM", "6:29 AM", "6:58 AM", "7:28 AM", "7:58 AM"] },
   { stop_id: "5693", name: "7100 Block SW Taylors Ferry", lat: 45.453862, lon: -122.750288, times: ["9:33 PM", "10:32 PM", "11:32 PM", "12:35 AM", "6:30 AM", "6:59 AM", "7:29 AM", "7:59 AM"] },
@@ -1490,12 +1496,25 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      // Assume timeStr is "HH:MM"
-      let [h, m] = timeStr.split(":");
+      let cleanTime = timeStr.trim(); // Remove spaces
+      let [h, m] = cleanTime.split(":");
+      // Pad single-digit hours/minutes
+      h = h.padStart(2, "0");
+      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      // Highlight only the next upcoming time in Portland
+
+      // Debugging log: see what times are being compared
+      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
+
+      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(cleanTime);
+      }
+    });
+  }</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(timeStr);

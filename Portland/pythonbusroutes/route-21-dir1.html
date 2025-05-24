@@ -11,12 +11,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
+     
+ body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
+
+    body {
+      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
@@ -729,29 +735,29 @@ const stopNames = {
 
 const stops = [
   { stop_id: "14136", name: "NE Sandy &amp; Parkrose Transit Center", lat: 45.55859, lon: -122.563721, times: ["10:02 PM", "10:49 PM", "11:36 PM", "6:01 AM", "6:37 AM", "7:17 AM", "8:00 AM", "8:32 AM"] },
-  { stop_id: "10856", name: "Parkrose/ Sumner Transit Center", lat: 45.558736, lon: -122.564507, times: ["9:18 PM", "10:04 PM", "10:51 PM", "11:38 PM", "1:58 AM", "6:03 AM", "6:39 AM", "7:19 AM"] },
-  { stop_id: "10715", name: "NE Sandy &amp; 102nd", lat: 45.559031, lon: -122.557982, times: ["9:18 PM", "10:04 PM", "10:51 PM", "11:38 PM", "1:59 AM", "6:04 AM", "6:40 AM", "7:20 AM"] },
-  { stop_id: "10779", name: "NE Sandy &amp; 105th", lat: 45.558779, lon: -122.554923, times: ["9:19 PM", "10:05 PM", "10:52 PM", "11:39 PM", "1:59 AM", "6:04 AM", "6:40 AM", "7:20 AM"] },
-  { stop_id: "14205", name: "NE Sandy &amp; 108th", lat: 45.558478, lon: -122.551399, times: ["9:19 PM", "10:05 PM", "10:52 PM", "11:39 PM", "2:00 AM", "6:05 AM", "6:41 AM", "7:21 AM"] },
-  { stop_id: "10782", name: "NE Sandy &amp; 112th", lat: 45.55811, lon: -122.547622, times: ["9:20 PM", "10:06 PM", "10:53 PM", "11:40 PM", "2:00 AM", "6:05 AM", "6:41 AM", "7:21 AM"] },
-  { stop_id: "10784", name: "NE Sandy &amp; 118th", lat: 45.557506, lon: -122.540998, times: ["9:21 PM", "10:07 PM", "10:54 PM", "11:41 PM", "2:02 AM", "6:06 AM", "6:42 AM", "7:22 AM"] },
-  { stop_id: "10785", name: "NE Sandy &amp; 125th Pl", lat: 45.556461, lon: -122.533733, times: ["9:22 PM", "10:08 PM", "10:55 PM", "11:42 PM", "6:07 AM", "6:43 AM", "7:23 AM", "8:06 AM"] },
-  { stop_id: "10786", name: "NE Sandy &amp; 131st Pl", lat: 45.555684, lon: -122.529331, times: ["9:22 PM", "10:08 PM", "10:55 PM", "11:42 PM", "6:08 AM", "6:44 AM", "7:24 AM", "8:07 AM"] },
-  { stop_id: "10787", name: "NE Sandy &amp; 133rd", lat: 45.554945, lon: -122.525173, times: ["9:23 PM", "10:09 PM", "10:56 PM", "11:43 PM", "6:08 AM", "6:44 AM", "7:24 AM", "8:07 AM"] },
-  { stop_id: "10788", name: "NE Sandy &amp; 138th", lat: 45.554119, lon: -122.5205, times: ["9:23 PM", "10:09 PM", "10:56 PM", "11:43 PM", "6:09 AM", "6:45 AM", "7:25 AM", "8:08 AM"] },
-  { stop_id: "10789", name: "14300 Block NE Sandy", lat: 45.552788, lon: -122.513004, times: ["9:24 PM", "10:10 PM", "10:57 PM", "11:44 PM", "6:10 AM", "6:46 AM", "7:26 AM", "8:09 AM"] },
-  { stop_id: "10790", name: "NE Sandy &amp; 148th", lat: 45.552337, lon: -122.510506, times: ["9:25 PM", "10:11 PM", "10:58 PM", "11:45 PM", "6:11 AM", "6:47 AM", "7:27 AM", "8:10 AM"] },
-  { stop_id: "8569", name: "NE Sandy &amp; 152nd", lat: 45.551567, lon: -122.505936, times: ["9:25 PM", "10:11 PM", "10:58 PM", "11:45 PM", "6:11 AM", "6:47 AM", "7:27 AM", "8:10 AM"] },
-  { stop_id: "10309", name: "NE Sandy &amp; 154th", lat: 45.551157, lon: -122.50394, times: ["9:25 PM", "10:11 PM", "10:58 PM", "11:45 PM", "6:11 AM", "6:47 AM", "7:27 AM", "8:10 AM"] },
-  { stop_id: "8570", name: "NE Sandy &amp; 158th", lat: 45.55049, lon: -122.500516, times: ["9:26 PM", "10:12 PM", "10:59 PM", "11:46 PM", "6:12 AM", "6:48 AM", "7:28 AM", "8:11 AM"] },
-  { stop_id: "8571", name: "NE Sandy &amp; 162nd", lat: 45.549454, lon: -122.496136, times: ["9:27 PM", "10:13 PM", "10:59 PM", "11:46 PM", "6:13 AM", "6:49 AM", "7:29 AM", "8:12 AM"] },
-  { stop_id: "8572", name: "NE Sandy &amp; 165th", lat: 45.548617, lon: -122.491668, times: ["9:27 PM", "10:13 PM", "11:00 PM", "11:47 PM", "6:13 AM", "6:49 AM", "7:29 AM", "8:12 AM"] },
-  { stop_id: "11816", name: "NE Sandy &amp; 172nd Pl", lat: 45.547448, lon: -122.485701, times: ["9:28 PM", "10:14 PM", "11:00 PM", "11:47 PM", "6:14 AM", "6:50 AM", "7:30 AM", "8:13 AM"] },
-  { stop_id: "9095", name: "17600 Block NE Sandy", lat: 45.546634, lon: -122.48165, times: ["9:29 PM", "10:15 PM", "11:01 PM", "11:48 PM", "6:15 AM", "6:51 AM", "7:31 AM", "8:14 AM"] },
-  { stop_id: "10315", name: "NE Sandy &amp; 181st/Airport Way", lat: 45.545823, lon: -122.47657, times: ["9:30 PM", "10:16 PM", "11:02 PM", "11:49 PM", "6:16 AM", "6:52 AM", "7:32 AM", "8:15 AM"] },
-  { stop_id: "10569", name: "NE Sandy &amp; 185th Dr", lat: 45.545682, lon: -122.472722, times: ["9:30 PM", "10:16 PM", "11:02 PM", "11:49 PM", "6:16 AM", "6:52 AM", "7:32 AM", "8:15 AM"] },
-  { stop_id: "9715", name: "18600 Block NE Sandy", lat: 45.545551, lon: -122.469709, times: ["9:30 PM", "10:16 PM", "11:02 PM", "11:49 PM", "6:17 AM", "6:53 AM", "7:33 AM", "8:15 AM"] },
-  { stop_id: "9811", name: "19000 Block NE Sandy", lat: 45.545324, lon: -122.464724, times: ["9:31 PM", "10:17 PM", "11:03 PM", "11:50 PM", "6:17 AM", "6:53 AM", "7:33 AM", "8:16 AM"] },
+  { stop_id: "10856", name: "Parkrose/ Sumner Transit Center", lat: 45.558736, lon: -122.564507, times: ["10:04 PM", "10:51 PM", "11:38 PM", "1:58 AM", "6:03 AM", "6:39 AM", "7:19 AM", "8:02 AM"] },
+  { stop_id: "10715", name: "NE Sandy &amp; 102nd", lat: 45.559031, lon: -122.557982, times: ["10:04 PM", "10:51 PM", "11:38 PM", "1:59 AM", "6:04 AM", "6:40 AM", "7:20 AM", "8:03 AM"] },
+  { stop_id: "10779", name: "NE Sandy &amp; 105th", lat: 45.558779, lon: -122.554923, times: ["10:05 PM", "10:52 PM", "11:39 PM", "1:59 AM", "6:04 AM", "6:40 AM", "7:20 AM", "8:03 AM"] },
+  { stop_id: "14205", name: "NE Sandy &amp; 108th", lat: 45.558478, lon: -122.551399, times: ["10:05 PM", "10:52 PM", "11:39 PM", "2:00 AM", "6:05 AM", "6:41 AM", "7:21 AM", "8:04 AM"] },
+  { stop_id: "10782", name: "NE Sandy &amp; 112th", lat: 45.55811, lon: -122.547622, times: ["10:06 PM", "10:53 PM", "11:40 PM", "2:00 AM", "6:05 AM", "6:41 AM", "7:21 AM", "8:04 AM"] },
+  { stop_id: "10784", name: "NE Sandy &amp; 118th", lat: 45.557506, lon: -122.540998, times: ["10:07 PM", "10:54 PM", "11:41 PM", "2:02 AM", "6:06 AM", "6:42 AM", "7:22 AM", "8:05 AM"] },
+  { stop_id: "10785", name: "NE Sandy &amp; 125th Pl", lat: 45.556461, lon: -122.533733, times: ["10:08 PM", "10:55 PM", "11:42 PM", "6:07 AM", "6:43 AM", "7:23 AM", "8:06 AM", "8:38 AM"] },
+  { stop_id: "10786", name: "NE Sandy &amp; 131st Pl", lat: 45.555684, lon: -122.529331, times: ["10:08 PM", "10:55 PM", "11:42 PM", "6:08 AM", "6:44 AM", "7:24 AM", "8:07 AM", "8:39 AM"] },
+  { stop_id: "10787", name: "NE Sandy &amp; 133rd", lat: 45.554945, lon: -122.525173, times: ["10:09 PM", "10:56 PM", "11:43 PM", "6:08 AM", "6:44 AM", "7:24 AM", "8:07 AM", "8:39 AM"] },
+  { stop_id: "10788", name: "NE Sandy &amp; 138th", lat: 45.554119, lon: -122.5205, times: ["10:09 PM", "10:56 PM", "11:43 PM", "6:09 AM", "6:45 AM", "7:25 AM", "8:08 AM", "8:40 AM"] },
+  { stop_id: "10789", name: "14300 Block NE Sandy", lat: 45.552788, lon: -122.513004, times: ["10:10 PM", "10:57 PM", "11:44 PM", "6:10 AM", "6:46 AM", "7:26 AM", "8:09 AM", "8:41 AM"] },
+  { stop_id: "10790", name: "NE Sandy &amp; 148th", lat: 45.552337, lon: -122.510506, times: ["10:11 PM", "10:58 PM", "11:45 PM", "6:11 AM", "6:47 AM", "7:27 AM", "8:10 AM", "8:42 AM"] },
+  { stop_id: "8569", name: "NE Sandy &amp; 152nd", lat: 45.551567, lon: -122.505936, times: ["10:11 PM", "10:58 PM", "11:45 PM", "6:11 AM", "6:47 AM", "7:27 AM", "8:10 AM", "8:42 AM"] },
+  { stop_id: "10309", name: "NE Sandy &amp; 154th", lat: 45.551157, lon: -122.50394, times: ["10:11 PM", "10:58 PM", "11:45 PM", "6:11 AM", "6:47 AM", "7:27 AM", "8:10 AM", "8:42 AM"] },
+  { stop_id: "8570", name: "NE Sandy &amp; 158th", lat: 45.55049, lon: -122.500516, times: ["10:12 PM", "10:59 PM", "11:46 PM", "6:12 AM", "6:48 AM", "7:28 AM", "8:11 AM", "8:43 AM"] },
+  { stop_id: "8571", name: "NE Sandy &amp; 162nd", lat: 45.549454, lon: -122.496136, times: ["10:13 PM", "10:59 PM", "11:46 PM", "6:13 AM", "6:49 AM", "7:29 AM", "8:12 AM", "8:44 AM"] },
+  { stop_id: "8572", name: "NE Sandy &amp; 165th", lat: 45.548617, lon: -122.491668, times: ["10:13 PM", "11:00 PM", "11:47 PM", "6:13 AM", "6:49 AM", "7:29 AM", "8:12 AM", "8:44 AM"] },
+  { stop_id: "11816", name: "NE Sandy &amp; 172nd Pl", lat: 45.547448, lon: -122.485701, times: ["10:14 PM", "11:00 PM", "11:47 PM", "6:14 AM", "6:50 AM", "7:30 AM", "8:13 AM", "8:45 AM"] },
+  { stop_id: "9095", name: "17600 Block NE Sandy", lat: 45.546634, lon: -122.48165, times: ["10:15 PM", "11:01 PM", "11:48 PM", "6:15 AM", "6:51 AM", "7:31 AM", "8:14 AM", "8:46 AM"] },
+  { stop_id: "10315", name: "NE Sandy &amp; 181st/Airport Way", lat: 45.545823, lon: -122.47657, times: ["10:16 PM", "11:02 PM", "11:49 PM", "6:16 AM", "6:52 AM", "7:32 AM", "8:15 AM", "8:47 AM"] },
+  { stop_id: "10569", name: "NE Sandy &amp; 185th Dr", lat: 45.545682, lon: -122.472722, times: ["10:16 PM", "11:02 PM", "11:49 PM", "6:16 AM", "6:52 AM", "7:32 AM", "8:15 AM", "8:47 AM"] },
+  { stop_id: "9715", name: "18600 Block NE Sandy", lat: 45.545551, lon: -122.469709, times: ["10:16 PM", "11:02 PM", "11:49 PM", "6:17 AM", "6:53 AM", "7:33 AM", "8:15 AM", "8:47 AM"] },
+  { stop_id: "9811", name: "19000 Block NE Sandy", lat: 45.545324, lon: -122.464724, times: ["10:17 PM", "11:03 PM", "11:50 PM", "6:17 AM", "6:53 AM", "7:33 AM", "8:16 AM", "8:48 AM"] },
   { stop_id: "9718", name: "NE Sandy &amp; 201st", lat: 45.544828, lon: -122.456051, times: ["9:32 PM", "10:18 PM", "11:04 PM", "11:51 PM", "6:19 AM", "6:55 AM", "7:35 AM", "8:17 AM"] },
   { stop_id: "9719", name: "NE Sandy &amp; 205th", lat: 45.54414, lon: -122.450596, times: ["9:33 PM", "10:19 PM", "11:05 PM", "11:52 PM", "6:20 AM", "6:56 AM", "7:36 AM", "8:18 AM"] },
   { stop_id: "9717", name: "21100 Block NE Sandy", lat: 45.543086, lon: -122.445215, times: ["9:33 PM", "10:19 PM", "11:05 PM", "11:52 PM", "6:20 AM", "6:56 AM", "7:36 AM", "8:19 AM"] },
@@ -807,12 +813,25 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      // Assume timeStr is "HH:MM"
-      let [h, m] = timeStr.split(":");
+      let cleanTime = timeStr.trim(); // Remove spaces
+      let [h, m] = cleanTime.split(":");
+      // Pad single-digit hours/minutes
+      h = h.padStart(2, "0");
+      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      // Highlight only the next upcoming time in Portland
+
+      // Debugging log: see what times are being compared
+      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
+
+      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(cleanTime);
+      }
+    });
+  }</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(timeStr);

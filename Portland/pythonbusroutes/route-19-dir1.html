@@ -11,12 +11,18 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body {
+     
+ body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
+
+    body {
+      padding-top: 120px; /* Keep consistent spacing below fixed banner */
+    }
+
     header {
       background-color: #0d0d0d;
       border-bottom: 3px solid #4dd0e1;
@@ -1550,24 +1556,24 @@ const stops = [
   { stop_id: "7772", name: "SW 6th &amp; Market", lat: 45.512943, lon: -122.681811, times: ["10:12 PM", "10:57 PM", "11:42 PM", "12:22 AM", "5:22 AM", "6:12 AM", "6:42 AM", "7:12 AM"] },
   { stop_id: "7765", name: "SW 6th &amp; Jefferson", lat: 45.514866, lon: -122.680761, times: ["10:13 PM", "10:58 PM", "11:43 PM", "12:23 AM", "5:23 AM", "6:13 AM", "6:43 AM", "7:13 AM"] },
   { stop_id: "7800", name: "SW 6th &amp; Taylor", lat: 45.517604, lon: -122.679316, times: ["10:15 PM", "11:00 PM", "11:45 PM", "12:25 AM", "12:32 AM", "1:08 AM", "5:25 AM", "5:32 AM"] },
-  { stop_id: "7797", name: "SW 6th &amp; Harvey Milk", lat: 45.520931, lon: -122.677521, times: ["9:16 PM", "10:16 PM", "11:01 PM", "11:46 PM", "12:33 AM", "1:09 AM", "5:33 AM", "6:16 AM"] },
-  { stop_id: "792", name: "W Burnside &amp; SW 6th", lat: 45.522948, lon: -122.676635, times: ["9:17 PM", "10:17 PM", "11:02 PM", "11:47 PM", "12:34 AM", "1:10 AM", "5:34 AM", "6:17 AM"] },
-  { stop_id: "9526", name: "W Burnside &amp; SW 2nd", lat: 45.523009, lon: -122.672529, times: ["9:18 PM", "10:18 PM", "11:03 PM", "11:48 PM", "12:35 AM", "1:11 AM", "5:35 AM", "6:18 AM"] },
-  { stop_id: "704", name: "E Burnside &amp; NE Grand", lat: 45.522869, lon: -122.660911, times: ["9:22 PM", "10:22 PM", "11:07 PM", "11:52 PM", "12:39 AM", "1:14 AM", "5:38 AM", "6:21 AM"] },
-  { stop_id: "820", name: "E Burnside &amp; SE 8th Ave", lat: 45.522847, lon: -122.657843, times: ["9:22 PM", "10:22 PM", "11:07 PM", "11:52 PM", "12:39 AM", "1:15 AM", "5:39 AM", "6:22 AM"] },
-  { stop_id: "13327", name: "E Burnside &amp; SE 12th Ave", lat: 45.522823, lon: -122.653824, times: ["9:24 PM", "10:24 PM", "11:09 PM", "11:54 PM", "12:41 AM", "1:16 AM", "5:40 AM", "6:23 AM"] },
-  { stop_id: "6839", name: "NE 16th &amp; Sandy", lat: 45.52422, lon: -122.649464, times: ["9:25 PM", "10:25 PM", "11:10 PM", "11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM"] },
-  { stop_id: "5061", name: "NE Sandy &amp; 18th", lat: 45.524971, lon: -122.647784, times: ["9:25 PM", "10:25 PM", "11:10 PM", "11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM"] },
-  { stop_id: "5044", name: "NE Sandy &amp; Flanders", lat: 45.525564, lon: -122.646165, times: ["9:26 PM", "10:25 PM", "11:10 PM", "11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM"] },
-  { stop_id: "13193", name: "NE Glisan &amp; 24th", lat: 45.526391, lon: -122.64116, times: ["9:27 PM", "10:26 PM", "11:11 PM", "11:56 PM", "12:43 AM", "1:18 AM", "5:42 AM", "6:25 AM"] },
-  { stop_id: "2105", name: "NE Glisan &amp; 28th", lat: 45.526378, lon: -122.636887, times: ["9:28 PM", "10:27 PM", "11:12 PM", "11:57 PM", "12:44 AM", "1:19 AM", "5:43 AM", "6:26 AM"] },
-  { stop_id: "2106", name: "NE Glisan &amp; 30th", lat: 45.526373, lon: -122.634198, times: ["9:28 PM", "10:28 PM", "11:13 PM", "11:58 PM", "12:45 AM", "1:20 AM", "5:44 AM", "6:27 AM"] },
-  { stop_id: "2108", name: "NE Glisan &amp; 32nd", lat: 45.526374, lon: -122.631819, times: ["9:29 PM", "10:28 PM", "11:13 PM", "11:58 PM", "12:45 AM", "1:20 AM", "5:44 AM", "6:27 AM"] },
-  { stop_id: "2003", name: "NE Glisan &amp; Laurelhurst", lat: 45.526374, lon: -122.627268, times: ["9:30 PM", "10:29 PM", "11:14 PM", "11:59 PM", "12:46 AM", "1:21 AM", "5:45 AM", "6:28 AM"] },
-  { stop_id: "2001", name: "NE Glisan &amp; Laddington", lat: 45.526356, lon: -122.625243, times: ["9:30 PM", "10:29 PM", "11:14 PM", "11:59 PM", "12:46 AM", "1:21 AM", "5:45 AM", "6:28 AM"] },
-  { stop_id: "2110", name: "NE Glisan &amp; Cesar Chavez Blvd", lat: 45.526042, lon: -122.622953, times: ["9:31 PM", "10:30 PM", "11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM"] },
-  { stop_id: "2114", name: "NE Glisan &amp; 43rd", lat: 45.526342, lon: -122.61897, times: ["9:31 PM", "10:30 PM", "11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM"] },
-  { stop_id: "13737", name: "NE Glisan &amp; 45th", lat: 45.526334, lon: -122.616283, times: ["9:31 PM", "10:30 PM", "11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM"] },
+  { stop_id: "7797", name: "SW 6th &amp; Harvey Milk", lat: 45.520931, lon: -122.677521, times: ["10:16 PM", "11:01 PM", "11:46 PM", "12:33 AM", "1:09 AM", "5:33 AM", "6:16 AM", "6:46 AM"] },
+  { stop_id: "792", name: "W Burnside &amp; SW 6th", lat: 45.522948, lon: -122.676635, times: ["10:17 PM", "11:02 PM", "11:47 PM", "12:34 AM", "1:10 AM", "5:34 AM", "6:17 AM", "6:47 AM"] },
+  { stop_id: "9526", name: "W Burnside &amp; SW 2nd", lat: 45.523009, lon: -122.672529, times: ["10:18 PM", "11:03 PM", "11:48 PM", "12:35 AM", "1:11 AM", "5:35 AM", "6:18 AM", "6:48 AM"] },
+  { stop_id: "704", name: "E Burnside &amp; NE Grand", lat: 45.522869, lon: -122.660911, times: ["10:22 PM", "11:07 PM", "11:52 PM", "12:39 AM", "1:14 AM", "5:38 AM", "6:21 AM", "6:51 AM"] },
+  { stop_id: "820", name: "E Burnside &amp; SE 8th Ave", lat: 45.522847, lon: -122.657843, times: ["10:22 PM", "11:07 PM", "11:52 PM", "12:39 AM", "1:15 AM", "5:39 AM", "6:22 AM", "6:52 AM"] },
+  { stop_id: "13327", name: "E Burnside &amp; SE 12th Ave", lat: 45.522823, lon: -122.653824, times: ["10:24 PM", "11:09 PM", "11:54 PM", "12:41 AM", "1:16 AM", "5:40 AM", "6:23 AM", "6:53 AM"] },
+  { stop_id: "6839", name: "NE 16th &amp; Sandy", lat: 45.52422, lon: -122.649464, times: ["10:25 PM", "11:10 PM", "11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM", "6:54 AM"] },
+  { stop_id: "5061", name: "NE Sandy &amp; 18th", lat: 45.524971, lon: -122.647784, times: ["10:25 PM", "11:10 PM", "11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM", "6:54 AM"] },
+  { stop_id: "5044", name: "NE Sandy &amp; Flanders", lat: 45.525564, lon: -122.646165, times: ["10:25 PM", "11:10 PM", "11:55 PM", "12:42 AM", "1:17 AM", "5:41 AM", "6:24 AM", "6:55 AM"] },
+  { stop_id: "13193", name: "NE Glisan &amp; 24th", lat: 45.526391, lon: -122.64116, times: ["10:26 PM", "11:11 PM", "11:56 PM", "12:43 AM", "1:18 AM", "5:42 AM", "6:25 AM", "6:56 AM"] },
+  { stop_id: "2105", name: "NE Glisan &amp; 28th", lat: 45.526378, lon: -122.636887, times: ["10:27 PM", "11:12 PM", "11:57 PM", "12:44 AM", "1:19 AM", "5:43 AM", "6:26 AM", "6:57 AM"] },
+  { stop_id: "2106", name: "NE Glisan &amp; 30th", lat: 45.526373, lon: -122.634198, times: ["10:28 PM", "11:13 PM", "11:58 PM", "12:45 AM", "1:20 AM", "5:44 AM", "6:27 AM", "6:57 AM"] },
+  { stop_id: "2108", name: "NE Glisan &amp; 32nd", lat: 45.526374, lon: -122.631819, times: ["10:28 PM", "11:13 PM", "11:58 PM", "12:45 AM", "1:20 AM", "5:44 AM", "6:27 AM", "6:58 AM"] },
+  { stop_id: "2003", name: "NE Glisan &amp; Laurelhurst", lat: 45.526374, lon: -122.627268, times: ["10:29 PM", "11:14 PM", "11:59 PM", "12:46 AM", "1:21 AM", "5:45 AM", "6:28 AM", "6:59 AM"] },
+  { stop_id: "2001", name: "NE Glisan &amp; Laddington", lat: 45.526356, lon: -122.625243, times: ["10:29 PM", "11:14 PM", "11:59 PM", "12:46 AM", "1:21 AM", "5:45 AM", "6:28 AM", "6:59 AM"] },
+  { stop_id: "2110", name: "NE Glisan &amp; Cesar Chavez Blvd", lat: 45.526042, lon: -122.622953, times: ["10:30 PM", "11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM", "7:00 AM"] },
+  { stop_id: "2114", name: "NE Glisan &amp; 43rd", lat: 45.526342, lon: -122.61897, times: ["10:30 PM", "11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM", "7:00 AM"] },
+  { stop_id: "13737", name: "NE Glisan &amp; 45th", lat: 45.526334, lon: -122.616283, times: ["10:30 PM", "11:15 PM", "12:00 AM", "12:47 AM", "1:22 AM", "5:46 AM", "6:29 AM", "7:00 AM"] },
   { stop_id: "2119", name: "NE Glisan &amp; 49th", lat: 45.526425, lon: -122.612514, times: ["9:32 PM", "10:31 PM", "11:16 PM", "12:01 AM", "12:48 AM", "1:23 AM", "5:47 AM", "6:30 AM"] },
   { stop_id: "2122", name: "NE Glisan &amp; 53rd", lat: 45.52642, lon: -122.609026, times: ["9:33 PM", "10:32 PM", "11:17 PM", "12:02 AM", "12:49 AM", "1:24 AM", "5:48 AM", "6:31 AM"] },
   { stop_id: "2124", name: "NE Glisan &amp; 56th", lat: 45.526414, lon: -122.606055, times: ["9:33 PM", "10:32 PM", "11:17 PM", "12:02 AM", "12:49 AM", "1:24 AM", "5:48 AM", "6:31 AM"] },
@@ -1615,12 +1621,25 @@ const stops = [
 
   if (stop.times && stop.times.length) {
     stop.times.forEach(timeStr => {
-      // Assume timeStr is "HH:MM"
-      let [h, m] = timeStr.split(":");
+      let cleanTime = timeStr.trim(); // Remove spaces
+      let [h, m] = cleanTime.split(":");
+      // Pad single-digit hours/minutes
+      h = h.padStart(2, "0");
+      m = m.padStart(2, "0");
       let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      // Highlight only the next upcoming time in Portland
+
+      // Debugging log: see what times are being compared
+      // console.log(`Stop: ${stop.name}, Time: ${cleanTime}, Scheduled: ${schedMins}, Now: ${nowMins}`);
+
+      // Highlight the next time only
       if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
+        highlightedTimes.push(`<span style=\"background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;\">${cleanTime}</span>`);
+        foundNext = true;
+      } else {
+        highlightedTimes.push(cleanTime);
+      }
+    });
+  }</span>`);
         foundNext = true;
       } else {
         highlightedTimes.push(timeStr);
