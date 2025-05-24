@@ -1087,10 +1087,10 @@ const stops = [
   { stop_id: "6896", name: "SE 17th &amp; Tacoma", lat: 45.46401, lon: -122.64713, times: ["6:49 AM", "7:19 AM", "7:49 AM", "8:09 AM", "8:29 AM", "8:49 AM", "9:09 AM", "9:29 AM"] },
   { stop_id: "6900", name: "SE 17th &amp; Umatilla", lat: 45.46256, lon: -122.647116, times: ["6:49 AM", "7:19 AM", "7:49 AM", "8:09 AM", "8:29 AM", "8:49 AM", "9:09 AM", "9:29 AM"] },
   { stop_id: "6852", name: "SE 17th &amp; Clatsop", lat: 45.460893, lon: -122.647117, times: ["6:49 AM", "7:20 AM", "7:50 AM", "8:10 AM", "8:30 AM", "8:50 AM", "9:10 AM", "9:30 AM"] },
-  { stop_id: "6886", name: "SE 17th &amp; Ochoco St", lat: 45.458725, lon: -122.647112, times: ["11:10 PM", "6:50 AM", "7:20 AM", "7:50 AM", "8:10 AM", "8:30 AM", "8:50 AM", "9:10 AM"] },
-  { stop_id: "6902", name: "SE 17th &amp; Waverly", lat: 45.453257, lon: -122.646234, times: ["11:12 PM", "6:52 AM", "7:22 AM", "7:52 AM", "8:12 AM", "8:32 AM", "8:52 AM", "9:12 AM"] },
-  { stop_id: "6872", name: "SE 17th &amp; Lava", lat: 45.446939, lon: -122.643374, times: ["11:13 PM", "6:53 AM", "7:24 AM", "7:54 AM", "8:14 AM", "8:34 AM", "8:54 AM", "9:14 AM"] },
-  { stop_id: "13477", name: "SE Jackson &amp; Main", lat: 45.444786, lon: -122.640713, times: ["11:15 PM", "6:55 AM", "7:26 AM", "7:56 AM", "8:16 AM", "8:36 AM", "8:56 AM", "9:16 AM"] },
+  { stop_id: "6886", name: "SE 17th &amp; Ochoco St", lat: 45.458725, lon: -122.647112, times: ["6:50 AM", "7:20 AM", "7:50 AM", "8:10 AM", "8:30 AM", "8:50 AM", "9:10 AM", "9:30 AM"] },
+  { stop_id: "6902", name: "SE 17th &amp; Waverly", lat: 45.453257, lon: -122.646234, times: ["6:52 AM", "7:22 AM", "7:52 AM", "8:12 AM", "8:32 AM", "8:52 AM", "9:12 AM", "9:32 AM"] },
+  { stop_id: "6872", name: "SE 17th &amp; Lava", lat: 45.446939, lon: -122.643374, times: ["6:53 AM", "7:24 AM", "7:54 AM", "8:14 AM", "8:34 AM", "8:54 AM", "9:14 AM", "9:34 AM"] },
+  { stop_id: "13477", name: "SE Jackson &amp; Main", lat: 45.444786, lon: -122.640713, times: ["6:55 AM", "7:26 AM", "7:56 AM", "8:16 AM", "8:36 AM", "8:56 AM", "9:16 AM", "9:36 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -1110,35 +1110,29 @@ const stops = [
     weight: 1
   });
 
-  // Get current Portland time in minutes since midnight
-  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
-  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+ // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  let highlightedTimes = [];
-  let foundNext = false;
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
 
-  if (stop.times && stop.times.length) {
-    stop.times.forEach(timeStr => {
-      let cleanTime = timeStr.trim();
-      let [h, m] = cleanTime.split(":");
-      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
-        foundNext = true;
-      } else {
-        highlightedTimes.push(cleanTime);
-      }
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
-  }
-
-  const popupContent = `
-    <strong>${stop.name}</strong><br>
-    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
-  `;
-
-  marker.bindPopup(popupContent);
-  marker.addTo(map);
-});
 
 
   let busMarkers = {};

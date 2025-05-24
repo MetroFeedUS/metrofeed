@@ -734,9 +734,9 @@ const stops = [
   { stop_id: "10758", name: "NW Graham/257th &amp; North Frontage Rd", lat: 45.545208, lon: -122.39086, times: ["6:00 AM", "6:37 AM", "7:11 AM", "7:46 AM", "8:21 AM", "8:56 AM", "9:31 AM", "10:06 AM"] },
   { stop_id: "13988", name: "900 Block NE Graham Rd", lat: 45.547038, lon: -122.391187, times: ["6:00 AM", "6:37 AM", "7:12 AM", "7:47 AM", "8:22 AM", "8:57 AM", "9:32 AM", "10:07 AM"] },
   { stop_id: "13989", name: "1500 Block NE Graham Rd", lat: 45.551362, lon: -122.388561, times: ["6:02 AM", "6:39 AM", "7:13 AM", "7:48 AM", "8:23 AM", "8:58 AM", "9:33 AM", "10:08 AM"] },
-  { stop_id: "13990", name: "NW Graham &amp; N Entrance Rd", lat: 45.552041, lon: -122.398732, times: ["11:10 PM", "6:04 AM", "6:41 AM", "7:15 AM", "7:50 AM", "8:25 AM", "9:00 AM", "9:35 AM"] },
-  { stop_id: "13991", name: "NW Sundial &amp; Rogers Circle", lat: 45.55363, lon: -122.407683, times: ["11:13 PM", "6:06 AM", "6:43 AM", "7:18 AM", "7:53 AM", "8:28 AM", "9:03 AM", "9:38 AM"] },
-  { stop_id: "13975", name: "1200 Block NW Swigert Way", lat: 45.55503, lon: -122.39933, times: ["11:15 PM", "6:08 AM", "6:45 AM", "7:20 AM", "7:55 AM", "8:30 AM", "9:05 AM", "9:40 AM"] },
+  { stop_id: "13990", name: "NW Graham &amp; N Entrance Rd", lat: 45.552041, lon: -122.398732, times: ["6:04 AM", "6:41 AM", "7:15 AM", "7:50 AM", "8:25 AM", "9:00 AM", "9:35 AM", "10:10 AM"] },
+  { stop_id: "13991", name: "NW Sundial &amp; Rogers Circle", lat: 45.55363, lon: -122.407683, times: ["6:06 AM", "6:43 AM", "7:18 AM", "7:53 AM", "8:28 AM", "9:03 AM", "9:38 AM", "10:13 AM"] },
+  { stop_id: "13975", name: "1200 Block NW Swigert Way", lat: 45.55503, lon: -122.39933, times: ["6:08 AM", "6:45 AM", "7:20 AM", "7:55 AM", "8:30 AM", "9:05 AM", "9:40 AM", "10:15 AM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -756,35 +756,29 @@ const stops = [
     weight: 1
   });
 
-  // Get current Portland time in minutes since midnight
-  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
-  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+ // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  let highlightedTimes = [];
-  let foundNext = false;
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
 
-  if (stop.times && stop.times.length) {
-    stop.times.forEach(timeStr => {
-      let cleanTime = timeStr.trim();
-      let [h, m] = cleanTime.split(":");
-      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
-        foundNext = true;
-      } else {
-        highlightedTimes.push(cleanTime);
-      }
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
-  }
-
-  const popupContent = `
-    <strong>${stop.name}</strong><br>
-    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
-  `;
-
-  marker.bindPopup(popupContent);
-  marker.addTo(map);
-});
 
 
   let busMarkers = {};

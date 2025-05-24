@@ -803,7 +803,7 @@ const stops = [
   { stop_id: "13604", name: "NW 10th &amp; Northrup", lat: 45.53128, lon: -122.681364, times: ["6:52 AM", "7:10 AM", "7:36 AM", "7:55 AM", "8:11 AM", "8:38 AM", "8:54 AM", "9:11 AM"] },
   { stop_id: "13620", name: "NW 11th &amp; Marshall", lat: 45.530904, lon: -122.682456, times: ["6:54 AM", "7:04 AM", "7:12 AM", "7:20 AM", "7:38 AM", "7:47 AM", "7:57 AM", "8:03 AM"] },
   { stop_id: "12796", name: "NW 12th &amp; Northrup", lat: 45.531535, lon: -122.68332, times: ["10:37 PM", "10:54 PM", "11:09 PM"] },
-  { stop_id: "10775", name: "NW 14th &amp; Northrup", lat: 45.531503, lon: -122.685357, times: ["11:11 PM", "10:39 PM", "10:56 PM"] },
+  { stop_id: "10775", name: "NW 14th &amp; Northrup", lat: 45.531503, lon: -122.685357, times: ["10:39 PM", "10:56 PM", "11:11 PM"] },
 ]
 
   const polylineOut = L.polyline(shapeOutbound, {
@@ -823,35 +823,29 @@ const stops = [
     weight: 1
   });
 
-  // Get current Portland time in minutes since midnight
-  const nowPortland = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
-  const nowMins = nowPortland.getHours() * 60 + nowPortland.getMinutes();
+ // 1. Get current time in PT
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const datePT = nowPT.toDateString();
 
-  let highlightedTimes = [];
-  let foundNext = false;
+    // 2. Add stops with highlighted next time
+    stops.forEach(stop => {
+      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
+      const nextIdx = stamps.findIndex(ts => ts > nowPT);
+      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
+        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
+      }).join('<br>');
 
-  if (stop.times && stop.times.length) {
-    stop.times.forEach(timeStr => {
-      let cleanTime = timeStr.trim();
-      let [h, m] = cleanTime.split(":");
-      let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-      if (!foundNext && schedMins >= nowMins) {
-        highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
-        foundNext = true;
-      } else {
-        highlightedTimes.push(cleanTime);
-      }
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .addTo(map);
     });
-  }
-
-  const popupContent = `
-    <strong>${stop.name}</strong><br>
-    ${highlightedTimes.length ? highlightedTimes.join("<br>") : "No scheduled times"}
-  `;
-
-  marker.bindPopup(popupContent);
-  marker.addTo(map);
-});
 
 
   let busMarkers = {};
