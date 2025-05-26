@@ -63,9 +63,6 @@ body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d
     .direction-buttons { margin-top: 0.5rem; display: none; }
     .direction-link { display: inline-block; background-color: #1e1e1e; color: #4dd0e1; font-weight: bold; border-radius: 6px; padding: 0.4rem 0.8rem; margin: 0.2rem 0; text-decoration: none; box-shadow: 0 0 5px #4dd0e1; }
     .direction-link:hover { background-color: #4dd0e1; color: #0d0d0d; }
-    .vote-buttons { display: flex; gap: 0.3rem; margin-top: 0.5rem; }
-    .vote-buttons button { background-color: transparent; border: none; color: #cccccc; font-size: 1.2rem; cursor: pointer; }
-    .vote-buttons button:hover { color: #4dd0e1; }
     .site-footer { text-align: center; margin-top: 2rem; margin-bottom: 120px; font-size: 0.8rem; color: #888; }
     .site-footer a { color: #4dd0e1; text-decoration: none; }
     .site-footer a:hover { text-decoration: underline; }
@@ -226,11 +223,6 @@ body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d
         <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
           <div onclick="toggleDirections('${route.id}')">
             <a>${route.label}</a>
-          </div>
-          <div class="vote-buttons">
-            <button onclick="vote('${route.id}', 'up')">👍</button>
-            <button onclick="vote('${route.id}', 'down')">👎</button>
-          </div>
         </div>
 
         <div id="directions-${route.id}" class="direction-buttons">
@@ -256,16 +248,6 @@ body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d
       });
     });
 
-    function vote(routeId, type) {
-      const key = `vote_${routeId}`;
-      const current = localStorage.getItem(key);
-      if (!current || current !== type) {
-        localStorage.setItem(key, type);
-        alert(`You voted ${type === 'up' ? '👍' : '👎'} for route ${routeId}`);
-      } else {
-        alert('You already voted this way.');
-      }
-    }
   </script>
 
   <footer class="site-footer">
