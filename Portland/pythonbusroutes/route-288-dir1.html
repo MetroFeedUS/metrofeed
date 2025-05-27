@@ -1,7 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 288 - To Willow Creek TC or Rose Quarter TC | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -33,13 +44,12 @@
     }
 
     .ad-banner img {
-  width: 100%;
-  max-width: 728px;
-
-  max-height: 120px; /* 👈 Caps desktop height */
-  display: block;
-  margin: 0 auto;
-}
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
     .home-button {
       position: fixed;
       top: 120px;
@@ -133,25 +143,21 @@
       text-decoration: underline;
     }
 
-@media (max-width: 600px) {
-  .ad-banner {
-    padding-top: 1rem;
-    padding-bottom: 0rem;
-  }
-}
-
-
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
   </style>
 </head>
 
 <body>
- 
-  <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-288-dir1-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-288-dir1-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
   </div>
 
- <header>
+  <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
@@ -184,7 +190,6 @@
     const routeNumber = 288;
     const direction = parseInt(1);
 
-    // Initialize map
     const map = L.map('map', {
       center: [45.6, -122.7],
       zoom: 12,
@@ -195,7 +200,6 @@
     });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    // Injected shape & stop data
     const shapeOutbound = [
   [45.522396, -122.991203],
   [45.522684, -122.991198],
@@ -745,18 +749,10 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "14012", name: "SW Adams &amp; W Main", lat: 45.52241, lon: -122.991147, times: ["1:05 AM", "1:35 AM", "2:05 AM"] },
-  { stop_id: "14551", name: "SE Washington &amp; 3rd", lat: 45.521287, lon: -122.985714, times: ["1:06 AM", "1:36 AM", "2:06 AM"] },
-  { stop_id: "14013", name: "SE Washington &amp; 8th", lat: 45.5212, lon: -122.976751, times: ["1:07 AM", "1:37 AM", "2:07 AM"] },
-  { stop_id: "14014", name: "SE 12th &amp; E Main", lat: 45.52158, lon: -122.969998, times: ["1:09 AM", "1:39 AM", "2:09 AM"] },
-  { stop_id: "14552", name: "NE Veterans Dr &amp; 34th", lat: 45.528372, lon: -122.947246, times: ["1:15 AM", "1:45 AM", "2:15 AM"] },
-  { stop_id: "10028", name: "NE Cornell &amp; 48th", lat: 45.533439, lon: -122.93412, times: ["1:18 AM", "1:48 AM", "2:18 AM"] },
-  { stop_id: "14486", name: "NE Cherry Dr &amp; Orenco Station Loop", lat: 45.531319, lon: -122.916177, times: ["1:22 AM", "1:52 AM", "2:22 AM"] },
-  { stop_id: "14553", name: "NE Quatama &amp; NW Sunbird", lat: 45.522125, lon: -122.889189, times: ["1:27 AM", "1:57 AM", "2:27 AM"] },
   { stop_id: "9870", name: "Willow Creek Transit Center ", lat: 45.51743, lon: -122.870457, times: ["12:50 AM", "1:34 AM", "2:04 AM", "2:34 AM"] },
   { stop_id: "14554", name: "W Baseline &amp; Baseline/Jenkins", lat: 45.511598, lon: -122.849246, times: ["12:54 AM"] },
   { stop_id: "14555", name: "SW Jenkins &amp; Merlo Rd", lat: 45.507516, lon: -122.841051, times: ["12:55 AM"] },
-  { stop_id: "14556", name: "SW 153rd &amp; 154th Terrace", lat: 45.499679, lon: -122.834832, times: ["12:58 AM"] },
+  { stop_id: "14556", name: "SW 153rd &amp; 154th Terrace", lat: 45.499705, lon: -122.834875, times: ["12:58 AM"] },
   { stop_id: "9465", name: "14100 Block SW Millikan", lat: 45.493404, lon: -122.822349, times: ["1:01 AM"] },
   { stop_id: "14557", name: "SW Millikan Way &amp; Rose Biggi Ave", lat: 45.489659, lon: -122.807673, times: ["1:03 AM"] },
   { stop_id: "9981", name: "Beaverton Transit Center", lat: 45.49093, lon: -122.801741, times: ["1:06 AM"] },
@@ -770,24 +766,39 @@ const stops = [
   { stop_id: "9299", name: "NW 6th &amp; Davis MAX Station", lat: 45.524405, lon: -122.676429, times: ["1:45 AM"] },
   { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["1:46 AM"] },
   { stop_id: "1097", name: "Rose Quarter Transit Center", lat: 45.530669, lon: -122.665646, times: ["1:51 AM"] },
+  { stop_id: "14012", name: "SW Adams &amp; W Main", lat: 45.52241, lon: -122.991147, times: ["1:05 AM", "1:35 AM", "2:05 AM"] },
+  { stop_id: "14551", name: "SE Washington &amp; 3rd", lat: 45.521287, lon: -122.985714, times: ["1:06 AM", "1:36 AM", "2:06 AM"] },
+  { stop_id: "14013", name: "SE Washington &amp; 8th", lat: 45.5212, lon: -122.976751, times: ["1:07 AM", "1:37 AM", "2:07 AM"] },
+  { stop_id: "14014", name: "SE 12th &amp; E Main", lat: 45.52158, lon: -122.969998, times: ["1:09 AM", "1:39 AM", "2:09 AM"] },
+  { stop_id: "14552", name: "NE Veterans Dr &amp; 34th", lat: 45.528372, lon: -122.947246, times: ["1:15 AM", "1:45 AM", "2:15 AM"] },
+  { stop_id: "10028", name: "NE Cornell &amp; 48th", lat: 45.533439, lon: -122.93412, times: ["1:18 AM", "1:48 AM", "2:18 AM"] },
+  { stop_id: "14486", name: "NE Cherry Dr &amp; Orenco Station Loop", lat: 45.531319, lon: -122.916177, times: ["1:22 AM", "1:52 AM", "2:22 AM"] },
+  { stop_id: "14553", name: "NE Quatama &amp; NW Sunbird", lat: 45.522125, lon: -122.889189, times: ["1:27 AM", "1:57 AM", "2:27 AM"] },
 ]
 
-    // Draw route polyline
     const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
     map.fitBounds(polylineOut.getBounds());
 
-    // 1. Get current time in PT
     const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    const datePT = nowPT.toDateString();
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
 
-    // 2. Add stops with highlighted next time
     stops.forEach(stop => {
-      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
-      const nextIdx = stamps.findIndex(ts => ts > nowPT);
-      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
-        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
-      }).join('<br>');
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
 
       L.circleMarker([stop.lat, stop.lon], {
         radius: 6,
@@ -796,11 +807,10 @@ const stops = [
         fillOpacity: 0.9,
         weight: 1
       })
-      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
       .addTo(map);
     });
 
-    // Bus markers fetch
     let busMarkers = {};
     async function fetchAndDisplay() {
       const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
@@ -815,7 +825,7 @@ const stops = [
         if (!bus.latitude || !bus.longitude || !bus.blockID) return;
         const icon = L.divIcon({    
            className: '',
-	   html: `
+           html: `
             <div style="text-align:center;">
               <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
               <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
@@ -835,6 +845,7 @@ const stops = [
     <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
     <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
     <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
     <a href="privacy.html">Privacy Policy</a>
   </footer>
 

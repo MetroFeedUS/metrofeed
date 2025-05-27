@@ -1,7 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Route 47 - To Hillsboro Transit Center | MetroFeed Portland</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -33,13 +44,12 @@
     }
 
     .ad-banner img {
-  width: 100%;
-  max-width: 728px;
-
-  max-height: 120px; /* 👈 Caps desktop height */
-  display: block;
-  margin: 0 auto;
-}
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
     .home-button {
       position: fixed;
       top: 120px;
@@ -133,25 +143,21 @@
       text-decoration: underline;
     }
 
-@media (max-width: 600px) {
-  .ad-banner {
-    padding-top: 1rem;
-    padding-bottom: 0rem;
-  }
-}
-
-
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
   </style>
 </head>
 
 <body>
- 
-  <!-- 🟦 Auto-Injected Banner Ad (route-specific) -->
   <div class="ad-banner">
-    <iframe src="https://metrofeedus.com/portland/Ads/route-47-dir0-ad.html" style="border:none; width:100%; max-width 728px; height:90px;"></iframe>
+    <iframe src="https://metrofeedus.com/portland/Ads/route-47-dir0-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
   </div>
 
- <header>
+  <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
@@ -184,7 +190,6 @@
     const routeNumber = 47;
     const direction = parseInt(0);
 
-    // Initialize map
     const map = L.map('map', {
       center: [45.6, -122.7],
       zoom: 12,
@@ -195,7 +200,6 @@
     });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    // Injected shape & stop data
     const shapeOutbound = [
   [45.517303, -122.869811],
   [45.517252, -122.869656],
@@ -622,7 +626,6 @@
   [45.540224, -122.907678],
   [45.54014, -122.907739],
   [45.539702, -122.908051],
-  [45.539079, -122.908501],
   [45.538979, -122.908574],
   [45.538866, -122.908655],
   [45.538752, -122.908738],
@@ -938,7 +941,6 @@ const stopNames = {
   "7020": "700 Block NW 185th",
   "8540": "NE Evergreen Pkwy &amp; John Olsen",
   "8541": "NE Evergreen Pkwy &amp; Aloclek Ct",
-  "8542": "NE Century &amp; Butler",
   "8646": "20500 Block NE Evergreen Pkwy",
   "8648": "NE Evergreen Pkwy &amp; NW Atkeson Ln",
   "9601": "NE Evergreen Pkwy &amp; 79th",
@@ -996,7 +998,6 @@ const stops = [
   { stop_id: "13164", name: "NE Century &amp; Intel South Drwy", lat: 45.543494, lon: -122.909584, times: ["5:58 AM", "6:39 AM", "6:52 AM", "7:06 AM", "7:22 AM", "7:38 AM", "7:52 AM", "8:05 AM"] },
   { stop_id: "14594", name: "NE Butler &amp; Century", lat: 45.53907, lon: -122.909236, times: ["6:00 AM", "6:41 AM", "6:54 AM", "7:08 AM", "7:24 AM", "7:40 AM", "7:54 AM", "8:07 AM"] },
   { stop_id: "14595", name: "Intel Ronler Acres RA3 Main Lobby/The Moore Ctr", lat: 45.541376, lon: -122.915074, times: ["6:02 AM", "6:43 AM", "6:57 AM", "7:11 AM", "7:27 AM", "7:43 AM", "7:57 AM", "8:10 AM"] },
-  { stop_id: "8542", name: "NE Century &amp; Butler", lat: 45.539111, lon: -122.908594, times: ["6:04 AM", "6:46 AM", "7:01 AM", "7:14 AM", "7:31 AM", "7:46 AM", "8:01 AM", "8:13 AM"] },
   { stop_id: "9851", name: "NE Century &amp; Rosebay Dr", lat: 45.537194, lon: -122.910038, times: ["6:05 AM", "6:46 AM", "7:02 AM", "7:14 AM", "7:32 AM", "7:46 AM", "8:02 AM", "8:13 AM"] },
   { stop_id: "13529", name: "NE Century &amp; Brighton St", lat: 45.53484, lon: -122.912119, times: ["6:05 AM", "6:47 AM", "7:03 AM", "7:15 AM", "7:33 AM", "7:47 AM", "8:03 AM", "8:14 AM"] },
   { stop_id: "10041", name: "NE Century &amp; Carillion", lat: 45.532747, lon: -122.912371, times: ["6:06 AM", "6:48 AM", "7:04 AM", "7:16 AM", "7:34 AM", "7:48 AM", "8:04 AM", "8:15 AM"] },
@@ -1022,26 +1023,33 @@ const stops = [
   { stop_id: "307", name: "SE Baseline St &amp; 5th", lat: 45.520114, lon: -122.982407, times: ["6:19 AM", "7:01 AM", "7:30 AM", "8:02 AM", "8:30 AM", "8:59 AM", "9:29 AM", "10:03 AM"] },
   { stop_id: "280", name: "SE Baseline St &amp; 2nd", lat: 45.520168, lon: -122.987847, times: ["6:21 AM", "7:03 AM", "7:32 AM", "8:04 AM", "8:32 AM", "9:01 AM", "9:31 AM", "10:05 AM"] },
   { stop_id: "9955", name: "Hillsboro Transit Center ", lat: 45.521505, lon: -122.98544, times: ["6:23 AM", "7:05 AM", "7:34 AM", "8:06 AM", "9:03 AM", "9:33 AM", "10:07 AM", "10:42 AM"] },
-  { stop_id: "9954", name: "Hillsboro Transit Center ", lat: 45.521496, lon: -122.984845, times: ["8:34 AM", "1:06 PM", "2:54 PM", "8:03 PM", "8:58 PM"] },
   { stop_id: "9923", name: "NE Orenco Station Loop &amp; MAX Station", lat: 45.530395, lon: -122.916207, times: ["7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "5:05 PM", "5:37 PM", "6:07 PM", "6:37 PM"] },
+  { stop_id: "9954", name: "Hillsboro Transit Center ", lat: 45.521496, lon: -122.984845, times: ["8:34 AM", "1:06 PM", "8:03 PM", "8:58 PM"] },
 ]
 
-    // Draw route polyline
     const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
     map.fitBounds(polylineOut.getBounds());
 
-    // 1. Get current time in PT
     const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    const datePT = nowPT.toDateString();
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
 
-    // 2. Add stops with highlighted next time
     stops.forEach(stop => {
-      const stamps = stop.times.map(t => new Date(`${datePT} ${t}`));
-      const nextIdx = stamps.findIndex(ts => ts > nowPT);
-      const timesHtml = stamps.slice(0, 8).map((ts, i) => {
-        const lbl = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return i === nextIdx ? `<strong>${lbl}</strong>` : lbl;
-      }).join('<br>');
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
 
       L.circleMarker([stop.lat, stop.lon], {
         radius: 6,
@@ -1050,11 +1058,10 @@ const stops = [
         fillOpacity: 0.9,
         weight: 1
       })
-      .bindPopup(`<strong>${stop.name}</strong><br>${timesHtml || 'No scheduled times'}`)
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
       .addTo(map);
     });
 
-    // Bus markers fetch
     let busMarkers = {};
     async function fetchAndDisplay() {
       const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
@@ -1069,7 +1076,7 @@ const stops = [
         if (!bus.latitude || !bus.longitude || !bus.blockID) return;
         const icon = L.divIcon({    
            className: '',
-	   html: `
+           html: `
             <div style="text-align:center;">
               <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
               <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
@@ -1089,6 +1096,7 @@ const stops = [
     <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
     <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
     <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
     <a href="privacy.html">Privacy Policy</a>
   </footer>
 
