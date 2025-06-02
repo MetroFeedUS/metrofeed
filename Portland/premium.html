@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetroFeed Premium Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      height: 100%;
+    }
+
+    #map {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .leaflet-popup-content {
+      font-size: 0.85rem;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="mastermap.js"></script>
+  <script>
+    const map = L.map('map').setView([45.515, -122.678], 12);
+
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=YOUR_MAPTILER_KEY', {
+      attribution: '&copy; MapTiler',
+      maxZoom: 19
+    }).addTo(map);
+
+    masterRoutes.forEach(route => {
+      const shape = L.polyline(route.shape, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
+      shape.bindPopup(route.route_title);
+
+      route.stops.forEach(stop => {
+        const marker = L.circleMarker([stop.lat, stop.lon], {
+          radius: 5,
+          color: 'red',
+          fillColor: 'red',
+          fillOpacity: 0.9
+        })
+        .addTo(map)
+        .bindPopup(`<b>${stop.name}</b><br>${stop.times.join('<br>')}`);
+      });
+    });
+  </script>
+</body>
+</html>
