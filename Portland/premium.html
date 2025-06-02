@@ -37,14 +37,16 @@
 
   <div id="map"></div>
 
-  <script src="mastermap.js"></script>
   <script>
     function checkPW() {
       const input = document.getElementById('pw').value;
-      const allowed = "premiumtest"; // ✅ Set password here
+      const allowed = "premiumtest";
       if (input === allowed) {
         document.getElementById('lockscreen').remove();
-        loadMap();
+        const script = document.createElement('script');
+        script.src = 'mastermap.js';
+        script.onload = () => loadMap();
+        document.body.appendChild(script);
       } else {
         document.getElementById('pw-error').style.display = "block";
       }
