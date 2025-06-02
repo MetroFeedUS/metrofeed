@@ -28,54 +28,32 @@
   </style>
 </head>
 <body>
-  <div id="lockscreen" style="position:fixed; top:0; left:0; right:0; bottom:0; background:#000; color:#fff; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <p style="margin-bottom:10px;">🔒 MetroFeed Premium Access</p>
-    <input type="password" id="pw" placeholder="Enter password" style="padding:10px; font-size:16px; border-radius:6px; border:none;" />
-    <button onclick="checkPW()" style="margin-top:10px; padding:10px 20px; font-weight:bold; background:#4dd0e1; color:#000; border:none; border-radius:6px; cursor:pointer;">Enter</button>
-    <p id="pw-error" style="color:red; margin-top:10px; display:none;">Wrong password, try again.</p>
-  </div>
-
   <div id="map"></div>
 
+  <script src="mastermap.js"></script>
   <script>
-    function checkPW() {
-      const input = document.getElementById('pw').value;
-      const allowed = "premiumtest";
-      if (input === allowed) {
-        document.getElementById('lockscreen').remove();
-        const script = document.createElement('script');
-        script.src = 'mastermap.js';
-        script.onload = () => loadMap();
-        document.body.appendChild(script);
-      } else {
-        document.getElementById('pw-error').style.display = "block";
-      }
-    }
+    const map = L.map('map').setView([45.515, -122.678], 12);
 
-    function loadMap() {
-      const map = L.map('map').setView([45.515, -122.678], 12);
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=2C4447D4A42083BCD84DE3B8E', {
+      attribution: '&copy; MapTiler',
+      maxZoom: 19
+    }).addTo(map);
 
-      L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=2C4447D4A42083BCD84DE3B8E, {
-        attribution: '&copy; MapTiler',
-        maxZoom: 19
-      }).addTo(map);
+    masterRoutes.forEach(route => {
+      const shape = L.polyline(route.shape, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
+      shape.bindPopup(route.route_title);
 
-      masterRoutes.forEach(route => {
-        const shape = L.polyline(route.shape, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
-        shape.bindPopup(route.route_title);
-
-        route.stops.forEach(stop => {
-          const marker = L.circleMarker([stop.lat, stop.lon], {
-            radius: 5,
-            color: 'red',
-            fillColor: 'red',
-            fillOpacity: 0.9
-          })
-          .addTo(map)
-          .bindPopup(`<b>${stop.name}</b><br>${stop.times.join('<br>')}`);
-        });
+      route.stops.forEach(stop => {
+        const marker = L.circleMarker([stop.lat, stop.lon], {
+          radius: 5,
+          color: 'red',
+          fillColor: 'red',
+          fillOpacity: 0.9
+        })
+        .addTo(map)
+        .bindPopup(`<b>${stop.name}</b><br>${stop.times.join('<br>')}`);
       });
-    }
+    });
   </script>
 </body>
 </html>
