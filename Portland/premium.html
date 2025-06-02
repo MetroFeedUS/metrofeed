@@ -44,33 +44,36 @@
       const allowed = "premiumtest"; // ✅ Set password here
       if (input === allowed) {
         document.getElementById('lockscreen').remove();
+        loadMap();
       } else {
         document.getElementById('pw-error').style.display = "block";
       }
     }
 
-    const map = L.map('map').setView([45.515, -122.678], 12);
+    function loadMap() {
+      const map = L.map('map').setView([45.515, -122.678], 12);
 
-    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key="2C4447D4A42083BCD84DE3B8E", {
-      attribution: '&copy; MapTiler',
-      maxZoom: 19
-    }).addTo(map);
+      L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=YOUR_MAPTILER_KEY', {
+        attribution: '&copy; MapTiler',
+        maxZoom: 19
+      }).addTo(map);
 
-    masterRoutes.forEach(route => {
-      const shape = L.polyline(route.shape, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
-      shape.bindPopup(route.route_title);
+      masterRoutes.forEach(route => {
+        const shape = L.polyline(route.shape, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
+        shape.bindPopup(route.route_title);
 
-      route.stops.forEach(stop => {
-        const marker = L.circleMarker([stop.lat, stop.lon], {
-          radius: 5,
-          color: 'red',
-          fillColor: 'red',
-          fillOpacity: 0.9
-        })
-        .addTo(map)
-        .bindPopup(`<b>${stop.name}</b><br>${stop.times.join('<br>')}`);
+        route.stops.forEach(stop => {
+          const marker = L.circleMarker([stop.lat, stop.lon], {
+            radius: 5,
+            color: 'red',
+            fillColor: 'red',
+            fillOpacity: 0.9
+          })
+          .addTo(map)
+          .bindPopup(`<b>${stop.name}</b><br>${stop.times.join('<br>')}`);
+        });
       });
-    });
+    }
   </script>
 </body>
 </html>
