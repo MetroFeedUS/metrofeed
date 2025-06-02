@@ -28,10 +28,27 @@
   </style>
 </head>
 <body>
+  <div id="lockscreen" style="position:fixed; top:0; left:0; right:0; bottom:0; background:#000; color:#fff; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+    <p style="margin-bottom:10px;">🔒 MetroFeed Premium Access</p>
+    <input type="password" id="pw" placeholder="Enter password" style="padding:10px; font-size:16px; border-radius:6px; border:none;" />
+    <button onclick="checkPW()" style="margin-top:10px; padding:10px 20px; font-weight:bold; background:#4dd0e1; color:#000; border:none; border-radius:6px; cursor:pointer;">Enter</button>
+    <p id="pw-error" style="color:red; margin-top:10px; display:none;">Wrong password, try again.</p>
+  </div>
+
   <div id="map"></div>
 
   <script src="mastermap.js"></script>
   <script>
+    function checkPW() {
+      const input = document.getElementById('pw').value;
+      const allowed = "premiumtest"; // ✅ Set password here
+      if (input === allowed) {
+        document.getElementById('lockscreen').remove();
+      } else {
+        document.getElementById('pw-error').style.display = "block";
+      }
+    }
+
     const map = L.map('map').setView([45.515, -122.678], 12);
 
     L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=YOUR_MAPTILER_KEY', {
