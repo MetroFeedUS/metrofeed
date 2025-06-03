@@ -100,6 +100,8 @@
     let originStop = null;
     let destinationStop = null;
     let clickCount = 0;
+    let routeShapes = [];
+    let busMarkers = [];
 
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371e3;
@@ -145,12 +147,54 @@
       toast.style.display = "block";
     }
 
+    function findRouteByStop(stop) {
+      return masterRoutes.find(route => route.stops.some(s => s.stop_id === stop.stop_id));
+    }
+
+    function drawRouteShape(route) {
+      const shape = L.polyline(route.shape, {
+        color: 'red', weight: 4, opacity: 0.8
+      }).addTo(map);
+      shape.bindPopup(route.route_title);
+      routeShapes.push(shape);
+    }
+
+    function fetchLiveBus(routeId) {
+      fetch(`https://developer.trimet.org/ws/v2/vehicles?routes=${routeId}&appID=YOUR_APP_ID`)
+        .then(res => res.json())
+        .then(data => {
+          data.resultSet.vehicle.forEach(bus => {
+            const marker = L.circleMarker([bus.latitude, bus.longitude], {
+              radius: 6,
+              fillColor: 'lime',
+              fillOpacity: 1,
+              color: '#0f0',
+              weight: 1
+            }).addTo(map).bindPopup(`Bus ID: ${bus.vehicleID}`);
+            busMarkers.push(marker);
+          });
+        })
+        .catch(err => console.error("Live bus error:", err));
+    }
+
+    function showRouteAndLiveBus(stop) {
+      const route = findRouteByStop(stop);
+      if (route) {
+        drawRouteShape(route);
+        fetchLiveBus(route.route_id);
+      }
+    }
+
     function resetMarkers() {
       if (originMarker) map.removeLayer(originMarker);
       if (destinationMarker) map.removeLayer(destinationMarker);
       originMarker = destinationMarker = null;
       originStop = destinationStop = null;
       clickCount = 0;
+      routeShapes.forEach(s => map.removeLayer(s));
+      busMarkers.forEach(b => map.removeLayer(b));
+      routeShapes = [];
+      busMarkers = [];
       showToast("Markers reset.");
     }
 
@@ -165,23 +209,32 @@
       return marker;
     }
 
-    function findDirectRoute(originStop, destinationStop) {
-      return masterRoutes.find(route => {
-        const stopIds = route.stops.map(s => s.stop_id);
-        return stopIds.includes(originStop.stop_id) && stopIds.includes(destinationStop.stop_id);
-      });
-    }
-
-    function enableTripPlannerMode() {
-      tripPlannerMode = true;
-      document.getElementById('infoBox').style.display = 'block';
-      document.getElementById('resetBtn').style.display = 'block';
-      showToast("Trip planner mode enabled. Click the map to begin.");
+    function selectStop(stop) {
+      if (clickCount === 0) {
+        if (originMarker) map.removeLayer(originMarker);
+        originMarker = placeStopMarker(stop, true);
+        originStop = stop;
+        showRouteAndLiveBus(stop);
+        clickCount++;
+        showToast("Origin set. Now select a destination.");
+      } else if (clickCount === 1) {
+        if (destinationMarker) map.removeLayer(destinationMarker);
+        destinationMarker = placeStopMarker(stop, false);
+        destinationStop = stop;
+        showRouteAndLiveBus(stop);
+        clickCount++;
+        showToast("Destination set. Both routes displayed.");
+      } else {
+        showToast("Both points already set. Use Reset to try again.");
+      }
     }
 
     document.getElementById("plannerToggle").addEventListener("click", () => {
       if (!tripPlannerMode) {
-        enableTripPlannerMode();
+        tripPlannerMode = true;
+        document.getElementById('infoBox').style.display = 'block';
+        document.getElementById('resetBtn').style.display = 'block';
+        showToast("Trip planner mode enabled. Click the map to begin.");
       } else {
         tripPlannerMode = false;
         document.getElementById('infoBox').style.display = 'none';
@@ -190,6 +243,8 @@
         showToast("Trip planner closed.");
       }
     });
+
+    document.getElementById("resetBtn").addEventListener("click", resetMarkers);
 
     map.on('click', function (e) {
       if (!tripPlannerMode) return;
@@ -213,35 +268,6 @@
       }
     });
 
-    function selectStop(stop) {
-      if (clickCount === 0) {
-        if (originMarker) map.removeLayer(originMarker);
-        originMarker = placeStopMarker(stop, true);
-        originStop = stop;
-        clickCount++;
-        showToast("Origin set. Now select a destination.");
-      } else if (clickCount === 1) {
-        if (destinationMarker) map.removeLayer(destinationMarker);
-        destinationMarker = placeStopMarker(stop, false);
-        destinationStop = stop;
-        clickCount++;
-
-        const route = findDirectRoute(originStop, destinationStop);
-        if (route) {
-          showToast("Direct route found: " + route.route_title);
-          console.log("Matched route:", route);
-        } else {
-          showToast("No direct route found (transfers not supported yet).");
-          console.log("No route connects both stops directly.");
-        }
-      } else {
-        showToast("Both points already set. Use Reset to try again.");
-      }
-    }
-
-    document.getElementById("resetBtn").addEventListener("click", resetMarkers);
-
-    // Default mode: only show closest route to user
     function showClosestRouteToUser() {
       navigator.geolocation.getCurrentPosition(pos => {
         const { latitude, longitude } = pos.coords;
