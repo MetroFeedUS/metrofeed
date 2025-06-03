@@ -4,8 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed Trip Planner</title>
+
+  <!-- Leaflet Styles -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Tom Select Styles -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet" />
+
+  <!-- Leaflet Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Tom Select Script -->
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
   <style>
     html, body {
       margin: 0;
@@ -15,17 +26,17 @@
       color: #cccccc;
       height: 100%;
     }
+
     #map {
       width: 100vw;
       height: 100vh;
     }
+
     .leaflet-popup-content {
       font-size: 0.85rem;
       color: #000;
     }
-    #infoBox, #resetBtn {
-      display: none;
-    }
+
     #plannerToggle {
       position: absolute;
       top: 12px;
@@ -39,6 +50,31 @@
       z-index: 1000;
       cursor: pointer;
     }
+
+    #searchBar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(0,0,0,0.85);
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    #searchBar select {
+      padding: 6px;
+      background: #222;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 5px;
+      min-width: 140px;
+      max-width: 200px;
+      font-size: 0.9rem;
+    }
+
     #infoBox {
       position: absolute;
       top: 60px;
@@ -49,6 +85,7 @@
       font-size: 0.9rem;
       z-index: 1000;
     }
+
     #resetBtn {
       margin-top: 6px;
       background: #444;
@@ -58,6 +95,7 @@
       border-radius: 5px;
       cursor: pointer;
     }
+
     #toast {
       position: absolute;
       bottom: 20px;
@@ -75,8 +113,14 @@
     }
   </style>
 </head>
+
 <body>
   <div id="map"></div>
+  <div id="searchBar">
+  <select id="originDropdown"></select>
+  <select id="destinationDropdown"></select>
+  <select id="routeDropdown"></select>
+</div>
   <button id="plannerToggle">Trip Planner</button>
   <div id="infoBox">
     <div><b>Click the map to:</b></div>
@@ -87,21 +131,31 @@
   <div id="toast"></div>
 
   <script src="mastermap.js"></script>
-  <script>
-    const map = L.map('map').setView([45.515, -122.678], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(map);
+ <script>
+  const map = L.map('map', {
+    maxBounds: [
+      [45.40, -122.85],  // Southwest corner of Portland
+      [45.65, -122.45]   // Northeast corner of Portland
+    ],
+    maxBoundsViscosity: 1.0,
+    minZoom: 11,
+    maxZoom: 17
+  }).setView([45.515, -122.678], 12);
 
-    let tripPlannerMode = false;
-    let originMarker = null;
-    let destinationMarker = null;
-    let originStop = null;
-    let destinationStop = null;
-    let clickCount = 0;
-    let routeShapes = [];
-    let busMarkers = [];
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  let tripPlannerMode = false;
+  let originMarker = null;
+  let destinationMarker = null;
+  let originStop = null;
+  let destinationStop = null;
+  let clickCount = 0;
+  let routeShapes = [];
+  let busMarkers = [];
+
 
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371e3;
@@ -114,6 +168,69 @@
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       return R * c;
     }
+function decodeHtmlEntities(str) {
+  const txt = document.createElement("textarea");
+  txt.innerHTML = str;
+  return txt.value;
+}
+
+// Populate dropdowns
+const originDropdown = document.getElementById("originDropdown");
+const destinationDropdown = document.getElementById("destinationDropdown");
+const routeDropdown = document.getElementById("routeDropdown");
+
+const stopMap = new Map();
+const addedStops = new Set();
+const addedRoutes = new Set();
+
+masterRoutes.forEach(route => {
+  if (!addedRoutes.has(route.route_id)) {
+    let opt = document.createElement("option");
+    opt.value = route.route_id;
+    opt.innerHTML = decodeHtmlEntities(decodeHtmlEntities(route.route_title));
+    routeDropdown.appendChild(opt);
+    addedRoutes.add(route.route_id);
+  }
+  route.stops.forEach(stop => {
+    if (!addedStops.has(stop.stop_id)) {
+      let opt1 = document.createElement("option");
+      opt1.value = stop.stop_id;
+      opt1.innerHTML = decodeHtmlEntities(decodeHtmlEntities(stop.name));
+      let opt2 = opt1.cloneNode(true);
+      originDropdown.appendChild(opt1);
+      destinationDropdown.appendChild(opt2);
+      stopMap.set(stop.stop_id, stop);
+      addedStops.add(stop.stop_id);
+    }
+  });
+});
+
+function selectStopById(stopId, isOrigin) {
+  const stop = stopMap.get(stopId);
+  if (stop) {
+    selectStop(stop);
+    map.setView([stop.lat, stop.lon], 15);
+  }
+}
+
+originDropdown.addEventListener("change", e => {
+  if (!tripPlannerMode) enableTripPlannerMode();
+  selectStopById(e.target.value, true);
+});
+
+destinationDropdown.addEventListener("change", e => {
+  if (!tripPlannerMode) enableTripPlannerMode();
+  selectStopById(e.target.value, false);
+});
+
+routeDropdown.addEventListener("change", e => {
+  const route = masterRoutes.find(r => r.route_id == e.target.value);
+  if (route) {
+    drawRouteShape(route);
+    fetchLiveBus(route.route_id);
+  }
+});
+
 
     function findStopsNear(lat, lon, radiusMeters = 40) {
       let nearby = [];
@@ -155,7 +272,7 @@
       const shape = L.polyline(route.shape, {
         color: 'red', weight: 4, opacity: 0.8
       }).addTo(map);
-      shape.bindPopup(route.route_title);
+      shape.bindPopup(decodeHtmlEntities(route.route_title));
       routeShapes.push(shape);
     }
 
@@ -305,6 +422,40 @@
     }
 
     showClosestRouteToUser();
+
+new TomSelect("#originDropdown", {
+  maxOptions: 30,
+  maxItems: 1,
+  placeholder: "Select origin stop...",
+  onFocus: function() {
+    this.clear(); // Clears the selected value
+    this.setTextboxValue(''); // Clears the text input
+    this.refreshOptions();    // Refresh the dropdown list
+  }
+});
+
+new TomSelect("#destinationDropdown", {
+  maxOptions: 30,
+  maxItems: 1,
+  placeholder: "Select destination stop...",
+  onFocus: function() {
+    this.clear();
+    this.setTextboxValue('');
+    this.refreshOptions();
+  }
+});
+
+new TomSelect("#routeDropdown", {
+  maxOptions: 30,
+  maxItems: 1,
+  placeholder: "Select route...",
+  onFocus: function() {
+    this.clear();
+    this.setTextboxValue('');
+    this.refreshOptions();
+  }
+});
+
   </script>
 </body>
 </html>
