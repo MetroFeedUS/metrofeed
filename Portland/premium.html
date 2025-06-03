@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetroFeed Premium Map</title>
+  <title>MetroFeed Trip Planner</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -15,20 +15,57 @@
       color: #cccccc;
       height: 100%;
     }
-
     #map {
       width: 100vw;
       height: 100vh;
     }
-
     .leaflet-popup-content {
       font-size: 0.85rem;
       color: #000;
+    }
+    #infoBox {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      z-index: 1000;
+    }
+    #resetBtn {
+      margin-top: 6px;
+      background: #444;
+      border: none;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #toast {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e88e5;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+      z-index: 9999;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <div id="infoBox">
+    <div><b>Click the map to:</b></div>
+    <div>1. Select origin (blue)</div>
+    <div>2. Select destination (green)</div>
+    <button id="resetBtn">Reset</button>
+  </div>
+  <div id="toast"></div>
 
   <script src="mastermap.js"></script>
   <script>
@@ -38,113 +75,80 @@
       maxZoom: 19
     }).addTo(map);
 
-    const apiKey = "2C4447D4A42083BCD84DE3B8E";
-    let busMarkers = {};
-
-    function getDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
-      const Δφ = (lat2-lat1) * Math.PI/180;
-      const Δλ = (lon2-lon1) * Math.PI/180;
-      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ/2) * Math.sin(Δλ/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
-    }
-
-    function highlightNextTimes(times) {
-      const now = new Date();
-      const ptNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      const nowMins = ptNow.getHours() * 60 + ptNow.getMinutes();
-      let output = [];
-      let foundNext = false;
-
-      times.forEach(timeStr => {
-        const [h, m] = timeStr.trim().split(':');
-        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-        if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-        if (!foundNext && schedMins >= nowMins) {
-          output.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${timeStr}</span>`);
-          foundNext = true;
-        } else {
-          output.push(timeStr);
-        }
-      });
-
-      return output.join('<br>');
-    }
-
-    function showRoute(route) {
-      const shape = L.polyline(route.shape, { color: 'blue', weight: 3, opacity: 0.7 }).addTo(map);
+    // 🔁 Show all routes and stops
+    masterRoutes.forEach(route => {
+      const shape = L.polyline(route.shape, {
+        color: 'blue',
+        weight: 3,
+        opacity: 0.6
+      }).addTo(map);
       shape.bindPopup(route.route_title);
-      map.fitBounds(shape.getBounds());
 
       route.stops.forEach(stop => {
         L.circleMarker([stop.lat, stop.lon], {
-          radius: 5,
+          radius: 4,
           color: 'red',
           fillColor: 'red',
-          fillOpacity: 0.9
+          fillOpacity: 0.8
         })
         .addTo(map)
-        .bindPopup(`<b>${stop.name}</b><br>${highlightNextTimes(stop.times)}`);
+        .bindPopup(`<b>${stop.name}</b>`);
       });
+    });
 
-      fetchBuses(route.route_number, route.direction_id);
-      setInterval(() => fetchBuses(route.route_number, route.direction_id), 15000);
+    // 👇 Marker drop logic below
+    let originMarker = null;
+    let destinationMarker = null;
+    let clickCount = 0;
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.style.display = "block";
+      setTimeout(() => toast.style.display = "none", 3000);
     }
 
-    async function fetchBuses(routeNumber, directionId) {
-      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-      const data = await res.json();
-      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == directionId);
-
-      Object.values(busMarkers).forEach(m => map.removeLayer(m));
-      busMarkers = {};
-
-      buses.forEach(bus => {
-        if (!bus.latitude || !bus.longitude) return;
-        const icon = L.divIcon({
-          className: '',
-          html: `<div style="text-align:center;">
-                   <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-                   <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-                 </div>`,
-          iconSize: [40, 30], iconAnchor: [20, 30]
-        });
-        busMarkers[bus.vehicleID] = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      });
+    function resetMarkers() {
+      if (originMarker) map.removeLayer(originMarker);
+      if (destinationMarker) map.removeLayer(destinationMarker);
+      originMarker = destinationMarker = null;
+      clickCount = 0;
+      showToast("Markers reset.");
     }
 
-    function findClosestRoute(userLat, userLon) {
-      let bestRoute = null;
-      let minDist = Infinity;
+    map.on('click', function (e) {
+      const { lat, lng } = e.latlng;
 
-      masterRoutes.forEach(route => {
-        route.stops.forEach(stop => {
-          const d = getDistance(userLat, userLon, stop.lat, stop.lon);
-          if (d < minDist) {
-            minDist = d;
-            bestRoute = route;
-          }
-        });
-      });
-
-      if (bestRoute) showRoute(bestRoute);
-      else alert("No nearby routes found.");
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const { latitude, longitude } = pos.coords;
-        map.setView([latitude, longitude], 14);
-        findClosestRoute(latitude, longitude);
-      },
-      err => {
-        alert("Location permission denied. Showing default map.");
+      if (clickCount === 0) {
+        if (originMarker) map.removeLayer(originMarker);
+        originMarker = L.marker([lat, lng], {
+          title: "Origin",
+          icon: L.divIcon({
+            className: '',
+            html: '<div style="background:#2196f3;color:white;padding:6px 10px;border-radius:8px;">Start</div>',
+            iconAnchor: [20, 20]
+          })
+        }).addTo(map);
+        clickCount++;
+        showToast("Origin set. Now select a destination.");
+      } else if (clickCount === 1) {
+        if (destinationMarker) map.removeLayer(destinationMarker);
+        destinationMarker = L.marker([lat, lng], {
+          title: "Destination",
+          icon: L.divIcon({
+            className: '',
+            html: '<div style="background:#4caf50;color:white;padding:6px 10px;border-radius:8px;">End</div>',
+            iconAnchor: [20, 20]
+          })
+        }).addTo(map);
+        clickCount++;
+        showToast("Both points set! Routing logic coming next.");
+      } else {
+        showToast("Both points already set. Use Reset to try again.");
       }
-    );
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", resetMarkers);
   </script>
 </body>
 </html>
