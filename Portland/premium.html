@@ -6,8 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed Premium Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://cdn.maptiler.com/maplibre-gl-js/v2.4.0/maplibre-gl.js"></script>
-  <link href="https://cdn.maptiler.com/maplibre-gl-js/v2.4.0/maplibre-gl.css" rel="stylesheet" />
   <script src="https://cdn.maptiler.com/leaflet-maplibre-gl/leaflet-maplibre-gl.js"></script>
   <style>
     html.founder { border: 5px solid gold; }
@@ -220,18 +218,22 @@
       });
 
       // Custom MapTiler style URLs
-      const dayTiles = L.maplibreGL({
-        style: 'https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/style.json?key=' + maptilerKey,
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+      const dayTiles = L.tileLayer('https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/{z}/{x}/{y}.png?key=' + maptilerKey, {
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        tileSize: 512,
+        zoomOffset: -1
       });
 
-      const nightTiles = L.maplibreGL({
-        style: 'https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/style.json?key=' + maptilerKey,
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+      const nightTiles = L.tileLayer('https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/{z}/{x}/{y}.png?key=' + maptilerKey, {
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        tileSize: 512,
+        zoomOffset: -1
       });
 
       // Add error handling for tile loading
-      dayTiles.on('error', function(e) {
+      dayTiles.on('tileerror', function(e) {
         console.error('Error loading day tiles:', e);
         // Switch to fallback if MapTiler fails
         if (!map.hasLayer(fallbackTiles)) {
@@ -241,7 +243,7 @@
         }
       });
 
-      nightTiles.on('error', function(e) {
+      nightTiles.on('tileerror', function(e) {
         console.error('Error loading night tiles:', e);
         // Switch to fallback if MapTiler fails
         if (!map.hasLayer(fallbackTiles)) {
