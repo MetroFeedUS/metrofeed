@@ -351,10 +351,27 @@
           }
 
           resultDiv.addEventListener('click', () => {
+            // Remove previous polyline if it exists
+            if (currentRoutePolyline) {
+              map.removeLayer(currentRoutePolyline);
+              currentRoutePolyline = null;
+            }
             if (result.type === 'route') {
-              // TODO: Show route on map
-              console.log('Selected route:', result.id);
+              // Find the route by ID and draw its shape
+              const route = masterRoutes.find(r => r.route_id === result.id);
+              if (route) {
+                const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
+                currentRoutePolyline = L.polyline(routeShape, { color: 'blue', weight: 5 }).addTo(map);
+                map.fitBounds(currentRoutePolyline.getBounds());
+              }
             } else {
+              // Find the route for this stop and draw its shape
+              const route = masterRoutes.find(r => r.route_id === result.routeId);
+              if (route) {
+                const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
+                currentRoutePolyline = L.polyline(routeShape, { color: 'blue', weight: 5 }).addTo(map);
+                map.fitBounds(currentRoutePolyline.getBounds());
+              }
               // Center map on stop and show popup
               map.setView([result.lat, result.lon], 16);
               L.popup()
