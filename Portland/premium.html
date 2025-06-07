@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="founder"> <!-- Change to gold, silver, bronze -->
+<html lang="en" class="founder">
 
 <head>
   <meta charset="UTF-8" />
@@ -45,7 +45,8 @@
       width: 20px;
       height: 20px;
       margin-right: 8px;
-      filter: invert(100%);
+      color: white;
+      font-size: 20px;
     }
 
     #searchBar {
@@ -72,13 +73,8 @@
       justify-content: center;
       backdrop-filter: blur(8px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    }
-
-    #menuToggle img, #modeToggle img {
-      width: 24px;
-      height: 24px;
-      filter: invert(100%);
-      pointer-events: none;
+      color: white;
+      font-size: 24px;
     }
 
     #menuToggle { left: 12px; }
@@ -116,6 +112,8 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.02);
+      color: white;
+      font-size: 20px;
     }
 
     .icon-button:hover {
@@ -127,13 +125,6 @@
       background: linear-gradient(145deg, #2a2a2a, #2e2e2e);
       box-shadow: 0 0 12px rgba(0, 150, 255, 0.6);
       border-color: rgba(0, 150, 255, 0.3);
-    }
-
-    .icon-svg {
-      width: 22px;
-      height: 22px;
-      filter: invert(100%);
-      pointer-events: none;
     }
 
     #settingsBar {
@@ -180,56 +171,73 @@
 
   <!-- Search Bar -->
   <div id="searchWrapper">
-    <img id="searchIcon" src="file:///C:/Users/User/AppData/Local/Temp/662dbe37-ae28-4a40-995e-234f2ebad095_mycollection.zip.095/svg/013-search.svg" alt="Search" />
+    <span id="searchIcon">🔍</span>
     <input type="text" id="searchBar" placeholder="Search routes or stops..." />
   </div>
 
   <!-- Menu & Mode Toggles -->
-  <button id="menuToggle"><img src="file:///C:/Users/User/AppData/Local/Temp/5d0922bc-e97f-4557-a535-b7004306cf43_mycollection.zip.f43/svg/010-menu.svg" alt="Menu"></button>
-  <button id="modeToggle" title="Toggle Night Mode"><img src="file:///C:/Users/User/AppData/Local/Temp/6dc267c1-06b0-4dfe-97d2-c17a68a12651_mycollection.zip.651/svg/012-day.svg" alt="Night Mode"></button>
+  <button id="menuToggle">☰</button>
+  <button id="modeToggle" title="Toggle Night Mode">🌙</button>
 
   <!-- Icon Menu -->
   <div id="iconMenu">
-    <button class="icon-button" title="Trip Planner"><img src="file:///C:/Users/User/AppData/Local/Temp/9244d6d1-da10-41f0-b021-a7f119f43138_mycollection.zip.138/svg/020-destination.svg" class="icon-svg" /></button>
-    <button class="icon-button" title="Traffic"><img src="file:///C:/Users/User/AppData/Local/Temp/2b56ece3-2983-4553-b19a-4bcc109f6cc0_mycollection.zip.cc0/svg/009-traffic.svgA" class="icon-svg" /></button>
-    <button class="icon-button" title="Weather"><img src="002-rainy.svg" class="icon-svg" /></button>
-    <button class="icon-button" title="Traffic Cams"><img src="camera.svg" class="icon-svg" /></button>
-    <button class="icon-button" title="Chat"><img src="chat.svg" class="icon-svg" /></button>
-    <button class="icon-button" title="AI"><img src="ai.svg" class="icon-svg" /></button>
-    <button class="icon-button" title="Quakes"><img src="quake.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="Traffic">🚦</button>
+    <button class="icon-button" title="Weather">🌧️</button>
+    <button class="icon-button" title="Traffic Cams">📹</button>
+    <button class="icon-button" title="Chat">💬</button>
+    <button class="icon-button" title="AI">🤖</button>
+    <button class="icon-button" title="Quakes">🌋</button>
 
     <div style="position: relative; margin-top: 4px;">
-      <button class="icon-button" id="moreBtn" title="More"><img src="settings.svg" class="icon-svg" /></button>
+      <button class="icon-button" id="moreBtn" title="More">⚙️</button>
       <div id="settingsBar">
-        <button class="icon-button" title="Terms"><img src="terms.svg" class="icon-svg" /></button>
-        <button class="icon-button" title="Account"><img src="account.svg" class="icon-svg" /></button>
-        <button class="icon-button" title="Report Bug"><img src="bug.svg" class="icon-svg" /></button>
-        <button class="icon-button" title="Contact"><img src="contact.svg" class="icon-svg" /></button>
+        <button class="icon-button" title="Terms">📜</button>
+        <button class="icon-button" title="Account">👤</button>
+        <button class="icon-button" title="Report Bug">🐛</button>
+        <button class="icon-button" title="Contact">📞</button>
       </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="mastermap.js"></script>
   <script>
       console.log('Initializing map...');
       const map = L.map('map').setView([45.5122, -122.6587], 13);
       console.log('Map initialized:', map);
+      
+      // MapTiler API key
       const maptilerKey = "9c1G1fH44ajCv0W1HJMt";
+      console.log('Using MapTiler key:', maptilerKey);
 
-      const dayTiles = L.tileLayer('https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>',
-        errorTileUrl: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png'
+      // Standard MapTiler style URLs
+      const dayTiles = L.tileLayer('https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=' + maptilerKey, {
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        tileSize: 512,
+        zoomOffset: -1
       });
 
-      const nightTiles = L.tileLayer('https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>',
-        errorTileUrl: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png'
+      const nightTiles = L.tileLayer('https://api.maptiler.com/maps/basic-v2-dark/{z}/{x}/{y}.png?key=' + maptilerKey, {
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        tileSize: 512,
+        zoomOffset: -1
+      });
+
+      // Add error handling for tile loading
+      dayTiles.on('tileerror', function(e) {
+        console.error('Error loading day tiles:', e);
+        console.log('Failed tile coordinates:', e.coords);
+      });
+
+      nightTiles.on('tileerror', function(e) {
+        console.error('Error loading night tiles:', e);
+        console.log('Failed tile coordinates:', e.coords);
       });
 
       // Add the default day tiles to the map
-      dayTiles.addTo(map).on('tileerror', function(e) {
-        console.error('Error loading MapTiler tiles:', e);
-      });
+      dayTiles.addTo(map);
 
       let darkModeOn = false;
       document.getElementById('modeToggle').addEventListener('click', () => {
@@ -237,6 +245,55 @@
         map.removeLayer(darkModeOn ? dayTiles : nightTiles);
         map.addLayer(darkModeOn ? nightTiles : dayTiles);
         document.getElementById('modeToggle').classList.toggle("active", darkModeOn);
+        console.log('Map mode changed to:', darkModeOn ? 'night' : 'day');
+      });
+
+      // Add map load event listener
+      map.on('load', () => {
+        console.log('Map loaded successfully');
+      });
+
+      // Add map error event listener
+      map.on('error', (e) => {
+        console.error('Map error:', e);
+      });
+
+      // Search functionality
+      const searchBar = document.getElementById('searchBar');
+      let searchTimeout;
+
+      // Sanitize input to only allow alphanumeric characters, spaces, and basic punctuation
+      function sanitizeInput(input) {
+        return input.replace(/[^a-zA-Z0-9\s\-.,]/g, '');
+      }
+
+      searchBar.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        // Sanitize the input
+        const rawQuery = e.target.value;
+        const sanitizedQuery = sanitizeInput(rawQuery);
+        
+        // Update the input field with sanitized value
+        if (rawQuery !== sanitizedQuery) {
+          e.target.value = sanitizedQuery;
+        }
+        
+        const query = sanitizedQuery.toLowerCase();
+        
+        if (query.length < 2) return;
+
+        searchTimeout = setTimeout(() => {
+          console.log('Searching for:', query);
+          // TODO: Implement search using mastermap.js data
+          // This will be implemented once we confirm the structure of mastermap.js
+        }, 300);
+      });
+
+      // Prevent form submission and other potentially dangerous actions
+      searchBar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+        }
       });
 
       // Icon menu interactivity
@@ -249,19 +306,26 @@
       toggle.addEventListener('click', () => {
         const isOpen = menu.style.display === 'flex';
         menu.style.display = isOpen ? 'none' : 'flex';
-        settingsBar.classList.remove("active");
       });
 
       moreBtn.addEventListener('click', () => {
-        settingsBar.classList.toggle("active");
+        settingsBar.classList.toggle('active');
       });
 
-      buttons.forEach(btn => {
-        if (btn !== moreBtn) {
-          btn.addEventListener('click', () => {
-            btn.classList.toggle('active');
-          });
+      // Close settings bar when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!moreBtn.contains(e.target) && !settingsBar.contains(e.target)) {
+          settingsBar.classList.remove('active');
         }
+      });
+
+      // Overlay button click handlers
+      buttons.forEach(button => {
+        button.addEventListener('click', () => {
+          if (button !== moreBtn) {
+            button.classList.toggle('active');
+          }
+        });
       });
   </script>
 </body>
