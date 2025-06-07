@@ -210,15 +210,15 @@
       const maptilerKey = "9c1G1fH44ajCv0W1HJMt";
       console.log('Using MapTiler key:', maptilerKey);
 
-      // Standard MapTiler style URLs
-      const dayTiles = L.tileLayer('https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=' + maptilerKey, {
+      // Custom MapTiler style URLs
+      const dayTiles = L.tileLayer('https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
         attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         maxZoom: 19,
         tileSize: 512,
         zoomOffset: -1
       });
 
-      const nightTiles = L.tileLayer('https://api.maptiler.com/maps/basic-v2-dark/{z}/{x}/{y}.png?key=' + maptilerKey, {
+      const nightTiles = L.tileLayer('https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
         attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         maxZoom: 19,
         tileSize: 512,
@@ -261,10 +261,128 @@
       // Search functionality
       const searchBar = document.getElementById('searchBar');
       let searchTimeout;
+      let searchResults = [];
+
+      // Create search results container
+      const searchResultsDiv = document.createElement('div');
+      searchResultsDiv.id = 'searchResults';
+      searchResultsDiv.style.cssText = `
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(20, 20, 20, 0.95);
+        border-radius: 8px;
+        margin-top: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        z-index: 1002;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      `;
+      document.getElementById('searchWrapper').appendChild(searchResultsDiv);
 
       // Sanitize input to only allow alphanumeric characters, spaces, and basic punctuation
       function sanitizeInput(input) {
         return input.replace(/[^a-zA-Z0-9\s\-.,]/g, '');
+      }
+
+      // Search through routes and stops
+      function searchRoutes(query) {
+        const results = [];
+        
+        masterRoutes.forEach(route => {
+          // Search in route title
+          if (route.route_title.toLowerCase().includes(query)) {
+            results.push({
+              type: 'route',
+              id: route.route_id,
+              title: route.route_title,
+              direction: route.direction_id
+            });
+          }
+
+          // Search in stops
+          route.stops.forEach(stop => {
+            if (stop.name.toLowerCase().includes(query)) {
+              results.push({
+                type: 'stop',
+                id: stop.stop_id,
+                name: stop.name,
+                lat: stop.lat,
+                lon: stop.lon,
+                times: stop.times,
+                routeId: route.route_id,
+                routeTitle: route.route_title
+              });
+            }
+          });
+        });
+
+        return results;
+      }
+
+      // Display search results
+      function displayResults(results) {
+        searchResultsDiv.innerHTML = '';
+        
+        if (results.length === 0) {
+          searchResultsDiv.style.display = 'none';
+          return;
+        }
+
+        results.forEach(result => {
+          const resultDiv = document.createElement('div');
+          resultDiv.style.cssText = `
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+          `;
+          resultDiv.style.hover = `
+            background: rgba(255,255,255,0.1);
+          `;
+
+          if (result.type === 'route') {
+            resultDiv.innerHTML = `
+              <div style="font-weight: bold;">${result.title}</div>
+              <div style="font-size: 12px; color: #888;">Route</div>
+            `;
+          } else {
+            resultDiv.innerHTML = `
+              <div style="font-weight: bold;">${result.name}</div>
+              <div style="font-size: 12px; color: #888;">
+                ${result.routeTitle} • Next: ${result.times[0]}
+              </div>
+            `;
+          }
+
+          resultDiv.addEventListener('click', () => {
+            if (result.type === 'route') {
+              // TODO: Show route on map
+              console.log('Selected route:', result.id);
+            } else {
+              // Center map on stop and show popup
+              map.setView([result.lat, result.lon], 16);
+              L.popup()
+                .setLatLng([result.lat, result.lon])
+                .setContent(`
+                  <strong>${result.name}</strong><br>
+                  ${result.routeTitle}<br>
+                  Next: ${result.times[0]}
+                `)
+                .openOn(map);
+            }
+            searchResultsDiv.style.display = 'none';
+            searchBar.value = '';
+          });
+
+          searchResultsDiv.appendChild(resultDiv);
+        });
+
+        searchResultsDiv.style.display = 'block';
       }
 
       searchBar.addEventListener('input', (e) => {
@@ -280,13 +398,23 @@
         
         const query = sanitizedQuery.toLowerCase();
         
-        if (query.length < 2) return;
+        if (query.length < 2) {
+          searchResultsDiv.style.display = 'none';
+          return;
+        }
 
         searchTimeout = setTimeout(() => {
           console.log('Searching for:', query);
-          // TODO: Implement search using mastermap.js data
-          // This will be implemented once we confirm the structure of mastermap.js
+          const results = searchRoutes(query);
+          displayResults(results);
         }, 300);
+      });
+
+      // Close search results when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!searchBar.contains(e.target) && !searchResultsDiv.contains(e.target)) {
+          searchResultsDiv.style.display = 'none';
+        }
       });
 
       // Prevent form submission and other potentially dangerous actions
