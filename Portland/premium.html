@@ -7,19 +7,231 @@
   <title>MetroFeed Premium Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    /* (CSS styles remain unchanged) */
+    html.founder { border: 5px solid gold; }
+    html.gold { border: 5px solid #FFD700; }
+    html.silver { border: 5px solid #C0C0C0; }
+    html.bronze { border: 5px solid #CD7F32; }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d0d0d;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      z-index: 0;
+    }
+
+    #searchWrapper {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(20, 20, 20, 0.75);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    #searchIcon {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      filter: invert(100%);
+    }
+
+    #searchBar {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 16px;
+      width: 250px;
+    }
+
+    #menuToggle, #modeToggle {
+      position: fixed;
+      top: 12px;
+      width: 48px;
+      height: 48px;
+      background: rgba(30, 30, 30, 0.8);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    #menuToggle img, #modeToggle img {
+      width: 24px;
+      height: 24px;
+      filter: invert(100%);
+      pointer-events: none;
+    }
+
+    #menuToggle { left: 12px; }
+    #modeToggle { right: 12px; }
+
+    #modeToggle.active {
+      box-shadow: 0 0 12px rgba(0, 150, 255, 0.6);
+      border: 1px solid rgba(0, 150, 255, 0.3);
+    }
+
+    #iconMenu {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      background: rgba(20, 20, 20, 0.7);
+      border-radius: 16px;
+      padding: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    }
+
+    .icon-button {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(145deg, #1c1c1c, #232323);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.02);
+    }
+
+    .icon-button:hover {
+      background: linear-gradient(145deg, #252525, #2c2c2c);
+      box-shadow: 0 0 10px rgba(100, 200, 255, 0.4);
+    }
+
+    .icon-button.active {
+      background: linear-gradient(145deg, #2a2a2a, #2e2e2e);
+      box-shadow: 0 0 12px rgba(0, 150, 255, 0.6);
+      border-color: rgba(0, 150, 255, 0.3);
+    }
+
+    .icon-svg {
+      width: 22px;
+      height: 22px;
+      filter: invert(100%);
+      pointer-events: none;
+    }
+
+    #settingsBar {
+      position: absolute;
+      top: -9px;
+      left: 60px;
+      display: none;
+      flex-direction: row;
+      gap: 10px;
+      background: rgba(20, 20, 20, 0.75);
+      border-radius: 16px;
+      padding: 10px;
+      z-index: 1000;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+    }
+
+    #settingsBar.active {
+      display: flex;
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    @media (max-width: 600px) {
+      #menuToggle, #modeToggle, .icon-button {
+        width: 44px;
+        height: 44px;
+      }
+      #searchBar {
+        width: 90%;
+        font-size: 14px;
+      }
+      #settingsBar {
+        left: 56px;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
-  <!-- Load Leaflet -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Load masterRoutes data -->
-  <script src="mastermap.js"></script>
+  <!-- Search Bar -->
+  <div id="searchWrapper">
+    <img id="searchIcon" src="015-search.svg" alt="Search" />
+    <input type="text" id="searchBar" placeholder="Search routes or stops..." />
+  </div>
 
+  <!-- Menu & Mode Toggles -->
+  <button id="menuToggle"><img src="014-menu.svg" alt="Menu"></button>
+  <button id="modeToggle" title="Toggle Night Mode"><img src="night.svg" alt="Night Mode"></button>
+
+  <!-- Icon Menu -->
+  <div id="iconMenu">
+    <button class="icon-button" title="Trip Planner"><img src="004-destination.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="Traffic"><img src="traffic.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="Weather"><img src="002-rainy.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="Traffic Cams"><img src="camera.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="Chat"><img src="chat.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="AI"><img src="ai.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="Quakes"><img src="quake.svg" class="icon-svg" /></button>
+
+    <div style="position: relative; margin-top: 4px;">
+      <button class="icon-button" id="moreBtn" title="More"><img src="settings.svg" class="icon-svg" /></button>
+      <div id="settingsBar">
+        <button class="icon-button" title="Terms"><img src="terms.svg" class="icon-svg" /></button>
+        <button class="icon-button" title="Account"><img src="account.svg" class="icon-svg" /></button>
+        <button class="icon-button" title="Report Bug"><img src="bug.svg" class="icon-svg" /></button>
+        <button class="icon-button" title="Contact"><img src="contact.svg" class="icon-svg" /></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="mastermap.js"></script>
   <script>
-    // ==== Data Indexing for Search Bar ==== 
+    const map = L.map('map').setView([45.5122, -122.6587], 13);
+    const maptilerKey = "9c1G1fH44ajCv0W1HJMt";
+
+const dayTiles = L.tileLayer('https://api.maptiler.com/maps/019734c4-68a3-70e5-8c72-011b52a8fd07/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
+  attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>'
+});
+
+const nightTiles = L.tileLayer('https://api.maptiler.com/maps/019748d2-04be-7c08-b477-fe99e8e81a0a/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
+  attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>'
+});
+
+
+    let darkModeOn = false;
+    document.getElementById('modeToggle').addEventListener('click', () => {
+      darkModeOn = !darkModeOn;
+      map.removeLayer(darkModeOn ? dayTiles : nightTiles);
+      map.addLayer(darkModeOn ? nightTiles : dayTiles);
+      document.getElementById('modeToggle').classList.toggle("active", darkModeOn);
+    });
+
     const routeIndex = new Map();
     const stopIndex = new Map();
     masterRoutes.forEach(route => {
@@ -32,17 +244,22 @@
       });
     });
 
-    // ==== Helper Functions ==== 
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371e3;
-      const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
-      const Δφ = (lat2 - lat1) * Math.PI/180;
-      const Δλ = (lon2 - lon1) * Math.PI/180;
-      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ/2) * Math.sin(Δλ/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
+    }
+
+    let routeLayer;
+    function drawRoute(route) {
+      if (routeLayer) map.removeLayer(routeLayer);
+      routeLayer = L.polyline(route.shape, { color: 'deepskyblue', weight: 4 }).addTo(map);
+      map.fitBounds(routeLayer.getBounds());
     }
 
     function showClosestRouteToUser() {
@@ -64,39 +281,7 @@
       });
     }
 
-    let routeLayer;
-    function drawRoute(route) {
-      if (routeLayer) map.removeLayer(routeLayer);
-      routeLayer = L.polyline(route.shape, { color: 'deepskyblue', weight: 4 }).addTo(map);
-      map.fitBounds(routeLayer.getBounds());
-    }
-
-    const map = L.map('map').setView([45.5122, -122.6587], 13);
-    const maptilerKey = "9c1G1fH44ajCv0W1HJMt";
-    const dayTiles = L.tileLayer(`https://api.maptiler.com/maps/019734c4-68a3-70e5-8c72-011b52a8fd07/256/{z}/{x}/{y}.png?key=${maptilerKey}`, {
-      attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>'
-    });
-    const nightTiles = L.tileLayer(`https://api.maptiler.com/maps/019748d2-04be-7c08-b477-fe99e8e81a0a/256/{z}/{x}/{y}.png?key=${maptilerKey}`, {
-      attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>'
-    });
-
-    dayTiles.addTo(map);
-
-    let darkModeOn = false;
-    const modeToggle = document.getElementById('modeToggle');
-    modeToggle.addEventListener('click', () => {
-      darkModeOn = !darkModeOn;
-      if (darkModeOn) {
-        map.removeLayer(dayTiles);
-        map.addLayer(nightTiles);
-        modeToggle.classList.add("active");
-      } else {
-        map.removeLayer(nightTiles);
-        map.addLayer(dayTiles);
-        modeToggle.classList.remove("active");
-      }
-    });
-
+    // Icon menu interactivity
     const toggle = document.getElementById('menuToggle');
     const menu = document.getElementById('iconMenu');
     const moreBtn = document.getElementById('moreBtn');
