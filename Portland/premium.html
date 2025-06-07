@@ -6,7 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed Premium Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://cdn.maptiler.com/leaflet-maplibre-gl/leaflet-maplibre-gl.js"></script>
+  <script src="https://cdn.maptiler.com/maplibre-gl-js/v2.4.0/maplibre-gl.js"></script>
+  <link href="https://cdn.maptiler.com/maplibre-gl-js/v2.4.0/maplibre-gl.css" rel="stylesheet" />
   <style>
     html.founder { border: 5px solid gold; }
     html.gold { border: 5px solid #FFD700; }
@@ -208,8 +209,16 @@
       console.log('Map initialized:', map);
       
       // MapTiler API key
-      const maptilerKey = "9c1G1fH44ajCv0W1HJMt";
+      const maptilerKey = "OdvGsCDtgdbG2nzaGSDE";
       console.log('Using MapTiler key:', maptilerKey);
+
+      // Initialize MapLibre GL map
+      const maplibreMap = new maplibregl.Map({
+        container: 'map',
+        style: `https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/style.json?key=${maptilerKey}`,
+        center: [-122.6499, 45.5222],
+        zoom: 10
+      });
 
       // Fallback map tiles (OpenStreetMap)
       const fallbackTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -217,67 +226,27 @@
         maxZoom: 19
       });
 
-      // Custom MapTiler style URLs
-      const dayTiles = L.tileLayer('https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/{z}/{x}/{y}.png?key=' + maptilerKey, {
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-        tileSize: 512,
-        zoomOffset: -1
-      });
-
-      const nightTiles = L.tileLayer('https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/{z}/{x}/{y}.png?key=' + maptilerKey, {
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-        tileSize: 512,
-        zoomOffset: -1
-      });
-
-      // Add error handling for tile loading
-      dayTiles.on('tileerror', function(e) {
-        console.error('Error loading day tiles:', e);
-        // Switch to fallback if MapTiler fails
-        if (!map.hasLayer(fallbackTiles)) {
-          map.removeLayer(dayTiles);
-          fallbackTiles.addTo(map);
-          console.log('Switched to fallback map tiles');
-        }
-      });
-
-      nightTiles.on('tileerror', function(e) {
-        console.error('Error loading night tiles:', e);
-        // Switch to fallback if MapTiler fails
-        if (!map.hasLayer(fallbackTiles)) {
-          map.removeLayer(nightTiles);
-          fallbackTiles.addTo(map);
-          console.log('Switched to fallback map tiles');
-        }
-      });
-
-      // Add the default day tiles to the map
-      dayTiles.addTo(map);
-
       let darkModeOn = false;
       document.getElementById('modeToggle').addEventListener('click', () => {
         darkModeOn = !darkModeOn;
-        if (map.hasLayer(fallbackTiles)) {
-          // If we're using fallback, just toggle dark mode class
-          document.body.classList.toggle('dark-mode', darkModeOn);
-        } else {
-          map.removeLayer(darkModeOn ? dayTiles : nightTiles);
-          map.addLayer(darkModeOn ? nightTiles : dayTiles);
-        }
+        maplibreMap.setStyle(`https://api.maptiler.com/maps/${darkModeOn ? '0197492e-69d1-7337-8c37-6179e8fda6a8' : '0197492c-4e22-74f2-beb1-36e1263607e9'}/style.json?key=${maptilerKey}`);
         document.getElementById('modeToggle').classList.toggle("active", darkModeOn);
         console.log('Map mode changed to:', darkModeOn ? 'night' : 'day');
       });
 
-      // Add map load event listener
-      map.on('load', () => {
-        console.log('Map loaded successfully');
+      // Add error handling
+      maplibreMap.on('error', (e) => {
+        console.error('Map error:', e);
+        // Switch to fallback if MapTiler fails
+        if (!map.hasLayer(fallbackTiles)) {
+          fallbackTiles.addTo(map);
+          console.log('Switched to fallback map tiles');
+        }
       });
 
-      // Add map error event listener
-      map.on('error', (e) => {
-        console.error('Map error:', e);
+      // Add map load event listener
+      maplibreMap.on('load', () => {
+        console.log('Map loaded successfully');
       });
 
       // Search functionality
