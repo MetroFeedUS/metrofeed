@@ -446,6 +446,62 @@
           }
         });
       });
+
+      // Store the current route polyline so we can remove it before drawing a new one
+      let currentRoutePolyline = null;
+
+      function showClosestRouteToUser() {
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser.");
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+
+            let closestRoute = null;
+            let closestDistance = Infinity;
+
+            for (const route of masterRoutes) {
+              for (const point of route.shape) {
+                const lat = point[0];
+                const lon = point[1];
+                const distance = Math.sqrt(
+                  Math.pow(lat - userLat, 2) + Math.pow(lon - userLon, 2)
+                );
+
+                if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestRoute = route;
+                }
+              }
+            }
+
+            if (closestRoute) {
+              // Remove previous polyline if it exists
+              if (currentRoutePolyline) {
+                map.removeLayer(currentRoutePolyline);
+              }
+              // Draw the closest route
+              const routeShape = closestRoute.shape.map(([lat, lon]) => [lat, lon]);
+              currentRoutePolyline = L.polyline(routeShape, { color: 'blue', weight: 5 }).addTo(map);
+              map.fitBounds(currentRoutePolyline.getBounds());
+              console.log("Closest route ID:", closestRoute.route_id);
+            } else {
+              alert("No routes found.");
+            }
+          },
+          function(error) {
+            alert("Unable to retrieve your location.");
+            console.error(error);
+          }
+        );
+      }
+
+      // Run closest route logic on page load
+      window.addEventListener('DOMContentLoaded', showClosestRouteToUser);
   </script>
 </body>
 </html>
