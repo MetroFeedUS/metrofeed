@@ -180,18 +180,18 @@
 
   <!-- Search Bar -->
   <div id="searchWrapper">
-    <img id="searchIcon" src="015-search.svg" alt="Search" />
+    <img id="searchIcon" src="file:///C:/Users/User/AppData/Local/Temp/662dbe37-ae28-4a40-995e-234f2ebad095_mycollection.zip.095/svg/013-search.svg" alt="Search" />
     <input type="text" id="searchBar" placeholder="Search routes or stops..." />
   </div>
 
   <!-- Menu & Mode Toggles -->
-  <button id="menuToggle"><img src="014-menu.svg" alt="Menu"></button>
-  <button id="modeToggle" title="Toggle Night Mode"><img src="night.svg" alt="Night Mode"></button>
+  <button id="menuToggle"><img src="file:///C:/Users/User/AppData/Local/Temp/5d0922bc-e97f-4557-a535-b7004306cf43_mycollection.zip.f43/svg/010-menu.svg" alt="Menu"></button>
+  <button id="modeToggle" title="Toggle Night Mode"><img src="file:///C:/Users/User/AppData/Local/Temp/6dc267c1-06b0-4dfe-97d2-c17a68a12651_mycollection.zip.651/svg/012-day.svg" alt="Night Mode"></button>
 
   <!-- Icon Menu -->
   <div id="iconMenu">
-    <button class="icon-button" title="Trip Planner"><img src="004-destination.svg" class="icon-svg" /></button>
-    <button class="icon-button" title="Traffic"><img src="traffic.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="Trip Planner"><img src="file:///C:/Users/User/AppData/Local/Temp/9244d6d1-da10-41f0-b021-a7f119f43138_mycollection.zip.138/svg/020-destination.svg" class="icon-svg" /></button>
+    <button class="icon-button" title="Traffic"><img src="file:///C:/Users/User/AppData/Local/Temp/2b56ece3-2983-4553-b19a-4bcc109f6cc0_mycollection.zip.cc0/svg/009-traffic.svgA" class="icon-svg" /></button>
     <button class="icon-button" title="Weather"><img src="002-rainy.svg" class="icon-svg" /></button>
     <button class="icon-button" title="Traffic Cams"><img src="camera.svg" class="icon-svg" /></button>
     <button class="icon-button" title="Chat"><img src="chat.svg" class="icon-svg" /></button>
@@ -210,104 +210,59 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="mastermap.js"></script>
   <script>
+      console.log('Initializing map...');
       const map = L.map('map').setView([45.5122, -122.6587], 13);
-  const maptilerKey = "9c1G1fH44ajCv0W1HJMt";
+      console.log('Map initialized:', map);
+      const maptilerKey = "9c1G1fH44ajCv0W1HJMt";
 
-  const dayTiles = L.tileLayer('https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
-    attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>'
-  });
-
-  const nightTiles = L.tileLayer('https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
-    attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>'
-  });
-
-
-
-    let darkModeOn = false;
-    document.getElementById('modeToggle').addEventListener('click', () => {
-      darkModeOn = !darkModeOn;
-      map.removeLayer(darkModeOn ? dayTiles : nightTiles);
-      map.addLayer(darkModeOn ? nightTiles : dayTiles);
-      document.getElementById('modeToggle').classList.toggle("active", darkModeOn);
-    });
-
-    const routeIndex = new Map();
-    const stopIndex = new Map();
-    masterRoutes.forEach(route => {
-      const key = route.route_title.toLowerCase();
-      routeIndex.set(key, route);
-      route.stops.forEach(stop => {
-        const name = stop.name.toLowerCase();
-        if (!stopIndex.has(name)) stopIndex.set(name, []);
-        stopIndex.get(name).push({ route, stop });
+      const dayTiles = L.tileLayer('https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>',
+        errorTileUrl: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png'
       });
-    });
 
-    function getDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-      const Δφ = (lat2 - lat1) * Math.PI / 180;
-      const Δλ = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
+      const nightTiles = L.tileLayer('https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>',
+        errorTileUrl: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png'
+      });
 
-    let routeLayer;
-    function drawRoute(route) {
-      if (routeLayer) map.removeLayer(routeLayer);
-      routeLayer = L.polyline(route.shape, { color: 'deepskyblue', weight: 4 }).addTo(map);
-      map.fitBounds(routeLayer.getBounds());
-    }
+      // Add the default day tiles to the map
+      dayTiles.addTo(map).on('tileerror', function(e) {
+        console.error('Error loading MapTiler tiles:', e);
+      });
 
-    function showClosestRouteToUser() {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(pos => {
-        const { latitude, longitude } = pos.coords;
-        let closest = null;
-        let minDist = Infinity;
-        masterRoutes.forEach(route => {
-          route.stops.forEach(stop => {
-            const dist = getDistance(latitude, longitude, stop.lat, stop.lon);
-            if (dist < minDist) {
-              minDist = dist;
-              closest = route;
-            }
+      let darkModeOn = false;
+      document.getElementById('modeToggle').addEventListener('click', () => {
+        darkModeOn = !darkModeOn;
+        map.removeLayer(darkModeOn ? dayTiles : nightTiles);
+        map.addLayer(darkModeOn ? nightTiles : dayTiles);
+        document.getElementById('modeToggle').classList.toggle("active", darkModeOn);
+      });
+
+      // Icon menu interactivity
+      const toggle = document.getElementById('menuToggle');
+      const menu = document.getElementById('iconMenu');
+      const moreBtn = document.getElementById('moreBtn');
+      const settingsBar = document.getElementById('settingsBar');
+      const buttons = document.querySelectorAll('.icon-button');
+
+      toggle.addEventListener('click', () => {
+        const isOpen = menu.style.display === 'flex';
+        menu.style.display = isOpen ? 'none' : 'flex';
+        settingsBar.classList.remove("active");
+      });
+
+      moreBtn.addEventListener('click', () => {
+        settingsBar.classList.toggle("active");
+      });
+
+      buttons.forEach(btn => {
+        if (btn !== moreBtn) {
+          btn.addEventListener('click', () => {
+            btn.classList.toggle('active');
           });
-        });
-        if (closest) drawRoute(closest);
+        }
       });
-    }
-
-    // Icon menu interactivity
-    const toggle = document.getElementById('menuToggle');
-    const menu = document.getElementById('iconMenu');
-    const moreBtn = document.getElementById('moreBtn');
-    const settingsBar = document.getElementById('settingsBar');
-    const buttons = document.querySelectorAll('.icon-button');
-
-    toggle.addEventListener('click', () => {
-      const isOpen = menu.style.display === 'flex';
-      menu.style.display = isOpen ? 'none' : 'flex';
-      settingsBar.classList.remove("active");
-    });
-
-    moreBtn.addEventListener('click', () => {
-      settingsBar.classList.toggle("active");
-    });
-
-    buttons.forEach(btn => {
-      if (btn !== moreBtn) {
-        btn.addEventListener('click', () => {
-          btn.classList.toggle('active');
-        });
-      }
-    });
-
-    showClosestRouteToUser();
   </script>
 </body>
 </html>
