@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed Premium Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.maptiler.com/maplibre-gl-js/v2.4.0/maplibre-gl.js"></script>
+  <link href="https://cdn.maptiler.com/maplibre-gl-js/v2.4.0/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://cdn.maptiler.com/leaflet-maplibre-gl/leaflet-maplibre-gl.js"></script>
   <style>
     html.founder { border: 5px solid gold; }
     html.gold { border: 5px solid #FFD700; }
@@ -203,37 +206,49 @@
   <script src="mastermap.js"></script>
   <script>
       console.log('Initializing map...');
-      const map = L.map('map').setView([45.5122, -122.6587], 13);
+      const map = L.map('map').setView([45.5222, -122.6499], 10);
       console.log('Map initialized:', map);
       
       // MapTiler API key
       const maptilerKey = "9c1G1fH44ajCv0W1HJMt";
       console.log('Using MapTiler key:', maptilerKey);
 
-      // Custom MapTiler style URLs
-      const dayTiles = L.tileLayer('https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-        tileSize: 512,
-        zoomOffset: -1
+      // Fallback map tiles (OpenStreetMap)
+      const fallbackTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        maxZoom: 19
       });
 
-      const nightTiles = L.tileLayer('https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/256/{z}/{x}/{y}.png?key=' + maptilerKey, {
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-        tileSize: 512,
-        zoomOffset: -1
+      // Custom MapTiler style URLs
+      const dayTiles = L.maplibreGL({
+        style: 'https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/style.json?key=' + maptilerKey,
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+      });
+
+      const nightTiles = L.maplibreGL({
+        style: 'https://api.maptiler.com/maps/0197492e-69d1-7337-8c37-6179e8fda6a8/style.json?key=' + maptilerKey,
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
       });
 
       // Add error handling for tile loading
-      dayTiles.on('tileerror', function(e) {
+      dayTiles.on('error', function(e) {
         console.error('Error loading day tiles:', e);
-        console.log('Failed tile coordinates:', e.coords);
+        // Switch to fallback if MapTiler fails
+        if (!map.hasLayer(fallbackTiles)) {
+          map.removeLayer(dayTiles);
+          fallbackTiles.addTo(map);
+          console.log('Switched to fallback map tiles');
+        }
       });
 
-      nightTiles.on('tileerror', function(e) {
+      nightTiles.on('error', function(e) {
         console.error('Error loading night tiles:', e);
-        console.log('Failed tile coordinates:', e.coords);
+        // Switch to fallback if MapTiler fails
+        if (!map.hasLayer(fallbackTiles)) {
+          map.removeLayer(nightTiles);
+          fallbackTiles.addTo(map);
+          console.log('Switched to fallback map tiles');
+        }
       });
 
       // Add the default day tiles to the map
@@ -242,8 +257,13 @@
       let darkModeOn = false;
       document.getElementById('modeToggle').addEventListener('click', () => {
         darkModeOn = !darkModeOn;
-        map.removeLayer(darkModeOn ? dayTiles : nightTiles);
-        map.addLayer(darkModeOn ? nightTiles : dayTiles);
+        if (map.hasLayer(fallbackTiles)) {
+          // If we're using fallback, just toggle dark mode class
+          document.body.classList.toggle('dark-mode', darkModeOn);
+        } else {
+          map.removeLayer(darkModeOn ? dayTiles : nightTiles);
+          map.addLayer(darkModeOn ? nightTiles : dayTiles);
+        }
         document.getElementById('modeToggle').classList.toggle("active", darkModeOn);
         console.log('Map mode changed to:', darkModeOn ? 'night' : 'day');
       });
