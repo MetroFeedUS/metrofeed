@@ -225,8 +225,6 @@
     }
 
     .diamond-stop .diamond-shape {
-      width: 20px;
-      height: 20px;
       background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
       border: 2px solid #0033A0;
       border-radius: 4px;
@@ -381,12 +379,43 @@
         });
       }
 
-      // Update searchRoutes to search only by unique route
-      function searchRoutes(query) {
+      // --- POI Moderation Logic ---
+      function getPOIs() {
+        // Get all POIs from localStorage (simulate backend)
+        return JSON.parse(localStorage.getItem('pois') || '[]');
+      }
+      function savePOIs(pois) {
+        localStorage.setItem('pois', JSON.stringify(pois));
+      }
+      function addPOI(poi) {
+        const pois = getPOIs();
+        pois.push(poi);
+        savePOIs(pois);
+      }
+      // Console moderation functions
+      window.listPendingPOIs = function() {
+        const pois = getPOIs();
+        console.table(pois.filter(p => p.status === 'pending'));
+      };
+      window.approvePOI = function(id) {
+        const pois = getPOIs();
+        const idx = pois.findIndex(p => p.id === id);
+        if (idx !== -1) {
+          pois[idx].status = 'approved';
+          savePOIs(pois);
+          console.log('POI approved:', pois[idx]);
+        } else {
+          console.warn('POI not found:', id);
+        }
+      };
+      // --- End POI Moderation Logic ---
+
+      // --- Unified Search Logic ---
+      function searchUnified(query) {
         const results = [];
+        // Routes
         const uniqueRoutes = getUniqueRoutes();
         uniqueRoutes.forEach(routeGroup => {
-          // Search in route display title
           if (routeGroup.display_title.toLowerCase().includes(query)) {
             results.push({
               type: 'route',
@@ -396,18 +425,65 @@
             });
           }
         });
+        // Stops
+        allStops.forEach(stop => {
+          if (
+            stop.name.toLowerCase().includes(query) ||
+            (stop.stop_id && stop.stop_id.toString().includes(query))
+          ) {
+            results.push({
+              type: 'stop',
+              id: stop.stop_id,
+              name: stop.name,
+              lat: stop.lat,
+              lon: stop.lon,
+              routes: stop.routes
+            });
+          }
+        });
+        // Approved POIs
+        getPOIs().filter(p => p.status === 'approved').forEach(poi => {
+          if (poi.title.toLowerCase().includes(query) || (poi.desc && poi.desc.toLowerCase().includes(query))) {
+            results.push({
+              type: 'poi',
+              id: poi.id,
+              title: poi.title,
+              desc: poi.desc,
+              lat: poi.lat,
+              lon: poi.lon
+            });
+          }
+        });
         return results;
       }
+      // --- End Unified Search Logic ---
 
-      // Display search results
+      // Update search input handler to use unified search
+      searchBar.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const rawQuery = e.target.value;
+        const sanitizedQuery = sanitizeInput(rawQuery);
+        if (rawQuery !== sanitizedQuery) {
+          e.target.value = sanitizedQuery;
+        }
+        const query = sanitizedQuery.toLowerCase();
+        if (query.length < 2) {
+          searchResultsDiv.style.display = 'none';
+          return;
+        }
+        searchTimeout = setTimeout(() => {
+          const results = searchUnified(query);
+          displayResults(results);
+        }, 300);
+      });
+
+      // Update displayResults to handle all types
       function displayResults(results) {
         searchResultsDiv.innerHTML = '';
-        
         if (results.length === 0) {
           searchResultsDiv.style.display = 'none';
           return;
         }
-
         results.forEach(result => {
           const resultDiv = document.createElement('div');
           resultDiv.style.cssText = `
@@ -416,32 +492,26 @@
             cursor: pointer;
             color: white;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
           `;
-          resultDiv.style.hover = `
-            background: rgba(255,255,255,0.1);
-          `;
-
+          let icon = '';
+          if (result.type === 'route') icon = '🚌';
+          else if (result.type === 'stop') icon = '◆';
+          else if (result.type === 'poi') icon = '⭐';
           if (result.type === 'route') {
-            resultDiv.innerHTML = `
-              <div style="font-weight: bold;">${result.display_title}</div>
-              <div style="font-size: 12px; color: #888;">Route</div>
-            `;
-          } else {
-            resultDiv.innerHTML = `
-              <div style="font-weight: bold;">${result.name}</div>
-              <div style="font-size: 12px; color: #888;">
-                ${result.display_title} • Next: ${result.times[0]}
-              </div>
-            `;
+            resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.display_title}</div><div style="font-size: 12px; color: #888;">Route</div></div>`;
+          } else if (result.type === 'stop') {
+            resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.name}</div><div style="font-size: 12px; color: #888;">Stop</div></div>`;
+          } else if (result.type === 'poi') {
+            resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.title}</div><div style="font-size: 12px; color: #888;">Landmark/POI</div></div>`;
           }
-
           resultDiv.addEventListener('click', () => {
             if (directionToggleDiv) directionToggleDiv.remove();
             if (result.type === 'route') {
-              // Find the route group by id
               const routeGroup = getUniqueRoutes().find(rg => rg.route_id === result.id);
               if (routeGroup) {
-                // Show direction 0 by default
                 let currentDirId = 0;
                 let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
                 showRouteWithStops(currentRoute);
@@ -453,60 +523,27 @@
                 };
                 showDirectionToggle(routeGroup, currentDirId, handleToggle);
               }
-            } else {
-              const route = masterRoutes.find(r => r.route_id === result.routeId);
-              if (route) {
-                showRouteWithStops(route, result);
-              }
+            } else if (result.type === 'stop') {
+              map.setView([result.lat, result.lon], 16);
+              const highlightedTimes = getHighlightedTimes(result.routes[0]?.times || []);
+              L.popup()
+                .setLatLng([result.lat, result.lon])
+                .setContent(`<strong>${result.name}</strong><br>${highlightedTimes}`)
+                .openOn(map);
+            } else if (result.type === 'poi') {
+              map.setView([result.lat, result.lon], 17);
+              L.popup()
+                .setLatLng([result.lat, result.lon])
+                .setContent(`<strong>${result.title}</strong><br>${result.desc || ''}`)
+                .openOn(map);
             }
             searchResultsDiv.style.display = 'none';
             searchBar.value = '';
           });
-
           searchResultsDiv.appendChild(resultDiv);
         });
-
         searchResultsDiv.style.display = 'block';
       }
-
-      searchBar.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        // Sanitize the input
-        const rawQuery = e.target.value;
-        const sanitizedQuery = sanitizeInput(rawQuery);
-        
-        // Update the input field with sanitized value
-        if (rawQuery !== sanitizedQuery) {
-          e.target.value = sanitizedQuery;
-        }
-        
-        const query = sanitizedQuery.toLowerCase();
-        
-        if (query.length < 2) {
-          searchResultsDiv.style.display = 'none';
-          return;
-        }
-
-        searchTimeout = setTimeout(() => {
-          console.log('Searching for:', query);
-          const results = searchRoutes(query);
-          displayResults(results);
-        }, 300);
-      });
-
-      // Close search results when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!searchBar.contains(e.target) && !searchResultsDiv.contains(e.target)) {
-          searchResultsDiv.style.display = 'none';
-        }
-      });
-
-      // Prevent form submission and other potentially dangerous actions
-      searchBar.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-        }
-      });
 
       // Icon menu interactivity
       const toggle = document.getElementById('menuToggle');
@@ -672,29 +709,35 @@
         currentRoutePolyline.bindTooltip(route.route_title, {sticky: true, direction: 'center', className: 'route-tooltip'});
 
         // Draw stop markers as diamonds
-        route.stops.forEach(stop => {
+        currentStopMarkers = route.stops.map(stop => {
           const marker = L.marker([stop.lat, stop.lon], {
-            icon: L.divIcon({
-              className: 'diamond-stop',
-              iconSize: [24, 24],
-              iconAnchor: [12, 12],
-              html: `<div class='diamond-shape'></div>`
-            })
+            icon: L.divIcon(getDiamondIconOptions(map.getZoom())),
           }).addTo(map);
           marker.bindTooltip(stop.name, {permanent: false, direction: 'top'});
-          marker.on('click', () => {
-            const highlightedTimes = getHighlightedTimes(stop.times);
-            L.popup()
-              .setLatLng([stop.lat, stop.lon])
-              .setContent(`
-                <strong>${stop.name}</strong><br>
-                ${route.route_title}<br>
-                ${highlightedTimes}
-              `)
-              .openOn(map);
-          });
-          currentStopMarkers.push(marker);
+          return marker;
         });
+
+        // Responsive marker sizing on zoom
+        map.on('zoomend', () => {
+          const zoom = map.getZoom();
+          currentStopMarkers.forEach(marker => {
+            marker.setIcon(L.divIcon(getDiamondIconOptions(zoom)));
+          });
+        });
+
+        // Helper for responsive diamond icon
+        function getDiamondIconOptions(zoom) {
+          let size = 10, border = 1;
+          if (zoom >= 14) { size = 22; border = 2; }
+          else if (zoom >= 12) { size = 16; border = 2; }
+          else if (zoom >= 10) { size = 12; border = 1; }
+          return {
+            className: 'diamond-stop',
+            iconSize: [size + 4, size + 4],
+            iconAnchor: [Math.round((size + 4) / 2), Math.round((size + 4) / 2)],
+            html: `<div class='diamond-shape' style='width:${size}px;height:${size}px;border-width:${border}px;'></div>`
+          };
+        }
 
         // Fit map to route
         map.fitBounds(currentRoutePolyline.getBounds());
@@ -868,11 +911,9 @@
         // Remove any existing modal
         const oldModal = document.getElementById('landmarkModal');
         if (oldModal) oldModal.remove();
-
         const modal = document.createElement('div');
         modal.id = 'landmarkModal';
-        modal.style.cssText = `
-          position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 2000; display: flex; align-items: center; justify-content: center;`;
+        modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 2000; display: flex; align-items: center; justify-content: center;`;
         modal.innerHTML = `
           <div style="background: #fff; color: #222; border-radius: 12px; padding: 24px 32px; min-width: 320px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.3); position: relative;">
             <button id="closeLandmarkModal" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:22px;cursor:pointer;">&times;</button>
@@ -890,20 +931,22 @@
         document.getElementById('closeLandmarkModal').onclick = () => modal.remove();
         document.getElementById('landmarkForm').onsubmit = (e) => {
           e.preventDefault();
-          // Stub: send data to backend or moderation queue
           const form = e.target;
           const data = {
+            id: 'poi-' + Date.now(),
             stop_id: stop.stop_id,
             stop_name: stop.name,
             title: form.title.value.trim(),
             desc: form.desc.value.trim(),
             cat: form.cat.value.trim(),
+            lat: stop.lat,
+            lon: stop.lon,
+            status: 'pending',
             submitted: new Date().toISOString()
           };
-          // For now, just show a thank you message
+          addPOI(data);
           document.getElementById('landmarkMsg').innerHTML = 'Thank you! Your suggestion will be reviewed.';
           form.reset();
-          // TODO: Send data to backend/moderation system
           setTimeout(() => modal.remove(), 2000);
         };
       }
@@ -941,7 +984,7 @@
             .openOn(map);
         } else if (stopsInRadius.length === 1) {
           const stop = stopsInRadius[0];
-          const highlightedTimes = getHighlightedTimes(stop.times);
+          const highlightedTimes = getHighlightedTimes(stop.routes[0]?.times || []);
           const routeList = stop.routes.map(r =>
             `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
           ).join('');
@@ -959,7 +1002,7 @@
             const routeList = stop.routes.map(r => `<span style="font-size:12px;color:#fff;background:#222;padding:2px 6px;border-radius:4px;margin-right:4px;cursor:pointer;" onclick=\"window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})\">${r.route_title}</span>`).join('');
             btn.innerHTML = `<strong>${stop.name}</strong><br>${routeList}`;
             btn.onclick = () => {
-              const highlightedTimes = getHighlightedTimes(stop.times);
+              const highlightedTimes = getHighlightedTimes(stop.routes[0]?.times || []);
               const routeBtns = stop.routes.map(r =>
                 `<button style=\"display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;\" onclick=\"window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})\">${r.route_title}</button>`
               ).join('');
