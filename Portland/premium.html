@@ -729,6 +729,94 @@
       searchBar.addEventListener('input', () => {
         if (directionToggleDiv) directionToggleDiv.remove();
       });
+
+      // Haversine formula for distance in meters
+      function haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // Earth radius in meters
+        const toRad = x => x * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      }
+
+      // Build a flat, deduplicated array of all stops
+      function getAllStopsWithRoutes() {
+        const stopMap = {};
+        masterRoutes.forEach(route => {
+          route.stops.forEach(stop => {
+            if (!stopMap[stop.stop_id]) {
+              stopMap[stop.stop_id] = {
+                ...stop,
+                routes: []
+              };
+            }
+            stopMap[stop.stop_id].routes.push({
+              route_id: route.route_id,
+              route_title: route.route_title,
+              direction_id: route.direction_id
+            });
+          });
+        });
+        return Object.values(stopMap);
+      }
+      const allStops = getAllStopsWithRoutes();
+
+      // Map click handler for closest stop(s)
+      map.on('click', function(e) {
+        const { lat, lng } = e.latlng;
+        const stopsInRadius = allStops.filter(stop =>
+          haversine(lat, lng, stop.lat, stop.lon) <= 100
+        );
+        if (stopsInRadius.length === 0) {
+          L.popup()
+            .setLatLng([lat, lng])
+            .setContent('No stops within 100 meters.')
+            .openOn(map);
+        } else if (stopsInRadius.length === 1) {
+          // Show the usual stop popup
+          const stop = stopsInRadius[0];
+          const highlightedTimes = getHighlightedTimes(stop.times);
+          const routeList = stop.routes.map(r => `<div>${r.route_title}</div>`).join('');
+          L.popup()
+            .setLatLng([stop.lat, stop.lon])
+            .setContent(`
+              <strong>${stop.name}</strong><br>
+              ${routeList}<br>
+              ${highlightedTimes}
+            `)
+            .openOn(map);
+        } else {
+          // Multiple stops: show a selection list
+          const popupDiv = document.createElement('div');
+          popupDiv.innerHTML = '<strong>Multiple stops found:</strong><br>';
+          stopsInRadius.forEach(stop => {
+            const btn = document.createElement('button');
+            btn.style.cssText = 'display:block;width:100%;margin:4px 0;padding:6px 8px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;';
+            const routeList = stop.routes.map(r => `<span style="font-size:12px;color:#fff;background:#222;padding:2px 6px;border-radius:4px;margin-right:4px;">${r.route_title}</span>`).join('');
+            btn.innerHTML = `<strong>${stop.name}</strong><br>${routeList}`;
+            btn.onclick = () => {
+              const highlightedTimes = getHighlightedTimes(stop.times);
+              L.popup()
+                .setLatLng([stop.lat, stop.lon])
+                .setContent(`
+                  <strong>${stop.name}</strong><br>
+                  ${routeList}<br>
+                  ${highlightedTimes}
+                `)
+                .openOn(map);
+            };
+            popupDiv.appendChild(btn);
+          });
+          L.popup()
+            .setLatLng([lat, lng])
+            .setContent(popupDiv)
+            .openOn(map);
+        }
+      });
   </script>
 </body>
 </html>
