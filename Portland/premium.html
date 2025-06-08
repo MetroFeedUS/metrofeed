@@ -298,42 +298,38 @@
         return input.replace(/[^a-zA-Z0-9\s\-.,]/g, '');
       }
 
-      // Group masterRoutes by route_id for unified search
-      function getUniqueRoutes() {
-        const routeMap = {};
-        masterRoutes.forEach(route => {
-          if (!routeMap[route.route_id]) {
-            routeMap[route.route_id] = [];
-          }
-          routeMap[route.route_id].push(route);
-        });
-        return Object.values(routeMap).map(routesArr => {
-          // Use direction 0 as default for display
-          const dir0 = routesArr.find(r => r.direction_id === 0) || routesArr[0];
-          return {
-            route_id: dir0.route_id,
-            directions: routesArr,
-            display_title: dir0.route_title.replace(/\s*-\s*To.*/i, ''), // Clean up for search display
-          };
-        });
-      }
-
-      // Update searchRoutes to search only by unique route
+      // Search through routes and stops
       function searchRoutes(query) {
         const results = [];
-        const uniqueRoutes = getUniqueRoutes();
-        uniqueRoutes.forEach(routeGroup => {
-          // Search in route display title
-          if (routeGroup.display_title.toLowerCase().includes(query)) {
+        
+        masterRoutes.forEach(route => {
+          // Search in route title
+          if (route.route_title.toLowerCase().includes(query)) {
             results.push({
               type: 'route',
-              id: routeGroup.route_id,
-              directions: routeGroup.directions,
-              display_title: routeGroup.display_title
+              id: route.route_id,
+              title: route.route_title,
+              direction: route.direction_id
             });
           }
+
+          // Search in stops
+          route.stops.forEach(stop => {
+            if (stop.name.toLowerCase().includes(query)) {
+              results.push({
+                type: 'stop',
+                id: stop.stop_id,
+                name: stop.name,
+                lat: stop.lat,
+                lon: stop.lon,
+                times: stop.times,
+                routeId: route.route_id,
+                routeTitle: route.route_title
+              });
+            }
+          });
         });
-        // Optionally, you can add stop search here if you want
+
         return results;
       }
 
@@ -361,35 +357,23 @@
 
           if (result.type === 'route') {
             resultDiv.innerHTML = `
-              <div style="font-weight: bold;">${result.display_title}</div>
+              <div style="font-weight: bold;">${result.title}</div>
               <div style="font-size: 12px; color: #888;">Route</div>
             `;
           } else {
             resultDiv.innerHTML = `
               <div style="font-weight: bold;">${result.name}</div>
               <div style="font-size: 12px; color: #888;">
-                ${result.display_title} • Next: ${result.times[0]}
+                ${result.routeTitle} • Next: ${result.times[0]}
               </div>
             `;
           }
 
           resultDiv.addEventListener('click', () => {
-            if (directionToggleDiv) directionToggleDiv.remove();
             if (result.type === 'route') {
-              // Find the route group by id
-              const routeGroup = getUniqueRoutes().find(rg => rg.route_id === result.id);
-              if (routeGroup) {
-                // Show direction 0 by default
-                let currentDirId = 0;
-                let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-                showRouteWithStops(currentRoute);
-                const handleToggle = (newDirId) => {
-                  currentDirId = newDirId;
-                  currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-                  showRouteWithStops(currentRoute);
-                  showDirectionToggle(routeGroup, currentDirId, handleToggle);
-                };
-                showDirectionToggle(routeGroup, currentDirId, handleToggle);
+              const route = masterRoutes.find(r => r.route_id === result.id);
+              if (route) {
+                showRouteWithStops(route);
               }
             } else {
               const route = masterRoutes.find(r => r.route_id === result.routeId);
@@ -446,11 +430,6 @@
         }
       });
 
-      // Listen for input focus to reset direction toggle
-      searchBar.addEventListener('focus', () => {
-        if (directionToggleDiv) directionToggleDiv.remove();
-      });
-
       // Icon menu interactivity
       const toggle = document.getElementById('menuToggle');
       const menu = document.getElementById('iconMenu');
@@ -487,11 +466,6 @@
       let currentRoutePolyline = null;
       let currentStopMarkers = [];
 
-      // TriMet API key for live bus locations
-      const apiKey = '2C4447D4A42083BCD84DE3B8E';
-      let busMarkers = {};
-      let busInterval = null;
-
       // Helper to get current time in Portland (America/Los_Angeles)
       function getPortlandTimeHM() {
         const now = new Date();
@@ -505,12 +479,12 @@
         if (!Array.isArray(timesArr) || timesArr.length === 0) return 'No scheduled times';
         const { h: nowH, m: nowM } = getPortlandTimeHM();
         const nowMins = nowH * 60 + nowM;
-        let soonest = null;
-        let soonestDiff = Infinity;
-        timesArr.forEach(t => {
-          // Parse time (supports both 12h and 24h, with or without AM/PM)
+        let nextTime = null;
+        let minDiff = Infinity;
+        for (const t of timesArr) {
+          // Parse time (supports both 12h and 24h)
           let match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-          if (!match) return;
+          if (!match) continue;
           let hour = parseInt(match[1], 10);
           let min = parseInt(match[2], 10);
           let ampm = match[3];
@@ -519,18 +493,65 @@
             if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
           }
           let schedMins = hour * 60 + min;
-          // If scheduled time is before now, treat as next day
+          // If scheduled time is before now, assume it's for the next day
+          if (schedMins < nowMins) schedMins += 1440;
           let diff = schedMins - nowMins;
-          if (diff < 0) diff += 1440;
-          if (diff < soonestDiff) {
-            soonestDiff = diff;
-            soonest = t;
+          if (diff >= 0 && diff < minDiff) {
+            minDiff = diff;
+            nextTime = t;
           }
-        });
-        return soonest || 'No scheduled times';
+        }
+        return nextTime || 'No scheduled times';
       }
 
-      // Update showRouteWithStops to use highlighted times in stop popups
+      // TriMet API key for live bus locations
+      const apiKey = '2C4447D4A42083BCD84DE3B8E';
+      let busMarkers = {};
+      let busInterval = null;
+
+      async function fetchAndDisplayBuses(routeNumber, direction) {
+        try {
+          const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+          const data = await res.json();
+          const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+          // Remove old bus markers
+          Object.values(busMarkers).forEach(m => map.removeLayer(m));
+          busMarkers = {};
+          if (!buses.length) return;
+
+          buses.forEach(bus => {
+            if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+            const icon = L.divIcon({    
+               className: '',
+               html: `
+                <div style="text-align:center;">
+                  <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+                  <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+                </div>
+              `,
+              iconSize: [40, 30], iconAnchor: [20, 30]
+            });
+            const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+            busMarkers[bus.vehicleID] = marker;
+          });
+        } catch (err) {
+          console.error('Error fetching live bus data:', err);
+        }
+      }
+
+      function startLiveBuses(route, direction) {
+        // Clear any previous interval and markers
+        if (busInterval) clearInterval(busInterval);
+        Object.values(busMarkers).forEach(m => map.removeLayer(m));
+        busMarkers = {};
+        // Initial fetch
+        fetchAndDisplayBuses(route.route_id, direction);
+        // Set interval
+        busInterval = setInterval(() => fetchAndDisplayBuses(route.route_id, direction), 15000);
+      }
+
+      // Update showRouteWithStops to start live bus updates
       function showRouteWithStops(route, focusStop) {
         // Remove previous polyline and stop markers if they exist
         if (currentRoutePolyline) {
@@ -562,13 +583,13 @@
           }).addTo(map);
           marker.bindTooltip(stop.name, {sticky: true, direction: 'top', className: 'stop-tooltip'});
           marker.on('click', () => {
-            const highlightedTimes = getNextArrival(stop.times);
+            const nextArrival = getNextArrival(stop.times);
             L.popup()
               .setLatLng([stop.lat, stop.lon])
               .setContent(`
                 <strong>${stop.name}</strong><br>
                 ${route.route_title}<br>
-                ${highlightedTimes}
+                Next scheduled: ${nextArrival}
               `)
               .openOn(map);
           });
@@ -581,13 +602,13 @@
         // If focusing a stop, center and open popup
         if (focusStop) {
           map.setView([focusStop.lat, focusStop.lon], 16);
-          const highlightedTimes = getNextArrival(focusStop.times);
+          const nextArrival = getNextArrival(focusStop.times);
           L.popup()
             .setLatLng([focusStop.lat, focusStop.lon])
             .setContent(`
               <strong>${focusStop.name}</strong><br>
               ${route.route_title}<br>
-              ${highlightedTimes}
+              Next scheduled: ${nextArrival}
             `)
             .openOn(map);
         }
@@ -642,49 +663,6 @@
 
       // Run closest route logic on page load
       window.addEventListener('DOMContentLoaded', showClosestRouteToUser);
-
-      // Refactor direction toggle logic for unlimited toggling and reset
-      let directionToggleDiv = null;
-      let currentDirectionToggleHandler = null;
-      function showDirectionToggle(routeGroup, currentDirectionId, onChange) {
-        if (directionToggleDiv) directionToggleDiv.remove();
-        directionToggleDiv = document.createElement('div');
-        directionToggleDiv.style.cssText = `
-          position: fixed;
-          top: 70px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 1002;
-          background: #222;
-          color: #fff;
-          border-radius: 8px;
-          padding: 8px 16px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-          display: flex;
-          gap: 10px;
-          align-items: center;
-        `;
-        directionToggleDiv.innerHTML = '';
-        routeGroup.directions.forEach(dir => {
-          const btn = document.createElement('button');
-          btn.textContent = dir.route_title;
-          btn.style.cssText = `
-            background: ${dir.direction_id === currentDirectionId ? '#0074D9' : '#444'};
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-weight: bold;
-            cursor: pointer;
-          `;
-          btn.onclick = () => {
-            onChange(dir.direction_id);
-          };
-          directionToggleDiv.appendChild(btn);
-        });
-        document.body.appendChild(directionToggleDiv);
-        currentDirectionToggleHandler = onChange;
-      }
   </script>
 </body>
 </html>
