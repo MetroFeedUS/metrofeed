@@ -224,6 +224,17 @@
       filter: drop-shadow(0 0 8px #C0C0C0);
     }
 
+    .diamond-stop .diamond-shape {
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
+      border: 2px solid #0033A0;
+      border-radius: 4px;
+      transform: rotate(45deg);
+      box-shadow: 0 0 8px #0033A0, 0 0 2px #fff;
+      margin: 2px auto;
+    }
+
     @media (max-width: 600px) {
       #menuToggle, #modeToggle, .icon-button {
         width: 44px;
@@ -638,18 +649,18 @@
 
         // Draw the route polyline with double stroke effect
         const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
-        // Silver bottom layer
+        // Silver bottom layer (thicker and more opaque)
         const silverPolyline = L.polyline(routeShape, {
           color: '#C0C0C0', // Silver
-          weight: 10,
-          opacity: 0.7,
+          weight: 12,
+          opacity: 0.85,
           lineCap: 'round',
           lineJoin: 'round',
           className: 'route-line-silver'
         }).addTo(map);
-        // Navy blue top layer
+        // Blue top layer (deep, rich blue)
         currentRoutePolyline = L.polyline(routeShape, {
-          color: '#000435', // Dark navy blue
+          color: '#0033A0', // Deep, rich blue
           weight: 8,
           opacity: 1.0,
           lineCap: 'round',
@@ -660,16 +671,17 @@
         // Add hover label for the route
         currentRoutePolyline.bindTooltip(route.route_title, {sticky: true, direction: 'center', className: 'route-tooltip'});
 
-        // Draw stop markers
+        // Draw stop markers as diamonds
         route.stops.forEach(stop => {
-          const marker = L.circleMarker([stop.lat, stop.lon], {
-            radius: 6,
-            color: '#0074D9',
-            fillColor: '#0074D9',
-            fillOpacity: 0.9,
-            weight: 1
+          const marker = L.marker([stop.lat, stop.lon], {
+            icon: L.divIcon({
+              className: 'diamond-stop',
+              iconSize: [24, 24],
+              iconAnchor: [12, 12],
+              html: `<div class='diamond-shape'></div>`
+            })
           }).addTo(map);
-          marker.bindTooltip(stop.name, {sticky: true, direction: 'top', className: 'stop-tooltip'});
+          marker.bindTooltip(stop.name, {permanent: false, direction: 'top'});
           marker.on('click', () => {
             const highlightedTimes = getHighlightedTimes(stop.times);
             L.popup()
