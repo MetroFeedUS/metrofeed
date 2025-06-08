@@ -215,11 +215,14 @@
 
     /* Route line styling */
     .route-line {
-      filter: drop-shadow(0 0 8px rgba(192,192,192,0.5));
-      stroke: linear-gradient(90deg, #00BFFF, #00CED1);
+      filter: drop-shadow(0 0 12px rgba(30,144,255,0.6)) drop-shadow(0 0 4px rgba(192,192,192,0.4));
+      stroke: linear-gradient(90deg, #1E90FF, #00CED1);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     .route-line:hover {
-      filter: drop-shadow(0 0 12px rgba(192,192,192,0.7));
+      filter: drop-shadow(0 0 16px rgba(30,144,255,0.8)) drop-shadow(0 0 8px rgba(192,192,192,0.6));
     }
 
     @media (max-width: 600px) {
@@ -637,9 +640,9 @@
         // Draw the route polyline
         const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
         currentRoutePolyline = L.polyline(routeShape, {
-          color: '#00BFFF',  // Bright metallic blue
-          weight: 6,
-          opacity: 0.9,
+          color: '#1E90FF',  // Deep metallic blue
+          weight: 8,
+          opacity: 0.95,
           lineCap: 'round',
           lineJoin: 'round',
           className: 'route-line'
