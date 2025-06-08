@@ -782,7 +782,68 @@
         }
       }
 
-      // Update stop popup logic in map click handler
+      // Modal for suggesting a landmark/POI
+      function showLandmarkModal(stop) {
+        // Remove any existing modal
+        const oldModal = document.getElementById('landmarkModal');
+        if (oldModal) oldModal.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'landmarkModal';
+        modal.style.cssText = `
+          position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 2000; display: flex; align-items: center; justify-content: center;`;
+        modal.innerHTML = `
+          <div style="background: #fff; color: #222; border-radius: 12px; padding: 24px 32px; min-width: 320px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.3); position: relative;">
+            <button id="closeLandmarkModal" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:22px;cursor:pointer;">&times;</button>
+            <h3>Suggest a Landmark/POI for<br><span style='color:#0074D9'>${stop.name}</span></h3>
+            <form id="landmarkForm">
+              <label>Name/Title:<br><input type="text" name="title" required style="width:100%;margin-bottom:8px;"></label><br>
+              <label>Description:<br><textarea name="desc" rows="2" style="width:100%;margin-bottom:8px;"></textarea></label><br>
+              <label>Category:<br><input type="text" name="cat" placeholder="e.g. City Hall, Park, School" style="width:100%;margin-bottom:8px;"></label><br>
+              <button type="submit" style="background:#0074D9;color:#fff;padding:8px 18px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Submit</button>
+            </form>
+            <div id="landmarkMsg" style="margin-top:10px;font-size:14px;"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('closeLandmarkModal').onclick = () => modal.remove();
+        document.getElementById('landmarkForm').onsubmit = (e) => {
+          e.preventDefault();
+          // Stub: send data to backend or moderation queue
+          const form = e.target;
+          const data = {
+            stop_id: stop.stop_id,
+            stop_name: stop.name,
+            title: form.title.value.trim(),
+            desc: form.desc.value.trim(),
+            cat: form.cat.value.trim(),
+            submitted: new Date().toISOString()
+          };
+          // For now, just show a thank you message
+          document.getElementById('landmarkMsg').innerHTML = 'Thank you! Your suggestion will be reviewed.';
+          form.reset();
+          // TODO: Send data to backend/moderation system
+          setTimeout(() => modal.remove(), 2000);
+        };
+      }
+
+      // Update stop popup logic to add the Suggest Landmark button
+      function getStopPopupContent(stop, highlightedTimes, routeList) {
+        return `
+          <strong>${stop.name}</strong><br>
+          ${routeList}<br>
+          ${highlightedTimes}<br>
+          <button style="margin-top:8px;background:#4dd0e1;color:#222;padding:6px 14px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;" onclick="window.showLandmarkModal && window.showLandmarkModal(${stop.stop_id})">Suggest a Landmark/POI</button>
+        `;
+      }
+
+      // Expose showLandmarkModal globally for popup onclick
+      window.showLandmarkModal = (stop_id) => {
+        const stop = allStops.find(s => s.stop_id == stop_id);
+        if (stop) showLandmarkModal(stop);
+      };
+
+      // Update map click handler to use getStopPopupContent
       map.on('click', function(e) {
         const { lat, lng } = e.latlng;
         const stopsInRadius = allStops.filter(stop =>
@@ -794,7 +855,6 @@
             .setContent('No stops within 100 meters.')
             .openOn(map);
         } else if (stopsInRadius.length === 1) {
-          // Show the usual stop popup
           const stop = stopsInRadius[0];
           const highlightedTimes = getHighlightedTimes(stop.times);
           const routeList = stop.routes.map(r =>
@@ -802,14 +862,9 @@
           ).join('');
           L.popup()
             .setLatLng([stop.lat, stop.lon])
-            .setContent(`
-              <strong>${stop.name}</strong><br>
-              ${routeList}<br>
-              ${highlightedTimes}
-            `)
+            .setContent(getStopPopupContent(stop, highlightedTimes, routeList))
             .openOn(map);
         } else {
-          // Multiple stops: show a selection list
           const popupDiv = document.createElement('div');
           popupDiv.innerHTML = '<strong>Multiple stops found:</strong><br>';
           stopsInRadius.forEach(stop => {
@@ -824,11 +879,7 @@
               ).join('');
               L.popup()
                 .setLatLng([stop.lat, stop.lon])
-                .setContent(`
-                  <strong>${stop.name}</strong><br>
-                  ${routeBtns}<br>
-                  ${highlightedTimes}
-                `)
+                .setContent(getStopPopupContent(stop, highlightedTimes, routeBtns))
                 .openOn(map);
             };
             popupDiv.appendChild(btn);
