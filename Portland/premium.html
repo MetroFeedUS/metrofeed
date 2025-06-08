@@ -833,17 +833,21 @@
           <strong>${stop.name}</strong><br>
           ${routeList}<br>
           ${highlightedTimes}<br>
-          <button style="margin-top:8px;background:#4dd0e1;color:#222;padding:6px 14px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;" onclick="window.showLandmarkModal && window.showLandmarkModal(${stop.stop_id})">Suggest a Landmark/POI</button>
+          <button id="suggestLandmarkBtn-${stop.stop_id}" style="margin-top:8px;background:#4dd0e1;color:#222;padding:6px 14px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Suggest a Landmark/POI</button>
         `;
       }
 
-      // Expose showLandmarkModal globally for popup onclick
-      window.showLandmarkModal = (stop_id) => {
-        const stop = allStops.find(s => s.stop_id == stop_id);
-        if (stop) showLandmarkModal(stop);
-      };
+      // Helper to attach the landmark button handler after popup opens
+      function attachLandmarkBtnHandler(stop) {
+        setTimeout(() => {
+          const btn = document.getElementById(`suggestLandmarkBtn-${stop.stop_id}`);
+          if (btn) {
+            btn.onclick = () => showLandmarkModal(stop);
+          }
+        }, 0);
+      }
 
-      // Update map click handler to use getStopPopupContent
+      // Update map click handler to use getStopPopupContent and attach handler
       map.on('click', function(e) {
         const { lat, lng } = e.latlng;
         const stopsInRadius = allStops.filter(stop =>
@@ -864,6 +868,7 @@
             .setLatLng([stop.lat, stop.lon])
             .setContent(getStopPopupContent(stop, highlightedTimes, routeList))
             .openOn(map);
+          attachLandmarkBtnHandler(stop);
         } else {
           const popupDiv = document.createElement('div');
           popupDiv.innerHTML = '<strong>Multiple stops found:</strong><br>';
@@ -881,6 +886,7 @@
                 .setLatLng([stop.lat, stop.lon])
                 .setContent(getStopPopupContent(stop, highlightedTimes, routeBtns))
                 .openOn(map);
+              attachLandmarkBtnHandler(stop);
             };
             popupDiv.appendChild(btn);
           });
