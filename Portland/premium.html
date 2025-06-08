@@ -213,6 +213,15 @@
       -webkit-backdrop-filter: blur(16px);
     }
 
+    /* Route line styling */
+    .route-line {
+      filter: drop-shadow(0 0 8px rgba(192,192,192,0.5));
+      stroke: linear-gradient(90deg, #00BFFF, #00CED1);
+    }
+    .route-line:hover {
+      filter: drop-shadow(0 0 12px rgba(192,192,192,0.7));
+    }
+
     @media (max-width: 600px) {
       #menuToggle, #modeToggle, .icon-button {
         width: 44px;
@@ -627,7 +636,14 @@
 
         // Draw the route polyline
         const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
-        currentRoutePolyline = L.polyline(routeShape, { color: 'blue', weight: 5 }).addTo(map);
+        currentRoutePolyline = L.polyline(routeShape, {
+          color: '#00BFFF',  // Bright metallic blue
+          weight: 6,
+          opacity: 0.9,
+          lineCap: 'round',
+          lineJoin: 'round',
+          className: 'route-line'
+        }).addTo(map);
 
         // Add hover label for the route
         currentRoutePolyline.bindTooltip(route.route_title, {sticky: true, direction: 'center', className: 'route-tooltip'});
