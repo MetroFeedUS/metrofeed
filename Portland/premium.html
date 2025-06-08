@@ -214,15 +214,14 @@
     }
 
     /* Route line styling */
-    .route-line {
-      filter: drop-shadow(0 0 12px rgba(30,144,255,0.6)) drop-shadow(0 0 4px rgba(192,192,192,0.4));
-      stroke: linear-gradient(90deg, #1E90FF, #00CED1);
-      stroke-width: 8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+    .route-line-silver {
+      filter: drop-shadow(0 0 8px rgba(192,192,192,0.3));
     }
-    .route-line:hover {
-      filter: drop-shadow(0 0 16px rgba(30,144,255,0.8)) drop-shadow(0 0 8px rgba(192,192,192,0.6));
+    .route-line-navy {
+      filter: drop-shadow(0 0 2px #000435);
+    }
+    .route-line-navy:hover {
+      filter: drop-shadow(0 0 8px #C0C0C0);
     }
 
     @media (max-width: 600px) {
@@ -637,15 +636,25 @@
         Object.values(busMarkers).forEach(m => map.removeLayer(m));
         busMarkers = {};
 
-        // Draw the route polyline
+        // Draw the route polyline with double stroke effect
         const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
-        currentRoutePolyline = L.polyline(routeShape, {
-          color: '#1E90FF',  // Deep metallic blue
-          weight: 8,
-          opacity: 0.95,
+        // Silver bottom layer
+        const silverPolyline = L.polyline(routeShape, {
+          color: '#C0C0C0', // Silver
+          weight: 10,
+          opacity: 0.7,
           lineCap: 'round',
           lineJoin: 'round',
-          className: 'route-line'
+          className: 'route-line-silver'
+        }).addTo(map);
+        // Navy blue top layer
+        currentRoutePolyline = L.polyline(routeShape, {
+          color: '#000435', // Dark navy blue
+          weight: 8,
+          opacity: 1.0,
+          lineCap: 'round',
+          lineJoin: 'round',
+          className: 'route-line-navy'
         }).addTo(map);
 
         // Add hover label for the route
