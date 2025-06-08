@@ -487,6 +487,11 @@
       let currentRoutePolyline = null;
       let currentStopMarkers = [];
 
+      // TriMet API key for live bus locations
+      const apiKey = '2C4447D4A42083BCD84DE3B8E';
+      let busMarkers = {};
+      let busInterval = null;
+
       // Helper to get current time in Portland (America/Los_Angeles)
       function getPortlandTimeHM() {
         const now = new Date();
@@ -495,28 +500,34 @@
         return { h: portlandTime.getHours(), m: portlandTime.getMinutes() };
       }
 
-      // Adapt next-arrival highlighting logic for stop popups
-      function getHighlightedTimes(timesArr) {
+      // Helper to find next scheduled time for a stop
+      function getNextArrival(timesArr) {
         if (!Array.isArray(timesArr) || timesArr.length === 0) return 'No scheduled times';
-        const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-        const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
-        let highlightedTimes = [];
-        let foundNext = false;
-        timesArr.forEach(timeStr => {
-          let cleanTime = timeStr.trim();
-          let [h, m] = cleanTime.split(":");
-          let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-          if (schedMins < nowMins && nowMins - schedMins > 720) {
-            schedMins += 1440;
+        const { h: nowH, m: nowM } = getPortlandTimeHM();
+        const nowMins = nowH * 60 + nowM;
+        let soonest = null;
+        let soonestDiff = Infinity;
+        timesArr.forEach(t => {
+          // Parse time (supports both 12h and 24h, with or without AM/PM)
+          let match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+          if (!match) return;
+          let hour = parseInt(match[1], 10);
+          let min = parseInt(match[2], 10);
+          let ampm = match[3];
+          if (ampm) {
+            if (ampm.toUpperCase() === 'PM' && hour !== 12) hour += 12;
+            if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
           }
-          if (!foundNext && schedMins >= nowMins) {
-            highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
-            foundNext = true;
-          } else {
-            highlightedTimes.push(cleanTime);
+          let schedMins = hour * 60 + min;
+          // If scheduled time is before now, treat as next day
+          let diff = schedMins - nowMins;
+          if (diff < 0) diff += 1440;
+          if (diff < soonestDiff) {
+            soonestDiff = diff;
+            soonest = t;
           }
         });
-        return highlightedTimes.join("<br>") || 'No scheduled times';
+        return soonest || 'No scheduled times';
       }
 
       // Update showRouteWithStops to use highlighted times in stop popups
@@ -551,7 +562,7 @@
           }).addTo(map);
           marker.bindTooltip(stop.name, {sticky: true, direction: 'top', className: 'stop-tooltip'});
           marker.on('click', () => {
-            const highlightedTimes = getHighlightedTimes(stop.times);
+            const highlightedTimes = getNextArrival(stop.times);
             L.popup()
               .setLatLng([stop.lat, stop.lon])
               .setContent(`
@@ -570,7 +581,7 @@
         // If focusing a stop, center and open popup
         if (focusStop) {
           map.setView([focusStop.lat, focusStop.lon], 16);
-          const highlightedTimes = getHighlightedTimes(focusStop.times);
+          const highlightedTimes = getNextArrival(focusStop.times);
           L.popup()
             .setLatLng([focusStop.lat, focusStop.lon])
             .setContent(`
@@ -674,11 +685,6 @@
         document.body.appendChild(directionToggleDiv);
         currentDirectionToggleHandler = onChange;
       }
-
-      // TriMet API key for live bus locations
-      const apiKey = '2C4447D4A42083BCD84DE3B8E';
-      let busMarkers = {};
-      let busInterval = null;
   </script>
 </body>
 </html>
