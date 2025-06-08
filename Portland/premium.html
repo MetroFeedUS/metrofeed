@@ -374,6 +374,7 @@
           }
 
           resultDiv.addEventListener('click', () => {
+            if (directionToggleDiv) directionToggleDiv.remove();
             if (result.type === 'route') {
               // Find the route group by id
               const routeGroup = getUniqueRoutes().find(rg => rg.route_id === result.id);
@@ -382,12 +383,13 @@
                 let currentDirId = 0;
                 let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
                 showRouteWithStops(currentRoute);
-                showDirectionToggle(routeGroup, currentDirId, (newDirId) => {
+                const handleToggle = (newDirId) => {
                   currentDirId = newDirId;
                   currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
                   showRouteWithStops(currentRoute);
-                  showDirectionToggle(routeGroup, currentDirId, arguments.callee);
-                });
+                  showDirectionToggle(routeGroup, currentDirId, handleToggle);
+                };
+                showDirectionToggle(routeGroup, currentDirId, handleToggle);
               }
             } else {
               const route = masterRoutes.find(r => r.route_id === result.routeId);
@@ -488,17 +490,17 @@
         return { h: portlandTime.getHours(), m: portlandTime.getMinutes() };
       }
 
-      // Helper to find next scheduled time for a stop
+      // Improved helper to find next scheduled time for a stop
       function getNextArrival(timesArr) {
         if (!Array.isArray(timesArr) || timesArr.length === 0) return 'No scheduled times';
         const { h: nowH, m: nowM } = getPortlandTimeHM();
         const nowMins = nowH * 60 + nowM;
-        let nextTime = null;
-        let minDiff = Infinity;
-        for (const t of timesArr) {
-          // Parse time (supports both 12h and 24h)
+        let soonest = null;
+        let soonestDiff = Infinity;
+        timesArr.forEach(t => {
+          // Parse time (supports both 12h and 24h, with or without AM/PM)
           let match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-          if (!match) continue;
+          if (!match) return;
           let hour = parseInt(match[1], 10);
           let min = parseInt(match[2], 10);
           let ampm = match[3];
@@ -507,15 +509,15 @@
             if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
           }
           let schedMins = hour * 60 + min;
-          // If scheduled time is before now, assume it's for the next day
-          if (schedMins < nowMins) schedMins += 1440;
+          // If scheduled time is before now, treat as next day
           let diff = schedMins - nowMins;
-          if (diff >= 0 && diff < minDiff) {
-            minDiff = diff;
-            nextTime = t;
+          if (diff < 0) diff += 1440;
+          if (diff < soonestDiff) {
+            soonestDiff = diff;
+            soonest = t;
           }
-        }
-        return nextTime || 'No scheduled times';
+        });
+        return soonest || 'No scheduled times';
       }
 
       // TriMet API key for live bus locations
@@ -678,8 +680,9 @@
       // Run closest route logic on page load
       window.addEventListener('DOMContentLoaded', showClosestRouteToUser);
 
-      // Add direction toggle UI
+      // Refactor direction toggle logic for unlimited toggling and reset
       let directionToggleDiv = null;
+      let currentDirectionToggleHandler = null;
       function showDirectionToggle(routeGroup, currentDirectionId, onChange) {
         if (directionToggleDiv) directionToggleDiv.remove();
         directionToggleDiv = document.createElement('div');
@@ -711,10 +714,13 @@
             font-weight: bold;
             cursor: pointer;
           `;
-          btn.onclick = () => onChange(dir.direction_id);
+          btn.onclick = () => {
+            onChange(dir.direction_id);
+          };
           directionToggleDiv.appendChild(btn);
         });
         document.body.appendChild(directionToggleDiv);
+        currentDirectionToggleHandler = onChange;
       }
   </script>
 </body>
