@@ -765,7 +765,24 @@
       }
       const allStops = getAllStopsWithRoutes();
 
-      // Map click handler for closest stop(s)
+      // Helper to show a route and direction from a stop popup
+      function showRouteFromStop(route_id, direction_id) {
+        const routeGroup = getUniqueRoutes().find(rg => rg.route_id === route_id);
+        if (routeGroup) {
+          let currentDirId = direction_id;
+          let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
+          showRouteWithStops(currentRoute);
+          const handleToggle = (newDirId) => {
+            currentDirId = newDirId;
+            currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
+            showRouteWithStops(currentRoute);
+            showDirectionToggle(routeGroup, currentDirId, handleToggle);
+          };
+          showDirectionToggle(routeGroup, currentDirId, handleToggle);
+        }
+      }
+
+      // Update stop popup logic in map click handler
       map.on('click', function(e) {
         const { lat, lng } = e.latlng;
         const stopsInRadius = allStops.filter(stop =>
@@ -780,7 +797,9 @@
           // Show the usual stop popup
           const stop = stopsInRadius[0];
           const highlightedTimes = getHighlightedTimes(stop.times);
-          const routeList = stop.routes.map(r => `<div>${r.route_title}</div>`).join('');
+          const routeList = stop.routes.map(r =>
+            `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
+          ).join('');
           L.popup()
             .setLatLng([stop.lat, stop.lon])
             .setContent(`
@@ -796,15 +815,18 @@
           stopsInRadius.forEach(stop => {
             const btn = document.createElement('button');
             btn.style.cssText = 'display:block;width:100%;margin:4px 0;padding:6px 8px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;';
-            const routeList = stop.routes.map(r => `<span style="font-size:12px;color:#fff;background:#222;padding:2px 6px;border-radius:4px;margin-right:4px;">${r.route_title}</span>`).join('');
+            const routeList = stop.routes.map(r => `<span style="font-size:12px;color:#fff;background:#222;padding:2px 6px;border-radius:4px;margin-right:4px;cursor:pointer;" onclick=\"window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})\">${r.route_title}</span>`).join('');
             btn.innerHTML = `<strong>${stop.name}</strong><br>${routeList}`;
             btn.onclick = () => {
               const highlightedTimes = getHighlightedTimes(stop.times);
+              const routeBtns = stop.routes.map(r =>
+                `<button style=\"display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;\" onclick=\"window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})\">${r.route_title}</button>`
+              ).join('');
               L.popup()
                 .setLatLng([stop.lat, stop.lon])
                 .setContent(`
                   <strong>${stop.name}</strong><br>
-                  ${routeList}<br>
+                  ${routeBtns}<br>
                   ${highlightedTimes}
                 `)
                 .openOn(map);
@@ -817,6 +839,9 @@
             .openOn(map);
         }
       });
+
+      // Expose showRouteFromStop globally for popup onclick
+      window.showRouteFromStop = showRouteFromStop;
   </script>
 </body>
 </html>
