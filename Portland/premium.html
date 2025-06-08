@@ -233,6 +233,32 @@
       margin: 2px auto;
     }
 
+    /* Dark theme for popups and tooltips */
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip,
+    .dark-popup {
+      background: #18181c !important;
+      color: #f5f5f5 !important;
+      border-radius: 12px !important;
+      border: 2px solid #C0C0C0 !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.7) !important;
+    }
+    .leaflet-popup-content {
+      color: #f5f5f5 !important;
+      font-size: 15px;
+    }
+    .leaflet-popup-close-button {
+      color: #fff !important;
+      font-size: 22px;
+      opacity: 0.8;
+    }
+    .route-tooltip, .stop-tooltip {
+      background: #18181c !important;
+      color: #f5f5f5 !important;
+      border: 2px solid #C0C0C0 !important;
+      box-shadow: 0 2px 8px rgba(192,192,192,0.10) !important;
+    }
+
     @media (max-width: 600px) {
       #menuToggle, #modeToggle, .icon-button {
         width: 44px;
@@ -477,7 +503,7 @@
         }, 300);
       });
 
-      // Update displayResults to handle all types
+      // Update displayResults to handle all types, add 'View Route' button for route popups
       function displayResults(results) {
         searchResultsDiv.innerHTML = '';
         if (results.length === 0) {
@@ -514,25 +540,36 @@
               if (routeGroup) {
                 let currentDirId = 0;
                 let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-                showRouteWithStops(currentRoute);
-                const handleToggle = (newDirId) => {
-                  currentDirId = newDirId;
-                  currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-                  showRouteWithStops(currentRoute);
-                  showDirectionToggle(routeGroup, currentDirId, handleToggle);
-                };
-                showDirectionToggle(routeGroup, currentDirId, handleToggle);
+                // Show a popup with a 'View Route' button
+                const center = currentRoute.shape[Math.floor(currentRoute.shape.length / 2)];
+                L.popup({className: 'dark-popup'})
+                  .setLatLng(center)
+                  .setContent(`
+                    <div style='font-weight:bold;font-size:16px;'>${currentRoute.route_title}</div>
+                    <div style='margin:8px 0 12px 0;font-size:13px;color:#ccc;'>Route ${currentRoute.route_id}</div>
+                    <button id='viewRouteBtn' style='background:#111;color:#fff;border:1.5px solid #C0C0C0;border-radius:8px;padding:8px 18px;font-weight:bold;cursor:pointer;'>View Route</button>
+                  `)
+                  .openOn(map);
+                setTimeout(() => {
+                  const btn = document.getElementById('viewRouteBtn');
+                  if (btn) {
+                    btn.onclick = () => {
+                      showRouteWithStops(currentRoute);
+                      map.closePopup();
+                    };
+                  }
+                }, 0);
               }
             } else if (result.type === 'stop') {
               map.setView([result.lat, result.lon], 16);
               const highlightedTimes = getHighlightedTimes(result.routes[0]?.times || []);
-              L.popup()
+              L.popup({className: 'dark-popup'})
                 .setLatLng([result.lat, result.lon])
                 .setContent(`<strong>${result.name}</strong><br>${highlightedTimes}`)
                 .openOn(map);
             } else if (result.type === 'poi') {
               map.setView([result.lat, result.lon], 17);
-              L.popup()
+              L.popup({className: 'dark-popup'})
                 .setLatLng([result.lat, result.lon])
                 .setContent(`<strong>${result.title}</strong><br>${result.desc || ''}`)
                 .openOn(map);
@@ -725,12 +762,12 @@
           });
         });
 
-        // Helper for responsive diamond icon
+        // Helper for responsive diamond icon (smaller sizes)
         function getDiamondIconOptions(zoom) {
-          let size = 10, border = 1;
-          if (zoom >= 14) { size = 22; border = 2; }
-          else if (zoom >= 12) { size = 16; border = 2; }
-          else if (zoom >= 10) { size = 12; border = 1; }
+          let size = 8, border = 1;
+          if (zoom >= 14) { size = 16; border = 2; }
+          else if (zoom >= 12) { size = 12; border = 2; }
+          else if (zoom >= 10) { size = 10; border = 1; }
           return {
             className: 'diamond-stop',
             iconSize: [size + 4, size + 4],
