@@ -504,6 +504,54 @@
         return nextTime || 'No scheduled times';
       }
 
+      // TriMet API key for live bus locations
+      const apiKey = '2C4447D4A42083BCD84DE3B8E';
+      let busMarkers = {};
+      let busInterval = null;
+
+      async function fetchAndDisplayBuses(routeNumber, direction) {
+        try {
+          const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+          const data = await res.json();
+          const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+          // Remove old bus markers
+          Object.values(busMarkers).forEach(m => map.removeLayer(m));
+          busMarkers = {};
+          if (!buses.length) return;
+
+          buses.forEach(bus => {
+            if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+            const icon = L.divIcon({    
+               className: '',
+               html: `
+                <div style="text-align:center;">
+                  <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+                  <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+                </div>
+              `,
+              iconSize: [40, 30], iconAnchor: [20, 30]
+            });
+            const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+            busMarkers[bus.vehicleID] = marker;
+          });
+        } catch (err) {
+          console.error('Error fetching live bus data:', err);
+        }
+      }
+
+      function startLiveBuses(route, direction) {
+        // Clear any previous interval and markers
+        if (busInterval) clearInterval(busInterval);
+        Object.values(busMarkers).forEach(m => map.removeLayer(m));
+        busMarkers = {};
+        // Initial fetch
+        fetchAndDisplayBuses(route.route_id, direction);
+        // Set interval
+        busInterval = setInterval(() => fetchAndDisplayBuses(route.route_id, direction), 15000);
+      }
+
+      // Update showRouteWithStops to start live bus updates
       function showRouteWithStops(route, focusStop) {
         // Remove previous polyline and stop markers if they exist
         if (currentRoutePolyline) {
@@ -512,6 +560,10 @@
         }
         currentStopMarkers.forEach(marker => map.removeLayer(marker));
         currentStopMarkers = [];
+        // Remove bus markers and interval
+        if (busInterval) clearInterval(busInterval);
+        Object.values(busMarkers).forEach(m => map.removeLayer(m));
+        busMarkers = {};
 
         // Draw the route polyline
         const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
@@ -560,6 +612,9 @@
             `)
             .openOn(map);
         }
+
+        // Start live bus updates for this route and direction
+        startLiveBuses(route, route.direction_id);
       }
 
       // Restore showClosestRouteToUser so it is defined and calls showRouteWithStops
