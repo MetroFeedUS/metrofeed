@@ -18,14 +18,37 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0d0d0d;
+      font-family: 'Segoe UI', 'San Francisco', 'Arial', sans-serif;
+      background: linear-gradient(135deg, #101014 0%, #18181c 100%);
+      color: #E5E5E5;
+      letter-spacing: 0.01em;
+      min-height: 100vh;
+    }
+
+    /* Glassmorphism base */
+    .glass {
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(192,192,192,0.25);
+      box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+    }
+
+    /* Metallic accent */
+    .metallic {
+      background: linear-gradient(120deg, #b8b8b8 0%, #e5e5e5 100%);
+      color: #18181c;
+      border: 1.5px solid #C0C0C0;
+      box-shadow: 0 2px 8px rgba(192,192,192,0.15);
     }
 
     #map {
       height: 100%;
       width: 100%;
       z-index: 0;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25);
     }
 
     #searchWrapper {
@@ -36,28 +59,32 @@
       z-index: 1001;
       display: flex;
       align-items: center;
-      padding: 8px 12px;
-      background: rgba(20, 20, 20, 0.75);
-      border-radius: 12px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      padding: 10px 18px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      border: 1.5px solid #C0C0C0;
+      background: rgba(24,24,28,0.85);
+      backdrop-filter: blur(10px);
     }
 
     #searchIcon {
-      width: 20px;
-      height: 20px;
-      margin-right: 8px;
-      color: white;
-      font-size: 20px;
+      width: 22px;
+      height: 22px;
+      margin-right: 10px;
+      color: #C0C0C0;
+      font-size: 22px;
+      filter: drop-shadow(0 0 2px #fff8);
     }
 
     #searchBar {
       background: transparent;
       border: none;
       outline: none;
-      color: white;
-      font-size: 16px;
+      color: #E5E5E5;
+      font-size: 17px;
       width: 250px;
+      font-family: inherit;
+      letter-spacing: 0.01em;
     }
 
     #menuToggle, #modeToggle {
@@ -65,68 +92,70 @@
       top: 12px;
       width: 48px;
       height: 48px;
-      background: rgba(30, 30, 30, 0.8);
-      border: none;
-      border-radius: 12px;
+      background: rgba(30, 30, 30, 0.85);
+      border: 1.5px solid #C0C0C0;
+      border-radius: 16px;
       cursor: pointer;
       z-index: 1001;
       display: flex;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      color: white;
-      font-size: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      color: #C0C0C0;
+      font-size: 26px;
+      transition: box-shadow 0.2s, border 0.2s;
     }
-
+    #menuToggle:hover, #modeToggle:hover {
+      box-shadow: 0 0 16px #C0C0C0, 0 4px 16px rgba(0,0,0,0.5);
+      border: 1.5px solid #E5E5E5;
+    }
     #menuToggle { left: 12px; }
     #modeToggle { right: 12px; }
-
     #modeToggle.active {
-      box-shadow: 0 0 12px rgba(0, 150, 255, 0.6);
-      border: 1px solid rgba(0, 150, 255, 0.3);
+      box-shadow: 0 0 16px #FFD700, 0 4px 16px rgba(0,0,0,0.5);
+      border: 1.5px solid #FFD700;
     }
 
     #iconMenu {
       position: fixed;
       top: 72px;
       left: 12px;
-      background: rgba(20, 20, 20, 0.7);
-      border-radius: 16px;
-      padding: 10px;
+      background: rgba(24,24,28,0.92);
+      border-radius: 20px;
+      padding: 12px;
       display: none;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       z-index: 1000;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 1.5px solid #C0C0C0;
     }
 
     .icon-button {
       width: 48px;
       height: 48px;
-      background: linear-gradient(145deg, #1c1c1c, #232323);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 12px;
+      background: linear-gradient(145deg, #23232a, #2c2c33);
+      border: 1.5px solid #C0C0C0;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s ease;
-      box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.02);
-      color: white;
-      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(192,192,192,0.10), 0 0 0 #fff0;
+      color: #C0C0C0;
+      font-size: 22px;
     }
-
     .icon-button:hover {
-      background: linear-gradient(145deg, #252525, #2c2c2c);
-      box-shadow: 0 0 10px rgba(100, 200, 255, 0.4);
+      background: linear-gradient(145deg, #2c2c33, #23232a);
+      box-shadow: 0 0 12px #C0C0C0, 0 2px 8px rgba(192,192,192,0.15);
+      border: 1.5px solid #E5E5E5;
     }
-
     .icon-button.active {
       background: linear-gradient(145deg, #2a2a2a, #2e2e2e);
-      box-shadow: 0 0 12px rgba(0, 150, 255, 0.6);
-      border-color: rgba(0, 150, 255, 0.3);
+      box-shadow: 0 0 16px #FFD700, 0 2px 8px rgba(192,192,192,0.15);
+      border-color: #FFD700;
     }
 
     #settingsBar {
@@ -136,7 +165,7 @@
       display: none;
       flex-direction: row;
       gap: 10px;
-      background: rgba(20, 20, 20, 0.75);
+      background: rgba(24,24,28,0.92);
       border-radius: 16px;
       padding: 10px;
       z-index: 1000;
@@ -145,12 +174,43 @@
       opacity: 0;
       transform: translateX(-10px);
       transition: all 0.3s ease;
+      border: 1.5px solid #C0C0C0;
     }
-
     #settingsBar.active {
       display: flex;
       opacity: 1;
       transform: translateX(0);
+    }
+
+    .route-tooltip {
+      background: rgba(24,24,28,0.92);
+      color: #C0C0C0;
+      font-weight: bold;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 16px;
+      border: 2px solid #C0C0C0;
+      box-shadow: 0 2px 8px rgba(192,192,192,0.10);
+    }
+    .stop-tooltip {
+      background: #fff;
+      color: #0074D9;
+      font-weight: bold;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 14px;
+      border: 1.5px solid #C0C0C0;
+      box-shadow: 0 2px 8px rgba(192,192,192,0.10);
+    }
+
+    /* Glassy modal for landmark/POI */
+    #landmarkModal > div {
+      background: rgba(24,24,28,0.92);
+      color: #E5E5E5;
+      border: 1.5px solid #C0C0C0;
+      box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     @media (max-width: 600px) {
@@ -160,30 +220,11 @@
       }
       #searchBar {
         width: 90%;
-        font-size: 14px;
+        font-size: 15px;
       }
       #settingsBar {
         left: 56px;
       }
-    }
-
-    .route-tooltip {
-      background: #222;
-      color: #fff;
-      font-weight: bold;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 15px;
-      border: 2px solid #0074D9;
-    }
-    .stop-tooltip {
-      background: #fff;
-      color: #0074D9;
-      font-weight: bold;
-      border-radius: 6px;
-      padding: 2px 8px;
-      font-size: 13px;
-      border: 1px solid #0074D9;
     }
   </style>
 </head>
