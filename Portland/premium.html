@@ -298,38 +298,41 @@
         return input.replace(/[^a-zA-Z0-9\s\-.,]/g, '');
       }
 
-      // Search through routes and stops
+      // Group masterRoutes by route_id for unified search
+      function getUniqueRoutes() {
+        const routeMap = {};
+        masterRoutes.forEach(route => {
+          if (!routeMap[route.route_id]) {
+            routeMap[route.route_id] = [];
+          }
+          routeMap[route.route_id].push(route);
+        });
+        return Object.values(routeMap).map(routesArr => {
+          // Use direction 0 as default for display
+          const dir0 = routesArr.find(r => r.direction_id === 0) || routesArr[0];
+          return {
+            route_id: dir0.route_id,
+            directions: routesArr,
+            display_title: dir0.route_title.replace(/\s*-\s*To.*/i, ''), // Clean up for search display
+          };
+        });
+      }
+
+      // Update searchRoutes to search only by unique route
       function searchRoutes(query) {
         const results = [];
-        
-        masterRoutes.forEach(route => {
-          // Search in route title
-          if (route.route_title.toLowerCase().includes(query)) {
+        const uniqueRoutes = getUniqueRoutes();
+        uniqueRoutes.forEach(routeGroup => {
+          // Search in route display title
+          if (routeGroup.display_title.toLowerCase().includes(query)) {
             results.push({
               type: 'route',
-              id: route.route_id,
-              title: route.route_title,
-              direction: route.direction_id
+              id: routeGroup.route_id,
+              directions: routeGroup.directions,
+              display_title: routeGroup.display_title
             });
           }
-
-          // Search in stops
-          route.stops.forEach(stop => {
-            if (stop.name.toLowerCase().includes(query)) {
-              results.push({
-                type: 'stop',
-                id: stop.stop_id,
-                name: stop.name,
-                lat: stop.lat,
-                lon: stop.lon,
-                times: stop.times,
-                routeId: route.route_id,
-                routeTitle: route.route_title
-              });
-            }
-          });
         });
-
         return results;
       }
 
@@ -357,23 +360,35 @@
 
           if (result.type === 'route') {
             resultDiv.innerHTML = `
-              <div style="font-weight: bold;">${result.title}</div>
+              <div style="font-weight: bold;">${result.display_title}</div>
               <div style="font-size: 12px; color: #888;">Route</div>
             `;
           } else {
             resultDiv.innerHTML = `
               <div style="font-weight: bold;">${result.name}</div>
               <div style="font-size: 12px; color: #888;">
-                ${result.routeTitle} • Next: ${result.times[0]}
+                ${result.display_title} • Next: ${result.times[0]}
               </div>
             `;
           }
 
           resultDiv.addEventListener('click', () => {
+            if (directionToggleDiv) directionToggleDiv.remove();
             if (result.type === 'route') {
-              const route = masterRoutes.find(r => r.route_id === result.id);
-              if (route) {
-                showRouteWithStops(route);
+              // Find the route group by id
+              const routeGroup = getUniqueRoutes().find(rg => rg.route_id === result.id);
+              if (routeGroup) {
+                // Show direction 0 by default
+                let currentDirId = 0;
+                let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
+                showRouteWithStops(currentRoute);
+                const handleToggle = (newDirId) => {
+                  currentDirId = newDirId;
+                  currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
+                  showRouteWithStops(currentRoute);
+                  showDirectionToggle(routeGroup, currentDirId, handleToggle);
+                };
+                showDirectionToggle(routeGroup, currentDirId, handleToggle);
               }
             } else {
               const route = masterRoutes.find(r => r.route_id === result.routeId);
@@ -663,6 +678,53 @@
 
       // Run closest route logic on page load
       window.addEventListener('DOMContentLoaded', showClosestRouteToUser);
+
+      // Add direction toggle UI
+      let directionToggleDiv = null;
+      function showDirectionToggle(routeGroup, currentDirectionId, onChange) {
+        if (directionToggleDiv) directionToggleDiv.remove();
+        directionToggleDiv = document.createElement('div');
+        directionToggleDiv.style.cssText = `
+          position: fixed;
+          top: 70px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 1002;
+          background: #222;
+          color: #fff;
+          border-radius: 8px;
+          padding: 8px 16px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        `;
+        directionToggleDiv.innerHTML = '';
+        routeGroup.directions.forEach(dir => {
+          const btn = document.createElement('button');
+          btn.textContent = dir.route_title;
+          btn.style.cssText = `
+            background: ${dir.direction_id === currentDirectionId ? '#0074D9' : '#444'};
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-weight: bold;
+            cursor: pointer;
+          `;
+          btn.onclick = () => onChange(dir.direction_id);
+          directionToggleDiv.appendChild(btn);
+        });
+        document.body.appendChild(directionToggleDiv);
+      }
+
+      // Remove direction toggle when starting a new search
+      searchBar.addEventListener('focus', () => {
+        if (directionToggleDiv) directionToggleDiv.remove();
+      });
+      searchBar.addEventListener('input', () => {
+        if (directionToggleDiv) directionToggleDiv.remove();
+      });
   </script>
 </body>
 </html>
