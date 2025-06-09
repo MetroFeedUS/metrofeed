@@ -51,6 +51,19 @@
       box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25);
     }
 
+    /* Add Mickey Mouse test image */
+    #mickeyTest {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      z-index: 9999;
+      background: url('https://upload.wikimedia.org/wikipedia/en/d/d4/Mickey_Mouse.png') no-repeat center center;
+      background-size: contain;
+    }
+
     #searchWrapper {
       position: fixed;
       top: 12px;
@@ -224,6 +237,9 @@
       filter: drop-shadow(0 0 8px #C0C0C0);
     }
 
+    .diamond-stop {
+      cursor: pointer;
+    }
     .diamond-stop .diamond-shape {
       background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
       border: 2px solid #0033A0;
@@ -259,6 +275,11 @@
       box-shadow: 0 2px 8px rgba(192,192,192,0.10) !important;
     }
 
+    /* Add this one new style */
+    .leaflet-clickable {
+      z-index: 1000 !important;
+    }
+
     @media (max-width: 600px) {
       #menuToggle, #modeToggle, .icon-button {
         width: 44px;
@@ -276,6 +297,7 @@
 </head>
 <body>
   <div id="map"></div>
+  <div id="mickeyTest"></div>
 
   <!-- Search Bar -->
   <div id="searchWrapper">
@@ -748,11 +770,18 @@
         // Draw stop markers as diamonds
         currentStopMarkers = route.stops.map(stop => {
           const marker = L.marker([stop.lat, stop.lon], {
-            icon: L.divIcon(getDiamondIconOptions(map.getZoom())),
+            icon: L.divIcon({
+              className: 'diamond-stop',
+              iconSize: [12, 12],
+              iconAnchor: [6, 6],
+              html: `<div class='diamond-shape' style='width:12px;height:12px;border:2px solid #0033A0;background:linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);transform:rotate(45deg);'></div>`
+            }),
+            interactive: true,
+            zIndexOffset: 1000
           }).addTo(map);
-          
-          // Add click handler to show stop info
-          marker.on('click', () => {
+
+          marker.on('click', function(e) {
+            e.originalEvent.stopPropagation();
             const highlightedTimes = getHighlightedTimes(stop.times);
             const routeList = stop.routes.map(r =>
               `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
@@ -770,27 +799,17 @@
           return marker;
         });
 
-        // Responsive marker sizing on zoom
+        // Update marker size on zoom
         map.on('zoomend', () => {
           const zoom = map.getZoom();
           currentStopMarkers.forEach(marker => {
-            marker.setIcon(L.divIcon(getDiamondIconOptions(zoom)));
+            let size = 6;
+            if (zoom >= 14) size = 8;
+            else if (zoom >= 12) size = 7;
+            else if (zoom >= 10) size = 6;
+            marker.setRadius(size);
           });
         });
-
-        // Helper for responsive diamond icon (smaller sizes)
-        function getDiamondIconOptions(zoom) {
-          let size = 8, border = 1;
-          if (zoom >= 14) { size = 16; border = 2; }
-          else if (zoom >= 12) { size = 12; border = 2; }
-          else if (zoom >= 10) { size = 10; border = 1; }
-          return {
-            className: 'diamond-stop',
-            iconSize: [size + 4, size + 4],
-            iconAnchor: [Math.round((size + 4) / 2), Math.round((size + 4) / 2)],
-            html: `<div class='diamond-shape' style='width:${size}px;height:${size}px;border-width:${border}px;'></div>`
-          };
-        }
 
         // Fit map to route
         map.fitBounds(currentRoutePolyline.getBounds());
@@ -1026,10 +1045,18 @@
 
       // Update map click handler to use getStopPopupContent and attach handler
       map.on('click', function(e) {
+        // Check if we clicked on a marker first
+        if (e.originalEvent.target.closest('.diamond-stop')) {
+          return; // Let the marker handle the click
+        }
+
         const { lat, lng } = e.latlng;
+        
+        // Then check if we clicked near a stop
         const stopsInRadius = allStops.filter(stop =>
           haversine(lat, lng, stop.lat, stop.lon) <= 100
         );
+
         if (stopsInRadius.length === 0) {
           L.popup()
             .setLatLng([lat, lng])
@@ -1041,10 +1068,12 @@
           const routeList = stop.routes.map(r =>
             `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
           ).join('');
+          
           L.popup()
             .setLatLng([stop.lat, stop.lon])
             .setContent(getStopPopupContent(stop, highlightedTimes, routeList))
             .openOn(map);
+            
           attachLandmarkBtnHandler(stop);
         } else {
           const popupDiv = document.createElement('div');
