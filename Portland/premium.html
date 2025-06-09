@@ -750,6 +750,22 @@
           const marker = L.marker([stop.lat, stop.lon], {
             icon: L.divIcon(getDiamondIconOptions(map.getZoom())),
           }).addTo(map);
+          
+          // Add click handler to show stop info
+          marker.on('click', () => {
+            const highlightedTimes = getHighlightedTimes(stop.times);
+            const routeList = stop.routes.map(r =>
+              `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
+            ).join('');
+            
+            L.popup()
+              .setLatLng([stop.lat, stop.lon])
+              .setContent(getStopPopupContent(stop, highlightedTimes, routeList))
+              .openOn(map);
+              
+            attachLandmarkBtnHandler(stop);
+          });
+          
           marker.bindTooltip(stop.name, {permanent: false, direction: 'top'});
           return marker;
         });
