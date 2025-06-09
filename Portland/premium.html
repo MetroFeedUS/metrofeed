@@ -224,6 +224,10 @@
       filter: drop-shadow(0 0 8px #C0C0C0);
     }
 
+    .diamond-stop {
+      cursor: pointer;
+      pointer-events: auto;
+    }
     .diamond-stop .diamond-shape {
       background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
       border: 2px solid #0033A0;
@@ -231,6 +235,8 @@
       transform: rotate(45deg);
       box-shadow: 0 0 8px #0033A0, 0 0 2px #fff;
       margin: 2px auto;
+      cursor: pointer;
+      pointer-events: auto;
     }
 
     @media (max-width: 600px) {
@@ -695,9 +701,9 @@
           lineJoin: 'round',
           className: 'route-line-silver'
         }).addTo(map);
-        // Red top layer (deep, rich red)
+        // Deep, rich blue top layer
         currentRoutePolyline = L.polyline(routeShape, {
-          color: '#FF0000', // Red
+          color: '#0033A0', // Deep, rich blue
           weight: 8,
           opacity: 1.0,
           lineCap: 'round',
@@ -714,6 +720,18 @@
             icon: L.divIcon(getDiamondIconOptions(map.getZoom())),
           }).addTo(map);
           marker.bindTooltip(stop.name, {permanent: false, direction: 'top'});
+          marker.on('click', function(e) {
+            e.originalEvent.stopPropagation(); // Prevent map click from firing
+            const highlightedTimes = getHighlightedTimes(stop.times || []);
+            const routeBtns = stop.routes.map(r =>
+              `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
+            ).join('');
+            L.popup()
+              .setLatLng([stop.lat, stop.lon])
+              .setContent(getStopPopupContent(stop, highlightedTimes, routeBtns))
+              .openOn(map);
+            attachLandmarkBtnHandler(stop);
+          });
           return marker;
         });
 
