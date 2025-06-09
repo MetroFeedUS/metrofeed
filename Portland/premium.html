@@ -347,6 +347,20 @@
       box-shadow: 0 0 16px #FFD700, 0 4px 16px rgba(0,0,0,0.5) !important;
       border-color: #FFD700 !important;
     }
+
+    .icon-svg {
+      width: 24px;
+      height: 24px;
+      vertical-align: middle;
+      display: inline-block;
+      margin-right: 6px;
+      filter: brightness(0.95) drop-shadow(0 0 2px #23232a);
+    }
+    #searchIcon .icon-svg {
+      width: 20px;
+      height: 20px;
+      margin-right: 0;
+    }
   </style>
 </head>
 <body>
@@ -354,30 +368,31 @@
 
   <!-- Search Bar -->
   <div id="searchWrapper">
-    <span id="searchIcon">🔍</span>
+    <span id="searchIcon"><img class="icon-svg" src="" alt="Search"></span>
     <input type="text" id="searchBar" placeholder="Search routes or stops..." />
   </div>
 
   <!-- Menu & Mode Toggles -->
-  <button id="menuToggle">☰</button>
-  <button id="modeToggle" title="Toggle Night Mode">🌙</button>
+  <button id="menuToggle"><img class="icon-svg" src="" alt="Menu"></button>
+  <button id="modeToggle" title="Toggle Night Mode"><img class="icon-svg" src="" alt="Mode"></button>
 
   <!-- Icon Menu -->
   <div id="iconMenu">
-    <button class="icon-button" title="Traffic">🚦</button>
-    <button class="icon-button" title="Weather">🌧️</button>
-    <button class="icon-button" title="Traffic Cams">📹</button>
-    <button class="icon-button" title="Chat">💬</button>
-    <button class="icon-button" title="AI">🤖</button>
-    <button class="icon-button" title="Quakes">🌋</button>
+    <button class="icon-button" title="Traffic"><img class="icon-svg" src="" alt="Traffic"></button>
+    <button class="icon-button" title="Weather"><img class="icon-svg" src="" alt="Weather"></button>
+    <button class="icon-button" title="Traffic Cams"><img class="icon-svg" src="" alt="Traffic Cams"></button>
+    <button class="icon-button" title="Alerts"><img class="icon-svg" src="" alt="Alerts"></button>
+    <button class="icon-button" title="Chat"><img class="icon-svg" src="" alt="Chat"></button>
+    <button class="icon-button" title="AI"><img class="icon-svg" src="" alt="AI"></button>
+    <button class="icon-button" title="Quakes"><img class="icon-svg" src="" alt="Quakes"></button>
 
     <div style="position: relative; margin-top: 4px;">
-      <button class="icon-button" id="moreBtn" title="More">⚙️</button>
+      <button class="icon-button" id="moreBtn" title="More"><img class="icon-svg" src="" alt="More"></button>
       <div id="settingsBar">
-        <button class="icon-button" title="Terms">📜</button>
-        <button class="icon-button" title="Account">👤</button>
-        <button class="icon-button" title="Report Bug">🐛</button>
-        <button class="icon-button" title="Contact">📞</button>
+        <button class="icon-button" title="Terms"><img class="icon-svg" src="" alt="Terms"></button>
+        <button class="icon-button" title="Account"><img class="icon-svg" src="" alt="Account"></button>
+        <button class="icon-button" title="Report Bug"><img class="icon-svg" src="" alt="Report Bug"></button>
+        <button class="icon-button" title="Contact"><img class="icon-svg" src="" alt="Contact"></button>
       </div>
     </div>
   </div>
@@ -680,6 +695,7 @@
 
       // Store the current route polyline and stop markers so we can remove them before drawing new ones
       let currentRoutePolyline = null;
+      let currentSilverPolyline = null;
       let currentStopMarkers = [];
 
       // Helper to get current time in Portland (America/Los_Angeles)
@@ -778,6 +794,10 @@
           map.removeLayer(currentRoutePolyline);
           currentRoutePolyline = null;
         }
+        if (currentSilverPolyline) {
+          map.removeLayer(currentSilverPolyline);
+          currentSilverPolyline = null;
+        }
         currentStopMarkers.forEach(marker => map.removeLayer(marker));
         currentStopMarkers = [];
         // Remove bus markers and interval
@@ -788,7 +808,7 @@
         // Draw the route polyline with double stroke effect
         const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
         // Silver bottom layer (thicker and more opaque)
-        const silverPolyline = L.polyline(routeShape, {
+        currentSilverPolyline = L.polyline(routeShape, {
           color: '#C0C0C0', // Silver
           weight: 12,
           opacity: 0.85,
@@ -932,7 +952,7 @@
         directionToggleDiv.innerHTML = '';
         routeGroup.directions.forEach(dir => {
           const btn = document.createElement('button');
-          btn.textContent = dir.route_title;
+          btn.innerHTML = `<img class='icon-svg' src='' alt='Direction'>${dir.route_title}`;
           btn.style.cssText = `
             background: ${dir.direction_id === currentDirectionId ? 'linear-gradient(145deg, #23232a, #2c2c33)' : 'rgba(24,24,28,0.92)'};
             color: #E5E5E5;
