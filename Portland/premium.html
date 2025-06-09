@@ -206,23 +206,20 @@
     }
 
     /* Override Leaflet popup styles */
-    .leaflet-popup-content-wrapper {
-      background: rgba(24,24,28,0.92);
-      color: #E5E5E5;
-      border: 1.5px solid #C0C0C0;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 12px;
+    .leaflet-popup-content-wrapper, .leaflet-popup-content {
+      min-width: 320px !important;
+      max-width: 500px !important;
+      max-height: 70vh !important;
+      overflow-y: auto !important;
+      padding: 18px 22px !important;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
     .leaflet-popup-tip {
       background: rgba(24,24,28,0.92);
       border: 1.5px solid #C0C0C0;
-    }
-    .leaflet-popup-content {
-      margin: 8px 12px;
-      font-size: 14px;
-      line-height: 1.4;
     }
     .leaflet-popup-content button {
       background: linear-gradient(145deg, #23232a, #2c2c33);
@@ -296,6 +293,11 @@
       #settingsBar {
         left: 56px;
       }
+    }
+
+    .leaflet-interactive:focus {
+      outline: none !important;
+      box-shadow: none !important;
     }
   </style>
 </head>
