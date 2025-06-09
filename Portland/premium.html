@@ -299,6 +299,45 @@
       outline: none !important;
       box-shadow: none !important;
     }
+
+    .stop-popup-stop {
+      background: rgba(24,24,28,0.92);
+      border: 1.5px solid #C0C0C0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      color: #E5E5E5;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(192,192,192,0.10);
+    }
+    .stop-popup-stop-title {
+      font-size: 16px;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+    .stop-popup-route-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .stop-popup-route-item {
+      background: linear-gradient(145deg, #23232a, #2c2c33);
+      color: #E5E5E5;
+      border: 1px solid #C0C0C0;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      padding: 7px 10px;
+      font-size: 14px;
+      font-weight: normal;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      display: block;
+      text-align: left;
+    }
+    .stop-popup-route-item:hover {
+      background: #2c2c33;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -1050,24 +1089,25 @@
           attachLandmarkBtnHandler(stop);
         } else {
           const popupDiv = document.createElement('div');
-          popupDiv.innerHTML = '<strong>Multiple stops found:</strong><br>';
+          popupDiv.innerHTML = '<strong>Multiple stops found:</strong>';
           stopsInRadius.forEach(stop => {
-            const btn = document.createElement('button');
-            btn.style.cssText = 'display:block;width:100%;margin:4px 0;padding:8px 12px;border-radius:8px;background:linear-gradient(145deg, #23232a, #2c2c33);color:#E5E5E5;border:1.5px solid #C0C0C0;cursor:pointer;text-align:left;transition:all 0.2s ease;';
-            const routeList = stop.routes.map(r => `<span style="font-size:12px;color:#E5E5E5;background:rgba(24,24,28,0.92);padding:2px 6px;border-radius:4px;margin-right:4px;cursor:pointer;border:1px solid #C0C0C0;" onclick=\"window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})\">${r.route_title}</span>`).join('');
-            btn.innerHTML = `<strong>${stop.name}</strong><br>${routeList}`;
-            btn.onclick = () => {
-              const highlightedTimes = getHighlightedTimes(stop.routes[0]?.times || []);
-              const routeBtns = stop.routes.map(r =>
-                `<button style=\"display:block;width:100%;margin:2px 0;padding:8px 12px;border-radius:8px;background:linear-gradient(145deg, #23232a, #2c2c33);color:#E5E5E5;border:1.5px solid #C0C0C0;cursor:pointer;text-align:left;transition:all 0.2s ease;\" onclick=\"window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})\">${r.route_title}</button>`
-              ).join('');
-              L.popup()
-                .setLatLng([stop.lat, stop.lon])
-                .setContent(getStopPopupContent(stop, highlightedTimes, routeBtns))
-                .openOn(map);
-              attachLandmarkBtnHandler(stop);
-            };
-            popupDiv.appendChild(btn);
+            const stopDiv = document.createElement('div');
+            stopDiv.className = 'stop-popup-stop';
+            stopDiv.innerHTML = `<div class="stop-popup-stop-title">${stop.name}</div>`;
+            const routeList = document.createElement('ul');
+            routeList.className = 'stop-popup-route-list';
+            stop.routes.forEach(r => {
+              const routeItem = document.createElement('li');
+              routeItem.className = 'stop-popup-route-item';
+              routeItem.textContent = r.route_title;
+              routeItem.onclick = () => {
+                window.showRouteFromStop && window.showRouteFromStop(r.route_id, r.direction_id);
+                L.popup().remove();
+              };
+              routeList.appendChild(routeItem);
+            });
+            stopDiv.appendChild(routeList);
+            popupDiv.appendChild(stopDiv);
           });
           L.popup()
             .setLatLng([lat, lng])
