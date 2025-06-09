@@ -716,6 +716,7 @@
         currentStopMarkers = route.stops.map(stop => {
           const marker = L.marker([stop.lat, stop.lon], {
             icon: L.divIcon(getDiamondIconOptions(map.getZoom())),
+            interactive: false
           }).addTo(map);
           marker.bindTooltip(stop.name, {permanent: false, direction: 'top'});
           return marker;
