@@ -51,19 +51,6 @@
       box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25);
     }
 
-    /* Add Mickey Mouse test image */
-    #mickeyTest {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 200px;
-      height: 200px;
-      z-index: 9999;
-      background: url('https://upload.wikimedia.org/wikipedia/en/d/d4/Mickey_Mouse.png') no-repeat center center;
-      background-size: contain;
-    }
-
     #searchWrapper {
       position: fixed;
       top: 12px;
@@ -237,9 +224,6 @@
       filter: drop-shadow(0 0 8px #C0C0C0);
     }
 
-    .diamond-stop {
-      cursor: pointer;
-    }
     .diamond-stop .diamond-shape {
       background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
       border: 2px solid #0033A0;
@@ -247,37 +231,6 @@
       transform: rotate(45deg);
       box-shadow: 0 0 8px #0033A0, 0 0 2px #fff;
       margin: 2px auto;
-    }
-
-    /* Dark theme for popups and tooltips */
-    .leaflet-popup-content-wrapper,
-    .leaflet-popup-tip,
-    .dark-popup {
-      background: #18181c !important;
-      color: #f5f5f5 !important;
-      border-radius: 12px !important;
-      border: 2px solid #C0C0C0 !important;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.7) !important;
-    }
-    .leaflet-popup-content {
-      color: #f5f5f5 !important;
-      font-size: 15px;
-    }
-    .leaflet-popup-close-button {
-      color: #fff !important;
-      font-size: 22px;
-      opacity: 0.8;
-    }
-    .route-tooltip, .stop-tooltip {
-      background: #18181c !important;
-      color: #f5f5f5 !important;
-      border: 2px solid #C0C0C0 !important;
-      box-shadow: 0 2px 8px rgba(192,192,192,0.10) !important;
-    }
-
-    /* Add this one new style */
-    .leaflet-clickable {
-      z-index: 1000 !important;
     }
 
     @media (max-width: 600px) {
@@ -297,7 +250,6 @@
 </head>
 <body>
   <div id="map"></div>
-  <div id="mickeyTest"></div>
 
   <!-- Search Bar -->
   <div id="searchWrapper">
@@ -525,7 +477,7 @@
         }, 300);
       });
 
-      // Update displayResults to handle all types, add 'View Route' button for route popups
+      // Update displayResults to handle all types
       function displayResults(results) {
         searchResultsDiv.innerHTML = '';
         if (results.length === 0) {
@@ -562,36 +514,25 @@
               if (routeGroup) {
                 let currentDirId = 0;
                 let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-                // Show a popup with a 'View Route' button
-                const center = currentRoute.shape[Math.floor(currentRoute.shape.length / 2)];
-                L.popup({className: 'dark-popup'})
-                  .setLatLng(center)
-                  .setContent(`
-                    <div style='font-weight:bold;font-size:16px;'>${currentRoute.route_title}</div>
-                    <div style='margin:8px 0 12px 0;font-size:13px;color:#ccc;'>Route ${currentRoute.route_id}</div>
-                    <button id='viewRouteBtn' style='background:#111;color:#fff;border:1.5px solid #C0C0C0;border-radius:8px;padding:8px 18px;font-weight:bold;cursor:pointer;'>View Route</button>
-                  `)
-                  .openOn(map);
-                setTimeout(() => {
-                  const btn = document.getElementById('viewRouteBtn');
-                  if (btn) {
-                    btn.onclick = () => {
-                      showRouteWithStops(currentRoute);
-                      map.closePopup();
-                    };
-                  }
-                }, 0);
+                showRouteWithStops(currentRoute);
+                const handleToggle = (newDirId) => {
+                  currentDirId = newDirId;
+                  currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
+                  showRouteWithStops(currentRoute);
+                  showDirectionToggle(routeGroup, currentDirId, handleToggle);
+                };
+                showDirectionToggle(routeGroup, currentDirId, handleToggle);
               }
             } else if (result.type === 'stop') {
               map.setView([result.lat, result.lon], 16);
               const highlightedTimes = getHighlightedTimes(result.routes[0]?.times || []);
-              L.popup({className: 'dark-popup'})
+              L.popup()
                 .setLatLng([result.lat, result.lon])
                 .setContent(`<strong>${result.name}</strong><br>${highlightedTimes}`)
                 .openOn(map);
             } else if (result.type === 'poi') {
               map.setView([result.lat, result.lon], 17);
-              L.popup({className: 'dark-popup'})
+              L.popup()
                 .setLatLng([result.lat, result.lon])
                 .setContent(`<strong>${result.title}</strong><br>${result.desc || ''}`)
                 .openOn(map);
@@ -770,46 +711,33 @@
         // Draw stop markers as diamonds
         currentStopMarkers = route.stops.map(stop => {
           const marker = L.marker([stop.lat, stop.lon], {
-            icon: L.divIcon({
-              className: 'diamond-stop',
-              iconSize: [12, 12],
-              iconAnchor: [6, 6],
-              html: `<div class='diamond-shape' style='width:12px;height:12px;border:2px solid #0033A0;background:linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);transform:rotate(45deg);'></div>`
-            }),
-            interactive: true,
-            zIndexOffset: 1000
+            icon: L.divIcon(getDiamondIconOptions(map.getZoom())),
           }).addTo(map);
-
-          marker.on('click', function(e) {
-            e.originalEvent.stopPropagation();
-            const highlightedTimes = getHighlightedTimes(stop.times);
-            const routeList = stop.routes.map(r =>
-              `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
-            ).join('');
-            
-            L.popup()
-              .setLatLng([stop.lat, stop.lon])
-              .setContent(getStopPopupContent(stop, highlightedTimes, routeList))
-              .openOn(map);
-              
-            attachLandmarkBtnHandler(stop);
-          });
-          
           marker.bindTooltip(stop.name, {permanent: false, direction: 'top'});
           return marker;
         });
 
-        // Update marker size on zoom
+        // Responsive marker sizing on zoom
         map.on('zoomend', () => {
           const zoom = map.getZoom();
           currentStopMarkers.forEach(marker => {
-            let size = 6;
-            if (zoom >= 14) size = 8;
-            else if (zoom >= 12) size = 7;
-            else if (zoom >= 10) size = 6;
-            marker.setRadius(size);
+            marker.setIcon(L.divIcon(getDiamondIconOptions(zoom)));
           });
         });
+
+        // Helper for responsive diamond icon
+        function getDiamondIconOptions(zoom) {
+          let size = 10, border = 1;
+          if (zoom >= 14) { size = 22; border = 2; }
+          else if (zoom >= 12) { size = 16; border = 2; }
+          else if (zoom >= 10) { size = 12; border = 1; }
+          return {
+            className: 'diamond-stop',
+            iconSize: [size + 4, size + 4],
+            iconAnchor: [Math.round((size + 4) / 2), Math.round((size + 4) / 2)],
+            html: `<div class='diamond-shape' style='width:${size}px;height:${size}px;border-width:${border}px;'></div>`
+          };
+        }
 
         // Fit map to route
         map.fitBounds(currentRoutePolyline.getBounds());
@@ -1045,18 +973,15 @@
 
       // Update map click handler to use getStopPopupContent and attach handler
       map.on('click', function(e) {
-        // Check if we clicked on a marker first
+        // Check if click was on a marker
         if (e.originalEvent.target.closest('.diamond-stop')) {
           return; // Let the marker handle the click
         }
-
-        const { lat, lng } = e.latlng;
         
-        // Then check if we clicked near a stop
+        const { lat, lng } = e.latlng;
         const stopsInRadius = allStops.filter(stop =>
           haversine(lat, lng, stop.lat, stop.lon) <= 100
         );
-
         if (stopsInRadius.length === 0) {
           L.popup()
             .setLatLng([lat, lng])
@@ -1068,12 +993,10 @@
           const routeList = stop.routes.map(r =>
             `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
           ).join('');
-          
           L.popup()
             .setLatLng([stop.lat, stop.lon])
             .setContent(getStopPopupContent(stop, highlightedTimes, routeList))
             .openOn(map);
-            
           attachLandmarkBtnHandler(stop);
         } else {
           const popupDiv = document.createElement('div');
