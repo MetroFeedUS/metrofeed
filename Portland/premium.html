@@ -226,7 +226,6 @@
 
     .diamond-stop {
       pointer-events: none;
-      z-index: 1000;
     }
     .diamond-stop .diamond-shape {
       background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
@@ -236,16 +235,6 @@
       box-shadow: 0 0 8px #0033A0, 0 0 2px #fff;
       margin: 2px auto;
       pointer-events: none;
-    }
-
-    #stopDetectionLayer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 999;
-      cursor: crosshair;
     }
 
     @media (max-width: 600px) {
@@ -729,6 +718,21 @@
             icon: L.divIcon(getDiamondIconOptions(map.getZoom())),
           }).addTo(map);
           marker.bindTooltip(stop.name, {permanent: false, direction: 'top'});
+          
+          // Add click handler to show stop information
+          marker.on('click', function(e) {
+            e.originalEvent.stopPropagation(); // Prevent map click from firing
+            const highlightedTimes = getHighlightedTimes(stop.times || []);
+            const routeBtns = stop.routes.map(r =>
+              `<button style="display:block;width:100%;margin:2px 0;padding:4px 6px;border-radius:6px;background:#0074D9;color:#fff;border:none;cursor:pointer;text-align:left;" onclick="window.showRouteFromStop && window.showRouteFromStop('${r.route_id}', ${r.direction_id})">${r.route_title}</button>`
+            ).join('');
+            L.popup()
+              .setLatLng([stop.lat, stop.lon])
+              .setContent(getStopPopupContent(stop, highlightedTimes, routeBtns))
+              .openOn(map);
+            attachLandmarkBtnHandler(stop);
+          });
+          
           return marker;
         });
 
@@ -986,25 +990,15 @@
         }, 0);
       }
 
-      // Create stop detection layer
-      const stopDetectionLayer = document.createElement('div');
-      stopDetectionLayer.id = 'stopDetectionLayer';
-      document.getElementById('map').appendChild(stopDetectionLayer);
-
-      // Handle clicks on the detection layer
-      stopDetectionLayer.addEventListener('click', function(e) {
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const point = map.containerPointToLatLng([x, y]);
-        
+      // Update map click handler to use getStopPopupContent and attach handler
+      map.on('click', function(e) {
+        const { lat, lng } = e.latlng;
         const stopsInRadius = allStops.filter(stop =>
-          haversine(point.lat, point.lng, stop.lat, stop.lon) <= 100
+          haversine(lat, lng, stop.lat, stop.lon) <= 100
         );
-        
         if (stopsInRadius.length === 0) {
           L.popup()
-            .setLatLng([point.lat, point.lng])
+            .setLatLng([lat, lng])
             .setContent('No stops within 100 meters.')
             .openOn(map);
         } else if (stopsInRadius.length === 1) {
@@ -1040,17 +1034,11 @@
             popupDiv.appendChild(btn);
           });
           L.popup()
-            .setLatLng([point.lat, point.lng])
+            .setLatLng([lat, lng])
             .setContent(popupDiv)
             .openOn(map);
         }
       });
-
-      // Remove the old map click handler
-      map.off('click');
-
-      // Expose showRouteFromStop globally for popup onclick
-      window.showRouteFromStop = showRouteFromStop;
   </script>
 </body>
 </html>
