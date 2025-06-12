@@ -293,43 +293,46 @@
         left: 56px;
       }
 
-      /* Mobile improvements for direction selector */
+      /* === Route Selector Responsive Redesign === */
       .direction-toggle-div {
         width: 95vw;
         max-width: 420px;
-        min-width: 44px;
-        height: 44px;
+        min-width: 120px;
+        height: 56px;
         top: 60px;
         left: 50%;
         transform: translateX(-50%);
-        padding: 0 4px 0 0;
-        gap: 6px;
+        padding: 0 8px 0 0;
+        gap: 8px;
         display: flex;
         align-items: center;
-        border-radius: 10px;
-        transition: width 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.2s;
+        border-radius: 12px;
+        transition: width 0.3s cubic-bezier(.4,2,.6,1), height 0.3s, box-shadow 0.2s;
         box-shadow: 0 2px 12px rgba(0,0,0,0.18);
         background: rgba(24,24,28,0.96);
         z-index: 1002;
       }
       .direction-toggle-div.collapsed {
-        width: 44px;
-        min-width: 44px;
-        max-width: 44px;
-        padding: 0;
+        width: 140px;
+        min-width: 100px;
+        max-width: 160px;
+        height: 44px;
+        padding: 0 8px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        justify-content: flex-start;
       }
       .direction-toggle-div button.direction-btn {
         flex: 1 1 auto;
-        padding: 6px 10px;
-        font-size: 13px;
+        padding: 10px 14px;
+        font-size: 15px;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        overflow: visible;
+        text-overflow: unset;
         margin: 0 2px;
         border-radius: 8px;
         transition: background 0.2s, color 0.2s;
+        display: block;
       }
       .direction-toggle-div.collapsed button.direction-btn {
         display: none;
@@ -345,10 +348,26 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        margin-left: auto;
+        margin-left: 0;
         transition: transform 0.2s;
       }
+      .direction-toggle-div .collapsed-label {
+        display: none;
+        color: #E5E5E5;
+        font-size: 15px;
+        font-weight: 500;
+        margin-right: 6px;
+        letter-spacing: 0.01em;
+      }
+      .direction-toggle-div.collapsed .collapsed-label {
+        display: block;
+      }
       .direction-toggle-div.collapsed .collapse-chevron {
+        /* Chevron points down when closed */
+        transform: rotate(0deg);
+      }
+      .direction-toggle-div:not(.collapsed) .collapse-chevron {
+        /* Chevron points up when open */
         transform: rotate(180deg);
       }
 
@@ -1024,6 +1043,12 @@
           align-items: center;
         `;
         directionToggleDiv.innerHTML = '';
+        // Collapsed label
+        const collapsedLabel = document.createElement('span');
+        collapsedLabel.className = 'collapsed-label';
+        collapsedLabel.textContent = 'Select route';
+        directionToggleDiv.appendChild(collapsedLabel);
+        // Direction buttons
         routeGroup.directions.forEach(dir => {
           const btn = document.createElement('button');
           btn.textContent = dir.route_title;
@@ -1033,12 +1058,13 @@
             color: #E5E5E5;
             border: 1.5px solid #C0C0C0;
             border-radius: 8px;
-            padding: 8px 14px;
+            padding: 10px 14px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s ease;
             flex: 1 1 auto;
             margin: 0 2px;
+            font-size: 15px;
           `;
           if (dir.direction_id === currentDirectionId) {
             btn.classList.add('direction-selected');
