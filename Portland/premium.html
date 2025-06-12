@@ -359,8 +359,8 @@
 
     /* Route Selector: Increase width by 50% */
     .direction-toggle-div {
-      width: calc(1.5 * (100vw - 24px));
-      max-width: 630px;
+      width: calc(100vw - 24px);
+      max-width: 420px;
       min-width: 120px;
       height: 64px;
       top: 60px;
@@ -968,18 +968,28 @@
           align-items: center;
         `;
         directionToggleDiv.innerHTML = '';
+        // Collapsed label (only visible in collapsed state)
+        const collapsedLabel = document.createElement('span');
+        collapsedLabel.className = 'collapsed-label';
+        collapsedLabel.textContent = 'Select route';
+        directionToggleDiv.appendChild(collapsedLabel);
+        // Direction buttons
         routeGroup.directions.forEach(dir => {
           const btn = document.createElement('button');
           btn.textContent = dir.route_title;
+          btn.className = 'direction-btn';
           btn.style.cssText = `
             background: ${dir.direction_id === currentDirectionId ? 'linear-gradient(145deg, #23232a, #2c2c33)' : 'rgba(24,24,28,0.92)'};
             color: #E5E5E5;
             border: 1.5px solid #C0C0C0;
             border-radius: 8px;
-            padding: 8px 14px;
+            padding: 14px 14px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s ease;
+            flex: 1 1 auto;
+            margin: 0 2px;
+            font-size: 16px;
           `;
           if (dir.direction_id === currentDirectionId) {
             btn.classList.add('direction-selected');
@@ -987,6 +997,37 @@
           btn.onclick = () => onChange(dir.direction_id);
           directionToggleDiv.appendChild(btn);
         });
+        // Add close (X) button in the top right corner
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'direction-toggle-close';
+        closeBtn.setAttribute('aria-label', 'Close direction selector');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.cssText = `
+          position: absolute;
+          top: 6px;
+          right: 10px;
+          background: none;
+          border: none;
+          color: #E5E5E5;
+          font-size: 26px;
+          cursor: pointer;
+          z-index: 1003;
+        `;
+        closeBtn.onclick = (e) => {
+          e.stopPropagation();
+          directionToggleDiv.remove();
+        };
+        directionToggleDiv.appendChild(closeBtn);
+        // Add collapse/expand chevron button
+        const chevronBtn = document.createElement('button');
+        chevronBtn.className = 'collapse-chevron';
+        chevronBtn.setAttribute('aria-label', 'Collapse or expand direction selector');
+        chevronBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10l4 4 4-4" stroke="#4A90E2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        chevronBtn.onclick = (e) => {
+          e.stopPropagation();
+          directionToggleDiv.classList.toggle('collapsed');
+        };
+        directionToggleDiv.appendChild(chevronBtn);
         document.body.appendChild(directionToggleDiv);
       }
 
