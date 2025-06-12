@@ -293,12 +293,12 @@
         left: 56px;
       }
 
-      /* === Route Selector Responsive Redesign === */
+      /* === Route Selector Responsive Redesign (Centered, Classy) === */
       .direction-toggle-div {
-        width: 95vw;
+        width: calc(100vw - 24px);
         max-width: 420px;
         min-width: 120px;
-        height: 56px;
+        height: 64px;
         top: 60px;
         left: 50%;
         transform: translateX(-50%);
@@ -306,7 +306,7 @@
         gap: 8px;
         display: flex;
         align-items: center;
-        border-radius: 12px;
+        border-radius: 14px;
         transition: width 0.3s cubic-bezier(.4,2,.6,1), height 0.3s, box-shadow 0.2s;
         box-shadow: 0 2px 12px rgba(0,0,0,0.18);
         background: rgba(24,24,28,0.96);
@@ -324,8 +324,8 @@
       }
       .direction-toggle-div button.direction-btn {
         flex: 1 1 auto;
-        padding: 10px 14px;
-        font-size: 15px;
+        padding: 14px 14px;
+        font-size: 16px;
         white-space: nowrap;
         overflow: visible;
         text-overflow: unset;
@@ -1043,7 +1043,7 @@
           align-items: center;
         `;
         directionToggleDiv.innerHTML = '';
-        // Collapsed label
+        // Collapsed label (only visible in collapsed state)
         const collapsedLabel = document.createElement('span');
         collapsedLabel.className = 'collapsed-label';
         collapsedLabel.textContent = 'Select route';
@@ -1058,13 +1058,13 @@
             color: #E5E5E5;
             border: 1.5px solid #C0C0C0;
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 14px 14px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s ease;
             flex: 1 1 auto;
             margin: 0 2px;
-            font-size: 15px;
+            font-size: 16px;
           `;
           if (dir.direction_id === currentDirectionId) {
             btn.classList.add('direction-selected');
@@ -1077,10 +1077,19 @@
         chevronBtn.className = 'collapse-chevron';
         chevronBtn.setAttribute('aria-label', 'Collapse or expand direction selector');
         chevronBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10l4 4 4-4" stroke="#4A90E2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        chevronBtn.onclick = () => {
+        chevronBtn.onclick = (e) => {
+          e.stopPropagation();
           directionToggleDiv.classList.toggle('collapsed');
+          // Only show the collapsed label when collapsed
+          if (directionToggleDiv.classList.contains('collapsed')) {
+            collapsedLabel.style.display = 'block';
+          } else {
+            collapsedLabel.style.display = 'none';
+          }
         };
         directionToggleDiv.appendChild(chevronBtn);
+        // Ensure correct initial state for label
+        collapsedLabel.style.display = directionToggleDiv.classList.contains('collapsed') ? 'block' : 'none';
         document.body.appendChild(directionToggleDiv);
       }
 
