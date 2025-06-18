@@ -736,507 +736,527 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="mastermap.js"></script>
   <script>
-      console.log('Initializing map...');
-      const map = L.map('map').setView([45.5222, -122.6499], 10);
-      console.log('Map initialized:', map);
-      
-      // MapTiler API key
-      const maptilerKey = "OdvGsCDtgdbG2nzaGSDE";
-      console.log('Using MapTiler key:', maptilerKey);
-
-      // Initialize MapLibre GL map
-      const maplibreMap = new maplibregl.Map({
-        container: 'map',
-        style: `https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/style.json?key=${maptilerKey}`,
-        center: [-122.6499, 45.5222],
-        zoom: 10
-      });
-
-      // Fallback map tiles (OpenStreetMap)
-      const fallbackTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
-        maxZoom: 19
-      });
-
-      let darkModeOn = false;
-      document.getElementById('modeToggle').addEventListener('click', () => {
-        darkModeOn = !darkModeOn;
-        maplibreMap.setStyle(`https://api.maptiler.com/maps/${darkModeOn ? '0197492e-69d1-7337-8c37-6179e8fda6a8' : '0197492c-4e22-74f2-beb1-36e1263607e9'}/style.json?key=${maptilerKey}`);
-        document.getElementById('modeToggle').classList.toggle("active", darkModeOn);
-        console.log('Map mode changed to:', darkModeOn ? 'night' : 'day');
-      });
-
-      // Add error handling
-      maplibreMap.on('error', (e) => {
-        console.error('Map error:', e);
-        // Switch to fallback if MapTiler fails
-        if (!map.hasLayer(fallbackTiles)) {
-          fallbackTiles.addTo(map);
-          console.log('Switched to fallback map tiles');
-        }
-      });
-
-      // Add map load event listener
-      maplibreMap.on('load', () => {
-        console.log('Map loaded successfully');
-      });
-
-      // Search functionality
-      const searchBar = document.getElementById('searchBar');
-      let searchTimeout;
-      let searchResults = [];
-
-      // Create search results container
-      const searchResultsDiv = document.createElement('div');
-      searchResultsDiv.id = 'searchResults';
-      searchResultsDiv.style.cssText = `
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: rgba(20, 20, 20, 0.95);
-        border-radius: 8px;
-        margin-top: 4px;
-        max-height: 300px;
-        overflow-y: auto;
-        display: none;
-        z-index: 1002;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      `;
-      document.getElementById('searchWrapper').appendChild(searchResultsDiv);
-
-      // Sanitize input to only allow alphanumeric characters, spaces, and basic punctuation
-      function sanitizeInput(input) {
-        return input.replace(/[^a-zA-Z0-9\s\-.,]/g, '');
-      }
-
-      // Group masterRoutes by route_id for unified search
-      function getUniqueRoutes() {
-        const routeMap = {};
-        masterRoutes.forEach(route => {
-          if (!routeMap[route.route_id]) {
-            routeMap[route.route_id] = [];
+    // Build a flat, deduplicated array of all stops with route info
+    function getAllStopsWithRoutes() {
+      const stopMap = {};
+      masterRoutes.forEach(route => {
+        route.stops.forEach(stop => {
+          if (!stopMap[stop.stop_id]) {
+            stopMap[stop.stop_id] = {
+              ...stop,
+              routes: []
+            };
           }
-          routeMap[route.route_id].push(route);
-        });
-        return Object.values(routeMap).map(routesArr => {
-          // Use direction 0 as default for display
-          const dir0 = routesArr.find(r => r.direction_id === 0) || routesArr[0];
-          return {
-            route_id: dir0.route_id,
-            directions: routesArr,
-            display_title: dir0.route_title.replace(/\s*-\s*To.*/i, ''), // Clean up for search display
-          };
-        });
-      }
-
-      // --- POI Moderation Logic ---
-      function getPOIs() {
-        // Get all POIs from localStorage (simulate backend)
-        return JSON.parse(localStorage.getItem('pois') || '[]');
-      }
-      function savePOIs(pois) {
-        localStorage.setItem('pois', JSON.stringify(pois));
-      }
-      function addPOI(poi) {
-        const pois = getPOIs();
-        pois.push(poi);
-        savePOIs(pois);
-      }
-      // Console moderation functions
-      window.listPendingPOIs = function() {
-        const pois = getPOIs();
-        console.table(pois.filter(p => p.status === 'pending'));
-      };
-      window.approvePOI = function(id) {
-        const pois = getPOIs();
-        const idx = pois.findIndex(p => p.id === id);
-        if (idx !== -1) {
-          pois[idx].status = 'approved';
-          savePOIs(pois);
-          console.log('POI approved:', pois[idx]);
-        } else {
-          console.warn('POI not found:', id);
-        }
-      };
-      // --- End POI Moderation Logic ---
-
-      // --- Unified Search Logic ---
-      function searchUnified(query) {
-        const results = [];
-        // Routes
-        const uniqueRoutes = getUniqueRoutes();
-        uniqueRoutes.forEach(routeGroup => {
-          if (
-            routeGroup.display_title.toLowerCase().includes(query) ||
-            (routeGroup.route_id && routeGroup.route_id.toString().toLowerCase().includes(query))
-          ) {
-            results.push({
-              type: 'route',
-              id: routeGroup.route_id,
-              directions: routeGroup.directions,
-              display_title: routeGroup.display_title
-            });
-          }
-        });
-        // Stops
-        allStops.forEach(stop => {
-          if (
-            stop.name.toLowerCase().includes(query) ||
-            (stop.stop_id && stop.stop_id.toString().toLowerCase().includes(query))
-          ) {
-            results.push({
-              type: 'stop',
-              id: stop.stop_id,
-              name: stop.name,
-              lat: stop.lat,
-              lon: stop.lon,
-              routes: stop.routes
-            });
-          }
-        });
-        // Approved POIs
-        getPOIs().filter(p => p.status === 'approved').forEach(poi => {
-          if (poi.title.toLowerCase().includes(query) || (poi.desc && poi.desc.toLowerCase().includes(query))) {
-            results.push({
-              type: 'poi',
-              id: poi.id,
-              title: poi.title,
-              desc: poi.desc,
-              lat: poi.lat,
-              lon: poi.lon
-            });
-          }
-        });
-        return results;
-      }
-      // --- End Unified Search Logic ---
-
-      // Update search input handler to use unified search
-      searchBar.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        const rawQuery = e.target.value;
-        const sanitizedQuery = sanitizeInput(rawQuery);
-        if (rawQuery !== sanitizedQuery) {
-          e.target.value = sanitizedQuery;
-        }
-        const query = sanitizedQuery.toLowerCase();
-        if (query.length < 1) {
-          searchResultsDiv.style.display = 'none';
-          return;
-        }
-        searchTimeout = setTimeout(() => {
-          const results = searchUnified(query);
-          displayResults(results);
-        }, 300);
-      });
-
-      // Update displayResults to handle all types
-      function displayResults(results) {
-        searchResultsDiv.innerHTML = '';
-        if (results.length === 0) {
-          searchResultsDiv.style.display = 'none';
-          return;
-        }
-        results.forEach(result => {
-          const resultDiv = document.createElement('div');
-          resultDiv.style.cssText = `
-            padding: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            color: white;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-          `;
-          let icon = '';
-          if (result.type === 'route') icon = '🚌';
-          else if (result.type === 'stop') icon = '◆';
-          else if (result.type === 'poi') icon = '⭐';
-          if (result.type === 'route') {
-            resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.display_title}</div><div style="font-size: 12px; color: #888;">Route</div></div>`;
-          } else if (result.type === 'stop') {
-            resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.name}</div><div style="font-size: 12px; color: #888;">Stop</div></div>`;
-          } else if (result.type === 'poi') {
-            resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.title}</div><div style="font-size: 12px; color: #888;">Landmark/POI</div></div>`;
-          }
-          resultDiv.addEventListener('click', () => {
-            if (directionToggleDiv) directionToggleDiv.remove();
-            if (result.type === 'route') {
-              const routeGroup = getUniqueRoutes().find(rg => rg.route_id === result.id);
-              if (routeGroup) {
-                let currentDirId = 0;
-                let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-                showRouteWithStops(currentRoute);
-                const handleToggle = (newDirId) => {
-                  currentDirId = newDirId;
-                  currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-                  showRouteWithStops(currentRoute);
-                  showDirectionToggle(routeGroup, currentDirId, handleToggle);
-                };
-                showDirectionToggle(routeGroup, currentDirId, handleToggle);
-              }
-            } else if (result.type === 'stop') {
-              map.setView([result.lat, result.lon], 16);
-              const highlightedTimes = getNextHighlightedTimes(result.routes[0]?.times || []);
-              showCustomPopup(getStopPopupContent(result, highlightedTimes, result.routes.map(r => r.route_title).join('<br>')), 'scheduled-times');
-            } else if (result.type === 'poi') {
-              map.setView([result.lat, result.lon], 17);
-              L.popup()
-                .setLatLng([result.lat, result.lon])
-                .setContent(`<strong>${result.title}</strong><br>${result.desc || ''}`)
-                .openOn(map);
-            }
-            searchResultsDiv.style.display = 'none';
-            searchBar.value = '';
+          stopMap[stop.stop_id].routes.push({
+            route_id: route.route_id,
+            route_title: route.route_title,
+            direction_id: route.direction_id,
+            times: stop.times // include times if present
           });
-          searchResultsDiv.appendChild(resultDiv);
-        });
-        searchResultsDiv.style.display = 'block';
-      }
-
-      // Icon menu interactivity
-      const toggle = document.getElementById('menuToggle');
-      const menu = document.getElementById('iconMenu');
-      const moreBtn = document.getElementById('moreBtn');
-      const settingsBar = document.getElementById('settingsBar');
-      const buttons = document.querySelectorAll('.icon-button');
-
-      toggle.addEventListener('click', () => {
-        const isOpen = menu.style.display === 'flex';
-        menu.style.display = isOpen ? 'none' : 'flex';
-      });
-
-      moreBtn.addEventListener('click', () => {
-        settingsBar.classList.toggle('active');
-      });
-
-      // Close settings bar when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!moreBtn.contains(e.target) && !settingsBar.contains(e.target)) {
-          settingsBar.classList.remove('active');
-        }
-      });
-
-      // Overlay button click handlers
-      buttons.forEach(button => {
-        button.addEventListener('click', () => {
-          if (button !== moreBtn) {
-            button.classList.toggle('active');
-          }
         });
       });
+      return Object.values(stopMap);
+    }
+    const allStops = getAllStopsWithRoutes();
 
-      // Store the current route polyline and stop markers so we can remove them before drawing new ones
-      let currentRoutePolyline = null;
-      let currentSilverPolyline = null;
-      let currentStopMarkers = [];
+    console.log('Initializing map...');
+    const map = L.map('map').setView([45.5222, -122.6499], 10);
+    console.log('Map initialized:', map);
+    
+    // MapTiler API key
+    const maptilerKey = "OdvGsCDtgdbG2nzaGSDE";
+    console.log('Using MapTiler key:', maptilerKey);
 
-      // Helper to get current time in Portland (America/Los_Angeles)
-      function getPortlandTimeMins() {
-        const now = new Date();
-        const portlandTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-        return portlandTime.getHours() * 60 + portlandTime.getMinutes();
+    // Initialize MapLibre GL map
+    const maplibreMap = new maplibregl.Map({
+      container: 'map',
+      style: `https://api.maptiler.com/maps/0197492c-4e22-74f2-beb1-36e1263607e9/style.json?key=${maptilerKey}`,
+      center: [-122.6499, 45.5222],
+      zoom: 10
+    });
+
+    // Fallback map tiles (OpenStreetMap)
+    const fallbackTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    });
+
+    let darkModeOn = false;
+    document.getElementById('modeToggle').addEventListener('click', () => {
+      darkModeOn = !darkModeOn;
+      maplibreMap.setStyle(`https://api.maptiler.com/maps/${darkModeOn ? '0197492e-69d1-7337-8c37-6179e8fda6a8' : '0197492c-4e22-74f2-beb1-36e1263607e9'}/style.json?key=${maptilerKey}`);
+      document.getElementById('modeToggle').classList.toggle("active", darkModeOn);
+      console.log('Map mode changed to:', darkModeOn ? 'night' : 'day');
+    });
+
+    // Add error handling
+    maplibreMap.on('error', (e) => {
+      console.error('Map error:', e);
+      // Switch to fallback if MapTiler fails
+      if (!map.hasLayer(fallbackTiles)) {
+        fallbackTiles.addTo(map);
+        console.log('Switched to fallback map tiles');
       }
+    });
 
-      // Helper to highlight next 3 arrivals and show all times
-      function getNextHighlightedTimes(timesArr, count = 3) {
-        if (!Array.isArray(timesArr) || timesArr.length === 0) return 'No scheduled times';
-        const nowMins = getPortlandTimeMins();
-        let highlighted = [];
-        let found = 0;
-        timesArr.forEach(timeStr => {
-          if (found >= count) return;
-          let cleanTime = timeStr.trim();
-          let match = cleanTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-          if (!match) {
-            highlighted.push(cleanTime);
-            found++;
-            return;
-          }
-          let hour = parseInt(match[1], 10);
-          let min = parseInt(match[2], 10);
-          let ampm = match[3];
-          if (ampm) {
-            if (ampm.toUpperCase() === 'PM' && hour !== 12) hour += 12;
-            if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
-          }
-          let schedMins = hour * 60 + min;
-          // Handle after-midnight wraparound
-          if (schedMins < nowMins && nowMins - schedMins > 720) {
-            schedMins += 1440;
-          }
-          if (schedMins >= nowMins) {
-            highlighted.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
-            found++;
-          }
-        });
-        // If not enough future times, fill with earlier times
-        if (highlighted.length < count) {
-          timesArr.slice(0, count - highlighted.length).forEach(t => highlighted.push(t));
+    // Add map load event listener
+    maplibreMap.on('load', () => {
+      console.log('Map loaded successfully');
+    });
+
+    // Search functionality
+    const searchBar = document.getElementById('searchBar');
+    let searchTimeout;
+    let searchResults = [];
+
+    // Create search results container
+    const searchResultsDiv = document.createElement('div');
+    searchResultsDiv.id = 'searchResults';
+    searchResultsDiv.style.cssText = `
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(20, 20, 20, 0.95);
+      border-radius: 8px;
+      margin-top: 4px;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      z-index: 1002;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    `;
+    document.getElementById('searchWrapper').appendChild(searchResultsDiv);
+
+    // Sanitize input to only allow alphanumeric characters, spaces, and basic punctuation
+    function sanitizeInput(input) {
+      return input.replace(/[^a-zA-Z0-9\s\-.,]/g, '');
+    }
+
+    // Group masterRoutes by route_id for unified search
+    function getUniqueRoutes() {
+      const routeMap = {};
+      masterRoutes.forEach(route => {
+        if (!routeMap[route.route_id]) {
+          routeMap[route.route_id] = [];
         }
-        return highlighted.slice(0, count).join("<br>") || 'No scheduled times';
-      }
+        routeMap[route.route_id].push(route);
+      });
+      return Object.values(routeMap).map(routesArr => {
+        // Use direction 0 as default for display
+        const dir0 = routesArr.find(r => r.direction_id === 0) || routesArr[0];
+        return {
+          route_id: dir0.route_id,
+          directions: routesArr,
+          display_title: dir0.route_title.replace(/\s*-\s*To.*/i, ''), // Clean up for search display
+        };
+      });
+    }
 
-      // Fetch live ETAs for a stop and return HTML for the next 3 arrivals
-      async function getLiveETAsHTML(stopId) {
-        const apiKey = '2C4447D4A42083BCD84DE3B8E';
-        try {
-          const res = await fetch(`https://developer.trimet.org/ws/v2/arrivals?locIDs=${stopId}&appID=${apiKey}&json=true`);
-          const data = await res.json();
-          const arrivals = (data.resultSet.arrival || []).filter(a => a.estimated || a.scheduled);
-          if (!arrivals.length) return '<div style="color:#aaa;">No real-time arrivals</div>';
-          // Sort by soonest
-          arrivals.sort((a, b) => (a.estimated || a.scheduled) - (b.estimated || b.scheduled));
-          const now = Date.now();
-          let html = '';
-          let shown = 0;
-          for (let arr of arrivals) {
-            if (shown >= 3) break;
-            let eta = arr.estimated || arr.scheduled;
-            let mins = Math.round((eta - now) / 60000);
-            let label = mins <= 0 ? 'Due' : mins + ' min';
-            let route = arr.shortSign ? ` <span style="color:#4dd0e1;">${arr.shortSign}</span>` : '';
-            html += `<div><span style="font-weight:bold;">${label}</span>${route}</div>`;
-            shown++;
-          }
-          return html;
-        } catch (e) {
-          return '<div style="color:#aaa;">Live ETA unavailable</div>';
+    // --- POI Moderation Logic ---
+    function getPOIs() {
+      // Get all POIs from localStorage (simulate backend)
+      return JSON.parse(localStorage.getItem('pois') || '[]');
+    }
+    function savePOIs(pois) {
+      localStorage.setItem('pois', JSON.stringify(pois));
+    }
+    function addPOI(poi) {
+      const pois = getPOIs();
+      pois.push(poi);
+      savePOIs(pois);
+    }
+    // Console moderation functions
+    window.listPendingPOIs = function() {
+      const pois = getPOIs();
+      console.table(pois.filter(p => p.status === 'pending'));
+    };
+    window.approvePOI = function(id) {
+      const pois = getPOIs();
+      const idx = pois.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        pois[idx].status = 'approved';
+        savePOIs(pois);
+        console.log('POI approved:', pois[idx]);
+      } else {
+        console.warn('POI not found:', id);
+      }
+    };
+    // --- End POI Moderation Logic ---
+
+    // --- Unified Search Logic ---
+    function searchUnified(query) {
+      const results = [];
+      // Routes
+      const uniqueRoutes = getUniqueRoutes();
+      uniqueRoutes.forEach(routeGroup => {
+        if (
+          routeGroup.display_title.toLowerCase().includes(query) ||
+          (routeGroup.route_id && routeGroup.route_id.toString().toLowerCase().includes(query))
+        ) {
+          results.push({
+            type: 'route',
+            id: routeGroup.route_id,
+            directions: routeGroup.directions,
+            display_title: routeGroup.display_title
+          });
         }
-      }
+      });
+      // Stops
+      allStops.forEach(stop => {
+        if (
+          stop.name.toLowerCase().includes(query) ||
+          (stop.stop_id && stop.stop_id.toString().toLowerCase().includes(query))
+        ) {
+          results.push({
+            type: 'stop',
+            id: stop.stop_id,
+            name: stop.name,
+            lat: stop.lat,
+            lon: stop.lon,
+            routes: stop.routes
+          });
+        }
+      });
+      // Approved POIs
+      getPOIs().filter(p => p.status === 'approved').forEach(poi => {
+        if (poi.title.toLowerCase().includes(query) || (poi.desc && poi.desc.toLowerCase().includes(query))) {
+          results.push({
+            type: 'poi',
+            id: poi.id,
+            title: poi.title,
+            desc: poi.desc,
+            lat: poi.lat,
+            lon: poi.lon
+          });
+        }
+      });
+      return results;
+    }
+    // --- End Unified Search Logic ---
 
-      // Update stop popup logic to show both scheduled and live ETAs
-      function getStopPopupContent(stop, highlightedTimes, routeList) {
-        // Add a container for live ETAs that will be filled asynchronously
-        return `
-          <strong>${stop.name}</strong><br>
-          ${routeList}<br>
-          <div style="margin-top:10px;margin-bottom:2px;font-size:13px;color:#aaa;font-weight:bold;">Scheduled Times</div>
-          <div id="scheduledTimes-${stop.stop_id}">${highlightedTimes}</div>
-          <div style="margin-top:10px;margin-bottom:2px;font-size:13px;color:#aaa;font-weight:bold;">Live ETA</div>
-          <div id="liveETAs-${stop.stop_id}" style="min-height:24px;color:#aaa;">Checking real-time arrivals...</div>
-          <button id="suggestLandmarkBtn-${stop.stop_id}" style="margin-top:8px;background:linear-gradient(145deg, #23232a, #2c2c33);color:#E5E5E5;padding:8px 14px;border:1.5px solid #C0C0C0;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;transition:all 0.2s ease;">Suggest a Landmark/POI</button>
+    // Update search input handler to use unified search
+    searchBar.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const rawQuery = e.target.value;
+      const sanitizedQuery = sanitizeInput(rawQuery);
+      if (rawQuery !== sanitizedQuery) {
+        e.target.value = sanitizedQuery;
+      }
+      const query = sanitizedQuery.toLowerCase();
+      if (query.length < 1) {
+        searchResultsDiv.style.display = 'none';
+        return;
+      }
+      searchTimeout = setTimeout(() => {
+        const results = searchUnified(query);
+        displayResults(results);
+      }, 300);
+    });
+
+    // Update displayResults to handle all types
+    function displayResults(results) {
+      searchResultsDiv.innerHTML = '';
+      if (results.length === 0) {
+        searchResultsDiv.style.display = 'none';
+        return;
+      }
+      results.forEach(result => {
+        const resultDiv = document.createElement('div');
+        resultDiv.style.cssText = `
+          padding: 12px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+          cursor: pointer;
+          color: white;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
         `;
-      }
-
-      // Helper to attach the landmark button handler and fetch live ETAs after popup opens
-      function attachLandmarkBtnHandler(stop) {
-        setTimeout(() => {
-          const btn = document.getElementById(`suggestLandmarkBtn-${stop.stop_id}`);
-          if (btn) {
-            btn.onclick = () => showLandmarkModal(stop);
+        let icon = '';
+        if (result.type === 'route') icon = '🚌';
+        else if (result.type === 'stop') icon = '◆';
+        else if (result.type === 'poi') icon = '⭐';
+        if (result.type === 'route') {
+          resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.display_title}</div><div style="font-size: 12px; color: #888;">Route</div></div>`;
+        } else if (result.type === 'stop') {
+          resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.name}</div><div style="font-size: 12px; color: #888;">Stop</div></div>`;
+        } else if (result.type === 'poi') {
+          resultDiv.innerHTML = `<span>${icon}</span><div><div style="font-weight: bold;">${result.title}</div><div style="font-size: 12px; color: #888;">Landmark/POI</div></div>`;
+        }
+        resultDiv.addEventListener('click', () => {
+          if (directionToggleDiv) directionToggleDiv.remove();
+          if (result.type === 'route') {
+            const routeGroup = getUniqueRoutes().find(rg => rg.route_id === result.id);
+            if (routeGroup) {
+              let currentDirId = 0;
+              let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
+              showRouteWithStops(currentRoute);
+              const handleToggle = (newDirId) => {
+                currentDirId = newDirId;
+                currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
+                showRouteWithStops(currentRoute);
+                showDirectionToggle(routeGroup, currentDirId, handleToggle);
+              };
+              showDirectionToggle(routeGroup, currentDirId, handleToggle);
+            }
+          } else if (result.type === 'stop') {
+            map.setView([result.lat, result.lon], 16);
+            const highlightedTimes = getNextHighlightedTimes(result.routes[0]?.times || []);
+            showCustomPopup(getStopPopupContent(result, highlightedTimes, result.routes.map(r => r.route_title).join('<br>')), 'scheduled-times');
+          } else if (result.type === 'poi') {
+            map.setView([result.lat, result.lon], 17);
+            L.popup()
+              .setLatLng([result.lat, result.lon])
+              .setContent(`<strong>${result.title}</strong><br>${result.desc || ''}`)
+              .openOn(map);
           }
-          // Fetch and display live ETAs
-          const liveDiv = document.getElementById(`liveETAs-${stop.stop_id}`);
-          if (liveDiv) {
-            getLiveETAsHTML(stop.stop_id).then(html => { liveDiv.innerHTML = html; });
-          }
-        }, 0);
-      }
+          searchResultsDiv.style.display = 'none';
+          searchBar.value = '';
+        });
+        searchResultsDiv.appendChild(resultDiv);
+      });
+      searchResultsDiv.style.display = 'block';
+    }
 
-      // Update map click handler to use showCustomPopup for all cases
-      map.on('click', function(e) {
-        const { lat, lng } = e.latlng;
-        const stopsInRadius = allStops.filter(stop =>
-          haversine(lat, lng, stop.lat, stop.lon) <= 100
-        );
-        if (stopsInRadius.length === 0) {
-          showCustomPopup('No stops within 100 meters.', 'minimal-message');
-        } else if (stopsInRadius.length === 1) {
-          const stop = stopsInRadius[0];
-          const highlightedTimes = getNextHighlightedTimes(stop.routes[0]?.times || []);
+    // Icon menu interactivity
+    const toggle = document.getElementById('menuToggle');
+    const menu = document.getElementById('iconMenu');
+    const moreBtn = document.getElementById('moreBtn');
+    const settingsBar = document.getElementById('settingsBar');
+    const buttons = document.querySelectorAll('.icon-button');
+
+    toggle.addEventListener('click', () => {
+      const isOpen = menu.style.display === 'flex';
+      menu.style.display = isOpen ? 'none' : 'flex';
+    });
+
+    moreBtn.addEventListener('click', () => {
+      settingsBar.classList.toggle('active');
+    });
+
+    // Close settings bar when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!moreBtn.contains(e.target) && !settingsBar.contains(e.target)) {
+        settingsBar.classList.remove('active');
+      }
+    });
+
+    // Overlay button click handlers
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        if (button !== moreBtn) {
+          button.classList.toggle('active');
+        }
+      });
+    });
+
+    // Store the current route polyline and stop markers so we can remove them before drawing new ones
+    let currentRoutePolyline = null;
+    let currentSilverPolyline = null;
+    let currentStopMarkers = [];
+
+    // Helper to get current time in Portland (America/Los_Angeles)
+    function getPortlandTimeMins() {
+      const now = new Date();
+      const portlandTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      return portlandTime.getHours() * 60 + portlandTime.getMinutes();
+    }
+
+    // Helper to highlight next 3 arrivals and show all times
+    function getNextHighlightedTimes(timesArr, count = 3) {
+      if (!Array.isArray(timesArr) || timesArr.length === 0) return 'No scheduled times';
+      const nowMins = getPortlandTimeMins();
+      let highlighted = [];
+      let found = 0;
+      timesArr.forEach(timeStr => {
+        if (found >= count) return;
+        let cleanTime = timeStr.trim();
+        let match = cleanTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+        if (!match) {
+          highlighted.push(cleanTime);
+          found++;
+          return;
+        }
+        let hour = parseInt(match[1], 10);
+        let min = parseInt(match[2], 10);
+        let ampm = match[3];
+        if (ampm) {
+          if (ampm.toUpperCase() === 'PM' && hour !== 12) hour += 12;
+          if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
+        }
+        let schedMins = hour * 60 + min;
+        // Handle after-midnight wraparound
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (schedMins >= nowMins) {
+          highlighted.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          found++;
+        }
+      });
+      // If not enough future times, fill with earlier times
+      if (highlighted.length < count) {
+        timesArr.slice(0, count - highlighted.length).forEach(t => highlighted.push(t));
+      }
+      return highlighted.slice(0, count).join("<br>") || 'No scheduled times';
+    }
+
+    // Fetch live ETAs for a stop and return HTML for the next 3 arrivals
+    async function getLiveETAsHTML(stopId) {
+      const apiKey = '2C4447D4A42083BCD84DE3B8E';
+      try {
+        const res = await fetch(`https://developer.trimet.org/ws/v2/arrivals?locIDs=${stopId}&appID=${apiKey}&json=true`);
+        const data = await res.json();
+        const arrivals = (data.resultSet.arrival || []).filter(a => a.estimated || a.scheduled);
+        if (!arrivals.length) return '<div style="color:#aaa;">No real-time arrivals</div>';
+        // Sort by soonest
+        arrivals.sort((a, b) => (a.estimated || a.scheduled) - (b.estimated || b.scheduled));
+        const now = Date.now();
+        let html = '';
+        let shown = 0;
+        for (let arr of arrivals) {
+          if (shown >= 3) break;
+          let eta = arr.estimated || arr.scheduled;
+          let mins = Math.round((eta - now) / 60000);
+          let label = mins <= 0 ? 'Due' : mins + ' min';
+          let route = arr.shortSign ? ` <span style="color:#4dd0e1;">${arr.shortSign}</span>` : '';
+          html += `<div><span style="font-weight:bold;">${label}</span>${route}</div>`;
+          shown++;
+        }
+        return html;
+      } catch (e) {
+        return '<div style="color:#aaa;">Live ETA unavailable</div>';
+      }
+    }
+
+    // Update stop popup logic to show only scheduled times (next 3, highlight next)
+    function getStopPopupContent(stop, highlightedTimes, routeList) {
+      return `
+        <strong>${stop.name}</strong><br>
+        ${routeList}<br>
+        <div style="margin-top:10px;margin-bottom:2px;font-size:13px;color:#aaa;font-weight:bold;">Scheduled Times</div>
+        <div id="scheduledTimes-${stop.stop_id}">${highlightedTimes}</div>
+        <button id="suggestLandmarkBtn-${stop.stop_id}" style="margin-top:8px;background:linear-gradient(145deg, #23232a, #2c2c33);color:#E5E5E5;padding:8px 14px;border:1.5px solid #C0C0C0;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;transition:all 0.2s ease;">Suggest a Landmark/POI</button>
+      `;
+    }
+
+    // Helper to attach the landmark button handler and fetch live ETAs after popup opens
+    function attachLandmarkBtnHandler(stop) {
+      setTimeout(() => {
+        const btn = document.getElementById(`suggestLandmarkBtn-${stop.stop_id}`);
+        if (btn) {
+          btn.onclick = () => showLandmarkModal(stop);
+        }
+        // Fetch and display live ETAs
+        const liveDiv = document.getElementById(`liveETAs-${stop.stop_id}`);
+        if (liveDiv) {
+          getLiveETAsHTML(stop.stop_id).then(html => { liveDiv.innerHTML = html; });
+        }
+      }, 0);
+    }
+
+    // Update map click handler to use showCustomPopup for all cases
+    map.on('click', function(e) {
+      const { lat, lng } = e.latlng;
+      const stopsInRadius = allStops.filter(stop =>
+        haversine(lat, lng, stop.lat, stop.lon) <= 100
+      );
+      if (stopsInRadius.length === 0) {
+        showCustomPopup('No stops within 100 meters.', 'minimal-message');
+      } else if (stopsInRadius.length === 1) {
+        const stop = stopsInRadius[0];
+        const highlightedTimes = getNextHighlightedTimes(stop.routes[0]?.times || []);
+        const routeList = stop.routes.map(r =>
+          `<button class="popup-route-btn" data-stop-id="${stop.stop_id}" data-route-id="${r.route_id}" data-direction-id="${r.direction_id}">${r.route_title}</button>`
+        ).join('');
+        const popupHtml = getStopPopupContent(stop, highlightedTimes, routeList);
+        showCustomPopup(popupHtml);
+        attachLandmarkBtnHandler(stop);
+      } else {
+        let popupHtml = `<div class="popup-multistop-wrapper"><div style='font-size:14px;color:#aaa;margin-bottom:4px;'>Multiple stops found:</div>`;
+        stopsInRadius.forEach(stop => {
           const routeList = stop.routes.map(r =>
             `<button class="popup-route-btn" data-stop-id="${stop.stop_id}" data-route-id="${r.route_id}" data-direction-id="${r.direction_id}">${r.route_title}</button>`
           ).join('');
-          const popupHtml = getStopPopupContent(stop, highlightedTimes, routeList);
+          popupHtml += `
+            <div class="popup-stop-box">
+              <div class="popup-stop-title">${stop.name}</div>
+              ${routeList}
+            </div>
+          `;
+        });
+        popupHtml += '</div>';
+        showCustomPopup(popupHtml);
+      }
+    });
+
+    // Add delegated click handler for .popup-route-btn inside #customPopup (after showCustomPopup definition)
+    document.body.addEventListener('click', function(e) {
+      const popup = document.getElementById('customPopup');
+      if (!popup || !e.target.classList.contains('popup-route-btn')) return;
+      const stopId = e.target.getAttribute('data-stop-id');
+      const routeId = e.target.getAttribute('data-route-id');
+      const directionId = e.target.getAttribute('data-direction-id');
+      if (stopId && routeId && directionId) {
+        // Check if this button is inside a single stop popup
+        const isSingleStop = !!e.target.closest('.popup-singlestop-wrapper');
+        if (isSingleStop) {
+          // Close popup and show the route
+          popup.remove();
+          if (window.showRouteFromStop) {
+            window.showRouteFromStop(routeId, Number(directionId));
+          }
+          return;
+        }
+        // Otherwise, handle multi-stop popup as before
+        const stop = allStops.find(s => s.stop_id == stopId);
+        const routeGroup = getUniqueRoutes().find(rg => rg.route_id == routeId);
+        if (stop && routeGroup) {
+          const route = routeGroup.directions.find(r => r.direction_id == directionId) || routeGroup.directions[0];
+          // Build the single stop popup for this stop/route
+          const highlightedTimes = getNextHighlightedTimes(stop.routes.find(r => r.route_id == routeId && r.direction_id == Number(directionId))?.times || []);
+          const routeBtn = `<button class="popup-route-btn" data-stop-id="${stop.stop_id}" data-route-id="${route.route_id}" data-direction-id="${route.direction_id}">${route.route_title}</button>`;
+          const popupHtml = getStopPopupContent(stop, highlightedTimes, routeBtn);
           showCustomPopup(popupHtml);
           attachLandmarkBtnHandler(stop);
-        } else {
-          let popupHtml = `<div class="popup-multistop-wrapper"><div style='font-size:14px;color:#aaa;margin-bottom:4px;'>Multiple stops found:</div>`;
-          stopsInRadius.forEach(stop => {
-            const routeList = stop.routes.map(r =>
-              `<button class="popup-route-btn" data-stop-id="${stop.stop_id}" data-route-id="${r.route_id}" data-direction-id="${r.direction_id}">${r.route_title}</button>`
-            ).join('');
-            popupHtml += `
-              <div class="popup-stop-box">
-                <div class="popup-stop-title">${stop.name}</div>
-                ${routeList}
-              </div>
-            `;
-          });
-          popupHtml += '</div>';
-          showCustomPopup(popupHtml);
         }
-      });
-
-      // Add delegated click handler for .popup-route-btn inside #customPopup (after showCustomPopup definition)
-      document.body.addEventListener('click', function(e) {
-        const popup = document.getElementById('customPopup');
-        if (!popup || !e.target.classList.contains('popup-route-btn')) return;
-        const stopId = e.target.getAttribute('data-stop-id');
-        const routeId = e.target.getAttribute('data-route-id');
-        const directionId = e.target.getAttribute('data-direction-id');
-        if (stopId && routeId && directionId) {
-          // Check if this button is inside a single stop popup
-          const isSingleStop = !!e.target.closest('.popup-singlestop-wrapper');
-          if (isSingleStop) {
-            // Close popup and show the route
-            popup.remove();
-            if (window.showRouteFromStop) {
-              window.showRouteFromStop(routeId, Number(directionId));
-            }
-            return;
-          }
-          // Otherwise, handle multi-stop popup as before
-          const stop = allStops.find(s => s.stop_id == stopId);
-          const routeGroup = getUniqueRoutes().find(rg => rg.route_id == routeId);
-          if (stop && routeGroup) {
-            const route = routeGroup.directions.find(r => r.direction_id == directionId) || routeGroup.directions[0];
-            // Build the single stop popup for this stop/route
-            const highlightedTimes = getNextHighlightedTimes(stop.routes.find(r => r.route_id == routeId && r.direction_id == Number(directionId))?.times || []);
-            const routeBtn = `<button class="popup-route-btn" data-stop-id="${stop.stop_id}" data-route-id="${route.route_id}" data-direction-id="${route.direction_id}">${route.route_title}</button>`;
-            const popupHtml = getStopPopupContent(stop, highlightedTimes, routeBtn);
-            showCustomPopup(popupHtml);
-            attachLandmarkBtnHandler(stop);
-          }
-        }
-      });
-
-      // Add new function showCustomPopup after the existing popup logic
-      function showCustomPopup(contentHTML, className) {
-        // Remove any existing custom popup
-        const oldPopup = document.getElementById('customPopup');
-        if (oldPopup) oldPopup.remove();
-        
-        // Create new custom popup
-        const popup = document.createElement('div');
-        popup.id = 'customPopup';
-        if (className) popup.classList.add(className);
-        popup.innerHTML = `
-          <button class="popup-close-button">&times;</button>
-          <div class="popup-content">${contentHTML}</div>
-        `;
-        document.body.appendChild(popup);
-        
-        // Adjust top offset if direction toggle is open
-        const directionToggle = document.querySelector('.direction-toggle-bar');
-        if (directionToggle) {
-          const toggleHeight = directionToggle.offsetHeight;
-          popup.style.top = (toggleHeight + 20) + 'px';
-          popup.style.transform = 'translate(-50%, 0)';
-        }
-        
-        // Show popup
-        popup.style.display = 'block';
-        
-        // Close popup on close button click
-        popup.querySelector('.popup-close-button').onclick = function() {
-          popup.remove();
-        };
       }
+    });
+
+    // Add new function showCustomPopup after the existing popup logic
+    function showCustomPopup(contentHTML, className) {
+      // Remove any existing custom popup
+      const oldPopup = document.getElementById('customPopup');
+      if (oldPopup) oldPopup.remove();
+      
+      // Create new custom popup
+      const popup = document.createElement('div');
+      popup.id = 'customPopup';
+      if (className) popup.classList.add(className);
+      popup.innerHTML = `
+        <button class="popup-close-button">&times;</button>
+        <div class="popup-content">${contentHTML}</div>
+      `;
+      document.body.appendChild(popup);
+      
+      // Adjust top offset if direction toggle is open
+      const directionToggle = document.querySelector('.direction-toggle-bar');
+      if (directionToggle) {
+        const toggleHeight = directionToggle.offsetHeight;
+        popup.style.top = (toggleHeight + 20) + 'px';
+        popup.style.transform = 'translate(-50%, 0)';
+      }
+      
+      // Show popup
+      popup.style.display = 'block';
+      
+      // Close popup on close button click
+      popup.querySelector('.popup-close-button').onclick = function() {
+        popup.remove();
+      };
+    }
   </script>
 </body>
 </html>
