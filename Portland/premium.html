@@ -980,8 +980,8 @@
               }
             } else if (result.type === 'stop') {
               map.setView([result.lat, result.lon], 16);
-              const highlightedTimes = getHighlightedTimes(result.routes[0]?.times || []);
-              showCustomPopup(`<strong>${result.name}</strong><br>${highlightedTimes}`);
+              const highlightedTimes = getNextHighlightedTimes(result.routes[0]?.times || []);
+              showCustomPopup(getStopPopupContent(result, highlightedTimes, result.routes.map(r => r.route_title).join('<br>')), 'scheduled-times');
             } else if (result.type === 'poi') {
               map.setView([result.lat, result.lon], 17);
               L.popup()
@@ -1041,17 +1041,19 @@
         return portlandTime.getHours() * 60 + portlandTime.getMinutes();
       }
 
-      // Helper to highlight next arrival and show all times
-      function getHighlightedTimes(timesArr) {
+      // Helper to highlight next 3 arrivals and show all times
+      function getNextHighlightedTimes(timesArr, count = 3) {
         if (!Array.isArray(timesArr) || timesArr.length === 0) return 'No scheduled times';
         const nowMins = getPortlandTimeMins();
-        let highlightedTimes = [];
-        let foundNext = false;
+        let highlighted = [];
+        let found = 0;
         timesArr.forEach(timeStr => {
+          if (found >= count) return;
           let cleanTime = timeStr.trim();
           let match = cleanTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
           if (!match) {
-            highlightedTimes.push(cleanTime);
+            highlighted.push(cleanTime);
+            found++;
             return;
           }
           let hour = parseInt(match[1], 10);
@@ -1066,337 +1068,71 @@
           if (schedMins < nowMins && nowMins - schedMins > 720) {
             schedMins += 1440;
           }
-          if (!foundNext && schedMins >= nowMins) {
-            highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
-            foundNext = true;
-          } else {
-            highlightedTimes.push(cleanTime);
+          if (schedMins >= nowMins) {
+            highlighted.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+            found++;
           }
         });
-        return highlightedTimes.join("<br>") || 'No scheduled times';
+        // If not enough future times, fill with earlier times
+        if (highlighted.length < count) {
+          timesArr.slice(0, count - highlighted.length).forEach(t => highlighted.push(t));
+        }
+        return highlighted.slice(0, count).join("<br>") || 'No scheduled times';
       }
 
-      // TriMet API key for live bus locations
-      const apiKey = '2C4447D4A42083BCD84DE3B8E';
-      let busMarkers = {};
-      let busInterval = null;
-
-      async function fetchAndDisplayBuses(routeNumber, direction) {
+      // Fetch live ETAs for a stop and return HTML for the next 3 arrivals
+      async function getLiveETAsHTML(stopId) {
+        const apiKey = '2C4447D4A42083BCD84DE3B8E';
         try {
-          const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+          const res = await fetch(`https://developer.trimet.org/ws/v2/arrivals?locIDs=${stopId}&appID=${apiKey}&json=true`);
           const data = await res.json();
-          const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
-
-          // Remove old bus markers
-          Object.values(busMarkers).forEach(m => map.removeLayer(m));
-          busMarkers = {};
-          if (!buses.length) return;
-
-          buses.forEach(bus => {
-            if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-            const icon = L.divIcon({    
-               className: '',
-               html: `
-                <div style="text-align:center;">
-                  <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-                  <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-                </div>
-              `,
-              iconSize: [40, 30], iconAnchor: [20, 30]
-            });
-            const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-            busMarkers[bus.vehicleID] = marker;
-          });
-        } catch (err) {
-          console.error('Error fetching live bus data:', err);
-        }
-      }
-
-      function startLiveBuses(route, direction) {
-        // Clear any previous interval and markers
-        if (busInterval) clearInterval(busInterval);
-        Object.values(busMarkers).forEach(m => map.removeLayer(m));
-        busMarkers = {};
-        // Initial fetch
-        fetchAndDisplayBuses(route.route_id, direction);
-        // Set interval
-        busInterval = setInterval(() => fetchAndDisplayBuses(route.route_id, direction), 15000);
-      }
-
-      // Update showRouteWithStops to start live bus updates
-      function showRouteWithStops(route, focusStop) {
-        // Remove previous polyline and stop markers if they exist
-        if (currentRoutePolyline) {
-          map.removeLayer(currentRoutePolyline);
-          currentRoutePolyline = null;
-        }
-        if (currentSilverPolyline) {
-          map.removeLayer(currentSilverPolyline);
-          currentSilverPolyline = null;
-        }
-        currentStopMarkers.forEach(marker => map.removeLayer(marker));
-        currentStopMarkers = [];
-        // Remove bus markers and interval
-        if (busInterval) clearInterval(busInterval);
-        Object.values(busMarkers).forEach(m => map.removeLayer(m));
-        busMarkers = {};
-
-        // Draw the route polyline with double stroke effect
-        const routeShape = route.shape.map(([lat, lon]) => [lat, lon]);
-        // Silver bottom layer (thicker and more opaque)
-        currentSilverPolyline = L.polyline(routeShape, {
-          color: '#C0C0C0', // Silver
-          weight: 12,
-          opacity: 0.85,
-          lineCap: 'round',
-          lineJoin: 'round',
-          className: 'route-line-silver'
-        }).addTo(map);
-        // Deep, rich blue top layer
-        currentRoutePolyline = L.polyline(routeShape, {
-          color: '#0033A0', // Deep, rich blue
-          weight: 8,
-          opacity: 1.0,
-          lineCap: 'round',
-          lineJoin: 'round',
-          className: 'route-line-navy'
-        }).addTo(map);
-
-        // Add hover label for the route
-        currentRoutePolyline.bindTooltip(route.route_title, {sticky: true, direction: 'center', className: 'route-tooltip'});
-
-        // Draw stop markers as diamonds
-        currentStopMarkers = route.stops.map(stop => {
-          const marker = L.marker([stop.lat, stop.lon], {
-            icon: L.divIcon({
-              className: 'diamond-stop',
-              iconSize: [12, 12],
-              iconAnchor: [6, 6],
-              html: `<div class='diamond-shape'></div>`
-            }),
-            interactive: false
-          }).addTo(map);
-          marker.bindTooltip(stop.name, {permanent: false, direction: 'top'});
-          return marker;
-        });
-
-        // Fit map to route
-        // map.fitBounds(currentRoutePolyline.getBounds());
-
-        // If focusing a stop, center and open popup
-        if (focusStop) {
-          map.setView([focusStop.lat, focusStop.lon], 16);
-          const highlightedTimes = getHighlightedTimes(focusStop.times);
-          L.popup()
-            .setLatLng([focusStop.lat, focusStop.lon])
-            .setContent(`
-              <strong>${focusStop.name}</strong><br>
-              ${route.route_title}<br>
-              ${highlightedTimes}
-            `)
-            .openOn(map);
-        }
-
-        // Start live bus updates for this route and direction
-        startLiveBuses(route, route.direction_id);
-      }
-
-      // Restore showClosestRouteToUser so it is defined and calls showRouteWithStops
-      function showClosestRouteToUser() {
-        if (!navigator.geolocation) {
-          alert("Geolocation is not supported by your browser.");
-          return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          function(position) {
-            const userLat = position.coords.latitude;
-            const userLon = position.coords.longitude;
-
-            let closestRoute = null;
-            let closestDistance = Infinity;
-
-            for (const route of masterRoutes) {
-              for (const point of route.shape) {
-                const lat = point[0];
-                const lon = point[1];
-                const distance = Math.sqrt(
-                  Math.pow(lat - userLat, 2) + Math.pow(lon - userLon, 2)
-                );
-
-                if (distance < closestDistance) {
-                  closestDistance = distance;
-                  closestRoute = route;
-                }
-              }
-            }
-
-            if (closestRoute) {
-              showRouteWithStops(closestRoute);
-              console.log("Closest route ID:", closestRoute.route_id);
-            } else {
-              alert("No routes found.");
-            }
-          },
-          function(error) {
-            alert("Unable to retrieve your location.");
-            console.error(error);
+          const arrivals = (data.resultSet.arrival || []).filter(a => a.estimated || a.scheduled);
+          if (!arrivals.length) return '<div style="color:#aaa;">No real-time arrivals</div>';
+          // Sort by soonest
+          arrivals.sort((a, b) => (a.estimated || a.scheduled) - (b.estimated || b.scheduled));
+          const now = Date.now();
+          let html = '';
+          let shown = 0;
+          for (let arr of arrivals) {
+            if (shown >= 3) break;
+            let eta = arr.estimated || arr.scheduled;
+            let mins = Math.round((eta - now) / 60000);
+            let label = mins <= 0 ? 'Due' : mins + ' min';
+            let route = arr.shortSign ? ` <span style="color:#4dd0e1;">${arr.shortSign}</span>` : '';
+            html += `<div><span style="font-weight:bold;">${label}</span>${route}</div>`;
+            shown++;
           }
-        );
-      }
-
-      // Run closest route logic on page load
-      window.addEventListener('DOMContentLoaded', showClosestRouteToUser);
-
-      // Add direction toggle UI
-      let directionToggleDiv = null;
-      function showDirectionToggle(routeGroup, currentDirectionId, onChange) {
-        if (directionToggleDiv) directionToggleDiv.remove();
-        directionToggleDiv = document.createElement('div');
-        directionToggleDiv.className = 'direction-toggle-bar';
-        directionToggleDiv.innerHTML = '';
-        // Button group wrapper
-        const btnGroup = document.createElement('div');
-        btnGroup.className = 'direction-btn-group';
-        routeGroup.directions.forEach(dir => {
-          const btn = document.createElement('button');
-          btn.textContent = dir.route_title;
-          btn.className = 'direction-btn' + (dir.direction_id === currentDirectionId ? ' direction-selected' : '');
-          btn.onclick = () => onChange(dir.direction_id);
-          btnGroup.appendChild(btn);
-        });
-        directionToggleDiv.appendChild(btnGroup);
-        // Add close button
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'direction-close-btn';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.title = 'Close';
-        closeBtn.onclick = () => directionToggleDiv.remove();
-        directionToggleDiv.appendChild(closeBtn);
-        document.body.appendChild(directionToggleDiv);
-      }
-
-      // Remove direction toggle when starting a new search
-      searchBar.addEventListener('focus', () => {
-        if (directionToggleDiv) directionToggleDiv.remove();
-      });
-      searchBar.addEventListener('input', () => {
-        if (directionToggleDiv) directionToggleDiv.remove();
-      });
-
-      // Haversine formula for distance in meters
-      function haversine(lat1, lon1, lat2, lon2) {
-        const R = 6371000; // Earth radius in meters
-        const toRad = x => x * Math.PI / 180;
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-      }
-
-      // Build a flat, deduplicated array of all stops
-      function getAllStopsWithRoutes() {
-        const stopMap = {};
-        masterRoutes.forEach(route => {
-          route.stops.forEach(stop => {
-            if (!stopMap[stop.stop_id]) {
-              stopMap[stop.stop_id] = {
-                ...stop,
-                routes: []
-              };
-            }
-            stopMap[stop.stop_id].routes.push({
-              route_id: route.route_id,
-              route_title: route.route_title,
-              direction_id: route.direction_id
-            });
-          });
-        });
-        return Object.values(stopMap);
-      }
-      const allStops = getAllStopsWithRoutes();
-
-      // Helper to show a route and direction from a stop popup
-      function showRouteFromStop(route_id, direction_id) {
-        const routeGroup = getUniqueRoutes().find(rg => rg.route_id === route_id);
-        if (routeGroup) {
-          let currentDirId = direction_id;
-          let currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-          showRouteWithStops(currentRoute);
-          const handleToggle = (newDirId) => {
-            currentDirId = newDirId;
-            currentRoute = routeGroup.directions.find(r => r.direction_id === currentDirId) || routeGroup.directions[0];
-            showRouteWithStops(currentRoute);
-            showDirectionToggle(routeGroup, currentDirId, handleToggle);
-          };
-          showDirectionToggle(routeGroup, currentDirId, handleToggle);
+          return html;
+        } catch (e) {
+          return '<div style="color:#aaa;">Live ETA unavailable</div>';
         }
       }
 
-      // Modal for suggesting a landmark/POI
-      function showLandmarkModal(stop) {
-        // Remove any existing modal
-        const oldModal = document.getElementById('landmarkModal');
-        if (oldModal) oldModal.remove();
-        const modal = document.createElement('div');
-        modal.id = 'landmarkModal';
-        modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 2000; display: flex; align-items: center; justify-content: center;`;
-        modal.innerHTML = `
-          <div style="background: #fff; color: #222; border-radius: 12px; padding: 24px 32px; min-width: 320px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.3); position: relative;">
-            <button id="closeLandmarkModal" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:22px;cursor:pointer;">&times;</button>
-            <h3>Suggest a Landmark/POI for<br><span style='color:#0074D9'>${stop.name}</span></h3>
-            <form id="landmarkForm">
-              <label>Name/Title:<br><input type="text" name="title" required style="width:100%;margin-bottom:8px;"></label><br>
-              <label>Description:<br><textarea name="desc" rows="2" style="width:100%;margin-bottom:8px;"></textarea></label><br>
-              <label>Category:<br><input type="text" name="cat" placeholder="e.g. City Hall, Park, etc" style="width:100%;margin-bottom:8px;"></label><br>
-              <button type="submit" style="background:#0074D9;color:#fff;padding:8px 18px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Submit</button>
-            </form>
-            <div id="landmarkMsg" style="margin-top:10px;font-size:14px;"></div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-        document.getElementById('closeLandmarkModal').onclick = () => modal.remove();
-        document.getElementById('landmarkForm').onsubmit = (e) => {
-          e.preventDefault();
-          const form = e.target;
-          const data = {
-            id: 'poi-' + Date.now(),
-            stop_id: stop.stop_id,
-            stop_name: stop.name,
-            title: form.title.value.trim(),
-            desc: form.desc.value.trim(),
-            cat: form.cat.value.trim(),
-            lat: stop.lat,
-            lon: stop.lon,
-            status: 'pending',
-            submitted: new Date().toISOString()
-          };
-          addPOI(data);
-          document.getElementById('landmarkMsg').innerHTML = 'Thank you! Your suggestion will be reviewed.';
-          form.reset();
-          setTimeout(() => modal.remove(), 2000);
-        };
-      }
-
-      // Update stop popup logic to add the Suggest Landmark button
+      // Update stop popup logic to show both scheduled and live ETAs
       function getStopPopupContent(stop, highlightedTimes, routeList) {
+        // Add a container for live ETAs that will be filled asynchronously
         return `
           <strong>${stop.name}</strong><br>
           ${routeList}<br>
-          ${highlightedTimes}<br>
+          <div style="margin-top:10px;margin-bottom:2px;font-size:13px;color:#aaa;font-weight:bold;">Scheduled Times</div>
+          <div id="scheduledTimes-${stop.stop_id}">${highlightedTimes}</div>
+          <div style="margin-top:10px;margin-bottom:2px;font-size:13px;color:#aaa;font-weight:bold;">Live ETA</div>
+          <div id="liveETAs-${stop.stop_id}" style="min-height:24px;color:#aaa;">Checking real-time arrivals...</div>
           <button id="suggestLandmarkBtn-${stop.stop_id}" style="margin-top:8px;background:linear-gradient(145deg, #23232a, #2c2c33);color:#E5E5E5;padding:8px 14px;border:1.5px solid #C0C0C0;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;transition:all 0.2s ease;">Suggest a Landmark/POI</button>
         `;
       }
 
-      // Helper to attach the landmark button handler after popup opens
+      // Helper to attach the landmark button handler and fetch live ETAs after popup opens
       function attachLandmarkBtnHandler(stop) {
         setTimeout(() => {
           const btn = document.getElementById(`suggestLandmarkBtn-${stop.stop_id}`);
           if (btn) {
             btn.onclick = () => showLandmarkModal(stop);
+          }
+          // Fetch and display live ETAs
+          const liveDiv = document.getElementById(`liveETAs-${stop.stop_id}`);
+          if (liveDiv) {
+            getLiveETAsHTML(stop.stop_id).then(html => { liveDiv.innerHTML = html; });
           }
         }, 0);
       }
@@ -1411,20 +1147,11 @@
           showCustomPopup('No stops within 100 meters.', 'minimal-message');
         } else if (stopsInRadius.length === 1) {
           const stop = stopsInRadius[0];
-          const highlightedTimes = getHighlightedTimes(stop.routes[0]?.times || []);
+          const highlightedTimes = getNextHighlightedTimes(stop.routes[0]?.times || []);
           const routeList = stop.routes.map(r =>
             `<button class="popup-route-btn" data-stop-id="${stop.stop_id}" data-route-id="${r.route_id}" data-direction-id="${r.direction_id}">${r.route_title}</button>`
           ).join('');
-          const popupHtml = `
-            <div class="popup-singlestop-wrapper">
-              <div class="popup-stop-box">
-                <div class="popup-stop-title">${stop.name}</div>
-                ${routeList}
-              </div>
-              <div style="font-size:13px;color:#aaa;text-align:center;">${highlightedTimes}</div>
-              <button id="suggestLandmarkBtn-${stop.stop_id}" class="popup-route-btn" style="margin-top:8px;">Suggest a Landmark/POI</button>
-            </div>
-          `;
+          const popupHtml = getStopPopupContent(stop, highlightedTimes, routeList);
           showCustomPopup(popupHtml);
           attachLandmarkBtnHandler(stop);
         } else {
@@ -1469,18 +1196,9 @@
           if (stop && routeGroup) {
             const route = routeGroup.directions.find(r => r.direction_id == directionId) || routeGroup.directions[0];
             // Build the single stop popup for this stop/route
-            const highlightedTimes = getHighlightedTimes(stop.routes.find(r => r.route_id == routeId && r.direction_id == Number(directionId))?.times || []);
+            const highlightedTimes = getNextHighlightedTimes(stop.routes.find(r => r.route_id == routeId && r.direction_id == Number(directionId))?.times || []);
             const routeBtn = `<button class="popup-route-btn" data-stop-id="${stop.stop_id}" data-route-id="${route.route_id}" data-direction-id="${route.direction_id}">${route.route_title}</button>`;
-            const popupHtml = `
-              <div class="popup-singlestop-wrapper">
-                <div class="popup-stop-box">
-                  <div class="popup-stop-title">${stop.name}</div>
-                  ${routeBtn}
-                </div>
-                <div style="font-size:13px;color:#aaa;text-align:center;">${highlightedTimes}</div>
-                <button id="suggestLandmarkBtn-${stop.stop_id}" class="popup-route-btn" style="margin-top:8px;">Suggest a Landmark/POI</button>
-              </div>
-            `;
+            const popupHtml = getStopPopupContent(stop, highlightedTimes, routeBtn);
             showCustomPopup(popupHtml);
             attachLandmarkBtnHandler(stop);
           }
