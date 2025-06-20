@@ -1,190 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-EL337T4JX4');
-</script>
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetroFeed</title>
-  <meta name="description" content="MetroFeed shows you live bus and rail positions, accurate arrival times, and more! Real-time tracking — optimized for mobile — in Portland and more cities to come.">
-
-
-
-<link rel="icon" href="favicon.ico" type="image/x-icon">
-<link rel="apple-touch-icon" href="metrofeedsimplelogo.png">
-<link rel="icon" type="image/png" sizes="512x512" href="metrofeedsimplelogo.png">
-
+  <title>MetroFeed | Find Your City</title>
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: #000;
+      background-color: #000000;
+      color: #ccc;
+      text-align: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #cookieBanner {
+  position: fixed;
+  top: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 500px;
+  background-color: #111;
+  color: #ccc;
+  padding: 1rem;
+  z-index: 2000;
+  font-size: 0.9rem;
+  border: 2px solid #0071CE;
+  border-radius: 10px;
+  pointer-events: auto;
+  box-shadow: 0 0 10px #000;
+  text-align: center;
+}
+
+
+    #cookieBanner button {
+      background-color: #0071CE;
       color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 1rem;
     }
-    header {
+
+    #loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background-color: #000;
-      padding: 1rem;
-      text-align: center;
-      border-bottom: 4px solid #0071CE;
-    }
-    header img {
-      max-width: 200px;
-      height: auto;
-    }
-    main {
-      padding: 2rem;
-      text-align: center;
-    }
-    #citySearch {
-      margin: 1rem auto;
-      padding: 0.5rem;
-      width: 80%;
-      max-width: 400px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    .city-list {
       display: flex;
       flex-direction: column;
+      justify-content: center;
       align-items: center;
+      z-index: 1000;
     }
-    .city-link {
-      display: block;
-      margin: 1rem 0;
-      padding: 1.5rem 3rem;
-      font-size: 1.2rem;
-      font-weight: bold;
-      background-color: #FF5C00;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 12px;
-      box-shadow: 0 0 10px #0071CE;
-      transition: transform 0.2s ease-in-out;
+
+    #loader img {
+      max-width: 200px;
+      margin-bottom: 1.5rem;
+    }
+
+    .loading-bar {
       width: 200px;
+      height: 10px;
+      background-color: #222;
+      border: 1px solid #0071CE;
+      border-radius: 5px;
+      overflow: hidden;
     }
-    .city-link:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px #0071CE;
+
+    .loading-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #0071CE;
+      animation: fillBar 1.5s ease-out forwards;
     }
-    .disabled-link {
-      pointer-events: none;
-      opacity: 0.5;
-      cursor: not-allowed;
+
+    @keyframes fillBar {
+      to {
+        width: 100%;
+      }
     }
-    .fav-btn {
-      margin-left: 0.5rem;
-      cursor: pointer;
-      font-size: 1.2rem;
-      color: gold;
+
+    header img {
+      max-width: 220px;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
     }
-    .site-footer {
-      text-align: center;
-      margin-top: 2rem;
-      margin-bottom: 120px;
-      font-size: 0.8rem;
+
+    h1 {
       color: #0071CE;
+      margin-bottom: 1rem;
     }
+
+    .city-select {
+      margin-top: 1rem;
+    }
+
+    select, button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin: 0.5rem;
+      background-color: #1e1e1e;
+      color: #ccc;
+      border: 1px solid #0071CE;
+      border-radius: 8px;
+    }
+
+    .message {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    footer.site-footer {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(30,30,30,0.85);
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      color: #888;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+      white-space: nowrap;
+      z-index: 100;
+    }
+
     .site-footer a {
       color: #0071CE;
       text-decoration: none;
+      margin: 0 6px;
     }
+
     .site-footer a:hover {
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
+  <div id="cookieBanner">
+  <div style="font-weight: bold; font-size: 1.05rem; margin-bottom: 0.5rem;">Lawyer Stuff 🙄</div>  
+MetroFeed uses your location and third-party services for login and payment. We do not store your personal data. By continuing, you agree to our use of cookies and geolocation. Term and Conditions, Privacy and more avialable at the bottom of this page to view right now without having to accept this cookie.              
+    <div style="margin-top: 0.75rem;">
+  <button onclick="acceptCookies()">Accept & Continue</button>
+</div>
+
+  </div>
+
+  <div id="loader" style="display:none;">
+    <img src="MetroFeedMainLogo.png" alt="MetroFeed Logo">
+    <div class="loading-bar">
+      <div class="loading-bar-fill"></div>
+    </div>
+  </div>
+
   <header>
     <img src="MetroFeedMainLogo.png" alt="MetroFeed Logo" />
   </header>
 
-  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
-    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  <div id="status">Detecting your location...</div>
+
+  <div class="city-select" style="display:none;" id="manualSelect">
+    <label for="city">Choose your city:</label>
+    <select id="city">
+      <option value="portlandindex.html">Portland, OR</option>
+    </select>
+    <button onclick="manualRedirect()">Go</button>
   </div>
 
-  <main>
-    <h2>Choose Your City</h2>
-    <input type="text" id="citySearch" placeholder="Search cities..." />
-    <div class="city-list" id="cityList">
-      <a href="Portland/PortlandHome.html" class="city-link" data-city="Portland">Portland, OR <span class="fav-btn" data-city="Portland">⭐</span></a>
-      <a href="#" class="city-link disabled-link" data-city="Boston">🚧🏗️ Coming Soon</a>
-      <a href="#" class="city-link disabled-link" data-city="Chicago">👷🛠️ Coming Soon</a>
-      <a href="premiummock.html" class="city-link" data-city="Premium">👷🛠️ Premium</a>
-    </div>
-  </main>
+  <div class="message">Don’t see your city? We're expanding fast. Stay tuned!</div>
 
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a>
+    <a href="contact.html">Contact Us</a>
+    <a href="report.html">Report a Problem</a>
+    <a href="dmca.html">DMCA</a>
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
 
-<!-- Footer -->
-<footer class="site-footer">
-  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-  <a href="privacy.html">Privacy Policy</a>
-</footer>
-
-<!-- Cookie Banner -->
-<div id="cookie-banner" style="display:none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-  📢 We use cookies to improve functionality and analyze traffic.
-  By using MetroFeed, you agree to our 
-  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.<br>
-  <button onclick="acceptCookies()" style="margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
-</div>
-
-<!-- JavaScript Logic -->
-<script>
-  function acceptCookies() {
-    localStorage.setItem("cookieConsent", "true");
-    document.getElementById("cookie-banner").style.display = "none";
-  }
-
-  window.onload = function () {
-    // ✅ Cookie banner
-    if (!localStorage.getItem("cookieConsent")) {
-      const banner = document.getElementById("cookie-banner");
-      if (banner) banner.style.display = "block";
+  <script>
+    function acceptCookies() {
+      localStorage.setItem("cookieConsent", "true");
+      document.getElementById("cookieBanner").style.display = "none";
+      document.getElementById("loader").style.display = "flex";
+      initGeo();
     }
 
-    // ✅ Search functionality
-    const searchInput = document.getElementById("citySearch");
-    const cityLinks = document.querySelectorAll(".city-link");
+    function manualRedirect() {
+      const selected = document.getElementById("city").value;
+      window.location.href = selected;
+    }
 
-    if (searchInput && cityLinks.length) {
-      searchInput.addEventListener("input", () => {
-        const term = searchInput.value.toLowerCase();
-        cityLinks.forEach(link => {
-          const city = link.getAttribute("data-city").toLowerCase();
-          link.style.display = city.includes(term) ? "block" : "none";
+    function inPortlandBounds(lat, lon) {
+      return lat >= 45.3 && lat <= 45.9 && lon >= -123.1 && lon <= -122.3;
+    }
+
+    function showMainContent(message, showDropdown) {
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("status").innerText = message;
+      if (showDropdown) document.getElementById("manualSelect").style.display = "block";
+    }
+
+    function initGeo() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          if (inPortlandBounds(lat, lon)) {
+            window.location.href = "portlandindex.html";
+          } else {
+            showMainContent(" 😭 We don’t serve your location... yet 😎.", true);
+          }
+        }, err => {
+          showMainContent("Location blocked. Please choose a city manually.", true);
         });
-      });
+      } else {
+        showMainContent("Geolocation not supported.", true);
+      }
     }
 
-    // ✅ Favorite city
-    const favorite = localStorage.getItem("favoriteCity");
-    const cityList = document.getElementById("cityList");
-    if (favorite && cityList) {
-      const fav = Array.from(cityList.children).find(el => el.dataset.city === favorite);
-      if (fav) cityList.prepend(fav);
-    }
-
-    document.querySelectorAll(".fav-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const city = e.target.dataset.city;
-        localStorage.setItem("favoriteCity", city);
-        window.location.reload();
-      });
-    });
-  };
-</script>
+   
+  </script>
 </body>
 </html>
