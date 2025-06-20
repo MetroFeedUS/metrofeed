@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetroFeed Portland Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .search-bar {
+      position: absolute;
+      top: 10px;
+      left: 60px;
+      right: 60px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .search-bar .input-wrapper {
+      display: flex;
+      align-items: center;
+      background-color: #0d0d0d;
+      border: 1px solid #4dd0e1;
+      border-radius: 8px;
+      padding: 5px 10px;
+    }
+
+    .search-bar input {
+      background: transparent;
+      border: none;
+      color: #cccccc;
+      padding: 5px;
+      width: 100%;
+    }
+
+    .icon-placeholder {
+      width: 20px;
+      height: 20px;
+      margin-right: 6px;
+    }
+
+    .side-buttons {
+      position: absolute;
+      width: 45px;
+      height: 45px;
+      z-index: 1001;
+      background-color: #4dd0e1;
+      border: 2px solid #000;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    #menuBtn {
+      top: 10px;
+      left: 10px;
+    }
+
+    #themeToggleBtn {
+      top: 10px;
+      right: 10px;
+    }
+
+    #aiChatBtn {
+      top: 60px;
+      right: 10px;
+    }
+
+    .side-buttons img {
+      width: 20px;
+      height: 20px;
+    }
+
+    footer.site-footer {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(30,30,30,0.85);
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      color: #888;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+      white-space: nowrap;
+    }
+
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+      margin: 0 6px;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .search-bar {
+        left: 60px;
+        right: 60px;
+        gap: 8px;
+      }
+
+      .side-buttons {
+        width: 40px;
+        height: 40px;
+      }
+
+      .search-bar input {
+        font-size: 0.9rem;
+      }
+
+      .site-footer {
+        font-size: 0.7rem;
+        padding: 5px 8px;
+      }
+
+      .site-footer a {
+        margin: 0 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <button id="menuBtn" class="side-buttons"><a href="portlandhome.html"><img src="005-list.svg" /></a></button>
+  <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
+  <button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
+
+  <div class="search-bar">
+    <div class="input-wrapper">
+      <img class="icon-placeholder" src="002-location.svg" alt="Start" />
+      <input type="text" placeholder="Start or Current Location" />
+    </div>
+    <div class="input-wrapper">
+      <img class="icon-placeholder" src="racing-flag.svg" alt="Destination" />
+      <input type="text" placeholder="Destination" />
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a>
+    <a href="contact.html">Contact Us</a>
+    <a href="report.html">Report a Problem</a>
+    <a href="dmca.html">DMCA</a>
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Route logic placeholder -->
+  <script src="mastermap.js"></script>
+  <script>
+    const map = L.map('map').setView([45.52, -122.67], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // Closest route logic with live stop times and buses
+const apiKey = "2C4447D4A42083BCD84DE3B8E";
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    const userLat = pos.coords.latitude;
+    const userLon = pos.coords.longitude;
+
+    let closestRoute = null;
+    let closestDist = Infinity;
+
+    masterRoutes.forEach(route => {
+      route.shape.forEach(([lat, lon]) => {
+        const dist = Math.hypot(userLat - lat, userLon - lon);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestRoute = route;
+        }
+      });
+    });
+
+    if (closestRoute) {
+      const polyline = L.polyline(closestRoute.shape, { color: '#0071CE', weight: 4, opacity: 0.7 }).addTo(map);
+      map.fitBounds(polyline.getBounds());
+
+      const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+      closestRoute.stops.forEach(stop => {
+        let highlightedTimes = [];
+        let foundNext = false;
+        stop.times.forEach(timeStr => {
+          let cleanTime = timeStr.trim();
+          let [h, m] = cleanTime.split(":"), schedMins = parseInt(h) * 60 + parseInt(m);
+          if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+          if (!foundNext && schedMins >= nowMins) {
+            highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+            foundNext = true;
+          } else {
+            highlightedTimes.push(cleanTime);
+          }
+        });
+
+        L.circleMarker([stop.lat, stop.lon], {
+          radius: 6,
+          color: '#4dd0e1',
+          fillColor: '#4dd0e1',
+          fillOpacity: 0.9,
+          weight: 1
+        }).bindPopup(`<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+  <strong style='color:#4dd0e1;'>${stop.name}</strong>
+  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+  ${highlightedTimes.map(t => `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`).join('') || '<div>No scheduled times</div>'}
+</div>`).addTo(map);
+      });
+
+      let busMarkers = {};
+      async function fetchAndDisplay() {
+        const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
+        const data = await res.json();
+        const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == closestRoute.route_id && v.direction == closestRoute.direction_id);
+
+        Object.values(busMarkers).forEach(m => map.removeLayer(m));
+        busMarkers = {};
+        if (!buses.length) return;
+
+        buses.forEach(bus => {
+          if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+          const icon = L.divIcon({
+            className: '',
+            html: `<div style='text-align:center;'>
+                     <div style='background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${bus.vehicleID}</div>
+                     <div style='width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;'></div>
+                   </div>`,
+            iconSize: [40, 30],
+            iconAnchor: [20, 30]
+          });
+          const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+          busMarkers[bus.vehicleID] = marker;
+        });
+      }
+
+      fetchAndDisplay();
+      setInterval(fetchAndDisplay, 15000);
+    }
+  });
+}
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const userLat = pos.coords.latitude;
+        const userLon = pos.coords.longitude;
+
+        let closestRoute = null;
+        let closestDist = Infinity;
+
+        masterRoutes.forEach(route => {
+          route.shape.forEach(([lat, lon]) => {
+            const dist = Math.hypot(userLat - lat, userLon - lon);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestRoute = route;
+            }
+          });
+        });
+
+        if (closestRoute) {
+          const polyline = L.polyline(closestRoute.shape, { color: 'white' }).addTo(map);
+          map.fitBounds(polyline.getBounds());
+        }
+      });
+    }
+  </script>
+</body>
+</html>
