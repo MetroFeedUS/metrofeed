@@ -82,6 +82,11 @@
       left: 10px;
     }
 
+    #accountBtn {
+      top: 60px;
+      left: 10px;
+    }
+
     #themeToggleBtn {
       top: 10px;
       right: 10px;
@@ -151,7 +156,8 @@
 <body>
   <div id="map"></div>
 
-  <button id="menuBtn" class="side-buttons"><a href="portlandhome.html"><img src="005-list.svg" /></a></button>
+  <button id="menuBtn" class="side-buttons"><a href="portlandhome.html"><img src="005-list.svg" alt="Menu" /></a></button>
+  <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
   <button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
 
@@ -272,30 +278,6 @@ if (navigator.geolocation) {
     }
   });
 }
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const userLat = pos.coords.latitude;
-        const userLon = pos.coords.longitude;
-
-        let closestRoute = null;
-        let closestDist = Infinity;
-
-        masterRoutes.forEach(route => {
-          route.shape.forEach(([lat, lon]) => {
-            const dist = Math.hypot(userLat - lat, userLon - lon);
-            if (dist < closestDist) {
-              closestDist = dist;
-              closestRoute = route;
-            }
-          });
-        });
-
-        if (closestRoute) {
-          const polyline = L.polyline(closestRoute.shape, { color: 'white' }).addTo(map);
-          map.fitBounds(polyline.getBounds());
-        }
-      });
-    }
   </script>
 </body>
 </html>

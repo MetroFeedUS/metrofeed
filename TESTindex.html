@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetroFeed | Find Your City</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000000;
+      color: #ccc;
+      text-align: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #loader img {
+      max-width: 200px;
+      margin-bottom: 1.5rem;
+    }
+
+    .loading-bar {
+      width: 200px;
+      height: 10px;
+      background-color: #222;
+      border: 1px solid #0071CE;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .loading-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #0071CE;
+      animation: fillBar 1.5s ease-out forwards;
+    }
+
+    @keyframes fillBar {
+      to {
+        width: 100%;
+      }
+    }
+
+    header img {
+      max-width: 220px;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      color: #0071CE;
+      margin-bottom: 1rem;
+    }
+
+    .city-select {
+      margin-top: 1rem;
+    }
+
+    select, button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin: 0.5rem;
+      background-color: #1e1e1e;
+      color: #ccc;
+      border: 1px solid #0071CE;
+      border-radius: 8px;
+    }
+
+    .message {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    footer.site-footer {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(30,30,30,0.85);
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      color: #888;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+      white-space: nowrap;
+    }
+
+    .site-footer a {
+      color: #0071CE;
+      text-decoration: none;
+      margin: 0 6px;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="loader">
+    <img src="MetroFeedMainLogo.png" alt="MetroFeed Logo">
+    <div class="loading-bar">
+      <div class="loading-bar-fill"></div>
+    </div>
+  </div>
+
+  <header>
+    <img src="MetroFeedMainLogo.png" alt="MetroFeed Logo" />
+  </header>
+
+  <div id="status">Detecting your location...</div>
+
+  <div class="city-select" style="display:none;" id="manualSelect">
+    <label for="city">Choose your city:</label>
+    <select id="city">
+      <option value="portlandindex.html">Portland, OR</option>
+      <!-- Add more cities here -->
+    </select>
+    <button onclick="manualRedirect()">Go</button>
+  </div>
+
+  <div class="message">Don’t see your city? We're expanding fast. Stay tuned!</div>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a>
+    <a href="contact.html">Contact Us</a>
+    <a href="report.html">Report a Problem</a>
+    <a href="dmca.html">DMCA</a>
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <script>
+    function manualRedirect() {
+      const selected = document.getElementById("city").value;
+      window.location.href = selected;
+    }
+
+    function inPortlandBounds(lat, lon) {
+      return lat >= 45.3 && lat <= 45.9 && lon >= -123.1 && lon <= -122.3;
+    }
+
+    function showMainContent(message, showDropdown) {
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("status").innerText = message;
+      if (showDropdown) document.getElementById("manualSelect").style.display = "block";
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        if (inPortlandBounds(lat, lon)) {
+          window.location.href = "portlandindex.html";
+        } else {
+          showMainContent(" 😭 We don’t serve your location... yet 😎.", true);
+        }
+      }, err => {
+        showMainContent("Location blocked. Please choose a city manually.", true);
+      });
+    } else {
+      showMainContent("Geolocation not supported.", true);
+    }
+  </script>
+</body>
+</html>
