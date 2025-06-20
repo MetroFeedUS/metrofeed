@@ -1,0 +1,195 @@
+print("Script is running")
+
+from datetime import datetime, timedelta
+import pandas as pd
+import os
+import html
+from jinja2 import Template
+import pytz
+from collections import defaultdict
+
+# ========== CONFIG ==========
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+GTFS_BASE = os.path.join(BASE_DIR, "gtfs")
+TEMPLATE_FOLDER = os.path.join(BASE_DIR, "gtfdcitytemplates")
+
+# Auto-detect cities based on folder names in gtfs/
+CITIES = [name for name in os.listdir(GTFS_BASE) if os.path.isdir(os.path.join(GTFS_BASE, name))]
+
+# Timezone mapping
+CITY_TIMEZONES = {
+    "portland": "America/Los_Angeles",
+    "boston": "America/New_York",
+    "chicago": "America/Chicago"
+}
+
+for CITY in CITIES:
+    print(f"\nProcessing city: {CITY}")
+
+    BUS_OUTPUT_BASE = rf"G:\My Drive\METROFEED WEBSITE\{CITY}\pythonbusroutes"
+    RAIL_OUTPUT_BASE = rf"G:\My Drive\METROFEED WEBSITE\{CITY}\Rail routes"
+
+    city_timezone_str = CITY_TIMEZONES.get(CITY.lower(), "UTC")
+    city_tz = pytz.timezone(city_timezone_str)
+    now = datetime.now(city_tz)
+    today_str = now.strftime("%Y%m%d")
+    weekday_str = now.strftime("%A").lower()
+
+    GTFS_FOLDER = os.path.join(GTFS_BASE, CITY)
+    try:
+        routes_df = pd.read_csv(os.path.join(GTFS_FOLDER, "routes.txt"), dtype=str)
+        trips_df = pd.read_csv(os.path.join(GTFS_FOLDER, "trips.txt"), dtype=str)
+        stop_times_df = pd.read_csv(os.path.join(GTFS_FOLDER, "stop_times.txt"), dtype=str)
+        stops_df = pd.read_csv(os.path.join(GTFS_FOLDER, "stops.txt"), dtype=str)
+        shapes_df = pd.read_csv(os.path.join(GTFS_FOLDER, "shapes.txt"), dtype=str)
+        route_directions_df = pd.read_csv(os.path.join(GTFS_FOLDER, "route_directions.txt"), dtype=str)
+        calendar_df = pd.read_csv(os.path.join(GTFS_FOLDER, "calendar.txt"), dtype=str)
+        calendar_dates_df = pd.read_csv(os.path.join(GTFS_FOLDER, "calendar_dates.txt"), dtype=str)
+    except FileNotFoundError as e:
+        print(f"Missing GTFS file for {CITY}: {e}")
+        continue
+
+    shapes_df["shape_pt_sequence"] = shapes_df["shape_pt_sequence"].astype(int)
+
+    # ========== Filter Active service_ids ==========
+    active_services = set()
+    for _, row in calendar_df.iterrows():
+        if row[weekday_str] == '1' and row["start_date"] <= today_str <= row["end_date"]:
+            active_services.add(row["service_id"])
+    for _, row in calendar_dates_df.iterrows():
+        if row["date"] == today_str:
+            if row["exception_type"] == '1':
+                active_services.add(row["service_id"])
+            elif row["exception_type"] == '2' and row["service_id"] in active_services:
+                active_services.remove(row["service_id"])
+    trips_df = trips_df[trips_df["service_id"].isin(active_services)]
+
+    # ========== Load Template ==========
+    template_path = os.path.join(TEMPLATE_FOLDER, f"{CITY}.html")
+    if not os.path.exists(template_path):
+        template_path = os.path.join(TEMPLATE_FOLDER, "default.html")
+
+    with open(template_path, "r", encoding="utf-8") as f:
+        base_template = Template(f.read())
+
+    stop_times_by_trip = defaultdict(lambda: defaultdict(list))
+    for _, row in stop_times_df.iterrows():
+        stop_times_by_trip[row["trip_id"]][row["stop_id"]].append(row["arrival_time"])
+
+    # ========== Process Each Route + Direction ==========
+    for i, row in route_directions_df.iterrows():
+        route_id = row["route_id"]
+        direction_id = row["direction_id"]
+        direction_label = row["direction_name"]
+
+        print(f"{CITY.upper()} -> Route {route_id} - Dir {direction_id} ({direction_label}) [{i + 1}/{len(route_directions_df)}]")
+        print(f"Checking trips for Route {route_id}, Direction {direction_id}")
+
+        trips = trips_df[
+            (trips_df["route_id"] == route_id) &
+            (trips_df["direction_id"] == direction_id)
+        ]
+
+        if trips.empty:
+            print(f"No trips found for Route {route_id}, Direction {direction_id} — generating placeholder page")
+            continue
+
+        route_info = routes_df[routes_df["route_id"] == route_id].iloc[0]
+        route_type = int(route_info.get("route_type", 3))
+        short_name = route_info.get("route_short_name")
+        if pd.isna(short_name) or short_name.strip() == "":
+            short_name = route_id
+
+        direction_label = row.get("direction_name", "")
+        route_title = f"Route {short_name} - {direction_label}"
+
+        shape_counts = trips["shape_id"].value_counts()
+        shape_id = shape_counts.idxmax()
+
+        shape_points = shapes_df[shapes_df["shape_id"] == shape_id].sort_values("shape_pt_sequence")
+        shape_data = [
+            [float(pt["shape_pt_lat"]), float(pt["shape_pt_lon"])]
+            for _, pt in shape_points.iterrows()
+        ]
+        shape_js = "const shapeOutbound = [\n" + ",\n".join(
+            [f"  [{lat}, {lon}]" for lat, lon in shape_data]
+        ) + "\n];"
+
+        trip_ids = trips["trip_id"].tolist()
+        relevant_stop_times = stop_times_df[stop_times_df["trip_id"].isin(trip_ids)]
+        stop_ids = relevant_stop_times["stop_id"].unique()
+        filtered_stops = stops_df[stops_df["stop_id"].isin(stop_ids)]
+
+        stop_names_dict = {
+            row["stop_id"]: html.escape(
+                row["stop_name"].replace("\"", "\"").replace("'", "\'") or f"Stop {row['stop_id']}"
+            )
+            for _, row in filtered_stops.iterrows()
+        }
+        stopnames_js = "const stopNames = {\n" + ",\n".join(
+            [f'  "{k}": "{v}"' for k, v in stop_names_dict.items()]
+        ) + "\n};"
+
+        stops_data = []
+        for stop_id in stop_ids:
+            stop_info = stops_df[stops_df["stop_id"] == stop_id].iloc[0]
+            stop_name = html.escape(stop_info["stop_name"])
+            lat = float(stop_info["stop_lat"])
+            lon = float(stop_info["stop_lon"])
+
+            trip_arrivals = []
+            for trip_id in trip_ids:
+                times = stop_times_by_trip[trip_id][stop_id]
+                for t in times:
+                    try:
+                        h, m, s = map(int, t.split(":"))
+                        days_ahead = h // 24
+                        h = h % 24
+                        arr_dt = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+                            days=days_ahead, hours=h, minutes=m, seconds=s
+                        )
+                        if h < 24 and arr_dt < now:
+                            arr_dt += timedelta(days=1)
+                        trip_arrivals.append(arr_dt)
+                    except Exception:
+                        continue
+
+            trip_arrivals = sorted(set(trip_arrivals))
+            formatted = [arr_dt.strftime("%I:%M %p").lstrip("0") for arr_dt in trip_arrivals[:8]]
+
+            stops_data.append({
+                "stop_id": stop_id,
+                "name": stop_name,
+                "lat": lat,
+                "lon": lon,
+                "times": formatted
+            })
+
+        stops_js = "const stops = [\n"
+        for stop in stops_data:
+            times_str = ", ".join([f'"{t}"' for t in stop["times"]])
+            stops_js += f'  {{ stop_id: "{stop["stop_id"]}", name: "{stop["name"]}", lat: {stop["lat"]}, lon: {stop["lon"]}, times: [{times_str}] }},\n'
+        stops_js += "]"
+
+        combined_js = shape_js + "\n\n" + stopnames_js + "\n\n" + stops_js
+
+        output_html = base_template.render(
+            ROUTE_TITLE=route_title,
+            ROUTE_NUMBER=short_name,
+            DIRECTION_ID=int(direction_id),
+            SHAPE_DATA=combined_js
+        )
+
+        filename = f"route-{short_name}-dir{direction_id}.html"
+        if route_type in [0, 6, 2]:
+            output_path = os.path.join(RAIL_OUTPUT_BASE, filename)
+        else:
+            output_path = os.path.join(BUS_OUTPUT_BASE, filename)
+
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(output_html)
+
+        print(f"Saved: {filename}")
+
+print("\nAll route pages generated for all cities.")

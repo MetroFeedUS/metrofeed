@@ -106,34 +106,36 @@ body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d
 
   
   </main>
-<script>
-if (document.referrer === "" && performance.navigation.type === 0) {
-  window.location.href = "/index.html";
-}
 
-const favoriteCity = localStorage.getItem('favoriteCity');
-if (favoriteCity) {
-  console.log("Favorite city:", favoriteCity);
-  const header = document.querySelector("h1");
-  if (header) {
-    const tag = document.createElement("div");
-    tag.textContent = `⭐ Favorite City: ${favoriteCity}`;
-    tag.style.fontSize = "1rem";
-    tag.style.color = "#ffcc00";
-    tag.style.marginBottom = "1rem";
-    header.insertAdjacentElement("afterend", tag);
+  <script>
+    
+ if (document.referrer === "" && performance.navigation.type === 0) {
+    // No referrer + user opened directly = likely a bookmark
+    window.location.href = "/index.html";
   }
-}
 
-// === Route Rendering Engine ===
+ const favoriteCity = localStorage.getItem('favoriteCity');
+  if (favoriteCity) {
+    console.log("Favorite city:", favoriteCity);
 
-const routeList = document.getElementById('routeList');
-const searchInput = document.getElementById('routeSearch');
+    const header = document.querySelector("h1");
+    if (header) {
+      const tag = document.createElement("div");
+      tag.textContent = `⭐ Favorite City: ${favoriteCity}`;
+      tag.style.fontSize = "1rem";
+      tag.style.color = "#ffcc00";
+      tag.style.marginBottom = "1rem";
+      header.insertAdjacentElement("afterend", tag);
+    }
+  }
 
-// ⬇️ You'll paste your actual route data in here
-const allRoutes = {
-  trimet: [
-    { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
+
+    const routeList = document.getElementById('routeList');
+    const searchInput = document.getElementById('routeSearch');
+
+    const routes = [
+      // 🔥🔥🔥 PLACE YOUR FINAL ROUTES ARRAY HERE 🔥🔥🔥
+  { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
   { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
   { id: '4', label: '4 – Fessenden', dir0: 'To St Johns', dir1: 'To Portland City Center' },
   { id: '6', label: '6 – Martin Luther King Jr Blvd', dir0: 'To Jantzen Beach', dir1: 'To Portland City Center' },
@@ -213,77 +215,58 @@ const allRoutes = {
 { id: '291', label: '291 – Orange Bus', dir0: 'To Milwaukie', dir1: 'To Portland City Center' },
 { id: '292', label: '292 – Red Bus', dir0: 'To Portland International Airport', dir1: 'To Goose Hollow/SW Jefferson' },
 { id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
-  ],
-  ctran: [
-    { id: '4', label: '4 – Fourth Plain', dir0: 'To Vancouver Mall', dir1: 'To Downtown Vancouver' },
-    { id: '32', label: '32 – Evergreen', dir0: 'To East County', dir1: 'To Vancouver Transit Center' },
-    // ...
-  ]
-};
 
-let currentAgency = 'trimet'; // Default
-renderRoutes(currentAgency);
 
-// Create agency selector
-const selector = document.createElement('select');
-selector.id = 'agencySelect';
-selector.style.margin = '0 0 1rem';
-selector.innerHTML = `
-  <option value="trimet">TriMet</option>
-  <option value="ctran">C-Tran</option>
-`;
-document.querySelector('main').insertBefore(selector, document.querySelector('.search-bar'));
+    ];
 
-// Switch agency
-selector.addEventListener('change', () => {
-  currentAgency = selector.value;
-  renderRoutes(currentAgency);
-  searchInput.value = ''; // Reset search box
-});
-
-// Main render function
-function renderRoutes(agencyKey) {
-  routeList.innerHTML = '';
-  const routes = allRoutes[agencyKey] || [];
-
-  routes.forEach(route => {
-    const div = document.createElement('div');
-    div.className = 'route-entry';
-    div.innerHTML = `
-      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-        <div onclick="toggleDirections('${route.id}')">
-          <a>${route.label}</a>
+    routes.forEach(route => {
+      const div = document.createElement('div');
+      div.className = 'route-entry';
+      div.innerHTML = `
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+          <div onclick="toggleDirections('${route.id}')">
+            <a>${route.label}</a>
+          </div>
+          <div class="vote-buttons">
+            <button onclick="vote('${route.id}', 'up')">👍</button>
+            <button onclick="vote('${route.id}', 'down')">👎</button>
+          </div>
         </div>
-      </div>
-      <div id="directions-${route.id}" class="direction-buttons">
-        <a href="pythonbusroutes/${agencyKey}/route-${route.id}-dir0.html" class="direction-link">➡ ${route.dir0}</a><br>
-        <a href="pythonbusroutes/${agencyKey}/route-${route.id}-dir1.html" class="direction-link">⬅ ${route.dir1}</a>
-      </div>
-    `;
-    routeList.appendChild(div);
-  });
-}
 
-// Toggle directions
-function toggleDirections(id) {
-  const elem = document.getElementById(`directions-${id}`);
-  if (elem) {
-    elem.style.display = (elem.style.display === 'none') ? 'block' : 'none';
-  }
-}
+        <div id="directions-${route.id}" class="direction-buttons">
+          <a href="pythonbusroutes/route-${route.id}-dir0.html" class="direction-link">➡ ${route.dir0}</a><br>
+          <a href="pythonbusroutes/route-${route.id}-dir1.html" class="direction-link">⬅ ${route.dir1}</a>
+        </div>
+      `;
+      routeList.appendChild(div);
+    });
 
-// Live search within current agency
-searchInput.addEventListener('input', function () {
-  const filter = this.value.toLowerCase();
-  const entries = document.querySelectorAll('.route-entry');
-  entries.forEach(entry => {
-    entry.style.display = entry.textContent.toLowerCase().includes(filter) ? '' : 'none';
-  });
-});
-</script>
+    function toggleDirections(id) {
+      const elem = document.getElementById(`directions-${id}`);
+      if (elem) {
+        elem.style.display = (elem.style.display === 'none') ? 'block' : 'none';
+      }
+    }
 
-</script>
+    searchInput.addEventListener('input', function () {
+      const filter = this.value.toLowerCase();
+      const entries = document.querySelectorAll('.route-entry');
+      entries.forEach(entry => {
+        entry.style.display = entry.textContent.toLowerCase().includes(filter) ? '' : 'none';
+      });
+    });
 
+    function vote(routeId, type) {
+      const key = `vote_${routeId}`;
+      const current = localStorage.getItem(key);
+      if (!current || current !== type) {
+        localStorage.setItem(key, type);
+        alert(`You voted ${type === 'up' ? '👍' : '👎'} for route ${routeId}`);
+      } else {
+        alert('You already voted this way.');
+      }
+    }
+  </script>
 
   <footer class="site-footer">
   <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
