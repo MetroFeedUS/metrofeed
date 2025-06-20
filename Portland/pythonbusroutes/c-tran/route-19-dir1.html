@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 19 - Direction 1 | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      overflow-y: auto;
+    }
+
+    body {
+      padding-top: 120px;
+    }
+
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .ad-banner img {
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
+    #map {
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .button-bar a, .back-button {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.6rem 1.2rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="ad-banner">
+    <iframe src="https://metrofeedus.com/portland/Ads/route-19-dir1-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
+  </div>
+
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+    <button class="back-button" onclick="history.back()">Back</button>
+  </div>
+
+  <h1>Route 19 - Direction 1</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <script>
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 19;
+    const direction = parseInt(1);
+
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const shapeOutbound = [
+  [45.69025223389005, -122.66381309887603],
+  [45.689709, -122.66408900000002],
+  [45.689748, -122.66423300000001],
+  [45.689757, -122.664256],
+  [45.689768, -122.664276],
+  [45.68979, -122.66429799999999],
+  [45.689814, -122.664311],
+  [45.689841, -122.66431300000002],
+  [45.689867, -122.664305],
+  [45.690904, -122.663767],
+  [45.690917, -122.663756],
+  [45.690926, -122.663742],
+  [45.690934, -122.66372599999998],
+  [45.69094, -122.663709],
+  [45.690948, -122.663683],
+  [45.690953, -122.66365599999999],
+  [45.690955, -122.663632],
+  [45.690956, -122.663585],
+  [45.690959, -122.66353500000001],
+  [45.690966, -122.663485],
+  [45.690977, -122.66344500000001],
+  [45.691021, -122.663386],
+  [45.691046, -122.663338],
+  [45.691061, -122.66330399999998],
+  [45.691074, -122.66324500000002],
+  [45.691134, -122.66326599999998],
+  [45.691212, -122.66330399999998],
+  [45.691272, -122.66334199999999],
+  [45.691398, -122.663462],
+  [45.691525, -122.66359],
+  [45.691664, -122.663761],
+  [45.691686, -122.663787],
+  [45.69176, -122.663882],
+  [45.691839, -122.663985],
+  [45.69194, -122.66408900000002],
+  [45.692029, -122.66417400000002],
+  [45.692109, -122.66422600000001],
+  [45.692186, -122.664267],
+  [45.692265, -122.66431300000002],
+  [45.692376, -122.664322],
+  [45.693007, -122.664299],
+  [45.692998, -122.663738],
+  [45.693, -122.663422],
+  [45.693006, -122.66313],
+  [45.692993, -122.662834],
+  [45.693015, -122.661478],
+  [45.693014, -122.661438],
+  [45.693014, -122.661335],
+  [45.693015, -122.661236],
+  [45.693014, -122.661186],
+  [45.693012, -122.65988100000001],
+  [45.693015, -122.659382],
+  [45.693034, -122.658464],
+  [45.693038, -122.658125],
+  [45.693046, -122.65756],
+  [45.693054, -122.656653],
+  [45.693163, -122.656592],
+  [45.69379969363905, -122.65623898963442],
+  [45.69379969031252, -122.65623899147882],
+  [45.693962, -122.656149],
+  [45.694063, -122.65609199999999],
+  [45.694783, -122.655692],
+  [45.695105, -122.655515],
+  [45.695132, -122.655499],
+  [45.695243, -122.655438],
+  [45.695558, -122.65526300000002],
+  [45.695928, -122.655057],
+  [45.696058, -122.654985],
+  [45.696178, -122.65492],
+  [45.696555, -122.65470999999998],
+  [45.69657177259995, -122.65470074615173],
+  [45.69657176913856, -122.65470074806147],
+  [45.696671, -122.654646],
+  [45.696938, -122.654498],
+  [45.698288550239425, -122.65380125279667],
+  [45.69828854980841, -122.65380125301901],
+  [45.698479, -122.653703],
+  [45.699027, -122.653383],
+  [45.700292, -122.65269700000002],
+  [45.701123, -122.652227],
+  [45.701613, -122.65197500000001],
+  [45.70215338854513, -122.65168201825867],
+  [45.70215338351616, -122.6516820209852],
+  [45.702194, -122.65165999999999],
+  [45.702348, -122.651573],
+  [45.704108, -122.650587],
+  [45.705136, -122.650037],
+  [45.705506, -122.64983399999998],
+  [45.70608614577313, -122.64950945266472],
+  [45.706086140318575, -122.64950945571614],
+  [45.706339, -122.649368],
+  [45.70673, -122.649162],
+  [45.706991, -122.649054],
+  [45.707301, -122.648972],
+  [45.707526, -122.648937],
+  [45.707682, -122.648931],
+  [45.707878, -122.648947],
+  [45.708198, -122.648974],
+  [45.708529, -122.649084],
+  [45.708654, -122.649126],
+  [45.708663, -122.649129],
+  [45.709047, -122.649257],
+  [45.709079, -122.64926700000001],
+  [45.70918, -122.649301],
+  [45.709309, -122.64934399999999],
+  [45.709444, -122.649389],
+  [45.709601, -122.649441],
+  [45.70972027144052, -122.64947947465822],
+  [45.709720274609595, -122.64947947568051],
+  [45.70988, -122.649531],
+  [45.710089, -122.64960199999999],
+  [45.710222, -122.649651],
+  [45.71087, -122.64988999999998],
+  [45.711297, -122.650048],
+  [45.711394, -122.65008399999999],
+  [45.712791, -122.65063799999999],
+  [45.713408, -122.650872],
+  [45.713981, -122.65107799999998],
+  [45.714017, -122.65109199999999],
+  [45.714386, -122.65123499999999],
+  [45.714641, -122.65134799999998],
+  [45.714858, -122.651431],
+  [45.71495022339326, -122.65146694347634],
+  [45.714950228783266, -122.65146694557707],
+  [45.715053, -122.651507],
+  [45.715278, -122.651542],
+  [45.715493, -122.65156399999998],
+  [45.715786, -122.651548],
+  [45.716344, -122.65144000000001],
+  [45.716545, -122.651399],
+  [45.716952, -122.651345],
+  [45.717338, -122.65134],
+  [45.717714, -122.651316],
+  [45.71822, -122.651358],
+  [45.71898, -122.651345],
+  [45.719355, -122.65134],
+  [45.719363, -122.65134],
+  [45.719784, -122.65135200000002],
+  [45.720063, -122.651354],
+  [45.720179, -122.651354],
+  [45.720923, -122.651345],
+  [45.72187, -122.651356],
+  [45.72188, -122.65035400000001],
+  [45.721886, -122.649869],
+  [45.721884, -122.649756],
+  [45.72188269344703, -122.64942500658105],
+  [45.72188269344605, -122.64942500633123],
+  [45.721878, -122.648236],
+  [45.721878, -122.64814800000002],
+  [45.721877, -122.64787800000002],
+  [45.721879, -122.647732],
+  [45.721866, -122.64621],
+  [45.72186966965696, -122.64587655050406],
+  [45.72186966965697, -122.64587655050308],
+  [45.721881, -122.64484700000001],
+  [45.721893, -122.64269700000001],
+  [45.721894741683634, -122.64228857518867],
+  [45.72189474168363, -122.6422885751892],
+  [45.721897, -122.64175900000001],
+  [45.721899, -122.64106300000002],
+  [45.722514, -122.641057],
+  [45.722891, -122.64104800000001],
+  [45.723267, -122.64104700000001],
+  [45.724651, -122.641042],
+  [45.725479, -122.641025],
+  [45.725635, -122.64105100000002],
+  [45.726388, -122.64108100000001],
+  [45.727769, -122.64104],
+  [45.728737, -122.64104700000001],
+  [45.728801, -122.64105100000002],
+  [45.729023310533194, -122.64104502391042]
+];
+
+const stopNames = {
+  "4145": "Hwy 99 &amp; 129th St",
+  "3254": "Hwy 99 &amp; NE 104th St",
+  "3702": "NE 139th St at Legacy Hospital",
+  "3703": "NE 139th St at Vancouver Clinic",
+  "1342": "Hwy 99 10600 Block",
+  "4150": "Hwy 99 &amp; 117th St",
+  "4151": "Hwy 99 &amp; 122nd St",
+  "2212": "Hwy 99 &amp; 99th St",
+  "2213": "Hwy 99 11200 Block",
+  "9014": "99th Street Transit Center: Bay E",
+  "6122": "NE 29th Ave &amp; WSUV Trailhead",
+  "3701": "NE 139th St &amp; 29th Ave"
+};
+
+const stops = [
+  { stop_id: "9014", name: "99th Street Transit Center: Bay E", lat: 45.690276, lon: -122.663909, times: ["5:50 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:50 AM", "9:20 AM", "9:50 AM"] },
+  { stop_id: "2212", name: "Hwy 99 &amp; 99th St", lat: 45.693751, lon: -122.656059, times: ["5:52 AM", "6:52 AM", "7:22 AM", "7:52 AM", "8:22 AM", "8:52 AM", "9:22 AM", "9:53 AM"] },
+  { stop_id: "3254", name: "Hwy 99 &amp; NE 104th St", lat: 45.696539, lon: -122.654579, times: ["5:52 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:23 AM", "8:53 AM", "9:23 AM", "9:54 AM"] },
+  { stop_id: "1342", name: "Hwy 99 10600 Block", lat: 45.698253, lon: -122.65366, times: ["5:53 AM", "6:53 AM", "7:23 AM", "7:54 AM", "8:24 AM", "8:54 AM", "9:24 AM", "9:54 AM"] },
+  { stop_id: "2213", name: "Hwy 99 11200 Block", lat: 45.702119, lon: -122.651552, times: ["5:54 AM", "6:54 AM", "7:24 AM", "7:55 AM", "8:25 AM", "8:55 AM", "9:25 AM", "9:55 AM"] },
+  { stop_id: "4150", name: "Hwy 99 &amp; 117th St", lat: 45.706041, lon: -122.649344, times: ["5:54 AM", "6:55 AM", "7:25 AM", "7:56 AM", "8:26 AM", "8:56 AM", "9:26 AM", "9:57 AM"] },
+  { stop_id: "4151", name: "Hwy 99 &amp; 122nd St", lat: 45.709743, lon: -122.649335, times: ["5:55 AM", "6:56 AM", "7:26 AM", "7:57 AM", "8:27 AM", "8:57 AM", "9:27 AM", "9:58 AM"] },
+  { stop_id: "4145", name: "Hwy 99 &amp; 129th St", lat: 45.714981, lon: -122.651305, times: ["5:56 AM", "6:58 AM", "7:28 AM", "7:59 AM", "8:29 AM", "8:59 AM", "9:29 AM", "9:59 AM"] },
+  { stop_id: "3702", name: "NE 139th St at Legacy Hospital", lat: 45.72176, lon: -122.649426, times: ["5:58 AM", "7:00 AM", "7:30 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:31 AM", "10:02 AM"] },
+  { stop_id: "3703", name: "NE 139th St at Vancouver Clinic", lat: 45.721801, lon: -122.645875, times: ["5:59 AM", "7:01 AM", "7:31 AM", "8:02 AM", "8:32 AM", "9:02 AM", "9:32 AM", "10:03 AM"] },
+  { stop_id: "3701", name: "NE 139th St &amp; 29th Ave", lat: 45.721829, lon: -122.642288, times: ["5:59 AM", "7:01 AM", "7:31 AM", "8:02 AM", "8:32 AM", "9:02 AM", "9:32 AM", "10:03 AM"] },
+  { stop_id: "6122", name: "NE 29th Ave &amp; WSUV Trailhead", lat: 45.729022, lon: -122.640945, times: ["6:01 AM", "7:03 AM", "7:33 AM", "8:04 AM", "8:34 AM", "9:04 AM", "9:34 AM", "10:05 AM"] },
+]
+
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
+
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+    stops.forEach(stop => {
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
+      .addTo(map);
+    });
+
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+           html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
+      });
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
+  </script>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>

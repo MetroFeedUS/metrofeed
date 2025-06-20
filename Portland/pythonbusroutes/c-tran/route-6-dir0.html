@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 6 - Direction 0 | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      overflow-y: auto;
+    }
+
+    body {
+      padding-top: 120px;
+    }
+
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .ad-banner img {
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
+    #map {
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .button-bar a, .back-button {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.6rem 1.2rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="ad-banner">
+    <iframe src="https://metrofeedus.com/portland/Ads/route-6-dir0-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
+  </div>
+
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+    <button class="back-button" onclick="history.back()">Back</button>
+  </div>
+
+  <h1>Route 6 - Direction 0</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <script>
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 6;
+    const direction = parseInt(0);
+
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const shapeOutbound = [
+  [45.645600717727575, -122.69245182770482],
+  [45.646444, -122.692429],
+  [45.647766, -122.692327],
+  [45.64840239660157, -122.69227106195478],
+  [45.64840239613818, -122.69227106199551],
+  [45.648551, -122.69225800000001],
+  [45.649145, -122.69223500000001],
+  [45.650154, -122.692153],
+  [45.65013, -122.69193700000001],
+  [45.65012923514064, -122.69153468397604],
+  [45.65012923514058, -122.69153468394936],
+  [45.650129, -122.691411],
+  [45.650124, -122.69122899999999],
+  [45.65012, -122.69101],
+  [45.650115, -122.690629],
+  [45.650113, -122.689949],
+  [45.650108, -122.68958999999998],
+  [45.650106, -122.68929599999998],
+  [45.650102, -122.689127],
+  [45.650104, -122.68875599999998],
+  [45.650105, -122.688627],
+  [45.650101, -122.687896],
+  [45.650092, -122.68602699999998],
+  [45.650089, -122.685527],
+  [45.650088, -122.685212],
+  [45.650089, -122.684428],
+  [45.650086, -122.68411499999999],
+  [45.65008, -122.683456],
+  [45.650072, -122.68247599999998],
+  [45.65005902492905, -122.68127436426332],
+  [45.65005902492909, -122.68127436426673],
+  [45.650054, -122.680809],
+  [45.649972, -122.680807],
+  [45.649683, -122.680807],
+  [45.649344, -122.680818],
+  [45.648937, -122.68082499999998],
+  [45.648534, -122.680829],
+  [45.6482046290439, -122.68083317983447],
+  [45.648204629023894, -122.68083317983474],
+  [45.64814, -122.680834],
+  [45.647783, -122.68084],
+  [45.647445, -122.680845],
+  [45.647326, -122.680838],
+  [45.647065, -122.68085],
+  [45.646733, -122.680856],
+  [45.646651, -122.680856],
+  [45.646593, -122.680858],
+  [45.646252, -122.68086300000002],
+  [45.646157, -122.68086300000002],
+  [45.645966, -122.680867],
+  [45.64592, -122.680869],
+  [45.645787, -122.680869],
+  [45.645626, -122.680872],
+  [45.645522, -122.68087300000002],
+  [45.645166, -122.680885],
+  [45.644774, -122.680885],
+  [45.644378105537726, -122.68089476071162],
+  [45.64437810541767, -122.68089476071457],
+  [45.64376, -122.68091],
+  [45.6426099129294, -122.68093305707839],
+  [45.64260991289029, -122.6809330570792],
+  [45.642513, -122.68093500000002],
+  [45.64067799980785, -122.68097490901438],
+  [45.640677999762374, -122.68097490901533],
+  [45.64026, -122.68098399999998],
+  [45.640253, -122.679695],
+  [45.640242, -122.67934299999999],
+  [45.640248, -122.678306],
+  [45.640246, -122.67796699999998],
+  [45.640225, -122.67688699999998],
+  [45.640214, -122.67559599999998],
+  [45.640214, -122.67514799999998],
+  [45.640214, -122.675148],
+  [45.640214, -122.675015],
+  [45.640205, -122.673624],
+  [45.640199, -122.67223400000002],
+  [45.64019971469629, -122.671657240098],
+  [45.64019971469628, -122.67165724009787],
+  [45.6402, -122.671427],
+  [45.640188, -122.670347],
+  [45.64018, -122.66975],
+  [45.640175, -122.66922800000002],
+  [45.64016239828836, -122.66825586795883],
+  [45.64016239828838, -122.66825586796065],
+  [45.640161, -122.66814800000002],
+  [45.640149, -122.66704500000002],
+  [45.640146, -122.66685200000002],
+  [45.640141, -122.66633900000001],
+  [45.64014400977026, -122.66591247255752],
+  [45.64014400977027, -122.66591247255575],
+  [45.640148, -122.665347],
+  [45.640135, -122.66521600000002],
+  [45.640115, -122.66509200000002],
+  [45.640079, -122.66495600000002],
+  [45.639955, -122.664714],
+  [45.639866, -122.66457500000001],
+  [45.639793, -122.66448500000001],
+  [45.639537, -122.664197],
+  [45.639251, -122.66389900000001],
+  [45.639164, -122.663776],
+  [45.639087, -122.663633],
+  [45.639009, -122.66348100000002],
+  [45.638885, -122.66320100000002],
+  [45.638782, -122.66282600000001],
+  [45.638743, -122.66266800000001],
+  [45.638722, -122.66255000000001],
+  [45.638717, -122.662519],
+  [45.638676, -122.662228],
+  [45.638667, -122.66205300000001],
+  [45.638667, -122.66189200000001],
+  [45.638667, -122.66175600000001],
+  [45.638676, -122.66155],
+  [45.638696, -122.66137],
+  [45.638702, -122.66132600000002],
+  [45.638732, -122.661104],
+  [45.638802, -122.66085800000002],
+  [45.638868, -122.66066000000001],
+  [45.638956, -122.66044400000001],
+  [45.63935, -122.65946500000001],
+  [45.639434, -122.65925400000002],
+  [45.639765, -122.65835],
+  [45.639793, -122.658274],
+  [45.639817, -122.658203],
+  [45.639837, -122.658131],
+  [45.639856, -122.658058],
+  [45.639872, -122.657982],
+  [45.639884, -122.65790600000001],
+  [45.639894, -122.65782900000002],
+  [45.6399, -122.65775600000002],
+  [45.639906, -122.657674],
+  [45.639907, -122.657595],
+  [45.639906, -122.65751800000001],
+  [45.6399, -122.65744000000001],
+  [45.639893, -122.65736200000002],
+  [45.639883, -122.65728500000002],
+  [45.639871, -122.657209],
+  [45.639729, -122.65654100000002],
+  [45.639697, -122.656386],
+  [45.639494, -122.65542500000001],
+  [45.63938, -122.654904],
+  [45.639243, -122.654302],
+  [45.63915706383673, -122.65390884205303]
+];
+
+const stopNames = {
+  "3495": "Grand Blvd &amp; 1st St",
+  "680": "Fourth Plain &amp; Z St",
+  "2847": "W 39th St &amp; Kauffman",
+  "3308": "Grand Blvd 300 Block",
+  "3306": "Grand Blvd &amp; 6th St",
+  "3304": "Grand Blvd &amp; 9th St",
+  "3303": "Grand Blvd &amp; 13th St",
+  "3285": "Kauffman &amp; Fourth Plain",
+  "3284": "Kauffman &amp; 29th St",
+  "3283": "Kauffman 3100 Block",
+  "321": "Fourth Plain &amp; Saint Johns",
+  "6258": "W. Fourth Plain &amp; Main St",
+  "6255": "Columbia Shores Blvd &amp; Columbia Way",
+  "6055": "Kauffman &amp; 36th St",
+  "678": "Fourth Plain &amp; T St",
+  "679": "Fourth Plain &amp; Ft Vancouver Wy",
+  "675": "Fourth Plain &amp; D St",
+  "676": "Fourth Plain &amp; F St",
+  "6023": "Fruit Valley Rd &amp; La Frambois",
+  "6060": "Fourth Plain &amp; Daniels",
+  "6062": "Grand Blvd &amp; 20th St",
+  "6063": "Grand Blvd &amp; McLoughlin",
+  "6024": "Fruit Valley Rd &amp; 37th St",
+  "6025": "W 39th St &amp; Fruit Valley Rd"
+};
+
+const stops = [
+  { stop_id: "6023", name: "Fruit Valley Rd &amp; La Frambois", lat: 45.645599, lon: -122.692322, times: ["5:49 AM", "6:19 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:50 AM", "9:20 AM"] },
+  { stop_id: "6024", name: "Fruit Valley Rd &amp; 37th St", lat: 45.648399, lon: -122.692192, times: ["5:50 AM", "6:20 AM", "6:51 AM", "7:21 AM", "7:51 AM", "8:21 AM", "8:51 AM", "9:21 AM"] },
+  { stop_id: "6025", name: "W 39th St &amp; Fruit Valley Rd", lat: 45.650048, lon: -122.691535, times: ["5:50 AM", "6:20 AM", "6:51 AM", "7:21 AM", "7:51 AM", "8:21 AM", "8:51 AM", "9:21 AM"] },
+  { stop_id: "2847", name: "W 39th St &amp; Kauffman", lat: 45.649985, lon: -122.681276, times: ["5:52 AM", "6:22 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:23 AM", "8:53 AM", "9:23 AM"] },
+  { stop_id: "6055", name: "Kauffman &amp; 36th St", lat: 45.648205, lon: -122.680893, times: ["5:52 AM", "6:22 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:23 AM", "8:53 AM", "9:23 AM"] },
+  { stop_id: "3283", name: "Kauffman 3100 Block", lat: 45.644379, lon: -122.680969, times: ["5:53 AM", "6:23 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM", "9:24 AM"] },
+  { stop_id: "3284", name: "Kauffman &amp; 29th St", lat: 45.642611, lon: -122.681044, times: ["5:53 AM", "6:23 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM", "8:55 AM", "9:25 AM"] },
+  { stop_id: "3285", name: "Kauffman &amp; Fourth Plain", lat: 45.640679, lon: -122.681069, times: ["5:54 AM", "6:24 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM", "8:55 AM", "9:25 AM"] },
+  { stop_id: "6060", name: "Fourth Plain &amp; Daniels", lat: 45.640152, lon: -122.675148, times: ["5:55 AM", "6:25 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM", "8:56 AM", "9:26 AM"] },
+  { stop_id: "6258", name: "W. Fourth Plain &amp; Main St", lat: 45.640105, lon: -122.671657, times: ["5:55 AM", "6:25 AM", "6:57 AM", "7:27 AM", "7:57 AM", "8:27 AM", "8:57 AM", "9:27 AM"] },
+  { stop_id: "675", name: "Fourth Plain &amp; D St", lat: 45.640082, lon: -122.668258, times: ["5:56 AM", "6:26 AM", "6:58 AM", "7:28 AM", "7:58 AM", "8:28 AM", "8:58 AM", "9:28 AM"] },
+  { stop_id: "676", name: "Fourth Plain &amp; F St", lat: 45.640042, lon: -122.665911, times: ["5:56 AM", "6:26 AM", "6:58 AM", "7:28 AM", "7:58 AM", "8:28 AM", "8:58 AM", "9:28 AM"] },
+  { stop_id: "321", name: "Fourth Plain &amp; Saint Johns", lat: 45.639027, lon: -122.653967, times: ["5:59 AM", "6:29 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:31 AM"] },
+  { stop_id: "678", name: "Fourth Plain &amp; T St", lat: 45.638703, lon: -122.65133, times: ["5:59 AM", "6:29 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:31 AM"] },
+  { stop_id: "679", name: "Fourth Plain &amp; Ft Vancouver Wy", lat: 45.638378, lon: -122.647163, times: ["6:00 AM", "6:30 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM", "9:32 AM"] },
+  { stop_id: "680", name: "Fourth Plain &amp; Z St", lat: 45.638082, lon: -122.643683, times: ["6:01 AM", "6:31 AM", "7:03 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM", "9:33 AM"] },
+  { stop_id: "6062", name: "Grand Blvd &amp; 20th St", lat: 45.63631, lon: -122.641962, times: ["6:02 AM", "6:32 AM", "7:04 AM", "7:35 AM", "8:05 AM", "8:35 AM", "9:05 AM", "9:35 AM"] },
+  { stop_id: "6063", name: "Grand Blvd &amp; McLoughlin", lat: 45.632668, lon: -122.640892, times: ["6:02 AM", "6:32 AM", "7:04 AM", "7:35 AM", "8:05 AM", "8:35 AM", "9:05 AM", "9:35 AM"] },
+  { stop_id: "3303", name: "Grand Blvd &amp; 13th St", lat: 45.630199, lon: -122.640762, times: ["6:03 AM", "6:33 AM", "7:05 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM"] },
+  { stop_id: "3304", name: "Grand Blvd &amp; 9th St", lat: 45.627239, lon: -122.640732, times: ["6:04 AM", "6:34 AM", "7:06 AM", "7:37 AM", "8:07 AM", "8:37 AM", "9:07 AM", "9:37 AM"] },
+  { stop_id: "3306", name: "Grand Blvd &amp; 6th St", lat: 45.625019, lon: -122.640717, times: ["6:04 AM", "6:34 AM", "7:06 AM", "7:37 AM", "8:07 AM", "8:37 AM", "9:07 AM", "9:37 AM"] },
+  { stop_id: "3308", name: "Grand Blvd 300 Block", lat: 45.622177, lon: -122.643494, times: ["6:06 AM", "6:36 AM", "7:08 AM", "7:39 AM", "8:09 AM", "8:39 AM", "9:09 AM", "9:39 AM"] },
+  { stop_id: "3495", name: "Grand Blvd &amp; 1st St", lat: 45.620335, lon: -122.643501, times: ["6:06 AM", "6:36 AM", "7:08 AM", "7:39 AM", "8:09 AM", "8:39 AM", "9:09 AM", "9:39 AM"] },
+  { stop_id: "6255", name: "Columbia Shores Blvd &amp; Columbia Way", lat: 45.617056, lon: -122.651693, times: ["6:09 AM", "6:39 AM", "7:11 AM", "7:42 AM", "8:12 AM", "8:42 AM", "9:12 AM", "9:42 AM"] },
+]
+
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
+
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+    stops.forEach(stop => {
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
+      .addTo(map);
+    });
+
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+           html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
+      });
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
+  </script>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>

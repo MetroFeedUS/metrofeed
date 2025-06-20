@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 65 - Direction 0 | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      overflow-y: auto;
+    }
+
+    body {
+      padding-top: 120px;
+    }
+
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .ad-banner img {
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
+    #map {
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .button-bar a, .back-button {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.6rem 1.2rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="ad-banner">
+    <iframe src="https://metrofeedus.com/portland/Ads/route-65-dir0-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
+  </div>
+
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+    <button class="back-button" onclick="history.back()">Back</button>
+  </div>
+
+  <h1>Route 65 - Direction 0</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <script>
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 65;
+    const direction = parseInt(0);
+
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const shapeOutbound = [
+  [45.558821358209585, -122.56460449061068],
+  [45.559077, -122.56428700000001],
+  [45.558527, -122.563869],
+  [45.558395, -122.563876],
+  [45.558801, -122.562842],
+  [45.558997, -122.56228900000002],
+  [45.559096, -122.56201000000001],
+  [45.55977, -122.561381],
+  [45.559968, -122.56116],
+  [45.560096, -122.56106],
+  [45.560252, -122.560974],
+  [45.560484, -122.56091300000001],
+  [45.560833, -122.560881],
+  [45.561168, -122.560881],
+  [45.561466, -122.560852],
+  [45.561791, -122.5608],
+  [45.56196, -122.560754],
+  [45.562132, -122.560672],
+  [45.562302, -122.560566],
+  [45.562461, -122.56044],
+  [45.562631, -122.560282],
+  [45.56372, -122.559076],
+  [45.565767, -122.556436],
+  [45.566472, -122.555402],
+  [45.566788, -122.554943],
+  [45.566973, -122.55472],
+  [45.567105, -122.55454],
+  [45.568745, -122.552487],
+  [45.568817, -122.552389],
+  [45.570695, -122.54985000000002],
+  [45.57086, -122.549653],
+  [45.570897, -122.549613],
+  [45.57098, -122.54952300000001],
+  [45.571128, -122.549333],
+  [45.571985, -122.548308],
+  [45.572608, -122.54765],
+  [45.573471, -122.546805],
+  [45.574461, -122.546123],
+  [45.574568334050895, -122.54604961053914],
+  [45.574568334050895, -122.54604961053914],
+  [45.575144, -122.545656],
+  [45.575377, -122.54550400000001],
+  [45.575784, -122.54524],
+  [45.576488, -122.544882],
+  [45.57711, -122.544569],
+  [45.578054, -122.54416400000001],
+  [45.579017, -122.543878],
+  [45.579723, -122.543725],
+  [45.580553, -122.543593],
+  [45.581345, -122.54352100000001],
+  [45.581434, -122.543513],
+  [45.582805, -122.54356300000002],
+  [45.583455, -122.543637],
+  [45.58406, -122.54374800000001],
+  [45.584606, -122.54387600000001],
+  [45.584691, -122.543896],
+  [45.585557, -122.544153],
+  [45.586283, -122.544427],
+  [45.586779, -122.54465000000002],
+  [45.587363, -122.544947],
+  [45.588233, -122.545424],
+  [45.589278, -122.546057],
+  [45.590173, -122.54661600000001],
+  [45.590835, -122.547027],
+  [45.59275, -122.54815300000001],
+  [45.593329, -122.54846300000001],
+  [45.594033, -122.548782],
+  [45.595257, -122.549345],
+  [45.596498, -122.54985200000002],
+  [45.597553, -122.550192],
+  [45.598424, -122.550419],
+  [45.599318, -122.550627],
+  [45.600287, -122.550828],
+  [45.600344, -122.550841],
+  [45.600355, -122.55084200000002],
+  [45.60048880978127, -122.55086248363794],
+  [45.60048880978127, -122.55086248363794],
+  [45.601962, -122.551088],
+  [45.603214, -122.55117000000001],
+  [45.603695, -122.55121],
+  [45.603845, -122.551223],
+  [45.603964, -122.55123200000001],
+  [45.60398, -122.551233],
+  [45.604276, -122.551258],
+  [45.604532, -122.55127900000001],
+  [45.604964, -122.551301],
+  [45.60504, -122.551301],
+  [45.605148, -122.551276],
+  [45.60522, -122.55125],
+  [45.605295, -122.551201],
+  [45.605363, -122.55113800000001],
+  [45.605427, -122.551067],
+  [45.605508, -122.55093500000001],
+  [45.605544, -122.550832],
+  [45.605567, -122.550747],
+  [45.605588, -122.550651],
+  [45.605598, -122.550549],
+  [45.605605, -122.55049700000001],
+  [45.605607, -122.55043600000002],
+  [45.605596, -122.550319],
+  [45.605587, -122.550252],
+  [45.605571, -122.55018800000002],
+  [45.605539, -122.55009],
+  [45.6055, -122.549996],
+  [45.605437, -122.54988800000001],
+  [45.605369, -122.549789],
+  [45.605313, -122.549712],
+  [45.60525, -122.54963800000002],
+  [45.605168, -122.549554],
+  [45.604968, -122.54937500000001],
+  [45.604726, -122.54919800000002],
+  [45.604548, -122.54909100000002],
+  [45.604324, -122.548996],
+  [45.603454, -122.548655],
+  [45.603337, -122.54861],
+  [45.603225, -122.548574],
+  [45.603053, -122.548507],
+  [45.603035, -122.548498],
+  [45.602966, -122.548464],
+  [45.602864, -122.54840300000001],
+  [45.602774, -122.548343],
+  [45.602742, -122.548322],
+  [45.602646, -122.548212],
+  [45.602584, -122.548136],
+  [45.602505, -122.548016],
+  [45.602432, -122.54789000000001],
+  [45.602364, -122.547772],
+  [45.602277, -122.54755700000001],
+  [45.602208, -122.547336],
+  [45.602153, -122.547105],
+  [45.602115, -122.54682200000002],
+  [45.60207, -122.54625100000001],
+  [45.602046, -122.54568900000001],
+  [45.602010612533185, -122.5452984510481],
+  [45.602010612533185, -122.5452984510481],
+  [45.601991, -122.545082],
+  [45.60194, -122.544681],
+  [45.601777, -122.543736],
+  [45.601313, -122.541606],
+  [45.600866, -122.539604],
+  [45.600183, -122.536678],
+  [45.599265, -122.532841],
+  [45.598165, -122.528178],
+  [45.597888, -122.526974],
+  [45.597503, -122.52535800000001],
+  [45.597086, -122.523705],
+  [45.596289, -122.5208],
+  [45.595032, -122.51613800000001],
+  [45.59458436611423, -122.51456130738276],
+  [45.59458436611423, -122.51456130738276],
+  [45.594471, -122.514162],
+  [45.593776, -122.511552],
+  [45.593369, -122.510421],
+  [45.592578, -122.50789600000002],
+  [45.59247, -122.507538],
+  [45.592315, -122.50713200000001],
+  [45.591996, -122.506453],
+  [45.591342, -122.50511300000001],
+  [45.591217, -122.50478700000001],
+  [45.591158, -122.50451700000002],
+  [45.591137, -122.50420900000002],
+  [45.591147, -122.503804],
+  [45.591667, -122.503849],
+  [45.591726, -122.50384800000002],
+  [45.591786, -122.50384800000002],
+  [45.592182, -122.50387100000002],
+  [45.594216, -122.503867],
+  [45.594207, -122.50431100000002],
+  [45.594203, -122.504374],
+  [45.594194, -122.504419],
+  [45.59418, -122.504465],
+  [45.594163, -122.504503],
+  [45.594145, -122.50454800000001],
+  [45.594105, -122.50465000000001],
+  [45.594096, -122.50468100000002],
+  [45.59409, -122.504713],
+  [45.594089, -122.504747],
+  [45.594091, -122.50478000000001],
+  [45.594097, -122.50480600000002],
+  [45.594133, -122.504891],
+  [45.594273842428294, -122.50521283993189]
+];
+
+const stopNames = {
+  "101": "Parkrose/Sumner Transit Center",
+  "9002": "Fisher&#x27;s Landing Transit Center: Bay C"
+};
+
+const stops = [
+  { stop_id: "101", name: "Parkrose/Sumner Transit Center", lat: 45.558762, lon: -122.564507, times: ["5:01 AM", "5:31 AM", "5:56 AM", "6:11 AM", "6:26 AM", "6:41 AM", "6:56 AM", "7:11 AM"] },
+  { stop_id: "9002", name: "Fisher&#x27;s Landing Transit Center: Bay C", lat: 45.594342, lon: -122.505152, times: ["5:12 AM", "5:42 AM", "6:07 AM", "6:22 AM", "6:37 AM", "6:52 AM", "7:07 AM", "7:22 AM"] },
+]
+
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
+
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+    stops.forEach(stop => {
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
+      .addTo(map);
+    });
+
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+           html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
+      });
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
+  </script>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>
