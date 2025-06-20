@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 81 - To Gresham Central Transit Center (Trimet) | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      overflow-y: auto;
+    }
+
+    body {
+      padding-top: 120px;
+    }
+
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .ad-banner img {
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
+    #map {
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .button-bar a, .back-button {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.6rem 1.2rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="ad-banner">
+    <iframe src="https://metrofeedus.com/portland/Ads/route-81-dir1-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
+  </div>
+
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+    <button class="back-button" onclick="history.back()">Back</button>
+  </div>
+
+  <h1>Route 81 - To Gresham Central Transit Center (Trimet)</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <script>
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 81;
+    const direction = parseInt(1);
+
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const shapeOutbound = [
+  [45.555127, -122.39933],
+  [45.555127, -122.39615],
+  [45.55513, -122.393559],
+  [45.555106, -122.393309],
+  [45.555068, -122.393129],
+  [45.555014, -122.392955],
+  [45.554943, -122.392797],
+  [45.554858, -122.392649],
+  [45.554792, -122.39255],
+  [45.554711, -122.392438],
+  [45.554618, -122.392354],
+  [45.554495, -122.392274],
+  [45.554424, -122.392239],
+  [45.554289, -122.392191],
+  [45.554204, -122.39218],
+  [45.552797, -122.39218],
+  [45.552797, -122.390651],
+  [45.552801, -122.389396],
+  [45.552797, -122.389306],
+  [45.552791, -122.389239],
+  [45.55278, -122.389161],
+  [45.552759, -122.389077],
+  [45.552719, -122.388979],
+  [45.552678, -122.388902],
+  [45.552645, -122.388855],
+  [45.552597, -122.388801],
+  [45.552535, -122.388744],
+  [45.552485, -122.388712],
+  [45.552466, -122.3887],
+  [45.552393, -122.388677],
+  [45.552344, -122.388669],
+  [45.552232, -122.38866],
+  [45.551033, -122.388658],
+  [45.550939, -122.388666],
+  [45.550836, -122.388689],
+  [45.550822, -122.388693],
+  [45.55042, -122.388796],
+  [45.550292, -122.388831],
+  [45.550234, -122.388843],
+  [45.55016, -122.388856],
+  [45.5501, -122.388863],
+  [45.550025, -122.388869],
+  [45.549878, -122.388876],
+  [45.548976, -122.388875],
+  [45.548873, -122.388882],
+  [45.548784, -122.38891],
+  [45.548701, -122.388959],
+  [45.54864, -122.389008],
+  [45.548593, -122.389054],
+  [45.548519, -122.389151],
+  [45.54846, -122.389254],
+  [45.548423, -122.389346],
+  [45.548393, -122.38944],
+  [45.548367, -122.389581],
+  [45.548351, -122.389723],
+  [45.548334, -122.390101],
+  [45.54832, -122.390236],
+  [45.548289, -122.390386],
+  [45.548261, -122.390472],
+  [45.548234, -122.390541],
+  [45.548167, -122.390669],
+  [45.548076, -122.390799],
+  [45.548039, -122.390843],
+  [45.547998, -122.390883],
+  [45.547916, -122.390944],
+  [45.547861, -122.39097],
+  [45.547687, -122.391045],
+  [45.547145, -122.391252],
+  [45.547071, -122.39128],
+  [45.546798, -122.391384],
+  [45.546604, -122.391455],
+  [45.546555, -122.391473],
+  [45.546488, -122.391489],
+  [45.54643, -122.391498],
+  [45.546339, -122.391503],
+  [45.546249, -122.391501],
+  [45.546096, -122.391493],
+  [45.54599, -122.391517],
+  [45.545936, -122.391533],
+  [45.545901, -122.391554],
+  [45.545862, -122.391601],
+  [45.545833, -122.391658],
+  [45.545814, -122.391708],
+  [45.545786, -122.391823],
+  [45.545738, -122.391884],
+  [45.54551, -122.393869],
+  [45.54547, -122.394266],
+  [45.54543, -122.394728],
+  [45.54541, -122.395062],
+  [45.545396, -122.395355],
+  [45.545389, -122.395648],
+  [45.545385, -122.395899],
+  [45.54539, -122.396305],
+  [45.545394, -122.396522],
+  [45.545413, -122.397469],
+  [45.545441, -122.399162],
+  [45.545438, -122.399644],
+  [45.545426, -122.39977],
+  [45.545413, -122.399908],
+  [45.545391, -122.400058],
+  [45.545311, -122.400491],
+  [45.545299, -122.400566],
+  [45.545087, -122.400505],
+  [45.544155, -122.400399],
+  [45.544196, -122.400086],
+  [45.544247, -122.399686],
+  [45.544314, -122.399147],
+  [45.544332, -122.398967],
+  [45.544355, -122.398697],
+  [45.544386, -122.398215],
+  [45.544388, -122.398173],
+  [45.544404, -122.397861],
+  [45.544428, -122.397375],
+  [45.544495, -122.396188],
+  [45.544547, -122.395252],
+  [45.544557, -122.394769],
+  [45.544533, -122.39397],
+  [45.544528, -122.393811],
+  [45.544503, -122.393178],
+  [45.544477, -122.392588],
+  [45.544462, -122.392243],
+  [45.544441, -122.39183],
+  [45.544411, -122.39127],
+  [45.544373, -122.391187],
+  [45.544363, -122.391114],
+  [45.544346, -122.391041],
+  [45.54432, -122.390948],
+  [45.544271, -122.390855],
+  [45.54422, -122.3908],
+  [45.544173, -122.390758],
+  [45.544125, -122.390721],
+  [45.544037, -122.390679],
+  [45.54395, -122.390664],
+  [45.543813, -122.390545],
+  [45.543543, -122.390545],
+  [45.543257, -122.390542],
+  [45.54321, -122.39054],
+  [45.543138, -122.390537],
+  [45.541638, -122.390578],
+  [45.541061, -122.390584],
+  [45.540983, -122.390585],
+  [45.540874, -122.390587],
+  [45.540761, -122.390588],
+  [45.540678, -122.390662],
+  [45.540321, -122.390665],
+  [45.540226, -122.390669],
+  [45.540124, -122.390686],
+  [45.540028, -122.390707],
+  [45.539894, -122.390759],
+  [45.539796, -122.39081],
+  [45.539681, -122.390884],
+  [45.539595, -122.390952],
+  [45.539501, -122.39104],
+  [45.539425, -122.391123],
+  [45.539365, -122.391203],
+  [45.539292, -122.391309],
+  [45.538358, -122.392745],
+  [45.538066, -122.393194],
+  [45.537271, -122.394415],
+  [45.537063, -122.394752],
+  [45.536859, -122.395096],
+  [45.536696, -122.395382],
+  [45.536463, -122.395798],
+  [45.536436, -122.395846],
+  [45.536261, -122.396183],
+  [45.536096, -122.396511],
+  [45.535863, -122.397004],
+  [45.535761, -122.397212],
+  [45.5354, -122.397975],
+  [45.535233, -122.398324],
+  [45.535103, -122.398604],
+  [45.535016, -122.398731],
+  [45.534937, -122.398846],
+  [45.534863, -122.398927],
+  [45.534779, -122.399025],
+  [45.534655, -122.399136],
+  [45.534531, -122.399222],
+  [45.534436, -122.399273],
+  [45.534296, -122.39933],
+  [45.534187, -122.39936],
+  [45.534071, -122.399384],
+  [45.533867, -122.39939],
+  [45.533651, -122.399393],
+  [45.533566, -122.3993],
+  [45.533248, -122.3993],
+  [45.532053, -122.3993],
+  [45.531129, -122.399302],
+  [45.530112, -122.399306],
+  [45.529996, -122.399307],
+  [45.529917, -122.399305],
+  [45.529834, -122.399302],
+  [45.529128, -122.399301],
+  [45.529032, -122.399294],
+  [45.528957, -122.399279],
+  [45.528795, -122.399232],
+  [45.528644, -122.399172],
+  [45.528496, -122.39909],
+  [45.527778, -122.398655],
+  [45.527655, -122.398595],
+  [45.527579, -122.398566],
+  [45.527477, -122.398534],
+  [45.52738, -122.398512],
+  [45.527294, -122.398497],
+  [45.52718, -122.398492],
+  [45.526975, -122.398485],
+  [45.526371, -122.398487],
+  [45.526269, -122.398486],
+  [45.525837, -122.39848],
+  [45.524603, -122.398463],
+  [45.524349, -122.39846],
+  [45.524139, -122.398457],
+  [45.52351, -122.398447],
+  [45.522942, -122.398441],
+  [45.522834, -122.398438],
+  [45.522674, -122.398433],
+  [45.521617, -122.398438],
+  [45.521304, -122.398439],
+  [45.521099, -122.39844],
+  [45.520512, -122.398445],
+  [45.520224, -122.398448],
+  [45.520113, -122.398521],
+  [45.5199, -122.398522],
+  [45.51969, -122.398525],
+  [45.519465, -122.398527],
+  [45.51917, -122.398528],
+  [45.519092, -122.398528],
+  [45.518997, -122.398527],
+  [45.518936, -122.398527],
+  [45.518487, -122.39852],
+  [45.518357, -122.398518],
+  [45.517794, -122.398509],
+  [45.517439, -122.398502],
+  [45.517117, -122.398491],
+  [45.517048, -122.398423],
+  [45.516586, -122.398418],
+  [45.516399, -122.398421],
+  [45.516302, -122.398426],
+  [45.516217, -122.39843],
+  [45.51593, -122.39846],
+  [45.515925, -122.398461],
+  [45.51573, -122.398489],
+  [45.515543, -122.398526],
+  [45.515253, -122.398592],
+  [45.515115, -122.398629],
+  [45.514998, -122.398663],
+  [45.514856, -122.398709],
+  [45.514586, -122.398808],
+  [45.514468, -122.398854],
+  [45.514366, -122.398899],
+  [45.514187, -122.39898],
+  [45.514003, -122.39907],
+  [45.513888, -122.399127],
+  [45.513046, -122.399616],
+  [45.512958, -122.399657],
+  [45.512699, -122.399778],
+  [45.512696, -122.399779],
+  [45.512553, -122.399827],
+  [45.512388, -122.399879],
+  [45.512278, -122.399908],
+  [45.512124, -122.399942],
+  [45.512007, -122.399962],
+  [45.511892, -122.399976],
+  [45.511781, -122.399983],
+  [45.511606, -122.399987],
+  [45.510343, -122.399984],
+  [45.510205, -122.399984],
+  [45.509552, -122.399984],
+  [45.508858, -122.399982],
+  [45.508155, -122.399981],
+  [45.507906, -122.39998],
+  [45.507819, -122.39998],
+  [45.506892, -122.399978],
+  [45.506635, -122.399978],
+  [45.505916, -122.399976],
+  [45.50502, -122.399972],
+  [45.504901, -122.399972],
+  [45.504783, -122.399974],
+  [45.504666, -122.399977],
+  [45.503372, -122.399951],
+  [45.503157, -122.399946],
+  [45.502697, -122.399935],
+  [45.502461, -122.399927],
+  [45.501941, -122.399921],
+  [45.501446, -122.399931],
+  [45.501337, -122.399932],
+  [45.501227, -122.39993],
+  [45.501205, -122.399957],
+  [45.501184, -122.39997],
+  [45.501162, -122.399976],
+  [45.501142, -122.39998],
+  [45.501033, -122.399957],
+  [45.500935, -122.399933],
+  [45.500828, -122.399897],
+  [45.500676, -122.399833],
+  [45.500533, -122.399756],
+  [45.50043, -122.399691],
+  [45.500322, -122.399612],
+  [45.500233, -122.39954],
+  [45.500197, -122.3995],
+  [45.500168, -122.399459],
+  [45.500163, -122.399396],
+  [45.499893, -122.399155],
+  [45.499786, -122.399075],
+  [45.499685, -122.399006],
+  [45.499619, -122.398968],
+  [45.499508, -122.39891],
+  [45.499434, -122.398876],
+  [45.49935, -122.398848],
+  [45.499242, -122.398817],
+  [45.499118, -122.398795],
+  [45.499021, -122.398785],
+  [45.498901, -122.398782],
+  [45.498284, -122.398787],
+  [45.498232, -122.398788],
+  [45.497674, -122.398793],
+  [45.497585, -122.398793],
+  [45.497584, -122.39896],
+  [45.497584, -122.399375],
+  [45.497579, -122.399719],
+  [45.497579, -122.399734],
+  [45.49758, -122.399907],
+  [45.49759, -122.401225],
+  [45.497592, -122.401472],
+  [45.497593, -122.401745],
+  [45.497596, -122.402153],
+  [45.497599, -122.402682],
+  [45.497602, -122.403092],
+  [45.497609, -122.404315],
+  [45.497614, -122.40508],
+  [45.497619, -122.406029],
+  [45.497618, -122.406112],
+  [45.497616, -122.406206],
+  [45.497609, -122.406311],
+  [45.497598, -122.4064],
+  [45.497579, -122.406496],
+  [45.49757, -122.406542],
+  [45.497538, -122.406655],
+  [45.497508, -122.406734],
+  [45.49748, -122.406785],
+  [45.497417, -122.406866],
+  [45.497357, -122.406946],
+  [45.497044, -122.407383],
+  [45.496932, -122.407548],
+  [45.49682, -122.407723],
+  [45.496712, -122.407905],
+  [45.49659, -122.408133],
+  [45.496519, -122.408275],
+  [45.496432, -122.408278],
+  [45.496143, -122.408007],
+  [45.495996, -122.40787],
+  [45.49569, -122.407601],
+  [45.495642, -122.407469],
+  [45.495285, -122.407155],
+  [45.494951, -122.406853],
+  [45.494614, -122.406532],
+  [45.494458, -122.406482],
+  [45.494297, -122.406463],
+  [45.494215, -122.406404],
+  [45.494208, -122.406399],
+  [45.494152, -122.406369],
+  [45.494083, -122.406382],
+  [45.494048, -122.406405],
+  [45.494021, -122.406443],
+  [45.493984, -122.406543],
+  [45.493925, -122.40673],
+  [45.493998, -122.407152],
+  [45.494068, -122.407566],
+  [45.494087, -122.407681],
+  [45.49411, -122.407818],
+  [45.494174, -122.407902],
+  [45.494217, -122.408164],
+  [45.494183, -122.408255],
+  [45.494256, -122.408683],
+  [45.494293, -122.408901],
+  [45.494363, -122.409306],
+  [45.494456, -122.409858],
+  [45.494485, -122.41003],
+  [45.494558, -122.410142],
+  [45.494599, -122.410355],
+  [45.494631, -122.410485],
+  [45.494663, -122.410604],
+  [45.494722, -122.410774],
+  [45.494743, -122.410965],
+  [45.49481, -122.4111],
+  [45.494869, -122.41121],
+  [45.494937, -122.411313],
+  [45.495007, -122.411412],
+  [45.495163, -122.411585],
+  [45.495266, -122.411681],
+  [45.495361, -122.41175],
+  [45.495479, -122.411758],
+  [45.495596, -122.411822],
+  [45.495684, -122.411864],
+  [45.495797, -122.411995],
+  [45.496073, -122.412128],
+  [45.496328, -122.412251],
+  [45.496587, -122.412372],
+  [45.496692, -122.412355],
+  [45.496845, -122.41243],
+  [45.496948, -122.412485],
+  [45.497043, -122.412542],
+  [45.497144, -122.412613],
+  [45.497258, -122.412708],
+  [45.497328, -122.412776],
+  [45.497444, -122.412906],
+  [45.497522, -122.413006],
+  [45.497591, -122.413099],
+  [45.497729, -122.413352],
+  [45.497782, -122.413475],
+  [45.497828, -122.413594],
+  [45.497892, -122.413811],
+  [45.497899, -122.413835],
+  [45.497876, -122.413958],
+  [45.497906, -122.414101],
+  [45.497928, -122.414246],
+  [45.497943, -122.414379],
+  [45.497956, -122.414527],
+  [45.497964, -122.414683],
+  [45.497968, -122.41481],
+  [45.49798, -122.415997],
+  [45.497983, -122.41653],
+  [45.497993, -122.417747],
+  [45.497997, -122.418267],
+  [45.497997, -122.418286],
+  [45.497999, -122.418591],
+  [45.498005, -122.419203],
+  [45.498021, -122.420968],
+  [45.498021, -122.421069],
+  [45.49802, -122.421197],
+  [45.498026, -122.421779],
+  [45.498028, -122.421944],
+  [45.498036, -122.422681],
+  [45.498081, -122.422819],
+  [45.498089, -122.423593],
+  [45.498089, -122.423741],
+  [45.498097, -122.42427],
+  [45.498097, -122.424481],
+  [45.498098, -122.424678],
+  [45.498052, -122.424796],
+  [45.498057, -122.425336],
+  [45.49806, -122.425871],
+  [45.498058, -122.426111],
+  [45.498055, -122.42622],
+  [45.49805, -122.426423],
+  [45.498046, -122.426507],
+  [45.49804, -122.426644],
+  [45.498033, -122.426821],
+  [45.498019, -122.427085],
+  [45.497994, -122.427592],
+  [45.497989, -122.427722],
+  [45.498112, -122.427726],
+  [45.498403, -122.427729],
+  [45.498514, -122.42773],
+  [45.498866, -122.427734],
+  [45.498951, -122.42774],
+  [45.499057, -122.427761],
+  [45.499479, -122.42795],
+  [45.499557, -122.427985],
+  [45.499582, -122.427994],
+  [45.499638, -122.428],
+  [45.499709, -122.427998],
+  [45.500323, -122.42799],
+  [45.50067, -122.427991],
+  [45.500722, -122.427991],
+  [45.500912, -122.427991],
+  [45.500939, -122.427991],
+  [45.50101, -122.427989],
+  [45.501078, -122.427986],
+  [45.50183, -122.427985],
+  [45.502222, -122.427977],
+  [45.502391, -122.427975],
+  [45.502676, -122.427973],
+  [45.502696, -122.427972],
+  [45.502767, -122.42797],
+  [45.502806, -122.427969],
+  [45.502948, -122.427975],
+  [45.502919, -122.427821],
+  [45.502919, -122.427622],
+  [45.502878, -122.427598],
+  [45.502853, -122.427569],
+  [45.502787, -122.427223],
+  [45.502761, -122.427093]
+];
+
+const stopNames = {
+  "3093-trimet": "NE Kane &amp; Division",
+  "3099-trimet": "NE Kane &amp; 18th Ct",
+  "3104-trimet": "NE Kane &amp; 23rd",
+  "3106-trimet": "NE Kane &amp; 8th",
+  "4518-trimet": "E Powell &amp; SE Burnside",
+  "4521-trimet": "E Powell &amp; NE Cleveland",
+  "4528-trimet": "E Powell &amp; NE Hogan",
+  "4546-trimet": "E Powell &amp; SE Rene",
+  "4638-trimet": "E Powell &amp; SE 3rd",
+  "8199-trimet": "Gresham Central Transit Center",
+  "8461-trimet": "E Powell &amp; NE Liberty",
+  "8595-trimet": "SW 257th &amp; Hensley Rd",
+  "8597-trimet": "SW 257th &amp; 28th",
+  "9101-trimet": "SW 257th &amp; Sturges Dr",
+  "9103-trimet": "SW 257th &amp; Cherry Park",
+  "9261-trimet": "NW Graham/257th &amp; W Columbia River Hwy",
+  "9428-trimet": "SW 257th &amp; Jennings Way",
+  "9471-trimet": "NW Graham/257th &amp; 257th Way",
+  "9472-trimet": "900 Block NW North Frontage Rd",
+  "9481-trimet": "1100 Block NW Frontage Rd",
+  "10171-trimet": "400 Block SW 257th",
+  "10646-trimet": "SW 257th &amp; 24th",
+  "10654-trimet": "NE Hood &amp; 5th",
+  "10657-trimet": "NE Hood &amp; 2nd",
+  "10857-trimet": "Gresham Central Transit Center",
+  "10858-trimet": "Gresham Central Transit Center ",
+  "10878-trimet": "NE Kane &amp; 29th (MHCC)",
+  "12952-trimet": "NE Kane &amp; 15th",
+  "13031-trimet": "NE Kane &amp; SE Stark",
+  "13473-trimet": "E Powell &amp; NE Elliott",
+  "13973-trimet": "SE 1st &amp; 3rd",
+  "13975-trimet": "1200 Block NW Swigert Way",
+  "13976-trimet": "1500 Block NE Graham Rd",
+  "13977-trimet": "900 Block NE Graham Rd",
+  "14165-trimet": "SE 1st &amp; Kane",
+  "14468-trimet": "NW Frontage Rd &amp; Phoenix Dr"
+};
+
+const stops = [
+  { stop_id: "13975-trimet", name: "1200 Block NW Swigert Way", lat: 45.55503, lon: -122.39933, times: ["5:05 AM", "5:10 AM", "5:45 AM", "6:15 AM", "6:45 AM", "7:20 AM", "7:55 AM", "8:30 AM"] },
+  { stop_id: "13976-trimet", name: "1500 Block NE Graham Rd", lat: 45.55085, lon: -122.388776, times: ["5:06 AM", "5:11 AM", "5:46 AM", "6:16 AM", "6:47 AM", "7:22 AM", "7:57 AM", "8:32 AM"] },
+  { stop_id: "13977-trimet", name: "900 Block NE Graham Rd", lat: 45.547082, lon: -122.391339, times: ["5:07 AM", "5:12 AM", "5:47 AM", "6:17 AM", "6:47 AM", "7:22 AM", "7:57 AM", "8:32 AM"] },
+  { stop_id: "9472-trimet", name: "900 Block NW North Frontage Rd", lat: 45.545493, lon: -122.396518, times: ["5:08 AM", "5:13 AM", "5:48 AM", "6:18 AM", "6:48 AM", "7:23 AM", "7:58 AM", "8:33 AM"] },
+  { stop_id: "9481-trimet", name: "1100 Block NW Frontage Rd", lat: 45.544285, lon: -122.398192, times: ["5:09 AM", "5:14 AM", "5:49 AM", "6:19 AM", "6:49 AM", "7:24 AM", "7:59 AM", "8:34 AM"] },
+  { stop_id: "14468-trimet", name: "NW Frontage Rd &amp; Phoenix Dr", lat: 45.544418, lon: -122.393973, times: ["5:09 AM", "5:14 AM", "5:49 AM", "6:19 AM", "6:50 AM", "7:25 AM", "8:00 AM", "8:35 AM"] },
+  { stop_id: "9471-trimet", name: "NW Graham/257th &amp; 257th Way", lat: 45.543218, lon: -122.390753, times: ["5:10 AM", "5:15 AM", "5:50 AM", "6:20 AM", "6:51 AM", "7:26 AM", "8:01 AM", "8:36 AM"] },
+  { stop_id: "9261-trimet", name: "NW Graham/257th &amp; W Columbia River Hwy", lat: 45.540984, lon: -122.390738, times: ["5:10 AM", "5:15 AM", "5:50 AM", "6:20 AM", "6:51 AM", "7:26 AM", "8:01 AM", "8:36 AM"] },
+  { stop_id: "10171-trimet", name: "400 Block SW 257th", lat: 45.538396, lon: -122.392799, times: ["5:11 AM", "5:16 AM", "5:51 AM", "6:21 AM", "6:52 AM", "7:27 AM", "8:02 AM", "8:37 AM"] },
+  { stop_id: "9428-trimet", name: "SW 257th &amp; Jennings Way", lat: 45.536511, lon: -122.395852, times: ["5:11 AM", "5:16 AM", "5:51 AM", "6:21 AM", "6:52 AM", "7:27 AM", "8:02 AM", "8:37 AM"] },
+  { stop_id: "9101-trimet", name: "SW 257th &amp; Sturges Dr", lat: 45.53325, lon: -122.399439, times: ["5:12 AM", "5:17 AM", "5:52 AM", "6:22 AM", "6:53 AM", "7:28 AM", "8:03 AM", "8:38 AM"] },
+  { stop_id: "9103-trimet", name: "SW 257th &amp; Cherry Park", lat: 45.530111, lon: -122.399467, times: ["5:13 AM", "5:18 AM", "5:53 AM", "6:23 AM", "6:54 AM", "7:29 AM", "8:04 AM", "8:39 AM"] },
+  { stop_id: "8595-trimet", name: "SW 257th &amp; Hensley Rd", lat: 45.525833, lon: -122.398634, times: ["5:14 AM", "5:19 AM", "5:54 AM", "6:24 AM", "6:55 AM", "7:30 AM", "8:05 AM", "8:40 AM"] },
+  { stop_id: "10646-trimet", name: "SW 257th &amp; 24th", lat: 45.524137, lon: -122.398608, times: ["5:14 AM", "5:19 AM", "5:54 AM", "6:24 AM", "6:55 AM", "7:30 AM", "8:05 AM", "8:40 AM"] },
+  { stop_id: "8597-trimet", name: "SW 257th &amp; 28th", lat: 45.521302, lon: -122.398589, times: ["5:15 AM", "5:20 AM", "5:55 AM", "6:25 AM", "6:56 AM", "7:31 AM", "8:06 AM", "8:41 AM"] },
+  { stop_id: "13031-trimet", name: "NE Kane &amp; SE Stark", lat: 45.518484, lon: -122.398609, times: ["5:15 AM", "5:20 AM", "5:55 AM", "6:25 AM", "6:57 AM", "7:32 AM", "8:07 AM", "8:42 AM"] },
+  { stop_id: "10878-trimet", name: "NE Kane &amp; 29th (MHCC)", lat: 45.515938, lon: -122.398608, times: ["5:16 AM", "5:21 AM", "5:56 AM", "6:26 AM", "6:57 AM", "7:32 AM", "8:07 AM", "8:42 AM"] },
+  { stop_id: "3104-trimet", name: "NE Kane &amp; 23rd", lat: 45.512733, lon: -122.399916, times: ["5:17 AM", "5:22 AM", "5:57 AM", "6:27 AM", "6:58 AM", "7:33 AM", "8:08 AM", "8:43 AM"] },
+  { stop_id: "3099-trimet", name: "NE Kane &amp; 18th Ct", lat: 45.51034, lon: -122.400119, times: ["5:17 AM", "5:22 AM", "5:57 AM", "6:27 AM", "6:59 AM", "7:34 AM", "8:09 AM", "8:44 AM"] },
+  { stop_id: "12952-trimet", name: "NE Kane &amp; 15th", lat: 45.507906, lon: -122.400104, times: ["5:18 AM", "5:23 AM", "5:58 AM", "6:28 AM", "6:59 AM", "7:34 AM", "8:09 AM", "8:44 AM"] },
+  { stop_id: "3093-trimet", name: "NE Kane &amp; Division", lat: 45.50502, lon: -122.400109, times: ["5:19 AM", "5:23 AM", "5:59 AM", "6:29 AM", "7:00 AM", "7:35 AM", "8:10 AM", "8:45 AM"] },
+  { stop_id: "3106-trimet", name: "NE Kane &amp; 8th", lat: 45.503155, lon: -122.400083, times: ["5:19 AM", "5:24 AM", "5:59 AM", "6:29 AM", "7:01 AM", "7:36 AM", "8:11 AM", "8:46 AM"] },
+  { stop_id: "14165-trimet", name: "SE 1st &amp; Kane", lat: 45.497631, lon: -122.399734, times: ["5:21 AM", "5:25 AM", "6:01 AM", "6:31 AM", "7:02 AM", "7:37 AM", "8:12 AM", "8:47 AM"] },
+  { stop_id: "13973-trimet", name: "SE 1st &amp; 3rd", lat: 45.497644, lon: -122.406523, times: ["5:22 AM", "5:26 AM", "6:02 AM", "6:32 AM", "7:03 AM", "7:38 AM", "8:13 AM", "8:48 AM"] },
+  { stop_id: "4518-trimet", name: "E Powell &amp; SE Burnside", lat: 45.494175, lon: -122.40753, times: ["5:23 AM", "5:27 AM", "6:03 AM", "6:33 AM", "7:05 AM", "7:40 AM", "8:15 AM", "8:50 AM"] },
+  { stop_id: "4546-trimet", name: "E Powell &amp; SE Rene", lat: 45.494565, lon: -122.409819, times: ["5:24 AM", "5:28 AM", "6:04 AM", "6:34 AM", "7:05 AM", "7:40 AM", "8:15 AM", "8:50 AM"] },
+  { stop_id: "4638-trimet", name: "E Powell &amp; SE 3rd", lat: 45.49611, lon: -122.411966, times: ["5:24 AM", "5:28 AM", "6:04 AM", "6:34 AM", "7:06 AM", "7:41 AM", "8:16 AM", "8:51 AM"] },
+  { stop_id: "4528-trimet", name: "E Powell &amp; NE Hogan", lat: 45.497948, lon: -122.413778, times: ["5:25 AM", "5:29 AM", "6:05 AM", "6:35 AM", "7:07 AM", "7:42 AM", "8:17 AM", "8:52 AM"] },
+  { stop_id: "8461-trimet", name: "E Powell &amp; NE Liberty", lat: 45.498117, lon: -122.418266, times: ["5:26 AM", "5:30 AM", "6:06 AM", "6:36 AM", "7:07 AM", "7:42 AM", "8:17 AM", "8:52 AM"] },
+  { stop_id: "4521-trimet", name: "E Powell &amp; NE Cleveland", lat: 45.498148, lon: -122.421777, times: ["5:26 AM", "5:30 AM", "6:06 AM", "6:36 AM", "7:08 AM", "7:43 AM", "8:18 AM", "8:53 AM"] },
+  { stop_id: "13473-trimet", name: "E Powell &amp; NE Elliott", lat: 45.49817, lon: -122.424482, times: ["5:27 AM", "5:31 AM", "6:07 AM", "6:37 AM", "7:08 AM", "7:43 AM", "8:18 AM", "8:53 AM"] },
+  { stop_id: "10657-trimet", name: "NE Hood &amp; 2nd", lat: 45.498868, lon: -122.427625, times: ["5:27 AM", "5:31 AM", "6:07 AM", "6:37 AM", "7:09 AM", "7:44 AM", "8:19 AM", "8:54 AM"] },
+  { stop_id: "10654-trimet", name: "NE Hood &amp; 5th", lat: 45.500913, lon: -122.427922, times: ["5:28 AM", "5:32 AM", "6:08 AM", "6:38 AM", "7:10 AM", "7:45 AM", "8:20 AM", "8:55 AM"] },
+  { stop_id: "10858-trimet", name: "Gresham Central Transit Center ", lat: 45.50287, lon: -122.42659, times: ["5:33 AM"] },
+  { stop_id: "10857-trimet", name: "Gresham Central Transit Center", lat: 45.502718, lon: -122.427108, times: ["5:29 AM", "6:09 AM", "6:39 AM", "7:11 AM", "7:46 AM", "8:21 AM", "8:56 AM", "9:30 AM"] },
+  { stop_id: "8199-trimet", name: "Gresham Central Transit Center", lat: 45.502862, lon: -122.426918, times: ["1:36 PM", "2:11 PM", "4:33 PM", "11:04 PM", "11:37 PM"] },
+]
+
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
+
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+    stops.forEach(stop => {
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
+      .addTo(map);
+    });
+
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+           html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
+      });
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
+  </script>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 1 - To Hayhurst and Maplewood via Vermont (Trimet) | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      overflow-y: auto;
+    }
+
+    body {
+      padding-top: 120px;
+    }
+
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .ad-banner img {
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
+    #map {
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .button-bar a, .back-button {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.6rem 1.2rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="ad-banner">
+    <iframe src="https://metrofeedus.com/portland/Ads/route-1-dir0-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
+  </div>
+
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+    <button class="back-button" onclick="history.back()">Back</button>
+  </div>
+
+  <h1>Route 1 - To Hayhurst and Maplewood via Vermont (Trimet)</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <script>
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 1;
+    const direction = parseInt(0);
+
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const shapeOutbound = [
+  [45.476029, -122.690996],
+  [45.476031, -122.691572],
+  [45.476037, -122.69255],
+  [45.476036, -122.692801],
+  [45.476036, -122.693606],
+  [45.476036, -122.693641],
+  [45.476038, -122.693947],
+  [45.476035, -122.694635],
+  [45.476039, -122.695402],
+  [45.476039, -122.695681],
+  [45.476039, -122.69604],
+  [45.476041, -122.696586],
+  [45.476042, -122.697036],
+  [45.476042, -122.697136],
+  [45.476043, -122.697571],
+  [45.476043, -122.697587],
+  [45.476044, -122.697866],
+  [45.476045, -122.698543],
+  [45.476047, -122.699186],
+  [45.476047, -122.699362],
+  [45.476047, -122.699701],
+  [45.476048, -122.700155],
+  [45.476048, -122.700518],
+  [45.476049, -122.700645],
+  [45.476048, -122.700993],
+  [45.476049, -122.701362],
+  [45.476049, -122.701435],
+  [45.476049, -122.701561],
+  [45.476049, -122.702036],
+  [45.476049, -122.702101],
+  [45.476051, -122.702144],
+  [45.476058, -122.70219],
+  [45.476068, -122.702233],
+  [45.476086, -122.702283],
+  [45.476103, -122.702322],
+  [45.476175, -122.702407],
+  [45.476153, -122.70246],
+  [45.476109, -122.702592],
+  [45.476089, -122.70269],
+  [45.476075, -122.702785],
+  [45.476064, -122.702882],
+  [45.476057, -122.703153],
+  [45.47606, -122.703455],
+  [45.476064, -122.7039],
+  [45.476067, -122.704203],
+  [45.476068, -122.704365],
+  [45.476074, -122.704961],
+  [45.476074, -122.705005],
+  [45.476077, -122.705274],
+  [45.476078, -122.705448],
+  [45.476082, -122.705829],
+  [45.476083, -122.705955],
+  [45.476086, -122.70626],
+  [45.476086, -122.706331],
+  [45.476088, -122.706529],
+  [45.476089, -122.706579],
+  [45.476092, -122.706912],
+  [45.476089, -122.707251],
+  [45.476092, -122.707512],
+  [45.476093, -122.70765],
+  [45.476094, -122.707748],
+  [45.476099, -122.708341],
+  [45.476107, -122.709509],
+  [45.476108, -122.709606],
+  [45.47611, -122.70981],
+  [45.476117, -122.710925],
+  [45.476128, -122.711626],
+  [45.476129, -122.711952],
+  [45.476131, -122.712313],
+  [45.476133, -122.71289],
+  [45.476136, -122.713242],
+  [45.476146, -122.714232],
+  [45.476156, -122.714877],
+  [45.476158, -122.715133],
+  [45.47616, -122.715297],
+  [45.476161, -122.715448],
+  [45.476162, -122.715541],
+  [45.476168, -122.716021],
+  [45.476208, -122.719724],
+  [45.47621, -122.719914],
+  [45.476214, -122.720302],
+  [45.476217, -122.720691],
+  [45.476217, -122.72076],
+  [45.476246, -122.72084],
+  [45.476249, -122.721024],
+  [45.476251, -122.721203],
+  [45.476223, -122.721264],
+  [45.476228, -122.721667],
+  [45.47623, -122.721885],
+  [45.476235, -122.72236],
+  [45.476237, -122.722523],
+  [45.476242, -122.723024],
+  [45.476244, -122.72316],
+  [45.476245, -122.723524],
+  [45.476246, -122.723677],
+  [45.476249, -122.724405],
+  [45.47625, -122.724495],
+  [45.476251, -122.72465],
+  [45.476254, -122.724985],
+  [45.476255, -122.725085],
+  [45.476267, -122.726145],
+  [45.476269, -122.726276],
+  [45.476278, -122.727251],
+  [45.476283, -122.727819],
+  [45.476284, -122.727976],
+  [45.476287, -122.728304],
+  [45.47629, -122.728554],
+  [45.476291, -122.728629],
+  [45.476298, -122.729254],
+  [45.47631, -122.730242],
+  [45.476314, -122.730658],
+  [45.476332, -122.73249],
+  [45.476342, -122.733389],
+  [45.476343, -122.733446],
+  [45.476351, -122.734347],
+  [45.476367, -122.735691],
+  [45.476367, -122.735714],
+  [45.47639, -122.738542],
+  [45.476391, -122.738596],
+  [45.476405, -122.740489],
+  [45.476417, -122.741488],
+  [45.476418, -122.741563],
+  [45.476418, -122.741615],
+  [45.476427, -122.74269],
+  [45.476429, -122.743054],
+  [45.476498, -122.743049],
+  [45.476534, -122.743041],
+  [45.476576, -122.743027],
+  [45.476634, -122.742993],
+  [45.476713, -122.742942],
+  [45.476799, -122.742881],
+  [45.47701, -122.742724],
+  [45.477143, -122.742615],
+  [45.477269, -122.742511],
+  [45.477371, -122.742405],
+  [45.477453, -122.742299],
+  [45.477568, -122.742129],
+  [45.477619, -122.742041],
+  [45.477676, -122.741941],
+  [45.477682, -122.741928],
+  [45.477725, -122.741841],
+  [45.477754, -122.741779],
+  [45.47808, -122.740909],
+  [45.478254, -122.740433],
+  [45.478399, -122.740029],
+  [45.478467, -122.739876],
+  [45.478536, -122.73974],
+  [45.478589, -122.739654],
+  [45.478635, -122.73959],
+  [45.478686, -122.739525],
+  [45.479255, -122.738834],
+  [45.47933, -122.738743],
+  [45.479467, -122.738574],
+  [45.47957, -122.738468],
+  [45.479628, -122.738411],
+  [45.479748, -122.73831],
+  [45.47981, -122.738261],
+  [45.479879, -122.738214],
+  [45.480009, -122.73814],
+  [45.480092, -122.738098],
+  [45.480581, -122.737861],
+  [45.48062, -122.73784],
+  [45.480803, -122.737754],
+  [45.48107, -122.73762],
+  [45.481206, -122.737549],
+  [45.481264, -122.737516],
+  [45.481275, -122.737509],
+  [45.481326, -122.737475],
+  [45.481377, -122.737439],
+  [45.48146, -122.737371],
+  [45.481521, -122.737317],
+  [45.481647, -122.737206],
+  [45.48186, -122.737014],
+  [45.481931, -122.736952],
+  [45.482002, -122.736887],
+  [45.482038, -122.736853],
+  [45.482138, -122.736769],
+  [45.482275, -122.736648],
+  [45.482431, -122.736511],
+  [45.4825, -122.73645],
+  [45.482604, -122.736356],
+  [45.483007, -122.735995],
+  [45.483295, -122.735738],
+  [45.483444, -122.735609],
+  [45.483643, -122.735425],
+  [45.483606, -122.735346],
+  [45.483593, -122.735308],
+  [45.483583, -122.735265],
+  [45.48358, -122.735218],
+  [45.483574, -122.734935],
+  [45.483573, -122.734806],
+  [45.483571, -122.734527],
+  [45.483562, -122.733612],
+  [45.483554, -122.732855],
+  [45.483552, -122.732667],
+  [45.483541, -122.731618],
+  [45.48354, -122.731533],
+  [45.483531, -122.730284],
+  [45.483524, -122.728351],
+  [45.483522, -122.72819],
+  [45.483523, -122.72736],
+  [45.483524, -122.727204],
+  [45.483523, -122.726909],
+  [45.483512, -122.726076],
+  [45.483511, -122.725743],
+  [45.483511, -122.725309],
+  [45.48351, -122.724898],
+  [45.48351, -122.724796],
+  [45.483509, -122.724684],
+  [45.483509, -122.723375],
+  [45.4835, -122.723198],
+  [45.483012, -122.723193],
+  [45.482893, -122.723193],
+  [45.482815, -122.723193],
+  [45.482607, -122.723193],
+  [45.4823, -122.723193],
+  [45.482116, -122.723193],
+  [45.481329, -122.723198],
+  [45.481253, -122.723197],
+  [45.481199, -122.723196],
+  [45.480266, -122.72318],
+  [45.479113, -122.723175],
+  [45.478717, -122.723173],
+  [45.478629, -122.723172],
+  [45.477609, -122.723165],
+  [45.477123, -122.723165],
+  [45.476669, -122.72316],
+  [45.476635, -122.72316],
+  [45.476506, -122.72316],
+  [45.476343, -122.723159],
+  [45.476244, -122.72316],
+  [45.476134, -122.723158],
+  [45.475997, -122.723159],
+  [45.475935, -122.723159],
+  [45.475875, -122.723159],
+  [45.475596, -122.72316],
+  [45.475531, -122.723162],
+  [45.475202, -122.723171],
+  [45.474918, -122.723179],
+  [45.474306, -122.723178],
+  [45.473727, -122.72318],
+  [45.473688, -122.72318],
+  [45.473614, -122.723177],
+  [45.472965, -122.723177],
+  [45.472647, -122.723172],
+  [45.472321, -122.723176],
+  [45.472199, -122.723175],
+  [45.471712, -122.723173],
+  [45.470922, -122.723174],
+  [45.47038, -122.723168],
+  [45.470256, -122.723166],
+  [45.469907, -122.723165],
+  [45.46902, -122.723164],
+  [45.468124, -122.723162],
+  [45.467924, -122.723162],
+  [45.467868, -122.723162],
+  [45.46779, -122.723162],
+  [45.467566, -122.723169],
+  [45.467466, -122.723174],
+  [45.467469, -122.723284],
+  [45.46747, -122.723591],
+  [45.46747, -122.724017],
+  [45.467471, -122.72416],
+  [45.46747, -122.725218],
+  [45.467474, -122.726067],
+  [45.467487, -122.728521],
+  [45.467487, -122.728809],
+  [45.467601, -122.728814],
+  [45.467973, -122.728801],
+  [45.468065, -122.728797],
+  [45.469668, -122.728766],
+  [45.469738, -122.728765],
+  [45.469752, -122.729935],
+  [45.469763, -122.730067],
+  [45.469782, -122.730134],
+  [45.469796, -122.73017],
+  [45.469817, -122.730207],
+  [45.469829, -122.73022],
+  [45.469855, -122.730238],
+  [45.469852, -122.730271],
+  [45.469852, -122.730312],
+  [45.469854, -122.730356],
+  [45.46986, -122.730398],
+  [45.46987, -122.730443],
+  [45.469879, -122.73047],
+  [45.469895, -122.730507],
+  [45.469911, -122.730535],
+  [45.469931, -122.730559],
+  [45.469953, -122.730581],
+  [45.469971, -122.730593],
+  [45.469996, -122.730604],
+  [45.470025, -122.730612],
+  [45.47086, -122.730604],
+  [45.47095, -122.730603],
+  [45.470984, -122.730604],
+  [45.47106, -122.730603],
+  [45.471692, -122.730601],
+  [45.472008, -122.730603],
+  [45.472183, -122.730607],
+  [45.472328, -122.730604],
+  [45.472843, -122.730584],
+  [45.47285, -122.730584],
+  [45.472895, -122.730575],
+  [45.472899, -122.731526],
+  [45.472899, -122.731731],
+  [45.472901, -122.732355]
+];
+
+const stopNames = {
+  "155-trimet": "4900 Block SW Barbur",
+  "173-trimet": "SW Barbur &amp; Hamilton",
+  "175-trimet": "SW Barbur &amp; Hooker",
+  "176-trimet": "SW Barbur &amp; Lane",
+  "181-trimet": "SW Barbur &amp; Parkhill Dr",
+  "191-trimet": "SW Barbur &amp; Terwilliger",
+  "196-trimet": "SW Barbur &amp; Whitaker",
+  "199-trimet": "SW Barbur &amp; Bertha",
+  "207-trimet": "SW Barbur &amp; 3rd",
+  "861-trimet": "4600 Block SW Cameron",
+  "862-trimet": "SW Cameron &amp; Fairvale Ct",
+  "863-trimet": "SW Cameron &amp; Shattuck",
+  "865-trimet": "SW Cameron &amp; 53rd",
+  "966-trimet": "SW Capitol &amp; 26th",
+  "1056-trimet": "SW Chestnut &amp; 14th",
+  "4052-trimet": "SW Multnomah &amp; 45th",
+  "4104-trimet": "SW Nevada Ct &amp; 54th",
+  "5221-trimet": "SW Shattuck &amp; 60th",
+  "5222-trimet": "SW Shattuck &amp; 63rd",
+  "6018-trimet": "2200 Block SW Vermont",
+  "6019-trimet": "5700 Block SW Vermont",
+  "6024-trimet": "SW Vermont &amp; Bertha",
+  "6026-trimet": "SW Vermont &amp; Chestnut",
+  "6028-trimet": "SW Vermont &amp; Idaho",
+  "6029-trimet": "SW Vermont &amp; Idaho Dr",
+  "6030-trimet": "SW Vermont &amp; Shattuck",
+  "6032-trimet": "SW Vermont &amp; 13th",
+  "6034-trimet": "SW Vermont &amp; 24th",
+  "6035-trimet": "SW Vermont &amp; 30th",
+  "6037-trimet": "SW Vermont &amp; 32nd",
+  "6041-trimet": "SW Vermont &amp; 37th",
+  "6043-trimet": "SW Vermont &amp; 42nd",
+  "6047-trimet": "SW Vermont &amp; 50th",
+  "6049-trimet": "SW Vermont &amp; 52nd",
+  "6050-trimet": "SW Vermont &amp; 55th",
+  "6051-trimet": "SW Vermont &amp; 60th",
+  "6052-trimet": "SW Vermont &amp; 63rd",
+  "7540-trimet": "SW 45th &amp; Caldew",
+  "7544-trimet": "SW 45th &amp; Flower Pl",
+  "7549-trimet": "SW 45th &amp; Illinois",
+  "7555-trimet": "SW 45th &amp; Pendleton",
+  "7559-trimet": "SW 45th &amp; Vermont",
+  "7588-trimet": "SW 5th &amp; Broadway",
+  "7591-trimet": "SW 5th &amp; Caruthers",
+  "7612-trimet": "SW 5th &amp; Madison",
+  "7616-trimet": "SW 5th &amp; Market",
+  "7625-trimet": "SW 5th &amp; Morrison",
+  "7631-trimet": "SW 5th &amp; Pine",
+  "7667-trimet": "SW 51st &amp; Custer",
+  "7668-trimet": "SW 51st &amp; Moss",
+  "7698-trimet": "SW 52nd &amp; Maplewood School",
+  "7700-trimet": "SW 52nd &amp; Nevada Ct",
+  "9033-trimet": "SW Bertha &amp; Chestnut",
+  "9328-trimet": "SW 45th &amp; Nevada",
+  "10466-trimet": "SW 45th &amp; Vermont",
+  "10491-trimet": "SW 5th &amp; Hall",
+  "10801-trimet": "7500 Block SW 45th",
+  "12467-trimet": "SW Chestnut &amp; 12th Dr",
+  "13170-trimet": "SW Broadway &amp; W Burnside",
+  "13703-trimet": "SW Shattuck &amp; 59th Ct",
+  "13768-trimet": "SW Vermont &amp; 34th"
+};
+
+const stops = [
+  { stop_id: "6026-trimet", name: "SW Vermont &amp; Chestnut", lat: 45.476082, lon: -122.690997, times: ["3:38 PM", "3:42 PM"] },
+  { stop_id: "6032-trimet", name: "SW Vermont &amp; 13th", lat: 45.476097, lon: -122.69364, times: ["3:38 PM", "3:43 PM"] },
+  { stop_id: "6024-trimet", name: "SW Vermont &amp; Bertha", lat: 45.476115, lon: -122.69758, times: ["3:39 PM", "3:44 PM"] },
+  { stop_id: "6018-trimet", name: "2200 Block SW Vermont", lat: 45.476108, lon: -122.699702, times: ["3:40 PM", "3:44 PM"] },
+  { stop_id: "6034-trimet", name: "SW Vermont &amp; 24th", lat: 45.476109, lon: -122.701564, times: ["3:40 PM", "3:45 PM"] },
+  { stop_id: "966-trimet", name: "SW Capitol &amp; 26th", lat: 45.476127, lon: -122.704188, times: ["3:41 PM", "3:46 PM"] },
+  { stop_id: "6035-trimet", name: "SW Vermont &amp; 30th", lat: 45.476155, lon: -122.707509, times: ["3:42 PM", "3:47 PM"] },
+  { stop_id: "6037-trimet", name: "SW Vermont &amp; 32nd", lat: 45.476152, lon: -122.709606, times: ["3:42 PM", "3:47 PM"] },
+  { stop_id: "13768-trimet", name: "SW Vermont &amp; 34th", lat: 45.476186, lon: -122.711952, times: ["3:43 PM", "3:48 PM"] },
+  { stop_id: "6041-trimet", name: "SW Vermont &amp; 37th", lat: 45.476236, lon: -122.715132, times: ["3:44 PM", "3:49 PM"] },
+  { stop_id: "6043-trimet", name: "SW Vermont &amp; 42nd", lat: 45.476274, lon: -122.719913, times: ["3:45 PM", "3:50 PM"] },
+  { stop_id: "6029-trimet", name: "SW Vermont &amp; Idaho Dr", lat: 45.476296, lon: -122.721884, times: ["3:46 PM", "3:51 PM"] },
+  { stop_id: "6028-trimet", name: "SW Vermont &amp; Idaho", lat: 45.476374, lon: -122.724985, times: ["3:46 PM", "3:51 PM"] },
+  { stop_id: "6047-trimet", name: "SW Vermont &amp; 50th", lat: 45.476345, lon: -122.727975, times: ["3:47 PM", "3:52 PM"] },
+  { stop_id: "6049-trimet", name: "SW Vermont &amp; 52nd", lat: 45.476356, lon: -122.730241, times: ["3:47 PM", "3:52 PM"] },
+  { stop_id: "6050-trimet", name: "SW Vermont &amp; 55th", lat: 45.47639, lon: -122.73339, times: ["3:47 PM", "3:52 PM"] },
+  { stop_id: "6019-trimet", name: "5700 Block SW Vermont", lat: 45.476406, lon: -122.735714, times: ["3:48 PM", "3:53 PM"] },
+  { stop_id: "6051-trimet", name: "SW Vermont &amp; 60th", lat: 45.476427, lon: -122.738544, times: ["3:48 PM", "3:53 PM"] },
+  { stop_id: "6052-trimet", name: "SW Vermont &amp; 63rd", lat: 45.476456, lon: -122.741562, times: ["3:49 PM", "3:54 PM"] },
+  { stop_id: "6030-trimet", name: "SW Vermont &amp; Shattuck", lat: 45.476465, lon: -122.74269, times: ["3:49 PM", "3:54 PM"] },
+  { stop_id: "5222-trimet", name: "SW Shattuck &amp; 63rd", lat: 45.477622, lon: -122.741869, times: ["3:50 PM", "3:55 PM"] },
+  { stop_id: "5221-trimet", name: "SW Shattuck &amp; 60th", lat: 45.479287, lon: -122.738677, times: ["3:50 PM", "3:55 PM"] },
+  { stop_id: "13703-trimet", name: "SW Shattuck &amp; 59th Ct", lat: 45.482576, lon: -122.736292, times: ["3:51 PM", "3:56 PM"] },
+  { stop_id: "863-trimet", name: "SW Cameron &amp; Shattuck", lat: 45.483508, lon: -122.734806, times: ["3:52 PM", "3:57 PM"] },
+  { stop_id: "865-trimet", name: "SW Cameron &amp; 53rd", lat: 45.483484, lon: -122.73162, times: ["3:52 PM", "3:57 PM"] },
+  { stop_id: "862-trimet", name: "SW Cameron &amp; Fairvale Ct", lat: 45.483464, lon: -122.72736, times: ["3:53 PM", "3:58 PM"] },
+  { stop_id: "861-trimet", name: "4600 Block SW Cameron", lat: 45.483441, lon: -122.724795, times: ["3:53 PM", "3:58 PM"] },
+  { stop_id: "7544-trimet", name: "SW 45th &amp; Flower Pl", lat: 45.482894, lon: -122.723244, times: ["3:54 PM", "3:59 PM"] },
+  { stop_id: "7555-trimet", name: "SW 45th &amp; Pendleton", lat: 45.481252, lon: -122.723236, times: ["3:54 PM", "3:59 PM"] },
+  { stop_id: "7549-trimet", name: "SW 45th &amp; Illinois", lat: 45.478715, lon: -122.723244, times: ["3:55 PM", "4:00 PM"] },
+  { stop_id: "7559-trimet", name: "SW 45th &amp; Vermont", lat: 45.476636, lon: -122.723237, times: ["3:56 PM", "4:01 PM"] },
+  { stop_id: "10466-trimet", name: "SW 45th &amp; Vermont", lat: 45.475871, lon: -122.723251, times: ["3:56 PM", "4:01 PM"] },
+  { stop_id: "9328-trimet", name: "SW 45th &amp; Nevada", lat: 45.473722, lon: -122.723241, times: ["3:56 PM", "4:01 PM"] },
+  { stop_id: "7540-trimet", name: "SW 45th &amp; Caldew", lat: 45.472195, lon: -122.723234, times: ["3:57 PM", "4:02 PM"] },
+  { stop_id: "10801-trimet", name: "7500 Block SW 45th", lat: 45.470391, lon: -122.723223, times: ["3:57 PM", "4:02 PM"] },
+  { stop_id: "4052-trimet", name: "SW Multnomah &amp; 45th", lat: 45.467527, lon: -122.724015, times: ["3:58 PM", "4:03 PM"] },
+  { stop_id: "7668-trimet", name: "SW 51st &amp; Moss", lat: 45.467968, lon: -122.728705, times: ["3:59 PM", "4:04 PM"] },
+  { stop_id: "7667-trimet", name: "SW 51st &amp; Custer", lat: 45.469664, lon: -122.728688, times: ["4:00 PM", "4:05 PM"] },
+  { stop_id: "7698-trimet", name: "SW 52nd &amp; Maplewood School", lat: 45.470854, lon: -122.730468, times: ["4:01 PM", "4:06 PM"] },
+  { stop_id: "7700-trimet", name: "SW 52nd &amp; Nevada Ct", lat: 45.472839, lon: -122.730516, times: ["4:01 PM", "4:06 PM"] },
+  { stop_id: "4104-trimet", name: "SW Nevada Ct &amp; 54th", lat: 45.472925, lon: -122.732355, times: ["4:02 PM", "4:07 PM"] },
+  { stop_id: "13170-trimet", name: "SW Broadway &amp; W Burnside", lat: 45.522894, lon: -122.677232, times: ["3:15 PM"] },
+  { stop_id: "7631-trimet", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["3:16 PM"] },
+  { stop_id: "7625-trimet", name: "SW 5th &amp; Morrison", lat: 45.518932, lon: -122.677571, times: ["3:18 PM"] },
+  { stop_id: "7612-trimet", name: "SW 5th &amp; Madison", lat: 45.515682, lon: -122.679352, times: ["3:21 PM"] },
+  { stop_id: "7616-trimet", name: "SW 5th &amp; Market", lat: 45.512954, lon: -122.680837, times: ["3:22 PM"] },
+  { stop_id: "10491-trimet", name: "SW 5th &amp; Hall", lat: 45.510277, lon: -122.682286, times: ["3:24 PM"] },
+  { stop_id: "7588-trimet", name: "SW 5th &amp; Broadway", lat: 45.507079, lon: -122.68385, times: ["3:26 PM"] },
+  { stop_id: "7591-trimet", name: "SW 5th &amp; Caruthers", lat: 45.505566, lon: -122.68329, times: ["3:28 PM"] },
+  { stop_id: "175-trimet", name: "SW Barbur &amp; Hooker", lat: 45.502494, lon: -122.68204, times: ["3:28 PM"] },
+  { stop_id: "196-trimet", name: "SW Barbur &amp; Whitaker", lat: 45.498602, lon: -122.679812, times: ["3:29 PM"] },
+  { stop_id: "176-trimet", name: "SW Barbur &amp; Lane", lat: 45.496002, lon: -122.678366, times: ["3:30 PM"] },
+  { stop_id: "173-trimet", name: "SW Barbur &amp; Hamilton", lat: 45.491037, lon: -122.678566, times: ["3:31 PM"] },
+  { stop_id: "155-trimet", name: "4900 Block SW Barbur", lat: 45.487059, lon: -122.682757, times: ["3:32 PM"] },
+  { stop_id: "181-trimet", name: "SW Barbur &amp; Parkhill Dr", lat: 45.476747, lon: -122.679797, times: ["3:35 PM"] },
+  { stop_id: "207-trimet", name: "SW Barbur &amp; 3rd", lat: 45.471567, lon: -122.680911, times: ["3:36 PM"] },
+  { stop_id: "191-trimet", name: "SW Barbur &amp; Terwilliger", lat: 45.471217, lon: -122.686158, times: ["3:37 PM"] },
+  { stop_id: "199-trimet", name: "SW Barbur &amp; Bertha", lat: 45.470468, lon: -122.689602, times: ["3:38 PM"] },
+  { stop_id: "9033-trimet", name: "SW Bertha &amp; Chestnut", lat: 45.472242, lon: -122.694348, times: ["3:40 PM"] },
+  { stop_id: "1056-trimet", name: "SW Chestnut &amp; 14th", lat: 45.473194, lon: -122.693437, times: ["3:40 PM"] },
+  { stop_id: "12467-trimet", name: "SW Chestnut &amp; 12th Dr", lat: 45.474763, lon: -122.690855, times: ["3:41 PM"] },
+]
+
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
+
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+    stops.forEach(stop => {
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
+      .addTo(map);
+    });
+
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+           html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
+      });
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
+  </script>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route 97 - To SW Langer Dr/Sherwood Plaza (Trimet) | MetroFeed Portland</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      overflow-y: auto;
+    }
+
+    body {
+      padding-top: 120px;
+    }
+
+    .ad-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #222;
+      padding: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 2px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .ad-banner img {
+      width: 100%;
+      max-width: 728px;
+      max-height: 120px;
+      display: block;
+      margin: 0 auto;
+    }
+    .home-button {
+      position: fixed;
+      top: 120px;
+      left: 10px;
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .home-button:hover {
+      background-color: #00bcd4;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 3px solid #4dd0e1;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header img {
+      max-height: 60px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 2rem;
+      color: #f0f0f0;
+    }
+
+    .content-box {
+      border-radius: 12px;
+      padding: 0;
+      margin: 0;
+      background-color: #1e1e1e;
+    }
+
+    #map {
+      width: 100%;
+      height: 85vh;
+      border: none;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .button-bar {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .button-bar a, .back-button {
+      background: #4dd0e1;
+      color: #0d0d0d;
+      padding: 0.6rem 1.2rem;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+
+    .back-button:hover {
+      background-color: #35c0d6;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 3rem;
+      margin-bottom: 120px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    .site-footer a {
+      color: #00BFFF;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .ad-banner {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="ad-banner">
+    <iframe src="https://metrofeedus.com/portland/Ads/route-97-dir0-ad.html" style="border:none; width:100%; max-width: 728px; height:90px;"></iframe>
+  </div>
+
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <div style="margin: 2rem 0; text-align: center;">
+    <button class="back-button" onclick="history.back()">Back</button>
+  </div>
+
+  <h1>Route 97 - To SW Langer Dr/Sherwood Plaza (Trimet)</h1>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <script>
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const routeNumber = 97;
+    const direction = parseInt(0);
+
+    const map = L.map('map', {
+      center: [45.6, -122.7],
+      zoom: 12,
+      minZoom: 12,
+      maxZoom: 18,
+      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
+      maxBoundsViscosity: 1.0
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const shapeOutbound = [
+  [45.382866, -122.764249],
+  [45.382653, -122.764248],
+  [45.382083, -122.76424],
+  [45.381757, -122.764227],
+  [45.381399, -122.764242],
+  [45.381312, -122.764243],
+  [45.381309, -122.764444],
+  [45.381309, -122.764567],
+  [45.381301, -122.765029],
+  [45.381288, -122.76568],
+  [45.381269, -122.766345],
+  [45.381268, -122.766712],
+  [45.381267, -122.766862],
+  [45.381265, -122.767026],
+  [45.38126, -122.767204],
+  [45.381247, -122.767366],
+  [45.381233, -122.767486],
+  [45.381167, -122.767699],
+  [45.381143, -122.76787],
+  [45.381108, -122.768082],
+  [45.381073, -122.768246],
+  [45.381052, -122.768347],
+  [45.381014, -122.76849],
+  [45.380976, -122.768635],
+  [45.380915, -122.768832],
+  [45.380784, -122.769217],
+  [45.380602, -122.769764],
+  [45.380559, -122.769892],
+  [45.380308, -122.770645],
+  [45.380251, -122.77081],
+  [45.380066, -122.771374],
+  [45.3795, -122.773104],
+  [45.379159, -122.774146],
+  [45.379131, -122.774236],
+  [45.379032, -122.774558],
+  [45.378979, -122.77474],
+  [45.37893, -122.774911],
+  [45.378809, -122.77537],
+  [45.378803, -122.775396],
+  [45.378766, -122.775555],
+  [45.378732, -122.775703],
+  [45.378667, -122.775993],
+  [45.378608, -122.776279],
+  [45.378558, -122.776545],
+  [45.378539, -122.776663],
+  [45.378452, -122.77718],
+  [45.378405, -122.777516],
+  [45.378361, -122.777841],
+  [45.378311, -122.778198],
+  [45.37828, -122.778516],
+  [45.378259, -122.778774],
+  [45.378193, -122.77977],
+  [45.378157, -122.780453],
+  [45.378154, -122.780489],
+  [45.378125, -122.780824],
+  [45.378104, -122.781023],
+  [45.378101, -122.78105],
+  [45.378066, -122.781297],
+  [45.378025, -122.781543],
+  [45.377971, -122.781818],
+  [45.377917, -122.782033],
+  [45.377859, -122.782257],
+  [45.377785, -122.782523],
+  [45.377731, -122.782694],
+  [45.37767, -122.782873],
+  [45.377594, -122.783077],
+  [45.377575, -122.783129],
+  [45.377535, -122.783235],
+  [45.377457, -122.783419],
+  [45.3774, -122.78354],
+  [45.377338, -122.78367],
+  [45.37726, -122.783829],
+  [45.376403, -122.78542],
+  [45.37553, -122.787042],
+  [45.375251, -122.78756],
+  [45.372804, -122.792105],
+  [45.372746, -122.792208],
+  [45.372339, -122.792962],
+  [45.372021, -122.793551],
+  [45.371825, -122.793922],
+  [45.371644, -122.794286],
+  [45.37141, -122.794791],
+  [45.371279, -122.795104],
+  [45.371154, -122.795403],
+  [45.371063, -122.795618],
+  [45.370889, -122.796105],
+  [45.370596, -122.79701],
+  [45.370458, -122.797514],
+  [45.37033, -122.798007],
+  [45.370213, -122.798524],
+  [45.370075, -122.799214],
+  [45.369956, -122.799901],
+  [45.369904, -122.800284],
+  [45.369861, -122.80063],
+  [45.369395, -122.80536],
+  [45.369366, -122.805636],
+  [45.369346, -122.805829],
+  [45.369109, -122.808274],
+  [45.369043, -122.808946],
+  [45.369029, -122.809086],
+  [45.369014, -122.809224],
+  [45.368793, -122.811487],
+  [45.368589, -122.813585],
+  [45.368387, -122.81561],
+  [45.368329, -122.816197],
+  [45.368313, -122.816324],
+  [45.368335, -122.816485],
+  [45.368245, -122.817407],
+  [45.368207, -122.817789],
+  [45.368159, -122.817938],
+  [45.368007, -122.819482],
+  [45.367996, -122.819623],
+  [45.367983, -122.819787],
+  [45.367963, -122.820141],
+  [45.367948, -122.82041],
+  [45.367938, -122.8207],
+  [45.367931, -122.821011],
+  [45.367929, -122.821547],
+  [45.367925, -122.822263],
+  [45.367918, -122.823805],
+  [45.367915, -122.824341],
+  [45.367912, -122.824519],
+  [45.367911, -122.824687],
+  [45.367903, -122.826333],
+  [45.367902, -122.826444],
+  [45.367831, -122.83018],
+  [45.367823, -122.830664],
+  [45.367777, -122.833216],
+  [45.367755, -122.834406],
+  [45.367752, -122.834695],
+  [45.367757, -122.835225],
+  [45.367774, -122.83583],
+  [45.367786, -122.836251],
+  [45.367806, -122.837216],
+  [45.367816, -122.837688],
+  [45.367825, -122.837962],
+  [45.367843, -122.838243],
+  [45.367865, -122.838498],
+  [45.367893, -122.838726],
+  [45.367965, -122.839175],
+  [45.367829, -122.839237],
+  [45.367574, -122.839335],
+  [45.367485, -122.839364],
+  [45.367398, -122.839387],
+  [45.367313, -122.839406],
+  [45.367129, -122.839427],
+  [45.36712, -122.839569],
+  [45.367105, -122.839691],
+  [45.36709, -122.839796],
+  [45.367037, -122.840065],
+  [45.367024, -122.840169],
+  [45.367018, -122.840268],
+  [45.367018, -122.840366],
+  [45.367024, -122.840456],
+  [45.367037, -122.840542],
+  [45.367058, -122.840635],
+  [45.367117, -122.840837],
+  [45.367162, -122.840967],
+  [45.367202, -122.841087],
+  [45.367327, -122.841468],
+  [45.367594, -122.842285],
+  [45.367636, -122.842424],
+  [45.367698, -122.842688],
+  [45.367725, -122.842831],
+  [45.367751, -122.84298],
+  [45.367769, -122.843116],
+  [45.367777, -122.843176],
+  [45.367784, -122.843233],
+  [45.367801, -122.843389],
+  [45.36781, -122.84354],
+  [45.367816, -122.843658],
+  [45.367818, -122.843754],
+  [45.367817, -122.844177],
+  [45.367817, -122.844499],
+  [45.367816, -122.844668],
+  [45.367817, -122.844848],
+  [45.367818, -122.845421],
+  [45.367816, -122.845508],
+  [45.367812, -122.845578],
+  [45.367802, -122.845647],
+  [45.367788, -122.845708],
+  [45.36777, -122.845771],
+  [45.367752, -122.84582],
+  [45.367733, -122.845861],
+  [45.367711, -122.845902],
+  [45.367678, -122.845953],
+  [45.36737, -122.846423],
+  [45.367369, -122.846424]
+];
+
+const stopNames = {
+  "9188-trimet": "SW Langer &amp; Sherwood Plaza",
+  "13079-trimet": "SW Boones Ferry Rd &amp; Nyberg",
+  "13546-trimet": "SW Langer &amp; Holland",
+  "13827-trimet": "SW Tualatin-Sherwood Rd &amp; 90th",
+  "13828-trimet": "SW Tualatin-Sherwood Rd &amp; 95th",
+  "13829-trimet": "SW Tualatin-Sherwood Rd &amp; Teton",
+  "13830-trimet": "SW Tualatin-Sherwood Rd &amp; 112th",
+  "13831-trimet": "SW Tualatin-Sherwood Rd &amp; 115th",
+  "13833-trimet": "SW Tualatin-Sherwood Rd &amp; Cipole",
+  "13834-trimet": "SW Tualatin-Sherwood Rd &amp; Oregon St",
+  "13835-trimet": "SW Tualatin-Sherwood Rd &amp; Gerda Ln",
+  "13836-trimet": "SW Tualatin-Sherwood Rd &amp; Langer Farms"
+};
+
+const stops = [
+  { stop_id: "13079-trimet", name: "SW Boones Ferry Rd &amp; Nyberg", lat: 45.382861, lon: -122.764363, times: ["6:18 AM", "7:18 AM", "8:18 AM", "9:18 AM", "3:33 PM", "4:43 PM", "5:53 PM"] },
+  { stop_id: "13827-trimet", name: "SW Tualatin-Sherwood Rd &amp; 90th", lat: 45.380686, lon: -122.769978, times: ["6:19 AM", "7:19 AM", "8:19 AM", "9:19 AM", "3:34 PM", "4:44 PM", "5:54 PM"] },
+  { stop_id: "13828-trimet", name: "SW Tualatin-Sherwood Rd &amp; 95th", lat: 45.379232, lon: -122.774299, times: ["6:19 AM", "7:19 AM", "8:19 AM", "9:19 AM", "3:35 PM", "4:45 PM", "5:55 PM"] },
+  { stop_id: "13829-trimet", name: "SW Tualatin-Sherwood Rd &amp; Teton", lat: 45.377702, lon: -122.783166, times: ["6:21 AM", "7:21 AM", "8:21 AM", "9:21 AM", "3:36 PM", "4:46 PM", "5:56 PM"] },
+  { stop_id: "13830-trimet", name: "SW Tualatin-Sherwood Rd &amp; 112th", lat: 45.37241, lon: -122.793043, times: ["6:23 AM", "7:23 AM", "8:23 AM", "9:23 AM", "3:39 PM", "4:49 PM", "5:59 PM"] },
+  { stop_id: "13831-trimet", name: "SW Tualatin-Sherwood Rd &amp; 115th", lat: 45.371348, lon: -122.795163, times: ["6:23 AM", "7:23 AM", "8:23 AM", "9:23 AM", "3:39 PM", "4:49 PM", "5:59 PM"] },
+  { stop_id: "13833-trimet", name: "SW Tualatin-Sherwood Rd &amp; Cipole", lat: 45.369213, lon: -122.808294, times: ["6:25 AM", "7:25 AM", "8:25 AM", "9:25 AM", "3:42 PM", "4:52 PM", "6:02 PM"] },
+  { stop_id: "13834-trimet", name: "SW Tualatin-Sherwood Rd &amp; Oregon St", lat: 45.368471, lon: -122.815627, times: ["6:27 AM", "7:27 AM", "8:27 AM", "9:27 AM", "3:44 PM", "4:54 PM", "6:04 PM"] },
+  { stop_id: "13835-trimet", name: "SW Tualatin-Sherwood Rd &amp; Gerda Ln", lat: 45.368004, lon: -122.823805, times: ["6:28 AM", "7:28 AM", "8:28 AM", "9:28 AM", "3:45 PM", "4:55 PM", "6:05 PM"] },
+  { stop_id: "13836-trimet", name: "SW Tualatin-Sherwood Rd &amp; Langer Farms", lat: 45.367865, lon: -122.835822, times: ["6:30 AM", "7:30 AM", "8:30 AM", "9:30 AM", "3:48 PM", "4:58 PM", "6:08 PM"] },
+  { stop_id: "13546-trimet", name: "SW Langer &amp; Holland", lat: 45.3674, lon: -122.841417, times: ["6:32 AM", "7:32 AM", "8:32 AM", "9:32 AM", "3:49 PM", "4:59 PM", "6:09 PM"] },
+  { stop_id: "9188-trimet", name: "SW Langer &amp; Sherwood Plaza", lat: 45.367891, lon: -122.844499, times: ["6:32 AM", "7:32 AM", "8:32 AM", "9:32 AM", "3:50 PM", "5:00 PM", "6:10 PM"] },
+]
+
+    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+    map.fitBounds(polylineOut.getBounds());
+
+    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+    stops.forEach(stop => {
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":");
+        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+        if (schedMins < nowMins && nowMins - schedMins > 720) {
+          schedMins += 1440;
+        }
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
+
+      L.circleMarker([stop.lat, stop.lon], {
+        radius: 6,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 1
+      })
+      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
+      .addTo(map);
+    });
+
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        const icon = L.divIcon({    
+           className: '',
+           html: `
+            <div style="text-align:center;">
+              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
+            </div>
+          `,
+          iconSize: [40, 30], iconAnchor: [20, 30]
+        });
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        busMarkers[bus.vehicleID] = marker;
+      });
+    }
+    fetchAndDisplay();
+    setInterval(fetchAndDisplay, 15000);
+  </script>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          📢 We use cookies to improve functionality and analyze traffic.
+          By using MetroFeed, you agree to our 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>
