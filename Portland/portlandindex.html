@@ -203,7 +203,23 @@
  </style>
 </head>
 <body>
-  <div id="map"></div>
+
+<script>
+  // Only allow access if trial or login is active (set by your modal logic)
+  if (
+    !localStorage.getItem('mf_unlocked') || 
+    localStorage.getItem('mf_unlocked') !== 'true'
+  ) {
+    // Option 1: Redirect to your landing/index page
+    window.location.href = 'portlandindex.html';
+
+    // Option 2 (alternate): Show the premium modal here instead of redirecting
+    // document.getElementById('yourModalID').style.display = 'block';
+  }
+</script>
+
+
+<div id="map"></div>
   <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
   <button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
