@@ -183,6 +183,19 @@
   pointer-events: auto !important;
 }
 
+.mf-free-btn {
+  background: #F7630C !important;
+  color: #fff !important;
+  border: 2px solid #fff;
+  margin-top: 10px;
+  width: 100%;
+}
+.mf-free-btn:hover, .mf-free-btn:focus {
+  background: #fff !important;
+  color: #F7630C !important;
+  border-color: #F7630C !important;
+}
+
 
     @keyframes popin { from { transform: scale(0.94); opacity: 0; } to   { transform: scale(1); opacity: 1; } }
     .mf-modal h2 { color: #4dd0e1; font-size: 1.25rem; margin: 0 0 0.5rem 0; letter-spacing: 0.01em; text-shadow: 0 1px 0 #222, 0 0 6px #4dd0e1; }
@@ -203,22 +216,6 @@
  </style>
 </head>
 <body>
-
-<script>
-  // Only allow access if trial or login is active (set by your modal logic)
-  if (
-    !localStorage.getItem('mf_unlocked') || 
-    localStorage.getItem('mf_unlocked') !== 'true'
-  ) {
-    // Option 1: Redirect to your landing/index page
-    window.location.href = 'portlandindex.html';
-
-    // Option 2 (alternate): Show the premium modal here instead of redirecting
-    // document.getElementById('yourModalID').style.display = 'block';
-  }
-</script>
-
-
 <div id="map"></div>
   <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
@@ -418,22 +415,19 @@
       });
     }
   </script>
-
-<div class="mf-overlay">
+<div class="mf-overlay" style="display:none;">
   <div class="mf-modal">
     <span class="dev-switch" id="devSwitch" onclick="toggleDevMode()">
       <span id="devModeStatus"></span>
     </span>
     <h2>You're not logged in or don’t have an account</h2>
-    <p>
-      Please <b>sign in</b> or <b>sign up</b> to continue, or use the <b>free version</b> below:
-    </p>
-    <div class="mf-actions-row">
+    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
+    <div class="mf-actions" style="display: flex; gap: 0.65rem; margin-bottom: 1.1rem;">
       <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
       <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
     </div>
-    <button class="mf-btn-orange" onclick="location.href='free.html'">Use Free Version</button>
-    <div class="mf-premium">
+    <button class="mf-btn mf-free-btn" id="freeBtn">Use Free Version</button>
+    <div class="mf-premium" style="margin-top:1.1rem;">
       Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
       <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
     </div>
@@ -441,56 +435,6 @@
     <span class="trial-timer" id="trialTimer"></span>
   </div>
 </div>
-
-<style>
-/* Extra MetroFeed popup button styles */
-.mf-actions-row {
-  display: flex;
-  gap: 0.65rem;
-  margin-bottom: 0.85rem;
-  justify-content: center;
-}
-.mf-btn {
-  flex: 1;
-  background: #0d0d0d;
-  color: #4dd0e1;
-  border: 2px solid #fff;
-  font-size: 1.01rem;
-  border-radius: 8px;
-  padding: 0.68rem 0.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background .15s, color .12s, border .18s;
-  min-width: 105px;
-  outline: none;
-  box-shadow: 0 0 6px #4dd0e1aa;
-}
-.mf-btn:hover, .mf-btn:focus {
-  background: #4dd0e1;
-  color: #0d0d0d;
-  border-color: #fff;
-}
-.mf-btn-orange {
-  display: block;
-  width: 100%;
-  margin-bottom: 1.1rem;
-  background: #F7630C !important;
-  color: #fff !important;
-  border: 2px solid #fff;
-  font-size: 1.01rem;
-  border-radius: 8px;
-  padding: 0.7rem 0;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 0 6px #F7630C55;
-  transition: background .17s, color .17s, border .15s;
-}
-.mf-btn-orange:hover, .mf-btn-orange:focus {
-  background: #fff !important;
-  color: #F7630C !important;
-  border: 2px solid #F7630C;
-}
-</style>
 
 <script>
   // DevMode + Timer logic
@@ -509,9 +453,24 @@
   }
   updateDevSwitch();
 
+  // Modal logic
+  function showModal() {
+    document.querySelector('.mf-overlay').style.display = 'flex';
+  }
+  function hideModal() {
+    document.querySelector('.mf-overlay').style.display = 'none';
+  }
+
+  // Free Version Button
+  document.getElementById('freeBtn').onclick = function() {
+    localStorage.setItem('mf_free', 'true');
+    hideModal();
+    // DO NOT set mf_unlocked
+  };
+
+  // Free Trial Button
   const btn = document.getElementById('startTrialBtn');
   const timerEl = document.getElementById('trialTimer');
-
   function msToTime(duration) {
     let seconds = Math.floor((duration / 1000) % 60),
         minutes = Math.floor((duration / (1000 * 60)) % 60),
@@ -519,9 +478,7 @@
         days = Math.floor(duration / (1000 * 60 * 60 * 24));
     return `${days > 0 ? days+'d ' : ''}${hours}h ${minutes}m ${seconds}s`;
   }
-
   function updateTrialTimer() {
-    // DevMode: always allow trial start
     if (devMode) {
       btn.disabled = false;
       btn.textContent = 'Start Free Trial';
@@ -541,28 +498,41 @@
       btn.disabled = true;
       btn.textContent = 'Trial Active';
       timerEl.textContent = 'Expires in: ' + msToTime(diff);
+      localStorage.setItem('mf_unlocked', 'true');
     } else {
-      btn.disabled = false; // <--- allow retry after trial ends, but you can change this to true to keep it locked out
-      btn.textContent = 'Start Free Trial';
-      timerEl.textContent = 'Your free trial has ended. Want another? (DevMode only allows repeat)';
+      btn.disabled = true;
+      btn.textContent = 'Trial Expired';
+      timerEl.textContent = 'Your free trial has ended.';
+      localStorage.removeItem('mf_unlocked');
+      // Optionally remove mf_trialStart here if you want to allow new trials after 24hr
+      // localStorage.removeItem('mf_trialStart');
     }
   }
-
   btn.onclick = function() {
-    // Only start a new trial if DevMode, or if not started yet, or if trial expired
-    const trialStart = parseInt(localStorage.getItem('mf_trialStart') || '0');
-    const now = Date.now();
-    const expired = trialStart && (now - trialStart > 24*60*60*1000);
-    if (devMode || !trialStart || expired) {
-      localStorage.setItem('mf_trialStart', now.toString());
+    if (devMode || !localStorage.getItem('mf_trialStart')) {
+      localStorage.setItem('mf_trialStart', Date.now().toString());
+      localStorage.setItem('mf_unlocked', 'true');
+      hideModal();
       updateTrialTimer();
-      // TODO: Add code to actually unlock premium mode here
-      alert('Premium trial started! (Replace this with your unlock logic)');
     }
   };
 
-  updateTrialTimer();
-  setInterval(updateTrialTimer, 1000);
+  // On page load: show modal if NOT unlocked/free
+  window.onload = function() {
+    updateTrialTimer();
+    setInterval(updateTrialTimer, 1000);
+
+    if (
+      localStorage.getItem('mf_unlocked') !== 'true' &&
+      localStorage.getItem('mf_free') !== 'true'
+    ) {
+      showModal();
+    } else {
+      hideModal();
+    }
+  };
+
+
 </script>
 
 </body>
