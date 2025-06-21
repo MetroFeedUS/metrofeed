@@ -165,14 +165,14 @@
   <button id="menuBtn" class="side-buttons" onclick="toggleMenu()"><img src="005-list.svg" alt="Menu" /></button>
 
   <div id="menuDropdown">
-    <a href="#"><img src="placeholder.svg" alt="Icon" /> Option 1</a>
-    <a href="#"><img src="placeholder.svg" alt="Icon" /> Option 2</a>
-    <a href="#"><img src="placeholder.svg" alt="Icon" /> Option 3</a>
-    <a href="#"><img src="placeholder.svg" alt="Icon" /> Option 4</a>
-    <a href="#"><img src="placeholder.svg" alt="Icon" /> Option 5</a>
-    <a href="#"><img src="placeholder.svg" alt="Icon" /> Option 6</a>
-    <a href="#"><img src="placeholder.svg" alt="Icon" /> Option 7</a>
-    <a href="#"><img src="placeholder.svg" alt="Icon" /> Option 8</a>
+    <a href="#" onclick="event.preventDefault()"><img src="placeholder.svg" alt="Icon" /> Option 1</a>
+    <a href="#" onclick="event.preventDefault()"><img src="placeholder.svg" alt="Icon" /> Option 2</a>
+    <a href="#" onclick="event.preventDefault()"><img src="placeholder.svg" alt="Icon" /> Option 3</a>
+    <a href="#" onclick="event.preventDefault()"><img src="placeholder.svg" alt="Icon" /> Option 4</a>
+    <a href="#" onclick="event.preventDefault()"><img src="placeholder.svg" alt="Icon" /> Option 5</a>
+    <a href="#" onclick="event.preventDefault()"><img src="placeholder.svg" alt="Icon" /> Option 6</a>
+    <a href="#" onclick="event.preventDefault()"><img src="placeholder.svg" alt="Icon" /> Option 7</a>
+    <a href="#" onclick="event.preventDefault()"><img src="placeholder.svg" alt="Icon" /> Option 8</a>
   </div>
 
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
@@ -234,6 +234,10 @@
     }
 
     function loadFavorite(index) {
+      if (typeof masterRoutes === 'undefined') {
+        console.error('masterRoutes is undefined');
+        return;
+      }
       const fav = savedFavorites[index];
       if (!fav) return;
       const route = masterRoutes.find(r => r.route_id == fav.route && r.direction_id == fav.direction);
@@ -242,10 +246,14 @@
     }
 
     function loadClosestRoute() {
-      location.reload(); // fallback for now
+      location.reload();
     }
 
     function drawRoute(route) {
+      if (typeof map === 'undefined') {
+        console.error('Leaflet map not initialized');
+        return;
+      }
       map.eachLayer(layer => {
         if (layer instanceof L.Polyline || layer instanceof L.Marker) map.removeLayer(layer);
       });
@@ -272,7 +280,7 @@
     function startTripPlanner() {
       const start = document.querySelectorAll('.search-bar input')[0].value.trim();
       const end = document.querySelectorAll('.search-bar input')[1].value.trim();
-      alert(`Trip planner would now calculate from \"${start}\" to \"${end}\".`);
+      alert(`Trip planner would now calculate from "${start}" to "${end}".`);
     }
 
     document.querySelectorAll('.search-bar input').forEach(input =>
