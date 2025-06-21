@@ -77,13 +77,61 @@
       padding: 0;
     }
 
-    #menuBtn {
-      top: 10px;
-      left: 10px;
-    }
+   .menu-container {
+  position: absolute;
+  top: 60px;
+  left: 10px; /* adjust if you want it elsewhere */
+  z-index: 1000;
+}
+
+#menuButton {
+  padding: 10px 16px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+#menuButton svg {
+  width: 20px;
+  height: 20px;
+  fill: white;
+}
+
+.dropdown {
+  margin-top: 8px;
+  background-color: #111;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dropdown a {
+  color: white;
+  padding: 10px 12px;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.dropdown a:hover {
+  background-color: #222;
+}
+
+.hidden {
+  display: none;
+}
 
     #accountBtn {
-      top: 60px;
+      top: 10px;
       left: 10px;
     }
 
@@ -156,7 +204,52 @@
 <body>
   <div id="map"></div>
 
-  <button id="menuBtn" class="side-buttons"><a href="portlandhome.html"><img src="005-list.svg" alt="Menu" /></a></button>
+  <div class="menu-container">
+  <button id="menuButton">
+    <!-- Menu Icon SVG -->
+    <svg viewBox="0 0 24 24">
+      <path d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" fill="none" />
+    </svg>
+    Menu
+  </button>
+  <div id="dropdownMenu" class="dropdown hidden">
+    <a href="#">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none" /></svg>
+      Weather
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" stroke="white" stroke-width="2" fill="none" /></svg>
+      Traffic
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M3 12h18M12 3v18" stroke="white" stroke-width="2" fill="none" /></svg>
+      Transit
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 2,22 22,22" stroke="white" stroke-width="2" fill="none" /></svg>
+      Alerts
+    </a>
+     <a href="#">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none" /></svg>
+      Weather
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" stroke="white" stroke-width="2" fill="none" /></svg>
+      Traffic
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M3 12h18M12 3v18" stroke="white" stroke-width="2" fill="none" /></svg>
+      Transit
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 2,22 22,22" stroke="white" stroke-width="2" fill="none" /></svg>
+      Alerts
+    </a>
+  </div>
+</div>
+
+</div>
+
   <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
   <button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
@@ -276,6 +369,21 @@ if (navigator.geolocation) {
       fetchAndDisplay();
       setInterval(fetchAndDisplay, 15000);
     }
+  <script>
+    const menuButton = document.getElementById("menuButton");
+    const dropdownMenu = document.getElementById("dropdownMenu");
+
+    menuButton.addEventListener("click", () => {
+      dropdownMenu.classList.toggle("hidden");
+    });
+
+    window.addEventListener("click", (e) => {
+      if (!menuButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
+        dropdownMenu.classList.add("hidden");
+      }
+    });
+  </script>
+
   });
 }
   </script>
