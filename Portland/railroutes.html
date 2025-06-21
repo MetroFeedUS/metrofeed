@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
@@ -112,90 +110,102 @@
       text-decoration: underline;
     }
 
-    .home-button {
+    /* BACK BUTTON */
+    .back-button {
       position: fixed;
-      top: 120px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
       background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1001;
       box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
     }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
+    .back-button:active, .back-button:focus {
+      background-color: #1976d2;
     }
-}
-
-
-
+    .back-button svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button:active svg,
+    .back-button:focus svg {
+      fill: #fff;
+    }
   </style>
 </head>
 
 <body>
 
 <header>
-    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
-  </header>
+  <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+</header>
 
-  <a href="PortlandHome.html" class="home-button">🏠</a>
+<!-- BACK BUTTON -->
+<button class="back-button" onclick="history.back()" aria-label="Go back">
+  <!-- Left Arrow SVG -->
+  <svg viewBox="0 0 24 24">
+    <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+  </svg>
+</button>
 
-  <!-- Beta Disclaimer -->
-  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
-    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
-  </div>
+<!-- Beta Disclaimer -->
+<div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+  ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+</div>
 
-  <main>
-    <h2>Portland, OR - Rail Routes</h2>
+<main>
+  <h2>Portland, OR - Rail Routes</h2>
+  <div class="route-list" id="railList"></div>
+</main>
 
-    <div class="route-list" id="railList"></div>
-
-  </main>
-
-  <script>
-    
-if (document.referrer === "" && performance.navigation.type === 0) {
+<script>
+  if (document.referrer === "" && performance.navigation.type === 0) {
     // No referrer + user opened directly = likely a bookmark
     window.location.href = "/index.html";
   }
 
-    const railList = document.getElementById('railList');
+  const railList = document.getElementById('railList');
 
-    const rails = [
-      { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
-      { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
-      { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
-      { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
-      { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
-      { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
+  const rails = [
+    { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
+    { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
+    { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
+    { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
+    { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
+    { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
+  ];
 
-    ];
+  rails.forEach(rail => {
+    const div = document.createElement('div');
+    div.className = `route-entry ${rail.className}`;
+    div.innerHTML = `
+      <div onclick="toggleDirections('${rail.id}')">${rail.label}</div>
+      <div id="directions-${rail.id}" class="direction-buttons" style="display: none;">
+        <a href="Rail routes/route-${rail.id}-dir0.html" class="direction-link">➡ ${rail.dir0}</a><br>
+        ${rail.dir1 ? `<a href="Rail routes/route-${rail.id}-dir1.html" class="direction-link">⬅ ${rail.dir1}</a>` : ''}
+      </div>
+    `;
+    railList.appendChild(div);
+  });
 
-    rails.forEach(rail => {
-      const div = document.createElement('div');
-      div.className = `route-entry ${rail.className}`;
-      div.innerHTML = `
-        <div onclick="toggleDirections('${rail.id}')">${rail.label}</div>
-        <div id="directions-${rail.id}" class="direction-buttons" style="display: none;">
-          <a href="Rail routes/route-${rail.id}-dir0.html" class="direction-link">➡ ${rail.dir0}</a><br>
-          ${rail.dir1 ? `<a href="Rail routes/route-${rail.id}-dir1.html" class="direction-link">⬅ ${rail.dir1}</a>` : ''}
-        </div>
-      `;
-      railList.appendChild(div);
-    });
+  function toggleDirections(id) {
+    const elem = document.getElementById(`directions-${id}`);
+    elem.style.display = (elem.style.display === 'none') ? 'block' : 'none';
+  }
+</script>
 
-    function toggleDirections(id) {
-      const elem = document.getElementById(`directions-${id}`);
-      elem.style.display = (elem.style.display === 'none') ? 'block' : 'none';
-    }
-  </script>
-
-  <footer class="site-footer">
+<footer class="site-footer">
   <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
   <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
   <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
