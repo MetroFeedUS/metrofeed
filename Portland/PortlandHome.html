@@ -10,169 +10,204 @@
   gtag('config', 'G-EL337T4JX4');
 </script>
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portland, OR - MetroFeed</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Portland, OR - MetroFeed Free</title>
 
 <link rel="icon" href="favicon.ico" type="image/x-icon">
 <link rel="apple-touch-icon" href="metrofeedsimplelogo.png">
 <link rel="icon" type="image/png" sizes="512x512" href="metrofeedsimplelogo.png">
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0d0d0d;
-      color: #cccccc;
-    }
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #cccccc;
+    height: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+    overscroll-behavior-y: none;
+  }
 
-    header {
-      background-color: #0d0d0d;
-      padding: 1rem;
-      text-align: center;
-      border-top: 4px solid #4dd0e1;
-      border-bottom: 4px solid #4dd0e1;
-    }
+  header {
+    background-color: #0d0d0d;
+    padding: 1rem;
+    text-align: center;
+    border-top: 4px solid #4dd0e1;
+    border-bottom: 4px solid #4dd0e1;
+  }
 
-    header img {
-      max-width: 200px;
-      height: auto;
-    }
+  header img {
+    max-width: 180px;
+    height: auto;
+  }
 
-    main {
-      padding: 2rem;
-      text-align: center;
-    }
+  /* UPGRADE BUTTON (top-right) */
+  .upgrade-btn {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 2000;
+    background: #F7630C;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    width: 52px;
+    height: 52px;
+    box-shadow: 0 0 10px #ff7c2b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.99rem;
+    transition: background 0.2s;
+  }
+  .upgrade-btn:hover,
+  .upgrade-btn:focus {
+    background: #fff;
+    color: #F7630C;
+    border: 2px solid #F7630C;
+    outline: none;
+  }
 
-    .section-link {
-      display: block;
-      margin: 1rem auto;
-      padding: 1.5rem 3rem;
-      font-size: 1.2rem;
-      font-weight: bold;
-      background-color: #4dd0e1;
-      color: #0d0d0d;
-      text-decoration: none;
-      border-radius: 12px;
-      box-shadow: 0 0 10px #4dd0e1;
-      transition: transform 0.2s ease-in-out;
-      width: 90%;
-      max-width: 300px;
-    }
+  main {
+    padding: 1.1rem 0.7rem 0 0.7rem;
+    text-align: center;
+    max-width: 480px;
+    margin: 0 auto;
+  }
 
-    .section-link:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px #4dd0e1;
-    }
+  .section-link {
+    display: block;
+    margin: 1.2rem auto 0 auto;
+    padding: 1.25rem 0.6rem;
+    font-size: 1.11rem;
+    font-weight: bold;
+    background-color: #4dd0e1;
+    color: #0d0d0d;
+    text-decoration: none;
+    border-radius: 12px;
+    box-shadow: 0 0 10px #4dd0e1;
+    transition: transform 0.18s, box-shadow 0.18s;
+    width: 98%;
+    max-width: 340px;
+    letter-spacing: 0.01em;
+  }
 
-    .sidebar-ad {
-      position: fixed;
-      right: 10px;
-      bottom: 10px;
-      background-color: #1e1e1e;
-      color: #39ff14;
-      padding: 1rem;
-      font-size: 0.9rem;
-      border: 2px dashed #4dd0e1;
-      border-radius: 8px;
-      width: 160px;
-      text-align: center;
-      z-index: 999;
-    }
+  .section-link:hover,
+  .section-link:focus {
+    transform: scale(1.03);
+    box-shadow: 0 0 18px #4dd0e1;
+    background: #1976d2;
+    color: #fff;
+    outline: none;
+  }
 
-    .site-footer {
-      text-align: center;
-      margin-top: 2rem;
-      margin-bottom: 120px;
-      font-size: 0.8rem;
-      color: #888;
-    }
+  /* CHANGE CITY BUTTON (bottom) */
+  .change-city-btn {
+    display: block;
+    width: 98%;
+    max-width: 340px;
+    margin: 2.4rem auto 0.8rem auto;
+    padding: 1.1rem 0;
+    background: #F7630C;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.13rem;
+    font-weight: bold;
+    box-shadow: 0 0 8px #f7630c70;
+    transition: background 0.16s, color 0.16s;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  .change-city-btn:hover, .change-city-btn:focus {
+    background: #fff;
+    color: #F7630C;
+    border: 2px solid #F7630C;
+    outline: none;
+  }
 
-    .site-footer a {
-      color: #4dd0e1;
-      text-decoration: none;
-    }
+  .site-footer {
+    text-align: center;
+    margin-top: 2rem;
+    margin-bottom: 100px;
+    font-size: 0.8rem;
+    color: #888;
+  }
 
-    .site-footer a:hover {
-      text-decoration: underline;
-    }
+  .site-footer a {
+    color: #4dd0e1;
+    text-decoration: none;
+    margin: 0 6px;
+  }
 
-    #installPrompt {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #1e1e1e;
-      color: #fff;
-      padding: 1.5rem;
-      text-align: center;
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      max-width: 90%;
-      width: 320px;
-      z-index: 10000;
-      box-shadow: 0 0 10px #4dd0e1;
-    }
+  .site-footer a:hover { text-decoration: underline; }
 
-    #installPrompt button {
-      display: block;
-      margin: 0.5rem auto;
-      padding: 0.6rem 1.2rem;
-      background-color: #4dd0e1;
-      color: #0d0d0d;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      width: 90%;
-      max-width: 240px;
-    }
+  #installPrompt {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1e1e1e;
+    color: #fff;
+    padding: 1.5rem;
+    text-align: center;
+    border: 2px solid #4dd0e1;
+    border-radius: 12px;
+    max-width: 90%;
+    width: 320px;
+    z-index: 10000;
+    box-shadow: 0 0 10px #4dd0e1;
+  }
 
-    /* BACK BUTTON */
-    .back-button {
-      position: fixed;
-      top: 20px;
-      left: 20px;
+  #installPrompt button {
+    display: block;
+    margin: 0.5rem auto;
+    padding: 0.6rem 1.2rem;
+    background-color: #4dd0e1;
+    color: #0d0d0d;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 90%;
+    max-width: 240px;
+  }
+
+  .disabled-link {
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Responsive Tweaks */
+  @media (max-width: 480px) {
+    main { padding: 1.1rem 2vw 0 2vw; }
+    .section-link, .change-city-btn {
+      font-size: 1.01rem;
+      min-height: 45px;
+      max-width: 99vw;
+    }
+    .upgrade-btn {
+      top: 12px;
+      right: 8px;
       width: 45px;
       height: 45px;
-      background-color: #4dd0e1;
-      border: 2px solid #000;
+      font-size: 0.98rem;
       border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1001;
-      box-shadow: 0 0 10px #4dd0e1;
-      cursor: pointer;
-      transition: background 0.2s;
-      outline: none;
     }
-    .back-button:active, .back-button:focus {
-      background-color: #1976d2;
-    }
-    .back-button svg {
-      width: 24px;
-      height: 24px;
-      fill: #000;
-      display: block;
-    }
-    .back-button:active svg,
-    .back-button:focus svg {
-      fill: #fff;
-    }
-
-    .disabled-link {
-      pointer-events: none;
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  </style>
+    header img { max-width: 88vw; }
+  }
+</style>
 </head>
 <body>
 
- <div id="installPrompt">
+<div id="installPrompt">
   <strong>📲 Add MetroFeed Portland to your home screen</strong><br>
   <small>Use MetroFeed like an app for faster access!</small><br><br>
   <a href="AndroidInstructions.html"><button>Android Instructions</button></a>
@@ -181,75 +216,71 @@
   <button onclick="localStorage.setItem('neverShowInstallPrompt', 'true'); document.getElementById('installPrompt').style.display='none'">Done / Don’t ask again</button>
 </div>
 
-  <header>
-    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
-  </header>
+<header>
+  <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+</header>
 
-  <!-- BACK BUTTON -->
-  <button class="back-button" onclick="history.back()" aria-label="Go back">
-    <!-- Left Arrow SVG -->
-    <svg viewBox="0 0 24 24">
-      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
-    </svg>
-  </button>
+<!-- UPGRADE BUTTON (TOP RIGHT) -->
+<button class="upgrade-btn" onclick="location.href='premium.html'">Upgrade</button>
 
-  <div class="disclaimer" style="margin:1rem auto 0.5rem;max-width:600px;font-size:0.8rem;color:#bbb;text-align:center;padding:0.5rem 1rem;background:#111;border:1px dashed #444;border-radius:6px;">
-    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
-  </div>
+<div class="disclaimer" style="margin:1rem auto 0.5rem;max-width:600px;font-size:0.8rem;color:#bbb;text-align:center;padding:0.5rem 1rem;background:#111;border:1px dashed #444;border-radius:6px;">
+  ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+</div>
 
-  <main>
-    <h2>Portland, OR Dashboard</h2>
-    <a href="BusRoutesMain.html" class="section-link">Bus Routes</a>
-    <a href="railroutes.html" class="section-link">Rail Routes</a>
-    <a href="Trafficmap.html" class="section-link">Traffic Map</a>
-    <a href="TrafficCameras.html" class="section-link">Traffic Cams</a>
-    <a href="portlandweather.html" class="section-link">Weather</a>
-    <a href="alerts.html" class="section-link">Alerts</a>
-    <a href="portland-earthquake.html" class="section-link">Earthquakes</a>
-    <div style="height:2rem;"></div>
-  </main>
+<main>
+  <h2>Portland, OR Dashboard</h2>
+  <a href="BusRoutesMain.html" class="section-link">Bus Routes</a>
+  <a href="railroutes.html" class="section-link">Rail Routes</a>
+  <a href="TrafficCameras.html" class="section-link">Traffic Cams</a>
+  <a href="portlandweather.html" class="section-link">Weather</a>
+  <a href="alerts.html" class="section-link">Alerts</a>
+  <a href="portland-earthquake.html" class="section-link">Earthquakes</a>
+  <button class="change-city-btn" onclick="location.href='cityselect.html'">Change City</button>
+  <div style="height:2rem;"></div>
+</main>
 
-  <script>
-   const daysBetweenPrompts = 3;
-   const lastPrompt = localStorage.getItem('lastInstallPrompt');
-   const neverShow = localStorage.getItem('neverShowInstallPrompt');
-   const now = Date.now();
+<script>
+  // Install prompt logic
+  const daysBetweenPrompts = 3;
+  const lastPrompt = localStorage.getItem('lastInstallPrompt');
+  const neverShow = localStorage.getItem('neverShowInstallPrompt');
+  const now = Date.now();
 
-   if (!window.matchMedia('(display-mode: standalone)').matches
-       && !neverShow
-       && (!lastPrompt || now - parseInt(lastPrompt) > daysBetweenPrompts * 86400000)) {
-     window.addEventListener('load', () => {
-       document.getElementById('installPrompt').style.display = 'block';
-       localStorage.setItem('lastInstallPrompt', now.toString());
-     });
-   }
-  </script>
+  if (!window.matchMedia('(display-mode: standalone)').matches
+      && !neverShow
+      && (!lastPrompt || now - parseInt(lastPrompt) > daysBetweenPrompts * 86400000)) {
+    window.addEventListener('load', () => {
+      document.getElementById('installPrompt').style.display = 'block';
+      localStorage.setItem('lastInstallPrompt', now.toString());
+    });
+  }
+</script>
 
-  <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-    <a href="privacy.html">Privacy Policy</a>
-  </footer>
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
 
-  <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#333;color:#fff;padding:1rem;z-index:1000;font-size:0.9rem;line-height:1.4;text-align:center;">
-    📢 We use cookies to improve functionality and analyze traffic.
-    By using MetroFeed, you agree to our 
-    <a href="privacy.html" style="color:#4dd0e1;text-decoration:underline;">Privacy Policy</a>.<br>
-    <button onclick="acceptCookies()" style="margin-top:0.5rem;background:#4dd0e1;color:#000;border:none;padding:0.5rem 1rem;border-radius:5px;cursor:pointer;font-weight:bold;">OK</button>
-  </div>
+<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#333;color:#fff;padding:1rem;z-index:1000;font-size:0.9rem;line-height:1.4;text-align:center;">
+  📢 We use cookies to improve functionality and analyze traffic.
+  By using MetroFeed, you agree to our 
+  <a href="privacy.html" style="color:#4dd0e1;text-decoration:underline;">Privacy Policy</a>.<br>
+  <button onclick="acceptCookies()" style="margin-top:0.5rem;background:#4dd0e1;color:#000;border:none;padding:0.5rem 1rem;border-radius:5px;cursor:pointer;font-weight:bold;">OK</button>
+</div>
 
-  <script>
-    function acceptCookies() {
-      localStorage.setItem("cookieConsent", "true");
-      document.getElementById("cookie-banner").style.display = "none";
+<script>
+  function acceptCookies() {
+    localStorage.setItem("cookieConsent", "true");
+    document.getElementById("cookie-banner").style.display = "none";
+  }
+  window.onload = () => {
+    if (!localStorage.getItem("cookieConsent")) {
+      document.getElementById("cookie-banner").style.display = "block";
     }
-    window.onload = () => {
-      if (!localStorage.getItem("cookieConsent")) {
-        document.getElementById("cookie-banner").style.display = "block";
-      }
-    };
-  </script>
+  };
+</script>
 </body>
 </html>
