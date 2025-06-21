@@ -1,27 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-EL337T4JX4');
-  </script>
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portland, OR Rail Routes - MetroFeed</title>
+  <title>Portland, OR Transit - MetroFeed</title>
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #0d0d0d;
       color: #cccccc;
     }
-
     header {
       background-color: #0d0d0d;
       padding: 1rem;
@@ -29,53 +18,60 @@
       border-top: 4px solid #4dd0e1;
       border-bottom: 4px solid #4dd0e1;
     }
-
     header img {
       max-width: 200px;
       height: auto;
     }
-
     main {
       padding: 2rem 1rem;
       text-align: center;
     }
-
     h2 {
       color: #f0f0f0;
       margin-bottom: 1rem;
     }
-
+    .search-bar {
+      margin: 1rem auto 2rem;
+      max-width: 340px;
+    }
+    .search-bar input {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: 2px solid #4dd0e1;
+      font-size: 1rem;
+      background-color: #1e1e1e;
+      color: #ffffff;
+    }
     .route-list {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-
     .route-entry {
       background-color: #1e1e1e;
       color: #ffffff;
       border-radius: 10px;
-      margin: 0.5rem 0;
-      padding: 0.8rem 1.2rem;
+      box-shadow: 0 0 10px #4dd0e1;
+      margin: 0.2rem 0;
+      padding: 0.5rem 1rem;
       width: 90%;
       max-width: 340px;
       font-size: 1rem;
       font-weight: bold;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .route-entry a {
+      color: #4dd0e1;
+      text-decoration: none;
       cursor: pointer;
     }
-
-    /* Line Colors */
-    .red-line { box-shadow: 0 0 10px #ff0000; }
-    .blue-line { box-shadow: 0 0 10px #0071ce; }
-    .yellow-line { box-shadow: 0 0 10px #ffcc00; }
-    .green-line { box-shadow: 0 0 10px #00cc66; }
-    .orange-line { box-shadow: 0 0 10px #ff6600; }
-    .silver-line { box-shadow: 0 0 10px #cccccc; }
-
     .direction-buttons {
       margin-top: 0.5rem;
+      display: none;
     }
-
     .direction-link {
       display: inline-block;
       background-color: #1e1e1e;
@@ -87,12 +83,10 @@
       text-decoration: none;
       box-shadow: 0 0 5px #4dd0e1;
     }
-
     .direction-link:hover {
       background-color: #4dd0e1;
       color: #0d0d0d;
     }
-
     .site-footer {
       text-align: center;
       margin-top: 2rem;
@@ -100,16 +94,13 @@
       font-size: 0.8rem;
       color: #888;
     }
-
     .site-footer a {
       color: #4dd0e1;
       text-decoration: none;
     }
-
     .site-footer a:hover {
       text-decoration: underline;
     }
-
     /* BACK BUTTON */
     .back-button {
       position: fixed;
@@ -129,7 +120,8 @@
       transition: background 0.2s;
       outline: none;
     }
-    .back-button:active, .back-button:focus {
+    .back-button:active,
+    .back-button:focus {
       background-color: #1976d2;
     }
     .back-button svg {
@@ -144,53 +136,202 @@
     }
   </style>
 </head>
-
 <body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+  </header>
 
-<header>
-  <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
-</header>
+  <!-- BACK BUTTON -->
+  <button class="back-button" onclick="history.back()" aria-label="Go back">
+    <!-- Left Arrow SVG -->
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
-<!-- BACK BUTTON -->
-<button class="back-button" onclick="history.back()" aria-label="Go back">
-  <!-- Left Arrow SVG -->
-  <svg viewBox="0 0 24 24">
-    <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
-  </svg>
-</button>
+  <main>
+    <h2>Portland, OR - Bus Routes</h2>
 
-<!-- Beta Disclaimer -->
-<div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
-  ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
-</div>
+    <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+      ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+    </div>
 
-<main>
-  <h2>Portland, OR - Rail Routes</h2>
+    <div class="search-bar">
+      <input type="text" id="routeSearch" placeholder="Search for a route...">
+    </div>
 
-  <div class="route-list" id="railList"></div>
-</main>
+    <div class="route-list" id="routeList"></div>
+  </main>
 
-<script>
-  if (document.referrer === "" && performance.navigation.type === 0) {
-    // No referrer + user opened directly = likely a bookmark
-    window.location.href = "/index.html";
-  }
+  <script>
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      // No referrer + user opened directly = likely a bookmark
+      window.location.href = "/index.html";
+    }
 
-  const railList = document.getElementById('railList');
+    const favoriteCity = localStorage.getItem('favoriteCity');
+    if (favoriteCity) {
+      console.log("Favorite city:", favoriteCity);
+      const header = document.querySelector("h1");
+      if (header) {
+        const tag = document.createElement("div");
+        tag.textContent = `⭐ Favorite City: ${favoriteCity}`;
+        tag.style.fontSize = "1rem";
+        tag.style.color = "#ffcc00";
+        tag.style.marginBottom = "1rem";
+        header.insertAdjacentElement("afterend", tag);
+      }
+    }
 
-  const rails = [
-    { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
-    { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
-    { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
-    { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
-    { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
-    { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
-  ];
+    const routeList = document.getElementById('routeList');
+    const searchInput = document.getElementById('routeSearch');
 
-  rails.forEach(rail => {
-    const div = document.createElement('div');
-    div.className = `route-entry ${rail.className}`;
-    div.innerHTML = `
-      <div onclick="toggleDirections('${rail.id}')">${rail.label}</div>
-      <div id="directions-${rail.id}" class="direction-buttons" style="display: none;">
-        <a href="Rail routes/route-${rail.id}-dir0.html" class="direction-link">➡ ${ra
+    const routes = [
+      // 🔥🔥🔥 PLACE YOUR FINAL ROUTES ARRAY HERE 🔥🔥🔥
+       { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
+  { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
+  { id: '4', label: '4 – Fessenden', dir0: 'To St Johns', dir1: 'To Portland City Center' },
+  { id: '6', label: '6 – Martin Luther King Jr Blvd', dir0: 'To Jantzen Beach', dir1: 'To Portland City Center' },
+  { id: '8', label: '8 – Jackson Park/NE 15th', dir0: 'To Marquam Hill', dir1: 'To NE M L King Jr Blvd & Lombard' },
+  { id: '9', label: '9 – Powell Blvd', dir0: 'To Powell & 92nd or Gresham Central Transit Center', dir1: 'To Portland City Center' },
+  { id: '10', label: '10 – Harold St', dir0: 'To Foster & 94th', dir1: 'To Portland City Center' },
+  { id: '11', label: '11 – Rivergate/Marine Dr', dir0: 'To Vancouver Way & Middlefield', dir1: 'To St Johns' },
+  { id: '12', label: '12 – Barbur/Sandy Blvd', dir0: 'To Tigard Transit Center', dir1: 'To Parkrose/Sumner Transit Center' },
+  { id: '14', label: '14 – Hawthorne/Foster', dir0: 'To Foster & 94th', dir1: 'To Portland City Center' },
+  { id: '15', label: '15 – Belmont/NW 23rd', dir0: 'To City Ctr, NW 23rd, Montgomery Pk or Yeon & 44th', dir1: 'To Gateway Transit Center' },
+  { id: '16', label: '16 – Front Ave/St Helens Rd', dir0: 'To St Johns and Sauvie Island', dir1: 'To Portland' },
+  { id: '17', label: '17 – Holgate/Broadway', dir0: 'To Holgate & 122nd', dir1: 'To Saratoga & 27th' },
+  { id: '18', label: '18 – Hillside', dir0: 'To Hillside and Providence Park', dir1: '' },
+  { id: '19', label: '19 – Woodstock/Glisan', dir0: 'To Mt. Scott & 112th', dir1: 'To Gateway Transit Center' },
+  { id: '20', label: '20 – Burnside/Stark', dir0: 'To Beaverton Transit Center', dir1: 'To Gresham Central Transit Center' },
+  { id: '21', label: '21 – Sandy Blvd/223rd', dir0: 'To Parkrose/Sumner Transit Center', dir1: 'To Gresham Central Transit Center' },
+  { id: '22', label: '22 – Parkrose', dir0: 'To Parkrose', dir1: 'To Gateway Transit Center' },
+  { id: '23', label: '23 – San Rafael', dir0: 'To Sandy & 148th', dir1: 'To Gateway Transit Center' },
+  { id: '24', label: '24 – Fremont/NW 18th', dir0: 'To SW Columbia & 18th', dir1: 'To Gateway Transit Center' },
+  { id: '25', label: '25 – Glisan/Troutdale Rd', dir0: 'To Mt Hood Community College', dir1: 'To Gateway Transit Center' },
+  { id: '26', label: '26 – Thurman/NW 18th', dir0: 'To NW Thurman & Gordon', dir1: 'To SW 18th & Salmon' },
+  { id: '29', label: '29 – Lake/Webster Rd', dir0: 'To Clackamas Town Center', dir1: 'To Milwaukie' },
+  { id: '30', label: '30 – Estacada', dir0: 'To Estacada', dir1: 'To Clackamas Town Center' },
+  { id: '31', label: '31 – Webster Rd', dir0: 'To Oregon City Transit Center', dir1: 'To Clackamas Town Center' },
+  { id: '32', label: '32 – Oatfield', dir0: 'To Clackamas Community College', dir1: 'To Oregon City Transit Center or Milwaukie' },
+  { id: '33', label: '33 – McLoughlin/King Rd', dir0: 'To Oregon City TC and Clackamas Community College', dir1: 'To Milwaukie and Clackamas Town Center' },
+  { id: '34', label: '34 – Linwood/River Rd', dir0: 'To Clackamas Heights', dir1: 'To Clackamas Town Center' },
+  { id: '35', label: '35 – Macadam/Greeley', dir0: 'To Oregon City Transit Center', dir1: 'To University of Portland' },
+  { id: '37', label: '37 – Lake Grove', dir0: 'To Tualatin Park & Ride', dir1: 'To Lake Oswego Transit Center' },
+  { id: '38', label: '38 – Boones Ferry Rd', dir0: 'To Tualatin Park & Ride', dir1: 'To Portland City Center' },
+  { id: '39', label: '39 – Arnold Creek/Hillsdale', dir0: 'To Barbur Transit Center', dir1: 'To Hillsdale' },
+  { id: '40', label: '40 – Tacoma/Swan Island', dir0: 'To SE Tacoma Park & Ride', dir1: 'To Swan Island' },
+ { id: '43', label: '43 – Taylors Ferry/Marquam Hill', dir0: 'To Tigard Transit Center', dir1: 'To Marquam Hill' },
+{ id: '44', label: '44 – Capitol Hwy/Mocks Crest', dir0: 'To PCC Sylvania', dir1: 'To St Johns' },
+{ id: '45', label: '45 – Garden Home', dir0: 'To Tigard Transit Center', dir1: 'To Portland City Center' },
+{ id: '46', label: '46 – North Hillsboro', dir0: 'To Hillsboro Brookwood Library', dir1: 'To Hillsboro Transit Center' },
+{ id: '47', label: '47 – Main/Baseline', dir0: 'To Hillsboro Transit Center', dir1: 'To Willow Creek Transit Center' },
+{ id: '48', label: '48 – Cornell', dir0: 'To Hillsboro Transit Center', dir1: 'To Sunset Transit Center' },
+{ id: '51', label: '51 – Vista/Sunset Blvd', dir0: 'To Bertha & Barbur or Council Crest', dir1: 'To SW Columbia & 18th' },
+{ id: '52', label: '52 – Farmington/185th', dir0: 'To PCC Rock Creek', dir1: 'To Beaverton Transit Center' },
+{ id: '53', label: '53 – Arctic/Allen', dir0: 'Evening Loop', dir1: 'Morning Loop' },
+{ id: '54', label: '54 – Beaverton-Hillsdale Hwy', dir0: 'To Beaverton Transit Center', dir1: 'To Portland City Center' },
+{ id: '55', label: '55 – Hamilton', dir0: 'To Raleigh Hills', dir1: 'To Portland City Center' },
+{ id: '56', label: '56 – Scholls Ferry/Marquam Hill', dir0: 'To Washington Square Transit Center', dir1: 'To Marquam Hill' },
+{ id: '57', label: '57 – TV Hwy/Forest Grove', dir0: 'To Forest Grove', dir1: 'To Beaverton Transit Center' },
+{ id: '58', label: '58 – Canyon Rd', dir0: 'To Beaverton Transit Center', dir1: 'To Portland City Center' },
+{ id: '59', label: '59 – Walker/Park Way', dir0: 'To Willow Creek/SW 185th Ave Transit Center', dir1: 'To Sunset Transit Center' },
+{ id: '62', label: '62 – Murray Blvd', dir0: 'To Washington Square Transit Center', dir1: 'To Sunset Transit Center' },
+{ id: '63', label: '63 – Washington Park/SW 6th', dir0: 'To Rose Garden/Japanese Garden', dir1: 'To Portland City Center' },
+{ id: '67', label: '67 – Bethany/158th', dir0: 'To PCC Rock Creek', dir1: 'To Merlo Rd/158th Ave' },
+{ id: '70', label: '70 – 12th/NE 33rd Ave', dir0: 'To 33rd & Sunderland', dir1: 'To Milwaukie' },
+{ id: '71', label: '71 – 60th Ave', dir0: 'To Clackamas Town Center', dir1: 'To Parkrose Transit Center' },
+{ id: '72', label: '72 – Killingsworth/82nd Ave', dir0: 'To Swan Island', dir1: 'To Clackamas Town Center' },
+{ id: '73', label: '73 – 122nd Ave', dir0: 'To Foster & 94th', dir1: 'To Parkrose Transit Center' },
+{ id: '74', label: '74 – 162nd Ave', dir0: 'To 158th & Airport Way', dir1: 'To Powell & 182nd' },
+{ id: '75', label: '75 – Cesar Chavez/Lombard', dir0: 'To St Johns', dir1: 'To Milwaukie' },
+{ id: '76', label: '76 – Hall/Greenburg', dir0: 'To Meridian Park Hospital or Oregon City TC', dir1: 'To Beaverton Transit Center' },
+{ id: '77', label: '77 – Broadway/Halsey', dir0: 'To Troutdale Frontage Rd or TRIP', dir1: 'To Montgomery Park' },
+{ id: '78', label: '78 – Denney/Kerr Pkwy', dir0: 'To Lake Oswego Transit Center', dir1: 'To Beaverton Transit Center' },
+{ id: '79', label: '79 – Clackamas/Oregon City', dir0: 'To Oregon City Transit Center', dir1: 'To Clackamas Town Center' },
+{ id: '81', label: '81 – Kane/257th', dir0: 'To Troutdale Reynolds Industrial Park', dir1: 'To Gresham Central Transit Center' },
+{ id: '82', label: '82 – South Gresham', dir0: 'To Powell & 182nd', dir1: 'To Gresham Village' },
+{ id: '84', label: '84 – Powell Valley/Orient Dr', dir0: 'Evening Loop', dir1: 'Morning Loop' },
+{ id: '86', label: '86 – 148th Ave', dir0: 'To Relay Resources', dir1: 'To Foster & 94th' },
+{ id: '87', label: '87 – Airport Way/181st', dir0: 'To Powell & 182nd', dir1: 'To Gateway Transit Center' },
+{ id: '88', label: '88 – Hart/198th', dir0: 'To Willow Creek/SW 185th Ave Transit Center', dir1: 'To Beaverton Transit Center' },
+{ id: '94', label: '94 – Tigard/Sherwood', dir0: 'To Sherwood', dir1: 'To Tigard' },
+{ id: '96', label: '96 – Tualatin/I-5', dir0: 'To Commerce Circle', dir1: 'To Portland City Center' },
+{ id: '97', label: '97 – Tualatin-Sherwood Rd', dir0: 'To SW Langer Dr/Sherwood Plaza', dir1: 'To Tualatin WES Station' },
+{ id: '98', label: '98 – MAX Shuttle', dir0: 'Eastbound', dir1: 'Westbound' },
+{ id: '152', label: '152 – Milwaukie', dir0: 'To Clackamas Town Center', dir1: 'To Milwaukie' },
+{ id: '153', label: '153 – Stafford/Salamo', dir0: 'To Willamette', dir1: 'To Lake Oswego Transit Center' },
+{ id: '155', label: '155 – Sunnyside', dir0: 'To 172nd', dir1: 'To Clackamas Town Center' },
+{ id: '156', label: '156 – Mather Rd', dir0: 'To 147th & Oregon Trail', dir1: 'To Clackamas Town Center' },
+{ id: '287', label: '287 – Blue Eastside Bus', dir0: 'To Cleveland Ave Park & Ride', dir1: 'To Goose Hollow/SW Jefferson' },
+{ id: '288', label: '288 – Blue Westside Bus', dir0: 'To Willow Creek TC or Hatfield Government Center', dir1: 'To Willow Creek TC or Rose Quarter TC' },
+{ id: '291', label: '291 – Orange Bus', dir0: 'To Milwaukie', dir1: 'To Portland City Center' },
+{ id: '292', label: '292 – Red Bus', dir0: 'To Portland International Airport', dir1: 'To Goose Hollow/SW Jefferson' },
+{ id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
+
+
+    ];
+
+    routes.forEach(route => {
+      const div = document.createElement('div');
+      div.className = 'route-entry';
+      div.innerHTML = `
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+          <div onclick="toggleDirections('${route.id}')">
+            <a>${route.label}</a>
+          </div>
+        </div>
+        <div id="directions-${route.id}" class="direction-buttons">
+          <a href="pythonbusroutes/route-${route.id}-dir0.html" class="direction-link">➡ ${route.dir0}</a><br>
+          <a href="pythonbusroutes/route-${route.id}-dir1.html" class="direction-link">⬅ ${route.dir1}</a>
+        </div>
+      `;
+      routeList.appendChild(div);
+    });
+
+    function toggleDirections(id) {
+      const elem = document.getElementById(`directions-${id}`);
+      if (elem) {
+        elem.style.display = (elem.style.display === 'none' || elem.style.display === '') ? 'block' : 'none';
+      }
+    }
+
+    searchInput.addEventListener('input', function () {
+      const filter = this.value.toLowerCase();
+      const entries = document.querySelectorAll('.route-entry');
+      entries.forEach(entry => {
+        entry.style.display = entry.textContent.toLowerCase().includes(filter) ? '' : 'none';
+      });
+    });
+  </script>
+
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <div id="cookie-banner" style="display:none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+    📢 We use cookies to improve functionality and analyze traffic.
+    By using MetroFeed, you agree to our 
+    <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.<br>
+    <button onclick="acceptCookies()" style="margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
+  </div>
+
+  <script>
+    function acceptCookies() {
+      localStorage.setItem("cookieConsent", "true");
+      document.getElementById("cookie-banner").style.display = "none";
+    }
+
+    window.onload = function () {
+      if (!localStorage.getItem("cookieConsent")) {
+        const banner = document.getElementById("cookie-banner");
+        if (banner) banner.style.display = "block";
+      }
+    };
+  </script>
+</body>
+</html>
