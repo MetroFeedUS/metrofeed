@@ -62,60 +62,21 @@
     }
 
     .side-buttons {
-    position: relative;
-    width: 45px;
-    height: 45px;
-    z-index: 1001;
-    background-color: #4dd0e1;
-    border: 2px solid #000;
-    border-radius: 10px;
-    box-shadow: 0 0 10px #4dd0e1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-  }
+      position: absolute;
+      width: 45px;
+      height: 45px;
+      z-index: 1001;
+      background-color: #4dd0e1;
+      border: 2px solid #000;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
 
-  .svg-icon {
-    width: 20px;
-    height: 20px;
-  }
-
-  .menu-container {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-  }
-
-  .dropdown-menu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: #333;
-    width: 45px;
-    flex-direction: column;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .dropdown-menu.show {
-    display: flex;
-  }
-
-  .dropdown-menu a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px;
-    text-decoration: none;
-    border-bottom: 1px solid #444;
-  }
-
-  .dropdown-menu a:hover {
-    background-color: #444;
-  }
     #menuBtn {
       top: 60px;
       left: 10px;
@@ -195,23 +156,7 @@
 <body>
   <div id="map"></div>
 
-  <div class="menu-container">
-  <button class="side-buttons" onclick="toggleMenu()">
-    <img src="menu.svg" alt="Menu" class="svg-icon" />
-  </button>
-
-  <!-- Dropdown Menu -->
-  <div class="dropdown-menu" id="dropdown">
-    <a href="page1.html"><img src="page1.svg" alt="Page 1" class="svg-icon" /></a>
-    <a href="page2.html"><img src="page2.svg" alt="Page 2" class="svg-icon" /></a>
-    <a href="page3.html"><img src="page3.svg" alt="Page 3" class="svg-icon" /></a>
-    <a href="page4.html"><img src="page4.svg" alt="Page 4" class="svg-icon" /></a>
-    <a href="page5.html"><img src="page5.svg" alt="Page 5" class="svg-icon" /></a>
-    <a href="page6.html"><img src="page6.svg" alt="Page 6" class="svg-icon" /></a>
-    <a href="page7.html"><img src="page7.svg" alt="Page 7" class="svg-icon" /></a>
-    <a href="page8.html"><img src="page8.svg" alt="Page 8" class="svg-icon" /></a>
-  </div>
-</div>
+  <button id="menuBtn" class="side-buttons"><a href="portlandhome.html"><img src="005-list.svg" alt="Menu" /></a></button>
   <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
   <button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
@@ -331,18 +276,6 @@ if (navigator.geolocation) {
       fetchAndDisplay();
       setInterval(fetchAndDisplay, 15000);
     }
-<script>
-  function toggleMenu() {
-    document.getElementById("dropdown").classList.toggle("show");
-  }
-
-  window.addEventListener("click", function(e) {
-    if (!e.target.closest('.menu-container')) {
-      document.getElementById("dropdown").classList.remove("show");
-    }
-  });
-</script>
-
   });
 }
   </script>
