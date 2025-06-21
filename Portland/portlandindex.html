@@ -4,36 +4,161 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed Portland Map</title>
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
-    #map { height: 100%; width: 100%; position: absolute; top: 0; left: 0; z-index: 0; }
-    .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
-    .search-bar .input-wrapper { display: flex; align-items: center; background-color: #0d0d0d; border: 1px solid #4dd0e1; border-radius: 8px; padding: 5px 10px; }
-    .search-bar input { background: transparent; border: none; color: #cccccc; padding: 5px; width: 100%; }
-    .icon-placeholder { width: 20px; height: 20px; margin-right: 6px; }
-    .go-button { background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; padding: 2px 10px; font-weight: bold; width: 40px; height: 20px; margin: 0 auto; }
-    .side-buttons { position: absolute; width: 45px; height: 45px; z-index: 1001; background-color: #4dd0e1; border: 2px solid #000; border-radius: 10px; box-shadow: 0 0 10px #4dd0e1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
-    #menuBtn { top: 60px; left: 10px; }
-    .dropdown { position: absolute; top: 110px; left: 10px; width: 45px; background-color: #0d0d0d; border: 2px solid #4dd0e1; border-radius: 10px; box-shadow: 0 0 10px #4dd0e1; display: none; flex-direction: column; align-items: center; z-index: 1002; }
-    .dropdown a { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #4dd0e1; background-color: #0d0d0d; }
-    .dropdown a img { width: 20px; height: 20px; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+    .search-bar {
+      position: absolute;
+      top: 10px;
+      left: 60px;
+      right: 60px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .search-bar .input-wrapper {
+      display: flex;
+      align-items: center;
+      background-color: #0d0d0d;
+      border: 1px solid #4dd0e1;
+      border-radius: 8px;
+      padding: 5px 10px;
+    }
+    .search-bar input {
+      background: transparent;
+      border: none;
+      color: #cccccc;
+      padding: 5px;
+      width: 100%;
+    }
+    .icon-placeholder {
+      width: 20px;
+      height: 20px;
+      margin-right: 6px;
+    }
+    .side-buttons {
+      position: absolute;
+      width: 45px;
+      height: 45px;
+      z-index: 1001;
+      background-color: #4dd0e1;
+      border: 2px solid #000;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    #menuBtn {
+      top: 60px;
+      left: 10px;
+    }
+    #accountBtn { top: 10px; left: 10px; }
+    #themeToggleBtn { top: 10px; right: 10px; }
+    #aiChatBtn { top: 60px; right: 10px; }
     .side-buttons img { width: 20px; height: 20px; }
-    footer.site-footer { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); background-color: rgba(30,30,30,0.85); padding: 6px 12px; font-size: 0.75rem; color: #888; text-align: center; border-radius: 8px 8px 0 0; white-space: nowrap; }
-    .site-footer a { color: #4dd0e1; text-decoration: none; margin: 0 6px; }
-    .saved-routes-wrapper { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 1001; display: flex; flex-direction: column; align-items: center; background-color: #000; padding: 5px 10px; border-radius: 10px; }
-    .saved-routes-wrapper-title { color: #4dd0e1; font-size: 0.75rem; margin-bottom: 5px; font-weight: bold; }
-    .saved-routes { display: flex; gap: 10px; }
-    .saved-route-button { width: 40px; height: 40px; background-color: #000; border-radius: 10px; border: 2px solid #4dd0e1; color: #fff; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; text-decoration: none; }
+    .dropdown {
+      position: absolute;
+      top: 110px;
+      left: 10px;
+      width: 45px;
+      background-color: #0d0d0d;
+      border: 2px solid #4dd0e1;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #4dd0e1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1002;
+    }
+    .dropdown a {
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #4dd0e1;
+      background-color: #0d0d0d;
+    }
+    .dropdown a img { width: 20px; height: 20px; }
+    .favorites-wrapper {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #000;
+      padding: 5px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 1001;
+    }
+    .favorites-wrapper span {
+      color: #cccccc;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.75rem;
+    }
+    .favorites-container {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+    .favorite-btn {
+      width: 40px;
+      height: 20px;
+      background-color: #111;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      line-height: 20px;
+      text-align: center;
+      cursor: pointer;
+    }
+    footer.site-footer {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(30,30,30,0.85);
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      color: #888;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+      white-space: nowrap;
+    }
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+      margin: 0 6px;
+    }
+    .site-footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <button id="accountBtn" class="side-buttons" style="top:10px;left:10px;"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
-  <button id="themeToggleBtn" class="side-buttons" style="top:10px;right:10px;"><img src="008-night.svg" alt="Theme Toggle" /></button>
-  <button id="aiChatBtn" class="side-buttons" style="top:60px;right:10px;"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
-  <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu" width="20" height="20"></button>
+  <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
+  <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
+  <button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
+  <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
   <div id="dropdownMenu" class="dropdown">
     <a href="#"><img src="icon1.svg" alt="1"></a>
     <a href="#"><img src="icon2.svg" alt="2"></a>
@@ -53,11 +178,16 @@
       <img class="icon-placeholder" src="racing-flag.svg" alt="Destination" />
       <input id="endInput" type="text" placeholder="Destination" />
     </div>
-    <button id="goBtn" class="go-button">Go</button>
+    <button id="goBtn" style="margin: 0 auto; width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
   </div>
-  <div class="saved-routes-wrapper">
-    <div class="saved-routes-wrapper-title">Favorite Routes</div>
-    <div class="saved-routes" id="savedRoutes"></div>
+  <div class="favorites-wrapper">
+    <span>Favorite Routes</span>
+    <div class="favorites-container">
+      <div id="fav1" class="favorite-btn"></div>
+      <div id="fav2" class="favorite-btn"></div>
+      <div id="fav3" class="favorite-btn"></div>
+      <div id="fav4" class="favorite-btn"></div>
+    </div>
   </div>
   <footer class="site-footer">
     <a href="terms.html">Terms of Use</a>
@@ -66,113 +196,65 @@
     <a href="dmca.html">DMCA</a>
     <a href="privacy.html">Privacy Policy</a>
   </footer>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="mastermap.js"></script>
   <script>
-    const map = L.map('map').setView([45.52, -122.67], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    document.getElementById('menuBtn').addEventListener('click', () => {
-      const dropdown = document.getElementById('dropdownMenu');
-      dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
-    });
-    const colors = ["#0071CE", "#E53935", "#43A047", "#8E24AA"];
-    function renderSavedRoutes() {
-      const container = document.getElementById("savedRoutes");
-      if (!container) return;
-      container.innerHTML = "";
-      const saved = JSON.parse(localStorage.getItem("savedRoutes") || "[]");
-      for (let i = 0; i < 4; i++) {
-        if (saved[i]) {
-          const btn = document.createElement("a");
-          btn.href = saved[i].link;
-          btn.className = "saved-route-button";
-          btn.style.backgroundColor = colors[i];
-          btn.textContent = saved[i].label;
-          container.appendChild(btn);
-        } else {
-          const empty = document.createElement("div");
-          empty.className = "saved-route-button";
-          container.appendChild(empty);
-        }
-      }
-    }
-    renderSavedRoutes();
+    const allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
 
-    const apiKey = "2C4447D4A42083BCD84DE3B8E";
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const userLat = pos.coords.latitude;
-        const userLon = pos.coords.longitude;
-        let closestRoute = null;
-        let closestDist = Infinity;
-        masterRoutes.forEach(route => {
-          route.shape.forEach(([lat, lon]) => {
-            const dist = Math.hypot(userLat - lat, userLon - lon);
-            if (dist < closestDist) {
-              closestDist = dist;
-              closestRoute = route;
-            }
+    function decodeHTMLEntities(text) {
+      const txt = document.createElement("textarea");
+      txt.innerHTML = text;
+      return txt.value;
+    }
+
+    function createAutocomplete(input) {
+      const dropdown = document.createElement("div");
+      dropdown.style.position = "absolute";
+      dropdown.style.background = "#0d0d0d";
+      dropdown.style.border = "1px solid #4dd0e1";
+      dropdown.style.color = "#cccccc";
+      dropdown.style.zIndex = 1002;
+      dropdown.style.maxHeight = "150px";
+      dropdown.style.overflowY = "auto";
+      dropdown.style.fontSize = "0.8rem";
+      dropdown.style.borderRadius = "6px";
+      dropdown.style.padding = "5px 0";
+      dropdown.style.display = "none";
+      dropdown.style.width = input.offsetWidth + "px";
+      input.parentNode.appendChild(dropdown);
+
+      input.addEventListener("input", () => {
+        const query = input.value.trim().toLowerCase();
+        dropdown.innerHTML = "";
+        if (!query) {
+          dropdown.style.display = "none";
+          return;
+        }
+        const matches = allStops.filter(name => name.toLowerCase().includes(query)).slice(0, 5);
+        matches.forEach(name => {
+          const option = document.createElement("div");
+          option.textContent = name;
+          option.style.padding = "4px 10px";
+          option.style.cursor = "pointer";
+          option.addEventListener("click", () => {
+            input.value = name;
+            dropdown.style.display = "none";
           });
+          dropdown.appendChild(option);
         });
-        if (closestRoute) {
-          const polyline = L.polyline(closestRoute.shape, { color: '#0071CE', weight: 4, opacity: 0.7 }).addTo(map);
-          map.fitBounds(polyline.getBounds());
-          const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-          const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
-          closestRoute.stops.forEach(stop => {
-            let highlightedTimes = [];
-            let foundNext = false;
-            stop.times.forEach(timeStr => {
-              let cleanTime = timeStr.trim();
-              let [h, m] = cleanTime.split(":"), schedMins = parseInt(h) * 60 + parseInt(m);
-              if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-              if (!foundNext && schedMins >= nowMins) {
-                highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-                foundNext = true;
-              } else {
-                highlightedTimes.push(cleanTime);
-              }
-            });
-            L.circleMarker([stop.lat, stop.lon], {
-              radius: 6,
-              color: '#4dd0e1',
-              fillColor: '#4dd0e1',
-              fillOpacity: 0.9,
-              weight: 1
-            }).bindPopup(`<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-  <strong style='color:#4dd0e1;'>${stop.name}</strong>
-  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-  ${highlightedTimes.map(t => `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`).join('') || '<div>No scheduled times</div>'}
-</div>`).addTo(map);
-          });
-          let busMarkers = {};
-          async function fetchAndDisplay() {
-            const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
-            const data = await res.json();
-            const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == closestRoute.route_id && v.direction == closestRoute.direction_id);
-            Object.values(busMarkers).forEach(m => map.removeLayer(m));
-            busMarkers = {};
-            if (!buses.length) return;
-            buses.forEach(bus => {
-              if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-              const icon = L.divIcon({
-                className: '',
-                html: `<div style='text-align:center;'>
-                         <div style='background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${bus.vehicleID}</div>
-                         <div style='width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;'></div>
-                       </div>`,
-                iconSize: [40, 30],
-                iconAnchor: [20, 30]
-              });
-              const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-              busMarkers[bus.vehicleID] = marker;
-            });
-          }
-          fetchAndDisplay();
-          setInterval(fetchAndDisplay, 15000);
+        dropdown.style.display = matches.length ? "block" : "none";
+      });
+
+      document.addEventListener("click", e => {
+        if (!dropdown.contains(e.target) && e.target !== input) {
+          dropdown.style.display = "none";
         }
       });
     }
+
+    createAutocomplete(document.getElementById("startInput"));
+    createAutocomplete(document.getElementById("endInput"));
   </script>
 </body>
 </html>
