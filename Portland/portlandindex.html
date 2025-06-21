@@ -403,22 +403,20 @@
     }
   </script>
 
-<!-- ...all your content... -->
-<!-- All other <script> tags ... -->
-
-<!-- MetroFeed Premium Popup Overlay (place before last script and </body>) -->
 <div class="mf-overlay">
   <div class="mf-modal">
     <span class="dev-switch" id="devSwitch" onclick="toggleDevMode()">
       <span id="devModeStatus"></span>
     </span>
     <h2>You're not logged in or don’t have an account</h2>
-    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
-    <div class="mf-actions">
+    <p>
+      Please <b>sign in</b> or <b>sign up</b> to continue, or use the <b>free version</b> below:
+    </p>
+    <div class="mf-actions-row">
       <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
       <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
-      <button class="mf-btn" onclick="location.href='free.html'">Use Free Version</button>
     </div>
+    <button class="mf-btn-orange" onclick="location.href='free.html'">Use Free Version</button>
     <div class="mf-premium">
       Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
       <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
@@ -428,7 +426,56 @@
   </div>
 </div>
 
-<!-- Place DevMode script HERE -->
+<style>
+/* Extra MetroFeed popup button styles */
+.mf-actions-row {
+  display: flex;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  justify-content: center;
+}
+.mf-btn {
+  flex: 1;
+  background: #0d0d0d;
+  color: #4dd0e1;
+  border: 2px solid #fff;
+  font-size: 1.01rem;
+  border-radius: 8px;
+  padding: 0.68rem 0.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background .15s, color .12s, border .18s;
+  min-width: 105px;
+  outline: none;
+  box-shadow: 0 0 6px #4dd0e1aa;
+}
+.mf-btn:hover, .mf-btn:focus {
+  background: #4dd0e1;
+  color: #0d0d0d;
+  border-color: #fff;
+}
+.mf-btn-orange {
+  display: block;
+  width: 100%;
+  margin-bottom: 1.1rem;
+  background: #F7630C !important;
+  color: #fff !important;
+  border: 2px solid #fff;
+  font-size: 1.01rem;
+  border-radius: 8px;
+  padding: 0.7rem 0;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 6px #F7630C55;
+  transition: background .17s, color .17s, border .15s;
+}
+.mf-btn-orange:hover, .mf-btn-orange:focus {
+  background: #fff !important;
+  color: #F7630C !important;
+  border: 2px solid #F7630C;
+}
+</style>
+
 <script>
   // DevMode + Timer logic
   let devMode = (localStorage.getItem('mf_devMode') === 'true');
@@ -448,6 +495,7 @@
 
   const btn = document.getElementById('startTrialBtn');
   const timerEl = document.getElementById('trialTimer');
+
   function msToTime(duration) {
     let seconds = Math.floor((duration / 1000) % 60),
         minutes = Math.floor((duration / (1000 * 60)) % 60),
@@ -455,7 +503,9 @@
         days = Math.floor(duration / (1000 * 60 * 60 * 24));
     return `${days > 0 ? days+'d ' : ''}${hours}h ${minutes}m ${seconds}s`;
   }
+
   function updateTrialTimer() {
+    // DevMode: always allow trial start
     if (devMode) {
       btn.disabled = false;
       btn.textContent = 'Start Free Trial';
@@ -476,22 +526,29 @@
       btn.textContent = 'Trial Active';
       timerEl.textContent = 'Expires in: ' + msToTime(diff);
     } else {
-      btn.disabled = true;
-      btn.textContent = 'Trial Expired';
-      timerEl.textContent = 'Your free trial has ended.';
-      // localStorage.removeItem('mf_trialStart'); // For 24hr repeatable trial, uncomment this.
+      btn.disabled = false; // <--- allow retry after trial ends, but you can change this to true to keep it locked out
+      btn.textContent = 'Start Free Trial';
+      timerEl.textContent = 'Your free trial has ended. Want another? (DevMode only allows repeat)';
     }
   }
+
   btn.onclick = function() {
-    if (devMode || !localStorage.getItem('mf_trialStart')) {
-      localStorage.setItem('mf_trialStart', Date.now().toString());
+    // Only start a new trial if DevMode, or if not started yet, or if trial expired
+    const trialStart = parseInt(localStorage.getItem('mf_trialStart') || '0');
+    const now = Date.now();
+    const expired = trialStart && (now - trialStart > 24*60*60*1000);
+    if (devMode || !trialStart || expired) {
+      localStorage.setItem('mf_trialStart', now.toString());
       updateTrialTimer();
-      // TODO: Unlock premium here!
+      // TODO: Add code to actually unlock premium mode here
+      alert('Premium trial started! (Replace this with your unlock logic)');
     }
   };
+
   updateTrialTimer();
   setInterval(updateTrialTimer, 1000);
 </script>
+
 </body>
 </html>
 
