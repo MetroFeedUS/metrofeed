@@ -33,6 +33,7 @@
       gap: 10px;
     }
     .search-bar .input-wrapper {
+      position: relative;
       display: flex;
       align-items: center;
       background-color: #0d0d0d;
@@ -67,10 +68,7 @@
       justify-content: center;
       padding: 0;
     }
-    #menuBtn {
-      top: 60px;
-      left: 10px;
-    }
+    #menuBtn { top: 60px; left: 10px; }
     #accountBtn { top: 10px; left: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
     #aiChatBtn { top: 60px; right: 10px; }
@@ -209,8 +207,12 @@
     }
 
     function createAutocomplete(input) {
+      const wrapper = input.closest('.input-wrapper');
       const dropdown = document.createElement("div");
       dropdown.style.position = "absolute";
+      dropdown.style.top = "100%";
+      dropdown.style.left = "0";
+      dropdown.style.right = "0";
       dropdown.style.background = "#0d0d0d";
       dropdown.style.border = "1px solid #4dd0e1";
       dropdown.style.color = "#cccccc";
@@ -219,10 +221,8 @@
       dropdown.style.overflowY = "auto";
       dropdown.style.fontSize = "0.8rem";
       dropdown.style.borderRadius = "6px";
-      dropdown.style.padding = "5px 0";
       dropdown.style.display = "none";
-      dropdown.style.width = input.offsetWidth + "px";
-      input.parentNode.appendChild(dropdown);
+      wrapper.appendChild(dropdown);
 
       input.addEventListener("input", () => {
         const query = input.value.trim().toLowerCase();
