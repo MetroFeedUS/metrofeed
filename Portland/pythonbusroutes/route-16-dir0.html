@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
@@ -27,23 +25,37 @@
       overflow-y: auto;
     }
 
-    .home-button {
+    /* BACK BUTTON */
+    .back-button-fixed {
       position: fixed;
-      top: 120px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
       background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1001;
       box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
     }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
+    .back-button-fixed:active, .back-button-fixed:focus {
+      background-color: #1976d2;
+    }
+    .back-button-fixed svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button-fixed:active svg,
+    .back-button-fixed:focus svg {
+      fill: #fff;
     }
 
     header {
@@ -119,19 +131,15 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
-    
-    }
   </style>
 </head>
-
 <body>
   
-
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
@@ -139,9 +147,12 @@
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
   </div>
 
-  <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
-  </div>
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
   <h1>Route 16 - To St Johns and Sauvie Island</h1>
 
@@ -778,38 +789,38 @@ const stopNames = {
 
 const stops = [
   { stop_id: "12798", name: "SW Oak &amp; 1st", lat: 45.52042, lon: -122.671994, times: ["9:04 AM", "1:21 PM", "5:08 AM"] },
-  { stop_id: "13168", name: "SW Oak &amp; 6th", lat: 45.521751, lon: -122.676914, times: ["5:11 AM", "6:39 AM", "8:09 AM", "9:07 AM", "9:54 AM", "10:54 AM", "11:44 AM", "12:34 PM"] },
-  { stop_id: "8886", name: "NW Everett &amp; 5th", lat: 45.525182, lon: -122.675622, times: ["5:12 AM", "6:40 AM", "8:11 AM", "9:09 AM", "9:56 AM", "10:56 AM", "11:46 AM", "12:36 PM"] },
-  { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["5:13 AM", "6:41 AM", "8:12 AM", "9:10 AM", "9:57 AM", "10:57 AM", "11:47 AM", "12:37 PM"] },
-  { stop_id: "9873", name: "600 Block NW Naito Parkway", lat: 45.527994, lon: -122.672866, times: ["5:15 AM", "6:43 AM", "8:13 AM", "9:11 AM", "9:58 AM", "10:58 AM", "11:48 AM", "12:39 PM"] },
-  { stop_id: "9874", name: "900 Block NW Naito Parkway", lat: 45.529926, lon: -122.675158, times: ["5:15 AM", "6:43 AM", "8:14 AM", "9:12 AM", "9:59 AM", "10:59 AM", "11:49 AM", "12:40 PM"] },
-  { stop_id: "9875", name: "NW Naito Parkway &amp; 9th", lat: 45.533016, lon: -122.679958, times: ["5:17 AM", "6:45 AM", "8:16 AM", "9:14 AM", "10:01 AM", "11:01 AM", "11:51 AM", "12:42 PM"] },
-  { stop_id: "9877", name: "NW Front &amp; 15th", lat: 45.536551, lon: -122.685954, times: ["5:18 AM", "6:46 AM", "8:17 AM", "9:15 AM", "10:02 AM", "11:02 AM", "11:52 AM", "12:43 PM"] },
-  { stop_id: "9878", name: "NW Front &amp; 17th", lat: 45.538204, lon: -122.688806, times: ["5:18 AM", "6:46 AM", "8:17 AM", "9:15 AM", "10:02 AM", "11:02 AM", "11:52 AM", "12:43 PM"] },
-  { stop_id: "9879", name: "NW Front &amp; 21st", lat: 45.541268, lon: -122.693794, times: ["5:19 AM", "6:47 AM", "8:18 AM", "9:16 AM", "10:03 AM", "11:03 AM", "11:53 AM", "12:44 PM"] },
-  { stop_id: "9880", name: "NW Front &amp; Nicolai", lat: 45.542445, lon: -122.695684, times: ["5:19 AM", "6:47 AM", "8:19 AM", "9:17 AM", "10:04 AM", "11:04 AM", "11:53 AM", "12:44 PM"] },
-  { stop_id: "9881", name: "3000 Block NW Front", lat: 45.544439, lon: -122.698911, times: ["5:20 AM", "6:48 AM", "8:19 AM", "9:17 AM", "10:04 AM", "11:04 AM", "11:54 AM", "12:45 PM"] },
-  { stop_id: "1931", name: "3700 Block NW Front", lat: 45.548847, lon: -122.706546, times: ["5:21 AM", "6:49 AM", "8:21 AM", "9:19 AM", "10:06 AM", "11:06 AM", "11:55 AM", "12:46 PM"] },
-  { stop_id: "8904", name: "3800 Block NW Front", lat: 45.55085, lon: -122.71157, times: ["5:22 AM", "6:50 AM", "8:21 AM", "9:19 AM", "10:06 AM", "11:06 AM", "11:56 AM", "12:47 PM"] },
-  { stop_id: "8902", name: "4200 Block NW Front", lat: 45.552858, lon: -122.717403, times: ["5:23 AM", "6:51 AM", "8:22 AM", "9:20 AM", "10:07 AM", "11:07 AM", "11:57 AM", "12:48 PM"] },
-  { stop_id: "1921", name: "4300 Block NW Front", lat: 45.553926, lon: -122.720329, times: ["5:23 AM", "6:51 AM", "8:23 AM", "9:21 AM", "10:08 AM", "11:08 AM", "11:57 AM", "12:48 PM"] },
-  { stop_id: "1924", name: "4500 Block NW Front", lat: 45.555206, lon: -122.723822, times: ["5:24 AM", "6:52 AM", "8:23 AM", "9:21 AM", "10:08 AM", "11:08 AM", "11:58 AM", "12:49 PM"] },
-  { stop_id: "1925", name: "4700 Block NW Front", lat: 45.556678, lon: -122.727515, times: ["5:24 AM", "6:52 AM", "8:24 AM", "9:22 AM", "10:09 AM", "11:09 AM", "11:58 AM", "12:49 PM"] },
-  { stop_id: "1922", name: "4800 Block NW Front", lat: 45.557317, lon: -122.729259, times: ["5:24 AM", "6:52 AM", "8:24 AM", "9:22 AM", "10:09 AM", "11:09 AM", "11:58 AM", "12:49 PM"] },
-  { stop_id: "13637", name: "NW Yeon &amp; 44th", lat: 45.554215, lon: -122.731958, times: ["5:26 AM", "6:54 AM", "8:26 AM", "9:24 AM", "10:11 AM", "11:11 AM", "12:00 PM", "12:51 PM"] },
-  { stop_id: "5338", name: "NW St Helens &amp; Doane", lat: 45.561416, lon: -122.742773, times: ["5:27 AM", "6:55 AM", "8:27 AM", "9:25 AM", "10:12 AM", "11:12 AM", "12:02 PM", "12:53 PM"] },
-  { stop_id: "13293", name: "NW St Helens &amp; Saltzman", lat: 45.564536, lon: -122.746772, times: ["5:28 AM", "6:56 AM", "8:28 AM", "9:26 AM", "10:13 AM", "11:13 AM", "12:02 PM", "12:53 PM"] },
-  { stop_id: "5329", name: "6600 Block NW St Helens", lat: 45.570086, lon: -122.754866, times: ["5:29 AM", "6:57 AM", "8:29 AM", "9:27 AM", "10:14 AM", "11:14 AM", "12:04 PM", "12:55 PM"] },
-  { stop_id: "5330", name: "6800 Block NW St Helens", lat: 45.571379, lon: -122.755843, times: ["5:29 AM", "6:57 AM", "8:29 AM", "9:28 AM", "10:15 AM", "11:15 AM", "12:04 PM", "12:55 PM"] },
-  { stop_id: "5352", name: "NW St Helens &amp; Front", lat: 45.575057, lon: -122.759118, times: ["5:30 AM", "6:58 AM", "8:30 AM", "9:28 AM", "10:15 AM", "11:15 AM", "12:05 PM", "12:56 PM"] },
-  { stop_id: "4440", name: "N Philadelphia &amp; Ivanhoe", lat: 45.589345, lon: -122.755562, times: ["5:33 AM", "7:01 AM", "8:33 AM", "9:32 AM", "10:19 AM", "11:19 AM", "12:09 PM", "1:00 PM"] },
-  { stop_id: "3009", name: "N Ivanhoe &amp; Charleston", lat: 45.588681, lon: -122.752711, times: ["5:34 AM", "7:02 AM", "8:34 AM", "9:33 AM", "10:20 AM", "11:20 AM", "12:10 PM", "1:01 PM"] },
-  { stop_id: "3509", name: "N Lombard &amp; John", lat: 45.589615, lon: -122.752757, times: ["5:35 AM", "7:03 AM", "8:35 AM", "9:34 AM", "10:21 AM", "11:21 AM", "12:11 PM", "1:02 PM"] },
-  { stop_id: "14216", name: "N Lombard &amp; Alta", lat: 45.590728, lon: -122.755342, times: ["5:36 AM", "7:04 AM", "8:36 AM", "9:35 AM", "10:22 AM", "11:22 AM", "12:12 PM", "1:03 PM"] },
-  { stop_id: "11837", name: "N Ivanhoe &amp; Baltimore", lat: 45.59049, lon: -122.756535, times: ["5:37 AM", "7:05 AM", "8:37 AM", "9:36 AM", "10:23 AM", "11:23 AM", "12:13 PM", "1:04 PM"] },
-  { stop_id: "4441", name: "N Philadelphia &amp; Syracuse", lat: 45.58925, lon: -122.756236, times: ["5:38 AM", "7:06 AM", "8:38 AM", "9:37 AM", "10:24 AM", "11:24 AM", "12:14 PM", "1:05 PM"] },
-  { stop_id: "599", name: "NW Bridge Ave &amp; Springville", lat: 45.585252, lon: -122.771428, times: ["5:39 AM", "7:07 AM", "8:40 AM", "9:39 AM", "10:26 AM", "11:26 AM", "12:16 PM", "1:07 PM"] },
-  { stop_id: "597", name: "NW Bridge Ave &amp; Germantown", lat: 45.586346, lon: -122.772452, times: ["5:39 AM", "7:07 AM", "8:40 AM", "9:39 AM", "10:26 AM", "11:26 AM", "12:16 PM", "1:07 PM"] },
+  { stop_id: "13168", name: "SW Oak &amp; 6th", lat: 45.521751, lon: -122.676914, times: ["6:39 AM", "8:09 AM", "9:07 AM", "9:54 AM", "10:54 AM", "11:44 AM", "12:34 PM", "1:24 PM"] },
+  { stop_id: "8886", name: "NW Everett &amp; 5th", lat: 45.525182, lon: -122.675622, times: ["6:40 AM", "8:11 AM", "9:09 AM", "9:56 AM", "10:56 AM", "11:46 AM", "12:36 PM", "1:26 PM"] },
+  { stop_id: "1612", name: "NW Everett &amp; 2nd", lat: 45.525237, lon: -122.672587, times: ["6:41 AM", "8:12 AM", "9:10 AM", "9:57 AM", "10:57 AM", "11:47 AM", "12:37 PM", "1:27 PM"] },
+  { stop_id: "9873", name: "600 Block NW Naito Parkway", lat: 45.527994, lon: -122.672866, times: ["6:43 AM", "8:13 AM", "9:11 AM", "9:58 AM", "10:58 AM", "11:48 AM", "12:39 PM", "1:29 PM"] },
+  { stop_id: "9874", name: "900 Block NW Naito Parkway", lat: 45.529926, lon: -122.675158, times: ["6:43 AM", "8:14 AM", "9:12 AM", "9:59 AM", "10:59 AM", "11:49 AM", "12:40 PM", "1:30 PM"] },
+  { stop_id: "9875", name: "NW Naito Parkway &amp; 9th", lat: 45.533016, lon: -122.679958, times: ["6:45 AM", "8:16 AM", "9:14 AM", "10:01 AM", "11:01 AM", "11:51 AM", "12:42 PM", "1:32 PM"] },
+  { stop_id: "9877", name: "NW Front &amp; 15th", lat: 45.536551, lon: -122.685954, times: ["6:46 AM", "8:17 AM", "9:15 AM", "10:02 AM", "11:02 AM", "11:52 AM", "12:43 PM", "1:33 PM"] },
+  { stop_id: "9878", name: "NW Front &amp; 17th", lat: 45.538204, lon: -122.688806, times: ["6:46 AM", "8:17 AM", "9:15 AM", "10:02 AM", "11:02 AM", "11:52 AM", "12:43 PM", "1:33 PM"] },
+  { stop_id: "9879", name: "NW Front &amp; 21st", lat: 45.541268, lon: -122.693794, times: ["6:47 AM", "8:18 AM", "9:16 AM", "10:03 AM", "11:03 AM", "11:53 AM", "12:44 PM", "1:34 PM"] },
+  { stop_id: "9880", name: "NW Front &amp; Nicolai", lat: 45.542445, lon: -122.695684, times: ["6:47 AM", "8:19 AM", "9:17 AM", "10:04 AM", "11:04 AM", "11:53 AM", "12:44 PM", "1:34 PM"] },
+  { stop_id: "9881", name: "3000 Block NW Front", lat: 45.544439, lon: -122.698911, times: ["6:48 AM", "8:19 AM", "9:17 AM", "10:04 AM", "11:04 AM", "11:54 AM", "12:45 PM", "1:35 PM"] },
+  { stop_id: "1931", name: "3700 Block NW Front", lat: 45.548847, lon: -122.706546, times: ["6:49 AM", "8:21 AM", "9:19 AM", "10:06 AM", "11:06 AM", "11:55 AM", "12:46 PM", "1:36 PM"] },
+  { stop_id: "8904", name: "3800 Block NW Front", lat: 45.55085, lon: -122.71157, times: ["6:50 AM", "8:21 AM", "9:19 AM", "10:06 AM", "11:06 AM", "11:56 AM", "12:47 PM", "1:37 PM"] },
+  { stop_id: "8902", name: "4200 Block NW Front", lat: 45.552858, lon: -122.717403, times: ["6:51 AM", "8:22 AM", "9:20 AM", "10:07 AM", "11:07 AM", "11:57 AM", "12:48 PM", "1:38 PM"] },
+  { stop_id: "1921", name: "4300 Block NW Front", lat: 45.553926, lon: -122.720329, times: ["6:51 AM", "8:23 AM", "9:21 AM", "10:08 AM", "11:08 AM", "11:57 AM", "12:48 PM", "1:38 PM"] },
+  { stop_id: "1924", name: "4500 Block NW Front", lat: 45.555206, lon: -122.723822, times: ["6:52 AM", "8:23 AM", "9:21 AM", "10:08 AM", "11:08 AM", "11:58 AM", "12:49 PM", "1:39 PM"] },
+  { stop_id: "1925", name: "4700 Block NW Front", lat: 45.556678, lon: -122.727515, times: ["6:52 AM", "8:24 AM", "9:22 AM", "10:09 AM", "11:09 AM", "11:58 AM", "12:49 PM", "1:39 PM"] },
+  { stop_id: "1922", name: "4800 Block NW Front", lat: 45.557317, lon: -122.729259, times: ["6:52 AM", "8:24 AM", "9:22 AM", "10:09 AM", "11:09 AM", "11:58 AM", "12:49 PM", "1:39 PM"] },
+  { stop_id: "13637", name: "NW Yeon &amp; 44th", lat: 45.554215, lon: -122.731958, times: ["6:54 AM", "8:26 AM", "9:24 AM", "10:11 AM", "11:11 AM", "12:00 PM", "12:51 PM", "1:41 PM"] },
+  { stop_id: "5338", name: "NW St Helens &amp; Doane", lat: 45.561416, lon: -122.742773, times: ["6:55 AM", "8:27 AM", "9:25 AM", "10:12 AM", "11:12 AM", "12:02 PM", "12:53 PM", "1:43 PM"] },
+  { stop_id: "13293", name: "NW St Helens &amp; Saltzman", lat: 45.564536, lon: -122.746772, times: ["6:56 AM", "8:28 AM", "9:26 AM", "10:13 AM", "11:13 AM", "12:02 PM", "12:53 PM", "1:43 PM"] },
+  { stop_id: "5329", name: "6600 Block NW St Helens", lat: 45.570086, lon: -122.754866, times: ["6:57 AM", "8:29 AM", "9:27 AM", "10:14 AM", "11:14 AM", "12:04 PM", "12:55 PM", "1:45 PM"] },
+  { stop_id: "5330", name: "6800 Block NW St Helens", lat: 45.571379, lon: -122.755843, times: ["6:57 AM", "8:29 AM", "9:28 AM", "10:15 AM", "11:15 AM", "12:04 PM", "12:55 PM", "1:45 PM"] },
+  { stop_id: "5352", name: "NW St Helens &amp; Front", lat: 45.575057, lon: -122.759118, times: ["6:58 AM", "8:30 AM", "9:28 AM", "10:15 AM", "11:15 AM", "12:05 PM", "12:56 PM", "1:46 PM"] },
+  { stop_id: "4440", name: "N Philadelphia &amp; Ivanhoe", lat: 45.589345, lon: -122.755562, times: ["7:01 AM", "8:33 AM", "9:32 AM", "10:19 AM", "11:19 AM", "12:09 PM", "1:00 PM", "1:50 PM"] },
+  { stop_id: "3009", name: "N Ivanhoe &amp; Charleston", lat: 45.588681, lon: -122.752711, times: ["7:02 AM", "8:34 AM", "9:33 AM", "10:20 AM", "11:20 AM", "12:10 PM", "1:01 PM", "1:51 PM"] },
+  { stop_id: "3509", name: "N Lombard &amp; John", lat: 45.589615, lon: -122.752757, times: ["7:03 AM", "8:35 AM", "9:34 AM", "10:21 AM", "11:21 AM", "12:11 PM", "1:02 PM", "1:52 PM"] },
+  { stop_id: "14216", name: "N Lombard &amp; Alta", lat: 45.590728, lon: -122.755342, times: ["7:04 AM", "8:36 AM", "9:35 AM", "10:22 AM", "11:22 AM", "12:12 PM", "1:03 PM", "1:53 PM"] },
+  { stop_id: "11837", name: "N Ivanhoe &amp; Baltimore", lat: 45.59049, lon: -122.756535, times: ["7:05 AM", "8:37 AM", "9:36 AM", "10:23 AM", "11:23 AM", "12:13 PM", "1:04 PM", "1:54 PM"] },
+  { stop_id: "4441", name: "N Philadelphia &amp; Syracuse", lat: 45.58925, lon: -122.756236, times: ["7:06 AM", "8:38 AM", "9:37 AM", "10:24 AM", "11:24 AM", "12:14 PM", "1:05 PM", "1:55 PM"] },
+  { stop_id: "599", name: "NW Bridge Ave &amp; Springville", lat: 45.585252, lon: -122.771428, times: ["7:07 AM", "8:40 AM", "9:39 AM", "10:26 AM", "11:26 AM", "12:16 PM", "1:07 PM", "1:57 PM"] },
+  { stop_id: "597", name: "NW Bridge Ave &amp; Germantown", lat: 45.586346, lon: -122.772452, times: ["7:07 AM", "8:40 AM", "9:39 AM", "10:26 AM", "11:26 AM", "12:16 PM", "1:07 PM", "1:57 PM"] },
   { stop_id: "596", name: "NW Bridge Ave &amp; St Helens", lat: 45.587365, lon: -122.773682, times: ["5:40 AM", "7:08 AM", "8:40 AM", "9:39 AM", "10:26 AM", "11:26 AM", "12:16 PM", "1:07 PM"] },
   { stop_id: "5350", name: "9400 Block NW St Helens", lat: 45.589184, lon: -122.776206, times: ["5:40 AM", "7:08 AM", "8:41 AM", "9:40 AM", "10:27 AM", "11:27 AM", "12:17 PM", "1:08 PM"] },
   { stop_id: "5345", name: "NW St Helens &amp; Hoge", lat: 45.592788, lon: -122.780925, times: ["5:41 AM", "7:09 AM", "8:41 AM", "9:40 AM", "10:27 AM", "11:27 AM", "12:17 PM", "1:08 PM"] },

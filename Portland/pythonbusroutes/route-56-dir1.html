@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
@@ -27,23 +25,37 @@
       overflow-y: auto;
     }
 
-    .home-button {
+    /* BACK BUTTON */
+    .back-button-fixed {
       position: fixed;
-      top: 120px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
       background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1001;
       box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
     }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
+    .back-button-fixed:active, .back-button-fixed:focus {
+      background-color: #1976d2;
+    }
+    .back-button-fixed svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button-fixed:active svg,
+    .back-button-fixed:focus svg {
+      fill: #fff;
     }
 
     header {
@@ -119,19 +131,15 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
-    
-    }
   </style>
 </head>
-
 <body>
   
-
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
@@ -139,9 +147,12 @@
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
   </div>
 
-  <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
-  </div>
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
   <h1>Route 56 - To Marquam Hill</h1>
 
@@ -1104,39 +1115,39 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "9650", name: "Washington Square Transit Center ", lat: 45.4527, lon: -122.77881, times: ["5:22 AM", "5:51 AM", "6:19 AM", "6:49 AM", "7:19 AM", "7:49 AM", "8:18 AM", "8:48 AM"] },
-  { stop_id: "6175", name: "SW Eliander &amp; One Embassy Centre", lat: 45.454727, lon: -122.780345, times: ["5:22 AM", "5:51 AM", "6:19 AM", "6:49 AM", "7:19 AM", "7:49 AM", "8:18 AM", "8:48 AM"] },
-  { stop_id: "2295", name: "SW Hall &amp; Scholls Ferry", lat: 45.456837, lon: -122.78214, times: ["5:23 AM", "5:52 AM", "6:20 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:19 AM", "8:49 AM"] },
-  { stop_id: "5160", name: "8600 Block SW Scholls Ferry", lat: 45.457787, lon: -122.781737, times: ["5:23 AM", "5:52 AM", "6:20 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:19 AM", "8:49 AM"] },
-  { stop_id: "5168", name: "SW Scholls Ferry &amp; Crestwood", lat: 45.460513, lon: -122.780326, times: ["5:24 AM", "5:53 AM", "6:21 AM", "6:51 AM", "7:21 AM", "7:51 AM", "8:20 AM", "8:50 AM"] },
-  { stop_id: "5170", name: "SW Scholls Ferry &amp; Crystal", lat: 45.462128, lon: -122.779451, times: ["5:24 AM", "5:53 AM", "6:21 AM", "6:51 AM", "7:21 AM", "7:51 AM", "8:20 AM", "8:50 AM"] },
-  { stop_id: "5173", name: "SW Scholls Ferry &amp; Eagle", lat: 45.463791, lon: -122.778584, times: ["5:25 AM", "5:54 AM", "6:22 AM", "6:52 AM", "7:22 AM", "7:52 AM", "8:21 AM", "8:51 AM"] },
-  { stop_id: "5181", name: "SW Scholls Ferry &amp; Marjorie", lat: 45.464957, lon: -122.777934, times: ["5:25 AM", "5:54 AM", "6:22 AM", "6:52 AM", "7:22 AM", "7:52 AM", "8:21 AM", "8:51 AM"] },
-  { stop_id: "5175", name: "SW Scholls Ferry &amp; Heather", lat: 45.467946, lon: -122.776409, times: ["5:26 AM", "5:55 AM", "6:23 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:22 AM", "8:52 AM"] },
-  { stop_id: "5182", name: "SW Scholls Ferry &amp; Merry", lat: 45.469237, lon: -122.775768, times: ["5:26 AM", "5:55 AM", "6:23 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:22 AM", "8:52 AM"] },
-  { stop_id: "5158", name: "6700 Block SW Scholls Ferry", lat: 45.471191, lon: -122.774681, times: ["5:27 AM", "5:56 AM", "6:24 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:23 AM", "8:53 AM"] },
-  { stop_id: "5162", name: "SW Scholls Ferry &amp; Allen", lat: 45.472313, lon: -122.773183, times: ["5:27 AM", "5:56 AM", "6:24 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:23 AM", "8:53 AM"] },
-  { stop_id: "5206", name: "SW Scholls Ferry &amp; 92nd", lat: 45.472434, lon: -122.771439, times: ["5:27 AM", "5:56 AM", "6:24 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM"] },
-  { stop_id: "5204", name: "SW Scholls Ferry &amp; 90th", lat: 45.472541, lon: -122.769722, times: ["5:27 AM", "5:56 AM", "6:24 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM"] },
-  { stop_id: "5203", name: "SW Scholls Ferry &amp; 88th", lat: 45.472938, lon: -122.767225, times: ["5:28 AM", "5:57 AM", "6:25 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:24 AM", "8:54 AM"] },
-  { stop_id: "5201", name: "SW Scholls Ferry &amp; 86th", lat: 45.474205, lon: -122.765262, times: ["5:28 AM", "5:57 AM", "6:25 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM", "8:55 AM"] },
-  { stop_id: "5156", name: "5900 Block SW Scholls Ferry (Crosswalk)", lat: 45.477353, lon: -122.763484, times: ["5:29 AM", "5:58 AM", "6:26 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM", "8:56 AM"] },
-  { stop_id: "5187", name: "SW Scholls Ferry &amp; Nicol", lat: 45.480458, lon: -122.760798, times: ["5:30 AM", "5:59 AM", "6:27 AM", "6:57 AM", "7:27 AM", "7:57 AM", "8:27 AM", "8:57 AM"] },
-  { stop_id: "5193", name: "5100 Block SW Scholls Ferry", lat: 45.483017, lon: -122.755557, times: ["5:31 AM", "6:00 AM", "6:28 AM", "6:58 AM", "7:28 AM", "7:58 AM", "8:28 AM", "8:58 AM"] },
-  { stop_id: "5186", name: "SW Scholls Ferry &amp; Stephen Lane", lat: 45.484747, lon: -122.751773, times: ["5:32 AM", "6:01 AM", "6:29 AM", "6:59 AM", "7:29 AM", "7:59 AM", "8:29 AM", "8:59 AM"] },
-  { stop_id: "348", name: "SW Beaverton-Hillsdale &amp; Oleson", lat: 45.486129, lon: -122.748414, times: ["5:33 AM", "6:02 AM", "6:30 AM", "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM"] },
-  { stop_id: "383", name: "6500 Block SW Beaverton-Hillsdale", lat: 45.486956, lon: -122.7444, times: ["5:33 AM", "6:02 AM", "6:30 AM", "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM"] },
-  { stop_id: "382", name: "SW Beaverton-Hillsdale &amp; 62nd", lat: 45.48696, lon: -122.740469, times: ["5:34 AM", "6:03 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM"] },
-  { stop_id: "328", name: "SW Beaverton-Hillsdale &amp; 59th", lat: 45.486948, lon: -122.73782, times: ["5:34 AM", "6:03 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM"] },
-  { stop_id: "379", name: "SW Beaverton-Hillsdale &amp; 56th", lat: 45.486931, lon: -122.734902, times: ["5:35 AM", "6:04 AM", "6:32 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM"] },
-  { stop_id: "351", name: "SW Beaverton-Hillsdale &amp; Shattuck", lat: 45.486926, lon: -122.732185, times: ["5:35 AM", "6:04 AM", "6:32 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM"] },
-  { stop_id: "377", name: "SW Beaverton-Hillsdale &amp; 50th", lat: 45.486912, lon: -122.728434, times: ["5:36 AM", "6:05 AM", "6:33 AM", "7:03 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM"] },
-  { stop_id: "375", name: "SW Beaverton-Hillsdale &amp; 45th", lat: 45.485579, lon: -122.722176, times: ["5:37 AM", "6:06 AM", "6:34 AM", "7:04 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM"] },
-  { stop_id: "373", name: "SW Beaverton-Hillsdale &amp; 42nd", lat: 45.48536, lon: -122.719881, times: ["5:37 AM", "6:06 AM", "6:34 AM", "7:04 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM"] },
-  { stop_id: "371", name: "SW Beaverton-Hillsdale &amp; 39th Dr", lat: 45.484739, lon: -122.717397, times: ["5:38 AM", "6:07 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:35 AM", "9:05 AM"] },
-  { stop_id: "326", name: "3600 Block SW Beaverton-Hillsdale", lat: 45.483593, lon: -122.714813, times: ["5:38 AM", "6:07 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:35 AM", "9:05 AM"] },
-  { stop_id: "369", name: "SW Beaverton-Hillsdale &amp; 35th", lat: 45.482672, lon: -122.712726, times: ["5:39 AM", "6:08 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM"] },
-  { stop_id: "368", name: "SW Beaverton-Hillsdale &amp; 33rd", lat: 45.481759, lon: -122.710514, times: ["5:39 AM", "6:08 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM"] },
+  { stop_id: "9650", name: "Washington Square Transit Center ", lat: 45.4527, lon: -122.77881, times: ["5:51 AM", "6:19 AM", "6:49 AM", "7:19 AM", "7:49 AM", "8:18 AM", "8:48 AM", "9:18 AM"] },
+  { stop_id: "6175", name: "SW Eliander &amp; One Embassy Centre", lat: 45.454727, lon: -122.780345, times: ["5:51 AM", "6:19 AM", "6:49 AM", "7:19 AM", "7:49 AM", "8:18 AM", "8:48 AM", "9:18 AM"] },
+  { stop_id: "2295", name: "SW Hall &amp; Scholls Ferry", lat: 45.456837, lon: -122.78214, times: ["5:52 AM", "6:20 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:19 AM", "8:49 AM", "9:19 AM"] },
+  { stop_id: "5160", name: "8600 Block SW Scholls Ferry", lat: 45.457787, lon: -122.781737, times: ["5:52 AM", "6:20 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:19 AM", "8:49 AM", "9:19 AM"] },
+  { stop_id: "5168", name: "SW Scholls Ferry &amp; Crestwood", lat: 45.460513, lon: -122.780326, times: ["5:53 AM", "6:21 AM", "6:51 AM", "7:21 AM", "7:51 AM", "8:20 AM", "8:50 AM", "9:20 AM"] },
+  { stop_id: "5170", name: "SW Scholls Ferry &amp; Crystal", lat: 45.462128, lon: -122.779451, times: ["5:53 AM", "6:21 AM", "6:51 AM", "7:21 AM", "7:51 AM", "8:20 AM", "8:50 AM", "9:20 AM"] },
+  { stop_id: "5173", name: "SW Scholls Ferry &amp; Eagle", lat: 45.463791, lon: -122.778584, times: ["5:54 AM", "6:22 AM", "6:52 AM", "7:22 AM", "7:52 AM", "8:21 AM", "8:51 AM", "9:21 AM"] },
+  { stop_id: "5181", name: "SW Scholls Ferry &amp; Marjorie", lat: 45.464957, lon: -122.777934, times: ["5:54 AM", "6:22 AM", "6:52 AM", "7:22 AM", "7:52 AM", "8:21 AM", "8:51 AM", "9:21 AM"] },
+  { stop_id: "5175", name: "SW Scholls Ferry &amp; Heather", lat: 45.467946, lon: -122.776409, times: ["5:55 AM", "6:23 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:22 AM", "8:52 AM", "9:22 AM"] },
+  { stop_id: "5182", name: "SW Scholls Ferry &amp; Merry", lat: 45.469237, lon: -122.775768, times: ["5:55 AM", "6:23 AM", "6:53 AM", "7:23 AM", "7:53 AM", "8:22 AM", "8:52 AM", "9:22 AM"] },
+  { stop_id: "5158", name: "6700 Block SW Scholls Ferry", lat: 45.471191, lon: -122.774681, times: ["5:56 AM", "6:24 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:23 AM", "8:53 AM", "9:23 AM"] },
+  { stop_id: "5162", name: "SW Scholls Ferry &amp; Allen", lat: 45.472313, lon: -122.773183, times: ["5:56 AM", "6:24 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:23 AM", "8:53 AM", "9:23 AM"] },
+  { stop_id: "5206", name: "SW Scholls Ferry &amp; 92nd", lat: 45.472434, lon: -122.771439, times: ["5:56 AM", "6:24 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM", "9:24 AM"] },
+  { stop_id: "5204", name: "SW Scholls Ferry &amp; 90th", lat: 45.472541, lon: -122.769722, times: ["5:56 AM", "6:24 AM", "6:54 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM", "9:24 AM"] },
+  { stop_id: "5203", name: "SW Scholls Ferry &amp; 88th", lat: 45.472938, lon: -122.767225, times: ["5:57 AM", "6:25 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:24 AM", "8:54 AM", "9:24 AM"] },
+  { stop_id: "5201", name: "SW Scholls Ferry &amp; 86th", lat: 45.474205, lon: -122.765262, times: ["5:57 AM", "6:25 AM", "6:55 AM", "7:25 AM", "7:55 AM", "8:25 AM", "8:55 AM", "9:25 AM"] },
+  { stop_id: "5156", name: "5900 Block SW Scholls Ferry (Crosswalk)", lat: 45.477353, lon: -122.763484, times: ["5:58 AM", "6:26 AM", "6:56 AM", "7:26 AM", "7:56 AM", "8:26 AM", "8:56 AM", "9:26 AM"] },
+  { stop_id: "5187", name: "SW Scholls Ferry &amp; Nicol", lat: 45.480458, lon: -122.760798, times: ["5:59 AM", "6:27 AM", "6:57 AM", "7:27 AM", "7:57 AM", "8:27 AM", "8:57 AM", "9:27 AM"] },
+  { stop_id: "5193", name: "5100 Block SW Scholls Ferry", lat: 45.483017, lon: -122.755557, times: ["6:00 AM", "6:28 AM", "6:58 AM", "7:28 AM", "7:58 AM", "8:28 AM", "8:58 AM", "9:28 AM"] },
+  { stop_id: "5186", name: "SW Scholls Ferry &amp; Stephen Lane", lat: 45.484747, lon: -122.751773, times: ["6:01 AM", "6:29 AM", "6:59 AM", "7:29 AM", "7:59 AM", "8:29 AM", "8:59 AM", "9:29 AM"] },
+  { stop_id: "348", name: "SW Beaverton-Hillsdale &amp; Oleson", lat: 45.486129, lon: -122.748414, times: ["6:02 AM", "6:30 AM", "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM"] },
+  { stop_id: "383", name: "6500 Block SW Beaverton-Hillsdale", lat: 45.486956, lon: -122.7444, times: ["6:02 AM", "6:30 AM", "7:00 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM"] },
+  { stop_id: "382", name: "SW Beaverton-Hillsdale &amp; 62nd", lat: 45.48696, lon: -122.740469, times: ["6:03 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:31 AM"] },
+  { stop_id: "328", name: "SW Beaverton-Hillsdale &amp; 59th", lat: 45.486948, lon: -122.73782, times: ["6:03 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "9:01 AM", "9:31 AM"] },
+  { stop_id: "379", name: "SW Beaverton-Hillsdale &amp; 56th", lat: 45.486931, lon: -122.734902, times: ["6:04 AM", "6:32 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM", "9:32 AM"] },
+  { stop_id: "351", name: "SW Beaverton-Hillsdale &amp; Shattuck", lat: 45.486926, lon: -122.732185, times: ["6:04 AM", "6:32 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "9:02 AM", "9:32 AM"] },
+  { stop_id: "377", name: "SW Beaverton-Hillsdale &amp; 50th", lat: 45.486912, lon: -122.728434, times: ["6:05 AM", "6:33 AM", "7:03 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM", "9:33 AM"] },
+  { stop_id: "375", name: "SW Beaverton-Hillsdale &amp; 45th", lat: 45.485579, lon: -122.722176, times: ["6:06 AM", "6:34 AM", "7:04 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM", "9:34 AM"] },
+  { stop_id: "373", name: "SW Beaverton-Hillsdale &amp; 42nd", lat: 45.48536, lon: -122.719881, times: ["6:06 AM", "6:34 AM", "7:04 AM", "7:34 AM", "8:04 AM", "8:34 AM", "9:04 AM", "9:34 AM"] },
+  { stop_id: "371", name: "SW Beaverton-Hillsdale &amp; 39th Dr", lat: 45.484739, lon: -122.717397, times: ["6:07 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:35 AM", "9:05 AM", "9:35 AM"] },
+  { stop_id: "326", name: "3600 Block SW Beaverton-Hillsdale", lat: 45.483593, lon: -122.714813, times: ["6:07 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:35 AM", "9:05 AM", "9:35 AM"] },
+  { stop_id: "369", name: "SW Beaverton-Hillsdale &amp; 35th", lat: 45.482672, lon: -122.712726, times: ["6:08 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM"] },
+  { stop_id: "368", name: "SW Beaverton-Hillsdale &amp; 33rd", lat: 45.481759, lon: -122.710514, times: ["6:08 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "9:06 AM", "9:36 AM"] },
   { stop_id: "367", name: "SW Beaverton-Hillsdale &amp; 30th", lat: 45.481497, lon: -122.707944, times: ["5:40 AM", "6:09 AM", "6:37 AM", "7:07 AM", "7:37 AM", "8:07 AM", "8:37 AM", "9:07 AM"] },
   { stop_id: "325", name: "2600 Block SW Beaverton-Hillsdale", lat: 45.480217, lon: -122.704126, times: ["5:40 AM", "6:09 AM", "6:37 AM", "7:07 AM", "7:37 AM", "8:07 AM", "8:37 AM", "9:07 AM"] },
   { stop_id: "364", name: "SW Beaverton-Hillsdale &amp; 25th", lat: 45.47987, lon: -122.702192, times: ["5:41 AM", "6:10 AM", "6:38 AM", "7:08 AM", "7:38 AM", "8:08 AM", "8:38 AM", "9:08 AM"] },

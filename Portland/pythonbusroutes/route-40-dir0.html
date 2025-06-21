@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
@@ -27,23 +25,37 @@
       overflow-y: auto;
     }
 
-    .home-button {
+    /* BACK BUTTON */
+    .back-button-fixed {
       position: fixed;
-      top: 120px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
       background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1001;
       box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
     }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
+    .back-button-fixed:active, .back-button-fixed:focus {
+      background-color: #1976d2;
+    }
+    .back-button-fixed svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button-fixed:active svg,
+    .back-button-fixed:focus svg {
+      fill: #fff;
     }
 
     header {
@@ -119,19 +131,15 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
-    
-    }
   </style>
 </head>
-
 <body>
   
-
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
@@ -139,9 +147,12 @@
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
   </div>
 
-  <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
-  </div>
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
   <h1>Route 40 - To SE Tacoma Park & Ride</h1>
 
@@ -567,30 +578,30 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "316", name: "6700 Block N Basin (Coast Guard)", lat: 45.572468, lon: -122.719884, times: ["5:27 AM", "5:59 AM", "6:18 AM", "6:48 AM", "7:18 AM", "7:48 AM", "8:18 AM", "8:48 AM"] },
-  { stop_id: "315", name: "N Basin &amp; Fathom", lat: 45.571264, lon: -122.717473, times: ["5:27 AM", "5:59 AM", "6:18 AM", "6:48 AM", "7:18 AM", "7:48 AM", "8:18 AM", "8:48 AM"] },
-  { stop_id: "319", name: "N Basin &amp; Ensign", lat: 45.569644, lon: -122.714504, times: ["5:28 AM", "6:00 AM", "6:19 AM", "6:49 AM", "7:19 AM", "7:49 AM", "8:19 AM", "8:49 AM"] },
-  { stop_id: "313", name: "6200 Block N Basin", lat: 45.56828, lon: -122.710853, times: ["5:28 AM", "6:00 AM", "6:19 AM", "6:49 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:50 AM"] },
-  { stop_id: "322", name: "N Basin &amp; Leverman", lat: 45.565822, lon: -122.708749, times: ["5:29 AM", "6:01 AM", "6:20 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:50 AM"] },
-  { stop_id: "317", name: "N Basin &amp; Emerson", lat: 45.561861, lon: -122.704051, times: ["5:30 AM", "6:02 AM", "6:21 AM", "6:51 AM", "7:22 AM", "7:52 AM", "8:22 AM", "8:52 AM"] },
-  { stop_id: "115", name: "N Anchor &amp; Channel", lat: 45.5567, lon: -122.703878, times: ["5:32 AM", "6:04 AM", "6:23 AM", "6:53 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM"] },
-  { stop_id: "9399", name: "N Going &amp; Port Center Way", lat: 45.55596, lon: -122.698512, times: ["5:32 AM", "6:04 AM", "6:23 AM", "6:53 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM"] },
-  { stop_id: "2964", name: "N Interstate &amp; Graham", lat: 45.543273, lon: -122.67737, times: ["5:12 AM", "5:36 AM", "6:08 AM", "6:27 AM", "6:57 AM", "7:29 AM", "7:59 AM", "8:29 AM"] },
-  { stop_id: "2945", name: "N Interstate &amp; Albina", lat: 45.539267, lon: -122.675252, times: ["5:13 AM", "5:37 AM", "6:09 AM", "6:28 AM", "6:58 AM", "7:30 AM", "8:00 AM", "8:30 AM"] },
-  { stop_id: "11844", name: "N Interstate &amp; Tillamook", lat: 45.538047, lon: -122.674731, times: ["5:14 AM", "5:38 AM", "6:10 AM", "6:29 AM", "6:59 AM", "7:30 AM", "8:00 AM", "8:30 AM"] },
-  { stop_id: "1098", name: "Rose Quarter Transit Center", lat: 45.530315, lon: -122.666005, times: ["5:16 AM", "5:40 AM", "6:12 AM", "6:31 AM", "7:01 AM", "7:33 AM", "8:03 AM", "8:33 AM"] },
-  { stop_id: "2592", name: "Rose Quarter Transit Center", lat: 45.530005, lon: -122.666476, times: ["5:18 AM", "5:47 AM", "6:19 AM", "6:38 AM", "7:08 AM", "7:40 AM", "8:10 AM", "8:40 AM"] },
-  { stop_id: "9311", name: "NW Glisan &amp; 3rd", lat: 45.526817, lon: -122.674106, times: ["5:20 AM", "5:49 AM", "6:21 AM", "6:40 AM", "7:10 AM", "7:42 AM", "8:12 AM", "8:42 AM"] },
-  { stop_id: "9301", name: "NW 5th &amp; Davis", lat: 45.524705, lon: -122.675552, times: ["5:21 AM", "5:50 AM", "6:22 AM", "6:41 AM", "7:11 AM", "7:43 AM", "8:13 AM", "8:43 AM"] },
-  { stop_id: "7631", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["5:22 AM", "5:51 AM", "6:23 AM", "6:42 AM", "7:12 AM", "7:44 AM", "8:14 AM", "8:44 AM"] },
-  { stop_id: "7586", name: "SW 5th &amp; Alder", lat: 45.519602, lon: -122.677207, times: ["5:23 AM", "5:52 AM", "6:24 AM", "6:43 AM", "7:13 AM", "7:45 AM", "8:15 AM", "8:45 AM"] },
-  { stop_id: "7614", name: "SW 5th &amp; Main", lat: 45.516269, lon: -122.679016, times: ["5:25 AM", "5:32 AM", "5:54 AM", "6:26 AM", "6:45 AM", "7:15 AM", "7:47 AM", "8:17 AM"] },
-  { stop_id: "13167", name: "SW 5th &amp; Clay", lat: 45.513593, lon: -122.680499, times: ["5:32 AM", "5:54 AM", "6:26 AM", "6:45 AM", "7:15 AM", "7:48 AM", "8:18 AM", "8:48 AM"] },
-  { stop_id: "2580", name: "SW Harrison &amp; 4th", lat: 45.51052, lon: -122.681095, times: ["5:34 AM", "5:56 AM", "6:28 AM", "6:47 AM", "7:17 AM", "7:49 AM", "8:19 AM", "8:49 AM"] },
-  { stop_id: "2566", name: "200 Block SW Harrison", lat: 45.509982, lon: -122.679032, times: ["5:34 AM", "5:56 AM", "6:28 AM", "6:47 AM", "7:17 AM", "7:49 AM", "8:19 AM", "8:49 AM"] },
-  { stop_id: "13180", name: "S River Pkwy &amp; River Dr", lat: 45.507144, lon: -122.674544, times: ["5:36 AM", "5:58 AM", "6:30 AM", "6:49 AM", "7:19 AM", "7:51 AM", "8:21 AM", "8:51 AM"] },
-  { stop_id: "13601", name: "S Moody &amp; Meade South", lat: 45.503115, lon: -122.672793, times: ["5:38 AM", "6:00 AM", "6:32 AM", "6:51 AM", "7:21 AM", "7:53 AM", "8:23 AM", "8:53 AM"] },
-  { stop_id: "12760", name: "S Moody &amp; Gibbs", lat: 45.499337, lon: -122.671815, times: ["5:39 AM", "6:01 AM", "6:33 AM", "6:52 AM", "7:22 AM", "7:55 AM", "8:25 AM", "8:55 AM"] },
+  { stop_id: "316", name: "6700 Block N Basin (Coast Guard)", lat: 45.572468, lon: -122.719884, times: ["5:59 AM", "6:18 AM", "6:48 AM", "7:18 AM", "7:48 AM", "8:18 AM", "8:48 AM", "9:18 AM"] },
+  { stop_id: "315", name: "N Basin &amp; Fathom", lat: 45.571264, lon: -122.717473, times: ["5:59 AM", "6:18 AM", "6:48 AM", "7:18 AM", "7:48 AM", "8:18 AM", "8:48 AM", "9:18 AM"] },
+  { stop_id: "319", name: "N Basin &amp; Ensign", lat: 45.569644, lon: -122.714504, times: ["6:00 AM", "6:19 AM", "6:49 AM", "7:19 AM", "7:49 AM", "8:19 AM", "8:49 AM", "9:19 AM"] },
+  { stop_id: "313", name: "6200 Block N Basin", lat: 45.56828, lon: -122.710853, times: ["6:00 AM", "6:19 AM", "6:49 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:50 AM", "9:19 AM"] },
+  { stop_id: "322", name: "N Basin &amp; Leverman", lat: 45.565822, lon: -122.708749, times: ["6:01 AM", "6:20 AM", "6:50 AM", "7:20 AM", "7:50 AM", "8:20 AM", "8:50 AM", "9:20 AM"] },
+  { stop_id: "317", name: "N Basin &amp; Emerson", lat: 45.561861, lon: -122.704051, times: ["6:02 AM", "6:21 AM", "6:51 AM", "7:22 AM", "7:52 AM", "8:22 AM", "8:52 AM", "9:21 AM"] },
+  { stop_id: "115", name: "N Anchor &amp; Channel", lat: 45.5567, lon: -122.703878, times: ["6:04 AM", "6:23 AM", "6:53 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM", "9:23 AM"] },
+  { stop_id: "9399", name: "N Going &amp; Port Center Way", lat: 45.55596, lon: -122.698512, times: ["6:04 AM", "6:23 AM", "6:53 AM", "7:24 AM", "7:54 AM", "8:24 AM", "8:54 AM", "9:23 AM"] },
+  { stop_id: "2964", name: "N Interstate &amp; Graham", lat: 45.543273, lon: -122.67737, times: ["6:08 AM", "6:27 AM", "6:57 AM", "7:29 AM", "7:59 AM", "8:29 AM", "8:59 AM", "9:28 AM"] },
+  { stop_id: "2945", name: "N Interstate &amp; Albina", lat: 45.539267, lon: -122.675252, times: ["6:09 AM", "6:28 AM", "6:58 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM", "9:29 AM"] },
+  { stop_id: "11844", name: "N Interstate &amp; Tillamook", lat: 45.538047, lon: -122.674731, times: ["6:10 AM", "6:29 AM", "6:59 AM", "7:30 AM", "8:00 AM", "8:30 AM", "9:00 AM", "9:29 AM"] },
+  { stop_id: "1098", name: "Rose Quarter Transit Center", lat: 45.530315, lon: -122.666005, times: ["5:40 AM", "6:12 AM", "6:31 AM", "7:01 AM", "7:33 AM", "8:03 AM", "8:33 AM", "9:03 AM"] },
+  { stop_id: "2592", name: "Rose Quarter Transit Center", lat: 45.530005, lon: -122.666476, times: ["5:47 AM", "6:19 AM", "6:38 AM", "7:08 AM", "7:40 AM", "8:10 AM", "8:40 AM", "9:10 AM"] },
+  { stop_id: "9311", name: "NW Glisan &amp; 3rd", lat: 45.526817, lon: -122.674106, times: ["5:49 AM", "6:21 AM", "6:40 AM", "7:10 AM", "7:42 AM", "8:12 AM", "8:42 AM", "9:12 AM"] },
+  { stop_id: "9301", name: "NW 5th &amp; Davis", lat: 45.524705, lon: -122.675552, times: ["5:50 AM", "6:22 AM", "6:41 AM", "7:11 AM", "7:43 AM", "8:13 AM", "8:43 AM", "9:14 AM"] },
+  { stop_id: "7631", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["5:51 AM", "6:23 AM", "6:42 AM", "7:12 AM", "7:44 AM", "8:14 AM", "8:44 AM", "9:15 AM"] },
+  { stop_id: "7586", name: "SW 5th &amp; Alder", lat: 45.519602, lon: -122.677207, times: ["5:52 AM", "6:24 AM", "6:43 AM", "7:13 AM", "7:45 AM", "8:15 AM", "8:45 AM", "9:16 AM"] },
+  { stop_id: "7614", name: "SW 5th &amp; Main", lat: 45.516269, lon: -122.679016, times: ["5:54 AM", "6:26 AM", "6:45 AM", "7:15 AM", "7:47 AM", "8:17 AM", "8:47 AM", "9:18 AM"] },
+  { stop_id: "13167", name: "SW 5th &amp; Clay", lat: 45.513593, lon: -122.680499, times: ["5:54 AM", "6:26 AM", "6:45 AM", "7:15 AM", "7:48 AM", "8:18 AM", "8:48 AM", "9:19 AM"] },
+  { stop_id: "2580", name: "SW Harrison &amp; 4th", lat: 45.51052, lon: -122.681095, times: ["5:56 AM", "6:28 AM", "6:47 AM", "7:17 AM", "7:49 AM", "8:19 AM", "8:49 AM", "9:20 AM"] },
+  { stop_id: "2566", name: "200 Block SW Harrison", lat: 45.509982, lon: -122.679032, times: ["5:56 AM", "6:28 AM", "6:47 AM", "7:17 AM", "7:49 AM", "8:19 AM", "8:49 AM", "9:21 AM"] },
+  { stop_id: "13180", name: "S River Pkwy &amp; River Dr", lat: 45.507144, lon: -122.674544, times: ["5:58 AM", "6:30 AM", "6:49 AM", "7:19 AM", "7:51 AM", "8:21 AM", "8:51 AM", "9:23 AM"] },
+  { stop_id: "13601", name: "S Moody &amp; Meade South", lat: 45.503115, lon: -122.672793, times: ["6:00 AM", "6:32 AM", "6:51 AM", "7:21 AM", "7:53 AM", "8:23 AM", "8:53 AM", "9:25 AM"] },
+  { stop_id: "12760", name: "S Moody &amp; Gibbs", lat: 45.499337, lon: -122.671815, times: ["6:01 AM", "6:33 AM", "6:52 AM", "7:22 AM", "7:55 AM", "8:25 AM", "8:55 AM", "9:26 AM"] },
   { stop_id: "12880", name: "S Moody &amp; Gaines", lat: 45.496182, lon: -122.671942, times: ["5:40 AM", "6:02 AM", "6:34 AM", "6:53 AM", "7:23 AM", "7:56 AM", "8:26 AM", "8:56 AM"] },
   { stop_id: "13183", name: "S Moody &amp; Thomas", lat: 45.494384, lon: -122.672042, times: ["5:41 AM", "6:03 AM", "6:35 AM", "6:54 AM", "7:24 AM", "7:57 AM", "8:27 AM", "8:57 AM"] },
   { stop_id: "3612", name: "S Macadam &amp; Hamilton Ct", lat: 45.489956, lon: -122.67383, times: ["5:42 AM", "6:04 AM", "6:36 AM", "6:55 AM", "7:25 AM", "7:58 AM", "8:28 AM", "8:58 AM"] },

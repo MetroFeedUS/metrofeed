@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
@@ -27,23 +25,37 @@
       overflow-y: auto;
     }
 
-    .home-button {
+    /* BACK BUTTON */
+    .back-button-fixed {
       position: fixed;
-      top: 120px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
       background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1001;
       box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
     }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
+    .back-button-fixed:active, .back-button-fixed:focus {
+      background-color: #1976d2;
+    }
+    .back-button-fixed svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button-fixed:active svg,
+    .back-button-fixed:focus svg {
+      fill: #fff;
     }
 
     header {
@@ -119,19 +131,15 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
-    
-    }
   </style>
 </head>
-
 <body>
   
-
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
@@ -139,9 +147,12 @@
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
   </div>
 
-  <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
-  </div>
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
   <h1>Route 6 - To Jantzen Beach</h1>
 
@@ -956,12 +967,12 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "1114", name: "SW 18th &amp; Goose Hollow MAX Station", lat: 45.517577, lon: -122.693099, times: ["5:32 AM", "6:02 AM", "6:32 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM", "8:22 AM"] },
-  { stop_id: "12792", name: "SW Columbia &amp; 16th", lat: 45.516919, lon: -122.690692, times: ["5:32 AM", "6:02 AM", "6:32 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM", "8:22 AM"] },
-  { stop_id: "1111", name: "SW Columbia &amp; 12th", lat: 45.515871, lon: -122.686848, times: ["5:34 AM", "6:04 AM", "6:34 AM", "7:04 AM", "7:24 AM", "7:44 AM", "8:04 AM", "8:24 AM"] },
-  { stop_id: "1108", name: "SW Columbia &amp; Park Ave", lat: 45.514919, lon: -122.683248, times: ["5:35 AM", "6:05 AM", "6:35 AM", "7:05 AM", "7:25 AM", "7:45 AM", "8:05 AM", "8:25 AM"] },
-  { stop_id: "12793", name: "SW Columbia between 6th &amp; 5th", lat: 45.51421, lon: -122.680655, times: ["5:36 AM", "6:06 AM", "6:36 AM", "7:07 AM", "7:27 AM", "7:47 AM", "8:07 AM", "8:27 AM"] },
-  { stop_id: "3635", name: "SW Madison &amp; 1st", lat: 45.514455, lon: -122.675839, times: ["5:38 AM", "6:08 AM", "6:38 AM", "7:09 AM", "7:29 AM", "7:49 AM", "8:09 AM", "8:29 AM"] },
+  { stop_id: "1114", name: "SW 18th &amp; Goose Hollow MAX Station", lat: 45.517577, lon: -122.693099, times: ["6:02 AM", "6:32 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM", "8:22 AM", "8:42 AM"] },
+  { stop_id: "12792", name: "SW Columbia &amp; 16th", lat: 45.516919, lon: -122.690692, times: ["6:02 AM", "6:32 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM", "8:22 AM", "8:42 AM"] },
+  { stop_id: "1111", name: "SW Columbia &amp; 12th", lat: 45.515871, lon: -122.686848, times: ["6:04 AM", "6:34 AM", "7:04 AM", "7:24 AM", "7:44 AM", "8:04 AM", "8:24 AM", "8:44 AM"] },
+  { stop_id: "1108", name: "SW Columbia &amp; Park Ave", lat: 45.514919, lon: -122.683248, times: ["6:05 AM", "6:35 AM", "7:05 AM", "7:25 AM", "7:45 AM", "8:05 AM", "8:25 AM", "8:45 AM"] },
+  { stop_id: "12793", name: "SW Columbia between 6th &amp; 5th", lat: 45.51421, lon: -122.680655, times: ["6:06 AM", "6:36 AM", "7:07 AM", "7:27 AM", "7:47 AM", "8:07 AM", "8:27 AM", "8:47 AM"] },
+  { stop_id: "3635", name: "SW Madison &amp; 1st", lat: 45.514455, lon: -122.675839, times: ["6:08 AM", "6:38 AM", "7:09 AM", "7:29 AM", "7:49 AM", "8:09 AM", "8:29 AM", "8:49 AM"] },
   { stop_id: "2641", name: "Hawthorne Bridge", lat: 45.512153, lon: -122.665112, times: ["5:40 AM", "6:11 AM", "6:41 AM", "7:12 AM", "7:32 AM", "7:52 AM", "8:12 AM", "8:32 AM"] },
   { stop_id: "2170", name: "SE Grand &amp; Main", lat: 45.51341, lon: -122.660658, times: ["5:42 AM", "6:12 AM", "6:43 AM", "7:14 AM", "7:34 AM", "7:54 AM", "8:14 AM", "8:34 AM"] },
   { stop_id: "11483", name: "SE Grand &amp; Taylor", lat: 45.514994, lon: -122.660668, times: ["5:42 AM", "6:13 AM", "6:43 AM", "7:14 AM", "7:34 AM", "7:54 AM", "8:14 AM", "8:34 AM"] },

@@ -153,7 +153,26 @@
       margin: 0 6px;
     }
     .site-footer a:hover { text-decoration: underline; }
-  </style>
+ 
+  .mf-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .mf-modal { background: #111; border: 2.5px solid #4dd0e1; border-radius: 18px; box-shadow: 0 0 24px #222, 0 0 6px #4dd0e1; padding: 2.2rem 2.3rem 1.8rem 2.3rem; min-width: 340px; max-width: 98vw; width: 370px; text-align: center; position: relative; animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1; }
+    @keyframes popin { from { transform: scale(0.94); opacity: 0; } to   { transform: scale(1); opacity: 1; } }
+    .mf-modal h2 { color: #4dd0e1; font-size: 1.25rem; margin: 0 0 0.5rem 0; letter-spacing: 0.01em; text-shadow: 0 1px 0 #222, 0 0 6px #4dd0e1; }
+    .mf-modal p { color: #e4f9fb; font-size: 1.02rem; margin: 0 0 1.5rem 0; line-height: 1.4; font-weight: 400; text-shadow: 0 1px 0 #222; }
+    .mf-actions { display: flex; gap: 0.65rem; margin-bottom: 1.1rem; justify-content: center; flex-wrap: wrap; }
+    .mf-btn { flex: 1; background: #0d0d0d; color: #4dd0e1; border: 2px solid #fff; font-size: 1.01rem; border-radius: 8px; padding: 0.68rem 0.5rem; font-weight: bold; cursor: pointer; transition: background .15s, color .12s, border .18s; margin-bottom: 2px; min-width: 105px; outline: none; box-shadow: 0 0 6px #4dd0e1aa;}
+    .mf-btn:hover, .mf-btn:focus { background: #4dd0e1; color: #0d0d0d; border-color: #fff; }
+    .mf-premium { margin: 1.1rem 0 0.5rem 0; color: #fff; font-size: 1.09rem; font-weight: bold; text-shadow: 0 0 6px #4dd0e1; }
+    .mf-premium span { color: #4dd0e1; }
+    .trial-btn { background: #4dd0e1; color: #000; border: 2px solid #fff; font-size: 1.07rem; font-weight: bold; padding: 0.75rem 0; width: 100%; border-radius: 10px; margin-top: 0.4rem; margin-bottom: 0.2rem; box-shadow: 0 0 10px #4dd0e1bb; cursor: pointer; transition: background .18s, color .18s, border .16s; }
+    .trial-btn:hover, .trial-btn:focus { background: #fff; color: #0071ce; border: 2px solid #4dd0e1; }
+    .trial-btn[disabled] { background: #222; color: #888; cursor: not-allowed; border: 2px solid #333; box-shadow: none;}
+    .trial-timer { display: block; margin-top: 0.2rem; font-size: 0.99rem; color: #fff; letter-spacing: 0.01em;}
+    .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid #4dd0e1; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+    @media (max-width: 480px) { .mf-modal { padding: 1.1rem 0.7rem 1.2rem 0.7rem; min-width: unset; width: 97vw; } .mf-btn, .trial-btn { font-size: 1rem; padding: 0.5rem 0; } }
+
+
+ </style>
 </head>
 <body>
   <div id="map"></div>
@@ -355,5 +374,121 @@
       });
     }
   </script>
+
+<!-- ...all your content... -->
+<!-- All other <script> tags ... -->
+
+<!-- MetroFeed Premium Popup Overlay (place before last script and </body>) -->
+<div class="mf-overlay">
+  <div class="mf-modal">
+    <span class="dev-switch" id="devSwitch" onclick="toggleDevMode()">
+      <span id="devModeStatus"></span>
+    </span>
+    <h2>You're not logged in or don’t have an account</h2>
+    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
+    <div class="mf-actions">
+      <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
+      <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
+      <button class="mf-btn" onclick="location.href='free.html'">Use Free Version</button>
+    </div>
+    <div class="mf-premium">
+      Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
+      <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
+    </div>
+    <button class="trial-btn" id="startTrialBtn">Start Free Trial</button>
+    <span class="trial-timer" id="trialTimer"></span>
+  </div>
+</div>
+
+<!-- Place DevMode script HERE -->
+<script>
+  // DevMode + Timer logic
+  let devMode = (localStorage.getItem('mf_devMode') === 'true');
+  const devSwitch = document.getElementById('devSwitch');
+  const devModeStatus = document.getElementById('devModeStatus');
+  function updateDevSwitch() {
+    devModeStatus.textContent = devMode ? "🛠️ DevMode: ON" : "🛠️ DevMode: OFF";
+    devSwitch.style.opacity = devMode ? "1" : "0.6";
+  }
+  function toggleDevMode() {
+    devMode = !devMode;
+    localStorage.setItem('mf_devMode', devMode ? 'true' : 'false');
+    updateDevSwitch();
+    updateTrialTimer();
+  }
+  updateDevSwitch();
+
+  const btn = document.getElementById('startTrialBtn');
+  const timerEl = document.getElementById('trialTimer');
+  function msToTime(duration) {
+    let seconds = Math.floor((duration / 1000) % 60),
+        minutes = Math.floor((duration / (1000 * 60)) % 60),
+        hours = Math.floor((duration / (1000 * 60 * 60)) % 24),
+        days = Math.floor(duration / (1000 * 60 * 60 * 24));
+    return `${days > 0 ? days+'d ' : ''}${hours}h ${minutes}m ${seconds}s`;
+  }
+  function updateTrialTimer() {
+    if (devMode) {
+      btn.disabled = false;
+      btn.textContent = 'Start Free Trial';
+      timerEl.textContent = 'DevMode: Timer is OFF for testing.';
+      return;
+    }
+    const trialStart = parseInt(localStorage.getItem('mf_trialStart') || '0');
+    if (!trialStart) {
+      timerEl.textContent = '';
+      btn.disabled = false;
+      btn.textContent = 'Start Free Trial';
+      return;
+    }
+    const now = Date.now();
+    const diff = (trialStart + 24*60*60*1000) - now;
+    if (diff > 0) {
+      btn.disabled = true;
+      btn.textContent = 'Trial Active';
+      timerEl.textContent = 'Expires in: ' + msToTime(diff);
+    } else {
+      btn.disabled = true;
+      btn.textContent = 'Trial Expired';
+      timerEl.textContent = 'Your free trial has ended.';
+      // localStorage.removeItem('mf_trialStart'); // For 24hr repeatable trial, uncomment this.
+    }
+  }
+  btn.onclick = function() {
+    if (devMode || !localStorage.getItem('mf_trialStart')) {
+      localStorage.setItem('mf_trialStart', Date.now().toString());
+      updateTrialTimer();
+      // TODO: Unlock premium here!
+    }
+  };
+  updateTrialTimer();
+  setInterval(updateTrialTimer, 1000);
+</script>
+</body>
+</html>
+
+
+<!-- MetroFeed Premium Popup Overlay (paste below just before </body>) -->
+<div class="mf-overlay">
+  <div class="mf-modal">
+    <span class="dev-switch" id="devSwitch" onclick="toggleDevMode()">
+      <span id="devModeStatus"></span>
+    </span>
+    <h2>You're not logged in or don’t have an account</h2>
+    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
+    <div class="mf-actions">
+      <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
+      <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
+      <button class="mf-btn" onclick="location.href='free.html'">Use Free Version</button>
+    </div>
+    <div class="mf-premium">
+      Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
+      <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
+    </div>
+    <button class="trial-btn" id="startTrialBtn">Start Free Trial</button>
+    <span class="trial-timer" id="trialTimer"></span>
+  </div>
+</div>
+
 </body>
 </html>

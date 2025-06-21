@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
@@ -27,23 +25,37 @@
       overflow-y: auto;
     }
 
-    .home-button {
+    /* BACK BUTTON */
+    .back-button-fixed {
       position: fixed;
-      top: 120px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
       background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1001;
       box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
     }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
+    .back-button-fixed:active, .back-button-fixed:focus {
+      background-color: #1976d2;
+    }
+    .back-button-fixed svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button-fixed:active svg,
+    .back-button-fixed:focus svg {
+      fill: #fff;
     }
 
     header {
@@ -119,19 +131,15 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
-    
-    }
   </style>
 </head>
-
 <body>
   
-
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
@@ -139,9 +147,12 @@
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
   </div>
 
-  <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
-  </div>
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
   <h1>Route 4 - To Portland City Center</h1>
 
@@ -900,19 +911,19 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "4818", name: "N Richmond &amp; Syracuse", lat: 45.587889, lon: -122.751884, times: ["5:32 AM", "6:32 AM", "6:55 AM", "7:15 AM", "7:35 AM", "7:55 AM", "8:13 AM", "8:30 AM"] },
-  { stop_id: "4817", name: "N Richmond &amp; Syracuse", lat: 45.587592, lon: -122.751862, times: ["5:33 AM", "6:33 AM", "6:56 AM", "7:16 AM", "7:36 AM", "7:56 AM", "8:14 AM", "8:31 AM"] },
-  { stop_id: "3509", name: "N Lombard &amp; John", lat: 45.589615, lon: -122.752757, times: ["5:34 AM", "6:34 AM", "6:57 AM", "7:17 AM", "7:37 AM", "7:57 AM", "8:15 AM", "8:32 AM"] },
-  { stop_id: "14216", name: "N Lombard &amp; Alta", lat: 45.590728, lon: -122.755342, times: ["5:34 AM", "6:34 AM", "6:57 AM", "7:17 AM", "7:37 AM", "7:57 AM", "8:15 AM", "8:32 AM"] },
-  { stop_id: "13877", name: "N Lombard &amp; St Louis", lat: 45.59279, lon: -122.757332, times: ["5:35 AM", "6:35 AM", "6:58 AM", "7:18 AM", "7:38 AM", "7:58 AM", "8:16 AM", "8:33 AM"] },
-  { stop_id: "11936", name: "N St Louis &amp; Central", lat: 45.593867, lon: -122.755506, times: ["5:35 AM", "6:35 AM", "6:58 AM", "7:18 AM", "7:38 AM", "7:58 AM", "8:16 AM", "8:33 AM"] },
-  { stop_id: "5376", name: "N St Louis &amp; Smith", lat: 45.59484, lon: -122.75354, times: ["5:36 AM", "6:36 AM", "6:59 AM", "7:19 AM", "7:39 AM", "7:59 AM", "8:17 AM", "8:34 AM"] },
-  { stop_id: "5373", name: "N St Louis &amp; New York", lat: 45.595604, lon: -122.751935, times: ["5:36 AM", "6:36 AM", "6:59 AM", "7:19 AM", "7:39 AM", "7:59 AM", "8:17 AM", "8:34 AM"] },
-  { stop_id: "11007", name: "N Fessenden &amp; Seneca", lat: 45.596548, lon: -122.749858, times: ["5:37 AM", "6:37 AM", "7:00 AM", "7:20 AM", "7:40 AM", "8:00 AM", "8:18 AM", "8:35 AM"] },
-  { stop_id: "1714", name: "N Fessenden &amp; Richmond", lat: 45.596122, lon: -122.746717, times: ["5:37 AM", "6:37 AM", "7:00 AM", "7:20 AM", "7:40 AM", "8:00 AM", "8:18 AM", "8:35 AM"] },
-  { stop_id: "1699", name: "N Fessenden &amp; Allegheny", lat: 45.595446, lon: -122.743864, times: ["5:38 AM", "6:38 AM", "7:01 AM", "7:21 AM", "7:41 AM", "8:01 AM", "8:19 AM", "8:36 AM"] },
-  { stop_id: "10614", name: "N Fessenden &amp; Tioga", lat: 45.594856, lon: -122.741381, times: ["5:39 AM", "6:39 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM", "8:20 AM", "8:37 AM"] },
-  { stop_id: "1703", name: "N Fessenden &amp; Burr", lat: 45.594162, lon: -122.738439, times: ["5:39 AM", "6:39 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM", "8:20 AM", "8:37 AM"] },
+  { stop_id: "4818", name: "N Richmond &amp; Syracuse", lat: 45.587889, lon: -122.751884, times: ["6:32 AM", "6:55 AM", "7:15 AM", "7:35 AM", "7:55 AM", "8:13 AM", "8:30 AM", "8:44 AM"] },
+  { stop_id: "4817", name: "N Richmond &amp; Syracuse", lat: 45.587592, lon: -122.751862, times: ["6:33 AM", "6:56 AM", "7:16 AM", "7:36 AM", "7:56 AM", "8:14 AM", "8:31 AM", "8:45 AM"] },
+  { stop_id: "3509", name: "N Lombard &amp; John", lat: 45.589615, lon: -122.752757, times: ["6:34 AM", "6:57 AM", "7:17 AM", "7:37 AM", "7:57 AM", "8:15 AM", "8:32 AM", "8:46 AM"] },
+  { stop_id: "14216", name: "N Lombard &amp; Alta", lat: 45.590728, lon: -122.755342, times: ["6:34 AM", "6:57 AM", "7:17 AM", "7:37 AM", "7:57 AM", "8:15 AM", "8:32 AM", "8:46 AM"] },
+  { stop_id: "13877", name: "N Lombard &amp; St Louis", lat: 45.59279, lon: -122.757332, times: ["6:35 AM", "6:58 AM", "7:18 AM", "7:38 AM", "7:58 AM", "8:16 AM", "8:33 AM", "8:47 AM"] },
+  { stop_id: "11936", name: "N St Louis &amp; Central", lat: 45.593867, lon: -122.755506, times: ["6:35 AM", "6:58 AM", "7:18 AM", "7:38 AM", "7:58 AM", "8:16 AM", "8:33 AM", "8:47 AM"] },
+  { stop_id: "5376", name: "N St Louis &amp; Smith", lat: 45.59484, lon: -122.75354, times: ["6:36 AM", "6:59 AM", "7:19 AM", "7:39 AM", "7:59 AM", "8:17 AM", "8:34 AM", "8:48 AM"] },
+  { stop_id: "5373", name: "N St Louis &amp; New York", lat: 45.595604, lon: -122.751935, times: ["6:36 AM", "6:59 AM", "7:19 AM", "7:39 AM", "7:59 AM", "8:17 AM", "8:34 AM", "8:48 AM"] },
+  { stop_id: "11007", name: "N Fessenden &amp; Seneca", lat: 45.596548, lon: -122.749858, times: ["6:37 AM", "7:00 AM", "7:20 AM", "7:40 AM", "8:00 AM", "8:18 AM", "8:35 AM", "8:49 AM"] },
+  { stop_id: "1714", name: "N Fessenden &amp; Richmond", lat: 45.596122, lon: -122.746717, times: ["6:37 AM", "7:00 AM", "7:20 AM", "7:40 AM", "8:00 AM", "8:18 AM", "8:35 AM", "8:49 AM"] },
+  { stop_id: "1699", name: "N Fessenden &amp; Allegheny", lat: 45.595446, lon: -122.743864, times: ["6:38 AM", "7:01 AM", "7:21 AM", "7:41 AM", "8:01 AM", "8:19 AM", "8:36 AM", "8:50 AM"] },
+  { stop_id: "10614", name: "N Fessenden &amp; Tioga", lat: 45.594856, lon: -122.741381, times: ["6:39 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM", "8:20 AM", "8:37 AM", "8:51 AM"] },
+  { stop_id: "1703", name: "N Fessenden &amp; Burr", lat: 45.594162, lon: -122.738439, times: ["6:39 AM", "7:02 AM", "7:22 AM", "7:42 AM", "8:02 AM", "8:20 AM", "8:37 AM", "8:51 AM"] },
   { stop_id: "1712", name: "N Fessenden &amp; Midway", lat: 45.593412, lon: -122.735186, times: ["5:40 AM", "6:40 AM", "7:03 AM", "7:23 AM", "7:43 AM", "8:03 AM", "8:21 AM", "8:38 AM"] },
   { stop_id: "1707", name: "N Fessenden &amp; Columbia Way", lat: 45.592627, lon: -122.732127, times: ["5:41 AM", "6:41 AM", "7:04 AM", "7:24 AM", "7:44 AM", "8:04 AM", "8:22 AM", "8:39 AM"] },
   { stop_id: "1709", name: "N Fessenden &amp; Geneva", lat: 45.59133, lon: -122.726929, times: ["5:42 AM", "6:42 AM", "7:05 AM", "7:25 AM", "7:45 AM", "8:05 AM", "8:23 AM", "8:40 AM"] },
@@ -953,21 +964,21 @@ const stops = [
   { stop_id: "3957", name: "N Mississippi &amp; Failing", lat: 45.550606, lon: -122.675648, times: ["6:07 AM", "7:07 AM", "7:30 AM", "7:50 AM", "8:10 AM", "8:30 AM", "8:48 AM", "9:05 AM"] },
   { stop_id: "1844", name: "N Fremont &amp; Mississippi", lat: 45.547787, lon: -122.675108, times: ["6:08 AM", "7:08 AM", "7:31 AM", "7:51 AM", "8:11 AM", "8:31 AM", "8:49 AM", "9:06 AM"] },
   { stop_id: "10649", name: "N Fremont &amp; Kerby", lat: 45.548214, lon: -122.671762, times: ["6:09 AM", "7:09 AM", "7:32 AM", "7:52 AM", "8:12 AM", "8:32 AM", "8:50 AM", "9:07 AM"] },
-  { stop_id: "6000", name: "N Vancouver &amp; Ivy", lat: 45.547637, lon: -122.668052, times: ["5:10 AM", "6:10 AM", "7:10 AM", "7:33 AM", "7:53 AM", "8:13 AM", "8:33 AM", "8:51 AM"] },
-  { stop_id: "5984", name: "N Vancouver &amp; Fargo", lat: 45.545971, lon: -122.668042, times: ["5:11 AM", "6:11 AM", "7:11 AM", "7:34 AM", "7:54 AM", "8:14 AM", "8:34 AM", "8:52 AM"] },
-  { stop_id: "6006", name: "N Vancouver &amp; Stanton", lat: 45.543858, lon: -122.668195, times: ["5:12 AM", "6:11 AM", "7:11 AM", "7:34 AM", "7:54 AM", "8:14 AM", "8:34 AM", "8:52 AM"] },
-  { stop_id: "5997", name: "N Vancouver &amp; Knott", lat: 45.542028, lon: -122.668249, times: ["5:12 AM", "6:12 AM", "7:12 AM", "7:35 AM", "7:55 AM", "8:15 AM", "8:35 AM", "8:53 AM"] },
-  { stop_id: "6003", name: "N Vancouver &amp; Russell", lat: 45.540714, lon: -122.667863, times: ["5:13 AM", "6:12 AM", "7:12 AM", "7:35 AM", "7:55 AM", "8:15 AM", "8:35 AM", "8:53 AM"] },
-  { stop_id: "6001", name: "N Vancouver &amp; Page", lat: 45.539663, lon: -122.667791, times: ["5:13 AM", "6:13 AM", "7:13 AM", "7:36 AM", "7:56 AM", "8:16 AM", "8:36 AM", "8:54 AM"] },
-  { stop_id: "6008", name: "N Vancouver &amp; Tillamook", lat: 45.538121, lon: -122.667792, times: ["5:14 AM", "6:13 AM", "7:13 AM", "7:36 AM", "7:56 AM", "8:16 AM", "8:36 AM", "8:54 AM"] },
-  { stop_id: "6009", name: "N Vancouver &amp; Weidler", lat: 45.5345, lon: -122.667841, times: ["5:15 AM", "6:15 AM", "7:15 AM", "7:38 AM", "7:58 AM", "8:18 AM", "8:38 AM", "8:56 AM"] },
-  { stop_id: "2592", name: "Rose Quarter Transit Center", lat: 45.530005, lon: -122.666476, times: ["5:17 AM", "6:17 AM", "7:17 AM", "7:40 AM", "8:00 AM", "8:20 AM", "8:40 AM", "8:58 AM"] },
-  { stop_id: "9311", name: "NW Glisan &amp; 3rd", lat: 45.526817, lon: -122.674106, times: ["5:18 AM", "6:18 AM", "7:18 AM", "7:41 AM", "8:01 AM", "8:21 AM", "8:41 AM", "8:59 AM"] },
-  { stop_id: "9301", name: "NW 5th &amp; Davis", lat: 45.524705, lon: -122.675552, times: ["5:20 AM", "6:20 AM", "7:20 AM", "7:43 AM", "8:03 AM", "8:23 AM", "8:43 AM", "9:01 AM"] },
-  { stop_id: "7631", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["5:22 AM", "6:22 AM", "7:22 AM", "7:45 AM", "8:05 AM", "8:25 AM", "8:45 AM", "9:03 AM"] },
-  { stop_id: "7642", name: "SW 5th &amp; Washington", lat: 45.52027, lon: -122.676855, times: ["5:23 AM", "6:23 AM", "7:23 AM", "7:46 AM", "8:06 AM", "8:26 AM", "8:46 AM", "9:04 AM"] },
-  { stop_id: "7634", name: "SW 5th &amp; Salmon", lat: 45.51694, lon: -122.678651, times: ["5:26 AM", "6:26 AM", "7:26 AM", "7:49 AM", "8:09 AM", "8:29 AM", "8:49 AM", "9:07 AM"] },
-  { stop_id: "12791", name: "SW Jefferson &amp; 5th", lat: 45.514806, lon: -122.679535, times: ["5:29 AM", "6:29 AM", "7:29 AM", "7:52 AM", "8:12 AM", "8:32 AM", "8:52 AM", "9:10 AM"] },
+  { stop_id: "6000", name: "N Vancouver &amp; Ivy", lat: 45.547637, lon: -122.668052, times: ["6:10 AM", "7:10 AM", "7:33 AM", "7:53 AM", "8:13 AM", "8:33 AM", "8:51 AM", "9:08 AM"] },
+  { stop_id: "5984", name: "N Vancouver &amp; Fargo", lat: 45.545971, lon: -122.668042, times: ["6:11 AM", "7:11 AM", "7:34 AM", "7:54 AM", "8:14 AM", "8:34 AM", "8:52 AM", "9:09 AM"] },
+  { stop_id: "6006", name: "N Vancouver &amp; Stanton", lat: 45.543858, lon: -122.668195, times: ["6:11 AM", "7:11 AM", "7:34 AM", "7:54 AM", "8:14 AM", "8:34 AM", "8:52 AM", "9:10 AM"] },
+  { stop_id: "5997", name: "N Vancouver &amp; Knott", lat: 45.542028, lon: -122.668249, times: ["6:12 AM", "7:12 AM", "7:35 AM", "7:55 AM", "8:15 AM", "8:35 AM", "8:53 AM", "9:11 AM"] },
+  { stop_id: "6003", name: "N Vancouver &amp; Russell", lat: 45.540714, lon: -122.667863, times: ["6:12 AM", "7:12 AM", "7:35 AM", "7:55 AM", "8:15 AM", "8:35 AM", "8:53 AM", "9:11 AM"] },
+  { stop_id: "6001", name: "N Vancouver &amp; Page", lat: 45.539663, lon: -122.667791, times: ["6:13 AM", "7:13 AM", "7:36 AM", "7:56 AM", "8:16 AM", "8:36 AM", "8:54 AM", "9:12 AM"] },
+  { stop_id: "6008", name: "N Vancouver &amp; Tillamook", lat: 45.538121, lon: -122.667792, times: ["6:13 AM", "7:13 AM", "7:36 AM", "7:56 AM", "8:16 AM", "8:36 AM", "8:54 AM", "9:12 AM"] },
+  { stop_id: "6009", name: "N Vancouver &amp; Weidler", lat: 45.5345, lon: -122.667841, times: ["6:15 AM", "7:15 AM", "7:38 AM", "7:58 AM", "8:18 AM", "8:38 AM", "8:56 AM", "9:14 AM"] },
+  { stop_id: "2592", name: "Rose Quarter Transit Center", lat: 45.530005, lon: -122.666476, times: ["6:17 AM", "7:17 AM", "7:40 AM", "8:00 AM", "8:20 AM", "8:40 AM", "8:58 AM", "9:16 AM"] },
+  { stop_id: "9311", name: "NW Glisan &amp; 3rd", lat: 45.526817, lon: -122.674106, times: ["6:18 AM", "7:18 AM", "7:41 AM", "8:01 AM", "8:21 AM", "8:41 AM", "8:59 AM", "9:17 AM"] },
+  { stop_id: "9301", name: "NW 5th &amp; Davis", lat: 45.524705, lon: -122.675552, times: ["6:20 AM", "7:20 AM", "7:43 AM", "8:03 AM", "8:23 AM", "8:43 AM", "9:01 AM", "9:19 AM"] },
+  { stop_id: "7631", name: "SW 5th &amp; Pine", lat: 45.522236, lon: -122.675827, times: ["6:22 AM", "7:22 AM", "7:45 AM", "8:05 AM", "8:25 AM", "8:45 AM", "9:03 AM", "9:21 AM"] },
+  { stop_id: "7642", name: "SW 5th &amp; Washington", lat: 45.52027, lon: -122.676855, times: ["6:23 AM", "7:23 AM", "7:46 AM", "8:06 AM", "8:26 AM", "8:46 AM", "9:04 AM", "9:22 AM"] },
+  { stop_id: "7634", name: "SW 5th &amp; Salmon", lat: 45.51694, lon: -122.678651, times: ["6:26 AM", "7:26 AM", "7:49 AM", "8:09 AM", "8:29 AM", "8:49 AM", "9:07 AM", "9:25 AM"] },
+  { stop_id: "12791", name: "SW Jefferson &amp; 5th", lat: 45.514806, lon: -122.679535, times: ["6:29 AM", "7:29 AM", "7:52 AM", "8:12 AM", "8:32 AM", "8:52 AM", "9:10 AM", "9:28 AM"] },
 ]
 
     const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);

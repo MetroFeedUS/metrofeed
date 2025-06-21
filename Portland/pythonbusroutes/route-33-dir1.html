@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
@@ -27,23 +25,37 @@
       overflow-y: auto;
     }
 
-    .home-button {
+    /* BACK BUTTON */
+    .back-button-fixed {
       position: fixed;
-      top: 120px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
       background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1001;
       box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
     }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
+    .back-button-fixed:active, .back-button-fixed:focus {
+      background-color: #1976d2;
+    }
+    .back-button-fixed svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button-fixed:active svg,
+    .back-button-fixed:focus svg {
+      fill: #fff;
     }
 
     header {
@@ -119,19 +131,15 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
-    
-    }
   </style>
 </head>
-
 <body>
   
-
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
@@ -139,9 +147,12 @@
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
   </div>
 
-  <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
-  </div>
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
   <h1>Route 33 - To Milwaukie and Clackamas Town Center</h1>
 
@@ -1330,23 +1341,23 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "1068", name: "Clackamas Community College", lat: 45.321961, lon: -122.575213, times: ["5:30 AM", "6:30 AM", "7:00 AM", "7:30 AM", "7:59 AM", "8:29 AM", "8:44 AM", "8:59 AM"] },
-  { stop_id: "14180", name: "19400 Block Molalla", lat: 45.325138, lon: -122.581162, times: ["5:31 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:00 AM", "8:30 AM", "8:45 AM", "9:00 AM"] },
-  { stop_id: "9042", name: "Molalla &amp; Oregon City Post Office", lat: 45.32744, lon: -122.583046, times: ["5:31 AM", "6:31 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "8:46 AM", "9:01 AM"] },
-  { stop_id: "2841", name: "Molalla &amp; Gaffney Ln", lat: 45.330266, lon: -122.585356, times: ["5:32 AM", "6:32 AM", "7:02 AM", "7:32 AM", "8:01 AM", "8:31 AM", "8:46 AM", "9:01 AM"] },
-  { stop_id: "2837", name: "Molalla &amp; Clairmont", lat: 45.331589, lon: -122.586473, times: ["5:32 AM", "6:32 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "8:47 AM", "9:02 AM"] },
-  { stop_id: "13592", name: "Beavercreek &amp; Danielson Dr", lat: 45.333759, lon: -122.591278, times: ["5:33 AM", "6:33 AM", "7:03 AM", "7:33 AM", "8:03 AM", "8:33 AM", "8:48 AM", "9:03 AM"] },
-  { stop_id: "6115", name: "300 Block Beavercreek Rd", lat: 45.333705, lon: -122.594035, times: ["5:34 AM", "6:34 AM", "7:04 AM", "7:34 AM", "8:03 AM", "8:33 AM", "8:48 AM", "9:03 AM"] },
-  { stop_id: "9517", name: "Beavercreek &amp; Courthouse Rd (Library Ct)", lat: 45.335056, lon: -122.5983, times: ["5:35 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:04 AM", "8:34 AM", "8:49 AM", "9:04 AM"] },
-  { stop_id: "6114", name: "200 Block Warner - Milne", lat: 45.336486, lon: -122.600839, times: ["5:35 AM", "6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:35 AM", "8:50 AM", "9:05 AM"] },
-  { stop_id: "6121", name: "Warner - Milne &amp; Linn Ave", lat: 45.336529, lon: -122.604555, times: ["5:36 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "8:51 AM", "9:06 AM"] },
-  { stop_id: "3418", name: "Linn &amp; Williams", lat: 45.337467, lon: -122.604893, times: ["5:36 AM", "6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "8:51 AM", "9:06 AM"] },
-  { stop_id: "3410", name: "Linn &amp; Ethel", lat: 45.340066, lon: -122.60492, times: ["5:37 AM", "6:37 AM", "7:07 AM", "7:37 AM", "8:06 AM", "8:36 AM", "8:51 AM", "9:06 AM"] },
-  { stop_id: "3412", name: "Linn &amp; Holmes", lat: 45.341882, lon: -122.604949, times: ["5:37 AM", "6:37 AM", "7:07 AM", "7:37 AM", "8:07 AM", "8:37 AM", "8:52 AM", "9:07 AM"] },
-  { stop_id: "3413", name: "Linn &amp; Narain", lat: 45.344227, lon: -122.604945, times: ["5:38 AM", "6:38 AM", "7:08 AM", "7:38 AM", "8:07 AM", "8:37 AM", "8:52 AM", "9:07 AM"] },
-  { stop_id: "3409", name: "Linn &amp; Charman", lat: 45.34744, lon: -122.602865, times: ["5:38 AM", "6:38 AM", "7:08 AM", "7:38 AM", "8:08 AM", "8:38 AM", "8:53 AM", "9:08 AM"] },
-  { stop_id: "3416", name: "Linn &amp; Pearl", lat: 45.349168, lon: -122.601451, times: ["5:39 AM", "6:39 AM", "7:09 AM", "7:39 AM", "8:09 AM", "8:39 AM", "8:54 AM", "9:09 AM"] },
-  { stop_id: "3423", name: "Linn &amp; 4th", lat: 45.351051, lon: -122.600734, times: ["5:39 AM", "6:39 AM", "7:09 AM", "7:39 AM", "8:09 AM", "8:39 AM", "8:54 AM", "9:09 AM"] },
+  { stop_id: "1068", name: "Clackamas Community College", lat: 45.321961, lon: -122.575213, times: ["6:30 AM", "7:00 AM", "7:30 AM", "7:59 AM", "8:29 AM", "8:44 AM", "8:59 AM", "9:13 AM"] },
+  { stop_id: "14180", name: "19400 Block Molalla", lat: 45.325138, lon: -122.581162, times: ["6:31 AM", "7:01 AM", "7:31 AM", "8:00 AM", "8:30 AM", "8:45 AM", "9:00 AM", "9:14 AM"] },
+  { stop_id: "9042", name: "Molalla &amp; Oregon City Post Office", lat: 45.32744, lon: -122.583046, times: ["6:31 AM", "7:01 AM", "7:31 AM", "8:01 AM", "8:31 AM", "8:46 AM", "9:01 AM", "9:15 AM"] },
+  { stop_id: "2841", name: "Molalla &amp; Gaffney Ln", lat: 45.330266, lon: -122.585356, times: ["6:32 AM", "7:02 AM", "7:32 AM", "8:01 AM", "8:31 AM", "8:46 AM", "9:01 AM", "9:15 AM"] },
+  { stop_id: "2837", name: "Molalla &amp; Clairmont", lat: 45.331589, lon: -122.586473, times: ["6:32 AM", "7:02 AM", "7:32 AM", "8:02 AM", "8:32 AM", "8:47 AM", "9:02 AM", "9:16 AM"] },
+  { stop_id: "13592", name: "Beavercreek &amp; Danielson Dr", lat: 45.333759, lon: -122.591278, times: ["6:33 AM", "7:03 AM", "7:33 AM", "8:03 AM", "8:33 AM", "8:48 AM", "9:03 AM", "9:17 AM"] },
+  { stop_id: "6115", name: "300 Block Beavercreek Rd", lat: 45.333705, lon: -122.594035, times: ["6:34 AM", "7:04 AM", "7:34 AM", "8:03 AM", "8:33 AM", "8:48 AM", "9:03 AM", "9:17 AM"] },
+  { stop_id: "9517", name: "Beavercreek &amp; Courthouse Rd (Library Ct)", lat: 45.335056, lon: -122.5983, times: ["6:35 AM", "7:05 AM", "7:35 AM", "8:04 AM", "8:34 AM", "8:49 AM", "9:04 AM", "9:18 AM"] },
+  { stop_id: "6114", name: "200 Block Warner - Milne", lat: 45.336486, lon: -122.600839, times: ["6:35 AM", "7:05 AM", "7:35 AM", "8:05 AM", "8:35 AM", "8:50 AM", "9:05 AM", "9:19 AM"] },
+  { stop_id: "6121", name: "Warner - Milne &amp; Linn Ave", lat: 45.336529, lon: -122.604555, times: ["6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "8:51 AM", "9:06 AM", "9:20 AM"] },
+  { stop_id: "3418", name: "Linn &amp; Williams", lat: 45.337467, lon: -122.604893, times: ["6:36 AM", "7:06 AM", "7:36 AM", "8:06 AM", "8:36 AM", "8:51 AM", "9:06 AM", "9:20 AM"] },
+  { stop_id: "3410", name: "Linn &amp; Ethel", lat: 45.340066, lon: -122.60492, times: ["6:37 AM", "7:07 AM", "7:37 AM", "8:06 AM", "8:36 AM", "8:51 AM", "9:06 AM", "9:20 AM"] },
+  { stop_id: "3412", name: "Linn &amp; Holmes", lat: 45.341882, lon: -122.604949, times: ["6:37 AM", "7:07 AM", "7:37 AM", "8:07 AM", "8:37 AM", "8:52 AM", "9:07 AM", "9:21 AM"] },
+  { stop_id: "3413", name: "Linn &amp; Narain", lat: 45.344227, lon: -122.604945, times: ["6:38 AM", "7:08 AM", "7:38 AM", "8:07 AM", "8:37 AM", "8:52 AM", "9:07 AM", "9:21 AM"] },
+  { stop_id: "3409", name: "Linn &amp; Charman", lat: 45.34744, lon: -122.602865, times: ["6:38 AM", "7:08 AM", "7:38 AM", "8:08 AM", "8:38 AM", "8:53 AM", "9:08 AM", "9:22 AM"] },
+  { stop_id: "3416", name: "Linn &amp; Pearl", lat: 45.349168, lon: -122.601451, times: ["6:39 AM", "7:09 AM", "7:39 AM", "8:09 AM", "8:39 AM", "8:54 AM", "9:09 AM", "9:23 AM"] },
+  { stop_id: "3423", name: "Linn &amp; 4th", lat: 45.351051, lon: -122.600734, times: ["6:39 AM", "7:09 AM", "7:39 AM", "8:09 AM", "8:39 AM", "8:54 AM", "9:09 AM", "9:23 AM"] },
   { stop_id: "7621", name: "5th &amp; Monroe", lat: 45.353115, lon: -122.602967, times: ["5:40 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:40 AM", "8:55 AM", "9:10 AM"] },
   { stop_id: "7610", name: "5th &amp; Jefferson", lat: 45.354003, lon: -122.604746, times: ["5:40 AM", "6:40 AM", "7:10 AM", "7:40 AM", "8:10 AM", "8:40 AM", "8:55 AM", "9:10 AM"] },
   { stop_id: "8732", name: "5th &amp; Washington (Oregon City)", lat: 45.354873, lon: -122.606393, times: ["5:41 AM", "6:41 AM", "7:11 AM", "7:41 AM", "8:11 AM", "8:41 AM", "8:56 AM", "9:11 AM"] },

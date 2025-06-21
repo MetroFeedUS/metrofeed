@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
@@ -27,23 +25,37 @@
       overflow-y: auto;
     }
 
-    .home-button {
+    /* BACK BUTTON */
+    .back-button-fixed {
       position: fixed;
-      top: 120px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
       background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1001;
       box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
     }
-
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
+    .back-button-fixed:active, .back-button-fixed:focus {
+      background-color: #1976d2;
+    }
+    .back-button-fixed svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button-fixed:active svg,
+    .back-button-fixed:focus svg {
+      fill: #fff;
     }
 
     header {
@@ -119,19 +131,15 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
-
-    
-    }
   </style>
 </head>
-
 <body>
   
-
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+  <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
@@ -139,9 +147,12 @@
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
   </div>
 
-  <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
-  </div>
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
   <h1>Route 81 - To Troutdale Reynolds Industrial Park</h1>
 
@@ -678,14 +689,14 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "10857", name: "Gresham Central Transit Center", lat: 45.502718, lon: -122.427108, times: ["5:34 AM", "6:25 AM", "7:31 AM", "8:41 AM", "9:56 AM", "11:11 AM", "12:24 PM", "2:54 PM"] },
-  { stop_id: "2253", name: "Gresham Central Transit Center", lat: 45.502592, lon: -122.426486, times: ["5:36 AM", "6:27 AM", "7:33 AM", "8:43 AM", "9:58 AM", "11:13 AM", "12:26 PM", "1:41 PM"] },
-  { stop_id: "13211", name: "NE Hood &amp; 5th", lat: 45.501098, lon: -122.428024, times: ["5:36 AM", "6:27 AM", "7:33 AM", "8:43 AM", "9:58 AM", "11:13 AM", "12:26 PM", "1:41 PM"] },
-  { stop_id: "13033", name: "NE Hood &amp; 2nd", lat: 45.498613, lon: -122.427832, times: ["5:37 AM", "6:28 AM", "7:34 AM", "8:44 AM", "9:59 AM", "11:14 AM", "12:27 PM", "1:42 PM"] },
-  { stop_id: "13474", name: "E Powell &amp; NE Elliott", lat: 45.49792, lon: -122.424876, times: ["5:37 AM", "6:28 AM", "7:35 AM", "8:45 AM", "10:00 AM", "11:15 AM", "12:28 PM", "1:43 PM"] },
-  { stop_id: "4520", name: "E Powell &amp; SE Cleveland", lat: 45.497919, lon: -122.421209, times: ["5:38 AM", "6:29 AM", "7:35 AM", "8:45 AM", "10:00 AM", "11:15 AM", "12:28 PM", "1:43 PM"] },
-  { stop_id: "4531", name: "E Powell &amp; NE Liberty", lat: 45.497888, lon: -122.418723, times: ["5:38 AM", "6:29 AM", "7:36 AM", "8:46 AM", "10:01 AM", "11:16 AM", "12:29 PM", "1:44 PM"] },
-  { stop_id: "4529", name: "E Powell &amp; SE Hogan", lat: 45.497829, lon: -122.414506, times: ["5:39 AM", "6:30 AM", "7:36 AM", "8:46 AM", "10:01 AM", "11:16 AM", "12:29 PM", "1:44 PM"] },
+  { stop_id: "10857", name: "Gresham Central Transit Center", lat: 45.502718, lon: -122.427108, times: ["6:25 AM", "7:31 AM", "8:41 AM", "9:56 AM", "11:11 AM", "12:24 PM", "2:54 PM", "4:10 PM"] },
+  { stop_id: "2253", name: "Gresham Central Transit Center", lat: 45.502592, lon: -122.426486, times: ["6:27 AM", "7:33 AM", "8:43 AM", "9:58 AM", "11:13 AM", "12:26 PM", "1:41 PM", "2:56 PM"] },
+  { stop_id: "13211", name: "NE Hood &amp; 5th", lat: 45.501098, lon: -122.428024, times: ["6:27 AM", "7:33 AM", "8:43 AM", "9:58 AM", "11:13 AM", "12:26 PM", "1:41 PM", "2:56 PM"] },
+  { stop_id: "13033", name: "NE Hood &amp; 2nd", lat: 45.498613, lon: -122.427832, times: ["6:28 AM", "7:34 AM", "8:44 AM", "9:59 AM", "11:14 AM", "12:27 PM", "1:42 PM", "2:57 PM"] },
+  { stop_id: "13474", name: "E Powell &amp; NE Elliott", lat: 45.49792, lon: -122.424876, times: ["6:28 AM", "7:35 AM", "8:45 AM", "10:00 AM", "11:15 AM", "12:28 PM", "1:43 PM", "2:58 PM"] },
+  { stop_id: "4520", name: "E Powell &amp; SE Cleveland", lat: 45.497919, lon: -122.421209, times: ["6:29 AM", "7:35 AM", "8:45 AM", "10:00 AM", "11:15 AM", "12:28 PM", "1:43 PM", "2:58 PM"] },
+  { stop_id: "4531", name: "E Powell &amp; NE Liberty", lat: 45.497888, lon: -122.418723, times: ["6:29 AM", "7:36 AM", "8:46 AM", "10:01 AM", "11:16 AM", "12:29 PM", "1:44 PM", "2:59 PM"] },
+  { stop_id: "4529", name: "E Powell &amp; SE Hogan", lat: 45.497829, lon: -122.414506, times: ["6:30 AM", "7:36 AM", "8:46 AM", "10:01 AM", "11:16 AM", "12:29 PM", "1:44 PM", "2:59 PM"] },
   { stop_id: "14573", name: "SE 3rd &amp; E Powell", lat: 45.495828, lon: -122.411566, times: ["5:40 AM", "6:31 AM", "7:37 AM", "8:47 AM", "10:02 AM", "11:17 AM", "12:30 PM", "1:45 PM"] },
   { stop_id: "13974", name: "SE 3rd &amp; 1st", lat: 45.497235, lon: -122.406978, times: ["5:40 AM", "6:31 AM", "7:38 AM", "8:48 AM", "10:03 AM", "11:18 AM", "12:31 PM", "1:46 PM"] },
   { stop_id: "3102", name: "NE Kane &amp; 2nd Ct", lat: 45.498119, lon: -122.398622, times: ["5:42 AM", "6:33 AM", "7:39 AM", "8:49 AM", "10:04 AM", "11:19 AM", "12:33 PM", "1:48 PM"] },
