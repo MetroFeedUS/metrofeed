@@ -84,7 +84,6 @@
 
     .dropdown {
       position: absolute;
-      top: 110px;
       left: 10px;
       width: 45px;
       background-color: #0d0d0d;
@@ -106,8 +105,6 @@
       justify-content: center;
       border-bottom: 1px solid #4dd0e1;
       background-color: #0d0d0d;
-      padding: 0;
-      margin: 0;
     }
 
     .dropdown a img {
@@ -225,9 +222,13 @@
   <!-- Route logic placeholder -->
   <script src="mastermap.js"></script>
   <script>
-    document.getElementById('menuBtn').addEventListener('click', () => {
-      const dropdown = document.getElementById('dropdownMenu');
-      dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+    const menuBtn = document.getElementById('menuBtn');
+    const dropdown = document.getElementById('dropdownMenu');
+
+    menuBtn.addEventListener('click', () => {
+      const isOpen = dropdown.style.display === 'flex';
+      dropdown.style.display = isOpen ? 'none' : 'flex';
+      dropdown.style.top = `${menuBtn.offsetTop + menuBtn.offsetHeight + 5}px`;
     });
   </script>
 </body>
