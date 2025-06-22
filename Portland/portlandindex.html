@@ -181,7 +181,7 @@ html, body {
  
 .mf-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   background: rgba(0,0,0,0.60);
   z-index: 9999;
   display: flex;
@@ -196,28 +196,22 @@ html, body {
   box-shadow: 0 0 24px #222, 0 0 6px #4dd0e1;
   padding: 1.1rem 0.7rem 1.2rem 0.7rem;
   min-width: unset;
-  max-width: 410px;    /* Desktop/larger screens */
-  width: 90vw;
+  max-width: 410px;
+  width: 95vw;
+  box-sizing: border-box;
   text-align: center;
   position: relative;
   animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1;
-  margin: 0 auto;      /* Ensures horizontal centering */
-  left: 0;
-  right: 0;
 }
 
-/* Mobile optimization */
 @media (max-width: 540px) {
   .mf-modal {
-    width: 96vw;                /* keeps it within viewport */
-    max-width: 99vw;
-    box-sizing: border-box;     /* ensures padding stays inside width */
-    padding: 0.7rem 2vw 1rem 2vw;
-    margin: 0 auto;
-    left: auto !important;
-    right: auto !important;
+    max-width: 98vw;
+    width: 95vw;
+    padding: 0.7rem 1vw 1rem 1vw;
   }
 }
+
 @media (max-width: 360px) {
   .mf-modal {
     width: 98vw;
