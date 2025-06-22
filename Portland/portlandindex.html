@@ -6,14 +6,19 @@
   <title>MetroFeed Portland Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0d0d0d;
-      color: #cccccc;
-    }
+   html, body, *, *:before, *:after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #0d0d0d;
+  color: #cccccc;
+}
+
     #map {
       height: 100%;
       width: 100%;
@@ -176,13 +181,13 @@
 .mf-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.60);   /* <-- adjust for brightness */
+  background: rgba(0,0,0,0.60);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Do NOT add pointer-events: none here! */
 }
+
 .mf-modal {
   background: #111;
   border: 2.5px solid #4dd0e1;
@@ -190,11 +195,36 @@
   box-shadow: 0 0 24px #222, 0 0 6px #4dd0e1;
   padding: 1.1rem 0.7rem 1.2rem 0.7rem;
   min-width: unset;
-  max-width: 410px;      /* Add this for desktop, tweak as you like */
-  width: 90vw;           /* Shrink from 96vw to 90vw */
+  max-width: 410px;    /* Desktop/larger screens */
+  width: 90vw;
   text-align: center;
   position: relative;
   animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1;
+  margin: 0 auto;      /* Ensures horizontal centering */
+  left: 0;
+  right: 0;
+}
+
+/* Mobile optimization */
+@media (max-width: 540px) {
+  .mf-modal {
+    width: 96vw;
+    max-width: 99vw;
+    padding: 0.7rem 1vw 1rem 1vw;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+  }
+}
+@media (max-width: 360px) {
+  .mf-modal {
+    width: 98vw;
+    max-width: 99vw;
+    padding: 0.6rem 1vw 0.9rem 1vw;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+  }
 }
 
 .mf-overlay {
