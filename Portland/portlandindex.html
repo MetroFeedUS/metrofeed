@@ -293,6 +293,29 @@ html, body {
     width: 90%;
     max-width: 240px;
   }
+.pulse-marker {
+  background: #003399;
+  border: 3px solid #4dd0e1;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  box-shadow: 0 0 0 0 #1976d2;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 #1976d2;
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 15px #1976d244;
+    opacity: 0.7;
+  }
+  100% {
+    box-shadow: 0 0 0 0 #1976d200;
+    opacity: 0.5;
+  }
+}
 
  </style>
 </head>
@@ -308,6 +331,9 @@ html, body {
 </div>
 
 <div id="map"></div>
+
+showUserLocation(map);
+
   <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
   <button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
@@ -454,6 +480,31 @@ html, body {
             }
           });
         });
+
+function showUserLocation(map) {
+  if (!navigator.geolocation) return; // browser doesn't support
+
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    // Remove previous marker if needed (optional)
+    if (window.userLocationMarker) map.removeLayer(window.userLocationMarker);
+
+    window.userLocationMarker = L.marker([lat, lng], {
+      icon: L.divIcon({
+        className: 'pulse-marker',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+        popupAnchor: [0, -9]
+      })
+    })
+    .addTo(map)
+    .bindPopup('You are here');
+  });
+}
+
+
 
         if (closestRoute) {
           const polyline = L.polyline(closestRoute.shape, { color: '#0071CE', weight: 4, opacity: 0.7 }).addTo(map);
