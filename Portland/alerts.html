@@ -64,15 +64,14 @@
       text-align: center;
       margin-bottom: 1.2rem;
       font-size: 1.8rem;
-      letter-spacing: 0.01em;
-      text-shadow: 0 1px 0 #222, 0 0 8px #4dd0e1bb;
+      text-shadow: 0 1px 0 #222, 0 0 6px #4dd0e1bb;
     }
     .alerts-feed {
       background: #181818;
       border: 2px dashed #4dd0e1;
-      border-radius: 14px;
-      padding: 1.6rem 1.1rem 1.2rem 1.1rem;
-      margin-bottom: 2rem;
+      border-radius: 12px;
+      padding: 1.7rem 1.1rem;
+      margin-bottom: 1.7rem;
       min-height: 120px;
       text-align: center;
       color: #fff;
@@ -80,48 +79,50 @@
       letter-spacing: 0.01em;
       box-shadow: 0 0 12px #222, 0 0 8px #4dd0e1aa;
     }
+    .alerts-feed span {
+      color: #bbb;
+      font-size: 0.95rem;
+      font-style: italic;
+    }
     .alert-card {
       background: #23272a;
-      border-left: 5px solid #F7630C;
+      border: 1.5px solid #4dd0e1;
       border-radius: 10px;
-      margin: 1.3rem 0;
-      padding: 1.1rem 1rem 0.85rem 1.1rem;
-      box-shadow: 0 0 10px #4dd0e155;
+      box-shadow: 0 0 10px #222;
+      margin: 0.8rem auto 1.4rem auto;
+      padding: 1.1rem 1rem 0.9rem 1rem;
+      max-width: 95%;
       text-align: left;
-      color: #fff;
       position: relative;
-      transition: box-shadow .18s;
-    }
-    .alert-card:hover {
-      box-shadow: 0 0 16px #4dd0e1, 0 0 8px #F7630C88;
+      word-break: break-word;
     }
     .alert-title {
-      color: #4dd0e1;
-      font-size: 1.15rem;
+      color: #ffa500;
       font-weight: bold;
-      letter-spacing: 0.02em;
-      margin-bottom: 0.3rem;
-      text-shadow: 0 1px 0 #222, 0 0 6px #4dd0e1bb;
+      font-size: 1.13rem;
+      margin-bottom: 0.4rem;
+      text-shadow: 0 1px 0 #222;
     }
     .alert-time {
-      color: #ffa500;
-      font-size: 0.97rem;
-      font-style: italic;
-      margin-bottom: 0.35rem;
+      color: #4dd0e1;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
       display: block;
+      text-shadow: 0 1px 0 #222;
     }
     .alert-desc {
-      color: #f8f8f8;
-      font-size: 1.04rem;
-      margin-bottom: 0.8rem;
-      margin-top: 0.2rem;
+      color: #e4f9fb;
+      font-size: 1.01rem;
+      margin: 0.2rem 0 0.9rem 0;
+      text-shadow: 0 1px 0 #222;
     }
     .alert-link {
       color: #4dd0e1;
       text-decoration: underline;
-      font-size: 1.02rem;
+      font-size: 0.95rem;
       font-weight: bold;
     }
+    .alert-link:hover { color: #ffa500; }
     .site-footer {
       text-align: center;
       margin-top: 3rem;
@@ -139,7 +140,7 @@
       .main-content { padding: 0 0.3rem; }
       .alerts-feed { padding: 1rem 0.2rem; }
       h2 { font-size: 1.35rem; }
-      .alert-card { padding: 0.9rem 0.7rem 0.7rem 0.85rem; }
+      .alert-card { font-size: 0.98rem; padding: 0.9rem 0.6rem 0.8rem 0.7rem; }
     }
   </style>
 </head>
@@ -171,41 +172,41 @@
   </footer>
 
   <script>
-const apiKey = "2C4447D4A42083BCD84DE3B8E";
-const apiUrl = `https://developer.trimet.org/ws/V1/FeedSpecAlerts/alerts.json?appID=${apiKey}`;
+    // LIVE TriMet Alerts (XML endpoint)
+    const apiKey = "2C4447D4A42083BCD84DE3B8E";
+    const apiUrl = `https://developer.trimet.org/ws/V1/FeedSpecAlerts/alerts.xml?appID=${apiKey}`;
+    const alertsFeed = document.getElementById('alerts-feed');
+    alertsFeed.innerHTML = "<span>Loading TriMet alerts…</span>";
 
-const alertsFeed = document.getElementById('alerts-feed');
-alertsFeed.innerHTML = "<span>Loading TriMet alerts…</span>";
-
-fetch(apiUrl)
-  .then(response => response.json())
-  .then(data => {
-    if (data.alerts && data.alerts.length > 0) {
-      alertsFeed.innerHTML = "";
-      data.alerts.slice(0, 10).forEach(alert => {
-        let issued = alert.published ? new Date(alert.published).toLocaleString() : '';
-        let desc = alert.description || '';
-        let header = alert.header || 'TriMet Alert';
-        let link = alert.infoURL || "https://trimet.org/alerts/";
-
-        const alertCard = document.createElement('div');
-        alertCard.className = 'alert-card';
-        alertCard.innerHTML = `
-          <div class="alert-title">${header}</div>
-          <span class="alert-time">${issued}</span>
-          <div class="alert-desc">${desc.slice(0,180)}${desc.length>180?'…':''}</div>
-          <a class="alert-link" href="${link}" target="_blank">Full Alert →</a>
-        `;
-        alertsFeed.appendChild(alertCard);
+    fetch(apiUrl)
+      .then(response => response.text())
+      .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
+      .then(data => {
+        const alertNodes = data.querySelectorAll("alert");
+        if (alertNodes.length > 0) {
+          alertsFeed.innerHTML = "";
+          alertNodes.forEach(alert => {
+            const header = alert.querySelector("header") ? alert.querySelector("header").textContent : "TriMet Alert";
+            const desc = alert.querySelector("description") ? alert.querySelector("description").textContent : "";
+            const issued = alert.querySelector("published") ? new Date(alert.querySelector("published").textContent).toLocaleString() : "";
+            const link = alert.querySelector("infoURL") ? alert.querySelector("infoURL").textContent : "https://trimet.org/alerts/";
+            const alertCard = document.createElement('div');
+            alertCard.className = 'alert-card';
+            alertCard.innerHTML = `
+              <div class="alert-title">${header}</div>
+              <span class="alert-time">${issued}</span>
+              <div class="alert-desc">${desc.slice(0,180)}${desc.length>180?'…':''}</div>
+              <a class="alert-link" href="${link}" target="_blank">Full Alert →</a>
+            `;
+            alertsFeed.appendChild(alertCard);
+          });
+        } else {
+          alertsFeed.innerHTML = "<span>No active TriMet alerts.</span>";
+        }
+      })
+      .catch(() => {
+        alertsFeed.innerHTML = "<span style='color:#ffa500;'>Could not load TriMet alerts. Try again later.</span>";
       });
-    } else {
-      alertsFeed.innerHTML = "<span>No active TriMet alerts.</span>";
-    }
-  })
-  .catch(() => {
-    alertsFeed.innerHTML = "<span style='color:#ffa500;'>Could not load TriMet alerts. Try again later.</span>";
-  });
-</script>
-
+  </script>
 </body>
 </html>
