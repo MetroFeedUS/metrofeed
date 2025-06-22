@@ -332,8 +332,6 @@ html, body {
 
 <div id="map"></div>
 
-showUserLocation(map);
-
   <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
   <button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
@@ -456,62 +454,58 @@ showUserLocation(map);
         }
       });
     }
+createAutocomplete(document.getElementById("startInput"));
+createAutocomplete(document.getElementById("endInput"));
 
-    createAutocomplete(document.getElementById("startInput"));
-    createAutocomplete(document.getElementById("endInput"));
+const menuBtn = document.getElementById('menuBtn');
+const dropdownMenu = document.getElementById('dropdownMenu');
+menuBtn.addEventListener('click', () => {
+  dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
+});
 
-    const menuBtn = document.getElementById('menuBtn');
-    const dropdownMenu = document.getElementById('dropdownMenu');
-    menuBtn.addEventListener('click', () => {
-      dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
-    });
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const userLat = pos.coords.latitude;
-        const userLon = pos.coords.longitude;
-        let closestRoute = null;
-        let closestDist = Infinity;
-
-        masterRoutes.forEach(route => {
-          route.shape.forEach(([lat, lon]) => {
-            const dist = Math.hypot(userLat - lat, userLon - lon);
-            if (dist < closestDist) {
-              closestDist = dist;
-              closestRoute = route;
-            }
-          });
-        });
-
-function showUserLocation(map) {
-  if (!navigator.geolocation) return; // browser doesn't support
-
-  navigator.geolocation.getCurrentPosition(function(pos) {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-
-    // Remove previous marker if needed
-    if (window.userLocationMarker) map.removeLayer(window.userLocationMarker);
-
-    window.userLocationMarker = L.marker([lat, lng], {
-      icon: L.divIcon({
-        className: 'pulse-marker',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
-        popupAnchor: [0, -9]
-      })
+// Define this BEFORE using it below
+function showUserLocation(lat, lon) {
+  if (window.userLocationMarker) map.removeLayer(window.userLocationMarker);
+  window.userLocationMarker = L.marker([lat, lon], {
+    icon: L.divIcon({
+      className: 'pulse-marker',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+      popupAnchor: [0, -9]
     })
-    .addTo(map)
-    .bindPopup('You are here');
-  });
+  }).addTo(map).bindPopup('You are here');
 }
 
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    const userLat = pos.coords.latitude;
+    const userLon = pos.coords.longitude;
 
+    showUserLocation(userLat, userLon); // ✅ works now
 
+    let closestRoute = null;
+    let closestDist = Infinity;
 
-        if (closestRoute) {
-          const polyline = L.polyline(closestRoute.shape, { color: '#0071CE', weight: 4, opacity: 0.7 }).addTo(map);
-          map.fitBounds(polyline.getBounds());
+    masterRoutes.forEach(route => {
+      route.shape.forEach(([lat, lon]) => {
+        const dist = Math.hypot(userLat - lat, userLon - lon);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestRoute = route;
+        }
+      });
+    });
+
+    if (closestRoute) {
+      const polyline = L.polyline(closestRoute.shape, {
+        color: '#0071CE',
+        weight: 4,
+        opacity: 0.7
+      }).addTo(map);
+      map.fitBounds(polyline.getBounds());
+    }
+  });
+}
 
           const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
           const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
