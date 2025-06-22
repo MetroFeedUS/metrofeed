@@ -332,7 +332,6 @@ html, body {
 
 <div id="map"></div>
 
-showUserLocation(map);
 
   <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
   <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
@@ -399,6 +398,8 @@ showUserLocation(map);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
     }).addTo(map);
+
+showUserLocation(map);
 
     const allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
 
@@ -488,7 +489,7 @@ function showUserLocation(map) {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    // Remove previous marker if needed (optional)
+    // Remove previous marker if needed
     if (window.userLocationMarker) map.removeLayer(window.userLocationMarker);
 
     window.userLocationMarker = L.marker([lat, lng], {
@@ -503,6 +504,7 @@ function showUserLocation(map) {
     .bindPopup('You are here');
   });
 }
+
 
 
 
