@@ -200,12 +200,15 @@
             `;
             alertsFeed.appendChild(alertCard);
           });
+          localStorage.setItem('hasActiveAlerts', 'true');
         } else {
           alertsFeed.innerHTML = "<span>No active TriMet alerts.</span>";
+          localStorage.setItem('hasActiveAlerts', 'false');
         }
       })
       .catch(() => {
         alertsFeed.innerHTML = "<span style='color:#ffa500;'>Could not load TriMet alerts. Try again later.</span>";
+        localStorage.setItem('hasActiveAlerts', 'false');
       });
   </script>
 </body>

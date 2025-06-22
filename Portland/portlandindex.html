@@ -318,9 +318,25 @@ html, body {
     <a href="https://metrofeedus.com/portland/trafficmap"><img src="003-warning.svg" alt="3"></a>
     <a href="https://metrofeedus.com/portland/trafficcameras"><img src="004-cctv-camera.svg" alt="4"></a>
     <a href="https://metrofeedus.com/portland/portlandweather"><img src="005-weather-radar.svg" alt="5"></a>
-    <a href="https://metrofeedus.com/portland/alerts"><img src="008-danger.svg" alt="6"></a>
+    <a id="alertsMenuBtn" href="https://metrofeedus.com/portland/alerts" style="position:relative;">
+  <img src="008-danger.svg" alt="Alerts">
+  <span id="alertsDot" style="
+    display: none;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #ff3b30;
+    border: 2px solid #000;
+    z-index: 2;">
+  </span>
+</a>
+
     <a href="https://metrofeedus.com/portland/portland-earthquake"><img src="006-earthquake.svg" alt="7"></a>
     <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="8"></a>
+
   </div>
   <div class="search-bar">
     <div class="input-wrapper">
@@ -503,6 +519,9 @@ html, body {
           fetchAndDisplay();
           setInterval(fetchAndDisplay, 15000);
         }
+
+
+
       });
     }
   </script>
@@ -600,11 +619,39 @@ html, body {
     }
   };
 
-  // On page load: show modal if NOT unlocked/free
-  window.onload = function() {
+  function setAlertsDot(show) {
+  var dot = document.getElementById('alertsDot');
+  if (dot) dot.style.display = show ? 'block' : 'none';
+}
+
+function renderFavoritesBar() {
+  let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+  for (let i = 1; i <= 4; i++) {
+    let btn = document.getElementById('fav' + i);
+    btn.innerHTML = '';
+    btn.style.background = '#000';
+    btn.style.cursor = 'default';
+    btn.onclick = null;
+    btn.title = '';
+    if (favorites[i-1]) {
+      let route = favorites[i-1];
+      let color = '#2196f3'; // bus is blue
+      if (route.type === 'rail') color = '#e53935';      // rail = red
+      if (route.type === 'max') color = '#43a047';       // max = green
+      if (route.type === 'streetcar') color = '#8e24aa'; // streetcar = purple
+      btn.style.background = color;
+      btn.style.cursor = 'pointer';
+      btn.title = "Go to Route " + route.number;
+      btn.textContent = route.number;
+      btn.onclick = () => { window.location.href = route.link; };
+    }
+  }
+}
+
+window.onload = function() {
   updateTrialTimer();
   setInterval(updateTrialTimer, 1000);
-
+renderFavoritesBar();
   if (
     localStorage.getItem('mf_unlocked') !== 'true' &&
     localStorage.getItem('mf_free') !== 'true'
@@ -614,12 +661,14 @@ html, body {
     hideModal();
   }
 
-  // Delay the install prompt by 30 seconds
- setTimeout(function() {
-  if (!localStorage.getItem('neverShowInstallPrompt')) {
-    document.getElementById('installPrompt').style.display = 'block';
-  }
-}, 30000);
+  setTimeout(function() {
+    if (!localStorage.getItem('neverShowInstallPrompt')) {
+      document.getElementById('installPrompt').style.display = 'block';
+    }
+  }, 30000);
+
+  setAlertsDot(localStorage.getItem('hasActiveAlerts') === 'true');
+
 
 };
 </script>

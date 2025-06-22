@@ -131,6 +131,53 @@
     .site-footer a:hover {
       text-decoration: underline;
     }
+
+.favorite-save-box {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1010;
+}
+
+.favorite-star {
+  background: #4dd0e1;
+  color: #FFD700;
+  font-size: 2.5rem;
+  border: 2px solid #222;
+  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  cursor: pointer;
+  box-shadow: 0 0 8px #4dd0e1;
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  margin-bottom: 8px;
+}
+.favorite-star:active,
+.favorite-star:focus {
+  background: #1976d2;
+  color: #ffea00;
+}
+
+.favorite-label {
+  color: #4dd0e1;
+  font-size: 1.03rem;
+  font-weight: bold;
+  background: #181818;
+  border-radius: 6px;
+  padding: 2px 10px;
+  text-align: center;
+  letter-spacing: 0.01em;
+  margin-top: 0;
+  box-shadow: 0 1px 6px #2224;
+}
+
   </style>
 </head>
 <body>
@@ -138,6 +185,13 @@
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
+
+<!-- Favorite Route Button (Top Right) -->
+<div class="favorite-save-box">
+  <button class="favorite-star" onclick="toggleFavoriteRoute()" aria-label="Save route to favorites">☆</button>
+  <div class="favorite-label">Save to Favorites</div>
+</div>
+
 
   <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
@@ -1199,25 +1253,49 @@ const stops = [
     setInterval(fetchAndDisplay, 15000);
   </script>
 
-  <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-    <a href="privacy.html">Privacy Policy</a>
-  </footer>
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
 
-  <script>
-    if (!localStorage.getItem('cookieConsent')) {
-      document.write(`
-        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-          📢 We use cookies to improve functionality and analyze traffic.
-          By using MetroFeed, you agree to our 
-          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-        </div>
-      `);
-    }
-  </script>
+<script>
+// ---- Route Info for this Page ----
+<script>
+const thisRoute = {
+  number: "",
+  link: "",
+  type: ""
+};
+</script>
+
+// ----------------------------------
+
+function toggleFavoriteRoute() {
+  let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+  // If already saved, remove it. Otherwise, add it to the front (up to 4).
+  const exists = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+  if (exists) {
+    favorites = favorites.filter(r => !(r.number === thisRoute.number && r.type === thisRoute.type));
+  } else {
+    favorites.unshift(thisRoute);      // add to the start
+    if (favorites.length > 4) favorites = favorites.slice(0, 4);
+  }
+  localStorage.setItem('metrofeed_favorites', JSON.stringify(favorites));
+  updateStarIcon();
+}
+
+function updateStarIcon() {
+  let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+  const isFavorite = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+  const btn = document.querySelector('.favorite-star');
+  if (btn) btn.textContent = isFavorite ? "★" : "☆";
+}
+
+// Run this when the page loads to set the correct icon:
+document.addEventListener("DOMContentLoaded", updateStarIcon);
+</script>
 </body>
 </html>
