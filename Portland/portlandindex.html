@@ -6,12 +6,9 @@
   <title>MetroFeed Portland Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-  html, body {
+html, body {
   width: 100vw;
   overflow-x: hidden;
-}
-
-html, body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -19,6 +16,7 @@ html, body {
   background-color: #0d0d0d;
   color: #cccccc;
 }
+
 
     #map {
       height: 100vh;
@@ -184,13 +182,13 @@ html, body {
   inset: 0;
   z-index: 9999;
   background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto !important;
 }
 
 .mf-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   background: #111;
   border: 2.5px solid #4dd0e1;
   border-radius: 18px;
@@ -202,32 +200,12 @@ html, body {
   box-sizing: border-box;
   text-align: center;
   animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1;
-}
-.mf-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(0,0,0,0.6);
-}
-
-.mf-modal {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #111;
-  border: 2.5px solid #4dd0e1;
-  border-radius: 18px;
-  box-shadow: 0 0 24px #222, 0 0 6px #4dd0e1;
-  padding: 1.1rem 0.7rem 1.2rem 0.7rem;
-  min-width: 0;
-  max-width: 410px;
-  width: 95vw;
-  box-sizing: border-box;
-  text-align: center;
-  animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1;
+  pointer-events: auto !important;
 }
-
 
 @media (max-width: 520px) {
   .mf-modal {
@@ -237,15 +215,11 @@ html, body {
   }
 }
 
-@media (max-width:340px) {
+@media (max-width: 340px) {
   .mf-modal {
     width: 98vw;
     max-width: 99vw;
-    box-sizing: border-box;
     padding: 0.6rem 2vw 0.9rem 2vw;
-    margin: 0 auto;
-    left: auto !important;
-    right: auto !important;
   }
 }
 
@@ -641,12 +615,11 @@ html, body {
   }
 
   // Delay the install prompt by 30 seconds
-  setTimeout(function() {
-    if (!localStorage.getItem('neverShowInstallPrompt')) {
-      document.getElementById('installPrompt').style.display = 'block';
-    }
-  }, 30000);
-};
+ setTimeout(function() {
+  if (!localStorage.getItem('neverShowInstallPrompt')) {
+    document.getElementById('installPrompt').style.display = 'block';
+  }
+}, 30000);
 
 </script>
 
