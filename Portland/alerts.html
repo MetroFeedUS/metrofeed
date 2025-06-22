@@ -171,39 +171,41 @@
   </footer>
 
   <script>
-    // TriMet Alerts - via rss2json
-    const feedUrl = encodeURIComponent("https://trimet.org/alerts/all/all.rss");
-    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`;
-    const alertsFeed = document.getElementById('alerts-feed');
-    alertsFeed.innerHTML = "<span>Loading TriMet alerts…</span>";
+const apiKey = "2C4447D4A42083BCD84DE3B8E";
+const apiUrl = `https://developer.trimet.org/ws/V1/FeedSpecAlerts/alerts.json?appID=${apiKey}`;
 
-    fetch(apiUrl)
-      .then(response => response.json())
-      .then(data => {
-        if (data.items && data.items.length > 0) {
-          alertsFeed.innerHTML = "";
-          data.items.slice(0, 8).forEach(item => {
-            // Clean up description to strip unwanted HTML and limit length
-            let cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
-            if (cleanDesc.length > 180) cleanDesc = cleanDesc.slice(0,180) + '…';
-            const alertCard = document.createElement('div');
-            alertCard.className = 'alert-card';
-            alertCard.innerHTML = `
-              <div class="alert-title">${item.title}</div>
-              <span class="alert-time">${new Date(item.pubDate).toLocaleString()}</span>
-              <div class="alert-desc">${cleanDesc}</div>
-              <a class="alert-link" href="${item.link}" target="_blank">Full Alert →</a>
-            `;
-            alertsFeed.appendChild(alertCard);
-          });
-        } else {
-          alertsFeed.innerHTML = "<span>No active TriMet alerts.</span>";
-        }
-      })
-      .catch(() => {
-        alertsFeed.innerHTML = "<span style='color:#ffa500;'>Could not load TriMet alerts. Try again later.</span>";
+const alertsFeed = document.getElementById('alerts-feed');
+alertsFeed.innerHTML = "<span>Loading TriMet alerts…</span>";
+
+fetch(apiUrl)
+  .then(response => response.json())
+  .then(data => {
+    if (data.alerts && data.alerts.length > 0) {
+      alertsFeed.innerHTML = "";
+      data.alerts.slice(0, 10).forEach(alert => {
+        let issued = alert.published ? new Date(alert.published).toLocaleString() : '';
+        let desc = alert.description || '';
+        let header = alert.header || 'TriMet Alert';
+        let link = alert.infoURL || "https://trimet.org/alerts/";
+
+        const alertCard = document.createElement('div');
+        alertCard.className = 'alert-card';
+        alertCard.innerHTML = `
+          <div class="alert-title">${header}</div>
+          <span class="alert-time">${issued}</span>
+          <div class="alert-desc">${desc.slice(0,180)}${desc.length>180?'…':''}</div>
+          <a class="alert-link" href="${link}" target="_blank">Full Alert →</a>
+        `;
+        alertsFeed.appendChild(alertCard);
       });
-  </script>
+    } else {
+      alertsFeed.innerHTML = "<span>No active TriMet alerts.</span>";
+    }
+  })
+  .catch(() => {
+    alertsFeed.innerHTML = "<span style='color:#ffa500;'>Could not load TriMet alerts. Try again later.</span>";
+  });
+</script>
 
 </body>
 </html>
