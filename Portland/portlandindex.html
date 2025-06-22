@@ -491,53 +491,59 @@ if (navigator.geolocation) {
             });
 
             L.circleMarker([stop.lat, stop.lon], {
-              radius: 6,
-              color: '#4dd0e1',
-              fillColor: '#4dd0e1',
-              fillOpacity: 0.9,
-              weight: 1
-            }).bindPopup(`<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-  <strong style='color:#4dd0e1;'>${stop.name}</strong>
-  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-  ${highlightedTimes.map(t => `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`).join('') || '<div>No scheduled times</div>'}
-</div>`).addTo(map);
-          });
+  radius: 6,
+  color: '#4dd0e1',
+  fillColor: '#4dd0e1',
+  fillOpacity: 0.9,
+  weight: 1
+}).bindPopup(
+  `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+    <strong style='color:#4dd0e1;'>${stop.name}</strong>
+    <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+    ${
+      highlightedTimes.map(t =>
+        `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+      ).join('') || '<div>No scheduled times</div>'
+    }
+  </div>`
+).addTo(map);
+// This should close the stop.forEach right above (make sure it's within a forEach or function)
 
-          let busMarkers = {};
-          async function fetchAndDisplay() {
-            const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
-            const data = await res.json();
-            const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == closestRoute.route_id && v.direction == closestRoute.direction_id);
+// --- Next block, outside the forEach ---
 
-            Object.values(busMarkers).forEach(m => map.removeLayer(m));
-            busMarkers = {};
-            if (!buses.length) return;
+let busMarkers = {};
+async function fetchAndDisplay() {
+  const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
+  const data = await res.json();
+  const buses = (data.resultSet.vehicle || []).filter(
+    v => v.routeNumber == closestRoute.route_id && v.direction == closestRoute.direction_id
+  );
 
-            buses.forEach(bus => {
-              if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-              const icon = L.divIcon({
-                className: '',
-                html: `<div style='text-align:center;'>
-                         <div style='background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${bus.vehicleID}</div>
-                         <div style='width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;'></div>
-                       </div>`,
-                iconSize: [40, 30],
-                iconAnchor: [20, 30]
-              });
-              const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-              busMarkers[bus.vehicleID] = marker;
-            });
-          }
+  Object.values(busMarkers).forEach(m => map.removeLayer(m));
+  busMarkers = {};
+  if (!buses.length) return;
 
-          fetchAndDisplay();
-          setInterval(fetchAndDisplay, 15000);
-       
+  buses.forEach(bus => {
+    if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style='text-align:center;'>
+               <div style='background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${bus.vehicleID}</div>
+               <div style='width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;'></div>
+             </div>`,
+      iconSize: [40, 30],
+      iconAnchor: [20, 30]
+    });
+    const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+    busMarkers[bus.vehicleID] = marker;
+  });
+}
 
+fetchAndDisplay();
+setInterval(fetchAndDisplay, 15000);
 
+</script>
 
-      });
-    
-  </script>
 <div class="mf-overlay" style="display:none;">
   <div class="mf-modal">
     <span class="dev-switch" id="devSwitch" onclick="toggleDevMode()">
