@@ -176,6 +176,34 @@
   margin-top: 0;
   box-shadow: 0 1px 6px #2224;
 }
+.fav-dropdown {
+  display: none;
+  position: absolute;
+  top: 65px;
+  right: 0;
+  z-index: 99999;
+  background: #222;
+  border: 2px solid #4dd0e1;
+  border-radius: 10px;
+  padding: 10px 20px;
+  text-align: center;
+  box-shadow: 0 2px 12px #2224;
+}
+.fav-dropdown button {
+  font-size: 1.1rem;
+  padding: 6px 16px;
+  background: #4dd0e1;
+  color: #222;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.fav-dropdown button:hover, .fav-dropdown button:focus {
+  background: #fff;
+  color: #0071ce;
+  outline: none;
+}
 </style>
 </head>
 <body>
@@ -184,10 +212,13 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
-<!-- Favorite Route Button (Top Right) -->
+<!-- Favorite Route Button (Top Right) with Dropdown -->
 <div class="favorite-save-box">
-  <button class="favorite-star" onclick="toggleFavoriteRoute()" aria-label="Save route to favorites" id="fav-star">☆</button>
+  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
   <div class="favorite-label">Save to Favorites</div>
+  <div class="fav-dropdown" id="fav-dropdown">
+    <button id="fav-dropdown-btn">Add to Favorites</button>
+  </div>
 </div>
 
   <!-- Beta Disclaimers -->
@@ -881,64 +912,41 @@ const stops = [
 </footer>
 
 <script>
-// ---- Favorite Star: Auto-detect route number, link, type from page ----
+// ---- Favorite Star Dropdown: Auto-detect route info, menu UI ----
 
 function getRouteInfoFromPage() {
-  // Try to read from visible DOM content
   let routeNumber = "";
   let routeType = "";
   let routeLink = "";
 
-  // 1. Try to get from <h1 id="route-title">Route 20 - Something</h1>
   let titleEl = document.getElementById('route-title');
   if (titleEl) {
     let match = titleEl.textContent.match(/Route\s+(\d+)[^\d]?/i);
     if (match) routeNumber = match[1];
   }
-  // 2. Try to get from hidden <span id="route-type">bus</span>
   let typeEl = document.getElementById('route-type');
   if (typeEl) {
     routeType = typeEl.textContent.trim().toLowerCase();
   }
-  // 3. Route link: use current file name (e.g. route-20.html)
   routeLink = window.location.pathname.split('/').pop();
 
-  // Fallbacks if not found
   if (!routeNumber) {
     let titleMatch = document.title.match(/Route\s+(\d+)/i);
     if (titleMatch) routeNumber = titleMatch[1];
   }
   if (!routeType) {
-    // Try from body class or default to bus
     routeType = document.body.className.includes('rail') ? 'rail' : 
                 document.body.className.includes('max') ? 'max' :
                 document.body.className.includes('streetcar') ? 'streetcar' :
                 'bus';
   }
   if (!routeLink) routeLink = window.location.href;
-
-  // Return only if we got number (at minimum)
   if (!routeNumber) return null;
   return {
     number: routeNumber,
     link: routeLink,
     type: routeType
   };
-}
-
-function toggleFavoriteRoute() {
-  const thisRoute = getRouteInfoFromPage();
-  if (!thisRoute) return;
-  let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
-  const exists = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
-  if (exists) {
-    favorites = favorites.filter(r => !(r.number === thisRoute.number && r.type === thisRoute.type));
-  } else {
-    favorites.unshift(thisRoute);
-    if (favorites.length > 4) favorites = favorites.slice(0, 4);
-  }
-  localStorage.setItem('metrofeed_favorites', JSON.stringify(favorites));
-  updateStarIcon();
 }
 
 function updateStarIcon() {
@@ -948,9 +956,59 @@ function updateStarIcon() {
   const isFavorite = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
   const btn = document.getElementById('fav-star');
   if (btn) btn.textContent = isFavorite ? "★" : "☆";
+
+  // Update dropdown button label
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) ddBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
 }
 
-document.addEventListener("DOMContentLoaded", updateStarIcon);
+// Show/hide dropdown on star click
+function showFavDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('fav-dropdown');
+  dd.style.display = dd.style.display === "block" ? "none" : "block";
+  updateStarIcon();
+
+  // When dropdown opens, add outside click listener
+  if (dd.style.display === "block") {
+    setTimeout(() => {
+      document.addEventListener('click', closeFavDropdown);
+    }, 10);
+  }
+}
+// Actually add/remove on dropdown click
+document.addEventListener("DOMContentLoaded", function() {
+  updateStarIcon();
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) {
+    ddBtn.onclick = function(e) {
+      e.stopPropagation();
+      const thisRoute = getRouteInfoFromPage();
+      if (!thisRoute) return;
+      let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+      const exists = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+      if (exists) {
+        favorites = favorites.filter(r => !(r.number === thisRoute.number && r.type === thisRoute.type));
+      } else {
+        favorites.unshift(thisRoute);
+        if (favorites.length > 4) favorites = favorites.slice(0, 4);
+      }
+      localStorage.setItem('metrofeed_favorites', JSON.stringify(favorites));
+      updateStarIcon();
+      document.getElementById('fav-dropdown').style.display = "none";
+    };
+  }
+});
+
+// Close dropdown if clicked anywhere else
+function closeFavDropdown(e) {
+  const dropdown = document.getElementById('fav-dropdown');
+  if (!dropdown.contains(e.target)) {
+    dropdown.style.display = "none";
+    document.removeEventListener('click', closeFavDropdown);
+  }
+}
+
 </script>
 </body>
 </html>
