@@ -293,29 +293,7 @@ html, body {
     width: 90%;
     max-width: 240px;
   }
-.pulse-marker {
-  background: #003399;
-  border: 3px solid #4dd0e1;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  box-shadow: 0 0 0 0 #1976d2;
-  animation: pulse 1.5s infinite;
-}
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 #1976d2;
-    opacity: 1;
-  }
-  70% {
-    box-shadow: 0 0 0 15px #1976d244;
-    opacity: 0.7;
-  }
-  100% {
-    box-shadow: 0 0 0 0 #1976d200;
-    opacity: 0.5;
-  }
-}
+
 
  </style>
 </head>
@@ -463,26 +441,13 @@ menuBtn.addEventListener('click', () => {
   dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
 });
 
-// Define this BEFORE using it below
-function showUserLocation(lat, lon) {
-  if (window.userLocationMarker) map.removeLayer(window.userLocationMarker);
-  window.userLocationMarker = L.marker([lat, lon], {
-    icon: L.divIcon({
-      className: 'pulse-marker',
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-      popupAnchor: [0, -9]
-    })
-  }).addTo(map).bindPopup('You are here');
-}
 
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(pos => {
     const userLat = pos.coords.latitude;
     const userLon = pos.coords.longitude;
 
-    showUserLocation(userLat, userLon); // ✅ works now
-
+ 
     let closestRoute = null;
     let closestDist = Infinity;
 
