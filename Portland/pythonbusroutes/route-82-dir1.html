@@ -1,137 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-EL337T4JX4');
 </script>
 
 <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Route 82 - To Gresham Village | MetroFeed Portland</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0d0d0d;
-      color: #cccccc;
-      overflow-y: auto;
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Route 82 - To Gresham Village | MetroFeed Portland</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #cccccc;
+    overflow-y: auto;
+  }
 
-    .home-button {
-      position: fixed;
-      top: 120px;
-      left: 10px;
-      background-color: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      text-decoration: none;
-      z-index: 1001;
-      box-shadow: 0 0 10px #4dd0e1;
-    }
+  .back-button-fixed {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 45px;
+    height: 45px;
+    background-color: #4dd0e1;
+    border: 2px solid #000;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 10px #4dd0e1;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+  }
+  .back-button-fixed:active, .back-button-fixed:focus {
+    background-color: #1976d2;
+  }
+  .back-button-fixed svg {
+    width: 24px;
+    height: 24px;
+    fill: #000;
+    display: block;
+  }
+  .back-button-fixed:active svg,
+  .back-button-fixed:focus svg {
+    fill: #fff;
+  }
 
-    .home-button:hover {
-      background-color: #00bcd4;
-      color: #ffffff;
-    }
+  header {
+    background-color: #0d0d0d;
+    border-top: 4px solid #4dd0e1;
+    border-bottom: 3px solid #4dd0e1;
+    padding: 1rem;
+    text-align: center;
+  }
 
-    header {
-      background-color: #0d0d0d;
-      border-top: 4px solid #4dd0e1;
-      border-bottom: 3px solid #4dd0e1;
-      padding: 1rem;
-      text-align: center;
-    }
+  header img {
+    max-height: 60px;
+  }
 
-    header img {
-      max-height: 60px;
-    }
+  h1#route-title {
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 2rem;
+    color: #f0f0f0;
+  }
 
-    h1 {
-      text-align: center;
-      margin: 1rem 0;
-      font-size: 2rem;
-      color: #f0f0f0;
-    }
+  .content-box {
+    border-radius: 12px;
+    padding: 0;
+    margin: 0;
+    background-color: #1e1e1e;
+  }
 
-    .content-box {
-      border-radius: 12px;
-      padding: 0;
-      margin: 0;
-      background-color: #1e1e1e;
-    }
+  #map {
+    width: 100%;
+    height: 85vh;
+    border: none;
+    margin: 0 auto;
+    display: block;
+    border-radius: 8px;
+  }
 
-    #map {
-      width: 100%;
-      height: 85vh;
-      border: none;
-      margin: 0 auto;
-      display: block;
-      border-radius: 8px;
-    }
+  .button-bar {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+  }
 
-    .button-bar {
-      display: flex;
-      justify-content: center;
-      margin: 1rem 0;
-    }
+  .button-bar a, .back-button {
+    background: #4dd0e1;
+    color: #0d0d0d;
+    padding: 0.6rem 1.2rem;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 10px #4dd0e1;
+  }
 
-    .button-bar a, .back-button {
-      background: #4dd0e1;
-      color: #0d0d0d;
-      padding: 0.6rem 1.2rem;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 0 10px #4dd0e1;
-    }
+  .back-button:hover {
+    background-color: #35c0d6;
+  }
 
-    .back-button:hover {
-      background-color: #35c0d6;
-    }
+  .site-footer {
+    text-align: center;
+    margin-top: 3rem;
+    margin-bottom: 120px;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
 
-    .site-footer {
-      text-align: center;
-      margin-top: 3rem;
-      margin-bottom: 120px;
-      font-size: 0.85rem;
-      color: #aaa;
-    }
+  .site-footer a {
+    color: #00BFFF;
+    text-decoration: none;
+  }
 
-    .site-footer a {
-      color: #00BFFF;
-      text-decoration: none;
-    }
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
 
-    .site-footer a:hover {
-      text-decoration: underline;
-    }
+.favorite-save-box {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1010;
+}
 
-    
-    }
-  </style>
+.favorite-star {
+  background: #4dd0e1;
+  color: #FFD700;
+  font-size: 2.5rem;
+  border: 2px solid #222;
+  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  cursor: pointer;
+  box-shadow: 0 0 8px #4dd0e1;
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  margin-bottom: 8px;
+}
+.favorite-star:active,
+.favorite-star:focus {
+  background: #1976d2;
+  color: #ffea00;
+}
+
+.favorite-label {
+  color: #4dd0e1;
+  font-size: 1.03rem;
+  font-weight: bold;
+  background: #181818;
+  border-radius: 6px;
+  padding: 2px 10px;
+  text-align: center;
+  letter-spacing: 0.01em;
+  margin-top: 0;
+  box-shadow: 0 1px 6px #2224;
+}
+.fav-dropdown {
+  display: none;
+  position: absolute;
+  top: 65px;
+  right: 0;
+  z-index: 99999;
+  background: #222;
+  border: 2px solid #4dd0e1;
+  border-radius: 10px;
+  padding: 10px 20px;
+  text-align: center;
+  box-shadow: 0 2px 12px #2224;
+}
+.fav-dropdown button {
+  font-size: 1.1rem;
+  padding: 6px 16px;
+  background: #4dd0e1;
+  color: #222;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.fav-dropdown button:hover, .fav-dropdown button:focus {
+  background: #fff;
+  color: #0071ce;
+  outline: none;
+}
+</style>
 </head>
-
 <body>
   
-
   <header>
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
+<!-- Favorite Route Button (Top Right) with Dropdown -->
+<div class="favorite-save-box">
+  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+  <div class="favorite-label">Save to Favorites</div>
+  <div class="fav-dropdown" id="fav-dropdown">
+    <button id="fav-dropdown-btn">Add to Favorites</button>
+  </div>
+</div>
+
+  <!-- Beta Disclaimers -->
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
     ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
   </div>
@@ -139,11 +229,15 @@
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
   </div>
 
-  <div style="margin: 2rem 0; text-align: center;">
-    <button class="back-button" onclick="history.back()">Back</button>
-  </div>
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
 
-  <h1>Route 82 - To Gresham Village</h1>
+  <h1 id="route-title">Route 82 - To Gresham Village</h1>
+  <span id="route-type" style="display:none;"></span>
 
   <div class="content-box">
     <div id="map"></div>
@@ -843,25 +937,112 @@ const stops = [
     setInterval(fetchAndDisplay, 15000);
   </script>
 
-  <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-    <a href="privacy.html">Privacy Policy</a>
-  </footer>
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
 
-  <script>
-    if (!localStorage.getItem('cookieConsent')) {
-      document.write(`
-        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-          📢 We use cookies to improve functionality and analyze traffic.
-          By using MetroFeed, you agree to our 
-          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
-        </div>
-      `);
-    }
-  </script>
+<script>
+// ---- Favorite Star Dropdown: Auto-detect route info, menu UI ----
+
+function getRouteInfoFromPage() {
+  let routeNumber = "";
+  let routeType = "";
+  let routeLink = "";
+
+  let titleEl = document.getElementById('route-title');
+  if (titleEl) {
+    let match = titleEl.textContent.match(/Route\s+(\d+)[^\d]?/i);
+    if (match) routeNumber = match[1];
+  }
+  let typeEl = document.getElementById('route-type');
+  if (typeEl) {
+    routeType = typeEl.textContent.trim().toLowerCase();
+  }
+  routeLink = window.location.pathname + window.location.search;
+
+  if (!routeNumber) {
+    let titleMatch = document.title.match(/Route\s+(\d+)/i);
+    if (titleMatch) routeNumber = titleMatch[1];
+  }
+  if (!routeType) {
+    routeType = document.body.className.includes('rail') ? 'rail' : 
+                document.body.className.includes('max') ? 'max' :
+                document.body.className.includes('streetcar') ? 'streetcar' :
+                'bus';
+  }
+  if (!routeLink) routeLink = window.location.href;
+  if (!routeNumber) return null;
+  return {
+    number: routeNumber,
+    link: routeLink,
+    type: routeType
+  };
+}
+
+function updateStarIcon() {
+  const thisRoute = getRouteInfoFromPage();
+  if (!thisRoute) return;
+  let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+  const isFavorite = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+  const btn = document.getElementById('fav-star');
+  if (btn) btn.textContent = isFavorite ? "★" : "☆";
+
+  // Update dropdown button label
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) ddBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
+}
+
+// Show/hide dropdown on star click
+function showFavDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('fav-dropdown');
+  dd.style.display = dd.style.display === "block" ? "none" : "block";
+  updateStarIcon();
+
+  // When dropdown opens, add outside click listener
+  if (dd.style.display === "block") {
+    setTimeout(() => {
+      document.addEventListener('click', closeFavDropdown);
+    }, 10);
+  }
+}
+// Actually add/remove on dropdown click
+document.addEventListener("DOMContentLoaded", function() {
+  updateStarIcon();
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) {
+    ddBtn.onclick = function(e) {
+      e.stopPropagation();
+      const thisRoute = getRouteInfoFromPage();
+      if (!thisRoute) return;
+      let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+      const exists = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+      if (exists) {
+        favorites = favorites.filter(r => !(r.number === thisRoute.number && r.type === thisRoute.type));
+      } else {
+        favorites.unshift(thisRoute);
+        if (favorites.length > 4) favorites = favorites.slice(0, 4);
+      }
+      localStorage.setItem('metrofeed_favorites', JSON.stringify(favorites));
+      updateStarIcon();
+      document.getElementById('fav-dropdown').style.display = "none";
+    };
+  }
+});
+
+// Close dropdown if clicked anywhere else
+function closeFavDropdown(e) {
+  const dropdown = document.getElementById('fav-dropdown');
+  if (!dropdown.contains(e.target)) {
+    dropdown.style.display = "none";
+    document.removeEventListener('click', closeFavDropdown);
+  }
+}
+
+</script>
 </body>
 </html>
