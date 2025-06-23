@@ -99,6 +99,22 @@
       height: 30px;
       display: block;
     }
+
+    .map-select-btn { 
+      background: transparent; 
+      border: none; 
+      color: #4dd0e1; 
+      cursor: pointer; 
+      padding: 4px; 
+      margin-left: 4px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .map-select-btn:hover { background-color: rgba(77, 208, 225, 0.1); }
+    .map-select-btn.active { 
+      background-color: rgba(77, 208, 225, 0.2); 
+      box-shadow: 0 0 4px #4dd0e1;
+    }
   </style>
 </head>
 <body>
@@ -140,10 +156,22 @@
   <div class="input-wrapper">
     <img class="icon-placeholder" src="002-location.svg" alt="Start" />
     <input id="startInput" type="text" placeholder="Start or Current Location" />
+    <button id="startMapBtn" class="map-select-btn" title="Click on map to select start location">
+      <svg width="16" height="16" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="6" fill="none" stroke="#4dd0e1" stroke-width="1.5"/>
+        <circle cx="8" cy="8" r="2" fill="#4dd0e1"/>
+      </svg>
+    </button>
   </div>
   <div class="input-wrapper">
     <img class="icon-placeholder" src="racing-flag.svg" alt="Destination" />
     <input id="endInput" type="text" placeholder="Destination" />
+    <button id="endMapBtn" class="map-select-btn" title="Click on map to select destination">
+      <svg width="16" height="16" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="6" fill="none" stroke="#4dd0e1" stroke-width="1.5"/>
+        <circle cx="8" cy="8" r="2" fill="#4dd0e1"/>
+      </svg>
+    </button>
   </div>
   <button id="goBtn" style="margin: 0 auto; width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
 </div>
@@ -256,6 +284,119 @@
   menuBtn.addEventListener('click', () => {
     dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
   });
+
+  // === SECTION: MAP SELECTION LOGIC ===
+  let mapSelectionMode = null; // 'start' or 'end' or null
+  let mapSelectionMarker = null;
+
+  function activateMapSelection(mode) {
+    // Deactivate any existing selection
+    if (mapSelectionMode) {
+      document.getElementById(mapSelectionMode + 'MapBtn').classList.remove('active');
+      if (mapSelectionMarker) {
+        map.removeLayer(mapSelectionMarker);
+        mapSelectionMarker = null;
+      }
+    }
+    
+    if (mapSelectionMode === mode) {
+      // Clicking same button deactivates
+      mapSelectionMode = null;
+      map.getContainer().style.cursor = 'grab';
+      return;
+    }
+    
+    // Activate new selection
+    mapSelectionMode = mode;
+    document.getElementById(mode + 'MapBtn').classList.add('active');
+    map.getContainer().style.cursor = 'crosshair';
+  }
+
+  function findClosestRouteToPoint(lat, lon) {
+    let closestRoute = null;
+    let closestDist = Infinity;
+    
+    masterRoutes.forEach(route => {
+      route.shape.forEach(([routeLat, routeLon]) => {
+        const dist = Math.hypot(lat - routeLat, lon - routeLon);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestRoute = route;
+        }
+      });
+    });
+    
+    return closestRoute;
+  }
+
+  function findClosestStopToPoint(lat, lon) {
+    let closestStop = null;
+    let closestDist = Infinity;
+    
+    masterRoutes.forEach(route => {
+      route.stops.forEach(stop => {
+        const dist = Math.hypot(lat - stop.lat, lon - stop.lon);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestStop = stop;
+        }
+      });
+    });
+    
+    return closestStop;
+  }
+
+  // Map click handler for route selection
+  map.on('click', function(e) {
+    if (!mapSelectionMode) return;
+    
+    const clickedLat = e.latlng.lat;
+    const clickedLon = e.latlng.lng;
+    
+    // Remove previous selection marker
+    if (mapSelectionMarker) {
+      map.removeLayer(mapSelectionMarker);
+    }
+    
+    // Add selection marker
+    mapSelectionMarker = L.circleMarker([clickedLat, clickedLon], {
+      radius: 8,
+      color: '#4dd0e1',
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.7,
+      weight: 2
+    }).addTo(map);
+    
+    // Find closest stop
+    const closestStop = findClosestStopToPoint(clickedLat, clickedLon);
+    
+    if (closestStop) {
+      // Populate the corresponding input with stop name
+      const inputId = mapSelectionMode + 'Input';
+      document.getElementById(inputId).value = closestStop.name;
+      
+      // Show stop marker briefly
+      const stopMarker = L.circleMarker([closestStop.lat, closestStop.lon], {
+        radius: 10,
+        color: '#4dd0e1',
+        fillColor: '#4dd0e1',
+        fillOpacity: 0.9,
+        weight: 2
+      }).addTo(map);
+      
+      // Remove stop marker after 3 seconds
+      setTimeout(() => {
+        map.removeLayer(stopMarker);
+      }, 3000);
+    }
+    
+    // Deactivate selection mode
+    activateMapSelection(mapSelectionMode);
+  });
+
+  // Button event listeners
+  document.getElementById('startMapBtn').addEventListener('click', () => activateMapSelection('start'));
+  document.getElementById('endMapBtn').addEventListener('click', () => activateMapSelection('end'));
 
   // === SECTION: GELOCATION & CLOSEST ROUTE LOGIC ===
   let closestRoute = null; // <-- declare at top so it's visible to all functions
