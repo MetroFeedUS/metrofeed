@@ -342,21 +342,7 @@
   }
 
   // === SECTION: MODAL/LOGIN LOGIC, FREE TRIAL, ETC ===
-  let devMode = (localStorage.getItem('mf_devMode') === 'true');
-  const devSwitch = document.getElementById('devSwitch');
-  const devModeStatus = document.getElementById('devModeStatus');
-  function updateDevSwitch() {
-    devModeStatus.textContent = devMode ? "🛠️ DevMode: ON" : "🛠️ DevMode: OFF";
-    devSwitch.style.opacity = devMode ? "1" : "0.6";
-  }
-  function toggleDevMode() {
-    devMode = !devMode;
-    localStorage.setItem('mf_devMode', devMode ? 'true' : 'false');
-    updateDevSwitch();
-    updateTrialTimer();
-  }
-  updateDevSwitch();
-
+ 
   function showModal() {
     document.querySelector('.mf-overlay').style.display = 'flex';
   }
@@ -374,43 +360,39 @@
     return `${days > 0 ? days+'d ' : ''}${hours}h ${minutes}m ${seconds}s`;
   }
   function updateTrialTimer() {
-    if (devMode) {
-      btn.disabled = false;
-      btn.textContent = 'Start Free Trial';
-      timerEl.textContent = 'DevMode: Timer is OFF for testing.';
-      return;
-    }
-    const trialStart = parseInt(localStorage.getItem('mf_trialStart') || '0');
-    if (!trialStart) {
-      timerEl.textContent = '';
-      btn.disabled = false;
-      btn.textContent = 'Start Free Trial';
-      return;
-    }
-    const now = Date.now();
-    const diff = (trialStart + 24*60*60*1000) - now;
-    if (diff > 0) {
-      btn.disabled = true;
-      btn.textContent = 'Trial Active';
-      timerEl.textContent = 'Expires in: ' + msToTime(diff);
-      localStorage.setItem('mf_unlocked', 'true');
-    } else {
-      btn.disabled = true;
-      btn.textContent = 'Trial Expired';
-      timerEl.textContent = 'Your free trial has ended.';
-      localStorage.removeItem('mf_unlocked');
-      // Optionally remove mf_trialStart here if you want to allow new trials after 24hr
-      // localStorage.removeItem('mf_trialStart');
-    }
+  const trialStart = parseInt(localStorage.getItem('mf_trialStart') || '0');
+  if (!trialStart) {
+    timerEl.textContent = '';
+    btn.disabled = false;
+    btn.textContent = 'Start Free Trial';
+    return;
   }
-  btn.onclick = function() {
-    if (devMode || !localStorage.getItem('mf_trialStart')) {
-      localStorage.setItem('mf_trialStart', Date.now().toString());
-      localStorage.setItem('mf_unlocked', 'true');
-      hideModal();
-      updateTrialTimer();
-    }
-  };
+  const now = Date.now();
+  const diff = (trialStart + 24*60*60*1000) - now;
+  if (diff > 0) {
+    btn.disabled = true;
+    btn.textContent = 'Trial Active';
+    timerEl.textContent = 'Expires in: ' + msToTime(diff);
+    localStorage.setItem('mf_unlocked', 'true');
+  } else {
+    btn.disabled = true;
+    btn.textContent = 'Trial Expired';
+    timerEl.textContent = 'Your free trial has ended.';
+    localStorage.removeItem('mf_unlocked');
+    // Optionally remove mf_trialStart here if you want to allow new trials after 24hr
+    // localStorage.removeItem('mf_trialStart');
+  }
+}
+
+ btn.onclick = function() {
+  if (!localStorage.getItem('mf_trialStart')) {
+    localStorage.setItem('mf_trialStart', Date.now().toString());
+    localStorage.setItem('mf_unlocked', 'true');
+    hideModal();
+    updateTrialTimer();
+  }
+};
+
 
   window.onload = function() {
     updateTrialTimer();
@@ -436,9 +418,7 @@
 <!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
 <div class="mf-overlay" style="display:none;">
   <div class="mf-modal">
-    <span class="dev-switch" id="devSwitch" onclick="toggleDevMode()">
-      <span id="devModeStatus"></span>
-    </span>
+    
     <h2>You're not logged in or don’t have an account</h2>
     <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
     <div class="mf-actions" style="display: flex; gap: 0.65rem; margin-bottom: 1.1rem;">
