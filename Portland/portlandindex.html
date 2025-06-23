@@ -58,6 +58,47 @@
     .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid #4dd0e1; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
     #installPrompt { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 1.5rem; text-align: center; border: 2px solid #4dd0e1; border-radius: 12px; max-width: 390px; width: 95vw; min-width: 0; z-index: 10000; box-shadow: 0 0 10px #4dd0e1; margin: 0; box-sizing: border-box; }
     #installPrompt button { display: block; margin: 0.5rem auto; padding: 0.6rem 1.2rem; background-color: #4dd0e1; color: #0d0d0d; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 90%; max-width: 240px; }
+    
+    /* Pulsing user location dot */
+    .pulse-marker {
+      width: 20px;
+      height: 20px;
+      background: #2196f3aa;
+      border: 4px solid #2196f3;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #2196f3;
+      position: relative;
+    }
+    .pulse-marker::after {
+      content: "";
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 36px; height: 36px;
+      transform: translate(-50%, -50%);
+      background: rgba(33,150,243,0.3);
+      border-radius: 50%;
+      animation: pulse 1.2s infinite;
+      z-index: 1;
+    }
+    @keyframes pulse {
+      0%   { transform: translate(-50%,-50%) scale(1); opacity: 0.8; }
+      70%  { transform: translate(-50%,-50%) scale(1.7); opacity: 0.15; }
+      100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
+    }
+
+    /* Arrow marker CSS */
+    .arrow-marker {
+      width: 30px;
+      height: 30px;
+      background: none;
+      border: none;
+      position: relative;
+    }
+    .arrow-marker svg {
+      width: 30px;
+      height: 30px;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -133,10 +174,25 @@
 <script>
   // === SECTION: MAP INIT ===
   const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  
+  // Portland Metro Area Bounds
+  const PORTLAND_BOUNDS = {
+    north: 45.80,    // Up to Ridgefield, WA (Clark County north edge)
+    south: 45.20,    // Down to Wilsonville, OR (Clackamas/Washington)
+    east: -122.15,   // Past Troutdale, east of Gresham
+    west: -123.35    // Past Hillsboro, near Forest Grove/Cornelius
+  };
+  
   const map = L.map('map').setView([45.52, -122.67], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
+  
+  // Set map bounds to restrict view to Portland metro area
+  map.setMaxBounds([
+    [PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.west],
+    [PORTLAND_BOUNDS.north, PORTLAND_BOUNDS.east]
+  ]);
 
   // === SECTION: AUTOCOMPLETE FOR SEARCH BAR ===
   const allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
@@ -203,78 +259,149 @@
 
   // === SECTION: GELOCATION & CLOSEST ROUTE LOGIC ===
   let closestRoute = null; // <-- declare at top so it's visible to all functions
+  let userLocationMarker = null; // Track user location marker
+  let userArrow = null; // Track user arrow marker
+  
+  // ==== CONFIGURE PORTLAND BOUNDS ====
+  // Using the bounds already defined above
+  function isInPortland(lat, lon) {
+    return (
+      lat > PORTLAND_BOUNDS.south &&
+      lat < PORTLAND_BOUNDS.north &&
+      lon > PORTLAND_BOUNDS.west &&
+      lon < PORTLAND_BOUNDS.east
+    );
+  }
+
+  // Utility to clamp value between min and max
+  function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+  }
+
+  // Utility to get angle (in degrees) between two latlon points
+  function getAngle(from, to) {
+    const dy = to[0] - from[0];
+    const dx = to[1] - from[1];
+    return Math.atan2(dy, dx) * 180 / Math.PI;
+  }
+
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
+    navigator.geolocation.watchPosition(function(pos) {
       const userLat = pos.coords.latitude;
       const userLon = pos.coords.longitude;
+      const userLatLng = [userLat, userLon];
 
-      let closestDist = Infinity;
-      masterRoutes.forEach(route => {
-        route.shape.forEach(([lat, lon]) => {
-          const dist = Math.hypot(userLat - lat, userLon - lon);
-          if (dist < closestDist) {
-            closestDist = dist;
-            closestRoute = route;
-          }
+      // Remove old markers if present
+      if (userLocationMarker) { map.removeLayer(userLocationMarker); userLocationMarker = null; }
+      if (userArrow) { map.removeLayer(userArrow); userArrow = null; }
+
+      if (isInPortland(userLat, userLon)) {
+        // IN BOUNDS: show pulsing dot
+        const pulseIcon = L.divIcon({
+          className: 'pulse-marker',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
         });
-      });
+        userLocationMarker = L.marker(userLatLng, { icon: pulseIcon }).addTo(map)
+          .bindPopup("You are here (location never leaves your device)").openPopup();
 
-      if (closestRoute) {
-        // --- Draw closest route ---
-        const polyline = L.polyline(closestRoute.shape, {
-          color: '#0071CE',
-          weight: 4,
-          opacity: 0.7
-        }).addTo(map);
-        map.fitBounds(polyline.getBounds());
-
-        // --- Show stops + next time highlight ---
-        const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-        const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
-
-        closestRoute.stops.forEach(stop => {
-          let highlightedTimes = [];
-          let foundNext = false;
-          stop.times.forEach(timeStr => {
-            let cleanTime = timeStr.trim();
-            let [h, m] = cleanTime.split(":"),
-              schedMins = parseInt(h) * 60 + parseInt(m);
-            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-            if (!foundNext && schedMins >= nowMins) {
-              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-              foundNext = true;
-            } else {
-              highlightedTimes.push(cleanTime);
+        // Find closest route logic (existing functionality)
+        let closestDist = Infinity;
+        masterRoutes.forEach(route => {
+          route.shape.forEach(([lat, lon]) => {
+            const dist = Math.hypot(userLat - lat, userLon - lon);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestRoute = route;
             }
           });
+        });
 
-          L.circleMarker([stop.lat, stop.lon], {
-            radius: 6,
-            color: '#4dd0e1',
-            fillColor: '#4dd0e1',
-            fillOpacity: 0.9,
-            weight: 1
-          }).bindPopup(
-            `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                <strong style='color:#4dd0e1;'>${stop.name}</strong>
-                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-                ${
-                  highlightedTimes.map(t =>
-                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                  ).join('') || '<div>No scheduled times</div>'
-                }
-              </div>`
-          ).addTo(map);
+        if (closestRoute) {
+          // --- Draw closest route ---
+          const polyline = L.polyline(closestRoute.shape, {
+            color: '#0071CE',
+            weight: 4,
+            opacity: 0.7
+          }).addTo(map);
+          map.fitBounds(polyline.getBounds());
 
-        }); // closes stops.forEach
+          // --- Show stops + next time highlight ---
+          const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+          const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
 
-        // --- Only fetch/display bus locations AFTER closestRoute is known ---
-        fetchAndDisplay(); // <-- run initial fetch
-        setInterval(fetchAndDisplay, 15000); // <-- keep running
+          closestRoute.stops.forEach(stop => {
+            let highlightedTimes = [];
+            let foundNext = false;
+            stop.times.forEach(timeStr => {
+              let cleanTime = timeStr.trim();
+              let [h, m] = cleanTime.split(":"),
+                schedMins = parseInt(h) * 60 + parseInt(m);
+              if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+              if (!foundNext && schedMins >= nowMins) {
+                highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+                foundNext = true;
+              } else {
+                highlightedTimes.push(cleanTime);
+              }
+            });
 
-      } // closes if(closestRoute)
-    }); // closes getCurrentPosition callback
-  } // closes if(navigator.geolocation)
+            L.circleMarker([stop.lat, stop.lon], {
+              radius: 6,
+              color: '#4dd0e1',
+              fillColor: '#4dd0e1',
+              fillOpacity: 0.9,
+              weight: 1
+            }).bindPopup(
+              `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                  <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                  ${
+                    highlightedTimes.map(t =>
+                      `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                    ).join('') || '<div>No scheduled times</div>'
+                  }
+                </div>`
+            ).addTo(map);
+
+          }); // closes stops.forEach
+
+          // --- Only fetch/display bus locations AFTER closestRoute is known ---
+          fetchAndDisplay(); // <-- run initial fetch
+          setInterval(fetchAndDisplay, 15000); // <-- keep running
+
+        } // closes if(closestRoute)
+      } else {
+        // OUT OF BOUNDS: show arrow at nearest edge
+        // Clamp user's lat/lon to the edge of Portland bounds
+        const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
+        const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
+        const edgeLatLng = [edgeLat, edgeLon];
+        // Angle from map center to user
+        const mapCenter = map.getCenter();
+        const angle = getAngle([edgeLat, edgeLon], [userLat, userLon]);
+        // Arrow icon with rotation
+        const arrowIcon = L.divIcon({
+          className: 'arrow-marker',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+          html: `<svg style="transform: rotate(${angle}deg);" viewBox="0 0 30 30">
+            <polygon points="15,4 24,26 15,21 6,26" fill="#2196f3"/>
+          </svg>`
+        });
+        userArrow = L.marker(edgeLatLng, { icon: arrowIcon }).addTo(map)
+          .bindPopup("You are outside the Portland map area.").openPopup();
+      }
+    }, function(error) {
+      if (error.code === 1) {
+        console.log('Location access denied by user.');
+      } else {
+        console.log('Unable to get your location:', error.message);
+      }
+    });
+  } else {
+    alert('Geolocation is not supported by your browser.');
+  }
 
   // === SECTION: LIVE BUS MARKERS ===
   let busMarkers = {};
@@ -312,7 +439,7 @@
   // --- Instead, we now only run it after closestRoute is set above.
 </script>
 
-!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- --
+<!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
 <div class="mf-overlay" style="display:none;">
   <div class="mf-modal">
     <h2>You're not logged in or don't have an account</h2>
