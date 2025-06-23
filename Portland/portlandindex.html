@@ -99,6 +99,49 @@
       height: 30px;
       display: block;
     }
+    
+    /* Trip planning pins */
+    .start-pin {
+      width: 24px;
+      height: 24px;
+      background: #4dd0e1;
+      border: 2px solid #fff;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .start-pin::after {
+      content: "S";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(45deg);
+      color: #000;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    
+    .destination-pin {
+      width: 24px;
+      height: 24px;
+      background: #ff6b35;
+      border: 2px solid #fff;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .destination-pin::after {
+      content: "D";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(45deg);
+      color: #fff;
+      font-weight: bold;
+      font-size: 12px;
+    }
 
     .map-select-btn { 
       background: transparent; 
@@ -174,6 +217,7 @@
     </button>
   </div>
   <button id="goBtn" style="margin: 0 auto; width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
+  <button id="clearBtn" style="margin: 0 auto; width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
 </div>
 
 <!-- -- FAVORITES BAR -- -->
@@ -288,6 +332,8 @@
   // === SECTION: MAP SELECTION LOGIC ===
   let mapSelectionMode = null; // 'start' or 'end' or null
   let mapSelectionMarker = null;
+  let startPin = null;
+  let destinationPin = null;
 
   function activateMapSelection(mode) {
     // Deactivate any existing selection
@@ -310,6 +356,35 @@
     mapSelectionMode = mode;
     document.getElementById(mode + 'MapBtn').classList.add('active');
     map.getContainer().style.cursor = 'crosshair';
+  }
+
+  function clearTripPlan() {
+    // Remove pins
+    if (startPin) {
+      map.removeLayer(startPin);
+      startPin = null;
+    }
+    if (destinationPin) {
+      map.removeLayer(destinationPin);
+      destinationPin = null;
+    }
+    
+    // Clear search bars
+    document.getElementById('startInput').value = '';
+    document.getElementById('endInput').value = '';
+    
+    // Remove any temporary selection marker
+    if (mapSelectionMarker) {
+      map.removeLayer(mapSelectionMarker);
+      mapSelectionMarker = null;
+    }
+    
+    // Deactivate selection mode
+    if (mapSelectionMode) {
+      document.getElementById(mapSelectionMode + 'MapBtn').classList.remove('active');
+      mapSelectionMode = null;
+      map.getContainer().style.cursor = 'grab';
+    }
   }
 
   function findClosestRouteToPoint(lat, lon) {
@@ -353,20 +428,6 @@
     const clickedLat = e.latlng.lat;
     const clickedLon = e.latlng.lng;
     
-    // Remove previous selection marker
-    if (mapSelectionMarker) {
-      map.removeLayer(mapSelectionMarker);
-    }
-    
-    // Add selection marker
-    mapSelectionMarker = L.circleMarker([clickedLat, clickedLon], {
-      radius: 8,
-      color: '#4dd0e1',
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.7,
-      weight: 2
-    }).addTo(map);
-    
     // Find closest stop
     const closestStop = findClosestStopToPoint(clickedLat, clickedLon);
     
@@ -375,19 +436,29 @@
       const inputId = mapSelectionMode + 'Input';
       document.getElementById(inputId).value = decodeHTMLEntities(closestStop.name);
       
-      // Show stop marker briefly
-      const stopMarker = L.circleMarker([closestStop.lat, closestStop.lon], {
-        radius: 10,
-        color: '#4dd0e1',
-        fillColor: '#4dd0e1',
-        fillOpacity: 0.9,
-        weight: 2
-      }).addTo(map);
+      // Remove existing pin for this mode
+      if (mapSelectionMode === 'start' && startPin) {
+        map.removeLayer(startPin);
+      } else if (mapSelectionMode === 'end' && destinationPin) {
+        map.removeLayer(destinationPin);
+      }
       
-      // Remove stop marker after 3 seconds
-      setTimeout(() => {
-        map.removeLayer(stopMarker);
-      }, 3000);
+      // Create and add new pin
+      const pinClass = mapSelectionMode === 'start' ? 'start-pin' : 'destination-pin';
+      const pinIcon = L.divIcon({
+        className: pinClass,
+        iconSize: [24, 24],
+        iconAnchor: [12, 24]
+      });
+      
+      const newPin = L.marker([closestStop.lat, closestStop.lon], { icon: pinIcon }).addTo(map);
+      
+      // Store reference to pin
+      if (mapSelectionMode === 'start') {
+        startPin = newPin;
+      } else {
+        destinationPin = newPin;
+      }
     }
     
     // Deactivate selection mode
@@ -397,6 +468,7 @@
   // Button event listeners
   document.getElementById('startMapBtn').addEventListener('click', () => activateMapSelection('start'));
   document.getElementById('endMapBtn').addEventListener('click', () => activateMapSelection('end'));
+  document.getElementById('clearBtn').addEventListener('click', clearTripPlan);
 
   // === SECTION: GELOCATION & CLOSEST ROUTE LOGIC ===
   let closestRoute = null; // <-- declare at top so it's visible to all functions
