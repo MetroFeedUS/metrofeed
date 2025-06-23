@@ -311,12 +311,33 @@
   // --- NO LONGER RUN fetchAndDisplay() on page load.
   // --- Instead, we now only run it after closestRoute is set above.
 
-  // === SECTION: MODAL, TRIAL, FAVORITES, ALERTS, ETC ===
+ <!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
+<div class="mf-overlay" style="display:none;">
+  <div class="mf-modal">
+    <h2>You're not logged in or don’t have an account</h2>
+    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
+    <div class="mf-actions" style="display: flex; gap: 0.65rem; margin-bottom: 1.1rem;">
+      <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
+      <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
+    </div>
+    <button class="mf-btn mf-free-btn" id="freeBtn" onclick="location.href='https://metrofeedus.com/portland/portlandhome'">Use Free Version</button>
+    <div class="mf-premium" style="margin-top:1.1rem;">
+      Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
+      <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
+    </div>
+    <button class="trial-btn" id="startTrialBtn">Start Free Trial</button>
+    <span class="trial-timer" id="trialTimer"></span>
+  </div>
+</div>
+
+<script>
+  // --- Helper: Show/hide alert dot ---
   function setAlertsDot(show) {
     var dot = document.getElementById('alertsDot');
     if (dot) dot.style.display = show ? 'block' : 'none';
   }
 
+  // --- Helper: Render favorite routes bar ---
   function renderFavoritesBar() {
     let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
     for (let i = 1; i <= 4; i++) {
@@ -341,8 +362,7 @@
     }
   }
 
-  // === SECTION: MODAL/LOGIN LOGIC, FREE TRIAL, ETC ===
- 
+  // --- Show/hide modal helpers ---
   function showModal() {
     document.querySelector('.mf-overlay').style.display = 'flex';
   }
@@ -350,51 +370,53 @@
     document.querySelector('.mf-overlay').style.display = 'none';
   }
 
-  const btn = document.getElementById('startTrialBtn');
-  const timerEl = document.getElementById('trialTimer');
-  function msToTime(duration) {
-    let seconds = Math.floor((duration / 1000) % 60),
-        minutes = Math.floor((duration / (1000 * 60)) % 60),
-        hours = Math.floor((duration / (1000 * 60 * 60)) % 24),
-        days = Math.floor(duration / (1000 * 60 * 60 * 24));
-    return `${days > 0 ? days+'d ' : ''}${hours}h ${minutes}m ${seconds}s`;
-  }
-  function updateTrialTimer() {
-  const trialStart = parseInt(localStorage.getItem('mf_trialStart') || '0');
-  if (!trialStart) {
-    timerEl.textContent = '';
-    btn.disabled = false;
-    btn.textContent = 'Start Free Trial';
-    return;
-  }
-  const now = Date.now();
-  const diff = (trialStart + 24*60*60*1000) - now;
-  if (diff > 0) {
-    btn.disabled = true;
-    btn.textContent = 'Trial Active';
-    timerEl.textContent = 'Expires in: ' + msToTime(diff);
-    localStorage.setItem('mf_unlocked', 'true');
-  } else {
-    btn.disabled = true;
-    btn.textContent = 'Trial Expired';
-    timerEl.textContent = 'Your free trial has ended.';
-    localStorage.removeItem('mf_unlocked');
-    // Optionally remove mf_trialStart here if you want to allow new trials after 24hr
-    // localStorage.removeItem('mf_trialStart');
-  }
-}
-
- btn.onclick = function() {
-  if (!localStorage.getItem('mf_trialStart')) {
-    localStorage.setItem('mf_trialStart', Date.now().toString());
-    localStorage.setItem('mf_unlocked', 'true');
-    hideModal();
-    updateTrialTimer();
-  }
-};
-
-
+  // --- Main onload logic (SAFE order) ---
   window.onload = function() {
+    const btn = document.getElementById('startTrialBtn');
+    const timerEl = document.getElementById('trialTimer');
+
+    function msToTime(duration) {
+      let seconds = Math.floor((duration / 1000) % 60),
+          minutes = Math.floor((duration / (1000 * 60)) % 60),
+          hours = Math.floor((duration / (1000 * 60 * 60)) % 24),
+          days = Math.floor(duration / (1000 * 60 * 60 * 24));
+      return `${days > 0 ? days+'d ' : ''}${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    function updateTrialTimer() {
+      const trialStart = parseInt(localStorage.getItem('mf_trialStart') || '0');
+      if (!trialStart) {
+        timerEl.textContent = '';
+        btn.disabled = false;
+        btn.textContent = 'Start Free Trial';
+        return;
+      }
+      const now = Date.now();
+      const diff = (trialStart + 24*60*60*1000) - now;
+      if (diff > 0) {
+        btn.disabled = true;
+        btn.textContent = 'Trial Active';
+        timerEl.textContent = 'Expires in: ' + msToTime(diff);
+        localStorage.setItem('mf_unlocked', 'true');
+      } else {
+        btn.disabled = true;
+        btn.textContent = 'Trial Expired';
+        timerEl.textContent = 'Your free trial has ended.';
+        localStorage.removeItem('mf_unlocked');
+        // Optionally remove mf_trialStart here if you want to allow new trials after 24hr
+        // localStorage.removeItem('mf_trialStart');
+      }
+    }
+
+    btn.onclick = function() {
+      if (!localStorage.getItem('mf_trialStart')) {
+        localStorage.setItem('mf_trialStart', Date.now().toString());
+        localStorage.setItem('mf_unlocked', 'true');
+        hideModal();
+        updateTrialTimer();
+      }
+    };
+
     updateTrialTimer();
     setInterval(updateTrialTimer, 1000);
     renderFavoritesBar();
@@ -414,26 +436,6 @@
     setAlertsDot(localStorage.getItem('hasActiveAlerts') === 'true');
   };
 </script>
-
-<!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
-<div class="mf-overlay" style="display:none;">
-  <div class="mf-modal">
-    
-    <h2>You're not logged in or don’t have an account</h2>
-    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
-    <div class="mf-actions" style="display: flex; gap: 0.65rem; margin-bottom: 1.1rem;">
-      <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
-      <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
-    </div>
-    <button class="mf-btn mf-free-btn" id="freeBtn" onclick="location.href='https://metrofeedus.com/portland/portlandhome'">Use Free Version</button>
-    <div class="mf-premium" style="margin-top:1.1rem;">
-      Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
-      <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
-    </div>
-    <button class="trial-btn" id="startTrialBtn">Start Free Trial</button>
-    <span class="trial-timer" id="trialTimer"></span>
-  </div>
-</div>
 
 </body>
 </html>
