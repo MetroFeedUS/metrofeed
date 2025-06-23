@@ -373,7 +373,7 @@
     if (closestStop) {
       // Populate the corresponding input with stop name
       const inputId = mapSelectionMode + 'Input';
-      document.getElementById(inputId).value = closestStop.name;
+      document.getElementById(inputId).value = decodeHTMLEntities(closestStop.name);
       
       // Show stop marker briefly
       const stopMarker = L.circleMarker([closestStop.lat, closestStop.lon], {
