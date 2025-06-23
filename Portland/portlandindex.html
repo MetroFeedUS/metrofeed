@@ -304,82 +304,14 @@
         });
         userLocationMarker = L.marker(userLatLng, { icon: pulseIcon }).addTo(map)
           .bindPopup("You are here (location never leaves your device)").openPopup();
-
-        // Find closest route logic (existing functionality)
-        let closestDist = Infinity;
-        masterRoutes.forEach(route => {
-          route.shape.forEach(([lat, lon]) => {
-            const dist = Math.hypot(userLat - lat, userLon - lon);
-            if (dist < closestDist) {
-              closestDist = dist;
-              closestRoute = route;
-            }
-          });
-        });
-
-        if (closestRoute) {
-          // --- Draw closest route ---
-          const polyline = L.polyline(closestRoute.shape, {
-            color: '#0071CE',
-            weight: 4,
-            opacity: 0.7
-          }).addTo(map);
-          map.fitBounds(polyline.getBounds());
-
-          // --- Show stops + next time highlight ---
-          const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-          const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
-
-          closestRoute.stops.forEach(stop => {
-            let highlightedTimes = [];
-            let foundNext = false;
-            stop.times.forEach(timeStr => {
-              let cleanTime = timeStr.trim();
-              let [h, m] = cleanTime.split(":"),
-                schedMins = parseInt(h) * 60 + parseInt(m);
-              if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-              if (!foundNext && schedMins >= nowMins) {
-                highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-                foundNext = true;
-              } else {
-                highlightedTimes.push(cleanTime);
-              }
-            });
-
-            L.circleMarker([stop.lat, stop.lon], {
-              radius: 6,
-              color: '#4dd0e1',
-              fillColor: '#4dd0e1',
-              fillOpacity: 0.9,
-              weight: 1
-            }).bindPopup(
-              `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                  <strong style='color:#4dd0e1;'>${stop.name}</strong>
-                  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-                  ${
-                    highlightedTimes.map(t =>
-                      `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                    ).join('') || '<div>No scheduled times</div>'
-                  }
-                </div>`
-            ).addTo(map);
-
-          }); // closes stops.forEach
-
-          // --- Only fetch/display bus locations AFTER closestRoute is known ---
-          fetchAndDisplay(); // <-- run initial fetch
-          setInterval(fetchAndDisplay, 15000); // <-- keep running
-
-        } // closes if(closestRoute)
       } else {
         // OUT OF BOUNDS: show arrow at nearest edge
         // Clamp user's lat/lon to the edge of Portland bounds
         const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
         const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
         const edgeLatLng = [edgeLat, edgeLon];
-        // Angle from map center to user
-        const mapCenter = map.getCenter();
-        const angle = getAngle([edgeLat, edgeLon], [userLat, userLon]);
+        // Angle from edge to user (flipped direction)
+        const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
         // Arrow icon with rotation
         const arrowIcon = L.divIcon({
           className: 'arrow-marker',
@@ -392,6 +324,73 @@
         userArrow = L.marker(edgeLatLng, { icon: arrowIcon }).addTo(map)
           .bindPopup("You are outside the Portland map area.").openPopup();
       }
+
+      // Find closest route logic (always run regardless of bounds)
+      let closestDist = Infinity;
+      masterRoutes.forEach(route => {
+        route.shape.forEach(([lat, lon]) => {
+          const dist = Math.hypot(userLat - lat, userLon - lon);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestRoute = route;
+          }
+        });
+      });
+
+      if (closestRoute) {
+        // --- Draw closest route ---
+        const polyline = L.polyline(closestRoute.shape, {
+          color: '#0071CE',
+          weight: 4,
+          opacity: 0.7
+        }).addTo(map);
+        map.fitBounds(polyline.getBounds());
+
+        // --- Show stops + next time highlight ---
+        const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+        const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+        closestRoute.stops.forEach(stop => {
+          let highlightedTimes = [];
+          let foundNext = false;
+          stop.times.forEach(timeStr => {
+            let cleanTime = timeStr.trim();
+            let [h, m] = cleanTime.split(":"),
+              schedMins = parseInt(h) * 60 + parseInt(m);
+            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+            if (!foundNext && schedMins >= nowMins) {
+              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+              foundNext = true;
+            } else {
+              highlightedTimes.push(cleanTime);
+            }
+          });
+
+          L.circleMarker([stop.lat, stop.lon], {
+            radius: 6,
+            color: '#4dd0e1',
+            fillColor: '#4dd0e1',
+            fillOpacity: 0.9,
+            weight: 1
+          }).bindPopup(
+            `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                ${
+                  highlightedTimes.map(t =>
+                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                  ).join('') || '<div>No scheduled times</div>'
+                }
+              </div>`
+          ).addTo(map);
+
+        }); // closes stops.forEach
+
+        // --- Only fetch/display bus locations AFTER closestRoute is known ---
+        fetchAndDisplay(); // <-- run initial fetch
+        setInterval(fetchAndDisplay, 15000); // <-- keep running
+
+      } // closes if(closestRoute)
     }, function(error) {
       if (error.code === 1) {
         console.log('Location access denied by user.');
