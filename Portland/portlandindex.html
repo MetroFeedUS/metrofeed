@@ -888,33 +888,25 @@
       alert("Trip data not found. Please try again.");
       return;
     }
-    if (routeLine) map.removeLayer(routeLine);
 
-    const coords = window.currentItins[idx].legs.flatMap(leg => {
-      if (!leg.legGeometry) {
-        console.warn("No legGeometry for leg:", leg);
-        return [];
-      }
-      if (!leg.legGeometry.points) {
-        console.warn("No points in legGeometry for leg:", leg);
-        return [];
-      }
-      console.log('Decoding polyline:', leg.legGeometry.points);
-      const pts = decodePolyline(leg.legGeometry.points);
-      if (!pts.length) {
-        console.warn("Decoded polyline is empty for leg:", leg);
-      }
-      return pts;
-    });
-
-    // Filter for valid Portland area coordinates
-    const filteredCoords = coords.filter(([lat, lng]) =>
-      lat > 45 && lat < 46 && lng < -122 && lng > -124
+    // Get all decoded points from all legs
+    let coords = window.currentItins[idx].legs.flatMap(leg =>
+      leg.legGeometry && leg.legGeometry.points
+        ? decodePolyline(leg.legGeometry.points)
+        : []
     );
-    console.log('Filtered coords:', filteredCoords);
 
-    if (filteredCoords.length) {
-      routeLine = L.polyline(filteredCoords, {color: "#0071ce", weight: 6}).addTo(map);
+    console.log("Initial coords:", coords);
+
+    // If coords is an array of arrays of arrays, flatten one more level
+    if (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
+      coords = coords.flat();
+    }
+    console.log("Final coords (flattened):", coords);
+
+    if (coords.length) {
+      if (routeLine) map.removeLayer(routeLine);
+      routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
       map.fitBounds(routeLine.getBounds(), {padding:[40,40]});
     } else {
       alert("No valid route geometry found for this trip.");
