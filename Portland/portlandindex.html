@@ -761,6 +761,8 @@
       if (!res.ok) throw new Error("OTP server error: " + res.status);
       const data = await res.json();
 
+      console.log('Full OTP response:', data); // Debug the full response
+
       // OTP v2+ always returns {plan: { itineraries: [...] }} if results are found
       if (!data.plan || !data.plan.itineraries || !data.plan.itineraries.length) {
         itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
@@ -769,6 +771,7 @@
 
       // Store itineraries globally and render
       currentItins = data.plan.itineraries;
+      console.log('Stored itineraries:', currentItins); // Debug stored data
       renderItinListVisual(data.plan.itineraries);
 
     } catch (e) {
@@ -842,68 +845,85 @@
     itinerary.legs.forEach((leg, legIdx) => {
       console.log(`Leg ${legIdx}:`, leg); // Debug log
       
+      let points = [];
+      let color = '#666'; // walk
+      if (leg.mode === 'BUS') color = '#0071CE';
+      else if (leg.mode === 'TRAIN') color = '#e53935';
+      
+      // Try multiple approaches to get route points
       if (leg.legGeometry && leg.legGeometry.points) {
-        console.log('Leg geometry points:', leg.legGeometry.points); // Debug log
-        
-        // Decode the polyline
-        const points = decodePolyline(leg.legGeometry.points);
-        console.log('Decoded points:', points); // Debug log
-        
-        // Validate points are in reasonable Portland area
-        const validPoints = points.filter(point => {
-          const [lat, lng] = point;
-          return lat >= 45.0 && lat <= 46.0 && lng >= -123.5 && lng <= -122.0;
-        });
-        
-        if (validPoints.length === 0) {
-          console.warn('No valid points found for leg:', leg);
+        console.log('Using legGeometry.points:', leg.legGeometry.points);
+        points = decodePolyline(leg.legGeometry.points);
+      } else if (leg.legGeometry && leg.legGeometry.coordinates) {
+        console.log('Using legGeometry.coordinates:', leg.legGeometry.coordinates);
+        points = leg.legGeometry.coordinates;
+      } else if (leg.legGeometry && leg.legGeometry.points) {
+        console.log('Using legGeometry.points (string):', leg.legGeometry.points);
+        points = decodePolyline(leg.legGeometry.points);
+      } else if (leg.from && leg.to) {
+        console.log('Using from/to coordinates as fallback');
+        points = [[leg.from.lat, leg.from.lon], [leg.to.lat, leg.to.lon]];
+      } else {
+        console.warn('No geometry found for leg:', leg);
+        // Create a simple straight line between from/to if available
+        if (leg.from && leg.to) {
+          console.log('Creating fallback line from/to coordinates');
+          points = [[leg.from.lat, leg.from.lon], [leg.to.lat, leg.to.lon]];
+        } else {
+          console.warn('No from/to coordinates available for leg:', leg);
           return;
         }
-        
-        // Choose color based on mode
-        let color = '#666'; // walk
-        if (leg.mode === 'BUS') color = '#0071CE';
-        else if (leg.mode === 'TRAIN') color = '#e53935';
-        
-        // Create polyline
-        const polyline = L.polyline(validPoints, {
-          color: color,
-          weight: 4,
-          opacity: 0.8
-        }).addTo(map);
-        
-        // Store for cleanup
-        routePolylines.push(polyline);
-        
-        // Add popup with leg info
-        const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
-        polyline.bindPopup(legInfo);
-      } else if (leg.from && leg.to) {
-        // Fallback: create a simple line between from/to coordinates
-        console.log('Using fallback line for leg:', leg);
-        const fromCoords = [leg.from.lat, leg.from.lon];
-        const toCoords = [leg.to.lat, leg.to.lon];
-        
-        // Validate coordinates
-        if (fromCoords[0] >= 45.0 && fromCoords[0] <= 46.0 && 
-            toCoords[0] >= 45.0 && toCoords[0] <= 46.0) {
-          
-          let color = '#666'; // walk
-          if (leg.mode === 'BUS') color = '#0071CE';
-          else if (leg.mode === 'TRAIN') color = '#e53935';
-          
-          const polyline = L.polyline([fromCoords, toCoords], {
-            color: color,
-            weight: 4,
-            opacity: 0.8
-          }).addTo(map);
-          
-          routePolylines.push(polyline);
-          
-          const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
-          polyline.bindPopup(legInfo);
-        }
       }
+      
+      console.log('Final points for leg:', points);
+      
+      // Validate points are in reasonable Portland area
+      const validPoints = points.filter(point => {
+        if (!Array.isArray(point) || point.length < 2) return false;
+        const [lat, lng] = point;
+        return lat >= 45.0 && lat <= 46.0 && lng >= -123.5 && lng <= -122.0;
+      });
+      
+      console.log('Valid points after filtering:', validPoints);
+      
+      if (validPoints.length === 0) {
+        console.warn('No valid points found for leg:', leg);
+        // Try to create a simple line anyway if we have from/to
+        if (leg.from && leg.to) {
+          const fromCoords = [leg.from.lat, leg.from.lon];
+          const toCoords = [leg.to.lat, leg.to.lon];
+          
+          if (fromCoords[0] >= 45.0 && fromCoords[0] <= 46.0 && 
+              toCoords[0] >= 45.0 && toCoords[0] <= 46.0) {
+            
+            const polyline = L.polyline([fromCoords, toCoords], {
+              color: color,
+              weight: 4,
+              opacity: 0.8
+            }).addTo(map);
+            
+            routePolylines.push(polyline);
+            
+            const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
+            polyline.bindPopup(legInfo);
+          }
+        }
+        return;
+      }
+      
+      // Create polyline
+      const polyline = L.polyline(validPoints, {
+        color: color,
+        weight: 4,
+        opacity: 0.8
+      }).addTo(map);
+      
+      // Store for cleanup
+      routePolylines.push(polyline);
+      
+      // Add popup with leg info
+      const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
+      polyline.bindPopup(legInfo);
     });
     
     // Fit map to show entire route (only if we have valid polylines)
@@ -1007,6 +1027,37 @@
   window.showRoute = showRoute;
   window.toggleDropdown = toggleDropdown;
   window.hideOtpModal = hideOtpModal;
+  
+  // Debug function to test route rendering
+  window.testRouteRender = function() {
+    console.log('Testing route render with sample data...');
+    
+    // Create a simple test route
+    const testItinerary = {
+      legs: [
+        {
+          mode: 'WALK',
+          from: { lat: 45.52, lon: -122.67 },
+          to: { lat: 45.52, lon: -122.66 },
+          duration: 300,
+          route: null
+        },
+        {
+          mode: 'BUS',
+          from: { lat: 45.52, lon: -122.66 },
+          to: { lat: 45.53, lon: -122.65 },
+          duration: 600,
+          route: '15'
+        }
+      ]
+    };
+    
+    // Test the rendering
+    currentItins = [testItinerary];
+    showRoute(0);
+  };
+  
+
 </script>
 
 <!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
