@@ -779,6 +779,7 @@
 
   // ==== RENDER TRIP OPTIONS ====
   function renderItinListVisual(itins) {
+    window.currentItins = itins; // Ensure global is always set!
     const itinList = document.getElementById('itinList');
     itinList.innerHTML = itins.map((itin, idx) => {
       const start = new Date(itin.startTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
@@ -851,27 +852,18 @@
   // ==== ROUTE DISPLAY ====
   let routeLine = null; // Track the current route line
   
-  function showRoute(idx) {
+  window.showRoute = function(idx) {
+    if (!window.currentItins || !window.currentItins[idx]) {
+      alert("Trip data not found. Please try again.");
+      return;
+    }
     if (routeLine) map.removeLayer(routeLine);
-    
-    // For real OTP data!
     const coords = window.currentItins[idx].legs.flatMap(leg =>
       leg.legGeometry ? decodePolyline(leg.legGeometry.points).map(pt => [pt.lat, pt.lng]) : []
     );
-    
-    console.log('Decoded coordinates:', coords); // Debug log
-    
-    if (coords.length) {
-      routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
-      
-      // Fit map to show the route
-      map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
-    } else {
-      console.warn('No coordinates found for route');
-    }
-    
+    if (coords.length) routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
     hideOtpModal();
-  }
+  };
 
   // ==== UTILITY FUNCTIONS ====
   function clearRoutePolylines() {
@@ -947,15 +939,6 @@
   }
 
   // Make functions globally available
-  window.showRoute = function(idx) {
-    if (routeLine) map.removeLayer(routeLine);
-    // For real OTP data!
-    const coords = window.currentItins[idx].legs.flatMap(leg =>
-      leg.legGeometry ? decodePolyline(leg.legGeometry.points).map(pt => [pt.lat, pt.lng]) : []
-    );
-    if (coords.length) routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
-    hideOtpModal();
-  };
   window.toggleDropdown = toggleDropdown;
   window.hideOtpModal = hideOtpModal;
   
