@@ -158,6 +158,85 @@
       background-color: rgba(77, 208, 225, 0.2); 
       box-shadow: 0 0 4px #4dd0e1;
     }
+
+    /* OTP Trip Planning Styles */
+    .itinListOption {
+      background: #1a1a1a;
+      border: 1px solid #4dd0e1;
+      border-radius: 8px;
+      margin: 8px 0;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .itinListOption:hover {
+      background: #222;
+      box-shadow: 0 0 8px #4dd0e1;
+    }
+    .itin-toptimes {
+      color: #4dd0e1;
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+    .itin-segments {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .seg-walk { background: #666; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; }
+    .seg-bus { background: #0071CE; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; }
+    .seg-train { background: #e53935; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; }
+    .seg-icon { margin-right: 4px; }
+    .itin-total {
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+    .itin-dropdown-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #4dd0e1;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .itin-details-overlay {
+      display: none;
+      background: #0d0d0d;
+      border-top: 1px solid #4dd0e1;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 0 0 8px 8px;
+    }
+    .itin-details-overlay.show {
+      display: block;
+    }
+    .itin-details-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #f55;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .itin-details-row {
+      color: #ccc;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -239,6 +318,17 @@
   <a href="dmca.html">DMCA</a>
   <a href="privacy.html">Privacy Policy</a>
 </footer>
+
+<!-- -- OTP TRIP PLANNING MODAL -- -->
+<div id="otpModal" class="mf-overlay" style="display:none;">
+  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+    <h2>🚌 Trip Options</h2>
+    <div id="itinList" style="text-align: left; margin-top: 1rem;">
+      <!-- Trip itineraries will be rendered here -->
+    </div>
+    <button class="mf-btn" onclick="hideOtpModal()" style="margin-top: 1rem;">Close</button>
+  </div>
+</div>
 
 <!-- -- LEAFLET & MASTERMAP -- -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -649,6 +739,204 @@
 
   // --- NO LONGER RUN fetchAndDisplay() on page load.
   // --- Instead, we now only run it after closestRoute is set above.
+
+  // === SECTION: OPEN TRIP PLANNER INTEGRATION ===
+  let currentItins = null; // Store current itineraries globally
+  let routePolylines = []; // Store route polylines for cleanup
+
+  // ==== OTP CORE LOGIC FOR METROFEED ====
+  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
+    const from = `${fromLat},${fromLon}`;
+    const to = `${toLat},${toLon}`;
+    // Adjust the server/URL as needed for production:
+    const url = `http://localhost:8080/otp/routers/default/plan?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
+
+    // Show loading state
+    const itinList = document.getElementById('itinList');
+    itinList.innerHTML = "<em style='color: #4dd0e1;'>Loading trip options...</em>";
+    showOtpModal();
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("OTP server error: " + res.status);
+      const data = await res.json();
+
+      // OTP v2+ always returns {plan: { itineraries: [...] }} if results are found
+      if (!data.plan || !data.plan.itineraries || !data.plan.itineraries.length) {
+        itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
+        return;
+      }
+
+      // Store itineraries globally and render
+      currentItins = data.plan.itineraries;
+      renderItinListVisual(data.plan.itineraries);
+
+    } catch (e) {
+      console.error('OTP Error:', e);
+      itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server. Please check if the OTP server is running on localhost:8080</em>`;
+    }
+  }
+
+  // ==== RENDER TRIP OPTIONS ====
+  function renderItinListVisual(itins) {
+    const itinList = document.getElementById('itinList');
+    itinList.innerHTML = itins.map((itin, idx) => {
+      const start = new Date(itin.startTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      const end = new Date(itin.endTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      const segs = itin.legs.map(leg => {
+        let icon = leg.mode === 'WALK' ? '🚶' : leg.mode === 'BUS' ? '🚌' : leg.mode === 'TRAIN' ? '🚆' : '';
+        let mins = Math.round((leg.duration || 0) / 60);
+        return `<span class='seg-${leg.mode.toLowerCase()}'><span class='seg-icon'>${icon}</span>${mins}m</span>`;
+      }).join('');
+      
+      // Overlay details for route info
+      const details = itin.legs.map((leg, j) => {
+        let modeTxt = leg.mode === 'WALK' ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode;
+        let lineInfo = leg.route ? ` <b>${leg.route}</b>` : '';
+        return `<div>→ <b>${modeTxt}${lineInfo}</b> <span style="color:#ffc107;">${Math.round((leg.duration||0)/60)} min</span> <br>
+            <span style="font-size:0.96em; color:#aaa;">${leg.info||''}</span></div>`;
+      }).join('<hr style="border:0; border-top:1px solid #222; margin:5px 0 4px 0">');
+      
+      return `<div class="itinListOption" data-idx="${idx}">
+        <button class="itin-dropdown-btn" onclick="event.stopPropagation();toggleDropdown(${idx})">&#9660;</button>
+        <div onclick="showRoute(${idx})">
+          <div class="itin-toptimes">Option ${idx+1}: ${start}–${end}</div>
+          <div class="itin-segments">${segs}</div>
+          <div class="itin-total">Total: ${Math.round(itin.duration/60)} min</div>
+        </div>
+        <div class="itin-details-overlay"><button class="itin-details-close" onclick="event.stopPropagation();toggleDropdown(${idx})">×</button><div class="itin-details-row">${details}</div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // ==== MODAL CONTROLS ====
+  function showOtpModal() {
+    document.getElementById('otpModal').style.display = 'flex';
+  }
+
+  function hideOtpModal() {
+    document.getElementById('otpModal').style.display = 'none';
+    // Clear route polylines when closing modal
+    clearRoutePolylines();
+  }
+
+  // ==== DROPDOWN TOGGLE ====
+  function toggleDropdown(idx) {
+    const overlay = document.querySelector(`[data-idx="${idx}"] .itin-details-overlay`);
+    if (overlay) {
+      overlay.classList.toggle('show');
+    }
+  }
+
+  // ==== ROUTE DISPLAY ====
+  function showRoute(idx) {
+    if (!currentItins || !currentItins[idx]) return;
+    
+    const itinerary = currentItins[idx];
+    
+    // Clear previous route polylines
+    clearRoutePolylines();
+    
+    // Plot each leg of the itinerary
+    itinerary.legs.forEach((leg, legIdx) => {
+      if (leg.legGeometry && leg.legGeometry.points) {
+        // Decode the polyline
+        const points = decodePolyline(leg.legGeometry.points);
+        
+        // Choose color based on mode
+        let color = '#666'; // walk
+        if (leg.mode === 'BUS') color = '#0071CE';
+        else if (leg.mode === 'TRAIN') color = '#e53935';
+        
+        // Create polyline
+        const polyline = L.polyline(points, {
+          color: color,
+          weight: 4,
+          opacity: 0.8
+        }).addTo(map);
+        
+        // Store for cleanup
+        routePolylines.push(polyline);
+        
+        // Add popup with leg info
+        const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
+        polyline.bindPopup(legInfo);
+      }
+    });
+    
+    // Fit map to show entire route
+    if (routePolylines.length > 0) {
+      const group = L.featureGroup(routePolylines);
+      map.fitBounds(group.getBounds(), { padding: [20, 20] });
+    }
+    
+    // Minimize modal
+    hideOtpModal();
+  }
+
+  // ==== UTILITY FUNCTIONS ====
+  function clearRoutePolylines() {
+    routePolylines.forEach(polyline => {
+      map.removeLayer(polyline);
+    });
+    routePolylines = [];
+  }
+
+  // Decode Google-style polyline
+  function decodePolyline(encoded) {
+    const points = [];
+    let index = 0, len = encoded.length;
+    let lat = 0, lng = 0;
+
+    while (index < len) {
+      let shift = 0, result = 0;
+
+      do {
+        let b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (result >= 0x20);
+
+      let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+
+      do {
+        let b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (result >= 0x20);
+
+      let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      points.push([lat / 1E5, lng / 1E5]);
+    }
+
+    return points;
+  }
+
+  // ==== CONNECT GO BUTTON TO OTP ====
+  // This will be moved to window.onload to ensure DOM is ready
+
+  // Helper function to find stop by name
+  function findStopByName(name) {
+    for (let route of masterRoutes) {
+      for (let stop of route.stops) {
+        if (decodeHTMLEntities(stop.name).toLowerCase() === name.toLowerCase()) {
+          return stop;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Make functions globally available
+  window.showRoute = showRoute;
+  window.toggleDropdown = toggleDropdown;
+  window.hideOtpModal = hideOtpModal;
 </script>
 
 <!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
@@ -714,6 +1002,39 @@
   window.onload = function() {
     const btn = document.getElementById('startTrialBtn');
     const timerEl = document.getElementById('trialTimer');
+
+    // ==== CONNECT GO BUTTON TO OTP ====
+    const goBtn = document.getElementById('goBtn');
+    if (goBtn) {
+      goBtn.addEventListener('click', function() {
+        console.log('Go button clicked!'); // Debug log
+        const startInput = document.getElementById('startInput').value.trim();
+        const endInput = document.getElementById('endInput').value.trim();
+        
+        console.log('Start:', startInput, 'End:', endInput); // Debug log
+        
+        if (!startInput || !endInput) {
+          alert('Please enter both start and destination locations.');
+          return;
+        }
+        
+        // Find coordinates for start and end locations
+        const startStop = findStopByName(startInput);
+        const endStop = findStopByName(endInput);
+        
+        console.log('Start stop:', startStop, 'End stop:', endStop); // Debug log
+        
+        if (!startStop || !endStop) {
+          alert('Could not find the specified locations. Please use the autocomplete suggestions.');
+          return;
+        }
+        
+        // Call OTP with coordinates
+        fetchAndShowOtpItineraries(startStop.lat, startStop.lon, endStop.lat, endStop.lon);
+      });
+    } else {
+      console.error('Go button not found!'); // Debug log
+    }
 
     function msToTime(duration) {
       let seconds = Math.floor((duration / 1000) % 60),
