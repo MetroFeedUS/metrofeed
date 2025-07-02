@@ -888,40 +888,31 @@
       alert("Trip data not found. Please try again.");
       return;
     }
+    if (routeLine) map.removeLayer(routeLine);
 
-    // Log geometry for debugging
-    window.currentItins[idx].legs.forEach((leg, i) => {
-      console.log(`Leg ${i} geometry:`, leg.legGeometry);
-    });
+    // LOG the trip structure for diagnosis!
+    console.log('Trip:', window.currentItins[idx]);
 
-    // Universal extraction
-    let coords = window.currentItins[idx].legs.flatMap(leg => {
-      if (leg.legGeometry) {
-        if (Array.isArray(leg.legGeometry.coordinates)) {
-          return leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        } else if (typeof leg.legGeometry.points === 'string') {
-          return decodePolyline(leg.legGeometry.points);
-        }
+    const coords = window.currentItins[idx].legs.flatMap(leg => {
+      if (!leg.legGeometry) {
+        console.warn('No geometry for leg:', leg);
+        return [];
       }
-      return [];
+      const decoded = decodePolyline(leg.legGeometry.points);
+      if (!decoded.length) {
+        console.warn('Decoded geometry is empty for leg:', leg);
+      }
+      return decoded;
     });
 
-    if (coords[0] && Array.isArray(coords[0][0])) coords = coords.flat();
-    console.log("Final route coords:", coords);
+    console.log('Polyline coords:', coords);
 
-    if (coords.length > 0) {
-      if (routeLine) map.removeLayer(routeLine);
-      routeLine = L.polyline(coords, { color: "#0071ce", weight: 6 }).addTo(map);
-      map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
-    } else {
+    if (!coords.length) {
       alert("No valid route geometry found for this trip.");
+      return;
     }
-
-    if (typeof minimizeModal === 'function') {
-      minimizeModal(true);
-    } else if (typeof hideOtpModal === 'function') {
-      hideOtpModal();
-    }
+    routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
+    // Optionally: minimizeModal(true);
   };
 
   // ==== UTILITY FUNCTIONS ====
