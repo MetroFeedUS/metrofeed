@@ -889,25 +889,30 @@
       return;
     }
 
-    // Get all decoded points from all legs
-    let coords = window.currentItins[idx].legs.flatMap(leg =>
-      leg.legGeometry && leg.legGeometry.points
-        ? decodePolyline(leg.legGeometry.points)
-        : []
-    );
+    // Log geometry for debugging
+    window.currentItins[idx].legs.forEach((leg, i) => {
+      console.log(`Leg ${i} geometry:`, leg.legGeometry);
+    });
 
-    console.log("Initial coords:", coords);
+    // Universal extraction
+    let coords = window.currentItins[idx].legs.flatMap(leg => {
+      if (leg.legGeometry) {
+        if (Array.isArray(leg.legGeometry.coordinates)) {
+          return leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        } else if (typeof leg.legGeometry.points === 'string') {
+          return decodePolyline(leg.legGeometry.points);
+        }
+      }
+      return [];
+    });
 
-    // If coords is an array of arrays of arrays, flatten one more level
-    if (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
-      coords = coords.flat();
-    }
-    console.log("Final coords (flattened):", coords);
+    if (coords[0] && Array.isArray(coords[0][0])) coords = coords.flat();
+    console.log("Final route coords:", coords);
 
-    if (coords.length) {
+    if (coords.length > 0) {
       if (routeLine) map.removeLayer(routeLine);
-      routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
-      map.fitBounds(routeLine.getBounds(), {padding:[40,40]});
+      routeLine = L.polyline(coords, { color: "#0071ce", weight: 6 }).addTo(map);
+      map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
     } else {
       alert("No valid route geometry found for this trip.");
     }
