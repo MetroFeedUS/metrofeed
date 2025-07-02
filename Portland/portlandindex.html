@@ -852,6 +852,37 @@
   // ==== ROUTE DISPLAY ====
   let routeLine = null; // Track the current route line
   
+  function decodePolyline(encoded) {
+    const points = [];
+    let index = 0, len = encoded.length;
+    let lat = 0, lng = 0;
+
+    while (index < len) {
+      let shift = 0, result = 0;
+      do {
+        let b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (result >= 0x20);
+      let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        let b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (result >= 0x20);
+      let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      points.push([lat / 1E5, lng / 1E5]);
+    }
+    console.log('Decoded polyline points:', points);
+    return points;
+  }
+
   window.showRoute = function(idx) {
     if (!window.currentItins || !window.currentItins[idx]) {
       alert("Trip data not found. Please try again.");
@@ -859,17 +890,34 @@
     }
     if (routeLine) map.removeLayer(routeLine);
 
-    const coords = window.currentItins[idx].legs.flatMap(leg =>
-      leg.legGeometry && leg.legGeometry.points
-        ? decodePolyline(leg.legGeometry.points)
-        : []
-    );
+    const coords = window.currentItins[idx].legs.flatMap(leg => {
+      if (!leg.legGeometry) {
+        console.warn("No legGeometry for leg:", leg);
+        return [];
+      }
+      if (!leg.legGeometry.points) {
+        console.warn("No points in legGeometry for leg:", leg);
+        return [];
+      }
+      console.log('Decoding polyline:', leg.legGeometry.points);
+      const pts = decodePolyline(leg.legGeometry.points);
+      if (!pts.length) {
+        console.warn("Decoded polyline is empty for leg:", leg);
+      }
+      return pts;
+    });
 
-    if (coords.length) {
-      routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
+    // Filter for valid Portland area coordinates
+    const filteredCoords = coords.filter(([lat, lng]) =>
+      lat > 45 && lat < 46 && lng < -122 && lng > -124
+    );
+    console.log('Filtered coords:', filteredCoords);
+
+    if (filteredCoords.length) {
+      routeLine = L.polyline(filteredCoords, {color: "#0071ce", weight: 6}).addTo(map);
       map.fitBounds(routeLine.getBounds(), {padding:[40,40]});
     } else {
-      alert("No route geometry found for this trip.");
+      alert("No valid route geometry found for this trip.");
     }
 
     if (typeof minimizeModal === 'function') {
@@ -886,59 +934,6 @@
     });
     routePolylines = [];
   }
-
-  // Decode Google-style polyline
-  function decodePolyline(encoded) {
-    console.log('Decoding polyline:', encoded); // Debug log
-    
-    // Handle different OTP response formats
-    if (typeof encoded === 'string') {
-      // Standard Google polyline format
-      const points = [];
-      let index = 0, len = encoded.length;
-      let lat = 0, lng = 0;
-
-      while (index < len) {
-        let shift = 0, result = 0;
-
-        do {
-          let b = encoded.charCodeAt(index++) - 63;
-          result |= (b & 0x1f) << shift;
-          shift += 5;
-        } while (result >= 0x20);
-
-        let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lat += dlat;
-
-        shift = 0;
-        result = 0;
-
-        do {
-          let b = encoded.charCodeAt(index++) - 63;
-          result |= (b & 0x1f) << shift;
-          shift += 5;
-        } while (result >= 0x20);
-
-        let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lng += dlng;
-
-        points.push([lat / 1E5, lng / 1E5]);
-      }
-
-      console.log('Decoded points:', points); // Debug log
-      return points;
-    } else if (Array.isArray(encoded)) {
-      // OTP might return coordinates directly as array
-      console.log('Using direct coordinate array:', encoded);
-      return encoded;
-    } else {
-      console.error('Unknown polyline format:', encoded);
-      return [];
-    }
-  }
-
-  // ==== CONNECT GO BUTTON TO OTP ====
-  // This will be moved to window.onload to ensure DOM is ready
 
   // Helper function to find stop by name
   function findStopByName(name) {
