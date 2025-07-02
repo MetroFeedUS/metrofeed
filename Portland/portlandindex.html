@@ -737,9 +737,6 @@
     });
   }
 
-  // --- NO LONGER RUN fetchAndDisplay() on page load.
-  // --- Instead, we now only run it after closestRoute is set above.
-
   // === SECTION: OPEN TRIP PLANNER INTEGRATION ===
   let currentItins = null; // Store current itineraries globally
   let routePolylines = []; // Store route polylines for cleanup
@@ -787,11 +784,32 @@
       const start = new Date(itin.startTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
       const end = new Date(itin.endTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
       const segs = itin.legs.map(leg => {
-        let icon = leg.mode === 'WALK' ? '🚶' : leg.mode === 'BUS' ? '🚌' : leg.mode === 'TRAIN' ? '🚆' : '';
+        let icon = '';
+        let segClass = '';
+        let label = '';
+        if (leg.mode === 'WALK') {
+          icon = '🚶‍♂️';
+          segClass = 'seg-walk';
+          label = 'Walk';
+        } else if (leg.mode === 'BUS') {
+          icon = '🚌';
+          segClass = 'seg-bus';
+          label = leg.route ? `Bus ${leg.route}` : 'Bus';
+        } else if (leg.mode === 'TRAM' || leg.mode === 'RAIL' || leg.mode === 'TRAIN') {
+          icon = '🚈';
+          segClass = 'seg-train';
+          label = leg.route ? `Train ${leg.route}` : 'Train';
+        } else {
+          icon = '❓';
+          segClass = '';
+          label = leg.mode;
+        }
         let mins = Math.round((leg.duration || 0) / 60);
-        return `<span class='seg-${leg.mode.toLowerCase()}'><span class='seg-icon'>${icon}</span>${mins}m</span>`;
+        return `<span class='${segClass}' title='${label}'>
+          <span class='seg-icon'>${icon}</span>
+          <span>${mins}m</span>
+        </span>`;
       }).join('');
-      
       // Overlay details for route info
       const details = itin.legs.map((leg, j) => {
         let modeTxt = leg.mode === 'WALK' ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode;
@@ -799,7 +817,6 @@
         return `<div>→ <b>${modeTxt}${lineInfo}</b> <span style="color:#ffc107;">${Math.round((leg.duration||0)/60)} min</span> <br>
             <span style="font-size:0.96em; color:#aaa;">${leg.info||''}</span></div>`;
       }).join('<hr style="border:0; border-top:1px solid #222; margin:5px 0 4px 0">');
-      
       return `<div class="itinListOption" data-idx="${idx}">
         <button class="itin-dropdown-btn" onclick="event.stopPropagation();toggleDropdown(${idx})">&#9660;</button>
         <div onclick="showRoute(${idx})">
@@ -832,121 +849,27 @@
   }
 
   // ==== ROUTE DISPLAY ====
+  let routeLine = null; // Track the current route line
+  
   function showRoute(idx) {
-    if (!currentItins || !currentItins[idx]) return;
+    if (routeLine) map.removeLayer(routeLine);
     
-    const itinerary = currentItins[idx];
-    console.log('Selected itinerary:', itinerary); // Debug log
+    // For real OTP data!
+    const coords = window.currentItins[idx].legs.flatMap(leg =>
+      leg.legGeometry ? decodePolyline(leg.legGeometry.points).map(pt => [pt.lat, pt.lng]) : []
+    );
     
-    // Clear previous route polylines
-    clearRoutePolylines();
+    console.log('Decoded coordinates:', coords); // Debug log
     
-    // Plot each leg of the itinerary
-    itinerary.legs.forEach((leg, legIdx) => {
-      console.log(`Leg ${legIdx}:`, leg); // Debug log
+    if (coords.length) {
+      routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
       
-      let points = [];
-      let color = '#666'; // walk
-      if (leg.mode === 'BUS') color = '#0071CE';
-      else if (leg.mode === 'TRAIN') color = '#e53935';
-      
-      // Try multiple approaches to get route points
-      if (leg.legGeometry && leg.legGeometry.points) {
-        console.log('Using legGeometry.points:', leg.legGeometry.points);
-        points = decodePolyline(leg.legGeometry.points);
-      } else if (leg.legGeometry && leg.legGeometry.coordinates) {
-        console.log('Using legGeometry.coordinates:', leg.legGeometry.coordinates);
-        points = leg.legGeometry.coordinates;
-      } else if (leg.legGeometry && leg.legGeometry.points) {
-        console.log('Using legGeometry.points (string):', leg.legGeometry.points);
-        points = decodePolyline(leg.legGeometry.points);
-      } else if (leg.from && leg.to) {
-        console.log('Using from/to coordinates as fallback');
-        points = [[leg.from.lat, leg.from.lon], [leg.to.lat, leg.to.lon]];
-      } else {
-        console.warn('No geometry found for leg:', leg);
-        // Create a simple straight line between from/to if available
-        if (leg.from && leg.to) {
-          console.log('Creating fallback line from/to coordinates');
-          points = [[leg.from.lat, leg.from.lon], [leg.to.lat, leg.to.lon]];
-        } else {
-          console.warn('No from/to coordinates available for leg:', leg);
-          return;
-        }
-      }
-      
-      console.log('Final points for leg:', points);
-      
-      // Validate points are in reasonable Portland area
-      const validPoints = points.filter(point => {
-        if (!Array.isArray(point) || point.length < 2) return false;
-        const [lat, lng] = point;
-        return lat >= 45.0 && lat <= 46.0 && lng >= -123.5 && lng <= -122.0;
-      });
-      
-      console.log('Valid points after filtering:', validPoints);
-      
-      if (validPoints.length === 0) {
-        console.warn('No valid points found for leg:', leg);
-        // Try to create a simple line anyway if we have from/to
-        if (leg.from && leg.to) {
-          const fromCoords = [leg.from.lat, leg.from.lon];
-          const toCoords = [leg.to.lat, leg.to.lon];
-          
-          if (fromCoords[0] >= 45.0 && fromCoords[0] <= 46.0 && 
-              toCoords[0] >= 45.0 && toCoords[0] <= 46.0) {
-            
-            const polyline = L.polyline([fromCoords, toCoords], {
-              color: color,
-              weight: 4,
-              opacity: 0.8
-            }).addTo(map);
-            
-            routePolylines.push(polyline);
-            
-            const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
-            polyline.bindPopup(legInfo);
-          }
-        }
-        return;
-      }
-      
-      // Create polyline
-      const polyline = L.polyline(validPoints, {
-        color: color,
-        weight: 4,
-        opacity: 0.8
-      }).addTo(map);
-      
-      // Store for cleanup
-      routePolylines.push(polyline);
-      
-      // Add popup with leg info
-      const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
-      polyline.bindPopup(legInfo);
-    });
-    
-    // Fit map to show entire route (only if we have valid polylines)
-    if (routePolylines.length > 0) {
-      const group = L.featureGroup(routePolylines);
-      const bounds = group.getBounds();
-      
-      // Validate bounds are reasonable
-      if (bounds.getNorth() >= 45.0 && bounds.getSouth() <= 46.0 &&
-          bounds.getWest() >= -123.5 && bounds.getEast() <= -122.0) {
-        map.fitBounds(bounds, { padding: [20, 20] });
-      } else {
-        console.warn('Bounds outside Portland area:', bounds);
-        // Stay in Portland area
-        map.setView([45.52, -122.67], 12);
-      }
+      // Fit map to show the route
+      map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
     } else {
-      console.warn('No valid route polylines created');
-      // Stay in Portland area
-      map.setView([45.52, -122.67], 12);
+      console.warn('No coordinates found for route');
     }
     
-    // Minimize modal
     hideOtpModal();
   }
 
@@ -1024,7 +947,15 @@
   }
 
   // Make functions globally available
-  window.showRoute = showRoute;
+  window.showRoute = function(idx) {
+    if (routeLine) map.removeLayer(routeLine);
+    // For real OTP data!
+    const coords = window.currentItins[idx].legs.flatMap(leg =>
+      leg.legGeometry ? decodePolyline(leg.legGeometry.points).map(pt => [pt.lat, pt.lng]) : []
+    );
+    if (coords.length) routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
+    hideOtpModal();
+  };
   window.toggleDropdown = toggleDropdown;
   window.hideOtpModal = hideOtpModal;
   
