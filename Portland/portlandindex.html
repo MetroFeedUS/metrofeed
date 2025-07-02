@@ -859,7 +859,7 @@
     }
     if (routeLine) map.removeLayer(routeLine);
     const coords = window.currentItins[idx].legs.flatMap(leg =>
-      leg.legGeometry ? decodePolyline(leg.legGeometry.points).map(pt => [pt.lat, pt.lng]) : []
+      leg.legGeometry ? decodePolyline(leg.legGeometry.points) : []
     );
     if (coords.length) routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
     hideOtpModal();
