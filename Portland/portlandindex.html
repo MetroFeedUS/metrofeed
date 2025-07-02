@@ -833,15 +833,32 @@
     if (!currentItins || !currentItins[idx]) return;
     
     const itinerary = currentItins[idx];
+    console.log('Selected itinerary:', itinerary); // Debug log
     
     // Clear previous route polylines
     clearRoutePolylines();
     
     // Plot each leg of the itinerary
     itinerary.legs.forEach((leg, legIdx) => {
+      console.log(`Leg ${legIdx}:`, leg); // Debug log
+      
       if (leg.legGeometry && leg.legGeometry.points) {
+        console.log('Leg geometry points:', leg.legGeometry.points); // Debug log
+        
         // Decode the polyline
         const points = decodePolyline(leg.legGeometry.points);
+        console.log('Decoded points:', points); // Debug log
+        
+        // Validate points are in reasonable Portland area
+        const validPoints = points.filter(point => {
+          const [lat, lng] = point;
+          return lat >= 45.0 && lat <= 46.0 && lng >= -123.5 && lng <= -122.0;
+        });
+        
+        if (validPoints.length === 0) {
+          console.warn('No valid points found for leg:', leg);
+          return;
+        }
         
         // Choose color based on mode
         let color = '#666'; // walk
@@ -849,7 +866,7 @@
         else if (leg.mode === 'TRAIN') color = '#e53935';
         
         // Create polyline
-        const polyline = L.polyline(points, {
+        const polyline = L.polyline(validPoints, {
           color: color,
           weight: 4,
           opacity: 0.8
@@ -861,13 +878,52 @@
         // Add popup with leg info
         const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
         polyline.bindPopup(legInfo);
+      } else if (leg.from && leg.to) {
+        // Fallback: create a simple line between from/to coordinates
+        console.log('Using fallback line for leg:', leg);
+        const fromCoords = [leg.from.lat, leg.from.lon];
+        const toCoords = [leg.to.lat, leg.to.lon];
+        
+        // Validate coordinates
+        if (fromCoords[0] >= 45.0 && fromCoords[0] <= 46.0 && 
+            toCoords[0] >= 45.0 && toCoords[0] <= 46.0) {
+          
+          let color = '#666'; // walk
+          if (leg.mode === 'BUS') color = '#0071CE';
+          else if (leg.mode === 'TRAIN') color = '#e53935';
+          
+          const polyline = L.polyline([fromCoords, toCoords], {
+            color: color,
+            weight: 4,
+            opacity: 0.8
+          }).addTo(map);
+          
+          routePolylines.push(polyline);
+          
+          const legInfo = `${leg.mode}${leg.route ? ' ' + leg.route : ''} - ${Math.round(leg.duration/60)} min`;
+          polyline.bindPopup(legInfo);
+        }
       }
     });
     
-    // Fit map to show entire route
+    // Fit map to show entire route (only if we have valid polylines)
     if (routePolylines.length > 0) {
       const group = L.featureGroup(routePolylines);
-      map.fitBounds(group.getBounds(), { padding: [20, 20] });
+      const bounds = group.getBounds();
+      
+      // Validate bounds are reasonable
+      if (bounds.getNorth() >= 45.0 && bounds.getSouth() <= 46.0 &&
+          bounds.getWest() >= -123.5 && bounds.getEast() <= -122.0) {
+        map.fitBounds(bounds, { padding: [20, 20] });
+      } else {
+        console.warn('Bounds outside Portland area:', bounds);
+        // Stay in Portland area
+        map.setView([45.52, -122.67], 12);
+      }
+    } else {
+      console.warn('No valid route polylines created');
+      // Stay in Portland area
+      map.setView([45.52, -122.67], 12);
     }
     
     // Minimize modal
@@ -884,38 +940,52 @@
 
   // Decode Google-style polyline
   function decodePolyline(encoded) {
-    const points = [];
-    let index = 0, len = encoded.length;
-    let lat = 0, lng = 0;
+    console.log('Decoding polyline:', encoded); // Debug log
+    
+    // Handle different OTP response formats
+    if (typeof encoded === 'string') {
+      // Standard Google polyline format
+      const points = [];
+      let index = 0, len = encoded.length;
+      let lat = 0, lng = 0;
 
-    while (index < len) {
-      let shift = 0, result = 0;
+      while (index < len) {
+        let shift = 0, result = 0;
 
-      do {
-        let b = encoded.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (result >= 0x20);
+        do {
+          let b = encoded.charCodeAt(index++) - 63;
+          result |= (b & 0x1f) << shift;
+          shift += 5;
+        } while (result >= 0x20);
 
-      let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-      lat += dlat;
+        let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lat += dlat;
 
-      shift = 0;
-      result = 0;
+        shift = 0;
+        result = 0;
 
-      do {
-        let b = encoded.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (result >= 0x20);
+        do {
+          let b = encoded.charCodeAt(index++) - 63;
+          result |= (b & 0x1f) << shift;
+          shift += 5;
+        } while (result >= 0x20);
 
-      let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-      lng += dlng;
+        let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lng += dlng;
 
-      points.push([lat / 1E5, lng / 1E5]);
+        points.push([lat / 1E5, lng / 1E5]);
+      }
+
+      console.log('Decoded points:', points); // Debug log
+      return points;
+    } else if (Array.isArray(encoded)) {
+      // OTP might return coordinates directly as array
+      console.log('Using direct coordinate array:', encoded);
+      return encoded;
+    } else {
+      console.error('Unknown polyline format:', encoded);
+      return [];
     }
-
-    return points;
   }
 
   // ==== CONNECT GO BUTTON TO OTP ====
