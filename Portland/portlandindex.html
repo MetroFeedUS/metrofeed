@@ -858,11 +858,25 @@
       return;
     }
     if (routeLine) map.removeLayer(routeLine);
+
     const coords = window.currentItins[idx].legs.flatMap(leg =>
-      leg.legGeometry ? decodePolyline(leg.legGeometry.points) : []
+      leg.legGeometry && leg.legGeometry.points
+        ? decodePolyline(leg.legGeometry.points)
+        : []
     );
-    if (coords.length) routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
-    hideOtpModal();
+
+    if (coords.length) {
+      routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
+      map.fitBounds(routeLine.getBounds(), {padding:[40,40]});
+    } else {
+      alert("No route geometry found for this trip.");
+    }
+
+    if (typeof minimizeModal === 'function') {
+      minimizeModal(true);
+    } else if (typeof hideOtpModal === 'function') {
+      hideOtpModal();
+    }
   };
 
   // ==== UTILITY FUNCTIONS ====
