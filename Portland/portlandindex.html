@@ -17,7 +17,7 @@
     #menuBtn { top: 60px; left: 10px; }
     #accountBtn { top: 10px; left: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
-    #ticketBtn { top: 60px; right: 10px; }
+    #aiChatBtn { top: 60px; right: 10px; }
     .side-buttons img { width: 20px; height: 20px; }
     /* -- DROPDOWN -- */
     .dropdown { position: absolute; top: 110px; left: 10px; width: 45px; background-color: #4dd0e1; border: 2px solid #000; border-radius: 10px; box-shadow: 0 0 10px #1976d2; display: none; flex-direction: column; align-items: center; z-index: 1002; }
@@ -36,7 +36,7 @@
     .site-footer a:hover { text-decoration: underline; }
     /* -- MODAL/OVERLAY -- */
     .mf-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; pointer-events: auto !important; }
-    .mf-modal { background: #111; border: 2.5px solid #4dd0e1; border-radius: 18px; box-shadow: 0 0 24px #222, 0 0 6px #4dd0e1; padding: 1.1rem 0.7rem 1.2rem 0.7rem; min-width: 0; max-width: 410px; width: 95vw; box-sizing: border-box; text-align: center; animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1; margin: auto; pointer-events: auto !important; }
+    .mf-modal { background: #111; border: 2.5px solid #4dd0e1; border-radius: 18px; box-shadow: 0 0 24px #222, 0 0 6px #4dd0e1; padding: 1.1rem 0.7rem 1.2rem 0.7rem; min-width: 0; max-width: 410px; width: 95vw; box-sizing: border-box; text-align: center; animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: auto !important; }
     @media (max-width: 520px) { .mf-modal { max-width: 98vw; width: 95vw; padding: 0.7rem 1vw 1rem 1vw; } }
     @media (max-width: 340px) { .mf-modal { width: 98vw; max-width: 99vw; padding: 0.6rem 2vw 0.9rem 2vw; } }
     .mf-overlay { pointer-events: auto !important; }
@@ -237,44 +237,6 @@
       font-size: 0.9rem;
       line-height: 1.4;
     }
-    #otpModal.minimized {
-      position: fixed !important;
-      bottom: 20px;
-      right: 20px;
-      left: auto;
-      top: auto;
-      width: 220px !important;
-      min-width: 0 !important;
-      max-width: 90vw;
-      height: 48px !important;
-      min-height: 0 !important;
-      max-height: 48px !important;
-      padding: 0 18px;
-      background: #181b1e;
-      border-radius: 16px;
-      box-shadow: 0 2px 30px #0007;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      cursor: pointer;
-      opacity: 0.95;
-      z-index: 9999;
-      overflow: hidden;
-      transition: all 0.2s;
-    }
-    #otpModal.minimized h3,
-    #otpModal.minimized .closeBtn,
-    #otpModal.minimized .itinListOption,
-    #otpModal.minimized .itin-details-overlay {
-      display: none !important;
-    }
-    #otpModal.minimized .minimized-label {
-      display: block;
-      color: #4dd0e1;
-      font-weight: bold;
-      font-size: 1.1em;
-      margin-left: 4px;
-    }
   </style>
 </head>
 <body>
@@ -295,7 +257,7 @@
 <!-- -- SIDE BUTTONS & DROPDOWN -- -->
 <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
 <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
-<button id="ticketBtn" class="side-buttons"><a href="tickets.html"><img src="ticket-icon.svg" /></a></button>
+<button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <div id="dropdownMenu" class="dropdown">
   <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="1"></a>
@@ -303,7 +265,6 @@
   <a href="https://metrofeedus.com/portland/trafficmap"><img src="003-warning.svg" alt="3"></a>
   <a href="https://metrofeedus.com/portland/trafficcameras"><img src="004-cctv-camera.svg" alt="4"></a>
   <a href="https://metrofeedus.com/portland/portlandweather"><img src="005-weather-radar.svg" alt="5"></a>
-  <a href="https://metrofeedus.com/portland/chat"><img src="007-chatbot.svg" alt="6"></a>
   <a id="alertsMenuBtn" href="https://metrofeedus.com/portland/alerts" style="position:relative;">
     <img src="008-danger.svg" alt="Alerts">
     <span id="alertsDot" style="display: none; position: absolute; top: 4px; right: 4px; width: 13px; height: 13px; border-radius: 50%; background: #ff3b30; border: 2px solid #000; z-index: 2;"></span>
@@ -362,7 +323,6 @@
 <div id="otpModal" class="mf-overlay" style="display:none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
     <h2>🚌 Trip Options</h2>
-    <span class="minimized-label" style="display:none;">Trip Options (Click to Restore)</span>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
       <!-- Trip itineraries will be rendered here -->
     </div>
@@ -395,18 +355,6 @@
     [PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.west],
     [PORTLAND_BOUNDS.north, PORTLAND_BOUNDS.east]
   ]);
-
-  // Track user map interactions
-  let hasUserMovedMap = false; // Track if user has manually moved the map
-  let initialLocationSet = false; // Track if we've done the initial location jump
-  
-  map.on('dragstart', function() {
-    hasUserMovedMap = true;
-  });
-  
-  map.on('zoomstart', function() {
-    hasUserMovedMap = true;
-  });
 
   // === SECTION: AUTOCOMPLETE FOR SEARCH BAR ===
   const allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
@@ -640,79 +588,8 @@
     return Math.atan2(dy, dx) * 180 / Math.PI;
   }
 
-  // Pre-calculate route centroids for faster distance calculations
-  const routeCentroids = masterRoutes.map(route => {
-    const lats = route.shape.map(p => p[0]);
-    const lons = route.shape.map(p => p[1]);
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-    const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2;
-    return { route, centerLat, centerLon };
-  });
-
-  // Optimized distance calculation using centroids first, then detailed check
-  function findClosestRouteOptimized(userLat, userLon) {
-    // First pass: find closest centroid (much faster)
-    let closestCentroid = null;
-    let closestDist = Infinity;
-    
-    routeCentroids.forEach(({ route, centerLat, centerLon }) => {
-      const dist = Math.hypot(userLat - centerLat, userLon - centerLon);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestCentroid = route;
-      }
-    });
-    
-    // Second pass: detailed check on the closest few routes
-    const candidates = routeCentroids
-      .filter(({ centerLat, centerLon }) => 
-        Math.hypot(userLat - centerLat, userLon - centerLon) < closestDist * 2
-      )
-      .map(({ route }) => route);
-    
-    closestDist = Infinity;
-    let bestRoute = null;
-    
-    candidates.forEach(route => {
-      route.shape.forEach(([lat, lon]) => {
-        const dist = Math.hypot(userLat - lat, userLon - lon);
-        if (dist < closestDist) {
-          closestDist = dist;
-          bestRoute = route;
-        }
-      });
-    });
-    
-    return bestRoute;
-  }
-
-  // Show loading indicator
-  function showLoadingIndicator() {
-    const loadingDiv = document.createElement('div');
-    loadingDiv.id = 'loadingIndicator';
-    loadingDiv.innerHTML = '📍 Finding closest route...';
-    loadingDiv.style.cssText = `
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.8); color: #4dd0e1; padding: 12px 20px;
-      border-radius: 8px; z-index: 10000; font-weight: bold;
-      border: 2px solid #4dd0e1; box-shadow: 0 0 10px #4dd0e1;
-    `;
-    document.body.appendChild(loadingDiv);
-  }
-
-  function hideLoadingIndicator() {
-    const loadingDiv = document.getElementById('loadingIndicator');
-    if (loadingDiv) {
-      loadingDiv.remove();
-    }
-  }
-
   if (navigator.geolocation) {
-    // Show loading indicator immediately
-    showLoadingIndicator();
-    
-    // Use getCurrentPosition for faster initial location (no continuous watching)
-    navigator.geolocation.getCurrentPosition(function(pos) {
+    navigator.geolocation.watchPosition(function(pos) {
       const userLat = pos.coords.latitude;
       const userLon = pos.coords.longitude;
       const userLatLng = [userLat, userLon];
@@ -732,10 +609,13 @@
           .bindPopup("You are here (location never leaves your device)").openPopup();
       } else {
         // OUT OF BOUNDS: show arrow at nearest edge
+        // Clamp user's lat/lon to the edge of Portland bounds
         const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
         const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
         const edgeLatLng = [edgeLat, edgeLon];
+        // Angle from edge to user (flipped direction)
         const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
+        // Arrow icon with rotation
         const arrowIcon = L.divIcon({
           className: 'arrow-marker',
           iconSize: [30, 30],
@@ -748,24 +628,28 @@
           .bindPopup("You are outside the Portland map area.").openPopup();
       }
 
-      // Use optimized route finding
-      closestRoute = findClosestRouteOptimized(userLat, userLon);
+      // Find closest route logic (always run regardless of bounds)
+      let closestDist = Infinity;
+      masterRoutes.forEach(route => {
+        route.shape.forEach(([lat, lon]) => {
+          const dist = Math.hypot(userLat - lat, userLon - lon);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestRoute = route;
+          }
+        });
+      });
 
       if (closestRoute) {
-        // Draw closest route
+        // --- Draw closest route ---
         const polyline = L.polyline(closestRoute.shape, {
           color: '#0071CE',
           weight: 4,
           opacity: 0.7
         }).addTo(map);
-        
-        // Only jump to location if user hasn't moved the map and this is the first time
-        if (!hasUserMovedMap && !initialLocationSet) {
-          map.fitBounds(polyline.getBounds());
-          initialLocationSet = true;
-        }
+        map.fitBounds(polyline.getBounds());
 
-        // Show stops with optimized time calculation
+        // --- Show stops + next time highlight ---
         const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
         const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
 
@@ -802,30 +686,22 @@
                 }
               </div>`
           ).addTo(map);
-        });
 
-        // Start bus tracking
-        fetchAndDisplay();
-        setInterval(fetchAndDisplay, 15000);
-      }
-      
-      // Hide loading indicator
-      hideLoadingIndicator();
-      
+        }); // closes stops.forEach
+
+        // --- Only fetch/display bus locations AFTER closestRoute is known ---
+        fetchAndDisplay(); // <-- run initial fetch
+        setInterval(fetchAndDisplay, 15000); // <-- keep running
+
+      } // closes if(closestRoute)
     }, function(error) {
-      hideLoadingIndicator();
       if (error.code === 1) {
         console.log('Location access denied by user.');
       } else {
         console.log('Unable to get your location:', error.message);
       }
-    }, {
-      enableHighAccuracy: false, // Faster on mobile
-      timeout: 10000, // 10 second timeout
-      maximumAge: 60000 // Use cached location if less than 1 minute old
     });
   } else {
-    hideLoadingIndicator();
     alert('Geolocation is not supported by your browser.');
   }
 
@@ -978,84 +854,91 @@
   
   function decodePolyline(encoded) {
     let points = [], index = 0, len = encoded.length, lat = 0, lng = 0;
-    // High-level log for debugging
-    // console.log('[decodePolyline] Raw input:', encoded);
+    console.log('[decodePolyline] Raw input:', encoded);
     while (index < len) {
       let b, shift = 0, result = 0;
       do {
         b = encoded.charCodeAt(index++) - 63;
         result |= (b & 0x1f) << shift;
         shift += 5;
+        console.log(`[decodePolyline] char: ${encoded[index-1]}, b: ${b}, result: ${result}, shift: ${shift}, index: ${index}`);
       } while (b >= 0x20);
       let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
       lat += dlat;
+      console.log(`[decodePolyline] dlat: ${dlat}, lat: ${lat}`);
       shift = 0; result = 0;
       do {
         b = encoded.charCodeAt(index++) - 63;
         result |= (b & 0x1f) << shift;
         shift += 5;
+        console.log(`[decodePolyline] char: ${encoded[index-1]}, b: ${b}, result: ${result}, shift: ${shift}, index: ${index}`);
       } while (b >= 0x20);
       let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
       lng += dlng;
+      console.log(`[decodePolyline] dlng: ${dlng}, lng: ${lng}`);
       points.push([lat / 1e5, lng / 1e5]);
+      console.log(`[decodePolyline] Decoded point: [${lat / 1e5}, ${lng / 1e5}] (index: ${index})`);
     }
-    // console.log('[decodePolyline] Final points:', points);
+    console.log('[decodePolyline] Final points:', points);
     return points;
   }
 
   window.showRoute = function(idx) {
+    console.log('[showRoute] Called with idx:', idx);
     if (!window.currentItins || !window.currentItins[idx]) {
+      console.error('[showRoute] Trip data not found.');
       alert("Trip data not found. Please try again.");
       return;
     }
-    if (routeLine) map.removeLayer(routeLine);
+    if (routeLine) {
+      console.log('[showRoute] Removing previous routeLine');
+      map.removeLayer(routeLine);
+    }
 
-    // Clear any existing route polylines
-    clearRoutePolylines();
+    console.log('[showRoute] Trip:', window.currentItins[idx]);
 
-    const itinerary = window.currentItins[idx];
-    let allBounds = [];
+    window.currentItins[idx].legs.forEach((leg, i) => {
+      console.log(`[showRoute] Leg ${i} polyline string:`, leg.legGeometry && leg.legGeometry.points);
+      if (leg.legGeometry && leg.legGeometry.points) {
+        const decoded = decodePolyline(leg.legGeometry.points);
+        console.log(`[showRoute] First 5 decoded points for leg ${i}:`, decoded.slice(0, 5));
+      }
+      console.log(`[showRoute] Leg ${i} coordinates:`, leg.legGeometry && leg.legGeometry.coordinates);
+    });
 
-    // Draw each leg with different colors based on mode
-    itinerary.legs.forEach((leg, i) => {
-      if (!leg.legGeometry) return;
-      
-      let coords = [];
+    const coords = window.currentItins[idx].legs.flatMap((leg, i) => {
+      if (!leg.legGeometry) {
+        console.warn(`[showRoute] No geometry for leg ${i}:`, leg);
+        return [];
+      }
       if (leg.legGeometry.points) {
         const decoded = decodePolyline(leg.legGeometry.points);
-        if (decoded.length) coords = decoded;
-      } else if (Array.isArray(leg.legGeometry.coordinates)) {
-        coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
-      }
-      
-      if (coords.length) {
-        // Set color based on mode
-        let color = "#0071ce"; // default blue
-        let weight = 6;
-        
-        if (leg.mode === 'WALK') {
-          color = "#666666"; // gray for walking
-          weight = 4;
-        } else if (leg.mode === 'BUS') {
-          color = "#0071CE"; // blue for bus
-          weight = 6;
-        } else if (leg.mode === 'TRAM' || leg.mode === 'RAIL' || leg.mode === 'TRAIN') {
-          color = "#e53935"; // red for rail
-          weight = 6;
+        if (!decoded.length) {
+          console.warn(`[showRoute] Decoded geometry is empty for leg ${i}:`, leg);
         }
-        
-        const polyline = L.polyline(coords, {color: color, weight: weight}).addTo(map);
-        routePolylines.push(polyline);
-        allBounds.push(polyline.getBounds());
+        return decoded;
+      } else if (Array.isArray(leg.legGeometry.coordinates)) {
+        const converted = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        console.log(`[showRoute] GeoJSON coordinates for leg ${i}:`, converted);
+        return converted;
+      } else {
+        console.warn(`[showRoute] Unknown geometry format for leg ${i}:`, leg.legGeometry);
+        return [];
       }
     });
 
-    if (allBounds.length > 0) {
-      const combinedBounds = L.latLngBounds(allBounds);
-      map.fitBounds(combinedBounds, { padding: [40, 40] });
+    console.log('[showRoute] Polyline coords:', coords);
+
+    if (!coords.length) {
+      console.error('[showRoute] No valid route geometry found for this trip.');
+      alert("No valid route geometry found for this trip.");
+      return;
     }
-    
-    minimizeModal(true);
+    routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
+    const bounds = routeLine.getBounds();
+    console.log('[showRoute] Polyline bounds:', bounds);
+    map.fitBounds(bounds, { padding: [40, 40] });
+    // Optionally: minimizeModal(true);
   };
 
   // ==== UTILITY FUNCTIONS ====
@@ -1076,48 +959,6 @@
       }
     }
     return null;
-  }
-
-  // ==== MODAL CONTROLS ====
-  function showOtpModal() {
-    document.getElementById('otpModal').style.display = 'flex';
-  }
-
-  function hideOtpModal() {
-    document.getElementById('otpModal').style.display = 'none';
-    // Clear route polylines when closing modal
-    clearRoutePolylines();
-  }
-
-  // ==== DROPDOWN TOGGLE ====
-  function toggleDropdown(idx) {
-    const overlay = document.querySelector(`[data-idx="${idx}"] .itin-details-overlay`);
-    if (overlay) {
-      overlay.classList.toggle('show');
-    }
-  }
-
-  function minimizeModal(min) {
-    const modal = document.getElementById('otpModal');
-    const label = modal.querySelector('.minimized-label');
-    if (min) {
-      modal.classList.add('minimized');
-      if (label) label.style.display = 'block';
-    } else {
-      modal.classList.remove('minimized');
-      if (label) label.style.display = 'none';
-    }
-  }
-
-  // Restore modal when minimized box is clicked
-  const otpModal = document.getElementById('otpModal');
-  if (otpModal) {
-    otpModal.addEventListener('click', function(e) {
-      if (otpModal.classList.contains('minimized')) {
-        minimizeModal(false);
-        e.stopPropagation();
-      }
-    });
   }
 
   // Make functions globally available
@@ -1153,7 +994,6 @@
     showRoute(0);
   };
   
-
 
 </script>
 
@@ -1210,12 +1050,10 @@
 
   // --- Show/hide modal helpers ---
   function showModal() {
-    const modal = document.querySelector('.mf-overlay');
-    if (modal) modal.style.display = 'flex';
+    document.querySelector('.mf-overlay').style.display = 'flex';
   }
   function hideModal() {
-    const modal = document.querySelector('.mf-overlay');
-    if (modal) modal.style.display = 'none';
+    document.querySelector('.mf-overlay').style.display = 'none';
   }
 
   // --- Main onload logic (SAFE order) ---
@@ -1309,14 +1147,11 @@
     } else {
       hideModal();
     }
-    // Show install prompt once after 30 seconds, unless user has dismissed it
-    const hasShownInstallPrompt = sessionStorage.getItem('hasShownInstallPrompt');
-    if (!hasShownInstallPrompt && !localStorage.getItem('neverShowInstallPrompt')) {
-      setTimeout(function() {
+    setTimeout(function() {
+      if (!localStorage.getItem('neverShowInstallPrompt')) {
         document.getElementById('installPrompt').style.display = 'block';
-        sessionStorage.setItem('hasShownInstallPrompt', 'true');
-      }, 30000);
-    }
+      }
+    }, 30000);
     setAlertsDot(localStorage.getItem('hasActiveAlerts') === 'true');
   };
 </script>
