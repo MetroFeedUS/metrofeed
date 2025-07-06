@@ -893,6 +893,11 @@
     // LOG the trip structure for diagnosis!
     console.log('Trip:', window.currentItins[idx]);
 
+    window.currentItins[idx].legs.forEach((leg, i) => {
+      console.log(`Leg ${i} polyline string:`, leg.legGeometry && leg.legGeometry.points);
+      console.log(`Leg ${i} coordinates:`, leg.legGeometry && leg.legGeometry.coordinates);
+    });
+
     const coords = window.currentItins[idx].legs.flatMap((leg, i) => {
       console.log(`Leg ${i}:`, leg);
       if (!leg.legGeometry) {
