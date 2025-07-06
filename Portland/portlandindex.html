@@ -895,18 +895,21 @@
 
     window.currentItins[idx].legs.forEach((leg, i) => {
       console.log(`Leg ${i} polyline string:`, leg.legGeometry && leg.legGeometry.points);
+      // Log the first 5 decoded points for each leg
+      if (leg.legGeometry && leg.legGeometry.points) {
+        const decoded = decodePolyline(leg.legGeometry.points);
+        console.log(`First 5 decoded points for leg ${i}:`, decoded.slice(0, 5));
+      }
       console.log(`Leg ${i} coordinates:`, leg.legGeometry && leg.legGeometry.coordinates);
     });
 
     const coords = window.currentItins[idx].legs.flatMap((leg, i) => {
-      console.log(`Leg ${i}:`, leg);
       if (!leg.legGeometry) {
         console.warn('No geometry for leg:', leg);
         return [];
       }
       if (leg.legGeometry.points) {
         const decoded = decodePolyline(leg.legGeometry.points);
-        console.log(`Decoded polyline for leg ${i}:`, decoded);
         if (!decoded.length) {
           console.warn('Decoded geometry is empty for leg:', leg);
         }
@@ -914,7 +917,6 @@
       } else if (Array.isArray(leg.legGeometry.coordinates)) {
         // GeoJSON style: [lng, lat] → [lat, lng]
         const converted = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        console.log(`GeoJSON coordinates for leg ${i}:`, converted);
         return converted;
       } else {
         console.warn('Unknown geometry format for leg:', leg.legGeometry);
