@@ -853,87 +853,90 @@
   let routeLine = null; // Track the current route line
   
   function decodePolyline(encoded) {
-    const points = [];
-    let index = 0, len = encoded.length;
-    let lat = 0, lng = 0;
-
+    let points = [], index = 0, len = encoded.length, lat = 0, lng = 0;
+    console.log('[decodePolyline] Raw input:', encoded);
     while (index < len) {
-      let shift = 0, result = 0;
+      let b, shift = 0, result = 0;
       do {
-        let b = encoded.charCodeAt(index++) - 63;
+        b = encoded.charCodeAt(index++) - 63;
         result |= (b & 0x1f) << shift;
         shift += 5;
-      } while (result >= 0x20);
+        console.log(`[decodePolyline] char: ${encoded[index-1]}, b: ${b}, result: ${result}, shift: ${shift}, index: ${index}`);
+      } while (b >= 0x20);
       let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
       lat += dlat;
-
-      shift = 0;
-      result = 0;
+      console.log(`[decodePolyline] dlat: ${dlat}, lat: ${lat}`);
+      shift = 0; result = 0;
       do {
-        let b = encoded.charCodeAt(index++) - 63;
+        b = encoded.charCodeAt(index++) - 63;
         result |= (b & 0x1f) << shift;
         shift += 5;
-      } while (result >= 0x20);
+        console.log(`[decodePolyline] char: ${encoded[index-1]}, b: ${b}, result: ${result}, shift: ${shift}, index: ${index}`);
+      } while (b >= 0x20);
       let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
       lng += dlng;
-
-      points.push([lat / 1E5, lng / 1E5]);
+      console.log(`[decodePolyline] dlng: ${dlng}, lng: ${lng}`);
+      points.push([lat / 1e5, lng / 1e5]);
+      console.log(`[decodePolyline] Decoded point: [${lat / 1e5}, ${lng / 1e5}] (index: ${index})`);
     }
-    console.log('Decoded polyline points:', points);
+    console.log('[decodePolyline] Final points:', points);
     return points;
   }
 
   window.showRoute = function(idx) {
+    console.log('[showRoute] Called with idx:', idx);
     if (!window.currentItins || !window.currentItins[idx]) {
+      console.error('[showRoute] Trip data not found.');
       alert("Trip data not found. Please try again.");
       return;
     }
-    if (routeLine) map.removeLayer(routeLine);
+    if (routeLine) {
+      console.log('[showRoute] Removing previous routeLine');
+      map.removeLayer(routeLine);
+    }
 
-    // LOG the trip structure for diagnosis!
-    console.log('Trip:', window.currentItins[idx]);
+    console.log('[showRoute] Trip:', window.currentItins[idx]);
 
     window.currentItins[idx].legs.forEach((leg, i) => {
-      console.log(`Leg ${i} polyline string:`, leg.legGeometry && leg.legGeometry.points);
-      // Log the first 5 decoded points for each leg
+      console.log(`[showRoute] Leg ${i} polyline string:`, leg.legGeometry && leg.legGeometry.points);
       if (leg.legGeometry && leg.legGeometry.points) {
         const decoded = decodePolyline(leg.legGeometry.points);
-        console.log(`First 5 decoded points for leg ${i}:`, decoded.slice(0, 5));
+        console.log(`[showRoute] First 5 decoded points for leg ${i}:`, decoded.slice(0, 5));
       }
-      console.log(`Leg ${i} coordinates:`, leg.legGeometry && leg.legGeometry.coordinates);
+      console.log(`[showRoute] Leg ${i} coordinates:`, leg.legGeometry && leg.legGeometry.coordinates);
     });
 
     const coords = window.currentItins[idx].legs.flatMap((leg, i) => {
       if (!leg.legGeometry) {
-        console.warn('No geometry for leg:', leg);
+        console.warn(`[showRoute] No geometry for leg ${i}:`, leg);
         return [];
       }
       if (leg.legGeometry.points) {
         const decoded = decodePolyline(leg.legGeometry.points);
         if (!decoded.length) {
-          console.warn('Decoded geometry is empty for leg:', leg);
+          console.warn(`[showRoute] Decoded geometry is empty for leg ${i}:`, leg);
         }
         return decoded;
       } else if (Array.isArray(leg.legGeometry.coordinates)) {
-        // GeoJSON style: [lng, lat] → [lat, lng]
         const converted = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        console.log(`[showRoute] GeoJSON coordinates for leg ${i}:`, converted);
         return converted;
       } else {
-        console.warn('Unknown geometry format for leg:', leg.legGeometry);
+        console.warn(`[showRoute] Unknown geometry format for leg ${i}:`, leg.legGeometry);
         return [];
       }
     });
 
-    console.log('Polyline coords:', coords);
+    console.log('[showRoute] Polyline coords:', coords);
 
     if (!coords.length) {
+      console.error('[showRoute] No valid route geometry found for this trip.');
       alert("No valid route geometry found for this trip.");
       return;
     }
     routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
-    // Log the bounds before fitting
     const bounds = routeLine.getBounds();
-    console.log('Polyline bounds:', bounds);
+    console.log('[showRoute] Polyline bounds:', bounds);
     map.fitBounds(bounds, { padding: [40, 40] });
     // Optionally: minimizeModal(true);
   };
