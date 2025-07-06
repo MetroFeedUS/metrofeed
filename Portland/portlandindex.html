@@ -17,7 +17,7 @@
     #menuBtn { top: 60px; left: 10px; }
     #accountBtn { top: 10px; left: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
-    #aiChatBtn { top: 60px; right: 10px; }
+    #ticketBtn { top: 60px; right: 10px; }
     .side-buttons img { width: 20px; height: 20px; }
     /* -- DROPDOWN -- */
     .dropdown { position: absolute; top: 110px; left: 10px; width: 45px; background-color: #4dd0e1; border: 2px solid #000; border-radius: 10px; box-shadow: 0 0 10px #1976d2; display: none; flex-direction: column; align-items: center; z-index: 1002; }
@@ -397,6 +397,9 @@
   ]);
 
   // Track user map interactions
+  let hasUserMovedMap = false; // Track if user has manually moved the map
+  let initialLocationSet = false; // Track if we've done the initial location jump
+  
   map.on('dragstart', function() {
     hasUserMovedMap = true;
   });
@@ -613,8 +616,6 @@
   let closestRoute = null; // <-- declare at top so it's visible to all functions
   let userLocationMarker = null; // Track user location marker
   let userArrow = null; // Track user arrow marker
-  let hasUserMovedMap = false; // Track if user has manually moved the map
-  let initialLocationSet = false; // Track if we've done the initial location jump
   
   // ==== CONFIGURE PORTLAND BOUNDS ====
   // Using the bounds already defined above
@@ -1077,6 +1078,48 @@
     return null;
   }
 
+  // ==== MODAL CONTROLS ====
+  function showOtpModal() {
+    document.getElementById('otpModal').style.display = 'flex';
+  }
+
+  function hideOtpModal() {
+    document.getElementById('otpModal').style.display = 'none';
+    // Clear route polylines when closing modal
+    clearRoutePolylines();
+  }
+
+  // ==== DROPDOWN TOGGLE ====
+  function toggleDropdown(idx) {
+    const overlay = document.querySelector(`[data-idx="${idx}"] .itin-details-overlay`);
+    if (overlay) {
+      overlay.classList.toggle('show');
+    }
+  }
+
+  function minimizeModal(min) {
+    const modal = document.getElementById('otpModal');
+    const label = modal.querySelector('.minimized-label');
+    if (min) {
+      modal.classList.add('minimized');
+      if (label) label.style.display = 'block';
+    } else {
+      modal.classList.remove('minimized');
+      if (label) label.style.display = 'none';
+    }
+  }
+
+  // Restore modal when minimized box is clicked
+  const otpModal = document.getElementById('otpModal');
+  if (otpModal) {
+    otpModal.addEventListener('click', function(e) {
+      if (otpModal.classList.contains('minimized')) {
+        minimizeModal(false);
+        e.stopPropagation();
+      }
+    });
+  }
+
   // Make functions globally available
   window.toggleDropdown = toggleDropdown;
   window.hideOtpModal = hideOtpModal;
@@ -1110,26 +1153,7 @@
     showRoute(0);
   };
   
-  function minimizeModal(min) {
-    const modal = document.getElementById('otpModal');
-    const label = modal.querySelector('.minimized-label');
-    if (min) {
-      modal.classList.add('minimized');
-      if (label) label.style.display = 'block';
-    } else {
-      modal.classList.remove('minimized');
-      if (label) label.style.display = 'none';
-    }
-  }
 
-  // Restore modal when minimized box is clicked
-  const otpModal = document.getElementById('otpModal');
-  otpModal.addEventListener('click', function(e) {
-    if (otpModal.classList.contains('minimized')) {
-      minimizeModal(false);
-      e.stopPropagation();
-    }
-  });
 
 </script>
 
@@ -1186,10 +1210,12 @@
 
   // --- Show/hide modal helpers ---
   function showModal() {
-    document.querySelector('.mf-overlay').style.display = 'flex';
+    const modal = document.querySelector('.mf-overlay');
+    if (modal) modal.style.display = 'flex';
   }
   function hideModal() {
-    document.querySelector('.mf-overlay').style.display = 'none';
+    const modal = document.querySelector('.mf-overlay');
+    if (modal) modal.style.display = 'none';
   }
 
   // --- Main onload logic (SAFE order) ---
