@@ -320,7 +320,7 @@
 </footer>
 
 <!-- -- OTP TRIP PLANNING MODAL -- -->
-<div id="otpModal" class="mf-overlay" style="display:none;">
+<div id="otpModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
     <h2>🚌 Trip Options</h2>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
@@ -854,32 +854,25 @@
   
   function decodePolyline(encoded) {
     let points = [], index = 0, len = encoded.length, lat = 0, lng = 0;
-    console.log('[decodePolyline] Raw input:', encoded);
     while (index < len) {
       let b, shift = 0, result = 0;
       do {
         b = encoded.charCodeAt(index++) - 63;
         result |= (b & 0x1f) << shift;
         shift += 5;
-        console.log(`[decodePolyline] char: ${encoded[index-1]}, b: ${b}, result: ${result}, shift: ${shift}, index: ${index}`);
       } while (b >= 0x20);
       let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
       lat += dlat;
-      console.log(`[decodePolyline] dlat: ${dlat}, lat: ${lat}`);
       shift = 0; result = 0;
       do {
         b = encoded.charCodeAt(index++) - 63;
         result |= (b & 0x1f) << shift;
         shift += 5;
-        console.log(`[decodePolyline] char: ${encoded[index-1]}, b: ${b}, result: ${result}, shift: ${shift}, index: ${index}`);
       } while (b >= 0x20);
       let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
       lng += dlng;
-      console.log(`[decodePolyline] dlng: ${dlng}, lng: ${lng}`);
       points.push([lat / 1e5, lng / 1e5]);
-      console.log(`[decodePolyline] Decoded point: [${lat / 1e5}, ${lng / 1e5}] (index: ${index})`);
     }
-    console.log('[decodePolyline] Final points:', points);
     return points;
   }
 
@@ -897,15 +890,6 @@
 
     console.log('[showRoute] Trip:', window.currentItins[idx]);
 
-    window.currentItins[idx].legs.forEach((leg, i) => {
-      console.log(`[showRoute] Leg ${i} polyline string:`, leg.legGeometry && leg.legGeometry.points);
-      if (leg.legGeometry && leg.legGeometry.points) {
-        const decoded = decodePolyline(leg.legGeometry.points);
-        console.log(`[showRoute] First 5 decoded points for leg ${i}:`, decoded.slice(0, 5));
-      }
-      console.log(`[showRoute] Leg ${i} coordinates:`, leg.legGeometry && leg.legGeometry.coordinates);
-    });
-
     const coords = window.currentItins[idx].legs.flatMap((leg, i) => {
       if (!leg.legGeometry) {
         console.warn(`[showRoute] No geometry for leg ${i}:`, leg);
@@ -916,6 +900,7 @@
         if (!decoded.length) {
           console.warn(`[showRoute] Decoded geometry is empty for leg ${i}:`, leg);
         }
+        console.log(`[showRoute] First 5 decoded points for leg ${i}:`, decoded.slice(0, 5));
         return decoded;
       } else if (Array.isArray(leg.legGeometry.coordinates)) {
         const converted = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
@@ -938,7 +923,7 @@
     const bounds = routeLine.getBounds();
     console.log('[showRoute] Polyline bounds:', bounds);
     map.fitBounds(bounds, { padding: [40, 40] });
-    // Optionally: minimizeModal(true);
+    hideOtpModal();
   };
 
   // ==== UTILITY FUNCTIONS ====
