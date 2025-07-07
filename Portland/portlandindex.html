@@ -994,6 +994,7 @@
 
   // ==== ROUTE DISPLAY ====
   let routeLine = null; // Track the current route line
+  window.routeLegLines = [];
   
   function decodePolyline(encoded) {
     let points = [], index = 0, len = encoded.length, lat = 0, lng = 0;
@@ -1019,6 +1020,17 @@
     return points;
   }
 
+  // Add this mapping near the top of your script section
+  const modeColors = {
+    WALK: "#666",
+    BUS: "#0071CE",
+    TRAM: "#43a047",
+    RAIL: "#e53935",
+    TRAIN: "#e53935",
+    STREETCAR: "#8e24aa",
+    FERRY: "#00bcd4"
+  };
+
   window.showRoute = function(idx) {
     console.log('[showRoute] Called with idx:', idx);
     if (!window.currentItins || !window.currentItins[idx]) {
@@ -1026,49 +1038,37 @@
       alert("Trip data not found. Please try again.");
       return;
     }
+    // Remove previous lines
     if (routeLine) {
-      console.log('[showRoute] Removing previous routeLine');
       map.removeLayer(routeLine);
+      routeLine = null;
+    }
+    if (window.routeLegLines && window.routeLegLines.length) {
+      window.routeLegLines.forEach(line => map.removeLayer(line));
+      window.routeLegLines = [];
     }
 
     console.log('[showRoute] Trip:', window.currentItins[idx]);
 
-    const coords = window.currentItins[idx].legs.flatMap((leg, i) => {
-      if (!leg.legGeometry) {
-        console.warn(`[showRoute] No geometry for leg ${i}:`, leg);
-        return [];
+    let allCoords = [];
+    window.currentItins[idx].legs.forEach(leg => {
+      let color = modeColors[leg.mode] || "#0071ce";
+      let coords = [];
+      if (leg.legGeometry && leg.legGeometry.points) {
+        coords = decodePolyline(leg.legGeometry.points);
+      } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
+        coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
       }
-      if (leg.legGeometry.points) {
-        const decoded = decodePolyline(leg.legGeometry.points);
-        if (!decoded.length) {
-          console.warn(`[showRoute] Decoded geometry is empty for leg ${i}:`, leg);
-        }
-        console.log(`[showRoute] First 5 decoded points for leg ${i}:`, decoded.slice(0, 5));
-        return decoded;
-      } else if (Array.isArray(leg.legGeometry.coordinates)) {
-        const converted = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        console.log(`[showRoute] GeoJSON coordinates for leg ${i}:`, converted);
-        return converted;
-      } else {
-        console.warn(`[showRoute] Unknown geometry format for leg ${i}:`, leg.legGeometry);
-        return [];
+      if (coords.length) {
+        let line = L.polyline(coords, {color, weight: 6}).addTo(map);
+        window.routeLegLines.push(line);
+        allCoords = allCoords.concat(coords);
       }
     });
-
-    console.log('[showRoute] Polyline coords:', coords);
-
-    if (!coords.length) {
-      console.error('[showRoute] No valid route geometry found for this trip.');
-      alert("No valid route geometry found for this trip.");
-      return;
+    if (window.routeLegLines.length) {
+      map.fitBounds(L.featureGroup(window.routeLegLines).getBounds(), { padding: [40, 40] });
     }
-    routeLine = L.polyline(coords, {color: "#0071ce", weight: 6}).addTo(map);
-    const bounds = routeLine.getBounds();
-    console.log('[showRoute] Polyline bounds:', bounds);
-    map.fitBounds(bounds, { padding: [40, 40] });
-    console.log('[showRoute] About to call minimizeOtpModal()');
-    minimizeOtpModal();
-    console.log('[showRoute] minimizeOtpModal() called');
+    hideOtpModal();
   };
 
   // ==== UTILITY FUNCTIONS ====
