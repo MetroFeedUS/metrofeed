@@ -237,6 +237,63 @@
       font-size: 0.9rem;
       line-height: 1.4;
     }
+
+    /* OTP Modal Minimize/Restore Styles */
+    .otp-modal-minimized {
+      transform: translate(-50%, -50%) scale(0.3) !important;
+      opacity: 0.7 !important;
+      pointer-events: none !important;
+      transition: all 0.3s ease !important;
+    }
+    .otp-modal-minimized:hover {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+    .otp-modal-minimized .mf-modal {
+      max-height: 200px !important;
+      overflow: hidden !important;
+    }
+    .otp-modal-minimized #itinList {
+      display: none !important;
+    }
+    .otp-modal-minimized .mf-btn {
+      display: none !important;
+    }
+    .otp-modal-minimized h2 {
+      font-size: 1rem !important;
+      margin-bottom: 0.2rem !important;
+    }
+    .otp-modal-minimized p {
+      display: none !important;
+    }
+    .minimize-btn {
+      position: absolute;
+      top: 10px;
+      right: 40px;
+      background: #4dd0e1;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 12px;
+      z-index: 1003;
+    }
+    .restore-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #4dd0e1;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 12px;
+      z-index: 1003;
+    }
   </style>
 </head>
 <body>
@@ -322,6 +379,8 @@
 <!-- -- OTP TRIP PLANNING MODAL -- -->
 <div id="otpModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+    <button class="minimize-btn" onclick="minimizeOtpModal()" title="Minimize">−</button>
+    <button class="restore-btn" onclick="restoreOtpModal()" title="Restore" style="display: none;">□</button>
     <h2>🚌 Trip Options</h2>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
       <!-- Trip itineraries will be rendered here -->
@@ -833,12 +892,28 @@
   // ==== MODAL CONTROLS ====
   function showOtpModal() {
     document.getElementById('otpModal').style.display = 'flex';
+    // Reset to normal state when showing
+    document.getElementById('otpModal').classList.remove('otp-modal-minimized');
+    document.querySelector('.minimize-btn').style.display = 'block';
+    document.querySelector('.restore-btn').style.display = 'none';
   }
 
   function hideOtpModal() {
     document.getElementById('otpModal').style.display = 'none';
     // Clear route polylines when closing modal
     clearRoutePolylines();
+  }
+
+  function minimizeOtpModal() {
+    document.getElementById('otpModal').classList.add('otp-modal-minimized');
+    document.querySelector('.minimize-btn').style.display = 'none';
+    document.querySelector('.restore-btn').style.display = 'block';
+  }
+
+  function restoreOtpModal() {
+    document.getElementById('otpModal').classList.remove('otp-modal-minimized');
+    document.querySelector('.minimize-btn').style.display = 'block';
+    document.querySelector('.restore-btn').style.display = 'none';
   }
 
   // ==== DROPDOWN TOGGLE ====
@@ -923,7 +998,7 @@
     const bounds = routeLine.getBounds();
     console.log('[showRoute] Polyline bounds:', bounds);
     map.fitBounds(bounds, { padding: [40, 40] });
-    hideOtpModal();
+    minimizeOtpModal();
   };
 
   // ==== UTILITY FUNCTIONS ====
@@ -949,6 +1024,8 @@
   // Make functions globally available
   window.toggleDropdown = toggleDropdown;
   window.hideOtpModal = hideOtpModal;
+  window.minimizeOtpModal = minimizeOtpModal;
+  window.restoreOtpModal = restoreOtpModal;
   
   // Debug function to test route rendering
   window.testRouteRender = function() {
