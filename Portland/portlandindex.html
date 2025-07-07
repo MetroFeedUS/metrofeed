@@ -1197,6 +1197,11 @@
     const goBtn = document.getElementById('goBtn');
     if (goBtn) {
       goBtn.addEventListener('click', function() {
+        // Clear previous route lines
+        if (window.routeLegLines && window.routeLegLines.length) {
+          window.routeLegLines.forEach(line => map.removeLayer(line));
+          window.routeLegLines = [];
+        }
         console.log('Go button clicked!'); // Debug log
         const startInput = document.getElementById('startInput').value.trim();
         const endInput = document.getElementById('endInput').value.trim();
@@ -1224,6 +1229,19 @@
       });
     } else {
       console.error('Go button not found!'); // Debug log
+    }
+
+    // Clear button handler
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function() {
+        // Clear previous route lines
+        if (window.routeLegLines && window.routeLegLines.length) {
+          window.routeLegLines.forEach(line => map.removeLayer(line));
+          window.routeLegLines = [];
+        }
+        clearTripPlan();
+      });
     }
 
     function msToTime(duration) {
