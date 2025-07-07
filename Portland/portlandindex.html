@@ -305,7 +305,17 @@
       height: 24px;
       cursor: pointer;
       font-size: 12px;
-      z-index: 1003;
+      z-index: 10004;
+      display: block !important;
+      transition: all 0.2s ease;
+    }
+    .minimize-btn:hover {
+      background: #fff;
+      color: #4dd0e1;
+      box-shadow: 0 0 8px #4dd0e1;
+    }
+    .otp-modal-minimized .minimize-btn {
+      display: none !important;
     }
     .restore-btn {
       position: absolute;
@@ -319,7 +329,7 @@
       height: 24px;
       cursor: pointer;
       font-size: 12px;
-      z-index: 1003;
+      z-index: 10004;
     }
   </style>
 </head>
@@ -406,7 +416,7 @@
 <!-- -- OTP TRIP PLANNING MODAL -- -->
 <div id="otpModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-    <button class="minimize-btn" onclick="minimizeOtpModal()" title="Minimize">−</button>
+    <button class="minimize-btn" onclick="console.log('Minimize button clicked'); minimizeOtpModal();" title="Minimize">−</button>
     <button class="restore-btn" onclick="restoreOtpModal()" title="Restore" style="display: none;">□</button>
     <h2>🚌 Trip Options</h2>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
@@ -939,6 +949,8 @@
     
     console.log('[minimizeOtpModal] Modal element:', modal);
     console.log('[minimizeOtpModal] Current display style:', modal.style.display);
+    console.log('[minimizeOtpModal] Minimize button:', minimizeBtn);
+    console.log('[minimizeOtpModal] Restore button:', restoreBtn);
     
     modal.classList.add('otp-modal-minimized');
     minimizeBtn.style.display = 'none';
@@ -953,6 +965,8 @@
     
     console.log('[minimizeOtpModal] Minimization complete. Modal classes:', modal.className);
     console.log('[minimizeOtpModal] Modal display style after:', modal.style.display);
+    console.log('[minimizeOtpModal] Minimize button display after:', minimizeBtn.style.display);
+    console.log('[minimizeOtpModal] Restore button display after:', restoreBtn.style.display);
   }
 
   function restoreOtpModal() {
