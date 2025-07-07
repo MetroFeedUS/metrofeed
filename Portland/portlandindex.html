@@ -1071,6 +1071,11 @@
       }
       if (coords.length) {
         let line = L.polyline(coords, {color, weight: 6}).addTo(map);
+        // Make the route clickable to show the itinerary modal
+        line.on('click', function() {
+          showOtpModal();
+          renderItinListVisual(window.currentItins);
+        });
         window.routeLegLines.push(line);
         allCoords = allCoords.concat(coords);
       }
