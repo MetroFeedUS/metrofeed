@@ -61,7 +61,18 @@
       border-color: #000;
     }
     /* -- FAVORITES BAR -- */
-    .favorites-wrapper { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background-color: #4dd0e1; border: 2px solid #000; padding: 5px; border-radius: 10px; text-align: center; z-index: 1001; }
+    .favorites-wrapper {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #4dd0e1;
+      border: 2px solid #000;
+      padding: 5px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 1001;
+    }
     .favorites-wrapper span { color: #fff; display: block; margin-bottom: 4px; font-size: 0.75rem; }
     .favorites-container { display: flex; gap: 6px; justify-content: center; }
     .favorite-btn { width: 40px; height: 40px; background-color: #000000; color: #fff; border: 2px solid #000; border-radius: 6px; font-size: 0.75rem; line-height: 40px; text-align: center; cursor: pointer; }
@@ -434,6 +445,13 @@
       font-size: 12px;
       z-index: 10004;
     }
+    .otp-btn-row {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -501,8 +519,10 @@
       </svg>
     </button>
   </div>
-  <button id="goBtn" style="margin: 0 auto; width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
-  <button id="clearBtn" style="margin: 0 auto; width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
+  <div class="otp-btn-row">
+    <button id="goBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
+    <button id="clearBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
+  </div>
 </div>
 
 <!-- -- FAVORITES BAR -- -->
@@ -864,9 +884,10 @@
 
       // Find closest route logic (always run regardless of bounds)
       let closestDist = Infinity;
+      // OPTIMIZED: Only check stops, not every shape point
       masterRoutes.forEach(route => {
-        route.shape.forEach(([lat, lon]) => {
-          const dist = Math.hypot(userLat - lat, userLon - lon);
+        route.stops.forEach(stop => {
+          const dist = Math.hypot(userLat - stop.lat, userLon - stop.lon);
           if (dist < closestDist) {
             closestDist = dist;
             closestRoute = route;
@@ -1497,6 +1518,11 @@
   function hideSignInModal() {
     document.getElementById('signInModal').style.display = 'none';
   }
+
+  // Re-render favorites bar when the page is shown (including back/forward navigation)
+  window.addEventListener('pageshow', function() {
+    renderFavoritesBar();
+  });
 </script>
 
 </body>
