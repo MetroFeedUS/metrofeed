@@ -702,6 +702,15 @@
     return Math.atan2(dy, dx) * 180 / Math.PI;
   }
 
+  // Add these variables near the top of your script section
+  let hasAutoSnapped = false;
+  let userHasMovedMap = false;
+
+  // Listen for user map movement
+  map.on('movestart', function() {
+    userHasMovedMap = true;
+  });
+
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition(function(pos) {
       const userLat = pos.coords.latitude;
@@ -761,7 +770,11 @@
           weight: 4,
           opacity: 0.7
         }).addTo(map);
-        map.fitBounds(polyline.getBounds());
+        // Only fitBounds if not already snapped and user hasn't moved the map
+        if (!hasAutoSnapped && !userHasMovedMap) {
+          map.fitBounds(polyline.getBounds());
+          hasAutoSnapped = true;
+        }
 
         // --- Show stops + next time highlight ---
         const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
