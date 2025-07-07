@@ -370,13 +370,22 @@
 <!-- -- SIDE BUTTONS & DROPDOWN -- -->
 <button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
 <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
-<button id="aiChatBtn" class="side-buttons"><a href="chat.html"><img src="007-chatbot.svg" /></a></button>
+<!-- Old AI button now a save icon placeholder -->
+<button id="aiChatBtn" class="side-buttons">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="3" width="14" height="14" rx="2" fill="#4dd0e1" stroke="#000" stroke-width="1.5"/>
+    <rect x="6" y="6" width="8" height="5" rx="1" fill="#fff" stroke="#000" stroke-width="1"/>
+    <rect x="7" y="13" width="6" height="2" rx="0.5" fill="#fff" stroke="#000" stroke-width="1"/>
+  </svg>
+</button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <div id="dropdownMenu" class="dropdown">
   <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="1"></a>
   <a href="https://metrofeedus.com/portland/railroutes"><img src="001-train-station.svg" alt="2"></a>
   <a href="https://metrofeedus.com/portland/trafficmap"><img src="003-warning.svg" alt="3"></a>
   <a href="https://metrofeedus.com/portland/trafficcameras"><img src="004-cctv-camera.svg" alt="4"></a>
+  <!-- New AI button in dropdown -->
+  <a href="chat.html"><img src="007-chatbot.svg" alt="AI"></a>
   <a href="https://metrofeedus.com/portland/portlandweather"><img src="005-weather-radar.svg" alt="5"></a>
   <a id="alertsMenuBtn" href="https://metrofeedus.com/portland/alerts" style="position:relative;">
     <img src="008-danger.svg" alt="Alerts">
@@ -1379,11 +1388,14 @@
     } else {
       hideModal();
     }
-    setTimeout(function() {
-      if (!localStorage.getItem('neverShowInstallPrompt')) {
-        document.getElementById('installPrompt').style.display = 'block';
-      }
-    }, 30000);
+    // Only set the install prompt timer ONCE, and only if not already dismissed
+    if (!localStorage.getItem('neverShowInstallPrompt')) {
+      setTimeout(function() {
+        if (!localStorage.getItem('neverShowInstallPrompt')) {
+          document.getElementById('installPrompt').style.display = 'block';
+        }
+      }, 30000);
+    }
     setAlertsDot(localStorage.getItem('hasActiveAlerts') === 'true');
   };
 </script>
