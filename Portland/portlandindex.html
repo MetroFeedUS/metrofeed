@@ -239,13 +239,16 @@
     }
 
     /* OTP Modal Minimize/Restore Styles */
-    .otp-modal-minimized {
-      opacity: 0.9 !important;
-      pointer-events: none !important;
-      transition: all 0.3s ease !important;
-      z-index: 10000 !important;
+    #otpModal {
+      /* default overlay styles */
+      pointer-events: auto;
+      background: rgba(0,0,0,0.6);
     }
-    #otpModal.otp-modal-minimized .mf-modal {
+    #otpModal.minimized-overlay {
+      pointer-events: none !important;
+      background: none !important;
+    }
+    .mf-modal.otp-modal-minimized {
       position: fixed !important;
       bottom: 80px !important;
       left: 50% !important;
@@ -258,25 +261,26 @@
       box-shadow: 0 0 15px #4dd0e1 !important;
       transition: all 0.3s ease !important;
       pointer-events: auto !important;
+      z-index: 10004 !important;
     }
-    #otpModal.otp-modal-minimized:hover .mf-modal {
+    .mf-modal.otp-modal-minimized:hover {
       transform: translateX(-50%) scale(0.45) !important;
       opacity: 1 !important;
     }
-    #otpModal.otp-modal-minimized #itinList {
+    .mf-modal.otp-modal-minimized #itinList {
       display: none !important;
     }
-    #otpModal.otp-modal-minimized .mf-btn {
+    .mf-modal.otp-modal-minimized .mf-btn {
       display: none !important;
     }
-    #otpModal.otp-modal-minimized h2 {
+    .mf-modal.otp-modal-minimized h2 {
       font-size: 0.9rem !important;
       margin-bottom: 0.2rem !important;
     }
-    #otpModal.otp-modal-minimized p {
+    .mf-modal.otp-modal-minimized p {
       display: none !important;
     }
-    #otpModal.otp-modal-minimized .mf-modal::after {
+    .mf-modal.otp-modal-minimized::after {
       content: "Click to restore";
       position: absolute;
       bottom: -25px;
@@ -941,27 +945,23 @@
   function minimizeOtpModal() {
     console.log('[minimizeOtpModal] Starting minimization...');
     const modal = document.getElementById('otpModal');
-    const minimizeBtn = document.querySelector('.minimize-btn');
-    const restoreBtn = document.querySelector('.restore-btn');
+    const modalContent = modal.querySelector('.mf-modal');
+    const minimizeBtn = modal.querySelector('.minimize-btn');
+    const restoreBtn = modal.querySelector('.restore-btn');
     
-    console.log('[minimizeOtpModal] Modal element:', modal);
-    console.log('[minimizeOtpModal] Current display style:', modal.style.display);
-    console.log('[minimizeOtpModal] Minimize button:', minimizeBtn);
-    console.log('[minimizeOtpModal] Restore button:', restoreBtn);
-    
-    modal.classList.add('otp-modal-minimized');
-    console.log('ClassList after add:', modal.classList.value);
+    modal.classList.add('minimized-overlay');
+    modalContent.classList.add('otp-modal-minimized');
+    console.log('ClassList after add:', modalContent.classList.value);
     minimizeBtn.style.display = 'none';
     restoreBtn.style.display = 'block';
     
     // Add click handler to restore modal when clicked
-    const modalContent = modal.querySelector('.mf-modal');
     modalContent.onclick = function(e) {
       e.stopPropagation();
       restoreOtpModal();
     };
     
-    console.log('[minimizeOtpModal] Minimization complete. Modal classes:', modal.className);
+    console.log('[minimizeOtpModal] Minimization complete. Modal classes:', modalContent.className);
     console.log('[minimizeOtpModal] Modal display style after:', modal.style.display);
     console.log('[minimizeOtpModal] Minimize button display after:', minimizeBtn.style.display);
     console.log('[minimizeOtpModal] Restore button display after:', restoreBtn.style.display);
@@ -970,18 +970,19 @@
   function restoreOtpModal() {
     console.log('[restoreOtpModal] Restoring modal...');
     const modal = document.getElementById('otpModal');
-    const minimizeBtn = document.querySelector('.minimize-btn');
-    const restoreBtn = document.querySelector('.restore-btn');
+    const modalContent = modal.querySelector('.mf-modal');
+    const minimizeBtn = modal.querySelector('.minimize-btn');
+    const restoreBtn = modal.querySelector('.restore-btn');
     
-    modal.classList.remove('otp-modal-minimized');
+    modal.classList.remove('minimized-overlay');
+    modalContent.classList.remove('otp-modal-minimized');
     minimizeBtn.style.display = 'block';
     restoreBtn.style.display = 'none';
     
     // Remove click handler
-    const modalContent = modal.querySelector('.mf-modal');
     modalContent.onclick = null;
     
-    console.log('[restoreOtpModal] Modal restored. Classes:', modal.className);
+    console.log('[restoreOtpModal] Modal restored. Classes:', modalContent.className);
   }
 
   // ==== DROPDOWN TOGGLE ====
