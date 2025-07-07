@@ -186,9 +186,48 @@
       margin-bottom: 8px;
       flex-wrap: wrap;
     }
-    .seg-walk { background: #666; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; }
-    .seg-bus { background: #0071CE; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; }
-    .seg-train { background: #e53935; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; }
+    .seg-walk {
+      background: #666;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .seg-bus {
+      background: #0071CE;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .seg-train {
+      background: #e53935;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .seg-tram {
+      background: #43a047;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .seg-streetcar {
+      background: #8e24aa;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .seg-ferry {
+      background: #00bcd4;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
     .seg-icon { margin-right: 4px; }
     .itin-total {
       color: #fff;
@@ -295,27 +334,6 @@
       z-index: 10001;
     }
     .minimize-btn {
-      position: absolute;
-      top: 10px;
-      right: 40px;
-      background: #4dd0e1;
-      color: #000;
-      border: none;
-      border-radius: 4px;
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-      font-size: 12px;
-      z-index: 10004;
-      display: block !important;
-      transition: all 0.2s ease;
-    }
-    .minimize-btn:hover {
-      background: #fff;
-      color: #4dd0e1;
-      box-shadow: 0 0 8px #4dd0e1;
-    }
-    .otp-modal-minimized .minimize-btn {
       display: none !important;
     }
     .restore-btn {
@@ -417,7 +435,6 @@
 <!-- -- OTP TRIP PLANNING MODAL -- -->
 <div id="otpModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-    <button class="minimize-btn" onclick="console.log('Minimize button clicked'); if(typeof minimizeOtpModal === 'function') { minimizeOtpModal(); } else { console.error('minimizeOtpModal function not found'); }" title="Minimize">−</button>
     <button class="restore-btn" onclick="restoreOtpModal()" title="Restore" style="display: none;">□</button>
     <h2>🚌 Trip Options</h2>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
@@ -893,10 +910,22 @@
           icon = '🚌';
           segClass = 'seg-bus';
           label = leg.route ? `Bus ${leg.route}` : 'Bus';
-        } else if (leg.mode === 'TRAM' || leg.mode === 'RAIL' || leg.mode === 'TRAIN') {
+        } else if (leg.mode === 'TRAM') {
+          icon = '🚋';
+          segClass = 'seg-tram';
+          label = leg.route ? `Tram ${leg.route}` : 'Tram';
+        } else if (leg.mode === 'RAIL' || leg.mode === 'TRAIN') {
           icon = '🚈';
           segClass = 'seg-train';
           label = leg.route ? `Train ${leg.route}` : 'Train';
+        } else if (leg.mode === 'STREETCAR') {
+          icon = '🚊';
+          segClass = 'seg-streetcar';
+          label = leg.route ? `Streetcar ${leg.route}` : 'Streetcar';
+        } else if (leg.mode === 'FERRY') {
+          icon = '⛴️';
+          segClass = 'seg-ferry';
+          label = leg.route ? `Ferry ${leg.route}` : 'Ferry';
         } else {
           icon = '❓';
           segClass = '';
@@ -932,8 +961,8 @@
     document.getElementById('otpModal').style.display = 'flex';
     // Reset to normal state when showing
     document.getElementById('otpModal').classList.remove('otp-modal-minimized');
-    document.querySelector('.minimize-btn').style.display = 'block';
-    document.querySelector('.restore-btn').style.display = 'none';
+    document.querySelector('.minimize-btn').style.display = 'none';
+    document.querySelector('.restore-btn').style.display = 'block';
   }
 
   function hideOtpModal() {
@@ -976,8 +1005,8 @@
     
     modal.classList.remove('minimized-overlay');
     modalContent.classList.remove('otp-modal-minimized');
-    minimizeBtn.style.display = 'block';
-    restoreBtn.style.display = 'none';
+    minimizeBtn.style.display = 'none';
+    restoreBtn.style.display = 'block';
     
     // Remove click handler
     modalContent.onclick = null;
