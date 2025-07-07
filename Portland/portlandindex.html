@@ -1314,6 +1314,22 @@
 
   // --- Main onload logic (SAFE order) ---
   window.onload = function() {
+    // --- SIGN-IN MODAL LOGIC (runs first) ---
+    console.log('Sign-in modal check running...');
+    if (
+      localStorage.getItem('mf_unlocked') !== 'true' &&
+      localStorage.getItem('mf_free') !== 'true'
+    ) {
+      console.log('Showing sign-in modal');
+      showSignInModal();
+    } else {
+      console.log('User is unlocked or using free version, not showing sign-in modal');
+      hideSignInModal();
+    }
+
+    // --- ENSURE OTP MODAL IS HIDDEN ON LOAD ---
+    document.getElementById('otpModal').style.display = 'none';
+
     const btn = document.getElementById('startTrialBtn');
     const timerEl = document.getElementById('trialTimer');
 
@@ -1413,14 +1429,6 @@
     updateTrialTimer();
     setInterval(updateTrialTimer, 1000);
     renderFavoritesBar();
-    if (
-      localStorage.getItem('mf_unlocked') !== 'true' &&
-      localStorage.getItem('mf_free') !== 'true'
-    ) {
-      showModal();
-    } else {
-      hideModal();
-    }
     // Only set the install prompt timer ONCE, and only if not already dismissed
     if (!localStorage.getItem('neverShowInstallPrompt')) {
       setTimeout(function() {
