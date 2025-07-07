@@ -240,22 +240,23 @@
 
     /* OTP Modal Minimize/Restore Styles */
     .otp-modal-minimized {
-      transform: translate(-50%, -50%) scale(0.4) !important;
       opacity: 0.9 !important;
       pointer-events: auto !important;
       transition: all 0.3s ease !important;
       z-index: 10000 !important;
-      border: 2px solid #4dd0e1 !important;
-      box-shadow: 0 0 15px #4dd0e1 !important;
-    }
-    .otp-modal-minimized:hover {
-      opacity: 1 !important;
-      transform: translate(-50%, -50%) scale(0.45) !important;
     }
     .otp-modal-minimized .mf-modal {
+      transform: scale(0.4) !important;
       max-height: 150px !important;
       overflow: hidden !important;
       min-width: 200px !important;
+      border: 2px solid #4dd0e1 !important;
+      box-shadow: 0 0 15px #4dd0e1 !important;
+      transition: all 0.3s ease !important;
+    }
+    .otp-modal-minimized:hover .mf-modal {
+      transform: scale(0.45) !important;
+      opacity: 1 !important;
     }
     .otp-modal-minimized #itinList {
       display: none !important;
@@ -270,7 +271,7 @@
     .otp-modal-minimized p {
       display: none !important;
     }
-    .otp-modal-minimized::after {
+    .otp-modal-minimized .mf-modal::after {
       content: "Click to restore";
       position: absolute;
       bottom: -25px;
