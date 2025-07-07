@@ -942,9 +942,33 @@
       const details = itin.legs.map((leg, j) => {
         let modeTxt = leg.mode === 'WALK' ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode;
         let lineInfo = leg.route ? ` <b>${leg.route}</b>` : '';
-        return `<div>→ <b>${modeTxt}${lineInfo}</b> <span style="color:#ffc107;">${Math.round((leg.duration||0)/60)} min</span> <br>
-            <span style="font-size:0.96em; color:#aaa;">${leg.info||''}</span></div>`;
-      }).join('<hr style="border:0; border-top:1px solid #222; margin:5px 0 4px 0">');
+        let fromTime = leg.startTime ? new Date(leg.startTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+        let toTime = leg.endTime ? new Date(leg.endTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+        let stopTimes = '';
+        // Show intermediate stops with times if available
+        if (leg.intermediateStops && Array.isArray(leg.intermediateStops) && leg.intermediateStops.length) {
+          stopTimes = '<div style="margin-left:1em; font-size:0.95em; color:#bbb;">';
+          leg.intermediateStops.forEach(stop => {
+            if (stop.departureTime) {
+              let t = new Date(stop.departureTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+              stopTimes += `• ${stop.name}: <b>${t}</b><br>`;
+            } else {
+              stopTimes += `• ${stop.name}<br>`;
+            }
+          });
+          stopTimes += '</div>';
+        }
+        return `<div>
+          → <b>${modeTxt}${lineInfo}</b>
+          <span style=\"color:#ffc107;\">${Math.round((leg.duration||0)/60)} min</span><br>
+          <span style=\"font-size:0.96em; color:#aaa;\">
+            ${fromTime ? `Depart: <b>${fromTime}</b>` : ''}${fromTime && toTime ? ' | ' : ''}${toTime ? `Arrive: <b>${toTime}</b>` : ''}
+          </span>
+          ${stopTimes}
+          <br>
+          <span style=\"font-size:0.96em; color:#aaa;\">${leg.info||''}</span>
+        </div>`;
+      }).join('<hr style=\"border:0; border-top:1px solid #222; margin:5px 0 4px 0\">');
       return `<div class="itinListOption" data-idx="${idx}">
         <button class="itin-dropdown-btn" onclick="event.stopPropagation();toggleDropdown(${idx})">&#9660;</button>
         <div onclick="showRoute(${idx})">
