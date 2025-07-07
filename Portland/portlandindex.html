@@ -854,6 +854,7 @@
   // === SECTION: OPEN TRIP PLANNER INTEGRATION ===
   let currentItins = null; // Store current itineraries globally
   let routePolylines = []; // Store route polylines for cleanup
+  let routeStopMarkers = [];
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
   async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
@@ -967,8 +968,12 @@
 
   function hideOtpModal() {
     document.getElementById('otpModal').style.display = 'none';
-    // Clear route polylines when closing modal
+    // Clear route polylines and stop markers
     clearRoutePolylines();
+    if (window.routeStopMarkers && window.routeStopMarkers.length) {
+      window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
+      window.routeStopMarkers = [];
+    }
   }
 
   function restoreOtpModal() {
@@ -1047,10 +1052,15 @@
       window.routeLegLines.forEach(line => map.removeLayer(line));
       window.routeLegLines = [];
     }
+    if (window.routeStopMarkers && window.routeStopMarkers.length) {
+      window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
+      window.routeStopMarkers = [];
+    }
 
     console.log('[showRoute] Trip:', window.currentItins[idx]);
 
     let allCoords = [];
+    let addedStops = new Set();
     window.currentItins[idx].legs.forEach(leg => {
       let color = modeColors[leg.mode] || "#0071ce";
       let coords = [];
@@ -1063,6 +1073,36 @@
         let line = L.polyline(coords, {color, weight: 6}).addTo(map);
         window.routeLegLines.push(line);
         allCoords = allCoords.concat(coords);
+      }
+      // Add stop markers (solid small white dots)
+      function addStopMarker(lat, lon, key) {
+        if (!lat || !lon) return;
+        if (addedStops.has(key)) return;
+        addedStops.add(key);
+        let marker = L.circleMarker([lat, lon], {
+          radius: 4,
+          color: '#fff',
+          fillColor: '#fff',
+          fillOpacity: 1,
+          weight: 0.5
+        }).addTo(map);
+        window.routeStopMarkers.push(marker);
+      }
+      // Add 'from' stop
+      if (leg.from && leg.from.lat && leg.from.lon) {
+        addStopMarker(leg.from.lat, leg.from.lon, leg.from.name + leg.from.lat + leg.from.lon);
+      }
+      // Add 'to' stop
+      if (leg.to && leg.to.lat && leg.to.lon) {
+        addStopMarker(leg.to.lat, leg.to.lon, leg.to.name + leg.to.lat + leg.to.lon);
+      }
+      // Add intermediate stops if present
+      if (leg.intermediateStops && Array.isArray(leg.intermediateStops)) {
+        leg.intermediateStops.forEach(stop => {
+          if (stop.lat && stop.lon) {
+            addStopMarker(stop.lat, stop.lon, stop.name + stop.lat + stop.lon);
+          }
+        });
       }
     });
     if (window.routeLegLines.length) {
