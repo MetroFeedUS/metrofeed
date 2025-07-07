@@ -240,18 +240,22 @@
 
     /* OTP Modal Minimize/Restore Styles */
     .otp-modal-minimized {
-      transform: translate(-50%, -50%) scale(0.3) !important;
-      opacity: 0.7 !important;
-      pointer-events: none !important;
+      transform: translate(-50%, -50%) scale(0.4) !important;
+      opacity: 0.9 !important;
+      pointer-events: auto !important;
       transition: all 0.3s ease !important;
+      z-index: 10000 !important;
+      border: 2px solid #4dd0e1 !important;
+      box-shadow: 0 0 15px #4dd0e1 !important;
     }
     .otp-modal-minimized:hover {
       opacity: 1 !important;
-      pointer-events: auto !important;
+      transform: translate(-50%, -50%) scale(0.45) !important;
     }
     .otp-modal-minimized .mf-modal {
-      max-height: 200px !important;
+      max-height: 150px !important;
       overflow: hidden !important;
+      min-width: 200px !important;
     }
     .otp-modal-minimized #itinList {
       display: none !important;
@@ -260,11 +264,25 @@
       display: none !important;
     }
     .otp-modal-minimized h2 {
-      font-size: 1rem !important;
+      font-size: 0.9rem !important;
       margin-bottom: 0.2rem !important;
     }
     .otp-modal-minimized p {
       display: none !important;
+    }
+    .otp-modal-minimized::after {
+      content: "Click to restore";
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4dd0e1;
+      color: #000;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      z-index: 10001;
     }
     .minimize-btn {
       position: absolute;
@@ -905,15 +923,43 @@
   }
 
   function minimizeOtpModal() {
-    document.getElementById('otpModal').classList.add('otp-modal-minimized');
-    document.querySelector('.minimize-btn').style.display = 'none';
-    document.querySelector('.restore-btn').style.display = 'block';
+    console.log('[minimizeOtpModal] Starting minimization...');
+    const modal = document.getElementById('otpModal');
+    const minimizeBtn = document.querySelector('.minimize-btn');
+    const restoreBtn = document.querySelector('.restore-btn');
+    
+    console.log('[minimizeOtpModal] Modal element:', modal);
+    console.log('[minimizeOtpModal] Current display style:', modal.style.display);
+    
+    modal.classList.add('otp-modal-minimized');
+    minimizeBtn.style.display = 'none';
+    restoreBtn.style.display = 'block';
+    
+    // Add click handler to restore modal when clicked
+    modal.onclick = function(e) {
+      if (e.target === modal || e.target.classList.contains('otp-modal-minimized')) {
+        restoreOtpModal();
+      }
+    };
+    
+    console.log('[minimizeOtpModal] Minimization complete. Modal classes:', modal.className);
+    console.log('[minimizeOtpModal] Modal display style after:', modal.style.display);
   }
 
   function restoreOtpModal() {
-    document.getElementById('otpModal').classList.remove('otp-modal-minimized');
-    document.querySelector('.minimize-btn').style.display = 'block';
-    document.querySelector('.restore-btn').style.display = 'none';
+    console.log('[restoreOtpModal] Restoring modal...');
+    const modal = document.getElementById('otpModal');
+    const minimizeBtn = document.querySelector('.minimize-btn');
+    const restoreBtn = document.querySelector('.restore-btn');
+    
+    modal.classList.remove('otp-modal-minimized');
+    minimizeBtn.style.display = 'block';
+    restoreBtn.style.display = 'none';
+    
+    // Remove click handler
+    modal.onclick = null;
+    
+    console.log('[restoreOtpModal] Modal restored. Classes:', modal.className);
   }
 
   // ==== DROPDOWN TOGGLE ====
@@ -998,7 +1044,9 @@
     const bounds = routeLine.getBounds();
     console.log('[showRoute] Polyline bounds:', bounds);
     map.fitBounds(bounds, { padding: [40, 40] });
+    console.log('[showRoute] About to call minimizeOtpModal()');
     minimizeOtpModal();
+    console.log('[showRoute] minimizeOtpModal() called');
   };
 
   // ==== UTILITY FUNCTIONS ====
