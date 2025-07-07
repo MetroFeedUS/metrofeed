@@ -241,21 +241,29 @@
     /* OTP Modal Minimize/Restore Styles */
     .otp-modal-minimized {
       opacity: 0.9 !important;
-      pointer-events: auto !important;
+      pointer-events: none !important;
       transition: all 0.3s ease !important;
       z-index: 10000 !important;
     }
+    .otp-modal-minimized .mf-overlay {
+      pointer-events: none !important;
+    }
     .otp-modal-minimized .mf-modal {
-      transform: scale(0.4) !important;
+      position: fixed !important;
+      bottom: 80px !important;
+      left: 50% !important;
+      top: auto !important;
+      transform: translateX(-50%) scale(0.4) !important;
       max-height: 150px !important;
       overflow: hidden !important;
       min-width: 200px !important;
       border: 2px solid #4dd0e1 !important;
       box-shadow: 0 0 15px #4dd0e1 !important;
       transition: all 0.3s ease !important;
+      pointer-events: auto !important;
     }
     .otp-modal-minimized:hover .mf-modal {
-      transform: scale(0.45) !important;
+      transform: translateX(-50%) scale(0.45) !important;
       opacity: 1 !important;
     }
     .otp-modal-minimized #itinList {
@@ -937,10 +945,10 @@
     restoreBtn.style.display = 'block';
     
     // Add click handler to restore modal when clicked
-    modal.onclick = function(e) {
-      if (e.target === modal || e.target.classList.contains('otp-modal-minimized')) {
-        restoreOtpModal();
-      }
+    const modalContent = modal.querySelector('.mf-modal');
+    modalContent.onclick = function(e) {
+      e.stopPropagation();
+      restoreOtpModal();
     };
     
     console.log('[minimizeOtpModal] Minimization complete. Modal classes:', modal.className);
@@ -958,7 +966,8 @@
     restoreBtn.style.display = 'none';
     
     // Remove click handler
-    modal.onclick = null;
+    const modalContent = modal.querySelector('.mf-modal');
+    modalContent.onclick = null;
     
     console.log('[restoreOtpModal] Modal restored. Classes:', modal.className);
   }
