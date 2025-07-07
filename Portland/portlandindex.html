@@ -71,9 +71,42 @@
     .site-footer a:hover { text-decoration: underline; }
     /* -- MODAL/OVERLAY -- */
     .mf-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; pointer-events: auto !important; }
-    .mf-modal { background: #111; border: 2.5px solid #4dd0e1; border-radius: 18px; box-shadow: 0 0 24px #222, 0 0 6px #4dd0e1; padding: 1.1rem 0.7rem 1.2rem 0.7rem; min-width: 0; max-width: 410px; width: 95vw; box-sizing: border-box; text-align: center; animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: auto !important; }
-    @media (max-width: 520px) { .mf-modal { max-width: 98vw; width: 95vw; padding: 0.7rem 1vw 1rem 1vw; } }
-    @media (max-width: 340px) { .mf-modal { width: 98vw; max-width: 99vw; padding: 0.6rem 2vw 0.9rem 2vw; } }
+    .mf-modal {
+      background: #111;
+      border: 2.5px solid #4dd0e1;
+      border-radius: 18px;
+      box-shadow: 0 0 24px #222, 0 0 6px #4dd0e1;
+      padding: 1.1rem 0.7rem 1.2rem 0.7rem;
+      min-width: 0;
+      max-width: 410px;
+      width: 95vw;
+      box-sizing: border-box;
+      text-align: center;
+      animation: popin 0.24s cubic-bezier(.32,1.56,.56,1) 1;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: auto !important;
+    }
+    @media (max-width: 520px) {
+      .mf-modal {
+        max-width: 98vw;
+        width: 95vw;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 0.7rem 2vw 1rem 2vw;
+      }
+    }
+    @media (max-width: 340px) {
+      .mf-modal {
+        width: 98vw;
+        max-width: 99vw;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 0.6rem 2vw 0.9rem 2vw;
+      }
+    }
     .mf-overlay { pointer-events: auto !important; }
     .mf-modal { pointer-events: auto !important; }
     .mf-free-btn { background: #F7630C !important; color: #fff !important; border: 2px solid #fff; margin-top: 10px; width: 100%; }
@@ -1421,7 +1454,8 @@
       if (!localStorage.getItem('mf_trialStart')) {
         localStorage.setItem('mf_trialStart', Date.now().toString());
         localStorage.setItem('mf_unlocked', 'true');
-        hideModal();
+        hideSignInModal(); // Close the sign-in modal immediately
+        hideModal(); // (if you want to also close the old modal, keep this)
         updateTrialTimer();
       }
     };
