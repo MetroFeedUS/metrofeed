@@ -479,12 +479,30 @@
 <!-- -- OTP TRIP PLANNING MODAL -- -->
 <div id="otpModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-    <button class="restore-btn" onclick="restoreOtpModal()" title="Restore" style="display: none;">□</button>
     <h2>🚌 Trip Options</h2>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
       <!-- Trip itineraries will be rendered here -->
     </div>
     <button class="mf-btn" onclick="hideOtpModal()" style="margin-top: 1rem;">Close</button>
+  </div>
+</div>
+
+<!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
+<div class="mf-overlay" id="signInModal" style="display:none;">
+  <div class="mf-modal">
+    <h2>You're not logged in or don't have an account</h2>
+    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
+    <div class="mf-actions" style="display: flex; gap: 0.65rem; margin-bottom: 1.1rem;">
+      <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
+      <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
+    </div>
+    <button class="mf-btn mf-free-btn" id="freeBtn" onclick="localStorage.setItem('mf_free','true');hideSignInModal();location.href='https://metrofeedus.com/portland/portlandhome'">Use Free Version</button>
+    <div class="mf-premium" style="margin-top:1.1rem;">
+      Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
+      <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
+    </div>
+    <button class="trial-btn" id="startTrialBtn">Start Free Trial</button>
+    <span class="trial-timer" id="trialTimer"></span>
   </div>
 </div>
 
@@ -746,11 +764,11 @@
     return Math.atan2(dy, dx) * 180 / Math.PI;
   }
 
-  // Add these variables near the top of your script section
+  // Ensure snap-back logic is robust
   let hasAutoSnapped = false;
   let userHasMovedMap = false;
 
-  // Listen for user map movement
+  // Attach this ONCE, outside any function
   map.on('movestart', function() {
     userHasMovedMap = true;
   });
@@ -1220,7 +1238,6 @@
   // Make functions globally available
   window.toggleDropdown = toggleDropdown;
   window.hideOtpModal = hideOtpModal;
-  window.minimizeOtpModal = minimizeOtpModal;
   window.restoreOtpModal = restoreOtpModal;
   
   // Debug function to test route rendering
@@ -1254,25 +1271,6 @@
   
 
 </script>
-
-<!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
-<div class="mf-overlay" style="display:none;">
-  <div class="mf-modal">
-    <h2>You're not logged in or don't have an account</h2>
-    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
-    <div class="mf-actions" style="display: flex; gap: 0.65rem; margin-bottom: 1.1rem;">
-      <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
-      <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
-    </div>
-    <button class="mf-btn mf-free-btn" id="freeBtn" onclick="location.href='https://metrofeedus.com/portland/portlandhome'">Use Free Version</button>
-    <div class="mf-premium" style="margin-top:1.1rem;">
-      Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
-      <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
-    </div>
-    <button class="trial-btn" id="startTrialBtn">Start Free Trial</button>
-    <span class="trial-timer" id="trialTimer"></span>
-  </div>
-</div>
 
 <script>
   // --- Helper: Show/hide alert dot ---
@@ -1433,6 +1431,14 @@
     }
     setAlertsDot(localStorage.getItem('hasActiveAlerts') === 'true');
   };
+
+  // Helper to show/hide sign-in modal
+  function showSignInModal() {
+    document.getElementById('signInModal').style.display = 'flex';
+  }
+  function hideSignInModal() {
+    document.getElementById('signInModal').style.display = 'none';
+  }
 </script>
 
 </body>
