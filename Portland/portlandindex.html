@@ -813,36 +813,52 @@
     const clickedLat = e.latlng.lat;
     const clickedLon = e.latlng.lng;
     
-    // Find closest stop
+    console.log('[Map Click] Clicked at:', clickedLat, clickedLon);
+    
+    // Find closest stop with distance threshold
     const closestStop = findClosestStopToPoint(clickedLat, clickedLon);
     
     if (closestStop) {
-      // Populate the corresponding input with stop name
-      const inputId = mapSelectionMode + 'Input';
-      document.getElementById(inputId).value = decodeHTMLEntities(closestStop.name);
+      // Calculate distance to see if we're close enough to a stop
+      const distance = Math.hypot(clickedLat - closestStop.lat, clickedLon - closestStop.lon);
+      const distanceInMeters = distance * 111000; // Rough conversion to meters
       
-      // Remove existing pin for this mode
-      if (mapSelectionMode === 'start' && startPin) {
-        map.removeLayer(startPin);
-      } else if (mapSelectionMode === 'end' && destinationPin) {
-        map.removeLayer(destinationPin);
-      }
+      console.log('[Map Click] Closest stop:', closestStop.name, 'Distance:', distanceInMeters.toFixed(1), 'meters');
       
-      // Create and add new pin
-      const pinClass = mapSelectionMode === 'start' ? 'start-pin' : 'destination-pin';
-      const pinIcon = L.divIcon({
-        className: pinClass,
-        iconSize: [24, 24],
-        iconAnchor: [12, 24]
-      });
-      
-      const newPin = L.marker([closestStop.lat, closestStop.lon], { icon: pinIcon }).addTo(map);
-      
-      // Store reference to pin
-      if (mapSelectionMode === 'start') {
-        startPin = newPin;
+      // Only select if within 50 meters of a stop
+      if (distanceInMeters <= 50) {
+        // Populate the corresponding input with stop name
+        const inputId = mapSelectionMode + 'Input';
+        document.getElementById(inputId).value = decodeHTMLEntities(closestStop.name);
+        
+        // Remove existing pin for this mode
+        if (mapSelectionMode === 'start' && startPin) {
+          map.removeLayer(startPin);
+        } else if (mapSelectionMode === 'end' && destinationPin) {
+          map.removeLayer(destinationPin);
+        }
+        
+        // Create and add new pin
+        const pinClass = mapSelectionMode === 'start' ? 'start-pin' : 'destination-pin';
+        const pinIcon = L.divIcon({
+          className: pinClass,
+          iconSize: [24, 24],
+          iconAnchor: [12, 24]
+        });
+        
+        const newPin = L.marker([closestStop.lat, closestStop.lon], { icon: pinIcon }).addTo(map);
+        
+        // Store reference to pin
+        if (mapSelectionMode === 'start') {
+          startPin = newPin;
+        } else {
+          destinationPin = newPin;
+        }
+        
+        console.log('[Map Click] Selected stop:', closestStop.name);
       } else {
-        destinationPin = newPin;
+        console.log('[Map Click] Click too far from stop, not selecting');
+        alert('Please click closer to a bus stop. You clicked ' + distanceInMeters.toFixed(0) + ' meters away from the nearest stop.');
       }
     }
     
@@ -1311,6 +1327,18 @@
           
           popupContent += `</div>`;
           
+          // Store bus information for itinerary display
+          if (routesToTrack) {
+            // Store bus info by route for itinerary display
+            if (!window.otpBusInfo) window.otpBusInfo = {};
+            if (!window.otpBusInfo[bus.routeNumber]) window.otpBusInfo[bus.routeNumber] = [];
+            window.otpBusInfo[bus.routeNumber].push({
+              vehicleID: bus.vehicleID,
+              routeNumber: bus.routeNumber,
+              direction: bus.direction
+            });
+          }
+          
           // Add popup to marker
           marker.bindPopup(popupContent);
           
@@ -1352,6 +1380,9 @@
     const to = `${toLat},${toLon}`;
     // Adjust the server/URL as needed for production:
     const url = `http://localhost:8080/otp/routers/default/plan?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
+
+    // Clear previous bus info
+    window.otpBusInfo = {};
 
     // Show loading state
     const itinList = document.getElementById('itinList');
@@ -1419,14 +1450,27 @@
           segClass = 'seg-bus';
           // Format bus label with route name and number using masterRoutes data
           if (leg.route) {
+            console.log('[Itinerary] Processing bus leg with route:', leg.route);
             // Try to find route info in masterRoutes
             const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
             if (masterRoute) {
+              console.log('[Itinerary] Found master route:', masterRoute.route_title);
               // Extract route number from route_title (e.g., "Route 15 - To City Ctr..." -> "15")
               const routeNumberMatch = masterRoute.route_title.match(/Route (\d+)/);
               const routeNumber = routeNumberMatch ? routeNumberMatch[1] : leg.route;
-              label = `Bus ${routeNumber} - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
+              
+              // Check if we have live bus info for this route
+              let busNumbers = '';
+              if (window.otpBusInfo && window.otpBusInfo[leg.route]) {
+                const buses = window.otpBusInfo[leg.route];
+                busNumbers = buses.map(b => b.vehicleID).join(', ');
+                label = `Bus ${routeNumber} (${busNumbers}) - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
+              } else {
+                label = `Bus ${routeNumber} - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
+              }
+              console.log('[Itinerary] Created label:', label);
             } else {
+              console.log('[Itinerary] No master route found, using OTP data');
               // Fallback to OTP data
               let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
               label = `${routeName} - ${leg.route}`;
@@ -1459,6 +1503,7 @@
         return `<span class='${segClass}' title='${label}'>
           <span class='seg-icon'>${icon}</span>
           <span>${mins}m</span>
+          ${leg.mode === 'BUS' && leg.route ? `<br><small style="font-size:0.8em;opacity:0.9;">${label}</small>` : ''}
         </span>`;
       }).join('');
       // Overlay details for route info
@@ -1472,7 +1517,16 @@
             const routeNumberMatch = masterRoute.route_title.match(/Route (\d+)/);
             const routeNumber = routeNumberMatch ? routeNumberMatch[1] : leg.route;
             const routeDescription = masterRoute.route_title.split(' - ')[1] || 'Portland';
-            lineInfo = ` <b>Bus ${routeNumber} - ${routeDescription}</b>`;
+            
+            // Check if we have live bus info for this route
+            let busNumbers = '';
+            if (window.otpBusInfo && window.otpBusInfo[leg.route]) {
+              const buses = window.otpBusInfo[leg.route];
+              busNumbers = buses.map(b => b.vehicleID).join(', ');
+              lineInfo = ` <b>Bus ${routeNumber} (${busNumbers}) - ${routeDescription}</b>`;
+            } else {
+              lineInfo = ` <b>Bus ${routeNumber} - ${routeDescription}</b>`;
+            }
           } else {
             // Fallback to OTP data
             let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
