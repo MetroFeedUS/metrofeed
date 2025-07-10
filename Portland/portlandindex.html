@@ -482,23 +482,7 @@
       margin-right: 8px;
     }
     
-    /* Map control indicator */
-    .map-control-indicator {
-      position: absolute;
-      top: 120px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.8);
-      border: 2px solid #ff6b35;
-      border-radius: 8px;
-      padding: 8px;
-      color: #fff;
-      font-size: 0.8rem;
-      z-index: 1000;
-      display: none;
-    }
-    .map-control-indicator.show {
-      display: block;
-    }
+
   </style>
 </head>
 <body>
@@ -569,7 +553,6 @@
   <div class="otp-btn-row">
     <button id="goBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
     <button id="clearBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
-    <button id="disableSnapBtn" style="width: 60px; height: 20px; background-color: #ff6b35; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;" title="Disable auto-snapping">No Snap</button>
   </div>
 </div>
 
@@ -625,11 +608,7 @@
   </div>
 </div>
 
-<!-- -- MAP CONTROL INDICATOR -- -->
-<div id="mapControlIndicator" class="map-control-indicator">
-  <strong>🚫 Auto-snapping disabled</strong><br>
-  <small>Map will stay where you place it</small>
-</div>
+
 
 <!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
 <div class="mf-overlay" id="signInModal" style="display:none;">
@@ -847,14 +826,21 @@
     
     console.log('[Map Click] Clicked at:', clickedLat, clickedLon);
     
-    // Use exact click coordinates - no stop finding needed
-    // Find the closest stop name for display purposes only
+    // Find the closest stop to the clicked location
     const closestStop = findClosestStopToPoint(clickedLat, clickedLon);
-    const stopName = closestStop ? decodeHTMLEntities(closestStop.name) : `Location (${clickedLat.toFixed(4)}, ${clickedLon.toFixed(4)})`;
     
-    // Populate the input with coordinates (OTP will handle the routing)
-    const inputId = mapSelectionMode + 'Input';
-    document.getElementById(inputId).value = `${clickedLat.toFixed(6)},${clickedLon.toFixed(6)}`;
+    if (closestStop) {
+      // Use the stop name instead of coordinates
+      const stopName = decodeHTMLEntities(closestStop.name);
+      const inputId = mapSelectionMode + 'Input';
+      document.getElementById(inputId).value = stopName;
+      console.log('[Map Click] Selected stop:', stopName);
+    } else {
+      // If no stop found, use coordinates but format them nicely
+      const inputId = mapSelectionMode + 'Input';
+      document.getElementById(inputId).value = `Location (${clickedLat.toFixed(4)}, ${clickedLon.toFixed(4)})`;
+      console.log('[Map Click] No nearby stop found, using coordinates');
+    }
     
     // Remove existing pin for this mode
     if (mapSelectionMode === 'start' && startPin) {
@@ -889,7 +875,8 @@
       background: rgba(0,0,0,0.8); color: #4dd0e1; padding: 10px 20px;
       border-radius: 8px; z-index: 10000; font-size: 14px;
     `;
-    feedback.textContent = `Selected: ${stopName}`;
+    const selectedName = closestStop ? decodeHTMLEntities(closestStop.name) : `Location (${clickedLat.toFixed(4)}, ${clickedLon.toFixed(4)})`;
+    feedback.textContent = `Selected: ${selectedName}`;
     document.body.appendChild(feedback);
     setTimeout(() => feedback.remove(), 2000);
     
@@ -930,82 +917,8 @@
     return Math.atan2(dy, dx) * 180 / Math.PI;
   }
 
-  // === MAP MOVEMENT CONTROL SYSTEM ===
+  // Simple flag to prevent multiple auto-snaps
   let hasAutoSnapped = false;
-  let userHasMovedMap = false;
-  let userHasInteracted = false; // Track any user interaction
-  let mapSnappingDisabled = false; // Global flag to disable all snapping
-
-  // Track user interactions to disable auto-snapping
-  map.on('movestart', function() {
-    userHasMovedMap = true;
-    userHasInteracted = true;
-    console.log('[Map Control] User moved map - disabling auto-snap');
-    showMapControlFeedback('Map moved - auto-snap disabled');
-  });
-
-  map.on('zoomstart', function() {
-    userHasInteracted = true;
-    console.log('[Map Control] User zoomed map - disabling auto-snap');
-    showMapControlFeedback('Map zoomed - auto-snap disabled');
-  });
-
-  map.on('click', function() {
-    userHasInteracted = true;
-    console.log('[Map Control] User clicked map - disabling auto-snap');
-    showMapControlFeedback('Map clicked - auto-snap disabled');
-  });
-
-  // Function to check if auto-snapping should be allowed
-  function shouldAllowAutoSnap() {
-    return !userHasInteracted && !mapSnappingDisabled && !hasAutoSnapped;
-  }
-
-  // Function to disable all map snapping
-  function disableMapSnapping() {
-    mapSnappingDisabled = true;
-    userHasInteracted = true;
-    hasAutoSnapped = true;
-    localStorage.setItem('mapSnappingDisabled', 'true');
-    console.log('[Map Control] All map snapping disabled');
-  }
-
-  // Function to reset snapping state (for new trips)
-  function resetMapSnapping() {
-    hasAutoSnapped = false;
-    userHasMovedMap = false;
-    userHasInteracted = false;
-    mapSnappingDisabled = false;
-    localStorage.removeItem('mapSnappingDisabled');
-    console.log('[Map Control] Map snapping state reset');
-  }
-
-  // Function to show map control feedback
-  function showMapControlFeedback(message) {
-    const indicator = document.getElementById('mapControlIndicator');
-    if (indicator) {
-      indicator.querySelector('strong').textContent = '🚫 ' + message;
-      indicator.classList.add('show');
-      setTimeout(() => indicator.classList.remove('show'), 2000);
-    }
-  }
-
-  // Keyboard shortcut to disable snapping (Ctrl+Shift+S)
-  document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-      e.preventDefault();
-      disableMapSnapping();
-      showMapControlFeedback('Keyboard shortcut - auto-snap disabled');
-      
-      // Update button if it exists
-      const disableSnapBtn = document.getElementById('disableSnapBtn');
-      if (disableSnapBtn) {
-        disableSnapBtn.style.backgroundColor = '#666';
-        disableSnapBtn.textContent = 'Snap Off';
-        disableSnapBtn.title = 'Auto-snapping disabled';
-      }
-    }
-  });
 
   if (navigator.geolocation) {
     // Track if we've already done the initial route setup
@@ -1075,13 +988,10 @@
             weight: 4,
             opacity: 0.7
           }).addTo(map);
-          // Only fitBounds if auto-snapping is still allowed
-          if (shouldAllowAutoSnap()) {
-            console.log('[Map Control] Auto-snapping to closest route');
+          // Only fitBounds once on initial load
+          if (!hasAutoSnapped) {
             map.fitBounds(polyline.getBounds());
             hasAutoSnapped = true;
-          } else {
-            console.log('[Map Control] Skipping auto-snap - user has interacted or snapping disabled');
           }
 
           // --- Show stops + next time highlight ---
@@ -1866,13 +1776,7 @@
     });
     
     if (window.routeLegLines.length) {
-      // Only fit bounds if user hasn't interacted with the map
-      if (!userHasInteracted) {
-        console.log('[Map Control] Auto-snapping to OTP route');
-        map.fitBounds(L.featureGroup(window.routeLegLines).getBounds(), { padding: [40, 40] });
-      } else {
-        console.log('[Map Control] Skipping OTP route snap - user has interacted with map');
-      }
+      map.fitBounds(L.featureGroup(window.routeLegLines).getBounds(), { padding: [40, 40] });
     }
     
     // Start tracking buses for the routes in this trip
@@ -2098,9 +2002,6 @@
           return;
         }
         
-        // Reset map snapping for new trip
-        resetMapSnapping();
-        
         // Call OTP with coordinates
         fetchAndShowOtpItineraries(startStop.lat, startStop.lon, endStop.lat, endStop.lon);
       });
@@ -2140,43 +2041,7 @@
       });
     }
 
-    // Disable snap button handler
-    const disableSnapBtn = document.getElementById('disableSnapBtn');
-    if (disableSnapBtn) {
-      // Check if snapping was previously disabled
-      if (localStorage.getItem('mapSnappingDisabled') === 'true') {
-        disableMapSnapping();
-        disableSnapBtn.style.backgroundColor = '#666';
-        disableSnapBtn.textContent = 'Snap Off';
-        disableSnapBtn.title = 'Auto-snapping disabled';
-      }
-      
-      disableSnapBtn.addEventListener('click', function() {
-        disableMapSnapping();
-        localStorage.setItem('mapSnappingDisabled', 'true');
-        this.style.backgroundColor = '#666';
-        this.textContent = 'Snap Off';
-        this.title = 'Auto-snapping disabled';
-        
-        // Show map control indicator
-        const indicator = document.getElementById('mapControlIndicator');
-        if (indicator) {
-          indicator.classList.add('show');
-          setTimeout(() => indicator.classList.remove('show'), 3000);
-        }
-        
-        // Show feedback
-        const feedback = document.createElement('div');
-        feedback.style.cssText = `
-          position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-          background: rgba(0,0,0,0.8); color: #ff6b35; padding: 10px 20px;
-          border-radius: 8px; z-index: 10000; font-size: 14px;
-        `;
-        feedback.textContent = 'Auto-snapping disabled';
-        document.body.appendChild(feedback);
-        setTimeout(() => feedback.remove(), 2000);
-      });
-    }
+
 
     function msToTime(duration) {
       let seconds = Math.floor((duration / 1000) % 60),
