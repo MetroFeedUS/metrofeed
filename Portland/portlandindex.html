@@ -1053,7 +1053,8 @@
       
       console.log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
       console.log('[fetchAndDisplayBuses] Sample of all buses route numbers:', allBuses.slice(0, 5).map(b => ({ routeNumber: b.routeNumber, direction: b.direction, vehicleID: b.vehicleID })));
-      console.log('[fetchAndDisplayBuses] All route numbers:', allBuses.map(b => b.routeNumber).sort());
+      const allRouteNumbers = allBuses.map(b => b.routeNumber).sort();
+      console.log('[fetchAndDisplayBuses] All route numbers:', allRouteNumbers);
       
       // Track each route
       routesToShow.forEach(route => {
@@ -1064,8 +1065,10 @@
         
               // Filter buses for this specific route
       console.log('[fetchAndDisplayBuses] Looking for route:', route.route_id, 'direction:', route.direction_id);
-      console.log('[fetchAndDisplayBuses] Available route numbers:', [...new Set(allBuses.map(b => b.routeNumber))]);
-      console.log('[fetchAndDisplayBuses] Available directions:', [...new Set(allBuses.map(b => b.direction))]);
+      const availableRouteNumbers = [...new Set(allBuses.map(b => b.routeNumber))];
+      const availableDirections = [...new Set(allBuses.map(b => b.direction))];
+      console.log('[fetchAndDisplayBuses] Available route numbers:', availableRouteNumbers);
+      console.log('[fetchAndDisplayBuses] Available directions:', availableDirections);
       
       const routeBuses = allBuses.filter(v => 
         v.routeNumber == route.route_id && v.direction == route.direction_id
@@ -1144,14 +1147,15 @@
         headsign: leg.headsign,
         agencyId: leg.agencyId
       })));
-      console.log('All route IDs from OTP:', currentItins.flatMap(itin => 
+      const otpRoutes = currentItins.flatMap(itin => 
         itin.legs.filter(leg => leg.mode !== 'WALK').map(leg => ({
           mode: leg.mode,
           route: leg.route,
           routeLongName: leg.routeLongName,
           routeShortName: leg.routeShortName
         }))
-      ));
+      );
+      console.log('All route IDs from OTP:', otpRoutes);
       renderItinListVisual(data.plan.itineraries);
 
     } catch (e) {
