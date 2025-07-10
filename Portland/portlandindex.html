@@ -974,34 +974,87 @@
 
   // === SECTION: LIVE BUS MARKERS ===
   let busMarkers = {};
-  async function fetchAndDisplay() {
-    // If closestRoute is still null (geo failed?), don't run
-    if (!closestRoute) return;
-
+  let currentTrackingRoutes = new Set(); // Track which routes we're currently showing buses for
+  
+  // Function to get route color based on mode
+  function getRouteColor(mode) {
+    switch(mode) {
+      case 'BUS': return '#0071CE';
+      case 'TRAM': return '#43a047';
+      case 'RAIL': case 'TRAIN': return '#e53935';
+      case 'STREETCAR': return '#8e24aa';
+      case 'FERRY': return '#00bcd4';
+      default: return '#0071CE';
+    }
+  }
+  
+  // Function to create bus marker icon
+  function createBusIcon(vehicleID, routeColor) {
+    return L.divIcon({
+      className: '',
+      html: `<div style='text-align:center;'>
+               <div style='background:${routeColor};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${vehicleID}</div>
+               <div style='width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid ${routeColor};margin:auto;'></div>
+             </div>`,
+      iconSize: [40, 30],
+      iconAnchor: [20, 30]
+    });
+  }
+  
+  // Enhanced function to fetch and display buses for multiple routes
+  async function fetchAndDisplayBuses(routesToTrack = null) {
+    // If no specific routes provided, use closestRoute if available
+    if (!routesToTrack && !closestRoute) return;
+    
     const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
     const data = await res.json();
-    const buses = (data.resultSet.vehicle || []).filter(
-      v => v.routeNumber == closestRoute.route_id && v.direction == closestRoute.direction_id
-    );
-
+    const allBuses = data.resultSet.vehicle || [];
+    
+    // Clear existing bus markers
     Object.values(busMarkers).forEach(m => map.removeLayer(m));
     busMarkers = {};
-    if (!buses.length) return;
-
-    buses.forEach(bus => {
-      if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-      const icon = L.divIcon({
-        className: '',
-        html: `<div style='text-align:center;'>
-                 <div style='background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${bus.vehicleID}</div>
-                 <div style='width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;'></div>
-               </div>`,
-        iconSize: [40, 30],
-        iconAnchor: [20, 30]
+    
+    // Determine which routes to track
+    let routesToShow = [];
+    if (routesToTrack) {
+      // Use provided routes (for OTP trips)
+      routesToShow = routesToTrack;
+    } else if (closestRoute) {
+      // Use closest route (for initial load)
+      routesToShow = [{
+        route_id: closestRoute.route_id,
+        direction_id: closestRoute.direction_id,
+        mode: 'BUS' // Default to bus for closest route
+      }];
+    }
+    
+    // Track each route
+    routesToShow.forEach(route => {
+      const routeKey = `${route.route_id}-${route.direction_id}`;
+      currentTrackingRoutes.add(routeKey);
+      
+      // Filter buses for this specific route
+      const routeBuses = allBuses.filter(v => 
+        v.routeNumber == route.route_id && v.direction == route.direction_id
+      );
+      
+      // Create markers for each bus on this route
+      routeBuses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        
+        const routeColor = getRouteColor(route.mode);
+        const icon = createBusIcon(bus.vehicleID, routeColor);
+        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        
+        // Store marker with unique key
+        busMarkers[`${bus.vehicleID}-${routeKey}`] = marker;
       });
-      const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-      busMarkers[bus.vehicleID] = marker;
     });
+  }
+  
+  // Legacy function for backward compatibility
+  async function fetchAndDisplay() {
+    return fetchAndDisplayBuses();
   }
 
   // === SECTION: OPEN TRIP PLANNER INTEGRATION ===
@@ -1151,6 +1204,18 @@
       window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
       window.routeStopMarkers = [];
     }
+    // Stop OTP bus tracking and clear bus markers
+    if (window.otpBusTrackingInterval) {
+      clearInterval(window.otpBusTrackingInterval);
+      window.otpBusTrackingInterval = null;
+    }
+    // Clear bus markers
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+    // Resume tracking closest route if available
+    if (closestRoute) {
+      fetchAndDisplayBuses();
+    }
   }
 
   function restoreOtpModal() {
@@ -1238,6 +1303,8 @@
 
     let allCoords = [];
     let addedStops = new Set();
+    let routesToTrack = []; // Collect routes for bus tracking
+    
     window.currentItins[idx].legs.forEach(leg => {
       let color = modeColors[leg.mode] || "#0071ce";
       let coords = [];
@@ -1256,6 +1323,16 @@
         window.routeLegLines.push(line);
         allCoords = allCoords.concat(coords);
       }
+      
+      // Collect route information for bus tracking (skip WALK legs)
+      if (leg.mode !== 'WALK' && leg.route) {
+        routesToTrack.push({
+          route_id: leg.route,
+          direction_id: leg.direction || 0, // Default direction if not specified
+          mode: leg.mode
+        });
+      }
+      
       // Add stop markers (solid small white dots)
       function addStopMarker(lat, lon, key) {
         if (!lat || !lon) return;
@@ -1287,9 +1364,24 @@
         });
       }
     });
+    
     if (window.routeLegLines.length) {
       map.fitBounds(L.featureGroup(window.routeLegLines).getBounds(), { padding: [40, 40] });
     }
+    
+    // Start tracking buses for the routes in this trip
+    if (routesToTrack.length > 0) {
+      console.log('[showRoute] Tracking buses for routes:', routesToTrack);
+      fetchAndDisplayBuses(routesToTrack);
+      // Set up continuous tracking for this trip
+      if (window.otpBusTrackingInterval) {
+        clearInterval(window.otpBusTrackingInterval);
+      }
+      window.otpBusTrackingInterval = setInterval(() => {
+        fetchAndDisplayBuses(routesToTrack);
+      }, 15000);
+    }
+    
     hideOtpModal();
   };
 
@@ -1457,6 +1549,18 @@
         if (window.routeLegLines && window.routeLegLines.length) {
           window.routeLegLines.forEach(line => map.removeLayer(line));
           window.routeLegLines = [];
+        }
+        // Stop OTP bus tracking
+        if (window.otpBusTrackingInterval) {
+          clearInterval(window.otpBusTrackingInterval);
+          window.otpBusTrackingInterval = null;
+        }
+        // Clear bus markers
+        Object.values(busMarkers).forEach(m => map.removeLayer(m));
+        busMarkers = {};
+        // Resume tracking closest route if available
+        if (closestRoute) {
+          fetchAndDisplayBuses();
         }
         clearTripPlan();
       });
