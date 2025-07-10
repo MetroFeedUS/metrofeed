@@ -452,6 +452,35 @@
       justify-content: center;
       margin-top: 4px;
     }
+    
+    /* Bus Legend Styles */
+    .bus-legend {
+      position: absolute;
+      top: 120px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #4dd0e1;
+      border-radius: 8px;
+      padding: 10px;
+      color: #fff;
+      font-size: 0.8rem;
+      z-index: 1000;
+      display: none;
+    }
+    .bus-legend.show {
+      display: block;
+    }
+    .bus-legend-item {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .bus-legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
@@ -553,6 +582,27 @@
       <!-- Trip itineraries will be rendered here -->
     </div>
     <button class="mf-btn" onclick="hideOtpModal()" style="margin-top: 1rem;">Close</button>
+  </div>
+</div>
+
+<!-- -- BUS LEGEND -- -->
+<div id="busLegend" class="bus-legend">
+  <strong>Bus Colors:</strong><br>
+  <div class="bus-legend-item">
+    <div class="bus-legend-color" style="background: #00ff00;"></div>
+    <span>Your Trip Route</span>
+  </div>
+  <div class="bus-legend-item">
+    <div class="bus-legend-color" style="background: #0071CE;"></div>
+    <span>Other Routes</span>
+  </div>
+  <div class="bus-legend-item">
+    <div class="bus-legend-color" style="background: #e53935;"></div>
+    <span>MAX/Train</span>
+  </div>
+  <div class="bus-legend-item">
+    <div class="bus-legend-color" style="background: #43a047;"></div>
+    <span>Streetcar</span>
   </div>
 </div>
 
@@ -1188,15 +1238,19 @@
             routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
           }
           
-          // If still no buses, show all buses for debugging
+          // If still no buses, show a subset of buses for this route number only
           if (routeBuses.length === 0) {
-            console.log('[fetchAndDisplayBuses] Still no buses found, showing all buses for debugging');
-            routeBuses = allBuses;
+            console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- showing buses with similar route numbers');
+            // Show buses with similar route numbers (e.g., if looking for "15", show "15", "150", "151", etc.)
+            routeBuses = allBuses.filter(v => 
+              v.routeNumber.toString().startsWith(trimetRouteNumber.toString()) ||
+              trimetRouteNumber.toString().startsWith(v.routeNumber.toString())
+            );
           }
         } else {
-          // If we can't map the route, show all buses (fallback)
-          console.log('[fetchAndDisplayBuses] No route mapping found, showing all buses');
-          routeBuses = allBuses;
+          // If we can't map the route, show a limited set of buses for debugging
+          console.log('[fetchAndDisplayBuses] No route mapping found, showing limited set of buses');
+          routeBuses = allBuses.slice(0, 20); // Limit to first 20 buses for debugging
         }
         
         console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber);
@@ -1210,9 +1264,41 @@
           
           console.log('[fetchAndDisplayBuses] Creating marker for bus:', bus.vehicleID, 'at', bus.latitude, bus.longitude);
           
-          const routeColor = getRouteColor(route.mode);
+          // Use different colors for OTP trip buses vs other buses
+          let routeColor = getRouteColor(route.mode);
+          if (routesToTrack) {
+            // OTP trip buses get a special color (bright green)
+            routeColor = '#00ff00';
+          }
           const icon = createBusIcon(bus.vehicleID, routeColor);
           const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+          
+          // Create popup content with route information
+          let popupContent = `<div style="min-width: 200px;">
+            <strong>Bus ${bus.vehicleID}</strong><br>
+            <strong>Route:</strong> ${bus.routeNumber}<br>
+            <strong>Direction:</strong> ${bus.direction}<br>
+            <strong>Block:</strong> ${bus.blockID}<br>
+            <strong>Speed:</strong> ${bus.speed || 'N/A'} mph<br>
+            <strong>Updated:</strong> ${new Date().toLocaleTimeString()}<br>`;
+          
+          // Add route description if available from masterRoutes
+          if (masterRoutes) {
+            const masterRoute = masterRoutes.find(r => r.route_id === bus.routeNumber);
+            if (masterRoute) {
+              popupContent += `<strong>Route Name:</strong> ${masterRoute.route_title}<br>`;
+            }
+          }
+          
+          // Add OTP context if this is from an OTP trip
+          if (routesToTrack) {
+            popupContent += `<br><em style="color: #4dd0e1;">🚌 This bus is part of your trip route</em>`;
+          }
+          
+          popupContent += `</div>`;
+          
+          // Add popup to marker
+          marker.bindPopup(popupContent);
           
           // Store marker with unique key
           busMarkers[`${bus.vehicleID}-${routeKey}`] = marker;
@@ -1220,6 +1306,13 @@
       });
       
       console.log('[fetchAndDisplayBuses] Total bus markers created:', Object.keys(busMarkers).length);
+      
+      // Show legend if we have buses and this is an OTP trip
+      if (Object.keys(busMarkers).length > 0 && routesToTrack) {
+        showBusLegend();
+      } else if (!routesToTrack) {
+        hideBusLegend();
+      }
       
     } catch (error) {
       console.error('[fetchAndDisplayBuses] Error fetching buses:', error);
@@ -1446,6 +1539,9 @@
         }, 15000);
       }
     }
+    
+    // Hide bus legend when OTP modal is closed
+    hideBusLegend();
   }
 
   function restoreOtpModal() {
@@ -1694,6 +1790,21 @@
     }
     console.log('=== END DEBUG ===');
   };
+  
+  // Function to show/hide bus legend
+  function showBusLegend() {
+    const legend = document.getElementById('busLegend');
+    if (legend) {
+      legend.classList.add('show');
+    }
+  }
+  
+  function hideBusLegend() {
+    const legend = document.getElementById('busLegend');
+    if (legend) {
+      legend.classList.remove('show');
+    }
+  }
   
 
 </script>
