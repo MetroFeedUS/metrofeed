@@ -1013,6 +1013,71 @@
     });
   }
   
+  // Function to map OTP route names to Trimet route numbers
+  function mapOtpRouteToTrimet(otpRouteName) {
+    const routeMapping = {
+      // MAX Lines
+      'Blue Eastside Bus': '100',
+      'Red Line': '200', 
+      'Green Line': '290',
+      'Yellow Line': '290',
+      'Orange Line': '290',
+      'Blue Line': '100',
+      
+      // Bus Routes (common ones)
+      'Division': '4',
+      'Sandy Blvd': '12',
+      'Burnside': '20',
+      'Glisan': '25',
+      'Killingsworth': '72',
+      'Fremont': '75',
+      'Beaverton-Hillsdale': '54',
+      'Tualatin Valley': '57',
+      'Cornell': '63',
+      'Murray': '66',
+      'Scholls Ferry': '88',
+      'Canyon': '92',
+      'Sunset': '94',
+      'Oregon City': '33',
+      'Molalla': '35',
+      'Canby': '37',
+      'Wilsonville': '96',
+      'Sherwood': '98',
+      
+      // Streetcar
+      'Portland Streetcar': '190',
+      'NS Line': '190',
+      'CL Line': '190',
+      
+      // Default fallback - try to extract number from name
+      'default': (name) => {
+        const match = name.match(/(\d+)/);
+        return match ? match[1] : null;
+      }
+    };
+    
+    // Try exact match first
+    if (routeMapping[otpRouteName]) {
+      return routeMapping[otpRouteName];
+    }
+    
+    // Try partial matches
+    for (const [key, value] of Object.entries(routeMapping)) {
+      if (otpRouteName.includes(key) || key.includes(otpRouteName)) {
+        return value;
+      }
+    }
+    
+    // Try to extract number from name
+    const numberMatch = otpRouteName.match(/(\d+)/);
+    if (numberMatch) {
+      return numberMatch[1];
+    }
+    
+    console.log('[mapOtpRouteToTrimet] No mapping found for:', otpRouteName);
+    return null;
+  }
+  
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
     console.log('[fetchAndDisplayBuses] Starting bus fetch...');
@@ -1061,20 +1126,26 @@
         const routeKey = `${route.route_id}-${route.direction_id}`;
         currentTrackingRoutes.add(routeKey);
         
-        console.log('[fetchAndDisplayBuses] Looking for route:', route.route_id, 'direction:', route.direction_id);
+        // Map OTP route name to Trimet route number
+        let trimetRouteNumber = route.route_id;
+        if (route.route_id && isNaN(route.route_id)) {
+          // This is likely an OTP route name, try to map it
+          trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
+          console.log('[fetchAndDisplayBuses] Mapped route:', route.route_id, '->', trimetRouteNumber);
+        }
         
-              // Filter buses for this specific route
-      console.log('[fetchAndDisplayBuses] Looking for route:', route.route_id, 'direction:', route.direction_id);
-      const availableRouteNumbers = [...new Set(allBuses.map(b => b.routeNumber))];
-      const availableDirections = [...new Set(allBuses.map(b => b.direction))];
-      console.log('[fetchAndDisplayBuses] Available route numbers:', availableRouteNumbers);
-      console.log('[fetchAndDisplayBuses] Available directions:', availableDirections);
-      
-      const routeBuses = allBuses.filter(v => 
-        v.routeNumber == route.route_id && v.direction == route.direction_id
-      );
+        console.log('[fetchAndDisplayBuses] Looking for route:', trimetRouteNumber, 'direction:', route.direction_id);
+        const availableRouteNumbers = [...new Set(allBuses.map(b => b.routeNumber))];
+        const availableDirections = [...new Set(allBuses.map(b => b.direction))];
+        console.log('[fetchAndDisplayBuses] Available route numbers:', availableRouteNumbers);
+        console.log('[fetchAndDisplayBuses] Available directions:', availableDirections);
         
-        console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', route.route_id);
+        // Filter buses for this specific route using mapped route number
+        const routeBuses = allBuses.filter(v => 
+          v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
+        );
+        
+        console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber);
         
         // Create markers for each bus on this route
         routeBuses.forEach(bus => {
