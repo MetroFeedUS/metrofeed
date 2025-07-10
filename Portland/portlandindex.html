@@ -1053,6 +1053,7 @@
       
       console.log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
       console.log('[fetchAndDisplayBuses] Sample of all buses route numbers:', allBuses.slice(0, 5).map(b => ({ routeNumber: b.routeNumber, direction: b.direction, vehicleID: b.vehicleID })));
+      console.log('[fetchAndDisplayBuses] All route numbers:', allBuses.map(b => b.routeNumber).sort());
       
       // Track each route
       routesToShow.forEach(route => {
@@ -1063,8 +1064,8 @@
         
               // Filter buses for this specific route
       console.log('[fetchAndDisplayBuses] Looking for route:', route.route_id, 'direction:', route.direction_id);
-      console.log('[fetchAndDisplayBuses] Available route numbers:', [...new Set(allBuses.map(b => b.routeNumber))].slice(0, 10));
-      console.log('[fetchAndDisplayBuses] Available directions:', [...new Set(allBuses.map(b => b.direction))].slice(0, 10));
+      console.log('[fetchAndDisplayBuses] Available route numbers:', [...new Set(allBuses.map(b => b.routeNumber))]);
+      console.log('[fetchAndDisplayBuses] Available directions:', [...new Set(allBuses.map(b => b.direction))]);
       
       const routeBuses = allBuses.filter(v => 
         v.routeNumber == route.route_id && v.direction == route.direction_id
@@ -1140,8 +1141,17 @@
         route: leg.route,
         routeLongName: leg.routeLongName,
         routeShortName: leg.routeShortName,
-        headsign: leg.headsign
+        headsign: leg.headsign,
+        agencyId: leg.agencyId
       })));
+      console.log('All route IDs from OTP:', currentItins.flatMap(itin => 
+        itin.legs.filter(leg => leg.mode !== 'WALK').map(leg => ({
+          mode: leg.mode,
+          route: leg.route,
+          routeLongName: leg.routeLongName,
+          routeShortName: leg.routeShortName
+        }))
+      ));
       renderItinListVisual(data.plan.itineraries);
 
     } catch (e) {
