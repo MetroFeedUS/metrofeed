@@ -958,7 +958,16 @@
 
           // --- Only fetch/display bus locations AFTER closestRoute is known ---
           fetchAndDisplay(); // <-- run initial fetch
-          setInterval(fetchAndDisplay, 15000); // <-- keep running
+          // Set up continuous tracking for closest route
+          if (window.closestRouteInterval) {
+            clearInterval(window.closestRouteInterval);
+          }
+          window.closestRouteInterval = setInterval(() => {
+            // Only track closest route if we're not doing OTP
+            if (!window.otpBusTrackingInterval) {
+              fetchAndDisplay();
+            }
+          }, 15000);
         }
         
         // Mark that we've initialized the route
@@ -1043,6 +1052,7 @@
       }
       
       console.log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
+      console.log('[fetchAndDisplayBuses] Sample of all buses route numbers:', allBuses.slice(0, 5).map(b => ({ routeNumber: b.routeNumber, direction: b.direction, vehicleID: b.vehicleID })));
       
       // Track each route
       routesToShow.forEach(route => {
@@ -1051,10 +1061,14 @@
         
         console.log('[fetchAndDisplayBuses] Looking for route:', route.route_id, 'direction:', route.direction_id);
         
-        // Filter buses for this specific route
-        const routeBuses = allBuses.filter(v => 
-          v.routeNumber == route.route_id && v.direction == route.direction_id
-        );
+              // Filter buses for this specific route
+      console.log('[fetchAndDisplayBuses] Looking for route:', route.route_id, 'direction:', route.direction_id);
+      console.log('[fetchAndDisplayBuses] Available route numbers:', [...new Set(allBuses.map(b => b.routeNumber))].slice(0, 10));
+      console.log('[fetchAndDisplayBuses] Available directions:', [...new Set(allBuses.map(b => b.direction))].slice(0, 10));
+      
+      const routeBuses = allBuses.filter(v => 
+        v.routeNumber == route.route_id && v.direction == route.direction_id
+      );
         
         console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', route.route_id);
         
@@ -1121,6 +1135,13 @@
       // Store itineraries globally and render
       currentItins = data.plan.itineraries;
       console.log('Stored itineraries:', currentItins); // Debug stored data
+      console.log('Sample leg data:', currentItins[0]?.legs?.map(leg => ({
+        mode: leg.mode,
+        route: leg.route,
+        routeLongName: leg.routeLongName,
+        routeShortName: leg.routeShortName,
+        headsign: leg.headsign
+      })));
       renderItinListVisual(data.plan.itineraries);
 
     } catch (e) {
@@ -1147,7 +1168,14 @@
         } else if (leg.mode === 'BUS') {
           icon = '🚌';
           segClass = 'seg-bus';
-          label = leg.route ? `Bus ${leg.route}` : 'Bus';
+          // Format bus label with route name and number
+          if (leg.route) {
+            // Try to get route name from leg info or use a default format
+            let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
+            label = `${routeName} - ${leg.route}`;
+          } else {
+            label = 'Bus';
+          }
         } else if (leg.mode === 'TRAM') {
           icon = '🚋';
           segClass = 'seg-tram';
@@ -1178,7 +1206,13 @@
       // Overlay details for route info
       const details = itin.legs.map((leg, j) => {
         let modeTxt = leg.mode === 'WALK' ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode;
-        let lineInfo = leg.route ? ` <b>${leg.route}</b>` : '';
+        let lineInfo = '';
+        if (leg.mode === 'BUS' && leg.route) {
+          let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
+          lineInfo = ` <b>${routeName} - ${leg.route}</b>`;
+        } else if (leg.route) {
+          lineInfo = ` <b>${leg.route}</b>`;
+        }
         let fromTime = leg.startTime ? new Date(leg.startTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
         let toTime = leg.endTime ? new Date(leg.endTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
         let stopTimes = '';
@@ -1357,6 +1391,7 @@
       
       // Collect route information for bus tracking (skip WALK legs)
       if (leg.mode !== 'WALK' && leg.route) {
+        console.log('[showRoute] Found transit leg:', leg);
         routesToTrack.push({
           route_id: leg.route,
           direction_id: leg.direction || 0, // Default direction if not specified
@@ -1411,6 +1446,11 @@
       window.otpBusTrackingInterval = setInterval(() => {
         fetchAndDisplayBuses(routesToTrack);
       }, 15000);
+    } else {
+      // If no routes to track, resume closest route tracking
+      if (closestRoute) {
+        fetchAndDisplayBuses();
+      }
     }
     
     hideOtpModal();
