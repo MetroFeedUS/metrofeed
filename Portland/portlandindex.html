@@ -1226,19 +1226,24 @@
         
         // Filter buses for this specific route using mapped route number
         let routeBuses = [];
+        console.log('[fetchAndDisplayBuses] Filtering for route:', trimetRouteNumber, 'direction:', route.direction_id);
+        console.log('[fetchAndDisplayBuses] Available buses route numbers:', [...new Set(allBuses.map(b => b.routeNumber))]);
+        
         if (trimetRouteNumber) {
           // Try to find buses for the specific mapped route
           routeBuses = allBuses.filter(v => 
             v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
           );
+          console.log('[fetchAndDisplayBuses] Buses with exact route and direction match:', routeBuses.length);
           
           // If no buses found with direction, try without direction constraint
           if (routeBuses.length === 0) {
             console.log('[fetchAndDisplayBuses] No buses found with direction constraint, trying without direction');
             routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+            console.log('[fetchAndDisplayBuses] Buses with route match (no direction):', routeBuses.length);
           }
           
-          // If still no buses, show a subset of buses for this route number only
+          // If still no buses, show buses with similar route numbers
           if (routeBuses.length === 0) {
             console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- showing buses with similar route numbers');
             // Show buses with similar route numbers (e.g., if looking for "15", show "15", "150", "151", etc.)
@@ -1246,12 +1251,21 @@
               v.routeNumber.toString().startsWith(trimetRouteNumber.toString()) ||
               trimetRouteNumber.toString().startsWith(v.routeNumber.toString())
             );
+            console.log('[fetchAndDisplayBuses] Buses with similar route numbers:', routeBuses.length);
+          }
+          
+          // If still no buses, show all buses for this route number (fallback)
+          if (routeBuses.length === 0) {
+            console.log('[fetchAndDisplayBuses] Still no buses found, showing all buses as fallback');
+            routeBuses = allBuses;
           }
         } else {
-          // If we can't map the route, show a limited set of buses for debugging
-          console.log('[fetchAndDisplayBuses] No route mapping found, showing limited set of buses');
-          routeBuses = allBuses.slice(0, 20); // Limit to first 20 buses for debugging
+          // If we can't map the route, show all buses for debugging
+          console.log('[fetchAndDisplayBuses] No route mapping found, showing all buses');
+          routeBuses = allBuses;
         }
+        
+        console.log('[fetchAndDisplayBuses] Final buses to display:', routeBuses.length);
         
         console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber);
         
@@ -1313,6 +1327,9 @@
       } else if (!routesToTrack) {
         hideBusLegend();
       }
+      
+      console.log('[fetchAndDisplayBuses] Bus markers created:', Object.keys(busMarkers).length);
+      console.log('[fetchAndDisplayBuses] Routes to track:', routesToTrack);
       
     } catch (error) {
       console.error('[fetchAndDisplayBuses] Error fetching buses:', error);
@@ -1787,6 +1804,24 @@
     if (masterRoutes && masterRoutes.length > 0) {
       console.log('First route sample:', masterRoutes[0]);
       console.log('Route IDs available:', masterRoutes.slice(0, 10).map(r => r.route_id));
+    }
+    console.log('=== END DEBUG ===');
+  };
+  
+  // Debug function to test bus API
+  window.testBusAPI = async function() {
+    console.log('=== BUS API DEBUG ===');
+    try {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
+      const data = await res.json();
+      console.log('API Response:', data);
+      console.log('Total buses:', data.resultSet.vehicle ? data.resultSet.vehicle.length : 0);
+      if (data.resultSet.vehicle && data.resultSet.vehicle.length > 0) {
+        console.log('Sample bus:', data.resultSet.vehicle[0]);
+        console.log('Route numbers available:', [...new Set(data.resultSet.vehicle.map(b => b.routeNumber))]);
+      }
+    } catch (error) {
+      console.error('API Error:', error);
     }
     console.log('=== END DEBUG ===');
   };
