@@ -966,6 +966,8 @@
             // Only track closest route if we're not doing OTP
             if (!window.otpBusTrackingInterval) {
               fetchAndDisplay();
+            } else {
+              console.log('[closestRouteInterval] Skipping closest route update - OTP tracking active');
             }
           }, 15000);
         }
@@ -1016,6 +1018,7 @@
   // Function to map OTP route names to Trimet route numbers using masterRoutes data
   function mapOtpRouteToTrimet(otpRouteName) {
     console.log('[mapOtpRouteToTrimet] Mapping OTP route:', otpRouteName);
+    console.log('[mapOtpRouteToTrimet] masterRoutes available:', masterRoutes ? masterRoutes.length : 'undefined');
     
     // If it's already a number, use it directly
     if (!isNaN(otpRouteName)) {
@@ -1025,26 +1028,31 @@
     
     // Create a comprehensive mapping from masterRoutes data
     const routeMappings = {};
-    masterRoutes.forEach(route => {
-      // Extract route number from route_title (e.g., "Route 15 - To City Ctr..." -> "15")
-      const routeNumberMatch = route.route_title.match(/Route (\d+)/);
-      if (routeNumberMatch) {
-        const routeNumber = routeNumberMatch[1];
-        routeMappings[routeNumber] = routeNumber;
+    if (masterRoutes && masterRoutes.length > 0) {
+      masterRoutes.forEach(route => {
+        // Extract route number from route_title (e.g., "Route 15 - To City Ctr..." -> "15")
+        const routeNumberMatch = route.route_title.match(/Route (\d+)/);
+        if (routeNumberMatch) {
+          const routeNumber = routeNumberMatch[1];
+          routeMappings[routeNumber] = routeNumber;
+          
+          // Also map common variations
+          routeMappings[`Route ${routeNumber}`] = routeNumber;
+          routeMappings[`Bus ${routeNumber}`] = routeNumber;
+          routeMappings[`${routeNumber}`] = routeNumber;
+        }
         
-        // Also map common variations
-        routeMappings[`Route ${routeNumber}`] = routeNumber;
-        routeMappings[`Bus ${routeNumber}`] = routeNumber;
-        routeMappings[`${routeNumber}`] = routeNumber;
-      }
-      
-      // Handle special routes like FX2
-      if (route.route_id === 'FX2') {
-        routeMappings['FX2'] = 'FX2';
-        routeMappings['Route FX2'] = 'FX2';
-        routeMappings['Bus FX2'] = 'FX2';
-      }
-    });
+        // Handle special routes like FX2
+        if (route.route_id === 'FX2') {
+          routeMappings['FX2'] = 'FX2';
+          routeMappings['Route FX2'] = 'FX2';
+          routeMappings['Bus FX2'] = 'FX2';
+        }
+      });
+      console.log('[mapOtpRouteToTrimet] Created mappings for', Object.keys(routeMappings).length, 'routes');
+    } else {
+      console.log('[mapOtpRouteToTrimet] WARNING: masterRoutes is not available!');
+    }
     
     // Common MAX line mappings (these are often named differently in OTP)
     const maxMappings = {
@@ -1149,10 +1157,15 @@
         
         // Map OTP route name to Trimet route number using masterRoutes data
         let trimetRouteNumber = route.route_id;
+        console.log('[fetchAndDisplayBuses] Processing route:', route);
+        console.log('[fetchAndDisplayBuses] Route ID type:', typeof route.route_id, 'Value:', route.route_id);
+        
         if (route.route_id && isNaN(route.route_id)) {
           // This is likely an OTP route name, try to map it
           trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
           console.log('[fetchAndDisplayBuses] Mapped route:', route.route_id, '->', trimetRouteNumber);
+        } else {
+          console.log('[fetchAndDisplayBuses] Route ID is numeric, using directly:', trimetRouteNumber);
         }
         
         console.log('[fetchAndDisplayBuses] Looking for route:', trimetRouteNumber, 'direction:', route.direction_id);
@@ -1173,6 +1186,12 @@
           if (routeBuses.length === 0) {
             console.log('[fetchAndDisplayBuses] No buses found with direction constraint, trying without direction');
             routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+          }
+          
+          // If still no buses, show all buses for debugging
+          if (routeBuses.length === 0) {
+            console.log('[fetchAndDisplayBuses] Still no buses found, showing all buses for debugging');
+            routeBuses = allBuses;
           }
         } else {
           // If we can't map the route, show all buses (fallback)
@@ -1418,7 +1437,14 @@
     busMarkers = {};
     // Resume tracking closest route if available
     if (closestRoute) {
+      console.log('[hideOtpModal] Resuming closest route tracking');
       fetchAndDisplayBuses();
+      // Restart closest route interval if it was stopped
+      if (!window.closestRouteInterval) {
+        window.closestRouteInterval = setInterval(() => {
+          fetchAndDisplay();
+        }, 15000);
+      }
     }
   }
 
@@ -1577,6 +1603,14 @@
     // Start tracking buses for the routes in this trip
     if (routesToTrack.length > 0) {
       console.log('[showRoute] Tracking buses for routes:', routesToTrack);
+      
+      // Stop closest route tracking when OTP tracking starts
+      if (window.closestRouteInterval) {
+        console.log('[showRoute] Stopping closest route tracking for OTP');
+        clearInterval(window.closestRouteInterval);
+        window.closestRouteInterval = null;
+      }
+      
       fetchAndDisplayBuses(routesToTrack);
       // Set up continuous tracking for this trip
       if (window.otpBusTrackingInterval) {
@@ -1647,6 +1681,18 @@
     // Test the rendering
     currentItins = [testItinerary];
     showRoute(0);
+  };
+  
+  // Debug function to test masterRoutes availability
+  window.testMasterRoutes = function() {
+    console.log('=== MASTERROUTES DEBUG ===');
+    console.log('masterRoutes available:', typeof masterRoutes);
+    console.log('masterRoutes length:', masterRoutes ? masterRoutes.length : 'N/A');
+    if (masterRoutes && masterRoutes.length > 0) {
+      console.log('First route sample:', masterRoutes[0]);
+      console.log('Route IDs available:', masterRoutes.slice(0, 10).map(r => r.route_id));
+    }
+    console.log('=== END DEBUG ===');
   };
   
 
@@ -1770,7 +1816,14 @@
         busMarkers = {};
         // Resume tracking closest route if available
         if (closestRoute) {
+          console.log('[clearBtn] Resuming closest route tracking');
           fetchAndDisplayBuses();
+          // Restart closest route interval if it was stopped
+          if (!window.closestRouteInterval) {
+            window.closestRouteInterval = setInterval(() => {
+              fetchAndDisplay();
+            }, 15000);
+          }
         }
         clearTripPlan();
       });
