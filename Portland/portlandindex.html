@@ -901,6 +901,9 @@
         });
 
         if (closestRoute) {
+          console.log('[Geolocation] Closest route found:', closestRoute);
+          console.log('[Geolocation] Route ID:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
+          
           // --- Draw closest route ---
           const polyline = L.polyline(closestRoute.shape, {
             color: '#0071CE',
@@ -1003,53 +1006,81 @@
   
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
+    console.log('[fetchAndDisplayBuses] Starting bus fetch...');
+    console.log('[fetchAndDisplayBuses] routesToTrack:', routesToTrack);
+    console.log('[fetchAndDisplayBuses] closestRoute:', closestRoute);
+    
     // If no specific routes provided, use closestRoute if available
-    if (!routesToTrack && !closestRoute) return;
-    
-    const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
-    const data = await res.json();
-    const allBuses = data.resultSet.vehicle || [];
-    
-    // Clear existing bus markers
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-    
-    // Determine which routes to track
-    let routesToShow = [];
-    if (routesToTrack) {
-      // Use provided routes (for OTP trips)
-      routesToShow = routesToTrack;
-    } else if (closestRoute) {
-      // Use closest route (for initial load)
-      routesToShow = [{
-        route_id: closestRoute.route_id,
-        direction_id: closestRoute.direction_id,
-        mode: 'BUS' // Default to bus for closest route
-      }];
+    if (!routesToTrack && !closestRoute) {
+      console.log('[fetchAndDisplayBuses] No routes to track and no closest route');
+      return;
     }
     
-    // Track each route
-    routesToShow.forEach(route => {
-      const routeKey = `${route.route_id}-${route.direction_id}`;
-      currentTrackingRoutes.add(routeKey);
+    try {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const allBuses = data.resultSet.vehicle || [];
       
-      // Filter buses for this specific route
-      const routeBuses = allBuses.filter(v => 
-        v.routeNumber == route.route_id && v.direction == route.direction_id
-      );
+      console.log('[fetchAndDisplayBuses] API response - total buses:', allBuses.length);
+      console.log('[fetchAndDisplayBuses] Sample bus data:', allBuses.slice(0, 2));
       
-      // Create markers for each bus on this route
-      routeBuses.forEach(bus => {
-        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+      // Clear existing bus markers
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      
+      // Determine which routes to track
+      let routesToShow = [];
+      if (routesToTrack) {
+        // Use provided routes (for OTP trips)
+        routesToShow = routesToTrack;
+      } else if (closestRoute) {
+        // Use closest route (for initial load)
+        routesToShow = [{
+          route_id: closestRoute.route_id,
+          direction_id: closestRoute.direction_id,
+          mode: 'BUS' // Default to bus for closest route
+        }];
+      }
+      
+      console.log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
+      
+      // Track each route
+      routesToShow.forEach(route => {
+        const routeKey = `${route.route_id}-${route.direction_id}`;
+        currentTrackingRoutes.add(routeKey);
         
-        const routeColor = getRouteColor(route.mode);
-        const icon = createBusIcon(bus.vehicleID, routeColor);
-        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+        console.log('[fetchAndDisplayBuses] Looking for route:', route.route_id, 'direction:', route.direction_id);
         
-        // Store marker with unique key
-        busMarkers[`${bus.vehicleID}-${routeKey}`] = marker;
+        // Filter buses for this specific route
+        const routeBuses = allBuses.filter(v => 
+          v.routeNumber == route.route_id && v.direction == route.direction_id
+        );
+        
+        console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', route.route_id);
+        
+        // Create markers for each bus on this route
+        routeBuses.forEach(bus => {
+          if (!bus.latitude || !bus.longitude || !bus.blockID) {
+            console.log('[fetchAndDisplayBuses] Skipping bus with missing data:', bus);
+            return;
+          }
+          
+          console.log('[fetchAndDisplayBuses] Creating marker for bus:', bus.vehicleID, 'at', bus.latitude, bus.longitude);
+          
+          const routeColor = getRouteColor(route.mode);
+          const icon = createBusIcon(bus.vehicleID, routeColor);
+          const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
+          
+          // Store marker with unique key
+          busMarkers[`${bus.vehicleID}-${routeKey}`] = marker;
+        });
       });
-    });
+      
+      console.log('[fetchAndDisplayBuses] Total bus markers created:', Object.keys(busMarkers).length);
+      
+    } catch (error) {
+      console.error('[fetchAndDisplayBuses] Error fetching buses:', error);
+    }
   }
   
   // Legacy function for backward compatibility
