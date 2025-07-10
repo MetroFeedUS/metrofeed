@@ -1013,68 +1013,89 @@
     });
   }
   
-  // Function to map OTP route names to Trimet route numbers
+  // Function to map OTP route names to Trimet route numbers using masterRoutes data
   function mapOtpRouteToTrimet(otpRouteName) {
-    const routeMapping = {
-      // MAX Lines
-      'Blue Eastside Bus': '100',
-      'Red Line': '200', 
-      'Green Line': '290',
-      'Yellow Line': '290',
-      'Orange Line': '290',
-      'Blue Line': '100',
-      
-      // Bus Routes (common ones)
-      'Division': '4',
-      'Sandy Blvd': '12',
-      'Burnside': '20',
-      'Glisan': '25',
-      'Killingsworth': '72',
-      'Fremont': '75',
-      'Beaverton-Hillsdale': '54',
-      'Tualatin Valley': '57',
-      'Cornell': '63',
-      'Murray': '66',
-      'Scholls Ferry': '88',
-      'Canyon': '92',
-      'Sunset': '94',
-      'Oregon City': '33',
-      'Molalla': '35',
-      'Canby': '37',
-      'Wilsonville': '96',
-      'Sherwood': '98',
-      
-      // Streetcar
-      'Portland Streetcar': '190',
-      'NS Line': '190',
-      'CL Line': '190',
-      
-      // Default fallback - try to extract number from name
-      'default': (name) => {
-        const match = name.match(/(\d+)/);
-        return match ? match[1] : null;
-      }
-    };
+    console.log('[mapOtpRouteToTrimet] Mapping OTP route:', otpRouteName);
     
-    // Try exact match first
-    if (routeMapping[otpRouteName]) {
-      return routeMapping[otpRouteName];
+    // If it's already a number, use it directly
+    if (!isNaN(otpRouteName)) {
+      console.log('[mapOtpRouteToTrimet] Direct number match:', otpRouteName);
+      return otpRouteName;
     }
     
-    // Try partial matches
-    for (const [key, value] of Object.entries(routeMapping)) {
-      if (otpRouteName.includes(key) || key.includes(otpRouteName)) {
+    // Create a comprehensive mapping from masterRoutes data
+    const routeMappings = {};
+    masterRoutes.forEach(route => {
+      // Extract route number from route_title (e.g., "Route 15 - To City Ctr..." -> "15")
+      const routeNumberMatch = route.route_title.match(/Route (\d+)/);
+      if (routeNumberMatch) {
+        const routeNumber = routeNumberMatch[1];
+        routeMappings[routeNumber] = routeNumber;
+        
+        // Also map common variations
+        routeMappings[`Route ${routeNumber}`] = routeNumber;
+        routeMappings[`Bus ${routeNumber}`] = routeNumber;
+        routeMappings[`${routeNumber}`] = routeNumber;
+      }
+      
+      // Handle special routes like FX2
+      if (route.route_id === 'FX2') {
+        routeMappings['FX2'] = 'FX2';
+        routeMappings['Route FX2'] = 'FX2';
+        routeMappings['Bus FX2'] = 'FX2';
+      }
+    });
+    
+    // Common MAX line mappings (these are often named differently in OTP)
+    const maxMappings = {
+      'Blue': '100',
+      'Red': '200', 
+      'Green': '290',
+      'Yellow': '290',
+      'Orange': '290',
+      'MAX Blue': '100',
+      'MAX Red': '200',
+      'MAX Green': '290',
+      'MAX Yellow': '290',
+      'MAX Orange': '290'
+    };
+    
+    // Check for MAX lines first
+    for (const [line, number] of Object.entries(maxMappings)) {
+      if (otpRouteName.includes(line)) {
+        console.log('[mapOtpRouteToTrimet] MAX line match:', line, '->', number);
+        return number;
+      }
+    }
+    
+    // Try exact match in our route mappings
+    if (routeMappings[otpRouteName]) {
+      console.log('[mapOtpRouteToTrimet] Exact match found:', otpRouteName, '->', routeMappings[otpRouteName]);
+      return routeMappings[otpRouteName];
+    }
+    
+    // Try to extract number from name (e.g., "Route 4" -> "4")
+    const numberMatch = otpRouteName.match(/(\d+)/);
+    if (numberMatch) {
+      const extractedNumber = numberMatch[1];
+      if (routeMappings[extractedNumber]) {
+        console.log('[mapOtpRouteToTrimet] Number extraction match:', extractedNumber);
+        return extractedNumber;
+      }
+    }
+    
+    // Try partial matching (e.g., "15th to Broadway" might match "Route 15")
+    for (const [key, value] of Object.entries(routeMappings)) {
+      if (otpRouteName.toLowerCase().includes(key.toLowerCase()) || 
+          key.toLowerCase().includes(otpRouteName.toLowerCase())) {
+        console.log('[mapOtpRouteToTrimet] Partial match found:', otpRouteName, '->', value);
         return value;
       }
     }
     
-    // Try to extract number from name
-    const numberMatch = otpRouteName.match(/(\d+)/);
-    if (numberMatch) {
-      return numberMatch[1];
-    }
-    
+    // If no mapping found, return null and we'll show all buses
     console.log('[mapOtpRouteToTrimet] No mapping found for:', otpRouteName);
+    console.log('[mapOtpRouteToTrimet] Available route numbers:', Object.keys(routeMappings));
     return null;
   }
   
@@ -1119,14 +1140,14 @@
       console.log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
       console.log('[fetchAndDisplayBuses] Sample of all buses route numbers:', allBuses.slice(0, 5).map(b => ({ routeNumber: b.routeNumber, direction: b.direction, vehicleID: b.vehicleID })));
       const allRouteNumbers = allBuses.map(b => b.routeNumber).sort();
-      console.log('[fetchAndDisplayBuses] All route numbers:', allRouteNumbers);
+      console.log('[fetchAndDisplayBuses] All route numbers:', JSON.stringify(allRouteNumbers));
       
       // Track each route
       routesToShow.forEach(route => {
         const routeKey = `${route.route_id}-${route.direction_id}`;
         currentTrackingRoutes.add(routeKey);
         
-        // Map OTP route name to Trimet route number
+        // Map OTP route name to Trimet route number using masterRoutes data
         let trimetRouteNumber = route.route_id;
         if (route.route_id && isNaN(route.route_id)) {
           // This is likely an OTP route name, try to map it
@@ -1137,13 +1158,27 @@
         console.log('[fetchAndDisplayBuses] Looking for route:', trimetRouteNumber, 'direction:', route.direction_id);
         const availableRouteNumbers = [...new Set(allBuses.map(b => b.routeNumber))];
         const availableDirections = [...new Set(allBuses.map(b => b.direction))];
-        console.log('[fetchAndDisplayBuses] Available route numbers:', availableRouteNumbers);
-        console.log('[fetchAndDisplayBuses] Available directions:', availableDirections);
+        console.log('[fetchAndDisplayBuses] Available route numbers:', JSON.stringify(availableRouteNumbers));
+        console.log('[fetchAndDisplayBuses] Available directions:', JSON.stringify(availableDirections));
         
         // Filter buses for this specific route using mapped route number
-        const routeBuses = allBuses.filter(v => 
-          v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
-        );
+        let routeBuses = [];
+        if (trimetRouteNumber) {
+          // Try to find buses for the specific mapped route
+          routeBuses = allBuses.filter(v => 
+            v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
+          );
+          
+          // If no buses found with direction, try without direction constraint
+          if (routeBuses.length === 0) {
+            console.log('[fetchAndDisplayBuses] No buses found with direction constraint, trying without direction');
+            routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+          }
+        } else {
+          // If we can't map the route, show all buses (fallback)
+          console.log('[fetchAndDisplayBuses] No route mapping found, showing all buses');
+          routeBuses = allBuses;
+        }
         
         console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber);
         
@@ -1253,11 +1288,20 @@
         } else if (leg.mode === 'BUS') {
           icon = '🚌';
           segClass = 'seg-bus';
-          // Format bus label with route name and number
+          // Format bus label with route name and number using masterRoutes data
           if (leg.route) {
-            // Try to get route name from leg info or use a default format
-            let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
-            label = `${routeName} - ${leg.route}`;
+            // Try to find route info in masterRoutes
+            const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
+            if (masterRoute) {
+              // Extract route number from route_title (e.g., "Route 15 - To City Ctr..." -> "15")
+              const routeNumberMatch = masterRoute.route_title.match(/Route (\d+)/);
+              const routeNumber = routeNumberMatch ? routeNumberMatch[1] : leg.route;
+              label = `Bus ${routeNumber} - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
+            } else {
+              // Fallback to OTP data
+              let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
+              label = `${routeName} - ${leg.route}`;
+            }
           } else {
             label = 'Bus';
           }
@@ -1293,8 +1337,18 @@
         let modeTxt = leg.mode === 'WALK' ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode;
         let lineInfo = '';
         if (leg.mode === 'BUS' && leg.route) {
-          let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
-          lineInfo = ` <b>${routeName} - ${leg.route}</b>`;
+          // Try to find route info in masterRoutes for better display
+          const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
+          if (masterRoute) {
+            const routeNumberMatch = masterRoute.route_title.match(/Route (\d+)/);
+            const routeNumber = routeNumberMatch ? routeNumberMatch[1] : leg.route;
+            const routeDescription = masterRoute.route_title.split(' - ')[1] || 'Portland';
+            lineInfo = ` <b>Bus ${routeNumber} - ${routeDescription}</b>`;
+          } else {
+            // Fallback to OTP data
+            let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
+            lineInfo = ` <b>${routeName} - ${leg.route}</b>`;
+          }
         } else if (leg.route) {
           lineInfo = ` <b>${leg.route}</b>`;
         }
