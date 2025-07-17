@@ -1361,10 +1361,12 @@
             const masterRoute = masterRoutes.find(r => r.route_id === bus.routeNumber);
             if (masterRoute) {
               popupContent += `<strong>Route Name:</strong> ${masterRoute.route_title}<br>`;
-              // Add link to route page
-              popupContent += `<a href="https://metrofeedus.com/portland/busroutesmain?route=${bus.routeNumber}" target="_blank" style="color: #4dd0e1; text-decoration: none; display: inline-block; margin-top: 8px; padding: 4px 8px; border: 1px solid #4dd0e1; border-radius: 4px;">📋 View Route Page</a>`;
             }
           }
+          
+          // Add link to specific route page using route and direction
+          const directionId = bus.direction || 0;
+          popupContent += `<a href="https://metrofeedus.com/portland/pythonbusroutes/route-${bus.routeNumber}-dir${directionId}.html" target="_blank" style="color: #4dd0e1; text-decoration: none; display: inline-block; margin-top: 8px; padding: 6px 12px; border: 1px solid #4dd0e1; border-radius: 6px; background: rgba(77, 208, 225, 0.1); font-weight: bold;">🚌 View Route ${bus.routeNumber} (Dir ${directionId})</a>`;
           
           // Add OTP context if this is from an OTP trip
           if (isOtpBus) {
@@ -1553,7 +1555,6 @@
         return `<span class='${segClass}' title='${label}'>
           <span class='seg-icon'>${icon}</span>
           <span>${mins}m</span>
-          ${leg.mode === 'BUS' && leg.route ? `<br><small style="font-size:0.8em;opacity:0.9;">${label}</small>` : ''}
         </span>`;
       }).join('');
       // Overlay details for route info
