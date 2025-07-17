@@ -1298,12 +1298,25 @@
                 routeColor = legInfo.color;
                 isOtpBus = true;
                 matchedLegKey = legKey;
-                console.log('[Bus Matching] Bus', bus.vehicleID, 'matched to leg:', legKey, 'color:', legInfo.color);
+                console.log('[Bus Matching] Bus', bus.vehicleID, 'matched to leg:', legKey, 'color:', legInfo.color, 'description:', legInfo.description);
                 break;
               }
             }
             
-            // If no exact match, check if it's any OTP route
+            // If no exact match, try matching by route description
+            if (!isOtpBus) {
+              for (const [legKey, legInfo] of Object.entries(window.currentLegColorMapping)) {
+                if (legInfo.description && legInfo.description.toLowerCase().includes(bus.routeNumber.toString())) {
+                  routeColor = legInfo.color;
+                  isOtpBus = true;
+                  matchedLegKey = legKey;
+                  console.log('[Bus Matching] Bus', bus.vehicleID, 'matched by description to leg:', legKey, 'color:', legInfo.color);
+                  break;
+                }
+              }
+            }
+            
+            // If still no match, check if it's any OTP route
             if (!isOtpBus) {
               const otpRoute = routesToTrack.find(r => r.route_id === bus.routeNumber);
               if (otpRoute) {
@@ -1692,6 +1705,49 @@
   
   // Keep walk color consistent
   const WALK_COLOR = "#666";
+  
+  // Function to find route in mastermap.js by route name/description
+  function findRouteByDescription(description) {
+    if (!masterRoutes) return null;
+    
+    // Clean the description (remove common prefixes/suffixes)
+    const cleanDesc = description.toLowerCase()
+      .replace(/^bus\s+/i, '')
+      .replace(/^route\s+/i, '')
+      .replace(/\s*-\s*portland$/i, '')
+      .trim();
+    
+    console.log('[findRouteByDescription] Looking for:', cleanDesc);
+    
+    // Try exact match first
+    for (const route of masterRoutes) {
+      const routeDesc = route.route_title.toLowerCase()
+        .replace(/^route\s+\d+\s*-\s*/i, '')
+        .replace(/\s*-\s*portland$/i, '')
+        .trim();
+      
+      if (routeDesc === cleanDesc) {
+        console.log('[findRouteByDescription] Exact match found:', route.route_id);
+        return route;
+      }
+    }
+    
+    // Try partial match
+    for (const route of masterRoutes) {
+      const routeDesc = route.route_title.toLowerCase()
+        .replace(/^route\s+\d+\s*-\s*/i, '')
+        .replace(/\s*-\s*portland$/i, '')
+        .trim();
+      
+      if (routeDesc.includes(cleanDesc) || cleanDesc.includes(routeDesc)) {
+        console.log('[findRouteByDescription] Partial match found:', route.route_id);
+        return route;
+      }
+    }
+    
+    console.log('[findRouteByDescription] No match found for:', cleanDesc);
+    return null;
+  }
 
   window.showRoute = function(idx) {
     console.log('[showRoute] Called with idx:', idx);
@@ -1732,15 +1788,44 @@
       } else {
         // Assign unique color to each transit leg
         color = legColors[legIndex % legColors.length];
-        legKey = `${leg.mode}-${leg.route}-${leg.direction || 0}`;
+        
+        // Extract route description from itinerary
+        let routeDescription = '';
+        let routeNumber = leg.route;
+        
+        if (leg.routeLongName) {
+          routeDescription = leg.routeLongName;
+        } else if (leg.routeShortName) {
+          routeDescription = leg.routeShortName;
+        } else if (leg.route) {
+          // Try to find route info in masterRoutes
+          const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
+          if (masterRoute) {
+            routeDescription = masterRoute.route_title.split(' - ')[1] || masterRoute.route_title;
+          }
+        }
+        
+        // Try to find the actual route number using the description
+        if (routeDescription) {
+          const foundRoute = findRouteByDescription(routeDescription);
+          if (foundRoute) {
+            routeNumber = foundRoute.route_id;
+            console.log('[showRoute] Found route number:', routeNumber, 'for description:', routeDescription);
+          }
+        }
+        
+        legKey = `${leg.mode}-${routeNumber}-${leg.direction || 0}`;
         
         // Store color mapping for bus matching
         legColorMapping[legKey] = {
           color: color,
-          route: leg.route,
+          route: routeNumber,
           direction: leg.direction || 0,
-          mode: leg.mode
+          mode: leg.mode,
+          description: routeDescription
         };
+        
+        console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription);
       }
       
       let coords = [];
@@ -2136,3 +2221,4 @@
 
 </body>
 </html>
+
