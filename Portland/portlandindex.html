@@ -537,6 +537,7 @@
   <div class="otp-btn-row">
     <button id="goBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
     <button id="clearBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
+    <button id="toggleRouteBtn" style="width: 60px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Toggle your closest route">Route</button>
   </div>
 </div>
 
@@ -769,6 +770,50 @@
       mapSelectionMode = null;
       map.getContainer().style.cursor = 'grab';
     }
+    
+    // Clear OTP route lines if they exist
+    if (window.routeLegLines && window.routeLegLines.length) {
+      window.routeLegLines.forEach(line => map.removeLayer(line));
+      window.routeLegLines = [];
+    }
+    
+    // Clear OTP stop markers if they exist
+    if (window.routeStopMarkers && window.routeStopMarkers.length) {
+      window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
+      window.routeStopMarkers = [];
+    }
+    
+    // Stop OTP bus tracking
+    if (window.otpBusTrackingInterval) {
+      clearInterval(window.otpBusTrackingInterval);
+      window.otpBusTrackingInterval = null;
+    }
+    
+    // Clear bus markers
+    Object.values(busMarkers).forEach(m => map.removeLayer(m));
+    busMarkers = {};
+    
+    // Resume tracking closest route if available
+    if (closestRoute) {
+      console.log('[clearTripPlan] Resuming closest route tracking');
+      
+      // Restore user's closest route polyline
+      if (!userLocationPolyline && closestRoute) {
+        userLocationPolyline = L.polyline(closestRoute.shape, {
+          color: '#0071CE',
+          weight: 4,
+          opacity: 0.7
+        }).addTo(map);
+      }
+      
+      fetchAndDisplayBuses();
+      // Restart closest route interval if it was stopped
+      if (!window.closestRouteInterval) {
+        window.closestRouteInterval = setInterval(() => {
+          fetchAndDisplay();
+        }, 15000);
+      }
+    }
   }
 
   function findClosestRouteToPoint(lat, lon) {
@@ -914,6 +959,7 @@
 
   // Simple flag to prevent multiple auto-snaps
   let hasAutoSnapped = false;
+  let userLocationPolyline = null; // Track the user's route polyline
 
   if (navigator.geolocation) {
     // Track if we've already done the initial route setup
@@ -978,15 +1024,24 @@
           console.log('[Geolocation] Route ID:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
           
           // --- Draw closest route ---
-          const polyline = L.polyline(closestRoute.shape, {
+          userLocationPolyline = L.polyline(closestRoute.shape, {
             color: '#0071CE',
             weight: 4,
             opacity: 0.7
           }).addTo(map);
+          
           // Only fitBounds once on initial load - but let user control the map
           if (!hasAutoSnapped && !map.hasBeenMovedByUser) {
-            map.fitBounds(polyline.getBounds());
-            hasAutoSnapped = true;
+            // Add a small delay to make the snapping less jarring
+            setTimeout(() => {
+              if (!map.hasBeenMovedByUser) {
+                map.fitBounds(userLocationPolyline.getBounds(), { 
+                  padding: [20, 20],
+                  maxZoom: 14 // Don't zoom in too much
+                });
+                hasAutoSnapped = true;
+              }
+            }, 1000); // 1 second delay
           }
 
                   // --- Show stops + next time highlight ---
@@ -2268,6 +2323,13 @@
           window.routeLegLines.forEach(line => map.removeLayer(line));
           window.routeLegLines = [];
         }
+        
+        // Hide user's closest route when planning a trip
+        if (userLocationPolyline) {
+          map.removeLayer(userLocationPolyline);
+          userLocationPolyline = null;
+        }
+        
         console.log('Go button clicked!'); // Debug log
         const startInput = document.getElementById('startInput').value.trim();
         const endInput = document.getElementById('endInput').value.trim();
@@ -2301,31 +2363,29 @@
     const clearBtn = document.getElementById('clearBtn');
     if (clearBtn) {
       clearBtn.addEventListener('click', function() {
-        // Clear previous route lines
-        if (window.routeLegLines && window.routeLegLines.length) {
-          window.routeLegLines.forEach(line => map.removeLayer(line));
-          window.routeLegLines = [];
-        }
-        // Stop OTP bus tracking
-        if (window.otpBusTrackingInterval) {
-          clearInterval(window.otpBusTrackingInterval);
-          window.otpBusTrackingInterval = null;
-        }
-        // Clear bus markers
-        Object.values(busMarkers).forEach(m => map.removeLayer(m));
-        busMarkers = {};
-        // Resume tracking closest route if available
-        if (closestRoute) {
-          console.log('[clearBtn] Resuming closest route tracking');
-          fetchAndDisplayBuses();
-          // Restart closest route interval if it was stopped
-          if (!window.closestRouteInterval) {
-            window.closestRouteInterval = setInterval(() => {
-              fetchAndDisplay();
-            }, 15000);
-          }
-        }
         clearTripPlan();
+      });
+    }
+    
+    // Toggle route button handler
+    const toggleRouteBtn = document.getElementById('toggleRouteBtn');
+    if (toggleRouteBtn) {
+      toggleRouteBtn.addEventListener('click', function() {
+        if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
+          // Hide route
+          map.removeLayer(userLocationPolyline);
+          toggleRouteBtn.style.backgroundColor = '#666';
+          toggleRouteBtn.textContent = 'Route';
+        } else if (closestRoute) {
+          // Show route
+          userLocationPolyline = L.polyline(closestRoute.shape, {
+            color: '#0071CE',
+            weight: 4,
+            opacity: 0.7
+          }).addTo(map);
+          toggleRouteBtn.style.backgroundColor = '#4dd0e1';
+          toggleRouteBtn.textContent = 'Hide';
+        }
       });
     }
 
