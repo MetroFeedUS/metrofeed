@@ -537,7 +537,7 @@
   <div class="otp-btn-row">
     <button id="goBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
     <button id="clearBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
-    <button id="toggleRouteBtn" style="width: 60px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Toggle your closest route">Route</button>
+    <button id="toggleRouteBtn" style="width: 80px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Hide your closest route">Hide Route</button>
   </div>
 </div>
 
@@ -797,13 +797,63 @@
     if (closestRoute) {
       console.log('[clearTripPlan] Resuming closest route tracking');
       
-      // Restore user's closest route polyline
+      // Restore user's closest route polyline and stops
       if (!userLocationPolyline && closestRoute) {
         userLocationPolyline = L.polyline(closestRoute.shape, {
           color: '#0071CE',
           weight: 4,
           opacity: 0.7
         }).addTo(map);
+        
+        // Recreate stop markers
+        const nowMins = getPortlandMinutes();
+        userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+        userLocationStopMarkers = [];
+        
+        closestRoute.stops.forEach(stop => {
+          let highlightedTimes = [];
+          let foundNext = false;
+          stop.times.forEach(timeStr => {
+            let cleanTime = timeStr.trim();
+            let [h, m] = cleanTime.split(":"),
+              schedMins = parseInt(h) * 60 + parseInt(m);
+            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+            if (!foundNext && schedMins >= nowMins) {
+              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+              foundNext = true;
+            } else {
+              highlightedTimes.push(cleanTime);
+            }
+          });
+
+          const stopMarker = L.circleMarker([stop.lat, stop.lon], {
+            radius: 6,
+            color: '#4dd0e1',
+            fillColor: '#4dd0e1',
+            fillOpacity: 0.9,
+            weight: 1
+          }).bindPopup(
+            `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                ${
+                  highlightedTimes.map(t =>
+                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                  ).join('') || '<div>No scheduled times</div>'
+                }
+              </div>`
+          ).addTo(map);
+
+          userLocationStopMarkers.push(stopMarker);
+        });
+        
+        // Update button state
+        const toggleRouteBtn = document.getElementById('toggleRouteBtn');
+        if (toggleRouteBtn) {
+          toggleRouteBtn.style.backgroundColor = '#4dd0e1';
+          toggleRouteBtn.textContent = 'Hide Route';
+          toggleRouteBtn.title = 'Hide your closest route';
+        }
       }
       
       fetchAndDisplayBuses();
@@ -960,6 +1010,7 @@
   // Simple flag to prevent multiple auto-snaps
   let hasAutoSnapped = false;
   let userLocationPolyline = null; // Track the user's route polyline
+  let userLocationStopMarkers = []; // Track the user's route stop markers
 
   if (navigator.geolocation) {
     // Track if we've already done the initial route setup
@@ -1044,44 +1095,50 @@
             }, 1000); // 1 second delay
           }
 
-                  // --- Show stops + next time highlight ---
+                          // --- Show stops + next time highlight ---
         const nowMins = getPortlandMinutes();
 
-          closestRoute.stops.forEach(stop => {
-            let highlightedTimes = [];
-            let foundNext = false;
-            stop.times.forEach(timeStr => {
-              let cleanTime = timeStr.trim();
-              let [h, m] = cleanTime.split(":"),
-                schedMins = parseInt(h) * 60 + parseInt(m);
-              if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-              if (!foundNext && schedMins >= nowMins) {
-                highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-                foundNext = true;
-              } else {
-                highlightedTimes.push(cleanTime);
-              }
-            });
+        // Clear any existing stop markers
+        userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+        userLocationStopMarkers = [];
 
-            L.circleMarker([stop.lat, stop.lon], {
-              radius: 6,
-              color: '#4dd0e1',
-              fillColor: '#4dd0e1',
-              fillOpacity: 0.9,
-              weight: 1
-            }).bindPopup(
-              `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                  <strong style='color:#4dd0e1;'>${stop.name}</strong>
-                  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-                  ${
-                    highlightedTimes.map(t =>
-                      `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                    ).join('') || '<div>No scheduled times</div>'
-                  }
-                </div>`
-            ).addTo(map);
+        closestRoute.stops.forEach(stop => {
+          let highlightedTimes = [];
+          let foundNext = false;
+          stop.times.forEach(timeStr => {
+            let cleanTime = timeStr.trim();
+            let [h, m] = cleanTime.split(":"),
+              schedMins = parseInt(h) * 60 + parseInt(m);
+            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+            if (!foundNext && schedMins >= nowMins) {
+              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+              foundNext = true;
+            } else {
+              highlightedTimes.push(cleanTime);
+            }
+          });
 
-          }); // closes stops.forEach
+          const stopMarker = L.circleMarker([stop.lat, stop.lon], {
+            radius: 6,
+            color: '#4dd0e1',
+            fillColor: '#4dd0e1',
+            fillOpacity: 0.9,
+            weight: 1
+          }).bindPopup(
+            `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                ${
+                  highlightedTimes.map(t =>
+                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                  ).join('') || '<div>No scheduled times</div>'
+                }
+              </div>`
+          ).addTo(map);
+
+          userLocationStopMarkers.push(stopMarker);
+
+        }); // closes stops.forEach
 
           // --- Only fetch/display bus locations AFTER closestRoute is known ---
           fetchAndDisplay(); // <-- run initial fetch
@@ -2372,19 +2429,65 @@
     if (toggleRouteBtn) {
       toggleRouteBtn.addEventListener('click', function() {
         if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
-          // Hide route
+          // Hide route and stops
           map.removeLayer(userLocationPolyline);
+          userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
           toggleRouteBtn.style.backgroundColor = '#666';
-          toggleRouteBtn.textContent = 'Route';
+          toggleRouteBtn.textContent = 'Show Route';
+          toggleRouteBtn.title = 'Show your closest route';
         } else if (closestRoute) {
-          // Show route
+          // Show route and stops
           userLocationPolyline = L.polyline(closestRoute.shape, {
             color: '#0071CE',
             weight: 4,
             opacity: 0.7
           }).addTo(map);
+          
+          // Recreate stop markers
+          const nowMins = getPortlandMinutes();
+          userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+          userLocationStopMarkers = [];
+          
+          closestRoute.stops.forEach(stop => {
+            let highlightedTimes = [];
+            let foundNext = false;
+            stop.times.forEach(timeStr => {
+              let cleanTime = timeStr.trim();
+              let [h, m] = cleanTime.split(":"),
+                schedMins = parseInt(h) * 60 + parseInt(m);
+              if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+              if (!foundNext && schedMins >= nowMins) {
+                highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+                foundNext = true;
+              } else {
+                highlightedTimes.push(cleanTime);
+              }
+            });
+
+            const stopMarker = L.circleMarker([stop.lat, stop.lon], {
+              radius: 6,
+              color: '#4dd0e1',
+              fillColor: '#4dd0e1',
+              fillOpacity: 0.9,
+              weight: 1
+            }).bindPopup(
+              `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                  <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                  ${
+                    highlightedTimes.map(t =>
+                      `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                    ).join('') || '<div>No scheduled times</div>'
+                  }
+                </div>`
+            ).addTo(map);
+
+            userLocationStopMarkers.push(stopMarker);
+          });
+          
           toggleRouteBtn.style.backgroundColor = '#4dd0e1';
-          toggleRouteBtn.textContent = 'Hide';
+          toggleRouteBtn.textContent = 'Hide Route';
+          toggleRouteBtn.title = 'Hide your closest route';
         }
       });
     }
