@@ -849,12 +849,7 @@
         
         // Update button state (only if not manually hidden)
         if (!userRouteManuallyHidden) {
-          const toggleRouteBtn = document.getElementById('toggleRouteBtn');
-          if (toggleRouteBtn) {
-            toggleRouteBtn.style.backgroundColor = '#4dd0e1';
-            toggleRouteBtn.textContent = 'Hide Route';
-            toggleRouteBtn.title = 'Hide your closest route';
-          }
+          updateRouteButtonState();
         }
       }
       
@@ -1143,6 +1138,9 @@
 
         }); // closes stops.forEach
 
+        // Update button state to show route is visible
+        updateRouteButtonState();
+
           // --- Only fetch/display bus locations AFTER closestRoute is known ---
           fetchAndDisplay(); // <-- run initial fetch
           // Set up continuous tracking for closest route
@@ -1176,6 +1174,24 @@
   // === SECTION: LIVE BUS MARKERS ===
   let busMarkers = {};
   let currentTrackingRoutes = new Set(); // Track which routes we're currently showing buses for
+  
+  // Function to update the route toggle button state
+  function updateRouteButtonState() {
+    const toggleRouteBtn = document.getElementById('toggleRouteBtn');
+    if (toggleRouteBtn) {
+      if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
+        // Route is visible
+        toggleRouteBtn.style.backgroundColor = '#4dd0e1';
+        toggleRouteBtn.textContent = 'Hide Route';
+        toggleRouteBtn.title = 'Hide your closest route';
+      } else {
+        // Route is hidden
+        toggleRouteBtn.style.backgroundColor = '#666';
+        toggleRouteBtn.textContent = 'Show Route';
+        toggleRouteBtn.title = 'Show your closest route';
+      }
+    }
+  }
   
   // Function to get route color based on mode
   function getRouteColor(mode) {
@@ -2436,9 +2452,7 @@
           map.removeLayer(userLocationPolyline);
           userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
           userRouteManuallyHidden = true; // Mark as manually hidden
-          toggleRouteBtn.style.backgroundColor = '#666';
-          toggleRouteBtn.textContent = 'Show Route';
-          toggleRouteBtn.title = 'Show your closest route';
+          updateRouteButtonState();
         } else if (closestRoute) {
           // Show route and stops
           userLocationPolyline = L.polyline(closestRoute.shape, {
@@ -2489,9 +2503,8 @@
             userLocationStopMarkers.push(stopMarker);
           });
           
-          toggleRouteBtn.style.backgroundColor = '#4dd0e1';
-          toggleRouteBtn.textContent = 'Hide Route';
-          toggleRouteBtn.title = 'Hide your closest route';
+          userRouteManuallyHidden = false; // Mark as manually shown
+          updateRouteButtonState();
         }
       });
     }
