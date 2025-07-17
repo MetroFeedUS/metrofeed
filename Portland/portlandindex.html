@@ -1251,21 +1251,17 @@
             console.log('[fetchAndDisplayBuses] Buses with route match (no direction):', routeBuses.length);
           }
           
-          // If still no buses, show buses with similar route numbers
+          // If still no buses, show a message and some nearby active routes
           if (routeBuses.length === 0) {
-            console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- showing buses with similar route numbers');
-            // Show buses with similar route numbers (e.g., if looking for "15", show "15", "150", "151", etc.)
-            routeBuses = allBuses.filter(v => 
-              v.routeNumber.toString().startsWith(trimetRouteNumber.toString()) ||
-              trimetRouteNumber.toString().startsWith(v.routeNumber.toString())
-            );
-            console.log('[fetchAndDisplayBuses] Buses with similar route numbers:', routeBuses.length);
-          }
-          
-          // If still no buses, show all buses for this route number (fallback)
-          if (routeBuses.length === 0) {
-            console.log('[fetchAndDisplayBuses] Still no buses found, showing all buses as fallback');
-            routeBuses = allBuses;
+            console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- route may not be active at this time');
+            
+            // Show a few active routes as alternatives
+            const activeRoutes = [...new Set(allBuses.map(b => b.routeNumber))].slice(0, 5);
+            console.log('[fetchAndDisplayBuses] Active routes available:', activeRoutes);
+            
+            // Show buses from a few active routes as alternatives
+            routeBuses = allBuses.filter(v => activeRoutes.includes(v.routeNumber));
+            console.log('[fetchAndDisplayBuses] Showing', routeBuses.length, 'buses from active routes as alternatives');
           }
         } else {
           // If we can't map the route, show all buses for debugging
@@ -1274,6 +1270,12 @@
         }
         
         console.log('[fetchAndDisplayBuses] Final buses to display:', routeBuses.length);
+        
+        // Show status message if no buses found for the requested route
+        if (routeBuses.length === 0 && trimetRouteNumber) {
+          console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- route may not be active');
+          // Could add a visual indicator here if needed
+        }
         
         console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber);
         
@@ -1296,6 +1298,7 @@
           console.log('[Bus Color Debug] Processing bus:', bus.vehicleID, 'route:', bus.routeNumber, 'direction:', bus.direction);
           console.log('[Bus Color Debug] routesToTrack:', routesToTrack);
           console.log('[Bus Color Debug] currentLegColorMapping:', window.currentLegColorMapping);
+          console.log('[Bus Color Debug] Leg mapping details:', JSON.stringify(window.currentLegColorMapping, null, 2));
           
           if (routesToTrack && window.currentLegColorMapping) {
             // Try to match this bus to a specific route leg
@@ -1331,7 +1334,7 @@
               }
             }
           }
-          console.log('[Bus Icon Debug] Creating icon for bus', bus.vehicleID, 'with color:', routeColor, 'isOtpBus:', isOtpBus);
+          console.log('[Bus Icon Debug] Creating icon for bus', bus.vehicleID, 'with color:', routeColor, 'isOtpBus:', isOtpBus, 'matchedLegKey:', matchedLegKey);
           const icon = createBusIcon(bus.vehicleID, routeColor, isOtpBus);
           const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
           
@@ -1366,7 +1369,14 @@
             // Add pulsing effect to the marker
             marker.getElement().style.animation = 'pulse 1.5s infinite';
           } else if (routesToTrack) {
-            popupContent += `<br><em style="color: #4dd0e1;">🚌 This bus is part of your trip route</em>`;
+            // Check if this is an alternative route (not the originally requested route)
+            const isAlternativeRoute = routesToTrack.some(r => r.route_id === trimetRouteNumber) && 
+                                     bus.routeNumber != trimetRouteNumber;
+            if (isAlternativeRoute) {
+              popupContent += `<br><em style="color: #ffa500; font-weight: bold;">🚌 Alternative route (your route ${trimetRouteNumber} not active)</em>`;
+            } else {
+              popupContent += `<br><em style="color: #4dd0e1;">🚌 This bus is part of your trip route</em>`;
+            }
           }
           
           popupContent += `</div>`;
@@ -2014,6 +2024,52 @@
       }
     } catch (error) {
       console.error('API Error:', error);
+    }
+    console.log('=== END DEBUG ===');
+  };
+  
+  // Debug function to test specific route tracking
+  window.testRouteTracking = function(routeNumber, direction = 0) {
+    console.log('=== ROUTE TRACKING DEBUG ===');
+    console.log('Testing route:', routeNumber, 'direction:', direction);
+    
+    const testRoute = {
+      route_id: routeNumber.toString(),
+      direction_id: direction,
+      mode: 'BUS'
+    };
+    
+    console.log('Test route object:', testRoute);
+    fetchAndDisplayBuses([testRoute]);
+    console.log('=== END DEBUG ===');
+  };
+  
+  // Debug function to show all available routes
+  window.showAvailableRoutes = function() {
+    console.log('=== AVAILABLE ROUTES DEBUG ===');
+    console.log('masterRoutes available:', masterRoutes ? masterRoutes.length : 'undefined');
+    if (masterRoutes && masterRoutes.length > 0) {
+      const routeIds = masterRoutes.map(r => r.route_id).sort();
+      console.log('All route IDs in masterRoutes:', routeIds);
+      
+      // Show routes that might be active (common routes)
+      const commonRoutes = ['2', '4', '6', '8', '9', '12', '14', '15', '17', '19', '20', '21', '33', '35', '54', '56', '72', '75', '90', '100', '190', '200', '287', '288', '291', '292', '293'];
+      console.log('Common active routes to test:', commonRoutes);
+    }
+    console.log('=== END DEBUG ===');
+  };
+  
+  // Debug function to show current leg color mapping
+  window.showLegColorMapping = function() {
+    console.log('=== LEG COLOR MAPPING DEBUG ===');
+    console.log('currentLegColorMapping:', window.currentLegColorMapping);
+    if (window.currentLegColorMapping) {
+      console.log('Leg mapping details:');
+      Object.entries(window.currentLegColorMapping).forEach(([key, info]) => {
+        console.log(`  ${key}:`, info);
+      });
+    } else {
+      console.log('No leg color mapping found - no OTP trip active');
     }
     console.log('=== END DEBUG ===');
   };
