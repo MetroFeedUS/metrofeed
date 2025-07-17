@@ -797,8 +797,8 @@
     if (closestRoute) {
       console.log('[clearTripPlan] Resuming closest route tracking');
       
-      // Restore user's closest route polyline and stops
-      if (!userLocationPolyline && closestRoute) {
+      // Restore user's closest route polyline and stops (only if not manually hidden)
+      if (!userLocationPolyline && closestRoute && !userRouteManuallyHidden) {
         userLocationPolyline = L.polyline(closestRoute.shape, {
           color: '#0071CE',
           weight: 4,
@@ -847,18 +847,20 @@
           userLocationStopMarkers.push(stopMarker);
         });
         
-        // Update button state
-        const toggleRouteBtn = document.getElementById('toggleRouteBtn');
-        if (toggleRouteBtn) {
-          toggleRouteBtn.style.backgroundColor = '#4dd0e1';
-          toggleRouteBtn.textContent = 'Hide Route';
-          toggleRouteBtn.title = 'Hide your closest route';
+        // Update button state (only if not manually hidden)
+        if (!userRouteManuallyHidden) {
+          const toggleRouteBtn = document.getElementById('toggleRouteBtn');
+          if (toggleRouteBtn) {
+            toggleRouteBtn.style.backgroundColor = '#4dd0e1';
+            toggleRouteBtn.textContent = 'Hide Route';
+            toggleRouteBtn.title = 'Hide your closest route';
+          }
         }
       }
       
       fetchAndDisplayBuses();
-      // Restart closest route interval if it was stopped
-      if (!window.closestRouteInterval) {
+      // Restart closest route interval if it was stopped and route is not manually hidden
+      if (!window.closestRouteInterval && !userRouteManuallyHidden) {
         window.closestRouteInterval = setInterval(() => {
           fetchAndDisplay();
         }, 15000);
@@ -1011,6 +1013,7 @@
   let hasAutoSnapped = false;
   let userLocationPolyline = null; // Track the user's route polyline
   let userLocationStopMarkers = []; // Track the user's route stop markers
+  let userRouteManuallyHidden = false; // Track if user manually hid the route
 
   if (navigator.geolocation) {
     // Track if we've already done the initial route setup
@@ -1147,11 +1150,11 @@
             clearInterval(window.closestRouteInterval);
           }
           window.closestRouteInterval = setInterval(() => {
-            // Only track closest route if we're not doing OTP
-            if (!window.otpBusTrackingInterval) {
+            // Only track closest route if we're not doing OTP and route is not manually hidden
+            if (!window.otpBusTrackingInterval && !userRouteManuallyHidden) {
               fetchAndDisplay();
             } else {
-              console.log('[closestRouteInterval] Skipping closest route update - OTP tracking active');
+              console.log('[closestRouteInterval] Skipping closest route update - OTP tracking active or route manually hidden');
             }
           }, 15000);
         }
@@ -1839,8 +1842,8 @@
     if (closestRoute) {
       console.log('[hideOtpModal] Resuming closest route tracking');
       fetchAndDisplayBuses();
-      // Restart closest route interval if it was stopped
-      if (!window.closestRouteInterval) {
+      // Restart closest route interval if it was stopped and route is not manually hidden
+      if (!window.closestRouteInterval && !userRouteManuallyHidden) {
         window.closestRouteInterval = setInterval(() => {
           fetchAndDisplay();
         }, 15000);
@@ -2432,6 +2435,7 @@
           // Hide route and stops
           map.removeLayer(userLocationPolyline);
           userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+          userRouteManuallyHidden = true; // Mark as manually hidden
           toggleRouteBtn.style.backgroundColor = '#666';
           toggleRouteBtn.textContent = 'Show Route';
           toggleRouteBtn.title = 'Show your closest route';
