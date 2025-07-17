@@ -1143,7 +1143,24 @@
       'MAX Orange': '290'
     };
     
-    // Check for MAX lines first
+    // Special route name mappings (from BusRoutesMain.html)
+    const specialRouteMappings = {
+      'Blue Eastside Bus': '287',
+      'Blue Westside Bus': '288',
+      'Orange Bus': '291',
+      'Red Bus': '292',
+      'Yellow Bus': '293'
+    };
+    
+    // Check for special route mappings first
+    for (const [name, number] of Object.entries(specialRouteMappings)) {
+      if (otpRouteName.includes(name) || name.includes(otpRouteName)) {
+        console.log('[mapOtpRouteToTrimet] Special route match:', name, '->', number);
+        return number;
+      }
+    }
+    
+    // Check for MAX lines
     for (const [line, number] of Object.entries(maxMappings)) {
       if (otpRouteName.includes(line)) {
         console.log('[mapOtpRouteToTrimet] MAX line match:', line, '->', number);
@@ -1499,7 +1516,10 @@
         routeLongName: leg.routeLongName,
         routeShortName: leg.routeShortName,
         headsign: leg.headsign,
-        agencyId: leg.agencyId
+        agencyId: leg.agencyId,
+        agencyName: leg.agencyName,
+        routeId: leg.routeId,
+        tripId: leg.tripId
       })));
       const otpRoutes = currentItins.flatMap(itin => 
         itin.legs.filter(leg => leg.mode !== 'WALK').map(leg => ({
@@ -1863,10 +1883,18 @@
         
         // Try to find the actual route number using the description
         if (routeDescription) {
-          const foundRoute = findRouteByDescription(routeDescription);
-          if (foundRoute) {
-            routeNumber = foundRoute.route_id;
-            console.log('[showRoute] Found route number:', routeNumber, 'for description:', routeDescription);
+          // First try to decode using our mapping function
+          const decodedRouteNumber = mapOtpRouteToTrimet(routeDescription);
+          if (decodedRouteNumber) {
+            routeNumber = decodedRouteNumber;
+            console.log('[showRoute] Decoded route number:', routeNumber, 'for description:', routeDescription);
+          } else {
+            // Fallback to masterRoutes search
+            const foundRoute = findRouteByDescription(routeDescription);
+            if (foundRoute) {
+              routeNumber = foundRoute.route_id;
+              console.log('[showRoute] Found route number via masterRoutes:', routeNumber, 'for description:', routeDescription);
+            }
           }
         }
         
@@ -2135,6 +2163,17 @@
     });
     
     return matches;
+  };
+  
+  // Debug function to test route decoding
+  window.testRouteDecoding = function(routeName) {
+    console.log('=== TESTING ROUTE DECODING ===');
+    console.log('Testing route name:', routeName);
+    
+    const result = mapOtpRouteToTrimet(routeName);
+    console.log('Decoded result:', result);
+    
+    return result;
   };
   
 
