@@ -458,14 +458,15 @@
       position: absolute;
       top: 120px;
       right: 10px;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.9);
       border: 2px solid #4dd0e1;
       border-radius: 8px;
-      padding: 10px;
+      padding: 12px;
       color: #fff;
       font-size: 0.8rem;
       z-index: 1000;
       display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     .bus-legend.show {
       display: block;
@@ -480,6 +481,17 @@
       height: 20px;
       border-radius: 4px;
       margin-right: 8px;
+    }
+    
+    /* Pulsing animation for OTP buses */
+    .otp-bus-pulse {
+      animation: otpPulse 2s infinite;
+    }
+    
+    @keyframes otpPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
     }
     
 
@@ -589,14 +601,14 @@
 
 <!-- -- BUS LEGEND -- -->
 <div id="busLegend" class="bus-legend">
-  <strong>Bus Colors:</strong><br>
+  <strong>🚌 Bus Colors:</strong><br>
   <div class="bus-legend-item">
-    <div class="bus-legend-color" style="background: #00ff00;"></div>
-    <span>Your Trip Route</span>
+    <div class="bus-legend-color" style="background: #00ff00; box-shadow: 0 0 8px #00ff00;"></div>
+    <span><strong>Your Trip Buses</strong></span>
   </div>
   <div class="bus-legend-item">
     <div class="bus-legend-color" style="background: #0071CE;"></div>
-    <span>Other Routes</span>
+    <span>Other Bus Routes</span>
   </div>
   <div class="bus-legend-item">
     <div class="bus-legend-color" style="background: #e53935;"></div>
@@ -654,6 +666,18 @@
     [PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.west],
     [PORTLAND_BOUNDS.north, PORTLAND_BOUNDS.east]
   ]);
+
+  // Track user interaction to prevent auto-snapping
+  map.hasBeenMovedByUser = false;
+  map.on('dragstart', () => {
+    map.hasBeenMovedByUser = true;
+  });
+  map.on('zoomstart', () => {
+    map.hasBeenMovedByUser = true;
+  });
+  map.on('click', () => {
+    map.hasBeenMovedByUser = true;
+  });
 
   // === SECTION: AUTOCOMPLETE FOR SEARCH BAR ===
   const allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
@@ -988,8 +1012,8 @@
             weight: 4,
             opacity: 0.7
           }).addTo(map);
-          // Only fitBounds once on initial load
-          if (!hasAutoSnapped) {
+          // Only fitBounds once on initial load - but let user control the map
+          if (!hasAutoSnapped && !map.hasBeenMovedByUser) {
             map.fitBounds(polyline.getBounds());
             hasAutoSnapped = true;
           }
@@ -1080,18 +1104,21 @@
     }
   }
   
-  // Function to create bus marker icon
-  function createBusIcon(vehicleID, routeColor) {
+  // Enhanced bus marker with better styling
+  function createBusIcon(vehicleID, routeColor, isOtpBus = false) {
+    const pulseClass = isOtpBus ? 'otp-bus-pulse' : '';
     return L.divIcon({
-      className: '',
+      className: pulseClass,
       html: `<div style='text-align:center;'>
-               <div style='background:${routeColor};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${vehicleID}</div>
-               <div style='width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid ${routeColor};margin:auto;'></div>
+               <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>${vehicleID}</div>
+               <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
              </div>`,
-      iconSize: [40, 30],
-      iconAnchor: [20, 30]
+      iconSize: [44, 36],
+      iconAnchor: [22, 36]
     });
   }
+  
+  
   
   // Function to map OTP route names to Trimet route numbers using masterRoutes data
   function mapOtpRouteToTrimet(otpRouteName) {
@@ -1308,11 +1335,16 @@
           
           // Use different colors for OTP trip buses vs other buses
           let routeColor = getRouteColor(route.mode);
+          let isOtpBus = false;
           if (routesToTrack) {
-            // OTP trip buses get a special color (bright green)
-            routeColor = '#00ff00';
+            // Check if this bus is part of the OTP trip
+            const otpRoute = routesToTrack.find(r => r.route_id === bus.routeNumber);
+            if (otpRoute) {
+              routeColor = '#00ff00'; // Bright green for OTP trip buses
+              isOtpBus = true;
+            }
           }
-          const icon = createBusIcon(bus.vehicleID, routeColor);
+          const icon = createBusIcon(bus.vehicleID, routeColor, isOtpBus);
           const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
           
           // Create popup content with route information
@@ -1329,11 +1361,17 @@
             const masterRoute = masterRoutes.find(r => r.route_id === bus.routeNumber);
             if (masterRoute) {
               popupContent += `<strong>Route Name:</strong> ${masterRoute.route_title}<br>`;
+              // Add link to route page
+              popupContent += `<a href="https://metrofeedus.com/portland/busroutesmain?route=${bus.routeNumber}" target="_blank" style="color: #4dd0e1; text-decoration: none; display: inline-block; margin-top: 8px; padding: 4px 8px; border: 1px solid #4dd0e1; border-radius: 4px;">📋 View Route Page</a>`;
             }
           }
           
           // Add OTP context if this is from an OTP trip
-          if (routesToTrack) {
+          if (isOtpBus) {
+            popupContent += `<br><em style="color: #00ff00; font-weight: bold;">🚌 THIS IS YOUR BUS!</em>`;
+            // Add pulsing effect to the marker
+            marker.getElement().style.animation = 'pulse 1.5s infinite';
+          } else if (routesToTrack) {
             popupContent += `<br><em style="color: #4dd0e1;">🚌 This bus is part of your trip route</em>`;
           }
           
