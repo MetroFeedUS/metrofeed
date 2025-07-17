@@ -794,6 +794,9 @@
     Object.values(busMarkers).forEach(m => map.removeLayer(m));
     busMarkers = {};
     
+    // Reset active trip flag
+    activeTripSelected = false;
+    
     // Resume tracking closest route if available
     if (closestRoute) {
       console.log('[clearTripPlan] Resuming closest route tracking');
@@ -1627,6 +1630,7 @@
   let currentItins = null; // Store current itineraries globally
   let routePolylines = []; // Store route polylines for cleanup
   let routeStopMarkers = [];
+  let activeTripSelected = false; // Track if user has selected a trip option
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
   async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
@@ -1841,30 +1845,36 @@
 
   function hideOtpModal() {
     document.getElementById('otpModal').style.display = 'none';
-    // Clear route polylines and stop markers
-    clearRoutePolylines();
-    if (window.routeStopMarkers && window.routeStopMarkers.length) {
-      window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
-      window.routeStopMarkers = [];
-    }
-    // Stop OTP bus tracking and clear bus markers
-    if (window.otpBusTrackingInterval) {
-      clearInterval(window.otpBusTrackingInterval);
-      window.otpBusTrackingInterval = null;
-    }
-    // Clear bus markers
-    Object.values(busMarkers).forEach(m => map.removeLayer(m));
-    busMarkers = {};
-    // Resume tracking closest route if available
-    if (closestRoute) {
-      console.log('[hideOtpModal] Resuming closest route tracking');
-      fetchAndDisplayBuses();
-      // Restart closest route interval if it was stopped and route is not manually hidden
-      if (!window.closestRouteInterval && !userRouteManuallyHidden) {
-        window.closestRouteInterval = setInterval(() => {
-          fetchAndDisplay();
-        }, 15000);
+    
+    // Only clear everything if no active trip is selected
+    if (!activeTripSelected) {
+      // Clear route polylines and stop markers
+      clearRoutePolylines();
+      if (window.routeStopMarkers && window.routeStopMarkers.length) {
+        window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
+        window.routeStopMarkers = [];
       }
+      // Stop OTP bus tracking and clear bus markers
+      if (window.otpBusTrackingInterval) {
+        clearInterval(window.otpBusTrackingInterval);
+        window.otpBusTrackingInterval = null;
+      }
+      // Clear bus markers
+      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      busMarkers = {};
+      // Resume tracking closest route if available
+      if (closestRoute) {
+        console.log('[hideOtpModal] Resuming closest route tracking');
+        fetchAndDisplayBuses();
+        // Restart closest route interval if it was stopped and route is not manually hidden
+        if (!window.closestRouteInterval && !userRouteManuallyHidden) {
+          window.closestRouteInterval = setInterval(() => {
+            fetchAndDisplay();
+          }, 15000);
+        }
+      }
+    } else {
+      console.log('[hideOtpModal] Trip is active, keeping route and buses visible');
     }
     
     // Don't hide bus legend when modal is closed - keep it visible for OTP buses
@@ -2155,6 +2165,9 @@
         fetchAndDisplayBuses();
       }
     }
+    
+    // Mark that a trip has been selected
+    activeTripSelected = true;
     
     // Don't hide the modal - let user see the trip options and buses
     // hideOtpModal();
