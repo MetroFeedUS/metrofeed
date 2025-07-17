@@ -453,35 +453,7 @@
       margin-top: 4px;
     }
     
-    /* Bus Legend Styles */
-    .bus-legend {
-      position: absolute;
-      top: 120px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #4dd0e1;
-      border-radius: 8px;
-      padding: 12px;
-      color: #fff;
-      font-size: 0.8rem;
-      z-index: 1000;
-      display: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
-    .bus-legend.show {
-      display: block;
-    }
-    .bus-legend-item {
-      display: flex;
-      align-items: center;
-      margin: 4px 0;
-    }
-    .bus-legend-color {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      margin-right: 8px;
-    }
+
     
     /* Pulsing animation for OTP buses */
     .otp-bus-pulse {
@@ -599,26 +571,7 @@
   </div>
 </div>
 
-<!-- -- BUS LEGEND -- -->
-<div id="busLegend" class="bus-legend">
-  <strong>🚌 Bus Colors:</strong><br>
-  <div class="bus-legend-item">
-    <div class="bus-legend-color" style="background: #00ff00; box-shadow: 0 0 8px #00ff00;"></div>
-    <span><strong>Your Trip Buses</strong></span>
-  </div>
-  <div class="bus-legend-item">
-    <div class="bus-legend-color" style="background: #0071CE;"></div>
-    <span>Other Bus Routes</span>
-  </div>
-  <div class="bus-legend-item">
-    <div class="bus-legend-color" style="background: #e53935;"></div>
-    <span>MAX/Train</span>
-  </div>
-  <div class="bus-legend-item">
-    <div class="bus-legend-color" style="background: #43a047;"></div>
-    <span>Streetcar</span>
-  </div>
-</div>
+
 
 
 
@@ -1333,15 +1286,30 @@
           
           console.log('[fetchAndDisplayBuses] Creating marker for bus:', bus.vehicleID, 'at', bus.latitude, bus.longitude);
           
-          // Use different colors for OTP trip buses vs other buses
+          // Match bus to route leg color
           let routeColor = getRouteColor(route.mode);
           let isOtpBus = false;
-          if (routesToTrack) {
-            // Check if this bus is part of the OTP trip
-            const otpRoute = routesToTrack.find(r => r.route_id === bus.routeNumber);
-            if (otpRoute) {
-              routeColor = '#00ff00'; // Bright green for OTP trip buses
-              isOtpBus = true;
+          let matchedLegKey = null;
+          
+          if (routesToTrack && window.currentLegColorMapping) {
+            // Try to match this bus to a specific route leg
+            for (const [legKey, legInfo] of Object.entries(window.currentLegColorMapping)) {
+              if (legInfo.route === bus.routeNumber && legInfo.direction == bus.direction) {
+                routeColor = legInfo.color;
+                isOtpBus = true;
+                matchedLegKey = legKey;
+                console.log('[Bus Matching] Bus', bus.vehicleID, 'matched to leg:', legKey, 'color:', legInfo.color);
+                break;
+              }
+            }
+            
+            // If no exact match, check if it's any OTP route
+            if (!isOtpBus) {
+              const otpRoute = routesToTrack.find(r => r.route_id === bus.routeNumber);
+              if (otpRoute) {
+                routeColor = '#00ff00'; // Fallback green for OTP trip buses
+                isOtpBus = true;
+              }
             }
           }
           const icon = createBusIcon(bus.vehicleID, routeColor, isOtpBus);
@@ -1369,7 +1337,11 @@
           popupContent += `<a href="https://metrofeedus.com/portland/pythonbusroutes/route-${bus.routeNumber}-dir${directionId}.html" style="color: #4dd0e1; text-decoration: none; display: inline-block; margin-top: 8px; padding: 6px 12px; border: 1px solid #4dd0e1; border-radius: 6px; background: rgba(77, 208, 225, 0.1); font-weight: bold;">🚌 View Route ${bus.routeNumber} (Dir ${directionId})</a>`;
           
           // Add OTP context if this is from an OTP trip
-          if (isOtpBus) {
+          if (matchedLegKey) {
+            popupContent += `<br><em style="color: ${routeColor}; font-weight: bold;">🚌 YOUR BUS - Matches route leg</em>`;
+            // Add pulsing effect to the marker
+            marker.getElement().style.animation = 'pulse 1.5s infinite';
+          } else if (isOtpBus) {
             popupContent += `<br><em style="color: #00ff00; font-weight: bold;">🚌 THIS IS YOUR BUS!</em>`;
             // Add pulsing effect to the marker
             marker.getElement().style.animation = 'pulse 1.5s infinite';
@@ -1401,12 +1373,7 @@
       
       console.log('[fetchAndDisplayBuses] Total bus markers created:', Object.keys(busMarkers).length);
       
-      // Show legend if we have buses and this is an OTP trip
-      if (Object.keys(busMarkers).length > 0 && routesToTrack) {
-        showBusLegend();
-      } else if (!routesToTrack) {
-        hideBusLegend();
-      }
+
       
       console.log('[fetchAndDisplayBuses] Bus markers created:', Object.keys(busMarkers).length);
       console.log('[fetchAndDisplayBuses] Routes to track:', routesToTrack);
@@ -1715,16 +1682,16 @@
     return points;
   }
 
-  // Add this mapping near the top of your script section
-  const modeColors = {
-    WALK: "#666",
-    BUS: "#0071CE",
-    TRAM: "#43a047",
-    RAIL: "#e53935",
-    TRAIN: "#e53935",
-    STREETCAR: "#8e24aa",
-    FERRY: "#00bcd4"
-  };
+  // Array of distinct colors for individual route legs
+  const legColors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2',
+    '#A9CCE3', '#F9E79F', '#D5A6BD', '#A2D9CE', '#FAD7A0'
+  ];
+  
+  // Keep walk color consistent
+  const WALK_COLOR = "#666";
 
   window.showRoute = function(idx) {
     console.log('[showRoute] Called with idx:', idx);
@@ -1752,9 +1719,30 @@
     let allCoords = [];
     let addedStops = new Set();
     let routesToTrack = []; // Collect routes for bus tracking
+    let legColorMapping = {}; // Store color mapping for each leg
+    let legIndex = 0; // Track leg index for color assignment
     
     window.currentItins[idx].legs.forEach(leg => {
-      let color = modeColors[leg.mode] || "#0071ce";
+      let color;
+      let legKey;
+      
+      if (leg.mode === 'WALK') {
+        color = WALK_COLOR;
+        legKey = `walk-${legIndex}`;
+      } else {
+        // Assign unique color to each transit leg
+        color = legColors[legIndex % legColors.length];
+        legKey = `${leg.mode}-${leg.route}-${leg.direction || 0}`;
+        
+        // Store color mapping for bus matching
+        legColorMapping[legKey] = {
+          color: color,
+          route: leg.route,
+          direction: leg.direction || 0,
+          mode: leg.mode
+        };
+      }
+      
       let coords = [];
       if (leg.legGeometry && leg.legGeometry.points) {
         coords = decodePolyline(leg.legGeometry.points);
@@ -1771,6 +1759,8 @@
         window.routeLegLines.push(line);
         allCoords = allCoords.concat(coords);
       }
+      
+      legIndex++;
       
       // Collect route information for bus tracking (skip WALK legs)
       if (leg.mode !== 'WALK' && leg.route) {
@@ -1817,6 +1807,10 @@
     if (window.routeLegLines.length) {
       map.fitBounds(L.featureGroup(window.routeLegLines).getBounds(), { padding: [40, 40] });
     }
+    
+    // Store leg color mapping globally for bus matching
+    window.currentLegColorMapping = legColorMapping;
+    console.log('[showRoute] Leg color mapping:', legColorMapping);
     
     // Start tracking buses for the routes in this trip
     if (routesToTrack.length > 0) {
@@ -1931,20 +1925,7 @@
     console.log('=== END DEBUG ===');
   };
   
-  // Function to show/hide bus legend
-  function showBusLegend() {
-    const legend = document.getElementById('busLegend');
-    if (legend) {
-      legend.classList.add('show');
-    }
-  }
-  
-  function hideBusLegend() {
-    const legend = document.getElementById('busLegend');
-    if (legend) {
-      legend.classList.remove('show');
-    }
-  }
+
   
 
 </script>
