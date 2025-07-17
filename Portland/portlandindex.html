@@ -1342,6 +1342,28 @@
               }
             }
             
+            // If still no match, try to map route numbers to descriptions using masterRoutes
+            if (!isOtpBus) {
+              for (const [legKey, legInfo] of Object.entries(window.currentLegColorMapping)) {
+                if (legInfo.description && masterRoutes) {
+                  // Try to find a master route that matches the description
+                  const matchingRoute = masterRoutes.find(r => {
+                    const routeTitle = r.route_title.toLowerCase();
+                    const description = legInfo.description.toLowerCase();
+                    return routeTitle.includes(description) || description.includes(routeTitle);
+                  });
+                  
+                  if (matchingRoute && matchingRoute.route_id === bus.routeNumber.toString()) {
+                    routeColor = legInfo.color;
+                    isOtpBus = true;
+                    matchedLegKey = legKey;
+                    console.log('[Bus Matching] Bus', bus.vehicleID, 'matched via masterRoutes to leg:', legKey, 'color:', legInfo.color, 'masterRoute:', matchingRoute.route_title);
+                    break;
+                  }
+                }
+              }
+            }
+            
             // If still no match, check if it's any OTP route
             if (!isOtpBus) {
               const otpRoute = routesToTrack.find(r => r.route_id === bus.routeNumber);
@@ -2089,6 +2111,30 @@
       console.log('No leg color mapping found - no OTP trip active');
     }
     console.log('=== END DEBUG ===');
+  };
+  
+  // Debug function to find routes matching a description
+  window.findRoutesByDescription = function(description) {
+    console.log('=== FINDING ROUTES BY DESCRIPTION ===');
+    console.log('Looking for routes matching:', description);
+    
+    if (!masterRoutes) {
+      console.log('masterRoutes not available');
+      return;
+    }
+    
+    const matches = masterRoutes.filter(r => {
+      const routeTitle = r.route_title.toLowerCase();
+      const searchDesc = description.toLowerCase();
+      return routeTitle.includes(searchDesc) || searchDesc.includes(routeTitle);
+    });
+    
+    console.log('Found matches:', matches.length);
+    matches.forEach(route => {
+      console.log(`  Route ${route.route_id}: ${route.route_title}`);
+    });
+    
+    return matches;
   };
   
 
