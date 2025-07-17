@@ -601,6 +601,7 @@
 <script>
   // === SECTION: MAP INIT ===
   const apiKey = "2C4447D4A42083BCD84DE3B8E";
+  const OTP_API = "https://otp.metrofeedus.com/otp/routers/default/plan";
   
   // Portland time utility functions
   function getPortlandTime() {
@@ -1632,7 +1633,7 @@
     const from = `${fromLat},${fromLon}`;
     const to = `${toLat},${toLon}`;
     // Adjust the server/URL as needed for production:
-    const url = `http://45.77.209.137:8080/otp/routers/default/plan?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
+    const url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
 
     // Clear previous bus info
     window.otpBusInfo = {};
@@ -1682,7 +1683,7 @@
 
     } catch (e) {
       console.error('OTP Error:', e);
-      itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server. Please check if the OTP server is running on 45.77.209.137:8080</em>`;
+      itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server. Please check if the OTP server is running on https://otp.metrofeedus.com</em>`;
     }
   }
 
