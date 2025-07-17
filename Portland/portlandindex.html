@@ -601,6 +601,24 @@
   // === SECTION: MAP INIT ===
   const apiKey = "2C4447D4A42083BCD84DE3B8E";
   
+  // Portland time utility functions
+  function getPortlandTime() {
+    return new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+  }
+  
+  function getPortlandTimeString(date = new Date()) {
+    return date.toLocaleTimeString('en-US', { 
+      timeZone: 'America/Los_Angeles', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  }
+  
+  function getPortlandMinutes() {
+    const nowPT = new Date(getPortlandTime());
+    return nowPT.getHours() * 60 + nowPT.getMinutes();
+  }
+  
   // Portland Metro Area Bounds
   const PORTLAND_BOUNDS = {
     north: 45.80,    // Up to Ridgefield, WA (Clark County north edge)
@@ -971,9 +989,8 @@
             hasAutoSnapped = true;
           }
 
-          // --- Show stops + next time highlight ---
-          const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-          const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+                  // --- Show stops + next time highlight ---
+        const nowMins = getPortlandMinutes();
 
           closestRoute.stops.forEach(stop => {
             let highlightedTimes = [];
@@ -1345,7 +1362,7 @@
             <strong>Direction:</strong> ${bus.direction}<br>
             <strong>Block:</strong> ${bus.blockID}<br>
             <strong>Speed:</strong> ${bus.speed || 'N/A'} mph<br>
-            <strong>Updated:</strong> ${new Date().toLocaleTimeString()}<br>`;
+            <strong>Updated:</strong> ${getPortlandTimeString()} PT<br>`;
           
           // Add route description if available from masterRoutes
           if (masterRoutes) {
@@ -1484,8 +1501,8 @@
     window.currentItins = itins; // Ensure global is always set!
     const itinList = document.getElementById('itinList');
     itinList.innerHTML = itins.map((itin, idx) => {
-      const start = new Date(itin.startTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-      const end = new Date(itin.endTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      const start = getPortlandTimeString(new Date(itin.startTime));
+      const end = getPortlandTimeString(new Date(itin.endTime));
       const segs = itin.legs.map(leg => {
         let icon = '';
         let segClass = '';
@@ -1583,15 +1600,15 @@
         } else if (leg.route) {
           lineInfo = ` <b>${leg.route}</b>`;
         }
-        let fromTime = leg.startTime ? new Date(leg.startTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
-        let toTime = leg.endTime ? new Date(leg.endTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+        let fromTime = leg.startTime ? getPortlandTimeString(new Date(leg.startTime)) : '';
+        let toTime = leg.endTime ? getPortlandTimeString(new Date(leg.endTime)) : '';
         let stopTimes = '';
         // Show intermediate stops with times if available
         if (leg.intermediateStops && Array.isArray(leg.intermediateStops) && leg.intermediateStops.length) {
           stopTimes = '<div style="margin-left:1em; font-size:0.95em; color:#bbb;">';
           leg.intermediateStops.forEach(stop => {
             if (stop.departureTime) {
-              let t = new Date(stop.departureTime).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+              let t = getPortlandTimeString(new Date(stop.departureTime));
               stopTimes += `• ${stop.name}: <b>${t}</b><br>`;
             } else {
               stopTimes += `• ${stop.name}<br>`;
