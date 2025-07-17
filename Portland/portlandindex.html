@@ -1223,19 +1223,27 @@
       Object.values(busMarkers).forEach(m => map.removeLayer(m));
       busMarkers = {};
       
-      // Determine which routes to track
-      let routesToShow = [];
-      if (routesToTrack) {
-        // Use provided routes (for OTP trips)
-        routesToShow = routesToTrack;
-      } else if (closestRoute) {
-        // Use closest route (for initial load)
-        routesToShow = [{
-          route_id: closestRoute.route_id,
-          direction_id: closestRoute.direction_id,
-          mode: 'BUS' // Default to bus for closest route
-        }];
-      }
+              // Determine which routes to track
+        let routesToShow = [];
+        if (routesToTrack) {
+          // Use provided routes (for OTP trips)
+          routesToShow = routesToTrack;
+        } else if (window.currentLegColorMapping) {
+          // Use routes from current OTP trip
+          routesToShow = Object.values(window.currentLegColorMapping).map(legInfo => ({
+            route_id: legInfo.route,
+            direction_id: legInfo.direction,
+            mode: legInfo.mode
+          }));
+          console.log('[fetchAndDisplayBuses] Using routes from currentLegColorMapping:', routesToShow);
+        } else if (closestRoute) {
+          // Use closest route (for initial load)
+          routesToShow = [{
+            route_id: closestRoute.route_id,
+            direction_id: closestRoute.direction_id,
+            mode: 'BUS' // Default to bus for closest route
+          }];
+        }
       
       console.log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
       console.log('[fetchAndDisplayBuses] Sample of all buses route numbers:', allBuses.slice(0, 5).map(b => ({ routeNumber: b.routeNumber, direction: b.direction, vehicleID: b.vehicleID })));
@@ -1334,7 +1342,7 @@
           console.log('[Bus Color Debug] currentLegColorMapping:', window.currentLegColorMapping);
           console.log('[Bus Color Debug] Leg mapping details:', JSON.stringify(window.currentLegColorMapping, null, 2));
           
-          if (routesToTrack && window.currentLegColorMapping) {
+          if (window.currentLegColorMapping) {
             // Try to match this bus to a specific route leg
             for (const [legKey, legInfo] of Object.entries(window.currentLegColorMapping)) {
               if (legInfo.route === bus.routeNumber && legInfo.direction == bus.direction) {
@@ -1424,14 +1432,23 @@
             popupContent += `<br><em style="color: #00ff00; font-weight: bold;">🚌 THIS IS YOUR BUS!</em>`;
             // Add pulsing effect to the marker
             marker.getElement().style.animation = 'pulse 1.5s infinite';
-          } else if (routesToTrack) {
-            // Check if this is an alternative route (not the originally requested route)
-            const isAlternativeRoute = routesToTrack.some(r => r.route_id === trimetRouteNumber) && 
-                                     bus.routeNumber != trimetRouteNumber;
-            if (isAlternativeRoute) {
-              popupContent += `<br><em style="color: #ffa500; font-weight: bold;">🚌 Alternative route (your route ${trimetRouteNumber} not active)</em>`;
-            } else {
+          } else if (window.currentLegColorMapping) {
+            // Check if this bus is on any of the OTP trip routes
+            const isOnOtpRoute = Object.values(window.currentLegColorMapping).some(legInfo => 
+              legInfo.route === bus.routeNumber.toString()
+            );
+            
+            if (isOnOtpRoute) {
               popupContent += `<br><em style="color: #4dd0e1;">🚌 This bus is part of your trip route</em>`;
+            } else if (routesToTrack) {
+              // Check if this is an alternative route (not the originally requested route)
+              const isAlternativeRoute = routesToTrack.some(r => r.route_id === trimetRouteNumber) && 
+                                       bus.routeNumber != trimetRouteNumber;
+              if (isAlternativeRoute) {
+                popupContent += `<br><em style="color: #ffa500; font-weight: bold;">🚌 Alternative route (your route ${trimetRouteNumber} not active)</em>`;
+              } else {
+                popupContent += `<br><em style="color: #4dd0e1;">🚌 This bus is part of your trip route</em>`;
+              }
             }
           }
           
