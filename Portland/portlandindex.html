@@ -1285,11 +1285,16 @@
           }
           
           console.log('[fetchAndDisplayBuses] Creating marker for bus:', bus.vehicleID, 'at', bus.latitude, bus.longitude);
+          console.log('[Bus Color Debug] Final color for bus', bus.vehicleID, ':', routeColor, 'isOtpBus:', isOtpBus, 'matchedLegKey:', matchedLegKey);
           
           // Match bus to route leg color
           let routeColor = getRouteColor(route.mode);
           let isOtpBus = false;
           let matchedLegKey = null;
+          
+          console.log('[Bus Color Debug] Processing bus:', bus.vehicleID, 'route:', bus.routeNumber, 'direction:', bus.direction);
+          console.log('[Bus Color Debug] routesToTrack:', routesToTrack);
+          console.log('[Bus Color Debug] currentLegColorMapping:', window.currentLegColorMapping);
           
           if (routesToTrack && window.currentLegColorMapping) {
             // Try to match this bus to a specific route leg
@@ -1325,6 +1330,7 @@
               }
             }
           }
+          console.log('[Bus Icon Debug] Creating icon for bus', bus.vehicleID, 'with color:', routeColor, 'isOtpBus:', isOtpBus);
           const icon = createBusIcon(bus.vehicleID, routeColor, isOtpBus);
           const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
           
