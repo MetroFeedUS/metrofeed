@@ -1366,7 +1366,7 @@
           
           // Add link to specific route page using route and direction
           const directionId = bus.direction || 0;
-          popupContent += `<a href="https://metrofeedus.com/portland/pythonbusroutes/route-${bus.routeNumber}-dir${directionId}.html" target="_blank" style="color: #4dd0e1; text-decoration: none; display: inline-block; margin-top: 8px; padding: 6px 12px; border: 1px solid #4dd0e1; border-radius: 6px; background: rgba(77, 208, 225, 0.1); font-weight: bold;">🚌 View Route ${bus.routeNumber} (Dir ${directionId})</a>`;
+          popupContent += `<a href="https://metrofeedus.com/portland/pythonbusroutes/route-${bus.routeNumber}-dir${directionId}.html" style="color: #4dd0e1; text-decoration: none; display: inline-block; margin-top: 8px; padding: 6px 12px; border: 1px solid #4dd0e1; border-radius: 6px; background: rgba(77, 208, 225, 0.1); font-weight: bold;">🚌 View Route ${bus.routeNumber} (Dir ${directionId})</a>`;
           
           // Add OTP context if this is from an OTP trip
           if (isOtpBus) {
@@ -1662,8 +1662,8 @@
       }
     }
     
-    // Hide bus legend when OTP modal is closed
-    hideBusLegend();
+    // Don't hide bus legend when modal is closed - keep it visible for OTP buses
+    // hideBusLegend();
   }
 
   function restoreOtpModal() {
