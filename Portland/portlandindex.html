@@ -1328,11 +1328,93 @@
       'Yellow Bus': '293'
     };
     
+    // Street name to route number mappings (common Portland streets)
+    const streetRouteMappings = {
+      'Division': ['20', '21', '32', '70', '71', '72', '73', '74', '75', '81', '82'],
+      'Sandy': ['12', '19', '20', '21', '81', '82'],
+      'Burnside': ['12', '19', '20', '21', '81', '82'],
+      'Stark': ['15', '19', '20', '21', '81', '82'],
+      'Washington': ['15', '19', '20', '21', '81', '82'],
+      'Morrison': ['15', '19', '20', '21', '81', '82'],
+      'Hawthorne': ['14', '15', '19', '20', '21', '81', '82'],
+      'Belmont': ['15', '19', '20', '21', '81', '82'],
+      'Powell': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Foster': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Woodstock': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Holgate': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Johnson Creek': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Cesar Chavez': ['9', '10', '11', '12', '19', '20', '21', '75', '81', '82'],
+      '82nd': ['72', '73', '74', '75'],
+      '122nd': ['73', '74', '75'],
+      '162nd': ['74', '75'],
+      '52nd': ['71', '72', '73', '74', '75'],
+      '39th': ['70', '71', '72', '73', '74', '75'],
+      '28th': ['70', '71', '72', '73', '74', '75'],
+      '21st': ['70', '71', '72', '73', '74', '75'],
+      '15th': ['70', '71', '72', '73', '74', '75'],
+      '12th': ['70', '71', '72', '73', '74', '75'],
+      '9th': ['70', '71', '72', '73', '74', '75'],
+      '6th': ['70', '71', '72', '73', '74', '75'],
+      '3rd': ['70', '71', '72', '73', '74', '75'],
+      '1st': ['70', '71', '72', '73', '74', '75'],
+      'MLK': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Grand': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Interstate': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Lombard': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Killingsworth': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Rosa Parks': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Columbia': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Vancouver': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Williams': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Mississippi': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Alberta': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Fremont': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Beaumont': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Prescott': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Klickitat': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Knott': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Ainsworth': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Skidmore': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Going': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Tillamook': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Russell': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Shaver': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Alberta': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Killingsworth': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Lombard': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Columbia': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Vancouver': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Williams': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Mississippi': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Fremont': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Beaumont': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Prescott': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Klickitat': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Knott': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Ainsworth': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Skidmore': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Going': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Tillamook': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Russell': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
+      'Shaver': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82']
+    };
+    
     // Check for special route mappings first
     for (const [name, number] of Object.entries(specialRouteMappings)) {
       if (otpRouteName.includes(name) || name.includes(otpRouteName)) {
         console.log('[mapOtpRouteToTrimet] Special route match:', name, '->', number);
         return number;
+      }
+    }
+    
+    // Check for street name mappings
+    for (const [streetName, routeNumbers] of Object.entries(streetRouteMappings)) {
+      if (otpRouteName.toLowerCase().includes(streetName.toLowerCase()) || 
+          streetName.toLowerCase().includes(otpRouteName.toLowerCase())) {
+        console.log('[mapOtpRouteToTrimet] Street name match:', otpRouteName, '->', routeNumbers);
+        // For now, return the first route number as the primary match
+        // TODO: Consider returning multiple routes for better coverage
+        return routeNumbers[0];
       }
     }
     
@@ -1425,26 +1507,36 @@
         console.log('[fetchAndDisplayBuses] Filtering for OTP trip buses only');
         
         otpRoutes.forEach(route => {
-          // Map OTP route name to Trimet route number
-          let trimetRouteNumber = route.route_id;
+          // Map OTP route name to Trimet route number(s)
+          let trimetRouteNumbers = [route.route_id];
           
           if (route.route_id && isNaN(route.route_id)) {
-            trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
-            console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumber);
+            const mappedRoute = mapOtpRouteToTrimet(route.route_id);
+            if (mappedRoute) {
+              trimetRouteNumbers = [mappedRoute];
+            }
+            console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumbers);
           }
           
-          if (trimetRouteNumber) {
-            // Filter buses for this specific route
-            let routeBuses = allBuses.filter(v => 
-              v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
-            );
+          // For street names, we might want to show multiple routes
+          if (trimetRouteNumbers.length > 0) {
+            // Filter buses for all relevant routes
+            let routeBuses = [];
             
-            // If no buses found with direction, try without direction constraint
-            if (routeBuses.length === 0) {
-              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
-            }
+            trimetRouteNumbers.forEach(routeNumber => {
+              let busesForRoute = allBuses.filter(v => 
+                v.routeNumber == routeNumber && v.direction == route.direction_id
+              );
+              
+              // If no buses found with direction, try without direction constraint
+              if (busesForRoute.length === 0) {
+                busesForRoute = allBuses.filter(v => v.routeNumber == routeNumber);
+              }
+              
+              routeBuses = routeBuses.concat(busesForRoute);
+            });
             
-            console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
+            console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for routes', trimetRouteNumbers.join(', '));
             
             // Create highlighted markers for OTP buses
             routeBuses.forEach(bus => {
