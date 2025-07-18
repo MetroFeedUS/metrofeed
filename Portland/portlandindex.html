@@ -1411,6 +1411,9 @@
       if (activeTripSelected && window.currentLegColorMapping) {
         // OTP trip is active - isolate only trip buses
         displayMode = 'otp-only';
+        console.log('[fetchAndDisplayBuses] OTP trip detected!');
+        console.log('[fetchAndDisplayBuses] currentLegColorMapping:', window.currentLegColorMapping);
+        
         otpRoutes = Object.values(window.currentLegColorMapping).map(legInfo => ({
           route_id: legInfo.route,
           direction_id: legInfo.direction,
@@ -1445,17 +1448,25 @@
           }
           
           if (trimetRouteNumber) {
+            console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', route.direction_id);
+            
             // Filter buses for this specific route
             let routeBuses = allBuses.filter(v => 
               v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
             );
             
+            console.log('[fetchAndDisplayBuses] Buses with direction match:', routeBuses.length);
+            
             // If no buses found with direction, try without direction constraint
             if (routeBuses.length === 0) {
               routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+              console.log('[fetchAndDisplayBuses] Buses without direction constraint:', routeBuses.length);
             }
             
             console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
+            if (routeBuses.length > 0) {
+              console.log('[fetchAndDisplayBuses] Sample bus data:', routeBuses[0]);
+            }
             
             // Create highlighted markers for OTP buses
             routeBuses.forEach(bus => {
