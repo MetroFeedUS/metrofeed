@@ -537,7 +537,7 @@
   <div class="otp-btn-row">
     <button id="goBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
     <button id="clearBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
-    <button id="toggleRouteBtn" style="width: 80px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Hide your closest route">Hide Route</button>
+    <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Find my location and closest route">Find Me</button>
   </div>
 </div>
 
@@ -640,353 +640,20 @@
     [PORTLAND_BOUNDS.north, PORTLAND_BOUNDS.east]
   ]);
 
-  // === SECTION: CENTRALIZED ROUTE STATE MANAGEMENT ===
-  // Single source of truth for route display state
-  const routeState = {
-    closestRoute: null,
-    userRouteVisible: false,
-    userRouteManuallyHidden: false,
-    otpRouteActive: false,
-    userHasInteracted: false,
-    lastUserInteraction: 0
-  };
-
-  // Centralized route display controller
-  function updateRouteDisplay(forceShow = false, forceHide = false) {
-    console.log('[updateRouteDisplay] Called with forceShow:', forceShow, 'forceHide:', forceHide);
-    console.log('[updateRouteDisplay] Current state:', routeState);
-    
-    // Don't auto-show routes if user has manually hidden them
-    if (routeState.userRouteManuallyHidden && !forceShow) {
-      console.log('[updateRouteDisplay] Route manually hidden, not showing');
-      return;
-    }
-    
-    // Don't show closest route if OTP is active
-    if (routeState.otpRouteActive && !forceShow) {
-      console.log('[updateRouteDisplay] OTP active, not showing closest route');
-      return;
-    }
-    
-    // Don't auto-snap if user has interacted with map recently
-    if (routeState.userHasInteracted && !forceShow) {
-      console.log('[updateRouteDisplay] User has interacted, not auto-showing');
-      return;
-    }
-    
-    if (routeState.closestRoute && (routeState.userRouteVisible || forceShow)) {
-      // Show route logic
-      if (!userLocationPolyline || !map.hasLayer(userLocationPolyline)) {
-        console.log('[updateRouteDisplay] Showing closest route');
-        userLocationPolyline = L.polyline(routeState.closestRoute.shape, {
-          color: '#0071CE',
-          weight: 4,
-          opacity: 0.7
-        }).addTo(map);
-        
-        // Recreate stop markers
-        const nowMins = getPortlandMinutes();
-        userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
-        userLocationStopMarkers = [];
-        
-        routeState.closestRoute.stops.forEach(stop => {
-          let highlightedTimes = [];
-          let foundNext = false;
-          stop.times.forEach(timeStr => {
-            let cleanTime = timeStr.trim();
-            let [h, m] = cleanTime.split(":"),
-              schedMins = parseInt(h) * 60 + parseInt(m);
-            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-            if (!foundNext && schedMins >= nowMins) {
-              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-              foundNext = true;
-            } else {
-              highlightedTimes.push(cleanTime);
-            }
-          });
-
-          const stopMarker = L.circleMarker([stop.lat, stop.lon], {
-            radius: 6,
-            color: '#4dd0e1',
-            fillColor: '#4dd0e1',
-            fillOpacity: 0.9,
-            weight: 1
-          }).bindPopup(
-            `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                <strong style='color:#4dd0e1;'>${stop.name}</strong>
-                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-                ${
-                  highlightedTimes.map(t =>
-                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                  ).join('') || '<div>No scheduled times</div>'
-                }
-              </div>`
-          ).addTo(map);
-
-          userLocationStopMarkers.push(stopMarker);
-        });
-        
-        routeState.userRouteVisible = true;
-        updateRouteButtonState();
-      }
-    } else {
-      // Hide route logic
-      if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
-        console.log('[updateRouteDisplay] Hiding closest route');
-        map.removeLayer(userLocationPolyline);
-        userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
-        routeState.userRouteVisible = false;
-        updateRouteButtonState();
-      }
-    }
-  }
-
-  // Smart fitBounds function that respects user preferences
-  function smartFitBounds(bounds, context = 'auto') {
-    console.log('[smartFitBounds] Called with context:', context);
-    console.log('[smartFitBounds] User has interacted:', routeState.userHasInteracted);
-    console.log('[smartFitBounds] Route manually hidden:', routeState.userRouteManuallyHidden);
-    
-    // Never auto-fit if user has interacted recently
-    if (routeState.userHasInteracted && context === 'auto') {
-      console.log('[smartFitBounds] Skipping auto-fit - user has interacted');
-      return;
-    }
-    
-    // Only fit if user hasn't manually hidden routes
-    if (routeState.userRouteManuallyHidden && context === 'closest_route') {
-      console.log('[smartFitBounds] Skipping closest route fit - manually hidden');
-      return;
-    }
-    
-    console.log('[smartFitBounds] Performing fitBounds');
-    map.fitBounds(bounds, { 
-      padding: [20, 20],
-      maxZoom: 14
-    });
-  }
-
-  // Interval manager to prevent conflicts
-  const intervalManager = {
-    closestRouteInterval: null,
-    otpBusInterval: null,
-    
-    startClosestRouteTracking() {
-      log('[intervalManager] Starting closest route tracking');
-      this.stopAll();
-      this.closestRouteInterval = setInterval(() => {
-        if (!routeState.otpRouteActive && !routeState.userRouteManuallyHidden) {
-          fetchAndDisplayBuses();
-        } else {
-          log('[intervalManager] Skipping closest route update - OTP active or route hidden');
-        }
-      }, performanceConfig.apiThrottleMs);
-    },
-    
-    startOtpTracking() {
-      log('[intervalManager] Starting OTP tracking');
-      this.stopAll();
-      this.otpBusInterval = setInterval(() => {
-        fetchAndDisplayBuses(window.currentOtpRoutes);
-      }, performanceConfig.apiThrottleMs);
-    },
-    
-    stopAll() {
-      if (this.closestRouteInterval) {
-        clearInterval(this.closestRouteInterval);
-        this.closestRouteInterval = null;
-      }
-      if (this.otpBusInterval) {
-        clearInterval(this.otpBusInterval);
-        this.otpBusInterval = null;
-      }
-    }
-  };
-
-  // Load user preferences from localStorage
-  function loadUserPreferences() {
-    const hidden = localStorage.getItem('userRouteHidden') === 'true';
-    routeState.userRouteManuallyHidden = hidden;
-    console.log('[loadUserPreferences] Route hidden preference:', hidden);
-  }
-
-  // Save user preference when they hide route
-  function hideUserRoute() {
-    routeState.userRouteManuallyHidden = true;
-    localStorage.setItem('userRouteHidden', 'true');
-    updateRouteDisplay();
-    console.log('[hideUserRoute] Route hidden and preference saved');
-  }
-
-  // Show user route and clear preference
-  function showUserRoute() {
-    routeState.userRouteManuallyHidden = false;
-    localStorage.removeItem('userRouteHidden');
-    updateRouteDisplay(true);
-    console.log('[showUserRoute] Route shown and preference cleared');
-  }
-
   // Track user interaction to prevent auto-snapping
   map.hasBeenMovedByUser = false;
   map.on('dragstart', () => {
-    routeState.userHasInteracted = true;
-    routeState.lastUserInteraction = Date.now();
     map.hasBeenMovedByUser = true;
-    console.log('[User Interaction] Map dragged');
   });
   map.on('zoomstart', () => {
-    routeState.userHasInteracted = true;
-    routeState.lastUserInteraction = Date.now();
     map.hasBeenMovedByUser = true;
-    console.log('[User Interaction] Map zoomed');
   });
   map.on('click', () => {
-    routeState.userHasInteracted = true;
-    routeState.lastUserInteraction = Date.now();
     map.hasBeenMovedByUser = true;
-    console.log('[User Interaction] Map clicked');
   });
 
-  // Reset interaction state after 5 minutes of inactivity
-  setInterval(() => {
-    if (Date.now() - routeState.lastUserInteraction > 300000) {
-      routeState.userHasInteracted = false;
-      console.log('[User Interaction] Reset after 5 minutes of inactivity');
-    }
-  }, 60000);
-
-  // Load preferences on initialization
-  loadUserPreferences();
-
-  // === SECTION: MOBILE PERFORMANCE OPTIMIZATIONS ===
-  // Detect mobile devices for performance optimizations
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const isSlowConnection = navigator.connection && (navigator.connection.effectiveType === 'slow-2g' || navigator.connection.effectiveType === '2g');
-  
-  // Performance settings based on device
-  const performanceConfig = {
-    // Reduce logging on mobile for better performance
-    enableLogging: !isMobile,
-    
-    // Throttle API calls on mobile
-    apiThrottleMs: isMobile ? 2000 : 15000,
-    
-    // Reduce autocomplete results on mobile
-    maxAutocompleteResults: isMobile ? 3 : 5,
-    
-    // Delay route finding on mobile to prevent UI blocking
-    routeFindingDelayMs: isMobile ? 500 : 0,
-    
-    // Reduce bus marker complexity on mobile
-    simplifyBusMarkers: isMobile,
-    
-    // Batch DOM updates on mobile
-    batchUpdates: isMobile
-  };
-
-  // Optimized logging function
-  function log(message, ...args) {
-    if (performanceConfig.enableLogging) {
-      console.log(message, ...args);
-    }
-  }
-
-  // Throttled function wrapper
-  function throttle(func, delay) {
-    let timeoutId;
-    let lastExecTime = 0;
-    return function (...args) {
-      const currentTime = Date.now();
-      
-      if (currentTime - lastExecTime > delay) {
-        func.apply(this, args);
-        lastExecTime = currentTime;
-      } else {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          func.apply(this, args);
-          lastExecTime = Date.now();
-        }, delay - (currentTime - lastExecTime));
-      }
-    };
-  }
-
-  // Optimized route finding with batching for mobile
-  function findClosestRouteOptimized(userLat, userLon) {
-    return new Promise((resolve) => {
-      if (performanceConfig.routeFindingDelayMs > 0) {
-        // Delay route finding on mobile to prevent UI blocking
-        setTimeout(() => {
-          resolve(findClosestRouteSync(userLat, userLon));
-        }, performanceConfig.routeFindingDelayMs);
-      } else {
-        resolve(findClosestRouteSync(userLat, userLon));
-      }
-    });
-  }
-
-  function findClosestRouteSync(userLat, userLon) {
-    let closestDist = Infinity;
-    let closestRoute = null;
-    
-    // Process routes in batches on mobile
-    const batchSize = isMobile ? 50 : masterRoutes.length;
-    let processed = 0;
-    
-    function processBatch() {
-      const endIndex = Math.min(processed + batchSize, masterRoutes.length);
-      
-      for (let i = processed; i < endIndex; i++) {
-        const route = masterRoutes[i];
-        route.stops.forEach(stop => {
-          const dist = Math.hypot(userLat - stop.lat, userLon - stop.lon);
-          if (dist < closestDist) {
-            closestDist = dist;
-            closestRoute = route;
-          }
-        });
-      }
-      
-      processed = endIndex;
-      
-      if (processed < masterRoutes.length && performanceConfig.batchUpdates) {
-        // Continue processing in next frame to prevent UI blocking
-        requestAnimationFrame(processBatch);
-      } else {
-        log('[Performance] Route finding completed');
-        return closestRoute;
-      }
-    }
-    
-    if (performanceConfig.batchUpdates) {
-      processBatch();
-    } else {
-      // Process all at once on desktop
-      masterRoutes.forEach(route => {
-        route.stops.forEach(stop => {
-          const dist = Math.hypot(userLat - stop.lat, userLon - stop.lon);
-          if (dist < closestDist) {
-            closestDist = dist;
-            closestRoute = route;
-          }
-        });
-      });
-    }
-    
-    return closestRoute;
-  }
-
   // === SECTION: AUTOCOMPLETE FOR SEARCH BAR ===
-  // Lazy load autocomplete data to prevent blocking on mobile
-  let allStops = null;
-  function getStopsForAutocomplete() {
-    if (!allStops) {
-      log('[Performance] Lazy loading autocomplete data');
-      allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
-    }
-    return allStops;
-  }
-
+  const allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
   function decodeHTMLEntities(text) {
     const txt = document.createElement("textarea");
     txt.innerHTML = text;
@@ -1017,12 +684,7 @@
         dropdown.style.display = "none";
         return;
       }
-      
-      // Lazy load stops data only when needed
-      const stops = getStopsForAutocomplete();
-      const matches = stops.filter(name => name.toLowerCase().includes(query))
-        .slice(0, performanceConfig.maxAutocompleteResults);
-      
+      const matches = allStops.filter(name => name.toLowerCase().includes(query)).slice(0, 5);
       matches.forEach(name => {
         const option = document.createElement("div");
         option.textContent = name;
@@ -1083,8 +745,6 @@
   }
 
   function clearTripPlan() {
-    console.log('[clearTripPlan] Clearing trip plan');
-    
     // Remove pins
     if (startPin) {
       map.removeLayer(startPin);
@@ -1137,18 +797,73 @@
     // Reset active trip flag
     activeTripSelected = false;
     
-    // Update route state
-    routeState.otpRouteActive = false;
-    
     // Resume tracking closest route if available
-    if (routeState.closestRoute) {
+    if (closestRoute) {
       console.log('[clearTripPlan] Resuming closest route tracking');
       
-      // Use centralized route display controller
-      updateRouteDisplay(true); // force show if not manually hidden
+      // Restore user's closest route polyline and stops (only if not manually hidden)
+      if (!userLocationPolyline && closestRoute && !userRouteManuallyHidden) {
+        userLocationPolyline = L.polyline(closestRoute.shape, {
+          color: '#0071CE',
+          weight: 4,
+          opacity: 0.7
+        }).addTo(map);
+        
+        // Recreate stop markers
+        const nowMins = getPortlandMinutes();
+        userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+        userLocationStopMarkers = [];
+        
+        closestRoute.stops.forEach(stop => {
+          let highlightedTimes = [];
+          let foundNext = false;
+          stop.times.forEach(timeStr => {
+            let cleanTime = timeStr.trim();
+            let [h, m] = cleanTime.split(":"),
+              schedMins = parseInt(h) * 60 + parseInt(m);
+            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+            if (!foundNext && schedMins >= nowMins) {
+              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+              foundNext = true;
+            } else {
+              highlightedTimes.push(cleanTime);
+            }
+          });
+
+          const stopMarker = L.circleMarker([stop.lat, stop.lon], {
+            radius: 6,
+            color: '#4dd0e1',
+            fillColor: '#4dd0e1',
+            fillOpacity: 0.9,
+            weight: 1
+          }).bindPopup(
+            `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                ${
+                  highlightedTimes.map(t =>
+                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                  ).join('') || '<div>No scheduled times</div>'
+                }
+              </div>`
+          ).addTo(map);
+
+          userLocationStopMarkers.push(stopMarker);
+        });
+        
+        // Update button state (only if not manually hidden)
+        if (!userRouteManuallyHidden) {
+          updateRouteButtonState();
+        }
+      }
       
-      // Start closest route tracking using interval manager
-      intervalManager.startClosestRouteTracking();
+      fetchAndDisplayBuses();
+      // Restart closest route interval if it was stopped and route is not manually hidden
+      if (!window.closestRouteInterval && !userRouteManuallyHidden) {
+        window.closestRouteInterval = setInterval(() => {
+          fetchAndDisplay();
+        }, 15000);
+      }
     }
   }
 
@@ -1293,9 +1008,14 @@
     return Math.atan2(dy, dx) * 180 / Math.PI;
   }
 
-  // Initialize variables for user location tracking
+  // Background loading flags
+  let hasAutoSnapped = false;
   let userLocationPolyline = null; // Track the user's route polyline
   let userLocationStopMarkers = []; // Track the user's route stop markers
+  let userLocationFound = false; // Track if location has been found in background
+  let closestRouteFound = false; // Track if closest route has been found in background
+  let backgroundLocationData = null; // Store location data for later display
+  let backgroundRouteData = null; // Store route data for later display
 
   if (navigator.geolocation) {
     // Track if we've already done the initial route setup
@@ -1306,75 +1026,169 @@
       const userLon = pos.coords.longitude;
       const userLatLng = [userLat, userLon];
 
-      // Remove old markers if present
-      if (userLocationMarker) { map.removeLayer(userLocationMarker); userLocationMarker = null; }
-      if (userArrow) { map.removeLayer(userArrow); userArrow = null; }
+      // Store location data in background (don't display yet)
+      backgroundLocationData = {
+        lat: userLat,
+        lon: userLon,
+        latLng: userLatLng,
+        inBounds: isInPortland(userLat, userLon)
+      };
+      userLocationFound = true;
 
-      if (isInPortland(userLat, userLon)) {
-        // IN BOUNDS: show pulsing dot
-        const pulseIcon = L.divIcon({
-          className: 'pulse-marker',
-          iconSize: [20, 20],
-          iconAnchor: [10, 10]
-        });
-        userLocationMarker = L.marker(userLatLng, { icon: pulseIcon }).addTo(map)
-          .bindPopup("You are here (location never leaves your device)").openPopup();
-      } else {
-        // OUT OF BOUNDS: show arrow at nearest edge
-        // Clamp user's lat/lon to the edge of Portland bounds
-        const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
-        const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
-        const edgeLatLng = [edgeLat, edgeLon];
-        // Angle from edge to user (flipped direction)
-        const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
-        // Arrow icon with rotation
-        const arrowIcon = L.divIcon({
-          className: 'arrow-marker',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
-          html: `<svg style="transform: rotate(${angle}deg);" viewBox="0 0 30 30">
-            <polygon points="15,4 24,26 15,21 6,26" fill="#2196f3"/>
-          </svg>`
-        });
-        userArrow = L.marker(edgeLatLng, { icon: arrowIcon }).addTo(map)
-          .bindPopup("You are outside the Portland map area.").openPopup();
+      // Only display location marker if user has clicked "Find Me"
+      if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
+        // Remove old markers if present
+        if (userLocationMarker) { map.removeLayer(userLocationMarker); userLocationMarker = null; }
+        if (userArrow) { map.removeLayer(userArrow); userArrow = null; }
+
+        if (isInPortland(userLat, userLon)) {
+          // IN BOUNDS: show pulsing dot
+          const pulseIcon = L.divIcon({
+            className: 'pulse-marker',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+          userLocationMarker = L.marker(userLatLng, { icon: pulseIcon }).addTo(map)
+            .bindPopup("You are here (location never leaves your device)").openPopup();
+        } else {
+          // OUT OF BOUNDS: show arrow at nearest edge
+          // Clamp user's lat/lon to the edge of Portland bounds
+          const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
+          const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
+          const edgeLatLng = [edgeLat, edgeLon];
+          // Angle from edge to user (flipped direction)
+          const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
+          // Arrow icon with rotation
+          const arrowIcon = L.divIcon({
+            className: 'arrow-marker',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            html: `<svg style="transform: rotate(${angle}deg);" viewBox="0 0 30 30">
+              <polygon points="15,4 24,26 15,21 6,26" fill="#2196f3"/>
+            </svg>`
+          });
+          userArrow = L.marker(edgeLatLng, { icon: arrowIcon }).addTo(map)
+            .bindPopup("You are outside the Portland map area.").openPopup();
+        }
       }
 
-      // Only run the route finding and setup logic ONCE
-      if (!hasInitializedRoute) {
-        log('[Geolocation] Initializing route setup');
-        
-        // Use optimized route finding with mobile-specific delays
-        findClosestRouteOptimized(userLat, userLon).then(foundRoute => {
-          closestRoute = foundRoute;
-          
-          if (closestRoute) {
-            log('[Geolocation] Closest route found:', closestRoute);
-            log('[Geolocation] Route ID:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
-            
-            // Store in centralized state
-            routeState.closestRoute = closestRoute;
-            
-            // Use centralized route display controller
-            updateRouteDisplay();
-            
-            // Use smart fitBounds for initial positioning
-            if (!routeState.userHasInteracted && !routeState.userRouteManuallyHidden) {
-              setTimeout(() => {
-                if (!routeState.userHasInteracted) {
-                  smartFitBounds(userLocationPolyline.getBounds(), 'closest_route');
-                }
-              }, 1000); // 1 second delay
+      // Store route data in background (don't display yet)
+      if (!closestRouteFound) {
+        // Find closest route logic
+        let closestDist = Infinity;
+        // OPTIMIZED: Only check stops, not every shape point
+        masterRoutes.forEach(route => {
+          route.stops.forEach(stop => {
+            const dist = Math.hypot(userLat - stop.lat, userLon - stop.lon);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestRoute = route;
             }
-
-            // Start bus tracking using interval manager with mobile throttling
-            fetchAndDisplayBuses();
-            intervalManager.startClosestRouteTracking();
-          }
-          
-          // Mark that we've initialized the route
-          hasInitializedRoute = true;
+          });
         });
+
+        if (closestRoute) {
+          console.log('[Geolocation] Closest route found in background:', closestRoute);
+          console.log('[Geolocation] Route ID:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
+          
+          // Store route data for later display
+          backgroundRouteData = {
+            route: closestRoute,
+            distance: closestDist
+          };
+          closestRouteFound = true;
+        }
+      }
+
+      // Only display route if user has clicked "Find Me"
+      if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
+        // --- Draw closest route ---
+        userLocationPolyline = L.polyline(closestRoute.shape, {
+          color: '#0071CE',
+          weight: 4,
+          opacity: 0.7
+        }).addTo(map);
+        
+        // Only fitBounds once on initial load - but let user control the map
+        if (!hasAutoSnapped && !map.hasBeenMovedByUser) {
+          // Add a small delay to make the snapping less jarring
+          setTimeout(() => {
+            if (!map.hasBeenMovedByUser) {
+              map.fitBounds(userLocationPolyline.getBounds(), { 
+                padding: [20, 20],
+                maxZoom: 14 // Don't zoom in too much
+              });
+              hasAutoSnapped = true;
+            }
+          }, 1000); // 1 second delay
+        }
+
+                          // --- Show stops + next time highlight ---
+        const nowMins = getPortlandMinutes();
+
+        // Clear any existing stop markers
+        userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+        userLocationStopMarkers = [];
+
+        closestRoute.stops.forEach(stop => {
+          let highlightedTimes = [];
+          let foundNext = false;
+          stop.times.forEach(timeStr => {
+            let cleanTime = timeStr.trim();
+            let [h, m] = cleanTime.split(":"),
+              schedMins = parseInt(h) * 60 + parseInt(m);
+            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+            if (!foundNext && schedMins >= nowMins) {
+              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+              foundNext = true;
+            } else {
+              highlightedTimes.push(cleanTime);
+            }
+          });
+
+          const stopMarker = L.circleMarker([stop.lat, stop.lon], {
+            radius: 6,
+            color: '#4dd0e1',
+            fillColor: '#4dd0e1',
+            fillOpacity: 0.9,
+            weight: 1
+          }).bindPopup(
+            `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                ${
+                  highlightedTimes.map(t =>
+                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                  ).join('') || '<div>No scheduled times</div>'
+                }
+              </div>`
+          ).addTo(map);
+
+          userLocationStopMarkers.push(stopMarker);
+
+        }); // closes stops.forEach
+
+        // Update button state to show route is visible
+        updateFindMeButtonState();
+
+          // --- Only fetch/display bus locations AFTER closestRoute is known ---
+          fetchAndDisplay(); // <-- run initial fetch
+          // Set up continuous tracking for closest route
+          if (window.closestRouteInterval) {
+            clearInterval(window.closestRouteInterval);
+          }
+          window.closestRouteInterval = setInterval(() => {
+            // Only track closest route if we're not doing OTP and route is visible
+            if (!window.otpBusTrackingInterval && userLocationPolyline && map.hasLayer(userLocationPolyline)) {
+              fetchAndDisplay();
+            } else {
+              console.log('[closestRouteInterval] Skipping closest route update - OTP tracking active or route not visible');
+            }
+          }, 15000);
+        }
+        
+        // Mark that we've initialized the route
+        hasInitializedRoute = true;
       }
     }, function(error) {
       if (error.code === 1) {
@@ -1391,20 +1205,20 @@
   let busMarkers = {};
   let currentTrackingRoutes = new Set(); // Track which routes we're currently showing buses for
   
-  // Function to update the route toggle button state
-  function updateRouteButtonState() {
-    const toggleRouteBtn = document.getElementById('toggleRouteBtn');
-    if (toggleRouteBtn) {
-      if (routeState.userRouteVisible && !routeState.userRouteManuallyHidden) {
+  // Function to update the find me button state
+  function updateFindMeButtonState() {
+    const findMeBtn = document.getElementById('findMeBtn');
+    if (findMeBtn) {
+      if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
         // Route is visible
-        toggleRouteBtn.style.backgroundColor = '#4dd0e1';
-        toggleRouteBtn.textContent = 'Hide Route';
-        toggleRouteBtn.title = 'Hide your closest route';
+        findMeBtn.style.backgroundColor = '#4dd0e1';
+        findMeBtn.textContent = 'Find Me';
+        findMeBtn.title = 'Find my location and closest route';
       } else {
         // Route is hidden
-        toggleRouteBtn.style.backgroundColor = '#666';
-        toggleRouteBtn.textContent = 'Show Route';
-        toggleRouteBtn.title = 'Show your closest route';
+        findMeBtn.style.backgroundColor = '#666';
+        findMeBtn.textContent = 'Find Me';
+        findMeBtn.title = 'Find my location and closest route';
       }
     }
   }
@@ -1548,13 +1362,13 @@
   
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
-    log('[fetchAndDisplayBuses] Starting bus fetch...');
-    log('[fetchAndDisplayBuses] routesToTrack:', routesToTrack);
-    log('[fetchAndDisplayBuses] closestRoute:', closestRoute);
+    console.log('[fetchAndDisplayBuses] Starting bus fetch...');
+    console.log('[fetchAndDisplayBuses] routesToTrack:', routesToTrack);
+    console.log('[fetchAndDisplayBuses] closestRoute:', closestRoute);
     
     // If no specific routes provided, use closestRoute if available
     if (!routesToTrack && !closestRoute) {
-      log('[fetchAndDisplayBuses] No routes to track and no closest route');
+      console.log('[fetchAndDisplayBuses] No routes to track and no closest route');
       return;
     }
     
@@ -1563,8 +1377,8 @@
       const data = await res.json();
       const allBuses = data.resultSet.vehicle || [];
       
-      log('[fetchAndDisplayBuses] API response - total buses:', allBuses.length);
-      log('[fetchAndDisplayBuses] Sample bus data:', allBuses.slice(0, 2));
+      console.log('[fetchAndDisplayBuses] API response - total buses:', allBuses.length);
+      console.log('[fetchAndDisplayBuses] Sample bus data:', allBuses.slice(0, 2));
       
       // Clear existing bus markers
       Object.values(busMarkers).forEach(m => map.removeLayer(m));
@@ -1582,7 +1396,7 @@
             direction_id: legInfo.direction,
             mode: legInfo.mode
           }));
-          log('[fetchAndDisplayBuses] Using routes from currentLegColorMapping:', routesToShow);
+          console.log('[fetchAndDisplayBuses] Using routes from currentLegColorMapping:', routesToShow);
         } else if (closestRoute) {
           // Use closest route (for initial load)
           routesToShow = [{
@@ -1592,10 +1406,10 @@
           }];
         }
       
-      log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
-      log('[fetchAndDisplayBuses] Sample of all buses route numbers:', allBuses.slice(0, 5).map(b => ({ routeNumber: b.routeNumber, direction: b.direction, vehicleID: b.vehicleID })));
+      console.log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
+      console.log('[fetchAndDisplayBuses] Sample of all buses route numbers:', allBuses.slice(0, 5).map(b => ({ routeNumber: b.routeNumber, direction: b.direction, vehicleID: b.vehicleID })));
       const allRouteNumbers = allBuses.map(b => b.routeNumber).sort();
-      log('[fetchAndDisplayBuses] All route numbers:', JSON.stringify(allRouteNumbers));
+      console.log('[fetchAndDisplayBuses] All route numbers:', JSON.stringify(allRouteNumbers));
       
       // Track each route
       routesToShow.forEach(route => {
@@ -1604,90 +1418,90 @@
         
         // Map OTP route name to Trimet route number using masterRoutes data
         let trimetRouteNumber = route.route_id;
-        log('[fetchAndDisplayBuses] Processing route:', route);
-        log('[fetchAndDisplayBuses] Route ID type:', typeof route.route_id, 'Value:', route.route_id);
+        console.log('[fetchAndDisplayBuses] Processing route:', route);
+        console.log('[fetchAndDisplayBuses] Route ID type:', typeof route.route_id, 'Value:', route.route_id);
         
         if (route.route_id && isNaN(route.route_id)) {
           // This is likely an OTP route name, try to map it
           trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
-          log('[fetchAndDisplayBuses] Mapped route:', route.route_id, '->', trimetRouteNumber);
+          console.log('[fetchAndDisplayBuses] Mapped route:', route.route_id, '->', trimetRouteNumber);
         } else {
-          log('[fetchAndDisplayBuses] Route ID is numeric, using directly:', trimetRouteNumber);
+          console.log('[fetchAndDisplayBuses] Route ID is numeric, using directly:', trimetRouteNumber);
         }
         
-        log('[fetchAndDisplayBuses] Looking for route:', trimetRouteNumber, 'direction:', route.direction_id);
+        console.log('[fetchAndDisplayBuses] Looking for route:', trimetRouteNumber, 'direction:', route.direction_id);
         const availableRouteNumbers = [...new Set(allBuses.map(b => b.routeNumber))];
         const availableDirections = [...new Set(allBuses.map(b => b.direction))];
-        log('[fetchAndDisplayBuses] Available route numbers:', JSON.stringify(availableRouteNumbers));
-        log('[fetchAndDisplayBuses] Available directions:', JSON.stringify(availableDirections));
+        console.log('[fetchAndDisplayBuses] Available route numbers:', JSON.stringify(availableRouteNumbers));
+        console.log('[fetchAndDisplayBuses] Available directions:', JSON.stringify(availableDirections));
         
         // Filter buses for this specific route using mapped route number
         let routeBuses = [];
-        log('[fetchAndDisplayBuses] Filtering for route:', trimetRouteNumber, 'direction:', route.direction_id);
-        log('[fetchAndDisplayBuses] Available buses route numbers:', [...new Set(allBuses.map(b => b.routeNumber))]);
+        console.log('[fetchAndDisplayBuses] Filtering for route:', trimetRouteNumber, 'direction:', route.direction_id);
+        console.log('[fetchAndDisplayBuses] Available buses route numbers:', [...new Set(allBuses.map(b => b.routeNumber))]);
         
         if (trimetRouteNumber) {
           // Try to find buses for the specific mapped route
           routeBuses = allBuses.filter(v => 
             v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
           );
-          log('[fetchAndDisplayBuses] Buses with exact route and direction match:', routeBuses.length);
+          console.log('[fetchAndDisplayBuses] Buses with exact route and direction match:', routeBuses.length);
           
           // If no buses found with direction, try without direction constraint
           if (routeBuses.length === 0) {
-            log('[fetchAndDisplayBuses] No buses found with direction constraint, trying without direction');
+            console.log('[fetchAndDisplayBuses] No buses found with direction constraint, trying without direction');
             routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
-            log('[fetchAndDisplayBuses] Buses with route match (no direction):', routeBuses.length);
+            console.log('[fetchAndDisplayBuses] Buses with route match (no direction):', routeBuses.length);
           }
           
           // If still no buses, show a message and some nearby active routes
           if (routeBuses.length === 0) {
-            log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- route may not be active at this time');
+            console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- route may not be active at this time');
             
             // Show a few active routes as alternatives
             const activeRoutes = [...new Set(allBuses.map(b => b.routeNumber))].slice(0, 5);
-            log('[fetchAndDisplayBuses] Active routes available:', activeRoutes);
+            console.log('[fetchAndDisplayBuses] Active routes available:', activeRoutes);
             
             // Show buses from a few active routes as alternatives
             routeBuses = allBuses.filter(v => activeRoutes.includes(v.routeNumber));
-            log('[fetchAndDisplayBuses] Showing', routeBuses.length, 'buses from active routes as alternatives');
+            console.log('[fetchAndDisplayBuses] Showing', routeBuses.length, 'buses from active routes as alternatives');
           }
         } else {
           // If we can't map the route, show all buses for debugging
-          log('[fetchAndDisplayBuses] No route mapping found, showing all buses');
+          console.log('[fetchAndDisplayBuses] No route mapping found, showing all buses');
           routeBuses = allBuses;
         }
         
-        log('[fetchAndDisplayBuses] Final buses to display:', routeBuses.length);
+        console.log('[fetchAndDisplayBuses] Final buses to display:', routeBuses.length);
         
         // Show status message if no buses found for the requested route
         if (routeBuses.length === 0 && trimetRouteNumber) {
-          log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- route may not be active');
+          console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- route may not be active');
           // Could add a visual indicator here if needed
         }
         
-        log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber);
+        console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber);
         
         // Create markers for each bus on this route
         routeBuses.forEach(bus => {
           if (!bus.latitude || !bus.longitude || !bus.blockID) {
-            log('[fetchAndDisplayBuses] Skipping bus with missing data:', bus);
+            console.log('[fetchAndDisplayBuses] Skipping bus with missing data:', bus);
             return;
           }
           
-          log('[fetchAndDisplayBuses] Creating marker for bus:', bus.vehicleID, 'at', bus.latitude, bus.longitude);
+          console.log('[fetchAndDisplayBuses] Creating marker for bus:', bus.vehicleID, 'at', bus.latitude, bus.longitude);
           
           // Match bus to route leg color
           let routeColor = getRouteColor(route.mode);
           let isOtpBus = false;
           let matchedLegKey = null;
           
-          log('[Bus Color Debug] Initial color for bus', bus.vehicleID, ':', routeColor);
+          console.log('[Bus Color Debug] Initial color for bus', bus.vehicleID, ':', routeColor);
           
-          log('[Bus Color Debug] Processing bus:', bus.vehicleID, 'route:', bus.routeNumber, 'direction:', bus.direction);
-          log('[Bus Color Debug] routesToTrack:', routesToTrack);
-          log('[Bus Color Debug] currentLegColorMapping:', window.currentLegColorMapping);
-          log('[Bus Color Debug] Leg mapping details:', JSON.stringify(window.currentLegColorMapping, null, 2));
+          console.log('[Bus Color Debug] Processing bus:', bus.vehicleID, 'route:', bus.routeNumber, 'direction:', bus.direction);
+          console.log('[Bus Color Debug] routesToTrack:', routesToTrack);
+          console.log('[Bus Color Debug] currentLegColorMapping:', window.currentLegColorMapping);
+          console.log('[Bus Color Debug] Leg mapping details:', JSON.stringify(window.currentLegColorMapping, null, 2));
           
           if (window.currentLegColorMapping) {
             // Try to match this bus to a specific route leg
@@ -1696,7 +1510,7 @@
                 routeColor = legInfo.color;
                 isOtpBus = true;
                 matchedLegKey = legKey;
-                log('[Bus Matching] Bus', bus.vehicleID, 'matched to leg:', legKey, 'color:', legInfo.color, 'description:', legInfo.description);
+                console.log('[Bus Matching] Bus', bus.vehicleID, 'matched to leg:', legKey, 'color:', legInfo.color, 'description:', legInfo.description);
                 break;
               }
             }
@@ -1708,7 +1522,7 @@
                   routeColor = legInfo.color;
                   isOtpBus = true;
                   matchedLegKey = legKey;
-                  log('[Bus Matching] Bus', bus.vehicleID, 'matched by description to leg:', legKey, 'color:', legInfo.color);
+                  console.log('[Bus Matching] Bus', bus.vehicleID, 'matched by description to leg:', legKey, 'color:', legInfo.color);
                   break;
                 }
               }
@@ -1729,7 +1543,7 @@
                     routeColor = legInfo.color;
                     isOtpBus = true;
                     matchedLegKey = legKey;
-                    log('[Bus Matching] Bus', bus.vehicleID, 'matched via masterRoutes to leg:', legKey, 'color:', legInfo.color, 'masterRoute:', matchingRoute.route_title);
+                    console.log('[Bus Matching] Bus', bus.vehicleID, 'matched via masterRoutes to leg:', legKey, 'color:', legInfo.color, 'masterRoute:', matchingRoute.route_title);
                     break;
                   }
                 }
@@ -1745,7 +1559,7 @@
               }
             }
           }
-          log('[Bus Icon Debug] Creating icon for bus', bus.vehicleID, 'with color:', routeColor, 'isOtpBus:', isOtpBus, 'matchedLegKey:', matchedLegKey);
+          console.log('[Bus Icon Debug] Creating icon for bus', bus.vehicleID, 'with color:', routeColor, 'isOtpBus:', isOtpBus, 'matchedLegKey:', matchedLegKey);
           const icon = createBusIcon(bus.vehicleID, routeColor, isOtpBus);
           const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
           
@@ -1821,12 +1635,12 @@
         });
       });
       
-      log('[fetchAndDisplayBuses] Total bus markers created:', Object.keys(busMarkers).length);
+      console.log('[fetchAndDisplayBuses] Total bus markers created:', Object.keys(busMarkers).length);
       
 
       
-      log('[fetchAndDisplayBuses] Bus markers created:', Object.keys(busMarkers).length);
-      log('[fetchAndDisplayBuses] Routes to track:', routesToTrack);
+      console.log('[fetchAndDisplayBuses] Bus markers created:', Object.keys(busMarkers).length);
+      console.log('[fetchAndDisplayBuses] Routes to track:', routesToTrack);
       
     } catch (error) {
       console.error('[fetchAndDisplayBuses] Error fetching buses:', error);
@@ -2056,42 +1870,34 @@
   }
 
   function hideOtpModal() {
-    console.log('[hideOtpModal] Hiding OTP modal');
     document.getElementById('otpModal').style.display = 'none';
     
     // Only clear everything if no active trip is selected
     if (!activeTripSelected) {
-      console.log('[hideOtpModal] No active trip, clearing OTP elements');
-      
       // Clear route polylines and stop markers
       clearRoutePolylines();
       if (window.routeStopMarkers && window.routeStopMarkers.length) {
         window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
         window.routeStopMarkers = [];
       }
-      
       // Stop OTP bus tracking and clear bus markers
       if (window.otpBusTrackingInterval) {
         clearInterval(window.otpBusTrackingInterval);
         window.otpBusTrackingInterval = null;
       }
-      
       // Clear bus markers
       Object.values(busMarkers).forEach(m => map.removeLayer(m));
       busMarkers = {};
-      
-      // Update route state
-      routeState.otpRouteActive = false;
-      
       // Resume tracking closest route if available
-      if (routeState.closestRoute) {
+      if (closestRoute) {
         console.log('[hideOtpModal] Resuming closest route tracking');
-        
-        // Use centralized route display controller
-        updateRouteDisplay(true); // force show if not manually hidden
-        
-        // Start closest route tracking using interval manager
-        intervalManager.startClosestRouteTracking();
+        fetchAndDisplayBuses();
+        // Restart closest route interval if it was stopped and route is not manually hidden
+        if (!window.closestRouteInterval && !userRouteManuallyHidden) {
+          window.closestRouteInterval = setInterval(() => {
+            fetchAndDisplay();
+          }, 15000);
+        }
       }
     } else {
       console.log('[hideOtpModal] Trip is active, keeping route and buses visible');
@@ -2353,7 +2159,7 @@
     });
     
     if (window.routeLegLines.length) {
-      smartFitBounds(L.featureGroup(window.routeLegLines).getBounds(), 'otp_route');
+      map.fitBounds(L.featureGroup(window.routeLegLines).getBounds(), { padding: [40, 40] });
     }
     
     // Store leg color mapping globally for bus matching
@@ -2364,22 +2170,25 @@
     if (routesToTrack.length > 0) {
       console.log('[showRoute] Tracking buses for routes:', routesToTrack);
       
-      // Update route state
-      routeState.otpRouteActive = true;
-      window.currentOtpRoutes = routesToTrack;
-      
       // Stop closest route tracking when OTP tracking starts
-      intervalManager.stopAll();
+      if (window.closestRouteInterval) {
+        console.log('[showRoute] Stopping closest route tracking for OTP');
+        clearInterval(window.closestRouteInterval);
+        window.closestRouteInterval = null;
+      }
       
       fetchAndDisplayBuses(routesToTrack);
       // Set up continuous tracking for this trip
-      intervalManager.startOtpTracking();
+      if (window.otpBusTrackingInterval) {
+        clearInterval(window.otpBusTrackingInterval);
+      }
+      window.otpBusTrackingInterval = setInterval(() => {
+        fetchAndDisplayBuses(routesToTrack);
+      }, 15000);
     } else {
       // If no routes to track, resume closest route tracking
-      if (routeState.closestRoute) {
-        routeState.otpRouteActive = false;
+      if (closestRoute) {
         fetchAndDisplayBuses();
-        intervalManager.startClosestRouteTracking();
       }
     }
     
@@ -2678,12 +2487,64 @@
     const toggleRouteBtn = document.getElementById('toggleRouteBtn');
     if (toggleRouteBtn) {
       toggleRouteBtn.addEventListener('click', function() {
-        if (routeState.userRouteVisible && !routeState.userRouteManuallyHidden) {
-          // Hide route
-          hideUserRoute();
-        } else if (routeState.closestRoute) {
-          // Show route
-          showUserRoute();
+        if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
+          // Hide route and stops
+          map.removeLayer(userLocationPolyline);
+          userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+          userRouteManuallyHidden = true; // Mark as manually hidden
+          updateRouteButtonState();
+        } else if (closestRoute) {
+          // Show route and stops
+          userLocationPolyline = L.polyline(closestRoute.shape, {
+            color: '#0071CE',
+            weight: 4,
+            opacity: 0.7
+          }).addTo(map);
+          
+          // Recreate stop markers
+          const nowMins = getPortlandMinutes();
+          userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+          userLocationStopMarkers = [];
+          
+          closestRoute.stops.forEach(stop => {
+            let highlightedTimes = [];
+            let foundNext = false;
+            stop.times.forEach(timeStr => {
+              let cleanTime = timeStr.trim();
+              let [h, m] = cleanTime.split(":"),
+                schedMins = parseInt(h) * 60 + parseInt(m);
+              if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+              if (!foundNext && schedMins >= nowMins) {
+                highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+                foundNext = true;
+              } else {
+                highlightedTimes.push(cleanTime);
+              }
+            });
+
+            const stopMarker = L.circleMarker([stop.lat, stop.lon], {
+              radius: 6,
+              color: '#4dd0e1',
+              fillColor: '#4dd0e1',
+              fillOpacity: 0.9,
+              weight: 1
+            }).bindPopup(
+              `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                  <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                  ${
+                    highlightedTimes.map(t =>
+                      `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                    ).join('') || '<div>No scheduled times</div>'
+                  }
+                </div>`
+            ).addTo(map);
+
+            userLocationStopMarkers.push(stopMarker);
+          });
+          
+          userRouteManuallyHidden = false; // Mark as manually shown
+          updateRouteButtonState();
         }
       });
     }
@@ -2759,6 +2620,214 @@
   window.addEventListener('pageshow', function() {
     renderFavoritesBar();
   });
+
+  // Find Me button handler
+  const findMeBtn = document.getElementById('findMeBtn');
+  if (findMeBtn) {
+    findMeBtn.addEventListener('click', function() {
+      // If route is already visible, hide it
+      if (userLocationPolyline && map.hasLayer(userLocationPolyline)) {
+        // Hide route and stops
+        map.removeLayer(userLocationPolyline);
+        userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+        userLocationStopMarkers = [];
+        
+        // Remove location markers
+        if (userLocationMarker) { map.removeLayer(userLocationMarker); userLocationMarker = null; }
+        if (userArrow) { map.removeLayer(userArrow); userArrow = null; }
+        
+        updateFindMeButtonState();
+        return;
+      }
+
+      // Show loading state
+      findMeBtn.disabled = true;
+      findMeBtn.textContent = 'Looking...';
+      findMeBtn.style.backgroundColor = '#888';
+      
+      // Create loading overlay
+      const loadingOverlay = document.createElement('div');
+      loadingOverlay.id = 'findMeLoading';
+      loadingOverlay.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.9);
+        color: #4dd0e1;
+        padding: 20px 30px;
+        border-radius: 12px;
+        z-index: 10000;
+        text-align: center;
+        border: 2px solid #4dd0e1;
+        box-shadow: 0 0 20px #4dd0e1;
+      `;
+      loadingOverlay.innerHTML = `
+        <div style="margin-bottom: 15px;">
+          <div style="width: 30px; height: 30px; border: 3px solid #4dd0e1; border-top: 3px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+        </div>
+        <div id="loadingText">Looking for you...</div>
+      `;
+      document.body.appendChild(loadingOverlay);
+
+      // Add CSS animation
+      const style = document.createElement('style');
+      style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+      document.head.appendChild(style);
+
+      let step = 0;
+      const loadingSteps = [
+        { text: 'Looking for you...', delay: 2000 },
+        { text: 'Finding closest route...', delay: 3000 },
+        { text: 'Getting bus locations...', delay: 2000 },
+        { text: 'Almost ready...', delay: 1000 }
+      ];
+
+      function updateLoadingStep() {
+        if (step < loadingSteps.length) {
+          const loadingText = document.getElementById('loadingText');
+          if (loadingText) {
+            loadingText.textContent = loadingSteps[step].text;
+          }
+          step++;
+          if (step < loadingSteps.length) {
+            setTimeout(updateLoadingStep, loadingSteps[step - 1].delay);
+          } else {
+            // Final step - show the route
+            setTimeout(showUserLocationAndRoute, loadingSteps[step - 1].delay);
+          }
+        }
+      }
+
+      function showUserLocationAndRoute() {
+        // Remove loading overlay
+        if (loadingOverlay) {
+          loadingOverlay.remove();
+        }
+        if (style) {
+          style.remove();
+        }
+
+        // Check if we have background data
+        if (!backgroundLocationData || !backgroundRouteData) {
+          findMeBtn.disabled = false;
+          findMeBtn.textContent = 'Find Me';
+          findMeBtn.style.backgroundColor = '#666';
+          alert('Location data not ready yet. Please try again in a moment.');
+          return;
+        }
+
+        // Display user location marker
+        const userLat = backgroundLocationData.lat;
+        const userLon = backgroundLocationData.lon;
+        const userLatLng = backgroundLocationData.latLng;
+
+        if (backgroundLocationData.inBounds) {
+          // IN BOUNDS: show pulsing dot
+          const pulseIcon = L.divIcon({
+            className: 'pulse-marker',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+          userLocationMarker = L.marker(userLatLng, { icon: pulseIcon }).addTo(map)
+            .bindPopup("You are here (location never leaves your device)").openPopup();
+        } else {
+          // OUT OF BOUNDS: show arrow at nearest edge
+          const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
+          const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
+          const edgeLatLng = [edgeLat, edgeLon];
+          const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
+          const arrowIcon = L.divIcon({
+            className: 'arrow-marker',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            html: `<svg style="transform: rotate(${angle}deg);" viewBox="0 0 30 30">
+              <polygon points="15,4 24,26 15,21 6,26" fill="#2196f3"/>
+            </svg>`
+          });
+          userArrow = L.marker(edgeLatLng, { icon: arrowIcon }).addTo(map)
+            .bindPopup("You are outside the Portland map area.").openPopup();
+        }
+
+        // Display closest route
+        closestRoute = backgroundRouteData.route;
+        
+        userLocationPolyline = L.polyline(closestRoute.shape, {
+          color: '#0071CE',
+          weight: 4,
+          opacity: 0.7
+        }).addTo(map);
+
+        // Fit bounds to show the route
+        map.fitBounds(userLocationPolyline.getBounds(), { 
+          padding: [20, 20],
+          maxZoom: 14
+        });
+
+        // Show stops with times
+        const nowMins = getPortlandMinutes();
+        userLocationStopMarkers.forEach(marker => map.removeLayer(marker));
+        userLocationStopMarkers = [];
+
+        closestRoute.stops.forEach(stop => {
+          let highlightedTimes = [];
+          let foundNext = false;
+          stop.times.forEach(timeStr => {
+            let cleanTime = timeStr.trim();
+            let [h, m] = cleanTime.split(":"),
+              schedMins = parseInt(h) * 60 + parseInt(m);
+            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+            if (!foundNext && schedMins >= nowMins) {
+              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+              foundNext = true;
+            } else {
+              highlightedTimes.push(cleanTime);
+            }
+          });
+
+          const stopMarker = L.circleMarker([stop.lat, stop.lon], {
+            radius: 6,
+            color: '#4dd0e1',
+            fillColor: '#4dd0e1',
+            fillOpacity: 0.9,
+            weight: 1
+          }).bindPopup(
+            `<div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                <strong style='color:#4dd0e1;'>${stop.name}</strong>
+                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+                ${
+                  highlightedTimes.map(t =>
+                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                  ).join('') || '<div>No scheduled times</div>'
+                }
+              </div>`
+          ).addTo(map);
+
+          userLocationStopMarkers.push(stopMarker);
+        });
+
+        // Start bus tracking
+        fetchAndDisplayBuses();
+        if (window.closestRouteInterval) {
+          clearInterval(window.closestRouteInterval);
+        }
+        window.closestRouteInterval = setInterval(() => {
+          if (!window.otpBusTrackingInterval) {
+            fetchAndDisplayBuses();
+          }
+        }, 15000);
+
+        // Update button state
+        findMeBtn.disabled = false;
+        findMeBtn.textContent = 'Find Me';
+        findMeBtn.style.backgroundColor = '#4dd0e1';
+        updateFindMeButtonState();
+      }
+
+      // Start the loading sequence
+      setTimeout(updateLoadingStep, 500);
+    });
+  }
 </script>
 
 </body>
