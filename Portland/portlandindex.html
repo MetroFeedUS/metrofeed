@@ -1123,7 +1123,7 @@
           }, 1000); // 1 second delay
         }
 
-                          // --- Show stops + next time highlight ---
+        // --- Show stops + next time highlight ---
         const nowMins = getPortlandMinutes();
 
         // Clear any existing stop markers
@@ -1165,31 +1165,29 @@
           ).addTo(map);
 
           userLocationStopMarkers.push(stopMarker);
-
         }); // closes stops.forEach
 
         // Update button state to show route is visible
         updateFindMeButtonState();
 
-          // --- Only fetch/display bus locations AFTER closestRoute is known ---
-          fetchAndDisplay(); // <-- run initial fetch
-          // Set up continuous tracking for closest route
-          if (window.closestRouteInterval) {
-            clearInterval(window.closestRouteInterval);
-          }
-          window.closestRouteInterval = setInterval(() => {
-            // Only track closest route if we're not doing OTP and route is visible
-            if (!window.otpBusTrackingInterval && userLocationPolyline && map.hasLayer(userLocationPolyline)) {
-              fetchAndDisplay();
-            } else {
-              console.log('[closestRouteInterval] Skipping closest route update - OTP tracking active or route not visible');
-            }
-          }, 15000);
+        // --- Only fetch/display bus locations AFTER closestRoute is known ---
+        fetchAndDisplay(); // <-- run initial fetch
+        // Set up continuous tracking for closest route
+        if (window.closestRouteInterval) {
+          clearInterval(window.closestRouteInterval);
         }
-        
-        // Mark that we've initialized the route
-        hasInitializedRoute = true;
+        window.closestRouteInterval = setInterval(() => {
+          // Only track closest route if we're not doing OTP and route is visible
+          if (!window.otpBusTrackingInterval && userLocationPolyline && map.hasLayer(userLocationPolyline)) {
+            fetchAndDisplay();
+          } else {
+            console.log('[closestRouteInterval] Skipping closest route update - OTP tracking active or route not visible');
+          }
+        }, 15000);
       }
+      
+      // Mark that we've initialized the route
+      closestRouteFound = true;
     }, function(error) {
       if (error.code === 1) {
         console.log('Location access denied by user.');
