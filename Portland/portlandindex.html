@@ -1352,6 +1352,8 @@
       'Stark': '15',
       'Sandy': '12',
       'Barbur': '12',
+      'Macadam': '35',
+      'Greeley': '35',
       'Division': '20',
       'Hawthorne': '14',
       'Belmont': '15',
@@ -1400,11 +1402,26 @@
       'Shaver': '6'
     };
     
+    // Walking route mappings (for completeness)
+    const walkingMappings = {
+      'WALK': 'WALK',
+      'Walk': 'WALK',
+      'walk': 'WALK'
+    };
+    
     // Check for special route mappings first
     for (const [name, number] of Object.entries(specialRouteMappings)) {
       if (otpRouteName.includes(name) || name.includes(otpRouteName)) {
         console.log('[mapOtpRouteToTrimet] Special route match:', name, '->', number);
         return number;
+      }
+    }
+    
+    // Check for walking routes
+    for (const [walkName, walkRoute] of Object.entries(walkingMappings)) {
+      if (otpRouteName.includes(walkName)) {
+        console.log('[mapOtpRouteToTrimet] Walking route match:', walkName, '->', walkRoute);
+        return walkRoute;
       }
     }
     
@@ -1512,7 +1529,7 @@
             console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumber);
           }
           
-          if (trimetRouteNumber) {
+          if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', route.direction_id);
             
             // Filter buses for this specific route
@@ -1562,6 +1579,9 @@
                     <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                     <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
                     <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
+                    <div style='margin-top:10px; text-align:center;'>
+                      <a href='pythonbusroutes/route-${trimetRouteNumber}-dir${bus.direction}.html' target='_blank' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
+                    </div>
                   </div>
                 `)
                 .addTo(map);
@@ -1615,6 +1635,9 @@
                   <div style='margin-bottom:4px;'><strong>Direction:</strong> ${direction}</div>
                   <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                   <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
+                  <div style='margin-top:8px; text-align:center;'>
+                    <a href='pythonbusroutes/route-${routeNumber}-dir${direction}.html' target='_blank' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
+                  </div>
                 </div>
               `)
               .addTo(map);
