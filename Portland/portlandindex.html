@@ -1490,15 +1490,13 @@
         console.log('[fetchAndDisplayBuses] Processed OTP routes with stop info:', otpRoutes);
         console.log('[fetchAndDisplayBuses] OTP mode - isolating buses for trip routes:', otpRoutes);
         
-        // Show status indicator for OTP mode
-        showBusStatusIndicator('otp-only', otpRoutes.length);
+
       } else {
         // Show all active buses (page load or no OTP trip)
         displayMode = 'all';
         console.log('[fetchAndDisplayBuses] All buses mode - showing all active buses');
         
-        // Show status indicator for all buses mode
-        showBusStatusIndicator('all', allBuses.length);
+
       }
       
       if (displayMode === 'otp-only') {
@@ -1542,13 +1540,12 @@
               // Use OTP route color and add special styling
               const routeColor = route.color || getRouteColor(route.mode);
               
-              // Create special OTP bus marker with pulsing effect
+              // Create OTP bus marker with route color
               const otpBusIcon = L.divIcon({
-                className: 'otp-bus-pulse',
+                className: 'otp-bus-marker',
                 html: `<div style='text-align:center;'>
-                         <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;box-shadow:0 0 15px ${routeColor};border:3px solid #fff;'>${bus.vehicleID}</div>
-                         <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;filter:drop-shadow(0 0 8px ${routeColor});'></div>
-                         <div style='position:absolute;top:-5px;right:-5px;background:#ff6b35;color:#fff;border-radius:50%;width:20px;height:20px;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;'>🚌</div>
+                         <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;border:3px solid #fff;'>${bus.vehicleID}</div>
+                         <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;'></div>
                        </div>`,
                 iconSize: [50, 44],
                 iconAnchor: [25, 44]
@@ -1568,6 +1565,8 @@
                   </div>
                 `)
                 .addTo(map);
+              
+
               
               busMarkers[`otp-${bus.vehicleID}`] = busMarker;
             });
@@ -1631,6 +1630,8 @@
       console.error('[fetchAndDisplayBuses] Error fetching buses:', error);
     }
   }
+  
+
   
   // Legacy function for backward compatibility
   async function fetchAndDisplay() {
