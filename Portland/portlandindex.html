@@ -181,6 +181,16 @@
       100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
     }
 
+    /* OTP Bus pulsing effect */
+    .otp-bus-pulse {
+      animation: otpPulse 2s infinite;
+    }
+    @keyframes otpPulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
     /* Arrow marker CSS */
     .arrow-marker {
       width: 30px;
@@ -797,6 +807,9 @@
     // Reset active trip flag
     activeTripSelected = false;
     
+    // Clear OTP leg color mapping
+    window.currentLegColorMapping = null;
+    
     // Resume tracking closest route if available
     if (closestRoute) {
       console.log('[clearTripPlan] Resuming closest route tracking');
@@ -853,17 +866,21 @@
         
         // Update button state (only if not manually hidden)
         if (!userRouteManuallyHidden) {
-          updateRouteButtonState();
+          updateFindMeButtonState();
         }
       }
       
+      // Switch back to showing all buses
       fetchAndDisplayBuses();
       // Restart closest route interval if it was stopped and route is not manually hidden
       if (!window.closestRouteInterval && !userRouteManuallyHidden) {
         window.closestRouteInterval = setInterval(() => {
-          fetchAndDisplay();
+          fetchAndDisplayBuses();
         }, 15000);
       }
+    } else {
+      // If no closest route, just show all buses
+      fetchAndDisplayBuses();
     }
   }
 
@@ -1363,12 +1380,7 @@
     console.log('[fetchAndDisplayBuses] Starting bus fetch...');
     console.log('[fetchAndDisplayBuses] routesToTrack:', routesToTrack);
     console.log('[fetchAndDisplayBuses] closestRoute:', closestRoute);
-    
-    // If no specific routes provided, use closestRoute if available
-    if (!routesToTrack && !closestRoute) {
-      console.log('[fetchAndDisplayBuses] No routes to track and no closest route');
-      return;
-    }
+    console.log('[fetchAndDisplayBuses] activeTripSelected:', activeTripSelected);
     
     try {
       const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
@@ -1376,269 +1388,155 @@
       const allBuses = data.resultSet.vehicle || [];
       
       console.log('[fetchAndDisplayBuses] API response - total buses:', allBuses.length);
-      console.log('[fetchAndDisplayBuses] Sample bus data:', allBuses.slice(0, 2));
       
       // Clear existing bus markers
       Object.values(busMarkers).forEach(m => map.removeLayer(m));
       busMarkers = {};
       
-              // Determine which routes to track
-        let routesToShow = [];
-        if (routesToTrack) {
-          // Use provided routes (for OTP trips)
-          routesToShow = routesToTrack;
-        } else if (window.currentLegColorMapping) {
-          // Use routes from current OTP trip
-          routesToShow = Object.values(window.currentLegColorMapping).map(legInfo => ({
-            route_id: legInfo.route,
-            direction_id: legInfo.direction,
-            mode: legInfo.mode
-          }));
-          console.log('[fetchAndDisplayBuses] Using routes from currentLegColorMapping:', routesToShow);
-        } else if (closestRoute) {
-          // Use closest route (for initial load)
-          routesToShow = [{
-            route_id: closestRoute.route_id,
-            direction_id: closestRoute.direction_id,
-            mode: 'BUS' // Default to bus for closest route
-          }];
-        }
+      // Determine display mode
+      let displayMode = 'all'; // 'all' or 'otp-only'
+      let otpRoutes = [];
       
-      console.log('[fetchAndDisplayBuses] Routes to show:', routesToShow);
-      console.log('[fetchAndDisplayBuses] Sample of all buses route numbers:', allBuses.slice(0, 5).map(b => ({ routeNumber: b.routeNumber, direction: b.direction, vehicleID: b.vehicleID })));
-      const allRouteNumbers = allBuses.map(b => b.routeNumber).sort();
-      console.log('[fetchAndDisplayBuses] All route numbers:', JSON.stringify(allRouteNumbers));
+      if (activeTripSelected && window.currentLegColorMapping) {
+        // OTP trip is active - isolate only trip buses
+        displayMode = 'otp-only';
+        otpRoutes = Object.values(window.currentLegColorMapping).map(legInfo => ({
+          route_id: legInfo.route,
+          direction_id: legInfo.direction,
+          mode: legInfo.mode,
+          color: legInfo.color,
+          description: legInfo.description
+        }));
+        console.log('[fetchAndDisplayBuses] OTP mode - isolating buses for trip routes:', otpRoutes);
+        
+        // Show status indicator for OTP mode
+        showBusStatusIndicator('otp-only', otpRoutes.length);
+      } else {
+        // Show all active buses (page load or no OTP trip)
+        displayMode = 'all';
+        console.log('[fetchAndDisplayBuses] All buses mode - showing all active buses');
+        
+        // Show status indicator for all buses mode
+        showBusStatusIndicator('all', allBuses.length);
+      }
       
-      // Track each route
-      routesToShow.forEach(route => {
-        const routeKey = `${route.route_id}-${route.direction_id}`;
-        currentTrackingRoutes.add(routeKey);
+      if (displayMode === 'otp-only') {
+        // OTP MODE: Only show buses that are part of the user's trip
+        console.log('[fetchAndDisplayBuses] Filtering for OTP trip buses only');
         
-        // Map OTP route name to Trimet route number using masterRoutes data
-        let trimetRouteNumber = route.route_id;
-        console.log('[fetchAndDisplayBuses] Processing route:', route);
-        console.log('[fetchAndDisplayBuses] Route ID type:', typeof route.route_id, 'Value:', route.route_id);
-        
-        if (route.route_id && isNaN(route.route_id)) {
-          // This is likely an OTP route name, try to map it
-          trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
-          console.log('[fetchAndDisplayBuses] Mapped route:', route.route_id, '->', trimetRouteNumber);
-        } else {
-          console.log('[fetchAndDisplayBuses] Route ID is numeric, using directly:', trimetRouteNumber);
-        }
-        
-        console.log('[fetchAndDisplayBuses] Looking for route:', trimetRouteNumber, 'direction:', route.direction_id);
-        const availableRouteNumbers = [...new Set(allBuses.map(b => b.routeNumber))];
-        const availableDirections = [...new Set(allBuses.map(b => b.direction))];
-        console.log('[fetchAndDisplayBuses] Available route numbers:', JSON.stringify(availableRouteNumbers));
-        console.log('[fetchAndDisplayBuses] Available directions:', JSON.stringify(availableDirections));
-        
-        // Filter buses for this specific route using mapped route number
-        let routeBuses = [];
-        console.log('[fetchAndDisplayBuses] Filtering for route:', trimetRouteNumber, 'direction:', route.direction_id);
-        console.log('[fetchAndDisplayBuses] Available buses route numbers:', [...new Set(allBuses.map(b => b.routeNumber))]);
-        
-        if (trimetRouteNumber) {
-          // Try to find buses for the specific mapped route
-          routeBuses = allBuses.filter(v => 
-            v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
-          );
-          console.log('[fetchAndDisplayBuses] Buses with exact route and direction match:', routeBuses.length);
+        otpRoutes.forEach(route => {
+          // Map OTP route name to Trimet route number
+          let trimetRouteNumber = route.route_id;
           
-          // If no buses found with direction, try without direction constraint
-          if (routeBuses.length === 0) {
-            console.log('[fetchAndDisplayBuses] No buses found with direction constraint, trying without direction');
-            routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
-            console.log('[fetchAndDisplayBuses] Buses with route match (no direction):', routeBuses.length);
+          if (route.route_id && isNaN(route.route_id)) {
+            trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
+            console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumber);
           }
           
-          // If still no buses, show a message and some nearby active routes
-          if (routeBuses.length === 0) {
-            console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- route may not be active at this time');
-            
-            // Show a few active routes as alternatives
-            const activeRoutes = [...new Set(allBuses.map(b => b.routeNumber))].slice(0, 5);
-            console.log('[fetchAndDisplayBuses] Active routes available:', activeRoutes);
-            
-            // Show buses from a few active routes as alternatives
-            routeBuses = allBuses.filter(v => activeRoutes.includes(v.routeNumber));
-            console.log('[fetchAndDisplayBuses] Showing', routeBuses.length, 'buses from active routes as alternatives');
-          }
-        } else {
-          // If we can't map the route, show all buses for debugging
-          console.log('[fetchAndDisplayBuses] No route mapping found, showing all buses');
-          routeBuses = allBuses;
-        }
-        
-        console.log('[fetchAndDisplayBuses] Final buses to display:', routeBuses.length);
-        
-        // Show status message if no buses found for the requested route
-        if (routeBuses.length === 0 && trimetRouteNumber) {
-          console.log('[fetchAndDisplayBuses] No buses found for route', trimetRouteNumber, '- route may not be active');
-          // Could add a visual indicator here if needed
-        }
-        
-        console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber);
-        
-        // Create markers for each bus on this route
-        routeBuses.forEach(bus => {
-          if (!bus.latitude || !bus.longitude || !bus.blockID) {
-            console.log('[fetchAndDisplayBuses] Skipping bus with missing data:', bus);
-            return;
-          }
-          
-          console.log('[fetchAndDisplayBuses] Creating marker for bus:', bus.vehicleID, 'at', bus.latitude, bus.longitude);
-          
-          // Match bus to route leg color
-          let routeColor = getRouteColor(route.mode);
-          let isOtpBus = false;
-          let matchedLegKey = null;
-          
-          console.log('[Bus Color Debug] Initial color for bus', bus.vehicleID, ':', routeColor);
-          
-          console.log('[Bus Color Debug] Processing bus:', bus.vehicleID, 'route:', bus.routeNumber, 'direction:', bus.direction);
-          console.log('[Bus Color Debug] routesToTrack:', routesToTrack);
-          console.log('[Bus Color Debug] currentLegColorMapping:', window.currentLegColorMapping);
-          console.log('[Bus Color Debug] Leg mapping details:', JSON.stringify(window.currentLegColorMapping, null, 2));
-          
-          if (window.currentLegColorMapping) {
-            // Try to match this bus to a specific route leg
-            for (const [legKey, legInfo] of Object.entries(window.currentLegColorMapping)) {
-              if (legInfo.route === bus.routeNumber && legInfo.direction == bus.direction) {
-                routeColor = legInfo.color;
-                isOtpBus = true;
-                matchedLegKey = legKey;
-                console.log('[Bus Matching] Bus', bus.vehicleID, 'matched to leg:', legKey, 'color:', legInfo.color, 'description:', legInfo.description);
-                break;
-              }
-            }
-            
-            // If no exact match, try matching by route description
-            if (!isOtpBus) {
-              for (const [legKey, legInfo] of Object.entries(window.currentLegColorMapping)) {
-                if (legInfo.description && legInfo.description.toLowerCase().includes(bus.routeNumber.toString())) {
-                  routeColor = legInfo.color;
-                  isOtpBus = true;
-                  matchedLegKey = legKey;
-                  console.log('[Bus Matching] Bus', bus.vehicleID, 'matched by description to leg:', legKey, 'color:', legInfo.color);
-                  break;
-                }
-              }
-            }
-            
-            // If still no match, try to map route numbers to descriptions using masterRoutes
-            if (!isOtpBus) {
-              for (const [legKey, legInfo] of Object.entries(window.currentLegColorMapping)) {
-                if (legInfo.description && masterRoutes) {
-                  // Try to find a master route that matches the description
-                  const matchingRoute = masterRoutes.find(r => {
-                    const routeTitle = r.route_title.toLowerCase();
-                    const description = legInfo.description.toLowerCase();
-                    return routeTitle.includes(description) || description.includes(routeTitle);
-                  });
-                  
-                  if (matchingRoute && matchingRoute.route_id === bus.routeNumber.toString()) {
-                    routeColor = legInfo.color;
-                    isOtpBus = true;
-                    matchedLegKey = legKey;
-                    console.log('[Bus Matching] Bus', bus.vehicleID, 'matched via masterRoutes to leg:', legKey, 'color:', legInfo.color, 'masterRoute:', matchingRoute.route_title);
-                    break;
-                  }
-                }
-              }
-            }
-            
-            // If still no match, check if it's any OTP route
-            if (!isOtpBus) {
-              const otpRoute = routesToTrack.find(r => r.route_id === bus.routeNumber);
-              if (otpRoute) {
-                routeColor = '#00ff00'; // Fallback green for OTP trip buses
-                isOtpBus = true;
-              }
-            }
-          }
-          console.log('[Bus Icon Debug] Creating icon for bus', bus.vehicleID, 'with color:', routeColor, 'isOtpBus:', isOtpBus, 'matchedLegKey:', matchedLegKey);
-          const icon = createBusIcon(bus.vehicleID, routeColor, isOtpBus);
-          const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-          
-          // Create popup content with route information
-          let popupContent = `<div style="min-width: 200px;">
-            <strong>Bus ${bus.vehicleID}</strong><br>
-            <strong>Route:</strong> ${bus.routeNumber}<br>
-            <strong>Direction:</strong> ${bus.direction}<br>
-            <strong>Block:</strong> ${bus.blockID}<br>
-            <strong>Speed:</strong> ${bus.speed || 'N/A'} mph<br>
-            <strong>Updated:</strong> ${getPortlandTimeString()} PT<br>`;
-          
-          // Add route description if available from masterRoutes
-          if (masterRoutes) {
-            const masterRoute = masterRoutes.find(r => r.route_id === bus.routeNumber);
-            if (masterRoute) {
-              popupContent += `<strong>Route Name:</strong> ${masterRoute.route_title}<br>`;
-            }
-          }
-          
-          // Add link to specific route page using route and direction
-          const directionId = bus.direction || 0;
-          popupContent += `<a href="https://metrofeedus.com/portland/pythonbusroutes/route-${bus.routeNumber}-dir${directionId}.html" style="color: #4dd0e1; text-decoration: none; display: inline-block; margin-top: 8px; padding: 6px 12px; border: 1px solid #4dd0e1; border-radius: 6px; background: rgba(77, 208, 225, 0.1); font-weight: bold;">🚌 View Route ${bus.routeNumber} (Dir ${directionId})</a>`;
-          
-          // Add OTP context if this is from an OTP trip
-          if (matchedLegKey) {
-            popupContent += `<br><em style="color: ${routeColor}; font-weight: bold;">🚌 YOUR BUS - Matches route leg</em>`;
-            // Add pulsing effect to the marker
-            marker.getElement().style.animation = 'pulse 1.5s infinite';
-          } else if (isOtpBus) {
-            popupContent += `<br><em style="color: #00ff00; font-weight: bold;">🚌 THIS IS YOUR BUS!</em>`;
-            // Add pulsing effect to the marker
-            marker.getElement().style.animation = 'pulse 1.5s infinite';
-          } else if (window.currentLegColorMapping) {
-            // Check if this bus is on any of the OTP trip routes
-            const isOnOtpRoute = Object.values(window.currentLegColorMapping).some(legInfo => 
-              legInfo.route === bus.routeNumber.toString()
+          if (trimetRouteNumber) {
+            // Filter buses for this specific route
+            let routeBuses = allBuses.filter(v => 
+              v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
             );
             
-            if (isOnOtpRoute) {
-              popupContent += `<br><em style="color: #4dd0e1;">🚌 This bus is part of your trip route</em>`;
-            } else if (routesToTrack) {
-              // Check if this is an alternative route (not the originally requested route)
-              const isAlternativeRoute = routesToTrack.some(r => r.route_id === trimetRouteNumber) && 
-                                       bus.routeNumber != trimetRouteNumber;
-              if (isAlternativeRoute) {
-                popupContent += `<br><em style="color: #ffa500; font-weight: bold;">🚌 Alternative route (your route ${trimetRouteNumber} not active)</em>`;
-              } else {
-                popupContent += `<br><em style="color: #4dd0e1;">🚌 This bus is part of your trip route</em>`;
-              }
+            // If no buses found with direction, try without direction constraint
+            if (routeBuses.length === 0) {
+              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
             }
-          }
-          
-          popupContent += `</div>`;
-          
-          // Store bus information for itinerary display
-          if (routesToTrack) {
-            // Store bus info by route for itinerary display
-            if (!window.otpBusInfo) window.otpBusInfo = {};
-            if (!window.otpBusInfo[bus.routeNumber]) window.otpBusInfo[bus.routeNumber] = [];
-            window.otpBusInfo[bus.routeNumber].push({
-              vehicleID: bus.vehicleID,
-              routeNumber: bus.routeNumber,
-              direction: bus.direction
+            
+            console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
+            
+            // Create highlighted markers for OTP buses
+            routeBuses.forEach(bus => {
+              if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+              
+              // Use OTP route color and add special styling
+              const routeColor = route.color || getRouteColor(route.mode);
+              
+              // Create special OTP bus marker with pulsing effect
+              const otpBusIcon = L.divIcon({
+                className: 'otp-bus-pulse',
+                html: `<div style='text-align:center;'>
+                         <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;box-shadow:0 0 15px ${routeColor};border:3px solid #fff;'>${bus.vehicleID}</div>
+                         <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;filter:drop-shadow(0 0 8px ${routeColor});'></div>
+                         <div style='position:absolute;top:-5px;right:-5px;background:#ff6b35;color:#fff;border-radius:50%;width:20px;height:20px;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;'>🚌</div>
+                       </div>`,
+                iconSize: [50, 44],
+                iconAnchor: [25, 44]
+              });
+              
+              const busMarker = L.marker([bus.latitude, bus.longitude], { icon: otpBusIcon })
+                .bindPopup(`
+                  <div style='border:2px solid ${routeColor}; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
+                    <div style='text-align:center; margin-bottom:8px;'>
+                      <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
+                    </div>
+                    <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
+                    <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
+                    <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
+                    <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
+                    <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
+                  </div>
+                `)
+                .addTo(map);
+              
+              busMarkers[`otp-${bus.vehicleID}`] = busMarker;
             });
           }
-          
-          // Add popup to marker
-          marker.bindPopup(popupContent);
-          
-          // Store marker with unique key
-          busMarkers[`${bus.vehicleID}-${routeKey}`] = marker;
         });
-      });
-      
-      console.log('[fetchAndDisplayBuses] Total bus markers created:', Object.keys(busMarkers).length);
-      
-
-      
-      console.log('[fetchAndDisplayBuses] Bus markers created:', Object.keys(busMarkers).length);
-      console.log('[fetchAndDisplayBuses] Routes to track:', routesToTrack);
+        
+        // Show a message that we're only showing trip buses
+        if (Object.keys(busMarkers).length > 0) {
+          console.log('[fetchAndDisplayBuses] Displayed', Object.keys(busMarkers).length, 'OTP trip buses');
+        } else {
+          console.log('[fetchAndDisplayBuses] No OTP buses found for the selected trip');
+        }
+        
+      } else {
+        // ALL BUSES MODE: Show all active buses with standard styling
+        console.log('[fetchAndDisplayBuses] Displaying all active buses');
+        
+        // Group buses by route for better organization
+        const busesByRoute = {};
+        allBuses.forEach(bus => {
+          if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+          
+          const routeKey = `${bus.routeNumber}-${bus.direction}`;
+          if (!busesByRoute[routeKey]) {
+            busesByRoute[routeKey] = [];
+          }
+          busesByRoute[routeKey].push(bus);
+        });
+        
+        // Display all buses with standard styling
+        Object.entries(busesByRoute).forEach(([routeKey, buses]) => {
+          const [routeNumber, direction] = routeKey.split('-');
+          
+          buses.forEach(bus => {
+            const routeColor = getRouteColor('BUS'); // Standard blue for all buses
+            
+            const busIcon = createBusIcon(bus.vehicleID, routeColor, false);
+            
+            const busMarker = L.marker([bus.latitude, bus.longitude], { icon: busIcon })
+              .bindPopup(`
+                <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
+                  <div style='text-align:center; margin-bottom:6px;'>
+                    <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${bus.vehicleID}</div>
+                  </div>
+                  <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNumber}</div>
+                  <div style='margin-bottom:4px;'><strong>Direction:</strong> ${direction}</div>
+                  <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
+                  <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
+                </div>
+              `)
+              .addTo(map);
+            
+            busMarkers[`all-${bus.vehicleID}`] = busMarker;
+          });
+        });
+        
+        console.log('[fetchAndDisplayBuses] Displayed', Object.keys(busMarkers).length, 'total active buses');
+      }
       
     } catch (error) {
       console.error('[fetchAndDisplayBuses] Error fetching buses:', error);
@@ -1648,6 +1546,58 @@
   // Legacy function for backward compatibility
   async function fetchAndDisplay() {
     return fetchAndDisplayBuses();
+  }
+
+  // Function to show bus display status indicator
+  function showBusStatusIndicator(mode, count) {
+    // Remove existing status indicator
+    const existingIndicator = document.getElementById('busStatusIndicator');
+    if (existingIndicator) {
+      existingIndicator.remove();
+    }
+    
+    // Create status indicator
+    const indicator = document.createElement('div');
+    indicator.id = 'busStatusIndicator';
+    indicator.style.cssText = `
+      position: fixed;
+      top: 120px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 1000;
+      border: 1px solid #4dd0e1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    `;
+    
+    if (mode === 'otp-only') {
+      indicator.innerHTML = `
+        <div style='color:#4dd0e1; font-weight:bold;'>🚌 Trip Buses Only</div>
+        <div style='font-size:11px; color:#ccc;'>Showing ${count} trip buses</div>
+      `;
+    } else {
+      indicator.innerHTML = `
+        <div style='color:#4dd0e1; font-weight:bold;'>🚌 All Active Buses</div>
+        <div style='font-size:11px; color:#ccc;'>Showing ${count} total buses</div>
+      `;
+    }
+    
+    document.body.appendChild(indicator);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      if (indicator.parentNode) {
+        indicator.style.opacity = '0.7';
+        setTimeout(() => {
+          if (indicator.parentNode) {
+            indicator.remove();
+          }
+        }, 1000);
+      }
+    }, 5000);
   }
 
   // === SECTION: OPEN TRIP PLANNER INTEGRATION ===
