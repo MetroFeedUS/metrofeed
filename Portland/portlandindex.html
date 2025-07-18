@@ -190,6 +190,24 @@
       50%  { transform: scale(1.1); }
       100% { transform: scale(1); }
     }
+    
+    /* Additional OTP bus animations */
+    @keyframes pulse {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.05); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-5px); }
+      60% { transform: translateY(-3px); }
+    }
+    
+    @keyframes ripple {
+      0%   { transform: translate(-50%,-50%) scale(0.8); opacity: 0.8; }
+      100% { transform: translate(-50%,-50%) scale(1.2); opacity: 0; }
+    }
 
     /* Arrow marker CSS */
     .arrow-marker {
@@ -1482,6 +1500,7 @@
       if (activeTripSelected && window.currentLegColorMapping) {
         // OTP trip is active - isolate only trip buses
         displayMode = 'otp-only';
+        console.log('[fetchAndDisplayBuses] currentLegColorMapping:', window.currentLegColorMapping);
         otpRoutes = Object.values(window.currentLegColorMapping).map(legInfo => ({
           route_id: legInfo.route,
           direction_id: legInfo.direction,
@@ -1540,21 +1559,45 @@
             
             // Create highlighted markers for OTP buses
             routeBuses.forEach(bus => {
-              if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+              console.log('[fetchAndDisplayBuses] Processing bus:', bus);
+              
+              if (!bus.latitude || !bus.longitude || !bus.blockID) {
+                console.log('[fetchAndDisplayBuses] Skipping bus due to missing data:', {
+                  hasLat: !!bus.latitude,
+                  hasLon: !!bus.longitude,
+                  hasBlockID: !!bus.blockID
+                });
+                return;
+              }
+              
+              console.log('[fetchAndDisplayBuses] Creating OTP bus marker:', {
+                vehicleID: bus.vehicleID,
+                route: trimetRouteNumbers[0],
+                lat: bus.latitude,
+                lon: bus.longitude,
+                direction: bus.direction
+              });
               
               // Use OTP route color and add special styling
               const routeColor = route.color || getRouteColor(route.mode);
+              console.log('[fetchAndDisplayBuses] Route color:', {
+                routeColor: routeColor,
+                routeColorFromRoute: route.color,
+                mode: route.mode,
+                getRouteColorResult: getRouteColor(route.mode)
+              });
               
               // Create special OTP bus marker with pulsing effect
               const otpBusIcon = L.divIcon({
                 className: 'otp-bus-pulse',
-                html: `<div style='text-align:center;'>
-                         <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;box-shadow:0 0 15px ${routeColor};border:3px solid #fff;'>${bus.vehicleID}</div>
-                         <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;filter:drop-shadow(0 0 8px ${routeColor});'></div>
-                         <div style='position:absolute;top:-5px;right:-5px;background:#ff6b35;color:#fff;border-radius:50%;width:20px;height:20px;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;'>🚌</div>
+                html: `<div style='text-align:center; position:relative;'>
+                         <div style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:12px;font-weight:bold;font-size:14px;box-shadow:0 0 20px ${routeColor}, 0 0 40px ${routeColor};border:4px solid #fff;animation:pulse 2s infinite;'>🚌 ${bus.vehicleID}</div>
+                         <div style='width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:20px solid ${routeColor};margin:auto;filter:drop-shadow(0 0 10px ${routeColor});'></div>
+                         <div style='position:absolute;top:-8px;right:-8px;background:#ff6b35;color:#fff;border-radius:50%;width:24px;height:24px;font-size:12px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;animation:bounce 1s infinite;'>⭐</div>
+                         <div style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;border:3px solid ${routeColor};border-radius:50%;animation:ripple 2s infinite;opacity:0.6;'></div>
                        </div>`,
-                iconSize: [50, 44],
-                iconAnchor: [25, 44]
+                iconSize: [60, 60],
+                iconAnchor: [30, 60]
               });
               
               const busMarker = L.marker([bus.latitude, bus.longitude], { icon: otpBusIcon })
@@ -1563,7 +1606,7 @@
                     <div style='text-align:center; margin-bottom:8px;'>
                       <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
                     </div>
-                    <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
+                    <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumbers[0]}`}</div>
                     <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
                     <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                     <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
@@ -1572,7 +1615,24 @@
                 `)
                 .addTo(map);
               
+              // Add a large circle around the bus for better visibility
+              const busCircle = L.circle([bus.latitude, bus.longitude], {
+                color: routeColor,
+                fillColor: routeColor,
+                fillOpacity: 0.2,
+                radius: 100,
+                weight: 3
+              }).addTo(map);
+              
+              // Store the circle for cleanup
+              busMarkers[`otp-circle-${bus.vehicleID}`] = busCircle;
+              
               busMarkers[`otp-${bus.vehicleID}`] = busMarker;
+              console.log('[fetchAndDisplayBuses] Added bus marker to map:', {
+                vehicleID: bus.vehicleID,
+                markerKey: `otp-${bus.vehicleID}`,
+                totalMarkers: Object.keys(busMarkers).length
+              });
             });
           }
         });
@@ -1582,6 +1642,22 @@
           console.log('[fetchAndDisplayBuses] Displayed', Object.keys(busMarkers).length, 'OTP trip buses');
         } else {
           console.log('[fetchAndDisplayBuses] No OTP buses found for the selected trip');
+          
+          // DEBUG: Add a test marker to see if marker creation works
+          console.log('[fetchAndDisplayBuses] Adding test marker to verify marker creation works');
+          const testMarker = L.marker([45.5152, -122.6784], { 
+            icon: L.divIcon({
+              className: 'otp-bus-pulse',
+              html: `<div style='text-align:center; position:relative;'>
+                       <div style='background:#ff0000;color:#fff;padding:6px 12px;border-radius:12px;font-weight:bold;font-size:14px;box-shadow:0 0 20px #ff0000, 0 0 40px #ff0000;border:4px solid #fff;animation:pulse 2s infinite;'>🚌 TEST</div>
+                       <div style='width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:20px solid #ff0000;margin:auto;filter:drop-shadow(0 0 10px #ff0000);'></div>
+                     </div>`,
+              iconSize: [60, 60],
+              iconAnchor: [30, 60]
+            })
+          }).addTo(map);
+          busMarkers['test-marker'] = testMarker;
+          console.log('[fetchAndDisplayBuses] Test marker added');
         }
         
       } else {
