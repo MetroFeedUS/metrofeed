@@ -1346,11 +1346,73 @@
       'Yellow Bus': '293'
     };
     
+    // Common Portland street name mappings
+    const streetMappings = {
+      'Burnside': '20',
+      'Stark': '15',
+      'Sandy': '12',
+      'Barbur': '12',
+      'Division': '20',
+      'Hawthorne': '14',
+      'Belmont': '15',
+      'Morrison': '15',
+      'Washington': '15',
+      'Powell': '9',
+      'Foster': '9',
+      'Woodstock': '9',
+      'Holgate': '9',
+      'Johnson Creek': '9',
+      'Cesar Chavez': '9',
+      '82nd': '72',
+      '122nd': '73',
+      '162nd': '74',
+      '52nd': '71',
+      '39th': '70',
+      '28th': '70',
+      '21st': '70',
+      '15th': '70',
+      '12th': '70',
+      '9th': '70',
+      '6th': '70',
+      '3rd': '70',
+      '1st': '70',
+      'MLK': '6',
+      'Grand': '6',
+      'Interstate': '6',
+      'Lombard': '6',
+      'Killingsworth': '6',
+      'Rosa Parks': '6',
+      'Columbia': '6',
+      'Vancouver': '6',
+      'Williams': '6',
+      'Mississippi': '6',
+      'Alberta': '6',
+      'Fremont': '6',
+      'Beaumont': '6',
+      'Prescott': '6',
+      'Klickitat': '6',
+      'Knott': '6',
+      'Ainsworth': '6',
+      'Skidmore': '6',
+      'Going': '6',
+      'Tillamook': '6',
+      'Russell': '6',
+      'Shaver': '6'
+    };
+    
     // Check for special route mappings first
     for (const [name, number] of Object.entries(specialRouteMappings)) {
       if (otpRouteName.includes(name) || name.includes(otpRouteName)) {
         console.log('[mapOtpRouteToTrimet] Special route match:', name, '->', number);
         return number;
+      }
+    }
+    
+    // Check for street name mappings
+    for (const [streetName, routeNumber] of Object.entries(streetMappings)) {
+      if (otpRouteName.toLowerCase().includes(streetName.toLowerCase())) {
+        console.log('[mapOtpRouteToTrimet] Street name match:', streetName, '->', routeNumber);
+        return routeNumber;
       }
     }
     
@@ -1413,14 +1475,19 @@
         displayMode = 'otp-only';
         console.log('[fetchAndDisplayBuses] OTP trip detected!');
         console.log('[fetchAndDisplayBuses] currentLegColorMapping:', window.currentLegColorMapping);
+        console.log('[fetchAndDisplayBuses] Full OTP trip data:', window.currentTrip);
+        console.log('[fetchAndDisplayBuses] OTP legs:', window.currentTrip?.legs);
         
         otpRoutes = Object.values(window.currentLegColorMapping).map(legInfo => ({
           route_id: legInfo.route,
           direction_id: legInfo.direction,
           mode: legInfo.mode,
           color: legInfo.color,
-          description: legInfo.description
+          description: legInfo.description,
+          fromStop: legInfo.fromStop,
+          toStop: legInfo.toStop
         }));
+        console.log('[fetchAndDisplayBuses] Processed OTP routes with stop info:', otpRoutes);
         console.log('[fetchAndDisplayBuses] OTP mode - isolating buses for trip routes:', otpRoutes);
         
         // Show status indicator for OTP mode
