@@ -1346,93 +1346,11 @@
       'Yellow Bus': '293'
     };
     
-    // Street name to route number mappings (common Portland streets)
-    const streetRouteMappings = {
-      'Division': ['20', '21', '32', '70', '71', '72', '73', '74', '75', '81', '82'],
-      'Sandy': ['12', '19', '20', '21', '81', '82'],
-      'Burnside': ['12', '19', '20', '21', '81', '82'],
-      'Stark': ['15', '19', '20', '21', '81', '82'],
-      'Washington': ['15', '19', '20', '21', '81', '82'],
-      'Morrison': ['15', '19', '20', '21', '81', '82'],
-      'Hawthorne': ['14', '15', '19', '20', '21', '81', '82'],
-      'Belmont': ['15', '19', '20', '21', '81', '82'],
-      'Powell': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Foster': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Woodstock': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Holgate': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Johnson Creek': ['9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Cesar Chavez': ['9', '10', '11', '12', '19', '20', '21', '75', '81', '82'],
-      '82nd': ['72', '73', '74', '75'],
-      '122nd': ['73', '74', '75'],
-      '162nd': ['74', '75'],
-      '52nd': ['71', '72', '73', '74', '75'],
-      '39th': ['70', '71', '72', '73', '74', '75'],
-      '28th': ['70', '71', '72', '73', '74', '75'],
-      '21st': ['70', '71', '72', '73', '74', '75'],
-      '15th': ['70', '71', '72', '73', '74', '75'],
-      '12th': ['70', '71', '72', '73', '74', '75'],
-      '9th': ['70', '71', '72', '73', '74', '75'],
-      '6th': ['70', '71', '72', '73', '74', '75'],
-      '3rd': ['70', '71', '72', '73', '74', '75'],
-      '1st': ['70', '71', '72', '73', '74', '75'],
-      'MLK': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Grand': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Interstate': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Lombard': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Killingsworth': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Rosa Parks': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Columbia': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Vancouver': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Williams': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Mississippi': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Alberta': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Fremont': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Beaumont': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Prescott': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Klickitat': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Knott': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Ainsworth': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Skidmore': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Going': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Tillamook': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Russell': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Shaver': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Alberta': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Killingsworth': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Lombard': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Columbia': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Vancouver': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Williams': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Mississippi': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Fremont': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Beaumont': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Prescott': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Klickitat': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Knott': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Ainsworth': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Skidmore': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Going': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Tillamook': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Russell': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82'],
-      'Shaver': ['6', '8', '9', '10', '11', '12', '19', '20', '21', '81', '82']
-    };
-    
     // Check for special route mappings first
     for (const [name, number] of Object.entries(specialRouteMappings)) {
       if (otpRouteName.includes(name) || name.includes(otpRouteName)) {
         console.log('[mapOtpRouteToTrimet] Special route match:', name, '->', number);
         return number;
-      }
-    }
-    
-    // Check for street name mappings
-    for (const [streetName, routeNumbers] of Object.entries(streetRouteMappings)) {
-      if (otpRouteName.toLowerCase().includes(streetName.toLowerCase()) || 
-          streetName.toLowerCase().includes(otpRouteName.toLowerCase())) {
-        console.log('[mapOtpRouteToTrimet] Street name match:', otpRouteName, '->', routeNumbers);
-        // For now, return the first route number as the primary match
-        // TODO: Consider returning multiple routes for better coverage
-        return routeNumbers[0];
       }
     }
     
@@ -1477,17 +1395,10 @@
   
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
-    console.log('[fetchAndDisplayBuses] Starting bus fetch...');
-    console.log('[fetchAndDisplayBuses] routesToTrack:', routesToTrack);
-    console.log('[fetchAndDisplayBuses] closestRoute:', closestRoute);
-    console.log('[fetchAndDisplayBuses] activeTripSelected:', activeTripSelected);
-    
     try {
       const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
       const data = await res.json();
       const allBuses = data.resultSet.vehicle || [];
-      
-      console.log('[fetchAndDisplayBuses] API response - total buses:', allBuses.length);
       
       // Clear existing bus markers
       Object.values(busMarkers).forEach(m => map.removeLayer(m));
@@ -1497,16 +1408,15 @@
       let displayMode = 'all'; // 'all' or 'otp-only'
       let otpRoutes = [];
       
-      if (activeTripSelected && window.routesToTrack && window.routesToTrack.length > 0) {
+      if (activeTripSelected && window.currentLegColorMapping) {
         // OTP trip is active - isolate only trip buses
         displayMode = 'otp-only';
-        console.log('[fetchAndDisplayBuses] routesToTrack:', window.routesToTrack);
-        otpRoutes = window.routesToTrack.map(route => ({
-          route_id: route.route_id,
-          direction_id: route.direction_id,
-          mode: route.mode,
-          color: getRouteColor(route.mode),
-          description: `Route ${route.route_id}`
+        otpRoutes = Object.values(window.currentLegColorMapping).map(legInfo => ({
+          route_id: legInfo.route,
+          direction_id: legInfo.direction,
+          mode: legInfo.mode,
+          color: legInfo.color,
+          description: legInfo.description
         }));
         console.log('[fetchAndDisplayBuses] OTP mode - isolating buses for trip routes:', otpRoutes);
         
@@ -1526,63 +1436,44 @@
         console.log('[fetchAndDisplayBuses] Filtering for OTP trip buses only');
         
         otpRoutes.forEach(route => {
-          // OTP gives us actual route numbers, so no mapping needed
-          const routeNumber = route.route_id;
-          console.log('[fetchAndDisplayBuses] Processing OTP route:', routeNumber, 'direction:', route.direction_id);
+          // Map OTP route name to Trimet route number
+          let trimetRouteNumber = route.route_id;
           
-          // Filter buses for this specific route
-          let routeBuses = allBuses.filter(v => 
-            v.routeNumber == routeNumber && v.direction == route.direction_id
-          );
-          
-          // If no buses found with direction, try without direction constraint
-          if (routeBuses.length === 0) {
-            routeBuses = allBuses.filter(v => v.routeNumber == routeNumber);
+          if (route.route_id && isNaN(route.route_id)) {
+            trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
+            console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumber);
           }
+          
+          if (trimetRouteNumber) {
+            // Filter buses for this specific route
+            let routeBuses = allBuses.filter(v => 
+              v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
+            );
             
-            console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', routeNumber);
+            // If no buses found with direction, try without direction constraint
+            if (routeBuses.length === 0) {
+              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+            }
+            
+            console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
             
             // Create highlighted markers for OTP buses
             routeBuses.forEach(bus => {
-              console.log('[fetchAndDisplayBuses] Processing bus:', bus);
-              
-              if (!bus.latitude || !bus.longitude || !bus.blockID) {
-                console.log('[fetchAndDisplayBuses] Skipping bus due to missing data:', {
-                  hasLat: !!bus.latitude,
-                  hasLon: !!bus.longitude,
-                  hasBlockID: !!bus.blockID
-                });
-                return;
-              }
-              
-              console.log('[fetchAndDisplayBuses] Creating OTP bus marker:', {
-                vehicleID: bus.vehicleID,
-                route: routeNumber,
-                lat: bus.latitude,
-                lon: bus.longitude,
-                direction: bus.direction
-              });
+              if (!bus.latitude || !bus.longitude || !bus.blockID) return;
               
               // Use OTP route color and add special styling
               const routeColor = route.color || getRouteColor(route.mode);
-              console.log('[fetchAndDisplayBuses] Route color:', {
-                routeColor: routeColor,
-                routeColorFromRoute: route.color,
-                mode: route.mode,
-                getRouteColorResult: getRouteColor(route.mode)
-              });
               
               // Create special OTP bus marker with pulsing effect
               const otpBusIcon = L.divIcon({
                 className: 'otp-bus-pulse',
-                html: `<div style='text-align:center; position:relative;'>
-                         <div style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:12px;font-weight:bold;font-size:14px;box-shadow:0 0 20px ${routeColor}, 0 0 40px ${routeColor};border:4px solid #fff;animation:pulse 2s infinite;'>🚌 ${bus.vehicleID}</div>
-                         <div style='width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:20px solid ${routeColor};margin:auto;filter:drop-shadow(0 0 10px ${routeColor});'></div>
-                         <div style='position:absolute;top:-8px;right:-8px;background:#ff6b35;color:#fff;border-radius:50%;width:24px;height:24px;font-size:12px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;animation:bounce 1s infinite;'>⭐</div>
-                         <div style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;border:3px solid ${routeColor};border-radius:50%;animation:ripple 2s infinite;opacity:0.6;'></div>
+                html: `<div style='text-align:center;'>
+                         <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;box-shadow:0 0 15px ${routeColor};border:3px solid #fff;'>${bus.vehicleID}</div>
+                         <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;filter:drop-shadow(0 0 8px ${routeColor});'></div>
+                         <div style='position:absolute;top:-5px;right:-5px;background:#ff6b35;color:#fff;border-radius:50%;width:20px;height:20px;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;'>🚌</div>
                        </div>`,
-                iconSize: [60, 60],
-                iconAnchor: [30, 60]
+                iconSize: [50, 44],
+                iconAnchor: [25, 44]
               });
               
               const busMarker = L.marker([bus.latitude, bus.longitude], { icon: otpBusIcon })
@@ -1591,7 +1482,7 @@
                     <div style='text-align:center; margin-bottom:8px;'>
                       <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
                     </div>
-                    <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${routeNumber}`}</div>
+                    <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
                     <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
                     <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                     <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
@@ -1600,24 +1491,7 @@
                 `)
                 .addTo(map);
               
-              // Add a large circle around the bus for better visibility
-              const busCircle = L.circle([bus.latitude, bus.longitude], {
-                color: routeColor,
-                fillColor: routeColor,
-                fillOpacity: 0.2,
-                radius: 100,
-                weight: 3
-              }).addTo(map);
-              
-              // Store the circle for cleanup
-              busMarkers[`otp-circle-${bus.vehicleID}`] = busCircle;
-              
               busMarkers[`otp-${bus.vehicleID}`] = busMarker;
-              console.log('[fetchAndDisplayBuses] Added bus marker to map:', {
-                vehicleID: bus.vehicleID,
-                markerKey: `otp-${bus.vehicleID}`,
-                totalMarkers: Object.keys(busMarkers).length
-              });
             });
           }
         });
@@ -1627,22 +1501,6 @@
           console.log('[fetchAndDisplayBuses] Displayed', Object.keys(busMarkers).length, 'OTP trip buses');
         } else {
           console.log('[fetchAndDisplayBuses] No OTP buses found for the selected trip');
-          
-          // DEBUG: Add a test marker to see if marker creation works
-          console.log('[fetchAndDisplayBuses] Adding test marker to verify marker creation works');
-          const testMarker = L.marker([45.5152, -122.6784], { 
-            icon: L.divIcon({
-              className: 'otp-bus-pulse',
-              html: `<div style='text-align:center; position:relative;'>
-                       <div style='background:#ff0000;color:#fff;padding:6px 12px;border-radius:12px;font-weight:bold;font-size:14px;box-shadow:0 0 20px #ff0000, 0 0 40px #ff0000;border:4px solid #fff;animation:pulse 2s infinite;'>🚌 TEST</div>
-                       <div style='width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:20px solid #ff0000;margin:auto;filter:drop-shadow(0 0 10px #ff0000);'></div>
-                     </div>`,
-              iconSize: [60, 60],
-              iconAnchor: [30, 60]
-            })
-          }).addTo(map);
-          busMarkers['test-marker'] = testMarker;
-          console.log('[fetchAndDisplayBuses] Test marker added');
         }
         
       } else {
