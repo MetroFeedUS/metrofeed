@@ -524,6 +524,7 @@
   </svg>
 </button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
+<button id="mapStyleBtn" class="side-buttons" style="top: 100px;" title="Toggle Day/Night Map"><img src="008-night.svg" alt="Map Style"></button>
 <div id="dropdownMenu" class="dropdown">
   <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="1"></a>
   <a href="https://metrofeedus.com/portland/railroutes"><img src="001-train-station.svg" alt="2"></a>
@@ -658,9 +659,20 @@
   };
   
   const map = L.map('map').setView([45.52, -122.67], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+  
+  // Self-hosted tile layers
+  const dayTiles = L.tileLayer('https://45.77.209.137:8081/styles/0/{z}/{x}/{y}.png', {
+    attribution: '© OpenMapTiles © OpenStreetMap contributors',
+    maxZoom: 18
+  });
+  
+  const nightTiles = L.tileLayer('https://45.77.209.137:8081/styles/1/{z}/{x}/{y}.png', {
+    attribution: '© OpenMapTiles © OpenStreetMap contributors',
+    maxZoom: 18
+  });
+  
+  // Add day tiles by default
+  dayTiles.addTo(map);
   
   // Set map bounds to restrict view to Portland metro area
   map.setMaxBounds([
@@ -741,6 +753,26 @@
   const dropdownMenu = document.getElementById('dropdownMenu');
   menuBtn.addEventListener('click', () => {
     dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
+  });
+  
+  // === SECTION: MAP STYLE TOGGLE LOGIC ===
+  const mapStyleBtn = document.getElementById('mapStyleBtn');
+  let isNightMode = false;
+  
+  mapStyleBtn.addEventListener('click', () => {
+    isNightMode = !isNightMode;
+    
+    if (isNightMode) {
+      map.removeLayer(dayTiles);
+      nightTiles.addTo(map);
+      mapStyleBtn.querySelector('img').src = '005-weather-radar.svg'; // Change to sun icon
+      mapStyleBtn.title = 'Switch to Day Map';
+    } else {
+      map.removeLayer(nightTiles);
+      dayTiles.addTo(map);
+      mapStyleBtn.querySelector('img').src = '008-night.svg'; // Change to moon icon
+      mapStyleBtn.title = 'Switch to Night Map';
+    }
   });
 
   // === SECTION: MAP SELECTION LOGIC ===
