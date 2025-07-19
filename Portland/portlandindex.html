@@ -1130,8 +1130,10 @@
   
   // Find Me button handler
   const findMeBtn = document.getElementById('findMeBtn');
+  console.log('[Find Me] Button found:', findMeBtn);
   if (findMeBtn) {
     findMeBtn.addEventListener('click', function() {
+      console.log('[Find Me] Button clicked!');
       // If route is already visible, hide it
       if (userLocationPolyline && map.getLayer(userLocationPolyline)) {
         // Hide route and stops
@@ -1153,6 +1155,7 @@
       }
 
       // Show loading state
+      console.log('[Find Me] Setting loading state...');
       findMeBtn.disabled = true;
       findMeBtn.textContent = 'Looking...';
       findMeBtn.style.backgroundColor = '#888';
@@ -1221,6 +1224,8 @@
         }
 
         // Check if we have background data
+        console.log('[Find Me] Background location data:', backgroundLocationData);
+        console.log('[Find Me] Background route data:', backgroundRouteData);
         if (!backgroundLocationData || !backgroundRouteData) {
           findMeBtn.disabled = false;
           findMeBtn.textContent = 'Find Me';
