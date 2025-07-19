@@ -663,18 +663,56 @@
   const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
   const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
   
-  const map = new maplibregl.Map({
-    container: 'map',
-    style: dayStyle,
-    center: [-122.67, 45.52],
-    zoom: 12,
-    maxZoom: 18,
-    minZoom: 8,
-    maxBounds: [
-      [PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.west],
-      [PORTLAND_BOUNDS.north, PORTLAND_BOUNDS.east]
-    ]
+  // Add error handling for map initialization
+  let map;
+  try {
+    console.log('[Map Init] Initializing MapLibre GL JS map...');
+    console.log('[Map Init] Day style URL:', dayStyle);
+    console.log('[Map Init] Night style URL:', nightStyle);
+    console.log('[Map Init] Center coordinates:', [-122.67, 45.52]);
+    console.log('[Map Init] Bounds:', [
+      [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
+      [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
+    ]);
+    
+    map = new maplibregl.Map({
+      container: 'map',
+      style: dayStyle,
+      center: [-122.67, 45.52],
+      zoom: 12,
+      maxZoom: 18,
+      minZoom: 8,
+      maxBounds: [
+        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
+        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
+      ]
+    });
+    
+      console.log('[Map Init] Map created successfully');
+  
+  // Add map event listeners for debugging
+  map.on('load', () => {
+    console.log('[Map] Map loaded successfully');
   });
+  
+  map.on('error', (e) => {
+    console.error('[Map] Map error:', e);
+  });
+  
+  map.on('styledata', () => {
+    console.log('[Map] Style data loaded');
+  });
+  
+} catch (error) {
+  console.error('[Map Init] Error creating map:', error);
+  // Fallback to a basic map if vector tiles fail
+  map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    center: [-122.67, 45.52],
+    zoom: 12
+  });
+}
   
   // Store tile styles for switching
   let isNightMode = false;
