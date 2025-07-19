@@ -624,9 +624,9 @@
   </div>
 </div>
 
-<!-- -- MAPBOX GL JS & MASTERMAP -- -->
-<script src="https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.js"></script>
-<link href="https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.css" rel="stylesheet" />
+<!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="mastermap.js"></script>
 <script>
   // === SECTION: MAP INIT ===
@@ -659,11 +659,11 @@
     west: -123.35    // Past Hillsboro, near Forest Grove/Cornelius
   };
   
-  // Initialize Mapbox GL JS map with vector tiles
-  const map = new mapboxgl.Map({
+  // Initialize MapLibre GL JS map with vector tiles
+  const map = new maplibregl.Map({
     container: 'map',
     style: 'https://maps.metrofeedus.com/styles/0/style.json',
-    center: [-122.67, 45.52],
+    center: [-122.67, 45.52], // [longitude, latitude] format
     zoom: 12,
     maxZoom: 18,
     minZoom: 8
@@ -672,6 +672,8 @@
   // Store tile styles for switching
   const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
   const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
+  
+  // Store tile styles for switching
   let isNightMode = false;
   
   // Set map bounds to restrict view to Portland metro area
