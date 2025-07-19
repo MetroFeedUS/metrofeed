@@ -624,8 +624,9 @@
   </div>
 </div>
 
-<!-- -- LEAFLET & MASTERMAP -- -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- -- MAPBOX GL JS & MASTERMAP -- -->
+<script src="https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.js"></script>
+<link href="https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.css" rel="stylesheet" />
 <script src="mastermap.js"></script>
 <script>
   // === SECTION: MAP INIT ===
@@ -658,21 +659,20 @@
     west: -123.35    // Past Hillsboro, near Forest Grove/Cornelius
   };
   
-  const map = L.map('map').setView([45.52, -122.67], 12);
-  
-  // Self-hosted tile layers
-  const dayTiles = L.tileLayer('https://maps.metrofeedus.com/styles/0/{z}/{x}/{y}.png', {
-    attribution: '© OpenMapTiles © OpenStreetMap contributors',
-    maxZoom: 18
+  // Initialize Mapbox GL JS map with vector tiles
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'https://maps.metrofeedus.com/styles/0/style.json',
+    center: [-122.67, 45.52],
+    zoom: 12,
+    maxZoom: 18,
+    minZoom: 8
   });
   
-  const nightTiles = L.tileLayer('https://maps.metrofeedus.com/styles/1/{z}/{x}/{y}.png', {
-    attribution: '© OpenMapTiles © OpenStreetMap contributors',
-    maxZoom: 18
-  });
-  
-  // Add day tiles by default
-  dayTiles.addTo(map);
+  // Store tile styles for switching
+  const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
+  const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
+  let isNightMode = false;
   
   // Set map bounds to restrict view to Portland metro area
   map.setMaxBounds([
@@ -757,19 +757,16 @@
   
   // === SECTION: MAP STYLE TOGGLE LOGIC ===
   const mapStyleBtn = document.getElementById('mapStyleBtn');
-  let isNightMode = false;
   
   mapStyleBtn.addEventListener('click', () => {
     isNightMode = !isNightMode;
     
     if (isNightMode) {
-      map.removeLayer(dayTiles);
-      nightTiles.addTo(map);
+      map.setStyle(nightStyle);
       mapStyleBtn.querySelector('img').src = '005-weather-radar.svg'; // Change to sun icon
       mapStyleBtn.title = 'Switch to Day Map';
     } else {
-      map.removeLayer(nightTiles);
-      dayTiles.addTo(map);
+      map.setStyle(dayStyle);
       mapStyleBtn.querySelector('img').src = '008-night.svg'; // Change to moon icon
       mapStyleBtn.title = 'Switch to Night Map';
     }
