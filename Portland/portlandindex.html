@@ -1199,22 +1199,27 @@
       ];
 
       function updateLoadingStep() {
+        console.log('[Find Me] updateLoadingStep called, step:', step);
         if (step < loadingSteps.length) {
           const loadingText = document.getElementById('loadingText');
           if (loadingText) {
             loadingText.textContent = loadingSteps[step].text;
+            console.log('[Find Me] Updated loading text to:', loadingSteps[step].text);
           }
           step++;
           if (step < loadingSteps.length) {
+            console.log('[Find Me] Scheduling next step in', loadingSteps[step - 1].delay, 'ms');
             setTimeout(updateLoadingStep, loadingSteps[step - 1].delay);
           } else {
             // Final step - show the route
+            console.log('[Find Me] Final step reached, calling showUserLocationAndRoute');
             setTimeout(showUserLocationAndRoute, loadingSteps[step - 1].delay);
           }
         }
       }
 
       function showUserLocationAndRoute() {
+        console.log('[Find Me] showUserLocationAndRoute called');
         // Remove loading overlay
         if (loadingOverlay) {
           loadingOverlay.remove();
@@ -1374,6 +1379,7 @@
         });
 
         // Start bus tracking
+        console.log('[Find Me] Starting bus tracking...');
         fetchAndDisplayBuses();
         if (window.closestRouteInterval) {
           clearInterval(window.closestRouteInterval);
