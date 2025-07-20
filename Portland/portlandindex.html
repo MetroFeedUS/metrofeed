@@ -481,6 +481,33 @@
       margin-top: 4px;
     }
     
+    /* Custom attribution positioning to avoid footer interference */
+    .maplibregl-ctrl-attrib {
+      position: absolute !important;
+      bottom: 120px !important; /* Move up above footer and favorites */
+      right: 0 !important;
+      background: rgba(0, 0, 0, 0.7) !important;
+      color: #fff !important;
+      font-size: 10px !important;
+      padding: 4px 8px !important;
+      border-radius: 4px !important;
+      z-index: 1000 !important;
+      max-width: 200px !important;
+      word-wrap: break-word !important;
+    }
+    
+
+    
+    /* Mobile-specific attribution positioning */
+    @media (max-width: 768px) {
+      .maplibregl-ctrl-attrib {
+        bottom: 140px !important; /* Even higher on mobile */
+        font-size: 9px !important;
+        padding: 3px 6px !important;
+        max-width: 150px !important;
+      }
+    }
+    
 
     
     /* Pulsing animation for OTP buses */
@@ -565,7 +592,7 @@
   </div>
   <div class="otp-btn-row">
             <button id="goBtn" style="width: 40px; height: 20px; background-color: #4CAF50; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);">Go</button>
-        <button id="clearBtn" style="width: 40px; height: 20px; background-color: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);">Clear</button>
+        <button id="clearBtn" style="width: 45px; height: 20px; background-color: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3); padding: 0 4px;">Clear</button>
         <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s ease;" title="Find my location and closest route">Find Me</button>
   </div>
 </div>
@@ -685,7 +712,8 @@
       maxBounds: [
         [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
         [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
-      ]
+      ],
+
     });
     
       console.log('[Map Init] Map created successfully');
