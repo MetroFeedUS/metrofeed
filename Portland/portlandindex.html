@@ -3303,6 +3303,8 @@
           }
           
           if (!map.getLayer('tomtom-traffic')) {
+            // Try to insert before bus-markers, but fall back to top if it doesn't exist
+            const beforeLayer = map.getLayer('bus-markers') ? 'bus-markers' : undefined;
             map.addLayer({
               id: 'tomtom-traffic',
               type: 'raster',
@@ -3310,7 +3312,7 @@
               paint: {
                 'raster-opacity': 0.6
               }
-            }, 'bus-markers'); // Insert before bus markers so buses show above traffic
+            }, beforeLayer); // Insert before bus markers if they exist, otherwise at top
           }
           
           trafficLayerActive = true;
