@@ -481,19 +481,12 @@
       margin-top: 4px;
     }
     
-    /* Custom attribution positioning to avoid footer interference */
+    /* Custom attribution positioning - just above footer */
     .maplibregl-ctrl-attrib {
       position: absolute !important;
-      bottom: 120px !important; /* Move up above footer and favorites */
+      bottom: 50px !important; /* 10px above footer */
       right: 0 !important;
-      background: rgba(0, 0, 0, 0.7) !important;
-      color: #fff !important;
-      font-size: 10px !important;
-      padding: 4px 8px !important;
-      border-radius: 4px !important;
       z-index: 1000 !important;
-      max-width: 200px !important;
-      word-wrap: break-word !important;
     }
     
 
@@ -501,10 +494,7 @@
     /* Mobile-specific attribution positioning */
     @media (max-width: 768px) {
       .maplibregl-ctrl-attrib {
-        bottom: 140px !important; /* Even higher on mobile */
-        font-size: 9px !important;
-        padding: 3px 6px !important;
-        max-width: 150px !important;
+        bottom: 50px !important; /* Same position on mobile */
       }
     }
     
@@ -964,7 +954,7 @@
           
           userLocationPolyline = 'userLocationRoute';
         
-                  // Recreate stop markers
+          // Recreate stop markers
           const nowMins = getPortlandMinutes();
           userLocationStopMarkers.forEach(marker => marker.remove());
           userLocationStopMarkers = [];
@@ -2627,12 +2617,12 @@
     return points;
   }
 
-  // Array of distinct colors for individual route legs
+  // Array of distinct colors for individual route legs (MetroFeed colors)
   const legColors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2',
-    '#A9CCE3', '#F9E79F', '#D5A6BD', '#A2D9CE', '#FAD7A0'
+    '#FB4F14', // MetroFeed Orange (Denver Broncos style)
+    '#1E3A8A', // MetroFeed Blue (Denver Broncos style) 
+    '#8B5CF6', // Purple
+    '#A0522D'  // Brown
   ];
   
   // Keep walk color consistent
@@ -2806,7 +2796,8 @@
           source: lineId,
           paint: {
             'line-color': color,
-            'line-width': 6
+            'line-width': 4,
+            'line-opacity': 0.7
           }
         });
         
