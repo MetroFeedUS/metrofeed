@@ -489,7 +489,56 @@
       z-index: 1000 !important;
     }
     
-
+    /* Force attribution to be collapsed by default */
+    .maplibregl-ctrl-attrib.maplibregl-compact {
+      min-height: 20px !important;
+    }
+    
+    .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner {
+      display: none !important;
+    }
+    
+    .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+      display: block !important;
+    }
+    
+    /* Tooltip styles for dropdown buttons */
+    .dropdown-tooltip {
+      position: absolute;
+      right: 60px;
+      background: #0d0d0d;
+      color: #4dd0e1;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      border: 1px solid #4dd0e1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 1003;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    
+    .dropdown-tooltip.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .dropdown-tooltip::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid #4dd0e1;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
     
     /* Mobile-specific attribution positioning */
     @media (max-width: 768px) {
@@ -703,7 +752,15 @@
         [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
         [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
       ],
-
+      attributionControl: true
+    });
+    
+    // Force attribution to be collapsed by default
+    map.on('load', () => {
+      const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+      if (attributionControl) {
+        attributionControl.classList.add('maplibregl-compact');
+      }
     });
     
       console.log('[Map Init] Map created successfully');
@@ -728,7 +785,16 @@
     container: 'map',
     style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
     center: [-122.67, 45.52],
-    zoom: 12
+    zoom: 12,
+    attributionControl: true
+  });
+  
+  // Force attribution to be collapsed by default for fallback map
+  map.on('load', () => {
+    const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+    if (attributionControl) {
+      attributionControl.classList.add('maplibregl-compact');
+    }
   });
 }
   
@@ -806,9 +872,63 @@
   // === SECTION: DROPDOWN MENU LOGIC ===
   const menuBtn = document.getElementById('menuBtn');
   const dropdownMenu = document.getElementById('dropdownMenu');
+  
+  // Check if this is the first time opening the dropdown
+  let hasShownTooltips = localStorage.getItem('dropdownTooltipsShown');
+  
   menuBtn.addEventListener('click', () => {
-    dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
+    const isOpening = dropdownMenu.style.display !== 'flex';
+    dropdownMenu.style.display = isOpening ? 'flex' : 'none';
+    
+    // Show tooltips only on first open
+    if (isOpening && !hasShownTooltips) {
+      showDropdownTooltips();
+      localStorage.setItem('dropdownTooltipsShown', 'true');
+      hasShownTooltips = true;
+    }
   });
+  
+  // Function to show tooltips for dropdown buttons
+  function showDropdownTooltips() {
+    const tooltipData = [
+      { selector: 'a[href*="busroutesmain"]', text: 'Bus Routes' },
+      { selector: 'a[href*="railroutes"]', text: 'Rail Routes' },
+      { selector: '#dropdownTrafficBtn', text: 'Traffic Overlay' },
+      { selector: 'a[href*="trafficcameras"]', text: 'Traffic Cameras' },
+      { selector: 'a[href*="chat.html"]', text: 'AI Chat' },
+      { selector: 'a[href*="portlandweather"]', text: 'Weather' },
+      { selector: '#alertsMenuBtn', text: 'Alerts' },
+      { selector: 'a[href*="portland-earthquake"]', text: 'Earthquakes' },
+      { selector: 'a[href*="freecitychanger"]', text: 'Change City' }
+    ];
+    
+    tooltipData.forEach((item, index) => {
+      const button = dropdownMenu.querySelector(item.selector);
+      if (button) {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'dropdown-tooltip';
+        tooltip.textContent = item.text;
+        tooltip.style.top = `${button.offsetTop}px`;
+        
+        dropdownMenu.appendChild(tooltip);
+        
+        // Show tooltip with delay
+        setTimeout(() => {
+          tooltip.classList.add('show');
+        }, index * 200);
+        
+        // Hide tooltip after 3 seconds
+        setTimeout(() => {
+          tooltip.classList.remove('show');
+          setTimeout(() => {
+            if (tooltip.parentNode) {
+              tooltip.parentNode.removeChild(tooltip);
+            }
+          }, 300);
+        }, 3000 + (index * 200));
+      }
+    });
+  }
   
   // === SECTION: MAP STYLE TOGGLE LOGIC ===
   const themeToggleBtn = document.getElementById('themeToggleBtn');
