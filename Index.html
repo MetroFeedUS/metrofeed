@@ -15,36 +15,46 @@
       overflow: hidden;
     }
 
-    #cookieBanner {
+ #cookieBanner {
   position: fixed;
-  top: 25%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  max-width: 500px;
-  background-color: #111;
-  color: #ccc;
-  padding: 1rem;
-  z-index: 2000;
-  font-size: 0.9rem;
-  border: 2px solid #0071CE;
-  border-radius: 10px;
-  pointer-events: auto;
-  box-shadow: 0 0 10px #000;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  width: 100vw;
+  background: #23292e;
+  color: #eee;
+  border-top: 3px solid #4dd0e1;
+  box-shadow: 0 -2px 18px #111c;
   text-align: center;
+  padding: 1.15rem 1rem 1.3rem 1rem;
+  font-size: 1rem;
+  display: none;
+  animation: slideInCookie 0.32s cubic-bezier(.68,-0.55,.27,1.55);
+}
+#cookieBanner button {
+  background: #4dd0e1;
+  color: #181818;
+  border: none;
+  border-radius: 7px;
+  padding: 0.62em 1.2em;
+  font-size: 1.06rem;
+  font-weight: bold;
+  box-shadow: 0 1px 6px #0008;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.18s, color 0.18s;
+  outline: none;
+}
+#cookieBanner button:hover, #cookieBanner button:focus {
+  background: #0071ce;
+  color: #fff;
+}
+@keyframes slideInCookie {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-
-    #cookieBanner button {
-      background-color: #0071CE;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-left: 1rem;
-    }
 
     #loader {
       position: absolute;
@@ -148,12 +158,25 @@
   </style>
 </head>
 <body>
-  <div id="cookieBanner">
-  <div style="font-weight: bold; font-size: 1.05rem; margin-bottom: 0.5rem;">Lawyer Stuff 🙄</div>  
-MetroFeed uses your location and third-party services for login and payment. We do not store your personal data. By continuing, you agree to our use of cookies and geolocation. Term and Conditions, Privacy and more avialable at the bottom of this page to view right now without having to accept this cookie.              
-    <div style="margin-top: 0.75rem;">
+  <!-- Cookie Modal -->
+<div id="cookieBanner">
+  <div style="font-weight: bold; font-size: 1.15rem; margin-bottom: 0.2rem;">Lawyer Stuff 🙄</div>
+  <div style="font-size: 1.07rem; color:#4dd0e1; margin-bottom: 0.6rem;">Cookies and stuff</div>
+  <div style="max-height:170px; overflow-y:auto; padding: 0.5rem 0.2rem 0.3rem 0.2rem; background:#202328; border-radius:8px; border:1px solid #333; margin-bottom: 0.9rem; text-align:left; font-size:1.05rem;">
+    <strong>Know Your App (KYA):</strong><br><br>
+    <ul style="padding-left:1.1em;">
+      <li><b>Cookies:</b> MetroFeed uses cookies and browser storage for login, preferences, and favorite routes. These help us remember your settings—nothing else.</li>
+      <li><b>Geolocation:</b> MetroFeed requests your location so we can show you local routes, bus stops, and nearby alerts. Your location is used only in your browser—we never transmit or store it on our servers.</li>
+      <li><b>Personal Data:</b> MetroFeed does <u>not</u> collect, store, or sell your personal data. Everything—favorites, login tokens, settings—is saved privately on <b>your own device</b> using browser storage.</li>
+      <li><b>Third-Party Services:</b> Login and payment features may use Google or payment providers. Only the minimum data required to complete login/payment is shared securely with those partners. MetroFeed itself does <b>not</b> store this information.</li>
+      <li><b>Analytics:</b> We collect basic anonymous usage stats (like visits, clicks, errors) to help us improve the app. No names, emails, or tracking profiles—ever.</li>
+      <li><b>Transparency:</b> You can review our <a href="privacy.html" style="color:#4dd0e1;">Privacy Policy</a> and <a href="terms.html" style="color:#4dd0e1;">Terms of Use</a> at any time—no need to accept cookies to read them.</li>
+    </ul>
+    <div style="font-size:0.93em; color:#aaa; margin-top:1em;">Questions or concerns? Email us any time using the “Contact Us” link at the bottom of this page.</div>
+  </div>
   <button onclick="acceptCookies()">Accept & Continue</button>
 </div>
+
 
   </div>
 
@@ -230,11 +253,18 @@ MetroFeed uses your location and third-party services for login and payment. We 
       });
     }
 
-    function acceptCookies() {
-      localStorage.setItem("cookieConsent", "true");
-      document.getElementById("cookieBanner").style.display = "none";
-      document.getElementById("loader").style.display = "flex";
-      
+    <script>
+function acceptCookies() {
+  document.getElementById('cookieBanner').style.display = 'none';
+  localStorage.setItem('metrofeedCookiesAccepted', '1');
+}
+window.addEventListener('DOMContentLoaded', function() {
+  if (!localStorage.getItem('metrofeedCookiesAccepted')) {
+    document.getElementById('cookieBanner').style.display = 'block';
+  }
+});
+</script>
+
       // Start the loading sequence
       startLoadingSequence();
       
