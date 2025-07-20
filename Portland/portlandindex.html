@@ -2044,7 +2044,7 @@
                   <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
                   <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                   <div style='margin-top:10px; text-align:center;'>
-                    <a href='${bus.vehicleID.length === 3 ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
+                    <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
                   </div>
                 </div>
               `;
@@ -2107,7 +2107,7 @@
                 <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                 <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
                 <div style='margin-top:8px; text-align:center;'>
-                  <a href='${bus.vehicleID.length === 3 ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
+                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
                 </div>
               </div>
             `;
@@ -2200,8 +2200,35 @@
     // Adjust the server/URL as needed for production:
     const url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
 
-    // Clear previous bus info
+    // Clear previous state for multiple trips
     window.otpBusInfo = {};
+    currentItins = null;
+    activeTripSelected = false;
+    window.currentLegColorMapping = null;
+    
+    // Clear any existing OTP route lines and stop markers
+    if (window.routeLegLines && window.routeLegLines.length) {
+      window.routeLegLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+      window.routeLegLines = [];
+    }
+    
+    if (window.routeStopMarkers && window.routeStopMarkers.length) {
+      window.routeStopMarkers.forEach(marker => marker.remove());
+      window.routeStopMarkers = [];
+    }
+    
+    // Stop any existing OTP bus tracking
+    if (window.otpBusTrackingInterval) {
+      clearInterval(window.otpBusTrackingInterval);
+      window.otpBusTrackingInterval = null;
+    }
 
     // Show loading state
     const itinList = document.getElementById('itinList');
@@ -3018,7 +3045,14 @@
       goBtn.addEventListener('click', function() {
         // Clear previous route lines
         if (window.routeLegLines && window.routeLegLines.length) {
-          window.routeLegLines.forEach(line => map.removeLayer(line));
+          window.routeLegLines.forEach(lineId => {
+            if (map.getLayer(lineId)) {
+              map.removeLayer(lineId);
+            }
+            if (map.getSource(lineId)) {
+              map.removeSource(lineId);
+            }
+          });
           window.routeLegLines = [];
         }
         
@@ -3056,6 +3090,7 @@
         }
         
         // Call OTP with coordinates
+        console.log('[Go Button] Starting new OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
         fetchAndShowOtpItineraries(startStop.lat, startStop.lon, endStop.lat, endStop.lon);
       });
     } else {
