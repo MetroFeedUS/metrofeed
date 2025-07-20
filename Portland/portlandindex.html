@@ -484,7 +484,7 @@
     /* Custom attribution positioning - just above footer */
     .maplibregl-ctrl-attrib {
       position: absolute !important;
-      bottom: 80px !important; /* Higher above footer to avoid favorites bar */
+      bottom: 120px !important; /* Much higher above footer to avoid favorites bar */
       right: 0 !important;
       z-index: 1000 !important;
     }
@@ -766,7 +766,20 @@
       const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
       if (attributionControl) {
         attributionControl.classList.add('maplibregl-compact');
+        // Remove any expanded state classes
+        attributionControl.classList.remove('maplibregl-compact-show');
       }
+    });
+    
+    // Also ensure attribution is collapsed after style changes
+    map.on('styledata', () => {
+      setTimeout(() => {
+        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+        if (attributionControl) {
+          attributionControl.classList.add('maplibregl-compact');
+          attributionControl.classList.remove('maplibregl-compact-show');
+        }
+      }, 100);
     });
     
       console.log('[Map Init] Map created successfully');
@@ -800,6 +813,7 @@
     const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
     if (attributionControl) {
       attributionControl.classList.add('maplibregl-compact');
+      attributionControl.classList.remove('maplibregl-compact-show');
     }
   });
 }
@@ -927,7 +941,7 @@
           tooltip.classList.add('show');
         }, index * 200);
         
-        // Hide tooltip after 3 seconds
+        // Hide tooltip after 5 seconds
         setTimeout(() => {
           tooltip.classList.remove('show');
           setTimeout(() => {
@@ -935,7 +949,7 @@
               tooltip.parentNode.removeChild(tooltip);
             }
           }, 300);
-        }, 3000 + (index * 200));
+        }, 5000 + (index * 200));
       }
     });
   }
