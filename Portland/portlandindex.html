@@ -2290,6 +2290,26 @@
       // Store itineraries globally and render
       currentItins = data.plan.itineraries;
       console.log('Stored itineraries:', currentItins); // Debug stored data
+      
+      // Enhanced OTP route debugging
+      console.log('=== OTP ROUTE ANALYSIS ===');
+      data.plan.itineraries.forEach((itin, idx) => {
+        console.log(`\n--- Itinerary ${idx + 1} ---`);
+        itin.legs.forEach((leg, legIdx) => {
+          if (leg.mode !== 'WALK') {
+            console.log(`Leg ${legIdx}:`);
+            console.log(`  Mode: ${leg.mode}`);
+            console.log(`  Route ID: ${leg.route}`);
+            console.log(`  Route Short Name: ${leg.routeShortName}`);
+            console.log(`  Route Long Name: ${leg.routeLongName}`);
+            console.log(`  Direction: ${leg.direction}`);
+            console.log(`  From: ${leg.from?.name} (${leg.from?.lat}, ${leg.from?.lon})`);
+            console.log(`  To: ${leg.to?.name} (${leg.to?.lat}, ${leg.to?.lon})`);
+            console.log(`  Agency: ${leg.agencyId} - ${leg.agencyName}`);
+          }
+        });
+      });
+      console.log('=== END OTP ROUTE ANALYSIS ===');
       console.log('Sample leg data:', currentItins[0]?.legs?.map(leg => ({
         mode: leg.mode,
         route: leg.route,
@@ -3061,6 +3081,52 @@
     });
     
     console.log('=== END OTP ROUTE MATCHING DEBUG ===');
+  };
+  
+  // Debug function to compare with Transit app
+  window.compareWithTransitApp = function() {
+    console.log('=== TRANSIT APP COMPARISON ===');
+    
+    if (!window.currentItins) {
+      console.log('No OTP trip active - plan a trip first');
+      return;
+    }
+    
+    console.log('What OTP says you should take:');
+    window.currentItins.forEach((itin, idx) => {
+      console.log(`\n--- Itinerary ${idx + 1} ---`);
+      itin.legs.forEach((leg, legIdx) => {
+        if (leg.mode !== 'WALK') {
+          console.log(`  ${leg.mode} ${leg.routeShortName || leg.route} (${leg.route})`);
+          console.log(`  Direction: ${leg.direction}`);
+          console.log(`  From: ${leg.from?.name}`);
+          console.log(`  To: ${leg.to?.name}`);
+        }
+      });
+    });
+    
+    console.log('\nWhat buses we found:');
+    if (window.lastBusData && window.lastBusData.resultSet && window.lastBusData.resultSet.vehicle) {
+      const allBuses = window.lastBusData.resultSet.vehicle;
+      const routeGroups = {};
+      
+      allBuses.forEach(bus => {
+        const key = `${bus.routeNumber}-${bus.direction}`;
+        if (!routeGroups[key]) routeGroups[key] = [];
+        routeGroups[key].push(bus.vehicleID);
+      });
+      
+      Object.entries(routeGroups).forEach(([routeKey, buses]) => {
+        console.log(`  Route ${routeKey}: ${buses.join(', ')}`);
+      });
+    }
+    
+    console.log('\nInstructions:');
+    console.log('1. Open Transit app and plan the same trip');
+    console.log('2. Compare the route numbers and bus numbers');
+    console.log('3. Tell me what Transit shows vs what we show');
+    
+    console.log('=== END TRANSIT APP COMPARISON ===');
   };
   
 
