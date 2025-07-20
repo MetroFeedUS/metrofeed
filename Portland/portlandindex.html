@@ -2044,7 +2044,7 @@
                   <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
                   <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                   <div style='margin-top:10px; text-align:center;'>
-                    <a href='pythonbusroutes/route-${trimetRouteNumber}-dir${bus.direction}.html' target='_blank' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
+                    <a href='${bus.vehicleID.length === 3 ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
                   </div>
                 </div>
               `;
@@ -2107,7 +2107,7 @@
                 <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                 <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
                 <div style='margin-top:8px; text-align:center;'>
-                  <a href='pythonbusroutes/route-${routeNumber}-dir${direction}.html' target='_blank' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
+                  <a href='${bus.vehicleID.length === 3 ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
                 </div>
               </div>
             `;
