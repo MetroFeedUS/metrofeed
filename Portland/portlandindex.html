@@ -564,9 +564,10 @@
     </button>
   </div>
   <div class="otp-btn-row">
-    <button id="goBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
-    <button id="clearBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
-    <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Find my location and closest route">Find Me</button>
+            <button id="goBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Go</button>
+        <button id="clearBtn" style="width: 40px; height: 20px; background-color: #4dd0e1; color: #000; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Clear</button>
+        <button id="trafficBtn" style="width: 60px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Toggle traffic overlay">Traffic</button>
+        <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem;" title="Find my location and closest route">Find Me</button>
   </div>
 </div>
 
@@ -3267,6 +3268,58 @@
     if (clearBtn) {
       clearBtn.addEventListener('click', function() {
         clearTripPlan();
+      });
+    }
+    
+    // Traffic button handler with TomTom overlay
+    let trafficLayerActive = false;
+    const trafficBtn = document.getElementById('trafficBtn');
+    if (trafficBtn) {
+      trafficBtn.addEventListener('click', function() {
+        // Toggle traffic display
+        if (trafficLayerActive) {
+          // Remove traffic layer
+          if (map.getLayer('tomtom-traffic')) {
+            map.removeLayer('tomtom-traffic');
+          }
+          if (map.getSource('tomtom-traffic')) {
+            map.removeSource('tomtom-traffic');
+          }
+          trafficLayerActive = false;
+          this.classList.remove('active');
+          this.textContent = 'Traffic';
+          this.style.backgroundColor = '#666';
+          console.log('[Traffic] Traffic overlay disabled');
+        } else {
+          // Add traffic layer
+          if (!map.getSource('tomtom-traffic')) {
+            map.addSource('tomtom-traffic', {
+              type: 'raster',
+              tiles: [
+                'https://api.tomtom.com/traffic/map/4/tile/flow/basic/main/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU'
+              ],
+              tileSize: 256,
+            });
+          }
+          
+          if (!map.getLayer('tomtom-traffic')) {
+            map.addLayer({
+              id: 'tomtom-traffic',
+              type: 'raster',
+              source: 'tomtom-traffic',
+              paint: {
+                'raster-opacity': 0.6
+              }
+            }, 'bus-markers'); // Insert before bus markers so buses show above traffic
+          }
+          
+          trafficLayerActive = true;
+          this.classList.add('active');
+          this.textContent = 'Traffic ON';
+          this.style.backgroundColor = '#4dd0e1';
+          this.style.color = '#000';
+          console.log('[Traffic] Traffic overlay enabled');
+        }
       });
     }
     
