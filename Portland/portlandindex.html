@@ -1993,6 +1993,13 @@
           if (route.routeShortName && !isNaN(route.routeShortName)) {
             trimetRouteNumber = route.routeShortName;
             console.log('[fetchAndDisplayBuses] Using route short name:', trimetRouteNumber);
+          } else if (route.route_id && !isNaN(route.route_id)) {
+            // Fallback to route_id if it's a number
+            trimetRouteNumber = route.route_id;
+            console.log('[fetchAndDisplayBuses] Using route_id as fallback:', trimetRouteNumber);
+          } else {
+            console.log('[fetchAndDisplayBuses] No valid route number found for:', route);
+            return; // Skip this route if we can't determine the number
           }
           
           // Get direction from OTP (use route page logic)
@@ -2005,9 +2012,13 @@
             console.log('[fetchAndDisplayBuses] Using default direction 0 (OTP didn\'t provide direction)');
           }
           
-          console.log('[fetchAndDisplayBuses] Final route number:', trimetRouteNumber, 'for OTP route:', route.route_id);
-          
-          if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
+                      console.log('[fetchAndDisplayBuses] Final route number:', trimetRouteNumber, 'for OTP route:', route.route_id);
+            
+            // Debug: Show all available buses for this route
+            const allRouteBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+            console.log('[fetchAndDisplayBuses] All buses on route', trimetRouteNumber, ':', allRouteBuses.map(b => `${b.vehicleID} (dir ${b.direction})`));
+            
+            if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
             
             // Enhanced bus filtering with better logging
