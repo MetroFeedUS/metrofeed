@@ -1938,6 +1938,9 @@
       const data = await res.json();
       const allBuses = data.resultSet.vehicle || [];
       
+      // Store for debugging
+      window.lastBusData = data;
+      
       // Clear existing bus markers
       Object.values(busMarkers).forEach(m => m.remove());
       busMarkers = {};
@@ -1980,28 +1983,64 @@
         console.log('[fetchAndDisplayBuses] Filtering for OTP trip buses only');
         
         otpRoutes.forEach(route => {
-          // Map OTP route name to Trimet route number
-          let trimetRouteNumber = route.route_id;
+          console.log('[fetchAndDisplayBuses] Processing OTP route:', route);
           
-          if (route.route_id && isNaN(route.route_id)) {
+          // Enhanced route mapping logic
+          let trimetRouteNumber = null;
+          let routeDescription = route.description || '';
+          
+          // Method 1: Direct route ID match (if it's already a number)
+          if (route.route_id && !isNaN(route.route_id)) {
+            trimetRouteNumber = route.route_id;
+            console.log('[fetchAndDisplayBuses] Direct route number match:', trimetRouteNumber);
+          }
+          // Method 2: Try to find in masterRoutes by route_id
+          else if (route.route_id && masterRoutes) {
+            const masterRoute = masterRoutes.find(r => r.route_id === route.route_id);
+            if (masterRoute) {
+              trimetRouteNumber = masterRoute.route_id;
+              routeDescription = masterRoute.route_title;
+              console.log('[fetchAndDisplayBuses] Found in masterRoutes:', trimetRouteNumber, routeDescription);
+            }
+          }
+          // Method 3: Try mapping function
+          else if (route.route_id) {
             trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
             console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumber);
           }
+          // Method 4: Try to find by description
+          else if (routeDescription) {
+            const foundRoute = findRouteByDescription(routeDescription);
+            if (foundRoute) {
+              trimetRouteNumber = foundRoute.route_id;
+              console.log('[fetchAndDisplayBuses] Found by description:', trimetRouteNumber, 'for:', routeDescription);
+            }
+          }
+          
+          console.log('[fetchAndDisplayBuses] Final route number:', trimetRouteNumber, 'for OTP route:', route.route_id);
           
           if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', route.direction_id);
             
-            // Filter buses for this specific route
-            let routeBuses = allBuses.filter(v => 
-              v.routeNumber == trimetRouteNumber && v.direction == route.direction_id
-            );
+            // Enhanced bus filtering with better logging
+            let routeBuses = allBuses.filter(v => {
+              const routeMatch = v.routeNumber == trimetRouteNumber;
+              const directionMatch = v.direction == route.direction_id;
+              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${route.direction_id} (${directionMatch})`);
+              return routeMatch && directionMatch;
+            });
             
-            console.log('[fetchAndDisplayBuses] Buses with direction match:', routeBuses.length);
+            console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
             
             // If no buses found with direction, try without direction constraint
             if (routeBuses.length === 0) {
-              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
-              console.log('[fetchAndDisplayBuses] Buses without direction constraint:', routeBuses.length);
+              console.log('[fetchAndDisplayBuses] No direction match, trying route-only match...');
+              routeBuses = allBuses.filter(v => {
+                const routeMatch = v.routeNumber == trimetRouteNumber;
+                console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch})`);
+                return routeMatch;
+              });
+              console.log('[fetchAndDisplayBuses] Buses with route-only match:', routeBuses.length);
             }
             
             console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
@@ -2967,10 +3006,61 @@
     console.log('=== TESTING ROUTE DECODING ===');
     console.log('Testing route name:', routeName);
     
-    const result = mapOtpRouteToTrimet(routeName);
-    console.log('Decoded result:', result);
+    // Test all mapping methods
+    console.log('Method 1 - Direct number check:', !isNaN(routeName) ? routeName : 'Not a number');
     
-    return result;
+    if (masterRoutes) {
+      const masterRoute = masterRoutes.find(r => r.route_id === routeName);
+      console.log('Method 2 - masterRoutes lookup:', masterRoute ? masterRoute.route_id : 'Not found');
+    }
+    
+    const mappedRoute = mapOtpRouteToTrimet(routeName);
+    console.log('Method 3 - mapOtpRouteToTrimet:', mappedRoute);
+    
+    const foundRoute = findRouteByDescription(routeName);
+    console.log('Method 4 - findRouteByDescription:', foundRoute ? foundRoute.route_id : 'Not found');
+    
+    console.log('=== END ROUTE DECODING TEST ===');
+  };
+  
+  // Debug function to test OTP route matching
+  window.testOtpRouteMatching = function() {
+    console.log('=== OTP ROUTE MATCHING DEBUG ===');
+    
+    if (!window.currentLegColorMapping) {
+      console.log('No OTP trip active - plan a trip first');
+      return;
+    }
+    
+    console.log('Current leg color mapping:', window.currentLegColorMapping);
+    
+    // Test each route in the current trip
+    Object.entries(window.currentLegColorMapping).forEach(([legKey, legInfo]) => {
+      console.log(`\n--- Testing Leg: ${legKey} ---`);
+      console.log('Route ID:', legInfo.route);
+      console.log('Direction:', legInfo.direction);
+      console.log('Description:', legInfo.description);
+      
+      // Test if this route number exists in live bus data
+      if (window.lastBusData && window.lastBusData.resultSet && window.lastBusData.resultSet.vehicle) {
+        const matchingBuses = window.lastBusData.resultSet.vehicle.filter(bus => 
+          bus.routeNumber == legInfo.route
+        );
+        console.log(`Found ${matchingBuses.length} buses on route ${legInfo.route}:`, 
+          matchingBuses.map(b => `${b.vehicleID} (dir ${b.direction})`));
+        
+        // Test direction matching
+        const directionMatches = matchingBuses.filter(bus => 
+          bus.direction == legInfo.direction
+        );
+        console.log(`Direction matches: ${directionMatches.length}`, 
+          directionMatches.map(b => b.vehicleID));
+      } else {
+        console.log('No live bus data available');
+      }
+    });
+    
+    console.log('=== END OTP ROUTE MATCHING DEBUG ===');
   };
   
 
