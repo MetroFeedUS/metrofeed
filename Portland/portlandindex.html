@@ -484,9 +484,15 @@
     /* Custom attribution positioning - just above footer */
     .maplibregl-ctrl-attrib {
       position: absolute !important;
-      bottom: 50px !important; /* 10px above footer */
+      bottom: 80px !important; /* Higher above footer to avoid favorites bar */
       right: 0 !important;
       z-index: 1000 !important;
+    }
+    
+    /* Make attribution more vertical when expanded */
+    .maplibregl-ctrl-attrib.maplibregl-compact-show {
+      max-width: 200px !important;
+      min-height: auto !important;
     }
     
     /* Force attribution to be collapsed by default, but allow expansion */
@@ -530,12 +536,12 @@
     .dropdown-tooltip::after {
       content: '';
       position: absolute;
-      right: -6px;
+      left: -6px;
       top: 50%;
       transform: translateY(-50%);
       width: 0;
       height: 0;
-      border-left: 6px solid #4dd0e1;
+      border-right: 6px solid #4dd0e1;
       border-top: 4px solid transparent;
       border-bottom: 4px solid transparent;
     }
@@ -912,7 +918,7 @@
         // Position tooltip relative to the button using fixed positioning
         const buttonRect = button.getBoundingClientRect();
         tooltip.style.top = `${buttonRect.top + buttonRect.height/2 - 15}px`;
-        tooltip.style.right = `${window.innerWidth - buttonRect.left + 10}px`;
+        tooltip.style.left = `${buttonRect.right + 10}px`;
         
         document.body.appendChild(tooltip);
         
