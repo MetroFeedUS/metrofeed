@@ -78,14 +78,17 @@
       height: 100%;
       width: 0%;
       background-color: #0071CE;
-      animation: fillBar 1.5s ease-out forwards;
+      transition: width 0.3s ease-out;
     }
 
-    @keyframes fillBar {
-      to {
-        width: 100%;
-      }
+    .loading-text {
+      color: #0071CE;
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      text-align: center;
     }
+
+
 
     header img {
       max-width: 220px;
@@ -159,6 +162,7 @@ MetroFeed uses your location and third-party services for login and payment. We 
     <div class="loading-bar">
       <div class="loading-bar-fill"></div>
     </div>
+    <div class="loading-text" id="loadingText">Initializing...</div>
   </div>
 
   <header>
@@ -186,10 +190,55 @@ MetroFeed uses your location and third-party services for login and payment. We 
   </footer>
 
   <script>
+    const loadingSteps = [
+      { text: "🚀 Launching MetroFeed...", progress: 10 },
+      { text: "📍 Finding your spot on Earth...", progress: 25 },
+      { text: "🚌 Summoning the bus spirits...", progress: 50 },
+      { text: "📅 Consulting the transit oracle...", progress: 75 },
+      { text: "✨ Almost there, magic happening...", progress: 90 },
+      { text: "🎉 Welcome to MetroFeed!", progress: 100 }
+    ];
+
+    let currentStep = 0;
+    let geoTimeout;
+
+    function updateLoadingProgress(stepIndex) {
+      const loadingBar = document.querySelector('.loading-bar-fill');
+      const loadingText = document.getElementById('loadingText');
+      
+      if (loadingBar && loadingText && stepIndex < loadingSteps.length) {
+        const step = loadingSteps[stepIndex];
+        loadingBar.style.width = step.progress + '%';
+        loadingText.textContent = step.text;
+        currentStep = stepIndex;
+      }
+    }
+
+    function startLoadingSequence() {
+      currentStep = 0;
+      updateLoadingProgress(0);
+      
+      // Progress through steps with realistic timing
+      const stepTimings = [800, 1200, 1000, 800, 600, 400];
+      
+      stepTimings.forEach((delay, index) => {
+        setTimeout(() => {
+          if (index < loadingSteps.length - 1) {
+            updateLoadingProgress(index + 1);
+          }
+        }, stepTimings.slice(0, index + 1).reduce((a, b) => a + b, 0));
+      });
+    }
+
     function acceptCookies() {
       localStorage.setItem("cookieConsent", "true");
       document.getElementById("cookieBanner").style.display = "none";
       document.getElementById("loader").style.display = "flex";
+      
+      // Start the loading sequence
+      startLoadingSequence();
+      
+      // Start geolocation
       initGeo();
     }
 
@@ -210,24 +259,53 @@ MetroFeed uses your location and third-party services for login and payment. We 
 
     function initGeo() {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
+        // Set a longer timeout since we have a loading sequence
+        geoTimeout = setTimeout(() => {
+          updateLoadingProgress(loadingSteps.length - 1); // Show final step
+          setTimeout(() => {
+            showMainContent("Location detection taking too long. Please choose a city manually.", true);
+          }, 500);
+        }, 8000); // 8 second timeout
 
-          if (inPortlandBounds(lat, lon)) {
-            window.location.href = "portlandindex.html";
-          } else {
-            showMainContent(" 😭 We don’t serve your location... yet 😎.", true);
-          }
+        navigator.geolocation.getCurrentPosition(pos => {
+          clearTimeout(geoTimeout);
+          
+          // Complete the loading sequence
+          updateLoadingProgress(loadingSteps.length - 1);
+          
+          setTimeout(() => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            if (inPortlandBounds(lat, lon)) {
+              window.location.href = "Portland/portlandindex.html";
+            } else {
+              showMainContent(" 😭 We don't serve your location... yet 😎.", true);
+            }
+          }, 400);
+          
         }, err => {
-          showMainContent("Location blocked. Please choose a city manually.", true);
+          clearTimeout(geoTimeout);
+          
+          // Complete the loading sequence
+          updateLoadingProgress(loadingSteps.length - 1);
+          
+          setTimeout(() => {
+            showMainContent("Location blocked. Please choose a city manually.", true);
+          }, 400);
+          
+        }, {
+          timeout: 8000,
+          enableHighAccuracy: false,
+          maximumAge: 300000
         });
       } else {
-        showMainContent("Geolocation not supported.", true);
+        updateLoadingProgress(loadingSteps.length - 1);
+        setTimeout(() => {
+          showMainContent("Geolocation not supported.", true);
+        }, 400);
       }
     }
-
-   
   </script>
 </body>
 </html>
