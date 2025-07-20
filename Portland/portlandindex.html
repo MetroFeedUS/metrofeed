@@ -1128,6 +1128,223 @@
   document.getElementById('endMapBtn').addEventListener('click', () => activateMapSelection('end'));
   document.getElementById('clearBtn').addEventListener('click', clearTripPlan);
   
+  // === SECTION: FIND ME FUNCTIONS ===
+  // Define these functions globally so they can be called from anywhere
+  let findMeStep = 0;
+  let findMeLoadingSteps = [
+    { text: 'Looking for you...', delay: 2000 },
+    { text: 'Finding closest route...', delay: 3000 },
+    { text: 'Getting bus locations...', delay: 2000 },
+    { text: 'Almost ready...', delay: 1000 }
+  ];
+
+  window.updateLoadingStep = function() {
+    console.log('[Find Me] updateLoadingStep called, step:', findMeStep);
+    if (findMeStep < findMeLoadingSteps.length) {
+      const loadingText = document.getElementById('loadingText');
+      if (loadingText) {
+        loadingText.textContent = findMeLoadingSteps[findMeStep].text;
+        console.log('[Find Me] Updated loading text to:', findMeLoadingSteps[findMeStep].text);
+      }
+      findMeStep++;
+      if (findMeStep < findMeLoadingSteps.length) {
+        console.log('[Find Me] Scheduling next step in', findMeLoadingSteps[findMeStep - 1].delay, 'ms');
+        setTimeout(window.updateLoadingStep, findMeLoadingSteps[findMeStep - 1].delay);
+      } else {
+        // Final step - show the route
+        console.log('[Find Me] Final step reached, calling showUserLocationAndRoute');
+        setTimeout(window.showUserLocationAndRoute, findMeLoadingSteps[findMeStep - 1].delay);
+      }
+    }
+  };
+
+  window.showUserLocationAndRoute = function() {
+    console.log('[Find Me] showUserLocationAndRoute called');
+    // Remove loading overlay
+    const loadingOverlay = document.getElementById('findMeLoading');
+    if (loadingOverlay) {
+      loadingOverlay.remove();
+    }
+    const style = document.querySelector('style[data-findme-animation]');
+    if (style) {
+      style.remove();
+    }
+
+    // Check if we have background data
+    console.log('[Find Me] Background location data:', backgroundLocationData);
+    console.log('[Find Me] Background route data:', backgroundRouteData);
+    if (!backgroundLocationData || !backgroundRouteData) {
+      const findMeBtn = document.getElementById('findMeBtn');
+      if (findMeBtn) {
+        findMeBtn.disabled = false;
+        findMeBtn.textContent = 'Find Me';
+        findMeBtn.style.backgroundColor = '#666';
+      }
+      alert('Location data not ready yet. Please try again in a moment.');
+      return;
+    }
+
+    // Display user location marker
+    const userLat = backgroundLocationData.lat;
+    const userLon = backgroundLocationData.lon;
+    const userLatLng = backgroundLocationData.latLng;
+
+    if (backgroundLocationData.inBounds) {
+      // IN BOUNDS: show pulsing dot
+      const pulseElement = document.createElement('div');
+      pulseElement.className = 'pulse-marker';
+      pulseElement.style.width = '20px';
+      pulseElement.style.height = '20px';
+      
+      userLocationMarker = new maplibregl.Marker({
+        element: pulseElement
+      });
+      userLocationMarker.setLngLat([userLon, userLat]);
+      
+      const popup = new maplibregl.Popup().setText("You are here (location never leaves your device)");
+      userLocationMarker.setPopup(popup);
+      userLocationMarker.addTo(map);
+      popup.addTo(map);
+    } else {
+      // OUT OF BOUNDS: show arrow at nearest edge
+      const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
+      const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
+      const edgeLatLng = [edgeLon, edgeLat];
+      const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
+      const arrowElement = document.createElement('div');
+      arrowElement.className = 'arrow-marker';
+      arrowElement.style.width = '30px';
+      arrowElement.style.height = '30px';
+      arrowElement.innerHTML = `<svg style="transform: rotate(${angle}deg);" viewBox="0 0 30 30">
+        <polygon points="15,4 24,26 15,21 6,26" fill="#2196f3"/>
+      </svg>`;
+      
+      userArrow = new maplibregl.Marker({
+        element: arrowElement
+      });
+      userArrow.setLngLat(edgeLatLng);
+      
+      const popup = new maplibregl.Popup().setText("You are outside the Portland map area.");
+      userArrow.setPopup(popup);
+      userArrow.addTo(map);
+      popup.addTo(map);
+    }
+
+    // Display closest route
+    closestRoute = backgroundRouteData.route;
+    
+    const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
+    
+    map.addSource('userLocationRoute', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: routeCoordinates
+        }
+      }
+    });
+    
+    map.addLayer({
+      id: 'userLocationRoute',
+      type: 'line',
+      source: 'userLocationRoute',
+      paint: {
+        'line-color': '#0071CE',
+        'line-width': 4,
+        'line-opacity': 0.7
+      }
+    });
+    
+    userLocationPolyline = 'userLocationRoute';
+
+    // Fit bounds to show the route
+    const bounds = new maplibregl.LngLatBounds();
+    routeCoordinates.forEach(coord => bounds.extend(coord));
+    map.fitBounds(bounds, { 
+      padding: [20, 20],
+      maxZoom: 14
+    });
+
+    // Show stops with times
+    const nowMins = getPortlandMinutes();
+    userLocationStopMarkers.forEach(marker => marker.remove());
+    userLocationStopMarkers = [];
+
+    closestRoute.stops.forEach(stop => {
+      let highlightedTimes = [];
+      let foundNext = false;
+      stop.times.forEach(timeStr => {
+        let cleanTime = timeStr.trim();
+        let [h, m] = cleanTime.split(":"),
+          schedMins = parseInt(h) * 60 + parseInt(m);
+        if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+        if (!foundNext && schedMins >= nowMins) {
+          highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+          foundNext = true;
+        } else {
+          highlightedTimes.push(cleanTime);
+        }
+      });
+
+      // Create stop marker element
+      const stopElement = document.createElement('div');
+      stopElement.style.width = '12px';
+      stopElement.style.height = '12px';
+      stopElement.style.backgroundColor = '#4dd0e1';
+      stopElement.style.borderRadius = '50%';
+      stopElement.style.border = '1px solid #4dd0e1';
+      stopElement.style.opacity = '0.9';
+
+      const stopMarker = new maplibregl.Marker({
+        element: stopElement
+      });
+      stopMarker.setLngLat([stop.lon, stop.lat]);
+      
+      // Create popup content
+      const popupContent = document.createElement('div');
+      popupContent.innerHTML = `
+        <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+            <strong style='color:#4dd0e1;'>${stop.name}</strong>
+            <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+            ${
+              highlightedTimes.map(t =>
+                `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+              ).join('') || '<div>No scheduled times</div>'
+            }
+          </div>
+      `;
+      
+      const popup = new maplibregl.Popup().setDOMContent(popupContent);
+      stopMarker.setPopup(popup);
+      stopMarker.addTo(map);
+      userLocationStopMarkers.push(stopMarker);
+    });
+
+    // Start bus tracking
+    console.log('[Find Me] Starting bus tracking...');
+    fetchAndDisplayBuses();
+    if (window.closestRouteInterval) {
+      clearInterval(window.closestRouteInterval);
+    }
+    window.closestRouteInterval = setInterval(() => {
+      if (!window.otpBusTrackingInterval) {
+        fetchAndDisplayBuses();
+      }
+    }, 15000);
+
+    // Update button state
+    const findMeBtn = document.getElementById('findMeBtn');
+    if (findMeBtn) {
+      findMeBtn.disabled = false;
+      findMeBtn.textContent = 'Hide Route';
+      findMeBtn.style.backgroundColor = '#4dd0e1';
+      updateFindMeButtonState();
+    }
+  };
+
   // Find Me button handler
   const findMeBtn = document.getElementById('findMeBtn');
   console.log('[Find Me] Button found:', findMeBtn);
@@ -1187,224 +1404,20 @@
 
       // Add CSS animation
       const style = document.createElement('style');
+      style.setAttribute('data-findme-animation', 'true');
       style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
       document.head.appendChild(style);
 
-      let step = 0;
-      const loadingSteps = [
-        { text: 'Looking for you...', delay: 2000 },
-        { text: 'Finding closest route...', delay: 3000 },
-        { text: 'Getting bus locations...', delay: 2000 },
-        { text: 'Almost ready...', delay: 1000 }
-      ];
-
-      // Define these functions in the global scope so they can be called from anywhere
-      window.updateLoadingStep = function() {
-        console.log('[Find Me] updateLoadingStep called, step:', step);
-        if (step < loadingSteps.length) {
-          const loadingText = document.getElementById('loadingText');
-          if (loadingText) {
-            loadingText.textContent = loadingSteps[step].text;
-            console.log('[Find Me] Updated loading text to:', loadingSteps[step].text);
-          }
-          step++;
-          if (step < loadingSteps.length) {
-            console.log('[Find Me] Scheduling next step in', loadingSteps[step - 1].delay, 'ms');
-            setTimeout(window.updateLoadingStep, loadingSteps[step - 1].delay);
-          } else {
-            // Final step - show the route
-            console.log('[Find Me] Final step reached, calling showUserLocationAndRoute');
-            setTimeout(window.showUserLocationAndRoute, loadingSteps[step - 1].delay);
-          }
-        }
-      };
-
-      window.showUserLocationAndRoute = function() {
-        console.log('[Find Me] showUserLocationAndRoute called');
-        // Remove loading overlay
-        if (loadingOverlay) {
-          loadingOverlay.remove();
-        }
-        if (style) {
-          style.remove();
-        }
-
-        // Check if we have background data
-        console.log('[Find Me] Background location data:', backgroundLocationData);
-        console.log('[Find Me] Background route data:', backgroundRouteData);
-        if (!backgroundLocationData || !backgroundRouteData) {
-          findMeBtn.disabled = false;
-          findMeBtn.textContent = 'Find Me';
-          findMeBtn.style.backgroundColor = '#666';
-          alert('Location data not ready yet. Please try again in a moment.');
-          return;
-        }
-
-        // Display user location marker
-        const userLat = backgroundLocationData.lat;
-        const userLon = backgroundLocationData.lon;
-        const userLatLng = backgroundLocationData.latLng;
-
-        if (backgroundLocationData.inBounds) {
-          // IN BOUNDS: show pulsing dot
-          const pulseElement = document.createElement('div');
-          pulseElement.className = 'pulse-marker';
-          pulseElement.style.width = '20px';
-          pulseElement.style.height = '20px';
-          
-          userLocationMarker = new maplibregl.Marker({
-            element: pulseElement
-          });
-          userLocationMarker.setLngLat([userLon, userLat]);
-          
-          const popup = new maplibregl.Popup().setText("You are here (location never leaves your device)");
-          userLocationMarker.setPopup(popup);
-          userLocationMarker.addTo(map);
-          popup.addTo(map);
-        } else {
-          // OUT OF BOUNDS: show arrow at nearest edge
-          const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
-          const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
-          const edgeLatLng = [edgeLon, edgeLat];
-          const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
-          const arrowElement = document.createElement('div');
-          arrowElement.className = 'arrow-marker';
-          arrowElement.style.width = '30px';
-          arrowElement.style.height = '30px';
-          arrowElement.innerHTML = `<svg style="transform: rotate(${angle}deg);" viewBox="0 0 30 30">
-            <polygon points="15,4 24,26 15,21 6,26" fill="#2196f3"/>
-          </svg>`;
-          
-          userArrow = new maplibregl.Marker({
-            element: arrowElement
-          });
-          userArrow.setLngLat(edgeLatLng);
-          
-          const popup = new maplibregl.Popup().setText("You are outside the Portland map area.");
-          userArrow.setPopup(popup);
-          userArrow.addTo(map);
-          popup.addTo(map);
-        }
-
-        // Display closest route
-        closestRoute = backgroundRouteData.route;
-        
-        const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
-        
-        map.addSource('userLocationRoute', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: routeCoordinates
-            }
-          }
-        });
-        
-        map.addLayer({
-          id: 'userLocationRoute',
-          type: 'line',
-          source: 'userLocationRoute',
-          paint: {
-            'line-color': '#0071CE',
-            'line-width': 4,
-            'line-opacity': 0.7
-          }
-        });
-        
-        userLocationPolyline = 'userLocationRoute';
-
-        // Fit bounds to show the route
-        const bounds = new maplibregl.LngLatBounds();
-        routeCoordinates.forEach(coord => bounds.extend(coord));
-        map.fitBounds(bounds, { 
-          padding: [20, 20],
-          maxZoom: 14
-        });
-
-        // Show stops with times
-        const nowMins = getPortlandMinutes();
-        userLocationStopMarkers.forEach(marker => marker.remove());
-        userLocationStopMarkers = [];
-
-        closestRoute.stops.forEach(stop => {
-          let highlightedTimes = [];
-          let foundNext = false;
-          stop.times.forEach(timeStr => {
-            let cleanTime = timeStr.trim();
-            let [h, m] = cleanTime.split(":"),
-              schedMins = parseInt(h) * 60 + parseInt(m);
-            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-            if (!foundNext && schedMins >= nowMins) {
-              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-              foundNext = true;
-            } else {
-              highlightedTimes.push(cleanTime);
-            }
-          });
-
-          // Create stop marker element
-          const stopElement = document.createElement('div');
-          stopElement.style.width = '12px';
-          stopElement.style.height = '12px';
-          stopElement.style.backgroundColor = '#4dd0e1';
-          stopElement.style.borderRadius = '50%';
-          stopElement.style.border = '1px solid #4dd0e1';
-          stopElement.style.opacity = '0.9';
-
-          const stopMarker = new maplibregl.Marker({
-            element: stopElement
-          });
-          stopMarker.setLngLat([stop.lon, stop.lat]);
-          
-          // Create popup content
-          const popupContent = document.createElement('div');
-          popupContent.innerHTML = `
-            <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                <strong style='color:#4dd0e1;'>${stop.name}</strong>
-                <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-                ${
-                  highlightedTimes.map(t =>
-                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                  ).join('') || '<div>No scheduled times</div>'
-                }
-              </div>
-          `;
-          
-          const popup = new maplibregl.Popup().setDOMContent(popupContent);
-          stopMarker.setPopup(popup);
-          stopMarker.addTo(map);
-          userLocationStopMarkers.push(stopMarker);
-        });
-
-        // Start bus tracking
-        console.log('[Find Me] Starting bus tracking...');
-        fetchAndDisplayBuses();
-        if (window.closestRouteInterval) {
-          clearInterval(window.closestRouteInterval);
-        }
-        window.closestRouteInterval = setInterval(() => {
-          if (!window.otpBusTrackingInterval) {
-            fetchAndDisplayBuses();
-          }
-        }, 15000);
-
-        // Update button state
-        findMeBtn.disabled = false;
-        findMeBtn.textContent = 'Hide Route';
-        findMeBtn.style.backgroundColor = '#4dd0e1';
-        updateFindMeButtonState();
-        
-        // Start loading steps
-        try {
-          console.log('[Find Me] About to call updateLoadingStep()');
-          window.updateLoadingStep();
-          console.log('[Find Me] updateLoadingStep() called successfully');
-        } catch (error) {
-          console.error('[Find Me] Error calling updateLoadingStep():', error);
-        }
+      // Reset step counter
+      findMeStep = 0;
+      
+      // Start loading steps
+      try {
+        console.log('[Find Me] About to call updateLoadingStep()');
+        window.updateLoadingStep();
+        console.log('[Find Me] updateLoadingStep() called successfully');
+      } catch (error) {
+        console.error('[Find Me] Error calling updateLoadingStep():', error);
       }
     });
   }
