@@ -1198,7 +1198,8 @@
         { text: 'Almost ready...', delay: 1000 }
       ];
 
-      function updateLoadingStep() {
+      // Define these functions in the global scope so they can be called from anywhere
+      window.updateLoadingStep = function() {
         console.log('[Find Me] updateLoadingStep called, step:', step);
         if (step < loadingSteps.length) {
           const loadingText = document.getElementById('loadingText');
@@ -1209,16 +1210,16 @@
           step++;
           if (step < loadingSteps.length) {
             console.log('[Find Me] Scheduling next step in', loadingSteps[step - 1].delay, 'ms');
-            setTimeout(updateLoadingStep, loadingSteps[step - 1].delay);
+            setTimeout(window.updateLoadingStep, loadingSteps[step - 1].delay);
           } else {
             // Final step - show the route
             console.log('[Find Me] Final step reached, calling showUserLocationAndRoute');
-            setTimeout(showUserLocationAndRoute, loadingSteps[step - 1].delay);
+            setTimeout(window.showUserLocationAndRoute, loadingSteps[step - 1].delay);
           }
         }
-      }
+      };
 
-      function showUserLocationAndRoute() {
+      window.showUserLocationAndRoute = function() {
         console.log('[Find Me] showUserLocationAndRoute called');
         // Remove loading overlay
         if (loadingOverlay) {
@@ -1397,7 +1398,13 @@
         updateFindMeButtonState();
         
         // Start loading steps
-        updateLoadingStep();
+        try {
+          console.log('[Find Me] About to call updateLoadingStep()');
+          window.updateLoadingStep();
+          console.log('[Find Me] updateLoadingStep() called successfully');
+        } catch (error) {
+          console.error('[Find Me] Error calling updateLoadingStep():', error);
+        }
       }
     });
   }
