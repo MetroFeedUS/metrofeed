@@ -1985,106 +1985,25 @@
         otpRoutes.forEach(route => {
           console.log('[fetchAndDisplayBuses] Processing OTP route:', route);
           
-                  // Enhanced route mapping logic
-        let trimetRouteNumber = null;
-        let routeDescription = route.description || '';
-        
-        // NEW: Use route short name if available (this is the actual route number)
-        if (route.routeShortName && !isNaN(route.routeShortName)) {
-          trimetRouteNumber = route.routeShortName;
-          console.log('[fetchAndDisplayBuses] Using route short name:', trimetRouteNumber);
-        }
-        
-        // NEW: Determine direction based on route endpoints when OTP doesn't provide it
-        let otpDirection = route.direction_id;
-        if (otpDirection === undefined || otpDirection === null) {
-          // Try to determine direction from route description or endpoints
-          if (route.route_id && route.route_id.includes('Burnside/Stark')) {
-            // Route 20: Check if going to Gresham (dir 1) or Beaverton (dir 0)
-            if (route.to && route.to.name && route.to.name.includes('Gresham')) {
-              otpDirection = 1; // To Gresham
-              console.log('[fetchAndDisplayBuses] Determined direction 1 (to Gresham) for Route 20');
-            } else if (route.to && route.to.name && route.to.name.includes('Beaverton')) {
-              otpDirection = 0; // To Beaverton
-              console.log('[fetchAndDisplayBuses] Determined direction 0 (to Beaverton) for Route 20');
-            } else {
-              // Check coordinates to determine direction
-              if (route.from && route.to) {
-                // If going east (increasing longitude), likely to Gresham (dir 1)
-                if (route.to.lon > route.from.lon) {
-                  otpDirection = 1; // To Gresham
-                  console.log('[fetchAndDisplayBuses] Determined direction 1 (eastbound) for Route 20');
-                } else {
-                  otpDirection = 0; // To Beaverton
-                  console.log('[fetchAndDisplayBuses] Determined direction 0 (westbound) for Route 20');
-                }
-              } else {
-                otpDirection = 0; // Default to outbound
-                console.log('[fetchAndDisplayBuses] Using default direction 0 for Route 20');
-              }
-            }
-          } else if (route.route_id && route.route_id.includes('Woodstock/Glisan')) {
-            // Route 19: Check direction based on coordinates
-            if (route.from && route.to) {
-              // If going east (increasing longitude), likely outbound
-              if (route.to.lon > route.from.lon) {
-                otpDirection = 0; // Outbound
-                console.log('[fetchAndDisplayBuses] Determined direction 0 (eastbound) for Route 19');
-              } else {
-                otpDirection = 1; // Inbound
-                console.log('[fetchAndDisplayBuses] Determined direction 1 (westbound) for Route 19');
-              }
-            } else {
-              otpDirection = 0; // Default for Route 19
-              console.log('[fetchAndDisplayBuses] Using default direction 0 for Route 19');
-            }
-          } else {
-            otpDirection = 0; // Default fallback
-            console.log('[fetchAndDisplayBuses] Using default direction 0 for unknown route');
-          }
-        }
+          // SIMPLIFIED: Use route page logic - direct route number and direction
+          let trimetRouteNumber = null;
+          let otpDirection = null;
           
-                  // Method 1: Direct route ID match (if it's already a number)
-        if (route.route_id && !isNaN(route.route_id)) {
-          trimetRouteNumber = route.route_id;
-          console.log('[fetchAndDisplayBuses] Direct route number match:', trimetRouteNumber);
-        }
-        // Method 2: Try to find in masterRoutes by route_id
-        else if (route.route_id && masterRoutes) {
-          const masterRoute = masterRoutes.find(r => r.route_id === route.route_id);
-          if (masterRoute) {
-            trimetRouteNumber = masterRoute.route_id;
-            routeDescription = masterRoute.route_title;
-            console.log('[fetchAndDisplayBuses] Found in masterRoutes:', trimetRouteNumber, routeDescription);
+          // Get route number from OTP (like route pages)
+          if (route.routeShortName && !isNaN(route.routeShortName)) {
+            trimetRouteNumber = route.routeShortName;
+            console.log('[fetchAndDisplayBuses] Using route short name:', trimetRouteNumber);
           }
-        }
-        // Method 3: Try mapping function
-        else if (route.route_id) {
-          trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
-          console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumber);
-        }
-        // Method 4: Try to find by description
-        else if (routeDescription) {
-          const foundRoute = findRouteByDescription(routeDescription);
-          if (foundRoute) {
-            trimetRouteNumber = foundRoute.route_id;
-            console.log('[fetchAndDisplayBuses] Found by description:', trimetRouteNumber, 'for:', routeDescription);
+          
+          // Get direction from OTP (use route page logic)
+          if (route.direction_id !== undefined && route.direction_id !== null) {
+            otpDirection = parseInt(route.direction_id);
+            console.log('[fetchAndDisplayBuses] Using OTP direction:', otpDirection);
+          } else {
+            // Default to 0 if OTP doesn't provide direction (like route pages)
+            otpDirection = 0;
+            console.log('[fetchAndDisplayBuses] Using default direction 0 (OTP didn\'t provide direction)');
           }
-        }
-        // Method 5: NEW - Try to extract route number from route description
-        if (!trimetRouteNumber && route.route_id) {
-          // Try to extract number from route names like "Burnside/Stark" -> "20"
-          if (route.route_id.includes('Burnside') || route.route_id.includes('Stark')) {
-            trimetRouteNumber = '20';
-            console.log('[fetchAndDisplayBuses] Extracted route 20 from Burnside/Stark');
-          } else if (route.route_id.includes('Woodstock') || route.route_id.includes('Glisan')) {
-            trimetRouteNumber = '19';
-            console.log('[fetchAndDisplayBuses] Extracted route 19 from Woodstock/Glisan');
-          } else if (route.route_id.includes('MAX') && route.route_id.includes('Blue')) {
-            trimetRouteNumber = '100';
-            console.log('[fetchAndDisplayBuses] Extracted route 100 from MAX Blue Line');
-          }
-        }
           
           console.log('[fetchAndDisplayBuses] Final route number:', trimetRouteNumber, 'for OTP route:', route.route_id);
           
@@ -2361,6 +2280,9 @@
       console.log('=== OTP ROUTE ANALYSIS ===');
       data.plan.itineraries.forEach((itin, idx) => {
         console.log(`\n--- Itinerary ${idx + 1} ---`);
+        console.log(`Total Duration: ${Math.round(itin.duration/60)} minutes`);
+        console.log(`Start Time: ${new Date(itin.startTime).toLocaleTimeString()}`);
+        console.log(`End Time: ${new Date(itin.endTime).toLocaleTimeString()}`);
         itin.legs.forEach((leg, legIdx) => {
           if (leg.mode !== 'WALK') {
             console.log(`Leg ${legIdx}:`);
@@ -2372,6 +2294,9 @@
             console.log(`  From: ${leg.from?.name} (${leg.from?.lat}, ${leg.from?.lon})`);
             console.log(`  To: ${leg.to?.name} (${leg.to?.lat}, ${leg.to?.lon})`);
             console.log(`  Agency: ${leg.agencyId} - ${leg.agencyName}`);
+            console.log(`  Duration: ${Math.round(leg.duration/60)} minutes`);
+          } else {
+            console.log(`Leg ${legIdx}: WALK ${Math.round(leg.duration/60)} minutes`);
           }
         });
       });
@@ -3161,12 +3086,18 @@
     console.log('What OTP says you should take:');
     window.currentItins.forEach((itin, idx) => {
       console.log(`\n--- Itinerary ${idx + 1} ---`);
+      console.log(`Duration: ${Math.round(itin.duration/60)} minutes`);
+      console.log(`Start: ${new Date(itin.startTime).toLocaleTimeString()}`);
+      console.log(`End: ${new Date(itin.endTime).toLocaleTimeString()}`);
       itin.legs.forEach((leg, legIdx) => {
         if (leg.mode !== 'WALK') {
           console.log(`  ${leg.mode} ${leg.routeShortName || leg.route} (${leg.route})`);
           console.log(`  Direction: ${leg.direction}`);
           console.log(`  From: ${leg.from?.name}`);
           console.log(`  To: ${leg.to?.name}`);
+          console.log(`  Duration: ${Math.round(leg.duration/60)} minutes`);
+        } else {
+          console.log(`  WALK ${Math.round(leg.duration/60)} minutes`);
         }
       });
     });
@@ -3191,6 +3122,7 @@
     console.log('1. Open Transit app and plan the same trip');
     console.log('2. Compare the route numbers and bus numbers');
     console.log('3. Tell me what Transit shows vs what we show');
+    console.log('4. Check if Transit is planning Route 19 instead of Route 9');
     
     console.log('=== END TRANSIT APP COMPARISON ===');
   };
