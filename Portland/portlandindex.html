@@ -1994,6 +1994,55 @@
           trimetRouteNumber = route.routeShortName;
           console.log('[fetchAndDisplayBuses] Using route short name:', trimetRouteNumber);
         }
+        
+        // NEW: Determine direction based on route endpoints when OTP doesn't provide it
+        let otpDirection = route.direction_id;
+        if (otpDirection === undefined || otpDirection === null) {
+          // Try to determine direction from route description or endpoints
+          if (route.route_id && route.route_id.includes('Burnside/Stark')) {
+            // Route 20: Check if going to Gresham (dir 1) or Beaverton (dir 0)
+            if (route.to && route.to.name && route.to.name.includes('Gresham')) {
+              otpDirection = 1; // To Gresham
+              console.log('[fetchAndDisplayBuses] Determined direction 1 (to Gresham) for Route 20');
+            } else if (route.to && route.to.name && route.to.name.includes('Beaverton')) {
+              otpDirection = 0; // To Beaverton
+              console.log('[fetchAndDisplayBuses] Determined direction 0 (to Beaverton) for Route 20');
+            } else {
+              // Check coordinates to determine direction
+              if (route.from && route.to) {
+                // If going east (increasing longitude), likely to Gresham (dir 1)
+                if (route.to.lon > route.from.lon) {
+                  otpDirection = 1; // To Gresham
+                  console.log('[fetchAndDisplayBuses] Determined direction 1 (eastbound) for Route 20');
+                } else {
+                  otpDirection = 0; // To Beaverton
+                  console.log('[fetchAndDisplayBuses] Determined direction 0 (westbound) for Route 20');
+                }
+              } else {
+                otpDirection = 0; // Default to outbound
+                console.log('[fetchAndDisplayBuses] Using default direction 0 for Route 20');
+              }
+            }
+          } else if (route.route_id && route.route_id.includes('Woodstock/Glisan')) {
+            // Route 19: Check direction based on coordinates
+            if (route.from && route.to) {
+              // If going east (increasing longitude), likely outbound
+              if (route.to.lon > route.from.lon) {
+                otpDirection = 0; // Outbound
+                console.log('[fetchAndDisplayBuses] Determined direction 0 (eastbound) for Route 19');
+              } else {
+                otpDirection = 1; // Inbound
+                console.log('[fetchAndDisplayBuses] Determined direction 1 (westbound) for Route 19');
+              }
+            } else {
+              otpDirection = 0; // Default for Route 19
+              console.log('[fetchAndDisplayBuses] Using default direction 0 for Route 19');
+            }
+          } else {
+            otpDirection = 0; // Default fallback
+            console.log('[fetchAndDisplayBuses] Using default direction 0 for unknown route');
+          }
+        }
           
                   // Method 1: Direct route ID match (if it's already a number)
         if (route.route_id && !isNaN(route.route_id)) {
@@ -2040,27 +2089,22 @@
           console.log('[fetchAndDisplayBuses] Final route number:', trimetRouteNumber, 'for OTP route:', route.route_id);
           
           if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
-            console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', route.direction_id);
+            console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
             
             // Enhanced bus filtering with better logging
             let routeBuses = allBuses.filter(v => {
               const routeMatch = v.routeNumber == trimetRouteNumber;
-              const directionMatch = v.direction == route.direction_id;
-              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${route.direction_id} (${directionMatch})`);
+              const directionMatch = v.direction == otpDirection;
+              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${otpDirection} (${directionMatch})`);
               return routeMatch && directionMatch;
             });
             
             console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
             
-            // If no buses found with direction, try without direction constraint
+            // STRICT DIRECTION MATCHING - No fallback to wrong direction
             if (routeBuses.length === 0) {
-              console.log('[fetchAndDisplayBuses] No direction match, trying route-only match...');
-              routeBuses = allBuses.filter(v => {
-                const routeMatch = v.routeNumber == trimetRouteNumber;
-                console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch})`);
-                return routeMatch;
-              });
-              console.log('[fetchAndDisplayBuses] Buses with route-only match:', routeBuses.length);
+              console.log('[fetchAndDisplayBuses] No buses found in correct direction. Showing message instead of wrong-direction buses.');
+              // Don't show buses going the wrong way - they're useless for the trip
             }
             
             console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
@@ -2122,8 +2166,10 @@
         // Show a message that we're only showing trip buses
         if (Object.keys(busMarkers).length > 0) {
           console.log('[fetchAndDisplayBuses] Displayed', Object.keys(busMarkers).length, 'OTP trip buses');
+          showBusStatusIndicator('otp-only', Object.keys(busMarkers).length);
         } else {
           console.log('[fetchAndDisplayBuses] No OTP buses found for the selected trip');
+          showBusStatusIndicator('otp-only', 0);
         }
         
       } else {
