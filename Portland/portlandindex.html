@@ -1985,37 +1985,57 @@
         otpRoutes.forEach(route => {
           console.log('[fetchAndDisplayBuses] Processing OTP route:', route);
           
-          // Enhanced route mapping logic
-          let trimetRouteNumber = null;
-          let routeDescription = route.description || '';
+                  // Enhanced route mapping logic
+        let trimetRouteNumber = null;
+        let routeDescription = route.description || '';
+        
+        // NEW: Use route short name if available (this is the actual route number)
+        if (route.routeShortName && !isNaN(route.routeShortName)) {
+          trimetRouteNumber = route.routeShortName;
+          console.log('[fetchAndDisplayBuses] Using route short name:', trimetRouteNumber);
+        }
           
-          // Method 1: Direct route ID match (if it's already a number)
-          if (route.route_id && !isNaN(route.route_id)) {
-            trimetRouteNumber = route.route_id;
-            console.log('[fetchAndDisplayBuses] Direct route number match:', trimetRouteNumber);
+                  // Method 1: Direct route ID match (if it's already a number)
+        if (route.route_id && !isNaN(route.route_id)) {
+          trimetRouteNumber = route.route_id;
+          console.log('[fetchAndDisplayBuses] Direct route number match:', trimetRouteNumber);
+        }
+        // Method 2: Try to find in masterRoutes by route_id
+        else if (route.route_id && masterRoutes) {
+          const masterRoute = masterRoutes.find(r => r.route_id === route.route_id);
+          if (masterRoute) {
+            trimetRouteNumber = masterRoute.route_id;
+            routeDescription = masterRoute.route_title;
+            console.log('[fetchAndDisplayBuses] Found in masterRoutes:', trimetRouteNumber, routeDescription);
           }
-          // Method 2: Try to find in masterRoutes by route_id
-          else if (route.route_id && masterRoutes) {
-            const masterRoute = masterRoutes.find(r => r.route_id === route.route_id);
-            if (masterRoute) {
-              trimetRouteNumber = masterRoute.route_id;
-              routeDescription = masterRoute.route_title;
-              console.log('[fetchAndDisplayBuses] Found in masterRoutes:', trimetRouteNumber, routeDescription);
-            }
+        }
+        // Method 3: Try mapping function
+        else if (route.route_id) {
+          trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
+          console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumber);
+        }
+        // Method 4: Try to find by description
+        else if (routeDescription) {
+          const foundRoute = findRouteByDescription(routeDescription);
+          if (foundRoute) {
+            trimetRouteNumber = foundRoute.route_id;
+            console.log('[fetchAndDisplayBuses] Found by description:', trimetRouteNumber, 'for:', routeDescription);
           }
-          // Method 3: Try mapping function
-          else if (route.route_id) {
-            trimetRouteNumber = mapOtpRouteToTrimet(route.route_id);
-            console.log('[fetchAndDisplayBuses] Mapped OTP route:', route.route_id, '->', trimetRouteNumber);
+        }
+        // Method 5: NEW - Try to extract route number from route description
+        if (!trimetRouteNumber && route.route_id) {
+          // Try to extract number from route names like "Burnside/Stark" -> "20"
+          if (route.route_id.includes('Burnside') || route.route_id.includes('Stark')) {
+            trimetRouteNumber = '20';
+            console.log('[fetchAndDisplayBuses] Extracted route 20 from Burnside/Stark');
+          } else if (route.route_id.includes('Woodstock') || route.route_id.includes('Glisan')) {
+            trimetRouteNumber = '19';
+            console.log('[fetchAndDisplayBuses] Extracted route 19 from Woodstock/Glisan');
+          } else if (route.route_id.includes('MAX') && route.route_id.includes('Blue')) {
+            trimetRouteNumber = '100';
+            console.log('[fetchAndDisplayBuses] Extracted route 100 from MAX Blue Line');
           }
-          // Method 4: Try to find by description
-          else if (routeDescription) {
-            const foundRoute = findRouteByDescription(routeDescription);
-            if (foundRoute) {
-              trimetRouteNumber = foundRoute.route_id;
-              console.log('[fetchAndDisplayBuses] Found by description:', trimetRouteNumber, 'for:', routeDescription);
-            }
-          }
+        }
           
           console.log('[fetchAndDisplayBuses] Final route number:', trimetRouteNumber, 'for OTP route:', route.route_id);
           
