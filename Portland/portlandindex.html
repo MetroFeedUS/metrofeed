@@ -566,7 +566,6 @@
   <div class="otp-btn-row">
             <button id="goBtn" style="width: 40px; height: 20px; background-color: #4CAF50; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);">Go</button>
         <button id="clearBtn" style="width: 40px; height: 20px; background-color: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);">Clear</button>
-        <button id="trafficBtn" style="width: 60px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s ease;" title="Toggle traffic overlay">Traffic</button>
         <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s ease;" title="Find my location and closest route">Find Me</button>
   </div>
 </div>
@@ -3291,69 +3290,55 @@
       });
     }
     
-    // Traffic button handler with TomTom overlay
+    // Traffic overlay functionality
     let trafficLayerActive = false;
-    const trafficBtn = document.getElementById('trafficBtn');
-    if (trafficBtn) {
-      trafficBtn.addEventListener('click', function() {
-        // Toggle traffic display
-        if (trafficLayerActive) {
-          // Remove traffic layer
-          if (map.getLayer('tomtom-traffic')) {
-            map.removeLayer('tomtom-traffic');
-          }
-          if (map.getSource('tomtom-traffic')) {
-            map.removeSource('tomtom-traffic');
-          }
-          trafficLayerActive = false;
-          this.classList.remove('active');
-          this.textContent = 'Traffic';
-          this.style.backgroundColor = '#666';
-          this.style.color = '#fff';
-          this.style.boxShadow = 'none';
-          this.style.border = 'none';
-          console.log('[Traffic] Traffic overlay disabled');
-        } else {
-          // Add traffic layer with 5-minute caching
-          if (!map.getSource('tomtom-traffic')) {
-            // Create a 5-minute cache timestamp (rounds down to nearest 5 minutes)
-            const now = Math.floor(Date.now() / 1000); // Current time in seconds
-            const fiveMinCache = Math.floor(now / 300) * 300; // Round down to nearest 5 minutes (300 seconds)
-            
-            map.addSource('tomtom-traffic', {
-              type: 'raster',
-              tiles: [
-                `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU&cache=${fiveMinCache}`
-              ],
-              tileSize: 256,
-            });
-            
-            console.log(`[Traffic] Using cached tiles with timestamp: ${fiveMinCache} (${new Date(fiveMinCache * 1000).toLocaleTimeString()})`);
-          }
-          
-          if (!map.getLayer('tomtom-traffic')) {
-            // Try to insert before bus-markers, but fall back to top if it doesn't exist
-            const beforeLayer = map.getLayer('bus-markers') ? 'bus-markers' : undefined;
-            map.addLayer({
-              id: 'tomtom-traffic',
-              type: 'raster',
-              source: 'tomtom-traffic',
-              paint: {
-                'raster-opacity': 0.6
-              }
-            }, beforeLayer); // Insert before bus markers if they exist, otherwise at top
-          }
-          
-          trafficLayerActive = true;
-          this.classList.add('active');
-          this.textContent = 'Traffic ON';
-          this.style.backgroundColor = '#4dd0e1';
-          this.style.color = '#000';
-          this.style.boxShadow = '0 0 15px rgba(77, 208, 225, 0.8)';
-          this.style.border = '2px solid #4dd0e1';
-          console.log('[Traffic] Traffic overlay enabled');
+    
+    // Function to toggle traffic overlay
+    function toggleTrafficOverlay() {
+      if (trafficLayerActive) {
+        // Remove traffic layer
+        if (map.getLayer('tomtom-traffic')) {
+          map.removeLayer('tomtom-traffic');
         }
-      });
+        if (map.getSource('tomtom-traffic')) {
+          map.removeSource('tomtom-traffic');
+        }
+        trafficLayerActive = false;
+        console.log('[Traffic] Traffic overlay disabled');
+      } else {
+        // Add traffic layer with 5-minute caching
+        if (!map.getSource('tomtom-traffic')) {
+          // Create a 5-minute cache timestamp (rounds down to nearest 5 minutes)
+          const now = Math.floor(Date.now() / 1000); // Current time in seconds
+          const fiveMinCache = Math.floor(now / 300) * 300; // Round down to nearest 5 minutes (300 seconds)
+          
+          map.addSource('tomtom-traffic', {
+            type: 'raster',
+            tiles: [
+              `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU&cache=${fiveMinCache}`
+            ],
+            tileSize: 256,
+          });
+          
+          console.log(`[Traffic] Using cached tiles with timestamp: ${fiveMinCache} (${new Date(fiveMinCache * 1000).toLocaleTimeString()})`);
+        }
+        
+        if (!map.getLayer('tomtom-traffic')) {
+          // Try to insert before bus-markers, but fall back to top if it doesn't exist
+          const beforeLayer = map.getLayer('bus-markers') ? 'bus-markers' : undefined;
+          map.addLayer({
+            id: 'tomtom-traffic',
+            type: 'raster',
+            source: 'tomtom-traffic',
+            paint: {
+              'raster-opacity': 0.6
+            }
+          }, beforeLayer); // Insert before bus markers if they exist, otherwise at top
+        }
+        
+        trafficLayerActive = true;
+        console.log('[Traffic] Traffic overlay enabled');
+      }
     }
     
     // Function to toggle traffic from dropdown menu
@@ -3361,11 +3346,8 @@
       // Prevent default link behavior
       event.preventDefault();
       
-      // Get the main traffic button and trigger its click event
-      const trafficBtn = document.getElementById('trafficBtn');
-      if (trafficBtn) {
-        trafficBtn.click();
-      }
+      // Toggle the traffic overlay
+      toggleTrafficOverlay();
       
       // Close the dropdown menu
       const dropdownMenu = document.getElementById('dropdownMenu');
