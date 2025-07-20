@@ -489,12 +489,13 @@
       z-index: 1000 !important;
     }
     
-    /* Force attribution to be collapsed by default */
+    /* Force attribution to be collapsed by default, but allow expansion */
     .maplibregl-ctrl-attrib.maplibregl-compact {
       min-height: 20px !important;
     }
     
-    .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner {
+    /* Only hide content when collapsed, allow it to show when expanded */
+    .maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
       display: none !important;
     }
     
@@ -504,8 +505,7 @@
     
     /* Tooltip styles for dropdown buttons */
     .dropdown-tooltip {
-      position: absolute;
-      right: 60px;
+      position: fixed;
       background: #0d0d0d;
       color: #4dd0e1;
       padding: 8px 12px;
@@ -908,9 +908,13 @@
         const tooltip = document.createElement('div');
         tooltip.className = 'dropdown-tooltip';
         tooltip.textContent = item.text;
-        tooltip.style.top = `${button.offsetTop}px`;
         
-        dropdownMenu.appendChild(tooltip);
+        // Position tooltip relative to the button using fixed positioning
+        const buttonRect = button.getBoundingClientRect();
+        tooltip.style.top = `${buttonRect.top + buttonRect.height/2 - 15}px`;
+        tooltip.style.right = `${window.innerWidth - buttonRect.left + 10}px`;
+        
+        document.body.appendChild(tooltip);
         
         // Show tooltip with delay
         setTimeout(() => {
