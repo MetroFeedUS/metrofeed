@@ -13,8 +13,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Route 153 - To Willamette | MetroFeed Portland</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <style>
   html, body {
     margin: 0;
@@ -55,6 +55,32 @@
   .back-button-fixed:active svg,
   .back-button-fixed:focus svg {
     fill: #fff;
+  }
+
+  .theme-toggle-fixed {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    background-color: #4dd0e1;
+    border: 2px solid #000;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 10px #4dd0e1;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+  }
+  .theme-toggle-fixed:active, .theme-toggle-fixed:focus {
+    background-color: #1976d2;
+  }
+  .theme-toggle-fixed img {
+    width: 16px;
+    height: 16px;
   }
 
   header {
@@ -132,49 +158,32 @@
   }
 
 .favorite-save-box {
-  position: absolute;
-  top: 20px;
+  position: fixed;
+  top: 60px;
   right: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  z-index: 1010;
+  z-index: 1001;
 }
 
 .favorite-star {
-  background: #4dd0e1;
-  color: #FFD700;
-  font-size: 2.5rem;
-  border: 2px solid #222;
-  border-radius: 10px;
-  width: 56px;
-  height: 56px;
-  cursor: pointer;
-  box-shadow: 0 0 8px #4dd0e1;
-  transition: background 0.18s, color 0.18s;
+  width: 35px;
+  height: 35px;
+  background-color: #4dd0e1;
+  border: 2px solid #000;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1001;
+  box-shadow: 0 0 10px #4dd0e1;
+  cursor: pointer;
+  transition: background 0.2s;
   outline: none;
-  margin-bottom: 8px;
+  font-size: 1.2rem;
+  color: #000;
 }
-.favorite-star:active,
-.favorite-star:focus {
-  background: #1976d2;
-  color: #ffea00;
-}
-
-.favorite-label {
-  color: #4dd0e1;
-  font-size: 1.03rem;
-  font-weight: bold;
-  background: #181818;
-  border-radius: 6px;
-  padding: 2px 10px;
-  text-align: center;
-  letter-spacing: 0.01em;
-  margin-top: 0;
-  box-shadow: 0 1px 6px #2224;
+.favorite-star:active, .favorite-star:focus {
+  background-color: #1976d2;
+  color: #fff;
 }
 .fav-dropdown {
   display: none;
@@ -204,6 +213,85 @@
   color: #0071ce;
   outline: none;
 }
+
+/* MapLibre attribution positioning */
+.maplibregl-ctrl-attrib {
+  position: absolute !important;
+  bottom: 120px !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  max-width: 200px !important;
+  min-height: auto !important;
+  transform: translateY(-30px) !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  min-height: 20px !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
+  display: none !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+  display: block !important;
+}
+
+/* Mobile-specific attribution positioning */
+@media (max-width: 768px) {
+  .maplibregl-ctrl-attrib {
+    bottom: 50px !important;
+  }
+}
+
+/* Beta Modal Styles */
+.beta-modal {
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.beta-modal-content {
+  background-color: #111;
+  color: #bbb;
+  margin: auto;
+  padding: 1.5rem;
+  border: 1px dashed #444;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  position: relative;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.beta-close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.beta-close:hover,
+.beta-close:focus {
+  color: #4dd0e1;
+}
 </style>
 </head>
 <body>
@@ -215,18 +303,18 @@
 <!-- Favorite Route Button (Top Right) with Dropdown -->
 <div class="favorite-save-box">
   <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
-  <div class="favorite-label">Save to Favorites</div>
   <div class="fav-dropdown" id="fav-dropdown">
     <button id="fav-dropdown-btn">Add to Favorites</button>
   </div>
 </div>
 
-  <!-- Beta Disclaimers -->
-  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
-    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
-  </div>
-  <div class="disclaimer" style="margin: 0 auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.25rem 1rem;">
-    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  <!-- Beta Modal -->
+  <div id="betaModal" class="beta-modal" style="display: block;">
+    <div class="beta-modal-content">
+      <span class="beta-close" onclick="closeBetaModal()">&times;</span>
+      <div style="font-weight: bold; font-size: 1.05rem; margin-bottom: 0.5rem;">⚠️ Beta Test</div>
+      <div>This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.</div>
+    </div>
   </div>
 
   <!-- Back button -->
@@ -234,6 +322,11 @@
     <svg viewBox="0 0 24 24">
       <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
     </svg>
+  </button>
+
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
+    <img src="008-night.svg" alt="Theme Toggle" />
   </button>
 
   <h1 id="route-title">Route 153 - To Willamette</h1>
@@ -246,7 +339,110 @@
     </div>
   </div>
 
+  <!-- TriMet Disclaimer -->
+  <div class="disclaimer" style="margin: 2rem auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.5rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
   <script>
+    // Beta Modal Functions
+    function closeBetaModal() {
+      document.getElementById('betaModal').style.display = 'none';
+    }
+
+    // Close modal if clicked outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('betaModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // Theme toggle functionality
+    let isNightMode = false;
+    function toggleTheme() {
+      isNightMode = !isNightMode;
+      const newStyle = isNightMode ? nightStyle : dayStyle;
+      map.setStyle(newStyle);
+      
+      // Re-add route data after style change
+      map.once('styledata', () => {
+        // Re-add route line
+        if (map.getSource('route-line')) {
+          map.addSource('route-line', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: shapeOutbound.map(coord => [coord[1], coord[0]])
+              }
+            }
+          });
+        }
+
+        map.addLayer({
+          id: 'route-line',
+          type: 'line',
+          source: 'route-line',
+          paint: {
+            'line-color': '#0071CE',
+            'line-width': 4,
+            'line-opacity': 0.7
+          }
+        });
+
+        // Re-add stops
+        const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+        const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+        stops.forEach(stop => {
+          let highlightedTimes = [];
+          let foundNext = false;
+          stop.times.forEach(timeStr => {
+            let cleanTime = timeStr.trim();
+            let [h, m] = cleanTime.split(":");
+            let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+            if (schedMins < nowMins && nowMins - schedMins > 720) {
+              schedMins += 1440;
+            }
+            if (!foundNext && schedMins >= nowMins) {
+              highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+              foundNext = true;
+            } else {
+              highlightedTimes.push(cleanTime);
+            }
+          });
+
+          const stopElement = document.createElement('div');
+          stopElement.style.width = '12px';
+          stopElement.style.height = '12px';
+          stopElement.style.backgroundColor = '#4dd0e1';
+          stopElement.style.borderRadius = '50%';
+          stopElement.style.border = '2px solid #4dd0e1';
+          stopElement.style.opacity = '0.9';
+
+          const stopMarker = new maplibregl.Marker({
+            element: stopElement
+          });
+          stopMarker.setLngLat([stop.lon, stop.lat]);
+          
+          const popupContent = document.createElement('div');
+          popupContent.innerHTML = `
+            <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+              <strong style='color:#4dd0e1;'>${stop.name}</strong>
+              <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+              ${highlightedTimes.join("<br>") || 'No scheduled times'}
+            </div>
+          `;
+          
+          const popup = new maplibregl.Popup().setDOMContent(popupContent);
+          stopMarker.setPopup(popup);
+          stopMarker.addTo(map);
+        });
+      });
+    }
     if (document.referrer === "" && performance.navigation.type === 0) {
       window.location.href = "/index.html";
     }
@@ -255,17 +451,55 @@
     const routeNumber = 153;
     const direction = parseInt(0);
 
-    const map = L.map('map', {
-      center: [45.6, -122.7],
-      zoom: 12,
-      minZoom: 12,
-      maxZoom: 18,
-      maxBounds: [[45.3, -123.1], [45.9, -122.3]],
-      maxBoundsViscosity: 1.0
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    // Portland Metro Area Bounds
+    const PORTLAND_BOUNDS = {
+      north: 45.80,
+      south: 45.20,
+      east: -122.15,
+      west: -123.35
+    };
 
-    const shapeOutbound = [
+    // Initialize MapLibre GL JS map with vector tiles
+    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
+    const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
+    
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: dayStyle,
+      center: [-122.67, 45.52],
+      zoom: 12,
+      maxZoom: 18,
+      minZoom: 12,
+      maxBounds: [
+        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
+        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
+      ],
+      attributionControl: true
+    });
+
+    // Force attribution to be collapsed by default
+    map.on('load', () => {
+      const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+      if (attributionControl) {
+        attributionControl.classList.add('maplibregl-compact');
+        attributionControl.classList.remove('maplibregl-compact-show');
+      }
+    });
+
+    // Also ensure attribution is collapsed after style changes
+    map.on('styledata', () => {
+      setTimeout(() => {
+        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+        if (attributionControl) {
+          attributionControl.classList.add('maplibregl-compact');
+          attributionControl.classList.remove('maplibregl-compact-show');
+        }
+      }, 100);
+    });
+
+    // Add route shape when map loads
+    map.on('load', () => {
+      const shapeOutbound = [
   [45.421121, -122.668092],
   [45.4211, -122.667896],
   [45.421076, -122.667683],
@@ -1065,69 +1299,142 @@ const stops = [
   { stop_id: "14485", name: "8th Ave &amp; 13th St", lat: 45.345032, lon: -122.655013, times: ["6:22 AM", "7:19 AM", "8:21 AM", "9:21 AM", "10:21 AM", "11:21 AM", "12:20 PM", "1:20 PM"] },
 ]
 
-    const polylineOut = L.polyline(shapeOutbound, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
-    map.fitBounds(polylineOut.getBounds());
-
-    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
-
-    stops.forEach(stop => {
-      let highlightedTimes = [];
-      let foundNext = false;
-      stop.times.forEach(timeStr => {
-        let cleanTime = timeStr.trim();
-        let [h, m] = cleanTime.split(":");
-        let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-        if (schedMins < nowMins && nowMins - schedMins > 720) {
-          schedMins += 1440;
-        }
-        if (!foundNext && schedMins >= nowMins) {
-          highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
-          foundNext = true;
-        } else {
-          highlightedTimes.push(cleanTime);
+      // Add route line
+      map.addSource('route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]]) // Convert lat/lon to lon/lat
+          }
         }
       });
 
-      L.circleMarker([stop.lat, stop.lon], {
-        radius: 6,
-        color: '#4dd0e1',
-        fillColor: '#4dd0e1',
-        fillOpacity: 0.9,
-        weight: 1
-      })
-      .bindPopup(`<strong>${stop.name}</strong><br>${highlightedTimes.join("<br>") || 'No scheduled times'}`)
-      .addTo(map);
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route-line',
+        paint: {
+          'line-color': '#0071CE',
+          'line-width': 4,
+          'line-opacity': 0.7
+        }
+      });
+
+      // Fit map to route bounds
+      const bounds = new maplibregl.LngLatBounds();
+      shapeOutbound.forEach(coord => bounds.extend([coord[1], coord[0]]));
+      map.fitBounds(bounds, { padding: 20 });
+
+      // Add stops
+      const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+      stops.forEach(stop => {
+        let highlightedTimes = [];
+        let foundNext = false;
+        stop.times.forEach(timeStr => {
+          let cleanTime = timeStr.trim();
+          let [h, m] = cleanTime.split(":");
+          let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+          if (schedMins < nowMins && nowMins - schedMins > 720) {
+            schedMins += 1440;
+          }
+          if (!foundNext && schedMins >= nowMins) {
+            highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+            foundNext = true;
+          } else {
+            highlightedTimes.push(cleanTime);
+          }
+        });
+
+        // Create stop marker element
+        const stopElement = document.createElement('div');
+        stopElement.style.width = '12px';
+        stopElement.style.height = '12px';
+        stopElement.style.backgroundColor = '#4dd0e1';
+        stopElement.style.borderRadius = '50%';
+        stopElement.style.border = '2px solid #4dd0e1';
+        stopElement.style.opacity = '0.9';
+
+        const stopMarker = new maplibregl.Marker({
+          element: stopElement
+        });
+        stopMarker.setLngLat([stop.lon, stop.lat]);
+        
+        // Create popup content
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+            <strong style='color:#4dd0e1;'>${stop.name}</strong>
+            <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+            ${highlightedTimes.join("<br>") || 'No scheduled times'}
+          </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        stopMarker.setPopup(popup);
+        stopMarker.addTo(map);
+      });
     });
 
+    // Live bus tracking
     let busMarkers = {};
     async function fetchAndDisplay() {
       const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
       const data = await res.json();
       const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
 
-      Object.values(busMarkers).forEach(m => map.removeLayer(m));
+      // Remove existing bus markers
+      Object.values(busMarkers).forEach(marker => marker.remove());
       busMarkers = {};
+      
       if (!buses.length) return;
 
       buses.forEach(bus => {
         if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-        const icon = L.divIcon({    
-           className: '',
-           html: `
-            <div style="text-align:center;">
-              <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${bus.vehicleID}</div>
-              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #00bfff;margin:auto;"></div>
-            </div>
-          `,
-          iconSize: [40, 30], iconAnchor: [20, 30]
+        
+        // Create bus marker element
+        const busElement = document.createElement('div');
+        busElement.style.textAlign = 'center';
+        busElement.innerHTML = `
+          <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
+          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #0071CE;margin:auto;"></div>
+        `;
+
+        const busMarker = new maplibregl.Marker({
+          element: busElement
         });
-        const marker = L.marker([bus.latitude, bus.longitude], { icon }).addTo(map);
-        busMarkers[bus.vehicleID] = marker;
+        busMarker.setLngLat([bus.longitude, bus.latitude]);
+        
+        // Create popup for bus
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:2px solid #0071CE; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
+            <div style='text-align:center; margin-bottom:8px;'>
+              <div style='background:#0071CE;color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
+            </div>
+            <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNumber}</div>
+            <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
+            <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
+            <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
+          </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        busMarker.setPopup(popup);
+        busMarker.addTo(map);
+        busMarkers[bus.vehicleID] = busMarker;
       });
     }
-    fetchAndDisplay();
-    setInterval(fetchAndDisplay, 15000);
+
+    // Start bus tracking after map loads
+    map.on('load', () => {
+      fetchAndDisplay();
+      setInterval(fetchAndDisplay, 15000);
+    });
   </script>
 
 <footer class="site-footer">
@@ -1203,6 +1510,7 @@ function showFavDropdown(e) {
     }, 10);
   }
 }
+
 // Actually add/remove on dropdown click
 document.addEventListener("DOMContentLoaded", function() {
   updateStarIcon();
@@ -1238,4 +1546,4 @@ function closeFavDropdown(e) {
 
 </script>
 </body>
-</html>
+</html> 
