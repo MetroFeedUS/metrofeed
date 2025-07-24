@@ -2099,10 +2099,24 @@
             
             console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
             
-            // STRICT DIRECTION MATCHING - No fallback to wrong direction
+            // If no buses in exact direction, try opposite direction (might be useful)
             if (routeBuses.length === 0) {
-              console.log('[fetchAndDisplayBuses] No buses found in correct direction. Showing message instead of wrong-direction buses.');
-              // Don't show buses going the wrong way - they're useless for the trip
+              console.log('[fetchAndDisplayBuses] No buses in exact direction, trying opposite direction');
+              const oppositeDirection = otpDirection === 0 ? 1 : 0;
+              routeBuses = allBuses.filter(v => {
+                const routeMatch = v.routeNumber == trimetRouteNumber;
+                const directionMatch = v.direction == oppositeDirection;
+                console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${oppositeDirection} (${directionMatch})`);
+                return routeMatch && directionMatch;
+              });
+              console.log('[fetchAndDisplayBuses] Buses in opposite direction:', routeBuses.length);
+            }
+            
+            // If still no buses, show any buses on this route
+            if (routeBuses.length === 0) {
+              console.log('[fetchAndDisplayBuses] No buses in either direction, showing any buses on route');
+              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+              console.log('[fetchAndDisplayBuses] Any buses on route:', routeBuses.length);
             }
             
             console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
@@ -2144,6 +2158,7 @@
                   <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                   <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
                   <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
+                  ${bus.direction !== otpDirection ? '<div style="color:#FF9800; font-size:11px; margin-top:4px;">⚠️ Opposite direction - check if useful for your trip</div>' : ''}
                   <div style='margin-top:10px; text-align:center;'>
                     <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html' : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
                   </div>
@@ -2796,9 +2811,9 @@
       source: completeRouteId,
       paint: {
         'line-color': color,
-        'line-width': 2,
-        'line-opacity': 0.3,
-        'line-dasharray': [2, 2] // Dashed line pattern
+        'line-width': 4,
+        'line-opacity': 0.6,
+        'line-dasharray': [6, 4] // Bigger, more pronounced dashes
       }
     });
     
