@@ -2863,6 +2863,8 @@
     window.currentItins[idx].legs.forEach((leg, legIdx) => {
       let color;
       let legKey;
+      let routeNumber = leg.route; // Declare routeNumber at the top level
+      let routeDescription = '';
       
       // Get mapping data for this leg
       const mappedLeg = mappedLegs[legIdx];
@@ -2878,8 +2880,6 @@
         color = legColors[legIndex % legColors.length];
         
         // Use hybrid mapping results if available
-        let routeNumber = leg.route;
-        let routeDescription = '';
         
         if (mappedLeg && mappedLeg.mapping.isValid) {
           // Use the hybrid mapping result
