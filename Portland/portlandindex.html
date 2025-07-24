@@ -98,54 +98,6 @@
     .site-footer a:hover { text-decoration: underline; }
     /* -- MODAL/OVERLAY -- */
     .mf-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; pointer-events: auto !important; }
-    
-    /* -- HYBRID MAPPING CONFIDENCE STYLES -- */
-    .confidence-high { border-left: 3px solid #4CAF50 !important; }
-    .confidence-medium { border-left: 3px solid #FF9800 !important; }
-    .confidence-low { border-left: 3px solid #F44336 !important; }
-    .confidence-none { border-left: 3px solid #666 !important; }
-    
-    .confidence-badge {
-      display: inline-block;
-      padding: 1px 4px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: bold;
-      margin-left: 4px;
-      text-transform: uppercase;
-    }
-    
-    .confidence-badge.high { background: #4CAF50; color: white; }
-    .confidence-badge.medium { background: #FF9800; color: white; }
-    .confidence-badge.low { background: #F44336; color: white; }
-    .confidence-badge.none { background: #666; color: white; }
-    
-    /* -- COMPLETE ROUTE LINE STYLES -- */
-    .complete-route-toggle {
-      position: absolute;
-      top: 120px;
-      right: 10px;
-      background: #4dd0e1;
-      border: 2px solid #000;
-      border-radius: 8px;
-      padding: 8px 12px;
-      color: #000;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      z-index: 1001;
-      box-shadow: 0 0 10px #4dd0e1;
-    }
-    
-    .complete-route-toggle:hover {
-      background: #1976d2;
-      color: #fff;
-    }
-    
-    .complete-route-toggle.active {
-      background: #4CAF50;
-      color: #fff;
-    }
     .mf-modal {
       background: #111;
       border: 2.5px solid #4dd0e1;
@@ -638,11 +590,9 @@
 <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
 <!-- Ticket purchase button -->
 <button id="aiChatBtn" class="side-buttons">
-  <a href="ticket.html"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
+  <a href="tickets.html"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
 </button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
-
-
 
 <div id="dropdownMenu" class="dropdown">
   <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="1"></a>
@@ -745,9 +695,9 @@
 
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <script src="mastermap.js"></script>
-    <script>
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script src="mastermap.js"></script>
+<script>
   // === SECTION: MAP INIT ===
   const apiKey = "2C4447D4A42083BCD84DE3B8E";
   const OTP_API = "https://otp.metrofeedus.com/otp/routers/default/plan";
@@ -1972,44 +1922,191 @@
   
   
   
-  // === ORIGINAL ROUTE MAPPING FUNCTION ===
+  // Function to map OTP route names to Trimet route numbers using masterRoutes data
   function mapOtpRouteToTrimet(otpRouteName) {
-    console.log('[mapOtpRouteToTrimet] Mapping:', otpRouteName);
+    console.log('[mapOtpRouteToTrimet] Mapping OTP route:', otpRouteName);
+    console.log('[mapOtpRouteToTrimet] masterRoutes available:', masterRoutes ? masterRoutes.length : 'undefined');
     
-    // Direct number mapping
+    // If it's already a number, use it directly
     if (!isNaN(otpRouteName)) {
+      console.log('[mapOtpRouteToTrimet] Direct number match:', otpRouteName);
       return otpRouteName;
     }
     
-    // MAX lines
-    if (otpRouteName.includes('MAX Blue')) return '100';
-    if (otpRouteName.includes('MAX Red')) return '90';
-    if (otpRouteName.includes('MAX Green')) return '200';
-    if (otpRouteName.includes('MAX Yellow')) return '190';
-    if (otpRouteName.includes('MAX Orange')) return '290';
-    if (otpRouteName.includes('MAX Purple')) return '203';
-    
-    // Streetcar
-    if (otpRouteName.includes('Streetcar')) return '193';
-    
-    // FX2
-    if (otpRouteName.includes('FX2')) return 'FX2';
-    
-    // Try to extract number from route name
-    const numberMatch = otpRouteName.match(/(\d+)/);
-    if (numberMatch) {
-      return numberMatch[1];
+    // Create a comprehensive mapping from masterRoutes data
+    const routeMappings = {};
+    if (masterRoutes && masterRoutes.length > 0) {
+      masterRoutes.forEach(route => {
+        // Extract route number from route_title (e.g., "Route 15 - To City Ctr..." -> "15")
+        const routeNumberMatch = route.route_title.match(/Route (\d+)/);
+        if (routeNumberMatch) {
+          const routeNumber = routeNumberMatch[1];
+          routeMappings[routeNumber] = routeNumber;
+          
+          // Also map common variations
+          routeMappings[`Route ${routeNumber}`] = routeNumber;
+          routeMappings[`Bus ${routeNumber}`] = routeNumber;
+          routeMappings[`${routeNumber}`] = routeNumber;
+        }
+        
+        // Handle special routes like FX2
+        if (route.route_id === 'FX2') {
+          routeMappings['FX2'] = 'FX2';
+          routeMappings['Route FX2'] = 'FX2';
+          routeMappings['Bus FX2'] = 'FX2';
+        }
+      });
+      console.log('[mapOtpRouteToTrimet] Created mappings for', Object.keys(routeMappings).length, 'routes');
+    } else {
+      console.log('[mapOtpRouteToTrimet] WARNING: masterRoutes is not available!');
     }
     
-    // Try to find in masterRoutes by description
-    if (masterRoutes) {
-      for (let route of masterRoutes) {
-        if (route.route_title && route.route_title.toLowerCase().includes(otpRouteName.toLowerCase())) {
-          return route.route_id;
-        }
+    // Common MAX line mappings (these are often named differently in OTP)
+    const maxMappings = {
+      'Blue': '100',
+      'Red': '200', 
+      'Green': '290',
+      'Yellow': '290',
+      'Orange': '290',
+      'MAX Blue': '100',
+      'MAX Red': '200',
+      'MAX Green': '290',
+      'MAX Yellow': '290',
+      'MAX Orange': '290'
+    };
+    
+    // Special route name mappings (from BusRoutesMain.html)
+    const specialRouteMappings = {
+      'Blue Eastside Bus': '287',
+      'Blue Westside Bus': '288',
+      'Orange Bus': '291',
+      'Red Bus': '292',
+      'Yellow Bus': '293'
+    };
+    
+    // Common Portland street name mappings
+    const streetMappings = {
+      'Burnside': '20',
+      'Stark': '15',
+      'Sandy': '12',
+      'Barbur': '12',
+      'Macadam': '35',
+      'Greeley': '35',
+      'Division': '20',
+      'Hawthorne': '14',
+      'Belmont': '15',
+      'Morrison': '15',
+      'Washington': '15',
+      'Powell': '9',
+      'Foster': '9',
+      'Woodstock': '9',
+      'Holgate': '9',
+      'Johnson Creek': '9',
+      'Cesar Chavez': '9',
+      '82nd': '72',
+      '122nd': '73',
+      '162nd': '74',
+      '52nd': '71',
+      '39th': '70',
+      '28th': '70',
+      '21st': '70',
+      '15th': '70',
+      '12th': '70',
+      '9th': '70',
+      '6th': '70',
+      '3rd': '70',
+      '1st': '70',
+      'MLK': '6',
+      'Grand': '6',
+      'Interstate': '6',
+      'Lombard': '6',
+      'Killingsworth': '6',
+      'Rosa Parks': '6',
+      'Columbia': '6',
+      'Vancouver': '6',
+      'Williams': '6',
+      'Mississippi': '6',
+      'Alberta': '6',
+      'Fremont': '6',
+      'Beaumont': '6',
+      'Prescott': '6',
+      'Klickitat': '6',
+      'Knott': '6',
+      'Ainsworth': '6',
+      'Skidmore': '6',
+      'Going': '6',
+      'Tillamook': '6',
+      'Russell': '6',
+      'Shaver': '6'
+    };
+    
+    // Walking route mappings (for completeness)
+    const walkingMappings = {
+      'WALK': 'WALK',
+      'Walk': 'WALK',
+      'walk': 'WALK'
+    };
+    
+    // Check for special route mappings first
+    for (const [name, number] of Object.entries(specialRouteMappings)) {
+      if (otpRouteName.includes(name) || name.includes(otpRouteName)) {
+        console.log('[mapOtpRouteToTrimet] Special route match:', name, '->', number);
+        return number;
       }
     }
     
+    // Check for walking routes
+    for (const [walkName, walkRoute] of Object.entries(walkingMappings)) {
+      if (otpRouteName.includes(walkName)) {
+        console.log('[mapOtpRouteToTrimet] Walking route match:', walkName, '->', walkRoute);
+        return walkRoute;
+      }
+    }
+    
+    // Check for street name mappings
+    for (const [streetName, routeNumber] of Object.entries(streetMappings)) {
+      if (otpRouteName.toLowerCase().includes(streetName.toLowerCase())) {
+        console.log('[mapOtpRouteToTrimet] Street name match:', streetName, '->', routeNumber);
+        return routeNumber;
+      }
+    }
+    
+    // Check for MAX lines
+    for (const [line, number] of Object.entries(maxMappings)) {
+      if (otpRouteName.includes(line)) {
+        console.log('[mapOtpRouteToTrimet] MAX line match:', line, '->', number);
+        return number;
+      }
+    }
+    
+    // Try exact match in our route mappings
+    if (routeMappings[otpRouteName]) {
+      console.log('[mapOtpRouteToTrimet] Exact match found:', otpRouteName, '->', routeMappings[otpRouteName]);
+      return routeMappings[otpRouteName];
+    }
+    
+    // Try to extract number from name (e.g., "Route 4" -> "4")
+    const numberMatch = otpRouteName.match(/(\d+)/);
+    if (numberMatch) {
+      const extractedNumber = numberMatch[1];
+      if (routeMappings[extractedNumber]) {
+        console.log('[mapOtpRouteToTrimet] Number extraction match:', extractedNumber);
+        return extractedNumber;
+      }
+    }
+    
+    // Try partial matching (e.g., "15th to Broadway" might match "Route 15")
+    for (const [key, value] of Object.entries(routeMappings)) {
+      if (otpRouteName.toLowerCase().includes(key.toLowerCase()) || 
+          key.toLowerCase().includes(otpRouteName.toLowerCase())) {
+        console.log('[mapOtpRouteToTrimet] Partial match found:', otpRouteName, '->', value);
+        return value;
+      }
+    }
+    
+    // If no mapping found, return null and we'll show all buses
+    console.log('[mapOtpRouteToTrimet] No mapping found for:', otpRouteName);
+    console.log('[mapOtpRouteToTrimet] Available route numbers:', Object.keys(routeMappings));
     return null;
   }
   
@@ -2113,14 +2210,11 @@
             
             console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
             
-            // If no buses in exact direction, show all buses on this route
+            // STRICT DIRECTION MATCHING - No fallback to wrong direction
             if (routeBuses.length === 0) {
-              console.log('[fetchAndDisplayBuses] No buses in exact direction, showing all buses on route');
-              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
-              console.log('[fetchAndDisplayBuses] All buses on route:', routeBuses.length);
+              console.log('[fetchAndDisplayBuses] No buses found in correct direction. Showing message instead of wrong-direction buses.');
+              // Don't show buses going the wrong way - they're useless for the trip
             }
-            
-
             
             console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
             if (routeBuses.length > 0) {
@@ -2156,14 +2250,13 @@
                   <div style='text-align:center; margin-bottom:8px;'>
                     <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
                   </div>
-                  <div style='margin-bottom:6px;'><strong>Route:</strong> ${trimetRouteNumber} - ${route.description || 'Portland'}</div>
+                  <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
                   <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
                   <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                   <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
                   <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
-
                   <div style='margin-top:10px; text-align:center;'>
-                    <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html' : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
+                    <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
                   </div>
                 </div>
               `;
@@ -2228,7 +2321,7 @@
                 <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                 <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
                 <div style='margin-top:8px; text-align:center;'>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction + '.html' : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
+                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
                 </div>
               </div>
             `;
@@ -2373,9 +2466,7 @@
       currentItins = data.plan.itineraries;
       console.log('Stored itineraries:', currentItins); // Debug stored data
       
-      
-      
-      // Enhanced OTP route debugging (keep for compatibility)
+      // Enhanced OTP route debugging
       console.log('=== OTP ROUTE ANALYSIS ===');
       data.plan.itineraries.forEach((itin, idx) => {
         console.log(`\n--- Itinerary ${idx + 1} ---`);
@@ -2400,7 +2491,26 @@
         });
       });
       console.log('=== END OTP ROUTE ANALYSIS ===');
-      
+      console.log('Sample leg data:', currentItins[0]?.legs?.map(leg => ({
+        mode: leg.mode,
+        route: leg.route,
+        routeLongName: leg.routeLongName,
+        routeShortName: leg.routeShortName,
+        headsign: leg.headsign,
+        agencyId: leg.agencyId,
+        agencyName: leg.agencyName,
+        routeId: leg.routeId,
+        tripId: leg.tripId
+      })));
+      const otpRoutes = currentItins.flatMap(itin => 
+        itin.legs.filter(leg => leg.mode !== 'WALK').map(leg => ({
+          mode: leg.mode,
+          route: leg.route,
+          routeLongName: leg.routeLongName,
+          routeShortName: leg.routeShortName
+        }))
+      );
+      console.log('All route IDs from OTP:', otpRoutes);
       renderItinListVisual(data.plan.itineraries);
 
     } catch (e) {
@@ -2409,25 +2519,17 @@
     }
   }
 
-  // ==== RENDER TRIP OPTIONS WITH HYBRID MAPPING ====
+  // ==== RENDER TRIP OPTIONS ====
   function renderItinListVisual(itins) {
     window.currentItins = itins; // Ensure global is always set!
     const itinList = document.getElementById('itinList');
-    
-    // Use processed itineraries if available, otherwise fall back to original
-    const processedData = window.processedItineraries || [];
-    
     itinList.innerHTML = itins.map((itin, idx) => {
       const start = getPortlandTimeString(new Date(itin.startTime));
       const end = getPortlandTimeString(new Date(itin.endTime));
-      
-      const segs = itin.legs.map((leg, legIdx) => {
+      const segs = itin.legs.map(leg => {
         let icon = '';
         let segClass = '';
         let label = '';
-        
-
-        
         if (leg.mode === 'WALK') {
           icon = '🚶‍♂️';
           segClass = 'seg-walk';
@@ -2435,14 +2537,30 @@
         } else if (leg.mode === 'BUS') {
           icon = '🚌';
           segClass = 'seg-bus';
-          
+          // Format bus label with route name and number using masterRoutes data
           if (leg.route) {
+            console.log('[Itinerary] Processing bus leg with route:', leg.route);
+            // Try to find route info in masterRoutes
             const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
             if (masterRoute) {
+              console.log('[Itinerary] Found master route:', masterRoute.route_title);
+              // Extract route number from route_title (e.g., "Route 15 - To City Ctr..." -> "15")
               const routeNumberMatch = masterRoute.route_title.match(/Route (\d+)/);
               const routeNumber = routeNumberMatch ? routeNumberMatch[1] : leg.route;
-              label = `Bus ${routeNumber} - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
+              
+              // Check if we have live bus info for this route
+              let busNumbers = '';
+              if (window.otpBusInfo && window.otpBusInfo[leg.route]) {
+                const buses = window.otpBusInfo[leg.route];
+                busNumbers = buses.map(b => b.vehicleID).join(', ');
+                label = `Bus ${routeNumber} (${busNumbers}) - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
+              } else {
+                label = `Bus ${routeNumber} - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
+              }
+              console.log('[Itinerary] Created label:', label);
             } else {
+              console.log('[Itinerary] No master route found, using OTP data');
+              // Fallback to OTP data
               let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
               label = `${routeName} - ${leg.route}`;
             }
@@ -2470,7 +2588,6 @@
           segClass = '';
           label = leg.mode;
         }
-        
         let mins = Math.round((leg.duration || 0) / 60);
         return `<span class='${segClass}' title='${label}'>
           <span class='seg-icon'>${icon}</span>
@@ -2584,8 +2701,6 @@
           }, 15000);
         }
       }
-      
-      // Complete route lines are automatically cleared
     } else {
       console.log('[hideOtpModal] Trip is active, keeping route and buses visible');
     }
@@ -2697,59 +2812,6 @@
     return null;
   }
 
-  // Function to add complete route line with dashed unused portions
-  function addCompleteRouteLine(routeNumber, direction, color, legIndex) {
-    // Find the route in masterRoutes
-    const route = masterRoutes.find(r => r.route_id === routeNumber && r.direction_id === direction);
-    if (!route) return;
-    
-    // Use route shape if available, otherwise use stops
-    let routeCoords = [];
-    if (route.shape && route.shape.length > 1) {
-      // Use actual route shape (follows roads)
-      routeCoords = route.shape.map(coord => [coord.lon, coord.lat]);
-    } else if (route.stops && route.stops.length > 1) {
-      // Fallback to stop coordinates
-      routeCoords = route.stops.map(stop => [stop.lon, stop.lat]);
-    } else {
-      return;
-    }
-    
-    if (routeCoords.length < 2) return;
-    
-    // Create a unique source and layer ID for the complete route
-    const completeRouteId = `completeRoute-${routeNumber}-${direction}-${legIndex}`;
-    
-    // Add the complete route as a dashed line
-    map.addSource(completeRouteId, {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: routeCoords
-        }
-      }
-    });
-    
-    // Add dashed line layer for complete route
-    map.addLayer({
-      id: completeRouteId,
-      type: 'line',
-      source: completeRouteId,
-      paint: {
-        'line-color': color,
-        'line-width': 4,
-        'line-opacity': 0.5,
-        'line-dasharray': [10, 6] // Bigger, more visible dashes
-      }
-    });
-    
-    // Store the layer ID for removal
-    window.routeLegLines.push(completeRouteId);
-  }
-
   window.showRoute = function(idx) {
     console.log('[showRoute] Called with idx:', idx);
     if (!window.currentItins || !window.currentItins[idx]) {
@@ -2757,7 +2819,6 @@
       alert("Trip data not found. Please try again.");
       return;
     }
-    
     // Remove previous lines
     if (routeLine) {
       map.removeLayer(routeLine);
@@ -2787,13 +2848,9 @@
     let legColorMapping = {}; // Store color mapping for each leg
     let legIndex = 0; // Track leg index for color assignment
     
-    
-    
-    window.currentItins[idx].legs.forEach((leg, legIdx) => {
+    window.currentItins[idx].legs.forEach(leg => {
       let color;
       let legKey;
-      let routeNumber = leg.route; // Declare routeNumber at the top level
-      let routeDescription = '';
       
       if (leg.mode === 'WALK') {
         color = WALK_COLOR;
@@ -2804,6 +2861,8 @@
         
         // Extract route description from itinerary
         let routeDescription = '';
+        let routeNumber = leg.route;
+        
         if (leg.routeLongName) {
           routeDescription = leg.routeLongName;
         } else if (leg.routeShortName) {
@@ -2818,6 +2877,7 @@
         
         // Try to find the actual route number using the description
         if (routeDescription) {
+          // First try to decode using our mapping function
           const decodedRouteNumber = mapOtpRouteToTrimet(routeDescription);
           if (decodedRouteNumber) {
             routeNumber = decodedRouteNumber;
@@ -2885,20 +2945,16 @@
         // Store the layer ID for removal
         window.routeLegLines.push(lineId);
         allCoords = allCoords.concat(coords);
-        
-        // Add complete route line with dashed unused portions
-        if (leg.mode !== 'WALK' && routeNumber && masterRoutes) {
-          addCompleteRouteLine(routeNumber, leg.direction || 0, color, legIndex);
-        }
       }
       
       legIndex++;
       
-      // Collect route information for bus tracking
+      // Collect route information for bus tracking (skip WALK legs)
       if (leg.mode !== 'WALK' && leg.route) {
+        console.log('[showRoute] Found transit leg:', leg);
         routesToTrack.push({
           route_id: leg.route,
-          direction_id: leg.direction || 0,
+          direction_id: leg.direction || 0, // Default direction if not specified
           mode: leg.mode
         });
       }
@@ -2984,13 +3040,9 @@
     // Mark that a trip has been selected
     activeTripSelected = true;
     
-    // Complete route lines are automatically shown as dashed lines
-    
     // Don't hide the modal - let user see the trip options and buses
     // hideOtpModal();
   };
-  
-
 
   // ==== UTILITY FUNCTIONS ====
   function clearRoutePolylines() {
@@ -3061,112 +3113,6 @@
       console.log('Route IDs available:', masterRoutes.slice(0, 10).map(r => r.route_id));
     }
     console.log('=== END DEBUG ===');
-  };
-  
-  // Debug function to test hybrid mapping system
-  window.testHybridMapping = async function() {
-    console.log('=== HYBRID MAPPING DEBUG ===');
-    
-    // Test with sample OTP leg data
-    const testLegs = [
-      { mode: 'WALK', route: null, routeLongName: null },
-      { mode: 'BUS', route: '15', routeLongName: 'Route 15 - To City Center', routeShortName: '15' },
-      { mode: 'BUS', route: '100', routeLongName: 'MAX Blue Line', routeShortName: '100' },
-      { mode: 'BUS', route: 'FX2', routeLongName: 'FX2 - Division', routeShortName: 'FX2' },
-      { mode: 'BUS', route: '20', routeLongName: 'Burnside', routeShortName: '20' }
-    ];
-    
-    console.log('Testing hybrid mapping with sample legs...');
-    
-    for (let i = 0; i < testLegs.length; i++) {
-      const leg = testLegs[i];
-      console.log(`\n--- Testing Leg ${i + 1}: ${leg.mode} ${leg.route} ---`);
-      
-      const mapping = await mapOtpRouteHybrid(leg, apiKey);
-      console.log('Mapping result:', mapping);
-    }
-    
-    console.log('=== END HYBRID MAPPING DEBUG ===');
-  };
-  
-  // Debug function to test route validation
-  window.testRouteValidation = async function(routeId) {
-    console.log('=== ROUTE VALIDATION DEBUG ===');
-    console.log('Testing validation for route:', routeId);
-    
-    const validation = await validateRouteInSystem(routeId, apiKey);
-    console.log('Validation result:', validation);
-    
-    console.log('=== END ROUTE VALIDATION DEBUG ===');
-  };
-  
-  // Debug function to test complete route lines
-  window.testCompleteRoutes = function() {
-    console.log('=== COMPLETE ROUTE DEBUG ===');
-    
-    // Test with a sample route
-    const testRoute = masterRoutes.find(r => r.route_id === '15' && r.direction_id === 0);
-    if (testRoute) {
-      console.log('Found test route:', testRoute.route_id, 'with', testRoute.stops.length, 'stops');
-      addCompleteRouteLine('15', 0, '#FB4F14', 0);
-      
-      // Show the complete route immediately for testing
-      setTimeout(() => {
-        showCompleteRoutes();
-        console.log('Complete route should now be visible');
-      }, 1000);
-    } else {
-      console.log('Test route not found');
-    }
-    
-    console.log('=== END COMPLETE ROUTE DEBUG ===');
-  };
-  
-  // Debug function to check layer visibility
-  window.checkLayerVisibility = function() {
-    console.log('=== LAYER VISIBILITY DEBUG ===');
-    
-    if (window.routeLegLines) {
-      window.routeLegLines.forEach(lineId => {
-        if (map.getLayer(lineId)) {
-          const visibility = map.getLayoutProperty(lineId, 'visibility');
-          console.log(`Layer ${lineId}: visibility = ${visibility}`);
-        } else {
-          console.log(`Layer ${lineId}: not found on map`);
-        }
-      });
-    } else {
-      console.log('No routeLegLines found');
-    }
-    
-    console.log('=== END LAYER VISIBILITY DEBUG ===');
-  };
-  
-  // Debug function to check direction mapping
-  window.checkDirectionMapping = function() {
-    console.log('=== DIRECTION MAPPING DEBUG ===');
-    
-    if (window.currentLegColorMapping) {
-      Object.entries(window.currentLegColorMapping).forEach(([key, leg]) => {
-        console.log(`Leg: ${key}`);
-        console.log(`  OTP Direction: ${leg.direction}`);
-        console.log(`  Route: ${leg.route}`);
-        console.log(`  Description: ${leg.description}`);
-        
-        // Check what buses are available for this route
-        if (window.lastBusData && window.lastBusData.resultSet && window.lastBusData.resultSet.vehicle) {
-          const routeBuses = window.lastBusData.resultSet.vehicle.filter(bus => bus.routeNumber == leg.route);
-          console.log(`  Available buses: ${routeBuses.length}`);
-          routeBuses.forEach(bus => {
-            console.log(`    Bus ${bus.vehicleID}: direction ${bus.direction}, speed ${bus.speed}mph`);
-          });
-        }
-      });
-    } else {
-      console.log('No current leg mapping found');
-    }
-    
-    console.log('=== END DIRECTION MAPPING DEBUG ===');
   };
   
   // Debug function to test bus API
