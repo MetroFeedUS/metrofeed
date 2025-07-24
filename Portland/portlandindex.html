@@ -642,10 +642,7 @@
 </button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 
-<!-- -- COMPLETE ROUTE TOGGLE BUTTON -- -->
-<button id="completeRouteToggle" class="complete-route-toggle" onclick="toggleCompleteRoutes()" style="display: none;">
-  🛤️ Show Full Routes
-</button>
+
 
 <div id="dropdownMenu" class="dropdown">
   <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="1"></a>
@@ -2645,11 +2642,7 @@
         }
       }
       
-      // Hide the complete route toggle button
-      const toggleBtn = document.getElementById('completeRouteToggle');
-      if (toggleBtn) {
-        toggleBtn.style.display = 'none';
-      }
+      // Complete route lines are automatically cleared
     } else {
       console.log('[hideOtpModal] Trip is active, keeping route and buses visible');
     }
@@ -2783,7 +2776,7 @@
     // Create a unique source and layer ID for the complete route
     const completeRouteId = `completeRoute-${routeNumber}-${direction}-${legIndex}`;
     
-    // Add the complete route as a dashed line behind the trip segment
+    // Add the complete route as a dashed line
     map.addSource(completeRouteId, {
       type: 'geojson',
       data: {
@@ -2796,21 +2789,18 @@
       }
     });
     
-    // Add dashed line layer for complete route (behind the trip segment)
+    // Add dashed line layer for complete route
     map.addLayer({
       id: completeRouteId,
       type: 'line',
       source: completeRouteId,
-      layout: {
-        'visibility': 'none' // Initially hidden
-      },
       paint: {
         'line-color': color,
         'line-width': 2,
         'line-opacity': 0.3,
         'line-dasharray': [2, 2] // Dashed line pattern
       }
-    }, lineId); // Insert before the trip segment layer
+    });
     
     // Store the layer ID for removal
     window.routeLegLines.push(completeRouteId);
@@ -2979,7 +2969,7 @@
         window.routeLegLines.push(lineId);
         allCoords = allCoords.concat(coords);
         
-        // Add complete route line with dashed unused portions (add BEFORE trip segment)
+        // Add complete route line with dashed unused portions
         if (leg.mode !== 'WALK' && routeNumber && masterRoutes) {
           addCompleteRouteLine(routeNumber, leg.direction || 0, color, legIndex);
         }
@@ -3093,63 +3083,13 @@
     // Mark that a trip has been selected
     activeTripSelected = true;
     
-    // Show the complete route toggle button
-    const toggleBtn = document.getElementById('completeRouteToggle');
-    if (toggleBtn) {
-      toggleBtn.style.display = 'block';
-      toggleBtn.textContent = '🛤️ Show Full Routes';
-      toggleBtn.classList.remove('active');
-    }
+    // Complete route lines are automatically shown as dashed lines
     
     // Don't hide the modal - let user see the trip options and buses
     // hideOtpModal();
   };
   
-  // Function to toggle complete route lines
-  window.toggleCompleteRoutes = function() {
-    const toggleBtn = document.getElementById('completeRouteToggle');
-    const isActive = toggleBtn.classList.contains('active');
-    
-    if (isActive) {
-      // Hide complete routes
-      hideCompleteRoutes();
-      toggleBtn.textContent = '🛤️ Show Full Routes';
-      toggleBtn.classList.remove('active');
-    } else {
-      // Show complete routes
-      showCompleteRoutes();
-      toggleBtn.textContent = '🛤️ Hide Full Routes';
-      toggleBtn.classList.add('active');
-    }
-  };
-  
-  // Function to show complete route lines
-  function showCompleteRoutes() {
-    console.log('[showCompleteRoutes] Showing complete route lines');
-    
-    // Find all complete route layers and make them visible
-    if (window.routeLegLines) {
-      window.routeLegLines.forEach(lineId => {
-        if (lineId.startsWith('completeRoute-') && map.getLayer(lineId)) {
-          map.setLayoutProperty(lineId, 'visibility', 'visible');
-        }
-      });
-    }
-  }
-  
-  // Function to hide complete route lines
-  function hideCompleteRoutes() {
-    console.log('[hideCompleteRoutes] Hiding complete route lines');
-    
-    // Find all complete route layers and hide them
-    if (window.routeLegLines) {
-      window.routeLegLines.forEach(lineId => {
-        if (lineId.startsWith('completeRoute-') && map.getLayer(lineId)) {
-          map.setLayoutProperty(lineId, 'visibility', 'none');
-        }
-      });
-    }
-  }
+
 
   // ==== UTILITY FUNCTIONS ====
   function clearRoutePolylines() {
