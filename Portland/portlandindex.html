@@ -2351,36 +2351,7 @@
       currentItins = data.plan.itineraries;
       console.log('Stored itineraries:', currentItins); // Debug stored data
       
-      // === HYBRID ROUTE MAPPING INTEGRATION ===
-      console.log('=== HYBRID ROUTE MAPPING ANALYSIS ===');
       
-      // Process each itinerary with the hybrid mapping system
-      const processedItineraries = [];
-      for (let i = 0; i < data.plan.itineraries.length; i++) {
-        const itinerary = data.plan.itineraries[i];
-        console.log(`\n--- Processing Itinerary ${i + 1} ---`);
-        
-        const { mappedLegs, summary } = await processItineraryHybrid(itinerary, apiKey);
-        const { routesToTrack, confidenceGroups } = getRoutesForTrackingWithConfidence(mappedLegs);
-        
-        // Store the processed data
-        processedItineraries.push({
-          originalItinerary: itinerary,
-          mappedLegs: mappedLegs,
-          summary: summary,
-          routesToTrack: routesToTrack,
-          confidenceGroups: confidenceGroups
-        });
-        
-        console.log(`Itinerary ${i + 1} Summary:`, summary);
-        console.log(`Routes to track:`, routesToTrack);
-        console.log(`Confidence breakdown:`, confidenceGroups);
-      }
-      
-      // Store processed itineraries globally for use in showRoute
-      window.processedItineraries = processedItineraries;
-      
-      console.log('=== END HYBRID ROUTE MAPPING ANALYSIS ===');
       
       // Enhanced OTP route debugging (keep for compatibility)
       console.log('=== OTP ROUTE ANALYSIS ===');
@@ -2428,15 +2399,10 @@
       const start = getPortlandTimeString(new Date(itin.startTime));
       const end = getPortlandTimeString(new Date(itin.endTime));
       
-      // Get processed mapping data for this itinerary
-      const processedItin = processedData[idx];
-      const mappedLegs = processedItin ? processedItin.mappedLegs : [];
-      
       const segs = itin.legs.map((leg, legIdx) => {
         let icon = '';
         let segClass = '';
         let label = '';
-        let confidenceBadge = '';
         
 
         
@@ -2448,43 +2414,18 @@
           icon = '🚌';
           segClass = 'seg-bus';
           
-          if (mappedLeg && mappedLeg.mapping.isValid) {
-            // Use hybrid mapping results
-            const routeNumber = routeId;
-            let routeDescription = 'Portland';
-            
-            // Try to get route description from masterRoutes
-            if (masterRoutes) {
-              const masterRoute = masterRoutes.find(r => r.route_id === routeNumber);
-              if (masterRoute) {
-                routeDescription = masterRoute.route_title.split(' - ')[1] || 'Portland';
-              }
-            }
-            
-            // Check if we have live bus info for this route
-            let busNumbers = '';
-            if (window.otpBusInfo && window.otpBusInfo[routeNumber]) {
-              const buses = window.otpBusInfo[routeNumber];
-              busNumbers = buses.map(b => b.vehicleID).join(', ');
-              label = `Bus ${routeNumber} (${busNumbers}) - ${routeDescription}`;
+          if (leg.route) {
+            const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
+            if (masterRoute) {
+              const routeNumberMatch = masterRoute.route_title.match(/Route (\d+)/);
+              const routeNumber = routeNumberMatch ? routeNumberMatch[1] : leg.route;
+              label = `Bus ${routeNumber} - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
             } else {
-              label = `Bus ${routeNumber} - ${routeDescription}`;
+              let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
+              label = `${routeName} - ${leg.route}`;
             }
           } else {
-            // Fallback to original logic
-            if (leg.route) {
-              const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
-              if (masterRoute) {
-                const routeNumberMatch = masterRoute.route_title.match(/Route (\d+)/);
-                const routeNumber = routeNumberMatch ? routeNumberMatch[1] : leg.route;
-                label = `Bus ${routeNumber} - ${masterRoute.route_title.split(' - ')[1] || 'Portland'}`;
-              } else {
-                let routeName = leg.routeLongName || leg.routeShortName || 'Bus';
-                label = `${routeName} - ${leg.route}`;
-              }
-            } else {
-              label = 'Bus';
-            }
+            label = 'Bus';
           }
         } else if (leg.mode === 'TRAM') {
           icon = '🚋';
@@ -2824,10 +2765,7 @@
     let legColorMapping = {}; // Store color mapping for each leg
     let legIndex = 0; // Track leg index for color assignment
     
-    // Get processed mapping data for this itinerary
-    const processedData = window.processedItineraries || [];
-    const processedItin = processedData[idx];
-    const mappedLegs = processedItin ? processedItin.mappedLegs : [];
+    
     
     window.currentItins[idx].legs.forEach((leg, legIdx) => {
       let color;
