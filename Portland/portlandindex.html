@@ -2089,21 +2089,13 @@
             if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
             
-            // Enhanced bus filtering with better logging
-            let routeBuses = allBuses.filter(v => {
-              const routeMatch = v.routeNumber == trimetRouteNumber;
-              const directionMatch = v.direction == otpDirection;
-              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${otpDirection} (${directionMatch})`);
-              return routeMatch && directionMatch;
-            });
+            // Get buses for this route
+            let routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
             
-            console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
-            
-            // If no buses in exact direction, show ALL buses on this route (direction might be wrong)
-            if (routeBuses.length === 0) {
-              console.log('[fetchAndDisplayBuses] No buses in exact direction, showing all buses on route (OTP direction might be wrong)');
-              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
-              console.log('[fetchAndDisplayBuses] All buses on route:', routeBuses.length);
+            // Try to match direction first, but show all if none found
+            const directionBuses = routeBuses.filter(v => v.direction == otpDirection);
+            if (directionBuses.length > 0) {
+              routeBuses = directionBuses;
             }
             
 
@@ -2147,7 +2139,7 @@
                   <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                   <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
                   <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
-                  ${bus.direction !== otpDirection ? '<div style="color:#FF9800; font-size:11px; margin-top:4px;">⚠️ Opposite direction - check if useful for your trip</div>' : ''}
+
                   <div style='margin-top:10px; text-align:center;'>
                     <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html' : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
                   </div>
@@ -2446,22 +2438,7 @@
         let label = '';
         let confidenceBadge = '';
         
-        // Get mapping data for this leg
-        const mappedLeg = mappedLegs[legIdx];
-        const confidence = mappedLeg ? mappedLeg.mapping.confidence : 'none';
-        const routeId = mappedLeg ? mappedLeg.mapping.routeId : leg.route;
-        const source = mappedLeg ? mappedLeg.mapping.source : 'unknown';
-        
-        // Add confidence badge
-        if (mappedLeg && mappedLeg.mapping.isValid) {
-          const confidenceColors = {
-            high: '#4CAF50',
-            medium: '#FF9800', 
-            low: '#F44336'
-          };
-          const color = confidenceColors[confidence] || '#666';
-          confidenceBadge = `<span style="background:${color};color:white;padding:1px 4px;border-radius:3px;font-size:10px;margin-left:4px;">${confidence}</span>`;
-        }
+
         
         if (leg.mode === 'WALK') {
           icon = '🚶‍♂️';
@@ -2532,10 +2509,9 @@
         }
         
         let mins = Math.round((leg.duration || 0) / 60);
-        return `<span class='${segClass}' title='${label} (${source})'>
+        return `<span class='${segClass}' title='${label}'>
           <span class='seg-icon'>${icon}</span>
           <span>${mins}m</span>
-          ${confidenceBadge}
         </span>`;
       }).join('');
       // Overlay details for route info
@@ -2760,22 +2736,23 @@
 
   // Function to add complete route line with dashed unused portions
   function addCompleteRouteLine(routeNumber, direction, color, legIndex) {
-    console.log('[addCompleteRouteLine] Adding complete route for:', routeNumber, 'direction:', direction);
-    
     // Find the route in masterRoutes
     const route = masterRoutes.find(r => r.route_id === routeNumber && r.direction_id === direction);
-    if (!route || !route.stops || route.stops.length < 2) {
-      console.log('[addCompleteRouteLine] Route not found or insufficient stops:', routeNumber);
+    if (!route) return;
+    
+    // Use route shape if available, otherwise use stops
+    let routeCoords = [];
+    if (route.shape && route.shape.length > 1) {
+      // Use actual route shape (follows roads)
+      routeCoords = route.shape.map(coord => [coord.lon, coord.lat]);
+    } else if (route.stops && route.stops.length > 1) {
+      // Fallback to stop coordinates
+      routeCoords = route.stops.map(stop => [stop.lon, stop.lat]);
+    } else {
       return;
     }
     
-    // Create coordinates from all stops in the route
-    const routeCoords = route.stops.map(stop => [stop.lon, stop.lat]);
-    
-    if (routeCoords.length < 2) {
-      console.log('[addCompleteRouteLine] Insufficient coordinates for route:', routeNumber);
-      return;
-    }
+    if (routeCoords.length < 2) return;
     
     // Create a unique source and layer ID for the complete route
     const completeRouteId = `completeRoute-${routeNumber}-${direction}-${legIndex}`;
@@ -2801,15 +2778,13 @@
       paint: {
         'line-color': color,
         'line-width': 4,
-        'line-opacity': 0.6,
-        'line-dasharray': [6, 4] // Bigger, more pronounced dashes
+        'line-opacity': 0.5,
+        'line-dasharray': [10, 6] // Bigger, more visible dashes
       }
     });
     
     // Store the layer ID for removal
     window.routeLegLines.push(completeRouteId);
-    
-    console.log('[addCompleteRouteLine] Added complete route line:', completeRouteId, 'with', routeCoords.length, 'coordinates');
   }
 
   window.showRoute = function(idx) {
@@ -2860,12 +2835,6 @@
       let routeNumber = leg.route; // Declare routeNumber at the top level
       let routeDescription = '';
       
-      // Get mapping data for this leg
-      const mappedLeg = mappedLegs[legIdx];
-      const confidence = mappedLeg ? mappedLeg.mapping.confidence : 'none';
-      const routeId = mappedLeg ? mappedLeg.mapping.routeId : leg.route;
-      const source = mappedLeg ? mappedLeg.mapping.source : 'unknown';
-      
       if (leg.mode === 'WALK') {
         color = WALK_COLOR;
         legKey = `walk-${legIndex}`;
@@ -2873,64 +2842,25 @@
         // Assign unique color to each transit leg
         color = legColors[legIndex % legColors.length];
         
-        // Use hybrid mapping results if available
-        
-        if (mappedLeg && mappedLeg.mapping.isValid) {
-          // Use the hybrid mapping result
-          routeNumber = routeId;
-          console.log('[showRoute] Using hybrid mapping:', routeNumber, 'confidence:', confidence, 'source:', source);
-          
-          // Get route description from masterRoutes
-          if (masterRoutes) {
-            const masterRoute = masterRoutes.find(r => r.route_id === routeNumber);
-            if (masterRoute) {
-              routeDescription = masterRoute.route_title.split(' - ')[1] || masterRoute.route_title;
-            }
-          }
-        } else {
-          // Fallback to original logic
-          if (leg.routeLongName) {
-            routeDescription = leg.routeLongName;
-          } else if (leg.routeShortName) {
-            routeDescription = leg.routeShortName;
-          } else if (leg.route) {
-            const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
-            if (masterRoute) {
-              routeDescription = masterRoute.route_title.split(' - ')[1] || masterRoute.route_title;
-            }
-          }
-          
-          // Try to find the actual route number using the description
-          if (routeDescription) {
-            const decodedRouteNumber = mapOtpRouteToTrimet(routeDescription);
-            if (decodedRouteNumber) {
-              routeNumber = decodedRouteNumber;
-              console.log('[showRoute] Decoded route number:', routeNumber, 'for description:', routeDescription);
-            } else {
-              const foundRoute = findRouteByDescription(routeDescription);
-              if (foundRoute) {
-                routeNumber = foundRoute.route_id;
-                console.log('[showRoute] Found route number via masterRoutes:', routeNumber, 'for description:', routeDescription);
-              }
-            }
+        // Get route description from masterRoutes
+        let routeDescription = '';
+        if (masterRoutes && routeNumber) {
+          const masterRoute = masterRoutes.find(r => r.route_id === routeNumber);
+          if (masterRoute) {
+            routeDescription = masterRoute.route_title.split(' - ')[1] || masterRoute.route_title;
           }
         }
         
         legKey = `${leg.mode}-${routeNumber}-${leg.direction || 0}`;
         
-        // Store color mapping for bus matching with confidence info
+        // Store color mapping for bus matching
         legColorMapping[legKey] = {
           color: color,
           route: routeNumber,
           direction: leg.direction || 0,
           mode: leg.mode,
-          description: routeDescription,
-          confidence: confidence,
-          source: source,
-          isValid: mappedLeg ? mappedLeg.mapping.isValid : false
+          description: routeDescription
         };
-        
-        console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'confidence:', confidence, 'source:', source);
       }
       
       let coords = [];
@@ -2981,29 +2911,13 @@
       
       legIndex++;
       
-      // Collect route information for bus tracking (skip WALK legs)
-      if (leg.mode !== 'WALK') {
-        if (mappedLeg && mappedLeg.mapping.isValid && mappedLeg.mapping.routeId !== 'WALK') {
-          // Use hybrid mapping results
-          console.log('[showRoute] Found valid transit leg with hybrid mapping:', mappedLeg.mapping.routeId, 'confidence:', confidence);
-          routesToTrack.push({
-            route_id: mappedLeg.mapping.routeId,
-            direction_id: leg.direction || 0,
-            mode: leg.mode,
-            confidence: confidence,
-            source: source
-          });
-        } else if (leg.route) {
-          // Fallback to original logic
-          console.log('[showRoute] Found transit leg with fallback:', leg.route);
-          routesToTrack.push({
-            route_id: leg.route,
-            direction_id: leg.direction || 0,
-            mode: leg.mode,
-            confidence: 'fallback',
-            source: 'original_logic'
-          });
-        }
+      // Collect route information for bus tracking
+      if (leg.mode !== 'WALK' && leg.route) {
+        routesToTrack.push({
+          route_id: leg.route,
+          direction_id: leg.direction || 0,
+          mode: leg.mode
+        });
       }
       
       // Add stop markers (solid small white dots)
