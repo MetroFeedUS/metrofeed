@@ -2142,13 +2142,13 @@
                   <div style='text-align:center; margin-bottom:8px;'>
                     <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
                   </div>
-                  <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
+                  <div style='margin-bottom:6px;'><strong>Route:</strong> ${trimetRouteNumber} - ${route.description || 'Portland'}</div>
                   <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
                   <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                   <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
                   <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                   <div style='margin-top:10px; text-align:center;'>
-                    <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
+                    <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html' : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
                   </div>
                 </div>
               `;
@@ -2213,7 +2213,7 @@
                 <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                 <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
                 <div style='margin-top:8px; text-align:center;'>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
+                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction + '.html' : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
                 </div>
               </div>
             `;
@@ -2810,7 +2810,7 @@
         'line-opacity': 0.3,
         'line-dasharray': [2, 2] // Dashed line pattern
       }
-    });
+    }, lineId); // Insert before the trip segment layer
     
     // Store the layer ID for removal
     window.routeLegLines.push(completeRouteId);
@@ -2979,7 +2979,7 @@
         window.routeLegLines.push(lineId);
         allCoords = allCoords.concat(coords);
         
-        // Add complete route line with dashed unused portions
+        // Add complete route line with dashed unused portions (add BEFORE trip segment)
         if (leg.mode !== 'WALK' && routeNumber && masterRoutes) {
           addCompleteRouteLine(routeNumber, leg.direction || 0, color, legIndex);
         }
@@ -3268,11 +3268,37 @@
     if (testRoute) {
       console.log('Found test route:', testRoute.route_id, 'with', testRoute.stops.length, 'stops');
       addCompleteRouteLine('15', 0, '#FB4F14', 0);
+      
+      // Show the complete route immediately for testing
+      setTimeout(() => {
+        showCompleteRoutes();
+        console.log('Complete route should now be visible');
+      }, 1000);
     } else {
       console.log('Test route not found');
     }
     
     console.log('=== END COMPLETE ROUTE DEBUG ===');
+  };
+  
+  // Debug function to check layer visibility
+  window.checkLayerVisibility = function() {
+    console.log('=== LAYER VISIBILITY DEBUG ===');
+    
+    if (window.routeLegLines) {
+      window.routeLegLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          const visibility = map.getLayoutProperty(lineId, 'visibility');
+          console.log(`Layer ${lineId}: visibility = ${visibility}`);
+        } else {
+          console.log(`Layer ${lineId}: not found on map`);
+        }
+      });
+    } else {
+      console.log('No routeLegLines found');
+    }
+    
+    console.log('=== END LAYER VISIBILITY DEBUG ===');
   };
   
   // Debug function to test bus API
