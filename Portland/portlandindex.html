@@ -2099,25 +2099,14 @@
             
             console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
             
-            // If no buses in exact direction, try opposite direction (might be useful)
+            // If no buses in exact direction, show ALL buses on this route (direction might be wrong)
             if (routeBuses.length === 0) {
-              console.log('[fetchAndDisplayBuses] No buses in exact direction, trying opposite direction');
-              const oppositeDirection = otpDirection === 0 ? 1 : 0;
-              routeBuses = allBuses.filter(v => {
-                const routeMatch = v.routeNumber == trimetRouteNumber;
-                const directionMatch = v.direction == oppositeDirection;
-                console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${oppositeDirection} (${directionMatch})`);
-                return routeMatch && directionMatch;
-              });
-              console.log('[fetchAndDisplayBuses] Buses in opposite direction:', routeBuses.length);
+              console.log('[fetchAndDisplayBuses] No buses in exact direction, showing all buses on route (OTP direction might be wrong)');
+              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+              console.log('[fetchAndDisplayBuses] All buses on route:', routeBuses.length);
             }
             
-            // If still no buses, show any buses on this route
-            if (routeBuses.length === 0) {
-              console.log('[fetchAndDisplayBuses] No buses in either direction, showing any buses on route');
-              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
-              console.log('[fetchAndDisplayBuses] Any buses on route:', routeBuses.length);
-            }
+
             
             console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
             if (routeBuses.length > 0) {
@@ -3254,6 +3243,33 @@
     }
     
     console.log('=== END LAYER VISIBILITY DEBUG ===');
+  };
+  
+  // Debug function to check direction mapping
+  window.checkDirectionMapping = function() {
+    console.log('=== DIRECTION MAPPING DEBUG ===');
+    
+    if (window.currentLegColorMapping) {
+      Object.entries(window.currentLegColorMapping).forEach(([key, leg]) => {
+        console.log(`Leg: ${key}`);
+        console.log(`  OTP Direction: ${leg.direction}`);
+        console.log(`  Route: ${leg.route}`);
+        console.log(`  Description: ${leg.description}`);
+        
+        // Check what buses are available for this route
+        if (window.lastBusData && window.lastBusData.resultSet && window.lastBusData.resultSet.vehicle) {
+          const routeBuses = window.lastBusData.resultSet.vehicle.filter(bus => bus.routeNumber == leg.route);
+          console.log(`  Available buses: ${routeBuses.length}`);
+          routeBuses.forEach(bus => {
+            console.log(`    Bus ${bus.vehicleID}: direction ${bus.direction}, speed ${bus.speed}mph`);
+          });
+        }
+      });
+    } else {
+      console.log('No current leg mapping found');
+    }
+    
+    console.log('=== END DIRECTION MAPPING DEBUG ===');
   };
   
   // Debug function to test bus API
