@@ -745,10 +745,9 @@
 
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-<script src="mastermap.js"></script>
-<script src="route-mapping-hybrid.js"></script>
-<script>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <script src="mastermap.js"></script>
+    <script>
   // === SECTION: MAP INIT ===
   const apiKey = "2C4447D4A42083BCD84DE3B8E";
   const OTP_API = "https://otp.metrofeedus.com/otp/routers/default/plan";
@@ -1973,30 +1972,45 @@
   
   
   
-  // === HYBRID ROUTE MAPPING SYSTEM INTEGRATION ===
-  // Legacy wrapper for backward compatibility - now uses the new hybrid system
-  
-  async function mapOtpRouteToTrimet(otpRouteName) {
-    console.log('[mapOtpRouteToTrimet] Legacy wrapper called with:', otpRouteName);
+  // === ORIGINAL ROUTE MAPPING FUNCTION ===
+  function mapOtpRouteToTrimet(otpRouteName) {
+    console.log('[mapOtpRouteToTrimet] Mapping:', otpRouteName);
     
-    // Create a mock leg object for the hybrid system
-    const mockLeg = {
-      mode: 'BUS',
-      route: otpRouteName,
-      routeLongName: otpRouteName,
-      routeShortName: otpRouteName
-    };
-    
-    // Use the new hybrid mapping system
-    const mapping = await mapOtpRouteHybrid(mockLeg, apiKey);
-    
-    if (mapping.isValid) {
-      console.log('[mapOtpRouteToTrimet] Hybrid mapping successful:', otpRouteName, '->', mapping.routeId, '(confidence:', mapping.confidence, ')');
-      return mapping.routeId;
-    } else {
-      console.warn('[mapOtpRouteToTrimet] Hybrid mapping failed for:', otpRouteName);
-      return null;
+    // Direct number mapping
+    if (!isNaN(otpRouteName)) {
+      return otpRouteName;
     }
+    
+    // MAX lines
+    if (otpRouteName.includes('MAX Blue')) return '100';
+    if (otpRouteName.includes('MAX Red')) return '90';
+    if (otpRouteName.includes('MAX Green')) return '200';
+    if (otpRouteName.includes('MAX Yellow')) return '190';
+    if (otpRouteName.includes('MAX Orange')) return '290';
+    if (otpRouteName.includes('MAX Purple')) return '203';
+    
+    // Streetcar
+    if (otpRouteName.includes('Streetcar')) return '193';
+    
+    // FX2
+    if (otpRouteName.includes('FX2')) return 'FX2';
+    
+    // Try to extract number from route name
+    const numberMatch = otpRouteName.match(/(\d+)/);
+    if (numberMatch) {
+      return numberMatch[1];
+    }
+    
+    // Try to find in masterRoutes by description
+    if (masterRoutes) {
+      for (let route of masterRoutes) {
+        if (route.route_title && route.route_title.toLowerCase().includes(otpRouteName.toLowerCase())) {
+          return route.route_id;
+        }
+      }
+    }
+    
+    return null;
   }
   
   // Enhanced function to fetch and display buses for multiple routes
@@ -2089,13 +2103,21 @@
             if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
             
-            // Get buses for this route
-            let routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+            // Enhanced bus filtering with better logging
+            let routeBuses = allBuses.filter(v => {
+              const routeMatch = v.routeNumber == trimetRouteNumber;
+              const directionMatch = v.direction == otpDirection;
+              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${otpDirection} (${directionMatch})`);
+              return routeMatch && directionMatch;
+            });
             
-            // Try to match direction first, but show all if none found
-            const directionBuses = routeBuses.filter(v => v.direction == otpDirection);
-            if (directionBuses.length > 0) {
-              routeBuses = directionBuses;
+            console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
+            
+            // If no buses in exact direction, show all buses on this route
+            if (routeBuses.length === 0) {
+              console.log('[fetchAndDisplayBuses] No buses in exact direction, showing all buses on route');
+              routeBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+              console.log('[fetchAndDisplayBuses] All buses on route:', routeBuses.length);
             }
             
 
@@ -2780,12 +2802,33 @@
         // Assign unique color to each transit leg
         color = legColors[legIndex % legColors.length];
         
-        // Get route description from masterRoutes
+        // Extract route description from itinerary
         let routeDescription = '';
-        if (masterRoutes && routeNumber) {
-          const masterRoute = masterRoutes.find(r => r.route_id === routeNumber);
+        if (leg.routeLongName) {
+          routeDescription = leg.routeLongName;
+        } else if (leg.routeShortName) {
+          routeDescription = leg.routeShortName;
+        } else if (leg.route) {
+          // Try to find route info in masterRoutes
+          const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
           if (masterRoute) {
             routeDescription = masterRoute.route_title.split(' - ')[1] || masterRoute.route_title;
+          }
+        }
+        
+        // Try to find the actual route number using the description
+        if (routeDescription) {
+          const decodedRouteNumber = mapOtpRouteToTrimet(routeDescription);
+          if (decodedRouteNumber) {
+            routeNumber = decodedRouteNumber;
+            console.log('[showRoute] Decoded route number:', routeNumber, 'for description:', routeDescription);
+          } else {
+            // Fallback to masterRoutes search
+            const foundRoute = findRouteByDescription(routeDescription);
+            if (foundRoute) {
+              routeNumber = foundRoute.route_id;
+              console.log('[showRoute] Found route number via masterRoutes:', routeNumber, 'for description:', routeDescription);
+            }
           }
         }
         
@@ -2799,6 +2842,8 @@
           mode: leg.mode,
           description: routeDescription
         };
+        
+        console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription);
       }
       
       let coords = [];
