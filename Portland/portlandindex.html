@@ -494,13 +494,17 @@
       position: fixed;
       bottom: 15px;
       left: 15px;
-      z-index: 1001;
-      background: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      background: rgba(0, 0, 0, 0.9);
       border-radius: 8px;
       padding: 8px;
-      border: 1px solid #4dd0e1;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border: 2px solid #4dd0e1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       transition: all 0.3s ease;
+      /* Debug: make sure it's visible */
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
     
     .metrofeed-logo:hover {
@@ -677,8 +681,8 @@
 </div>
 
 <!-- -- METROFEED LOGO -- -->
-<div class="metrofeed-logo">
-  <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland" />
+<div class="metrofeed-logo" id="metrofeedLogo">
+  <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland" onerror="console.error('Logo failed to load'); this.style.display='none';" onload="console.log('Logo loaded successfully');" />
 </div>
 
 <!-- -- FOOTER -- -->
@@ -3718,6 +3722,19 @@
   // Re-render favorites bar when the page is shown (including back/forward navigation)
   window.addEventListener('pageshow', function() {
     renderFavoritesBar();
+  });
+  
+  // Ensure logo is visible
+  window.addEventListener('load', function() {
+    const logo = document.getElementById('metrofeedLogo');
+    if (logo) {
+      console.log('Logo element found:', logo);
+      logo.style.display = 'block';
+      logo.style.visibility = 'visible';
+      logo.style.opacity = '1';
+    } else {
+      console.error('Logo element not found!');
+    }
   });
 
 
