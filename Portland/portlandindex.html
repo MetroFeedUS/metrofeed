@@ -119,6 +119,33 @@
     .confidence-badge.medium { background: #FF9800; color: white; }
     .confidence-badge.low { background: #F44336; color: white; }
     .confidence-badge.none { background: #666; color: white; }
+    
+    /* -- COMPLETE ROUTE LINE STYLES -- */
+    .complete-route-toggle {
+      position: absolute;
+      top: 120px;
+      right: 10px;
+      background: #4dd0e1;
+      border: 2px solid #000;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #000;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+    }
+    
+    .complete-route-toggle:hover {
+      background: #1976d2;
+      color: #fff;
+    }
+    
+    .complete-route-toggle.active {
+      background: #4CAF50;
+      color: #fff;
+    }
     .mf-modal {
       background: #111;
       border: 2.5px solid #4dd0e1;
@@ -614,6 +641,11 @@
   <a href="ticket.html"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
 </button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
+
+<!-- -- COMPLETE ROUTE TOGGLE BUTTON -- -->
+<button id="completeRouteToggle" class="complete-route-toggle" onclick="toggleCompleteRoutes()" style="display: none;">
+  🛤️ Show Full Routes
+</button>
 
 <div id="dropdownMenu" class="dropdown">
   <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="1"></a>
@@ -2612,6 +2644,12 @@
           }, 15000);
         }
       }
+      
+      // Hide the complete route toggle button
+      const toggleBtn = document.getElementById('completeRouteToggle');
+      if (toggleBtn) {
+        toggleBtn.style.display = 'none';
+      }
     } else {
       console.log('[hideOtpModal] Trip is active, keeping route and buses visible');
     }
@@ -2721,6 +2759,63 @@
     
     console.log('[findRouteByDescription] No match found for:', cleanDesc);
     return null;
+  }
+
+  // Function to add complete route line with dashed unused portions
+  function addCompleteRouteLine(routeNumber, direction, color, legIndex) {
+    console.log('[addCompleteRouteLine] Adding complete route for:', routeNumber, 'direction:', direction);
+    
+    // Find the route in masterRoutes
+    const route = masterRoutes.find(r => r.route_id === routeNumber && r.direction_id === direction);
+    if (!route || !route.stops || route.stops.length < 2) {
+      console.log('[addCompleteRouteLine] Route not found or insufficient stops:', routeNumber);
+      return;
+    }
+    
+    // Create coordinates from all stops in the route
+    const routeCoords = route.stops.map(stop => [stop.lon, stop.lat]);
+    
+    if (routeCoords.length < 2) {
+      console.log('[addCompleteRouteLine] Insufficient coordinates for route:', routeNumber);
+      return;
+    }
+    
+    // Create a unique source and layer ID for the complete route
+    const completeRouteId = `completeRoute-${routeNumber}-${direction}-${legIndex}`;
+    
+    // Add the complete route as a dashed line behind the trip segment
+    map.addSource(completeRouteId, {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: routeCoords
+        }
+      }
+    });
+    
+    // Add dashed line layer for complete route (behind the trip segment)
+    map.addLayer({
+      id: completeRouteId,
+      type: 'line',
+      source: completeRouteId,
+      layout: {
+        'visibility': 'none' // Initially hidden
+      },
+      paint: {
+        'line-color': color,
+        'line-width': 2,
+        'line-opacity': 0.3,
+        'line-dasharray': [2, 2] // Dashed line pattern
+      }
+    });
+    
+    // Store the layer ID for removal
+    window.routeLegLines.push(completeRouteId);
+    
+    console.log('[addCompleteRouteLine] Added complete route line:', completeRouteId, 'with', routeCoords.length, 'coordinates');
   }
 
   window.showRoute = function(idx) {
@@ -2883,6 +2978,11 @@
         // Store the layer ID for removal
         window.routeLegLines.push(lineId);
         allCoords = allCoords.concat(coords);
+        
+        // Add complete route line with dashed unused portions
+        if (leg.mode !== 'WALK' && routeNumber && masterRoutes) {
+          addCompleteRouteLine(routeNumber, leg.direction || 0, color, legIndex);
+        }
       }
       
       legIndex++;
@@ -2993,9 +3093,63 @@
     // Mark that a trip has been selected
     activeTripSelected = true;
     
+    // Show the complete route toggle button
+    const toggleBtn = document.getElementById('completeRouteToggle');
+    if (toggleBtn) {
+      toggleBtn.style.display = 'block';
+      toggleBtn.textContent = '🛤️ Show Full Routes';
+      toggleBtn.classList.remove('active');
+    }
+    
     // Don't hide the modal - let user see the trip options and buses
     // hideOtpModal();
   };
+  
+  // Function to toggle complete route lines
+  window.toggleCompleteRoutes = function() {
+    const toggleBtn = document.getElementById('completeRouteToggle');
+    const isActive = toggleBtn.classList.contains('active');
+    
+    if (isActive) {
+      // Hide complete routes
+      hideCompleteRoutes();
+      toggleBtn.textContent = '🛤️ Show Full Routes';
+      toggleBtn.classList.remove('active');
+    } else {
+      // Show complete routes
+      showCompleteRoutes();
+      toggleBtn.textContent = '🛤️ Hide Full Routes';
+      toggleBtn.classList.add('active');
+    }
+  };
+  
+  // Function to show complete route lines
+  function showCompleteRoutes() {
+    console.log('[showCompleteRoutes] Showing complete route lines');
+    
+    // Find all complete route layers and make them visible
+    if (window.routeLegLines) {
+      window.routeLegLines.forEach(lineId => {
+        if (lineId.startsWith('completeRoute-') && map.getLayer(lineId)) {
+          map.setLayoutProperty(lineId, 'visibility', 'visible');
+        }
+      });
+    }
+  }
+  
+  // Function to hide complete route lines
+  function hideCompleteRoutes() {
+    console.log('[hideCompleteRoutes] Hiding complete route lines');
+    
+    // Find all complete route layers and hide them
+    if (window.routeLegLines) {
+      window.routeLegLines.forEach(lineId => {
+        if (lineId.startsWith('completeRoute-') && map.getLayer(lineId)) {
+          map.setLayoutProperty(lineId, 'visibility', 'none');
+        }
+      });
+    }
+  }
 
   // ==== UTILITY FUNCTIONS ====
   function clearRoutePolylines() {
@@ -3103,6 +3257,22 @@
     console.log('Validation result:', validation);
     
     console.log('=== END ROUTE VALIDATION DEBUG ===');
+  };
+  
+  // Debug function to test complete route lines
+  window.testCompleteRoutes = function() {
+    console.log('=== COMPLETE ROUTE DEBUG ===');
+    
+    // Test with a sample route
+    const testRoute = masterRoutes.find(r => r.route_id === '15' && r.direction_id === 0);
+    if (testRoute) {
+      console.log('Found test route:', testRoute.route_id, 'with', testRoute.stops.length, 'stops');
+      addCompleteRouteLine('15', 0, '#FB4F14', 0);
+    } else {
+      console.log('Test route not found');
+    }
+    
+    console.log('=== END COMPLETE ROUTE DEBUG ===');
   };
   
   // Debug function to test bus API
