@@ -1573,9 +1573,21 @@
     // Display closest route
     closestRoute = backgroundRouteData.route;
     
-    console.log('[showUserLocationAndRoute] closestRoute.shape:', closestRoute.shape);
-    console.log('[showUserLocationAndRoute] Number of shape points:', closestRoute.shape?.length || 0);
-    console.log('[showUserLocationAndRoute] Shape points (first 5):', closestRoute.shape?.slice(0, 5));
+    console.log('[showUserLocationAndRoute] closestRoute:', closestRoute);
+    console.log('[showUserLocationAndRoute] closestRoute.shape:', closestRoute?.shape);
+    console.log('[showUserLocationAndRoute] Number of shape points:', closestRoute?.shape?.length || 0);
+    
+    if (!closestRoute || !closestRoute.shape || !Array.isArray(closestRoute.shape)) {
+      console.error('[showUserLocationAndRoute] ERROR: No valid shape data found!', {
+        closestRoute: !!closestRoute,
+        hasShape: !!closestRoute?.shape,
+        isArray: Array.isArray(closestRoute?.shape),
+        shapeLength: closestRoute?.shape?.length
+      });
+      return;
+    }
+    
+    console.log('[showUserLocationAndRoute] Shape points (first 5):', closestRoute.shape.slice(0, 5));
     
     const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
     console.log('[showUserLocationAndRoute] routeCoordinates (first 3):', routeCoordinates.slice(0, 3));
