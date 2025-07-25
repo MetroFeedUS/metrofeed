@@ -3242,12 +3242,25 @@
         
         console.log('[showRoute] Processing transit leg:', legKey, 'with masterRoute:', masterRoute ? 'YES' : 'NO');
         
-        if (masterRoute && masterRoute.shape) {
-          // Use mastermap.js shape data for the route
-          console.log('[showRoute] Using mastermap.js shape for route:', routeNumber, 'direction:', direction);
-          
-          // Convert shape coordinates to [lng, lat] format for MapLibre GL JS
-          const lineCoords = masterRoute.shape.map(coord => [coord[1], coord[0]]);
+        // Use OTP geometry if available (follows roads), otherwise use mastermap.js shape
+        let coords = [];
+        if (leg.legGeometry && leg.legGeometry.points) {
+          // OTP provides encoded polyline - decode it for smooth road-following path
+          coords = decodePolyline(leg.legGeometry.points);
+          console.log('[showRoute] Using OTP polyline geometry for route:', routeNumber, 'direction:', direction);
+        } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
+          // OTP provides coordinates array
+          coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
+          console.log('[showRoute] Using OTP coordinate geometry for route:', routeNumber, 'direction:', direction);
+        } else if (masterRoute && masterRoute.shape) {
+          // Fallback to mastermap.js shape data (straight lines between stops)
+          coords = masterRoute.shape;
+          console.log('[showRoute] Using mastermap.js shape (straight lines) for route:', routeNumber, 'direction:', direction);
+        }
+        
+        if (coords.length) {
+          // Convert coordinates to [lng, lat] format for MapLibre GL JS
+          const lineCoords = coords.map(coord => [coord[1], coord[0]]);
           
           // Create a unique source and layer ID for this line
           const lineId = `routeLeg-${legIndex}`;
@@ -3277,7 +3290,7 @@
           
           // Store the layer ID for removal
           window.routeLegLines.push(lineId);
-          allCoords = allCoords.concat(masterRoute.shape);
+          allCoords = allCoords.concat(coords);
           
           // Add ALL stops from mastermap.js for this route (like closest route)
           console.log('[showRoute] Adding stops from mastermap.js for route:', routeNumber);
