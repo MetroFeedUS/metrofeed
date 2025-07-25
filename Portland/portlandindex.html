@@ -3292,63 +3292,27 @@
           window.routeLegLines.push(lineId);
           allCoords = allCoords.concat(coords);
           
-          // Add ALL stops from mastermap.js for this route (like closest route)
-          console.log('[showRoute] Adding stops from mastermap.js for route:', routeNumber);
-          const nowMins = getPortlandMinutes();
+          // Add only the stops that are part of this OTP trip leg
+          console.log('[showRoute] Adding OTP trip stops for route:', routeNumber);
           
-          masterRoute.stops.forEach(stop => {
-            // Create stop marker with times (like closest route)
-            let highlightedTimes = [];
-            let foundNext = false;
-            
-            if (stop.times && Array.isArray(stop.times)) {
-              stop.times.forEach(timeStr => {
-                let cleanTime = timeStr.trim();
-                let [h, m] = cleanTime.split(":"),
-                  schedMins = parseInt(h) * 60 + parseInt(m);
-                if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-                if (!foundNext && schedMins >= nowMins) {
-                  highlightedTimes.push(`<span style='background:${color};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-                  foundNext = true;
-                } else {
-                  highlightedTimes.push(cleanTime);
-                }
-              });
-            }
-            
-            // Create stop marker element
-            const stopElement = document.createElement('div');
-            stopElement.style.width = '12px';
-            stopElement.style.height = '12px';
-            stopElement.style.backgroundColor = color;
-            stopElement.style.borderRadius = '50%';
-            stopElement.style.border = `1px solid ${color}`;
-            stopElement.style.opacity = '0.9';
-            
-            const stopMarker = new maplibregl.Marker({
-              element: stopElement
+          // Add FROM stop
+          if (leg.from && leg.from.lat && leg.from.lon) {
+            addStopMarker(leg.from.lat, leg.from.lon, leg.from.name + leg.from.lat + leg.from.lon, color);
+          }
+          
+          // Add TO stop
+          if (leg.to && leg.to.lat && leg.to.lon) {
+            addStopMarker(leg.to.lat, leg.to.lon, leg.to.name + leg.to.lat + leg.to.lon, color);
+          }
+          
+          // Add intermediate stops if they exist
+          if (leg.intermediateStops && Array.isArray(leg.intermediateStops)) {
+            leg.intermediateStops.forEach(stop => {
+              if (stop.lat && stop.lon) {
+                addStopMarker(stop.lat, stop.lon, stop.name + stop.lat + stop.lon, color);
+              }
             });
-            stopMarker.setLngLat([stop.lon, stop.lat]);
-            
-            // Create popup content
-            const popupContent = document.createElement('div');
-            popupContent.innerHTML = `
-              <div style='border:1px solid ${color}; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                  <strong style='color:${color};'>${stop.name}</strong>
-                  <hr style='border:none; border-top:1px solid ${color}; margin:6px 0;'>
-                  ${
-                    highlightedTimes.map(t =>
-                      `<div style='padding:2px 0; color:${t.includes('background') ? '#fff' : '#fff'};'>${t}</div>`
-                    ).join('') || '<div>No scheduled times</div>'
-                  }
-                </div>
-            `;
-            
-            const popup = new maplibregl.Popup().setDOMContent(popupContent);
-            stopMarker.setPopup(popup);
-            stopMarker.addTo(map);
-            window.routeStopMarkers.push(stopMarker);
-          });
+          }
           
         } else {
           // Fallback to OTP geometry if no masterRoute match
