@@ -670,6 +670,91 @@
   </div>
 </div>
 
+<!-- -- OTP SETTINGS MODAL -- -->
+<div id="otpSettingsModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 500px;">
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #4dd0e1; padding-bottom: 0.5rem;">
+      <h3 style="margin: 0; color: #4dd0e1;">Trip Preferences</h3>
+      <span class="close" style="cursor: pointer; font-size: 1.5rem; color: #666;" onclick="hideOtpSettingsModal()">&times;</span>
+    </div>
+    
+    <div class="modal-body" style="margin-bottom: 1rem;">
+      <div class="setting-group" style="margin-bottom: 1rem;">
+        <label for="maxWalkDistance" style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Maximum Walking Distance:</label>
+        <select id="maxWalkDistance" style="width: 100%; padding: 0.5rem; border: 1px solid #333; border-radius: 4px; background: #1a1a1a; color: #fff;">
+          <option value="400">0.25 miles (400m)</option>
+          <option value="800" selected>0.5 miles (800m)</option>
+          <option value="1200">0.75 miles (1200m)</option>
+          <option value="1600">1 mile (1600m)</option>
+          <option value="2400">1.5 miles (2400m)</option>
+          <option value="3200">2 miles (3200m)</option>
+        </select>
+      </div>
+      
+      <div class="setting-group" style="margin-bottom: 1rem;">
+        <label for="maxWalkTime" style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Maximum Walking Time:</label>
+        <select id="maxWalkTime" style="width: 100%; padding: 0.5rem; border: 1px solid #333; border-radius: 4px; background: #1a1a1a; color: #fff;">
+          <option value="300">5 minutes</option>
+          <option value="600" selected>10 minutes</option>
+          <option value="900">15 minutes</option>
+          <option value="1200">20 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+      </div>
+      
+      <div class="setting-group" style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Transit Modes:</label>
+        <div class="checkbox-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="checkbox" id="modeBus" checked style="margin-right: 0.5rem;"> Bus
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="checkbox" id="modeTrain" checked style="margin-right: 0.5rem;"> Train/MAX
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="checkbox" id="modeStreetcar" checked style="margin-right: 0.5rem;"> Streetcar
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="checkbox" id="modeFerry" checked style="margin-right: 0.5rem;"> Ferry
+          </label>
+        </div>
+      </div>
+      
+      <div class="setting-group" style="margin-bottom: 1rem;">
+        <label for="optimizeFor" style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Optimize For:</label>
+        <select id="optimizeFor" style="width: 100%; padding: 0.5rem; border: 1px solid #333; border-radius: 4px; background: #1a1a1a; color: #fff;">
+          <option value="QUICK" selected>Quickest Trip</option>
+          <option value="SAFE">Safest Trip</option>
+          <option value="FLAT">Flattest Route</option>
+          <option value="GREENWAYS">Greenways</option>
+          <option value="TRIANGLE">Triangle</option>
+        </select>
+      </div>
+      
+      <div class="setting-group" style="margin-bottom: 1rem;">
+        <label for="wheelchairAccessible" style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Wheelchair Accessible:</label>
+        <select id="wheelchairAccessible" style="width: 100%; padding: 0.5rem; border: 1px solid #333; border-radius: 4px; background: #1a1a1a; color: #fff;">
+          <option value="false" selected>No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+      
+      <div class="setting-group" style="margin-bottom: 1rem;">
+        <label for="bikeRide" style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Bike & Ride:</label>
+        <select id="bikeRide" style="width: 100%; padding: 0.5rem; border: 1px solid #333; border-radius: 4px; background: #1a1a1a; color: #fff;">
+          <option value="false" selected>No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="modal-footer" style="display: flex; gap: 1rem; justify-content: flex-end;">
+      <button id="cancelSettings" class="mf-btn" style="background: #666;" onclick="hideOtpSettingsModal()">Cancel</button>
+      <button id="applySettings" class="mf-btn" style="background: #4dd0e1; color: #000;" onclick="applyOtpSettings()">Plan Trip</button>
+    </div>
+  </div>
+</div>
+
 
 
 
@@ -1488,7 +1573,11 @@
     // Display closest route
     closestRoute = backgroundRouteData.route;
     
+    console.log('[showUserLocationAndRoute] closestRoute.shape:', closestRoute.shape);
+    console.log('[showUserLocationAndRoute] Number of shape points:', closestRoute.shape?.length || 0);
+    
     const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
+    console.log('[showUserLocationAndRoute] routeCoordinates (first 3):', routeCoordinates.slice(0, 3));
     
     map.addSource('userLocationRoute', {
       type: 'geojson',
@@ -1528,8 +1617,14 @@
     userLocationStopMarkers.forEach(marker => marker.remove());
     userLocationStopMarkers = [];
 
+    console.log('[showUserLocationAndRoute] closestRoute:', closestRoute);
+    console.log('[showUserLocationAndRoute] closestRoute.stops:', closestRoute?.stops);
+    console.log('[showUserLocationAndRoute] Number of stops:', closestRoute?.stops?.length || 0);
+
     if (closestRoute && Array.isArray(closestRoute.stops)) {
-      closestRoute.stops.forEach(stop => {
+      console.log('[showUserLocationAndRoute] Creating stops for route:', closestRoute.route_title);
+      closestRoute.stops.forEach((stop, index) => {
+        console.log(`[showUserLocationAndRoute] Creating stop ${index + 1}:`, stop.name, 'at', stop.lat, stop.lon);
         let highlightedTimes = [];
         let foundNext = false;
         stop.times.forEach(timeStr => {
@@ -1577,6 +1672,7 @@
         stopMarker.setPopup(popup);
         stopMarker.addTo(map);
         userLocationStopMarkers.push(stopMarker);
+        console.log(`[showUserLocationAndRoute] Added stop marker ${index + 1} to map`);
       });
     } else {
       console.error('[showUserLocationAndRoute] closestRoute or closestRoute.stops is undefined!', closestRoute);
@@ -2513,15 +2609,52 @@
   window.routeLegLines = [];
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
-  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
+  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, settings = {}) {
     const from = `${fromLat},${fromLon}`;
     const to = `${toLat},${toLon}`;
-    // Adjust the server/URL as needed for production:
-    const url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
+    
+    // Build URL with settings
+    let url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&numItineraries=4`;
+    
+    // Add modes
+    if (settings.modes && settings.modes.length > 0) {
+      url += `&mode=${settings.modes.join(',')},WALK`;
+    } else {
+      url += `&mode=TRANSIT,WALK`;
+    }
+    
+    // Add walking preferences
+    if (settings.maxWalkDistance) {
+      url += `&maxWalkDistance=${settings.maxWalkDistance}`;
+    }
+    if (settings.maxWalkTime) {
+      url += `&maxWalkTime=${settings.maxWalkTime}`;
+    }
+    
+    // Add optimization (OTP uses 'optimize' parameter)
+    if (settings.optimizeFor) {
+      url += `&optimize=${settings.optimizeFor}`;
+    }
+    
+    // Add accessibility (OTP uses 'wheelchair' parameter)
+    if (settings.wheelchairAccessible === 'true') {
+      url += `&wheelchair=true`;
+    }
+    
+    // Add bike & ride (OTP uses 'bikeParkAndRide' parameter)
+    if (settings.bikeRide === 'true') {
+      url += `&bikeParkAndRide=true`;
+    }
+    
+    // Add arrival/departure time (default to now)
+    const now = new Date();
+    url += `&time=${now.getHours()}:${now.getMinutes()}`;
+    url += `&date=${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     console.log('🚀 [OTP DEBUG] Starting OTP request...');
     console.log('🚀 [OTP DEBUG] URL:', url);
     console.log('🚀 [OTP DEBUG] From:', from, 'To:', to);
+    console.log('🚀 [OTP DEBUG] Settings applied:', settings);
 
     // Clear previous state for multiple trips
     window.otpBusInfo = {};
@@ -2581,6 +2714,14 @@
         console.log('📊 [OTP DEBUG] Date:', data.plan.date);
         console.log('📊 [OTP DEBUG] From:', data.plan.from);
         console.log('📊 [OTP DEBUG] To:', data.plan.to);
+        
+        // Check if OTP acknowledged our settings
+        if (data.plan.requestParameters) {
+          console.log('📊 [OTP DEBUG] Request parameters:', data.plan.requestParameters);
+        }
+        if (data.plan.searchWindowUsed) {
+          console.log('📊 [OTP DEBUG] Search window used:', data.plan.searchWindowUsed);
+        }
       }
       
       if (data.error) {
@@ -2610,6 +2751,16 @@
         console.log(`🎯 [OTP DEBUG] Transfers: ${itin.transfers || 0}`);
         console.log(`🎯 [OTP DEBUG] Fare: ${itin.fare || 'Not available'}`);
         console.log(`🎯 [OTP DEBUG] Number of legs: ${itin.legs?.length || 0}`);
+        
+        // Check if walking distance respects our maxWalkDistance setting
+        if (settings.maxWalkDistance && itin.walkDistance) {
+          const maxWalkMeters = parseInt(settings.maxWalkDistance);
+          const actualWalkMeters = Math.round(itin.walkDistance);
+          console.log(`🎯 [OTP DEBUG] Max walk setting: ${maxWalkMeters}m, Actual walk: ${actualWalkMeters}m`);
+          if (actualWalkMeters > maxWalkMeters) {
+            console.log(`⚠️ [OTP DEBUG] WARNING: Walk distance exceeds setting!`);
+          }
+        }
         
         // Complete leg analysis
         itin.legs.forEach((leg, legIdx) => {
@@ -3299,8 +3450,8 @@
           // Add the full route as a gray background line
           if (masterRoute && masterRoute.shape) {
             console.log('[showRoute] Adding gray background line for route:', routeNumber);
-            // Use the same coordinates as the trip line for consistency
-            const fullRouteCoords = coords.map(coord => [coord[1], coord[0]]);
+            // Use the full mastermap.js route shape as background
+            const fullRouteCoords = masterRoute.shape.map(coord => [coord[1], coord[0]]);
             const fullRouteId = `fullRoute-${legIndex}`;
             
             map.addSource(fullRouteId, {
@@ -3949,6 +4100,69 @@
   function hideModal() {
     document.querySelector('.mf-overlay').style.display = 'none';
   }
+  
+  // --- OTP Settings Modal Functions ---
+  function showOtpSettingsModal() {
+    document.getElementById('otpSettingsModal').style.display = 'flex';
+  }
+  
+  function hideOtpSettingsModal() {
+    document.getElementById('otpSettingsModal').style.display = 'none';
+  }
+  
+  function applyOtpSettings() {
+    // Get all the settings values
+    const maxWalkDistance = document.getElementById('maxWalkDistance').value;
+    const maxWalkTime = document.getElementById('maxWalkTime').value;
+    const optimizeFor = document.getElementById('optimizeFor').value;
+    const wheelchairAccessible = document.getElementById('wheelchairAccessible').value;
+    const bikeRide = document.getElementById('bikeRide').value;
+    
+    // Get transit modes
+    const modes = [];
+    if (document.getElementById('modeBus').checked) modes.push('BUS');
+    if (document.getElementById('modeTrain').checked) modes.push('TRAIN');
+    if (document.getElementById('modeStreetcar').checked) modes.push('STREETCAR');
+    if (document.getElementById('modeFerry').checked) modes.push('FERRY');
+    
+    // Hide the settings modal
+    hideOtpSettingsModal();
+    
+    // Show loading state on Go button
+    const goBtn = document.getElementById('goBtn');
+    if (goBtn) {
+      goBtn.textContent = 'Planning...';
+      goBtn.disabled = true;
+    }
+    
+    // Clear any existing routes
+    clearRoute();
+    
+    // Plan the trip with custom settings
+    console.log('[OTP Settings] Planning trip with:', {
+      maxWalkDistance,
+      maxWalkTime,
+      optimizeFor,
+      wheelchairAccessible,
+      bikeRide,
+      modes
+    });
+    
+    fetchAndShowOtpItineraries(
+      window.otpStartCoords.lat, 
+      window.otpStartCoords.lon, 
+      window.otpEndCoords.lat, 
+      window.otpEndCoords.lon,
+      {
+        maxWalkDistance,
+        maxWalkTime,
+        optimizeFor,
+        wheelchairAccessible,
+        bikeRide,
+        modes
+      }
+    );
+  }
 
   // --- Main onload logic (SAFE order) ---
   window.onload = function() {
@@ -4021,9 +4235,12 @@
           return;
         }
         
-        // Call OTP with coordinates
-        console.log('[Go Button] Starting new OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
-        fetchAndShowOtpItineraries(startStop.lat, startStop.lon, endStop.lat, endStop.lon);
+        // Store coordinates for later use in settings modal
+        window.otpStartCoords = { lat: startStop.lat, lon: startStop.lon };
+        window.otpEndCoords = { lat: endStop.lat, lon: endStop.lon };
+        
+        // Show the OTP settings modal
+        showOtpSettingsModal();
       });
     } else {
       console.error('Go button not found!'); // Debug log
