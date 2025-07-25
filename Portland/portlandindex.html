@@ -98,6 +98,157 @@
     .site-footer a:hover { text-decoration: underline; }
     /* -- MODAL/OVERLAY -- */
     .mf-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; pointer-events: auto !important; }
+    
+    /* -- TRIP OPTIONS MODAL -- */
+    .trip-options-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 10000;
+      backdrop-filter: blur(4px);
+    }
+    
+    .trip-options-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a1a1a;
+      border: 2px solid #4dd0e1;
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(77, 208, 225, 0.3);
+    }
+    
+    .trip-options-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #333;
+    }
+    
+    .trip-options-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #4dd0e1;
+    }
+    
+    .close-modal {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    
+    .close-modal:hover {
+      background: #333;
+      color: #fff;
+    }
+    
+    .trip-option-group {
+      margin-bottom: 20px;
+    }
+    
+    .trip-option-label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    
+    .trip-option-input {
+      width: 100%;
+      padding: 10px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    .trip-option-input:focus {
+      outline: none;
+      border-color: #4dd0e1;
+      box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2);
+    }
+    
+    .trip-option-select {
+      width: 100%;
+      padding: 10px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    
+    .trip-option-select:focus {
+      outline: none;
+      border-color: #4dd0e1;
+    }
+    
+    .trip-option-checkbox {
+      margin-right: 8px;
+      transform: scale(1.2);
+    }
+    
+    .trip-option-checkbox-label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    
+    .trip-options-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      justify-content: flex-end;
+    }
+    
+    .trip-option-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .trip-option-btn-primary {
+      background: #4dd0e1;
+      color: #000;
+    }
+    
+    .trip-option-btn-primary:hover {
+      background: #26c6da;
+    }
+    
+    .trip-option-btn-secondary {
+      background: #444;
+      color: #ccc;
+    }
+    
+    .trip-option-btn-secondary:hover {
+      background: #555;
+    }
     .mf-modal {
       background: #111;
       border: 2.5px solid #4dd0e1;
@@ -1075,6 +1226,19 @@
         }
       });
       window.routeLegLines = [];
+    }
+    
+    // Clear full route lines if they exist
+    if (window.fullRouteLines && window.fullRouteLines.length) {
+      window.fullRouteLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+      window.fullRouteLines = [];
     }
     
     // Clear OTP stop markers if they exist
@@ -2397,38 +2561,17 @@
               // Use OTP route color and add special styling
               const routeColor = route.color || getRouteColor(route.mode);
               
-              // Create OTP bus marker with rotating electric bus SVG
+              // Create simple OTP bus marker
               const otpMarkerElement = document.createElement('div');
               otpMarkerElement.className = 'otp-bus-marker';
               
-              // Get bus bearing for rotation (0-359 degrees)
-              const busBearing = bus.bearing || 0;
               const directionArrow = bus.direction == 1 ? '↑' : '↓';
               
               otpMarkerElement.innerHTML = `
-                <div style='text-align:center; position:relative;'>
-                  <!-- Bus icon with road perspective -->
-                  <div style='width:32px; height:32px; margin:0 auto 4px auto; position:relative;'>
-                    <!-- Road shadow for depth -->
-                    <div style='position:absolute; bottom:-2px; left:2px; right:2px; height:4px; background:rgba(0,0,0,0.3); border-radius:50%; transform:skewX(-15deg);'></div>
-                    
-                    <!-- Bus icon with perspective -->
-                    <div style='transform:rotate(${busBearing}deg) scaleX(0.8); transition:transform 0.3s ease; transform-origin:center bottom;'>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512" style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));">
-                        <g>
-                          <path fill="${routeColor}" d="m502.658 272.053-17.873-77.566a24.049 24.049 0 0 0-23.435-18.648H15.516a8.016 8.016 0 0 0-8.016 8.016v128.258a8.016 8.016 0 0 0 8.016 8.016h480.968a8.016 8.016 0 0 0 8.016-8.016v-23.861c0-5.451-.618-10.886-1.842-16.199z"/>
-                          <path fill="#f87c12" d="M32.142 280.048v-104.21H15.516a8.016 8.016 0 0 0-8.016 8.016v128.258a8.016 8.016 0 0 0 8.016 8.016h480.968a8.016 8.016 0 0 0 8.016-8.016V296.08H48.174c-8.854.001-16.032-7.177-16.032-16.032z"/>
-                          <circle cx="135.758" cy="312.113" r="24.048" fill="#5d5360"/>
-                          <g fill="#739ad6">
-                            <path d="M408.306 256H47.581a8.016 8.016 0 0 1-8.016-8.016v-32.065a8.016 8.016 0 0 1 8.016-8.016h360.726V256z"/>
-                            <path d="M199.887 207.903h64.129v112.226h-64.129zM408.306 207.903h64.129v112.226h-64.129z"/>
-                          </g>
-                          <circle cx="384.258" cy="312.113" r="24.048" fill="#5d5360"/>
-                          <path fill="#8bb3ea" d="M199.887 207.903H47.581a8.016 8.016 0 0 0-8.016 8.016v16.032h160.323v-24.048zM264.016 207.903v24.048h104.21c8.854 0 16.032 7.178 16.032 16.032V256h24.048v-48.097z"/>
-                          <path d="m509.966 270.37-17.873-77.566c-3.318-14.404-15.96-24.465-30.743-24.465H15.516C6.96 168.339 0 175.299 0 183.854v128.258c0 8.556 6.96 15.516 15.516 15.516h92.789c5.426 9.562 15.695 16.032 27.453 16.032s22.027-6.47 27.453-16.032h193.594c5.426 9.562 15.695 16.032 27.453 16.032s22.027-6.47 27.453-16.032h84.773c8.556 0 15.516-6.96 15.516-15.516v-23.86c0-6.009-.684-12.025-2.034-17.882zm-374.208 58.291c-9.125 0-16.549-7.423-16.549-16.548s7.424-16.548 16.549-16.548 16.548 7.424 16.548 16.548c.001 9.125-7.423 16.548-16.548 16.548zm0-48.097c-17.396 0-31.549 14.152-31.549 31.548 0 .173.01.344.013.516H15.516a.516.516 0 0 1-.516-.516V183.854c0-.284.231-.516.516-.516h445.835c7.754 0 14.385 5.277 16.125 12.833l.975 4.231H87.66a7.5 7.5 0 0 0 0 15h24.566V248.5H47.581a.516.516 0 0 1-.516-.516V215.92c0-.285.231-.516.516-.516h8.016a7.5 7.5 0 0 0 0-15h-8.016c-8.556 0-15.516 6.96-15.516 15.516v32.064c0 8.556 6.96 15.516 15.516 15.516h144.807v49.129h-25.094c.003-.172.013-.343.013-.516 0-17.396-14.153-31.549-31.549-31.549zm265.049-65.161V248.5h-57.146v-33.097zm15 0h17.064v97.226h-17.064zm32.064 0h17.064v97.226h-17.064zm-255.484 0V248.5h-65.162v-33.097zm15 0h17.064v97.226h-17.064zm32.065 0h17.064v97.226h-17.064zm32.064 97.226v-97.226h57.145V248.5h-32.578a7.5 7.5 0 0 0 0 15h104.723v21.768a31.35 31.35 0 0 0-16.548-4.703c-17.396 0-31.549 14.152-31.549 31.548 0 .173.01.344.013.516zm112.742 16.032c-9.125 0-16.549-7.423-16.549-16.548s7.424-16.548 16.549-16.548 16.548 7.424 16.548 16.548c.001 9.125-7.423 16.548-16.548 16.548zM497 312.113a.516.516 0 0 1-.516.516h-16.548v-97.226h1.972l13.441 58.334A64.701 64.701 0 0 1 497 288.252z" fill="#000000"/>
-                        </g>
-                      </svg>
-                    </div>
+                <div style='text-align:center;'>
+                  <!-- Simple bus icon -->
+                  <div style='width:24px; height:24px; margin:0 auto 4px auto; background:${routeColor}; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:12px;'>
+                    🚌
                   </div>
                   
                   <!-- Bus ID and direction -->
@@ -2636,6 +2779,19 @@
         }
       });
       window.routeLegLines = [];
+    }
+    
+    // Clear any existing full route lines
+    if (window.fullRouteLines && window.fullRouteLines.length) {
+      window.fullRouteLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+      window.fullRouteLines = [];
     }
     
     if (window.routeStopMarkers && window.routeStopMarkers.length) {
@@ -3216,6 +3372,9 @@
     // Store routesToTrack globally for bus tracking
     window.routesToTrack = routesToTrack;
     
+    // Draw full routes for each transit leg
+    drawFullRoutesForLegs(legs, legColorMapping);
+    
     // Start tracking buses for the routes in this trip
     if (routesToTrack.length > 0) {
       console.log('[showRoute] Tracking buses for routes:', routesToTrack);
@@ -3639,9 +3798,16 @@
           return;
         }
         
-        // Call OTP with coordinates
-        console.log('[Go Button] Starting new OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
-        fetchAndShowOtpItineraries(startStop.lat, startStop.lon, endStop.lat, endStop.lon);
+        // Store trip coordinates for later use
+        window.pendingTrip = {
+          startStop: startStop,
+          endStop: endStop,
+          startInput: startInput,
+          endInput: endInput
+        };
+        
+        // Show trip options modal instead of planning directly
+        showTripOptions();
       });
     } else {
       console.error('Go button not found!'); // Debug log
@@ -3907,6 +4073,286 @@
     }
   });
 
+  // Trip Options Modal HTML
+  const tripOptionsModal = document.createElement('div');
+  tripOptionsModal.className = 'trip-options-modal';
+  tripOptionsModal.id = 'tripOptionsModal';
+  tripOptionsModal.innerHTML = `
+    <div class="trip-options-content">
+      <div class="trip-options-header">
+        <div class="trip-options-title">🚌 Trip Options</div>
+        <button class="close-modal" onclick="closeTripOptions()">&times;</button>
+      </div>
+      
+      <div class="trip-option-group">
+        <label class="trip-option-label">Departure Time</label>
+        <input type="datetime-local" class="trip-option-input" id="departureTime" value="${new Date().toISOString().slice(0, 16)}">
+      </div>
+      
+      <div class="trip-option-group">
+        <label class="trip-option-label">Transportation Modes</label>
+        <div class="trip-option-checkbox-label">
+          <input type="checkbox" class="trip-option-checkbox" id="modeBus" checked>
+          <span>🚌 Bus</span>
+        </div>
+        <div class="trip-option-checkbox-label">
+          <input type="checkbox" class="trip-option-checkbox" id="modeRail" checked>
+          <span>🚇 MAX Rail</span>
+        </div>
+        <div class="trip-option-checkbox-label">
+          <input type="checkbox" class="trip-option-checkbox" id="modeBike" checked>
+          <span>🚲 Bike</span>
+        </div>
+        <div class="trip-option-checkbox-label">
+          <input type="checkbox" class="trip-option-checkbox" id="modeWalk" checked>
+          <span>🚶 Walk</span>
+        </div>
+      </div>
+      
+      <div class="trip-option-group">
+        <label class="trip-option-label">Walking Distance</label>
+        <select class="trip-option-select" id="walkDistance">
+          <option value="400">0.25 miles (400m)</option>
+          <option value="800" selected>0.5 miles (800m)</option>
+          <option value="1200">0.75 miles (1.2km)</option>
+          <option value="1600">1 mile (1.6km)</option>
+          <option value="2400">1.5 miles (2.4km)</option>
+        </select>
+      </div>
+      
+      <div class="trip-option-group">
+        <label class="trip-option-label">Trip Preferences</label>
+        <div class="trip-option-checkbox-label">
+          <input type="checkbox" class="trip-option-checkbox" id="preferBus" checked>
+          <span>Prefer bus over rail</span>
+        </div>
+        <div class="trip-option-checkbox-label">
+          <input type="checkbox" class="trip-option-checkbox" id="preferWalk" checked>
+          <span>Prefer walking</span>
+        </div>
+        <div class="trip-option-checkbox-label">
+          <input type="checkbox" class="trip-option-checkbox" id="avoidTransfers">
+          <span>Avoid transfers</span>
+        </div>
+        <div class="trip-option-checkbox-label">
+          <input type="checkbox" class="trip-option-checkbox" id="wheelchairAccessible">
+          <span>♿ Wheelchair accessible</span>
+        </div>
+      </div>
+      
+      <div class="trip-option-group">
+        <label class="trip-option-label">Trip Type</label>
+        <select class="trip-option-select" id="tripType">
+          <option value="QUICK" selected>🚀 Fastest</option>
+          <option value="SAFE">🛡️ Safest</option>
+          <option value="FLAT">🏔️ Flattest</option>
+          <option value="GREENWAYS">🌳 Greenways</option>
+          <option value="TRIANGLE">📐 Triangle</option>
+        </select>
+      </div>
+      
+      <div class="trip-options-buttons">
+        <button class="trip-option-btn trip-option-btn-secondary" onclick="closeTripOptions()">Cancel</button>
+        <button class="trip-option-btn trip-option-btn-primary" onclick="planTripWithOptions()">🚀 Plan Trip</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(tripOptionsModal);
+
+  // Trip Options Modal Functions
+  function showTripOptions() {
+    document.getElementById('tripOptionsModal').style.display = 'block';
+  }
+  
+  function closeTripOptions() {
+    document.getElementById('tripOptionsModal').style.display = 'none';
+  }
+  
+  function planTripWithOptions() {
+    if (!window.pendingTrip) {
+      console.error('No pending trip found!');
+      return;
+    }
+    
+    const { startStop, endStop, startInput, endInput } = window.pendingTrip;
+    
+    // Get trip options from the modal
+    const departureTime = document.getElementById('departureTime').value;
+    const walkDistance = document.getElementById('walkDistance').value;
+    const tripType = document.getElementById('tripType').value;
+    
+    // Get transportation modes
+    const modes = [];
+    if (document.getElementById('modeBus').checked) modes.push('BUS');
+    if (document.getElementById('modeRail').checked) modes.push('RAIL');
+    if (document.getElementById('modeBike').checked) modes.push('BICYCLE');
+    if (document.getElementById('modeWalk').checked) modes.push('WALK');
+    
+    // Get preferences
+    const preferences = {
+      preferBus: document.getElementById('preferBus').checked,
+      preferWalk: document.getElementById('preferWalk').checked,
+      avoidTransfers: document.getElementById('avoidTransfers').checked,
+      wheelchairAccessible: document.getElementById('wheelchairAccessible').checked
+    };
+    
+    console.log('[Trip Options] Planning trip with options:', {
+      departureTime,
+      walkDistance,
+      tripType,
+      modes,
+      preferences
+    });
+    
+    // Close the modal
+    closeTripOptions();
+    
+    // Clear previous route lines
+    if (window.routeLegLines && window.routeLegLines.length) {
+      window.routeLegLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+      window.routeLegLines = [];
+    }
+    
+    // Hide user's closest route when planning a trip
+    if (userLocationPolyline) {
+      if (map.getLayer(userLocationPolyline)) {
+        map.removeLayer(userLocationPolyline);
+      }
+      if (map.getSource(userLocationPolyline)) {
+        map.removeSource(userLocationPolyline);
+      }
+      userLocationPolyline = null;
+    }
+    
+    // Call OTP with coordinates and options
+    console.log('[Trip Options] Starting OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
+    fetchAndShowOtpItinerariesWithOptions(startStop.lat, startStop.lon, endStop.lat, endStop.lon, {
+      departureTime,
+      walkDistance,
+      tripType,
+      modes,
+      preferences
+    });
+  }
+  
+  // Function to draw full routes for each transit leg
+  function drawFullRoutesForLegs(legs, legColorMapping) {
+    console.log('[drawFullRoutesForLegs] Drawing full routes for', legs.length, 'legs');
+    
+    legs.forEach((leg, legIndex) => {
+      if (leg.mode === 'WALK') return; // Skip walking legs
+      
+      const routeId = leg.route;
+      const legColor = legColorMapping[legIndex] || '#4dd0e1';
+      
+      if (!routeId || !masterRoutes) {
+        console.log('[drawFullRoutesForLegs] No route ID or masterRoutes for leg', legIndex);
+        return;
+      }
+      
+      // Find the route in masterRoutes
+      const masterRoute = masterRoutes.find(r => r.route_id === routeId);
+      if (!masterRoute || !masterRoute.stops || masterRoute.stops.length < 2) {
+        console.log('[drawFullRoutesForLegs] No master route found for', routeId);
+        return;
+      }
+      
+      console.log('[drawFullRoutesForLegs] Drawing full route for', routeId, 'with', masterRoute.stops.length, 'stops');
+      
+      // Create coordinates from all stops in the route
+      const routeCoords = masterRoute.stops.map(stop => [stop.lon, stop.lat]);
+      
+      // Create a unique ID for this full route line
+      const fullRouteLineId = `full-route-${routeId}-${legIndex}`;
+      
+      // Add the full route as a dashed line
+      map.addSource(fullRouteLineId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: routeCoords
+          }
+        }
+      });
+      
+      map.addLayer({
+        id: fullRouteLineId,
+        type: 'line',
+        source: fullRouteLineId,
+        paint: {
+          'line-color': legColor,
+          'line-width': 2,
+          'line-opacity': 0.4,
+          'line-dasharray': [2, 2] // Dashed line for full route
+        }
+      });
+      
+      // Store the full route line ID for cleanup
+      if (!window.fullRouteLines) window.fullRouteLines = [];
+      window.fullRouteLines.push(fullRouteLineId);
+      
+      console.log('[drawFullRoutesForLegs] Added full route line:', fullRouteLineId);
+    });
+  }
+  
+  // Enhanced OTP function with options
+  function fetchAndShowOtpItinerariesWithOptions(startLat, startLon, endLat, endLon, options) {
+    const { departureTime, walkDistance, tripType, modes, preferences } = options;
+    
+    // Build OTP query parameters
+    const params = new URLSearchParams({
+      fromPlace: `${startLat},${startLon}`,
+      toPlace: `${endLat},${endLon}`,
+      time: departureTime,
+      arriveBy: 'false',
+      maxWalkDistance: walkDistance,
+      walkReluctance: preferences.preferWalk ? '1.0' : '2.0',
+      walkSpeed: '1.34',
+      bikeSpeed: '5.0',
+      maxTransfers: preferences.avoidTransfers ? '0' : '5',
+      wheelchair: preferences.wheelchairAccessible ? 'true' : 'false',
+      numItineraries: '3',
+      showIntermediateStops: 'true'
+    });
+    
+    // Add modes
+    if (modes.length > 0) {
+      params.append('mode', modes.join(','));
+    }
+    
+    // Add trip type preferences
+    if (tripType === 'SAFE') {
+      params.append('walkReluctance', '5.0');
+      params.append('bikeReluctance', '5.0');
+    } else if (tripType === 'FLAT') {
+      params.append('walkReluctance', '3.0');
+      params.append('bikeReluctance', '1.0');
+    } else if (tripType === 'GREENWAYS') {
+      params.append('bikeReluctance', '0.5');
+    }
+    
+    // Add bus preference
+    if (preferences.preferBus) {
+      params.append('busReluctance', '0.8');
+    }
+    
+    const otpUrl = `https://otp.metrofeedus.com/otp/routers/default/plan?${params.toString()}`;
+    
+    console.log('[Trip Options] OTP URL:', otpUrl);
+    
+    // Call the existing OTP function with the enhanced URL
+    fetchAndShowOtpItineraries(startLat, startLon, endLat, endLon, otpUrl);
+  }
 
 </script>
 
