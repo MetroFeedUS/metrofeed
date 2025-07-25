@@ -98,157 +98,6 @@
     .site-footer a:hover { text-decoration: underline; }
     /* -- MODAL/OVERLAY -- */
     .mf-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; pointer-events: auto !important; }
-    
-    /* -- TRIP OPTIONS MODAL -- */
-    .trip-options-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 10000;
-      backdrop-filter: blur(4px);
-    }
-    
-    .trip-options-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #1a1a1a;
-      border: 2px solid #4dd0e1;
-      border-radius: 12px;
-      padding: 24px;
-      width: 90%;
-      max-width: 500px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 8px 32px rgba(77, 208, 225, 0.3);
-    }
-    
-    .trip-options-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #333;
-    }
-    
-    .trip-options-title {
-      font-size: 20px;
-      font-weight: bold;
-      color: #4dd0e1;
-    }
-    
-    .close-modal {
-      background: none;
-      border: none;
-      color: #ccc;
-      font-size: 24px;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
-      transition: all 0.2s;
-    }
-    
-    .close-modal:hover {
-      background: #333;
-      color: #fff;
-    }
-    
-    .trip-option-group {
-      margin-bottom: 20px;
-    }
-    
-    .trip-option-label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 8px;
-      color: #fff;
-    }
-    
-    .trip-option-input {
-      width: 100%;
-      padding: 10px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-    
-    .trip-option-input:focus {
-      outline: none;
-      border-color: #4dd0e1;
-      box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2);
-    }
-    
-    .trip-option-select {
-      width: 100%;
-      padding: 10px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-      box-sizing: border-box;
-    }
-    
-    .trip-option-select:focus {
-      outline: none;
-      border-color: #4dd0e1;
-    }
-    
-    .trip-option-checkbox {
-      margin-right: 8px;
-      transform: scale(1.2);
-    }
-    
-    .trip-option-checkbox-label {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-      cursor: pointer;
-    }
-    
-    .trip-options-buttons {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-      justify-content: flex-end;
-    }
-    
-    .trip-option-btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .trip-option-btn-primary {
-      background: #4dd0e1;
-      color: #000;
-    }
-    
-    .trip-option-btn-primary:hover {
-      background: #26c6da;
-    }
-    
-    .trip-option-btn-secondary {
-      background: #444;
-      color: #ccc;
-    }
-    
-    .trip-option-btn-secondary:hover {
-      background: #555;
-    }
     .mf-modal {
       background: #111;
       border: 2.5px solid #4dd0e1;
@@ -640,36 +489,6 @@
       z-index: 1000 !important;
     }
     
-    /* MetroFeed Logo in bottom left corner */
-    .metrofeed-logo {
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      width: 70px;
-      height: 70px;
-      z-index: 1001;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      /* Debug: make sure it's visible */
-      display: block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-    
-    .metrofeed-logo img {
-      width: 100%;
-      height: 100%;
-    }
-    
-    .metrofeed-logo:hover {
-      background: rgba(0, 0, 0, 0.9);
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(77, 208, 225, 0.4);
-    }
-    
-
-    
     /* Make attribution more vertical when expanded and move it up by 30px */
     .maplibregl-ctrl-attrib.maplibregl-compact-show {
       max-width: 200px !important;
@@ -829,13 +648,6 @@
     <div id="fav3" class="favorite-btn"></div>
     <div id="fav4" class="favorite-btn"></div>
   </div>
-</div>
-
-<!-- -- METROFEED LOGO -- -->
-<div class="metrofeed-logo" id="metrofeedLogo">
-  <a href="about.html">
-    <img src="metrofeedsimplelogo.png" alt="MetroFeed" onerror="console.error('Logo failed to load'); this.style.display='none';" onload="console.log('Logo loaded successfully');" />
-  </a>
 </div>
 
 <!-- -- FOOTER -- -->
@@ -1226,19 +1038,6 @@
         }
       });
       window.routeLegLines = [];
-    }
-    
-    // Clear full route lines if they exist
-    if (window.fullRouteLines && window.fullRouteLines.length) {
-      window.fullRouteLines.forEach(lineId => {
-        if (map.getLayer(lineId)) {
-          map.removeLayer(lineId);
-        }
-        if (map.getSource(lineId)) {
-          map.removeSource(lineId);
-        }
-      });
-      window.fullRouteLines = [];
     }
     
     // Clear OTP stop markers if they exist
@@ -2125,7 +1924,6 @@
   
   // Function to map OTP route names to Trimet route numbers using masterRoutes data
   function mapOtpRouteToTrimet(otpRouteName) {
-    console.log('=== ROUTE MAPPING DEBUG ===');
     console.log('[mapOtpRouteToTrimet] Mapping OTP route:', otpRouteName);
     console.log('[mapOtpRouteToTrimet] masterRoutes available:', masterRoutes ? masterRoutes.length : 'undefined');
     
@@ -2133,15 +1931,6 @@
     if (!isNaN(otpRouteName)) {
       console.log('[mapOtpRouteToTrimet] Direct number match:', otpRouteName);
       return otpRouteName;
-    }
-    
-    // Validate route exists in masterRoutes
-    if (masterRoutes && masterRoutes.length > 0) {
-      const routeExists = masterRoutes.some(route => route.route_id === otpRouteName);
-      console.log('[mapOtpRouteToTrimet] Route', otpRouteName, 'exists in masterRoutes:', routeExists);
-      if (routeExists) {
-        return otpRouteName;
-      }
     }
     
     // Create a comprehensive mapping from masterRoutes data
@@ -2321,71 +2110,6 @@
     return null;
   }
   
-  // Function to determine correct direction using mastermap.js data
-  function determineCorrectDirection(routeId, otpDirection, legStart, legEnd) {
-    console.log('[determineCorrectDirection] Route:', routeId, 'OTP Direction:', otpDirection);
-    console.log('[determineCorrectDirection] Leg start:', legStart, 'Leg end:', legEnd);
-    
-    if (!masterRoutes || !legStart || !legEnd) {
-      console.log('[determineCorrectDirection] Missing data, returning OTP direction:', otpDirection);
-      return otpDirection;
-    }
-    
-    // Find the route in masterRoutes
-    const route = masterRoutes.find(r => r.route_id === routeId);
-    if (!route || !route.stops || route.stops.length < 2) {
-      console.log('[determineCorrectDirection] Route not found or no stops, returning OTP direction:', otpDirection);
-      return otpDirection;
-    }
-    
-    console.log('[determineCorrectDirection] Found route with', route.stops.length, 'stops');
-    
-    // Get the first and last stops from masterRoutes
-    const firstStop = route.stops[0];
-    const lastStop = route.stops[route.stops.length - 1];
-    
-    console.log('[determineCorrectDirection] Route direction: First stop:', firstStop.name, 'Last stop:', lastStop.name);
-    
-    // Calculate distances to determine which direction the trip is going
-    const distanceToFirst = calculateDistance(legStart, firstStop);
-    const distanceToLast = calculateDistance(legStart, lastStop);
-    
-    console.log('[determineCorrectDirection] Distance to first stop:', distanceToFirst, 'Distance to last stop:', distanceToLast);
-    
-    // If we're closer to the first stop, we're going in the "forward" direction (dir 1)
-    // If we're closer to the last stop, we're going in the "reverse" direction (dir 2)
-    const isForwardDirection = distanceToFirst < distanceToLast;
-    
-    console.log('[determineCorrectDirection] Trip appears to be going', isForwardDirection ? 'FORWARD' : 'REVERSE');
-    
-    // Map to TriMet directions (this is the key insight!)
-    // Forward direction (first stop to last stop) = dir 1
-    // Reverse direction (last stop to first stop) = dir 2
-    const trimetDirection = isForwardDirection ? 1 : 2;
-    
-    console.log('[determineCorrectDirection] Mapped to TriMet direction:', trimetDirection);
-    return trimetDirection;
-  }
-  
-  // Helper function to calculate distance between two points
-  function calculateDistance(point1, point2) {
-    const lat1 = point1.lat || point1.latitude;
-    const lon1 = point1.lon || point1.longitude;
-    const lat2 = point2.lat;
-    const lon2 = point2.lon;
-    
-    if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
-    
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-  
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
     try {
@@ -2407,54 +2131,10 @@
       if (activeTripSelected && window.currentLegColorMapping) {
         // OTP trip is active - isolate only trip buses
         displayMode = 'otp-only';
-        console.log('=== OTP ROUTE DEBUGGING ===');
         console.log('[fetchAndDisplayBuses] OTP trip detected!');
         console.log('[fetchAndDisplayBuses] currentLegColorMapping:', window.currentLegColorMapping);
         console.log('[fetchAndDisplayBuses] Full OTP trip data:', window.currentTrip);
         console.log('[fetchAndDisplayBuses] OTP legs:', window.currentTrip?.legs);
-        console.log('[fetchAndDisplayBuses] OTP trip summary:', {
-          from: window.currentTrip?.from,
-          to: window.currentTrip?.to,
-          startTime: window.currentTrip?.startTime,
-          endTime: window.currentTrip?.endTime,
-          duration: window.currentTrip?.duration,
-          walkDistance: window.currentTrip?.walkDistance,
-          fare: window.currentTrip?.fare
-        });
-        
-        // Log each leg in detail
-        if (window.currentTrip?.legs) {
-          window.currentTrip.legs.forEach((leg, index) => {
-            if (leg.mode !== 'WALK') {
-              console.log(`--- Leg ${index} Details ---`);
-              console.log(`  Mode: ${leg.mode}`);
-              console.log(`  Route ID: ${leg.route}`);
-              console.log(`  Route Short Name: ${leg.routeShortName}`);
-              console.log(`  Route Long Name: ${leg.routeLongName}`);
-              console.log(`  Direction: ${leg.direction}`);
-              console.log(`  From: ${leg.from?.name}`);
-              console.log(`  To: ${leg.to?.name}`);
-              console.log(`  Agency: ${leg.agencyId}`);
-              console.log(`  From coordinates:`, leg.from);
-              console.log(`  To coordinates:`, leg.to);
-              console.log(`  Full leg object:`, leg);
-              console.log(`  Leg start coordinates:`, { lat: leg.from?.lat, lon: leg.from?.lon });
-              console.log(`  Leg end coordinates:`, { lat: leg.to?.lat, lon: leg.to?.lon });
-              console.log(`  Leg distance:`, leg.distance);
-              console.log(`  Leg duration:`, leg.duration);
-              console.log(`  Leg start time:`, leg.startTime);
-              console.log(`  Leg end time:`, leg.endTime);
-              console.log(`  Leg geometry:`, leg.legGeometry);
-              console.log(`  Leg steps:`, leg.steps);
-              console.log(`  Leg headsign:`, leg.headsign);
-              console.log(`  Leg tripId:`, leg.tripId);
-              console.log(`  Leg serviceDate:`, leg.serviceDate);
-              console.log(`  Leg realTime:`, leg.realTime);
-              console.log(`  Leg transitLeg:`, leg.transitLeg);
-              console.log(`  Leg intermediateStops:`, leg.intermediateStops);
-            }
-          });
-        }
         
         otpRoutes = Object.values(window.currentLegColorMapping).map(legInfo => ({
           route_id: legInfo.route,
@@ -2465,14 +2145,9 @@
           fromStop: legInfo.fromStop,
           toStop: legInfo.toStop
         }));
-        
-        console.log('[fetchAndDisplayBuses] Raw legInfo objects from currentLegColorMapping:');
-        Object.values(window.currentLegColorMapping).forEach((legInfo, index) => {
-          console.log(`  Leg ${index} legInfo:`, legInfo);
-        });
         console.log('[fetchAndDisplayBuses] Processed OTP routes with stop info:', otpRoutes);
         console.log('[fetchAndDisplayBuses] OTP mode - isolating buses for trip routes:', otpRoutes);
-        console.log('=== END OTP ROUTE DEBUGGING ===');
+        
 
       } else {
         // Show all active buses (page load or no OTP trip)
@@ -2522,32 +2197,24 @@
             const allRouteBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
             console.log('[fetchAndDisplayBuses] All buses on route', trimetRouteNumber, ':', allRouteBuses.map(b => `${b.vehicleID} (dir ${b.direction})`));
             
-            // Debug: Show available directions for this route
-            const routeDirections = [...new Set(allRouteBuses.map(b => b.direction))].sort();
-            console.log('[fetchAndDisplayBuses] Available directions for route', trimetRouteNumber, ':', routeDirections);
-            console.log('[fetchAndDisplayBuses] OTP wants direction:', otpDirection);
-            
-            // Debug: Show ALL available route numbers
-            const allRouteNumbers = [...new Set(allBuses.map(b => b.routeNumber))].sort();
-            console.log('[fetchAndDisplayBuses] All available route numbers in system:', allRouteNumbers);
-            
             if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
             
-            // Show ALL buses on the route (no direction filtering)
-            console.log('[fetchAndDisplayBuses] Showing ALL buses on route:', trimetRouteNumber);
-            
-            // Enhanced bus filtering - show all buses on the route
+            // Enhanced bus filtering with better logging
             let routeBuses = allBuses.filter(v => {
               const routeMatch = v.routeNumber == trimetRouteNumber;
-              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), direction: ${v.direction}, bearing: ${v.bearing}°`);
-              return routeMatch; // Show all buses, let user see direction
+              const directionMatch = v.direction == otpDirection;
+              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${otpDirection} (${directionMatch})`);
+              return routeMatch && directionMatch;
             });
             
             console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
             
-            // Show all buses on the route (no direction filtering)
-            console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses on route', trimetRouteNumber, 'in all directions');
+            // STRICT DIRECTION MATCHING - No fallback to wrong direction
+            if (routeBuses.length === 0) {
+              console.log('[fetchAndDisplayBuses] No buses found in correct direction. Showing message instead of wrong-direction buses.');
+              // Don't show buses going the wrong way - they're useless for the trip
+            }
             
             console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
             if (routeBuses.length > 0) {
@@ -2561,25 +2228,13 @@
               // Use OTP route color and add special styling
               const routeColor = route.color || getRouteColor(route.mode);
               
-              // Create simple OTP bus marker
+              // Create OTP bus marker with route color for MapLibre GL JS
               const otpMarkerElement = document.createElement('div');
               otpMarkerElement.className = 'otp-bus-marker';
-              
-              const directionArrow = bus.direction == 1 ? '↑' : '↓';
-              
-              otpMarkerElement.innerHTML = `
-                <div style='text-align:center;'>
-                  <!-- Simple bus icon -->
-                  <div style='width:24px; height:24px; margin:0 auto 4px auto; background:${routeColor}; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:12px;'>
-                    🚌
-                  </div>
-                  
-                  <!-- Bus ID and direction -->
-                  <div style='background:${routeColor};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:10px;border:1px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);'>
-                    ${bus.vehicleID} ${directionArrow}
-                  </div>
-                </div>
-              `;
+              otpMarkerElement.innerHTML = `<div style='text-align:center;'>
+                <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;border:3px solid #fff;'>${bus.vehicleID}</div>
+                <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;'></div>
+              </div>`;
               
               const busMarker = new maplibregl.Marker({
                 element: otpMarkerElement
@@ -2588,21 +2243,18 @@
               // Set position and add popup
               busMarker.setLngLat([bus.longitude, bus.latitude]);
               
-              // Create popup content with clear direction info
+              // Create popup content
               const popupContent = document.createElement('div');
-              const popupDirectionArrow = bus.direction == 1 ? '↑' : '↓';
-              const directionDescription = bus.direction == 1 ? 'Direction 1 (Forward)' : 'Direction 2 (Reverse)';
-              
               popupContent.innerHTML = `
                 <div style='border:2px solid ${routeColor}; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
                   <div style='text-align:center; margin-bottom:8px;'>
-                    <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID} ${popupDirectionArrow}</div>
+                    <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
                   </div>
                   <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
-                  <div style='margin-bottom:6px;'><strong>Direction:</strong> ${directionDescription}</div>
+                  <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
                   <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                   <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
-                  <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>🎯 Check if this bus is going your way!</div>
+                  <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                   <div style='margin-top:10px; text-align:center;'>
                     <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
                   </div>
@@ -2756,18 +2408,11 @@
   let activeTripSelected = false; // Track if user has selected a trip option
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
-  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, customUrl = null) {
-    let url;
-    if (customUrl) {
-      url = customUrl;
-      console.log('[fetchAndShowOtpItineraries] Using custom URL:', url);
-    } else {
-      const from = `${fromLat},${fromLon}`;
-      const to = `${toLat},${toLon}`;
-      // Adjust the server/URL as needed for production:
-      url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
-      console.log('[fetchAndShowOtpItineraries] Using default URL:', url);
-    }
+  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
+    const from = `${fromLat},${fromLon}`;
+    const to = `${toLat},${toLon}`;
+    // Adjust the server/URL as needed for production:
+    const url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
 
     // Clear previous state for multiple trips
     window.otpBusInfo = {};
@@ -2786,19 +2431,6 @@
         }
       });
       window.routeLegLines = [];
-    }
-    
-    // Clear any existing full route lines
-    if (window.fullRouteLines && window.fullRouteLines.length) {
-      window.fullRouteLines.forEach(lineId => {
-        if (map.getLayer(lineId)) {
-          map.removeLayer(lineId);
-        }
-        if (map.getSource(lineId)) {
-          map.removeSource(lineId);
-        }
-      });
-      window.fullRouteLines = [];
     }
     
     if (window.routeStopMarkers && window.routeStopMarkers.length) {
@@ -3100,7 +2732,6 @@
 
   // ==== ROUTE DISPLAY ====
   let routeLine = null; // Track the current route line
-  let userRouteManuallyHidden = false; // Track if user manually hid their route
   window.routeLegLines = [];
   
   function decodePolyline(encoded) {
@@ -3275,23 +2906,15 @@
         console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription);
       }
       
-      // Build route path from our GTFS data instead of OTP coordinates
       let coords = [];
-      if (leg.mode !== 'WALK' && leg.route) {
-        console.log('[showRoute] Building GTFS path for route:', leg.route);
-        coords = buildRoutePathFromGTFS(leg.route, leg.from, leg.to);
-      } else if (leg.mode === 'WALK') {
-        // For walking legs, use OTP coordinates if available
-        if (leg.legGeometry && leg.legGeometry.points) {
-          coords = decodePolyline(leg.legGeometry.points);
-        } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
-          coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        }
+      if (leg.legGeometry && leg.legGeometry.points) {
+        coords = decodePolyline(leg.legGeometry.points);
+      } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
+        coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
       }
-      
-      if (coords && coords.length > 0) {
+      if (coords.length) {
         // Convert coordinates to [lng, lat] format for MapLibre GL JS
-        const lineCoords = coords.map(coord => [coord[0], coord[1]]);
+        const lineCoords = coords.map(coord => [coord[1], coord[0]]);
         
         // Create a unique source and layer ID for this line
         const lineId = `routeLeg-${legIndex}`;
@@ -3321,7 +2944,7 @@
         
         // Store the layer ID for removal
         window.routeLegLines.push(lineId);
-        allCoords = allCoords.concat(coords.map(coord => [coord[1], coord[0]])); // Convert back for bounds calculation
+        allCoords = allCoords.concat(coords);
       }
       
       legIndex++;
@@ -3387,9 +3010,6 @@
     
     // Store routesToTrack globally for bus tracking
     window.routesToTrack = routesToTrack;
-    
-    // Draw full routes for each transit leg
-    drawFullRoutesForLegs(legs, legColorMapping);
     
     // Start tracking buses for the routes in this trip
     if (routesToTrack.length > 0) {
@@ -3814,16 +3434,9 @@
           return;
         }
         
-        // Store trip coordinates for later use
-        window.pendingTrip = {
-          startStop: startStop,
-          endStop: endStop,
-          startInput: startInput,
-          endInput: endInput
-        };
-        
-        // Show trip options modal instead of planning directly
-        showTripOptions();
+        // Call OTP with coordinates
+        console.log('[Go Button] Starting new OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
+        fetchAndShowOtpItineraries(startStop.lat, startStop.lon, endStop.lat, endStop.lon);
       });
     } else {
       console.error('Go button not found!'); // Debug log
@@ -4075,389 +3688,7 @@
   window.addEventListener('pageshow', function() {
     renderFavoritesBar();
   });
-  
-  // Ensure logo is visible
-  window.addEventListener('load', function() {
-    const logo = document.getElementById('metrofeedLogo');
-    if (logo) {
-      console.log('Logo element found:', logo);
-      logo.style.display = 'block';
-      logo.style.visibility = 'visible';
-      logo.style.opacity = '1';
-    } else {
-      console.error('Logo element not found!');
-    }
-  });
 
-  // Trip Options Modal HTML
-  const tripOptionsModal = document.createElement('div');
-  tripOptionsModal.className = 'trip-options-modal';
-  tripOptionsModal.id = 'tripOptionsModal';
-  tripOptionsModal.innerHTML = `
-    <div class="trip-options-content">
-      <div class="trip-options-header">
-        <div class="trip-options-title">🚌 Trip Options</div>
-        <button class="close-modal" onclick="closeTripOptions()">&times;</button>
-      </div>
-      
-      <div class="trip-option-group">
-        <label class="trip-option-label">Departure Time</label>
-        <input type="datetime-local" class="trip-option-input" id="departureTime" value="${new Date().toISOString().slice(0, 16)}">
-      </div>
-      
-      <div class="trip-option-group">
-        <label class="trip-option-label">Transportation Modes</label>
-        <div class="trip-option-checkbox-label">
-          <input type="checkbox" class="trip-option-checkbox" id="modeBus" checked>
-          <span>🚌 Bus</span>
-        </div>
-        <div class="trip-option-checkbox-label">
-          <input type="checkbox" class="trip-option-checkbox" id="modeRail" checked>
-          <span>🚇 MAX Rail</span>
-        </div>
-        <div class="trip-option-checkbox-label">
-          <input type="checkbox" class="trip-option-checkbox" id="modeBike" checked>
-          <span>🚲 Bike</span>
-        </div>
-        <div class="trip-option-checkbox-label">
-          <input type="checkbox" class="trip-option-checkbox" id="modeWalk" checked>
-          <span>🚶 Walk</span>
-        </div>
-      </div>
-      
-      <div class="trip-option-group">
-        <label class="trip-option-label">Walking Distance</label>
-        <select class="trip-option-select" id="walkDistance">
-          <option value="400">0.25 miles (400m)</option>
-          <option value="800" selected>0.5 miles (800m)</option>
-          <option value="1200">0.75 miles (1.2km)</option>
-          <option value="1600">1 mile (1.6km)</option>
-          <option value="2400">1.5 miles (2.4km)</option>
-        </select>
-      </div>
-      
-      <div class="trip-option-group">
-        <label class="trip-option-label">Trip Preferences</label>
-        <div class="trip-option-checkbox-label">
-          <input type="checkbox" class="trip-option-checkbox" id="preferBus" checked>
-          <span>Prefer bus over rail</span>
-        </div>
-        <div class="trip-option-checkbox-label">
-          <input type="checkbox" class="trip-option-checkbox" id="preferWalk" checked>
-          <span>Prefer walking</span>
-        </div>
-        <div class="trip-option-checkbox-label">
-          <input type="checkbox" class="trip-option-checkbox" id="avoidTransfers">
-          <span>Avoid transfers</span>
-        </div>
-        <div class="trip-option-checkbox-label">
-          <input type="checkbox" class="trip-option-checkbox" id="wheelchairAccessible">
-          <span>♿ Wheelchair accessible</span>
-        </div>
-      </div>
-      
-      <div class="trip-option-group">
-        <label class="trip-option-label">Trip Type</label>
-        <select class="trip-option-select" id="tripType">
-          <option value="QUICK" selected>🚀 Fastest</option>
-          <option value="SAFE">🛡️ Safest</option>
-          <option value="FLAT">🏔️ Flattest</option>
-          <option value="GREENWAYS">🌳 Greenways</option>
-          <option value="TRIANGLE">📐 Triangle</option>
-        </select>
-      </div>
-      
-      <div class="trip-options-buttons">
-        <button class="trip-option-btn trip-option-btn-secondary" onclick="closeTripOptions()">Cancel</button>
-        <button class="trip-option-btn trip-option-btn-primary" onclick="planTripWithOptions()">🚀 Plan Trip</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(tripOptionsModal);
-
-  // Trip Options Modal Functions
-  function showTripOptions() {
-    document.getElementById('tripOptionsModal').style.display = 'block';
-  }
-  
-  function closeTripOptions() {
-    document.getElementById('tripOptionsModal').style.display = 'none';
-  }
-  
-  function planTripWithOptions() {
-    if (!window.pendingTrip) {
-      console.error('No pending trip found!');
-      return;
-    }
-    
-    const { startStop, endStop, startInput, endInput } = window.pendingTrip;
-    
-    // Get trip options from the modal
-    const departureTime = document.getElementById('departureTime').value;
-    const walkDistance = document.getElementById('walkDistance').value;
-    const tripType = document.getElementById('tripType').value;
-    
-    // Get transportation modes
-    const modes = [];
-    if (document.getElementById('modeBus').checked) modes.push('BUS');
-    if (document.getElementById('modeRail').checked) modes.push('RAIL');
-    if (document.getElementById('modeBike').checked) modes.push('BICYCLE');
-    if (document.getElementById('modeWalk').checked) modes.push('WALK');
-    
-    // Get preferences
-    const preferences = {
-      preferBus: document.getElementById('preferBus').checked,
-      preferWalk: document.getElementById('preferWalk').checked,
-      avoidTransfers: document.getElementById('avoidTransfers').checked,
-      wheelchairAccessible: document.getElementById('wheelchairAccessible').checked
-    };
-    
-    console.log('[Trip Options] Planning trip with options:', {
-      departureTime,
-      walkDistance,
-      tripType,
-      modes,
-      preferences
-    });
-    
-    // Close the modal
-    closeTripOptions();
-    
-    // Clear previous route lines
-    if (window.routeLegLines && window.routeLegLines.length) {
-      window.routeLegLines.forEach(lineId => {
-        if (map.getLayer(lineId)) {
-          map.removeLayer(lineId);
-        }
-        if (map.getSource(lineId)) {
-          map.removeSource(lineId);
-        }
-      });
-      window.routeLegLines = [];
-    }
-    
-    // Hide user's closest route when planning a trip
-    if (userLocationPolyline) {
-      if (map.getLayer(userLocationPolyline)) {
-        map.removeLayer(userLocationPolyline);
-      }
-      if (map.getSource(userLocationPolyline)) {
-        map.removeSource(userLocationPolyline);
-      }
-      userLocationPolyline = null;
-    }
-    
-    // Call OTP with coordinates and options
-    console.log('[Trip Options] Starting OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
-    fetchAndShowOtpItinerariesWithOptions(startStop.lat, startStop.lon, endStop.lat, endStop.lon, {
-      departureTime,
-      walkDistance,
-      tripType,
-      modes,
-      preferences
-    });
-  }
-  
-  // Function to build route path from GTFS data
-  function buildRoutePathFromGTFS(routeId, fromStop, toStop) {
-    console.log('[buildRoutePathFromGTFS] Building path for route', routeId, 'from', fromStop?.name, 'to', toStop?.name);
-    
-    if (!routeId || !masterRoutes) {
-      console.log('[buildRoutePathFromGTFS] No route ID or masterRoutes');
-      return null;
-    }
-    
-    // Try multiple ways to find the route in masterRoutes
-    let masterRoute = masterRoutes.find(r => r.route_id === routeId);
-    
-    // If not found by exact ID, try to find by route title or short name
-    if (!masterRoute) {
-      console.log('[buildRoutePathFromGTFS] Route not found by ID, trying alternative matches for:', routeId);
-      masterRoute = masterRoutes.find(r => 
-        r.route_title && r.route_title.includes(routeId) ||
-        r.route_short_name === routeId ||
-        r.route_long_name && r.route_long_name.includes(routeId)
-      );
-    }
-    
-    // If still not found, try to extract route number from the name
-    if (!masterRoute && routeId.includes('MAX')) {
-      console.log('[buildRoutePathFromGTFS] Trying to extract MAX route number from:', routeId);
-      const maxMatch = routeId.match(/MAX\s+(\w+)/);
-      if (maxMatch) {
-        const maxColor = maxMatch[1].toLowerCase();
-        console.log('[buildRoutePathFromGTFS] Looking for MAX route with color:', maxColor);
-        masterRoute = masterRoutes.find(r => 
-          r.route_title && r.route_title.toLowerCase().includes(maxColor)
-        );
-      }
-    }
-    
-    if (!masterRoute || !masterRoute.stops || masterRoute.stops.length < 2) {
-      console.log('[buildRoutePathFromGTFS] No master route found for', routeId, '- available routes:', masterRoutes?.slice(0, 5).map(r => r.route_id));
-      return null;
-    }
-    
-    // Find the from and to stops in the route
-    let fromIndex = -1;
-    let toIndex = -1;
-    
-    // Try to match stops by name or coordinates
-    masterRoute.stops.forEach((stop, index) => {
-      if (fromStop && (
-        stop.stop_name === fromStop.name ||
-        (Math.abs(stop.lat - fromStop.lat) < 0.001 && Math.abs(stop.lon - fromStop.lon) < 0.001)
-      )) {
-        fromIndex = index;
-      }
-      if (toStop && (
-        stop.stop_name === toStop.name ||
-        (Math.abs(stop.lat - toStop.lat) < 0.001 && Math.abs(stop.lon - toStop.lon) < 0.001)
-      )) {
-        toIndex = index;
-      }
-    });
-    
-    // If we can't find exact matches, use the entire route
-    if (fromIndex === -1 || toIndex === -1) {
-      console.log('[buildRoutePathFromGTFS] Could not find exact stop matches, using full route');
-      return masterRoute.stops.map(stop => [stop.lon, stop.lat]);
-    }
-    
-    // Ensure proper order (fromIndex should be before toIndex)
-    if (fromIndex > toIndex) {
-      [fromIndex, toIndex] = [toIndex, fromIndex];
-    }
-    
-    // Extract the path between the stops
-    const pathStops = masterRoute.stops.slice(fromIndex, toIndex + 1);
-    const pathCoords = pathStops.map(stop => [stop.lon, stop.lat]).filter(coord => {
-      // Validate coordinates
-      const [lon, lat] = coord;
-      if (isNaN(lon) || isNaN(lat) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-        console.warn('[buildRoutePathFromGTFS] Invalid coordinate filtered out:', coord);
-        return false;
-      }
-      return true;
-    });
-    
-    console.log('[buildRoutePathFromGTFS] Built path with', pathCoords.length, 'valid coordinates');
-    return pathCoords;
-  }
-  
-  // Function to draw full routes for each transit leg
-  function drawFullRoutesForLegs(legs, legColorMapping) {
-    console.log('[drawFullRoutesForLegs] Drawing full routes for', legs.length, 'legs');
-    
-    legs.forEach((leg, legIndex) => {
-      if (leg.mode === 'WALK') return; // Skip walking legs
-      
-      const routeId = leg.route;
-      const legColor = legColorMapping[legIndex] || '#4dd0e1';
-      
-      if (!routeId || !masterRoutes) {
-        console.log('[drawFullRoutesForLegs] No route ID or masterRoutes for leg', legIndex);
-        return;
-      }
-      
-      // Find the route in masterRoutes
-      const masterRoute = masterRoutes.find(r => r.route_id === routeId);
-      if (!masterRoute || !masterRoute.stops || masterRoute.stops.length < 2) {
-        console.log('[drawFullRoutesForLegs] No master route found for', routeId);
-        return;
-      }
-      
-      console.log('[drawFullRoutesForLegs] Drawing full route for', routeId, 'with', masterRoute.stops.length, 'stops');
-      
-      // Create coordinates from all stops in the route
-      const routeCoords = masterRoute.stops.map(stop => [stop.lon, stop.lat]);
-      
-      // Create a unique ID for this full route line
-      const fullRouteLineId = `full-route-${routeId}-${legIndex}`;
-      
-      // Add the full route as a dashed line
-      map.addSource(fullRouteLineId, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: routeCoords
-          }
-        }
-      });
-      
-      map.addLayer({
-        id: fullRouteLineId,
-        type: 'line',
-        source: fullRouteLineId,
-        paint: {
-          'line-color': legColor,
-          'line-width': 2,
-          'line-opacity': 0.4,
-          'line-dasharray': [2, 2] // Dashed line for full route
-        }
-      });
-      
-      // Store the full route line ID for cleanup
-      if (!window.fullRouteLines) window.fullRouteLines = [];
-      window.fullRouteLines.push(fullRouteLineId);
-      
-      console.log('[drawFullRoutesForLegs] Added full route line:', fullRouteLineId);
-    });
-  }
-  
-  // Enhanced OTP function with options
-  function fetchAndShowOtpItinerariesWithOptions(startLat, startLon, endLat, endLon, options) {
-    console.log('[fetchAndShowOtpItinerariesWithOptions] Received options:', options);
-    
-    const { departureTime, walkDistance, tripType, modes, preferences } = options;
-    
-    // Build OTP query parameters
-    const params = new URLSearchParams({
-      fromPlace: `${startLat},${startLon}`,
-      toPlace: `${endLat},${endLon}`,
-      time: departureTime,
-      arriveBy: 'false',
-      maxWalkDistance: walkDistance,
-      walkReluctance: preferences.preferWalk ? '1.0' : '2.0',
-      walkSpeed: '1.34',
-      bikeSpeed: '5.0',
-      maxTransfers: preferences.avoidTransfers ? '0' : '5',
-      wheelchair: preferences.wheelchairAccessible ? 'true' : 'false',
-      numItineraries: '3',
-      showIntermediateStops: 'true'
-    });
-    
-    // Add modes
-    if (modes.length > 0) {
-      params.append('mode', modes.join(','));
-    }
-    
-    // Add trip type preferences
-    if (tripType === 'SAFE') {
-      params.append('walkReluctance', '5.0');
-      params.append('bikeReluctance', '5.0');
-    } else if (tripType === 'FLAT') {
-      params.append('walkReluctance', '3.0');
-      params.append('bikeReluctance', '1.0');
-    } else if (tripType === 'GREENWAYS') {
-      params.append('bikeReluctance', '0.5');
-    }
-    
-    // Add bus preference
-    if (preferences.preferBus) {
-      params.append('busReluctance', '0.8');
-    }
-    
-    const otpUrl = `https://otp.metrofeedus.com/otp/routers/default/plan?${params.toString()}`;
-    
-    console.log('[Trip Options] OTP URL:', otpUrl);
-    
-    // Call the existing OTP function with the enhanced URL
-    fetchAndShowOtpItineraries(startLat, startLon, endLat, endLon, otpUrl);
-  }
 
 </script>
 
