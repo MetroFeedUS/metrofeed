@@ -1575,9 +1575,11 @@
     
     console.log('[showUserLocationAndRoute] closestRoute.shape:', closestRoute.shape);
     console.log('[showUserLocationAndRoute] Number of shape points:', closestRoute.shape?.length || 0);
+    console.log('[showUserLocationAndRoute] Shape points (first 5):', closestRoute.shape?.slice(0, 5));
     
     const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
     console.log('[showUserLocationAndRoute] routeCoordinates (first 3):', routeCoordinates.slice(0, 3));
+    console.log('[showUserLocationAndRoute] Total route coordinates:', routeCoordinates.length);
     
     // Remove existing source if it exists
     if (map.getSource('userLocationRoute')) {
@@ -1606,7 +1608,9 @@
       paint: {
         'line-color': '#0071CE',
         'line-width': 4,
-        'line-opacity': 0.7
+        'line-opacity': 0.7,
+        'line-join': 'round',
+        'line-cap': 'round'
       }
     });
     
