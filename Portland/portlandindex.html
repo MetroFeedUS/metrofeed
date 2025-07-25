@@ -2248,6 +2248,15 @@
         console.log('[fetchAndDisplayBuses] currentLegColorMapping:', window.currentLegColorMapping);
         console.log('[fetchAndDisplayBuses] Full OTP trip data:', window.currentTrip);
         console.log('[fetchAndDisplayBuses] OTP legs:', window.currentTrip?.legs);
+        console.log('[fetchAndDisplayBuses] OTP trip summary:', {
+          from: window.currentTrip?.from,
+          to: window.currentTrip?.to,
+          startTime: window.currentTrip?.startTime,
+          endTime: window.currentTrip?.endTime,
+          duration: window.currentTrip?.duration,
+          walkDistance: window.currentTrip?.walkDistance,
+          fare: window.currentTrip?.fare
+        });
         
         // Log each leg in detail
         if (window.currentTrip?.legs) {
@@ -2262,6 +2271,23 @@
               console.log(`  From: ${leg.from?.name}`);
               console.log(`  To: ${leg.to?.name}`);
               console.log(`  Agency: ${leg.agencyId}`);
+              console.log(`  From coordinates:`, leg.from);
+              console.log(`  To coordinates:`, leg.to);
+              console.log(`  Full leg object:`, leg);
+              console.log(`  Leg start coordinates:`, { lat: leg.from?.lat, lon: leg.from?.lon });
+              console.log(`  Leg end coordinates:`, { lat: leg.to?.lat, lon: leg.to?.lon });
+              console.log(`  Leg distance:`, leg.distance);
+              console.log(`  Leg duration:`, leg.duration);
+              console.log(`  Leg start time:`, leg.startTime);
+              console.log(`  Leg end time:`, leg.endTime);
+              console.log(`  Leg geometry:`, leg.legGeometry);
+              console.log(`  Leg steps:`, leg.steps);
+              console.log(`  Leg headsign:`, leg.headsign);
+              console.log(`  Leg tripId:`, leg.tripId);
+              console.log(`  Leg serviceDate:`, leg.serviceDate);
+              console.log(`  Leg realTime:`, leg.realTime);
+              console.log(`  Leg transitLeg:`, leg.transitLeg);
+              console.log(`  Leg intermediateStops:`, leg.intermediateStops);
             }
           });
         }
@@ -2275,6 +2301,11 @@
           fromStop: legInfo.fromStop,
           toStop: legInfo.toStop
         }));
+        
+        console.log('[fetchAndDisplayBuses] Raw legInfo objects from currentLegColorMapping:');
+        Object.values(window.currentLegColorMapping).forEach((legInfo, index) => {
+          console.log(`  Leg ${index} legInfo:`, legInfo);
+        });
         console.log('[fetchAndDisplayBuses] Processed OTP routes with stop info:', otpRoutes);
         console.log('[fetchAndDisplayBuses] OTP mode - isolating buses for trip routes:', otpRoutes);
         console.log('=== END OTP ROUTE DEBUGGING ===');
@@ -2340,6 +2371,13 @@
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
             
             // Use mastermap.js to determine the correct direction
+            console.log('[fetchAndDisplayBuses] Calling determineCorrectDirection with:');
+            console.log('  - routeId:', trimetRouteNumber);
+            console.log('  - otpDirection:', otpDirection);
+            console.log('  - route.fromStop:', route.fromStop);
+            console.log('  - route.toStop:', route.toStop);
+            console.log('  - Full route object:', route);
+            
             const correctedDirection = determineCorrectDirection(trimetRouteNumber, otpDirection, route.fromStop, route.toStop);
             console.log('[fetchAndDisplayBuses] Corrected direction using mastermap.js:', correctedDirection);
             
