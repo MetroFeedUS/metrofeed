@@ -494,9 +494,11 @@
       position: fixed;
       bottom: 10px;
       left: 10px;
-      width: 45px;
-      height: 45px;
+      width: 70px;
+      height: 70px;
       z-index: 1001;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
       transition: all 0.3s ease;
       /* Debug: make sure it's visible */
       display: block !important;
@@ -681,7 +683,7 @@
 <!-- -- METROFEED LOGO -- -->
 <div class="metrofeed-logo" id="metrofeedLogo">
   <a href="about.html">
-    <img src="Simplelogoround.png" alt="MetroFeed" onerror="console.error('Logo failed to load'); this.style.display='none';" onload="console.log('Logo loaded successfully');" />
+    <img src="metrofeedsimplelogo.png" alt="MetroFeed" onerror="console.error('Logo failed to load'); this.style.display='none';" onload="console.log('Logo loaded successfully');" />
   </a>
 </div>
 
@@ -1959,6 +1961,7 @@
   
   // Function to map OTP route names to Trimet route numbers using masterRoutes data
   function mapOtpRouteToTrimet(otpRouteName) {
+    console.log('=== ROUTE MAPPING DEBUG ===');
     console.log('[mapOtpRouteToTrimet] Mapping OTP route:', otpRouteName);
     console.log('[mapOtpRouteToTrimet] masterRoutes available:', masterRoutes ? masterRoutes.length : 'undefined');
     
@@ -2166,10 +2169,28 @@
       if (activeTripSelected && window.currentLegColorMapping) {
         // OTP trip is active - isolate only trip buses
         displayMode = 'otp-only';
+        console.log('=== OTP ROUTE DEBUGGING ===');
         console.log('[fetchAndDisplayBuses] OTP trip detected!');
         console.log('[fetchAndDisplayBuses] currentLegColorMapping:', window.currentLegColorMapping);
         console.log('[fetchAndDisplayBuses] Full OTP trip data:', window.currentTrip);
         console.log('[fetchAndDisplayBuses] OTP legs:', window.currentTrip?.legs);
+        
+        // Log each leg in detail
+        if (window.currentTrip?.legs) {
+          window.currentTrip.legs.forEach((leg, index) => {
+            if (leg.mode !== 'WALK') {
+              console.log(`--- Leg ${index} Details ---`);
+              console.log(`  Mode: ${leg.mode}`);
+              console.log(`  Route ID: ${leg.route}`);
+              console.log(`  Route Short Name: ${leg.routeShortName}`);
+              console.log(`  Route Long Name: ${leg.routeLongName}`);
+              console.log(`  Direction: ${leg.direction}`);
+              console.log(`  From: ${leg.from?.name}`);
+              console.log(`  To: ${leg.to?.name}`);
+              console.log(`  Agency: ${leg.agencyId}`);
+            }
+          });
+        }
         
         otpRoutes = Object.values(window.currentLegColorMapping).map(legInfo => ({
           route_id: legInfo.route,
@@ -2182,7 +2203,7 @@
         }));
         console.log('[fetchAndDisplayBuses] Processed OTP routes with stop info:', otpRoutes);
         console.log('[fetchAndDisplayBuses] OTP mode - isolating buses for trip routes:', otpRoutes);
-        
+        console.log('=== END OTP ROUTE DEBUGGING ===');
 
       } else {
         // Show all active buses (page load or no OTP trip)
