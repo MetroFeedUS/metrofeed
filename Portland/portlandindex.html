@@ -2756,11 +2756,18 @@
   let activeTripSelected = false; // Track if user has selected a trip option
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
-  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
-    const from = `${fromLat},${fromLon}`;
-    const to = `${toLat},${toLon}`;
-    // Adjust the server/URL as needed for production:
-    const url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
+  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, customUrl = null) {
+    let url;
+    if (customUrl) {
+      url = customUrl;
+      console.log('[fetchAndShowOtpItineraries] Using custom URL:', url);
+    } else {
+      const from = `${fromLat},${fromLon}`;
+      const to = `${toLat},${toLon}`;
+      // Adjust the server/URL as needed for production:
+      url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
+      console.log('[fetchAndShowOtpItineraries] Using default URL:', url);
+    }
 
     // Clear previous state for multiple trips
     window.otpBusInfo = {};
@@ -3093,6 +3100,7 @@
 
   // ==== ROUTE DISPLAY ====
   let routeLine = null; // Track the current route line
+  let userRouteManuallyHidden = false; // Track if user manually hid their route
   window.routeLegLines = [];
   
   function decodePolyline(encoded) {
@@ -4259,10 +4267,34 @@
       return null;
     }
     
-    // Find the route in masterRoutes
-    const masterRoute = masterRoutes.find(r => r.route_id === routeId);
+    // Try multiple ways to find the route in masterRoutes
+    let masterRoute = masterRoutes.find(r => r.route_id === routeId);
+    
+    // If not found by exact ID, try to find by route title or short name
+    if (!masterRoute) {
+      console.log('[buildRoutePathFromGTFS] Route not found by ID, trying alternative matches for:', routeId);
+      masterRoute = masterRoutes.find(r => 
+        r.route_title && r.route_title.includes(routeId) ||
+        r.route_short_name === routeId ||
+        r.route_long_name && r.route_long_name.includes(routeId)
+      );
+    }
+    
+    // If still not found, try to extract route number from the name
+    if (!masterRoute && routeId.includes('MAX')) {
+      console.log('[buildRoutePathFromGTFS] Trying to extract MAX route number from:', routeId);
+      const maxMatch = routeId.match(/MAX\s+(\w+)/);
+      if (maxMatch) {
+        const maxColor = maxMatch[1].toLowerCase();
+        console.log('[buildRoutePathFromGTFS] Looking for MAX route with color:', maxColor);
+        masterRoute = masterRoutes.find(r => 
+          r.route_title && r.route_title.toLowerCase().includes(maxColor)
+        );
+      }
+    }
+    
     if (!masterRoute || !masterRoute.stops || masterRoute.stops.length < 2) {
-      console.log('[buildRoutePathFromGTFS] No master route found for', routeId);
+      console.log('[buildRoutePathFromGTFS] No master route found for', routeId, '- available routes:', masterRoutes?.slice(0, 5).map(r => r.route_id));
       return null;
     }
     
@@ -4299,9 +4331,17 @@
     
     // Extract the path between the stops
     const pathStops = masterRoute.stops.slice(fromIndex, toIndex + 1);
-    const pathCoords = pathStops.map(stop => [stop.lon, stop.lat]);
+    const pathCoords = pathStops.map(stop => [stop.lon, stop.lat]).filter(coord => {
+      // Validate coordinates
+      const [lon, lat] = coord;
+      if (isNaN(lon) || isNaN(lat) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        console.warn('[buildRoutePathFromGTFS] Invalid coordinate filtered out:', coord);
+        return false;
+      }
+      return true;
+    });
     
-    console.log('[buildRoutePathFromGTFS] Built path with', pathCoords.length, 'coordinates');
+    console.log('[buildRoutePathFromGTFS] Built path with', pathCoords.length, 'valid coordinates');
     return pathCoords;
   }
   
@@ -4370,6 +4410,8 @@
   
   // Enhanced OTP function with options
   function fetchAndShowOtpItinerariesWithOptions(startLat, startLon, endLat, endLon, options) {
+    console.log('[fetchAndShowOtpItinerariesWithOptions] Received options:', options);
+    
     const { departureTime, walkDistance, tripType, modes, preferences } = options;
     
     // Build OTP query parameters
