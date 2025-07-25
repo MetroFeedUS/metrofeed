@@ -2370,38 +2370,20 @@
             if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
             
-            // Use mastermap.js to determine the correct direction
-            console.log('[fetchAndDisplayBuses] Calling determineCorrectDirection with:');
-            console.log('  - routeId:', trimetRouteNumber);
-            console.log('  - otpDirection:', otpDirection);
-            console.log('  - route.fromStop:', route.fromStop);
-            console.log('  - route.toStop:', route.toStop);
-            console.log('  - Full route object:', route);
+            // Show ALL buses on the route (no direction filtering)
+            console.log('[fetchAndDisplayBuses] Showing ALL buses on route:', trimetRouteNumber);
             
-            const correctedDirection = determineCorrectDirection(trimetRouteNumber, otpDirection, route.fromStop, route.toStop);
-            console.log('[fetchAndDisplayBuses] Corrected direction using mastermap.js:', correctedDirection);
-            
-            // Enhanced bus filtering with better logging
+            // Enhanced bus filtering - show all buses on the route
             let routeBuses = allBuses.filter(v => {
               const routeMatch = v.routeNumber == trimetRouteNumber;
-              const directionMatch = v.direction == correctedDirection;
-              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${correctedDirection} (${directionMatch})`);
-              return routeMatch && directionMatch;
+              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), direction: ${v.direction}`);
+              return routeMatch; // Show all buses, let user see direction
             });
             
             console.log('[fetchAndDisplayBuses] Buses with exact route+direction match:', routeBuses.length);
             
-            // STRICT DIRECTION MATCHING - No fallback to wrong direction
-            if (routeBuses.length === 0) {
-              console.log('[fetchAndDisplayBuses] No buses found in correct direction. Showing message instead of wrong-direction buses.');
-              
-              // TEMPORARY: Show buses in any direction for debugging
-              const anyDirectionBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
-              if (anyDirectionBuses.length > 0) {
-                console.log('[fetchAndDisplayBuses] TEMP: Found', anyDirectionBuses.length, 'buses on route', trimetRouteNumber, 'in ANY direction:', anyDirectionBuses.map(b => `${b.vehicleID} (dir ${b.direction})`));
-              }
-              // Don't show buses going the wrong way - they're useless for the trip
-            }
+            // Show all buses on the route (no direction filtering)
+            console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses on route', trimetRouteNumber, 'in all directions');
             
             console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'OTP buses for route', trimetRouteNumber);
             if (routeBuses.length > 0) {
@@ -2415,11 +2397,18 @@
               // Use OTP route color and add special styling
               const routeColor = route.color || getRouteColor(route.mode);
               
-              // Create OTP bus marker with route color for MapLibre GL JS
+              // Create OTP bus marker with direction indicator
               const otpMarkerElement = document.createElement('div');
               otpMarkerElement.className = 'otp-bus-marker';
+              
+              // Direction arrow (↑ for dir 1, ↓ for dir 2)
+              const directionArrow = bus.direction == 1 ? '↑' : '↓';
+              const directionText = bus.direction == 1 ? 'Dir 1' : 'Dir 2';
+              
               otpMarkerElement.innerHTML = `<div style='text-align:center;'>
-                <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;border:3px solid #fff;'>${bus.vehicleID}</div>
+                <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;border:3px solid #fff;'>
+                  ${bus.vehicleID} ${directionArrow}
+                </div>
                 <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;'></div>
               </div>`;
               
@@ -2430,18 +2419,21 @@
               // Set position and add popup
               busMarker.setLngLat([bus.longitude, bus.latitude]);
               
-              // Create popup content
+              // Create popup content with clear direction info
               const popupContent = document.createElement('div');
+              const popupDirectionArrow = bus.direction == 1 ? '↑' : '↓';
+              const directionDescription = bus.direction == 1 ? 'Direction 1 (Forward)' : 'Direction 2 (Reverse)';
+              
               popupContent.innerHTML = `
                 <div style='border:2px solid ${routeColor}; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
                   <div style='text-align:center; margin-bottom:8px;'>
-                    <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
+                    <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID} ${popupDirectionArrow}</div>
                   </div>
                   <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
-                  <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
+                  <div style='margin-bottom:6px;'><strong>Direction:</strong> ${directionDescription}</div>
                   <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                   <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
-                  <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
+                  <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>🎯 Check if this bus is going your way!</div>
                   <div style='margin-top:10px; text-align:center;'>
                     <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
                   </div>
