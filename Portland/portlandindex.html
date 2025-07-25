@@ -2590,6 +2590,95 @@
               console.log(`    Agency Name: ${leg.transitLeg.agencyName || 'N/A'}`);
             }
             
+            // CROSS-REFERENCE WITH MASTERMAP.JS TO DETERMINE DIRECTION
+            if (leg.routeShortName && leg.from && leg.to) {
+              console.log(`  🔍 [DIRECTION DETECTION] Cross-referencing with mastermap.js...`);
+              
+              // Find all routes with this route number in mastermap.js
+              const routeNumber = leg.routeShortName;
+              const masterRoutesForNumber = masterRoutes.filter(r => r.route_id === routeNumber);
+              
+              console.log(`  🔍 [DIRECTION DETECTION] Found ${masterRoutesForNumber.length} directions for route ${routeNumber}:`);
+              masterRoutesForNumber.forEach((route, idx) => {
+                console.log(`    Direction ${idx + 1}: ${route.direction_id || 'unknown'} - ${route.route_title}`);
+              });
+              
+              if (masterRoutesForNumber.length >= 2) {
+                // We have multiple directions, let's determine which one matches
+                let bestMatch = null;
+                let bestScore = 0;
+                
+                masterRoutesForNumber.forEach((masterRoute, dirIdx) => {
+                  console.log(`  🔍 [DIRECTION DETECTION] Checking direction ${dirIdx + 1} (${masterRoute.direction_id || 'unknown'}):`);
+                  
+                  // Check if FROM stop matches any stop in this direction
+                  const fromStopMatch = masterRoute.stops.find(stop => {
+                    const distance = Math.hypot(stop.lat - leg.from.lat, stop.lon - leg.from.lon);
+                    return distance < 0.001; // Within ~100 meters
+                  });
+                  
+                  // Check if TO stop matches any stop in this direction
+                  const toStopMatch = masterRoute.stops.find(stop => {
+                    const distance = Math.hypot(stop.lat - leg.to.lat, stop.lon - leg.to.lon);
+                    return distance < 0.001; // Within ~100 meters
+                  });
+                  
+                  console.log(`    FROM stop "${leg.from.name}" match: ${fromStopMatch ? 'YES' : 'NO'}`);
+                  console.log(`    TO stop "${leg.to.name}" match: ${toStopMatch ? 'YES' : 'NO'}`);
+                  
+                  // Calculate match score (both stops should match for a good score)
+                  let score = 0;
+                  if (fromStopMatch) score += 1;
+                  if (toStopMatch) score += 1;
+                  
+                  // Bonus: check if stops are in the right order (FROM should come before TO)
+                  if (fromStopMatch && toStopMatch) {
+                    const fromIndex = masterRoute.stops.indexOf(fromStopMatch);
+                    const toIndex = masterRoute.stops.indexOf(toStopMatch);
+                    if (fromIndex < toIndex) {
+                      score += 0.5; // Bonus for correct order
+                      console.log(`    ✅ Stops are in correct order (${fromIndex} -> ${toIndex})`);
+                    } else {
+                      console.log(`    ⚠️ Stops are in reverse order (${fromIndex} -> ${toIndex})`);
+                    }
+                  }
+                  
+                  console.log(`    Direction ${dirIdx + 1} score: ${score}`);
+                  
+                  if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = {
+                      direction: masterRoute.direction_id || dirIdx,
+                      route: masterRoute,
+                      score: score,
+                      fromStop: fromStopMatch,
+                      toStop: toStopMatch
+                    };
+                  }
+                });
+                
+                if (bestMatch && bestMatch.score >= 1) {
+                  console.log(`  ✅ [DIRECTION DETECTION] BEST MATCH: Direction ${bestMatch.direction} (score: ${bestMatch.score})`);
+                  console.log(`  ✅ [DIRECTION DETECTION] Route: ${bestMatch.route.route_title}`);
+                  console.log(`  ✅ [DIRECTION DETECTION] FROM: ${bestMatch.fromStop?.name || 'Not found'}`);
+                  console.log(`  ✅ [DIRECTION DETECTION] TO: ${bestMatch.toStop?.name || 'Not found'}`);
+                  
+                  // Store the detected direction for bus tracking
+                  leg.detectedDirection = bestMatch.direction;
+                  leg.masterRouteMatch = bestMatch.route;
+                } else {
+                  console.log(`  ❌ [DIRECTION DETECTION] No good match found. Best score: ${bestScore}`);
+                }
+              } else if (masterRoutesForNumber.length === 1) {
+                // Only one direction exists
+                console.log(`  ℹ️ [DIRECTION DETECTION] Only one direction exists for route ${routeNumber}: ${masterRoutesForNumber[0].direction_id || 'unknown'}`);
+                leg.detectedDirection = masterRoutesForNumber[0].direction_id || 0;
+                leg.masterRouteMatch = masterRoutesForNumber[0];
+              } else {
+                console.log(`  ❌ [DIRECTION DETECTION] No routes found in mastermap.js for route ${routeNumber}`);
+              }
+            }
+            
           } else {
             console.log(`🚶‍♂️ [OTP DEBUG] Walking Details:`);
             console.log(`  🚶‍♂️ From: ${leg.from?.name || 'N/A'} (${leg.from?.lat}, ${leg.from?.lon})`);
@@ -2997,9 +3086,9 @@
       window.routeLegLines = [];
     }
     if (window.routeStopMarkers && window.routeStopMarkers.length) {
-      window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
+      window.routeStopMarkers.forEach(marker => marker.remove());
+      window.routeStopMarkers = [];
     }
-    window.routeStopMarkers = [];
 
     console.log('[showRoute] Trip:', window.currentItins[idx]);
 
@@ -3016,148 +3105,272 @@
       if (leg.mode === 'WALK') {
         color = WALK_COLOR;
         legKey = `walk-${legIndex}`;
+        
+        // For walking legs, use OTP geometry if available
+        let coords = [];
+        if (leg.legGeometry && leg.legGeometry.points) {
+          coords = decodePolyline(leg.legGeometry.points);
+        } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
+          coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        }
+        
+        if (coords.length) {
+          // Convert coordinates to [lng, lat] format for MapLibre GL JS
+          const lineCoords = coords.map(coord => [coord[1], coord[0]]);
+          
+          // Create a unique source and layer ID for this line
+          const lineId = `routeLeg-${legIndex}`;
+          
+          map.addSource(lineId, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: lineCoords
+              }
+            }
+          });
+          
+          map.addLayer({
+            id: lineId,
+            type: 'line',
+            source: lineId,
+            paint: {
+              'line-color': color,
+              'line-width': 3,
+              'line-opacity': 0.7
+            }
+          });
+          
+          // Store the layer ID for removal
+          window.routeLegLines.push(lineId);
+          allCoords = allCoords.concat(coords);
+        }
+        
+        // Add walking stop markers
+        if (leg.from && leg.from.lat && leg.from.lon) {
+          addStopMarker(leg.from.lat, leg.from.lon, leg.from.name + leg.from.lat + leg.from.lon, color);
+        }
+        if (leg.to && leg.to.lat && leg.to.lon) {
+          addStopMarker(leg.to.lat, leg.to.lon, leg.to.name + leg.to.lat + leg.to.lon, color);
+        }
+        
       } else {
-        // Assign unique color to each transit leg
+        // TRANSIT LEGS - Use mastermap.js shape data
         color = legColors[legIndex % legColors.length];
         
-        // Extract route description from itinerary
-        let routeDescription = '';
-        let routeNumber = leg.route;
+        // Use detected direction and masterRouteMatch if available
+        let routeNumber = leg.routeShortName || leg.route;
+        let direction = leg.detectedDirection || leg.direction || 0;
+        let masterRoute = leg.masterRouteMatch;
         
-        if (leg.routeLongName) {
-          routeDescription = leg.routeLongName;
-        } else if (leg.routeShortName) {
-          routeDescription = leg.routeShortName;
-        } else if (leg.route) {
-          // Try to find route info in masterRoutes
-          const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
-          if (masterRoute) {
-            routeDescription = masterRoute.route_title.split(' - ')[1] || masterRoute.route_title;
-          }
-        }
-        
-        // Try to find the actual route number using the description
-        if (routeDescription) {
-          // First try to decode using our mapping function
-          const decodedRouteNumber = mapOtpRouteToTrimet(routeDescription);
-          if (decodedRouteNumber) {
-            routeNumber = decodedRouteNumber;
-            console.log('[showRoute] Decoded route number:', routeNumber, 'for description:', routeDescription);
-          } else {
-            // Fallback to masterRoutes search
-            const foundRoute = findRouteByDescription(routeDescription);
-            if (foundRoute) {
-              routeNumber = foundRoute.route_id;
-              console.log('[showRoute] Found route number via masterRoutes:', routeNumber, 'for description:', routeDescription);
-            }
-          }
-        }
-        
-        legKey = `${leg.mode}-${routeNumber}-${leg.direction || 0}`;
+        legKey = `${leg.mode}-${routeNumber}-${direction}`;
         
         // Store color mapping for bus matching
         legColorMapping[legKey] = {
           color: color,
           route: routeNumber,
-          direction: leg.direction || 0,
+          direction: direction,
           mode: leg.mode,
-          description: routeDescription
+          description: leg.routeLongName || leg.routeShortName || `Route ${routeNumber}`
         };
         
-        console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription);
-      }
-      
-      let coords = [];
-      if (leg.legGeometry && leg.legGeometry.points) {
-        coords = decodePolyline(leg.legGeometry.points);
-      } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
-        coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
-      }
-      if (coords.length) {
-        // Convert coordinates to [lng, lat] format for MapLibre GL JS
-        const lineCoords = coords.map(coord => [coord[1], coord[0]]);
+        console.log('[showRoute] Processing transit leg:', legKey, 'with masterRoute:', masterRoute ? 'YES' : 'NO');
         
-        // Create a unique source and layer ID for this line
-        const lineId = `routeLeg-${legIndex}`;
-        
-        map.addSource(lineId, {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: lineCoords
+        if (masterRoute && masterRoute.shape) {
+          // Use mastermap.js shape data for the route
+          console.log('[showRoute] Using mastermap.js shape for route:', routeNumber, 'direction:', direction);
+          
+          // Convert shape coordinates to [lng, lat] format for MapLibre GL JS
+          const lineCoords = masterRoute.shape.map(coord => [coord[1], coord[0]]);
+          
+          // Create a unique source and layer ID for this line
+          const lineId = `routeLeg-${legIndex}`;
+          
+          map.addSource(lineId, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: lineCoords
+              }
             }
+          });
+          
+          map.addLayer({
+            id: lineId,
+            type: 'line',
+            source: lineId,
+            paint: {
+              'line-color': color,
+              'line-width': 4,
+              'line-opacity': 0.7
+            }
+          });
+          
+          // Store the layer ID for removal
+          window.routeLegLines.push(lineId);
+          allCoords = allCoords.concat(masterRoute.shape);
+          
+          // Add ALL stops from mastermap.js for this route (like closest route)
+          console.log('[showRoute] Adding stops from mastermap.js for route:', routeNumber);
+          const nowMins = getPortlandMinutes();
+          
+          masterRoute.stops.forEach(stop => {
+            // Create stop marker with times (like closest route)
+            let highlightedTimes = [];
+            let foundNext = false;
+            
+            if (stop.times && Array.isArray(stop.times)) {
+              stop.times.forEach(timeStr => {
+                let cleanTime = timeStr.trim();
+                let [h, m] = cleanTime.split(":"),
+                  schedMins = parseInt(h) * 60 + parseInt(m);
+                if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+                if (!foundNext && schedMins >= nowMins) {
+                  highlightedTimes.push(`<span style='background:${color};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+                  foundNext = true;
+                } else {
+                  highlightedTimes.push(cleanTime);
+                }
+              });
+            }
+            
+            // Create stop marker element
+            const stopElement = document.createElement('div');
+            stopElement.style.width = '12px';
+            stopElement.style.height = '12px';
+            stopElement.style.backgroundColor = color;
+            stopElement.style.borderRadius = '50%';
+            stopElement.style.border = `1px solid ${color}`;
+            stopElement.style.opacity = '0.9';
+            
+            const stopMarker = new maplibregl.Marker({
+              element: stopElement
+            });
+            stopMarker.setLngLat([stop.lon, stop.lat]);
+            
+            // Create popup content
+            const popupContent = document.createElement('div');
+            popupContent.innerHTML = `
+              <div style='border:1px solid ${color}; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+                  <strong style='color:${color};'>${stop.name}</strong>
+                  <hr style='border:none; border-top:1px solid ${color}; margin:6px 0;'>
+                  ${
+                    highlightedTimes.map(t =>
+                      `<div style='padding:2px 0; color:${t.includes('background') ? '#fff' : '#fff'};'>${t}</div>`
+                    ).join('') || '<div>No scheduled times</div>'
+                  }
+                </div>
+            `;
+            
+            const popup = new maplibregl.Popup().setDOMContent(popupContent);
+            stopMarker.setPopup(popup);
+            stopMarker.addTo(map);
+            window.routeStopMarkers.push(stopMarker);
+          });
+          
+        } else {
+          // Fallback to OTP geometry if no masterRoute match
+          console.log('[showRoute] No masterRoute match, falling back to OTP geometry for route:', routeNumber);
+          
+          let coords = [];
+          if (leg.legGeometry && leg.legGeometry.points) {
+            coords = decodePolyline(leg.legGeometry.points);
+          } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
+            coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
           }
-        });
-        
-        map.addLayer({
-          id: lineId,
-          type: 'line',
-          source: lineId,
-          paint: {
-            'line-color': color,
-            'line-width': 4,
-            'line-opacity': 0.7
+          
+          if (coords.length) {
+            // Convert coordinates to [lng, lat] format for MapLibre GL JS
+            const lineCoords = coords.map(coord => [coord[1], coord[0]]);
+            
+            // Create a unique source and layer ID for this line
+            const lineId = `routeLeg-${legIndex}`;
+            
+            map.addSource(lineId, {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: lineCoords
+                }
+              }
+            });
+            
+            map.addLayer({
+              id: lineId,
+              type: 'line',
+              source: lineId,
+              paint: {
+                'line-color': color,
+                'line-width': 4,
+                'line-opacity': 0.7
+              }
+            });
+            
+            // Store the layer ID for removal
+            window.routeLegLines.push(lineId);
+            allCoords = allCoords.concat(coords);
           }
-        });
+          
+          // Add OTP stops as fallback
+          if (leg.from && leg.from.lat && leg.from.lon) {
+            addStopMarker(leg.from.lat, leg.from.lon, leg.from.name + leg.from.lat + leg.from.lon, color);
+          }
+          if (leg.to && leg.to.lat && leg.to.lon) {
+            addStopMarker(leg.to.lat, leg.to.lon, leg.to.name + leg.to.lat + leg.to.lon, color);
+          }
+          if (leg.intermediateStops && Array.isArray(leg.intermediateStops)) {
+            leg.intermediateStops.forEach(stop => {
+              if (stop.lat && stop.lon) {
+                addStopMarker(stop.lat, stop.lon, stop.name + stop.lat + stop.lon, color);
+              }
+            });
+          }
+        }
         
-        // Store the layer ID for removal
-        window.routeLegLines.push(lineId);
-        allCoords = allCoords.concat(coords);
+        // Collect route information for bus tracking
+        if (routeNumber) {
+          console.log('[showRoute] Adding route for bus tracking:', routeNumber, 'direction:', direction);
+          routesToTrack.push({
+            route_id: routeNumber,
+            direction_id: direction,
+            mode: leg.mode
+          });
+        }
       }
       
       legIndex++;
-      
-      // Collect route information for bus tracking (skip WALK legs)
-      if (leg.mode !== 'WALK' && leg.route) {
-        console.log('[showRoute] Found transit leg:', leg);
-        routesToTrack.push({
-          route_id: leg.route,
-          direction_id: leg.direction || 0, // Default direction if not specified
-          mode: leg.mode
-        });
-      }
-      
-      // Add stop markers (solid small white dots)
-      function addStopMarker(lat, lon, key) {
-        if (!lat || !lon) return;
-        if (addedStops.has(key)) return;
-        addedStops.add(key);
-        
-        // Create stop marker element
-        const stopElement = document.createElement('div');
-        stopElement.style.width = '8px';
-        stopElement.style.height = '8px';
-        stopElement.style.backgroundColor = '#fff';
-        stopElement.style.borderRadius = '50%';
-        stopElement.style.border = '0.5px solid #fff';
-        
-        let marker = new maplibregl.Marker({
-          element: stopElement
-        });
-        marker.setLngLat([lon, lat]);
-        marker.addTo(map);
-        window.routeStopMarkers.push(marker);
-      }
-      // Add 'from' stop
-      if (leg.from && leg.from.lat && leg.from.lon) {
-        addStopMarker(leg.from.lat, leg.from.lon, leg.from.name + leg.from.lat + leg.from.lon);
-      }
-      // Add 'to' stop
-      if (leg.to && leg.to.lat && leg.to.lon) {
-        addStopMarker(leg.to.lat, leg.to.lon, leg.to.name + leg.to.lat + leg.to.lon);
-      }
-      // Add intermediate stops if present
-      if (leg.intermediateStops && Array.isArray(leg.intermediateStops)) {
-        leg.intermediateStops.forEach(stop => {
-          if (stop.lat && stop.lon) {
-            addStopMarker(stop.lat, stop.lon, stop.name + stop.lat + stop.lon);
-          }
-        });
-      }
     });
+    
+    // Helper function to add stop markers
+    function addStopMarker(lat, lon, key, color = '#fff') {
+      if (!lat || !lon) return;
+      if (addedStops.has(key)) return;
+      addedStops.add(key);
+      
+      // Create stop marker element
+      const stopElement = document.createElement('div');
+      stopElement.style.width = '8px';
+      stopElement.style.height = '8px';
+      stopElement.style.backgroundColor = color;
+      stopElement.style.borderRadius = '50%';
+      stopElement.style.border = `0.5px solid ${color}`;
+      
+      let marker = new maplibregl.Marker({
+        element: stopElement
+      });
+      marker.setLngLat([lon, lat]);
+      marker.addTo(map);
+      window.routeStopMarkers.push(marker);
+    }
     
     if (window.routeLegLines.length) {
       const bounds = new maplibregl.LngLatBounds();
