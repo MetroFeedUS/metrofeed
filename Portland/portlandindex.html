@@ -2507,6 +2507,10 @@
   let routeStopMarkers = [];
   let activeTripSelected = false; // Track if user has selected a trip option
   let userRouteManuallyHidden = false; // Track if user manually hid their closest route
+  
+  // Initialize global arrays to prevent undefined errors
+  window.routeStopMarkers = [];
+  window.routeLegLines = [];
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
   async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
@@ -3409,27 +3413,32 @@
       legIndex++;
     });
     
-    // Helper function to add stop markers
+        // Helper function to add stop markers
     function addStopMarker(lat, lon, key, color = '#fff') {
-      if (!lat || !lon) return;
-      if (addedStops.has(key)) return;
-      addedStops.add(key);
-      
-      // Create stop marker element
-      const stopElement = document.createElement('div');
-      stopElement.style.width = '8px';
-      stopElement.style.height = '8px';
+        if (!lat || !lon) return;
+        if (addedStops.has(key)) return;
+        addedStops.add(key);
+        
+        // Create stop marker element
+        const stopElement = document.createElement('div');
+        stopElement.style.width = '8px';
+        stopElement.style.height = '8px';
       stopElement.style.backgroundColor = color;
-      stopElement.style.borderRadius = '50%';
+        stopElement.style.borderRadius = '50%';
       stopElement.style.border = `0.5px solid ${color}`;
-      
-      let marker = new maplibregl.Marker({
-        element: stopElement
-      });
-      marker.setLngLat([lon, lat]);
-      marker.addTo(map);
-      window.routeStopMarkers.push(marker);
-    }
+        
+        let marker = new maplibregl.Marker({
+          element: stopElement
+        });
+        marker.setLngLat([lon, lat]);
+        marker.addTo(map);
+        
+        // Ensure the array exists before pushing
+        if (!window.routeStopMarkers) {
+          window.routeStopMarkers = [];
+        }
+        window.routeStopMarkers.push(marker);
+      }
     
     if (window.routeLegLines.length) {
       const bounds = new maplibregl.LngLatBounds();
