@@ -3297,19 +3297,19 @@
           
           // Add FROM stop
           if (leg.from && leg.from.lat && leg.from.lon) {
-            addStopMarker(leg.from.lat, leg.from.lon, leg.from.name + leg.from.lat + leg.from.lon, color);
+            createStopMarker(leg.from.lat, leg.from.lon, leg.from.name, color, 'FROM', leg.from.departureTime);
           }
           
           // Add TO stop
           if (leg.to && leg.to.lat && leg.to.lon) {
-            addStopMarker(leg.to.lat, leg.to.lon, leg.to.name + leg.to.lat + leg.to.lon, color);
+            createStopMarker(leg.to.lat, leg.to.lon, leg.to.name, color, 'TO', leg.to.arrivalTime);
           }
           
           // Add intermediate stops if they exist
           if (leg.intermediateStops && Array.isArray(leg.intermediateStops)) {
             leg.intermediateStops.forEach(stop => {
               if (stop.lat && stop.lon) {
-                addStopMarker(stop.lat, stop.lon, stop.name + stop.lat + stop.lon, color);
+                createStopMarker(stop.lat, stop.lon, stop.name, color, 'INTERMEDIATE', stop.departureTime || stop.arrivalTime);
               }
             });
           }
@@ -3416,6 +3416,81 @@
         }
         window.routeStopMarkers.push(marker);
       }
+      
+    // Helper function to create detailed stop markers with popups
+    function createStopMarker(lat, lon, stopName, color, stopType, time) {
+        if (!lat || !lon) return;
+        
+        // Create stop marker element
+        const stopElement = document.createElement('div');
+        stopElement.style.width = '12px';
+        stopElement.style.height = '12px';
+        stopElement.style.backgroundColor = color;
+        stopElement.style.borderRadius = '50%';
+        stopElement.style.border = `2px solid #fff`;
+        stopElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        stopElement.style.cursor = 'pointer';
+        
+        // Create popup content
+        const popupContent = document.createElement('div');
+        
+        // Format time
+        let timeDisplay = '';
+        if (time) {
+          const timeDate = new Date(time);
+          timeDisplay = timeDate.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            timeZone: 'America/Los_Angeles'
+          });
+        }
+        
+        // Create different content based on stop type
+        let stopTypeLabel = '';
+        let timeLabel = '';
+        
+        switch(stopType) {
+          case 'FROM':
+            stopTypeLabel = 'Departure';
+            timeLabel = timeDisplay ? `Departure: ${timeDisplay}` : 'Departure stop';
+            break;
+          case 'TO':
+            stopTypeLabel = 'Arrival';
+            timeLabel = timeDisplay ? `Arrival: ${timeDisplay}` : 'Arrival stop';
+            break;
+          case 'INTERMEDIATE':
+            stopTypeLabel = 'Stop';
+            timeLabel = timeDisplay ? `Time: ${timeDisplay}` : 'Intermediate stop';
+            break;
+        }
+        
+        popupContent.innerHTML = `
+          <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#0d0d0d; color:#cccccc; min-width:200px;'>
+            <div style='text-align:center; margin-bottom:8px;'>
+              <div style='background:#4dd0e1;color:#000;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>${stopTypeLabel}</div>
+            </div>
+            <div style='margin-bottom:6px;'><strong style='color:#4dd0e1;'>Stop:</strong> ${stopName}</div>
+            <div style='margin-bottom:6px;'><strong style='color:#4dd0e1;'>${timeLabel}</strong></div>
+            <div style='color:#4dd0e1; font-size:11px; margin-top:8px; font-style:italic;'>✨ Part of your planned trip</div>
+          </div>
+        `;
+        
+        const marker = new maplibregl.Marker({
+          element: stopElement
+        });
+        
+        marker.setLngLat([lon, lat]);
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        marker.setPopup(popup);
+        marker.addTo(map);
+        
+        // Ensure the array exists before pushing
+        if (!window.routeStopMarkers) {
+          window.routeStopMarkers = [];
+        }
+        window.routeStopMarkers.push(marker);
+    }
     
     if (window.routeLegLines.length) {
       const bounds = new maplibregl.LngLatBounds();
