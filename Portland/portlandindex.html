@@ -1579,6 +1579,14 @@
     const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
     console.log('[showUserLocationAndRoute] routeCoordinates (first 3):', routeCoordinates.slice(0, 3));
     
+    // Remove existing source if it exists
+    if (map.getSource('userLocationRoute')) {
+      map.removeSource('userLocationRoute');
+    }
+    if (map.getLayer('userLocationRoute')) {
+      map.removeLayer('userLocationRoute');
+    }
+    
     map.addSource('userLocationRoute', {
       type: 'geojson',
       data: {
@@ -1627,18 +1635,24 @@
         console.log(`[showUserLocationAndRoute] Creating stop ${index + 1}:`, stop.name, 'at', stop.lat, stop.lon);
         let highlightedTimes = [];
         let foundNext = false;
-        stop.times.forEach(timeStr => {
-          let cleanTime = timeStr.trim();
-          let [h, m] = cleanTime.split(":"),
-            schedMins = parseInt(h) * 60 + parseInt(m);
-          if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-          if (!foundNext && schedMins >= nowMins) {
-            highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-            foundNext = true;
-          } else {
-            highlightedTimes.push(cleanTime);
-          }
-        });
+        
+        // Check if stop.times exists before calling forEach
+        if (stop.times && Array.isArray(stop.times)) {
+          stop.times.forEach(timeStr => {
+            let cleanTime = timeStr.trim();
+            let [h, m] = cleanTime.split(":"),
+              schedMins = parseInt(h) * 60 + parseInt(m);
+            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+            if (!foundNext && schedMins >= nowMins) {
+              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+              foundNext = true;
+            } else {
+              highlightedTimes.push(cleanTime);
+            }
+          });
+        } else {
+          console.log(`[showUserLocationAndRoute] No times found for stop: ${stop.name}`);
+        }
 
         // Create stop marker element
         const stopElement = document.createElement('div');
