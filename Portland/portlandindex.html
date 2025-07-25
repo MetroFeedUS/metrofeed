@@ -2725,18 +2725,21 @@
                 const masterRoutesForNumber = masterRoutes.filter(r => r.route_id === routeNumber);
                 const masterRoute = masterRoutesForNumber.find(r => r.direction_id === detectedDirection);
                 
-                if (masterRoute) {
-                  console.log(`  ✅ [DIRECTION DETECTION] Found mastermap.js route: ${masterRoute.route_title}`);
-                  leg.detectedDirection = detectedDirection;
-                  leg.masterRouteMatch = masterRoute;
-                } else {
-                  console.log(`  ❌ [DIRECTION DETECTION] No mastermap.js route found for direction ${detectedDirection}`);
-                  // Fallback to first available route
-                  if (masterRoutesForNumber.length > 0) {
-                    leg.detectedDirection = masterRoutesForNumber[0].direction_id || 0;
-                    leg.masterRouteMatch = masterRoutesForNumber[0];
-                  }
-                }
+                                 if (masterRoute) {
+                   console.log(`  ✅ [DIRECTION DETECTION] Found mastermap.js route: ${masterRoute.route_title}`);
+                   leg.detectedDirection = detectedDirection;
+                   leg.masterRouteMatch = masterRoute;
+                 } else {
+                   console.log(`  ❌ [DIRECTION DETECTION] No mastermap.js route found for direction ${detectedDirection}`);
+                   // Fallback to first available route
+                   if (masterRoutesForNumber.length > 0) {
+                      leg.detectedDirection = masterRoutesForNumber[0].direction_id || 0;
+                      leg.masterRouteMatch = masterRoutesForNumber[0];
+                      console.log(`  ℹ️ [DIRECTION DETECTION] Using fallback route: ${masterRoutesForNumber[0].route_title}`);
+                    } else {
+                      console.log(`  ❌ [DIRECTION DETECTION] No routes found at all for route number ${routeNumber}`);
+                    }
+                 }
               } else {
                 console.log(`  ❌ [DIRECTION DETECTION] No route data found in BusRoutesMain.html for route ${routeNumber}`);
               }
@@ -3295,6 +3298,7 @@
           
           // Add the full route as a gray background line
           if (masterRoute && masterRoute.shape) {
+            console.log('[showRoute] Adding gray background line for route:', routeNumber);
             // Use the same coordinates as the trip line for consistency
             const fullRouteCoords = coords.map(coord => [coord[1], coord[0]]);
             const fullRouteId = `fullRoute-${legIndex}`;
@@ -3324,6 +3328,8 @@
             
             // Store the layer ID for removal
             window.routeLegLines.push(fullRouteId);
+          } else {
+            console.log('[showRoute] No masterRoute.shape found for gray background line, route:', routeNumber);
           }
           
           // Add only the stops that are part of this OTP trip leg
@@ -3504,13 +3510,14 @@
         let foundNext = false;
         
         console.log(`[createStopMarker] Looking for stop at ${lat}, ${lon} - "${stopName}"`);
+        console.log(`[createStopMarker] Searching through ${masterRoutes.length} routes for matching stop`);
         
         // Search through all routes to find this stop
         masterRoutes.forEach(route => {
           if (route.stops && Array.isArray(route.stops)) {
             route.stops.forEach(stop => {
-              // Check if this is the same stop (by coordinates)
-              if (Math.abs(stop.lat - lat) < 0.0001 && Math.abs(stop.lon - lon) < 0.0001) {
+              // Check if this is the same stop (by coordinates) - more flexible matching
+              if (Math.abs(stop.lat - lat) < 0.001 && Math.abs(stop.lon - lon) < 0.001) {
                 console.log(`[createStopMarker] Found matching stop: "${stop.name}" in route ${route.route_id}`);
                 if (stop.times && Array.isArray(stop.times)) {
                   const nowMins = getPortlandMinutes();
