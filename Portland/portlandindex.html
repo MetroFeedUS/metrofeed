@@ -3295,7 +3295,8 @@
           
           // Add the full route as a gray background line
           if (masterRoute && masterRoute.shape) {
-            const fullRouteCoords = masterRoute.shape.map(coord => [coord[1], coord[0]]);
+            // Use the same coordinates as the trip line for consistency
+            const fullRouteCoords = coords.map(coord => [coord[1], coord[0]]);
             const fullRouteId = `fullRoute-${legIndex}`;
             
             map.addSource(fullRouteId, {
@@ -3502,14 +3503,18 @@
         let highlightedTimes = [];
         let foundNext = false;
         
+        console.log(`[createStopMarker] Looking for stop at ${lat}, ${lon} - "${stopName}"`);
+        
         // Search through all routes to find this stop
         masterRoutes.forEach(route => {
           if (route.stops && Array.isArray(route.stops)) {
             route.stops.forEach(stop => {
               // Check if this is the same stop (by coordinates)
               if (Math.abs(stop.lat - lat) < 0.0001 && Math.abs(stop.lon - lon) < 0.0001) {
+                console.log(`[createStopMarker] Found matching stop: "${stop.name}" in route ${route.route_id}`);
                 if (stop.times && Array.isArray(stop.times)) {
                   const nowMins = getPortlandMinutes();
+                  console.log(`[createStopMarker] Current time: ${nowMins} minutes, Stop times:`, stop.times);
                   
                   stop.times.forEach(timeStr => {
                     let cleanTime = timeStr.trim();
@@ -3520,12 +3525,14 @@
                     if (!foundNext && schedMins >= nowMins) {
                       highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
                       foundNext = true;
+                      console.log(`[createStopMarker] Highlighted next time: ${cleanTime}`);
                     } else {
                       highlightedTimes.push(cleanTime);
                     }
                   });
                   
                   fullSchedule = highlightedTimes;
+                  console.log(`[createStopMarker] Final schedule:`, fullSchedule);
                 }
               }
             });
