@@ -3203,7 +3203,8 @@
             paint: {
               'line-color': color,
               'line-width': 3,
-              'line-opacity': 0.7
+              'line-opacity': 0.7,
+              'line-dasharray': [2, 2]
             }
           });
           
@@ -3291,6 +3292,38 @@
           // Store the layer ID for removal
           window.routeLegLines.push(lineId);
           allCoords = allCoords.concat(coords);
+          
+          // Add the full route as a gray background line
+          if (masterRoute && masterRoute.shape) {
+            const fullRouteCoords = masterRoute.shape.map(coord => [coord[1], coord[0]]);
+            const fullRouteId = `fullRoute-${legIndex}`;
+            
+            map.addSource(fullRouteId, {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: fullRouteCoords
+                }
+              }
+            });
+            
+            map.addLayer({
+              id: fullRouteId,
+              type: 'line',
+              source: fullRouteId,
+              paint: {
+                'line-color': '#666666',
+                'line-width': 2,
+                'line-opacity': 0.3
+              }
+            });
+            
+            // Store the layer ID for removal
+            window.routeLegLines.push(fullRouteId);
+          }
           
           // Add only the stops that are part of this OTP trip leg
           console.log('[showRoute] Adding OTP trip stops for route:', routeNumber);
@@ -3464,6 +3497,51 @@
             break;
         }
         
+        // Find this stop in mastermap.js to get full schedule
+        let fullSchedule = [];
+        let highlightedTimes = [];
+        let foundNext = false;
+        
+        // Search through all routes to find this stop
+        masterRoutes.forEach(route => {
+          if (route.stops && Array.isArray(route.stops)) {
+            route.stops.forEach(stop => {
+              // Check if this is the same stop (by coordinates)
+              if (Math.abs(stop.lat - lat) < 0.0001 && Math.abs(stop.lon - lon) < 0.0001) {
+                if (stop.times && Array.isArray(stop.times)) {
+                  const nowMins = getPortlandMinutes();
+                  
+                  stop.times.forEach(timeStr => {
+                    let cleanTime = timeStr.trim();
+                    let [h, m] = cleanTime.split(":");
+                    let schedMins = parseInt(h) * 60 + parseInt(m);
+                    if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+                    
+                    if (!foundNext && schedMins >= nowMins) {
+                      highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+                      foundNext = true;
+                    } else {
+                      highlightedTimes.push(cleanTime);
+                    }
+                  });
+                  
+                  fullSchedule = highlightedTimes;
+                }
+              }
+            });
+          }
+        });
+        
+        // Build popup content with full schedule
+        let scheduleHTML = '';
+        if (fullSchedule.length > 0) {
+          scheduleHTML = `
+            <hr style='border:none; border-top:1px solid #4dd0e1; margin:8px 0;'>
+            <div style='margin-bottom:6px;'><strong style='color:#4dd0e1;'>Full Schedule:</strong></div>
+            ${fullSchedule.map(t => `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#cccccc'};'>${t}</div>`).join('')}
+          `;
+        }
+        
         popupContent.innerHTML = `
           <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#0d0d0d; color:#cccccc; min-width:200px;'>
             <div style='text-align:center; margin-bottom:8px;'>
@@ -3471,6 +3549,7 @@
             </div>
             <div style='margin-bottom:6px;'><strong style='color:#4dd0e1;'>Stop:</strong> ${stopName}</div>
             <div style='margin-bottom:6px;'><strong style='color:#4dd0e1;'>${timeLabel}</strong></div>
+            ${scheduleHTML}
             <div style='color:#4dd0e1; font-size:11px; margin-top:8px; font-style:italic;'>✨ Part of your planned trip</div>
           </div>
         `;
