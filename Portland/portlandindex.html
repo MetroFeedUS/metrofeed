@@ -1432,55 +1432,59 @@
     userLocationStopMarkers.forEach(marker => marker.remove());
     userLocationStopMarkers = [];
 
-    closestRoute.stops.forEach(stop => {
-      let highlightedTimes = [];
-      let foundNext = false;
-      stop.times.forEach(timeStr => {
-        let cleanTime = timeStr.trim();
-        let [h, m] = cleanTime.split(":"),
-          schedMins = parseInt(h) * 60 + parseInt(m);
-        if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-        if (!foundNext && schedMins >= nowMins) {
-          highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-          foundNext = true;
-        } else {
-          highlightedTimes.push(cleanTime);
-        }
-      });
+    if (closestRoute && Array.isArray(closestRoute.stops)) {
+      closestRoute.stops.forEach(stop => {
+        let highlightedTimes = [];
+        let foundNext = false;
+        stop.times.forEach(timeStr => {
+          let cleanTime = timeStr.trim();
+          let [h, m] = cleanTime.split(":"),
+            schedMins = parseInt(h) * 60 + parseInt(m);
+          if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
+          if (!foundNext && schedMins >= nowMins) {
+            highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
+            foundNext = true;
+          } else {
+            highlightedTimes.push(cleanTime);
+          }
+        });
 
-      // Create stop marker element
-      const stopElement = document.createElement('div');
-      stopElement.style.width = '12px';
-      stopElement.style.height = '12px';
-      stopElement.style.backgroundColor = '#4dd0e1';
-      stopElement.style.borderRadius = '50%';
-      stopElement.style.border = '1px solid #4dd0e1';
-      stopElement.style.opacity = '0.9';
+        // Create stop marker element
+        const stopElement = document.createElement('div');
+        stopElement.style.width = '12px';
+        stopElement.style.height = '12px';
+        stopElement.style.backgroundColor = '#4dd0e1';
+        stopElement.style.borderRadius = '50%';
+        stopElement.style.border = '1px solid #4dd0e1';
+        stopElement.style.opacity = '0.9';
 
-      const stopMarker = new maplibregl.Marker({
-        element: stopElement
+        const stopMarker = new maplibregl.Marker({
+          element: stopElement
+        });
+        stopMarker.setLngLat([stop.lon, stop.lat]);
+        
+        // Create popup content
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+              <strong style='color:#4dd0e1;'>${stop.name}</strong>
+              <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+              ${
+                highlightedTimes.map(t =>
+                  `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                ).join('') || '<div>No scheduled times</div>'
+              }
+            </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        stopMarker.setPopup(popup);
+        stopMarker.addTo(map);
+        userLocationStopMarkers.push(stopMarker);
       });
-      stopMarker.setLngLat([stop.lon, stop.lat]);
-      
-      // Create popup content
-      const popupContent = document.createElement('div');
-      popupContent.innerHTML = `
-        <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-            <strong style='color:#4dd0e1;'>${stop.name}</strong>
-            <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-            ${
-              highlightedTimes.map(t =>
-                `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-              ).join('') || '<div>No scheduled times</div>'
-            }
-          </div>
-      `;
-      
-      const popup = new maplibregl.Popup().setDOMContent(popupContent);
-      stopMarker.setPopup(popup);
-      stopMarker.addTo(map);
-      userLocationStopMarkers.push(stopMarker);
-    });
+    } else {
+      console.error('[showUserLocationAndRoute] closestRoute or closestRoute.stops is undefined!', closestRoute);
+    }
 
     // Start bus tracking
     console.log('[Find Me] Starting bus tracking...');
@@ -2414,6 +2418,10 @@
     // Adjust the server/URL as needed for production:
     const url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
 
+    console.log('🚀 [OTP DEBUG] Starting OTP request...');
+    console.log('🚀 [OTP DEBUG] URL:', url);
+    console.log('🚀 [OTP DEBUG] From:', from, 'To:', to);
+
     // Clear previous state for multiple trips
     window.otpBusInfo = {};
     currentItins = null;
@@ -2450,71 +2458,224 @@
     showOtpModal();
 
     try {
+      console.log('🚀 [OTP DEBUG] Fetching from OTP server...');
       const res = await fetch(url);
       if (!res.ok) throw new Error("OTP server error: " + res.status);
       const data = await res.json();
 
-      console.log('Full OTP response:', data); // Debug the full response
+      console.log('📊 [OTP DEBUG] ==========================================');
+      console.log('📊 [OTP DEBUG] COMPLETE OTP RESPONSE STRUCTURE');
+      console.log('📊 [OTP DEBUG] ==========================================');
+      console.log('📊 [OTP DEBUG] Raw response:', data);
+      
+      // Store the complete response for debugging
+      window.lastOtpResponse = data;
+      
+      // Analyze the complete response structure
+      console.log('📊 [OTP DEBUG] Response keys:', Object.keys(data));
+      
+      if (data.plan) {
+        console.log('📊 [OTP DEBUG] Plan keys:', Object.keys(data.plan));
+        console.log('📊 [OTP DEBUG] Number of itineraries:', data.plan.itineraries?.length || 0);
+        console.log('📊 [OTP DEBUG] Date:', data.plan.date);
+        console.log('📊 [OTP DEBUG] From:', data.plan.from);
+        console.log('📊 [OTP DEBUG] To:', data.plan.to);
+      }
+      
+      if (data.error) {
+        console.log('❌ [OTP DEBUG] OTP Error:', data.error);
+      }
 
       // OTP v2+ always returns {plan: { itineraries: [...] }} if results are found
       if (!data.plan || !data.plan.itineraries || !data.plan.itineraries.length) {
+        console.log('❌ [OTP DEBUG] No itineraries found in response');
         itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
         return;
       }
 
       // Store itineraries globally and render
       currentItins = data.plan.itineraries;
-      console.log('Stored itineraries:', currentItins); // Debug stored data
       
-      // Enhanced OTP route debugging
-      console.log('=== OTP ROUTE ANALYSIS ===');
+      console.log('📊 [OTP DEBUG] ==========================================');
+      console.log('📊 [OTP DEBUG] DETAILED ITINERARY ANALYSIS');
+      console.log('📊 [OTP DEBUG] ==========================================');
+      
       data.plan.itineraries.forEach((itin, idx) => {
-        console.log(`\n--- Itinerary ${idx + 1} ---`);
-        console.log(`Total Duration: ${Math.round(itin.duration/60)} minutes`);
-        console.log(`Start Time: ${new Date(itin.startTime).toLocaleTimeString()}`);
-        console.log(`End Time: ${new Date(itin.endTime).toLocaleTimeString()}`);
+        console.log(`\n🎯 [OTP DEBUG] ===== ITINERARY ${idx + 1} =====`);
+        console.log(`🎯 [OTP DEBUG] Total Duration: ${Math.round(itin.duration/60)} minutes`);
+        console.log(`🎯 [OTP DEBUG] Start Time: ${new Date(itin.startTime).toLocaleTimeString()}`);
+        console.log(`🎯 [OTP DEBUG] End Time: ${new Date(itin.endTime).toLocaleTimeString()}`);
+        console.log(`🎯 [OTP DEBUG] Walk Distance: ${Math.round(itin.walkDistance || 0)} meters`);
+        console.log(`🎯 [OTP DEBUG] Transfers: ${itin.transfers || 0}`);
+        console.log(`🎯 [OTP DEBUG] Fare: ${itin.fare || 'Not available'}`);
+        console.log(`🎯 [OTP DEBUG] Number of legs: ${itin.legs?.length || 0}`);
+        
+        // Complete leg analysis
         itin.legs.forEach((leg, legIdx) => {
+          console.log(`\n🚶‍♂️ [OTP DEBUG] ----- LEG ${legIdx + 1} -----`);
+          console.log(`🚶‍♂️ [OTP DEBUG] Mode: ${leg.mode}`);
+          console.log(`🚶‍♂️ [OTP DEBUG] Duration: ${Math.round(leg.duration/60)} minutes`);
+          console.log(`🚶‍♂️ [OTP DEBUG] Distance: ${Math.round(leg.distance || 0)} meters`);
+          console.log(`🚶‍♂️ [OTP DEBUG] Start Time: ${leg.startTime ? new Date(leg.startTime).toLocaleTimeString() : 'N/A'}`);
+          console.log(`🚶‍♂️ [OTP DEBUG] End Time: ${leg.endTime ? new Date(leg.endTime).toLocaleTimeString() : 'N/A'}`);
+          
           if (leg.mode !== 'WALK') {
-            console.log(`Leg ${legIdx}:`);
-            console.log(`  Mode: ${leg.mode}`);
-            console.log(`  Route ID: ${leg.route}`);
-            console.log(`  Route Short Name: ${leg.routeShortName}`);
-            console.log(`  Route Long Name: ${leg.routeLongName}`);
-            console.log(`  Direction: ${leg.direction}`);
-            console.log(`  From: ${leg.from?.name} (${leg.from?.lat}, ${leg.from?.lon})`);
-            console.log(`  To: ${leg.to?.name} (${leg.to?.lat}, ${leg.to?.lon})`);
-            console.log(`  Agency: ${leg.agencyId} - ${leg.agencyName}`);
-            console.log(`  Duration: ${Math.round(leg.duration/60)} minutes`);
+            console.log(`🚌 [OTP DEBUG] Transit Details:`);
+            console.log(`  🚌 Route ID: ${leg.route || 'N/A'}`);
+            console.log(`  🚌 Route Short Name: ${leg.routeShortName || 'N/A'}`);
+            console.log(`  🚌 Route Long Name: ${leg.routeLongName || 'N/A'}`);
+            console.log(`  🚌 Direction: ${leg.direction || 'N/A'}`);
+            console.log(`  🚌 Headsign: ${leg.headsign || 'N/A'}`);
+            console.log(`  🚌 Agency ID: ${leg.agencyId || 'N/A'}`);
+            console.log(`  🚌 Agency Name: ${leg.agencyName || 'N/A'}`);
+            console.log(`  🚌 Trip ID: ${leg.tripId || 'N/A'}`);
+            console.log(`  🚌 Service Date: ${leg.serviceDate || 'N/A'}`);
+            console.log(`  🚌 Real Time: ${leg.realTime || 'N/A'}`);
+            console.log(`  🚌 Interline With Previous Leg: ${leg.interlineWithPreviousLeg || 'N/A'}`);
+            
+            // Stop information
+            if (leg.from) {
+              console.log(`  🚌 FROM STOP:`);
+              console.log(`    Name: ${leg.from.name || 'N/A'}`);
+              console.log(`    Coordinates: (${leg.from.lat}, ${leg.from.lon})`);
+              console.log(`    Stop ID: ${leg.from.stopId || 'N/A'}`);
+              console.log(`    Stop Code: ${leg.from.stopCode || 'N/A'}`);
+              console.log(`    Departure Time: ${leg.from.departureTime ? new Date(leg.from.departureTime).toLocaleTimeString() : 'N/A'}`);
+            }
+            
+            if (leg.to) {
+              console.log(`  🚌 TO STOP:`);
+              console.log(`    Name: ${leg.to.name || 'N/A'}`);
+              console.log(`    Coordinates: (${leg.to.lat}, ${leg.to.lon})`);
+              console.log(`    Stop ID: ${leg.to.stopId || 'N/A'}`);
+              console.log(`    Stop Code: ${leg.to.stopCode || 'N/A'}`);
+              console.log(`    Arrival Time: ${leg.to.arrivalTime ? new Date(leg.to.arrivalTime).toLocaleTimeString() : 'N/A'}`);
+            }
+            
+            // Intermediate stops
+            if (leg.intermediateStops && leg.intermediateStops.length > 0) {
+              console.log(`  🚌 INTERMEDIATE STOPS (${leg.intermediateStops.length}):`);
+              leg.intermediateStops.forEach((stop, stopIdx) => {
+                console.log(`    Stop ${stopIdx + 1}: ${stop.name} (${stop.lat}, ${stop.lon})`);
+                console.log(`      Stop ID: ${stop.stopId || 'N/A'}`);
+                console.log(`      Stop Code: ${stop.stopCode || 'N/A'}`);
+                console.log(`      Arrival: ${stop.arrivalTime ? new Date(stop.arrivalTime).toLocaleTimeString() : 'N/A'}`);
+                console.log(`      Departure: ${stop.departureTime ? new Date(stop.departureTime).toLocaleTimeString() : 'N/A'}`);
+              });
+            }
+            
+            // Geometry information
+            if (leg.legGeometry) {
+              console.log(`  🚌 GEOMETRY:`);
+              console.log(`    Type: ${leg.legGeometry.type || 'N/A'}`);
+              console.log(`    Has Points: ${leg.legGeometry.points ? 'Yes' : 'No'}`);
+              console.log(`    Has Coordinates: ${leg.legGeometry.coordinates ? 'Yes' : 'No'}`);
+              if (leg.legGeometry.points) {
+                console.log(`    Encoded Points Length: ${leg.legGeometry.points.length}`);
+              }
+              if (leg.legGeometry.coordinates) {
+                console.log(`    Coordinates Count: ${leg.legGeometry.coordinates.length}`);
+              }
+            }
+            
+            // Additional transit info
+            if (leg.transitLeg) {
+              console.log(`  🚌 TRANSIT LEG INFO:`);
+              console.log(`    Trip ID: ${leg.transitLeg.tripId || 'N/A'}`);
+              console.log(`    Service ID: ${leg.transitLeg.serviceId || 'N/A'}`);
+              console.log(`    Route ID: ${leg.transitLeg.routeId || 'N/A'}`);
+              console.log(`    Route Short Name: ${leg.transitLeg.routeShortName || 'N/A'}`);
+              console.log(`    Route Long Name: ${leg.transitLeg.routeLongName || 'N/A'}`);
+              console.log(`    Agency ID: ${leg.transitLeg.agencyId || 'N/A'}`);
+              console.log(`    Agency Name: ${leg.transitLeg.agencyName || 'N/A'}`);
+            }
+            
           } else {
-            console.log(`Leg ${legIdx}: WALK ${Math.round(leg.duration/60)} minutes`);
+            console.log(`🚶‍♂️ [OTP DEBUG] Walking Details:`);
+            console.log(`  🚶‍♂️ From: ${leg.from?.name || 'N/A'} (${leg.from?.lat}, ${leg.from?.lon})`);
+            console.log(`  🚶‍♂️ To: ${leg.to?.name || 'N/A'} (${leg.to?.lat}, ${leg.to?.lon})`);
+            if (leg.legGeometry) {
+              console.log(`  🚶‍♂️ Has walking path geometry: ${leg.legGeometry.points ? 'Yes' : 'No'}`);
+            }
           }
         });
       });
-      console.log('=== END OTP ROUTE ANALYSIS ===');
-      console.log('Sample leg data:', currentItins[0]?.legs?.map(leg => ({
-        mode: leg.mode,
-        route: leg.route,
-        routeLongName: leg.routeLongName,
-        routeShortName: leg.routeShortName,
-        headsign: leg.headsign,
-        agencyId: leg.agencyId,
-        agencyName: leg.agencyName,
-        routeId: leg.routeId,
-        tripId: leg.tripId
-      })));
-      const otpRoutes = currentItins.flatMap(itin => 
-        itin.legs.filter(leg => leg.mode !== 'WALK').map(leg => ({
-          mode: leg.mode,
-          route: leg.route,
-          routeLongName: leg.routeLongName,
-          routeShortName: leg.routeShortName
-        }))
-      );
-      console.log('All route IDs from OTP:', otpRoutes);
+      
+      console.log('📊 [OTP DEBUG] ==========================================');
+      console.log('📊 [OTP DEBUG] ACTIONABLE DATA SUMMARY');
+      console.log('📊 [OTP DEBUG] ==========================================');
+      
+      // Extract all unique routes for bus tracking
+      const allRoutes = new Set();
+      const routeDetails = [];
+      
+      data.plan.itineraries.forEach((itin, itinIdx) => {
+        itin.legs.forEach((leg, legIdx) => {
+          if (leg.mode !== 'WALK' && leg.route) {
+            const routeKey = `${leg.route}-${leg.direction || 0}`;
+            allRoutes.add(routeKey);
+            routeDetails.push({
+              itinerary: itinIdx + 1,
+              leg: legIdx + 1,
+              route: leg.route,
+              routeShortName: leg.routeShortName,
+              routeLongName: leg.routeLongName,
+              direction: leg.direction || 0,
+              mode: leg.mode,
+              agencyId: leg.agencyId,
+              agencyName: leg.agencyName,
+              fromStop: leg.from?.name,
+              toStop: leg.to?.name,
+              startTime: leg.startTime ? new Date(leg.startTime).toLocaleTimeString() : 'N/A',
+              endTime: leg.endTime ? new Date(leg.endTime).toLocaleTimeString() : 'N/A'
+            });
+          }
+        });
+      });
+      
+      console.log('🚌 [OTP DEBUG] Routes to track for buses:', Array.from(allRoutes));
+      console.log('🚌 [OTP DEBUG] Detailed route breakdown:', routeDetails);
+      
+      // Extract all stops for mapping
+      const allStops = new Set();
+      data.plan.itineraries.forEach((itin, itinIdx) => {
+        itin.legs.forEach((leg, legIdx) => {
+          if (leg.from) {
+            allStops.add(`${leg.from.name} (${leg.from.lat}, ${leg.from.lon})`);
+          }
+          if (leg.to) {
+            allStops.add(`${leg.to.name} (${leg.to.lat}, ${leg.to.lon})`);
+          }
+          if (leg.intermediateStops) {
+            leg.intermediateStops.forEach(stop => {
+              allStops.add(`${stop.name} (${stop.lat}, ${stop.lon})`);
+            });
+          }
+        });
+      });
+      
+      console.log('📍 [OTP DEBUG] All stops in trip:', Array.from(allStops));
+      
+      // Extract timing information
+      const timingInfo = data.plan.itineraries.map((itin, idx) => ({
+        itinerary: idx + 1,
+        startTime: new Date(itin.startTime).toLocaleTimeString(),
+        endTime: new Date(itin.endTime).toLocaleTimeString(),
+        duration: Math.round(itin.duration / 60),
+        transfers: itin.transfers || 0,
+        walkDistance: Math.round(itin.walkDistance || 0)
+      }));
+      
+      console.log('⏰ [OTP DEBUG] Timing summary:', timingInfo);
+      
+      console.log('📊 [OTP DEBUG] ==========================================');
+      console.log('📊 [OTP DEBUG] END OTP ANALYSIS');
+      console.log('📊 [OTP DEBUG] ==========================================');
+      
       renderItinListVisual(data.plan.itineraries);
 
     } catch (e) {
-      console.error('OTP Error:', e);
+      console.error('❌ [OTP DEBUG] OTP Error:', e);
       itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server. Please check if the OTP server is running on https://otp.metrofeedus.com</em>`;
     }
   }
