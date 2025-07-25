@@ -702,6 +702,102 @@
   const apiKey = "2C4447D4A42083BCD84DE3B8E";
   const OTP_API = "https://otp.metrofeedus.com/otp/routers/default/plan";
   
+  // BusRoutesMain.html route data for direction detection
+  const busRoutesData = [
+    { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
+    { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
+    { id: '4', label: '4 – Fessenden', dir0: 'To St Johns', dir1: 'To Portland City Center' },
+    { id: '6', label: '6 – Martin Luther King Jr Blvd', dir0: 'To Jantzen Beach', dir1: 'To Portland City Center' },
+    { id: '8', label: '8 – Jackson Park/NE 15th', dir0: 'To Marquam Hill', dir1: 'To NE M L King Jr Blvd & Lombard' },
+    { id: '9', label: '9 – Powell Blvd', dir0: 'To Powell & 92nd or Gresham Central Transit Center', dir1: 'To Portland City Center' },
+    { id: '10', label: '10 – Harold St', dir0: 'To Foster & 94th', dir1: 'To Portland City Center' },
+    { id: '11', label: '11 – Rivergate/Marine Dr', dir0: 'To Vancouver Way & Middlefield', dir1: 'To St Johns' },
+    { id: '12', label: '12 – Barbur/Sandy Blvd', dir0: 'To Tigard Transit Center', dir1: 'To Parkrose/Sumner Transit Center' },
+    { id: '14', label: '14 – Hawthorne/Foster', dir0: 'To Foster & 94th', dir1: 'To Portland City Center' },
+    { id: '15', label: '15 – Belmont/NW 23rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '16', label: '16 – Front Ave/St Helens Rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '17', label: '17 – Holgate/Broadway', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '19', label: '19 – Woodstock/Glisan', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '20', label: '20 – Burnside/Stark', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '21', label: '21 – Sandy Blvd/223rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '22', label: '22 – Parkrose', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '23', label: '23 – San Rafael', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '24', label: '24 – Fremont', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '25', label: '25 – Glisan/Rockwood', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '28', label: '28 – Lake Oswego', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '29', label: '29 – Lake/Webster Rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '30', label: '30 – Sandy Blvd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '31', label: '31 – Killingsworth', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '32', label: '32 – Oatfield', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '33', label: '33 – McLoughlin/King Rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '34', label: '34 – Linwood', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '35', label: '35 – Macadam/Greeley', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '37', label: '37 – Lake Grove', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '38', label: '38 – Boones Ferry Rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '39', label: '39 – Lewis & Clark', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '40', label: '40 – 12th/NE 33rd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '43', label: '43 – Taylors Ferry Rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '44', label: '44 – Capitol Hwy/Mocks Crest', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '45', label: '45 – Garden Home', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '46', label: '46 – Main St', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '47', label: '47 – Baseline/Hillcrest', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '48', label: '48 – Cornell', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '51', label: '51 – Vista', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '52', label: '52 – Farmington/185th', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '53', label: '53 – Pacific Hwy/Greenburg', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '54', label: '54 – 56th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '55', label: '55 – Hamilton', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '56', label: '56 – Scholls Ferry Rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '57', label: '57 – TV Hwy/Forest Grove', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '58', label: '58 – Canyon Rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '59', label: '59 – Walker/Park Way', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '62', label: '62 – Murray Blvd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '63', label: '63 – Washington Park/Arlington Heights', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '64', label: '64 – Marquam Hill/OHSU', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '65', label: '65 – Marquam Hill/Barbur Blvd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '66', label: '66 – Marquam Hill/Hollywood', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '67', label: '67 – 158th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '70', label: '70 – 12th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '71', label: '71 – 60th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '72', label: '72 – Killingsworth/82nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '73', label: '73 – 122nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '74', label: '74 – 162nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '75', label: '75 – Cesar Chavez/Lombard', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '76', label: '76 – 181st Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '77', label: '77 – 182nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '78', label: '78 – 185th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '79', label: '79 – Clackamas Town Center', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '80', label: '80 – Kane/Troutdale Rd', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '81', label: '81 – Kane/257th', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '82', label: '82 – 162nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '83', label: '83 – 185th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '84', label: '84 – Powell Valley', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '85', label: '85 – Swan Island', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '87', label: '87 – Airport Way/181st', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '88', label: '88 – Hart/198th', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '89', label: '89 – 162nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '90', label: '90 – 185th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '91', label: '91 – 92nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '92', label: '92 – 122nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '93', label: '93 – 162nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '94', label: '94 – 185th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '95', label: '95 – 92nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '96', label: '96 – 122nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '97', label: '97 – 162nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '98', label: '98 – 185th Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '99', label: '99 – 92nd Ave', dir0: 'To Portland City Center', dir1: 'To Portland City Center' },
+    { id: '100', label: 'MAX Blue Line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
+    { id: '190', label: 'MAX Red Line', dir0: 'To Portland Airport', dir1: 'To Beaverton Transit Center' },
+    { id: '200', label: 'MAX Green Line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center' },
+    { id: '203', label: 'MAX Orange Line', dir0: 'To Milwaukie', dir1: 'To Portland City Center' },
+    { id: '290', label: 'MAX Yellow Line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
+    { id: '287', label: 'Blue Eastside Bus', dir0: 'To Gresham', dir1: 'To Portland City Center' },
+    { id: '288', label: 'Blue Westside Bus', dir0: 'To Hillsboro', dir1: 'To Portland City Center' },
+    { id: '291', label: 'Orange Bus', dir0: 'To Milwaukie', dir1: 'To Portland City Center' },
+    { id: '292', label: 'Red Bus', dir0: 'To Portland Airport', dir1: 'To Portland City Center' },
+    { id: '293', label: 'Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
+  ];
+  
   // Portland time utility functions
   function getPortlandTime() {
     return new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
@@ -2410,6 +2506,7 @@
   let routePolylines = []; // Store route polylines for cleanup
   let routeStopMarkers = [];
   let activeTripSelected = false; // Track if user has selected a trip option
+  let userRouteManuallyHidden = false; // Track if user manually hid their closest route
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
   async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
@@ -2590,92 +2687,54 @@
               console.log(`    Agency Name: ${leg.transitLeg.agencyName || 'N/A'}`);
             }
             
-            // CROSS-REFERENCE WITH MASTERMAP.JS TO DETERMINE DIRECTION
-            if (leg.routeShortName && leg.from && leg.to) {
-              console.log(`  🔍 [DIRECTION DETECTION] Cross-referencing with mastermap.js...`);
+            // SIMPLE DIRECTION DETECTION USING HEADSIGN
+            if (leg.routeShortName && leg.headsign) {
+              console.log(`  🔍 [DIRECTION DETECTION] Using headsign: "${leg.headsign}" for route ${leg.routeShortName}`);
               
-              // Find all routes with this route number in mastermap.js
+              // Find route in BusRoutesMain.html data
               const routeNumber = leg.routeShortName;
-              const masterRoutesForNumber = masterRoutes.filter(r => r.route_id === routeNumber);
+              const routeData = busRoutesData.find(r => r.id === routeNumber);
               
-              console.log(`  🔍 [DIRECTION DETECTION] Found ${masterRoutesForNumber.length} directions for route ${routeNumber}:`);
-              masterRoutesForNumber.forEach((route, idx) => {
-                console.log(`    Direction ${idx + 1}: ${route.direction_id || 'unknown'} - ${route.route_title}`);
-              });
-              
-              if (masterRoutesForNumber.length >= 2) {
-                // We have multiple directions, let's determine which one matches
-                let bestMatch = null;
-                let bestScore = 0;
+              if (routeData) {
+                console.log(`  🔍 [DIRECTION DETECTION] Found route data: ${routeData.label}`);
+                console.log(`  🔍 [DIRECTION DETECTION] dir0: "${routeData.dir0}"`);
+                console.log(`  🔍 [DIRECTION DETECTION] dir1: "${routeData.dir1}"`);
                 
-                masterRoutesForNumber.forEach((masterRoute, dirIdx) => {
-                  console.log(`  🔍 [DIRECTION DETECTION] Checking direction ${dirIdx + 1} (${masterRoute.direction_id || 'unknown'}):`);
-                  
-                  // Check if FROM stop matches any stop in this direction
-                  const fromStopMatch = masterRoute.stops.find(stop => {
-                    const distance = Math.hypot(stop.lat - leg.from.lat, stop.lon - leg.from.lon);
-                    return distance < 0.001; // Within ~100 meters
-                  });
-                  
-                  // Check if TO stop matches any stop in this direction
-                  const toStopMatch = masterRoute.stops.find(stop => {
-                    const distance = Math.hypot(stop.lat - leg.to.lat, stop.lon - leg.to.lon);
-                    return distance < 0.001; // Within ~100 meters
-                  });
-                  
-                  console.log(`    FROM stop "${leg.from.name}" match: ${fromStopMatch ? 'YES' : 'NO'}`);
-                  console.log(`    TO stop "${leg.to.name}" match: ${toStopMatch ? 'YES' : 'NO'}`);
-                  
-                  // Calculate match score (both stops should match for a good score)
-                  let score = 0;
-                  if (fromStopMatch) score += 1;
-                  if (toStopMatch) score += 1;
-                  
-                  // Bonus: check if stops are in the right order (FROM should come before TO)
-                  if (fromStopMatch && toStopMatch) {
-                    const fromIndex = masterRoute.stops.indexOf(fromStopMatch);
-                    const toIndex = masterRoute.stops.indexOf(toStopMatch);
-                    if (fromIndex < toIndex) {
-                      score += 0.5; // Bonus for correct order
-                      console.log(`    ✅ Stops are in correct order (${fromIndex} -> ${toIndex})`);
-                    } else {
-                      console.log(`    ⚠️ Stops are in reverse order (${fromIndex} -> ${toIndex})`);
-                    }
-                  }
-                  
-                  console.log(`    Direction ${dirIdx + 1} score: ${score}`);
-                  
-                  if (score > bestScore) {
-                    bestScore = score;
-                    bestMatch = {
-                      direction: masterRoute.direction_id || dirIdx,
-                      route: masterRoute,
-                      score: score,
-                      fromStop: fromStopMatch,
-                      toStop: toStopMatch
-                    };
-                  }
-                });
+                const headsign = leg.headsign.toLowerCase();
+                let detectedDirection = null;
                 
-                if (bestMatch && bestMatch.score >= 1) {
-                  console.log(`  ✅ [DIRECTION DETECTION] BEST MATCH: Direction ${bestMatch.direction} (score: ${bestMatch.score})`);
-                  console.log(`  ✅ [DIRECTION DETECTION] Route: ${bestMatch.route.route_title}`);
-                  console.log(`  ✅ [DIRECTION DETECTION] FROM: ${bestMatch.fromStop?.name || 'Not found'}`);
-                  console.log(`  ✅ [DIRECTION DETECTION] TO: ${bestMatch.toStop?.name || 'Not found'}`);
-                  
-                  // Store the detected direction for bus tracking
-                  leg.detectedDirection = bestMatch.direction;
-                  leg.masterRouteMatch = bestMatch.route;
+                // Check if headsign matches dir0 or dir1
+                if (routeData.dir0.toLowerCase().includes(headsign) || headsign.includes(routeData.dir0.toLowerCase())) {
+                  detectedDirection = 0;
+                  console.log(`  ✅ [DIRECTION DETECTION] Headsign "${leg.headsign}" matches dir0: "${routeData.dir0}"`);
+                } else if (routeData.dir1.toLowerCase().includes(headsign) || headsign.includes(routeData.dir1.toLowerCase())) {
+                  detectedDirection = 1;
+                  console.log(`  ✅ [DIRECTION DETECTION] Headsign "${leg.headsign}" matches dir1: "${routeData.dir1}"`);
                 } else {
-                  console.log(`  ❌ [DIRECTION DETECTION] No good match found. Best score: ${bestScore}`);
+                  console.log(`  ❌ [DIRECTION DETECTION] No headsign match found for "${leg.headsign}"`);
+                  // Default to dir0 if no match
+                  detectedDirection = 0;
+                  console.log(`  ℹ️ [DIRECTION DETECTION] Defaulting to dir0`);
                 }
-              } else if (masterRoutesForNumber.length === 1) {
-                // Only one direction exists
-                console.log(`  ℹ️ [DIRECTION DETECTION] Only one direction exists for route ${routeNumber}: ${masterRoutesForNumber[0].direction_id || 'unknown'}`);
-                leg.detectedDirection = masterRoutesForNumber[0].direction_id || 0;
-                leg.masterRouteMatch = masterRoutesForNumber[0];
+                
+                // Now find the corresponding mastermap.js route with this direction
+                const masterRoutesForNumber = masterRoutes.filter(r => r.route_id === routeNumber);
+                const masterRoute = masterRoutesForNumber.find(r => r.direction_id === detectedDirection);
+                
+                if (masterRoute) {
+                  console.log(`  ✅ [DIRECTION DETECTION] Found mastermap.js route: ${masterRoute.route_title}`);
+                  leg.detectedDirection = detectedDirection;
+                  leg.masterRouteMatch = masterRoute;
+                } else {
+                  console.log(`  ❌ [DIRECTION DETECTION] No mastermap.js route found for direction ${detectedDirection}`);
+                  // Fallback to first available route
+                  if (masterRoutesForNumber.length > 0) {
+                    leg.detectedDirection = masterRoutesForNumber[0].direction_id || 0;
+                    leg.masterRouteMatch = masterRoutesForNumber[0];
+                  }
+                }
               } else {
-                console.log(`  ❌ [DIRECTION DETECTION] No routes found in mastermap.js for route ${routeNumber}`);
+                console.log(`  ❌ [DIRECTION DETECTION] No route data found in BusRoutesMain.html for route ${routeNumber}`);
               }
             }
             
