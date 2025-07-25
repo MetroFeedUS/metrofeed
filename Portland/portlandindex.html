@@ -1971,6 +1971,15 @@
       return otpRouteName;
     }
     
+    // Validate route exists in masterRoutes
+    if (masterRoutes && masterRoutes.length > 0) {
+      const routeExists = masterRoutes.some(route => route.route_id === otpRouteName);
+      console.log('[mapOtpRouteToTrimet] Route', otpRouteName, 'exists in masterRoutes:', routeExists);
+      if (routeExists) {
+        return otpRouteName;
+      }
+    }
+    
     // Create a comprehensive mapping from masterRoutes data
     const routeMappings = {};
     if (masterRoutes && masterRoutes.length > 0) {
@@ -2148,6 +2157,71 @@
     return null;
   }
   
+  // Function to determine correct direction using mastermap.js data
+  function determineCorrectDirection(routeId, otpDirection, legStart, legEnd) {
+    console.log('[determineCorrectDirection] Route:', routeId, 'OTP Direction:', otpDirection);
+    console.log('[determineCorrectDirection] Leg start:', legStart, 'Leg end:', legEnd);
+    
+    if (!masterRoutes || !legStart || !legEnd) {
+      console.log('[determineCorrectDirection] Missing data, returning OTP direction:', otpDirection);
+      return otpDirection;
+    }
+    
+    // Find the route in masterRoutes
+    const route = masterRoutes.find(r => r.route_id === routeId);
+    if (!route || !route.stops || route.stops.length < 2) {
+      console.log('[determineCorrectDirection] Route not found or no stops, returning OTP direction:', otpDirection);
+      return otpDirection;
+    }
+    
+    console.log('[determineCorrectDirection] Found route with', route.stops.length, 'stops');
+    
+    // Get the first and last stops from masterRoutes
+    const firstStop = route.stops[0];
+    const lastStop = route.stops[route.stops.length - 1];
+    
+    console.log('[determineCorrectDirection] Route direction: First stop:', firstStop.name, 'Last stop:', lastStop.name);
+    
+    // Calculate distances to determine which direction the trip is going
+    const distanceToFirst = calculateDistance(legStart, firstStop);
+    const distanceToLast = calculateDistance(legStart, lastStop);
+    
+    console.log('[determineCorrectDirection] Distance to first stop:', distanceToFirst, 'Distance to last stop:', distanceToLast);
+    
+    // If we're closer to the first stop, we're going in the "forward" direction (dir 1)
+    // If we're closer to the last stop, we're going in the "reverse" direction (dir 2)
+    const isForwardDirection = distanceToFirst < distanceToLast;
+    
+    console.log('[determineCorrectDirection] Trip appears to be going', isForwardDirection ? 'FORWARD' : 'REVERSE');
+    
+    // Map to TriMet directions (this is the key insight!)
+    // Forward direction (first stop to last stop) = dir 1
+    // Reverse direction (last stop to first stop) = dir 2
+    const trimetDirection = isForwardDirection ? 1 : 2;
+    
+    console.log('[determineCorrectDirection] Mapped to TriMet direction:', trimetDirection);
+    return trimetDirection;
+  }
+  
+  // Helper function to calculate distance between two points
+  function calculateDistance(point1, point2) {
+    const lat1 = point1.lat || point1.latitude;
+    const lon1 = point1.lon || point1.longitude;
+    const lat2 = point2.lat;
+    const lon2 = point2.lon;
+    
+    if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+    
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+  
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
     try {
@@ -2253,14 +2327,27 @@
             const allRouteBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
             console.log('[fetchAndDisplayBuses] All buses on route', trimetRouteNumber, ':', allRouteBuses.map(b => `${b.vehicleID} (dir ${b.direction})`));
             
+            // Debug: Show available directions for this route
+            const routeDirections = [...new Set(allRouteBuses.map(b => b.direction))].sort();
+            console.log('[fetchAndDisplayBuses] Available directions for route', trimetRouteNumber, ':', routeDirections);
+            console.log('[fetchAndDisplayBuses] OTP wants direction:', otpDirection);
+            
+            // Debug: Show ALL available route numbers
+            const allRouteNumbers = [...new Set(allBuses.map(b => b.routeNumber))].sort();
+            console.log('[fetchAndDisplayBuses] All available route numbers in system:', allRouteNumbers);
+            
             if (trimetRouteNumber && trimetRouteNumber !== 'WALK') {
             console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
+            
+            // Use mastermap.js to determine the correct direction
+            const correctedDirection = determineCorrectDirection(trimetRouteNumber, otpDirection, route.fromStop, route.toStop);
+            console.log('[fetchAndDisplayBuses] Corrected direction using mastermap.js:', correctedDirection);
             
             // Enhanced bus filtering with better logging
             let routeBuses = allBuses.filter(v => {
               const routeMatch = v.routeNumber == trimetRouteNumber;
-              const directionMatch = v.direction == otpDirection;
-              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${otpDirection} (${directionMatch})`);
+              const directionMatch = v.direction == correctedDirection;
+              console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${correctedDirection} (${directionMatch})`);
               return routeMatch && directionMatch;
             });
             
@@ -2269,6 +2356,12 @@
             // STRICT DIRECTION MATCHING - No fallback to wrong direction
             if (routeBuses.length === 0) {
               console.log('[fetchAndDisplayBuses] No buses found in correct direction. Showing message instead of wrong-direction buses.');
+              
+              // TEMPORARY: Show buses in any direction for debugging
+              const anyDirectionBuses = allBuses.filter(v => v.routeNumber == trimetRouteNumber);
+              if (anyDirectionBuses.length > 0) {
+                console.log('[fetchAndDisplayBuses] TEMP: Found', anyDirectionBuses.length, 'buses on route', trimetRouteNumber, 'in ANY direction:', anyDirectionBuses.map(b => `${b.vehicleID} (dir ${b.direction})`));
+              }
               // Don't show buses going the wrong way - they're useless for the trip
             }
             
