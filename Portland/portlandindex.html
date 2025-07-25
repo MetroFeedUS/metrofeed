@@ -3267,15 +3267,23 @@
         console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription);
       }
       
+      // Build route path from our GTFS data instead of OTP coordinates
       let coords = [];
-      if (leg.legGeometry && leg.legGeometry.points) {
-        coords = decodePolyline(leg.legGeometry.points);
-      } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
-        coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      if (leg.mode !== 'WALK' && leg.route) {
+        console.log('[showRoute] Building GTFS path for route:', leg.route);
+        coords = buildRoutePathFromGTFS(leg.route, leg.from, leg.to);
+      } else if (leg.mode === 'WALK') {
+        // For walking legs, use OTP coordinates if available
+        if (leg.legGeometry && leg.legGeometry.points) {
+          coords = decodePolyline(leg.legGeometry.points);
+        } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
+          coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        }
       }
-      if (coords.length) {
+      
+      if (coords && coords.length > 0) {
         // Convert coordinates to [lng, lat] format for MapLibre GL JS
-        const lineCoords = coords.map(coord => [coord[1], coord[0]]);
+        const lineCoords = coords.map(coord => [coord[0], coord[1]]);
         
         // Create a unique source and layer ID for this line
         const lineId = `routeLeg-${legIndex}`;
@@ -3305,7 +3313,7 @@
         
         // Store the layer ID for removal
         window.routeLegLines.push(lineId);
-        allCoords = allCoords.concat(coords);
+        allCoords = allCoords.concat(coords.map(coord => [coord[1], coord[0]])); // Convert back for bounds calculation
       }
       
       legIndex++;
@@ -4240,6 +4248,61 @@
       modes,
       preferences
     });
+  }
+  
+  // Function to build route path from GTFS data
+  function buildRoutePathFromGTFS(routeId, fromStop, toStop) {
+    console.log('[buildRoutePathFromGTFS] Building path for route', routeId, 'from', fromStop?.name, 'to', toStop?.name);
+    
+    if (!routeId || !masterRoutes) {
+      console.log('[buildRoutePathFromGTFS] No route ID or masterRoutes');
+      return null;
+    }
+    
+    // Find the route in masterRoutes
+    const masterRoute = masterRoutes.find(r => r.route_id === routeId);
+    if (!masterRoute || !masterRoute.stops || masterRoute.stops.length < 2) {
+      console.log('[buildRoutePathFromGTFS] No master route found for', routeId);
+      return null;
+    }
+    
+    // Find the from and to stops in the route
+    let fromIndex = -1;
+    let toIndex = -1;
+    
+    // Try to match stops by name or coordinates
+    masterRoute.stops.forEach((stop, index) => {
+      if (fromStop && (
+        stop.stop_name === fromStop.name ||
+        (Math.abs(stop.lat - fromStop.lat) < 0.001 && Math.abs(stop.lon - fromStop.lon) < 0.001)
+      )) {
+        fromIndex = index;
+      }
+      if (toStop && (
+        stop.stop_name === toStop.name ||
+        (Math.abs(stop.lat - toStop.lat) < 0.001 && Math.abs(stop.lon - toStop.lon) < 0.001)
+      )) {
+        toIndex = index;
+      }
+    });
+    
+    // If we can't find exact matches, use the entire route
+    if (fromIndex === -1 || toIndex === -1) {
+      console.log('[buildRoutePathFromGTFS] Could not find exact stop matches, using full route');
+      return masterRoute.stops.map(stop => [stop.lon, stop.lat]);
+    }
+    
+    // Ensure proper order (fromIndex should be before toIndex)
+    if (fromIndex > toIndex) {
+      [fromIndex, toIndex] = [toIndex, fromIndex];
+    }
+    
+    // Extract the path between the stops
+    const pathStops = masterRoute.stops.slice(fromIndex, toIndex + 1);
+    const pathCoords = pathStops.map(stop => [stop.lon, stop.lat]);
+    
+    console.log('[buildRoutePathFromGTFS] Built path with', pathCoords.length, 'coordinates');
+    return pathCoords;
   }
   
   // Function to draw full routes for each transit leg
