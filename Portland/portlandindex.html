@@ -2647,7 +2647,7 @@
     const to = `${toLat},${toLon}`;
     
     // Build URL with settings
-    let url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&numItineraries=4`;
+    let url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&numItineraries=4&maxWalkDistance=800&maxWalkTime=600`;
     
     // Add modes
     if (settings.modes && settings.modes.length > 0) {
@@ -2683,6 +2683,9 @@
     const now = new Date();
     url += `&time=${now.getHours()}:${now.getMinutes()}`;
     url += `&date=${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    // Add arrival/departure preference (default to depart now)
+    url += `&arriveBy=false`;
 
     console.log('🚀 [OTP DEBUG] Starting OTP request...');
     console.log('🚀 [OTP DEBUG] URL:', url);
