@@ -1538,11 +1538,13 @@
 
     // Start bus tracking
     console.log('[Find Me] Starting bus tracking...');
+    // Show buses for closest route
     fetchAndDisplayBuses();
     if (window.closestRouteInterval) {
       clearInterval(window.closestRouteInterval);
     }
     window.closestRouteInterval = setInterval(() => {
+      // Track closest route and show buses
       if (!window.otpBusTrackingInterval) {
         fetchAndDisplayBuses();
       }
@@ -2774,11 +2776,13 @@
       // Resume tracking closest route if available
       if (closestRoute) {
         console.log('[hideOtpModal] Resuming closest route tracking');
+        // Show buses for closest route
         fetchAndDisplayBuses();
         // Restart closest route interval if it was stopped and route is not manually hidden
         if (!window.closestRouteInterval && !userRouteManuallyHidden) {
           window.closestRouteInterval = setInterval(() => {
-            fetchAndDisplay();
+            // Track closest route and show buses
+            fetchAndDisplayBuses();
           }, 15000);
         }
       }
@@ -3114,6 +3118,7 @@
     } else {
       // If no routes to track, resume closest route tracking
       if (closestRoute) {
+        // Show buses for closest route
         fetchAndDisplayBuses();
       }
     }
