@@ -1068,7 +1068,34 @@
       
               // Restore user's closest route polyline and stops (only if not manually hidden)
         if (!userLocationPolyline && closestRoute && !userRouteManuallyHidden) {
-          const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
+          // Debug: Log the route data to check for issues
+          console.log('[Closest Route] Drawing route:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
+          console.log('[Closest Route] Shape points:', closestRoute.shape.length);
+          console.log('[Closest Route] First 5 shape points:', closestRoute.shape.slice(0, 5));
+          
+          // Clean and validate coordinates
+          const routeCoordinates = closestRoute.shape
+            .filter(coord => coord && coord.length === 2 && 
+                   typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+                   !isNaN(coord[0]) && !isNaN(coord[1]))
+            .map(coord => [coord[1], coord[0]]); // Convert [lat, lng] to [lng, lat]
+          
+          console.log('[Closest Route] Cleaned coordinates:', routeCoordinates.length);
+          console.log('[Closest Route] First 5 cleaned points:', routeCoordinates.slice(0, 5));
+          
+          // Only draw if we have valid coordinates
+          if (routeCoordinates.length < 2) {
+            console.error('[Closest Route] Not enough valid coordinates to draw route');
+            return;
+          }
+          
+          // Remove existing source and layer if they exist to prevent duplicates
+          if (map.getLayer('userLocationRoute')) {
+            map.removeLayer('userLocationRoute');
+          }
+          if (map.getSource('userLocationRoute')) {
+            map.removeSource('userLocationRoute');
+          }
           
           map.addSource('userLocationRoute', {
             type: 'geojson',
@@ -1392,7 +1419,34 @@
     // Display closest route
     closestRoute = backgroundRouteData.route;
     
-    const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
+    // Debug: Log the route data to check for issues
+    console.log('[Find Me] Drawing route:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
+    console.log('[Find Me] Shape points:', closestRoute.shape.length);
+    console.log('[Find Me] First 5 shape points:', closestRoute.shape.slice(0, 5));
+    
+    // Clean and validate coordinates
+    const routeCoordinates = closestRoute.shape
+      .filter(coord => coord && coord.length === 2 && 
+             typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+             !isNaN(coord[0]) && !isNaN(coord[1]))
+      .map(coord => [coord[1], coord[0]]); // Convert [lat, lng] to [lng, lat]
+    
+    console.log('[Find Me] Cleaned coordinates:', routeCoordinates.length);
+    console.log('[Find Me] First 5 cleaned points:', routeCoordinates.slice(0, 5));
+    
+    // Only draw if we have valid coordinates
+    if (routeCoordinates.length < 2) {
+      console.error('[Find Me] Not enough valid coordinates to draw route');
+      return;
+    }
+    
+    // Remove existing source and layer if they exist to prevent duplicates
+    if (map.getLayer('userLocationRoute')) {
+      map.removeLayer('userLocationRoute');
+    }
+    if (map.getSource('userLocationRoute')) {
+      map.removeSource('userLocationRoute');
+    }
     
     map.addSource('userLocationRoute', {
       type: 'geojson',
@@ -1732,7 +1786,34 @@
       // Only display route if user has clicked "Find Me"
       if (userLocationPolyline && map.getLayer(userLocationPolyline)) {
         // --- Draw closest route ---
-        const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]); // Convert [lat, lng] to [lng, lat]
+        // Debug: Log the route data to check for issues
+        console.log('[Geolocation] Drawing route:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
+        console.log('[Geolocation] Shape points:', closestRoute.shape.length);
+        console.log('[Geolocation] First 5 shape points:', closestRoute.shape.slice(0, 5));
+        
+        // Clean and validate coordinates
+        const routeCoordinates = closestRoute.shape
+          .filter(coord => coord && coord.length === 2 && 
+                 typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+                 !isNaN(coord[0]) && !isNaN(coord[1]))
+          .map(coord => [coord[1], coord[0]]); // Convert [lat, lng] to [lng, lat]
+        
+        console.log('[Geolocation] Cleaned coordinates:', routeCoordinates.length);
+        console.log('[Geolocation] First 5 cleaned points:', routeCoordinates.slice(0, 5));
+        
+        // Only draw if we have valid coordinates
+        if (routeCoordinates.length < 2) {
+          console.error('[Geolocation] Not enough valid coordinates to draw route');
+          return;
+        }
+        
+        // Remove existing source and layer if they exist to prevent duplicates
+        if (map.getLayer('userLocationRoute')) {
+          map.removeLayer('userLocationRoute');
+        }
+        if (map.getSource('userLocationRoute')) {
+          map.removeSource('userLocationRoute');
+        }
         
         map.addSource('userLocationRoute', {
           type: 'geojson',
@@ -3528,7 +3609,34 @@
           updateRouteButtonState();
         } else if (closestRoute) {
           // Show route and stops
-          const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
+          // Debug: Log the route data to check for issues
+          console.log('[Toggle Route] Drawing route:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
+          console.log('[Toggle Route] Shape points:', closestRoute.shape.length);
+          console.log('[Toggle Route] First 5 shape points:', closestRoute.shape.slice(0, 5));
+          
+          // Clean and validate coordinates
+          const routeCoordinates = closestRoute.shape
+            .filter(coord => coord && coord.length === 2 && 
+                   typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+                   !isNaN(coord[0]) && !isNaN(coord[1]))
+            .map(coord => [coord[1], coord[0]]); // Convert [lat, lng] to [lng, lat]
+          
+          console.log('[Toggle Route] Cleaned coordinates:', routeCoordinates.length);
+          console.log('[Toggle Route] First 5 cleaned points:', routeCoordinates.slice(0, 5));
+          
+          // Only draw if we have valid coordinates
+          if (routeCoordinates.length < 2) {
+            console.error('[Toggle Route] Not enough valid coordinates to draw route');
+            return;
+          }
+          
+          // Remove existing source and layer if they exist to prevent duplicates
+          if (map.getLayer('userLocationRoute')) {
+            map.removeLayer('userLocationRoute');
+          }
+          if (map.getSource('userLocationRoute')) {
+            map.removeSource('userLocationRoute');
+          }
           
           map.addSource('userLocationRoute', {
             type: 'geojson',
