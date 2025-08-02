@@ -607,6 +607,8 @@
     <span id="alertsDot" style="display: none; position: absolute; top: 4px; right: 4px; width: 13px; height: 13px; border-radius: 50%; background: #ff3b30; border: 2px solid #000; z-index: 2;"></span>
   </a>
   <a href="https://metrofeedus.com/portland/portland-earthquake"><img src="006-earthquake.svg" alt="7"></a>
+  <!-- New Buses button in dropdown -->
+  <a href="#" id="dropdownBusesBtn" onclick="toggleAllBusesFromDropdown()"><img src="002-bus.svg" alt="Buses"></a>
   <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="8"></a>
 </div>
 
@@ -968,6 +970,7 @@
       { selector: 'a[href*="railroutes"]', text: 'Rail Routes' },
       { selector: '#dropdownTrafficBtn', text: 'Traffic Overlay' },
       { selector: 'a[href*="trafficcameras"]', text: 'Traffic Cameras' },
+      { selector: '#dropdownBusesBtn', text: 'Live Buses' },
       { selector: 'a[href*="chat.html"]', text: 'AI Chat' },
       { selector: 'a[href*="portlandweather"]', text: 'Weather' },
       { selector: '#alertsMenuBtn', text: 'Alerts' },
@@ -1056,6 +1059,39 @@
   }
 
   function clearTripPlan() {
+    // Turn off Find Me
+    if (findMeActive) {
+      findMeActive = false;
+      if (window.closestRouteInterval) {
+        clearInterval(window.closestRouteInterval);
+        window.closestRouteInterval = null;
+      }
+      
+      // Remove user location marker
+      if (userLocationMarker) {
+        userLocationMarker.remove();
+        userLocationMarker = null;
+      }
+      
+      // Remove closest route polyline
+      if (userLocationPolyline) {
+        if (map.getLayer('userLocationRoute')) {
+          map.removeLayer('userLocationRoute');
+        }
+        if (map.getSource('userLocationRoute')) {
+          map.removeSource('userLocationRoute');
+        }
+        userLocationPolyline = null;
+      }
+      
+      // Remove closest route stop markers
+      userLocationStopMarkers.forEach(marker => marker.remove());
+      userLocationStopMarkers = [];
+      
+      // Update button state
+      updateFindMeButtonState();
+    }
+    
     // Remove pins
     if (startPin) {
       startPin.remove();
@@ -1108,7 +1144,13 @@
       window.otpBusTrackingInterval = null;
     }
     
-    // Clear bus markers
+    // Stop all buses interval
+    if (window.allBusesInterval) {
+      clearInterval(window.allBusesInterval);
+      window.allBusesInterval = null;
+    }
+    
+    // Clear ALL bus markers (not just OTP buses)
     Object.values(busMarkers).forEach(m => m.remove());
     busMarkers = {};
     
@@ -1117,123 +1159,6 @@
     
     // Clear OTP leg color mapping
     window.currentLegColorMapping = null;
-    
-    // Resume tracking closest route if available
-    if (closestRoute) {
-      console.log('[clearTripPlan] Resuming closest route tracking');
-      
-              // Restore user's closest route polyline and stops (only if not manually hidden)
-        if (!userLocationPolyline && closestRoute && !userRouteManuallyHidden) {
-          // Debug: Log the route data to check for issues
-          console.log('[Closest Route] Drawing route:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
-          console.log('[Closest Route] Shape points:', closestRoute.shape.length);
-          console.log('[Closest Route] First 5 shape points:', closestRoute.shape.slice(0, 5));
-          
-          // Convert coordinates to [lon, lat] order for MapLibre GL JS
-          const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
-          
-          console.log('[Closest Route] Cleaned coordinates:', routeCoordinates.length);
-          console.log('[Closest Route] First 5 cleaned points:', routeCoordinates.slice(0, 5));
-          
-          // Only draw if we have valid coordinates
-          if (routeCoordinates.length < 2) {
-            console.error('[Closest Route] Not enough valid coordinates to draw route');
-            return;
-          }
-          
-          // Remove existing source and layer if they exist to prevent duplicates
-          if (map.getLayer('userLocationRoute')) {
-            map.removeLayer('userLocationRoute');
-          }
-          if (map.getSource('userLocationRoute')) {
-            map.removeSource('userLocationRoute');
-          }
-          
-          map.addSource('userLocationRoute', {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: routeCoordinates
-              }
-            }
-          });
-          
-          map.addLayer({
-            id: 'userLocationRoute',
-            type: 'line',
-            source: 'userLocationRoute',
-            paint: {
-              'line-color': '#0071CE',
-              'line-width': 4,
-              'line-opacity': 0.7
-            }
-          });
-          
-          userLocationPolyline = 'userLocationRoute';
-        
-          // Recreate stop markers
-          userLocationStopMarkers.forEach(marker => marker.remove());
-          userLocationStopMarkers = [];
-          
-          closestRoute.stops.forEach(stop => {
-            const highlightedTimes = processStopTimes(stop.times);
-
-            // Create stop marker element
-            const stopElement = document.createElement('div');
-            stopElement.style.width = '12px';
-            stopElement.style.height = '12px';
-            stopElement.style.backgroundColor = '#4dd0e1';
-            stopElement.style.borderRadius = '50%';
-            stopElement.style.border = '1px solid #4dd0e1';
-            stopElement.style.opacity = '0.9';
-
-            const stopMarker = new maplibregl.Marker({
-              element: stopElement
-            });
-            stopMarker.setLngLat([stop.lon, stop.lat]);
-            
-            // Create popup content
-            const popupContent = document.createElement('div');
-            popupContent.innerHTML = `
-              <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                  <strong style='color:#4dd0e1;'>${stop.name}</strong>
-                  <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-                  ${
-                    highlightedTimes.map(t =>
-                      `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                    ).join('') || '<div>No scheduled times</div>'
-                  }
-                </div>
-            `;
-            
-            const popup = new maplibregl.Popup().setDOMContent(popupContent);
-            stopMarker.setPopup(popup);
-            stopMarker.addTo(map);
-
-            userLocationStopMarkers.push(stopMarker);
-          });
-        
-        // Update button state (only if not manually hidden)
-        if (!userRouteManuallyHidden) {
-          updateFindMeButtonState();
-        }
-      }
-      
-      // Switch back to showing all buses
-      fetchAndDisplayBuses();
-      // Restart closest route interval if it was stopped and route is not manually hidden
-      if (!window.closestRouteInterval && !userRouteManuallyHidden) {
-        window.closestRouteInterval = setInterval(() => {
-          fetchAndDisplayBuses();
-        }, 15000);
-      }
-    } else {
-      // If no closest route, just show all buses
-      fetchAndDisplayBuses();
-    }
   }
 
   function findClosestRouteToPoint(lat, lon) {
@@ -1401,7 +1326,7 @@
       const findMeBtn = document.getElementById('findMeBtn');
       if (findMeBtn) {
         findMeBtn.disabled = false;
-        findMeBtn.textContent = 'Find Me';
+        findMeBtn.textContent = 'Find Me OFF';
         findMeBtn.style.backgroundColor = '#666';
       }
       alert('Location data not ready yet. Please try again in a moment.');
@@ -1605,7 +1530,7 @@
         if (userArrow) { userArrow.remove(); userArrow = null; }
         
         // Update button to OFF state
-        findMeBtn.textContent = 'Find Me';
+        findMeBtn.textContent = 'Find Me OFF';
         findMeBtn.style.backgroundColor = '#666';
         findMeBtn.style.color = '#fff';
         findMeBtn.style.boxShadow = 'none';
@@ -1972,7 +1897,7 @@
         findMeBtn.style.color = '#fff';
         findMeBtn.style.boxShadow = 'none';
         findMeBtn.style.border = 'none';
-        findMeBtn.textContent = 'Find Me';
+        findMeBtn.textContent = 'Find Me OFF';
         findMeBtn.title = 'Find my location and closest route';
       }
     }
@@ -3768,18 +3693,71 @@
     
     // Function to toggle traffic from dropdown menu (make it global)
     window.toggleTrafficFromDropdown = function() {
-      // Prevent default link behavior
-      event.preventDefault();
-      
-      // Toggle the traffic overlay
-      toggleTrafficOverlay();
+      // Toggle traffic layer
+      if (map.getLayer('traffic')) {
+        map.removeLayer('traffic');
+        map.removeSource('traffic');
+      } else {
+        map.addSource('traffic', {
+          type: 'vector',
+          url: 'mapbox://mapbox.mapbox-traffic-v1'
+        });
+        map.addLayer({
+          id: 'traffic',
+          type: 'line',
+          source: 'traffic',
+          'source-layer': 'traffic',
+          paint: {
+            'line-color': [
+              'case',
+              ['==', ['get', 'congestion'], 'low'], '#4CAF50',
+              ['==', ['get', 'congestion'], 'moderate'], '#FF9800',
+              ['==', ['get', 'congestion'], 'heavy'], '#F44336',
+              ['==', ['get', 'congestion'], 'severe'], '#9C27B0',
+              '#4CAF50'
+            ],
+            'line-width': 2
+          }
+        });
+      }
       
       // Close the dropdown menu
       const dropdownMenu = document.getElementById('dropdownMenu');
       if (dropdownMenu) {
         dropdownMenu.style.display = 'none';
       }
-    }
+    };
+    
+    // Function to toggle all buses from dropdown menu (make it global)
+    window.toggleAllBusesFromDropdown = function() {
+      // Clear any existing bus markers
+      Object.values(busMarkers).forEach(m => m.remove());
+      busMarkers = {};
+      
+      // Stop any existing bus tracking intervals
+      if (window.otpBusTrackingInterval) {
+        clearInterval(window.otpBusTrackingInterval);
+        window.otpBusTrackingInterval = null;
+      }
+      if (window.closestRouteInterval) {
+        clearInterval(window.closestRouteInterval);
+        window.closestRouteInterval = null;
+      }
+      
+      // Fetch and display all buses
+      fetchAndDisplayBuses();
+      
+      // Start interval to refresh buses every 15 seconds
+      window.allBusesInterval = setInterval(() => {
+        fetchAndDisplayBuses();
+      }, 15000);
+      
+      // Close the dropdown menu
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      if (dropdownMenu) {
+        dropdownMenu.style.display = 'none';
+      }
+    };
     
     // Toggle route button handler
     const toggleRouteBtn = document.getElementById('toggleRouteBtn');
