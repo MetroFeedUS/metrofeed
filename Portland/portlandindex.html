@@ -3572,69 +3572,61 @@
     document.getElementById('otpOptionsModal').style.display = 'block';
   }
 
+  // Traffic overlay functionality
+  let trafficLayerActive = false;
+  
+  // Function to toggle traffic overlay
+  function toggleTrafficOverlay() {
+    if (trafficLayerActive) {
+      // Remove traffic layer
+      if (map.getLayer('tomtom-traffic')) {
+        map.removeLayer('tomtom-traffic');
+      }
+      if (map.getSource('tomtom-traffic')) {
+        map.removeSource('tomtom-traffic');
+      }
+      trafficLayerActive = false;
+      console.log('[Traffic] Traffic overlay disabled');
+    } else {
+      // Add traffic layer with 5-minute caching
+      if (!map.getSource('tomtom-traffic')) {
+        // Create a 5-minute cache timestamp (rounds down to nearest 5 minutes)
+        const now = Math.floor(Date.now() / 1000); // Current time in seconds
+        const fiveMinCache = Math.floor(now / 300) * 300; // Round down to nearest 5 minutes (300 seconds)
+        
+        map.addSource('tomtom-traffic', {
+          type: 'raster',
+          tiles: [
+            `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU&cache=${fiveMinCache}`
+          ],
+          tileSize: 256,
+        });
+        
+        console.log(`[Traffic] Using cached tiles with timestamp: ${fiveMinCache} (${new Date(fiveMinCache * 1000).toLocaleTimeString()})`);
+      }
+      
+      if (!map.getLayer('tomtom-traffic')) {
+        // Try to insert before bus-markers, but fall back to top if it doesn't exist
+        const beforeLayer = map.getLayer('bus-markers') ? 'bus-markers' : undefined;
+        map.addLayer({
+          id: 'tomtom-traffic',
+          type: 'raster',
+          source: 'tomtom-traffic',
+          paint: {
+            'raster-opacity': 0.6
+          }
+        }, beforeLayer); // Insert before bus markers if they exist, otherwise at top
+      }
+      
+      trafficLayerActive = true;
+      console.log('[Traffic] Traffic overlay enabled');
+    }
+  }
+  
+  // Function to toggle traffic from dropdown menu
   function toggleTrafficFromDropdown() {
     console.log('[toggleTrafficFromDropdown] Function called');
-    
-    if (!window.trafficLayer) {
-      // Add traffic layer with caching
-      const trafficSource = new maplibregl.RasterSource({
-        url: 'https://api.tomtom.com/traffic/map/4/tile/flow/relative0-dark/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU',
-        tileSize: 256,
-        // Add caching parameters to reduce API calls
-        maxzoom: 15,
-        // Cache tiles for 5 minutes (300000ms)
-        tileCache: {
-          max: 1000,
-          ttl: 300000
-        }
-      });
-      
-      // Add the raster layer
-      map.addLayer({
-        id: 'traffic-raster',
-        type: 'raster',
-        source: trafficSource,
-        paint: {
-          'raster-opacity': 0.7
-        }
-      });
-      
-      window.trafficLayer = trafficSource;
-      
-      // Set up refresh interval (every 5 minutes)
-      window.trafficRefreshInterval = setInterval(() => {
-        if (window.trafficLayer && map.getLayer('traffic-raster')) {
-          console.log('[toggleTrafficFromDropdown] Refreshing traffic tiles (5min interval)');
-          // Force refresh by removing and re-adding the layer
-          map.removeLayer('traffic-raster');
-          map.addLayer({
-            id: 'traffic-raster',
-            type: 'raster',
-            source: window.trafficLayer,
-            paint: {
-              'raster-opacity': 0.7
-            }
-          });
-        }
-      }, 300000); // 5 minutes
-      
-      console.log('[toggleTrafficFromDropdown] Traffic layer added with 5-minute refresh');
-    } else {
-      // Remove traffic layer and clear interval
-      if (map.getLayer('traffic-raster')) {
-        map.removeLayer('traffic-raster');
-      }
-      if (map.getSource('traffic-layer')) {
-        map.removeSource('traffic-layer');
-      }
-      if (window.trafficRefreshInterval) {
-        clearInterval(window.trafficRefreshInterval);
-        window.trafficRefreshInterval = null;
-      }
-      window.trafficLayer = null;
-      
-      console.log('[toggleTrafficFromDropdown] Traffic layer removed');
-    }
+    toggleTrafficOverlay();
   }
 
   function toggleAllBusesFromDropdown() {
