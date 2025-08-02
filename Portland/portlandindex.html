@@ -672,9 +672,63 @@
   </div>
 </div>
 
-
-
-
+<!-- -- OTP OPTIONS MODAL -- -->
+<div id="otpOptionsModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 400px;">
+    <h2>🚌 Trip Options</h2>
+    <div style="text-align: left; margin-top: 1rem;">
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Max Walk Distance:</label>
+        <select id="maxWalkDistance" style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #4dd0e1; border-radius: 6px;">
+          <option value="400">400m (0.25 miles)</option>
+          <option value="800" selected>800m (0.5 miles)</option>
+          <option value="1200">1200m (0.75 miles)</option>
+          <option value="1600">1600m (1 mile)</option>
+          <option value="2400">2400m (1.5 miles)</option>
+        </select>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Departure Time:</label>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <input type="radio" id="departNow" name="departureType" value="now" checked style="margin: 0;">
+          <label for="departNow" style="margin: 0; color: #fff;">Depart Now</label>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
+          <input type="radio" id="departTime" name="departureType" value="time" style="margin: 0;">
+          <label for="departTime" style="margin: 0; color: #fff;">Depart At:</label>
+          <input type="time" id="departureTime" style="padding: 0.3rem; background: #222; color: #fff; border: 1px solid #4dd0e1; border-radius: 4px;" disabled>
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Transport Modes:</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.3rem;">
+            <input type="checkbox" id="modeBus" checked style="margin: 0;">
+            <label for="modeBus" style="margin: 0; color: #fff; font-size: 0.9rem;">🚌 Bus</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.3rem;">
+            <input type="checkbox" id="modeRail" checked style="margin: 0;">
+            <label for="modeRail" style="margin: 0; color: #fff; font-size: 0.9rem;">🚆 Rail</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.3rem;">
+            <input type="checkbox" id="modeWalk" checked style="margin: 0;">
+            <label for="modeWalk" style="margin: 0; color: #fff; font-size: 0.9rem;">🚶 Walk</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.3rem;">
+            <input type="checkbox" id="modeBike" style="margin: 0;">
+            <label for="modeBike" style="margin: 0; color: #fff; font-size: 0.9rem;">🚲 Bike</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mf-actions" style="margin-top: 1.5rem;">
+      <button class="mf-btn" onclick="hideOtpOptionsModal()">Cancel</button>
+      <button class="mf-btn" onclick="planTripWithOptions()" style="background: #4CAF50; border-color: #4CAF50;">Plan Trip</button>
+    </div>
+  </div>
+</div>
 
 <!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
 <div class="mf-overlay" id="signInModal" style="display:none;">
@@ -2418,12 +2472,29 @@
   let activeTripSelected = false; // Track if user has selected a trip option
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
-  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon) {
+  async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWalkDistance = 800, departureType = 'now', departureTime = '', modes = 'TRANSIT,WALK') {
     const from = `${fromLat},${fromLon}`;
     const to = `${toLat},${toLon}`;
-    // Adjust the server/URL as needed for production:
-    const url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&mode=TRANSIT,WALK&numItineraries=4`;
-
+    
+    // Build the URL with options
+    let url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&numItineraries=4`;
+    
+    // Add max walk distance
+    url += `&maxWalkDistance=${maxWalkDistance}`;
+    
+    // Add departure time
+    if (departureType === 'time' && departureTime) {
+      // Convert time to current date with specified time
+      const today = new Date();
+      const [hours, minutes] = departureTime.split(':');
+      today.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      const timestamp = today.getTime();
+      url += `&time=${timestamp}`;
+    }
+    
+    // Add transport modes
+    url += `&mode=${modes}`;
+    
     // Clear previous state for multiple trips
     window.otpBusInfo = {};
     currentItins = null;
@@ -3626,7 +3697,13 @@
         
         // Call OTP with coordinates
         console.log('[Go Button] Starting new OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
-        fetchAndShowOtpItineraries(startStop.lat, startStop.lon, endStop.lat, endStop.lon);
+        
+        // Store coordinates for use in options modal
+        window.otpStartCoords = { lat: startStop.lat, lon: startStop.lon };
+        window.otpEndCoords = { lat: endStop.lat, lon: endStop.lon };
+        
+        // Show options modal instead of directly planning
+        showOtpOptionsModal();
       });
     } else {
       console.error('Go button not found!'); // Debug log
@@ -3941,6 +4018,79 @@
     renderFavoritesBar();
   });
 
+  // Function to show OTP options modal
+  function showOtpOptionsModal() {
+    const modal = document.getElementById('otpOptionsModal');
+    if (modal) {
+      modal.style.display = 'flex';
+    }
+  }
+  
+  // Function to hide OTP options modal
+  function hideOtpOptionsModal() {
+    const modal = document.getElementById('otpOptionsModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+  
+  // Function to plan trip with selected options
+  function planTripWithOptions() {
+    const maxWalkDistance = document.getElementById('maxWalkDistance').value;
+    const departureType = document.querySelector('input[name="departureType"]:checked').value;
+    const departureTime = document.getElementById('departureTime').value;
+    const modeBus = document.getElementById('modeBus').checked;
+    const modeRail = document.getElementById('modeRail').checked;
+    const modeWalk = document.getElementById('modeWalk').checked;
+    const modeBike = document.getElementById('modeBike').checked;
+    
+    // Build transport modes string
+    const modes = [];
+    if (modeBus) modes.push('BUS');
+    if (modeRail) modes.push('RAIL');
+    if (modeWalk) modes.push('WALK');
+    if (modeBike) modes.push('BICYCLE');
+    
+    // Hide the options modal
+    hideOtpOptionsModal();
+    
+    // Use stored coordinates
+    if (window.otpStartCoords && window.otpEndCoords) {
+      // Call the existing OTP function with the selected options
+      fetchAndShowOtpItineraries(
+        window.otpStartCoords.lat, 
+        window.otpStartCoords.lon, 
+        window.otpEndCoords.lat, 
+        window.otpEndCoords.lon,
+        maxWalkDistance,
+        departureType,
+        departureTime,
+        modes.join(',')
+      );
+    }
+  }
+  
+  // Make functions global
+  window.showOtpOptionsModal = showOtpOptionsModal;
+  window.hideOtpOptionsModal = hideOtpOptionsModal;
+  window.planTripWithOptions = planTripWithOptions;
+  
+  // Add event listeners for departure time options
+  document.addEventListener('DOMContentLoaded', function() {
+    const departNow = document.getElementById('departNow');
+    const departTime = document.getElementById('departTime');
+    const departureTimeInput = document.getElementById('departureTime');
+    
+    if (departNow && departTime && departureTimeInput) {
+      departNow.addEventListener('change', function() {
+        departureTimeInput.disabled = true;
+      });
+      
+      departTime.addEventListener('change', function() {
+        departureTimeInput.disabled = false;
+      });
+    }
+  });
 
 </script>
 
