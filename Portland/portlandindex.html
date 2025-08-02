@@ -701,7 +701,7 @@
 </button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <div id="logoBtn">
-  <img src="Simplelogoround.png" alt="MetroFeed Logo" />
+  <img src="Sitelogo.png" alt="MetroFeed Logo" />
 </div>
 
 <div id="dropdownMenu" class="dropdown">
@@ -3518,6 +3518,42 @@
       console.error('Go button not found!'); // Debug log
     }
   });
+
+  function planTripWithOptions() {
+    const maxWalkDistance = document.getElementById('maxWalkDistance').value;
+    const departureType = document.querySelector('input[name="departureType"]:checked').value;
+    const departureTime = document.getElementById('departureTime').value;
+    
+    const modeBus = document.getElementById('modeBus').checked;
+    const modeRail = document.getElementById('modeRail').checked;
+    const modeWalk = document.getElementById('modeWalk').checked;
+    const modeBike = document.getElementById('modeBike').checked;
+    
+    let modes = [];
+    if (modeBus) modes.push('BUS');
+    if (modeRail) modes.push('RAIL');
+    if (modeWalk) modes.push('WALK');
+    if (modeBike) modes.push('BICYCLE');
+    
+    const modesString = modes.join(',');
+    
+    document.getElementById('otpOptionsModal').style.display = 'none';
+    
+    fetchAndShowOtpItineraries(
+        window.otpStartCoords.lat, 
+        window.otpStartCoords.lng, 
+        window.otpEndCoords.lat, 
+        window.otpEndCoords.lng,
+        maxWalkDistance,
+        departureType,
+        departureTime,
+        modesString
+    );
+  }
+
+  function showOtpOptionsModal() {
+    document.getElementById('otpOptionsModal').style.display = 'block';
+  }
 </script>
 </body>
 </html>
