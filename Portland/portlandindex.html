@@ -3306,6 +3306,151 @@
     console.log('=== END ROUTE DECODING TEST ===');
   };
   
+  // Debug function to test route drawing
+  window.testRouteDrawing = function() {
+    console.log('=== TESTING ROUTE DRAWING ===');
+    
+    // Create a simple test route - just a straight line
+    const testCoords = [
+      [-122.67, 45.52], // Portland center
+      [-122.66, 45.52],
+      [-122.65, 45.52],
+      [-122.64, 45.52]
+    ];
+    
+    console.log('Test coordinates:', testCoords);
+    
+    // Remove any existing test route
+    if (map.getLayer('testRoute')) {
+      map.removeLayer('testRoute');
+    }
+    if (map.getSource('testRoute')) {
+      map.removeSource('testRoute');
+    }
+    
+    // Add test route
+    map.addSource('testRoute', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: testCoords
+        }
+      }
+    });
+    
+    map.addLayer({
+      id: 'testRoute',
+      type: 'line',
+      source: 'testRoute',
+      paint: {
+        'line-color': '#ff0000',
+        'line-width': 6,
+        'line-opacity': 1.0
+      }
+    });
+    
+    console.log('Test route added - should see a red line');
+  };
+  
+  // Debug function to test actual route data
+  window.testActualRouteData = function() {
+    console.log('=== TESTING ACTUAL ROUTE DATA ===');
+    
+    if (!closestRoute) {
+      console.log('No closest route found');
+      return;
+    }
+    
+    console.log('Route ID:', closestRoute.route_id);
+    console.log('Total shape points:', closestRoute.shape.length);
+    console.log('First 10 shape points:', closestRoute.shape.slice(0, 10));
+    console.log('Last 10 shape points:', closestRoute.shape.slice(-10));
+    
+    // Check for any invalid coordinates
+    const invalidCoords = closestRoute.shape.filter(coord => 
+      !coord || coord.length !== 2 || 
+      typeof coord[0] !== 'number' || typeof coord[1] !== 'number' ||
+      isNaN(coord[0]) || isNaN(coord[1])
+    );
+    
+    console.log('Invalid coordinates found:', invalidCoords.length);
+    if (invalidCoords.length > 0) {
+      console.log('Sample invalid coords:', invalidCoords.slice(0, 5));
+    }
+    
+    // Check for duplicate consecutive points
+    let duplicates = 0;
+    for (let i = 1; i < closestRoute.shape.length; i++) {
+      if (closestRoute.shape[i][0] === closestRoute.shape[i-1][0] && 
+          closestRoute.shape[i][1] === closestRoute.shape[i-1][1]) {
+        duplicates++;
+      }
+    }
+    console.log('Duplicate consecutive points:', duplicates);
+  };
+  
+  // Debug function to test drawing actual route data
+  window.testDrawActualRoute = function() {
+    console.log('=== TESTING DRAWING ACTUAL ROUTE ===');
+    
+    if (!closestRoute) {
+      console.log('No closest route found');
+      return;
+    }
+    
+    // Remove any existing test route
+    if (map.getLayer('testActualRoute')) {
+      map.removeLayer('testActualRoute');
+    }
+    if (map.getSource('testActualRoute')) {
+      map.removeSource('testActualRoute');
+    }
+    
+    // Clean and validate coordinates (same as our fix)
+    const routeCoordinates = closestRoute.shape
+      .filter(coord => coord && coord.length === 2 && 
+             typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+             !isNaN(coord[0]) && !isNaN(coord[1]))
+      .map(coord => [coord[1], coord[0]]); // Convert [lat, lng] to [lng, lat]
+    
+    console.log('Cleaned coordinates:', routeCoordinates.length);
+    console.log('First 5 coordinates:', routeCoordinates.slice(0, 5));
+    
+    if (routeCoordinates.length < 2) {
+      console.error('Not enough valid coordinates');
+      return;
+    }
+    
+    // Draw with a different color to distinguish from the problematic route
+    map.addSource('testActualRoute', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: routeCoordinates
+        }
+      }
+    });
+    
+    map.addLayer({
+      id: 'testActualRoute',
+      type: 'line',
+      source: 'testActualRoute',
+      paint: {
+        'line-color': '#00ff00',
+        'line-width': 8,
+        'line-opacity': 1.0
+      }
+    });
+    
+    console.log('Actual route drawn in green - compare with blue spaghetti');
+  };
+  
   // Debug function to test OTP route matching
   window.testOtpRouteMatching = function() {
     console.log('=== OTP ROUTE MATCHING DEBUG ===');
