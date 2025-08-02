@@ -720,6 +720,62 @@
     return nowPT.getHours() * 60 + nowPT.getMinutes();
   }
   
+  // Function to process stop times intelligently
+  function processStopTimes(times) {
+    const nowMins = getPortlandMinutes();
+    
+    // Convert all times to minutes and find current position
+    const timeData = times.map(timeStr => {
+      const cleanTime = timeStr.trim();
+      const [h, m] = cleanTime.split(":");
+      let schedMins = parseInt(h) * 60 + parseInt(m);
+      
+      // Handle times that have passed (add 24 hours if more than 12 hours ago)
+      if (schedMins < nowMins && nowMins - schedMins > 720) {
+        schedMins += 1440;
+      }
+      
+      return {
+        original: cleanTime,
+        minutes: schedMins,
+        isPast: schedMins < nowMins,
+        isNext: false // Will be set below
+      };
+    });
+    
+    // Sort by minutes
+    timeData.sort((a, b) => a.minutes - b.minutes);
+    
+    // Find the next time (first time >= now)
+    const nextIndex = timeData.findIndex(t => t.minutes >= nowMins);
+    
+    // Mark the next time
+    if (nextIndex !== -1) {
+      timeData[nextIndex].isNext = true;
+    }
+    
+    // Select times to show: 2 past, next (highlighted), 4 future
+    const pastTimes = timeData.filter(t => t.isPast).slice(-2);
+    const nextTime = timeData.find(t => t.isNext);
+    const futureTimes = timeData.filter(t => !t.isPast && !t.isNext).slice(0, 4);
+    
+    // Combine and format
+    const selectedTimes = [...pastTimes];
+    if (nextTime) selectedTimes.push(nextTime);
+    selectedTimes.push(...futureTimes);
+    
+    // Convert to HTML
+    return selectedTimes.map(time => {
+      if (time.isNext) {
+        return `<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${time.original}</span>`;
+      } else if (time.isPast) {
+        return `<span style='color:#888;'>${time.original}</span>`;
+      } else {
+        return time.original;
+      }
+    });
+  }
+  
   // Portland Metro Area Bounds
   const PORTLAND_BOUNDS = {
     north: 45.80,    // Up to Ridgefield, WA (Clark County north edge)
@@ -1119,25 +1175,11 @@
           userLocationPolyline = 'userLocationRoute';
         
           // Recreate stop markers
-          const nowMins = getPortlandMinutes();
           userLocationStopMarkers.forEach(marker => marker.remove());
           userLocationStopMarkers = [];
           
           closestRoute.stops.forEach(stop => {
-            let highlightedTimes = [];
-            let foundNext = false;
-            stop.times.forEach(timeStr => {
-              let cleanTime = timeStr.trim();
-              let [h, m] = cleanTime.split(":"),
-                schedMins = parseInt(h) * 60 + parseInt(m);
-              if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-              if (!foundNext && schedMins >= nowMins) {
-                highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-                foundNext = true;
-              } else {
-                highlightedTimes.push(cleanTime);
-              }
-            });
+            const highlightedTimes = processStopTimes(stop.times);
 
             // Create stop marker element
             const stopElement = document.createElement('div');
@@ -1479,20 +1521,7 @@
     userLocationStopMarkers = [];
 
     closestRoute.stops.forEach(stop => {
-      let highlightedTimes = [];
-      let foundNext = false;
-      stop.times.forEach(timeStr => {
-        let cleanTime = timeStr.trim();
-        let [h, m] = cleanTime.split(":"),
-          schedMins = parseInt(h) * 60 + parseInt(m);
-        if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-        if (!foundNext && schedMins >= nowMins) {
-          highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-          foundNext = true;
-        } else {
-          highlightedTimes.push(cleanTime);
-        }
-      });
+      const highlightedTimes = processStopTimes(stop.times);
 
       // Create stop marker element
       const stopElement = document.createElement('div');
@@ -1852,20 +1881,7 @@
         userLocationStopMarkers = [];
 
         closestRoute.stops.forEach(stop => {
-          let highlightedTimes = [];
-          let foundNext = false;
-          stop.times.forEach(timeStr => {
-            let cleanTime = timeStr.trim();
-            let [h, m] = cleanTime.split(":"),
-              schedMins = parseInt(h) * 60 + parseInt(m);
-            if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-            if (!foundNext && schedMins >= nowMins) {
-              highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-              foundNext = true;
-            } else {
-              highlightedTimes.push(cleanTime);
-            }
-          });
+          const highlightedTimes = processStopTimes(stop.times);
 
           // Create stop marker element
           const stopElement = document.createElement('div');
@@ -3828,25 +3844,11 @@
           userLocationPolyline = 'userLocationRoute';
           
           // Recreate stop markers
-          const nowMins = getPortlandMinutes();
           userLocationStopMarkers.forEach(marker => marker.remove());
           userLocationStopMarkers = [];
           
           closestRoute.stops.forEach(stop => {
-            let highlightedTimes = [];
-            let foundNext = false;
-            stop.times.forEach(timeStr => {
-              let cleanTime = timeStr.trim();
-              let [h, m] = cleanTime.split(":"),
-                schedMins = parseInt(h) * 60 + parseInt(m);
-              if (schedMins < nowMins && nowMins - schedMins > 720) schedMins += 1440;
-              if (!foundNext && schedMins >= nowMins) {
-                highlightedTimes.push(`<span style='background:#4dd0e1;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${cleanTime}</span>`);
-                foundNext = true;
-              } else {
-                highlightedTimes.push(cleanTime);
-              }
-            });
+            const highlightedTimes = processStopTimes(stop.times);
 
             // Create stop marker element
             const stopElement = document.createElement('div');
