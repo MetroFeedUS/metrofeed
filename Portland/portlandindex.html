@@ -18,7 +18,16 @@
     #accountBtn { top: 10px; left: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
     #aiChatBtn { top: 60px; right: 10px; }
-    #logoBtn { bottom: 10px; left: 10px; }
+    #logoBtn { 
+      position: absolute; 
+      bottom: 10px; 
+      left: 10px; 
+      width: 45px; 
+      height: 45px; 
+      z-index: 1001; 
+      cursor: default; 
+    }
+    #logoBtn img { width: 45px; height: 45px; }
     .side-buttons img { width: 20px; height: 20px; }
     /* -- DROPDOWN -- */
     .dropdown {
@@ -234,11 +243,6 @@
     .start-pin {
       width: 24px;
       height: 24px;
-      background: #4dd0e1;
-      border: 2px solid #fff;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
       position: relative;
       display: flex;
       align-items: center;
@@ -249,9 +253,9 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) rotate(45deg);
-      width: 16px;
-      height: 16px;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
       background-image: url('009-pin-1.svg');
       background-size: contain;
       background-repeat: no-repeat;
@@ -261,11 +265,6 @@
     .destination-pin {
       width: 24px;
       height: 24px;
-      background: #ff6b35;
-      border: 2px solid #fff;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
       position: relative;
       display: flex;
       align-items: center;
@@ -276,9 +275,9 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) rotate(45deg);
-      width: 16px;
-      height: 16px;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
       background-image: url('008-pin.svg');
       background-size: contain;
       background-repeat: no-repeat;
@@ -701,7 +700,7 @@
   <a href="tickets.html"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
 </button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
-<div id="logoBtn" class="side-buttons" style="cursor: default;">
+<div id="logoBtn">
   <img src="Simplelogoround.png" alt="MetroFeed Logo" />
 </div>
 
@@ -3436,6 +3435,89 @@
     console.log('=== END DEBUG ===');
   };
 
+  // Make restore function global
+  window.restoreItineraryModal = restoreItineraryModal;
+  
+  // Add event listeners for departure time options
+  document.addEventListener('DOMContentLoaded', function() {
+    const departNow = document.getElementById('departNow');
+    const departTime = document.getElementById('departTime');
+    const departureTimeInput = document.getElementById('departureTime');
+    
+    if (departNow && departTime && departureTimeInput) {
+      departNow.addEventListener('change', function() {
+        departureTimeInput.disabled = true;
+      });
+      
+      departTime.addEventListener('change', function() {
+        departureTimeInput.disabled = false;
+      });
+    }
+    
+    // Connect Go button to OTP
+    const goBtn = document.getElementById('goBtn');
+    if (goBtn) {
+      goBtn.addEventListener('click', function() {
+        // Clear previous route lines
+        if (window.routeLegLines && window.routeLegLines.length) {
+          window.routeLegLines.forEach(lineId => {
+            if (map.getLayer(lineId)) {
+              map.removeLayer(lineId);
+            }
+            if (map.getSource(lineId)) {
+              map.removeSource(lineId);
+            }
+          });
+          window.routeLegLines = [];
+        }
+        
+        // Hide user's closest route when planning a trip
+        if (userLocationPolyline) {
+          if (map.getLayer(userLocationPolyline)) {
+            map.removeLayer(userLocationPolyline);
+          }
+          if (map.getSource(userLocationPolyline)) {
+            map.removeSource(userLocationPolyline);
+          }
+          userLocationPolyline = null;
+        }
+        
+        console.log('Go button clicked!'); // Debug log
+        const startInput = document.getElementById('startInput').value.trim();
+        const endInput = document.getElementById('endInput').value.trim();
+        
+        console.log('Start:', startInput, 'End:', endInput); // Debug log
+        
+        if (!startInput || !endInput) {
+          alert('Please enter both start and destination locations.');
+          return;
+        }
+        
+        // Find coordinates for start and end locations
+        const startStop = findStopByName(startInput);
+        const endStop = findStopByName(endInput);
+        
+        console.log('Start stop:', startStop, 'End stop:', endStop); // Debug log
+        
+        if (!startStop || !endStop) {
+          alert('Could not find the specified locations. Please use the autocomplete suggestions.');
+          return;
+        }
+        
+        // Call OTP with coordinates
+        console.log('[Go Button] Starting new OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
+        
+        // Store coordinates for use in options modal
+        window.otpStartCoords = { lat: startStop.lat, lon: startStop.lon };
+        window.otpEndCoords = { lat: endStop.lat, lon: endStop.lon };
+        
+        // Show options modal instead of directly planning
+        showOtpOptionsModal();
+      });
+    } else {
+      console.error('Go button not found!'); // Debug log
+    }
+  });
 </script>
 </body>
 </html>
