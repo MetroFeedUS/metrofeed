@@ -2601,6 +2601,8 @@
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
   async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWalkDistance = 800, departureType = 'now', departureTime = '', modes = 'TRANSIT,WALK') {
+    console.log('[fetchAndShowOtpItineraries] Function called with params:', { fromLat, fromLon, toLat, toLon, maxWalkDistance, departureType, departureTime, modes });
+    
     const from = `${fromLat},${fromLon}`;
     const to = `${toLat},${toLon}`;
     
@@ -2622,6 +2624,8 @@
     
     // Add transport modes
     url += `&mode=${modes}`;
+    
+    console.log('[fetchAndShowOtpItineraries] OTP API URL:', url);
     
     // Clear previous state for multiple trips
     window.otpBusInfo = {};
@@ -3508,8 +3512,8 @@
         console.log('[Go Button] Starting new OTP trip from', startStop.lat, startStop.lon, 'to', endStop.lat, endStop.lon);
         
         // Store coordinates for use in options modal
-        window.otpStartCoords = { lat: startStop.lat, lon: startStop.lon };
-        window.otpEndCoords = { lat: endStop.lat, lon: endStop.lon };
+        window.otpStartCoords = { lat: startStop.lat, lng: startStop.lon };
+        window.otpEndCoords = { lat: endStop.lat, lng: endStop.lon };
         
         // Show options modal instead of directly planning
         showOtpOptionsModal();
@@ -3520,6 +3524,9 @@
   });
 
   function planTripWithOptions() {
+    console.log('[planTripWithOptions] Function called');
+    console.log('[planTripWithOptions] Stored coordinates:', window.otpStartCoords, window.otpEndCoords);
+    
     const maxWalkDistance = document.getElementById('maxWalkDistance').value;
     const departureType = document.querySelector('input[name="departureType"]:checked').value;
     const departureTime = document.getElementById('departureTime').value;
@@ -3537,8 +3544,18 @@
     
     const modesString = modes.join(',');
     
+    console.log('[planTripWithOptions] Parameters:', {
+      maxWalkDistance,
+      departureType,
+      departureTime,
+      modesString,
+      startCoords: window.otpStartCoords,
+      endCoords: window.otpEndCoords
+    });
+    
     document.getElementById('otpOptionsModal').style.display = 'none';
     
+    console.log('[planTripWithOptions] Calling fetchAndShowOtpItineraries...');
     fetchAndShowOtpItineraries(
         window.otpStartCoords.lat, 
         window.otpStartCoords.lng, 
@@ -3553,6 +3570,95 @@
 
   function showOtpOptionsModal() {
     document.getElementById('otpOptionsModal').style.display = 'block';
+  }
+
+  function toggleTrafficFromDropdown() {
+    console.log('[toggleTrafficFromDropdown] Function called');
+    
+    if (!window.trafficLayer) {
+      // Add traffic layer with caching
+      const trafficSource = new maplibregl.RasterSource({
+        url: 'https://api.tomtom.com/traffic/map/4/tile/flow/relative0-dark/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU',
+        tileSize: 256,
+        // Add caching parameters to reduce API calls
+        maxzoom: 15,
+        // Cache tiles for 5 minutes (300000ms)
+        tileCache: {
+          max: 1000,
+          ttl: 300000
+        }
+      });
+      
+      // Add the raster layer
+      map.addLayer({
+        id: 'traffic-raster',
+        type: 'raster',
+        source: trafficSource,
+        paint: {
+          'raster-opacity': 0.7
+        }
+      });
+      
+      window.trafficLayer = trafficSource;
+      
+      // Set up refresh interval (every 5 minutes)
+      window.trafficRefreshInterval = setInterval(() => {
+        if (window.trafficLayer && map.getLayer('traffic-raster')) {
+          console.log('[toggleTrafficFromDropdown] Refreshing traffic tiles (5min interval)');
+          // Force refresh by removing and re-adding the layer
+          map.removeLayer('traffic-raster');
+          map.addLayer({
+            id: 'traffic-raster',
+            type: 'raster',
+            source: window.trafficLayer,
+            paint: {
+              'raster-opacity': 0.7
+            }
+          });
+        }
+      }, 300000); // 5 minutes
+      
+      console.log('[toggleTrafficFromDropdown] Traffic layer added with 5-minute refresh');
+    } else {
+      // Remove traffic layer and clear interval
+      if (map.getLayer('traffic-raster')) {
+        map.removeLayer('traffic-raster');
+      }
+      if (map.getSource('traffic-layer')) {
+        map.removeSource('traffic-layer');
+      }
+      if (window.trafficRefreshInterval) {
+        clearInterval(window.trafficRefreshInterval);
+        window.trafficRefreshInterval = null;
+      }
+      window.trafficLayer = null;
+      
+      console.log('[toggleTrafficFromDropdown] Traffic layer removed');
+    }
+  }
+
+  function toggleAllBusesFromDropdown() {
+    console.log('[toggleAllBusesFromDropdown] Function called');
+    
+    // Clear existing buses and stop intervals
+    if (window.allBusesInterval) {
+      clearInterval(window.allBusesInterval);
+      window.allBusesInterval = null;
+    }
+    
+    // Clear existing bus markers
+    if (window.busMarkers) {
+      window.busMarkers.forEach(marker => marker.remove());
+      window.busMarkers = [];
+    }
+    
+    // Fetch and display all buses
+    fetchAndDisplayBuses('all');
+    
+    // Set refresh interval for all buses
+    window.allBusesInterval = setInterval(() => {
+      fetchAndDisplayBuses('all');
+    }, 10000); // Refresh every 10 seconds
   }
 </script>
 </body>
