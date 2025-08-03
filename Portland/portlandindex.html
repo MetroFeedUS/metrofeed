@@ -1324,80 +1324,88 @@
     return closestStop;
   }
 
-  // Map click handler for route selection
-  map.on('click', function(e) {
-    if (!mapSelectionMode) return;
-    
-    const clickedLat = e.lngLat.lat;
-    const clickedLon = e.lngLat.lng;
-    
-    console.log('[Map Click] Clicked at:', clickedLat, clickedLon);
-    
-    // Find the closest stop to the clicked location
-    const closestStop = findClosestStopToPoint(clickedLat, clickedLon);
-    
-    if (closestStop) {
-      // Use the stop name instead of coordinates
-      const stopName = decodeHTMLEntities(closestStop.name);
-      const inputId = mapSelectionMode + 'Input';
-      document.getElementById(inputId).value = stopName;
-      console.log('[Map Click] Selected stop:', stopName);
-    } else {
-      // If no stop found, use coordinates but format them nicely
-      const inputId = mapSelectionMode + 'Input';
-      document.getElementById(inputId).value = `Location (${clickedLat.toFixed(4)}, ${clickedLon.toFixed(4)})`;
-      console.log('[Map Click] No nearby stop found, using coordinates');
-    }
-    
-    // Remove existing pin for this mode
-    if (mapSelectionMode === 'start' && startPin) {
-      startPin.remove();
-    } else if (mapSelectionMode === 'end' && destinationPin) {
-      destinationPin.remove();
-    }
-    
-    // Create and add new pin at exact click location
-    const pinClass = mapSelectionMode === 'start' ? 'start-pin' : 'destination-pin';
-    const pinElement = document.createElement('div');
-    pinElement.className = pinClass;
-    pinElement.style.width = '24px';
-    pinElement.style.height = '24px';
-    
-    const newPin = new maplibregl.Marker({
-      element: pinElement
+  // Map click handler for route selection (will be added after map initialization)
+  function setupMapClickHandler() {
+    map.on('click', function(e) {
+      if (!mapSelectionMode) return;
+      
+      const clickedLat = e.lngLat.lat;
+      const clickedLon = e.lngLat.lng;
+      
+      console.log('[Map Click] Clicked at:', clickedLat, clickedLon);
+      
+      // Find the closest stop to the clicked location
+      const closestStop = findClosestStopToPoint(clickedLat, clickedLon);
+      
+      if (closestStop) {
+        // Use the stop name instead of coordinates
+        const stopName = decodeHTMLEntities(closestStop.name);
+        const inputId = mapSelectionMode + 'Input';
+        document.getElementById(inputId).value = stopName;
+        console.log('[Map Click] Selected stop:', stopName);
+      } else {
+        // If no stop found, use coordinates but format them nicely
+        const inputId = mapSelectionMode + 'Input';
+        document.getElementById(inputId).value = `Location (${clickedLat.toFixed(4)}, ${clickedLon.toFixed(4)})`;
+        console.log('[Map Click] No nearby stop found, using coordinates');
+      }
+      
+      // Remove existing pin for this mode
+      if (mapSelectionMode === 'start' && startPin) {
+        startPin.remove();
+      } else if (mapSelectionMode === 'end' && destinationPin) {
+        destinationPin.remove();
+      }
+      
+      // Create and add new pin at exact click location
+      const pinClass = mapSelectionMode === 'start' ? 'start-pin' : 'destination-pin';
+      const pinElement = document.createElement('div');
+      pinElement.className = pinClass;
+      pinElement.style.width = '24px';
+      pinElement.style.height = '24px';
+      
+      const newPin = new maplibregl.Marker({
+        element: pinElement
+      });
+      newPin.setLngLat([clickedLon, clickedLat]);
+      newPin.addTo(map);
+      
+      // Store reference to pin
+      if (mapSelectionMode === 'start') {
+        startPin = newPin;
+      } else {
+        destinationPin = newPin;
+      }
+      
+      console.log('[Map Click] Selected location:', clickedLat, clickedLon);
+      
+      // Show success feedback
+      const feedback = document.createElement('div');
+      feedback.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.8); color: #4dd0e1; padding: 10px 20px;
+        border-radius: 8px; z-index: 10000; font-size: 14px;
+      `;
+      const selectedName = closestStop ? decodeHTMLEntities(closestStop.name) : `Location (${clickedLat.toFixed(4)}, ${clickedLon.toFixed(4)})`;
+      feedback.textContent = `Selected: ${selectedName}`;
+      document.body.appendChild(feedback);
+      setTimeout(() => feedback.remove(), 2000);
+      
+      // Deactivate selection mode
+      activateMapSelection(mapSelectionMode);
     });
-    newPin.setLngLat([clickedLon, clickedLat]);
-    newPin.addTo(map);
-    
-    // Store reference to pin
-    if (mapSelectionMode === 'start') {
-      startPin = newPin;
-    } else {
-      destinationPin = newPin;
-    }
-    
-    console.log('[Map Click] Selected location:', clickedLat, clickedLon);
-    
-    // Show success feedback
-    const feedback = document.createElement('div');
-    feedback.style.cssText = `
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.8); color: #4dd0e1; padding: 10px 20px;
-      border-radius: 8px; z-index: 10000; font-size: 14px;
-    `;
-    const selectedName = closestStop ? decodeHTMLEntities(closestStop.name) : `Location (${clickedLat.toFixed(4)}, ${clickedLon.toFixed(4)})`;
-    feedback.textContent = `Selected: ${selectedName}`;
-    document.body.appendChild(feedback);
-    setTimeout(() => feedback.remove(), 2000);
-    
-    // Deactivate selection mode
-    activateMapSelection(mapSelectionMode);
-  });
+  }
 
-  // Button event listeners
-  document.getElementById('startMapBtn').addEventListener('click', () => activateMapSelection('start'));
-  document.getElementById('endMapBtn').addEventListener('click', () => activateMapSelection('end'));
-  document.getElementById('clearBtn').addEventListener('click', clearTripPlan);
+  // Button event listeners (will be added after DOM is ready)
+  function setupButtonEventListeners() {
+    const startMapBtn = document.getElementById('startMapBtn');
+    const endMapBtn = document.getElementById('endMapBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    
+    if (startMapBtn) startMapBtn.addEventListener('click', () => activateMapSelection('start'));
+    if (endMapBtn) endMapBtn.addEventListener('click', () => activateMapSelection('end'));
+    if (clearBtn) clearBtn.addEventListener('click', clearTripPlan);
+  }
   
   // === SECTION: FIND ME FUNCTIONS ===
   // Define these functions globally so they can be called from anywhere
@@ -3492,6 +3500,9 @@
         mapHasBeenMovedByUser = true;
       });
       
+      // Setup map click handler for route selection
+      setupMapClickHandler();
+      
       console.log('[Map Init] Map created successfully');
       
     } catch (error) {
@@ -3543,6 +3554,9 @@
     } else {
       console.error('[DOMContentLoaded] Go button not found!');
     }
+    
+    // Setup button event listeners
+    setupButtonEventListeners();
     
     // Departure Time Radio Button Listeners
     const departNowRadio = document.getElementById('departNow');
