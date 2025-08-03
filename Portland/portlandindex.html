@@ -873,18 +873,41 @@
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <script src="mastermap.js"></script>
 <script>
+  // === CITY CONFIGURATION ===
+  const CITY_CONFIG = {
+    // Basic Info
+    cityName: "Portland",
+    state: "OR",
+    timezone: "America/Los_Angeles",
+    
+    // APIs
+    apiKey: "2C4447D4A42083BCD84DE3B8E",
+    otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
+    busApi: "https://developer.trimet.org/ws/v2/vehicles",
+    trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
+    tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
+    
+    // Map Settings
+    defaultCenter: [45.5152, -122.6784],
+    defaultZoom: 13,
+    
+    // File Paths
+    mastermapFile: "mastermap.js",
+    logoFile: "Sitelogo.png"
+  };
+
   // === SECTION: MAP INIT ===
-  const apiKey = "2C4447D4A42083BCD84DE3B8E";
-  const OTP_API = "https://otp.metrofeedus.com/otp/routers/default/plan";
+  const apiKey = CITY_CONFIG.apiKey;
+  const OTP_API = CITY_CONFIG.otpApi;
   
   // Portland time utility functions
   function getPortlandTime() {
-    return new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+    return new Date().toLocaleString('en-US', { timeZone: CITY_CONFIG.timezone });
   }
   
   function getPortlandTimeString(date = new Date()) {
     return date.toLocaleTimeString('en-US', { 
-      timeZone: 'America/Los_Angeles', 
+      timeZone: CITY_CONFIG.timezone, 
       hour: '2-digit', 
       minute: '2-digit' 
     });
@@ -972,7 +995,7 @@
     console.log('[Map Init] Initializing MapLibre GL JS map...');
     console.log('[Map Init] Day style URL:', dayStyle);
     console.log('[Map Init] Night style URL:', nightStyle);
-    console.log('[Map Init] Center coordinates:', [-122.67, 45.52]);
+    console.log('[Map Init] Center coordinates:', CITY_CONFIG.defaultCenter);
     console.log('[Map Init] Bounds:', [
       [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
       [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
@@ -981,8 +1004,8 @@
     map = new maplibregl.Map({
       container: 'map',
       style: dayStyle,
-      center: [-122.67, 45.52],
-      zoom: 12,
+      center: CITY_CONFIG.defaultCenter,
+      zoom: CITY_CONFIG.defaultZoom,
       maxZoom: 18,
       minZoom: 8,
       maxBounds: [
@@ -1034,8 +1057,8 @@
   map = new maplibregl.Map({
     container: 'map',
     style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-    center: [-122.67, 45.52],
-    zoom: 12,
+    center: CITY_CONFIG.defaultCenter,
+    zoom: CITY_CONFIG.defaultZoom,
     attributionControl: true
   });
   
@@ -3482,6 +3505,59 @@
         modesString
     );
   }
+
+  // DOM Content Loaded Event Listener
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('[DOMContentLoaded] Initializing event listeners...');
+    
+    // Go Button Event Listener
+    const goBtn = document.getElementById('goBtn');
+    if (goBtn) {
+      goBtn.addEventListener('click', function() {
+        console.log('[goBtn] Clicked');
+        
+        const startInput = document.getElementById('startInput');
+        const endInput = document.getElementById('endInput');
+        
+        if (!startInput.value || !endInput.value) {
+          alert('Please enter both start and destination locations.');
+          return;
+        }
+        
+        // Store coordinates for OTP
+        if (window.startCoords && window.endCoords) {
+          window.otpStartCoords = { lat: window.startCoords.lat, lng: window.startCoords.lng };
+          window.otpEndCoords = { lat: window.endCoords.lat, lng: window.endCoords.lng };
+          console.log('[goBtn] Stored coordinates for OTP:', window.otpStartCoords, window.otpEndCoords);
+          showOtpOptionsModal();
+        } else {
+          alert('Please select valid start and destination locations on the map.');
+        }
+      });
+      console.log('[DOMContentLoaded] Go button event listener added');
+    } else {
+      console.error('[DOMContentLoaded] Go button not found!');
+    }
+    
+    // Departure Time Radio Button Listeners
+    const departNowRadio = document.getElementById('departNow');
+    const departTimeRadio = document.getElementById('departTime');
+    const departureTimeInput = document.getElementById('departureTime');
+    
+    if (departNowRadio && departTimeRadio && departureTimeInput) {
+      departNowRadio.addEventListener('change', function() {
+        departureTimeInput.disabled = true;
+      });
+      
+      departTimeRadio.addEventListener('change', function() {
+        departureTimeInput.disabled = false;
+      });
+      
+      console.log('[DOMContentLoaded] Departure time radio button listeners added');
+    }
+    
+    console.log('[DOMContentLoaded] Event listeners initialization complete');
+  });
 </script>
 </body>
 </html>
