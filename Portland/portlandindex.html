@@ -887,13 +887,19 @@
     trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
     tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
     
-    // Map Settings
-    defaultCenter: [45.5152, -122.6784],
-    defaultZoom: 13,
-    
-    // File Paths
-    mastermapFile: "mastermap.js",
-    logoFile: "Sitelogo.png"
+        // Map Settings
+  defaultCenter: [-122.6784, 45.5152], // [longitude, latitude] for MapLibre GL JS
+  defaultZoom: 13,
+  bounds: {
+    north: 45.80,    // Up to Ridgefield, WA (Clark County north edge)
+    south: 45.20,    // Down to Wilsonville, OR (Clackamas/Washington)
+    east: -122.15,   // Past Troutdale, east of Gresham
+    west: -123.35    // Past Hillsboro, near Forest Grove/Cornelius
+  },
+  
+  // File Paths
+  mastermapFile: "mastermap.js",
+  logoFile: "Sitelogo.png"
   };
 
   // === SECTION: MAP INIT ===
@@ -977,13 +983,8 @@
     });
   }
   
-  // Portland Metro Area Bounds
-  const PORTLAND_BOUNDS = {
-    north: 45.80,    // Up to Ridgefield, WA (Clark County north edge)
-    south: 45.20,    // Down to Wilsonville, OR (Clackamas/Washington)
-    east: -122.15,   // Past Troutdale, east of Gresham
-    west: -123.35    // Past Hillsboro, near Forest Grove/Cornelius
-  };
+  // Use bounds from configuration
+  const PORTLAND_BOUNDS = CITY_CONFIG.bounds;
   
   // Initialize MapLibre GL JS map with vector tiles
   const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
@@ -991,101 +992,10 @@
   
   // Add error handling for map initialization
   let map;
-  try {
-    console.log('[Map Init] Initializing MapLibre GL JS map...');
-    console.log('[Map Init] Day style URL:', dayStyle);
-    console.log('[Map Init] Night style URL:', nightStyle);
-    console.log('[Map Init] Center coordinates:', CITY_CONFIG.defaultCenter);
-    console.log('[Map Init] Bounds:', [
-      [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
-      [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
-    ]);
-    
-    map = new maplibregl.Map({
-      container: 'map',
-      style: dayStyle,
-      center: CITY_CONFIG.defaultCenter,
-      zoom: CITY_CONFIG.defaultZoom,
-      maxZoom: 18,
-      minZoom: 8,
-      maxBounds: [
-        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
-        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
-      ],
-      attributionControl: true
-    });
-    
-    // Force attribution to be collapsed by default
-    map.on('load', () => {
-      const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
-      if (attributionControl) {
-        attributionControl.classList.add('maplibregl-compact');
-        // Remove any expanded state classes
-        attributionControl.classList.remove('maplibregl-compact-show');
-      }
-    });
-    
-    // Also ensure attribution is collapsed after style changes
-    map.on('styledata', () => {
-      setTimeout(() => {
-        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
-        if (attributionControl) {
-          attributionControl.classList.add('maplibregl-compact');
-          attributionControl.classList.remove('maplibregl-compact-show');
-        }
-      }, 100);
-    });
-    
-      console.log('[Map Init] Map created successfully');
-  
-  // Add map event listeners for debugging
-  map.on('load', () => {
-    console.log('[Map] Map loaded successfully');
-  });
-  
-  map.on('error', (e) => {
-    console.error('[Map] Map error:', e);
-  });
-  
-  map.on('styledata', () => {
-    console.log('[Map] Style data loaded');
-  });
-  
-} catch (error) {
-  console.error('[Map Init] Error creating map:', error);
-  // Fallback to a basic map if vector tiles fail
-  map = new maplibregl.Map({
-    container: 'map',
-    style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-    center: CITY_CONFIG.defaultCenter,
-    zoom: CITY_CONFIG.defaultZoom,
-    attributionControl: true
-  });
-  
-  // Force attribution to be collapsed by default for fallback map
-  map.on('load', () => {
-    const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
-    if (attributionControl) {
-      attributionControl.classList.add('maplibregl-compact');
-      attributionControl.classList.remove('maplibregl-compact-show');
-    }
-  });
-}
-  
-  // Store tile styles for switching
   let isNightMode = false;
   
   // Track user interaction to prevent auto-snapping
-  map.hasBeenMovedByUser = false;
-  map.on('dragstart', () => {
-    map.hasBeenMovedByUser = true;
-  });
-  map.on('zoomstart', () => {
-    map.hasBeenMovedByUser = true;
-  });
-  map.on('click', () => {
-    map.hasBeenMovedByUser = true;
-  });
+  let mapHasBeenMovedByUser = false;
 
   // === SECTION: AUTOCOMPLETE FOR SEARCH BAR ===
   const allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
@@ -3508,7 +3418,102 @@
 
   // DOM Content Loaded Event Listener
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('[DOMContentLoaded] Initializing event listeners...');
+    console.log('[DOMContentLoaded] Initializing map and event listeners...');
+    
+    // Initialize MapLibre GL JS map with vector tiles
+    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
+    const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
+    
+    try {
+      console.log('[Map Init] Initializing MapLibre GL JS map...');
+      console.log('[Map Init] Day style URL:', dayStyle);
+      console.log('[Map Init] Night style URL:', nightStyle);
+      console.log('[Map Init] Center coordinates:', CITY_CONFIG.defaultCenter);
+      console.log('[Map Init] Bounds:', [
+        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
+        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
+      ]);
+      
+      map = new maplibregl.Map({
+        container: 'map',
+        style: dayStyle,
+        center: CITY_CONFIG.defaultCenter,
+        zoom: CITY_CONFIG.defaultZoom,
+        maxZoom: 18,
+        minZoom: 8,
+        maxBounds: [
+          [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
+          [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
+        ],
+        attributionControl: true
+      });
+      
+      // Force attribution to be collapsed by default
+      map.on('load', () => {
+        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+        if (attributionControl) {
+          attributionControl.classList.add('maplibregl-compact');
+          attributionControl.classList.remove('maplibregl-compact-show');
+        }
+      });
+      
+      // Also ensure attribution is collapsed after style changes
+      map.on('styledata', () => {
+        setTimeout(() => {
+          const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+          if (attributionControl) {
+            attributionControl.classList.add('maplibregl-compact');
+            attributionControl.classList.remove('maplibregl-compact-show');
+          }
+        }, 100);
+      });
+      
+      // Add map event listeners for debugging
+      map.on('load', () => {
+        console.log('[Map] Map loaded successfully');
+      });
+      
+      map.on('error', (e) => {
+        console.error('[Map] Map error:', e);
+      });
+      
+      map.on('styledata', () => {
+        console.log('[Map] Style data loaded');
+      });
+      
+      // Track user interaction to prevent auto-snapping
+      map.on('dragstart', () => {
+        mapHasBeenMovedByUser = true;
+      });
+      map.on('zoomstart', () => {
+        mapHasBeenMovedByUser = true;
+      });
+      map.on('click', () => {
+        mapHasBeenMovedByUser = true;
+      });
+      
+      console.log('[Map Init] Map created successfully');
+      
+    } catch (error) {
+      console.error('[Map Init] Error creating map:', error);
+      // Fallback to a basic map if vector tiles fail
+      map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        center: CITY_CONFIG.defaultCenter,
+        zoom: CITY_CONFIG.defaultZoom,
+        attributionControl: true
+      });
+      
+      // Force attribution to be collapsed by default for fallback map
+      map.on('load', () => {
+        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+        if (attributionControl) {
+          attributionControl.classList.add('maplibregl-compact');
+          attributionControl.classList.remove('maplibregl-compact-show');
+        }
+      });
+    }
     
     // Go Button Event Listener
     const goBtn = document.getElementById('goBtn');
@@ -3556,7 +3561,7 @@
       console.log('[DOMContentLoaded] Departure time radio button listeners added');
     }
     
-    console.log('[DOMContentLoaded] Event listeners initialization complete');
+    console.log('[DOMContentLoaded] Map and event listeners initialization complete');
   });
 </script>
 </body>
