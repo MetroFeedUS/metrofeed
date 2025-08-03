@@ -1642,94 +1642,96 @@
     }
   };
 
-  // Find Me button handler
-  const findMeBtn = document.getElementById('findMeBtn');
-  console.log('[Find Me] Button found:', findMeBtn);
-  if (findMeBtn) {
-    findMeBtn.addEventListener('click', function() {
-      console.log('[Find Me] Button clicked!');
-      // Toggle Find Me state
-      if (findMeActive) {
-        // Turn off Find Me
-        findMeActive = false;
-        
-        // Hide route and stops
-        if (userLocationPolyline && map.getLayer(userLocationPolyline)) {
-          map.removeLayer(userLocationPolyline);
+  // Find Me button handler (will be set up after DOM is ready)
+  function setupFindMeButton() {
+    const findMeBtn = document.getElementById('findMeBtn');
+    console.log('[Find Me] Button found:', findMeBtn);
+    if (findMeBtn) {
+      findMeBtn.addEventListener('click', function() {
+        console.log('[Find Me] Button clicked!');
+        // Toggle Find Me state
+        if (findMeActive) {
+          // Turn off Find Me
+          findMeActive = false;
+          
+          // Hide route and stops
+          if (userLocationPolyline && map.getLayer(userLocationPolyline)) {
+            map.removeLayer(userLocationPolyline);
+          }
+          if (userLocationPolyline && map.getSource(userLocationPolyline)) {
+            map.removeSource(userLocationPolyline);
+          }
+          userLocationStopMarkers.forEach(marker => marker.remove());
+          userLocationStopMarkers = [];
+          
+          // Remove location markers
+          if (userLocationMarker) { userLocationMarker.remove(); userLocationMarker = null; }
+          if (userArrow) { userArrow.remove(); userArrow = null; }
+          
+          // Update button to OFF state
+          findMeBtn.textContent = 'Find Me OFF';
+          findMeBtn.style.backgroundColor = '#666';
+          findMeBtn.style.color = '#fff';
+          findMeBtn.style.boxShadow = 'none';
+          findMeBtn.style.border = 'none';
+          
+          console.log('[Find Me] Deactivated');
+          return;
         }
-        if (userLocationPolyline && map.getSource(userLocationPolyline)) {
-          map.removeSource(userLocationPolyline);
+        
+        // Turn on Find Me
+        findMeActive = true;
+
+        // Show loading state
+        console.log('[Find Me] Setting loading state...');
+        findMeBtn.disabled = true;
+        findMeBtn.textContent = 'Looking...';
+        findMeBtn.style.backgroundColor = '#888';
+        
+        // Create loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'findMeLoading';
+        loadingOverlay.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0,0,0,0.9);
+          color: #4dd0e1;
+          padding: 20px 30px;
+          border-radius: 12px;
+          z-index: 10000;
+          text-align: center;
+          border: 2px solid #4dd0e1;
+          box-shadow: 0 0 20px #4dd0e1;
+        `;
+        loadingOverlay.innerHTML = `
+          <div style="margin-bottom: 15px;">
+            <div style="width: 30px; height: 30px; border: 3px solid #4dd0e1; border-top: 3px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+          </div>
+          <div id="loadingText">Looking for you...</div>
+        `;
+        document.body.appendChild(loadingOverlay);
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.setAttribute('data-findme-animation', 'true');
+        style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+
+        // Reset step counter
+        findMeStep = 0;
+        
+        // Start loading steps
+        try {
+          console.log('[Find Me] About to call updateLoadingStep()');
+          window.updateLoadingStep();
+          console.log('[Find Me] updateLoadingStep() called successfully');
+        } catch (error) {
+          console.error('[Find Me] Error calling updateLoadingStep():', error);
         }
-        userLocationStopMarkers.forEach(marker => marker.remove());
-        userLocationStopMarkers = [];
-        
-        // Remove location markers
-        if (userLocationMarker) { userLocationMarker.remove(); userLocationMarker = null; }
-        if (userArrow) { userArrow.remove(); userArrow = null; }
-        
-        // Update button to OFF state
-        findMeBtn.textContent = 'Find Me OFF';
-        findMeBtn.style.backgroundColor = '#666';
-        findMeBtn.style.color = '#fff';
-        findMeBtn.style.boxShadow = 'none';
-        findMeBtn.style.border = 'none';
-        
-        console.log('[Find Me] Deactivated');
-        return;
-      }
-      
-      // Turn on Find Me
-      findMeActive = true;
-
-      // Show loading state
-      console.log('[Find Me] Setting loading state...');
-      findMeBtn.disabled = true;
-      findMeBtn.textContent = 'Looking...';
-      findMeBtn.style.backgroundColor = '#888';
-      
-      // Create loading overlay
-      const loadingOverlay = document.createElement('div');
-      loadingOverlay.id = 'findMeLoading';
-      loadingOverlay.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.9);
-        color: #4dd0e1;
-        padding: 20px 30px;
-        border-radius: 12px;
-        z-index: 10000;
-        text-align: center;
-        border: 2px solid #4dd0e1;
-        box-shadow: 0 0 20px #4dd0e1;
-      `;
-      loadingOverlay.innerHTML = `
-        <div style="margin-bottom: 15px;">
-          <div style="width: 30px; height: 30px; border: 3px solid #4dd0e1; border-top: 3px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-        </div>
-        <div id="loadingText">Looking for you...</div>
-      `;
-      document.body.appendChild(loadingOverlay);
-
-      // Add CSS animation
-      const style = document.createElement('style');
-      style.setAttribute('data-findme-animation', 'true');
-      style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
-      document.head.appendChild(style);
-
-      // Reset step counter
-      findMeStep = 0;
-      
-      // Start loading steps
-      try {
-        console.log('[Find Me] About to call updateLoadingStep()');
-        window.updateLoadingStep();
-        console.log('[Find Me] updateLoadingStep() called successfully');
-      } catch (error) {
-        console.error('[Find Me] Error calling updateLoadingStep():', error);
-      }
-    });
+      });
+    }
   }
 
   // === SECTION: GELOCATION & CLOSEST ROUTE LOGIC ===
@@ -3267,6 +3269,26 @@
     }
   }
   
+  // Function to minimize OTP itinerary modal
+  function minimizeItineraryModal() {
+    console.log('[minimizeItineraryModal] Function called');
+    const modal = document.getElementById('otpModal');
+    const minimizedBar = document.getElementById('minimizedItinerary');
+    
+    if (modal) modal.style.display = 'none';
+    if (minimizedBar) minimizedBar.style.display = 'block';
+  }
+
+  // Function to restore OTP itinerary modal
+  function restoreItineraryModal() {
+    console.log('[restoreItineraryModal] Function called');
+    const modal = document.getElementById('otpModal');
+    const minimizedBar = document.getElementById('minimizedItinerary');
+    
+    if (modal) modal.style.display = 'block';
+    if (minimizedBar) minimizedBar.style.display = 'none';
+  }
+
   // Function to toggle traffic from dropdown menu
   function toggleTrafficFromDropdown() {
     console.log('[toggleTrafficFromDropdown] Function called');
@@ -3563,6 +3585,7 @@
     
     // Setup button event listeners
     setupButtonEventListeners();
+    setupFindMeButton();
     
     // Departure Time Radio Button Listeners
     const departNowRadio = document.getElementById('departNow');
