@@ -1373,8 +1373,14 @@
       // Store reference to pin
       if (mapSelectionMode === 'start') {
         startPin = newPin;
+        // Store coordinates for OTP
+        window.startCoords = { lat: clickedLat, lng: clickedLon };
+        console.log('[Map Click] Stored start coordinates:', window.startCoords);
       } else {
         destinationPin = newPin;
+        // Store coordinates for OTP
+        window.endCoords = { lat: clickedLat, lng: clickedLon };
+        console.log('[Map Click] Stored end coordinates:', window.endCoords);
       }
       
       console.log('[Map Click] Selected location:', clickedLat, clickedLon);
