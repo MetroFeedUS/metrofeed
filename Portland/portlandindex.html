@@ -3030,6 +3030,7 @@
     window.currentItins[idx].legs.forEach(leg => {
       let color;
       let legKey;
+      let routeNumber = null; // Initialize routeNumber for all legs
       
       if (leg.mode === 'WALK') {
         color = WALK_COLOR;
@@ -3040,7 +3041,7 @@
         
         // Extract route description from itinerary
         let routeDescription = '';
-        let routeNumber = leg.route;
+        routeNumber = leg.route; // Set routeNumber for transit legs
         
         if (leg.routeLongName) {
           routeDescription = leg.routeLongName;
