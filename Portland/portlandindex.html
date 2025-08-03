@@ -1308,6 +1308,19 @@
       window.routeLegLines = [];
     }
     
+    // Clear extended routes if they exist
+    if (window.extendedRouteLines && window.extendedRouteLines.length) {
+      window.extendedRouteLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+      window.extendedRouteLines = [];
+    }
+    
     // Clear OTP stop markers if they exist
     if (window.routeStopMarkers && window.routeStopMarkers.length) {
       window.routeStopMarkers.forEach(marker => marker.remove());
@@ -3054,6 +3067,19 @@
       });
       window.routeLegLines = [];
     }
+    
+    // Clear extended routes
+    if (window.extendedRouteLines && window.extendedRouteLines.length) {
+      window.extendedRouteLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+      window.extendedRouteLines = [];
+    }
     if (window.routeStopMarkers && window.routeStopMarkers.length) {
       window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
     }
@@ -3226,6 +3252,9 @@
     // Store leg color mapping globally for bus matching
     window.currentLegColorMapping = legColorMapping;
     console.log('[showRoute] Leg color mapping:', legColorMapping);
+    
+    // Draw extended routes from mastermap
+    drawExtendedRoutes(legColorMapping);
     
     // Store routesToTrack globally for bus tracking
     window.routesToTrack = routesToTrack;
@@ -3651,6 +3680,86 @@
     window.allBusesInterval = setInterval(() => {
       fetchAndDisplayBuses('all');
     }, 10000); // Refresh every 10 seconds
+  }
+
+  // Function to draw extended routes from mastermap
+  function drawExtendedRoutes(legColorMapping) {
+    console.log('[drawExtendedRoutes] Starting extended route drawing');
+    
+    // Clear any existing extended routes
+    if (window.extendedRouteLines && window.extendedRouteLines.length) {
+      window.extendedRouteLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+    }
+    window.extendedRouteLines = [];
+    
+    // Limit to max 3 legs as requested
+    const legsToProcess = Object.keys(legColorMapping).slice(0, 3);
+    
+    legsToProcess.forEach((legKey, index) => {
+      const legInfo = legColorMapping[legKey];
+      
+      // Only process BUS and RAIL legs (skip WALK)
+      if (legInfo.mode === 'WALK') return;
+      
+      console.log('[drawExtendedRoutes] Processing leg:', legKey, 'Route:', legInfo.route, 'Direction:', legInfo.direction);
+      
+      // Find the route in mastermap
+      const masterRoute = masterRoutes.find(r => 
+        r.route_number === legInfo.route && 
+        r.direction_id === legInfo.direction
+      );
+      
+      if (!masterRoute) {
+        console.log('[drawExtendedRoutes] Route not found in mastermap:', legInfo.route, 'direction:', legInfo.direction);
+        return;
+      }
+      
+      console.log('[drawExtendedRoutes] Found mastermap route:', masterRoute.route_title);
+      
+      // Convert shape coordinates from [lat, lng] to [lng, lat] for MapLibre
+      const lineCoords = masterRoute.shape.map(coord => [coord[1], coord[0]]);
+      
+      // Create unique source and layer ID for extended route
+      const extendedLineId = `extendedRoute-${index}`;
+      
+      map.addSource(extendedLineId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: lineCoords
+          }
+        }
+      });
+      
+      map.addLayer({
+        id: extendedLineId,
+        type: 'line',
+        source: extendedLineId,
+        paint: {
+          'line-color': legInfo.color,
+          'line-width': 2,
+          'line-opacity': 0.4,
+          'line-dasharray': [2, 2] // Small dots
+        }
+      });
+      
+      // Store the layer ID for removal
+      window.extendedRouteLines.push(extendedLineId);
+      
+      console.log('[drawExtendedRoutes] Added extended route:', extendedLineId, 'for route:', legInfo.route);
+    });
+    
+    console.log('[drawExtendedRoutes] Completed. Added', window.extendedRouteLines.length, 'extended routes');
   }
 </script>
 </body>
