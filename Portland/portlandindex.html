@@ -3218,7 +3218,57 @@
         });
       }
     });
-  
+    
+    if (window.routeLegLines.length) {
+      const bounds = new maplibregl.LngLatBounds();
+      allCoords.forEach(coord => bounds.extend([coord[1], coord[0]]));
+      map.fitBounds(bounds, { padding: [40, 40] });
+    }
+    
+    // Store leg color mapping globally for bus matching
+    window.currentLegColorMapping = legColorMapping;
+    console.log('[showRoute] Leg color mapping:', legColorMapping);
+    
+    // Draw extended routes from mastermap
+    drawExtendedRoutes(legColorMapping);
+    
+    // Store routesToTrack globally for bus tracking
+    window.routesToTrack = routesToTrack;
+    
+    // Start tracking buses for the routes in this trip
+    if (routesToTrack.length > 0) {
+      console.log('[showRoute] Tracking buses for routes:', routesToTrack);
+      
+      // Stop closest route tracking when OTP tracking starts
+      if (window.closestRouteInterval) {
+        console.log('[showRoute] Stopping closest route tracking for OTP');
+        clearInterval(window.closestRouteInterval);
+        window.closestRouteInterval = null;
+      }
+      
+      fetchAndDisplayBuses(routesToTrack);
+      // Set up continuous tracking for this trip
+      if (window.otpBusTrackingInterval) {
+        clearInterval(window.otpBusTrackingInterval);
+      }
+      window.otpBusTrackingInterval = setInterval(() => {
+        fetchAndDisplayBuses(routesToTrack);
+      }, 15000);
+    } else {
+      // If no routes to track, resume closest route tracking
+      if (closestRoute) {
+        // Show buses for closest route
+        fetchAndDisplayBuses();
+      }
+    }
+    
+    // Mark that a trip has been selected
+    activeTripSelected = true;
+    
+    // Minimize the modal instead of hiding it
+    minimizeItineraryModal();
+  };
+
   // Traffic overlay functionality
   let trafficLayerActive = false;
   
