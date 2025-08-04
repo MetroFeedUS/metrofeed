@@ -2030,6 +2030,7 @@
   // === SECTION: LIVE BUS MARKERS ===
   let busMarkers = {};
   let currentTrackingRoutes = new Set(); // Track which routes we're currently showing buses for
+  let userRouteManuallyHidden = false; // Track if user manually hid the route
   
   // Function to update the find me button state
   function updateFindMeButtonState() {
@@ -2856,13 +2857,13 @@
       // Clear bus markers
       Object.values(busMarkers).forEach(m => map.removeLayer(m));
       busMarkers = {};
-      // Resume tracking closest route if available
-      if (closestRoute) {
-        console.log('[hideOtpModal] Resuming closest route tracking');
-        // Show buses for closest route
-        fetchAndDisplayBuses();
-        // Restart closest route interval if it was stopped and route is not manually hidden
-        if (!window.closestRouteInterval && !userRouteManuallyHidden) {
+              // Resume tracking closest route if available
+        if (closestRoute) {
+          console.log('[hideOtpModal] Resuming closest route tracking');
+          // Show buses for closest route
+          fetchAndDisplayBuses();
+          // Restart closest route interval if it was stopped and route is not manually hidden
+          if (!window.closestRouteInterval && !window.userRouteManuallyHidden) {
           window.closestRouteInterval = setInterval(() => {
             // Track closest route and show buses
             fetchAndDisplayBuses();
@@ -3334,8 +3335,8 @@
       if (leg.mode !== 'WALK' && routeNumber) {
         console.log('[showRoute] Found transit leg:', leg, 'with processed route number:', routeNumber);
         
-        // The direction was already calculated above for this leg, so we can use it directly
-        // No need to recalculate - just use the direction that was determined earlier
+        // Use the direction that was calculated earlier in this leg's processing
+        // The direction variable should be available from the scope above
         
         routesToTrack.push({
           route_id: routeNumber, // Use the processed route number, not leg.route
