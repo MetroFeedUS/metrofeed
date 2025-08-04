@@ -754,6 +754,12 @@
         <button id="clearBtn" style="width: 45px; height: 20px; background-color: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3); padding: 0 4px;">Clear</button>
         <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s ease;" title="Find my location and closest route">Find Me</button>
   </div>
+  
+  <!-- Beta Test Popup -->
+  <div id="betaPopup" style="background: rgba(255, 193, 7, 0.95); color: #000; padding: 8px 12px; border-radius: 6px; margin-top: 8px; border: 2px solid #ffc107; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 0.8rem;">
+    <span style="font-weight: bold;">⚠️ Beta Test:</span> This program is a beta test, please report any issues.
+    <button onclick="closeBetaPopup()" style="position: absolute; top: 2px; right: 6px; background: none; border: none; color: #000; font-size: 16px; cursor: pointer; font-weight: bold; line-height: 1;">×</button>
+  </div>
 </div>
 
 <!-- -- FAVORITES -- -->
@@ -3073,7 +3079,7 @@
         }
         
         // Calculate direction BEFORE creating the mapping
-        let direction = 0; // Default fallback
+        let direction = 0; // Default fallback - declare at leg level scope
         
         // OTP provides direction in different ways:
         // 1. leg.headsign - contains the direction description
@@ -3488,6 +3494,43 @@
     window.allBusesInterval = setInterval(() => {
       fetchAndDisplayBuses('all');
     }, 10000); // Refresh every 10 seconds
+  }
+
+  // Function to close beta popup
+  function closeBetaPopup() {
+    const popup = document.getElementById('betaPopup');
+    if (popup) {
+      popup.style.display = 'none';
+    }
+  }
+
+  // Function to clear route polylines
+  function clearRoutePolylines() {
+    // Clear route leg lines
+    if (window.routeLegLines && window.routeLegLines.length) {
+      window.routeLegLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+      window.routeLegLines = [];
+    }
+    
+    // Clear extended route lines
+    if (window.extendedRouteLines && window.extendedRouteLines.length) {
+      window.extendedRouteLines.forEach(lineId => {
+        if (map.getLayer(lineId)) {
+          map.removeLayer(lineId);
+        }
+        if (map.getSource(lineId)) {
+          map.removeSource(lineId);
+        }
+      });
+      window.extendedRouteLines = [];
+    }
   }
 
   // Function to draw extended routes from mastermap
