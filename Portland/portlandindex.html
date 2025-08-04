@@ -3141,32 +3141,138 @@
         // 2. leg.direction - might contain direction info
         // 3. We need to match this with mastermap direction_name
         
+        // Enhanced direction matching logic with comprehensive debugging
+        function normalizeString(str) {
+          return (str || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '')
+            .replace(/\s+/g, '');
+        }
+        
         if (leg.headsign) {
-          console.log('[showRoute] OTP headsign:', leg.headsign);
-          // Try to find matching direction in mastermap
+          console.log('🔍 [DIRECTION DEBUG] ==========================================');
+          console.log('🔍 [DIRECTION DEBUG] Processing leg for route:', routeNumber);
+          console.log('🔍 [DIRECTION DEBUG] OTP headsign:', leg.headsign);
+          console.log('🔍 [DIRECTION DEBUG] OTP from stop:', leg.from?.name);
+          console.log('🔍 [DIRECTION DEBUG] OTP to stop:', leg.to?.name);
+          
+          const normHeadsign = normalizeString(leg.headsign);
+          console.log('🔍 [DIRECTION DEBUG] Normalized headsign:', normHeadsign);
+          
           const masterRoute = masterRoutes.find(r => r.route_number === routeNumber);
           if (masterRoute) {
-            // Check both directions for this route
-            const dir0Route = masterRoutes.find(r => 
-              r.route_number === routeNumber && r.direction_id === 0
-            );
-            const dir1Route = masterRoutes.find(r => 
-              r.route_number === routeNumber && r.direction_id === 1
-            );
+            const dir0Route = masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 0);
+            const dir1Route = masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 1);
             
-            // Compare headsign with direction_name
-            if (dir0Route && dir0Route.direction_name && 
-                leg.headsign.toLowerCase().includes(dir0Route.direction_name.toLowerCase())) {
-              direction = 0;
-              console.log('[showRoute] Matched headsign to direction 0:', dir0Route.direction_name);
-            } else if (dir1Route && dir1Route.direction_name && 
-                       leg.headsign.toLowerCase().includes(dir1Route.direction_name.toLowerCase())) {
-              direction = 1;
-              console.log('[showRoute] Matched headsign to direction 1:', dir1Route.direction_name);
-            } else {
-              console.log('[showRoute] Could not match headsign to direction, using default 0');
+            console.log('🔍 [DIRECTION DEBUG] Found master routes:');
+            console.log('🔍 [DIRECTION DEBUG]   Direction 0:', dir0Route ? {
+              direction_name: dir0Route.direction_name,
+              first_stop: dir0Route.stops?.[0]?.name,
+              last_stop: dir0Route.stops?.[dir0Route.stops?.length - 1]?.name
+            } : 'NOT FOUND');
+            console.log('🔍 [DIRECTION DEBUG]   Direction 1:', dir1Route ? {
+              direction_name: dir1Route.direction_name,
+              first_stop: dir1Route.stops?.[0]?.name,
+              last_stop: dir1Route.stops?.[dir1Route.stops?.length - 1]?.name
+            } : 'NOT FOUND');
+            
+            let matched = false;
+            
+            // Try headsign matching first
+            console.log('🔍 [DIRECTION DEBUG] --- TRYING HEADSIGN MATCHING ---');
+            
+            if (dir0Route && dir0Route.direction_name) {
+              const normDir0 = normalizeString(dir0Route.direction_name);
+              console.log('🔍 [DIRECTION DEBUG] Comparing headsigns:');
+              console.log('🔍 [DIRECTION DEBUG]   OTP:', normHeadsign);
+              console.log('🔍 [DIRECTION DEBUG]   Dir0:', normDir0);
+              console.log('🔍 [DIRECTION DEBUG]   OTP includes Dir0?', normHeadsign.includes(normDir0));
+              console.log('🔍 [DIRECTION DEBUG]   Dir0 includes OTP?', normDir0.includes(normHeadsign));
+              
+              if (normHeadsign.includes(normDir0) || normDir0.includes(normHeadsign)) {
+                direction = 0;
+                matched = true;
+                console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched headsign to direction 0');
+                console.log('✅ [DIRECTION DEBUG] Original:', dir0Route.direction_name, 'vs', leg.headsign);
+              } else {
+                console.log('❌ [DIRECTION DEBUG] FAILED: Headsign match for direction 0');
+              }
             }
+            
+            if (!matched && dir1Route && dir1Route.direction_name) {
+              const normDir1 = normalizeString(dir1Route.direction_name);
+              console.log('🔍 [DIRECTION DEBUG] Comparing headsigns:');
+              console.log('🔍 [DIRECTION DEBUG]   OTP:', normHeadsign);
+              console.log('🔍 [DIRECTION DEBUG]   Dir1:', normDir1);
+              console.log('🔍 [DIRECTION DEBUG]   OTP includes Dir1?', normHeadsign.includes(normDir1));
+              console.log('🔍 [DIRECTION DEBUG]   Dir1 includes OTP?', normDir1.includes(normHeadsign));
+              
+              if (normHeadsign.includes(normDir1) || normDir1.includes(normHeadsign)) {
+                direction = 1;
+                matched = true;
+                console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched headsign to direction 1');
+                console.log('✅ [DIRECTION DEBUG] Original:', dir1Route.direction_name, 'vs', leg.headsign);
+              } else {
+                console.log('❌ [DIRECTION DEBUG] FAILED: Headsign match for direction 1');
+              }
+            }
+            
+            // Fallback: try to infer by comparing from/to stop names
+            if (!matched && dir0Route && dir1Route) {
+              console.log('🔍 [DIRECTION DEBUG] --- TRYING STOP NAME FALLBACK ---');
+              
+              const otpFrom = normalizeString(leg.from?.name);
+              const otpTo = normalizeString(leg.to?.name);
+              const dir0From = normalizeString(dir0Route.stops?.[0]?.name);
+              const dir0To = normalizeString(dir0Route.stops?.[dir0Route.stops.length - 1]?.name);
+              const dir1From = normalizeString(dir1Route.stops?.[0]?.name);
+              const dir1To = normalizeString(dir1Route.stops?.[dir1Route.stops.length - 1]?.name);
+              
+              console.log('🔍 [DIRECTION DEBUG] Stop comparisons:');
+              console.log('🔍 [DIRECTION DEBUG]   OTP From:', otpFrom, '| OTP To:', otpTo);
+              console.log('🔍 [DIRECTION DEBUG]   Dir0 From:', dir0From, '| Dir0 To:', dir0To);
+              console.log('🔍 [DIRECTION DEBUG]   Dir1 From:', dir1From, '| Dir1 To:', dir1To);
+              
+              const fromMatch0 = otpFrom && dir0From && otpFrom === dir0From;
+              const toMatch0 = otpTo && dir0To && otpTo === dir0To;
+              const fromMatch1 = otpFrom && dir1From && otpFrom === dir1From;
+              const toMatch1 = otpTo && dir1To && otpTo === dir1To;
+              
+              console.log('🔍 [DIRECTION DEBUG] Stop matches:');
+              console.log('🔍 [DIRECTION DEBUG]   Dir0 From match?', fromMatch0);
+              console.log('🔍 [DIRECTION DEBUG]   Dir0 To match?', toMatch0);
+              console.log('🔍 [DIRECTION DEBUG]   Dir1 From match?', fromMatch1);
+              console.log('🔍 [DIRECTION DEBUG]   Dir1 To match?', toMatch1);
+              
+              if (fromMatch0 || toMatch0) {
+                direction = 0;
+                matched = true;
+                console.log('✅ [DIRECTION DEBUG] SUCCESS: Fallback matched stops to direction 0');
+                console.log('✅ [DIRECTION DEBUG] Match type:', fromMatch0 ? 'FROM stop' : 'TO stop');
+              } else if (fromMatch1 || toMatch1) {
+                direction = 1;
+                matched = true;
+                console.log('✅ [DIRECTION DEBUG] SUCCESS: Fallback matched stops to direction 1');
+                console.log('✅ [DIRECTION DEBUG] Match type:', fromMatch1 ? 'FROM stop' : 'TO stop');
+              } else {
+                console.log('❌ [DIRECTION DEBUG] FAILED: Stop name fallback');
+              }
+            }
+            
+            if (!matched) {
+              direction = 0; // fallback
+              console.log('⚠️ [DIRECTION DEBUG] WARNING: Could not match headsign or stops to direction, using default 0');
+            }
+            
+            console.log('🔍 [DIRECTION DEBUG] FINAL RESULT: Direction =', direction);
+            console.log('🔍 [DIRECTION DEBUG] ==========================================');
+          } else {
+            console.log('❌ [DIRECTION DEBUG] ERROR: No master route found for route number:', routeNumber);
+            console.log('🔍 [DIRECTION DEBUG] ==========================================');
           }
+        } else {
+          console.log('🔍 [DIRECTION DEBUG] No headsign available for this leg');
+          console.log('🔍 [DIRECTION DEBUG] ==========================================');
         }
         
         routesToTrack.push({
