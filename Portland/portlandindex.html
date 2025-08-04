@@ -3167,13 +3167,17 @@
             console.log('🔍 [DIRECTION DEBUG] Found master routes:');
             console.log('🔍 [DIRECTION DEBUG]   Direction 0:', dir0Route ? {
               direction_name: dir0Route.direction_name,
+              direction_name_raw: dir0Route.direction_name,
               first_stop: dir0Route.stops?.[0]?.name,
-              last_stop: dir0Route.stops?.[dir0Route.stops?.length - 1]?.name
+              last_stop: dir0Route.stops?.[dir0Route.stops?.length - 1]?.name,
+              route_title: dir0Route.route_title
             } : 'NOT FOUND');
             console.log('🔍 [DIRECTION DEBUG]   Direction 1:', dir1Route ? {
               direction_name: dir1Route.direction_name,
+              direction_name_raw: dir1Route.direction_name,
               first_stop: dir1Route.stops?.[0]?.name,
-              last_stop: dir1Route.stops?.[dir1Route.stops?.length - 1]?.name
+              last_stop: dir1Route.stops?.[dir1Route.stops?.length - 1]?.name,
+              route_title: dir1Route.route_title
             } : 'NOT FOUND');
             
             let matched = false;
@@ -3181,19 +3185,38 @@
             // Try headsign matching first
             console.log('🔍 [DIRECTION DEBUG] --- TRYING HEADSIGN MATCHING ---');
             
+            // Helper function to extract key destination words
+            function extractKeyWords(text) {
+              const keywords = ['gateway', 'city', 'downtown', 'center', 'ctr', 'tc', 'transit', 'portland', 'gresham', 'beaverton', 'hillsboro'];
+              const normalized = normalizeString(text);
+              return keywords.filter(keyword => normalized.includes(keyword));
+            }
+            
             if (dir0Route && dir0Route.direction_name) {
               const normDir0 = normalizeString(dir0Route.direction_name);
+              const otpKeywords = extractKeyWords(leg.headsign);
+              const dir0Keywords = extractKeyWords(dir0Route.direction_name);
+              
               console.log('🔍 [DIRECTION DEBUG] Comparing headsigns:');
               console.log('🔍 [DIRECTION DEBUG]   OTP:', normHeadsign);
               console.log('🔍 [DIRECTION DEBUG]   Dir0:', normDir0);
+              console.log('🔍 [DIRECTION DEBUG]   OTP keywords:', otpKeywords);
+              console.log('🔍 [DIRECTION DEBUG]   Dir0 keywords:', dir0Keywords);
               console.log('🔍 [DIRECTION DEBUG]   OTP includes Dir0?', normHeadsign.includes(normDir0));
               console.log('🔍 [DIRECTION DEBUG]   Dir0 includes OTP?', normDir0.includes(normHeadsign));
               
-              if (normHeadsign.includes(normDir0) || normDir0.includes(normHeadsign)) {
+              // Check for keyword overlap
+              const keywordOverlap = otpKeywords.filter(k => dir0Keywords.includes(k));
+              console.log('🔍 [DIRECTION DEBUG]   Keyword overlap:', keywordOverlap);
+              
+              if (normHeadsign.includes(normDir0) || normDir0.includes(normHeadsign) || keywordOverlap.length > 0) {
                 direction = 0;
                 matched = true;
                 console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched headsign to direction 0');
                 console.log('✅ [DIRECTION DEBUG] Original:', dir0Route.direction_name, 'vs', leg.headsign);
+                if (keywordOverlap.length > 0) {
+                  console.log('✅ [DIRECTION DEBUG] Matched via keywords:', keywordOverlap);
+                }
               } else {
                 console.log('❌ [DIRECTION DEBUG] FAILED: Headsign match for direction 0');
               }
@@ -3201,17 +3224,29 @@
             
             if (!matched && dir1Route && dir1Route.direction_name) {
               const normDir1 = normalizeString(dir1Route.direction_name);
+              const otpKeywords = extractKeyWords(leg.headsign);
+              const dir1Keywords = extractKeyWords(dir1Route.direction_name);
+              
               console.log('🔍 [DIRECTION DEBUG] Comparing headsigns:');
               console.log('🔍 [DIRECTION DEBUG]   OTP:', normHeadsign);
               console.log('🔍 [DIRECTION DEBUG]   Dir1:', normDir1);
+              console.log('🔍 [DIRECTION DEBUG]   OTP keywords:', otpKeywords);
+              console.log('🔍 [DIRECTION DEBUG]   Dir1 keywords:', dir1Keywords);
               console.log('🔍 [DIRECTION DEBUG]   OTP includes Dir1?', normHeadsign.includes(normDir1));
               console.log('🔍 [DIRECTION DEBUG]   Dir1 includes OTP?', normDir1.includes(normHeadsign));
               
-              if (normHeadsign.includes(normDir1) || normDir1.includes(normHeadsign)) {
+              // Check for keyword overlap
+              const keywordOverlap = otpKeywords.filter(k => dir1Keywords.includes(k));
+              console.log('🔍 [DIRECTION DEBUG]   Keyword overlap:', keywordOverlap);
+              
+              if (normHeadsign.includes(normDir1) || normDir1.includes(normHeadsign) || keywordOverlap.length > 0) {
                 direction = 1;
                 matched = true;
                 console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched headsign to direction 1');
                 console.log('✅ [DIRECTION DEBUG] Original:', dir1Route.direction_name, 'vs', leg.headsign);
+                if (keywordOverlap.length > 0) {
+                  console.log('✅ [DIRECTION DEBUG] Matched via keywords:', keywordOverlap);
+                }
               } else {
                 console.log('❌ [DIRECTION DEBUG] FAILED: Headsign match for direction 1');
               }
@@ -3256,6 +3291,41 @@
                 console.log('✅ [DIRECTION DEBUG] Match type:', fromMatch1 ? 'FROM stop' : 'TO stop');
               } else {
                 console.log('❌ [DIRECTION DEBUG] FAILED: Stop name fallback');
+              }
+            }
+            
+            // Additional fallback: try to extract direction from route title if direction_name is corrupted
+            if (!matched) {
+              console.log('🔍 [DIRECTION DEBUG] --- TRYING ROUTE TITLE FALLBACK ---');
+              
+              // Check if direction_name looks corrupted (too long, no spaces, etc.)
+              const isCorrupted = (name) => name && (name.length > 50 || !name.includes(' ') || name.includes('montgomerypkoryeon'));
+              
+              if (dir0Route && isCorrupted(dir0Route.direction_name)) {
+                console.log('🔍 [DIRECTION DEBUG] Direction 0 name appears corrupted, trying route title');
+                const routeTitle = dir0Route.route_title || '';
+                console.log('🔍 [DIRECTION DEBUG] Route title:', routeTitle);
+                
+                // Try to extract direction info from route title
+                const titleLower = routeTitle.toLowerCase();
+                if (titleLower.includes('gateway') || titleLower.includes('tc')) {
+                  direction = 0;
+                  matched = true;
+                  console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched route title to direction 0 (Gateway)');
+                }
+              }
+              
+              if (!matched && dir1Route && isCorrupted(dir1Route.direction_name)) {
+                console.log('🔍 [DIRECTION DEBUG] Direction 1 name appears corrupted, trying route title');
+                const routeTitle = dir1Route.route_title || '';
+                console.log('🔍 [DIRECTION DEBUG] Route title:', routeTitle);
+                
+                const titleLower = routeTitle.toLowerCase();
+                if (titleLower.includes('gateway') || titleLower.includes('tc')) {
+                  direction = 1;
+                  matched = true;
+                  console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched route title to direction 1 (Gateway)');
+                }
               }
             }
             
