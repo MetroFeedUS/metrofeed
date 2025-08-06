@@ -89,7 +89,6 @@
     border-bottom: 3px solid #4dd0e1;
     padding: 1rem;
     text-align: center;
-    margin-top: 40px; /* Account for beta banner */
   }
 
   header img {
@@ -250,10 +249,7 @@
 
 /* Beta Banner Styles */
 .beta-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   background-color: #111;
   color: #bbb;
   border-bottom: 2px solid #4dd0e1;
@@ -261,7 +257,6 @@
   text-align: center;
   font-size: 0.85rem;
   line-height: 1.3;
-  z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -295,14 +290,6 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
-<!-- Favorite Route Button (Top Right) with Dropdown -->
-<div class="favorite-save-box">
-  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
-  <div class="fav-dropdown" id="fav-dropdown">
-    <button id="fav-dropdown-btn">Add to Favorites</button>
-  </div>
-</div>
-
   <!-- Beta Banner -->
   <div id="betaBanner" class="beta-banner" style="display: flex;">
     <div class="beta-banner-content">
@@ -311,6 +298,14 @@
       <span class="beta-close" onclick="closeBetaBanner()">&times;</span>
     </div>
   </div>
+
+<!-- Favorite Route Button (Top Right) with Dropdown -->
+<div class="favorite-save-box">
+  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+  <div class="fav-dropdown" id="fav-dropdown">
+    <button id="fav-dropdown-btn">Add to Favorites</button>
+  </div>
+</div>
 
   <!-- Back button -->
   <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">

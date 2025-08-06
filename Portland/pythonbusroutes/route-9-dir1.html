@@ -89,7 +89,6 @@
     border-bottom: 3px solid #4dd0e1;
     padding: 1rem;
     text-align: center;
-    margin-top: 40px; /* Account for beta banner */
   }
 
   header img {
@@ -250,10 +249,7 @@
 
 /* Beta Banner Styles */
 .beta-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   background-color: #111;
   color: #bbb;
   border-bottom: 2px solid #4dd0e1;
@@ -261,7 +257,6 @@
   text-align: center;
   font-size: 0.85rem;
   line-height: 1.3;
-  z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -295,14 +290,6 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
-<!-- Favorite Route Button (Top Right) with Dropdown -->
-<div class="favorite-save-box">
-  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
-  <div class="fav-dropdown" id="fav-dropdown">
-    <button id="fav-dropdown-btn">Add to Favorites</button>
-  </div>
-</div>
-
   <!-- Beta Banner -->
   <div id="betaBanner" class="beta-banner" style="display: flex;">
     <div class="beta-banner-content">
@@ -311,6 +298,14 @@
       <span class="beta-close" onclick="closeBetaBanner()">&times;</span>
     </div>
   </div>
+
+<!-- Favorite Route Button (Top Right) with Dropdown -->
+<div class="favorite-save-box">
+  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+  <div class="fav-dropdown" id="fav-dropdown">
+    <button id="fav-dropdown-btn">Add to Favorites</button>
+  </div>
+</div>
 
   <!-- Back button -->
   <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
@@ -1549,11 +1544,11 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "12757", name: "NE 10th &amp; Hood (Gresham Central TC)", lat: 45.502929, lon: -122.42814, times: ["4:02 AM", "4:32 AM", "4:47 AM", "5:03 AM", "5:16 AM", "5:46 AM", "6:01 AM", "6:15 AM"] },
-  { stop_id: "10858", name: "Gresham Central Transit Center ", lat: 45.50287, lon: -122.42659, times: ["4:04 AM", "4:34 AM", "4:49 AM", "5:05 AM", "5:18 AM", "5:33 AM", "5:48 AM", "6:03 AM"] },
-  { stop_id: "7605", name: "NE 5th &amp; Hood", lat: 45.501069, lon: -122.4278, times: ["4:04 AM", "4:34 AM", "4:49 AM", "5:05 AM", "5:18 AM", "5:33 AM", "5:48 AM", "6:03 AM"] },
-  { stop_id: "13033", name: "NE Hood &amp; 2nd", lat: 45.498613, lon: -122.427832, times: ["4:05 AM", "4:35 AM", "4:50 AM", "5:06 AM", "5:19 AM", "5:34 AM", "5:49 AM", "6:04 AM"] },
-  { stop_id: "12862", name: "W Powell &amp; N Main", lat: 45.497985, lon: -122.431377, times: ["4:05 AM", "4:35 AM", "4:50 AM", "5:06 AM", "5:20 AM", "5:35 AM", "5:50 AM", "6:05 AM"] },
+  { stop_id: "12757", name: "NE 10th &amp; Hood (Gresham Central TC)", lat: 45.502929, lon: -122.42814, times: ["4:32 AM", "4:47 AM", "5:03 AM", "5:16 AM", "5:46 AM", "6:01 AM", "6:15 AM", "6:28 AM"] },
+  { stop_id: "10858", name: "Gresham Central Transit Center ", lat: 45.50287, lon: -122.42659, times: ["4:34 AM", "4:49 AM", "5:05 AM", "5:18 AM", "5:33 AM", "5:48 AM", "6:03 AM", "6:17 AM"] },
+  { stop_id: "7605", name: "NE 5th &amp; Hood", lat: 45.501069, lon: -122.4278, times: ["4:34 AM", "4:49 AM", "5:05 AM", "5:18 AM", "5:33 AM", "5:48 AM", "6:03 AM", "6:17 AM"] },
+  { stop_id: "13033", name: "NE Hood &amp; 2nd", lat: 45.498613, lon: -122.427832, times: ["4:35 AM", "4:50 AM", "5:06 AM", "5:19 AM", "5:34 AM", "5:49 AM", "6:04 AM", "6:18 AM"] },
+  { stop_id: "12862", name: "W Powell &amp; N Main", lat: 45.497985, lon: -122.431377, times: ["4:35 AM", "4:50 AM", "5:06 AM", "5:20 AM", "5:35 AM", "5:50 AM", "6:05 AM", "6:19 AM"] },
   { stop_id: "4558", name: "W Powell &amp; SW Walters", lat: 45.49728, lon: -122.43507, times: ["4:06 AM", "4:36 AM", "4:51 AM", "5:07 AM", "5:20 AM", "5:35 AM", "5:50 AM", "6:05 AM"] },
   { stop_id: "12868", name: "W Powell &amp; NW Eastman Parkway", lat: 45.497219, lon: -122.438784, times: ["4:06 AM", "4:36 AM", "4:51 AM", "5:07 AM", "5:21 AM", "5:36 AM", "5:51 AM", "6:06 AM"] },
   { stop_id: "12863", name: "W Powell &amp; NW Wilson", lat: 45.497187, lon: -122.441719, times: ["4:07 AM", "4:37 AM", "4:52 AM", "5:08 AM", "5:21 AM", "5:36 AM", "5:51 AM", "6:06 AM"] },

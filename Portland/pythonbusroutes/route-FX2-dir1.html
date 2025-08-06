@@ -89,7 +89,6 @@
     border-bottom: 3px solid #4dd0e1;
     padding: 1rem;
     text-align: center;
-    margin-top: 40px; /* Account for beta banner */
   }
 
   header img {
@@ -250,10 +249,7 @@
 
 /* Beta Banner Styles */
 .beta-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   background-color: #111;
   color: #bbb;
   border-bottom: 2px solid #4dd0e1;
@@ -261,7 +257,6 @@
   text-align: center;
   font-size: 0.85rem;
   line-height: 1.3;
-  z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -295,14 +290,6 @@
     <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
   </header>
 
-<!-- Favorite Route Button (Top Right) with Dropdown -->
-<div class="favorite-save-box">
-  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
-  <div class="fav-dropdown" id="fav-dropdown">
-    <button id="fav-dropdown-btn">Add to Favorites</button>
-  </div>
-</div>
-
   <!-- Beta Banner -->
   <div id="betaBanner" class="beta-banner" style="display: flex;">
     <div class="beta-banner-content">
@@ -311,6 +298,14 @@
       <span class="beta-close" onclick="closeBetaBanner()">&times;</span>
     </div>
   </div>
+
+<!-- Favorite Route Button (Top Right) with Dropdown -->
+<div class="favorite-save-box">
+  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+  <div class="fav-dropdown" id="fav-dropdown">
+    <button id="fav-dropdown-btn">Add to Favorites</button>
+  </div>
+</div>
 
   <!-- Back button -->
   <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
@@ -1382,7 +1377,7 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "14232", name: "Cleveland Ave Park &amp; Ride", lat: 45.503106, lon: -122.418964, times: ["4:04 AM", "4:24 AM", "4:44 AM", "5:03 AM", "5:22 AM", "5:38 AM", "5:50 AM", "6:01 AM"] },
+  { stop_id: "14232", name: "Cleveland Ave Park &amp; Ride", lat: 45.503106, lon: -122.418964, times: ["4:24 AM", "4:44 AM", "5:03 AM", "5:22 AM", "5:38 AM", "5:50 AM", "6:01 AM", "6:13 AM"] },
   { stop_id: "14233", name: "Gresham Central Transit Center", lat: 45.503543, lon: -122.426109, times: ["4:07 AM", "4:27 AM", "4:47 AM", "5:06 AM", "5:25 AM", "5:41 AM", "5:53 AM", "6:04 AM"] },
   { stop_id: "1332", name: "NW Division &amp; Eastman Parkway", lat: 45.504578, lon: -122.434694, times: ["4:08 AM", "4:28 AM", "4:48 AM", "5:07 AM", "5:26 AM", "5:42 AM", "5:54 AM", "6:05 AM"] },
   { stop_id: "1316", name: "NW Division &amp; Civic Dr", lat: 45.504618, lon: -122.441835, times: ["4:09 AM", "4:29 AM", "4:49 AM", "5:08 AM", "5:27 AM", "5:43 AM", "5:55 AM", "6:06 AM"] },
