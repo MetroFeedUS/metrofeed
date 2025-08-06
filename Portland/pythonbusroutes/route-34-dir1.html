@@ -313,7 +313,7 @@
     <div class="beta-modal-content">
       <span class="beta-close" onclick="closeBetaModal()">&times;</span>
       <div style="font-weight: bold; font-size: 1.05rem; margin-bottom: 0.5rem;">⚠️ Beta Test</div>
-      <div>This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.</div>
+      <div>This program is a beta test, please report any issues.</div>
     </div>
   </div>
 
@@ -324,10 +324,10 @@
     </svg>
   </button>
 
-  <!-- Theme Toggle Button -->
-  <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
+  <!-- Theme Toggle Button - DISABLED FOR FREE VERSION -->
+  <!-- <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
     <img src="008-night.svg" alt="Theme Toggle" />
-  </button>
+  </button> -->
 
   <h1 id="route-title">Route 34 - To Clackamas Town Center</h1>
   <span id="route-type" style="display:none;"></span>
@@ -358,91 +358,12 @@
       }
     }
 
-    // Theme toggle functionality
-    let isNightMode = false;
-    function toggleTheme() {
-      isNightMode = !isNightMode;
-      const newStyle = isNightMode ? nightStyle : dayStyle;
-      map.setStyle(newStyle);
-      
-      // Re-add route data after style change
-      map.once('styledata', () => {
-        // Re-add route line
-        if (map.getSource('route-line')) {
-          map.addSource('route-line', {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: shapeOutbound.map(coord => [coord[1], coord[0]])
-              }
-            }
-          });
-        }
-
-        map.addLayer({
-          id: 'route-line',
-          type: 'line',
-          source: 'route-line',
-          paint: {
-            'line-color': '#0071CE',
-            'line-width': 4,
-            'line-opacity': 0.7
-          }
-        });
-
-        // Re-add stops
-        const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-        const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
-
-        stops.forEach(stop => {
-          let highlightedTimes = [];
-          let foundNext = false;
-          stop.times.forEach(timeStr => {
-            let cleanTime = timeStr.trim();
-            let [h, m] = cleanTime.split(":");
-            let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-            if (schedMins < nowMins && nowMins - schedMins > 720) {
-              schedMins += 1440;
-            }
-            if (!foundNext && schedMins >= nowMins) {
-              highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
-              foundNext = true;
-            } else {
-              highlightedTimes.push(cleanTime);
-            }
-          });
-
-          const stopElement = document.createElement('div');
-          stopElement.style.width = '12px';
-          stopElement.style.height = '12px';
-          stopElement.style.backgroundColor = '#4dd0e1';
-          stopElement.style.borderRadius = '50%';
-          stopElement.style.border = '2px solid #4dd0e1';
-          stopElement.style.opacity = '0.9';
-
-          const stopMarker = new maplibregl.Marker({
-            element: stopElement
-          });
-          stopMarker.setLngLat([stop.lon, stop.lat]);
-          
-          const popupContent = document.createElement('div');
-          popupContent.innerHTML = `
-            <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-              <strong style='color:#4dd0e1;'>${stop.name}</strong>
-              <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
-              ${highlightedTimes.join("<br>") || 'No scheduled times'}
-            </div>
-          `;
-          
-          const popup = new maplibregl.Popup().setDOMContent(popupContent);
-          stopMarker.setPopup(popup);
-          stopMarker.addTo(map);
-        });
-      });
-    }
+    // Theme toggle functionality - DISABLED FOR FREE VERSION
+    // let isNightMode = false;
+    // function toggleTheme() {
+    //   // Night mode functionality removed for free version
+    //   // Available in premium version
+    // }
     if (document.referrer === "" && performance.navigation.type === 0) {
       window.location.href = "/index.html";
     }
@@ -461,7 +382,7 @@
 
     // Initialize MapLibre GL JS map with vector tiles
     const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
-    const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
+    // const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json'; // DISABLED FOR FREE VERSION
     
     const map = new maplibregl.Map({
       container: 'map',
@@ -1937,10 +1858,10 @@ const stops = [
         }
       });
 
-      // Fit map to route bounds
+      // Fit map to route bounds (but maintain minimum zoom level)
       const bounds = new maplibregl.LngLatBounds();
       shapeOutbound.forEach(coord => bounds.extend([coord[1], coord[0]]));
-      map.fitBounds(bounds, { padding: 20 });
+      map.fitBounds(bounds, { padding: 20, maxZoom: 12 });
 
       // Add stops
       const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
