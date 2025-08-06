@@ -89,6 +89,7 @@
     border-bottom: 3px solid #4dd0e1;
     padding: 1rem;
     text-align: center;
+    margin-top: 40px; /* Account for beta banner */
   }
 
   header img {
@@ -247,45 +248,39 @@
   }
 }
 
-/* Beta Modal Styles */
-.beta-modal {
+/* Beta Banner Styles */
+.beta-banner {
   position: fixed;
-  z-index: 10000;
-  left: 0;
   top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.6);
+  left: 0;
+  right: 0;
+  background-color: #111;
+  color: #bbb;
+  border-bottom: 2px solid #4dd0e1;
+  padding: 8px 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
 }
 
-.beta-modal-content {
-  background-color: #111;
-  color: #bbb;
-  margin: auto;
-  padding: 1.5rem;
-  border: 1px dashed #444;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  text-align: center;
-  position: relative;
-  font-size: 0.9rem;
-  line-height: 1.4;
+.beta-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .beta-close {
   color: #aaa;
-  float: right;
-  font-size: 28px;
+  font-size: 18px;
   font-weight: bold;
-  position: absolute;
-  top: 10px;
-  right: 15px;
   cursor: pointer;
   transition: color 0.2s;
+  margin-left: auto;
 }
 
 .beta-close:hover,
@@ -308,12 +303,12 @@
   </div>
 </div>
 
-  <!-- Beta Modal -->
-  <div id="betaModal" class="beta-modal" style="display: block;">
-    <div class="beta-modal-content">
-      <span class="beta-close" onclick="closeBetaModal()">&times;</span>
-      <div style="font-weight: bold; font-size: 1.05rem; margin-bottom: 0.5rem;">⚠️ Beta Test</div>
-      <div>This program is a beta test, please report any issues.</div>
+  <!-- Beta Banner -->
+  <div id="betaBanner" class="beta-banner" style="display: flex;">
+    <div class="beta-banner-content">
+      <span style="font-weight: bold;">⚠️ Beta Test</span>
+      <span>This program is a beta test, please report any issues.</span>
+      <span class="beta-close" onclick="closeBetaBanner()">&times;</span>
     </div>
   </div>
 
@@ -345,17 +340,9 @@
   </div>
 
   <script>
-    // Beta Modal Functions
-    function closeBetaModal() {
-      document.getElementById('betaModal').style.display = 'none';
-    }
-
-    // Close modal if clicked outside
-    window.onclick = function(event) {
-      const modal = document.getElementById('betaModal');
-      if (event.target === modal) {
-        modal.style.display = 'none';
-      }
+    // Beta Banner Functions
+    function closeBetaBanner() {
+      document.getElementById('betaBanner').style.display = 'none';
     }
 
     // Theme toggle functionality - DISABLED FOR FREE VERSION
@@ -2289,9 +2276,9 @@ const stops = [
   { stop_id: "8360", name: "Gresham Central TC MAX Station", lat: 45.502705, lon: -122.427348, times: ["4:39 AM", "5:12 AM", "5:33 AM", "5:56 AM", "6:11 AM", "6:26 AM", "6:42 AM", "6:56 AM"] },
   { stop_id: "8361", name: "Gresham City Hall MAX Station", lat: 45.505981, lon: -122.436285, times: ["4:41 AM", "5:13 AM", "5:34 AM", "5:58 AM", "6:13 AM", "6:28 AM", "6:44 AM", "6:58 AM"] },
   { stop_id: "13449", name: "Civic Drive MAX Station", lat: 45.508293, lon: -122.441843, times: ["4:42 AM", "5:15 AM", "5:36 AM", "5:59 AM", "6:14 AM", "6:29 AM", "6:45 AM", "6:59 AM"] },
-  { stop_id: "8371", name: "NE 82nd Ave MAX Station", lat: 45.533968, lon: -122.57975, times: ["3:23 AM", "3:58 AM", "4:03 AM", "4:27 AM", "4:44 AM", "5:06 AM", "5:25 AM", "5:39 AM"] },
-  { stop_id: "8372", name: "NE 60th Ave MAX Station", lat: 45.528491, lon: -122.603342, times: ["3:28 AM", "4:01 AM", "4:06 AM", "4:30 AM", "4:47 AM", "5:09 AM", "5:28 AM", "5:42 AM"] },
-  { stop_id: "8373", name: "Hollywood/NE 42nd Ave MAX Station", lat: 45.532957, lon: -122.621367, times: ["3:32 AM", "4:03 AM", "4:08 AM", "4:32 AM", "4:49 AM", "5:11 AM", "5:31 AM", "5:44 AM"] },
+  { stop_id: "8371", name: "NE 82nd Ave MAX Station", lat: 45.533968, lon: -122.57975, times: ["3:58 AM", "4:03 AM", "4:27 AM", "4:44 AM", "5:06 AM", "5:25 AM", "5:39 AM", "5:51 AM"] },
+  { stop_id: "8372", name: "NE 60th Ave MAX Station", lat: 45.528491, lon: -122.603342, times: ["4:01 AM", "4:06 AM", "4:30 AM", "4:47 AM", "5:09 AM", "5:28 AM", "5:42 AM", "5:54 AM"] },
+  { stop_id: "8373", name: "Hollywood/NE 42nd Ave MAX Station", lat: 45.532957, lon: -122.621367, times: ["4:03 AM", "4:08 AM", "4:32 AM", "4:49 AM", "5:11 AM", "5:31 AM", "5:44 AM", "5:56 AM"] },
   { stop_id: "8374", name: "Lloyd Center/NE 11th Ave MAX Station", lat: 45.530146, lon: -122.654335, times: ["3:38 AM", "4:07 AM", "4:12 AM", "4:36 AM", "4:53 AM", "5:15 AM", "5:34 AM", "5:48 AM"] },
   { stop_id: "8375", name: "NE 7th Ave MAX Station", lat: 45.53015, lon: -122.658277, times: ["3:39 AM", "4:08 AM", "4:13 AM", "4:37 AM", "4:54 AM", "5:16 AM", "5:36 AM", "5:49 AM"] },
   { stop_id: "8376", name: "Convention Center MAX Station", lat: 45.530138, lon: -122.66254, times: ["3:41 AM", "4:10 AM", "4:15 AM", "4:39 AM", "4:56 AM", "5:18 AM", "5:37 AM", "5:51 AM"] },
