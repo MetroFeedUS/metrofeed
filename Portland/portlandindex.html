@@ -7,202 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <!-- Language System -->
-  <script>
-    // Translation system
-    const translations = {
-      en: {
-        // Search and UI
-        "search_placeholder": "Search routes...",
-        "find_me": "Find Me",
-        "menu": "Menu",
-        "account": "Account",
-        "theme": "Theme",
-        "ai_chat": "AI Chat",
-        
-        // Beta banner
-        "beta_test": "Beta Test",
-        "beta_message": "This program is a beta test, please report any issues.",
-        
-        // Favorites
-        "favorites": "Favorites",
-        "no_favorites": "No favorites yet",
-        
-        // Footer
-        "terms": "Terms of Use",
-        "contact": "Contact Us", 
-        "report": "Report a Problem",
-        "dmca": "DMCA",
-        "privacy": "Privacy Policy",
-        
-        // Popups and messages
-        "live_bus": "Live Bus",
-        "route": "Route",
-        "direction": "Direction",
-        "speed": "Speed",
-        "block": "Block",
-        "mph": "mph",
-        
-        // OTP related
-        "from": "From",
-        "to": "To",
-        "departure": "Departure",
-        "arrival": "Arrival",
-        "duration": "Duration",
-        "walking": "Walking",
-        "transit": "Transit",
-        
-        // Error messages
-        "error_loading": "Error loading data",
-        "no_routes_found": "No routes found",
-        "location_error": "Location error",
-        
-        // Data attribution
-        "data_courtesy": "Data courtesy of TriMet.",
-        "disclaimer": "This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit",
-        
-        // Search placeholders
-        "start_location": "Start or Current Location",
-        "destination": "Destination",
-        "language": "EN",
-        
-        // Modal buttons
-        "close": "Close",
-        "cancel": "Cancel",
-        "plan_trip": "Plan Trip",
-        "trip_options": "Trip Options",
-        "finding_route": "Finding closest route..."
-      },
-      es: {
-        // Search and UI
-        "search_placeholder": "Buscar rutas...",
-        "find_me": "Encontrar",
-        "menu": "Menú",
-        "account": "Cuenta",
-        "theme": "Tema",
-        "ai_chat": "Chat IA",
-        
-        // Beta banner
-        "beta_test": "Prueba Beta",
-        "beta_message": "Este programa es una prueba beta, por favor reporte cualquier problema.",
-        
-        // Favorites
-        "favorites": "Favoritos",
-        "no_favorites": "Sin favoritos aún",
-        
-        // Footer
-        "terms": "Términos de Uso",
-        "contact": "Contáctenos",
-        "report": "Reportar Problema",
-        "dmca": "DMCA",
-        "privacy": "Política de Privacidad",
-        
-        // Popups and messages
-        "live_bus": "Autobús en Vivo",
-        "route": "Ruta",
-        "direction": "Dirección",
-        "speed": "Velocidad",
-        "block": "Bloque",
-        "mph": "mph",
-        
-        // OTP related
-        "from": "Desde",
-        "to": "Hacia",
-        "departure": "Salida",
-        "arrival": "Llegada",
-        "duration": "Duración",
-        "walking": "Caminando",
-        "transit": "Tránsito",
-        
-        // Error messages
-        "error_loading": "Error al cargar datos",
-        "no_routes_found": "No se encontraron rutas",
-        "location_error": "Error de ubicación",
-        
-        // Data attribution
-        "data_courtesy": "Datos cortesía de TriMet.",
-        "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite",
-        
-        // Search placeholders
-        "start_location": "Inicio o Ubicación Actual",
-        "destination": "Destino",
-        "language": "ES",
-        
-        // Modal buttons
-        "close": "Cerrar",
-        "cancel": "Cancelar",
-        "plan_trip": "Planificar Viaje",
-        "trip_options": "Opciones de Viaje",
-        "finding_route": "Buscando ruta más cercana..."
-      }
-    };
-
-    // Language management
-    let currentLanguage = 'en';
-
-    function getCurrentLanguage() {
-      return localStorage.getItem('language') || navigator.language.split('-')[0] || 'en';
-    }
-
-    function setLanguage(lang) {
-      if (translations[lang]) {
-        currentLanguage = lang;
-        localStorage.setItem('language', lang);
-        updatePageLanguage();
-      }
-    }
-
-    function updatePageLanguage() {
-      // Update regular text elements
-      document.querySelectorAll('[data-translate]').forEach(el => {
-        const key = el.getAttribute('data-translate');
-        if (translations[currentLanguage] && translations[currentLanguage][key]) {
-          el.textContent = translations[currentLanguage][key];
-        } else if (translations.en[key]) {
-          el.textContent = translations.en[key]; // Fallback to English
-        }
-      });
-      
-      // Update placeholders
-      document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-translate-placeholder');
-        if (translations[currentLanguage] && translations[currentLanguage][key]) {
-          el.placeholder = translations[currentLanguage][key];
-        } else if (translations.en[key]) {
-          el.placeholder = translations.en[key]; // Fallback to English
-        }
-      });
-      
-      // Update language button text
-      const langBtn = document.querySelector('#languageBtn span');
-      if (langBtn) {
-        langBtn.textContent = currentLanguage.toUpperCase();
-      }
-      
-      // Update HTML lang attribute
-      document.documentElement.lang = currentLanguage;
-    }
-
-    function toggleLanguage() {
-      const newLang = currentLanguage === 'en' ? 'es' : 'en';
-      setLanguage(newLang);
-    }
-
-    // Initialize language on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      currentLanguage = getCurrentLanguage();
-      updatePageLanguage();
-    });
-
-    // Function to translate dynamic content (for JavaScript-created elements)
-    function translateText(key) {
-      if (translations[currentLanguage] && translations[currentLanguage][key]) {
-        return translations[currentLanguage][key];
-      } else if (translations.en[key]) {
-        return translations.en[key]; // Fallback to English
-      }
-      return key; // Return key if no translation found
-    }
-  </script>
+  <script src="translations.js"></script>
   <style>
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
     html, body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
@@ -894,9 +699,9 @@
 <div id="installPrompt" style="display:none;">
   <strong>📲 Add MetroFeed Portland to your home screen</strong><br>
   <small>Use MetroFeed like an app for faster access!</small><br><br>
-  <a href="AndroidInstructions.html"><button>Android Instructions</button></a>
-  <a href="AppleInstructions.html"><button>Apple Instructions</button></a>
-  <button onclick="document.getElementById('installPrompt').style.display='none'">Later</button>
+          <a href="AndroidInstructions.html"><button data-translate="android_instructions">Android Instructions</button></a>
+        <a href="AppleInstructions.html"><button data-translate="apple_instructions">Apple Instructions</button></a>
+        <button onclick="document.getElementById('installPrompt').style.display='none'" data-translate="later">Later</button>
   <button onclick="localStorage.setItem('neverShowInstallPrompt', 'true'); document.getElementById('installPrompt').style.display='none'">Done / Don't ask again</button>
 </div>
 
@@ -959,8 +764,8 @@
     </button>
   </div>
   <div class="otp-btn-row">
-            <button id="goBtn" style="width: 40px; height: 20px; background-color: #4CAF50; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);">Go</button>
-        <button id="clearBtn" style="width: 45px; height: 20px; background-color: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3); padding: 0 4px;">Clear</button>
+            <button id="goBtn" style="width: 40px; height: 20px; background-color: #4CAF50; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go">Go</button>
+        <button id="clearBtn" style="width: 45px; height: 20px; background-color: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3); padding: 0 4px;" data-translate="clear">Clear</button>
         <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s ease;" title="Find my location and closest route" data-translate="find_me">Find Me</button>
   </div>
 </div>
@@ -979,9 +784,9 @@
 <!-- -- MINIMIZED ITINERARY BAR -- -->
 <div id="minimizedItinerary" class="minimized-itinerary" onclick="restoreItineraryModal()">
   <div class="itinerary-info">
-    <div class="itinerary-title">Itinerary</div>
-    <div class="itinerary-details">Click to view details</div>
-    <button class="restore-btn" onclick="event.stopPropagation(); restoreItineraryModal()">Restore</button>
+    <div class="itinerary-title" data-translate="itinerary">Itinerary</div>
+    <div class="itinerary-details" data-translate="itinerary_details">Click to view details</div>
+    <button class="restore-btn" onclick="event.stopPropagation(); restoreItineraryModal()" data-translate="restore">Restore</button>
   </div>
 </div>
 
@@ -1025,7 +830,7 @@
         <label style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Departure Time:</label>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
           <input type="radio" id="departNow" name="departureType" value="now" checked style="margin: 0;">
-          <label for="departNow" style="margin: 0; color: #fff;">Depart Now</label>
+          <label for="departNow" style="margin: 0; color: #fff;" data-translate="depart_now">Depart Now</label>
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
           <input type="radio" id="departTime" name="departureType" value="time" style="margin: 0;">
@@ -1066,18 +871,18 @@
 <!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
 <div class="mf-overlay" id="signInModal" style="display:none;">
   <div class="mf-modal">
-    <h2>You're not logged in or don't have an account</h2>
-    <p>Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
+    <h2 data-translate="sign_in_prompt">You're not logged in or don't have an account</h2>
+    <p data-translate="sign_in_prompt">Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
     <div class="mf-actions" style="display: flex; gap: 0.65rem; margin-bottom: 1.1rem;">
-      <button class="mf-btn" onclick="location.href='signin.html'">Sign In</button>
-      <button class="mf-btn" onclick="location.href='signup.html'">Sign Up</button>
+      <button class="mf-btn" onclick="location.href='signin.html'" data-translate="sign_in">Sign In</button>
+      <button class="mf-btn" onclick="location.href='signup.html'" data-translate="sign_up">Sign Up</button>
     </div>
-    <button class="mf-btn mf-free-btn" id="freeBtn" onclick="localStorage.setItem('mf_free','true');hideSignInModal();location.href='https://metrofeedus.com/portland/portlandhome'">Use Free Version</button>
+    <button class="mf-btn mf-free-btn" id="freeBtn" onclick="localStorage.setItem('mf_free','true');hideSignInModal();location.href='https://metrofeedus.com/portland/portlandhome'" data-translate="use_free_version">Use Free Version</button>
     <div class="mf-premium" style="margin-top:1.1rem;">
-      Try <span>MetroFeed Premium</span> <b>FREE for 24hrs</b><br>
-      <small style="font-weight:normal;color:#cfdfff">NO email needed</small>
+      <span data-translate="try_premium">Try MetroFeed Premium FREE for 24hrs</span><br>
+      <small style="font-weight:normal;color:#cfdfff" data-translate="no_email_needed">NO email needed</small>
     </div>
-    <button class="trial-btn" id="startTrialBtn">Start Free Trial</button>
+    <button class="trial-btn" id="startTrialBtn" data-translate="start_free_trial">Start Free Trial</button>
     <span class="trial-timer" id="trialTimer"></span>
   </div>
 </div>
@@ -1821,7 +1626,7 @@
             ${
               highlightedTimes.map(t =>
                 `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-              ).join('') || '<div>No scheduled times</div>'
+              ).join('') || '<div>' + translateText('no_scheduled_times') + '</div>'
             }
           </div>
       `;
@@ -2186,7 +1991,7 @@
                 ${
                   highlightedTimes.map(t =>
                     `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                  ).join('') || '<div>No scheduled times</div>'
+                  ).join('') || '<div>' + translateText('no_scheduled_times') + '</div>'
                 }
               </div>
           `;
@@ -2595,13 +2400,13 @@
                 <div style='text-align:center; margin-bottom:8px;'>
                   <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
                 </div>
-                <div style='margin-bottom:6px;'><strong>Route:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
-                <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
-                <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
-                <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:6px;'><strong>${translateText('route')}:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
+                <div style='margin-bottom:6px;'><strong>${translateText('direction')}:</strong> ${bus.direction}</div>
+                <div style='margin-bottom:6px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
+                <div style='margin-bottom:6px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
                 <div style='color:#4dd0e1; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                 <div style='margin-top:10px; text-align:center;'>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>View Route Details</a>
+                  <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>${translateText('view_route_details')}</a>
                 </div>
               </div>
             `;
@@ -2657,12 +2462,12 @@
                 <div style='text-align:center; margin-bottom:6px;'>
                   <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${bus.vehicleID}</div>
                 </div>
-                <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNumber}</div>
-                <div style='margin-bottom:4px;'><strong>Direction:</strong> ${direction}</div>
-                <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
-                <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:4px;'><strong>${translateText('route')}:</strong> ${routeNumber}</div>
+                <div style='margin-bottom:4px;'><strong>${translateText('direction')}:</strong> ${direction}</div>
+                <div style='margin-bottom:4px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
+                <div style='margin-bottom:4px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
                 <div style='margin-top:8px; text-align:center;'>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>View Route Details</a>
+                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>${translateText('view_route_details')}</a>
                 </div>
               </div>
             `;
