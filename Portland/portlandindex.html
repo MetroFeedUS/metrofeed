@@ -5,6 +5,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed Portland Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Language System -->
+  <script>
+    // Translation system
+    const translations = {
+      en: {
+        // Search and UI
+        "search_placeholder": "Search routes...",
+        "find_me": "Find Me",
+        "menu": "Menu",
+        "account": "Account",
+        "theme": "Theme",
+        "ai_chat": "AI Chat",
+        
+        // Beta banner
+        "beta_test": "Beta Test",
+        "beta_message": "This program is a beta test, please report any issues.",
+        
+        // Favorites
+        "favorites": "Favorites",
+        "no_favorites": "No favorites yet",
+        
+        // Footer
+        "terms": "Terms of Use",
+        "contact": "Contact Us", 
+        "report": "Report a Problem",
+        "dmca": "DMCA",
+        "privacy": "Privacy Policy",
+        
+        // Popups and messages
+        "live_bus": "Live Bus",
+        "route": "Route",
+        "direction": "Direction",
+        "speed": "Speed",
+        "block": "Block",
+        "mph": "mph",
+        
+        // OTP related
+        "from": "From",
+        "to": "To",
+        "departure": "Departure",
+        "arrival": "Arrival",
+        "duration": "Duration",
+        "walking": "Walking",
+        "transit": "Transit",
+        
+        // Error messages
+        "error_loading": "Error loading data",
+        "no_routes_found": "No routes found",
+        "location_error": "Location error",
+        
+        // Data attribution
+        "data_courtesy": "Data courtesy of TriMet.",
+        "disclaimer": "This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit",
+        
+        // Search placeholders
+        "start_location": "Start or Current Location",
+        "destination": "Destination",
+        "language": "EN",
+        
+        // Modal buttons
+        "close": "Close",
+        "cancel": "Cancel",
+        "plan_trip": "Plan Trip",
+        "trip_options": "Trip Options",
+        "finding_route": "Finding closest route..."
+      },
+      es: {
+        // Search and UI
+        "search_placeholder": "Buscar rutas...",
+        "find_me": "Encontrar",
+        "menu": "Menú",
+        "account": "Cuenta",
+        "theme": "Tema",
+        "ai_chat": "Chat IA",
+        
+        // Beta banner
+        "beta_test": "Prueba Beta",
+        "beta_message": "Este programa es una prueba beta, por favor reporte cualquier problema.",
+        
+        // Favorites
+        "favorites": "Favoritos",
+        "no_favorites": "Sin favoritos aún",
+        
+        // Footer
+        "terms": "Términos de Uso",
+        "contact": "Contáctenos",
+        "report": "Reportar Problema",
+        "dmca": "DMCA",
+        "privacy": "Política de Privacidad",
+        
+        // Popups and messages
+        "live_bus": "Autobús en Vivo",
+        "route": "Ruta",
+        "direction": "Dirección",
+        "speed": "Velocidad",
+        "block": "Bloque",
+        "mph": "mph",
+        
+        // OTP related
+        "from": "Desde",
+        "to": "Hacia",
+        "departure": "Salida",
+        "arrival": "Llegada",
+        "duration": "Duración",
+        "walking": "Caminando",
+        "transit": "Tránsito",
+        
+        // Error messages
+        "error_loading": "Error al cargar datos",
+        "no_routes_found": "No se encontraron rutas",
+        "location_error": "Error de ubicación",
+        
+        // Data attribution
+        "data_courtesy": "Datos cortesía de TriMet.",
+        "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite",
+        
+        // Search placeholders
+        "start_location": "Inicio o Ubicación Actual",
+        "destination": "Destino",
+        "language": "ES",
+        
+        // Modal buttons
+        "close": "Cerrar",
+        "cancel": "Cancelar",
+        "plan_trip": "Planificar Viaje",
+        "trip_options": "Opciones de Viaje",
+        "finding_route": "Buscando ruta más cercana..."
+      }
+    };
+
+    // Language management
+    let currentLanguage = 'en';
+
+    function getCurrentLanguage() {
+      return localStorage.getItem('language') || navigator.language.split('-')[0] || 'en';
+    }
+
+    function setLanguage(lang) {
+      if (translations[lang]) {
+        currentLanguage = lang;
+        localStorage.setItem('language', lang);
+        updatePageLanguage();
+      }
+    }
+
+    function updatePageLanguage() {
+      // Update regular text elements
+      document.querySelectorAll('[data-translate]').forEach(el => {
+        const key = el.getAttribute('data-translate');
+        if (translations[currentLanguage] && translations[currentLanguage][key]) {
+          el.textContent = translations[currentLanguage][key];
+        } else if (translations.en[key]) {
+          el.textContent = translations.en[key]; // Fallback to English
+        }
+      });
+      
+      // Update placeholders
+      document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-translate-placeholder');
+        if (translations[currentLanguage] && translations[currentLanguage][key]) {
+          el.placeholder = translations[currentLanguage][key];
+        } else if (translations.en[key]) {
+          el.placeholder = translations.en[key]; // Fallback to English
+        }
+      });
+      
+      // Update language button text
+      const langBtn = document.querySelector('#languageBtn span');
+      if (langBtn) {
+        langBtn.textContent = currentLanguage.toUpperCase();
+      }
+      
+      // Update HTML lang attribute
+      document.documentElement.lang = currentLanguage;
+    }
+
+    function toggleLanguage() {
+      const newLang = currentLanguage === 'en' ? 'es' : 'en';
+      setLanguage(newLang);
+    }
+
+    // Initialize language on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      currentLanguage = getCurrentLanguage();
+      updatePageLanguage();
+    });
+
+    // Function to translate dynamic content (for JavaScript-created elements)
+    function translateText(key) {
+      if (translations[currentLanguage] && translations[currentLanguage][key]) {
+        return translations[currentLanguage][key];
+      } else if (translations.en[key]) {
+        return translations.en[key]; // Fallback to English
+      }
+      return key; // Return key if no translation found
+    }
+  </script>
   <style>
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
     html, body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
@@ -18,6 +216,14 @@
     #accountBtn { top: 10px; left: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
     #aiChatBtn { top: 60px; right: 10px; }
+    #languageBtn { top: 110px; right: 10px; }
+    #languageBtn span { 
+      font-size: 0.8rem; 
+      font-weight: bold; 
+      color: #000; 
+      min-width: 20px; 
+      text-align: center; 
+    }
     #logoBtn { 
       position: absolute; 
       bottom: 50px; 
@@ -704,6 +910,9 @@
 <button id="aiChatBtn" class="side-buttons">
   <a href="tickets.html"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
 </button>
+<button id="languageBtn" class="side-buttons" onclick="toggleLanguage()" title="Toggle Language / Cambiar Idioma">
+  <span data-translate="language">EN</span>
+</button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <div id="logoBtn">
   <img src="Sitelogo.png" alt="MetroFeed Logo" />
@@ -731,7 +940,7 @@
 <div class="search-bar">
   <div class="input-wrapper">
     <img class="icon-placeholder" src="009-pin-1.svg" alt="Start" />
-    <input id="startInput" type="text" placeholder="Start or Current Location" />
+    <input id="startInput" type="text" placeholder="Start or Current Location" data-translate-placeholder="start_location" />
     <button id="startMapBtn" class="map-select-btn" title="Click on map to select start location">
       <svg width="16" height="16" viewBox="0 0 16 16">
         <circle cx="8" cy="8" r="6" fill="none" stroke="#4dd0e1" stroke-width="1.5"/>
@@ -741,7 +950,7 @@
   </div>
   <div class="input-wrapper">
     <img class="icon-placeholder" src="008-pin.svg" alt="Destination" />
-    <input id="endInput" type="text" placeholder="Destination" />
+    <input id="endInput" type="text" placeholder="Destination" data-translate-placeholder="destination" />
     <button id="endMapBtn" class="map-select-btn" title="Click on map to select destination">
       <svg width="16" height="16" viewBox="0 0 16 16">
         <circle cx="8" cy="8" r="6" fill="none" stroke="#4dd0e1" stroke-width="1.5"/>
@@ -752,13 +961,13 @@
   <div class="otp-btn-row">
             <button id="goBtn" style="width: 40px; height: 20px; background-color: #4CAF50; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);">Go</button>
         <button id="clearBtn" style="width: 45px; height: 20px; background-color: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3); padding: 0 4px;">Clear</button>
-        <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s ease;" title="Find my location and closest route">Find Me</button>
+        <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s ease;" title="Find my location and closest route" data-translate="find_me">Find Me</button>
   </div>
 </div>
 
 <!-- -- FAVORITES -- -->
 <div class="favorites-wrapper">
-  <span>Favorite Routes</span>
+  <span data-translate="favorites">Favorite Routes</span>
   <div class="favorites-container">
     <div id="fav1" class="favorite-btn"></div>
     <div id="fav2" class="favorite-btn"></div>
@@ -778,28 +987,28 @@
 
 <!-- -- FOOTER -- -->
 <footer class="site-footer">
-  <a href="terms.html">Terms of Use</a>
-  <a href="contact.html">Contact Us</a>
-  <a href="report.html">Report a Problem</a>
-  <a href="dmca.html">DMCA</a>
-  <a href="privacy.html">Privacy</a>
+  <a href="terms.html" data-translate="terms">Terms of Use</a>
+  <a href="contact.html" data-translate="contact">Contact Us</a>
+  <a href="report.html" data-translate="report">Report a Problem</a>
+  <a href="dmca.html" data-translate="dmca">DMCA</a>
+  <a href="privacy.html" data-translate="privacy">Privacy</a>
 </footer>
 
 <!-- -- OTP TRIP PLANNING MODAL -- -->
 <div id="otpModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-    <h2>🚌 Trip Options</h2>
+    <h2>🚌 <span data-translate="trip_options">Trip Options</span></h2>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
       <!-- Trip itineraries will be rendered here -->
     </div>
-    <button class="mf-btn" onclick="hideOtpModal()" style="margin-top: 1rem;">Close</button>
+    <button class="mf-btn" onclick="hideOtpModal()" style="margin-top: 1rem;" data-translate="close">Close</button>
   </div>
 </div>
 
 <!-- -- OTP OPTIONS MODAL -- -->
 <div id="otpOptionsModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 400px;">
-    <h2>🚌 Trip Options</h2>
+    <h2>🚌 <span data-translate="trip_options">Trip Options</span></h2>
     <div style="text-align: left; margin-top: 1rem;">
       <div style="margin-bottom: 1rem;">
         <label style="display: block; margin-bottom: 0.5rem; color: #4dd0e1; font-weight: bold;">Max Walk Distance:</label>
@@ -848,8 +1057,8 @@
       </div>
     </div>
     <div class="mf-actions" style="margin-top: 1.5rem;">
-      <button class="mf-btn" onclick="hideOtpOptionsModal()">Cancel</button>
-      <button class="mf-btn" onclick="planTripWithOptions()" style="background: #4CAF50; border-color: #4CAF50; color: #000; font-weight: bold;">Plan Trip</button>
+      <button class="mf-btn" onclick="hideOtpOptionsModal()" data-translate="cancel">Cancel</button>
+      <button class="mf-btn" onclick="planTripWithOptions()" style="background: #4CAF50; border-color: #4CAF50; color: #000; font-weight: bold;" data-translate="plan_trip">Plan Trip</button>
     </div>
   </div>
 </div>
