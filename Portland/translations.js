@@ -11,11 +11,7 @@ function toggleLanguage() {
   console.log('toggleLanguage called, current language:', currentLanguage);
   const newLang = currentLanguage === 'en' ? 'es' : 'en';
   console.log('switching to:', newLang);
-  if (window.setLanguage) {
-    window.setLanguage(newLang);
-  } else {
-    console.error('setLanguage function not available yet');
-  }
+  setLanguage(newLang);
 }
 
 // Make it globally available immediately
