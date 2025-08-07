@@ -450,7 +450,7 @@ function selectLanguage(lang) {
   }
 }
 
-// Make all functions globally available
+// Make all functions globally available immediately
 window.setLanguage = setLanguage;
 window.updatePageLanguage = updatePageLanguage;
 window.translateText = translateText;
@@ -459,6 +459,23 @@ window.toggleLanguage = toggleLanguage;
 window.toggleLanguageDropdown = toggleLanguageDropdown;
 window.closeLanguageDropdown = closeLanguageDropdown;
 window.selectLanguage = selectLanguage;
+
+// Also make them available as global functions for onclick handlers
+window.toggleLanguageDropdown = function() {
+  console.log('toggleLanguageDropdown called from global scope');
+  const dropdown = document.getElementById('languageDropdown');
+  if (dropdown) {
+    const isVisible = dropdown.style.display === 'flex';
+    dropdown.style.display = isVisible ? 'none' : 'flex';
+    
+    // Close dropdown when clicking outside
+    if (!isVisible) {
+      setTimeout(() => {
+        document.addEventListener('click', closeLanguageDropdown);
+      }, 100);
+    }
+  }
+};
 
 // Initialize language system
 document.addEventListener('DOMContentLoaded', function() {

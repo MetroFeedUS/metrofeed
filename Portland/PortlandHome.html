@@ -355,7 +355,13 @@
     };
   }
   
-
+  // Fallback for toggleLanguageDropdown if not available yet
+  if (typeof window.toggleLanguageDropdown === 'undefined') {
+    window.toggleLanguageDropdown = function() {
+      console.warn('toggleLanguageDropdown not ready yet');
+      alert('Language system not loaded yet. Please refresh the page.');
+    };
+  }
 </script>
 </head>
 <body>
