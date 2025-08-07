@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Portland Alerts - MetroFeed</title>
+  <title data-translate="alertsTitle">Portland Alerts - MetroFeed</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="apple-touch-icon" href="metrofeedsimplelogo.png">
   <link rel="icon" type="image/png" sizes="512x512" href="metrofeedsimplelogo.png">
@@ -157,26 +157,33 @@
   </header>
 
   <div class="main-content">
-    <h2>Portland Area Alerts</h2>
+    <h2 data-translate="portlandAreaAlerts">Portland Area Alerts</h2>
     <div class="alerts-feed" id="alerts-feed">
-      <span>Loading TriMet alerts…</span>
+      <span data-translate="loadingAlerts">Loading TriMet alerts…</span>
     </div>
   </div>
 
   <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html" data-translate="terms">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html" data-translate="contact">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html" data-translate="report">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html" data-translate="dmca">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html" data-translate="privacy">Privacy Policy</a>
   </footer>
 
+  <script src="../translations.js"></script>
+  <script>
+    // Initialize language system
+    document.addEventListener('DOMContentLoaded', function() {
+      setLanguage(getCurrentLanguage());
+    });
+  </script>
   <script>
     // LIVE TriMet Alerts (XML endpoint)
     const apiKey = "2C4447D4A42083BCD84DE3B8E";
     const apiUrl = `https://developer.trimet.org/ws/V1/FeedSpecAlerts/alerts.xml?appID=${apiKey}`;
     const alertsFeed = document.getElementById('alerts-feed');
-    alertsFeed.innerHTML = "<span>Loading TriMet alerts…</span>";
+    alertsFeed.innerHTML = "<span data-translate='loadingAlerts'>Loading TriMet alerts…</span>";
 
     fetch(apiUrl)
       .then(response => response.text())
@@ -186,7 +193,7 @@
         if (alertNodes.length > 0) {
           alertsFeed.innerHTML = "";
           alertNodes.forEach(alert => {
-            const header = alert.querySelector("header") ? alert.querySelector("header").textContent : "TriMet Alert";
+            const header = alert.querySelector("header") ? alert.querySelector("header").textContent : translateText('trimetAlert');
             const desc = alert.querySelector("description") ? alert.querySelector("description").textContent : "";
             const issued = alert.querySelector("published") ? new Date(alert.querySelector("published").textContent).toLocaleString() : "";
             const link = alert.querySelector("infoURL") ? alert.querySelector("infoURL").textContent : "https://trimet.org/alerts/";
@@ -196,18 +203,18 @@
               <div class="alert-title">${header}</div>
               <span class="alert-time">${issued}</span>
               <div class="alert-desc">${desc.slice(0,180)}${desc.length>180?'…':''}</div>
-              <a class="alert-link" href="${link}" target="_blank">Full Alert →</a>
+              <a class="alert-link" href="${link}" target="_blank">${translateText('fullAlert')}</a>
             `;
             alertsFeed.appendChild(alertCard);
           });
           localStorage.setItem('hasActiveAlerts', 'true');
         } else {
-          alertsFeed.innerHTML = "<span>No active TriMet alerts.</span>";
+          alertsFeed.innerHTML = "<span data-translate='noActiveAlerts'>No active TriMet alerts.</span>";
           localStorage.setItem('hasActiveAlerts', 'false');
         }
       })
       .catch(() => {
-        alertsFeed.innerHTML = "<span style='color:#ffa500;'>Could not load TriMet alerts. Try again later.</span>";
+        alertsFeed.innerHTML = "<span style='color:#ffa500;' data-translate='couldNotLoadAlerts'>Could not load TriMet alerts. Try again later.</span>";
         localStorage.setItem('hasActiveAlerts', 'false');
       });
   </script>

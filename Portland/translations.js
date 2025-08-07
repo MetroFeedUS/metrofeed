@@ -121,7 +121,44 @@ const translations = {
     "searchRoutes": "Search for a route...",
     
     // RailRoutes specific
-    "portlandRailRoutes": "Portland, OR - Rail Routes"
+    "portlandRailRoutes": "Portland, OR - Rail Routes",
+    
+    // Weather page specific
+    "weatherTitle": "Portland, OR Weather - MetroFeed",
+    "weatherDisclaimer": "Disclaimer: MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the",
+    "nationalWeatherService": "National Weather Service (NWS)",
+    "weatherGov": "weather.gov",
+    "weatherBetaMessage": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
+    "weatherAlerts": "⚠️ Weather Alerts (Tap to View)",
+    "checkingAlerts": "Checking for alerts...",
+    "noActiveAlerts": "✅ No active alerts at this time.",
+    "unableToLoadAlerts": "⚠️ Unable to load alert data.",
+    "jumpToForecast": "Jump to Forecast",
+    "tornadoWarning": "Tornado Warning",
+    "severeThunderstormWarning": "Severe Thunderstorm Warning",
+    "flashFloodWarning": "Flash Flood Warning",
+    "floodWarning": "Flood Warning",
+    "winterStormWarning": "Winter Storm Warning",
+    "specialWeatherStatement": "Special Weather Statement",
+    "loadingForecast": "Loading 7-day forecast...",
+    "sevenDayForecast": "7-Day Forecast",
+    "failedToLoadForecast": "Failed to load forecast.",
+    "goBack": "Go back",
+    
+    // Alerts page specific
+    "alertsTitle": "Portland Alerts - MetroFeed",
+    "portlandAreaAlerts": "Portland Area Alerts",
+    "loadingAlerts": "Loading TriMet alerts…",
+    "noActiveAlerts": "No active TriMet alerts.",
+    "couldNotLoadAlerts": "Could not load TriMet alerts. Try again later.",
+    "trimetAlert": "TriMet Alert",
+    "fullAlert": "Full Alert →",
+    
+    // TrafficCameras page specific
+    "trafficCamerasTitle": "Live Traffic Cameras – MetroFeed Portland",
+    "liveTrafficCameras": "Live Traffic Cameras – Portland, OR",
+    "cameraCourtesy": "Camera courtesy of ODOT",
+    "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of the Oregon Department of Transportation (ODOT)."
   },
   
   es: {
@@ -238,7 +275,44 @@ const translations = {
     
     // RailRoutes specific
     "portlandRailRoutes": "Portland, OR - Rutas de Tren",
-    "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite"
+    "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite",
+    
+    // Weather page specific
+    "weatherTitle": "Clima de Portland, OR - MetroFeed",
+    "weatherDisclaimer": "Descargo de responsabilidad: MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del",
+    "nationalWeatherService": "Servicio Meteorológico Nacional (NWS)",
+    "weatherGov": "weather.gov",
+    "weatherBetaMessage": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
+    "weatherAlerts": "⚠️ Alertas Meteorológicas (Toca para Ver)",
+    "checkingAlerts": "Verificando alertas...",
+    "noActiveAlerts": "✅ No hay alertas activas en este momento.",
+    "unableToLoadAlerts": "⚠️ No se pudieron cargar los datos de alerta.",
+    "jumpToForecast": "Ir al Pronóstico",
+    "tornadoWarning": "Advertencia de Tornado",
+    "severeThunderstormWarning": "Advertencia de Tormenta Eléctrica Severa",
+    "flashFloodWarning": "Advertencia de Inundación Repentina",
+    "floodWarning": "Advertencia de Inundación",
+    "winterStormWarning": "Advertencia de Tormenta Invernal",
+    "specialWeatherStatement": "Declaración Meteorológica Especial",
+    "loadingForecast": "Cargando pronóstico de 7 días...",
+    "sevenDayForecast": "Pronóstico de 7 Días",
+    "failedToLoadForecast": "Error al cargar el pronóstico.",
+    "goBack": "Volver",
+    
+    // Alerts page specific
+    "alertsTitle": "Alertas de Portland - MetroFeed",
+    "portlandAreaAlerts": "Alertas del Área de Portland",
+    "loadingAlerts": "Cargando alertas de TriMet…",
+    "noActiveAlerts": "No hay alertas activas de TriMet.",
+    "couldNotLoadAlerts": "No se pudieron cargar las alertas de TriMet. Inténtalo más tarde.",
+    "trimetAlert": "Alerta de TriMet",
+    "fullAlert": "Alerta Completa →",
+    
+    // TrafficCameras page specific
+    "trafficCamerasTitle": "Cámaras de Tráfico en Vivo – MetroFeed Portland",
+    "liveTrafficCameras": "Cámaras de Tráfico en Vivo – Portland, OR",
+    "cameraCourtesy": "Cámara cortesía de ODOT",
+    "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía del Departamento de Transporte de Oregon (ODOT)."
   }
 };
 

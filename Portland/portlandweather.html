@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#000000" />
-  <title>Portland, OR Weather - MetroFeed</title>
+  <title data-translate="weatherTitle">Portland, OR Weather - MetroFeed</title>
 
   <style>
     html, body {
@@ -130,7 +130,7 @@
   </header>
 
   <!-- BACK BUTTON -->
-  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+  <button class="back-button-fixed" onclick="history.back()" aria-label="goBack">
     <!-- Left Arrow SVG -->
     <svg viewBox="0 0 24 24">
       <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
@@ -138,25 +138,25 @@
   </button>
 
   <div style="background-color: #111; color: #ccc; padding: 0.75rem 1rem; text-align: center; font-size: 0.9rem; border-bottom: 1px solid #333;">
-    <strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href="https://www.weather.gov" target="_blank" style="color: #1DA1F2; text-decoration: none;">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.
+    <strong data-translate="weatherDisclaimer">Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href="https://www.weather.gov" target="_blank" style="color: #1DA1F2; text-decoration: none;" data-translate="nationalWeatherService">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong data-translate="weatherGov">weather.gov</strong> or your local authorities.
   </div>
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
-    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+    <span data-translate="weatherBetaMessage">⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.</span>
   </div>
 
   <div style="padding: 1rem; max-width: 95%; margin: 1rem auto;">
     <details style="background:#111; border:2px solid #F7630C; border-radius:8px; padding:1rem;">
       <summary style="color:#F7630C; font-weight:bold; font-size:1.2rem; cursor:pointer;">
-        ⚠️ Weather Alerts (Tap to View)
+        <span data-translate="weatherAlerts">⚠️ Weather Alerts (Tap to View)</span>
       </summary>
-      <div id="alertBox" style="margin-top: 1rem; color: #ccc;">Checking for alerts...</div>
+      <div id="alertBox" style="margin-top: 1rem; color: #ccc;" data-translate="checkingAlerts">Checking for alerts...</div>
     </details>
   </div>
 
   <!-- Jump to Forecast button -->
   <div class="button-bar">
-    <a href="#forecast-section" class="back-button">Jump to Forecast</a>
+    <a href="#forecast-section" class="back-button" data-translate="jumpToForecast">Jump to Forecast</a>
   </div>
 
   <iframe
@@ -166,17 +166,17 @@
   </iframe>
 
   <div id="legend" style="margin: 1rem auto; background: rgba(0,0,0,0.7); padding: 10px; color: white; font-family: Arial, sans-serif; border-radius: 8px; font-size: 12px; backdrop-filter: blur(4px); display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 95%;">
-    <div><span style="width: 12px; height: 12px; background: rgba(255,0,0,0.8); display: inline-block; margin-right: 6px;"></span>Tornado Warning</div>
-    <div><span style="width: 12px; height: 12px; background: rgba(255,255,0,0.8); display: inline-block; margin-right: 6px;"></span>Severe Thunderstorm Warning</div>
-    <div><span style="width: 12px; height: 12px; background: rgba(0,255,0,0.8); display: inline-block; margin-right: 6px;"></span>Flash Flood Warning</div>
-    <div><span style="width: 12px; height: 12px; background: rgba(0,128,255,0.8); display: inline-block; margin-right: 6px;"></span>Flood Warning</div>
-    <div><span style="width: 12px; height: 12px; background: rgba(255,192,203,0.8); display: inline-block; margin-right: 6px;"></span>Winter Storm Warning</div>
-    <div><span style="width: 12px; height: 12px; background: rgba(255,165,0,0.8); display: inline-block; margin-right: 6px;"></span>Special Weather Statement</div>
+    <div><span style="width: 12px; height: 12px; background: rgba(255,0,0,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="tornadoWarning">Tornado Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(255,255,0,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="severeThunderstormWarning">Severe Thunderstorm Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(0,255,0,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="flashFloodWarning">Flash Flood Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(0,128,255,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="floodWarning">Flood Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(255,192,203,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="winterStormWarning">Winter Storm Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(255,165,0,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="specialWeatherStatement">Special Weather Statement</span></div>
   </div>
 
   <!-- Forecast container with updated ID -->
   <div class="forecast" id="forecast-section" style="padding: 1rem; max-width: 400px; margin: 2rem auto 0; background-color: #111; border-radius: 8px; border: 2px solid #0071CE;">
-    Loading 7-day forecast...
+    <span data-translate="loadingForecast">Loading 7-day forecast...</span>
   </div>
 
   <script>
@@ -191,7 +191,7 @@
       .then(data => {
         const box = document.getElementById('alertBox');
         if (!data.features || data.features.length === 0) {
-          box.innerHTML = '<div style="color:#1DA1F2;font-weight:bold;">✅ No active alerts at this time.</div>';
+          box.innerHTML = '<div style="color:#1DA1F2;font-weight:bold;">' + translateText('noActiveAlerts') + '</div>';
           return;
         }
         const alert = data.features[0].properties;
@@ -201,7 +201,7 @@
         `;
       })
       .catch(() => {
-        document.getElementById('alertBox').textContent = '⚠️ Unable to load alert data.';
+        document.getElementById('alertBox').textContent = translateText('unableToLoadAlerts');
       });
 
     // Auto-refresh radar every 5 minutes
@@ -236,7 +236,7 @@
       .then(data => {
         const periods = data.properties.periods.slice(0, 7);
         const forecastEl = document.getElementById('forecast-section');
-        forecastEl.innerHTML = '<h2 style="color:#F7630C; font-size:1.2rem; margin-bottom:0.75rem;">7-Day Forecast</h2>';
+        forecastEl.innerHTML = '<h2 style="color:#F7630C; font-size:1.2rem; margin-bottom:0.75rem;">' + translateText('sevenDayForecast') + '</h2>';
         periods.forEach(period => {
           const emoji = getEmoji(period.shortForecast);
           const el = document.createElement('div');
@@ -256,7 +256,7 @@
         });
       })
       .catch(() => {
-        document.getElementById('forecast-section').textContent = 'Failed to load forecast.';
+        document.getElementById('forecast-section').textContent = translateText('failedToLoadForecast');
       });
 
     // Refresh entire page every 30 minutes
@@ -265,13 +265,20 @@
 
   <!-- Footer -->
   <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html" data-translate="terms">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html" data-translate="contact">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html" data-translate="report">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html" data-translate="dmca">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html" data-translate="privacy">Privacy Policy</a>
   </footer>
 
+  <script src="../translations.js"></script>
+  <script>
+    // Initialize language system
+    document.addEventListener('DOMContentLoaded', function() {
+      setLanguage(getCurrentLanguage());
+    });
+  </script>
   <script>
     if (!localStorage.getItem('cookieConsent')) {
       document.write(`
