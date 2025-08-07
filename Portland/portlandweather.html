@@ -7,12 +7,6 @@
   <title data-translate="weatherTitle">Portland, OR Weather - MetroFeed</title>
 
   <script src="../translations.js"></script>
-  <script>
-    // Initialize language system immediately after translations.js loads
-    if (typeof updatePageLanguage === 'function') {
-      updatePageLanguage();
-    }
-  </script>
 
   <style>
     html, body {
@@ -280,6 +274,15 @@
     <a href="privacy.html" data-translate="privacy">Privacy Policy</a>
   </footer>
 
+
+  <script>
+    // Initialize language system after DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof updatePageLanguage === 'function') {
+        updatePageLanguage();
+      }
+    });
+  </script>
 
   <script>
     if (!localStorage.getItem('cookieConsent')) {
