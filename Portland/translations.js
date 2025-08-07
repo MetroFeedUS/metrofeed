@@ -6,138 +6,7 @@ console.log('🚀 translations.js is loading...');
 // Global variables
 let currentLanguage = 'en';
 
-// Make all functions globally available immediately (before they're defined)
-window.setLanguage = function(lang) {
-  if (!translations[lang]) {
-    console.warn(`Language '${lang}' not supported, falling back to English`);
-    lang = 'en';
-  }
-  
-  currentLanguage = lang;
-  localStorage.setItem('metrofeed_language', lang);
-  updatePageLanguage();
-};
-
-window.updatePageLanguage = function() {
-  console.log('updatePageLanguage called, current language:', currentLanguage);
-  
-  // Update HTML lang attribute
-  document.documentElement.lang = currentLanguage;
-  
-  // Update page title
-  document.title = translateText('page_title');
-  
-  // Update elements with data-translate attribute
-  const translateElements = document.querySelectorAll('[data-translate]');
-  console.log('Found', translateElements.length, 'elements with data-translate');
-  translateElements.forEach(element => {
-    const key = element.getAttribute('data-translate');
-    const translation = translateText(key);
-    if (translation) {
-      element.textContent = translation;
-    }
-  });
-  
-  // Update elements with data-translate-placeholder attribute
-  const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
-  console.log('Found', placeholderElements.length, 'elements with data-translate-placeholder');
-  placeholderElements.forEach(element => {
-    const key = element.getAttribute('data-translate-placeholder');
-    const translation = translateText(key);
-    if (translation) {
-      element.placeholder = translation;
-    }
-  });
-  
-  // Update language button text
-  const langBtn = document.getElementById('languageBtn');
-  if (langBtn) {
-    const langSpan = langBtn.querySelector('span');
-    if (langSpan) {
-      langSpan.textContent = translateText('language');
-      console.log('Updated language button text to:', translateText('language'));
-    }
-  } else {
-    console.log('Language button not found');
-  }
-};
-
-window.translateText = function(key) {
-  if (translations[currentLanguage] && translations[currentLanguage][key]) {
-    return translations[currentLanguage][key];
-  } else if (translations.en[key]) {
-    return translations.en[key]; // Fallback to English
-  }
-  return key; // Return key if no translation found
-};
-
-window.getCurrentLanguage = function() {
-  // Check localStorage first
-  const savedLang = localStorage.getItem('metrofeed_language');
-  if (savedLang && translations[savedLang]) {
-    return savedLang;
-  }
-  
-  // Check browser language
-  const browserLang = navigator.language || navigator.userLanguage;
-  if (browserLang.startsWith('es')) {
-    return 'es';
-  }
-  
-  // Default to English
-  return 'en';
-};
-
-window.toggleLanguage = function() {
-  console.log('toggleLanguage called, current language:', currentLanguage);
-  const newLang = currentLanguage === 'en' ? 'es' : 'en';
-  console.log('switching to:', newLang);
-  setLanguage(newLang);
-};
-
-window.toggleLanguageDropdown = function() {
-  const dropdown = document.getElementById('languageDropdown');
-  if (dropdown) {
-    const isVisible = dropdown.style.display === 'flex';
-    dropdown.style.display = isVisible ? 'none' : 'flex';
-    
-    // Close dropdown when clicking outside
-    if (!isVisible) {
-      setTimeout(() => {
-        document.addEventListener('click', closeLanguageDropdown);
-      }, 100);
-    }
-  }
-};
-
-window.closeLanguageDropdown = function(event) {
-  const dropdown = document.getElementById('languageDropdown');
-  const languageBtn = document.getElementById('languageBtn');
-  
-  if (dropdown && languageBtn) {
-    if (!dropdown.contains(event.target) && !languageBtn.contains(event.target)) {
-      dropdown.style.display = 'none';
-      document.removeEventListener('click', closeLanguageDropdown);
-    }
-  }
-};
-
-window.selectLanguage = function(lang) {
-  // Only allow supported languages for now
-  if (lang === 'en' || lang === 'es') {
-    setLanguage(lang);
-  } else {
-    // For unsupported languages, show a message or just close dropdown
-    console.log(`Language '${lang}' not yet supported`);
-  }
-  
-  const dropdown = document.getElementById('languageDropdown');
-  if (dropdown) {
-    dropdown.style.display = 'none';
-    document.removeEventListener('click', closeLanguageDropdown);
-  }
-};
-
+// Define translations object first
 const translations = {
   en: {
     // Page title
@@ -447,6 +316,149 @@ const translations = {
     "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía del Departamento de Transporte de Oregon (ODOT)."
   }
 };
+
+// Now define functions that use the translations object
+function getCurrentLanguage() {
+  // Check localStorage first
+  const savedLang = localStorage.getItem('metrofeed_language');
+  if (savedLang && translations[savedLang]) {
+    return savedLang;
+  }
+  
+  // Check browser language
+  const browserLang = navigator.language || navigator.userLanguage;
+  if (browserLang.startsWith('es')) {
+    return 'es';
+  }
+  
+  // Default to English
+  return 'en';
+}
+
+function translateText(key) {
+  if (translations[currentLanguage] && translations[currentLanguage][key]) {
+    return translations[currentLanguage][key];
+  } else if (translations.en[key]) {
+    return translations.en[key]; // Fallback to English
+  }
+  return key; // Return key if no translation found
+}
+
+function updatePageLanguage() {
+  console.log('updatePageLanguage called, current language:', currentLanguage);
+  
+  // Update HTML lang attribute
+  document.documentElement.lang = currentLanguage;
+  
+  // Update page title
+  document.title = translateText('page_title');
+  
+  // Update elements with data-translate attribute
+  const translateElements = document.querySelectorAll('[data-translate]');
+  console.log('Found', translateElements.length, 'elements with data-translate');
+  translateElements.forEach(element => {
+    const key = element.getAttribute('data-translate');
+    const translation = translateText(key);
+    if (translation) {
+      element.textContent = translation;
+    }
+  });
+  
+  // Update elements with data-translate-placeholder attribute
+  const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
+  console.log('Found', placeholderElements.length, 'elements with data-translate-placeholder');
+  placeholderElements.forEach(element => {
+    const key = element.getAttribute('data-translate-placeholder');
+    const translation = translateText(key);
+    if (translation) {
+      element.placeholder = translation;
+    }
+  });
+  
+  // Update language button text
+  const langBtn = document.getElementById('languageBtn');
+  if (langBtn) {
+    const langSpan = langBtn.querySelector('span');
+    if (langSpan) {
+      langSpan.textContent = translateText('language');
+      console.log('Updated language button text to:', translateText('language'));
+    }
+  } else {
+    console.log('Language button not found');
+  }
+}
+
+function setLanguage(lang) {
+  if (!translations[lang]) {
+    console.warn(`Language '${lang}' not supported, falling back to English`);
+    lang = 'en';
+  }
+  
+  currentLanguage = lang;
+  localStorage.setItem('metrofeed_language', lang);
+  updatePageLanguage();
+}
+
+function toggleLanguage() {
+  console.log('toggleLanguage called, current language:', currentLanguage);
+  const newLang = currentLanguage === 'en' ? 'es' : 'en';
+  console.log('switching to:', newLang);
+  setLanguage(newLang);
+}
+
+function toggleLanguageDropdown() {
+  console.log('toggleLanguageDropdown called');
+  const dropdown = document.getElementById('languageDropdown');
+  if (dropdown) {
+    const isVisible = dropdown.style.display === 'flex';
+    dropdown.style.display = isVisible ? 'none' : 'flex';
+    
+    // Close dropdown when clicking outside
+    if (!isVisible) {
+      setTimeout(() => {
+        document.addEventListener('click', closeLanguageDropdown);
+      }, 100);
+    }
+  }
+}
+
+function closeLanguageDropdown(event) {
+  const dropdown = document.getElementById('languageDropdown');
+  const languageBtn = document.getElementById('languageBtn');
+  
+  if (dropdown && languageBtn) {
+    if (!dropdown.contains(event.target) && !languageBtn.contains(event.target)) {
+      dropdown.style.display = 'none';
+      document.removeEventListener('click', closeLanguageDropdown);
+    }
+  }
+}
+
+function selectLanguage(lang) {
+  // Only allow supported languages for now
+  if (lang === 'en' || lang === 'es') {
+    setLanguage(lang);
+  } else {
+    // For unsupported languages, show a message or just close dropdown
+    console.log(`Language '${lang}' not yet supported`);
+  }
+  
+  const dropdown = document.getElementById('languageDropdown');
+  if (dropdown) {
+    dropdown.style.display = 'none';
+    document.removeEventListener('click', closeLanguageDropdown);
+  }
+}
+
+// Make all functions globally available
+window.setLanguage = setLanguage;
+window.updatePageLanguage = updatePageLanguage;
+window.translateText = translateText;
+window.getCurrentLanguage = getCurrentLanguage;
+window.toggleLanguage = toggleLanguage;
+window.toggleLanguageDropdown = toggleLanguageDropdown;
+window.closeLanguageDropdown = closeLanguageDropdown;
+window.selectLanguage = selectLanguage;
 
 // Initialize language system
 document.addEventListener('DOMContentLoaded', function() {
