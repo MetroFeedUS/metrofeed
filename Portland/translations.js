@@ -1,6 +1,8 @@
 // MetroFeed Portland Translations
 // Comprehensive translation system for portlandindex.html
 
+console.log('🚀 translations.js is loading...');
+
 // Global variables
 let currentLanguage = 'en';
 
@@ -21,6 +23,8 @@ window.toggleLanguage = toggleLanguage;
 
 // Debug: Log when this script loads
 console.log('translations.js loaded, toggleLanguage function created:', typeof window.toggleLanguage);
+console.log('window.toggleLanguage:', window.toggleLanguage);
+console.log('typeof window.toggleLanguage:', typeof window.toggleLanguage);
 
 const translations = {
   en: {
@@ -253,7 +257,7 @@ const translations = {
     "searchRoutes": "Buscar una ruta...",
     
     // RailRoutes specific
-    "portlandRailRoutes": "Portland, OR - Rutas de Tren"
+    "portlandRailRoutes": "Portland, OR - Rutas de Tren",
     "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite"
   }
 };
@@ -381,4 +385,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { translations, translateText, setLanguage, getCurrentLanguage };
-} 
+}
+
+console.log('✅ translations.js loaded completely!');
+console.log('Available functions:', {
+  toggleLanguage: typeof window.toggleLanguage,
+  setLanguage: typeof window.setLanguage,
+  translateText: typeof window.translateText
+}); 
