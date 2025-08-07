@@ -6,22 +6,6 @@ console.log('🚀 translations.js is loading...');
 // Global variables
 let currentLanguage = 'en';
 
-// Immediately make toggleLanguage globally available
-function toggleLanguage() {
-  console.log('toggleLanguage called, current language:', currentLanguage);
-  const newLang = currentLanguage === 'en' ? 'es' : 'en';
-  console.log('switching to:', newLang);
-  setLanguage(newLang);
-}
-
-// Make it globally available immediately
-window.toggleLanguage = toggleLanguage;
-
-// Debug: Log when this script loads
-console.log('translations.js loaded, toggleLanguage function created:', typeof window.toggleLanguage);
-console.log('window.toggleLanguage:', window.toggleLanguage);
-console.log('typeof window.toggleLanguage:', typeof window.toggleLanguage);
-
 const translations = {
   en: {
     // Page title
@@ -340,11 +324,19 @@ function translateText(key) {
   return key; // Return key if no translation found
 }
 
+function toggleLanguage() {
+  console.log('toggleLanguage called, current language:', currentLanguage);
+  const newLang = currentLanguage === 'en' ? 'es' : 'en';
+  console.log('switching to:', newLang);
+  setLanguage(newLang);
+}
+
 // Make all functions globally available
 window.setLanguage = setLanguage;
 window.updatePageLanguage = updatePageLanguage;
 window.translateText = translateText;
 window.getCurrentLanguage = getCurrentLanguage;
+window.toggleLanguage = toggleLanguage;
 
 // Initialize language system
 document.addEventListener('DOMContentLoaded', function() {
@@ -353,39 +345,12 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('Initial language set to:', currentLanguage);
   updatePageLanguage();
   
-  // Test if toggleLanguage is accessible
-  console.log('toggleLanguage function available:', typeof window.toggleLanguage);
-  console.log('toggleLanguage function:', window.toggleLanguage);
-  
-  // Test if the button exists and add event listener
+  // Test if the button exists
   const langBtn = document.getElementById('languageBtn');
   console.log('Language button found:', !!langBtn);
   if (langBtn) {
     console.log('Language button onclick:', langBtn.onclick);
-    // Test if we can call the function directly
-    console.log('Can call toggleLanguage directly:', typeof window.toggleLanguage === 'function');
-    
-    // Add event listener as backup
-    langBtn.addEventListener('click', function(e) {
-      console.log('Language button clicked via event listener');
-      e.preventDefault();
-      if (typeof window.toggleLanguage === 'function') {
-        window.toggleLanguage();
-      } else {
-        console.error('toggleLanguage function not found in event listener');
-      }
-    });
   }
 });
 
-// Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { translations, translateText, setLanguage, getCurrentLanguage };
-}
-
-console.log('✅ translations.js loaded completely!');
-console.log('Available functions:', {
-  toggleLanguage: typeof window.toggleLanguage,
-  setLanguage: typeof window.setLanguage,
-  translateText: typeof window.translateText
-}); 
+console.log('✅ translations.js loaded completely!'); 
