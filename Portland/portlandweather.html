@@ -276,7 +276,9 @@
   <script>
     // Initialize language system
     document.addEventListener('DOMContentLoaded', function() {
-      setLanguage(getCurrentLanguage());
+      if (typeof updatePageLanguage === 'function') {
+        updatePageLanguage();
+      }
     });
   </script>
   <script>
