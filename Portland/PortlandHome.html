@@ -53,10 +53,13 @@
     background: #4dd0e1;
     color: #0d0d0d;
     border: none;
-    border-radius: 6px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-    font-weight: bold;
+    border-radius: 8px;
+    padding: 0.6rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: background 0.2s;
     z-index: 1000;
@@ -69,6 +72,12 @@
 
   #languageBtn {
     right: 0.5rem;
+  }
+  
+  #languageBtn img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) saturate(100%);
   }
 
   /* -- LANGUAGE DROPDOWN -- */
@@ -345,6 +354,14 @@
       return key;
     };
   }
+  
+  // Fallback for toggleLanguageDropdown if not available yet
+  if (typeof window.toggleLanguageDropdown === 'undefined') {
+    window.toggleLanguageDropdown = function() {
+      console.warn('toggleLanguageDropdown not ready yet');
+      alert('Language system not loaded yet. Please refresh the page.');
+    };
+  }
 </script>
 </head>
 <body>
@@ -438,6 +455,13 @@
       document.getElementById("cookie-banner").style.display = "block";
     }
   };
+  
+  // Initialize language system when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof updatePageLanguage === 'function') {
+      updatePageLanguage();
+    }
+  });
 </script>
 </body>
 </html>

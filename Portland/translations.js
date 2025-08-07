@@ -73,8 +73,8 @@ const translations = {
     "clear": "Clear",
     
     // Install prompt
-    "android_instructions": "Android Instructions",
-    "apple_instructions": "Apple Instructions", 
+    "androidInstructions": "Android Instructions",
+    "appleInstructions": "Apple Instructions", 
     "later": "Later",
     "installPromptTitle": "📲 Add MetroFeed Portland to your home screen",
     "installPromptSubtitle": "Use MetroFeed like an app for faster access!",
@@ -227,8 +227,8 @@ const translations = {
     "clear": "Limpiar",
     
     // Install prompt
-    "android_instructions": "Instrucciones Android",
-    "apple_instructions": "Instrucciones Apple",
+    "androidInstructions": "Instrucciones Android",
+    "appleInstructions": "Instrucciones Apple",
     "later": "Más Tarde",
     "installPromptTitle": "📲 Agregar MetroFeed Portland a tu pantalla de inicio",
     "installPromptSubtitle": "¡Usa MetroFeed como una aplicación para acceso más rápido!",
@@ -449,7 +449,7 @@ function selectLanguage(lang) {
   }
 }
 
-// Make all functions globally available
+// Make all functions globally available immediately
 window.setLanguage = setLanguage;
 window.updatePageLanguage = updatePageLanguage;
 window.translateText = translateText;
@@ -458,6 +458,23 @@ window.toggleLanguage = toggleLanguage;
 window.toggleLanguageDropdown = toggleLanguageDropdown;
 window.closeLanguageDropdown = closeLanguageDropdown;
 window.selectLanguage = selectLanguage;
+
+// Also make them available as global functions for onclick handlers
+window.toggleLanguageDropdown = function() {
+  console.log('toggleLanguageDropdown called from global scope');
+  const dropdown = document.getElementById('languageDropdown');
+  if (dropdown) {
+    const isVisible = dropdown.style.display === 'flex';
+    dropdown.style.display = isVisible ? 'none' : 'flex';
+    
+    // Close dropdown when clicking outside
+    if (!isVisible) {
+      setTimeout(() => {
+        document.addEventListener('click', closeLanguageDropdown);
+      }, 100);
+    }
+  }
+};
 
 // Initialize language system
 document.addEventListener('DOMContentLoaded', function() {
