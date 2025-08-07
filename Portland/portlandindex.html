@@ -2839,50 +2839,99 @@
   // ==== MODAL CONTROLS ====
   function showOtpModal() {
     document.getElementById('otpModal').style.display = 'flex';
-    // Reset to normal state when showing
+    // Remove minimized class if it exists
     document.getElementById('otpModal').classList.remove('otp-modal-minimized');
-    var restoreBtn = document.querySelector('.restore-btn');
-    if (restoreBtn) restoreBtn.style.display = 'none';
   }
-
+  
   function hideOtpModal() {
     document.getElementById('otpModal').style.display = 'none';
-    
-    // Only clear everything if no active trip is selected
-    if (!activeTripSelected) {
-      // Clear route polylines and stop markers
-      clearRoutePolylines();
-          if (window.routeStopMarkers && window.routeStopMarkers.length) {
-      window.routeStopMarkers.forEach(marker => marker.remove());
-      window.routeStopMarkers = [];
-    }
-      // Stop OTP bus tracking and clear bus markers
-      if (window.otpBusTrackingInterval) {
-        clearInterval(window.otpBusTrackingInterval);
-        window.otpBusTrackingInterval = null;
+    // Clear any active trip data
+    if (window.activeTrip) {
+      console.log('[hideOtpModal] Clearing active trip data');
+      window.activeTrip = null;
+      window.activeItinerary = null;
+      window.activeRoutePolylines = [];
+      window.activeBusMarkers = [];
+      
+      // Clear route polylines
+      if (window.activeRoutePolylines && window.activeRoutePolylines.length > 0) {
+        window.activeRoutePolylines.forEach(polyline => {
+          if (map.getSource(polyline.id)) {
+            map.removeLayer(polyline.id);
+            map.removeSource(polyline.id);
+          }
+        });
+        window.activeRoutePolylines = [];
       }
+      
       // Clear bus markers
-      Object.values(busMarkers).forEach(m => map.removeLayer(m));
-      busMarkers = {};
-      // Resume tracking closest route if available
-      if (closestRoute) {
-        console.log('[hideOtpModal] Resuming closest route tracking');
-        // Show buses for closest route
-        fetchAndDisplayBuses();
-        // Restart closest route interval if it was stopped and route is not manually hidden
-        if (!window.closestRouteInterval && !userRouteManuallyHidden) {
-          window.closestRouteInterval = setInterval(() => {
-            // Track closest route and show buses
-            fetchAndDisplayBuses();
-          }, 15000);
-        }
+      if (window.activeBusMarkers && window.activeBusMarkers.length > 0) {
+        window.activeBusMarkers.forEach(marker => {
+          if (marker && marker.remove) {
+            marker.remove();
+          }
+        });
+        window.activeBusMarkers = [];
+      }
+      
+      // Resume closest route tracking
+      console.log('[hideOtpModal] Resuming closest route tracking');
+      if (window.closestRouteData && !window.userRouteManuallyHidden) {
+        showClosestRoute();
       }
     } else {
       console.log('[hideOtpModal] Trip is active, keeping route and buses visible');
     }
     
     // Don't hide bus legend when modal is closed - keep it visible for OTP buses
-    // hideBusLegend();
+    // showBusLegend();
+  }
+  
+  // === SECTION: SIGN-IN MODAL CONTROLS ===
+  function showSignInModal() {
+    console.log('[showSignInModal] Showing sign-in modal');
+    document.getElementById('signInModal').style.display = 'flex';
+  }
+  
+  function hideSignInModal() {
+    console.log('[hideSignInModal] Hiding sign-in modal');
+    document.getElementById('signInModal').style.display = 'none';
+  }
+  
+  // === SECTION: AUTHENTICATION CHECK ===
+  function checkAuthentication() {
+    console.log('[checkAuthentication] Checking user authentication status...');
+    
+    // Check if user is already using free version
+    const isFreeUser = localStorage.getItem('mf_free') === 'true';
+    if (isFreeUser) {
+      console.log('[checkAuthentication] User is already using free version, redirecting to PortlandHome');
+      window.location.href = 'PortlandHome.html';
+      return;
+    }
+    
+    // Check if user has an active trial
+    const hasTrial = localStorage.getItem('mf_trial') === 'true';
+    if (hasTrial) {
+      console.log('[checkAuthentication] User has active trial, allowing access');
+      return;
+    }
+    
+    // Check if user has a valid premium subscription
+    // For now, we'll show the sign-in modal if no authentication is found
+    // In a real implementation, you would check for valid tokens/sessions here
+    
+    const hasValidAuth = false; // Placeholder - replace with actual auth check
+    
+    if (!hasValidAuth) {
+      console.log('[checkAuthentication] No valid authentication found, showing sign-in modal');
+      // Show the sign-in modal after a short delay to ensure page is loaded
+      setTimeout(() => {
+        showSignInModal();
+      }, 1000);
+    } else {
+      console.log('[checkAuthentication] User is authenticated');
+    }
   }
 
   function restoreOtpModal() {
@@ -3832,6 +3881,9 @@
   document.addEventListener('DOMContentLoaded', function() {
     console.log('[DOMContentLoaded] Initializing map and event listeners...');
     
+    // Check authentication status first
+    checkAuthentication();
+    
     // Initialize MapLibre GL JS map with vector tiles
     const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
     const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
@@ -3978,6 +4030,19 @@
       });
       
       console.log('[DOMContentLoaded] Departure time radio button listeners added');
+    }
+    
+    // Trial button event listener
+    const startTrialBtn = document.getElementById('startTrialBtn');
+    if (startTrialBtn) {
+      startTrialBtn.addEventListener('click', function() {
+        console.log('[startTrialBtn] Free trial started');
+        // For now, just hide the modal and allow access
+        // In a real implementation, you would start a trial period
+        localStorage.setItem('mf_trial', 'true');
+        hideSignInModal();
+      });
+      console.log('[DOMContentLoaded] Trial button event listener added');
     }
     
     console.log('[DOMContentLoaded] Map and event listeners initialization complete');
