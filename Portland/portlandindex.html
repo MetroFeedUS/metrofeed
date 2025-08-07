@@ -81,6 +81,52 @@
       box-shadow: 0 0 6px #1976d2;
       border-color: #000;
     }
+    
+    /* -- LANGUAGE DROPDOWN -- */
+    .language-dropdown {
+      position: absolute;
+      top: 110px;
+      right: 10px;
+      width: 45px;
+      background-color: #f3f3f3; /* light gray */
+      border: 2px solid #000; /* black border */
+      border-radius: 10px;
+      box-shadow: 0 0 10px #1976d2;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1002;
+    }
+    .language-dropdown a {
+      width: 39px;
+      height: 39px;
+      margin: 2px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1.5px solid #000; /* black button border */
+      background-color: #4dd0e1; /* blue button background */
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 3px #1976d277;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #000;
+      text-decoration: none;
+    }
+    .language-dropdown a img {
+      width: 20px;
+      height: 20px;
+    }
+    .language-dropdown a:last-child {
+      margin-bottom: 0;
+    }
+    .language-dropdown a:hover, .language-dropdown a:focus {
+      background-color: #1976d2;
+      box-shadow: 0 0 6px #1976d2;
+      border-color: #000;
+    }
     /* -- FAVORITES -- */
     .favorites-wrapper {
       position: absolute;
@@ -715,8 +761,8 @@
 <button id="aiChatBtn" class="side-buttons">
   <a href="tickets.html"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
 </button>
-<button id="languageBtn" class="side-buttons" onclick="toggleLanguage()" title="Toggle Language / Cambiar Idioma">
-  <span data-translate="language">EN</span>
+<button id="languageBtn" class="side-buttons" onclick="toggleLanguageDropdown()" title="Select Language / Seleccionar Idioma">
+  <img src="global.svg" alt="Language" />
 </button>
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <div id="logoBtn">
@@ -739,6 +785,18 @@
   <!-- New Buses button in dropdown -->
   <a href="#" id="dropdownBusesBtn" onclick="toggleAllBusesFromDropdown()"><img src="001-buses.svg" alt="Buses"></a>
   <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="8"></a>
+</div>
+
+<!-- Language Dropdown -->
+<div id="languageDropdown" class="language-dropdown">
+  <a href="#" onclick="selectLanguage('en')">EN</a>
+  <a href="#" onclick="selectLanguage('es')">ES</a>
+  <a href="#" onclick="selectLanguage('fr')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('de')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('it')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('pt')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('ja')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('ko')"><img src="construction.svg" alt="Coming Soon"></a>
 </div>
 
 <!-- -- SEARCH BAR -- -->

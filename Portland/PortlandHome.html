@@ -71,6 +71,52 @@
     right: 0.5rem;
   }
 
+  /* -- LANGUAGE DROPDOWN -- */
+  .language-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0.5rem;
+    width: 45px;
+    background-color: #f3f3f3; /* light gray */
+    border: 2px solid #000; /* black border */
+    border-radius: 10px;
+    box-shadow: 0 0 10px #1976d2;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1002;
+  }
+  .language-dropdown a {
+    width: 39px;
+    height: 39px;
+    margin: 2px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1.5px solid #000; /* black button border */
+    background-color: #4dd0e1; /* blue button background */
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 3px #1976d277;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #000;
+    text-decoration: none;
+  }
+  .language-dropdown a img {
+    width: 20px;
+    height: 20px;
+  }
+  .language-dropdown a:last-child {
+    margin-bottom: 0;
+  }
+  .language-dropdown a:hover, .language-dropdown a:focus {
+    background-color: #1976d2;
+    box-shadow: 0 0 6px #1976d2;
+    border-color: #000;
+  }
+
   /* UPGRADE BUTTON (inline) */
   .upgrade-btn {
     display: block;
@@ -305,10 +351,22 @@
 
 <header>
   <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
-  <button id="languageBtn" class="side-buttons" onclick="toggleLanguage()" title="Toggle Language / Cambiar Idioma">
-  <span data-translate="language">EN</span>
-</button>
+  <button id="languageBtn" class="side-buttons" onclick="toggleLanguageDropdown()" title="Select Language / Seleccionar Idioma">
+    <img src="global.svg" alt="Language" />
+  </button>
 </header>
+
+<!-- Language Dropdown -->
+<div id="languageDropdown" class="language-dropdown">
+  <a href="#" onclick="selectLanguage('en')">EN</a>
+  <a href="#" onclick="selectLanguage('es')">ES</a>
+  <a href="#" onclick="selectLanguage('fr')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('de')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('it')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('pt')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('ja')"><img src="construction.svg" alt="Coming Soon"></a>
+  <a href="#" onclick="selectLanguage('ko')"><img src="construction.svg" alt="Coming Soon"></a>
+</div>
 
 <!-- UPGRADE BUTTON (inline) -->
 <a href="premium.html" class="upgrade-btn" data-translate="upgrade">Upgrade</a>

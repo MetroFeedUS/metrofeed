@@ -331,12 +331,59 @@ function toggleLanguage() {
   setLanguage(newLang);
 }
 
+// Language dropdown functionality
+function toggleLanguageDropdown() {
+  const dropdown = document.getElementById('languageDropdown');
+  if (dropdown) {
+    const isVisible = dropdown.style.display === 'flex';
+    dropdown.style.display = isVisible ? 'none' : 'flex';
+    
+    // Close dropdown when clicking outside
+    if (!isVisible) {
+      setTimeout(() => {
+        document.addEventListener('click', closeLanguageDropdown);
+      }, 100);
+    }
+  }
+}
+
+function closeLanguageDropdown(event) {
+  const dropdown = document.getElementById('languageDropdown');
+  const languageBtn = document.getElementById('languageBtn');
+  
+  if (dropdown && languageBtn) {
+    if (!dropdown.contains(event.target) && !languageBtn.contains(event.target)) {
+      dropdown.style.display = 'none';
+      document.removeEventListener('click', closeLanguageDropdown);
+    }
+  }
+}
+
+function selectLanguage(lang) {
+  // Only allow supported languages for now
+  if (lang === 'en' || lang === 'es') {
+    setLanguage(lang);
+  } else {
+    // For unsupported languages, show a message or just close dropdown
+    console.log(`Language '${lang}' not yet supported`);
+  }
+  
+  const dropdown = document.getElementById('languageDropdown');
+  if (dropdown) {
+    dropdown.style.display = 'none';
+    document.removeEventListener('click', closeLanguageDropdown);
+  }
+}
+
 // Make all functions globally available
 window.setLanguage = setLanguage;
 window.updatePageLanguage = updatePageLanguage;
 window.translateText = translateText;
 window.getCurrentLanguage = getCurrentLanguage;
 window.toggleLanguage = toggleLanguage;
+window.toggleLanguageDropdown = toggleLanguageDropdown;
+window.closeLanguageDropdown = closeLanguageDropdown;
+window.selectLanguage = selectLanguage;
 
 // Initialize language system
 document.addEventListener('DOMContentLoaded', function() {
