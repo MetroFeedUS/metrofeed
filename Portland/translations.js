@@ -126,9 +126,12 @@ const translations = {
     
     // Weather page specific
     "weatherTitle": "Portland, OR Weather - MetroFeed",
-    "weatherDisclaimer": "Disclaimer: MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the",
+    "weatherDisclaimer": "Disclaimer:",
+    "weatherDisclaimerText": "MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the",
     "nationalWeatherService": "National Weather Service (NWS)",
+    "weatherDisclaimerEnd": "During severe weather or life-threatening events, always rely on official alerts at",
     "weatherGov": "weather.gov",
+    "weatherDisclaimerFinal": "or your local authorities.",
     "weatherBetaMessage": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
     "weatherAlerts": "⚠️ Weather Alerts (Tap to View)",
     "checkingAlerts": "Checking for alerts...",
@@ -280,9 +283,12 @@ const translations = {
     
     // Weather page specific
     "weatherTitle": "Clima de Portland, OR - MetroFeed",
-    "weatherDisclaimer": "Descargo de responsabilidad: MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del",
+    "weatherDisclaimer": "Descargo de responsabilidad:",
+    "weatherDisclaimerText": "MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del",
     "nationalWeatherService": "Servicio Meteorológico Nacional (NWS)",
+    "weatherDisclaimerEnd": "Durante condiciones meteorológicas severas o eventos que amenacen la vida, siempre confíe en alertas oficiales en",
     "weatherGov": "weather.gov",
+    "weatherDisclaimerFinal": "o sus autoridades locales.",
     "weatherBetaMessage": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
     "weatherAlerts": "⚠️ Alertas Meteorológicas (Toca para Ver)",
     "checkingAlerts": "Verificando alertas...",
