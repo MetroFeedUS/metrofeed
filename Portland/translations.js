@@ -331,19 +331,36 @@ function getCurrentLanguage() {
 }
 
 function translateText(key) {
+  // Safety check - if translations object isn't loaded yet, return the key
+  if (!translations || !translations[currentLanguage]) {
+    console.warn('Translations not loaded yet, returning key:', key);
+    return key;
+  }
+  
   if (translations[currentLanguage] && translations[currentLanguage][key]) {
+    console.log('✅ Translated', key, 'to', translations[currentLanguage][key]);
     return translations[currentLanguage][key];
-  } else if (translations.en[key]) {
+  } else if (translations.en && translations.en[key]) {
+    console.log('⚠️ Key not found in', currentLanguage, 'using English:', key);
     return translations.en[key];
   }
+  console.warn('❌ Translation key not found:', key);
   return key;
 }
 
 function updatePageLanguage() {
+  console.log('🔄 updatePageLanguage called, currentLanguage:', currentLanguage);
   document.documentElement.lang = currentLanguage;
-  document.title = translateText('page_title');
+  
+  // Only update title if there's a data-translate attribute on the title element
+  const titleElement = document.querySelector('title[data-translate]');
+  if (titleElement) {
+    const titleKey = titleElement.getAttribute('data-translate');
+    document.title = translateText(titleKey);
+  }
   
   const translateElements = document.querySelectorAll('[data-translate]');
+  console.log('📝 Found', translateElements.length, 'elements to translate');
   translateElements.forEach(element => {
     const key = element.getAttribute('data-translate');
     const translation = translateText(key);
@@ -402,12 +419,15 @@ window.updatePageLanguage = updatePageLanguage;
 window.translateText = translateText;
 window.getCurrentLanguage = getCurrentLanguage;
 
+// Initialize currentLanguage immediately
+currentLanguage = getCurrentLanguage();
+console.log('🌍 Current language set to:', currentLanguage);
+
 // Test that the function is available
 console.log('toggleLanguageDropdown available:', typeof window.toggleLanguageDropdown);
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-  currentLanguage = getCurrentLanguage();
   updatePageLanguage();
 });
 

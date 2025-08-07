@@ -274,6 +274,14 @@
 
   <script src="../translations.js"></script>
   <script>
+    // Fallback for translateText if not available yet
+    if (typeof window.translateText === 'undefined') {
+      window.translateText = function(key) {
+        console.warn('translateText not ready yet, returning key:', key);
+        return key;
+      };
+    }
+    
     // Initialize language system
     document.addEventListener('DOMContentLoaded', function() {
       if (typeof updatePageLanguage === 'function') {
