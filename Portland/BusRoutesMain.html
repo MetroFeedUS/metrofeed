@@ -135,6 +135,16 @@
       fill: #fff;
     }
   </style>
+  <script src="../translations.js"></script>
+  <script>
+    // Fallback for translateText if not available yet
+    if (typeof window.translateText === 'undefined') {
+      window.translateText = function(key) {
+        console.warn('translateText not ready yet, returning key:', key);
+        return key;
+      };
+    }
+  </script>
 </head>
 <body>
   <header>
@@ -150,14 +160,14 @@
   </button>
 
   <main>
-    <h2>Portland, OR - Bus Routes</h2>
+    <h2 data-translate="portlandBusRoutes">Portland, OR - Bus Routes</h2>
 
     <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
-      ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+      <span data-translate="betaDisclaimer">⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.</span>
     </div>
 
     <div class="search-bar">
-      <input type="text" id="routeSearch" placeholder="Search for a route...">
+      <input type="text" id="routeSearch" placeholder="Search for a route..." data-translate-placeholder="searchRoutes">
     </div>
 
     <div class="route-list" id="routeList"></div>
@@ -306,18 +316,17 @@
   </script>
 
   <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
-    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html" data-translate="termsOfUse">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html" data-translate="contactUs">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html" data-translate="reportProblem">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html" data-translate="dmca">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html" data-translate="privacyPolicy">Privacy Policy</a>
   </footer>
 
   <div id="cookie-banner" style="display:none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-    📢 We use cookies to improve functionality and analyze traffic.
-    By using MetroFeed, you agree to our 
-    <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.<br>
-    <button onclick="acceptCookies()" style="margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
+    <span data-translate="cookieMessage">📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our</span>
+    <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;" data-translate="privacyPolicy">Privacy Policy</a>.<br>
+    <button onclick="acceptCookies()" style="margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;" data-translate="ok">OK</button>
   </div>
 
   <script>

@@ -4,7 +4,7 @@
 // Global variables
 let currentLanguage = 'en';
 
-// Immediately make all functions globally available
+// Immediately make toggleLanguage globally available
 function toggleLanguage() {
   console.log('toggleLanguage called, current language:', currentLanguage);
   const newLang = currentLanguage === 'en' ? 'es' : 'en';
@@ -16,24 +16,11 @@ function toggleLanguage() {
   }
 }
 
-function translateText(key) {
-  if (translations && translations[currentLanguage] && translations[currentLanguage][key]) {
-    return translations[currentLanguage][key];
-  } else if (translations && translations.en && translations.en[key]) {
-    return translations.en[key]; // Fallback to English
-  }
-  return key; // Return key if no translation found
-}
-
-// Make functions globally available immediately
+// Make it globally available immediately
 window.toggleLanguage = toggleLanguage;
-window.translateText = translateText;
 
 // Debug: Log when this script loads
-console.log('translations.js loaded, functions created:', {
-  toggleLanguage: typeof window.toggleLanguage,
-  translateText: typeof window.translateText
-});
+console.log('translations.js loaded, toggleLanguage function created:', typeof window.toggleLanguage);
 
 const translations = {
   en: {
@@ -105,6 +92,9 @@ const translations = {
     "android_instructions": "Android Instructions",
     "apple_instructions": "Apple Instructions", 
     "later": "Later",
+    "installPromptTitle": "📲 Add MetroFeed Portland to your home screen",
+    "installPromptSubtitle": "Use MetroFeed like an app for faster access!",
+    "doneDontAsk": "Done / Don't ask again",
     
     // Premium/Auth
     "sign_in_prompt": "Please sign in, sign up, or use the free version to continue:",
@@ -122,7 +112,32 @@ const translations = {
     
     // Data attribution
     "data_courtesy": "Data courtesy of TriMet.",
-    "disclaimer": "This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit"
+    "disclaimer": "This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit",
+    
+    // PortlandHome specific
+    "upgrade": "Upgrade",
+    "betaDisclaimer": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
+    "portlandDashboard": "Portland, OR Dashboard",
+    "busRoutes": "Bus Routes",
+    "railRoutes": "Rail Routes", 
+    "trafficCams": "Traffic Cams",
+    "weather": "Weather",
+    "alerts": "Alerts",
+    "earthquakes": "Earthquakes",
+    "changeCity": "Change City",
+    "termsOfUse": "Terms of Use",
+    "contactUs": "Contact Us",
+    "reportProblem": "Report a Problem",
+    "privacyPolicy": "Privacy Policy",
+    "cookieMessage": "📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our",
+    "ok": "OK",
+    
+    // BusRoutesMain specific
+    "portlandBusRoutes": "Portland, OR - Bus Routes",
+    "searchRoutes": "Search for a route...",
+    
+    // RailRoutes specific
+    "portlandRailRoutes": "Portland, OR - Rail Routes"
   },
   
   es: {
@@ -194,6 +209,9 @@ const translations = {
     "android_instructions": "Instrucciones Android",
     "apple_instructions": "Instrucciones Apple",
     "later": "Más Tarde",
+    "installPromptTitle": "📲 Agregar MetroFeed Portland a tu pantalla de inicio",
+    "installPromptSubtitle": "¡Usa MetroFeed como una aplicación para acceso más rápido!",
+    "doneDontAsk": "Listo / No preguntar de nuevo",
     
     // Premium/Auth
     "sign_in_prompt": "Por favor inicie sesión, regístrese o use la versión gratuita para continuar:",
@@ -211,6 +229,31 @@ const translations = {
     
     // Data attribution
     "data_courtesy": "Datos cortesía de TriMet.",
+    
+    // PortlandHome specific
+    "upgrade": "Actualizar",
+    "betaDisclaimer": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
+    "portlandDashboard": "Panel de Portland, OR",
+    "busRoutes": "Rutas de Autobús",
+    "railRoutes": "Rutas de Tren",
+    "trafficCams": "Cámaras de Tráfico",
+    "weather": "Clima",
+    "alerts": "Alertas",
+    "earthquakes": "Terremotos",
+    "changeCity": "Cambiar Ciudad",
+    "termsOfUse": "Términos de Uso",
+    "contactUs": "Contáctenos",
+    "reportProblem": "Reportar Problema",
+    "privacyPolicy": "Política de Privacidad",
+    "cookieMessage": "📢 Usamos cookies para mejorar la funcionalidad y analizar el tráfico. Al usar MetroFeed, aceptas nuestra",
+    "ok": "OK",
+    
+    // BusRoutesMain specific
+    "portlandBusRoutes": "Portland, OR - Rutas de Autobús",
+    "searchRoutes": "Buscar una ruta...",
+    
+    // RailRoutes specific
+    "portlandRailRoutes": "Portland, OR - Rutas de Tren"
     "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite"
   }
 };
@@ -288,11 +331,19 @@ function updatePageLanguage() {
   }
 }
 
-// translateText function is already defined at the top of the file
+function translateText(key) {
+  if (translations[currentLanguage] && translations[currentLanguage][key]) {
+    return translations[currentLanguage][key];
+  } else if (translations.en[key]) {
+    return translations.en[key]; // Fallback to English
+  }
+  return key; // Return key if no translation found
+}
 
-// Make remaining functions globally available
+// Make all functions globally available
 window.setLanguage = setLanguage;
 window.updatePageLanguage = updatePageLanguage;
+window.translateText = translateText;
 window.getCurrentLanguage = getCurrentLanguage;
 
 // Initialize language system
