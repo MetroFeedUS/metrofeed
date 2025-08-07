@@ -1,0 +1,333 @@
+// MetroFeed Portland Translations
+// Comprehensive translation system for portlandindex.html
+
+// Global variables
+let currentLanguage = 'en';
+
+// Immediately make all functions globally available
+function toggleLanguage() {
+  console.log('toggleLanguage called, current language:', currentLanguage);
+  const newLang = currentLanguage === 'en' ? 'es' : 'en';
+  console.log('switching to:', newLang);
+  if (window.setLanguage) {
+    window.setLanguage(newLang);
+  } else {
+    console.error('setLanguage function not available yet');
+  }
+}
+
+function translateText(key) {
+  if (translations && translations[currentLanguage] && translations[currentLanguage][key]) {
+    return translations[currentLanguage][key];
+  } else if (translations && translations.en && translations.en[key]) {
+    return translations.en[key]; // Fallback to English
+  }
+  return key; // Return key if no translation found
+}
+
+// Make functions globally available immediately
+window.toggleLanguage = toggleLanguage;
+window.translateText = translateText;
+
+// Debug: Log when this script loads
+console.log('translations.js loaded, functions created:', {
+  toggleLanguage: typeof window.toggleLanguage,
+  translateText: typeof window.translateText
+});
+
+const translations = {
+  en: {
+    // Page title
+    "page_title": "MetroFeed Portland Map",
+    
+    // Search and UI
+    "search_placeholder": "Search routes...",
+    "start_location": "Start or Current Location", 
+    "destination": "Destination",
+    "find_me": "Find Me",
+    "menu": "Menu",
+    "account": "Account",
+    "theme": "Theme",
+    "ai_chat": "AI Chat",
+    "language": "EN",
+    
+    // Beta banner
+    "beta_test": "Beta Test",
+    "beta_message": "This program is a beta test, please report any issues.",
+    
+    // Favorites
+    "favorites": "Favorites",
+    "favorite_routes": "Favorite Routes",
+    "no_favorites": "No favorites yet",
+    
+    // Itinerary
+    "itinerary": "Itinerary",
+    "itinerary_details": "Click to view details",
+    "restore": "Restore",
+    
+    // Footer
+    "terms": "Terms of Use",
+    "contact": "Contact Us",
+    "report": "Report a Problem", 
+    "dmca": "DMCA",
+    "privacy": "Privacy Policy",
+    
+    // Popups and messages
+    "live_bus": "Live Bus",
+    "route": "Route",
+    "direction": "Direction",
+    "speed": "Speed",
+    "block": "Block",
+    "mph": "mph",
+    "view_route_details": "View Route Details",
+    "no_scheduled_times": "No scheduled times",
+    
+    // OTP related
+    "from": "From",
+    "to": "To",
+    "departure": "Departure",
+    "arrival": "Arrival",
+    "duration": "Duration",
+    "walking": "Walking",
+    "transit": "Transit",
+    "trip_options": "Trip Options",
+    "depart_now": "Depart Now",
+    "finding_route": "Finding closest route...",
+    
+    // Modal buttons
+    "close": "Close",
+    "cancel": "Cancel",
+    "plan_trip": "Plan Trip",
+    "go": "Go",
+    "clear": "Clear",
+    
+    // Install prompt
+    "android_instructions": "Android Instructions",
+    "apple_instructions": "Apple Instructions", 
+    "later": "Later",
+    
+    // Premium/Auth
+    "sign_in_prompt": "Please sign in, sign up, or use the free version to continue:",
+    "sign_in": "Sign In",
+    "sign_up": "Sign Up",
+    "use_free_version": "Use Free Version",
+    "try_premium": "Try MetroFeed Premium FREE for 24hrs",
+    "no_email_needed": "NO email needed",
+    "start_free_trial": "Start Free Trial",
+    
+    // Error messages
+    "error_loading": "Error loading data",
+    "no_routes_found": "No routes found",
+    "location_error": "Location error",
+    
+    // Data attribution
+    "data_courtesy": "Data courtesy of TriMet.",
+    "disclaimer": "This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit"
+  },
+  
+  es: {
+    // Page title
+    "page_title": "Mapa de MetroFeed Portland",
+    
+    // Search and UI
+    "search_placeholder": "Buscar rutas...",
+    "start_location": "Ubicación de inicio o actual",
+    "destination": "Destino",
+    "find_me": "Encontrar",
+    "menu": "Menú",
+    "account": "Cuenta",
+    "theme": "Tema",
+    "ai_chat": "Chat IA",
+    "language": "ES",
+    
+    // Beta banner
+    "beta_test": "Prueba Beta",
+    "beta_message": "Este programa es una prueba beta, por favor reporte cualquier problema.",
+    
+    // Favorites
+    "favorites": "Favoritos",
+    "favorite_routes": "Rutas Favoritas",
+    "no_favorites": "Sin favoritos aún",
+    
+    // Itinerary
+    "itinerary": "Itinerario",
+    "itinerary_details": "Haga clic para ver detalles",
+    "restore": "Restaurar",
+    
+    // Footer
+    "terms": "Términos de Uso",
+    "contact": "Contáctenos",
+    "report": "Reportar Problema",
+    "dmca": "DMCA", 
+    "privacy": "Política de Privacidad",
+    
+    // Popups and messages
+    "live_bus": "Autobús en Vivo",
+    "route": "Ruta",
+    "direction": "Dirección",
+    "speed": "Velocidad",
+    "block": "Bloque",
+    "mph": "mph",
+    "view_route_details": "Ver Detalles de Ruta",
+    "no_scheduled_times": "Sin horarios programados",
+    
+    // OTP related
+    "from": "Desde",
+    "to": "Hacia",
+    "departure": "Salida",
+    "arrival": "Llegada",
+    "duration": "Duración",
+    "walking": "Caminando",
+    "transit": "Tránsito",
+    "trip_options": "Opciones de Viaje",
+    "depart_now": "Salir Ahora",
+    "finding_route": "Buscando ruta más cercana...",
+    
+    // Modal buttons
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "plan_trip": "Planificar Viaje",
+    "go": "Ir",
+    "clear": "Limpiar",
+    
+    // Install prompt
+    "android_instructions": "Instrucciones Android",
+    "apple_instructions": "Instrucciones Apple",
+    "later": "Más Tarde",
+    
+    // Premium/Auth
+    "sign_in_prompt": "Por favor inicie sesión, regístrese o use la versión gratuita para continuar:",
+    "sign_in": "Iniciar Sesión",
+    "sign_up": "Registrarse",
+    "use_free_version": "Usar Versión Gratuita",
+    "try_premium": "Pruebe MetroFeed Premium GRATIS por 24 horas",
+    "no_email_needed": "NO se necesita email",
+    "start_free_trial": "Comenzar Prueba Gratuita",
+    
+    // Error messages
+    "error_loading": "Error al cargar datos",
+    "no_routes_found": "No se encontraron rutas",
+    "location_error": "Error de ubicación",
+    
+    // Data attribution
+    "data_courtesy": "Datos cortesía de TriMet.",
+    "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite"
+  }
+};
+
+// Language management functions
+function getCurrentLanguage() {
+  // Check localStorage first
+  const savedLang = localStorage.getItem('metrofeed_language');
+  if (savedLang && translations[savedLang]) {
+    return savedLang;
+  }
+  
+  // Check browser language
+  const browserLang = navigator.language || navigator.userLanguage;
+  if (browserLang.startsWith('es')) {
+    return 'es';
+  }
+  
+  // Default to English
+  return 'en';
+}
+
+function setLanguage(lang) {
+  if (!translations[lang]) {
+    console.warn(`Language '${lang}' not supported, falling back to English`);
+    lang = 'en';
+  }
+  
+  currentLanguage = lang;
+  localStorage.setItem('metrofeed_language', lang);
+  updatePageLanguage();
+}
+
+function updatePageLanguage() {
+  console.log('updatePageLanguage called, current language:', currentLanguage);
+  
+  // Update HTML lang attribute
+  document.documentElement.lang = currentLanguage;
+  
+  // Update page title
+  document.title = translateText('page_title');
+  
+  // Update elements with data-translate attribute
+  const translateElements = document.querySelectorAll('[data-translate]');
+  console.log('Found', translateElements.length, 'elements with data-translate');
+  translateElements.forEach(element => {
+    const key = element.getAttribute('data-translate');
+    const translation = translateText(key);
+    if (translation) {
+      element.textContent = translation;
+    }
+  });
+  
+  // Update elements with data-translate-placeholder attribute
+  const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
+  console.log('Found', placeholderElements.length, 'elements with data-translate-placeholder');
+  placeholderElements.forEach(element => {
+    const key = element.getAttribute('data-translate-placeholder');
+    const translation = translateText(key);
+    if (translation) {
+      element.placeholder = translation;
+    }
+  });
+  
+  // Update language button text
+  const langBtn = document.getElementById('languageBtn');
+  if (langBtn) {
+    const langSpan = langBtn.querySelector('span');
+    if (langSpan) {
+      langSpan.textContent = translateText('language');
+      console.log('Updated language button text to:', translateText('language'));
+    }
+  } else {
+    console.log('Language button not found');
+  }
+}
+
+// translateText function is already defined at the top of the file
+
+// Make remaining functions globally available
+window.setLanguage = setLanguage;
+window.updatePageLanguage = updatePageLanguage;
+window.getCurrentLanguage = getCurrentLanguage;
+
+// Initialize language system
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOMContentLoaded - initializing language system');
+  currentLanguage = getCurrentLanguage();
+  console.log('Initial language set to:', currentLanguage);
+  updatePageLanguage();
+  
+  // Test if toggleLanguage is accessible
+  console.log('toggleLanguage function available:', typeof window.toggleLanguage);
+  console.log('toggleLanguage function:', window.toggleLanguage);
+  
+  // Test if the button exists and add event listener
+  const langBtn = document.getElementById('languageBtn');
+  console.log('Language button found:', !!langBtn);
+  if (langBtn) {
+    console.log('Language button onclick:', langBtn.onclick);
+    // Test if we can call the function directly
+    console.log('Can call toggleLanguage directly:', typeof window.toggleLanguage === 'function');
+    
+    // Add event listener as backup
+    langBtn.addEventListener('click', function(e) {
+      console.log('Language button clicked via event listener');
+      e.preventDefault();
+      if (typeof window.toggleLanguage === 'function') {
+        window.toggleLanguage();
+      } else {
+        console.error('toggleLanguage function not found in event listener');
+      }
+    });
+  }
+});
+
+// Export for use in other files
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { translations, translateText, setLanguage, getCurrentLanguage };
+} 
