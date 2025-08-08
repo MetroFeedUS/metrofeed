@@ -148,7 +148,7 @@ const translations = {
     "alertsTitle": "Portland Alerts - MetroFeed",
     "portlandAreaAlerts": "Portland Area Alerts",
     "loadingAlerts": "Loading TriMet alerts…",
-    "noActiveAlerts": "No active TriMet alerts.",
+    "noActiveTriMetAlerts": "No active TriMet alerts.",
     "couldNotLoadAlerts": "Could not load TriMet alerts. Try again later.",
     "trimetAlert": "TriMet Alert",
     "fullAlert": "Full Alert →",
@@ -300,7 +300,7 @@ const translations = {
     "alertsTitle": "Alertas de Portland - MetroFeed",
     "portlandAreaAlerts": "Alertas del Área de Portland",
     "loadingAlerts": "Cargando alertas de TriMet…",
-    "noActiveAlerts": "No hay alertas activas de TriMet.",
+    "noActiveTriMetAlerts": "No hay alertas activas de TriMet.",
     "couldNotLoadAlerts": "No se pudieron cargar las alertas de TriMet. Inténtalo más tarde.",
     "trimetAlert": "Alerta de TriMet",
     "fullAlert": "Alerta Completa →",
@@ -451,4 +451,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-console.log('✅ translations.js loaded completely! (v11)'); 
+console.log('✅ translations.js loaded completely! (v12)'); 
