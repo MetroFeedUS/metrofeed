@@ -359,7 +359,9 @@ function updatePageLanguage() {
   console.log('📝 Found', translateElements.length, 'elements to translate');
   translateElements.forEach(element => {
     const key = element.getAttribute('data-translate');
+    console.log('🔍 Processing element with key:', key);
     const translation = translateText(key);
+    console.log('📄 Translation result:', translation);
     if (translation) {
       // Check if this element should preserve HTML formatting
       const preserveHTML = element.hasAttribute('data-translate-html');
@@ -368,6 +370,7 @@ function updatePageLanguage() {
       } else {
         element.textContent = translation;
       }
+      console.log('✅ Applied translation to element');
     }
   });
   
