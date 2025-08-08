@@ -8,6 +8,28 @@
 
   <script src="../translations.js"></script>
 
+  <script>
+    // Initialize language system after translations.js loads
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🌍 Weather page DOM loaded, initializing language...');
+      if (typeof updatePageLanguage === 'function') {
+        console.log('✅ updatePageLanguage function found, calling it...');
+        updatePageLanguage();
+      } else {
+        console.error('❌ updatePageLanguage function not found!');
+        // Fallback: try again after a short delay
+        setTimeout(function() {
+          if (typeof updatePageLanguage === 'function') {
+            console.log('✅ updatePageLanguage function found on retry, calling it...');
+            updatePageLanguage();
+          } else {
+            console.error('❌ updatePageLanguage function still not found after retry!');
+          }
+        }, 100);
+      }
+    });
+  </script>
+
   <style>
     html, body {
       margin: 0;
@@ -132,15 +154,15 @@
   </header>
 
   <!-- BACK BUTTON -->
-  <button class="back-button-fixed" onclick="history.back()" aria-label="goBack">
+  <button class="back-button-fixed" onclick="history.back()" aria-label="goBack" title="Go Back">
     <!-- Left Arrow SVG -->
     <svg viewBox="0 0 24 24">
       <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
     </svg>
   </button>
 
-  <div style="background-color: #111; color: #ccc; padding: 0.75rem 1rem; text-align: center; font-size: 0.9rem; border-bottom: 1px solid #333;">
-    <strong data-translate="weatherDisclaimer">Disclaimer:</strong> <span data-translate="weatherDisclaimerText">MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the</span> <a href="https://www.weather.gov" target="_blank" style="color: #1DA1F2; text-decoration: none;" data-translate="nationalWeatherService">National Weather Service (NWS)</a>. <span data-translate="weatherDisclaimerEnd">During severe weather or life-threatening events, always rely on official alerts at</span> <strong data-translate="weatherGov">weather.gov</strong> <span data-translate="weatherDisclaimerFinal">or your local authorities.</span>
+  <div style="background-color: #111; color: #ccc; padding: 0.75rem 1rem; text-align: center; font-size: 0.9rem; border-bottom: 1px solid #333;" data-translate="weatherDisclaimerFull" data-translate-html>
+    <strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href="https://www.weather.gov" target="_blank" style="color: #1DA1F2; text-decoration: none;">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.
   </div>
 
   <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
@@ -275,22 +297,13 @@
   </footer>
 
 
-  <script>
-    // Initialize language system after DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof updatePageLanguage === 'function') {
-        updatePageLanguage();
-      }
-    });
-  </script>
+
 
   <script>
     if (!localStorage.getItem('cookieConsent')) {
       document.write(`
-        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
-          📢 We use cookies to improve functionality and analyze traffic.
-          By using MetroFeed, you agree to our 
-          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;" data-translate="cookieBannerFull" data-translate-html>
+          📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
           <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
         </div>
       `);
