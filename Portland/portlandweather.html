@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#000000" />
   <title data-translate="weatherTitle">Portland, OR Weather - MetroFeed</title>
 
-  <script src="../translations.js"></script>
+  <script src="../translations.js?v=8"></script>
 
   <script>
     // Fallback for translateText if not available yet
@@ -19,8 +19,16 @@
     
     // Initialize language system
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('🌍 Weather page DOM loaded, checking translation system...');
+      console.log('Current language:', localStorage.getItem('metrofeed_language') || 'en');
+      console.log('updatePageLanguage available:', typeof updatePageLanguage);
+      console.log('translateText available:', typeof translateText);
+      
       if (typeof updatePageLanguage === 'function') {
+        console.log('✅ Calling updatePageLanguage...');
         updatePageLanguage();
+      } else {
+        console.error('❌ updatePageLanguage not available!');
       }
     });
   </script>
