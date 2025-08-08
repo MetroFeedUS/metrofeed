@@ -327,11 +327,6 @@ function getCurrentLanguage() {
 }
 
 function translateText(key) {
-  console.log('🔍 translateText called with key:', key);
-  console.log('🔍 currentLanguage:', currentLanguage);
-  console.log('🔍 translations object exists:', !!translations);
-  console.log('🔍 translations[currentLanguage] exists:', !!translations[currentLanguage]);
-  
   // Safety check - if translations object isn't loaded yet, return the key
   if (!translations || !translations[currentLanguage]) {
     console.warn('Translations not loaded yet, returning key:', key);
@@ -339,7 +334,6 @@ function translateText(key) {
   }
   
   if (translations[currentLanguage] && translations[currentLanguage][key]) {
-    console.log('✅ Translated', key, 'to', translations[currentLanguage][key]);
     return translations[currentLanguage][key];
   } else if (translations.en && translations.en[key]) {
     console.log('⚠️ Key not found in', currentLanguage, 'using English:', key);
