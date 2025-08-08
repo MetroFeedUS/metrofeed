@@ -327,13 +327,19 @@ function getCurrentLanguage() {
 }
 
 function translateText(key) {
+  console.log('🔍 translateText called with key:', key);
+  console.log('🔍 currentLanguage:', currentLanguage);
+  console.log('🔍 translations object exists:', !!translations);
+  console.log('🔍 translations[currentLanguage] exists:', !!translations[currentLanguage]);
+  
   // Safety check - if translations object isn't loaded yet, return the key
   if (!translations || !translations[currentLanguage]) {
-    console.warn('Translations not loaded yet, returning key:', key);
+    console.warn('❌ Translations not loaded yet, returning key:', key);
     return key;
   }
   
   if (translations[currentLanguage] && translations[currentLanguage][key]) {
+    console.log('✅ Found translation for', key, ':', translations[currentLanguage][key]);
     return translations[currentLanguage][key];
   } else if (translations.en && translations.en[key]) {
     console.log('⚠️ Key not found in', currentLanguage, 'using English:', key);
@@ -345,26 +351,36 @@ function translateText(key) {
 
 function updatePageLanguage() {
   console.log('🔄 updatePageLanguage called, currentLanguage:', currentLanguage);
+  console.log('🔄 Document readyState:', document.readyState);
+  console.log('🔄 translations object available:', typeof translations);
   document.documentElement.lang = currentLanguage;
   
   // Only update title if there's a data-translate attribute on the title element
   const titleElement = document.querySelector('title[data-translate]');
+  console.log('🔄 Title element found:', !!titleElement);
   if (titleElement) {
     const titleKey = titleElement.getAttribute('data-translate');
-    document.title = translateText(titleKey);
+    console.log('🔄 Title key:', titleKey);
+    const titleTranslation = translateText(titleKey);
+    console.log('🔄 Title translation:', titleTranslation);
+    document.title = titleTranslation;
   }
   
   const translateElements = document.querySelectorAll('[data-translate]');
   console.log('📝 Found', translateElements.length, 'elements to translate');
-  translateElements.forEach(element => {
+  translateElements.forEach((element, index) => {
     const key = element.getAttribute('data-translate');
-    console.log('🔍 Processing element with key:', key);
+    console.log(`🔍 Processing element ${index + 1}/${translateElements.length} with key:`, key);
+    console.log('🔍 Element tagName:', element.tagName);
+    console.log('🔍 Element original text:', element.textContent);
     const translation = translateText(key);
     console.log('📄 Translation result:', translation);
     if (translation) {
       // Check if this element should preserve HTML formatting
       const preserveHTML = element.hasAttribute('data-translate-html');
+      console.log('🔍 Preserve HTML:', preserveHTML);
       if (preserveHTML) {
+        console.log('🔍 Setting innerHTML to:', translation);
         element.innerHTML = translation;
       } else {
         element.textContent = translation;
