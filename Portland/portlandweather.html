@@ -7,25 +7,19 @@
   <title data-translate="weatherTitle">Portland, OR Weather - MetroFeed</title>
 
   <script src="../translations.js"></script>
-
   <script>
-    // Initialize language system after translations.js loads
+    // Fallback for translateText if not available yet
+    if (typeof window.translateText === 'undefined') {
+      window.translateText = function(key) {
+        console.warn('translateText not ready yet, returning key:', key);
+        return key;
+      };
+    }
+    
+    // Initialize language system
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🌍 Weather page DOM loaded, initializing language...');
       if (typeof updatePageLanguage === 'function') {
-        console.log('✅ updatePageLanguage function found, calling it...');
         updatePageLanguage();
-      } else {
-        console.error('❌ updatePageLanguage function not found!');
-        // Fallback: try again after a short delay
-        setTimeout(function() {
-          if (typeof updatePageLanguage === 'function') {
-            console.log('✅ updatePageLanguage function found on retry, calling it...');
-            updatePageLanguage();
-          } else {
-            console.error('❌ updatePageLanguage function still not found after retry!');
-          }
-        }, 100);
       }
     });
   </script>
@@ -161,7 +155,7 @@
     </svg>
   </button>
 
-  <div style="background-color: #111; color: #ccc; padding: 0.75rem 1rem; text-align: center; font-size: 0.9rem; border-bottom: 1px solid #333;" data-translate="weatherDisclaimerFull" data-translate-html>
+  <div style="background-color: #111; color: #ccc; padding: 0.75rem 1rem; text-align: center; font-size: 0.9rem; border-bottom: 1px solid #333;" data-translate="weatherDisclaimerFull">
     <strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href="https://www.weather.gov" target="_blank" style="color: #1DA1F2; text-decoration: none;">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.
   </div>
 
@@ -302,9 +296,10 @@
   <script>
     if (!localStorage.getItem('cookieConsent')) {
       document.write(`
-        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;" data-translate="cookieBannerFull" data-translate-html>
-          📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br>
-          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          <span data-translate="cookieMessage">📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our</span> 
+          <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;' data-translate="privacy">Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;' data-translate="ok">OK</button>
         </div>
       `);
     }

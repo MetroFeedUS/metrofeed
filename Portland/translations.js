@@ -114,7 +114,8 @@ const translations = {
     "contactUs": "Contact Us",
     "reportProblem": "Report a Problem",
     "privacyPolicy": "Privacy Policy",
-    "cookieBannerFull": "📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Privacy Policy</a>.<br><button onclick='localStorage.setItem(\"cookieConsent\", \"true\"); document.getElementById(\"cookie-banner\").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>",
+    "cookieMessage": "📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our",
+    "ok": "OK",
     
     // BusRoutesMain specific
     "portlandBusRoutes": "Portland, OR - Bus Routes",
@@ -125,7 +126,7 @@ const translations = {
     
     // Weather page specific
     "weatherTitle": "Portland, OR Weather - MetroFeed",
-    "weatherDisclaimerFull": "<strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.",
+    "weatherDisclaimerFull": "Disclaimer: MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the National Weather Service (NWS). During severe weather or life-threatening events, always rely on official alerts at weather.gov or your local authorities.",
     "weatherBetaMessage": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
     "weatherAlerts": "⚠️ Weather Alerts (Tap to View)",
     "checkingAlerts": "Checking for alerts...",
@@ -264,7 +265,8 @@ const translations = {
     "contactUs": "Contáctenos",
     "reportProblem": "Reportar Problema",
     "privacyPolicy": "Política de Privacidad",
-    "cookieBannerFull": "📢 Usamos cookies para mejorar la funcionalidad y analizar el tráfico. Al usar MetroFeed, aceptas nuestra <a href='privacy.html' style='color: #4dd0e1; text-decoration: underline;'>Política de Privacidad</a>.<br><button onclick='localStorage.setItem(\"cookieConsent\", \"true\"); document.getElementById(\"cookie-banner\").remove();' style='margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;'>OK</button>",
+    "cookieMessage": "📢 Usamos cookies para mejorar la funcionalidad y analizar el tráfico. Al usar MetroFeed, aceptas nuestra",
+    "ok": "OK",
     
     // BusRoutesMain specific
     "portlandBusRoutes": "Portland, OR - Rutas de Autobús",
@@ -276,7 +278,7 @@ const translations = {
     
     // Weather page specific
     "weatherTitle": "Clima de Portland, OR - MetroFeed",
-    "weatherDisclaimerFull": "<strong>Descargo de responsabilidad:</strong> MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">Servicio Meteorológico Nacional (NWS)</a>. Durante condiciones meteorológicas severas o eventos que amenacen la vida, siempre confíe en alertas oficiales en <strong>weather.gov</strong> o sus autoridades locales.",
+    "weatherDisclaimerFull": "Descargo de responsabilidad: MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del Servicio Meteorológico Nacional (NWS). Durante condiciones meteorológicas severas o eventos que amenacen la vida, siempre confíe en alertas oficiales en weather.gov o sus autoridades locales.",
     "weatherBetaMessage": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
     "weatherAlerts": "⚠️ Alertas Meteorológicas (Toca para Ver)",
     "checkingAlerts": "Verificando alertas...",
