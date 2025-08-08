@@ -124,25 +124,25 @@ const translations = {
     // RailRoutes specific
     "portlandRailRoutes": "Portland, OR - Rail Routes",
     
-         // Weather page specific
-     "weatherTitle": "Portland, OR Weather - MetroFeed",
-     "weatherDisclaimerFull": "<strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.",
-     "weatherBetaMessage": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
-     "weatherAlerts": "⚠️ Weather Alerts (Tap to View)",
-     "checkingAlerts": "Checking for alerts...",
-     "noActiveAlerts": "✅ No active alerts at this time.",
-     "unableToLoadAlerts": "⚠️ Unable to load alert data.",
-     "jumpToForecast": "Jump to Forecast",
-     "tornadoWarning": "Tornado Warning",
-     "severeThunderstormWarning": "Severe Thunderstorm Warning",
-     "flashFloodWarning": "Flash Flood Warning",
-     "floodWarning": "Flood Warning",
-     "winterStormWarning": "Winter Storm Warning",
-     "specialWeatherStatement": "Special Weather Statement",
-     "loadingForecast": "Loading 7-day forecast...",
-     "sevenDayForecast": "7-Day Forecast",
-     "failedToLoadForecast": "Failed to load forecast.",
-     "goBack": "Go back",
+    // Weather page specific
+    "weatherTitle": "Portland, OR Weather - MetroFeed",
+    "weatherDisclaimerFull": "<strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.",
+    "weatherBetaMessage": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
+    "weatherAlerts": "⚠️ Weather Alerts (Tap to View)",
+    "checkingAlerts": "Checking for alerts...",
+    "noActiveAlerts": "✅ No active alerts at this time.",
+    "unableToLoadAlerts": "⚠️ Unable to load alert data.",
+    "jumpToForecast": "Jump to Forecast",
+    "tornadoWarning": "Tornado Warning",
+    "severeThunderstormWarning": "Severe Thunderstorm Warning",
+    "flashFloodWarning": "Flash Flood Warning",
+    "floodWarning": "Flood Warning",
+    "winterStormWarning": "Winter Storm Warning",
+    "specialWeatherStatement": "Special Weather Statement",
+    "loadingForecast": "Loading 7-day forecast...",
+    "sevenDayForecast": "7-Day Forecast",
+    "failedToLoadForecast": "Failed to load forecast.",
+    "goBack": "Go back",
     
     // Alerts page specific
     "alertsTitle": "Portland Alerts - MetroFeed",
@@ -277,24 +277,24 @@ const translations = {
     "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite",
     
     // Weather page specific
-     "weatherTitle": "Clima de Portland, OR - MetroFeed",
-     "weatherDisclaimerFull": "<strong>Descargo de responsabilidad:</strong> MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">Servicio Meteorológico Nacional (NWS)</a>. Durante condiciones meteorológicas severas o eventos que amenacen la vida, siempre confíe en alertas oficiales en <strong>weather.gov</strong> o sus autoridades locales.",
-     "weatherBetaMessage": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
-     "weatherAlerts": "⚠️ Alertas Meteorológicas (Toca para Ver)",
-     "checkingAlerts": "Verificando alertas...",
-     "noActiveAlerts": "✅ No hay alertas activas en este momento.",
-     "unableToLoadAlerts": "⚠️ No se pudieron cargar los datos de alerta.",
-     "jumpToForecast": "Ir al Pronóstico",
-     "tornadoWarning": "Advertencia de Tornado",
-     "severeThunderstormWarning": "Advertencia de Tormenta Eléctrica Severa",
-     "flashFloodWarning": "Advertencia de Inundación Repentina",
-     "floodWarning": "Advertencia de Inundación",
-     "winterStormWarning": "Advertencia de Tormenta Invernal",
-     "specialWeatherStatement": "Declaración Meteorológica Especial",
-     "loadingForecast": "Cargando pronóstico de 7 días...",
-     "sevenDayForecast": "Pronóstico de 7 Días",
-     "failedToLoadForecast": "Error al cargar el pronóstico.",
-     "goBack": "Volver",
+    "weatherTitle": "Clima de Portland, OR - MetroFeed",
+    "weatherDisclaimerFull": "<strong>Descargo de responsabilidad:</strong> MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">Servicio Meteorológico Nacional (NWS)</a>. Durante condiciones meteorológicas severas o eventos que amenacen la vida, siempre confíe en alertas oficiales en <strong>weather.gov</strong> o sus autoridades locales.",
+    "weatherBetaMessage": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
+    "weatherAlerts": "⚠️ Alertas Meteorológicas (Toca para Ver)",
+    "checkingAlerts": "Verificando alertas...",
+    "noActiveAlerts": "✅ No hay alertas activas en este momento.",
+    "unableToLoadAlerts": "⚠️ No se pudieron cargar los datos de alerta.",
+    "jumpToForecast": "Ir al Pronóstico",
+    "tornadoWarning": "Advertencia de Tornado",
+    "severeThunderstormWarning": "Advertencia de Tormenta Eléctrica Severa",
+    "flashFloodWarning": "Advertencia de Inundación Repentina",
+    "floodWarning": "Advertencia de Inundación",
+    "winterStormWarning": "Advertencia de Tormenta Invernal",
+    "specialWeatherStatement": "Declaración Meteorológica Especial",
+    "loadingForecast": "Cargando pronóstico de 7 días...",
+    "sevenDayForecast": "Pronóstico de 7 Días",
+    "failedToLoadForecast": "Error al cargar el pronóstico.",
+    "goBack": "Volver",
     
     // Alerts page specific
     "alertsTitle": "Alertas de Portland - MetroFeed",
@@ -451,4 +451,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-console.log('✅ translations.js loaded completely! (v9)'); 
+console.log('✅ translations.js loaded completely! (v10)'); 
