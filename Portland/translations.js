@@ -7,6 +7,7 @@ console.log('🚀 translations.js is loading...');
 let currentLanguage = 'en';
 
 // Define translations object first
+console.log('🔍 Creating translations object...');
 const translations = {
   en: {
     // Page title
@@ -313,6 +314,11 @@ const translations = {
   }
 };
 
+console.log('🔍 Translations object created with EN keys:', Object.keys(translations.en).length);
+console.log('🔍 Translations object created with ES keys:', Object.keys(translations.es).length);
+console.log('🔍 Weather keys in EN:', Object.keys(translations.en).filter(key => key.includes('weather')));
+console.log('🔍 Weather keys in ES:', Object.keys(translations.es).filter(key => key.includes('weather')));
+
 // Simple, direct functions
 function getCurrentLanguage() {
   const savedLang = localStorage.getItem('metrofeed_language');
@@ -451,4 +457,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-console.log('✅ translations.js loaded completely! (v13)'); 
+console.log('✅ translations.js loaded completely! (v14)'); 
