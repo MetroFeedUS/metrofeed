@@ -6,6 +6,8 @@ console.log('🚀 translations.js is loading...');
 // Global variables
 let currentLanguage = 'en';
 
+// Define translations object first
+console.log('🔍 Creating translations object...');
 const translations = {
   en: {
     // Page title
@@ -73,8 +75,8 @@ const translations = {
     "clear": "Clear",
     
     // Install prompt
-    "android_instructions": "Android Instructions",
-    "apple_instructions": "Apple Instructions", 
+    "androidInstructions": "Android Instructions",
+    "appleInstructions": "Apple Instructions", 
     "later": "Later",
     "installPromptTitle": "📲 Add MetroFeed Portland to your home screen",
     "installPromptSubtitle": "Use MetroFeed like an app for faster access!",
@@ -121,7 +123,42 @@ const translations = {
     "searchRoutes": "Search for a route...",
     
     // RailRoutes specific
-    "portlandRailRoutes": "Portland, OR - Rail Routes"
+    "portlandRailRoutes": "Portland, OR - Rail Routes",
+    
+    // Weather page specific
+    "weatherTitle": "Portland, OR Weather - MetroFeed",
+    "weatherDisclaimerFull": "<strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.",
+    "weatherBetaMessage": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
+    "weatherAlerts": "⚠️ Weather Alerts (Tap to View)",
+    "checkingAlerts": "Checking for alerts...",
+    "noActiveAlerts": "✅ No active alerts at this time.",
+    "unableToLoadAlerts": "⚠️ Unable to load alert data.",
+    "jumpToForecast": "Jump to Forecast",
+    "tornadoWarning": "Tornado Warning",
+    "severeThunderstormWarning": "Severe Thunderstorm Warning",
+    "flashFloodWarning": "Flash Flood Warning",
+    "floodWarning": "Flood Warning",
+    "winterStormWarning": "Winter Storm Warning",
+    "specialWeatherStatement": "Special Weather Statement",
+    "loadingForecast": "Loading 7-day forecast...",
+    "sevenDayForecast": "7-Day Forecast",
+    "failedToLoadForecast": "Failed to load forecast.",
+    "goBack": "Go back",
+    
+    // Alerts page specific
+    "alertsTitle": "Portland Alerts - MetroFeed",
+    "portlandAreaAlerts": "Portland Area Alerts",
+    "loadingAlerts": "Loading TriMet alerts…",
+    "noActiveTriMetAlerts": "No active TriMet alerts.",
+    "couldNotLoadAlerts": "Could not load TriMet alerts. Try again later.",
+    "trimetAlert": "TriMet Alert",
+    "fullAlert": "Full Alert →",
+    
+    // TrafficCameras page specific
+    "trafficCamerasTitle": "Live Traffic Cameras – MetroFeed Portland",
+    "liveTrafficCameras": "Live Traffic Cameras – Portland, OR",
+    "cameraCourtesy": "Camera courtesy of ODOT",
+    "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of the Oregon Department of Transportation (ODOT)."
   },
   
   es: {
@@ -190,8 +227,8 @@ const translations = {
     "clear": "Limpiar",
     
     // Install prompt
-    "android_instructions": "Instrucciones Android",
-    "apple_instructions": "Instrucciones Apple",
+    "androidInstructions": "Instrucciones Android",
+    "appleInstructions": "Instrucciones Apple",
     "later": "Más Tarde",
     "installPromptTitle": "📲 Agregar MetroFeed Portland a tu pantalla de inicio",
     "installPromptSubtitle": "¡Usa MetroFeed como una aplicación para acceso más rápido!",
@@ -238,62 +275,127 @@ const translations = {
     
     // RailRoutes specific
     "portlandRailRoutes": "Portland, OR - Rutas de Tren",
-    "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite"
+    "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite",
+    
+    // Weather page specific
+    "weatherTitle": "Clima de Portland, OR - MetroFeed",
+    "weatherDisclaimerFull": "<strong>Descargo de responsabilidad:</strong> MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">Servicio Meteorológico Nacional (NWS)</a>. Durante condiciones meteorológicas severas o eventos que amenacen la vida, siempre confíe en alertas oficiales en <strong>weather.gov</strong> o sus autoridades locales.",
+    "weatherBetaMessage": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
+    "weatherAlerts": "⚠️ Alertas Meteorológicas (Toca para Ver)",
+    "checkingAlerts": "Verificando alertas...",
+    "noActiveAlerts": "✅ No hay alertas activas en este momento.",
+    "unableToLoadAlerts": "⚠️ No se pudieron cargar los datos de alerta.",
+    "jumpToForecast": "Ir al Pronóstico",
+    "tornadoWarning": "Advertencia de Tornado",
+    "severeThunderstormWarning": "Advertencia de Tormenta Eléctrica Severa",
+    "flashFloodWarning": "Advertencia de Inundación Repentina",
+    "floodWarning": "Advertencia de Inundación",
+    "winterStormWarning": "Advertencia de Tormenta Invernal",
+    "specialWeatherStatement": "Declaración Meteorológica Especial",
+    "loadingForecast": "Cargando pronóstico de 7 días...",
+    "sevenDayForecast": "Pronóstico de 7 Días",
+    "failedToLoadForecast": "Error al cargar el pronóstico.",
+    "goBack": "Volver",
+    
+    // Alerts page specific
+    "alertsTitle": "Alertas de Portland - MetroFeed",
+    "portlandAreaAlerts": "Alertas del Área de Portland",
+    "loadingAlerts": "Cargando alertas de TriMet…",
+    "noActiveTriMetAlerts": "No hay alertas activas de TriMet.",
+    "couldNotLoadAlerts": "No se pudieron cargar las alertas de TriMet. Inténtalo más tarde.",
+    "trimetAlert": "Alerta de TriMet",
+    "fullAlert": "Alerta Completa →",
+    
+    // TrafficCameras page specific
+    "trafficCamerasTitle": "Cámaras de Tráfico en Vivo – MetroFeed Portland",
+    "liveTrafficCameras": "Cámaras de Tráfico en Vivo – Portland, OR",
+    "cameraCourtesy": "Cámara cortesía de ODOT",
+    "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía del Departamento de Transporte de Oregon (ODOT)."
   }
 };
 
-// Language management functions
+console.log('🔍 Translations object created with EN keys:', Object.keys(translations.en).length);
+console.log('🔍 Translations object created with ES keys:', Object.keys(translations.es).length);
+console.log('🔍 Weather keys in EN:', Object.keys(translations.en).filter(key => key.includes('weather')));
+console.log('🔍 Weather keys in ES:', Object.keys(translations.es).filter(key => key.includes('weather')));
+
+// Simple, direct functions
 function getCurrentLanguage() {
-  // Check localStorage first
   const savedLang = localStorage.getItem('metrofeed_language');
   if (savedLang && translations[savedLang]) {
     return savedLang;
   }
-  
-  // Check browser language
   const browserLang = navigator.language || navigator.userLanguage;
   if (browserLang.startsWith('es')) {
     return 'es';
   }
-  
-  // Default to English
   return 'en';
 }
 
-function setLanguage(lang) {
-  if (!translations[lang]) {
-    console.warn(`Language '${lang}' not supported, falling back to English`);
-    lang = 'en';
+function translateText(key) {
+  console.log('🔍 translateText called with key:', key);
+  console.log('🔍 currentLanguage:', currentLanguage);
+  console.log('🔍 translations object exists:', !!translations);
+  console.log('🔍 translations[currentLanguage] exists:', !!translations[currentLanguage]);
+  
+  // Safety check - if translations object isn't loaded yet, return the key
+  if (!translations || !translations[currentLanguage]) {
+    console.warn('❌ Translations not loaded yet, returning key:', key);
+    return key;
   }
   
-  currentLanguage = lang;
-  localStorage.setItem('metrofeed_language', lang);
-  updatePageLanguage();
+  if (translations[currentLanguage] && translations[currentLanguage][key]) {
+    console.log('✅ Found translation for', key, ':', translations[currentLanguage][key]);
+    return translations[currentLanguage][key];
+  } else if (translations.en && translations.en[key]) {
+    console.log('⚠️ Key not found in', currentLanguage, 'using English:', key);
+    return translations.en[key];
+  }
+  console.warn('❌ Translation key not found:', key);
+  return key;
 }
 
 function updatePageLanguage() {
-  console.log('updatePageLanguage called, current language:', currentLanguage);
-  
-  // Update HTML lang attribute
+  console.log('🔄 updatePageLanguage called, currentLanguage:', currentLanguage);
+  console.log('🔄 Document readyState:', document.readyState);
+  console.log('🔄 translations object available:', typeof translations);
   document.documentElement.lang = currentLanguage;
   
-  // Update page title
-  document.title = translateText('page_title');
+  // Only update title if there's a data-translate attribute on the title element
+  const titleElement = document.querySelector('title[data-translate]');
+  console.log('🔄 Title element found:', !!titleElement);
+  if (titleElement) {
+    const titleKey = titleElement.getAttribute('data-translate');
+    console.log('🔄 Title key:', titleKey);
+    const titleTranslation = translateText(titleKey);
+    console.log('🔄 Title translation:', titleTranslation);
+    document.title = titleTranslation;
+  }
   
-  // Update elements with data-translate attribute
   const translateElements = document.querySelectorAll('[data-translate]');
-  console.log('Found', translateElements.length, 'elements with data-translate');
-  translateElements.forEach(element => {
+  console.log('📝 Found', translateElements.length, 'elements to translate');
+  translateElements.forEach((element, index) => {
     const key = element.getAttribute('data-translate');
+    console.log(`🔍 Processing element ${index + 1}/${translateElements.length} with key:`, key);
+    console.log('🔍 Element tagName:', element.tagName);
+    console.log('🔍 Element original text:', element.textContent);
     const translation = translateText(key);
+    console.log('📄 Translation result:', translation);
     if (translation) {
-      element.textContent = translation;
+      // Check if this element should preserve HTML formatting
+      const preserveHTML = element.hasAttribute('data-translate-html');
+      console.log('🔍 Preserve HTML:', preserveHTML);
+      if (preserveHTML) {
+        console.log('🔍 Setting innerHTML to:', translation);
+        element.innerHTML = translation;
+      } else {
+        element.textContent = translation;
+      }
+      console.log('✅ Applied translation to element');
     }
   });
   
-  // Update elements with data-translate-placeholder attribute
   const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
-  console.log('Found', placeholderElements.length, 'elements with data-translate-placeholder');
   placeholderElements.forEach(element => {
     const key = element.getAttribute('data-translate-placeholder');
     const translation = translateText(key);
@@ -301,56 +403,58 @@ function updatePageLanguage() {
       element.placeholder = translation;
     }
   });
-  
-  // Update language button text
-  const langBtn = document.getElementById('languageBtn');
-  if (langBtn) {
-    const langSpan = langBtn.querySelector('span');
-    if (langSpan) {
-      langSpan.textContent = translateText('language');
-      console.log('Updated language button text to:', translateText('language'));
+}
+
+function setLanguage(lang) {
+  if (!translations[lang]) {
+    lang = 'en';
+  }
+  currentLanguage = lang;
+  localStorage.setItem('metrofeed_language', lang);
+  updatePageLanguage();
+}
+
+// SIMPLE DROPDOWN FUNCTION - THIS IS ALL WE NEED
+function toggleLanguageDropdown() {
+  console.log('toggleLanguageDropdown called');
+  const dropdown = document.getElementById('languageDropdown');
+  if (dropdown) {
+    if (dropdown.style.display === 'flex') {
+      dropdown.style.display = 'none';
+    } else {
+      dropdown.style.display = 'flex';
     }
-  } else {
-    console.log('Language button not found');
   }
 }
 
-function translateText(key) {
-  if (translations[currentLanguage] && translations[currentLanguage][key]) {
-    return translations[currentLanguage][key];
-  } else if (translations.en[key]) {
-    return translations.en[key]; // Fallback to English
+function selectLanguage(lang) {
+  if (lang === 'en' || lang === 'es') {
+    setLanguage(lang);
   }
-  return key; // Return key if no translation found
+  const dropdown = document.getElementById('languageDropdown');
+  if (dropdown) {
+    dropdown.style.display = 'none';
+  }
 }
 
-function toggleLanguage() {
-  console.log('toggleLanguage called, current language:', currentLanguage);
-  const newLang = currentLanguage === 'en' ? 'es' : 'en';
-  console.log('switching to:', newLang);
-  setLanguage(newLang);
-}
-
-// Make all functions globally available
+// Make functions globally available IMMEDIATELY
+window.toggleLanguageDropdown = toggleLanguageDropdown;
+window.selectLanguage = selectLanguage;
 window.setLanguage = setLanguage;
 window.updatePageLanguage = updatePageLanguage;
 window.translateText = translateText;
 window.getCurrentLanguage = getCurrentLanguage;
-window.toggleLanguage = toggleLanguage;
 
-// Initialize language system
+// Initialize currentLanguage immediately
+currentLanguage = getCurrentLanguage();
+console.log('🌍 Current language set to:', currentLanguage);
+
+// Test that the function is available
+console.log('toggleLanguageDropdown available:', typeof window.toggleLanguageDropdown);
+
+// Initialize
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOMContentLoaded - initializing language system');
-  currentLanguage = getCurrentLanguage();
-  console.log('Initial language set to:', currentLanguage);
   updatePageLanguage();
-  
-  // Test if the button exists
-  const langBtn = document.getElementById('languageBtn');
-  console.log('Language button found:', !!langBtn);
-  if (langBtn) {
-    console.log('Language button onclick:', langBtn.onclick);
-  }
 });
 
-console.log('✅ translations.js loaded completely!'); 
+console.log('✅ translations.js loaded completely! (v14)'); 
