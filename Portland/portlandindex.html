@@ -18,7 +18,6 @@
     .icon-placeholder { width: 20px; height: 20px; margin-right: 6px; }
     .side-buttons { position: absolute; width: 45px; height: 45px; z-index: 1001; background-color: #4dd0e1; border: 2px solid #000; border-radius: 10px; box-shadow: 0 0 10px #4dd0e1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
     #menuBtn { top: 60px; left: 10px; }
-    #accountBtn { top: 10px; left: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
     #aiChatBtn { top: 60px; right: 10px; }
     #languageBtn { position: relative; }
@@ -209,20 +208,12 @@
     }
     .mf-overlay { pointer-events: auto !important; }
     .mf-modal { pointer-events: auto !important; }
-    .mf-free-btn { background: #F7630C !important; color: #fff !important; border: 2px solid #fff; margin-top: 10px; width: 100%; }
-    .mf-free-btn:hover, .mf-free-btn:focus { background: #fff !important; color: #F7630C !important; border-color: #F7630C !important; }
     @keyframes popin { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .mf-modal h2 { color: #4dd0e1; font-size: 1.25rem; margin: 0 0 0.5rem 0; letter-spacing: 0.01em; text-shadow: 0 1px 0 #222, 0 0 6px #4dd0e1; }
     .mf-modal p { color: #e4f9fb; font-size: 1.02rem; margin: 0 0 1.5rem 0; line-height: 1.4; font-weight: 400; text-shadow: 0 1px 0 #222; }
     .mf-actions { display: flex; gap: 0.65rem; margin-bottom: 1.1rem; justify-content: center; flex-wrap: wrap; }
     .mf-btn { flex: 1; background: #0d0d0d; color: #4dd0e1; border: 2px solid #fff; font-size: 1.01rem; border-radius: 8px; padding: 0.68rem 0.5rem; font-weight: bold; cursor: pointer; transition: background .15s, color .12s, border .18s; margin-bottom: 2px; min-width: 105px; outline: none; box-shadow: 0 0 6px #4dd0e1aa;}
     .mf-btn:hover, .mf-btn:focus { background: #4dd0e1; color: #0d0d0d; border-color: #fff; }
-    .mf-premium { margin: 1.1rem 0 0.5rem 0; color: #fff; font-size: 1.09rem; font-weight: bold; text-shadow: 0 0 6px #4dd0e1; }
-    .mf-premium span { color: #4dd0e1; }
-    .trial-btn { background: #4dd0e1; color: #000; border: 2px solid #fff; font-size: 1.07rem; font-weight: bold; padding: 0.75rem 0; width: 100%; border-radius: 10px; margin-top: 0.4rem; margin-bottom: 0.2rem; box-shadow: 0 0 10px #4dd0e1bb; cursor: pointer; transition: background .18s, color .18s, border .16s; }
-    .trial-btn:hover, .trial-btn:focus { background: #fff; color: #0071ce; border: 2px solid #4dd0e1; }
-    .trial-btn[disabled] { background: #222; color: #888; cursor: not-allowed; border: 2px solid #333; box-shadow: none;}
-    .trial-timer { display: block; margin-top: 0.2rem; font-size: 0.99rem; color: #fff; letter-spacing: 0.01em;}
     .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid #4dd0e1; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
     #installPrompt { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 1.5rem; text-align: center; border: 2px solid #4dd0e1; border-radius: 12px; max-width: 390px; width: 95vw; min-width: 0; z-index: 10000; box-shadow: 0 0 10px #4dd0e1; margin: 0; box-sizing: border-box; }
     #installPrompt button { display: block; margin: 0.5rem auto; padding: 0.6rem 1.2rem; background-color: #4dd0e1; color: #0d0d0d; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 90%; max-width: 240px; }
@@ -755,7 +746,6 @@
 <div id="map"></div>
 
 <!-- -- SIDE BUTTONS & DROPDOWN -- -->
-<button id="accountBtn" class="side-buttons"><a href="account.html"><img src="006-user.svg" alt="Account" /></a></button>
 <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
 <!-- Ticket purchase button -->
 <button id="aiChatBtn" class="side-buttons">
@@ -785,21 +775,21 @@
 </div>
 
 <div id="dropdownMenu" class="dropdown">
-  <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="1"></a>
-  <a href="https://metrofeedus.com/portland/railroutes"><img src="001-train-station.svg" alt="2"></a>
-  <a href="#" id="dropdownTrafficBtn" onclick="toggleTrafficFromDropdown()"><img src="003-warning.svg" alt="3"></a>
-  <a href="https://metrofeedus.com/portland/trafficcameras"><img src="004-cctv-camera.svg" alt="4"></a>
-  <!-- New AI button in dropdown -->
-  <a href="chat.html"><img src="007-chatbot.svg" alt="AI"></a>
-  <a href="https://metrofeedus.com/portland/portlandweather"><img src="005-weather-radar.svg" alt="5"></a>
+  <a href="https://metrofeedus.com/portland/portland-earthquake"><img src="006-earthquake.svg" alt="Earthquakes"></a>
+  <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="Bus Routes"></a>
+  <a href="https://metrofeedus.com/portland/railroutes"><img src="001-train-station.svg" alt="Rail Routes"></a>
+  <a href="#" id="dropdownTrafficBtn" onclick="toggleTrafficFromDropdown()"><img src="003-warning.svg" alt="Traffic Overlay"></a>
+  <a href="https://metrofeedus.com/portland/trafficcameras"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
+  <a href="https://metrofeedus.com/portland/portlandweather"><img src="005-weather-radar.svg" alt="Weather"></a>
+  <!-- AI Chat button in dropdown -->
+  <a href="chat.html"><img src="007-chatbot.svg" alt="AI Chat"></a>
   <a id="alertsMenuBtn" href="https://metrofeedus.com/portland/alerts" style="position:relative;">
     <img src="008-danger.svg" alt="Alerts">
     <span id="alertsDot" style="display: none; position: absolute; top: 4px; right: 4px; width: 13px; height: 13px; border-radius: 50%; background: #ff3b30; border: 2px solid #000; z-index: 2;"></span>
   </a>
-  <a href="https://metrofeedus.com/portland/portland-earthquake"><img src="006-earthquake.svg" alt="7"></a>
-  <!-- New Buses button in dropdown -->
-  <a href="#" id="dropdownBusesBtn" onclick="toggleAllBusesFromDropdown()"><img src="001-buses.svg" alt="Buses"></a>
-  <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="8"></a>
+  <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="Change City"></a>
+  <!-- Live Buses button in dropdown -->
+  <a href="#" id="dropdownBusesBtn" onclick="toggleAllBusesFromDropdown()"><img src="001-buses.svg" alt="Live Buses"></a>
 </div>
 
 <!-- -- SEARCH BAR -- -->
@@ -929,24 +919,6 @@
   </div>
 </div>
 
-<!-- -- LOGIN MODAL OVERLAY (hidden by default, shown by JS) -- -->
-<div class="mf-overlay" id="signInModal" style="display:none;">
-  <div class="mf-modal">
-    <h2 data-translate="sign_in_prompt">You're not logged in or don't have an account</h2>
-    <p data-translate="sign_in_prompt">Please <b>sign in</b>, <b>sign up</b>, or use the <b>free version</b> to continue:</p>
-    <div class="mf-actions" style="display: flex; gap: 0.65rem; margin-bottom: 1.1rem;">
-      <button class="mf-btn" onclick="location.href='signin.html'" data-translate="sign_in">Sign In</button>
-      <button class="mf-btn" onclick="location.href='signup.html'" data-translate="sign_up">Sign Up</button>
-    </div>
-    <button class="mf-btn mf-free-btn" id="freeBtn" onclick="localStorage.setItem('mf_free','true');hideSignInModal();location.href='https://metrofeedus.com/portland/portlandhome'" data-translate="use_free_version">Use Free Version</button>
-    <div class="mf-premium" style="margin-top:1.1rem;">
-      <span data-translate="try_premium">Try MetroFeed Premium FREE for 24hrs</span><br>
-      <small style="font-weight:normal;color:#cfdfff" data-translate="no_email_needed">NO email needed</small>
-    </div>
-    <button class="trial-btn" id="startTrialBtn" data-translate="start_free_trial">Start Free Trial</button>
-    <span class="trial-timer" id="trialTimer"></span>
-  </div>
-</div>
 
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -1155,16 +1127,16 @@
   // Function to show tooltips for dropdown buttons
   function showDropdownTooltips() {
     const tooltipData = [
+      { selector: 'a[href*="portland-earthquake"]', text: 'Earthquakes' },
       { selector: 'a[href*="busroutesmain"]', text: 'Bus Routes' },
       { selector: 'a[href*="railroutes"]', text: 'Rail Routes' },
       { selector: '#dropdownTrafficBtn', text: 'Traffic Overlay' },
       { selector: 'a[href*="trafficcameras"]', text: 'Traffic Cameras' },
-      { selector: 'a[href*="chat.html"]', text: 'AI Chat' },
       { selector: 'a[href*="portlandweather"]', text: 'Weather' },
+      { selector: 'a[href*="chat.html"]', text: 'AI Chat' },
       { selector: '#alertsMenuBtn', text: 'Alerts' },
-      { selector: 'a[href*="portland-earthquake"]', text: 'Earthquakes' },
-      { selector: '#dropdownBusesBtn', text: 'Live Buses' },
-      { selector: 'a[href*="freecitychanger"]', text: 'Change City' }
+      { selector: 'a[href*="freecitychanger"]', text: 'Change City' },
+      { selector: '#dropdownBusesBtn', text: 'Live Buses' }
     ];
     
     tooltipData.forEach((item, index) => {
@@ -2948,52 +2920,6 @@
     // showBusLegend();
   }
   
-  // === SECTION: SIGN-IN MODAL CONTROLS ===
-  function showSignInModal() {
-    console.log('[showSignInModal] Showing sign-in modal');
-    document.getElementById('signInModal').style.display = 'flex';
-  }
-  
-  function hideSignInModal() {
-    console.log('[hideSignInModal] Hiding sign-in modal');
-    document.getElementById('signInModal').style.display = 'none';
-  }
-  
-  // === SECTION: AUTHENTICATION CHECK ===
-  function checkAuthentication() {
-    console.log('[checkAuthentication] Checking user authentication status...');
-    
-    // Check if user is already using free version
-    const isFreeUser = localStorage.getItem('mf_free') === 'true';
-    if (isFreeUser) {
-      console.log('[checkAuthentication] User is already using free version, redirecting to PortlandHome');
-      window.location.href = 'PortlandHome.html';
-      return;
-    }
-    
-    // Check if user has an active trial
-    const hasTrial = localStorage.getItem('mf_trial') === 'true';
-    if (hasTrial) {
-      console.log('[checkAuthentication] User has active trial, allowing access');
-      return;
-    }
-    
-    // Check if user has a valid premium subscription
-    // For now, we'll show the sign-in modal if no authentication is found
-    // In a real implementation, you would check for valid tokens/sessions here
-    
-    const hasValidAuth = false; // Placeholder - replace with actual auth check
-    
-    if (!hasValidAuth) {
-      console.log('[checkAuthentication] No valid authentication found, showing sign-in modal');
-      // Show the sign-in modal after a short delay to ensure page is loaded
-      setTimeout(() => {
-        showSignInModal();
-      }, 1000);
-    } else {
-      console.log('[checkAuthentication] User is authenticated');
-    }
-  }
 
   function restoreOtpModal() {
     console.log('[restoreOtpModal] Restoring modal...');
@@ -3452,203 +3378,20 @@
       if (leg.mode !== 'WALK' && routeNumber) {
         console.log('[showRoute] Found transit leg:', leg, 'with processed route number:', routeNumber);
         
-        // Extract direction information from OTP leg
+        // Retrieve the direction that was already calculated in the first block
+        // This ensures both legs use the same fixed direction matching logic
         let direction = 0; // Default fallback
-        
-        // OTP provides direction in different ways:
-        // 1. leg.headsign - contains the direction description
-        // 2. leg.direction - might contain direction info
-        // 3. We need to match this with mastermap direction_name
-        
-        // Enhanced direction matching logic with comprehensive debugging
-        function normalizeString(str) {
-          return (str || '')
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '')
-            .replace(/\s+/g, '');
-        }
-        
-        if (leg.headsign) {
-          console.log('🔍 [DIRECTION DEBUG] ==========================================');
-          console.log('🔍 [DIRECTION DEBUG] Processing leg for route:', routeNumber);
-          console.log('🔍 [DIRECTION DEBUG] OTP headsign:', leg.headsign);
-          console.log('🔍 [DIRECTION DEBUG] OTP from stop:', leg.from?.name);
-          console.log('🔍 [DIRECTION DEBUG] OTP to stop:', leg.to?.name);
-          
-          const normHeadsign = normalizeString(leg.headsign);
-          console.log('🔍 [DIRECTION DEBUG] Normalized headsign:', normHeadsign);
-          
-          const masterRoute = masterRoutes.find(r => r.route_number === routeNumber);
-          if (masterRoute) {
-            const dir0Route = masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 0);
-            const dir1Route = masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 1);
-            
-            console.log('🔍 [DIRECTION DEBUG] Found master routes:');
-            console.log('🔍 [DIRECTION DEBUG]   Direction 0:', dir0Route ? {
-              direction_name: dir0Route.direction_name,
-              direction_name_raw: dir0Route.direction_name,
-              first_stop: dir0Route.stops?.[0]?.name,
-              last_stop: dir0Route.stops?.[dir0Route.stops?.length - 1]?.name,
-              route_title: dir0Route.route_title
-            } : 'NOT FOUND');
-            console.log('🔍 [DIRECTION DEBUG]   Direction 1:', dir1Route ? {
-              direction_name: dir1Route.direction_name,
-              direction_name_raw: dir1Route.direction_name,
-              first_stop: dir1Route.stops?.[0]?.name,
-              last_stop: dir1Route.stops?.[dir1Route.stops?.length - 1]?.name,
-              route_title: dir1Route.route_title
-            } : 'NOT FOUND');
-            
-            let matched = false;
-            
-            // SIMPLE HEADSIGN MATCHING - Let's make this work!
-            console.log('🔍 [DIRECTION DEBUG] --- SIMPLE HEADSIGN MATCHING ---');
-            
-            // Simple function to check if a destination is mentioned
-            function containsDestination(headsign, directionName) {
-              const headLower = headsign.toLowerCase();
-              const dirLower = directionName.toLowerCase();
-              
-              // Common destination keywords
-              const destinations = ['gresham', 'gateway', 'beaverton', 'hillsboro', 'city', 'downtown', 'center', 'tc', 'transit'];
-              
-              for (const dest of destinations) {
-                if (headLower.includes(dest) && dirLower.includes(dest)) {
-                  return true;
-                }
-              }
-              return false;
-            }
-            
-            console.log('🔍 [DIRECTION DEBUG] OTP headsign:', leg.headsign);
-            console.log('🔍 [DIRECTION DEBUG] Looking for destination match...');
-            
-            // Check Direction 0
-            if (dir0Route && dir0Route.direction_name) {
-              const dir0Match = containsDestination(leg.headsign, dir0Route.direction_name);
-              console.log('🔍 [DIRECTION DEBUG] Direction 0:', dir0Route.direction_name);
-              console.log('🔍 [DIRECTION DEBUG] Direction 0 match?', dir0Match);
-              
-              if (dir0Match) {
-                direction = 0;
-                matched = true;
-                console.log('✅ [DIRECTION DEBUG] SUCCESS: Direction 0 matches!');
-              }
-            }
-            
-            // Check Direction 1
-            if (!matched && dir1Route && dir1Route.direction_name) {
-              const dir1Match = containsDestination(leg.headsign, dir1Route.direction_name);
-              console.log('🔍 [DIRECTION DEBUG] Direction 1:', dir1Route.direction_name);
-              console.log('🔍 [DIRECTION DEBUG] Direction 1 match?', dir1Match);
-              
-              if (dir1Match) {
-                direction = 1;
-                matched = true;
-                console.log('✅ [DIRECTION DEBUG] SUCCESS: Direction 1 matches!');
-              }
-            }
-            
-            if (!matched) {
-              console.log('❌ [DIRECTION DEBUG] No destination match found');
-            }
-            
-            // Fallback: try to infer by comparing from/to stop names
-            if (!matched && dir0Route && dir1Route) {
-              console.log('🔍 [DIRECTION DEBUG] --- TRYING STOP NAME FALLBACK ---');
-              
-              const otpFrom = normalizeString(leg.from?.name);
-              const otpTo = normalizeString(leg.to?.name);
-              const dir0From = normalizeString(dir0Route.stops?.[0]?.name);
-              const dir0To = normalizeString(dir0Route.stops?.[dir0Route.stops.length - 1]?.name);
-              const dir1From = normalizeString(dir1Route.stops?.[0]?.name);
-              const dir1To = normalizeString(dir1Route.stops?.[dir1Route.stops.length - 1]?.name);
-              
-              console.log('🔍 [DIRECTION DEBUG] Stop comparisons:');
-              console.log('🔍 [DIRECTION DEBUG]   OTP From:', otpFrom, '| OTP To:', otpTo);
-              console.log('🔍 [DIRECTION DEBUG]   Dir0 From:', dir0From, '| Dir0 To:', dir0To);
-              console.log('🔍 [DIRECTION DEBUG]   Dir1 From:', dir1From, '| Dir1 To:', dir1To);
-              
-              const fromMatch0 = otpFrom && dir0From && otpFrom === dir0From;
-              const toMatch0 = otpTo && dir0To && otpTo === dir0To;
-              const fromMatch1 = otpFrom && dir1From && otpFrom === dir1From;
-              const toMatch1 = otpTo && dir1To && otpTo === dir1To;
-              
-              console.log('🔍 [DIRECTION DEBUG] Stop matches:');
-              console.log('🔍 [DIRECTION DEBUG]   Dir0 From match?', fromMatch0);
-              console.log('🔍 [DIRECTION DEBUG]   Dir0 To match?', toMatch0);
-              console.log('🔍 [DIRECTION DEBUG]   Dir1 From match?', fromMatch1);
-              console.log('🔍 [DIRECTION DEBUG]   Dir1 To match?', toMatch1);
-              
-              if (fromMatch0 || toMatch0) {
-                direction = 0;
-                matched = true;
-                console.log('✅ [DIRECTION DEBUG] SUCCESS: Fallback matched stops to direction 0');
-                console.log('✅ [DIRECTION DEBUG] Match type:', fromMatch0 ? 'FROM stop' : 'TO stop');
-              } else if (fromMatch1 || toMatch1) {
-                direction = 1;
-                matched = true;
-                console.log('✅ [DIRECTION DEBUG] SUCCESS: Fallback matched stops to direction 1');
-                console.log('✅ [DIRECTION DEBUG] Match type:', fromMatch1 ? 'FROM stop' : 'TO stop');
-              } else {
-                console.log('❌ [DIRECTION DEBUG] FAILED: Stop name fallback');
-              }
-            }
-            
-            // Additional fallback: try to extract direction from route title if direction_name is corrupted
-            if (!matched) {
-              console.log('🔍 [DIRECTION DEBUG] --- TRYING ROUTE TITLE FALLBACK ---');
-              
-              // Check if direction_name looks corrupted (too long, no spaces, etc.)
-              const isCorrupted = (name) => name && (name.length > 50 || !name.includes(' ') || name.includes('montgomerypkoryeon'));
-              
-              if (dir0Route && isCorrupted(dir0Route.direction_name)) {
-                console.log('🔍 [DIRECTION DEBUG] Direction 0 name appears corrupted, trying route title');
-                const routeTitle = dir0Route.route_title || '';
-                console.log('🔍 [DIRECTION DEBUG] Route title:', routeTitle);
-                
-                // Try to extract direction info from route title
-                const titleLower = routeTitle.toLowerCase();
-                if (titleLower.includes('gateway') || titleLower.includes('tc')) {
-                  direction = 0;
-                  matched = true;
-                  console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched route title to direction 0 (Gateway)');
-                }
-              }
-              
-              if (!matched && dir1Route && isCorrupted(dir1Route.direction_name)) {
-                console.log('🔍 [DIRECTION DEBUG] Direction 1 name appears corrupted, trying route title');
-                const routeTitle = dir1Route.route_title || '';
-                console.log('🔍 [DIRECTION DEBUG] Route title:', routeTitle);
-                
-                const titleLower = routeTitle.toLowerCase();
-                if (titleLower.includes('gateway') || titleLower.includes('tc')) {
-                  direction = 1;
-                  matched = true;
-                  console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched route title to direction 1 (Gateway)');
-                }
-              }
-            }
-            
-            if (!matched) {
-              direction = 0; // fallback
-              console.log('⚠️ [DIRECTION DEBUG] WARNING: Could not match headsign or stops to direction, using default 0');
-            }
-            
-            console.log('🔍 [DIRECTION DEBUG] FINAL RESULT: Direction =', direction);
-            console.log('🔍 [DIRECTION DEBUG] ==========================================');
-          } else {
-            console.log('❌ [DIRECTION DEBUG] ERROR: No master route found for route number:', routeNumber);
-            console.log('🔍 [DIRECTION DEBUG] ==========================================');
-          }
+        if (legKey && legColorMapping[legKey]) {
+          direction = legColorMapping[legKey].direction;
+          console.log('[showRoute] ✅ Reusing direction from legColorMapping for leg:', legIndex, 'route:', routeNumber, 'direction:', direction, 'legKey:', legKey);
         } else {
-          console.log('🔍 [DIRECTION DEBUG] No headsign available for this leg');
-          console.log('🔍 [DIRECTION DEBUG] ==========================================');
+          console.warn('[showRoute] ⚠️ WARNING: Could not find direction in legColorMapping for legKey:', legKey, '- route:', routeNumber, '- Using default 0');
+          console.warn('[showRoute] Available legKeys:', Object.keys(legColorMapping));
         }
         
         routesToTrack.push({
           route_id: routeNumber, // Use the processed route number, not leg.route
-          direction_id: direction, // Use the matched direction
+          direction_id: direction, // Use the direction from legColorMapping (already calculated in first block)
           mode: leg.mode
         });
       }
@@ -3942,9 +3685,6 @@
   document.addEventListener('DOMContentLoaded', function() {
     console.log('[DOMContentLoaded] Initializing map and event listeners...');
     
-    // Check authentication status first
-    checkAuthentication();
-    
     // Initialize MapLibre GL JS map with vector tiles
     const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
     const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
@@ -4091,19 +3831,6 @@
       });
       
       console.log('[DOMContentLoaded] Departure time radio button listeners added');
-    }
-    
-    // Trial button event listener
-    const startTrialBtn = document.getElementById('startTrialBtn');
-    if (startTrialBtn) {
-      startTrialBtn.addEventListener('click', function() {
-        console.log('[startTrialBtn] Free trial started');
-        // For now, just hide the modal and allow access
-        // In a real implementation, you would start a trial period
-        localStorage.setItem('mf_trial', 'true');
-        hideSignInModal();
-      });
-      console.log('[DOMContentLoaded] Trial button event listener added');
     }
     
     console.log('[DOMContentLoaded] Map and event listeners initialization complete');
