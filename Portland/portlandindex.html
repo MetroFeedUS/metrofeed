@@ -6,6 +6,13 @@
   <title>MetroFeed Portland Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
+  <!-- Sponsor Image Configuration -->
+  <script>
+    // Easy placement code for sponsor image
+    // Change this filename to update the sponsor image
+    const SPONSOR_IMAGE = "sponsor.png";
+  </script>
+  
   <!-- Language System -->
   	<script src="../translations.js"></script>
   <style>
@@ -28,16 +35,28 @@
       min-width: 20px; 
       text-align: center; 
     }
-    #logoBtn { 
-      position: absolute; 
-      bottom: 50px; 
-      left: 10px; 
-      width: 45px; 
-      height: 45px; 
-      z-index: 1001; 
-      cursor: default; 
+    /* -- SPONSOR BOX -- */
+    .sponsor-box {
+      position: absolute;
+      bottom: 10px; /* 10px from bottom of screen */
+      left: 10px; /* 10px from left of screen */
+      background-color: rgba(30,30,30,0.85);
+      padding: 8px 12px; /* Same as favorites bar */
+      border-radius: 8px; /* Same as favorites bar */
+      border: 1px solid #1E90FF; /* Same as favorites bar */
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      max-width: 200px; /* Reasonable max width for sponsor image */
     }
-    #logoBtn img { width: 45px; height: 45px; }
+    .sponsor-box img {
+      max-width: 100%;
+      max-height: 100%;
+      height: auto;
+      display: block;
+    }
     .side-buttons img { width: 20px; height: 20px; }
     /* -- DROPDOWN -- */
     .dropdown {
@@ -794,9 +813,18 @@
 </div>
 
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
-<div id="logoBtn">
-  <img src="Sitelogo.png" alt="MetroFeed Logo" />
+<div class="sponsor-box">
+  <img src="sponsor.png" alt="Sponsor" id="sponsorImage" />
 </div>
+<script>
+  // Set sponsor image from configuration constant
+  (function() {
+    const sponsorImg = document.getElementById('sponsorImage');
+    if (sponsorImg && typeof SPONSOR_IMAGE !== 'undefined') {
+      sponsorImg.src = SPONSOR_IMAGE;
+    }
+  })();
+</script>
 
 <div id="dropdownMenu" class="dropdown">
   <a id="youtubeBtn" href="https://www.youtube.com/@MetroFeedLouisville" target="_blank"><img src="006-earthquake.svg" alt="Youtube"></a>
@@ -854,7 +882,6 @@
     <div id="fav1" class="favorite-btn"></div>
     <div id="fav2" class="favorite-btn"></div>
     <div id="fav3" class="favorite-btn"></div>
-    <div id="fav4" class="favorite-btn"></div>
   </div>
 </div>
 
