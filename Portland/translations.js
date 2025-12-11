@@ -39,11 +39,11 @@ const translations = {
     "restore": "Restore",
     
     // Footer
-    "terms": "Terms of Use",
+    "terms": "Terms",
     "contact": "Contact Us",
     "report": "Report a Problem", 
     "dmca": "DMCA",
-    "privacy": "Privacy Policy",
+    "privacy": "Privacy",
     
     // Popups and messages
     "live_bus": "Live Bus",
@@ -191,11 +191,11 @@ const translations = {
     "restore": "Restaurar",
     
     // Footer
-    "terms": "Términos de Uso",
+    "terms": "Términos",
     "contact": "Contáctenos",
     "report": "Reportar Problema",
     "dmca": "DMCA", 
-    "privacy": "Política de Privacidad",
+    "privacy": "Privacidad",
     
     // Popups and messages
     "live_bus": "Autobús en Vivo",
