@@ -457,4 +457,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-console.log('✅ translations.js loaded completely! (v14)'); 
+console.log('✅ translations.js loaded completely! (v15)'); 
