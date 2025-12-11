@@ -203,7 +203,7 @@
     .favorites-wrapper.collapsed .favorites-chevron {
       transform: rotate(180deg);
     }
-    .favorites-wrapper span { 
+    .favorites-title { 
       color: #fff; 
       display: flex; 
       align-items: center;
@@ -214,6 +214,9 @@
       position: relative;
       gap: 6px; /* Space between text and chevron */
     }
+    .favorites-wrapper span[data-translate="favorites"] {
+      color: #fff;
+    }
     .favorites-container { 
       display: flex; 
       gap: 6px; 
@@ -222,13 +225,20 @@
       transition: all 0.3s ease;
     }
     .favorites-chevron {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       transition: transform 0.3s ease;
-      color: #1E90FF;
-      font-size: 12px;
-      line-height: 1;
-      font-weight: bold;
       flex-shrink: 0;
+      width: 12px;
+      height: 12px;
+      opacity: 1;
+      visibility: visible;
+    }
+    .favorites-chevron svg {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
     .favorite-btn { width: 40px; height: 40px; background-color: #000000; color: #fff; border: 2px solid #000; border-radius: 6px; font-size: 0.75rem; line-height: 40px; text-align: center; cursor: pointer; }
     /* -- FOOTER -- */
@@ -918,7 +928,14 @@
 
 <!-- -- FAVORITES -- -->
 <div class="favorites-wrapper" id="favoritesWrapper">
-  <span data-translate="favorites">Favorite Routes<span class="favorites-chevron">▼</span></span>
+  <span class="favorites-title">
+    <span data-translate="favorites">Favorite Routes</span>
+    <span class="favorites-chevron">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 9L1 4H11L6 9Z" fill="#1E90FF"/>
+      </svg>
+    </span>
+  </span>
   <div class="favorites-container">
     <div id="fav1" class="favorite-btn"></div>
     <div id="fav2" class="favorite-btn"></div>
