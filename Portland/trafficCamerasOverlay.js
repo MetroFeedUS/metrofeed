@@ -1,0 +1,288 @@
+/**
+ * Traffic Cameras Overlay Module
+ * 
+ * Handles the traffic camera overlay functionality for MetroFeed map.
+ * Loads camera data from cameras.json and displays markers on the map.
+ * 
+ * Usage:
+ *   TrafficCamerasOverlay.init(map);
+ *   TrafficCamerasOverlay.toggle();
+ */
+
+const TrafficCamerasOverlay = (function() {
+  'use strict';
+
+  // Private variables
+  let map = null;
+  let cameraMarkers = [];
+  let camerasActive = false;
+  let camerasData = null;
+  let isLoading = false;
+
+  // Configuration
+  const CAMERAS_JSON_URL = 'data/cameras.json';
+  const MARKER_COLOR = '#FF6B35'; // Orange accent color
+  const MARKER_SIZE = 24;
+
+  /**
+   * Initialize the overlay with a map instance
+   * @param {maplibregl.Map} mapInstance - The MapLibre GL map instance
+   */
+  function init(mapInstance) {
+    if (!mapInstance) {
+      console.error('[TrafficCamerasOverlay] Map instance is required');
+      return;
+    }
+    map = mapInstance;
+    console.log('[TrafficCamerasOverlay] Initialized');
+  }
+
+  /**
+   * Load camera data from JSON file
+   * @returns {Promise<Array>} Array of camera objects
+   */
+  async function loadCamerasData() {
+    // Return cached data if available
+    if (camerasData) {
+      return camerasData;
+    }
+
+    // Prevent multiple simultaneous loads
+    if (isLoading) {
+      console.log('[TrafficCamerasOverlay] Already loading cameras data...');
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (!isLoading && camerasData) {
+            clearInterval(checkInterval);
+            resolve(camerasData);
+          }
+        }, 100);
+      });
+    }
+
+    isLoading = true;
+    console.log('[TrafficCamerasOverlay] Loading cameras data from:', CAMERAS_JSON_URL);
+
+    try {
+      const response = await fetch(CAMERAS_JSON_URL);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      camerasData = await response.json();
+      console.log('[TrafficCamerasOverlay] Loaded', camerasData.length, 'cameras');
+      isLoading = false;
+      return camerasData;
+    } catch (error) {
+      console.error('[TrafficCamerasOverlay] Error loading cameras data:', error);
+      isLoading = false;
+      camerasData = []; // Set empty array to prevent retry loops
+      return [];
+    }
+  }
+
+  /**
+   * Create a camera marker element
+   * @param {Object} camera - Camera object with id, name, lat, lon, url
+   * @returns {HTMLElement} Marker element
+   */
+  function createMarkerElement(camera) {
+    const markerElement = document.createElement('div');
+    markerElement.style.width = `${MARKER_SIZE}px`;
+    markerElement.style.height = `${MARKER_SIZE}px`;
+    markerElement.style.backgroundColor = MARKER_COLOR;
+    markerElement.style.borderRadius = '50%';
+    markerElement.style.border = '2px solid #fff';
+    markerElement.style.boxShadow = `0 0 8px ${MARKER_COLOR}`;
+    markerElement.style.cursor = 'pointer';
+    markerElement.innerHTML = '📹';
+    markerElement.style.fontSize = '14px';
+    markerElement.style.display = 'flex';
+    markerElement.style.alignItems = 'center';
+    markerElement.style.justifyContent = 'center';
+    markerElement.style.transition = 'transform 0.2s ease';
+    
+    // Hover effect
+    markerElement.addEventListener('mouseenter', () => {
+      markerElement.style.transform = 'scale(1.2)';
+    });
+    markerElement.addEventListener('mouseleave', () => {
+      markerElement.style.transform = 'scale(1)';
+    });
+
+    return markerElement;
+  }
+
+  /**
+   * Create popup content for a camera marker
+   * @param {Object} camera - Camera object
+   * @returns {HTMLElement} Popup content element
+   */
+  function createPopupContent(camera) {
+    const popupContent = document.createElement('div');
+    popupContent.innerHTML = `
+      <div style='border:2px solid ${MARKER_COLOR}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:200px;'>
+        <strong style='color:${MARKER_COLOR};'>📹 ${camera.name}</strong>
+        ${camera.description && camera.description !== camera.name ? `<div style='font-size:0.85rem; color:#aaa; margin-top:4px;'>${camera.description}</div>` : ''}
+        <hr style='border:none; border-top:1px solid ${MARKER_COLOR}; margin:6px 0;'>
+        <button onclick='TrafficCamerasOverlay.showCameraFeed("${camera.id}", "${camera.name}", "${camera.url.replace(/'/g, "\\'")}"); event.stopPropagation();' 
+                style='background:${MARKER_COLOR}; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; width:100%; margin-top:6px;'>
+          View Camera
+        </button>
+      </div>
+    `;
+    return popupContent;
+  }
+
+  /**
+   * Add camera markers to the map
+   * @param {Array} cameras - Array of camera objects
+   */
+  function addMarkers(cameras) {
+    if (!map) {
+      console.error('[TrafficCamerasOverlay] Map not initialized');
+      return;
+    }
+
+    // Clear existing markers
+    removeMarkers();
+
+    cameras.forEach(camera => {
+      // Validate camera data
+      if (!camera.lat || !camera.lon || !camera.id || !camera.url) {
+        console.warn('[TrafficCamerasOverlay] Skipping invalid camera:', camera);
+        return;
+      }
+
+      // Create marker element
+      const markerElement = createMarkerElement(camera);
+      
+      // Create marker
+      const marker = new maplibregl.Marker({
+        element: markerElement
+      });
+      marker.setLngLat([camera.lon, camera.lat]);
+      
+      // Create popup
+      const popupContent = createPopupContent(camera);
+      const popup = new maplibregl.Popup().setDOMContent(popupContent);
+      marker.setPopup(popup);
+      
+      // Add click handler to marker
+      markerElement.addEventListener('click', () => {
+        showCameraFeed(camera.id, camera.name, camera.url);
+      });
+      
+      // Add to map
+      marker.addTo(map);
+      cameraMarkers.push(marker);
+    });
+
+    console.log('[TrafficCamerasOverlay] Added', cameraMarkers.length, 'camera markers');
+  }
+
+  /**
+   * Remove all camera markers from the map
+   */
+  function removeMarkers() {
+    cameraMarkers.forEach(marker => {
+      marker.remove();
+    });
+    cameraMarkers = [];
+  }
+
+  /**
+   * Toggle camera overlay on/off
+   */
+  async function toggle() {
+    if (camerasActive) {
+      // Turn off
+      removeMarkers();
+      camerasActive = false;
+      console.log('[TrafficCamerasOverlay] Camera overlay disabled');
+      // Close modal if open
+      hideCameraModal();
+    } else {
+      // Turn on
+      if (!map) {
+        console.error('[TrafficCamerasOverlay] Map not initialized');
+        return;
+      }
+
+      // Load camera data
+      const cameras = await loadCamerasData();
+      
+      if (cameras.length === 0) {
+        console.warn('[TrafficCamerasOverlay] No camera data available');
+        alert('Unable to load traffic camera data. Please check that cameras.json exists.');
+        return;
+      }
+
+      // Add markers
+      addMarkers(cameras);
+      camerasActive = true;
+      console.log('[TrafficCamerasOverlay] Camera overlay enabled');
+    }
+  }
+
+  /**
+   * Show camera feed in modal
+   * @param {string} cameraId - Camera ID
+   * @param {string} cameraName - Camera name
+   * @param {string} imageUrl - Camera image URL
+   */
+  function showCameraFeed(cameraId, cameraName, imageUrl) {
+    const modal = document.getElementById('cameraModal');
+    const modalTitle = document.getElementById('cameraModalTitle');
+    const modalImage = document.getElementById('cameraModalImage');
+    const modalAttribution = document.getElementById('cameraModalAttribution');
+    
+    if (!modal || !modalTitle || !modalImage) {
+      console.error('[TrafficCamerasOverlay] Camera modal elements not found');
+      return;
+    }
+
+    modalTitle.textContent = cameraName;
+    
+    // Add timestamp to force refresh
+    const timestamp = new Date().getTime();
+    const separator = imageUrl.includes('?') ? '&' : '?';
+    modalImage.src = imageUrl + separator + 't=' + timestamp;
+    modalImage.alt = cameraName;
+    
+    if (modalAttribution) {
+      modalAttribution.textContent = 'Camera courtesy of ODOT';
+    }
+    
+    modal.style.display = 'flex';
+    console.log('[TrafficCamerasOverlay] Showing camera feed for:', cameraId, cameraName);
+  }
+
+  /**
+   * Hide camera modal
+   */
+  function hideCameraModal() {
+    const modal = document.getElementById('cameraModal');
+    if (modal) {
+      modal.style.display = 'none';
+      console.log('[TrafficCamerasOverlay] Camera modal closed');
+    }
+  }
+
+  /**
+   * Check if cameras overlay is currently active
+   * @returns {boolean}
+   */
+  function isActive() {
+    return camerasActive;
+  }
+
+  // Public API
+  return {
+    init: init,
+    toggle: toggle,
+    showCameraFeed: showCameraFeed,
+    hideCameraModal: hideCameraModal,
+    isActive: isActive
+  };
+})();
+

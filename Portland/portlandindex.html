@@ -1049,6 +1049,8 @@
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <script src="mastermap.js"></script>
+<!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
+<script src="trafficCamerasOverlay.js"></script>
 <script>
   // === CITY CONFIGURATION ===
   const CITY_CONFIG = {
@@ -3672,98 +3674,13 @@
   }
 
   // === SECTION: TRAFFIC CAMERAS OVERLAY ===
-  let cameraMarkers = [];
-  let camerasActive = false;
-  
-  // Camera data extracted from TrafficCameras.html
-  // Coordinates are approximate based on location names
-  const trafficCameras = [
-    { name: "I-205 at 92nd", lat: 45.5200, lng: -122.5600, imageUrl: "http://www.TripCheck.com/roadcams/cams/i20592nd_pid532.jpg" },
-    { name: "I-84 at Lloyd Blvd", lat: 45.5300, lng: -122.6600, imageUrl: "http://www.TripCheck.com/roadcams/cams/i84lloyd_pid587.jpg" },
-    { name: "I-5 at Terwilliger", lat: 45.4800, lng: -122.6800, imageUrl: "http://www.TripCheck.com/roadcams/cams/i5terwil_pid573.jpg" },
-    { name: "US 26 at Zoo Bridge", lat: 45.5100, lng: -122.7200, imageUrl: "http://www.TripCheck.com/roadcams/cams/26Zoo_pid498.jpg" },
-    { name: "I-84 at 122nd WB", lat: 45.5400, lng: -122.5300, imageUrl: "http://www.TripCheck.com/roadcams/cams/I-84%20at%20122nd%20WB_pid4578.jpg" },
-    { name: "I-205 at Glisan SB", lat: 45.5250, lng: -122.5700, imageUrl: "http://www.TripCheck.com/roadcams/cams/I-205%20at%20Glisan%20SB_pid4405.jpg" },
-    { name: "I-5 at Fremont", lat: 45.5500, lng: -122.6700, imageUrl: "http://www.TripCheck.com/roadcams/cams/i5fremont_pid560.jpg" },
-    { name: "I-84 at 181st", lat: 45.5400, lng: -122.4800, imageUrl: "http://www.TripCheck.com/roadcams/cams/i84@181st_pid1580.jpg" },
-    { name: "I-5 at Marine Drive", lat: 45.6000, lng: -122.6800, imageUrl: "http://www.TripCheck.com/roadcams/cams/i5marine_pid567.jpg" },
-    { name: "I-5 at Broadway N", lat: 45.5300, lng: -122.6600, imageUrl: "http://www.TripCheck.com/roadcams/cams/I-5%20at%20Broadway%20N_pid4737.jpg" }
-  ];
-
-  // Function to toggle traffic cameras overlay
-  function toggleTrafficCameras() {
-    if (camerasActive) {
-      // Remove all camera markers
-      cameraMarkers.forEach(marker => {
-        marker.remove();
-      });
-      cameraMarkers = [];
-      camerasActive = false;
-      console.log('[Traffic Cameras] Camera overlay disabled');
-      // Close modal if open
-      hideCameraModal();
-    } else {
-      // Add camera markers
-      if (!map) {
-        console.error('[Traffic Cameras] Map not initialized');
-        return;
-      }
-      
-      trafficCameras.forEach(camera => {
-        // Create camera marker element
-        const cameraElement = document.createElement('div');
-        cameraElement.style.width = '24px';
-        cameraElement.style.height = '24px';
-        cameraElement.style.backgroundColor = '#FF6B35'; // Orange accent
-        cameraElement.style.borderRadius = '50%';
-        cameraElement.style.border = '2px solid #fff';
-        cameraElement.style.boxShadow = '0 0 8px #FF6B35';
-        cameraElement.style.cursor = 'pointer';
-        cameraElement.innerHTML = '📹';
-        cameraElement.style.fontSize = '14px';
-        cameraElement.style.display = 'flex';
-        cameraElement.style.alignItems = 'center';
-        cameraElement.style.justifyContent = 'center';
-        
-        const cameraMarker = new maplibregl.Marker({
-          element: cameraElement
-        });
-        cameraMarker.setLngLat([camera.lng, camera.lat]);
-        
-        // Create popup with camera info
-        const popupContent = document.createElement('div');
-        popupContent.innerHTML = `
-          <div style='border:2px solid #FF6B35; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:200px;'>
-            <strong style='color:#FF6B35;'>📹 ${camera.name}</strong>
-            <hr style='border:none; border-top:1px solid #FF6B35; margin:6px 0;'>
-            <button onclick='showCameraFeed("${camera.name}", "${camera.imageUrl}"); event.stopPropagation();' 
-                    style='background:#FF6B35; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; width:100%; margin-top:6px;'>
-              View Camera
-            </button>
-          </div>
-        `;
-        
-        const popup = new maplibregl.Popup().setDOMContent(popupContent);
-        cameraMarker.setPopup(popup);
-        
-        // Add click handler to marker
-        cameraElement.addEventListener('click', () => {
-          showCameraFeed(camera.name, camera.imageUrl);
-        });
-        
-        cameraMarker.addTo(map);
-        cameraMarkers.push(cameraMarker);
-      });
-      
-      camerasActive = true;
-      console.log('[Traffic Cameras] Camera overlay enabled, markers added:', cameraMarkers.length);
-    }
-  }
+  // Traffic cameras overlay is now handled by trafficCamerasOverlay.js module
+  // The module loads camera data from data/cameras.json and manages markers
 
   // Function to toggle traffic cameras from dropdown menu
   function toggleTrafficCamerasFromDropdown() {
     console.log('[toggleTrafficCamerasFromDropdown] Function called');
-    toggleTrafficCameras();
+    TrafficCamerasOverlay.toggle();
     // Close dropdown menu after toggling
     const dropdownMenu = document.getElementById('dropdownMenu');
     if (dropdownMenu) {
@@ -3771,34 +3688,14 @@
     }
   }
 
-  // Function to show camera feed in modal
-  function showCameraFeed(cameraName, imageUrl) {
-    const modal = document.getElementById('cameraModal');
-    const modalTitle = document.getElementById('cameraModalTitle');
-    const modalImage = document.getElementById('cameraModalImage');
-    const modalAttribution = document.getElementById('cameraModalAttribution');
-    
-    if (modal && modalTitle && modalImage) {
-      modalTitle.textContent = cameraName;
-      // Add timestamp to force refresh
-      const timestamp = new Date().getTime();
-      // Properly encode URL
-      const separator = imageUrl.includes('?') ? '&' : '?';
-      modalImage.src = imageUrl + separator + 't=' + timestamp;
-      modalImage.alt = cameraName;
-      modalAttribution.textContent = 'Camera courtesy of ODOT';
-      modal.style.display = 'flex';
-      console.log('[Traffic Cameras] Showing camera feed for:', cameraName);
-    }
+  // Function to show camera feed in modal (called by overlay module)
+  function showCameraFeed(cameraId, cameraName, imageUrl) {
+    TrafficCamerasOverlay.showCameraFeed(cameraId, cameraName, imageUrl);
   }
 
-  // Function to hide camera modal
+  // Function to hide camera modal (called by overlay module)
   function hideCameraModal() {
-    const modal = document.getElementById('cameraModal');
-    if (modal) {
-      modal.style.display = 'none';
-      console.log('[Traffic Cameras] Camera modal closed');
-    }
+    TrafficCamerasOverlay.hideCameraModal();
   }
 
   // Close modal when clicking outside (attach after DOM is ready)
@@ -4036,6 +3933,10 @@
       // Add map event listeners for debugging
       map.on('load', () => {
         console.log('[Map] Map loaded successfully');
+        // Initialize traffic cameras overlay
+        if (typeof TrafficCamerasOverlay !== 'undefined') {
+          TrafficCamerasOverlay.init(map);
+        }
       });
       
       map.on('error', (e) => {
