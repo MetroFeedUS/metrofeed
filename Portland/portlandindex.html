@@ -2593,7 +2593,8 @@
                 <div style='margin-bottom:6px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
                 <div style='margin-bottom:6px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
                 <div style='color:#1E90FF; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
-                <div style='margin-top:10px; text-align:center;'>
+                <div style='margin-top:10px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
+                  <button onclick='event.stopPropagation(); if(typeof showRouteOverlay === "function") { showRouteOverlay("${trimetRouteNumber}", ${bus.direction}); } else { console.error("showRouteOverlay not available"); }' style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
                   <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>${translateText('view_route_details')}</a>
                 </div>
               </div>
@@ -2654,7 +2655,8 @@
                 <div style='margin-bottom:4px;'><strong>${translateText('direction')}:</strong> ${direction}</div>
                 <div style='margin-bottom:4px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
                 <div style='margin-bottom:4px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
-                <div style='margin-top:8px; text-align:center;'>
+                <div style='margin-top:8px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
+                  <button onclick='event.stopPropagation(); if(typeof showRouteOverlay === "function") { showRouteOverlay("${routeNumber}", ${direction}); } else { console.error("showRouteOverlay not available"); }' style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
                   <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>${translateText('view_route_details')}</a>
                 </div>
               </div>
@@ -3683,6 +3685,11 @@
   // Route overlay functionality for displaying bus routes on the main map
   // Uses shared attachRouteToMap function from routeOverlay.js
   
+  // Initialize active route overlays tracking (must be before showRouteOverlay function)
+  if (!window.activeRouteOverlays) {
+    window.activeRouteOverlays = {};
+  }
+  
   /**
    * Show a route overlay on the main map
    * @param {string|number} routeId - Route ID or route number
@@ -3692,7 +3699,13 @@
   window.showRouteOverlay = function(routeId, directionId, routePageUrl) {
     if (!map || !window.attachRouteToMap) {
       console.error('[showRouteOverlay] Map or attachRouteToMap not available');
+      console.error('[showRouteOverlay] map:', map, 'attachRouteToMap:', window.attachRouteToMap);
       return;
+    }
+    
+    // Ensure activeRouteOverlays is initialized
+    if (!window.activeRouteOverlays) {
+      window.activeRouteOverlays = {};
     }
     
     const overlayKey = `${routeId}-${directionId}`;
@@ -3707,6 +3720,9 @@
     
     // Find route in masterRoutes
     const routeNumber = String(routeId);
+    console.log('[showRouteOverlay] Looking for route:', routeNumber, 'direction:', directionId);
+    console.log('[showRouteOverlay] masterRoutes available:', typeof masterRoutes !== 'undefined', 'length:', typeof masterRoutes !== 'undefined' ? masterRoutes.length : 0);
+    
     const routeData = masterRoutes.find(r => 
       String(r.route_number) === routeNumber && 
       r.direction_id === directionId
@@ -3714,9 +3730,12 @@
     
     if (!routeData) {
       console.error('[showRouteOverlay] Route not found:', routeId, directionId);
-      alert(`Route ${routeId} (direction ${directionId}) not found.`);
+      console.error('[showRouteOverlay] Available routes (first 10):', masterRoutes.slice(0, 10).map(r => ({ number: r.route_number, dir: r.direction_id })));
+      alert(`Route ${routeId} (direction ${directionId}) not found. Check console for available routes.`);
       return;
     }
+    
+    console.log('[showRouteOverlay] Found route data:', routeData.route_title, 'shape points:', routeData.shape ? routeData.shape.length : 0, 'stops:', routeData.stops ? routeData.stops.length : 0);
     
     // Determine route page URL if not provided
     if (!routePageUrl) {
