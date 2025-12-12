@@ -4,6 +4,8 @@
  * Handles the traffic camera overlay functionality for MetroFeed map.
  * Loads camera data from cameras.json and displays markers on the map.
  * 
+ * Uses shared camera icon from cameraIcon.js (004-cctv-camera.svg)
+ * 
  * Data Source: data/cameras.json (single source of truth)
  * - No Python scripts
  * - No CSV files
@@ -24,6 +26,23 @@
 const TrafficCamerasOverlay = (function() {
   'use strict';
 
+  // Inject CSS to prevent marker lag/float during zoom
+  if (!document.getElementById('metrofeed-camera-icon-styles')) {
+    const style = document.createElement('style');
+    style.id = 'metrofeed-camera-icon-styles';
+    style.textContent = `
+      .metrofeed-camera-icon,
+      .metrofeed-camera-icon * {
+        transition: none !important;
+        animation: none !important;
+      }
+      .metrofeed-camera-icon img {
+        pointer-events: none;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   // Private variables
   let map = null;
   let cameraMarkers = [];
@@ -33,8 +52,7 @@ const TrafficCamerasOverlay = (function() {
 
   // Configuration
   const CAMERAS_JSON_URL = 'data/cameras.json';
-  const MARKER_COLOR = '#FF6B35'; // Orange accent color
-  const MARKER_SIZE = 24;
+  const MARKER_SIZE = 32; // Size for camera icon
 
   /**
    * Initialize the overlay with a map instance
@@ -93,34 +111,34 @@ const TrafficCamerasOverlay = (function() {
   }
 
   /**
-   * Create a camera marker element
+   * Create a camera marker element using the shared camera icon
    * @param {Object} camera - Camera object with id, name, lat, lon, url
    * @returns {HTMLElement} Marker element
    */
   function createMarkerElement(camera) {
+    // Use shared camera icon function if available, otherwise create inline
+    if (typeof createCameraMarkerElement === 'function') {
+      return createCameraMarkerElement(MARKER_SIZE);
+    }
+    
+    // Fallback: create marker element with SVG
     const markerElement = document.createElement('div');
+    markerElement.className = 'metrofeed-camera-icon';
     markerElement.style.width = `${MARKER_SIZE}px`;
     markerElement.style.height = `${MARKER_SIZE}px`;
-    markerElement.style.backgroundColor = MARKER_COLOR;
-    markerElement.style.borderRadius = '50%';
-    markerElement.style.border = '2px solid #fff';
-    markerElement.style.boxShadow = `0 0 8px ${MARKER_COLOR}`;
     markerElement.style.cursor = 'pointer';
-    markerElement.innerHTML = '📹';
-    markerElement.style.fontSize = '14px';
     markerElement.style.display = 'flex';
     markerElement.style.alignItems = 'center';
     markerElement.style.justifyContent = 'center';
-    markerElement.style.transition = 'transform 0.2s ease';
+    markerElement.style.pointerEvents = 'auto';
     
-    // Hover effect
-    markerElement.addEventListener('mouseenter', () => {
-      markerElement.style.transform = 'scale(1.2)';
-    });
-    markerElement.addEventListener('mouseleave', () => {
-      markerElement.style.transform = 'scale(1)';
-    });
-
+    // Use the existing MetroFeed camera SVG
+    markerElement.innerHTML = `
+      <img src="004-cctv-camera.svg" 
+           alt="Camera" 
+           style="width: ${MARKER_SIZE}px; height: ${MARKER_SIZE}px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />
+    `;
+    
     return markerElement;
   }
 
@@ -165,12 +183,13 @@ const TrafficCamerasOverlay = (function() {
         return;
       }
 
-      // Create marker element
+      // Create marker element using shared camera icon
       const markerElement = createMarkerElement(camera);
       
-      // Create marker
+      // Create marker (no transitions - markers should move exactly with map)
       const marker = new maplibregl.Marker({
-        element: markerElement
+        element: markerElement,
+        anchor: 'center' // Center anchor for proper positioning
       });
       marker.setLngLat([camera.lon, camera.lat]);
       
