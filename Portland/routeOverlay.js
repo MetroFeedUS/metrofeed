@@ -1,270 +1,308 @@
 /**
- * Shared Route Overlay Module
- * 
- * Provides consistent route drawing logic for both:
- * - Individual route HTML pages (route-XXX-dirY.html)
- * - Main Portland map (portlandindex.html) bus overlay
- * 
- * Usage:
- *   const routeOverlay = attachRouteToMap(map, routeId, directionId, {
- *     mode: 'singleRoutePage' | 'mainOverlay',
- *     routeData: { shape: [...], stops: [...] }, // Optional: if not provided, looks up in masterRoutes
- *     routePageUrl: 'pythonbusroutes/route-293-dir1.html' // Optional: for "Open full route page" link
- *   });
- * 
- * Returns: { remove: function() } - call remove() to clean up the overlay
+ * MetroFeed Route Overlay Module (clean version)
+ *
+ * Shared route drawing logic for:
+ *  - Individual route HTML pages (route-XXX-dirY.html)
+ *  - Main Portland map (bus overlay on portlandindex.html)
+ *
+ * USAGE EXAMPLES
+ * --------------
+ * // On a route page (small embedded map)
+ * const routeOverlay = attachRouteToMap(map, "15", 0, {
+ *   mode: "singleRoutePage",
+ *   routeData: routeDataFromThisPage,
+ *   routePageUrl: "pythonbusroutes/route-15-dir0.html"
+ * });
+ *
+ * // On the main city map (overlay)
+ * const routeOverlay = attachRouteToMap(mainMap, "15", 0, {
+ *   mode: "mainOverlay",
+ *   routeData: someRouteDataObject,
+ *   routePageUrl: "pythonbusroutes/route-15-dir0.html",
+ *   fitBounds: false
+ * });
+ *
+ * routeOverlay.remove(); // cleans up layers, markers, panel
  */
 
-'use strict';
+"use strict";
 
 /**
- * Attach a route to a map instance
- * @param {maplibregl.Map} map - MapLibre GL JS map instance
- * @param {string|number} routeId - Route ID or route number
- * @param {number} directionId - Direction ID (0 or 1)
- * @param {Object} options - Configuration options
- * @param {string} options.mode - 'singleRoutePage' or 'mainOverlay'
- * @param {Object} options.routeData - Optional: route data with shape and stops (if not provided, looks up in masterRoutes)
- * @param {string} options.routePageUrl - Optional: URL to full route page
- * @param {string} options.routeColor - Optional: route line color (default: '#0071CE')
- * @param {boolean} options.fitBounds - Optional: whether to fit map to route bounds (default: true for singleRoutePage, false for mainOverlay)
- * @returns {Object} Overlay object with remove() method
+ * Attach a route overlay to a MapLibre map
+ *
+ * @param {maplibregl.Map} map              - MapLibre GL JS map instance
+ * @param {string|number}  routeId          - Route ID / number (for labels only)
+ * @param {number}         directionId      - Direction ID (0 or 1, for labels only)
+ * @param {Object}         options
+ * @param {Object}         options.routeData   - REQUIRED: { shape: [[lat,lon]...], stops: [...] }
+ * @param {string}         options.mode        - "singleRoutePage" | "mainOverlay" (default: "mainOverlay")
+ * @param {string}         options.routePageUrl- Optional: URL to full route page
+ * @param {string}         options.routeColor  - Optional: line color (default MetroFeed blue)
+ * @param {boolean}        options.fitBounds   - Optional: fit map to route (default: true for singleRoutePage)
+ *
+ * @returns {{ remove: function }} overlay handle
  */
 function attachRouteToMap(map, routeId, directionId, options) {
   options = options || {};
-  const mode = options.mode || 'mainOverlay';
-  const routeColor = options.routeColor || '#0071CE';
-  const fitBounds = options.fitBounds !== undefined ? options.fitBounds : (mode === 'singleRoutePage');
-  
-  // Track created elements for cleanup
+
+  const mode        = options.mode || "mainOverlay";
+  const routeColor  = options.routeColor || "#0071CE"; // MetroFeed blue-ish
+  const fitBounds   =
+    options.fitBounds !== undefined
+      ? options.fitBounds
+      : mode === "singleRoutePage";
+
+  const routeData = options.routeData;
+
+  // ==== Basic validation =====================================================
+  if (!map || typeof map.addSource !== "function") {
+    console.error("[attachRouteToMap] Invalid MapLibre map instance.");
+    return { remove: function () {} };
+  }
+
+  if (!routeData || !Array.isArray(routeData.shape) || !Array.isArray(routeData.stops)) {
+    console.error("[attachRouteToMap] routeData with shape[] and stops[] is REQUIRED.", {
+      routeId,
+      directionId,
+      routeData
+    });
+    return { remove: function () {} };
+  }
+
+  const shape      = routeData.shape; // [[lat,lon], ...]
+  const stops      = routeData.stops; // [{lat,lon,times,name,stop_id}, ...]
+  const routeTitle = routeData.route_title || `Route ${routeId}`;
+
+  // ==== Tracking created objects for cleanup =================================
   const overlayElements = {
-    sources: [],
-    layers: [],
-    markers: [],
+    sources:  [],
+    layers:   [],
+    markers:  [],
     controls: []
   };
-  
-  // Find route data
-  let routeData = options.routeData;
-  if (!routeData && typeof masterRoutes !== 'undefined') {
-    // Look up route in masterRoutes
-    const routeNumber = String(routeId);
-    routeData = masterRoutes.find(r => 
-      String(r.route_number) === routeNumber && 
-      r.direction_id === directionId
-    );
-  }
-  
-  if (!routeData || !routeData.shape || !routeData.stops) {
-    console.error('[attachRouteToMap] Route data not found for route:', routeId, 'direction:', directionId);
-    return {
-      remove: function() {}
-    };
-  }
-  
-  const shape = routeData.shape;
-  const stops = routeData.stops;
-  const routeTitle = routeData.route_title || `Route ${routeId}`;
-  
-  // Wait for map to load if needed
+
+  // ==== Internal: build & attach =================================================
   const addRouteToMap = () => {
-    // Add route line
+    // ---------- Route line ----------
     const routeSourceId = `route-line-${routeId}-${directionId}`;
-    const routeLayerId = `route-layer-${routeId}-${directionId}`;
-    
+    const routeLayerId  = `route-layer-${routeId}-${directionId}`;
+
+    // Guard against duplicate IDs
+    if (map.getLayer(routeLayerId)) {
+      map.removeLayer(routeLayerId);
+    }
+    if (map.getSource(routeSourceId)) {
+      map.removeSource(routeSourceId);
+    }
+
     map.addSource(routeSourceId, {
-      type: 'geojson',
+      type: "geojson",
       data: {
-        type: 'Feature',
+        type: "Feature",
         properties: {},
         geometry: {
-          type: 'LineString',
-          coordinates: shape.map(coord => [coord[1], coord[0]]) // Convert lat/lon to lon/lat
+          type: "LineString",
+          coordinates: shape.map((coord) => [coord[1], coord[0]]) // [lat,lon] -> [lon,lat]
         }
       }
     });
     overlayElements.sources.push(routeSourceId);
-    
+
     map.addLayer({
       id: routeLayerId,
-      type: 'line',
+      type: "line",
       source: routeSourceId,
       paint: {
-        'line-color': routeColor,
-        'line-width': 4,
-        'line-opacity': 0.7
+        "line-color": routeColor,
+        "line-width": 4,
+        "line-opacity": 0.8
       }
     });
     overlayElements.layers.push(routeLayerId);
-    
-    // Fit map to route bounds (only for single route pages)
-    if (fitBounds) {
+
+    // ---------- Fit bounds (if desired) ----------
+    if (fitBounds && shape.length > 0) {
       const bounds = new maplibregl.LngLatBounds();
-      shape.forEach(coord => bounds.extend([coord[1], coord[0]]));
-      map.fitBounds(bounds, { padding: 20, maxZoom: 12 });
+      shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
+      map.fitBounds(bounds, { padding: 40, maxZoom: 14 });
     }
-    
-    // Add stops
-    const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+
+    // ---------- Stops + popups ----------
+    const nowPT   = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
     const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
-    
-    stops.forEach(stop => {
-      // Format stop times
-      let highlightedTimes = [];
-      let foundNext = false;
-      
-      if (stop.times && Array.isArray(stop.times)) {
-        stop.times.forEach(timeStr => {
-          let cleanTime = timeStr.trim();
-          
-          // Handle both "HH:MM:SS" and "H:MM AM/PM" formats
+
+    stops.forEach((stop) => {
+      const lat = stop.lat;
+      const lon = stop.lon;
+
+      if (typeof lat !== "number" || typeof lon !== "number") return;
+
+      // Highlight next time
+      const highlightedTimes = [];
+      let   foundNext        = false;
+
+      if (Array.isArray(stop.times)) {
+        stop.times.forEach((timeStrRaw) => {
+          let cleanTime = String(timeStrRaw).trim();
           let schedMins;
-          if (cleanTime.includes('AM') || cleanTime.includes('PM')) {
-            // "H:MM AM/PM" format
-            let [timePart, ampm] = cleanTime.split(' ');
-            let [h, m] = timePart.split(':');
-            h = parseInt(h, 10);
-            m = parseInt(m, 10);
-            if (ampm === 'PM' && h !== 12) h += 12;
-            if (ampm === 'AM' && h === 12) h = 0;
+
+          // Case 1: "H:MM AM/PM"
+          if (cleanTime.includes("AM") || cleanTime.includes("PM")) {
+            const parts = cleanTime.split(" ");
+            const timePart = parts[0];
+            const ampm  = parts[1];
+            const [hStr, mStr] = timePart.split(":");
+            let h = parseInt(hStr, 10);
+            const m = parseInt(mStr, 10);
+            if (ampm === "PM" && h !== 12) h += 12;
+            if (ampm === "AM" && h === 12) h = 0;
             schedMins = h * 60 + m;
           } else {
-            // "HH:MM:SS" format
-            let [h, m] = cleanTime.split(':');
-            schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
-            // Convert to 12-hour format for display
-            let displayH = parseInt(h, 10);
-            let ampm = displayH >= 12 ? 'PM' : 'AM';
+            // Case 2: "HH:MM:SS"
+            const [hStr, mStr] = cleanTime.split(":");
+            const h = parseInt(hStr, 10);
+            const m = parseInt(mStr, 10);
+            schedMins = h * 60 + m;
+
+            // Convert to 12-hour display
+            let displayH = h;
+            let ampm     = displayH >= 12 ? "PM" : "AM";
             if (displayH > 12) displayH -= 12;
             if (displayH === 0) displayH = 12;
-            cleanTime = `${displayH}:${m} ${ampm}`;
+            cleanTime = `${displayH}:${mStr} ${ampm}`;
           }
-          
-          // Handle next day
+
+          // Handle "after midnight" wrap
           if (schedMins < nowMins && nowMins - schedMins > 720) {
             schedMins += 1440;
           }
-          
+
           if (!foundNext && schedMins >= nowMins) {
-            highlightedTimes.push(`<span style="background:#1E90FF; color:#fff; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+            highlightedTimes.push(
+              `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${cleanTime}</span>`
+            );
             foundNext = true;
           } else {
             highlightedTimes.push(cleanTime);
           }
         });
       }
-      
-      // Create stop marker element
-      const stopElement = document.createElement('div');
-      stopElement.style.width = '12px';
-      stopElement.style.height = '12px';
-      stopElement.style.backgroundColor = '#1E90FF';
-      stopElement.style.borderRadius = '50%';
-      stopElement.style.border = '2px solid #fff';
-      stopElement.style.opacity = '0.9';
-      stopElement.style.cursor = 'pointer';
-      
-      const stopMarker = new maplibregl.Marker({
-        element: stopElement
-      });
-      stopMarker.setLngLat([stop.lon, stop.lat]);
-      
-      // Create popup content
-      const popupContent = document.createElement('div');
+
+      // Stop marker element
+      const stopElement = document.createElement("div");
+      stopElement.style.width          = "12px";
+      stopElement.style.height         = "12px";
+      stopElement.style.backgroundColor= "#1E90FF";
+      stopElement.style.borderRadius   = "50%";
+      stopElement.style.border         = "2px solid #fff";
+      stopElement.style.opacity        = "0.9";
+      stopElement.style.cursor         = "pointer";
+
+      const stopMarker = new maplibregl.Marker({ element: stopElement })
+        .setLngLat([lon, lat]);
+
+      // Popup content
+      const popupContent = document.createElement("div");
       popupContent.innerHTML = `
-        <div style='border:1px solid #1E90FF; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:200px;'>
-          <strong style='color:#1E90FF;'>${stop.name || `Stop ${stop.stop_id}`}</strong>
-          ${highlightedTimes.length > 0 ? `
-            <hr style='border:none; border-top:1px solid #1E90FF; margin:6px 0;'>
+        <div style="border:1px solid #1E90FF;border-radius:8px;padding:10px;background:#222;color:#fff;min-width:200px;">
+          <strong style="color:#1E90FF;">${stop.name || `Stop ${stop.stop_id}`}</strong>
+          ${
+            highlightedTimes.length
+              ? `
+            <hr style="border:none;border-top:1px solid #1E90FF;margin:6px 0;">
             ${highlightedTimes.join("<br>")}
-          ` : ''}
+          `
+              : ""
+          }
         </div>
       `;
-      
+
       const popup = new maplibregl.Popup().setDOMContent(popupContent);
+
       stopMarker.setPopup(popup);
       stopMarker.addTo(map);
-      
+
       overlayElements.markers.push(stopMarker);
     });
-    
-    // Add route info panel for main overlay mode
-    if (mode === 'mainOverlay' && options.routePageUrl) {
-      const routeInfoPanel = document.createElement('div');
-      routeInfoPanel.id = `route-info-${routeId}-${directionId}`;
+
+    // ---------- Route info panel (mainOverlay only) ----------
+    if (mode === "mainOverlay" && options.routePageUrl) {
+      const panelId = `route-info-${routeId}-${directionId}`;
+      const existing = document.getElementById(panelId);
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+      const routeInfoPanel = document.createElement("div");
+      routeInfoPanel.id = panelId;
       routeInfoPanel.style.cssText = `
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        background: rgba(30, 30, 30, 0.95);
-        border: 2px solid #1E90FF;
-        border-radius: 8px;
-        padding: 12px;
-        color: #fff;
-        z-index: 1000;
-        max-width: 300px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        position:absolute;
+        bottom:20px;
+        left:20px;
+        background:rgba(30,30,30,0.95);
+        border:2px solid #1E90FF;
+        border-radius:8px;
+        padding:12px;
+        color:#fff;
+        z-index:1000;
+        max-width:300px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.5);
       `;
       routeInfoPanel.innerHTML = `
-        <div style="margin-bottom: 8px;">
-          <strong style="color: #1E90FF; font-size: 1.1em;">${routeTitle}</strong>
+        <div style="margin-bottom:8px;">
+          <strong style="color:#1E90FF;font-size:1.1em;">${routeTitle}</strong>
         </div>
-        <a href="${options.routePageUrl}" 
-           style="color: #1E90FF; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 8px;"
+        <a href="${options.routePageUrl}"
+           style="color:#1E90FF;text-decoration:none;font-weight:bold;display:inline-block;margin-top:8px;"
            target="_blank">
           Open full route page →
         </a>
       `;
+
       map.getContainer().appendChild(routeInfoPanel);
       overlayElements.controls.push(routeInfoPanel);
     }
   };
-  
-  // Add route when map is ready
-  if (map.loaded()) {
+
+  // ==== Wait for map load if needed ==========================================
+  if (map.loaded && map.loaded()) {
     addRouteToMap();
   } else {
-    map.once('load', addRouteToMap);
+    map.once("load", addRouteToMap);
   }
-  
-  // Return cleanup function
+
+  // ==== Cleanup handle =======================================================
   return {
-    remove: function() {
-      // Remove layers
-      overlayElements.layers.forEach(layerId => {
-        if (map.getLayer(layerId)) {
+    remove: function () {
+      // Layers
+      overlayElements.layers.forEach((layerId) => {
+        if (map.getLayer && map.getLayer(layerId)) {
           map.removeLayer(layerId);
         }
       });
-      
-      // Remove sources
-      overlayElements.sources.forEach(sourceId => {
-        if (map.getSource(sourceId)) {
+
+      // Sources
+      overlayElements.sources.forEach((sourceId) => {
+        if (map.getSource && map.getSource(sourceId)) {
           map.removeSource(sourceId);
         }
       });
-      
-      // Remove markers
-      overlayElements.markers.forEach(marker => {
-        marker.remove();
+
+      // Markers
+      overlayElements.markers.forEach((marker) => {
+        if (marker && typeof marker.remove === "function") marker.remove();
       });
-      
-      // Remove controls
-      overlayElements.controls.forEach(control => {
-        if (control.parentNode) {
-          control.parentNode.removeChild(control);
-        }
+
+      // Controls / panels
+      overlayElements.controls.forEach((el) => {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
       });
-      
-      // Clear arrays
-      overlayElements.sources = [];
-      overlayElements.layers = [];
-      overlayElements.markers = [];
+
+      overlayElements.sources  = [];
+      overlayElements.layers   = [];
+      overlayElements.markers  = [];
       overlayElements.controls = [];
     }
   };
 }
 
-// Export to window for global access
+// Expose globally for both route pages and main map
 window.attachRouteToMap = attachRouteToMap;
-

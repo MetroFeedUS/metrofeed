@@ -3721,7 +3721,12 @@
     // Find route in masterRoutes
     const routeNumber = String(routeId);
     console.log('[showRouteOverlay] Looking for route:', routeNumber, 'direction:', directionId);
-    console.log('[showRouteOverlay] masterRoutes available:', typeof masterRoutes !== 'undefined', 'length:', typeof masterRoutes !== 'undefined' ? masterRoutes.length : 0);
+    
+    if (typeof masterRoutes === 'undefined') {
+      console.error('[showRouteOverlay] masterRoutes not available');
+      alert('Route data not loaded. Please refresh the page.');
+      return;
+    }
     
     const routeData = masterRoutes.find(r => 
       String(r.route_number) === routeNumber && 
@@ -3735,7 +3740,14 @@
       return;
     }
     
-    console.log('[showRouteOverlay] Found route data:', routeData.route_title, 'shape points:', routeData.shape ? routeData.shape.length : 0, 'stops:', routeData.stops ? routeData.stops.length : 0);
+    // Validate route data structure
+    if (!routeData.shape || !Array.isArray(routeData.shape) || !routeData.stops || !Array.isArray(routeData.stops)) {
+      console.error('[showRouteOverlay] Route data missing shape or stops:', routeData);
+      alert(`Route ${routeId} data is incomplete. Missing shape or stops data.`);
+      return;
+    }
+    
+    console.log('[showRouteOverlay] Found route data:', routeData.route_title, 'shape points:', routeData.shape.length, 'stops:', routeData.stops.length);
     
     // Determine route page URL if not provided
     if (!routePageUrl) {
@@ -3744,10 +3756,10 @@
       routePageUrl = `${routeType}/route-${routeNumber}-dir${directionId}.html`;
     }
     
-    // Create overlay
+    // Create overlay with explicit routeData
     const overlay = window.attachRouteToMap(map, routeId, directionId, {
       mode: 'mainOverlay',
-      routeData: routeData,
+      routeData: routeData,  // Pass routeData explicitly (required by new version)
       routePageUrl: routePageUrl,
       fitBounds: false // Don't auto-fit on main map
     });
