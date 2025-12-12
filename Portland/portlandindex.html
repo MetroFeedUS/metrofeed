@@ -1053,6 +1053,8 @@
 <script src="metroFeedMap.js"></script>
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
+<!-- -- SHARED ROUTE OVERLAY MODULE -- -->
+<script src="routeOverlay.js"></script>
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>
 <script>
@@ -3677,6 +3679,89 @@
     toggleTrafficOverlay();
   }
 
+  // === SECTION: ROUTE OVERLAY ===
+  // Route overlay functionality for displaying bus routes on the main map
+  // Uses shared attachRouteToMap function from routeOverlay.js
+  
+  /**
+   * Show a route overlay on the main map
+   * @param {string|number} routeId - Route ID or route number
+   * @param {number} directionId - Direction ID (0 or 1)
+   * @param {string} routePageUrl - URL to full route page (optional)
+   */
+  window.showRouteOverlay = function(routeId, directionId, routePageUrl) {
+    if (!map || !window.attachRouteToMap) {
+      console.error('[showRouteOverlay] Map or attachRouteToMap not available');
+      return;
+    }
+    
+    const overlayKey = `${routeId}-${directionId}`;
+    
+    // Remove existing overlay if present (toggle behavior)
+    if (window.activeRouteOverlays[overlayKey]) {
+      window.activeRouteOverlays[overlayKey].remove();
+      delete window.activeRouteOverlays[overlayKey];
+      console.log('[showRouteOverlay] Route overlay toggled off:', overlayKey);
+      return;
+    }
+    
+    // Find route in masterRoutes
+    const routeNumber = String(routeId);
+    const routeData = masterRoutes.find(r => 
+      String(r.route_number) === routeNumber && 
+      r.direction_id === directionId
+    );
+    
+    if (!routeData) {
+      console.error('[showRouteOverlay] Route not found:', routeId, directionId);
+      alert(`Route ${routeId} (direction ${directionId}) not found.`);
+      return;
+    }
+    
+    // Determine route page URL if not provided
+    if (!routePageUrl) {
+      // Try to construct URL based on route number
+      const routeType = routeData.route_type === '0' ? 'Rail routes' : 'pythonbusroutes';
+      routePageUrl = `${routeType}/route-${routeNumber}-dir${directionId}.html`;
+    }
+    
+    // Create overlay
+    const overlay = window.attachRouteToMap(map, routeId, directionId, {
+      mode: 'mainOverlay',
+      routeData: routeData,
+      routePageUrl: routePageUrl,
+      fitBounds: false // Don't auto-fit on main map
+    });
+    
+    window.activeRouteOverlays[overlayKey] = overlay;
+    console.log('[showRouteOverlay] Route overlay added:', overlayKey);
+  };
+  
+  /**
+   * Remove a route overlay from the main map
+   * @param {string|number} routeId - Route ID or route number
+   * @param {number} directionId - Direction ID (0 or 1)
+   */
+  window.hideRouteOverlay = function(routeId, directionId) {
+    const overlayKey = `${routeId}-${directionId}`;
+    if (window.activeRouteOverlays[overlayKey]) {
+      window.activeRouteOverlays[overlayKey].remove();
+      delete window.activeRouteOverlays[overlayKey];
+      console.log('[hideRouteOverlay] Route overlay removed:', overlayKey);
+    }
+  };
+  
+  /**
+   * Remove all route overlays from the main map
+   */
+  window.clearAllRouteOverlays = function() {
+    Object.keys(window.activeRouteOverlays).forEach(key => {
+      window.activeRouteOverlays[key].remove();
+    });
+    window.activeRouteOverlays = {};
+    console.log('[clearAllRouteOverlays] All route overlays cleared');
+  };
+
   // === SECTION: TRAFFIC CAMERAS OVERLAY ===
   // Traffic cameras overlay is now handled by trafficCamerasOverlay.js module
   // The module loads camera data from data/cameras.json and manages markers
@@ -3915,6 +4000,9 @@
       
       console.log('[Map Init] Day style URL:', dayStyle);
       console.log('[Map Init] Night style URL:', nightStyle);
+      
+      // Track active route overlays
+      window.activeRouteOverlays = {};
       
       // Add map event listeners for debugging
       map.on('load', () => {
