@@ -4,6 +4,18 @@
  * Handles the traffic camera overlay functionality for MetroFeed map.
  * Loads camera data from cameras.json and displays markers on the map.
  * 
+ * Data Source: data/cameras.json (single source of truth)
+ * - No Python scripts
+ * - No CSV files
+ * - No geocoding APIs
+ * 
+ * To update cameras:
+ * 1. Edit camera list in TrafficCameras.html (if needed)
+ * 2. Open TrafficCamerasEditor.html in browser
+ * 3. Place pins on map for each camera
+ * 4. Export JSON and paste into data/cameras.json
+ * 5. Deploy the updated file
+ * 
  * Usage:
  *   TrafficCamerasOverlay.init(map);
  *   TrafficCamerasOverlay.toggle();

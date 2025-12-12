@@ -1049,6 +1049,8 @@
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <script src="mastermap.js"></script>
+<!-- -- SHARED MAP INITIALIZATION -- -->
+<script src="metroFeedMap.js"></script>
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>
 <script>
@@ -1165,9 +1167,9 @@
   // Use bounds from configuration
   const PORTLAND_BOUNDS = CITY_CONFIG.bounds;
   
-  // Initialize MapLibre GL JS map with vector tiles
-  const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
-  const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
+  // Map styles are now initialized via initMetroFeedMap() in metroFeedMap.js
+  // These variables are set after map initialization
+  let dayStyle, nightStyle;
   
   // Add error handling for map initialization
   let map;
@@ -3676,6 +3678,14 @@
   // === SECTION: TRAFFIC CAMERAS OVERLAY ===
   // Traffic cameras overlay is now handled by trafficCamerasOverlay.js module
   // The module loads camera data from data/cameras.json and manages markers
+  //
+  // To update cameras:
+  // 1. Edit Traffic Cameras page list (TrafficCameras.html)
+  // 2. Open TrafficCamerasEditor.html in browser → drop pins
+  // 3. Export JSON → paste into data/cameras.json → deploy
+  //
+  // The main map now depends only on cameras.json
+  // No Python, no CSV, no geocoding APIs
 
   // Function to toggle traffic cameras from dropdown menu
   function toggleTrafficCamerasFromDropdown() {
@@ -3882,53 +3892,27 @@
   document.addEventListener('DOMContentLoaded', function() {
     console.log('[DOMContentLoaded] Initializing map and event listeners...');
     
-    // Initialize MapLibre GL JS map with vector tiles
-    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
-    const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
-    
+    // Use shared map initialization (from metroFeedMap.js)
     try {
       console.log('[Map Init] Initializing MapLibre GL JS map...');
-      console.log('[Map Init] Day style URL:', dayStyle);
-      console.log('[Map Init] Night style URL:', nightStyle);
       console.log('[Map Init] Center coordinates:', CITY_CONFIG.defaultCenter);
       console.log('[Map Init] Bounds:', [
         [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
         [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
       ]);
       
-      map = new maplibregl.Map({
-        container: 'map',
-        style: dayStyle,
-        center: CITY_CONFIG.defaultCenter,
-        zoom: CITY_CONFIG.defaultZoom,
-        maxZoom: 18,
-        minZoom: 8,
-        maxBounds: [
-          [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
-          [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
-        ],
-        attributionControl: true
+      const mapSetup = initMetroFeedMap('map', {
+        defaultCenter: CITY_CONFIG.defaultCenter,
+        defaultZoom: CITY_CONFIG.defaultZoom,
+        bounds: PORTLAND_BOUNDS
       });
       
-      // Force attribution to be collapsed by default
-      map.on('load', () => {
-        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
-        if (attributionControl) {
-          attributionControl.classList.add('maplibregl-compact');
-          attributionControl.classList.remove('maplibregl-compact-show');
-        }
-      });
+      map = mapSetup.map;
+      dayStyle = mapSetup.dayStyle;
+      nightStyle = mapSetup.nightStyle;
       
-      // Also ensure attribution is collapsed after style changes
-      map.on('styledata', () => {
-        setTimeout(() => {
-          const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
-          if (attributionControl) {
-            attributionControl.classList.add('maplibregl-compact');
-            attributionControl.classList.remove('maplibregl-compact-show');
-          }
-        }, 100);
-      });
+      console.log('[Map Init] Day style URL:', dayStyle);
+      console.log('[Map Init] Night style URL:', nightStyle);
       
       // Add map event listeners for debugging
       map.on('load', () => {
@@ -3966,13 +3950,16 @@
     } catch (error) {
       console.error('[Map Init] Error creating map:', error);
       // Fallback to a basic map if vector tiles fail
-      map = new maplibregl.Map({
-        container: 'map',
-        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-        center: CITY_CONFIG.defaultCenter,
-        zoom: CITY_CONFIG.defaultZoom,
-        attributionControl: true
+      const fallbackMapSetup = initMetroFeedMap('map', {
+        defaultCenter: CITY_CONFIG.defaultCenter,
+        defaultZoom: CITY_CONFIG.defaultZoom,
+        bounds: PORTLAND_BOUNDS
       });
+      map = fallbackMapSetup.map;
+      dayStyle = fallbackMapSetup.dayStyle;
+      nightStyle = fallbackMapSetup.nightStyle;
+      // Override with fallback style
+      map.setStyle('https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
       
       // Force attribution to be collapsed by default for fallback map
       map.on('load', () => {
