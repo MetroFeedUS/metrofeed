@@ -53,6 +53,7 @@ const TrafficCamerasOverlay = (function() {
   // Configuration
   const CAMERAS_JSON_URL = 'data/cameras.json';
   const MARKER_SIZE = 32; // Size for camera icon
+  const MARKER_COLOR = '#007BFF'; // MetroFeed standard blue color for camera popups
 
   /**
    * Initialize the overlay with a map instance
