@@ -881,7 +881,7 @@
   <a id="youtubeBtn" href="https://www.youtube.com/@MetroFeedLouisville" target="_blank"><img src="006-earthquake.svg" alt="Youtube"></a>
   <div class="dropdown-divider"></div>
   <a href="#" id="dropdownBusesBtn" onclick="event.preventDefault(); showBusRoutesModal();"><img src="002-bus.svg" alt="Bus Routes"></a>
-  <a href="https://metrofeedus.com/portland/railroutes"><img src="001-train-station.svg" alt="Rail Routes"></a>
+  <a href="#" id="dropdownRailBtn" onclick="event.preventDefault(); event.stopPropagation(); console.log('[RailBtn] Clicked'); showRailRoutesModal(); return false;"><img src="001-train-station.svg" alt="Rail Routes"></a>
   <a href="#" id="dropdownTrafficBtn" onclick="toggleTrafficFromDropdown()"><img src="003-warning.svg" alt="Traffic Overlay"></a>
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
   <a href="https://metrofeedus.com/portland/portlandweather"><img src="005-weather-radar.svg" alt="Weather"></a>
@@ -1057,6 +1057,22 @@
     </div>
     <div style="padding: 1rem; border-top: 1px solid #333; margin-top: auto;">
       <button class="mf-btn" onclick="hideBusRoutesModal()" style="width: 100%;" data-translate="close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- -- RAIL ROUTES MODAL -- -->
+<div id="railRoutesModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
+    <h2>🚆 Rail Routes</h2>
+    <div style="margin-bottom: 1rem; padding: 0 1rem;">
+      <input type="text" id="railRouteSearch" placeholder="Search routes..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+    </div>
+    <div id="railRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
+      <!-- Route list will be populated here -->
+    </div>
+    <div style="padding: 1rem; border-top: 1px solid #333; margin-top: auto;">
+      <button class="mf-btn" onclick="hideRailRoutesModal()" style="width: 100%;" data-translate="close">Close</button>
     </div>
   </div>
 </div>
@@ -1279,7 +1295,7 @@
     const tooltipData = [
       { selector: '#youtubeBtn', text: 'Daily Brief' },
       { selector: '#dropdownBusesBtn', text: 'Bus Routes' },
-      { selector: 'a[href*="railroutes"]', text: 'Rail Routes' },
+      { selector: '#dropdownRailBtn', text: 'Rail Routes' },
       { selector: '#dropdownTrafficBtn', text: 'Traffic Overlay' },
       { selector: '#dropdownCamerasBtn', text: 'Traffic Cameras' },
       { selector: 'a[href*="portlandweather"]', text: 'Weather' },
@@ -4004,6 +4020,126 @@
       showRouteOverlay(routeId, directionId);
     } else {
       console.error('[selectRoute] showRouteOverlay not available');
+      alert('Route overlay function not available. Please refresh the page.');
+    }
+  }
+
+  // === SECTION: RAIL ROUTES MODAL ===
+  // Modal for selecting rail routes to overlay on the map
+  
+  // Rail routes list (from railroutes.html)
+  const RAIL_ROUTES = [
+    { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
+    { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
+    { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
+    { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
+    { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
+    { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
+  ];
+  
+  /**
+   * Show the rail routes modal
+   */
+  function showRailRoutesModal() {
+    console.log('[showRailRoutesModal] Function called');
+    const modal = document.getElementById('railRoutesModal');
+    const routeList = document.getElementById('railRouteList');
+    
+    if (!modal || !routeList) {
+      console.error('[showRailRoutesModal] Modal elements not found', { modal, routeList });
+      return;
+    }
+    
+    console.log('[showRailRoutesModal] Modal and routeList found, opening modal');
+    
+    // Populate route list
+    routeList.innerHTML = '';
+    RAIL_ROUTES.forEach(route => {
+      const routeDiv = document.createElement('div');
+      routeDiv.className = 'route-entry-modal';
+      routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
+      
+      const routeHeader = document.createElement('div');
+      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer;';
+      routeHeader.textContent = route.label;
+      routeHeader.onclick = () => toggleRailRouteDirections(route.id);
+      
+      const directionsDiv = document.createElement('div');
+      directionsDiv.id = `rail-directions-${route.id}`;
+      directionsDiv.style.cssText = 'display: none; margin-top: 0.5rem;';
+      
+      if (route.dir0) {
+        const dir0Btn = document.createElement('button');
+        dir0Btn.textContent = `➡ ${route.dir0}`;
+        dir0Btn.style.cssText = 'width: 100%; padding: 0.5rem; margin-bottom: 0.25rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir0Btn.onclick = () => selectRailRoute(route.id, 0);
+        directionsDiv.appendChild(dir0Btn);
+      }
+      
+      if (route.dir1) {
+        const dir1Btn = document.createElement('button');
+        dir1Btn.textContent = `⬅ ${route.dir1}`;
+        dir1Btn.style.cssText = 'width: 100%; padding: 0.5rem; margin-bottom: 0.25rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir1Btn.onclick = () => selectRailRoute(route.id, 1);
+        directionsDiv.appendChild(dir1Btn);
+      }
+      
+      routeDiv.appendChild(routeHeader);
+      routeDiv.appendChild(directionsDiv);
+      routeList.appendChild(routeDiv);
+    });
+    
+    // Setup search
+    const searchInput = document.getElementById('railRouteSearch');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.oninput = function() {
+        const filter = this.value.toLowerCase();
+        const entries = routeList.querySelectorAll('.route-entry-modal');
+        entries.forEach(entry => {
+          const text = entry.textContent.toLowerCase();
+          entry.style.display = text.includes(filter) ? '' : 'none';
+        });
+      };
+    }
+    
+    modal.style.display = 'flex';
+  }
+  
+  /**
+   * Hide the rail routes modal
+   */
+  function hideRailRoutesModal() {
+    const modal = document.getElementById('railRoutesModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+  
+  /**
+   * Toggle rail route directions visibility
+   */
+  function toggleRailRouteDirections(routeId) {
+    const dirDiv = document.getElementById(`rail-directions-${routeId}`);
+    if (dirDiv) {
+      dirDiv.style.display = dirDiv.style.display === 'none' ? 'block' : 'none';
+    }
+  }
+  
+  /**
+   * Select a rail route and overlay it on the map
+   */
+  function selectRailRoute(routeId, directionId) {
+    console.log('[selectRailRoute] Selected route:', routeId, 'direction:', directionId);
+    
+    // Close modal
+    hideRailRoutesModal();
+    
+    // Show route overlay
+    if (typeof showRouteOverlay === 'function') {
+      showRouteOverlay(routeId, directionId);
+    } else {
+      console.error('[selectRailRoute] showRouteOverlay not available');
       alert('Route overlay function not available. Please refresh the page.');
     }
   }
