@@ -251,9 +251,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
         transition:all 0.3s ease;
       `;
       
-      // Create collapse button
+      // Create collapse button (starts pointing right ▶ to collapse)
       const collapseBtn = document.createElement("button");
-      collapseBtn.innerHTML = "◀";
+      collapseBtn.innerHTML = "▶";
       collapseBtn.style.cssText = `
         position:absolute;
         right:4px;
@@ -275,34 +275,54 @@ function attachRouteToMap(map, routeId, directionId, options) {
         e.stopPropagation();
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
-          // Collapse to right side - thin vertical tab (10px wide, 50px tall)
+          // Collapse to right side - vertical tab with vertical text
           routeInfoPanel.style.left = "100%";
-          routeInfoPanel.style.transform = "translate(-10px, -50%)";
-          routeInfoPanel.style.width = "10px";
-          routeInfoPanel.style.height = "50px";
-          routeInfoPanel.style.padding = "0";
+          routeInfoPanel.style.transform = "translate(-100%, -50%)";
+          routeInfoPanel.style.width = "auto";
+          routeInfoPanel.style.minWidth = "50px";
+          routeInfoPanel.style.maxWidth = "80px";
+          routeInfoPanel.style.height = "auto";
+          routeInfoPanel.style.maxHeight = "300px";
+          routeInfoPanel.style.padding = "30px 8px 8px 8px";
           routeInfoPanel.style.borderRadius = "4px 0 0 4px";
           routeInfoPanel.style.borderRight = "none";
           routeInfoPanel.style.borderLeft = "2px solid #1E90FF";
-          collapseBtn.style.display = "none";
+          routeInfoPanel.style.borderTop = "2px solid #1E90FF";
+          routeInfoPanel.style.borderBottom = "2px solid #1E90FF";
+          // Move collapse button to top center
+          collapseBtn.style.right = "auto";
+          collapseBtn.style.left = "50%";
+          collapseBtn.style.top = "4px";
+          collapseBtn.style.transform = "translateX(-50%)";
+          collapseBtn.innerHTML = "◀"; // Point left to expand
           closeBtn.style.display = "none";
           routeInfoPanel.querySelector(".route-info-content").style.display = "none";
-          // Show collapsed route name (rotated 90deg for horizontal reading)
+          // Show collapsed route name (vertical text)
           const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
           if (collapsedName) {
-            collapsedName.style.display = "flex";
+            collapsedName.style.display = "block";
           }
         } else {
           // Expand back to center
           routeInfoPanel.style.left = "50%";
           routeInfoPanel.style.transform = "translate(-50%, -50%)";
           routeInfoPanel.style.width = "auto";
+          routeInfoPanel.style.minWidth = "200px";
+          routeInfoPanel.style.maxWidth = "none";
           routeInfoPanel.style.height = "auto";
+          routeInfoPanel.style.maxHeight = "none";
           routeInfoPanel.style.padding = "12px";
           routeInfoPanel.style.borderRadius = "8px";
           routeInfoPanel.style.borderRight = "2px solid #1E90FF";
           routeInfoPanel.style.borderLeft = "2px solid #1E90FF";
-          collapseBtn.style.display = "block";
+          routeInfoPanel.style.borderTop = "2px solid #1E90FF";
+          routeInfoPanel.style.borderBottom = "2px solid #1E90FF";
+          // Move collapse button back to top-right
+          collapseBtn.style.right = "4px";
+          collapseBtn.style.left = "auto";
+          collapseBtn.style.top = "4px";
+          collapseBtn.style.transform = "none";
+          collapseBtn.innerHTML = "▶"; // Point right to collapse
           closeBtn.style.display = "flex";
           routeInfoPanel.querySelector(".route-info-content").style.display = "block";
           // Hide collapsed route name
@@ -361,27 +381,32 @@ function attachRouteToMap(map, routeId, directionId, options) {
         </a>
       `;
       
-      // Collapsed route name (rotated 90deg so text reads horizontally when tab is vertical)
+      // Collapsed route name (vertical text - each word on new line)
       const collapsedName = document.createElement("div");
       collapsedName.className = "route-name-collapsed";
+      // Split route title into words and create vertical layout
+      const words = routeTitle.split(' ');
+      const verticalText = words.map(word => {
+        // For very long words, split into characters
+        if (word.length > 10) {
+          return word.split('').join('<br>');
+        }
+        return word;
+      }).join('<br>');
+      collapsedName.innerHTML = verticalText;
       collapsedName.style.cssText = `
         display:none;
-        position:absolute;
-        top:50%;
-        left:50%;
-        transform:translate(-50%, -50%) rotate(90deg);
-        white-space:nowrap;
+        position:relative;
         color:#1E90FF;
         font-weight:bold;
         font-size:0.7rem;
         pointer-events:none;
-        transform-origin:center;
         text-align:center;
-        width:50px;
-        height:10px;
-        line-height:10px;
+        line-height:1.4;
+        word-break:break-word;
+        margin-top:8px;
+        padding:0 4px;
       `;
-      collapsedName.textContent = routeTitle;
       
       routeInfoPanel.appendChild(closeBtn);
       routeInfoPanel.appendChild(contentDiv);
