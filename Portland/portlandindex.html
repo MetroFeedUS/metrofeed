@@ -880,7 +880,7 @@
 <div id="dropdownMenu" class="dropdown">
   <a id="youtubeBtn" href="https://www.youtube.com/@MetroFeedLouisville" target="_blank"><img src="006-earthquake.svg" alt="Youtube"></a>
   <div class="dropdown-divider"></div>
-  <a href="https://metrofeedus.com/portland/busroutesmain"><img src="002-bus.svg" alt="Bus Routes"></a>
+  <a href="#" onclick="event.preventDefault(); showBusRoutesModal();"><img src="002-bus.svg" alt="Bus Routes"></a>
   <a href="https://metrofeedus.com/portland/railroutes"><img src="001-train-station.svg" alt="Rail Routes"></a>
   <a href="#" id="dropdownTrafficBtn" onclick="toggleTrafficFromDropdown()"><img src="003-warning.svg" alt="Traffic Overlay"></a>
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
@@ -1042,6 +1042,20 @@
       Camera courtesy of ODOT
     </div>
     <button class="mf-btn" onclick="hideCameraModal()" style="margin-top: 1rem;" data-translate="close">Close</button>
+  </div>
+</div>
+
+<!-- -- BUS ROUTES MODAL -- -->
+<div id="busRoutesModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+    <h2>🚌 Bus Routes</h2>
+    <div style="margin-bottom: 1rem;">
+      <input type="text" id="busRouteSearch" placeholder="Search routes..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem;">
+    </div>
+    <div id="busRouteList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+      <!-- Route list will be populated here -->
+    </div>
+    <button class="mf-btn" onclick="hideBusRoutesModal()" style="margin-top: 1rem;" data-translate="close">Close</button>
   </div>
 </div>
 
@@ -2594,7 +2608,7 @@
                 <div style='margin-bottom:6px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
                 <div style='color:#1E90FF; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                 <div style='margin-top:10px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
-                  <button onclick='event.stopPropagation(); if(typeof showRouteOverlay === "function") { showRouteOverlay("${trimetRouteNumber}", ${bus.direction}); } else { console.error("showRouteOverlay not available"); }' style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
+                  <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${trimetRouteNumber}", "direction:", ${bus.direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${trimetRouteNumber}", ${bus.direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
                   <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>${translateText('view_route_details')}</a>
                 </div>
               </div>
@@ -2656,7 +2670,7 @@
                 <div style='margin-bottom:4px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
                 <div style='margin-bottom:4px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
                 <div style='margin-top:8px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
-                  <button onclick='event.stopPropagation(); if(typeof showRouteOverlay === "function") { showRouteOverlay("${routeNumber}", ${direction}); } else { console.error("showRouteOverlay not available"); }' style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
+                  <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${routeNumber}", "direction:", ${direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${routeNumber}", ${direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
                   <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>${translateText('view_route_details')}</a>
                 </div>
               </div>
@@ -3697,11 +3711,19 @@
    * @param {string} routePageUrl - URL to full route page (optional)
    */
   window.showRouteOverlay = function(routeId, directionId, routePageUrl) {
+    console.log('[showRouteOverlay] ===== FUNCTION CALLED =====');
+    console.log('[showRouteOverlay] routeId:', routeId, 'directionId:', directionId);
+    console.log('[showRouteOverlay] map:', map, 'type:', typeof map);
+    console.log('[showRouteOverlay] attachRouteToMap:', window.attachRouteToMap, 'type:', typeof window.attachRouteToMap);
+    
     if (!map || !window.attachRouteToMap) {
-      console.error('[showRouteOverlay] Map or attachRouteToMap not available');
+      console.error('[showRouteOverlay] ❌ Map or attachRouteToMap not available');
       console.error('[showRouteOverlay] map:', map, 'attachRouteToMap:', window.attachRouteToMap);
+      alert('Route overlay not ready. Map: ' + (map ? 'OK' : 'MISSING') + ', attachRouteToMap: ' + (window.attachRouteToMap ? 'OK' : 'MISSING'));
       return;
     }
+    
+    console.log('[showRouteOverlay] ✅ Map and attachRouteToMap are available');
     
     // Ensure activeRouteOverlays is initialized
     if (!window.activeRouteOverlays) {
@@ -3792,6 +3814,197 @@
     window.activeRouteOverlays = {};
     console.log('[clearAllRouteOverlays] All route overlays cleared');
   };
+
+  // === SECTION: BUS ROUTES MODAL ===
+  // Modal for selecting bus routes to overlay on the map
+  
+  // Bus routes list (from BusRoutesMain.html)
+  const BUS_ROUTES = [
+    { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
+    { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
+    { id: '4', label: '4 – Fessenden', dir0: 'To St Johns', dir1: 'To Portland City Center' },
+    { id: '6', label: '6 – Martin Luther King Jr Blvd', dir0: 'To Jantzen Beach', dir1: 'To Portland City Center' },
+    { id: '8', label: '8 – Jackson Park/NE 15th', dir0: 'To Marquam Hill', dir1: 'To NE M L King Jr Blvd & Lombard' },
+    { id: '9', label: '9 – Powell Blvd', dir0: 'To Powell & 92nd or Gresham Central Transit Center', dir1: 'To Portland City Center' },
+    { id: '10', label: '10 – Harold St', dir0: 'To Foster & 94th', dir1: 'To Portland City Center' },
+    { id: '11', label: '11 – Rivergate/Marine Dr', dir0: 'To Vancouver Way & Middlefield', dir1: 'To St Johns' },
+    { id: '12', label: '12 – Barbur/Sandy Blvd', dir0: 'To Tigard Transit Center', dir1: 'To Parkrose/Sumner Transit Center' },
+    { id: '14', label: '14 – Hawthorne/Foster', dir0: 'To Foster & 94th', dir1: 'To Portland City Center' },
+    { id: '15', label: '15 – Belmont/NW 23rd', dir0: 'To City Ctr, NW 23rd, Montgomery Pk or Yeon & 44th', dir1: 'To Gateway Transit Center' },
+    { id: '16', label: '16 – Front Ave/St Helens Rd', dir0: 'To St Johns and Sauvie Island', dir1: 'To Portland' },
+    { id: '17', label: '17 – Holgate/Broadway', dir0: 'To Holgate & 122nd', dir1: 'To Saratoga & 27th' },
+    { id: '18', label: '18 – Hillside', dir0: 'To Hillside and Providence Park', dir1: '' },
+    { id: '19', label: '19 – Woodstock/Glisan', dir0: 'To Mt. Scott & 112th', dir1: 'To Gateway Transit Center' },
+    { id: '20', label: '20 – Burnside/Stark', dir0: 'To Beaverton Transit Center', dir1: 'To Gresham Central Transit Center' },
+    { id: '21', label: '21 – Sandy Blvd/223rd', dir0: 'To Parkrose/Sumner Transit Center', dir1: 'To Gresham Central Transit Center' },
+    { id: '22', label: '22 – Parkrose', dir0: 'To Parkrose', dir1: 'To Gateway Transit Center' },
+    { id: '23', label: '23 – San Rafael', dir0: 'To Sandy & 148th', dir1: 'To Gateway Transit Center' },
+    { id: '24', label: '24 – Fremont/NW 18th', dir0: 'To SW Columbia & 18th', dir1: 'To Gateway Transit Center' },
+    { id: '25', label: '25 – Glisan/Troutdale Rd', dir0: 'To Mt Hood Community College', dir1: 'To Gateway Transit Center' },
+    { id: '26', label: '26 – Thurman/NW 18th', dir0: 'To NW Thurman & Gordon', dir1: 'To SW 18th & Salmon' },
+    { id: '29', label: '29 – Lake/Webster Rd', dir0: 'To Clackamas Town Center', dir1: 'To Milwaukie' },
+    { id: '30', label: '30 – Estacada', dir0: 'To Estacada', dir1: 'To Clackamas Town Center' },
+    { id: '31', label: '31 – Webster Rd', dir0: 'To Oregon City Transit Center', dir1: 'To Clackamas Town Center' },
+    { id: '32', label: '32 – Oatfield', dir0: 'To Clackamas Community College', dir1: 'To Oregon City Transit Center or Milwaukie' },
+    { id: '33', label: '33 – McLoughlin/King Rd', dir0: 'To Oregon City TC and Clackamas Community College', dir1: 'To Milwaukie and Clackamas Town Center' },
+    { id: '34', label: '34 – Linwood/River Rd', dir0: 'To Clackamas Heights', dir1: 'To Clackamas Town Center' },
+    { id: '35', label: '35 – Macadam/Greeley', dir0: 'To Oregon City Transit Center', dir1: 'To University of Portland' },
+    { id: '37', label: '37 – Lake Grove', dir0: 'To Tualatin Park & Ride', dir1: 'To Lake Oswego Transit Center' },
+    { id: '38', label: '38 – Boones Ferry Rd', dir0: 'To Tualatin Park & Ride', dir1: 'To Portland City Center' },
+    { id: '39', label: '39 – Arnold Creek/Hillsdale', dir0: 'To Barbur Transit Center', dir1: 'To Hillsdale' },
+    { id: '40', label: '40 – Tacoma/Swan Island', dir0: 'To SE Tacoma Park & Ride', dir1: 'To Swan Island' },
+    { id: '43', label: '43 – Taylors Ferry/Marquam Hill', dir0: 'To Tigard Transit Center', dir1: 'To Marquam Hill' },
+    { id: '44', label: '44 – Capitol Hwy/Mocks Crest', dir0: 'To PCC Sylvania', dir1: 'To St Johns' },
+    { id: '45', label: '45 – Garden Home', dir0: 'To Tigard Transit Center', dir1: 'To Portland City Center' },
+    { id: '46', label: '46 – North Hillsboro', dir0: 'To Hillsboro Brookwood Library', dir1: 'To Hillsboro Transit Center' },
+    { id: '47', label: '47 – Main/Baseline', dir0: 'To Hillsboro Transit Center', dir1: 'To Willow Creek Transit Center' },
+    { id: '48', label: '48 – Cornell', dir0: 'To Hillsboro Transit Center', dir1: 'To Sunset Transit Center' },
+    { id: '51', label: '51 – Vista/Sunset Blvd', dir0: 'To Bertha & Barbur or Council Crest', dir1: 'To SW Columbia & 18th' },
+    { id: '52', label: '52 – Farmington/185th', dir0: 'To PCC Rock Creek', dir1: 'To Beaverton Transit Center' },
+    { id: '53', label: '53 – Arctic/Allen', dir0: 'Evening Loop', dir1: 'Morning Loop' },
+    { id: '54', label: '54 – Beaverton-Hillsdale Hwy', dir0: 'To Beaverton Transit Center', dir1: 'To Portland City Center' },
+    { id: '55', label: '55 – Hamilton', dir0: 'To Raleigh Hills', dir1: 'To Portland City Center' },
+    { id: '56', label: '56 – Scholls Ferry/Marquam Hill', dir0: 'To Washington Square Transit Center', dir1: 'To Marquam Hill' },
+    { id: '57', label: '57 – TV Hwy/Forest Grove', dir0: 'To Forest Grove', dir1: 'To Beaverton Transit Center' },
+    { id: '58', label: '58 – Canyon Rd', dir0: 'To Beaverton Transit Center', dir1: 'To Portland City Center' },
+    { id: '59', label: '59 – Walker/Park Way', dir0: 'To Willow Creek/SW 185th Ave Transit Center', dir1: 'To Sunset Transit Center' },
+    { id: '62', label: '62 – Murray Blvd', dir0: 'To Washington Square Transit Center', dir1: 'To Sunset Transit Center' },
+    { id: '63', label: '63 – Washington Park/SW 6th', dir0: 'To Rose Garden/Japanese Garden', dir1: 'To Portland City Center' },
+    { id: '67', label: '67 – Bethany/158th', dir0: 'To PCC Rock Creek', dir1: 'To Merlo Rd/158th Ave' },
+    { id: '70', label: '70 – 12th/NE 33rd Ave', dir0: 'To 33rd & Sunderland', dir1: 'To Milwaukie' },
+    { id: '71', label: '71 – 60th Ave', dir0: 'To Clackamas Town Center', dir1: 'To Parkrose Transit Center' },
+    { id: '72', label: '72 – Killingsworth/82nd Ave', dir0: 'To Swan Island', dir1: 'To Clackamas Town Center' },
+    { id: '73', label: '73 – 122nd Ave', dir0: 'To Foster & 94th', dir1: 'To Parkrose Transit Center' },
+    { id: '74', label: '74 – 162nd Ave', dir0: 'To 158th & Airport Way', dir1: 'To Powell & 182nd' },
+    { id: '75', label: '75 – Cesar Chavez/Lombard', dir0: 'To St Johns', dir1: 'To Milwaukie' },
+    { id: '76', label: '76 – Hall/Greenburg', dir0: 'To Meridian Park Hospital or Oregon City TC', dir1: 'To Beaverton Transit Center' },
+    { id: '77', label: '77 – Broadway/Halsey', dir0: 'To Troutdale Frontage Rd or TRIP', dir1: 'To Montgomery Park' },
+    { id: '78', label: '78 – Denney/Kerr Pkwy', dir0: 'To Lake Oswego Transit Center', dir1: 'To Beaverton Transit Center' },
+    { id: '79', label: '79 – Clackamas/Oregon City', dir0: 'To Oregon City Transit Center', dir1: 'To Clackamas Town Center' },
+    { id: '81', label: '81 – Kane/257th', dir0: 'To Troutdale Reynolds Industrial Park', dir1: 'To Gresham Central Transit Center' },
+    { id: '82', label: '82 – South Gresham', dir0: 'To Powell & 182nd', dir1: 'To Gresham Village' },
+    { id: '84', label: '84 – Powell Valley/Orient Dr', dir0: 'Evening Loop', dir1: 'Morning Loop' },
+    { id: '86', label: '86 – 148th Ave', dir0: 'To Relay Resources', dir1: 'To Foster & 94th' },
+    { id: '87', label: '87 – Airport Way/181st', dir0: 'To Powell & 182nd', dir1: 'To Gateway Transit Center' },
+    { id: '88', label: '88 – Hart/198th', dir0: 'To Willow Creek/SW 185th Ave Transit Center', dir1: 'To Beaverton Transit Center' },
+    { id: '94', label: '94 – Tigard/Sherwood', dir0: 'To Sherwood', dir1: 'To Tigard' },
+    { id: '96', label: '96 – Tualatin/I-5', dir0: 'To Commerce Circle', dir1: 'To Portland City Center' },
+    { id: '97', label: '97 – Tualatin-Sherwood Rd', dir0: 'To SW Langer Dr/Sherwood Plaza', dir1: 'To Tualatin WES Station' },
+    { id: '98', label: '98 – MAX Shuttle', dir0: 'Eastbound', dir1: 'Westbound' },
+    { id: '152', label: '152 – Milwaukie', dir0: 'To Clackamas Town Center', dir1: 'To Milwaukie' },
+    { id: '153', label: '153 – Stafford/Salamo', dir0: 'To Willamette', dir1: 'To Lake Oswego Transit Center' },
+    { id: '155', label: '155 – Sunnyside', dir0: 'To 172nd', dir1: 'To Clackamas Town Center' },
+    { id: '156', label: '156 – Mather Rd', dir0: 'To 147th & Oregon Trail', dir1: 'To Clackamas Town Center' },
+    { id: '287', label: '287 – Blue Eastside Bus', dir0: 'To Cleveland Ave Park & Ride', dir1: 'To Goose Hollow/SW Jefferson' },
+    { id: '288', label: '288 – Blue Westside Bus', dir0: 'To Willow Creek TC or Hatfield Government Center', dir1: 'To Willow Creek TC or Rose Quarter TC' },
+    { id: '291', label: '291 – Orange Bus', dir0: 'To Milwaukie', dir1: 'To Portland City Center' },
+    { id: '292', label: '292 – Red Bus', dir0: 'To Portland International Airport', dir1: 'To Goose Hollow/SW Jefferson' },
+    { id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
+  ];
+  
+  /**
+   * Show the bus routes modal
+   */
+  function showBusRoutesModal() {
+    const modal = document.getElementById('busRoutesModal');
+    const routeList = document.getElementById('busRouteList');
+    
+    if (!modal || !routeList) {
+      console.error('[showBusRoutesModal] Modal elements not found');
+      return;
+    }
+    
+    // Populate route list
+    routeList.innerHTML = '';
+    BUS_ROUTES.forEach(route => {
+      const routeDiv = document.createElement('div');
+      routeDiv.className = 'route-entry-modal';
+      routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
+      
+      const routeHeader = document.createElement('div');
+      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer;';
+      routeHeader.textContent = route.label;
+      routeHeader.onclick = () => toggleRouteDirections(route.id);
+      
+      const directionsDiv = document.createElement('div');
+      directionsDiv.id = `directions-${route.id}`;
+      directionsDiv.style.cssText = 'display: none; margin-top: 0.5rem;';
+      
+      if (route.dir0) {
+        const dir0Btn = document.createElement('button');
+        dir0Btn.textContent = `➡ ${route.dir0}`;
+        dir0Btn.style.cssText = 'width: 100%; padding: 0.5rem; margin-bottom: 0.25rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir0Btn.onclick = () => selectRoute(route.id, 0);
+        directionsDiv.appendChild(dir0Btn);
+      }
+      
+      if (route.dir1) {
+        const dir1Btn = document.createElement('button');
+        dir1Btn.textContent = `⬅ ${route.dir1}`;
+        dir1Btn.style.cssText = 'width: 100%; padding: 0.5rem; margin-bottom: 0.25rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir1Btn.onclick = () => selectRoute(route.id, 1);
+        directionsDiv.appendChild(dir1Btn);
+      }
+      
+      routeDiv.appendChild(routeHeader);
+      routeDiv.appendChild(directionsDiv);
+      routeList.appendChild(routeDiv);
+    });
+    
+    // Setup search
+    const searchInput = document.getElementById('busRouteSearch');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.oninput = function() {
+        const filter = this.value.toLowerCase();
+        const entries = routeList.querySelectorAll('.route-entry-modal');
+        entries.forEach(entry => {
+          const text = entry.textContent.toLowerCase();
+          entry.style.display = text.includes(filter) ? '' : 'none';
+        });
+      };
+    }
+    
+    modal.style.display = 'flex';
+  }
+  
+  /**
+   * Hide the bus routes modal
+   */
+  function hideBusRoutesModal() {
+    const modal = document.getElementById('busRoutesModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+  
+  /**
+   * Toggle route directions visibility
+   */
+  function toggleRouteDirections(routeId) {
+    const dirDiv = document.getElementById(`directions-${routeId}`);
+    if (dirDiv) {
+      dirDiv.style.display = dirDiv.style.display === 'none' ? 'block' : 'none';
+    }
+  }
+  
+  /**
+   * Select a route and overlay it on the map
+   */
+  function selectRoute(routeId, directionId) {
+    console.log('[selectRoute] Selected route:', routeId, 'direction:', directionId);
+    
+    // Close modal
+    hideBusRoutesModal();
+    
+    // Show route overlay
+    if (typeof showRouteOverlay === 'function') {
+      showRouteOverlay(routeId, directionId);
+    } else {
+      console.error('[selectRoute] showRouteOverlay not available');
+      alert('Route overlay function not available. Please refresh the page.');
+    }
+  }
 
   // === SECTION: TRAFFIC CAMERAS OVERLAY ===
   // Traffic cameras overlay is now handled by trafficCamerasOverlay.js module
@@ -4038,6 +4251,10 @@
       // Add map event listeners for debugging
       map.on('load', () => {
         console.log('[Map] Map loaded successfully');
+        console.log('[Map] Testing route overlay availability:');
+        console.log('[Map]   - attachRouteToMap:', typeof window.attachRouteToMap);
+        console.log('[Map]   - showRouteOverlay:', typeof window.showRouteOverlay);
+        console.log('[Map]   - masterRoutes:', typeof masterRoutes, 'length:', masterRoutes?.length);
         // Initialize traffic cameras overlay
         if (typeof TrafficCamerasOverlay !== 'undefined') {
           TrafficCamerasOverlay.init(map);
