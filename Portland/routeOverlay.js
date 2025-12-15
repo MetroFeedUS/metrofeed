@@ -233,29 +233,115 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
       const routeInfoPanel = document.createElement("div");
       routeInfoPanel.id = panelId;
+      routeInfoPanel.className = "route-info-panel";
       routeInfoPanel.style.cssText = `
         position:absolute;
-        bottom:20px;
-        left:20px;
+        top:50%;
+        left:50%;
+        transform:translate(-50%, -50%);
         background:rgba(30,30,30,0.95);
         border:2px solid #1E90FF;
         border-radius:8px;
         padding:12px;
         color:#fff;
         z-index:1000;
-        max-width:300px;
+        max-width:280px;
+        min-width:200px;
         box-shadow:0 4px 12px rgba(0,0,0,0.5);
+        transition:all 0.3s ease;
       `;
-      routeInfoPanel.innerHTML = `
-        <div style="margin-bottom:8px;">
-          <strong style="color:#1E90FF;font-size:1.1em;">${routeTitle}</strong>
+      
+      // Create collapse button
+      const collapseBtn = document.createElement("button");
+      collapseBtn.innerHTML = "◀";
+      collapseBtn.style.cssText = `
+        position:absolute;
+        right:-20px;
+        top:50%;
+        transform:translateY(-50%);
+        background:#1E90FF;
+        color:#fff;
+        border:none;
+        border-radius:4px 0 0 4px;
+        padding:8px 4px;
+        cursor:pointer;
+        font-size:12px;
+        z-index:1001;
+        box-shadow:-2px 0 4px rgba(0,0,0,0.3);
+      `;
+      
+      let isCollapsed = false;
+      collapseBtn.onclick = (e) => {
+        e.stopPropagation();
+        isCollapsed = !isCollapsed;
+        if (isCollapsed) {
+          routeInfoPanel.style.transform = "translate(calc(-100% + 20px), -50%)";
+          routeInfoPanel.style.opacity = "0.7";
+          collapseBtn.innerHTML = "▶";
+          collapseBtn.style.right = "-20px";
+          collapseBtn.style.borderRadius = "4px 0 0 4px";
+          routeInfoPanel.querySelector(".route-info-content").style.display = "none";
+        } else {
+          routeInfoPanel.style.transform = "translate(-50%, -50%)";
+          routeInfoPanel.style.opacity = "1";
+          collapseBtn.innerHTML = "◀";
+          collapseBtn.style.right = "-20px";
+          collapseBtn.style.borderRadius = "4px 0 0 4px";
+          routeInfoPanel.querySelector(".route-info-content").style.display = "block";
+        }
+      };
+      
+      // Create close button
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = "×";
+      closeBtn.style.cssText = `
+        position:absolute;
+        top:4px;
+        right:4px;
+        background:transparent;
+        color:#fff;
+        border:none;
+        font-size:20px;
+        cursor:pointer;
+        width:24px;
+        height:24px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:4px;
+        line-height:1;
+      `;
+      closeBtn.onmouseover = () => closeBtn.style.background = "rgba(255,255,255,0.2)";
+      closeBtn.onmouseout = () => closeBtn.style.background = "transparent";
+      closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        // Find and remove this overlay
+        if (window.activeRouteOverlays) {
+          const overlayKey = `${routeId}-${directionId}`;
+          if (window.activeRouteOverlays[overlayKey]) {
+            window.activeRouteOverlays[overlayKey].remove();
+            delete window.activeRouteOverlays[overlayKey];
+          }
+        }
+      };
+      
+      // Content wrapper
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "route-info-content";
+      contentDiv.innerHTML = `
+        <div style="margin-bottom:8px; padding-right:20px;">
+          <strong style="color:#1E90FF;font-size:1em;">${routeTitle}</strong>
         </div>
         <a href="${options.routePageUrl}"
-           style="color:#1E90FF;text-decoration:none;font-weight:bold;display:inline-block;margin-top:8px;"
+           style="color:#1E90FF;text-decoration:none;font-weight:bold;display:inline-block;margin-top:8px;font-size:0.9em;"
            target="_blank">
           Open full route page →
         </a>
       `;
+      
+      routeInfoPanel.appendChild(closeBtn);
+      routeInfoPanel.appendChild(contentDiv);
+      routeInfoPanel.appendChild(collapseBtn);
 
       map.getContainer().appendChild(routeInfoPanel);
       overlayElements.controls.push(routeInfoPanel);
