@@ -256,38 +256,60 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapseBtn.innerHTML = "◀";
       collapseBtn.style.cssText = `
         position:absolute;
-        right:-20px;
-        top:50%;
-        transform:translateY(-50%);
-        background:#1E90FF;
+        right:4px;
+        top:4px;
+        background:transparent;
         color:#fff;
         border:none;
-        border-radius:4px 0 0 4px;
-        padding:8px 4px;
+        padding:2px 6px;
         cursor:pointer;
-        font-size:12px;
+        font-size:16px;
         z-index:1001;
-        box-shadow:-2px 0 4px rgba(0,0,0,0.3);
+        line-height:1;
       `;
+      collapseBtn.onmouseover = () => collapseBtn.style.background = "rgba(255,255,255,0.2)";
+      collapseBtn.onmouseout = () => collapseBtn.style.background = "transparent";
       
       let isCollapsed = false;
       collapseBtn.onclick = (e) => {
         e.stopPropagation();
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
-          routeInfoPanel.style.transform = "translate(calc(-100% + 20px), -50%)";
-          routeInfoPanel.style.opacity = "0.7";
-          collapseBtn.innerHTML = "▶";
-          collapseBtn.style.right = "-20px";
-          collapseBtn.style.borderRadius = "4px 0 0 4px";
+          // Collapse to right side - thin vertical tab (10px wide, 50px tall)
+          routeInfoPanel.style.left = "100%";
+          routeInfoPanel.style.transform = "translate(-10px, -50%)";
+          routeInfoPanel.style.width = "10px";
+          routeInfoPanel.style.height = "50px";
+          routeInfoPanel.style.padding = "0";
+          routeInfoPanel.style.borderRadius = "4px 0 0 4px";
+          routeInfoPanel.style.borderRight = "none";
+          routeInfoPanel.style.borderLeft = "2px solid #1E90FF";
+          collapseBtn.style.display = "none";
+          closeBtn.style.display = "none";
           routeInfoPanel.querySelector(".route-info-content").style.display = "none";
+          // Show collapsed route name (rotated 90deg for horizontal reading)
+          const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
+          if (collapsedName) {
+            collapsedName.style.display = "flex";
+          }
         } else {
+          // Expand back to center
+          routeInfoPanel.style.left = "50%";
           routeInfoPanel.style.transform = "translate(-50%, -50%)";
-          routeInfoPanel.style.opacity = "1";
-          collapseBtn.innerHTML = "◀";
-          collapseBtn.style.right = "-20px";
-          collapseBtn.style.borderRadius = "4px 0 0 4px";
+          routeInfoPanel.style.width = "auto";
+          routeInfoPanel.style.height = "auto";
+          routeInfoPanel.style.padding = "12px";
+          routeInfoPanel.style.borderRadius = "8px";
+          routeInfoPanel.style.borderRight = "2px solid #1E90FF";
+          routeInfoPanel.style.borderLeft = "2px solid #1E90FF";
+          collapseBtn.style.display = "block";
+          closeBtn.style.display = "flex";
           routeInfoPanel.querySelector(".route-info-content").style.display = "block";
+          // Hide collapsed route name
+          const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
+          if (collapsedName) {
+            collapsedName.style.display = "none";
+          }
         }
       };
       
@@ -339,8 +361,31 @@ function attachRouteToMap(map, routeId, directionId, options) {
         </a>
       `;
       
+      // Collapsed route name (rotated 90deg so text reads horizontally when tab is vertical)
+      const collapsedName = document.createElement("div");
+      collapsedName.className = "route-name-collapsed";
+      collapsedName.style.cssText = `
+        display:none;
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform:translate(-50%, -50%) rotate(90deg);
+        white-space:nowrap;
+        color:#1E90FF;
+        font-weight:bold;
+        font-size:0.7rem;
+        pointer-events:none;
+        transform-origin:center;
+        text-align:center;
+        width:50px;
+        height:10px;
+        line-height:10px;
+      `;
+      collapsedName.textContent = routeTitle;
+      
       routeInfoPanel.appendChild(closeBtn);
       routeInfoPanel.appendChild(contentDiv);
+      routeInfoPanel.appendChild(collapsedName);
       routeInfoPanel.appendChild(collapseBtn);
 
       map.getContainer().appendChild(routeInfoPanel);
