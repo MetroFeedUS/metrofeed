@@ -3768,14 +3768,51 @@
       return;
     }
     
-    const routeData = masterRoutes.find(r => 
+    // Try multiple matching strategies
+    let routeData = masterRoutes.find(r => 
       String(r.route_number) === routeNumber && 
       r.direction_id === directionId
     );
     
+    // If not found, try matching route_id as well
+    if (!routeData) {
+      routeData = masterRoutes.find(r => 
+        (String(r.route_number) === routeNumber || String(r.route_id) === routeNumber) && 
+        r.direction_id === directionId
+      );
+    }
+    
+    // If still not found, try without direction match (some routes might not have direction_id)
+    if (!routeData) {
+      routeData = masterRoutes.find(r => 
+        String(r.route_number) === routeNumber || String(r.route_id) === routeNumber
+      );
+    }
+    
     if (!routeData) {
       console.error('[showRouteOverlay] Route not found:', routeId, directionId);
-      console.error('[showRouteOverlay] Available routes (first 10):', masterRoutes.slice(0, 10).map(r => ({ number: r.route_number, dir: r.direction_id })));
+      console.error('[showRouteOverlay] Total routes in masterRoutes:', masterRoutes.length);
+      
+      // Show rail routes specifically
+      const railRoutes = masterRoutes.filter(r => 
+        ['90', '100', '190', '200', '290', '203'].includes(String(r.route_number)) ||
+        ['90', '100', '190', '200', '290', '203'].includes(String(r.route_id))
+      );
+      console.error('[showRouteOverlay] Rail routes found in masterRoutes:', railRoutes.map(r => ({ 
+        route_number: r.route_number, 
+        route_id: r.route_id, 
+        direction_id: r.direction_id,
+        route_title: r.route_title 
+      })));
+      
+      // Show first 20 routes for debugging
+      console.error('[showRouteOverlay] First 20 routes:', masterRoutes.slice(0, 20).map(r => ({ 
+        route_number: r.route_number, 
+        route_id: r.route_id, 
+        direction_id: r.direction_id,
+        route_type: r.route_type 
+      })));
+      
       alert(`Route ${routeId} (direction ${directionId}) not found. Check console for available routes.`);
       return;
     }
