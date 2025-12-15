@@ -256,7 +256,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapseBtn.innerHTML = "▶";
       collapseBtn.style.cssText = `
         position:absolute;
-        right:4px;
+        right:32px;
         top:4px;
         background:transparent;
         color:#fff;
@@ -317,8 +317,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeInfoPanel.style.borderLeft = "2px solid #1E90FF";
           routeInfoPanel.style.borderTop = "2px solid #1E90FF";
           routeInfoPanel.style.borderBottom = "2px solid #1E90FF";
-          // Move collapse button back to top-right
-          collapseBtn.style.right = "4px";
+          // Move collapse button back to top-right (left of close button)
+          collapseBtn.style.right = "32px";
           collapseBtn.style.left = "auto";
           collapseBtn.style.top = "4px";
           collapseBtn.style.transform = "none";
