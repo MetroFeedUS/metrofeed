@@ -137,11 +137,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
       if (typeof lat !== "number" || typeof lon !== "number") return;
 
-      // Highlight next time
+      // Highlight next time and limit to next 10 times
       const highlightedTimes = [];
       let   foundNext        = false;
+      const maxTimesToShow   = 10; // Limit to next 10 times
+      let   timesAdded       = 0;
 
       if (Array.isArray(stop.times)) {
+        // First, collect all future times with their scheduled minutes
+        const futureTimes = [];
         stop.times.forEach((timeStrRaw) => {
           let cleanTime = String(timeStrRaw).trim();
           let schedMins;
@@ -177,13 +181,24 @@ function attachRouteToMap(map, routeId, directionId, options) {
             schedMins += 1440;
           }
 
-          if (!foundNext && schedMins >= nowMins) {
+          // Only include future times
+          if (schedMins >= nowMins) {
+            futureTimes.push({ cleanTime, schedMins });
+          }
+        });
+
+        // Sort by scheduled time
+        futureTimes.sort((a, b) => a.schedMins - b.schedMins);
+
+        // Add up to maxTimesToShow times, highlighting the first one
+        futureTimes.slice(0, maxTimesToShow).forEach((timeData, index) => {
+          if (index === 0) {
+            // Highlight the next upcoming time
             highlightedTimes.push(
-              `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${cleanTime}</span>`
+              `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${timeData.cleanTime}</span>`
             );
-            foundNext = true;
           } else {
-            highlightedTimes.push(cleanTime);
+            highlightedTimes.push(timeData.cleanTime);
           }
         });
       }

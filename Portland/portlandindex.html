@@ -880,7 +880,7 @@
 <div id="dropdownMenu" class="dropdown">
   <a id="youtubeBtn" href="https://www.youtube.com/@MetroFeedLouisville" target="_blank"><img src="006-earthquake.svg" alt="Youtube"></a>
   <div class="dropdown-divider"></div>
-  <a href="#" onclick="event.preventDefault(); showBusRoutesModal();"><img src="002-bus.svg" alt="Bus Routes"></a>
+  <a href="#" id="dropdownBusesBtn" onclick="event.preventDefault(); showBusRoutesModal();"><img src="002-bus.svg" alt="Bus Routes"></a>
   <a href="https://metrofeedus.com/portland/railroutes"><img src="001-train-station.svg" alt="Rail Routes"></a>
   <a href="#" id="dropdownTrafficBtn" onclick="toggleTrafficFromDropdown()"><img src="003-warning.svg" alt="Traffic Overlay"></a>
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
@@ -1047,15 +1047,17 @@
 
 <!-- -- BUS ROUTES MODAL -- -->
 <div id="busRoutesModal" class="mf-overlay" style="display: none;">
-  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
     <h2>🚌 Bus Routes</h2>
-    <div style="margin-bottom: 1rem;">
-      <input type="text" id="busRouteSearch" placeholder="Search routes..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem;">
+    <div style="margin-bottom: 1rem; padding: 0 1rem;">
+      <input type="text" id="busRouteSearch" placeholder="Search routes..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
     </div>
-    <div id="busRouteList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+    <div id="busRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
       <!-- Route list will be populated here -->
     </div>
-    <button class="mf-btn" onclick="hideBusRoutesModal()" style="margin-top: 1rem;" data-translate="close">Close</button>
+    <div style="padding: 1rem; border-top: 1px solid #333; margin-top: auto;">
+      <button class="mf-btn" onclick="hideBusRoutesModal()" style="width: 100%;" data-translate="close">Close</button>
+    </div>
   </div>
 </div>
 
@@ -1276,7 +1278,7 @@
   function showDropdownTooltips() {
     const tooltipData = [
       { selector: '#youtubeBtn', text: 'Daily Brief' },
-      { selector: 'a[href*="busroutesmain"]', text: 'Bus Routes' },
+      { selector: '#dropdownBusesBtn', text: 'Bus Routes' },
       { selector: 'a[href*="railroutes"]', text: 'Rail Routes' },
       { selector: '#dropdownTrafficBtn', text: 'Traffic Overlay' },
       { selector: '#dropdownCamerasBtn', text: 'Traffic Cameras' },
