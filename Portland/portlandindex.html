@@ -23,6 +23,10 @@
     .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: #0d0d0d; border: 1px solid #1E90FF; border-radius: 8px; padding: 5px 10px; }
     .search-bar input { background: transparent; border: none; color: #cccccc; padding: 5px; width: 100%; }
     .icon-placeholder { width: 20px; height: 20px; margin-right: 6px; }
+    .hand-icon { 
+      flex-shrink: 0;
+      display: inline-block;
+    }
     .side-buttons { position: absolute; width: 45px; height: 45px; z-index: 1001; background-color: #1E90FF; border: 2px solid #000; border-radius: 10px; box-shadow: 0 0 10px #1E90FF; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
     #menuBtn { top: 60px; left: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
@@ -437,17 +441,54 @@
     .map-select-btn { 
       background: transparent; 
       border: none; 
-      color: #1E90FF; 
+      color: #ffffff; 
       cursor: pointer; 
       padding: 4px; 
       margin-left: 4px;
       border-radius: 4px;
       transition: background-color 0.2s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .map-select-btn:hover { background-color: rgba(77, 208, 225, 0.1); }
+    .map-select-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
     .map-select-btn.active { 
-      background-color: rgba(77, 208, 225, 0.2); 
+      background-color: rgba(255, 255, 255, 0.2); 
       box-shadow: 0 0 4px #1E90FF;
+    }
+    /* Tooltip for map select buttons */
+    .map-select-tooltip {
+      position: absolute;
+      background: rgba(30, 30, 30, 0.95);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10000;
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      top: 50%;
+      right: 100%;
+      margin-right: 8px;
+      transform: translateY(-50%) translateX(-10px);
+      border: 1px solid #1E90FF;
+    }
+    .map-select-tooltip.show {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+    .map-select-tooltip::after {
+      content: '';
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-left-color: rgba(30, 30, 30, 0.95);
     }
 
     /* OTP Trip Planning Styles */
@@ -909,22 +950,24 @@
 <!-- -- SEARCH BAR -- -->
 <div class="search-bar">
   <div class="input-wrapper">
-    <img class="icon-placeholder" src="009-pin-1.svg" alt="Start" />
+    <svg class="icon-placeholder hand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 11v-1a2 2 0 0 0-2-2h-1a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1a2 2 0 0 0 2-2z"/>
+    </svg>
     <input id="startInput" type="text" placeholder="Start or Current Location" data-translate-placeholder="start_location" />
-    <button id="startMapBtn" class="map-select-btn" title="Click on map to select start location">
-      <svg width="16" height="16" viewBox="0 0 16 16">
-        <circle cx="8" cy="8" r="6" fill="none" stroke="#1E90FF" stroke-width="1.5"/>
-        <circle cx="8" cy="8" r="2" fill="#1E90FF"/>
+    <button id="startMapBtn" class="map-select-btn" data-tooltip="Click on map to select start location">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 11v-1a2 2 0 0 0-2-2h-1a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1a2 2 0 0 0 2-2z"/>
       </svg>
     </button>
   </div>
   <div class="input-wrapper">
-    <img class="icon-placeholder" src="008-pin.svg" alt="Destination" />
+    <svg class="icon-placeholder hand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 11v-1a2 2 0 0 0-2-2h-1a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1a2 2 0 0 0 2-2z"/>
+    </svg>
     <input id="endInput" type="text" placeholder="Destination" data-translate-placeholder="destination" />
-    <button id="endMapBtn" class="map-select-btn" title="Click on map to select destination">
-      <svg width="16" height="16" viewBox="0 0 16 16">
-        <circle cx="8" cy="8" r="6" fill="none" stroke="#1E90FF" stroke-width="1.5"/>
-        <circle cx="8" cy="8" r="2" fill="#1E90FF"/>
+    <button id="endMapBtn" class="map-select-btn" data-tooltip="Click on map to select destination">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 11v-1a2 2 0 0 0-2-2h-1a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1a2 2 0 0 0 2-2z"/>
       </svg>
     </button>
   </div>
@@ -1660,10 +1703,95 @@
     const startMapBtn = document.getElementById('startMapBtn');
     const endMapBtn = document.getElementById('endMapBtn');
     const clearBtn = document.getElementById('clearBtn');
+    const startInput = document.getElementById('startInput');
+    const endInput = document.getElementById('endInput');
     
-    if (startMapBtn) startMapBtn.addEventListener('click', () => activateMapSelection('start'));
-    if (endMapBtn) endMapBtn.addEventListener('click', () => activateMapSelection('end'));
+    if (startMapBtn) {
+      startMapBtn.addEventListener('click', () => activateMapSelection('start'));
+      addMapSelectTooltip(startMapBtn);
+    }
+    if (endMapBtn) {
+      endMapBtn.addEventListener('click', () => activateMapSelection('end'));
+      addMapSelectTooltip(endMapBtn);
+    }
     if (clearBtn) clearBtn.addEventListener('click', clearTripPlan);
+    
+    // Show tooltips when search bar inputs are focused/clicked (for mobile)
+    // Check if tooltips have been shown this session
+    let hasShownMapTooltips = sessionStorage.getItem('mapSelectTooltipsShown');
+    
+    if (startInput) {
+      startInput.addEventListener('focus', () => {
+        if (!hasShownMapTooltips) {
+          showMapSelectTooltips();
+          sessionStorage.setItem('mapSelectTooltipsShown', 'true');
+          hasShownMapTooltips = true;
+        }
+      });
+    }
+    
+    if (endInput) {
+      endInput.addEventListener('focus', () => {
+        if (!hasShownMapTooltips) {
+          showMapSelectTooltips();
+          sessionStorage.setItem('mapSelectTooltipsShown', 'true');
+          hasShownMapTooltips = true;
+        }
+      });
+    }
+  }
+  
+  /**
+   * Add tooltip to map select button
+   */
+  function addMapSelectTooltip(button) {
+    const tooltipText = button.getAttribute('data-tooltip');
+    if (!tooltipText) return;
+    
+    const tooltip = document.createElement('div');
+    tooltip.className = 'map-select-tooltip';
+    tooltip.textContent = tooltipText;
+    button.appendChild(tooltip);
+    
+    // Show tooltip on hover (for desktop)
+    button.addEventListener('mouseenter', () => {
+      tooltip.classList.add('show');
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('show');
+    });
+  }
+  
+  /**
+   * Show tooltips for map select buttons (similar to dropdown tooltips)
+   * Shows automatically when search bar is engaged
+   */
+  function showMapSelectTooltips() {
+    const startMapBtn = document.getElementById('startMapBtn');
+    const endMapBtn = document.getElementById('endMapBtn');
+    
+    const tooltipData = [
+      { button: startMapBtn, text: 'Click on map to select start location' },
+      { button: endMapBtn, text: 'Click on map to select destination' }
+    ];
+    
+    tooltipData.forEach((item, index) => {
+      if (!item.button) return;
+      
+      const tooltip = item.button.querySelector('.map-select-tooltip');
+      if (!tooltip) return;
+      
+      // Show tooltip with delay (staggered like dropdown)
+      setTimeout(() => {
+        tooltip.classList.add('show');
+      }, index * 200);
+      
+      // Hide tooltip after 5 seconds
+      setTimeout(() => {
+        tooltip.classList.remove('show');
+      }, 5000 + (index * 200));
+    });
   }
   
   // === SECTION: FIND ME FUNCTIONS ===
