@@ -4152,8 +4152,8 @@
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
       
       const routeHeader = document.createElement('div');
-      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer;';
-      routeHeader.textContent = route.label;
+      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
+      routeHeader.innerHTML = `<span>${route.label}</span>`;
       routeHeader.onclick = () => toggleRouteDirections(route.id);
       
       const directionsDiv = document.createElement('div');
@@ -4161,19 +4161,33 @@
       directionsDiv.style.cssText = 'display: none; margin-top: 0.5rem;';
       
       if (route.dir0) {
+        const dir0BtnWrapper = document.createElement('div');
+        dir0BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;';
+        
         const dir0Btn = document.createElement('button');
         dir0Btn.textContent = `➡ ${route.dir0}`;
-        dir0Btn.style.cssText = 'width: 100%; padding: 0.5rem; margin-bottom: 0.25rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRoute(route.id, 0);
-        directionsDiv.appendChild(dir0Btn);
+        
+        const star0Btn = createFavoriteStar(route.id, 0, route.label);
+        dir0BtnWrapper.appendChild(dir0Btn);
+        dir0BtnWrapper.appendChild(star0Btn);
+        directionsDiv.appendChild(dir0BtnWrapper);
       }
       
       if (route.dir1) {
+        const dir1BtnWrapper = document.createElement('div');
+        dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;';
+        
         const dir1Btn = document.createElement('button');
         dir1Btn.textContent = `⬅ ${route.dir1}`;
-        dir1Btn.style.cssText = 'width: 100%; padding: 0.5rem; margin-bottom: 0.25rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir1Btn.onclick = () => selectRoute(route.id, 1);
-        directionsDiv.appendChild(dir1Btn);
+        
+        const star1Btn = createFavoriteStar(route.id, 1, route.label);
+        dir1BtnWrapper.appendChild(dir1Btn);
+        dir1BtnWrapper.appendChild(star1Btn);
+        directionsDiv.appendChild(dir1BtnWrapper);
       }
       
       routeDiv.appendChild(routeHeader);
@@ -4206,6 +4220,124 @@
     if (modal) {
       modal.style.display = 'none';
     }
+  }
+  
+  /**
+   * Create a favorite star button for a route direction
+   */
+  function createFavoriteStar(routeId, directionId, routeLabel) {
+    const starBtn = document.createElement('button');
+    starBtn.style.cssText = 'background: transparent; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;';
+    
+    const favorites = getFavorites();
+    const isFavorite = favorites.some(fav => fav.routeId === routeId && fav.directionId === directionId);
+    
+    // Star icon (filled if favorite, outline if not)
+    starBtn.innerHTML = isFavorite 
+      ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+    
+    starBtn.onclick = (e) => {
+      e.stopPropagation();
+      toggleFavorite(routeId, directionId, routeLabel);
+      // Update star icon
+      const favorites = getFavorites();
+      const isFavorite = favorites.some(fav => fav.routeId === routeId && fav.directionId === directionId);
+      starBtn.innerHTML = isFavorite 
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
+        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+      // Refresh the modal to update all stars
+      showBusRoutesModal();
+    };
+    
+    return starBtn;
+  }
+  
+  /**
+   * Get favorites from localStorage
+   */
+  function getFavorites() {
+    try {
+      const stored = localStorage.getItem('favoriteRoutes');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error('[getFavorites] Error reading favorites:', e);
+      return [];
+    }
+  }
+  
+  /**
+   * Save favorites to localStorage
+   */
+  function saveFavorites(favorites) {
+    try {
+      localStorage.setItem('favoriteRoutes', JSON.stringify(favorites));
+    } catch (e) {
+      console.error('[saveFavorites] Error saving favorites:', e);
+    }
+  }
+  
+  /**
+   * Toggle favorite status for a route
+   */
+  function toggleFavorite(routeId, directionId, routeLabel) {
+    let favorites = getFavorites();
+    const favoriteKey = `${routeId}-${directionId}`;
+    
+    // Check if already favorite
+    const existingIndex = favorites.findIndex(fav => fav.routeId === routeId && fav.directionId === directionId);
+    
+    if (existingIndex > -1) {
+      // Remove from favorites
+      favorites.splice(existingIndex, 1);
+      console.log('[toggleFavorite] Removed favorite:', routeId, directionId);
+    } else {
+      // Add to favorites (max 3)
+      if (favorites.length >= 3) {
+        alert('Maximum 3 favorite routes allowed. Please remove one first.');
+        return;
+      }
+      favorites.push({ routeId, directionId, label: routeLabel });
+      console.log('[toggleFavorite] Added favorite:', routeId, directionId);
+    }
+    
+    saveFavorites(favorites);
+    updateFavoritesBox();
+  }
+  
+  /**
+   * Update the favorites box with current favorites
+   */
+  function updateFavoritesBox() {
+    const favorites = getFavorites();
+    const fav1 = document.getElementById('fav1');
+    const fav2 = document.getElementById('fav2');
+    const fav3 = document.getElementById('fav3');
+    
+    // Clear all
+    [fav1, fav2, fav3].forEach(btn => {
+      if (btn) {
+        btn.textContent = '';
+        btn.onclick = null;
+        btn.style.cursor = 'default';
+      }
+    });
+    
+    // Populate with favorites
+    favorites.forEach((fav, index) => {
+      const favBtn = index === 0 ? fav1 : index === 1 ? fav2 : fav3;
+      if (favBtn) {
+        // Extract route number from label (e.g., "15 – Belmont/NW 23rd" -> "15")
+        const routeNumber = fav.label.split('–')[0].trim();
+        favBtn.textContent = routeNumber;
+        favBtn.style.cursor = 'pointer';
+        favBtn.onclick = () => {
+          if (typeof showRouteOverlay === 'function') {
+            showRouteOverlay(fav.routeId, fav.directionId);
+          }
+        };
+      }
+    });
   }
   
   /**
@@ -4611,6 +4743,11 @@
         // Initialize dropdown button states
         if (typeof updateDropdownButtonStates === 'function') {
           updateDropdownButtonStates();
+        }
+        
+        // Initialize favorites box
+        if (typeof updateFavoritesBox === 'function') {
+          updateFavoritesBox();
         }
       });
       
