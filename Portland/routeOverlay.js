@@ -472,16 +472,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
             delete busMarkers[vehicleId];
           });
           
-          // Create markers for buses
+          // Create markers for buses (matching "All Buses Mode" style)
           routeBuses.forEach(bus => {
             if (!bus.latitude || !bus.longitude || !bus.blockID) return;
             
-            // Create bus marker element
+            // Create bus marker element matching createBusMarker style
             const busElement = document.createElement('div');
             busElement.style.textAlign = 'center';
             busElement.innerHTML = `
-              <div style="background:${routeColor};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
-              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid ${routeColor};margin:auto;"></div>
+              <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
+                <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNum}</span>${bus.vehicleID}
+              </div>
+              <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
             `;
             
             const busMarker = new maplibregl.Marker({
@@ -489,17 +491,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
             });
             busMarker.setLngLat([bus.longitude, bus.latitude]);
             
-            // Create popup for bus
+            // Create popup for bus (matching "All Buses Mode" style)
             const popupContent = document.createElement('div');
             popupContent.innerHTML = `
-              <div style='border:2px solid ${routeColor}; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
-                <div style='text-align:center; margin-bottom:8px;'>
-                  <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
+              <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
+                <div style='text-align:center; margin-bottom:6px;'>
+                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${bus.vehicleID}</div>
                 </div>
-                <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNum}</div>
-                <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
-                <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
-                <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
+                <div style='margin-bottom:4px;'><strong>Direction:</strong> ${bus.direction}</div>
+                <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
+                <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
               </div>
             `;
             
