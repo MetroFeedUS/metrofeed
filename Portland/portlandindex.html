@@ -103,6 +103,15 @@
       box-shadow: 0 0 6px #1976d2;
       border-color: #000;
     }
+    /* Active state - Orange glow for selected buttons */
+    .dropdown a.active {
+      box-shadow: 0 0 12px #FF6B35, 0 0 20px #FF6B35, inset 0 0 10px rgba(255, 107, 53, 0.3);
+      background-color: #1E90FF;
+    }
+    .dropdown a.active:hover {
+      background-color: #1976d2;
+      box-shadow: 0 0 12px #FF6B35, 0 0 20px #FF6B35, inset 0 0 10px rgba(255, 107, 53, 0.3);
+    }
     /* Youtube button - Red */
     .dropdown a#youtubeBtn {
       background-color: #FF0000;
@@ -886,7 +895,7 @@
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
   <a href="https://metrofeedus.com/portland/portlandweather"><img src="005-weather-radar.svg" alt="Weather"></a>
   <!-- AI Chat button in dropdown -->
-  <a href="chat.html"><img src="007-chatbot.svg" alt="AI Chat"></a>
+  <a href="chat.html" id="dropdownAiChatBtn" onclick="event.preventDefault(); window.chatWindow = window.open('chat.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="007-chatbot.svg" alt="AI Chat"></a>
   <a id="alertsMenuBtn" href="https://metrofeedus.com/portland/alerts" style="position:relative;">
     <img src="008-danger.svg" alt="Alerts">
     <span id="alertsDot" style="display: none; position: absolute; top: 4px; right: 4px; width: 13px; height: 13px; border-radius: 50%; background: #ff3b30; border: 2px solid #000; z-index: 2;"></span>
@@ -1281,6 +1290,11 @@
   menuBtn.addEventListener('click', () => {
     const isOpening = dropdownMenu.style.display !== 'flex';
     dropdownMenu.style.display = isOpening ? 'flex' : 'none';
+    
+    // Update button states when opening dropdown
+    if (isOpening && typeof updateDropdownButtonStates === 'function') {
+      updateDropdownButtonStates();
+    }
     
     // Show tooltips only on first open of this session
     if (isOpening && !hasShownTooltips) {
@@ -3685,6 +3699,8 @@
       trafficLayerActive = true;
       console.log('[Traffic] Traffic overlay enabled');
     }
+    // Update button active state
+    updateDropdownButtonStates();
   }
   
   // Function to minimize OTP itinerary modal
@@ -3711,6 +3727,43 @@
   function toggleTrafficFromDropdown() {
     console.log('[toggleTrafficFromDropdown] Function called');
     toggleTrafficOverlay();
+    // Don't close dropdown menu - let user keep it open
+  }
+  
+  /**
+   * Update dropdown button active states based on current overlay states
+   */
+  function updateDropdownButtonStates() {
+    // Traffic overlay button
+    const trafficBtn = document.getElementById('dropdownTrafficBtn');
+    if (trafficBtn) {
+      if (trafficLayerActive) {
+        trafficBtn.classList.add('active');
+      } else {
+        trafficBtn.classList.remove('active');
+      }
+    }
+    
+    // Traffic cameras button
+    const camerasBtn = document.getElementById('dropdownCamerasBtn');
+    if (camerasBtn && typeof TrafficCamerasOverlay !== 'undefined') {
+      if (TrafficCamerasOverlay.isActive()) {
+        camerasBtn.classList.add('active');
+      } else {
+        camerasBtn.classList.remove('active');
+      }
+    }
+    
+    // AI Chat button - track if chat window is open
+    const aiChatBtn = document.getElementById('dropdownAiChatBtn');
+    if (aiChatBtn) {
+      // Check if chat window reference exists and is not closed
+      if (window.chatWindow && !window.chatWindow.closed) {
+        aiChatBtn.classList.add('active');
+      } else {
+        aiChatBtn.classList.remove('active');
+      }
+    }
   }
 
   // === SECTION: ROUTE OVERLAY ===
@@ -4197,11 +4250,9 @@
   function toggleTrafficCamerasFromDropdown() {
     console.log('[toggleTrafficCamerasFromDropdown] Function called');
     TrafficCamerasOverlay.toggle();
-    // Close dropdown menu after toggling
-    const dropdownMenu = document.getElementById('dropdownMenu');
-    if (dropdownMenu) {
-      dropdownMenu.style.display = 'none';
-    }
+    // Update button active state
+    updateDropdownButtonStates();
+    // Don't close dropdown menu - let user keep it open
   }
 
   // Function to show camera feed in modal (called by overlay module)
@@ -4433,6 +4484,11 @@
         // Initialize traffic cameras overlay
         if (typeof TrafficCamerasOverlay !== 'undefined') {
           TrafficCamerasOverlay.init(map);
+        }
+        
+        // Initialize dropdown button states
+        if (typeof updateDropdownButtonStates === 'function') {
+          updateDropdownButtonStates();
         }
       });
       
