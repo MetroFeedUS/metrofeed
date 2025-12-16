@@ -95,6 +95,10 @@
       width: 20px;
       height: 20px;
     }
+    /* Ensure camera button SVG stays white (no filter) */
+    .dropdown a#dropdownCamerasBtn img {
+      filter: none;
+    }
     .dropdown a:last-child {
       margin-bottom: 0;
     }
@@ -4363,10 +4367,10 @@
   // No Python, no CSV, no geocoding APIs
 
   // Function to toggle traffic cameras from dropdown menu
-  function toggleTrafficCamerasFromDropdown() {
+  async function toggleTrafficCamerasFromDropdown() {
     console.log('[toggleTrafficCamerasFromDropdown] Function called');
-    TrafficCamerasOverlay.toggle();
-    // Update button active state
+    await TrafficCamerasOverlay.toggle();
+    // Update button active state after toggle completes
     updateDropdownButtonStates();
     // Don't close dropdown menu - let user keep it open
   }

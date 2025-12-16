@@ -134,10 +134,11 @@ const TrafficCamerasOverlay = (function() {
     markerElement.style.pointerEvents = 'auto';
     
     // Use the existing MetroFeed camera SVG
+    // Apply filter to make it black (invert white to black)
     markerElement.innerHTML = `
       <img src="004-cctv-camera.svg" 
            alt="Camera" 
-           style="width: ${MARKER_SIZE}px; height: ${MARKER_SIZE}px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />
+           style="width: ${MARKER_SIZE}px; height: ${MARKER_SIZE}px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(0);" />
     `;
     
     return markerElement;
