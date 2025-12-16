@@ -39,6 +39,8 @@
  * @param {string}         options.routePageUrl- Optional: URL to full route page
  * @param {string}         options.routeColor  - Optional: line color (default MetroFeed blue)
  * @param {boolean}        options.fitBounds   - Optional: fit map to route (default: true for singleRoutePage)
+ * @param {string}         options.apiKey      - Optional: TriMet API key for bus tracking
+ * @param {boolean}        options.trackBuses  - Optional: enable bus tracking (default: true for mainOverlay)
  *
  * @returns {{ remove: function }} overlay handle
  */
@@ -51,6 +53,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     options.fitBounds !== undefined
       ? options.fitBounds
       : mode === "singleRoutePage";
+  const trackBuses  = options.trackBuses !== undefined ? options.trackBuses : (mode === "mainOverlay");
+  const apiKey      = options.apiKey || null;
 
   const routeData = options.routeData;
 
@@ -78,7 +82,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     sources:  [],
     layers:   [],
     markers:  [],
-    controls: []
+    controls: [],
+    intervals: [] // For bus tracking intervals
   };
 
   // ==== Internal: build & attach =================================================
@@ -431,6 +436,94 @@ function attachRouteToMap(map, routeId, directionId, options) {
       map.getContainer().appendChild(routeInfoPanel);
       overlayElements.controls.push(routeInfoPanel);
     }
+
+    // ---------- Bus tracking (for mainOverlay mode only) ----------
+    if (trackBuses && apiKey && mode === "mainOverlay") {
+      const busMarkers = {}; // Store bus markers separately
+      
+      async function fetchAndDisplayBuses() {
+        try {
+          const routeNum = String(routeId).replace(/[^0-9]/g, ''); // Extract numeric route ID
+          if (!routeNum) {
+            console.warn('[attachRouteToMap] Invalid route ID for bus tracking:', routeId);
+            return;
+          }
+          
+          const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNum}&appID=${apiKey}&json=true`);
+          const data = await res.json();
+          const allBuses = data.resultSet.vehicle || [];
+          
+          // Filter buses for this route and direction
+          const routeBuses = allBuses.filter(v => 
+            v.routeNumber == routeNum && v.direction == directionId
+          );
+          
+          // Remove old bus markers from map and overlayElements
+          Object.keys(busMarkers).forEach(vehicleId => {
+            const marker = busMarkers[vehicleId];
+            if (marker && typeof marker.remove === "function") {
+              marker.remove();
+              // Remove from overlayElements.markers
+              const index = overlayElements.markers.indexOf(marker);
+              if (index > -1) {
+                overlayElements.markers.splice(index, 1);
+              }
+            }
+            delete busMarkers[vehicleId];
+          });
+          
+          // Create markers for buses
+          routeBuses.forEach(bus => {
+            if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+            
+            // Create bus marker element
+            const busElement = document.createElement('div');
+            busElement.style.textAlign = 'center';
+            busElement.innerHTML = `
+              <div style="background:${routeColor};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid ${routeColor};margin:auto;"></div>
+            `;
+            
+            const busMarker = new maplibregl.Marker({
+              element: busElement
+            });
+            busMarker.setLngLat([bus.longitude, bus.latitude]);
+            
+            // Create popup for bus
+            const popupContent = document.createElement('div');
+            popupContent.innerHTML = `
+              <div style='border:2px solid ${routeColor}; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
+                <div style='text-align:center; margin-bottom:8px;'>
+                  <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
+                </div>
+                <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNum}</div>
+                <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
+                <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
+                <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
+              </div>
+            `;
+            
+            const popup = new maplibregl.Popup().setDOMContent(popupContent);
+            busMarker.setPopup(popup);
+            busMarker.addTo(map);
+            
+            busMarkers[bus.vehicleID] = busMarker;
+            overlayElements.markers.push(busMarker);
+          });
+          
+          console.log(`[attachRouteToMap] Displayed ${routeBuses.length} buses for route ${routeNum} direction ${directionId}`);
+        } catch (error) {
+          console.error('[attachRouteToMap] Error fetching buses:', error);
+        }
+      }
+      
+      // Fetch buses immediately
+      fetchAndDisplayBuses();
+      
+      // Update buses every 15 seconds
+      const busInterval = setInterval(fetchAndDisplayBuses, 15000);
+      overlayElements.intervals.push(busInterval);
+    }
   };
 
   // ==== Wait for map load if needed ==========================================
@@ -467,10 +560,16 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (el && el.parentNode) el.parentNode.removeChild(el);
       });
 
+      // Intervals (bus tracking)
+      overlayElements.intervals.forEach((interval) => {
+        if (interval) clearInterval(interval);
+      });
+
       overlayElements.sources  = [];
       overlayElements.layers   = [];
       overlayElements.markers  = [];
       overlayElements.controls = [];
+      overlayElements.intervals = [];
     }
   };
 }
