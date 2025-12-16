@@ -117,9 +117,25 @@ const TrafficCamerasOverlay = (function() {
    * @returns {HTMLElement} Marker element
    */
   function createMarkerElement(camera) {
+    // Check if map is in dark mode (night style)
+    const isDarkMode = (typeof window !== 'undefined' && window.isNightMode === true);
+    
+    // Determine filter based on dark mode
+    // In dark mode: white (no brightness filter)
+    // In light mode: black (brightness(0))
+    const filterStyle = isDarkMode 
+      ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' // White in dark mode
+      : 'drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(0)'; // Black in light mode
+    
     // Use shared camera icon function if available, otherwise create inline
     if (typeof createCameraMarkerElement === 'function') {
-      return createCameraMarkerElement(MARKER_SIZE);
+      const markerElement = createCameraMarkerElement(MARKER_SIZE);
+      // Update the filter based on dark mode (override the default)
+      const img = markerElement.querySelector('img');
+      if (img) {
+        img.style.filter = filterStyle;
+      }
+      return markerElement;
     }
     
     // Fallback: create marker element with SVG
@@ -134,11 +150,11 @@ const TrafficCamerasOverlay = (function() {
     markerElement.style.pointerEvents = 'auto';
     
     // Use the existing MetroFeed camera SVG
-    // Apply filter to make it black (invert white to black)
+    // Apply filter based on dark mode: white in dark mode, black in light mode
     markerElement.innerHTML = `
       <img src="004-cctv-camera.svg" 
            alt="Camera" 
-           style="width: ${MARKER_SIZE}px; height: ${MARKER_SIZE}px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(0);" />
+           style="width: ${MARKER_SIZE}px; height: ${MARKER_SIZE}px; display: block; filter: ${filterStyle};" />
     `;
     
     return markerElement;

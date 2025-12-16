@@ -260,7 +260,7 @@
       color: #1E90FF; 
       border: 2px solid #fff; 
       border-radius: 6px; 
-      font-size: 0.75rem; 
+      font-size: 0.8625rem; /* 15% larger than 0.75rem */
       font-weight: bold;
       line-height: 40px; 
       text-align: center; 
@@ -1168,7 +1168,7 @@
     
         // Map Settings
   defaultCenter: [-122.6784, 45.5152], // [longitude, latitude] for MapLibre GL JS
-  defaultZoom: 13,
+  defaultZoom: 10.5, // Split difference between 13 and 8 (minZoom)
   bounds: {
     north: 45.80,    // Up to Ridgefield, WA (Clark County north edge)
     south: 45.20,    // Down to Wilsonville, OR (Clackamas/Washington)
@@ -1431,6 +1431,8 @@
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
       isNightMode = !isNightMode;
+      // Make isNightMode globally accessible for camera markers
+      window.isNightMode = isNightMode;
       
       if (isNightMode) {
         map.setStyle(nightStyle);
@@ -1441,8 +1443,20 @@
         themeToggleBtn.querySelector('img').src = '008-night.svg'; // Change to moon icon
         themeToggleBtn.title = 'Switch to Night Map';
       }
+      
+      // Update camera markers if overlay is active
+      if (typeof TrafficCamerasOverlay !== 'undefined' && TrafficCamerasOverlay.isActive()) {
+        // Remove and re-add markers to update their appearance
+        TrafficCamerasOverlay.toggle(); // Turn off
+        setTimeout(() => {
+          TrafficCamerasOverlay.toggle(); // Turn back on with new style
+        }, 100);
+      }
     });
   }
+  
+  // Initialize window.isNightMode
+  window.isNightMode = isNightMode;
 
   // === SECTION: MAP SELECTION LOGIC ===
   let mapSelectionMode = null; // 'start' or 'end' or null
