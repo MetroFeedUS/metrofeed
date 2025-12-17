@@ -1139,6 +1139,24 @@
   </div>
 </div>
 
+<!-- -- SPONSOR MODAL -- -->
+<div id="sponsorModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 700px; max-height: 90vh; display: flex; flex-direction: column; position: relative;">
+    <button id="sponsorModalClose" onclick="hideSponsorModal()" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; z-index: 10; transition: background-color 0.2s ease;" title="Close" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+      ×
+    </button>
+    <div style="padding: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center;">
+      <h2 style="color: #1E90FF; margin-bottom: 1rem; font-size: 1.5rem;">Thank You to Our Sponsor</h2>
+      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.5;">
+        Your support helps keep MetroFeed free for all users. We appreciate your partnership!
+      </p>
+      <div style="width: 100%; max-width: 600px; margin: 0 auto; background: #1a1a1a; border-radius: 8px; padding: 1.5rem; border: 1px solid #333;">
+        <img id="sponsorModalImage" src="sponsor-ad-placeholder.png" alt="Sponsor" style="width: 100%; height: auto; max-height: 500px; object-fit: contain; display: block; margin: 0 auto;">
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
@@ -4732,8 +4750,91 @@
   }
 
   // DOM Content Loaded Event Listener
+  // === SECTION: SPONSOR MODAL ===
+  // Shows once per day (resets at 1am) to thank sponsor for keeping MetroFeed free
+  
+  /**
+   * Check if sponsor modal should be shown today
+   * Resets at 1am (not 24-hour timer)
+   */
+  function shouldShowSponsorModal() {
+    try {
+      const lastShownDate = localStorage.getItem('sponsorModalLastShown');
+      if (!lastShownDate) {
+        return true; // Never shown before
+      }
+      
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const lastShown = new Date(lastShownDate);
+      const lastShownDay = new Date(lastShown.getFullYear(), lastShown.getMonth(), lastShown.getDate());
+      
+      // Check if it's a new day (after 1am reset)
+      // If current time is after 1am and last shown was before today, show it
+      const currentHour = now.getHours();
+      const isAfterReset = currentHour >= 1; // 1am reset
+      
+      // If it's after 1am and last shown was before today, show modal
+      if (isAfterReset && lastShownDay < today) {
+        return true;
+      }
+      
+      // If last shown was today, don't show
+      if (lastShownDay.getTime() === today.getTime()) {
+        return false;
+      }
+      
+      // If it's before 1am and last shown was yesterday, don't show yet
+      if (!isAfterReset && lastShownDay.getTime() === today.getTime() - 86400000) {
+        return false;
+      }
+      
+      return false;
+    } catch (e) {
+      console.error('[shouldShowSponsorModal] Error:', e);
+      return false; // Don't show on error
+    }
+  }
+  
+  /**
+   * Show the sponsor modal
+   */
+  function showSponsorModal() {
+    const modal = document.getElementById('sponsorModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      // Save current date/time to localStorage
+      localStorage.setItem('sponsorModalLastShown', new Date().toISOString());
+    }
+  }
+  
+  /**
+   * Hide the sponsor modal
+   */
+  function hideSponsorModal() {
+    const modal = document.getElementById('sponsorModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+  
+  /**
+   * Initialize sponsor modal (check and show after 3 seconds if needed)
+   */
+  function initSponsorModal() {
+    if (shouldShowSponsorModal()) {
+      // Show modal 3 seconds after page load
+      setTimeout(() => {
+        showSponsorModal();
+      }, 3000);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     console.log('[DOMContentLoaded] Initializing map and event listeners...');
+    
+    // Initialize sponsor modal
+    initSponsorModal();
     
     // Use shared map initialization (from metroFeedMap.js)
     try {
