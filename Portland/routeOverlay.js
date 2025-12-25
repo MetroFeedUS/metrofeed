@@ -291,57 +291,73 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapseBtn.onmouseout = () => collapseBtn.style.background = "transparent";
       
       let isCollapsed = false;
+      
+      // Make the panel clickable when collapsed to expand it
+      routeInfoPanel.onclick = (e) => {
+        if (isCollapsed) {
+          // Only expand if clicking the circle itself (not buttons)
+          if (e.target === routeInfoPanel || e.target.classList.contains('route-name-collapsed')) {
+            isCollapsed = false;
+            collapseBtn.onclick({ stopPropagation: () => {} });
+          }
+        }
+      };
+      
       collapseBtn.onclick = (e) => {
         e.stopPropagation();
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
-          // Collapse to right side - vertical tab with vertical text
-          routeInfoPanel.style.left = "100%";
-          routeInfoPanel.style.transform = "translate(-100%, -50%)";
-          routeInfoPanel.style.width = "auto";
+          // Collapse to right side - circle with route number
+          routeInfoPanel.style.left = "calc(100% - 60px)"; // Position from right edge with some margin
+          routeInfoPanel.style.transform = "translateY(-50%)";
+          routeInfoPanel.style.width = "50px";
+          routeInfoPanel.style.height = "50px";
           routeInfoPanel.style.minWidth = "50px";
-          routeInfoPanel.style.maxWidth = "80px";
-          routeInfoPanel.style.height = "auto";
-          routeInfoPanel.style.maxHeight = "300px";
-          routeInfoPanel.style.padding = "30px 8px 8px 8px";
-          routeInfoPanel.style.borderRadius = "4px 0 0 4px";
-          routeInfoPanel.style.borderRight = "none";
-          routeInfoPanel.style.borderLeft = "2px solid #1E90FF";
-          routeInfoPanel.style.borderTop = "2px solid #1E90FF";
-          routeInfoPanel.style.borderBottom = "2px solid #1E90FF";
-          // Move collapse button to top center
-          collapseBtn.style.right = "auto";
-          collapseBtn.style.left = "50%";
-          collapseBtn.style.top = "4px";
-          collapseBtn.style.transform = "translateX(-50%)";
-          collapseBtn.innerHTML = "◀"; // Point left to expand
+          routeInfoPanel.style.maxWidth = "50px";
+          routeInfoPanel.style.minHeight = "50px";
+          routeInfoPanel.style.maxHeight = "50px";
+          routeInfoPanel.style.padding = "0";
+          routeInfoPanel.style.borderRadius = "50%"; // Perfect circle
+          routeInfoPanel.style.border = "3px solid #fff"; // White border
+          routeInfoPanel.style.background = "#FF6B35"; // Orange background
+          routeInfoPanel.style.display = "flex";
+          routeInfoPanel.style.alignItems = "center";
+          routeInfoPanel.style.justifyContent = "center";
+          routeInfoPanel.style.cursor = "pointer"; // Make it clear it's clickable
+          // Hide collapse button and close button
+          collapseBtn.style.display = "none";
           closeBtn.style.display = "none";
           routeInfoPanel.querySelector(".route-info-content").style.display = "none";
-          // Show collapsed route name (vertical text)
+          // Show collapsed route number (circle)
           const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
           if (collapsedName) {
             collapsedName.style.display = "block";
+            collapsedName.style.color = "#fff"; // White text
+            collapsedName.style.fontWeight = "bold";
+            collapsedName.style.fontSize = "1.2rem";
           }
         } else {
-          // Expand back to center
+          // Expand back to center - restore original panel styles
           routeInfoPanel.style.left = "50%";
           routeInfoPanel.style.transform = "translate(-50%, -50%)";
           routeInfoPanel.style.width = "auto";
           routeInfoPanel.style.minWidth = "200px";
           routeInfoPanel.style.maxWidth = "none";
           routeInfoPanel.style.height = "auto";
+          routeInfoPanel.style.minHeight = "auto";
           routeInfoPanel.style.maxHeight = "none";
           routeInfoPanel.style.padding = "12px";
           routeInfoPanel.style.borderRadius = "8px";
-          routeInfoPanel.style.borderRight = "2px solid #1E90FF";
-          routeInfoPanel.style.borderLeft = "2px solid #1E90FF";
-          routeInfoPanel.style.borderTop = "2px solid #1E90FF";
-          routeInfoPanel.style.borderBottom = "2px solid #1E90FF";
+          routeInfoPanel.style.background = "rgba(30,30,30,0.95)";
+          routeInfoPanel.style.border = "2px solid #1E90FF";
+          routeInfoPanel.style.display = "block";
+          routeInfoPanel.style.cursor = "default";
           // Move collapse button back to top-right (left of close button)
           collapseBtn.style.right = "32px";
           collapseBtn.style.left = "auto";
           collapseBtn.style.top = "4px";
           collapseBtn.style.transform = "none";
+          collapseBtn.style.display = "flex";
           collapseBtn.innerHTML = "▶"; // Point right to collapse
           closeBtn.style.display = "flex";
           routeInfoPanel.querySelector(".route-info-content").style.display = "block";
@@ -401,31 +417,39 @@ function attachRouteToMap(map, routeId, directionId, options) {
         </a>
       `;
       
-      // Collapsed route name (vertical text - each word on new line)
+      // Collapsed route number (circle display)
       const collapsedName = document.createElement("div");
       collapsedName.className = "route-name-collapsed";
-      // Split route title into words and create vertical layout
-      const words = routeTitle.split(' ');
-      const verticalText = words.map(word => {
-        // For very long words, split into characters
-        if (word.length > 10) {
-          return word.split('').join('<br>');
+      // Extract route number from route title (e.g., "Route 15" -> "15", "MAX Red Line" -> "Red")
+      let routeNumber = routeTitle;
+      // Try to extract number first
+      const numberMatch = routeTitle.match(/\d+/);
+      if (numberMatch) {
+        routeNumber = numberMatch[0];
+      } else {
+        // If no number, try to get first word or abbreviation
+        const words = routeTitle.split(' ');
+        if (words.length > 1 && words[0].toUpperCase() === 'MAX') {
+          // For MAX lines, use color name (Red, Blue, etc.)
+          routeNumber = words[1] || words[0];
+        } else {
+          routeNumber = words[0];
         }
-        return word;
-      }).join('<br>');
-      collapsedName.innerHTML = verticalText;
+        // Limit to 3 characters for circle
+        routeNumber = routeNumber.substring(0, 3);
+      }
+      collapsedName.innerHTML = routeNumber;
       collapsedName.style.cssText = `
         display:none;
         position:relative;
-        color:#1E90FF;
+        color:#fff;
         font-weight:bold;
-        font-size:0.7rem;
+        font-size:1.2rem;
         pointer-events:none;
         text-align:center;
-        line-height:1.4;
-        word-break:break-word;
-        margin-top:8px;
-        padding:0 4px;
+        line-height:1;
+        margin:0;
+        padding:0;
       `;
       
       routeInfoPanel.appendChild(closeBtn);
