@@ -955,10 +955,7 @@
   <a href="https://metrofeedus.com/portland/portlandweather"><img src="005-weather-radar.svg" alt="Weather"></a>
   <!-- ADA and Official Resources button in dropdown -->
   <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA and Official Resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA and Official Resources"></a>
-  <a id="alertsMenuBtn" href="https://metrofeedus.com/portland/alerts" style="position:relative;">
-    <img src="008-danger.svg" alt="Alerts">
-    <span id="alertsDot" style="display: none; position: absolute; top: 4px; right: 4px; width: 13px; height: 13px; border-radius: 50%; background: #ff3b30; border: 2px solid #000; z-index: 2;"></span>
-  </a>
+  <a href="#" id="dropdownMarketplaceBtn" onclick="event.preventDefault(); toggleMarketplaceFromDropdown();"><img src="store.svg" alt="Marketplace" onerror="this.onerror=null; this.src='008-danger.svg';"></a>
   <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="Change City"></a>
   <div class="dropdown-divider"></div>
   <!-- Advertise button in dropdown -->
@@ -1107,6 +1104,24 @@
   </div>
 </div>
 
+<!-- -- MARKETPLACE COMING SOON MODAL -- -->
+<div id="marketplaceComingSoonModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 500px; max-height: 90vh;">
+    <button onclick="MarketplaceOverlay.hideComingSoonModal()" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; z-index: 10; transition: background-color 0.2s ease;" title="Close" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+      ×
+    </button>
+    <div style="padding: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center;">
+      <h2 style="color: #1E90FF; margin-bottom: 1rem; font-size: 1.5rem; width: 100%;">🛒 Marketplace Coming Soon</h2>
+      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.5; width: 100%;">
+        We're working on bringing you convenient vending machine locations throughout the city. Check back soon for updates!
+      </p>
+      <p style="color: #888; font-size: 0.85rem; line-height: 1.5; width: 100%;">
+        This feature will help you find MetroFeed vending machines near transit stops and popular locations.
+      </p>
+    </div>
+  </div>
+</div>
+
 <!-- -- BUS ROUTES MODAL -- -->
 <div id="busRoutesModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
@@ -1169,6 +1184,8 @@
 <script src="routeOverlay.js"></script>
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>
+<!-- -- MARKETPLACE OVERLAY MODULE -- -->
+<script src="marketplaceOverlay.js"></script>
 <script>
   // === CITY CONFIGURATION ===
   const CITY_CONFIG = {
@@ -1385,7 +1402,7 @@
       { selector: '#dropdownCamerasBtn', text: 'Traffic Cameras' },
       { selector: 'a[href*="portlandweather"]', text: 'Weather' },
       { selector: 'a[href*="resources.html"]', text: 'ADA and Official Resources' },
-      { selector: '#alertsMenuBtn', text: 'Alerts' },
+      { selector: '#dropdownMarketplaceBtn', text: 'Marketplace' },
       { selector: 'a[href*="freecitychanger"]', text: 'Change City' },
       { selector: '#advertiseBtn', text: 'Advertise' }
     ];
@@ -3924,6 +3941,16 @@
       }
     }
     
+    // Marketplace button
+    const marketplaceBtn = document.getElementById('dropdownMarketplaceBtn');
+    if (marketplaceBtn && typeof MarketplaceOverlay !== 'undefined') {
+      if (MarketplaceOverlay.isActive()) {
+        marketplaceBtn.classList.add('active');
+      } else {
+        marketplaceBtn.classList.remove('active');
+      }
+    }
+    
     // ADA and Official Resources button - track if resources window is open
     const aiChatBtn = document.getElementById('dropdownAiChatBtn');
     if (aiChatBtn) {
@@ -4559,6 +4586,28 @@
     // Don't close dropdown menu - let user keep it open
   }
 
+  // === SECTION: MARKETPLACE OVERLAY ===
+  // Marketplace overlay is handled by marketplaceOverlay.js module
+  // The module loads marketplace data from data/marketplace.json and manages markers
+  //
+  // To update marketplace locations:
+  // 1. Open MarketplaceEditor.html in browser → add locations and drop pins
+  // 2. Export JSON → paste into data/marketplace.json → deploy
+  // 3. Set MARKETPLACE_ENABLED to true in marketplaceOverlay.js when ready to launch
+  //
+  // Feature Toggle: Set MARKETPLACE_ENABLED in marketplaceOverlay.js
+  // - When disabled: Shows "coming soon" modal
+  // - When enabled: Shows map markers if locations exist
+
+  // Function to toggle marketplace from dropdown menu
+  async function toggleMarketplaceFromDropdown() {
+    console.log('[toggleMarketplaceFromDropdown] Function called');
+    await MarketplaceOverlay.toggle();
+    // Update button active state after toggle completes
+    updateDropdownButtonStates();
+    // Don't close dropdown menu - let user keep it open
+  }
+
   // Function to show camera feed in modal (called by overlay module)
   function showCameraFeed(cameraId, cameraName, imageUrl) {
     TrafficCamerasOverlay.showCameraFeed(cameraId, cameraName, imageUrl);
@@ -4871,6 +4920,11 @@
         // Initialize traffic cameras overlay
         if (typeof TrafficCamerasOverlay !== 'undefined') {
           TrafficCamerasOverlay.init(map);
+        }
+        
+        // Initialize marketplace overlay
+        if (typeof MarketplaceOverlay !== 'undefined') {
+          MarketplaceOverlay.init(map);
         }
         
         // Initialize dropdown button states
