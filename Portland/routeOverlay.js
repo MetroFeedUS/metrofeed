@@ -312,19 +312,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
           // Collapse to right side - circle with route number
-          // Calculate vertical position based on number of collapsed panels
+          // Find the next available position (highest existing index + 1)
           const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel'));
           const collapsedPanels = allPanels.filter(panel => 
             panel.getAttribute('data-collapsed') === 'true' && panel !== routeInfoPanel
           );
-          const panelIndex = collapsedPanels.length;
+          
+          // Find the highest index from stored collapse-index attributes
+          let maxIndex = -1;
+          collapsedPanels.forEach(panel => {
+            const storedIndex = panel.getAttribute('data-collapse-index');
+            if (storedIndex !== null) {
+              maxIndex = Math.max(maxIndex, parseInt(storedIndex, 10));
+            }
+          });
+          
+          const panelIndex = maxIndex + 1; // Next available position
           const circleSize = 40; // 20% smaller than 50px
           const circleSpacing = 10; // Space between circles
           const topOffset = 250; // Start from top to avoid overlapping with other UI elements
           const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
           
-          // Mark this panel as collapsed
+          // Mark this panel as collapsed and store its position index
           routeInfoPanel.setAttribute('data-collapsed', 'true');
+          routeInfoPanel.setAttribute('data-collapse-index', panelIndex.toString());
           
           routeInfoPanel.style.left = `calc(100% - ${circleSize + 10}px)`; // Position from right edge with margin
           routeInfoPanel.style.top = `${verticalPosition}px`;
@@ -374,15 +385,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeInfoPanel.style.display = "block";
           routeInfoPanel.style.cursor = "default";
           
-          // Recalculate positions of remaining collapsed panels
-          const remainingCollapsed = Array.from(map.getContainer().querySelectorAll('.route-info-panel[data-collapsed="true"]'));
-          remainingCollapsed.forEach((panel, index) => {
-            const circleSize = 40;
-            const circleSpacing = 10;
-            const topOffset = 50;
-            const verticalPosition = topOffset + (index * (circleSize + circleSpacing));
-            panel.style.top = `${verticalPosition}px`;
-          });
+          // Don't recalculate positions - keep other collapsed panels locked in place
+          // Each panel maintains its own position when collapsed, so they don't move when others expand
           // Move collapse button back to top-right (left of close button)
           collapseBtn.style.right = "32px";
           collapseBtn.style.left = "auto";
