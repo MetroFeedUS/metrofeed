@@ -118,14 +118,6 @@ const MarketplaceOverlay = (function() {
    * @returns {HTMLElement} Marker element
    */
   function createMarkerElement(location) {
-    // Check if map is in dark mode (night style)
-    const isDarkMode = (typeof window !== 'undefined' && window.isNightMode === true);
-    
-    // Determine filter based on dark mode
-    const filterStyle = isDarkMode 
-      ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' // White in dark mode
-      : 'drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(0)'; // Black in light mode
-    
     // Create marker element
     const markerElement = document.createElement('div');
     markerElement.className = 'metrofeed-marketplace-icon';
@@ -137,11 +129,12 @@ const MarketplaceOverlay = (function() {
     markerElement.style.justifyContent = 'center';
     markerElement.style.pointerEvents = 'auto';
     
-    // Use store icon
+    // Use store icon - always orange on map (#FF6B35)
+    // Apply filter to make it orange: use sepia + hue-rotate + saturate to convert white to orange
     markerElement.innerHTML = `
       <img src="store.svg" 
            alt="Store" 
-           style="width: ${MARKER_SIZE}px; height: ${MARKER_SIZE}px; display: block; filter: ${filterStyle};" 
+           style="width: ${MARKER_SIZE}px; height: ${MARKER_SIZE}px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(0) saturate(100%) invert(58%) sepia(95%) saturate(2000%) hue-rotate(350deg) brightness(1.1);" 
            onerror="this.onerror=null; this.src='008-danger.svg';" />
     `;
     
