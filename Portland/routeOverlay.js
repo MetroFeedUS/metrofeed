@@ -308,14 +308,29 @@ function attachRouteToMap(map, routeId, directionId, options) {
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
           // Collapse to right side - circle with route number
-          routeInfoPanel.style.left = "calc(100% - 60px)"; // Position from right edge with some margin
-          routeInfoPanel.style.transform = "translateY(-50%)";
-          routeInfoPanel.style.width = "50px";
-          routeInfoPanel.style.height = "50px";
-          routeInfoPanel.style.minWidth = "50px";
-          routeInfoPanel.style.maxWidth = "50px";
-          routeInfoPanel.style.minHeight = "50px";
-          routeInfoPanel.style.maxHeight = "50px";
+          // Calculate vertical position based on number of collapsed panels
+          const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel'));
+          const collapsedPanels = allPanels.filter(panel => 
+            panel.getAttribute('data-collapsed') === 'true' && panel !== routeInfoPanel
+          );
+          const panelIndex = collapsedPanels.length;
+          const circleSize = 40; // 20% smaller than 50px
+          const circleSpacing = 10; // Space between circles
+          const topOffset = 50; // Start from top
+          const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
+          
+          // Mark this panel as collapsed
+          routeInfoPanel.setAttribute('data-collapsed', 'true');
+          
+          routeInfoPanel.style.left = `calc(100% - ${circleSize + 10}px)`; // Position from right edge with margin
+          routeInfoPanel.style.top = `${verticalPosition}px`;
+          routeInfoPanel.style.transform = "none"; // Remove centering transform
+          routeInfoPanel.style.width = `${circleSize}px`;
+          routeInfoPanel.style.height = `${circleSize}px`;
+          routeInfoPanel.style.minWidth = `${circleSize}px`;
+          routeInfoPanel.style.maxWidth = `${circleSize}px`;
+          routeInfoPanel.style.minHeight = `${circleSize}px`;
+          routeInfoPanel.style.maxHeight = `${circleSize}px`;
           routeInfoPanel.style.padding = "0";
           routeInfoPanel.style.borderRadius = "50%"; // Perfect circle
           routeInfoPanel.style.border = "3px solid #fff"; // White border
@@ -334,11 +349,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
             collapsedName.style.display = "block";
             collapsedName.style.color = "#fff"; // White text
             collapsedName.style.fontWeight = "bold";
-            collapsedName.style.fontSize = "1.2rem";
+            collapsedName.style.fontSize = "1rem"; // Slightly smaller for 40px circle
           }
         } else {
           // Expand back to center - restore original panel styles
+          routeInfoPanel.removeAttribute('data-collapsed');
           routeInfoPanel.style.left = "50%";
+          routeInfoPanel.style.top = "50%";
           routeInfoPanel.style.transform = "translate(-50%, -50%)";
           routeInfoPanel.style.width = "auto";
           routeInfoPanel.style.minWidth = "200px";
@@ -352,6 +369,16 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeInfoPanel.style.border = "2px solid #1E90FF";
           routeInfoPanel.style.display = "block";
           routeInfoPanel.style.cursor = "default";
+          
+          // Recalculate positions of remaining collapsed panels
+          const remainingCollapsed = Array.from(map.getContainer().querySelectorAll('.route-info-panel[data-collapsed="true"]'));
+          remainingCollapsed.forEach((panel, index) => {
+            const circleSize = 40;
+            const circleSpacing = 10;
+            const topOffset = 50;
+            const verticalPosition = topOffset + (index * (circleSize + circleSpacing));
+            panel.style.top = `${verticalPosition}px`;
+          });
           // Move collapse button back to top-right (left of close button)
           collapseBtn.style.right = "32px";
           collapseBtn.style.left = "auto";
@@ -420,12 +447,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Collapsed route number (circle display)
       const collapsedName = document.createElement("div");
       collapsedName.className = "route-name-collapsed";
-      // Extract route number from route title (e.g., "Route 15" -> "15", "MAX Red Line" -> "Red")
+      // Extract route number from route title - show full number (e.g., "Route 15" -> "15", "Route 4" -> "4")
       let routeNumber = routeTitle;
-      // Try to extract number first
+      // Try to extract number first - get the full number
       const numberMatch = routeTitle.match(/\d+/);
       if (numberMatch) {
-        routeNumber = numberMatch[0];
+        routeNumber = numberMatch[0]; // Use full number, not abbreviated
       } else {
         // If no number, try to get first word or abbreviation
         const words = routeTitle.split(' ');
@@ -435,8 +462,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         } else {
           routeNumber = words[0];
         }
-        // Limit to 3 characters for circle
-        routeNumber = routeNumber.substring(0, 3);
       }
       collapsedName.innerHTML = routeNumber;
       collapsedName.style.cssText = `
@@ -444,7 +469,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         position:relative;
         color:#fff;
         font-weight:bold;
-        font-size:1.2rem;
+        font-size:1rem;
         pointer-events:none;
         text-align:center;
         line-height:1;
