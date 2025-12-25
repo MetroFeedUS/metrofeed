@@ -293,15 +293,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       let isCollapsed = false;
       
       // Make the panel clickable when collapsed to expand it
-      routeInfoPanel.onclick = (e) => {
-        if (isCollapsed) {
-          // Only expand if clicking the circle itself (not buttons)
-          if (e.target === routeInfoPanel || e.target.classList.contains('route-name-collapsed')) {
-            isCollapsed = false;
-            collapseBtn.onclick({ stopPropagation: () => {} });
+      routeInfoPanel.addEventListener('click', function(e) {
+        // Check if panel is collapsed by checking the data attribute
+        if (this.getAttribute('data-collapsed') === 'true') {
+          // Expand when clicking anywhere on the collapsed circle
+          e.stopPropagation();
+          // Manually trigger the expand logic by calling collapseBtn.onclick
+          // This will toggle isCollapsed and update the panel
+          if (collapseBtn && typeof collapseBtn.onclick === 'function') {
+            const fakeEvent = { stopPropagation: () => {}, preventDefault: () => {} };
+            collapseBtn.onclick(fakeEvent);
           }
         }
-      };
+      });
       
       collapseBtn.onclick = (e) => {
         e.stopPropagation();
@@ -316,7 +320,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const panelIndex = collapsedPanels.length;
           const circleSize = 40; // 20% smaller than 50px
           const circleSpacing = 10; // Space between circles
-          const topOffset = 50; // Start from top
+          const topOffset = 250; // Start from top to avoid overlapping with other UI elements
           const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
           
           // Mark this panel as collapsed
@@ -447,21 +451,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Collapsed route number (circle display)
       const collapsedName = document.createElement("div");
       collapsedName.className = "route-name-collapsed";
-      // Extract route number from route title - show full number (e.g., "Route 15" -> "15", "Route 4" -> "4")
-      let routeNumber = routeTitle;
-      // Try to extract number first - get the full number
-      const numberMatch = routeTitle.match(/\d+/);
-      if (numberMatch) {
-        routeNumber = numberMatch[0]; // Use full number, not abbreviated
-      } else {
-        // If no number, try to get first word or abbreviation
-        const words = routeTitle.split(' ');
-        if (words.length > 1 && words[0].toUpperCase() === 'MAX') {
-          // For MAX lines, use color name (Red, Blue, etc.)
-          routeNumber = words[1] || words[0];
-        } else {
-          routeNumber = words[0];
-        }
+      // Use the parent route ID (routeId parameter) - this is the actual route number
+      // For bus routes: routeId is like "15", "4", "12", etc.
+      // For rail routes: routeId is like "90" (MAX Red), "100" (MAX Blue), etc.
+      let routeNumber = String(routeId);
+      // Extract just the numeric part if routeId has non-numeric characters
+      const numericMatch = routeNumber.match(/\d+/);
+      if (numericMatch) {
+        routeNumber = numericMatch[0];
       }
       collapsedName.innerHTML = routeNumber;
       collapsedName.style.cssText = `
