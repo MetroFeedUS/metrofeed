@@ -1194,9 +1194,9 @@
   // === CITY CONFIGURATION ===
   const CITY_CONFIG = {
     // Basic Info
-    cityName: "Portland",
-    state: "OR",
-    timezone: "America/Los_Angeles",
+    cityName: "Louisville",
+    state: "KY",
+    timezone: "America/New_York",
     
     // APIs
     apiKey: "2C4447D4A42083BCD84DE3B8E",
@@ -1206,13 +1206,13 @@
     tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
     
         // Map Settings
-  defaultCenter: [-122.6784, 45.5152], // [longitude, latitude] for MapLibre GL JS
+  defaultCenter: [-85.76, 38.25], // [longitude, latitude] for MapLibre GL JS - Louisville, KY
   defaultZoom: 10.5, // Split difference between 13 and 8 (minZoom)
   bounds: {
-    north: 45.80,    // Up to Ridgefield, WA (Clark County north edge)
-    south: 45.20,    // Down to Wilsonville, OR (Clackamas/Washington)
-    east: -122.15,   // Past Troutdale, east of Gresham
-    west: -123.35    // Past Hillsboro, near Forest Grove/Cornelius
+    north: 38.5,    // Northern edge of Louisville metro area
+    south: 38.0,    // Southern edge of Louisville metro area
+    east: -85.4,    // Eastern edge of Louisville metro area
+    west: -85.9     // Western edge of Louisville metro area
   },
   
   // File Paths
@@ -2186,7 +2186,7 @@
   
   // ==== CONFIGURE PORTLAND BOUNDS ====
   // Using the bounds already defined above
-  function isInPortland(lat, lon) {
+  function isInLouisville(lat, lon) {
     return (
       lat > PORTLAND_BOUNDS.south &&
       lat < PORTLAND_BOUNDS.north &&
@@ -2231,7 +2231,7 @@
         lat: userLat,
         lon: userLon,
         latLng: userLatLng,
-        inBounds: isInPortland(userLat, userLon)
+        inBounds: isInLouisville(userLat, userLon)
       };
       userLocationFound = true;
 
@@ -2241,7 +2241,7 @@
         if (userLocationMarker) { userLocationMarker.remove(); userLocationMarker = null; }
         if (userArrow) { userArrow.remove(); userArrow = null; }
 
-        if (isInPortland(userLat, userLon)) {
+        if (isInLouisville(userLat, userLon)) {
           // IN BOUNDS: show pulsing dot
           const pulseElement = document.createElement('div');
           pulseElement.className = 'pulse-marker';
@@ -2279,7 +2279,7 @@
           });
           userArrow.setLngLat(edgeLatLng);
           
-          const popup = new maplibregl.Popup().setText("You are outside the Portland map area.");
+          const popup = new maplibregl.Popup().setText("You are outside the Louisville map area.");
           userArrow.setPopup(popup);
           userArrow.addTo(map);
           popup.addTo(map);

@@ -8,9 +8,9 @@
  * 
  * Usage:
  *   const mapSetup = initMetroFeedMap('map', {
- *     defaultCenter: [-122.6784, 45.5152],
+ *     defaultCenter: [-85.76, 38.25],
  *     defaultZoom: 12,
- *     bounds: { west: -123.0, east: -122.4, south: 45.4, north: 45.65 }
+ *     bounds: { west: -85.9, east: -85.4, south: 38.0, north: 38.5 }
  *   });
  * 
  * Returns: { map, dayStyle, nightStyle }
@@ -20,17 +20,17 @@ function initMetroFeedMap(containerId, options) {
   // Handle default options
   options = options || {};
 
-  // Default configuration (Portland)
+  // Default configuration (Louisville, KY)
   const defaults = {
-    defaultCenter: [-122.6784, 45.5152],
+    defaultCenter: [-85.76, 38.25],
     defaultZoom: 12,
     maxZoom: 18,
     minZoom: 8,
     bounds: {
-      west: -123.0,
-      east: -122.4,
-      south: 45.4,
-      north: 45.65
+      west: -85.9,
+      east: -85.4,
+      south: 38.0,
+      north: 38.5
     }
   };
 
