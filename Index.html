@@ -174,7 +174,8 @@ MetroFeed uses your location and third-party services for login and payment. We 
   <div class="city-select" style="display:none;" id="manualSelect">
     <label for="city">Choose your city:</label>
     <select id="city">
-      <option value="Portland/portlandindex.html">Portland, OR</option>
+      <option value="Louisville/home.html">Louisville, KY</option>
+      <option value="Portland/home.html">Portland, OR</option>
     </select>
     <button onclick="manualRedirect()">Go</button>
   </div>
@@ -247,8 +248,8 @@ MetroFeed uses your location and third-party services for login and payment. We 
       window.location.href = selected;
     }
 
-    function inPortlandBounds(lat, lon) {
-      return lat >= 45.3 && lat <= 45.9 && lon >= -123.1 && lon <= -122.3;
+    function inLouisvilleBounds(lat, lon) {
+      return lat >= 38.0 && lat <= 38.5 && lon >= -85.9 && lon <= -85.4;
     }
 
     function showMainContent(message, showDropdown) {
@@ -277,8 +278,8 @@ MetroFeed uses your location and third-party services for login and payment. We 
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
 
-            if (inPortlandBounds(lat, lon)) {
-              window.location.href = "Portland/portlandindex.html";
+            if (inLouisvilleBounds(lat, lon)) {
+              window.location.href = "Louisville/home.html";
             } else {
               showMainContent(" 😭 We don't serve your location... yet 😎.", true);
             }
