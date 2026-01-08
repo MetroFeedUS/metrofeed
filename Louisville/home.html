@@ -1179,6 +1179,7 @@
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
 <script src="mastermapLouisville.js"></script>
 <!-- -- SHARED MAP INITIALIZATION -- -->
 <script src="metroFeedMap.js"></script>
@@ -1201,7 +1202,7 @@
     // APIs
     apiKey: "2C4447D4A42083BCD84DE3B8E",
     otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
-    busApi: "https://developer.trimet.org/ws/v2/vehicles",
+    busApi: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition",
     trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
     tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
     
@@ -2707,15 +2708,69 @@
     return null;
   }
   
+  // Function to fetch and parse TARC GTFS-RT feed
+  async function fetchTARCGTFSRT() {
+    try {
+      // Load GTFS-RT proto definition
+      const protoResponse = await fetch('https://raw.githubusercontent.com/google/transit/master/gtfs-realtime/proto/gtfs-realtime.proto');
+      const protoText = await protoResponse.text();
+      
+      const root = protobuf.parse(protoText).root;
+      const FeedMessage = root.lookupType('transit_realtime.FeedMessage');
+      
+      // Fetch TARC GTFS-RT feed
+      const response = await fetch(CITY_CONFIG.busApi);
+      const arrayBuffer = await response.arrayBuffer();
+      
+      // Decode the Protocol Buffer
+      const message = FeedMessage.decode(new Uint8Array(arrayBuffer));
+      const feed = FeedMessage.toObject(message, {
+        longs: String,
+        enums: String,
+        bytes: String,
+        defaults: true
+      });
+      
+      // Convert GTFS-RT format to expected format
+      const vehicles = [];
+      if (feed.entity && Array.isArray(feed.entity)) {
+        feed.entity.forEach(entity => {
+          if (entity.vehicle && entity.vehicle.position) {
+            const vp = entity.vehicle;
+            vehicles.push({
+              vehicleID: (vp.vehicle && vp.vehicle.label) ? vp.vehicle.label : 
+                        (vp.vehicle && vp.vehicle.id) ? vp.vehicle.id : 
+                        entity.id || "unknown",
+              routeNumber: (vp.trip && vp.trip.routeId) ? vp.trip.routeId : "unknown",
+              direction: (vp.trip && vp.trip.directionId !== undefined && vp.trip.directionId !== null) ? parseInt(vp.trip.directionId) : 0,
+              latitude: vp.position.latitude,
+              longitude: vp.position.longitude,
+              blockID: (vp.trip && vp.trip.tripId) ? vp.trip.tripId : "unknown",
+              bearing: vp.position.bearing || null,
+              speed: vp.position.speed || null
+            });
+          }
+        });
+      }
+      
+      console.log('[fetchTARCGTFSRT] Parsed', vehicles.length, 'vehicles from TARC GTFS-RT feed');
+      return vehicles;
+    } catch (error) {
+      console.error('[fetchTARCGTFSRT] Error parsing GTFS-RT:', error);
+      console.error('[fetchTARCGTFSRT] Error details:', error.message);
+      // Return empty array on error so the app doesn't break
+      return [];
+    }
+  }
+
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
     try {
-      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
-      const data = await res.json();
-      const allBuses = data.resultSet.vehicle || [];
+      // Use TARC GTFS-RT feed for Louisville
+      const allBuses = await fetchTARCGTFSRT();
       
       // Store for debugging
-      window.lastBusData = data;
+      window.lastBusData = { resultSet: { vehicle: allBuses } };
       
       // Clear existing bus markers
       Object.values(busMarkers).forEach(m => m.remove());
