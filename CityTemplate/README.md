@@ -34,7 +34,7 @@ const CITIES = {
       east: -122.15,
       west: -123.35
     },
-    mastermapFile: "mastermapYourCity.js",
+    mastermapFile: "mastermap.js", // Always "mastermap.js" (no city-specific naming)
     logoFile: "Sitelogo.png",
     busApiType: "trimet", // or "tarc-gtfs-rt" or "custom"
     gtfsRtUrl: null // if using GTFS-RT
@@ -48,7 +48,7 @@ const CITIES = {
 3. Update the folder name to match the key in `city-config.js` (lowercase)
 
 ### Step 3: Add City-Specific Files
-- Create `mastermapYourCity.js` with your route data
+- Create `mastermap.js` with your route data (always named `mastermap.js`, no city-specific naming)
 - Add any city-specific assets (logos, etc.)
 - Update route files in `pythonbusroutes/` folder
 
@@ -66,7 +66,7 @@ Add your city to the dropdown in `Index.html`:
 - `timezone`: IANA timezone string
 - `defaultCenter`: [longitude, latitude] for map center
 - `bounds`: North, south, east, west coordinates
-- `mastermapFile`: Path to route data file
+- `mastermapFile`: Always set to `"mastermap.js"` (no city-specific naming)
 
 ### API Configuration
 - `apiKey`: Your transit API key (if needed)
@@ -83,7 +83,7 @@ Add your city to the dropdown in `Index.html`:
 CityTemplate/
 ├── city-config.js          # All city configurations
 ├── home.html               # Main template file (generic)
-├── mastermap.js            # Route data (city-specific, replace per city)
+├── mastermap.js            # Route data (always named mastermap.js, city-specific data inside)
 ├── metroFeedMap.js         # Shared map initialization
 ├── routeOverlay.js         # Shared route overlay
 ├── pythonbusroutes/        # Route detail pages

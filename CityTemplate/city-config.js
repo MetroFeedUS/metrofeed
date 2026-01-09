@@ -70,7 +70,7 @@ const CITIES = {
     },
     
     // File Paths
-    mastermapFile: "mastermapLouisville.js",
+    mastermapFile: "mastermap.js",
     logoFile: "Sitelogo.png",
     
     // Bus API Type
