@@ -252,6 +252,10 @@ MetroFeed uses your location and third-party services for login and payment. We 
       return lat >= 38.0 && lat <= 38.5 && lon >= -85.9 && lon <= -85.4;
     }
 
+    function inPortlandBounds(lat, lon) {
+      return lat >= 45.20 && lat <= 45.80 && lon >= -123.35 && lon <= -122.15;
+    }
+
     function showMainContent(message, showDropdown) {
       document.getElementById("loader").style.display = "none";
       document.getElementById("status").innerText = message;
@@ -280,6 +284,8 @@ MetroFeed uses your location and third-party services for login and payment. We 
 
             if (inLouisvilleBounds(lat, lon)) {
               window.location.href = "Louisville/home.html";
+            } else if (inPortlandBounds(lat, lon)) {
+              window.location.href = "Portland/home.html";
             } else {
               showMainContent(" 😭 We don't serve your location... yet 😎.", true);
             }
