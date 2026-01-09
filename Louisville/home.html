@@ -4139,7 +4139,9 @@
     if (!routePageUrl) {
       // Try to construct URL based on route number
       const routeType = routeData.route_type === '0' ? 'Rail routes' : 'pythonbusroutes';
-      routePageUrl = `${routeType}/route-${routeNumber}-dir${directionId}.html`;
+      // Use routeId directly (it's already the route number from the modal)
+      routePageUrl = `${routeType}/route-${routeId}-dir${directionId}.html`;
+      console.log('[showRouteOverlay] Constructed routePageUrl:', routePageUrl);
     }
     
     // Create overlay with explicit routeData

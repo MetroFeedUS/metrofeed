@@ -446,9 +446,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           <strong style="color:#1E90FF;font-size:1em;">${routeTitle}</strong>
         </div>
         <a href="${options.routePageUrl}"
-           style="color:#1E90FF;text-decoration:none;font-weight:bold;display:inline-block;margin-top:8px;font-size:0.9em;"
-           target="_blank">
-          Open full route page →
+           style="text-decoration:none;font-weight:bold;display:inline-block;margin-top:8px;font-size:0.9em;padding:6px 12px;background:#1E90FF;color:#fff;border-radius:6px;text-align:center;width:100%;box-sizing:border-box;"
+           onclick="if(event) event.stopPropagation();">
+          View Route Details →
         </a>
       `;
       
