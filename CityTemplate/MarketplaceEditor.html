@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
+<title>Marketplace Editor – MetroFeed Portland</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #cccccc;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  header {
+    background-color: #0d0d0d;
+    border-top: 4px solid #1E90FF;
+    border-bottom: 4px solid #1E90FF;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #f0f0f0;
+  }
+
+  .editor-container {
+    display: flex;
+    height: calc(100vh - 60px);
+  }
+
+  .sidebar {
+    width: 300px;
+    background-color: #1e1e1e;
+    border-right: 2px solid #1E90FF;
+    padding: 1rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .map-container {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+  }
+
+  #marketplaceEditorMap {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+  }
+
+  .control-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .control-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #1E90FF;
+    font-weight: bold;
+    font-size: 0.9rem;
+  }
+
+  .control-group select,
+  .control-group input,
+  .control-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #1E90FF;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .control-group textarea {
+    min-height: 60px;
+    resize: vertical;
+  }
+
+  .control-group button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #1E90FF;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  .control-group button:hover {
+    background-color: #0066cc;
+  }
+
+  .control-group button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+  }
+
+  .location-list {
+    margin-top: 1rem;
+  }
+
+  .location-item {
+    background-color: #222;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #333;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .location-item:hover {
+    border-color: #1E90FF;
+  }
+
+  .location-item.has-location {
+    border-color: #4CAF50;
+  }
+
+  .location-item.selected {
+    border-color: #1E90FF;
+    border-width: 2px;
+  }
+
+  .location-item .location-name {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 0.25rem;
+  }
+
+  .location-item .location-coords {
+    font-size: 0.8rem;
+    color: #888;
+  }
+
+  .location-item .location-coords.has-coords {
+    color: #4CAF50;
+  }
+
+  .add-location-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #333;
+  }
+
+  .export-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #333;
+  }
+
+  .export-section textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 0.5rem;
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #1E90FF;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+
+  .instructions {
+    background-color: #1a1a1a;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #1E90FF;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .instructions h3 {
+    margin-top: 0;
+    color: #1E90FF;
+    font-size: 1rem;
+  }
+
+  .instructions ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .instructions li {
+    margin-bottom: 0.5rem;
+  }
+
+  .metrofeed-marketplace-icon,
+  .metrofeed-marketplace-icon * {
+    transition: none !important;
+    animation: none !important;
+  }
+  .metrofeed-marketplace-icon img {
+    pointer-events: none;
+  }
+
+  .theme-toggle {
+    position: absolute;
+    top: 70px;
+    right: 10px;
+    width: 45px;
+    height: 45px;
+    background-color: #1E90FF;
+    border: 2px solid #000;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
+  }
+
+  .theme-toggle img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .delete-btn {
+    background-color: #ff4444 !important;
+    margin-top: 0.5rem;
+  }
+
+  .delete-btn:hover {
+    background-color: #cc0000 !important;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🛒 Marketplace Editor</h1>
+  <button class="back-button" onclick="history.back()" style="background: #1E90FF; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">← Back</button>
+</header>
+
+<div class="editor-container">
+  <div class="sidebar">
+    <div class="instructions">
+      <h3>How to Update Marketplace Locations:</h3>
+      <ol>
+        <li>Add a new location or select an existing one</li>
+        <li>Click "Place Pin" button</li>
+        <li>Click on the map to place/move the pin</li>
+        <li>Repeat for all locations</li>
+        <li>Click "Export marketplace.json"</li>
+        <li>Copy the JSON and paste into <code>data/marketplace.json</code></li>
+        <li>Deploy the updated file</li>
+      </ol>
+    </div>
+
+    <div class="add-location-section">
+      <div class="control-group">
+        <label for="locationName">Location Name:</label>
+        <input type="text" id="locationName" placeholder="e.g., Downtown Transit Center">
+      </div>
+      <div class="control-group">
+        <label for="locationDescription">Description (optional):</label>
+        <textarea id="locationDescription" placeholder="e.g., Vending machine near main entrance"></textarea>
+      </div>
+      <div class="control-group">
+        <label for="locationAddress">Address (optional):</label>
+        <input type="text" id="locationAddress" placeholder="e.g., 123 Main St, Portland, OR">
+      </div>
+      <button onclick="addNewLocation()">Add New Location</button>
+    </div>
+
+    <div class="control-group">
+      <label for="locationSelect">Select Location:</label>
+      <select id="locationSelect">
+        <option value="">-- Select a location --</option>
+      </select>
+      <button id="placePinBtn" onclick="enablePlacement()" disabled>Place Pin</button>
+      <button id="deleteBtn" onclick="deleteLocation()" disabled class="delete-btn">Delete Location</button>
+    </div>
+
+    <div class="location-list" id="locationList">
+      <!-- Location items will be populated here -->
+    </div>
+
+    <div class="export-section">
+      <label for="exportJson">Export marketplace.json:</label>
+      <button onclick="exportJson()" style="margin-bottom: 0.5rem;">Export marketplace.json</button>
+      <textarea id="exportJson" readonly placeholder="Click 'Export marketplace.json' to generate JSON..."></textarea>
+    </div>
+  </div>
+
+  <div class="map-container">
+    <div id="marketplaceEditorMap"></div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Day/Night Map">
+      <img src="008-night.svg" alt="Theme Toggle" />
+    </button>
+  </div>
+</div>
+
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script src="metroFeedMap.js"></script>
+
+<script>
+  // Marketplace location data
+  let locations = [];
+  let map, dayStyle, nightStyle;
+  let isNightMode = false;
+  let placementMode = false;
+  let selectedLocationId = null;
+  let markers = {}; // locationId -> marker
+  let nextId = 1;
+
+  // Initialize map
+  function initMap() {
+    try {
+      console.log('[Editor] Initializing map...');
+      
+      const mapSetup = initMetroFeedMap('marketplaceEditorMap', {
+        defaultCenter: [-122.6784, 45.5152],
+        defaultZoom: 12,
+        bounds: {
+          west: -123.0,
+          east: -122.4,
+          south: 45.4,
+          north: 45.65
+        }
+      });
+
+      map = mapSetup.map;
+      dayStyle = mapSetup.dayStyle;
+      nightStyle = mapSetup.nightStyle;
+
+      console.log('[Editor] Map instance created');
+
+      // Wait for map to load before doing anything else
+      map.on('load', async () => {
+        console.log('[Editor] Map loaded successfully');
+        
+        // Load existing marketplace.json if available
+        await loadExistingLocations();
+        
+        // Place markers for any locations that have coordinates
+        locations.forEach(location => {
+          if (location.lat && location.lon) {
+            placeMarker(location);
+          }
+        });
+        
+        // Populate location dropdown and list
+        populateLocationUI();
+
+        // Map click handler for placement
+        map.on('click', handleMapClick);
+        
+        console.log('[Editor] Initialization complete. Locations:', locations.length);
+      });
+      
+      // Handle map errors
+      map.on('error', (e) => {
+        console.error('[Editor] Map error:', e);
+      });
+    } catch (error) {
+      console.error('[Editor] Error initializing map:', error);
+      alert('Error loading map. Please check the console for details. Error: ' + error.message);
+    }
+  }
+
+  // Load existing marketplace.json
+  async function loadExistingLocations() {
+    try {
+      const response = await fetch('data/marketplace.json');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[Editor] Loaded', data.length, 'locations from marketplace.json');
+        locations = data;
+        
+        // Find highest ID to set nextId
+        if (locations.length > 0) {
+          const maxId = Math.max(...locations.map(l => parseInt(l.id) || 0));
+          nextId = maxId + 1;
+        }
+      } else {
+        console.log('[Editor] No marketplace.json found, starting fresh');
+        locations = [];
+      }
+    } catch (error) {
+      console.log('[Editor] No existing marketplace.json found, starting fresh:', error);
+      locations = [];
+    }
+  }
+
+  // Add new location
+  function addNewLocation() {
+    const name = document.getElementById('locationName').value.trim();
+    if (!name) {
+      alert('Please enter a location name');
+      return;
+    }
+
+    const description = document.getElementById('locationDescription').value.trim();
+    const address = document.getElementById('locationAddress').value.trim();
+
+    const newLocation = {
+      id: String(nextId++),
+      name: name,
+      description: description || null,
+      address: address || null,
+      city: 'Portland',
+      state: 'OR',
+      country: 'USA',
+      lat: null,
+      lon: null
+    };
+
+    locations.push(newLocation);
+    
+    // Clear form
+    document.getElementById('locationName').value = '';
+    document.getElementById('locationDescription').value = '';
+    document.getElementById('locationAddress').value = '';
+    
+    // Update UI
+    populateLocationUI();
+    selectLocation(newLocation.id);
+    
+    console.log('[Editor] Added new location:', newLocation);
+  }
+
+  // Populate location dropdown and list
+  function populateLocationUI() {
+    const select = document.getElementById('locationSelect');
+    const list = document.getElementById('locationList');
+
+    select.innerHTML = '<option value="">-- Select a location --</option>';
+    list.innerHTML = '';
+
+    locations.forEach(location => {
+      // Add to dropdown
+      const option = document.createElement('option');
+      option.value = location.id;
+      option.textContent = location.name;
+      select.appendChild(option);
+
+      // Add to list
+      const item = document.createElement('div');
+      item.className = 'location-item' + (location.lat && location.lon ? ' has-location' : '');
+      item.dataset.locationId = location.id;
+      item.innerHTML = `
+        <div class="location-name">${location.name}</div>
+        <div class="location-coords ${location.lat && location.lon ? 'has-coords' : ''}">
+          ${location.lat && location.lon ? `📍 ${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : 'No location set'}
+        </div>
+      `;
+      item.onclick = () => selectLocation(location.id);
+      list.appendChild(item);
+    });
+  }
+
+  // Update location UI after changes
+  function updateLocationUI() {
+    populateLocationUI();
+    if (selectedLocationId) {
+      selectLocation(selectedLocationId);
+    }
+  }
+
+  // Select a location
+  function selectLocation(locationId) {
+    selectedLocationId = locationId;
+    document.getElementById('locationSelect').value = locationId;
+    document.getElementById('placePinBtn').disabled = false;
+    document.getElementById('deleteBtn').disabled = false;
+
+    // Update form fields
+    const location = locations.find(l => l.id === locationId);
+    if (location) {
+      document.getElementById('locationName').value = location.name || '';
+      document.getElementById('locationDescription').value = location.description || '';
+      document.getElementById('locationAddress').value = location.address || '';
+    }
+
+    // Update list highlighting
+    document.querySelectorAll('.location-item').forEach(item => {
+      item.classList.remove('selected');
+      if (item.dataset.locationId === locationId) {
+        item.classList.add('selected');
+      }
+    });
+
+    // Center map on location if it has coordinates
+    if (location && location.lat && location.lon) {
+      map.flyTo({ center: [location.lon, location.lat], zoom: 14 });
+    }
+  }
+
+  // Delete location
+  function deleteLocation() {
+    if (!selectedLocationId) return;
+    
+    if (!confirm('Are you sure you want to delete this location?')) {
+      return;
+    }
+
+    // Remove marker
+    if (markers[selectedLocationId]) {
+      markers[selectedLocationId].remove();
+      delete markers[selectedLocationId];
+    }
+
+    // Remove from locations array
+    locations = locations.filter(l => l.id !== selectedLocationId);
+    selectedLocationId = null;
+
+    // Update UI
+    document.getElementById('locationSelect').value = '';
+    document.getElementById('placePinBtn').disabled = true;
+    document.getElementById('deleteBtn').disabled = true;
+    document.getElementById('locationName').value = '';
+    document.getElementById('locationDescription').value = '';
+    document.getElementById('locationAddress').value = '';
+    
+    updateLocationUI();
+  }
+
+  // Enable placement mode
+  function enablePlacement() {
+    const locationId = document.getElementById('locationSelect').value;
+    if (!locationId) return;
+
+    placementMode = true;
+    selectedLocationId = locationId;
+    document.getElementById('placePinBtn').textContent = 'Click on map to place pin...';
+    document.getElementById('placePinBtn').disabled = true;
+  }
+
+  // Handle map click
+  function handleMapClick(e) {
+    if (!placementMode || !selectedLocationId) return;
+
+    const location = locations.find(l => l.id === selectedLocationId);
+    if (!location) return;
+
+    // Update location coordinates
+    location.lat = e.lngLat.lat;
+    location.lon = e.lngLat.lng;
+
+    // Update location name/description/address from form
+    location.name = document.getElementById('locationName').value.trim() || location.name;
+    location.description = document.getElementById('locationDescription').value.trim() || null;
+    location.address = document.getElementById('locationAddress').value.trim() || null;
+
+    // Place or move marker
+    placeMarker(location);
+
+    // Exit placement mode
+    placementMode = false;
+    document.getElementById('placePinBtn').textContent = 'Place Pin';
+    document.getElementById('placePinBtn').disabled = false;
+
+    // Update UI
+    updateLocationUI();
+  }
+
+  // Place marker on map
+  function placeMarker(location) {
+    // Remove existing marker if any
+    if (markers[location.id]) {
+      markers[location.id].remove();
+    }
+
+    // Create marker element - always orange on map (#FF6B35)
+    const markerElement = document.createElement('div');
+    markerElement.className = 'metrofeed-marketplace-icon';
+    markerElement.style.width = '32px';
+    markerElement.style.height = '32px';
+    markerElement.style.cursor = 'pointer';
+    markerElement.style.display = 'flex';
+    markerElement.style.alignItems = 'center';
+    markerElement.style.justifyContent = 'center';
+    markerElement.style.pointerEvents = 'auto';
+    // Apply filter to make it orange: use sepia + hue-rotate + saturate to convert white to orange
+    markerElement.innerHTML = `
+      <img src="store.svg" 
+           alt="Store" 
+           style="width: 32px; height: 32px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(0) saturate(100%) invert(58%) sepia(95%) saturate(2000%) hue-rotate(350deg) brightness(1.1);" 
+           onerror="this.onerror=null; this.src='008-danger.svg';" />
+    `;
+
+    // Create marker
+    const marker = new maplibregl.Marker({ 
+      element: markerElement,
+      anchor: 'center'
+    })
+      .setLngLat([location.lon, location.lat])
+      .addTo(map);
+
+    // Create popup
+    const popup = new maplibregl.Popup().setText(location.name);
+    marker.setPopup(popup);
+
+    markers[location.id] = marker;
+  }
+
+  // Export JSON
+  function exportJson() {
+    // Filter locations that have coordinates
+    const locationsWithCoords = locations
+      .filter(l => l.lat && l.lon)
+      .map(l => ({
+        id: l.id,
+        name: l.name,
+        description: l.description || null,
+        address: l.address || null,
+        city: l.city || 'Portland',
+        state: l.state || 'OR',
+        country: l.country || 'USA',
+        lat: l.lat,
+        lon: l.lon
+      }));
+
+    const json = JSON.stringify(locationsWithCoords, null, 2);
+    document.getElementById('exportJson').value = json;
+  }
+
+  // Toggle theme
+  function toggleTheme() {
+    isNightMode = !isNightMode;
+    map.setStyle(isNightMode ? nightStyle : dayStyle);
+    
+    // Update all markers when theme changes
+    locations.forEach(location => {
+      if (location.lat && location.lon && markers[location.id]) {
+        placeMarker(location);
+      }
+    });
+  }
+
+  // Location select change handler
+  document.getElementById('locationSelect').addEventListener('change', function() {
+    if (this.value) {
+      selectLocation(this.value);
+    } else {
+      selectedLocationId = null;
+      document.getElementById('placePinBtn').disabled = true;
+      document.getElementById('deleteBtn').disabled = true;
+      document.querySelectorAll('.location-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+    }
+  });
+
+  // Initialize on page load
+  window.addEventListener('DOMContentLoaded', function() {
+    console.log('[Editor] DOM loaded, initializing...');
+    initMap();
+  });
+</script>
+
+</body>
+</html>
+
