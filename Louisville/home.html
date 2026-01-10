@@ -1178,14 +1178,19 @@
 
 <!-- -- CITY CONFIGURATION (MUST LOAD FIRST) -- -->
 <script src="city-config.js"></script>
+<script>
+  // Get config immediately to load mastermap synchronously
+  const CITY_CONFIG_TEMP = getCityConfig();
+  // Load mastermap.js synchronously (blocking load) so masterRoutes is available
+  document.write('<script src="' + CITY_CONFIG_TEMP.mastermapFile + '"><\/script>');
+</script>
 <!-- -- ROUTES INDEX (MUST LOAD AFTER CITY CONFIG) -- -->
 <script src="routes_index.js"></script>
 
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-<!-- Mastermap file will be loaded dynamically based on city config -->
-<script id="mastermap-loader"></script>
+<script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
 <!-- -- SHARED MAP INITIALIZATION -- -->
 <script src="metroFeedMap.js"></script>
 <!-- -- SHARED CAMERA ICON -- -->
@@ -1198,8 +1203,8 @@
 <script src="marketplaceOverlay.js"></script>
 <script>
   // === CITY CONFIGURATION ===
-  // Load city config from external file (auto-detects city from path)
-  const CITY_CONFIG = getCityConfig();
+  // Config already loaded above
+  const CITY_CONFIG = CITY_CONFIG_TEMP || getCityConfig();
   
   // Update dynamic city name placeholders in the page
   document.addEventListener('DOMContentLoaded', function() {
@@ -1212,11 +1217,6 @@
     const titlePlaceholder = document.getElementById('city-name-placeholder');
     if (titlePlaceholder) titlePlaceholder.textContent = cityName;
   });
-  
-  // Load mastermap.js (always named mastermap.js, city-specific data is in the file)
-  const mastermapScript = document.createElement('script');
-  mastermapScript.src = CITY_CONFIG.mastermapFile;
-  document.getElementById('mastermap-loader').parentNode.replaceChild(mastermapScript, document.getElementById('mastermap-loader'));
 
   // === SECTION: MAP INIT ===
   const apiKey = CITY_CONFIG.apiKey;
@@ -1320,7 +1320,20 @@
   let mapHasBeenMovedByUser = false;
 
   // === SECTION: AUTOCOMPLETE FOR SEARCH BAR ===
-  const allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
+  // Initialize allStops after masterRoutes is loaded (mastermap.js loads synchronously above)
+  let allStops = [];
+  function initializeStopsAndAutocomplete() {
+    if (typeof masterRoutes !== 'undefined' && masterRoutes && masterRoutes.length > 0) {
+      allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
+      createAutocomplete(document.getElementById("startInput"));
+      createAutocomplete(document.getElementById("endInput"));
+    } else {
+      console.warn('[Autocomplete] masterRoutes not available yet, will retry');
+      // Retry after a short delay
+      setTimeout(initializeStopsAndAutocomplete, 100);
+    }
+  }
+  
   function decodeHTMLEntities(text) {
     const txt = document.createElement("textarea");
     txt.innerHTML = text;
@@ -1372,8 +1385,8 @@
       }
     });
   }
-  createAutocomplete(document.getElementById("startInput"));
-  createAutocomplete(document.getElementById("endInput"));
+  // Initialize stops and autocomplete when masterRoutes is ready
+  initializeStopsAndAutocomplete();
 
   // === SECTION: DROPDOWN MENU LOGIC ===
   const menuBtn = document.getElementById('menuBtn');
