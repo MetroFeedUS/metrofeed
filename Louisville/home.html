@@ -2735,7 +2735,7 @@
       const allBuses = data.resultSet.vehicle || [];
       
       // Store for debugging
-      window.lastBusData = data;
+      window.lastBusData = { resultSet: { vehicle: allBuses } };
       
       // Clear existing bus markers
       Object.values(busMarkers).forEach(m => m.remove());
@@ -4967,8 +4967,9 @@
         console.error('[Map] Error details:', e.error);
         // Only use fallback if it's a style loading error and custom server fails
         if (e.error && e.error.message && e.error.message.includes('style')) {
-          console.warn('[Map] Custom tile server failed, attempting fallback CartoDB style...');
-          map.setStyle('https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
+          console.warn('[Map] Custom tile server failed, attempting fallback style from config...');
+          // Use CartoDB as ultimate fallback if config style also fails
+          map.setStyle(CITY_CONFIG.dayStyle || 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
         }
       });
       
@@ -5005,8 +5006,8 @@
       map = fallbackMapSetup.map;
       dayStyle = fallbackMapSetup.dayStyle;
       nightStyle = fallbackMapSetup.nightStyle;
-      // Override with fallback style
-      map.setStyle('https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
+      // Use config style, with CartoDB as ultimate fallback
+      map.setStyle(CITY_CONFIG.dayStyle || 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
       
       // Force attribution to be collapsed by default for fallback map
       map.on('load', () => {
