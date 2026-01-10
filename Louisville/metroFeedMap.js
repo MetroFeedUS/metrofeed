@@ -3,14 +3,14 @@
 /**
  * Shared MetroFeed Map Initialization Module
  * 
- * Provides consistent map setup for both the main map (home.html)
+ * Provides consistent map setup for both the main map (portlandindex.html)
  * and the Traffic Cameras Editor page.
  * 
  * Usage:
  *   const mapSetup = initMetroFeedMap('map', {
- *     defaultCenter: [-85.76, 38.25],
+ *     defaultCenter: [-122.6784, 45.5152],
  *     defaultZoom: 12,
- *     bounds: { west: -85.9, east: -85.4, south: 38.0, north: 38.5 }
+ *     bounds: { west: -123.0, east: -122.4, south: 45.4, north: 45.65 }
  *   });
  * 
  * Returns: { map, dayStyle, nightStyle }
@@ -20,17 +20,17 @@ function initMetroFeedMap(containerId, options) {
   // Handle default options
   options = options || {};
 
-  // Default configuration (Louisville, KY)
+  // Default configuration (Portland)
   const defaults = {
-    defaultCenter: [-85.76, 38.25],
+    defaultCenter: [-122.6784, 45.5152],
     defaultZoom: 12,
     maxZoom: 18,
     minZoom: 8,
     bounds: {
-      west: -85.9,
-      east: -85.4,
-      south: 38.0,
-      north: 38.5
+      west: -123.0,
+      east: -122.4,
+      south: 45.4,
+      north: 45.65
     }
   };
 
@@ -43,9 +43,9 @@ function initMetroFeedMap(containerId, options) {
     bounds: options.bounds || defaults.bounds
   };
 
-  // Map style URLs - Using open source CartoDB Positron for Louisville (temporary)
-  const dayStyle = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
-  const nightStyle = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+  // Map style URLs (from config if available, otherwise defaults)
+  const dayStyle = options.dayStyle || 'https://maps.metrofeedus.com/styles/0/style.json';
+  const nightStyle = options.nightStyle || 'https://maps.metrofeedus.com/styles/1/style.json';
 
   // Create map instance
   const map = new maplibregl.Map({

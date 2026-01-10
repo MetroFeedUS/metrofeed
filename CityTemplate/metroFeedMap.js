@@ -43,9 +43,9 @@ function initMetroFeedMap(containerId, options) {
     bounds: options.bounds || defaults.bounds
   };
 
-  // Map style URLs
-  const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
-  const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json';
+  // Map style URLs (from config if available, otherwise defaults)
+  const dayStyle = options.dayStyle || 'https://maps.metrofeedus.com/styles/0/style.json';
+  const nightStyle = options.nightStyle || 'https://maps.metrofeedus.com/styles/1/style.json';
 
   // Create map instance
   const map = new maplibregl.Map({

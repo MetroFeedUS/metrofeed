@@ -19,7 +19,7 @@ const CITIES = {
     
     // APIs
     apiKey: "2C4447D4A42083BCD84DE3B8E",
-    otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
+    otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan", // (unchanged)
     busApi: "https://developer.trimet.org/ws/v2/vehicles",
     trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
     tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
@@ -57,7 +57,7 @@ const CITIES = {
     
     // APIs
     apiKey: "2C4447D4A42083BCD84DE3B8E",
-    otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
+    otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan", // (unchanged)
     busApi: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition",
     trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
     tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
@@ -71,6 +71,9 @@ const CITIES = {
       east: -85.4,
       west: -85.9
     },
+    // Map Tile Styles (base map API) - Louisville TileServer-GL (verified in browser)
+    dayStyle: "http://45.77.209.137:8082/styles/0/style.json",
+    nightStyle: "http://45.77.209.137:8082/styles/0/style.json",
     
     // File Paths
     mastermapFile: "mastermap.js",
@@ -121,4 +124,3 @@ function getCityConfig(cityId) {
 window.CITIES = CITIES;
 window.getCityConfig = getCityConfig;
 window.getCityIdFromPath = getCityIdFromPath;
-

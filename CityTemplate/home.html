@@ -1178,6 +1178,8 @@
 
 <!-- -- CITY CONFIGURATION (MUST LOAD FIRST) -- -->
 <script src="city-config.js"></script>
+<!-- -- ROUTES INDEX (MUST LOAD AFTER CITY CONFIG) -- -->
+<script src="routes_index.js"></script>
 
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -4134,8 +4136,9 @@
   // === SECTION: BUS ROUTES MODAL ===
   // Modal for selecting bus routes to overlay on the map
   
-  // Bus routes list (from BusRoutesMain.html)
-  const BUS_ROUTES = [
+  // Bus routes list (loaded from routes_index.js)
+  const cityRoutes = getCityRoutes();
+  const BUS_ROUTES = cityRoutes.busRoutes || [
     { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
     { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
     { id: '4', label: '4 – Fessenden', dir0: 'To St Johns', dir1: 'To Portland City Center' },
@@ -4216,7 +4219,7 @@
     { id: '291', label: '291 – Orange Bus', dir0: 'To Milwaukie', dir1: 'To Portland City Center' },
     { id: '292', label: '292 – Red Bus', dir0: 'To Portland International Airport', dir1: 'To Goose Hollow/SW Jefferson' },
     { id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
-  ];
+  ]; // Fallback if routes_index.js not loaded
   
   /**
    * Show the bus routes modal
@@ -4457,15 +4460,15 @@
   // === SECTION: RAIL ROUTES MODAL ===
   // Modal for selecting rail routes to overlay on the map
   
-  // Rail routes list (from railroutes.html)
-  const RAIL_ROUTES = [
+  // Rail routes list (loaded from routes_index.js)
+  const RAIL_ROUTES = cityRoutes.railRoutes || [
     { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
     { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
     { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
     { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
     { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
     { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
-  ];
+  ]; // Fallback if routes_index.js not loaded
   
   /**
    * Show the rail routes modal
@@ -4906,7 +4909,9 @@
       const mapSetup = initMetroFeedMap('map', {
         defaultCenter: CITY_CONFIG.defaultCenter,
         defaultZoom: CITY_CONFIG.defaultZoom,
-        bounds: PORTLAND_BOUNDS
+        bounds: PORTLAND_BOUNDS,
+        dayStyle: CITY_CONFIG.dayStyle,
+        nightStyle: CITY_CONFIG.nightStyle
       });
       
       map = mapSetup.map;
@@ -4977,7 +4982,9 @@
       const fallbackMapSetup = initMetroFeedMap('map', {
         defaultCenter: CITY_CONFIG.defaultCenter,
         defaultZoom: CITY_CONFIG.defaultZoom,
-        bounds: PORTLAND_BOUNDS
+        bounds: PORTLAND_BOUNDS,
+        dayStyle: CITY_CONFIG.dayStyle,
+        nightStyle: CITY_CONFIG.nightStyle
       });
       map = fallbackMapSetup.map;
       dayStyle = fallbackMapSetup.dayStyle;

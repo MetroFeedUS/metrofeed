@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetroFeed Portland Map</title>
+  <title>MetroFeed <span id="city-name-placeholder">City</span> Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <!-- Sponsor Image Configuration -->
@@ -899,7 +899,7 @@
 
 <!-- -- INSTALL PROMPT -- -->
 <div id="installPrompt" style="display:none;">
-  <strong>📲 Add MetroFeed Portland to your home screen</strong><br>
+  <strong>📲 Add MetroFeed <span id="city-name-pwa">City</span> to your home screen</strong><br>
   <small>Use MetroFeed like an app for faster access!</small><br><br>
           <a href="AndroidInstructions.html"><button data-translate="android_instructions">Android Instructions</button></a>
         <a href="AppleInstructions.html"><button data-translate="apple_instructions">Apple Instructions</button></a>
@@ -1176,11 +1176,16 @@
   </div>
 </div>
 
+<!-- -- CITY CONFIGURATION (MUST LOAD FIRST) -- -->
+<script src="city-config.js"></script>
+<!-- -- ROUTES INDEX (MUST LOAD AFTER CITY CONFIG) -- -->
+<script src="routes_index.js"></script>
+
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
-<script src="mastermapLouisville.js"></script>
+<!-- Mastermap file will be loaded dynamically based on city config -->
+<script id="mastermap-loader"></script>
 <!-- -- SHARED MAP INITIALIZATION -- -->
 <script src="metroFeedMap.js"></script>
 <!-- -- SHARED CAMERA ICON -- -->
@@ -1193,44 +1198,36 @@
 <script src="marketplaceOverlay.js"></script>
 <script>
   // === CITY CONFIGURATION ===
-  const CITY_CONFIG = {
-    // Basic Info
-    cityName: "Louisville",
-    state: "KY",
-    timezone: "America/New_York",
-    
-    // APIs
-    apiKey: "2C4447D4A42083BCD84DE3B8E",
-    otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
-    busApi: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition",
-    trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
-    tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
-    
-        // Map Settings
-  defaultCenter: [-85.76, 38.25], // [longitude, latitude] for MapLibre GL JS - Louisville, KY
-  defaultZoom: 10.5, // Split difference between 13 and 8 (minZoom)
-  bounds: {
-    north: 38.5,    // Northern edge of Louisville metro area
-    south: 38.0,    // Southern edge of Louisville metro area
-    east: -85.4,    // Eastern edge of Louisville metro area
-    west: -85.9     // Western edge of Louisville metro area
-  },
+  // Load city config from external file (auto-detects city from path)
+  const CITY_CONFIG = getCityConfig();
   
-  // File Paths
-  mastermapFile: "mastermapLouisville.js",
-  logoFile: "Sitelogo.png"
-  };
+  // Update dynamic city name placeholders in the page
+  document.addEventListener('DOMContentLoaded', function() {
+    const cityName = CITY_CONFIG.cityName;
+    // Update title
+    document.title = `MetroFeed ${cityName} Map`;
+    // Update PWA text
+    const pwaPlaceholder = document.getElementById('city-name-pwa');
+    if (pwaPlaceholder) pwaPlaceholder.textContent = cityName;
+    const titlePlaceholder = document.getElementById('city-name-placeholder');
+    if (titlePlaceholder) titlePlaceholder.textContent = cityName;
+  });
+  
+  // Load mastermap.js (always named mastermap.js, city-specific data is in the file)
+  const mastermapScript = document.createElement('script');
+  mastermapScript.src = CITY_CONFIG.mastermapFile;
+  document.getElementById('mastermap-loader').parentNode.replaceChild(mastermapScript, document.getElementById('mastermap-loader'));
 
   // === SECTION: MAP INIT ===
   const apiKey = CITY_CONFIG.apiKey;
   const OTP_API = CITY_CONFIG.otpApi;
   
-  // Portland time utility functions
-  function getPortlandTime() {
+  // City time utility functions (uses timezone from config)
+  function getCityTime() {
     return new Date().toLocaleString('en-US', { timeZone: CITY_CONFIG.timezone });
   }
   
-  function getPortlandTimeString(date = new Date()) {
+  function getCityTimeString(date = new Date()) {
     return date.toLocaleTimeString('en-US', { 
       timeZone: CITY_CONFIG.timezone, 
       hour: '2-digit', 
@@ -1238,10 +1235,15 @@
     });
   }
   
-  function getPortlandMinutes() {
-    const nowPT = new Date(getPortlandTime());
-    return nowPT.getHours() * 60 + nowPT.getMinutes();
+  function getCityMinutes() {
+    const nowCity = new Date(getCityTime());
+    return nowCity.getHours() * 60 + nowCity.getMinutes();
   }
+  
+  // Legacy function names for backward compatibility
+  const getPortlandTime = getCityTime;
+  const getPortlandTimeString = getCityTimeString;
+  const getPortlandMinutes = getCityMinutes;
   
   // Function to process stop times intelligently
   function processStopTimes(times) {
@@ -1303,7 +1305,8 @@
   }
   
   // Use bounds from configuration
-  const PORTLAND_BOUNDS = CITY_CONFIG.bounds;
+  const CITY_BOUNDS = CITY_CONFIG.bounds;
+  const PORTLAND_BOUNDS = CITY_BOUNDS; // Legacy alias for backward compatibility
   
   // Map styles are now initialized via initMetroFeedMap() in metroFeedMap.js
   // These variables are set after map initialization
@@ -1937,8 +1940,8 @@
       popup.addTo(map);
     } else {
       // OUT OF BOUNDS: show arrow at nearest edge
-      const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
-      const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
+      const edgeLat = clamp(userLat, CITY_BOUNDS.south, CITY_BOUNDS.north);
+      const edgeLon = clamp(userLon, CITY_BOUNDS.west, CITY_BOUNDS.east);
       const edgeLatLng = [edgeLon, edgeLat];
       const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
       const arrowElement = document.createElement('div');
@@ -1954,7 +1957,7 @@
       });
       userArrow.setLngLat(edgeLatLng);
       
-      const popup = new maplibregl.Popup().setText("You are outside the Portland map area.");
+      const popup = new maplibregl.Popup().setText(`You are outside the ${CITY_CONFIG.cityName} map area.`);
       userArrow.setPopup(popup);
       userArrow.addTo(map);
       popup.addTo(map);
@@ -2185,16 +2188,19 @@
   let userLocationMarker = null; // Track user location marker
   let userArrow = null; // Track user arrow marker
   
-  // ==== CONFIGURE PORTLAND BOUNDS ====
+  // ==== CONFIGURE CITY BOUNDS ====
   // Using the bounds already defined above
-  function isInLouisville(lat, lon) {
+  function isInCityBounds(lat, lon) {
     return (
-      lat > PORTLAND_BOUNDS.south &&
-      lat < PORTLAND_BOUNDS.north &&
-      lon > PORTLAND_BOUNDS.west &&
-      lon < PORTLAND_BOUNDS.east
+      lat > CITY_BOUNDS.south &&
+      lat < CITY_BOUNDS.north &&
+      lon > CITY_BOUNDS.west &&
+      lon < CITY_BOUNDS.east
     );
   }
+  
+  // Legacy function name for backward compatibility
+  const isInPortland = isInCityBounds;
 
   // Utility to clamp value between min and max
   function clamp(val, min, max) {
@@ -2232,7 +2238,7 @@
         lat: userLat,
         lon: userLon,
         latLng: userLatLng,
-        inBounds: isInLouisville(userLat, userLon)
+        inBounds: isInPortland(userLat, userLon)
       };
       userLocationFound = true;
 
@@ -2242,7 +2248,7 @@
         if (userLocationMarker) { userLocationMarker.remove(); userLocationMarker = null; }
         if (userArrow) { userArrow.remove(); userArrow = null; }
 
-        if (isInLouisville(userLat, userLon)) {
+        if (isInPortland(userLat, userLon)) {
           // IN BOUNDS: show pulsing dot
           const pulseElement = document.createElement('div');
           pulseElement.className = 'pulse-marker';
@@ -2280,7 +2286,7 @@
           });
           userArrow.setLngLat(edgeLatLng);
           
-          const popup = new maplibregl.Popup().setText("You are outside the Louisville map area.");
+          const popup = new maplibregl.Popup().setText(`You are outside the ${CITY_CONFIG.cityName} map area.`);
           userArrow.setPopup(popup);
           userArrow.addTo(map);
           popup.addTo(map);
@@ -2708,69 +2714,15 @@
     return null;
   }
   
-  // Function to fetch and parse TARC GTFS-RT feed
-  async function fetchTARCGTFSRT() {
-    try {
-      // Load GTFS-RT proto definition
-      const protoResponse = await fetch('https://raw.githubusercontent.com/google/transit/master/gtfs-realtime/proto/gtfs-realtime.proto');
-      const protoText = await protoResponse.text();
-      
-      const root = protobuf.parse(protoText).root;
-      const FeedMessage = root.lookupType('transit_realtime.FeedMessage');
-      
-      // Fetch TARC GTFS-RT feed
-      const response = await fetch(CITY_CONFIG.busApi);
-      const arrayBuffer = await response.arrayBuffer();
-      
-      // Decode the Protocol Buffer
-      const message = FeedMessage.decode(new Uint8Array(arrayBuffer));
-      const feed = FeedMessage.toObject(message, {
-        longs: String,
-        enums: String,
-        bytes: String,
-        defaults: true
-      });
-      
-      // Convert GTFS-RT format to expected format
-      const vehicles = [];
-      if (feed.entity && Array.isArray(feed.entity)) {
-        feed.entity.forEach(entity => {
-          if (entity.vehicle && entity.vehicle.position) {
-            const vp = entity.vehicle;
-            vehicles.push({
-              vehicleID: (vp.vehicle && vp.vehicle.label) ? vp.vehicle.label : 
-                        (vp.vehicle && vp.vehicle.id) ? vp.vehicle.id : 
-                        entity.id || "unknown",
-              routeNumber: (vp.trip && vp.trip.routeId) ? vp.trip.routeId : "unknown",
-              direction: (vp.trip && vp.trip.directionId !== undefined && vp.trip.directionId !== null) ? parseInt(vp.trip.directionId) : 0,
-              latitude: vp.position.latitude,
-              longitude: vp.position.longitude,
-              blockID: (vp.trip && vp.trip.tripId) ? vp.trip.tripId : "unknown",
-              bearing: vp.position.bearing || null,
-              speed: vp.position.speed || null
-            });
-          }
-        });
-      }
-      
-      console.log('[fetchTARCGTFSRT] Parsed', vehicles.length, 'vehicles from TARC GTFS-RT feed');
-      return vehicles;
-    } catch (error) {
-      console.error('[fetchTARCGTFSRT] Error parsing GTFS-RT:', error);
-      console.error('[fetchTARCGTFSRT] Error details:', error.message);
-      // Return empty array on error so the app doesn't break
-      return [];
-    }
-  }
-
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
     try {
-      // Use TARC GTFS-RT feed for Louisville
-      const allBuses = await fetchTARCGTFSRT();
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const allBuses = data.resultSet.vehicle || [];
       
       // Store for debugging
-      window.lastBusData = { resultSet: { vehicle: allBuses } };
+      window.lastBusData = data;
       
       // Clear existing bus markers
       Object.values(busMarkers).forEach(m => m.remove());
@@ -3430,7 +3382,7 @@
   // Keep walk color consistent
   const WALK_COLOR = "#666";
   
-  // Function to find route in mastermapLouisville.js by route name/description
+  // Function to find route in mastermap.js by route name/description
   function findRouteByDescription(description) {
     if (!masterRoutes) return null;
     
@@ -3921,7 +3873,7 @@
         map.addSource('tomtom-traffic', {
           type: 'raster',
           tiles: [
-            `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU&cache=${fiveMinCache}`
+            `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=${CITY_CONFIG.tomtomKey}&cache=${fiveMinCache}`
           ],
           tileSize: 256,
         });
@@ -4139,9 +4091,7 @@
     if (!routePageUrl) {
       // Try to construct URL based on route number
       const routeType = routeData.route_type === '0' ? 'Rail routes' : 'pythonbusroutes';
-      // Use routeId directly (it's already the route number from the modal)
-      routePageUrl = `${routeType}/route-${routeId}-dir${directionId}.html`;
-      console.log('[showRouteOverlay] Constructed routePageUrl:', routePageUrl);
+      routePageUrl = `${routeType}/route-${routeNumber}-dir${directionId}.html`;
     }
     
     // Create overlay with explicit routeData
@@ -4186,34 +4136,90 @@
   // === SECTION: BUS ROUTES MODAL ===
   // Modal for selecting bus routes to overlay on the map
   
-  // Bus routes list (from BusRoutesMain.html)
-  const BUS_ROUTES = [
-    // TARC Louisville Bus Routes
-    { id: '2', label: 'Route 2', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '4', label: 'Route 4', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '6', label: 'Route 6', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '10', label: 'Route 10', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '12', label: 'Route 12', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '15', label: 'Route 15', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '17', label: 'Route 17', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '18', label: 'Route 18', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '19', label: 'Route 19', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '21', label: 'Route 21', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '23', label: 'Route 23', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '25', label: 'Route 25', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '27', label: 'Route 27', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '28', label: 'Route 28', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '29', label: 'Route 29', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '31', label: 'Route 31', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '40', label: 'Route 40', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '43', label: 'Route 43', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '51', label: 'Route 51', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '71', label: 'Route 71', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '72', label: 'Route 72', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '93', label: 'Route 93', dir0: 'Direction 0', dir1: 'Direction 1' },
-    { id: '94', label: 'Route 94', dir0: '', dir1: 'Direction 1' },
-    { id: '99', label: 'Route 99', dir0: 'Direction 0', dir1: 'Direction 1' }
-  ];
+  // Bus routes list (loaded from routes_index.js)
+  const cityRoutes = getCityRoutes();
+  const BUS_ROUTES = cityRoutes.busRoutes || [
+    { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
+    { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
+    { id: '4', label: '4 – Fessenden', dir0: 'To St Johns', dir1: 'To Portland City Center' },
+    { id: '6', label: '6 – Martin Luther King Jr Blvd', dir0: 'To Jantzen Beach', dir1: 'To Portland City Center' },
+    { id: '8', label: '8 – Jackson Park/NE 15th', dir0: 'To Marquam Hill', dir1: 'To NE M L King Jr Blvd & Lombard' },
+    { id: '9', label: '9 – Powell Blvd', dir0: 'To Powell & 92nd or Gresham Central Transit Center', dir1: 'To Portland City Center' },
+    { id: '10', label: '10 – Harold St', dir0: 'To Foster & 94th', dir1: 'To Portland City Center' },
+    { id: '11', label: '11 – Rivergate/Marine Dr', dir0: 'To Vancouver Way & Middlefield', dir1: 'To St Johns' },
+    { id: '12', label: '12 – Barbur/Sandy Blvd', dir0: 'To Tigard Transit Center', dir1: 'To Parkrose/Sumner Transit Center' },
+    { id: '14', label: '14 – Hawthorne/Foster', dir0: 'To Foster & 94th', dir1: 'To Portland City Center' },
+    { id: '15', label: '15 – Belmont/NW 23rd', dir0: 'To City Ctr, NW 23rd, Montgomery Pk or Yeon & 44th', dir1: 'To Gateway Transit Center' },
+    { id: '16', label: '16 – Front Ave/St Helens Rd', dir0: 'To St Johns and Sauvie Island', dir1: 'To Portland' },
+    { id: '17', label: '17 – Holgate/Broadway', dir0: 'To Holgate & 122nd', dir1: 'To Saratoga & 27th' },
+    { id: '18', label: '18 – Hillside', dir0: 'To Hillside and Providence Park', dir1: '' },
+    { id: '19', label: '19 – Woodstock/Glisan', dir0: 'To Mt. Scott & 112th', dir1: 'To Gateway Transit Center' },
+    { id: '20', label: '20 – Burnside/Stark', dir0: 'To Beaverton Transit Center', dir1: 'To Gresham Central Transit Center' },
+    { id: '21', label: '21 – Sandy Blvd/223rd', dir0: 'To Parkrose/Sumner Transit Center', dir1: 'To Gresham Central Transit Center' },
+    { id: '22', label: '22 – Parkrose', dir0: 'To Parkrose', dir1: 'To Gateway Transit Center' },
+    { id: '23', label: '23 – San Rafael', dir0: 'To Sandy & 148th', dir1: 'To Gateway Transit Center' },
+    { id: '24', label: '24 – Fremont/NW 18th', dir0: 'To SW Columbia & 18th', dir1: 'To Gateway Transit Center' },
+    { id: '25', label: '25 – Glisan/Troutdale Rd', dir0: 'To Mt Hood Community College', dir1: 'To Gateway Transit Center' },
+    { id: '26', label: '26 – Thurman/NW 18th', dir0: 'To NW Thurman & Gordon', dir1: 'To SW 18th & Salmon' },
+    { id: '29', label: '29 – Lake/Webster Rd', dir0: 'To Clackamas Town Center', dir1: 'To Milwaukie' },
+    { id: '30', label: '30 – Estacada', dir0: 'To Estacada', dir1: 'To Clackamas Town Center' },
+    { id: '31', label: '31 – Webster Rd', dir0: 'To Oregon City Transit Center', dir1: 'To Clackamas Town Center' },
+    { id: '32', label: '32 – Oatfield', dir0: 'To Clackamas Community College', dir1: 'To Oregon City Transit Center or Milwaukie' },
+    { id: '33', label: '33 – McLoughlin/King Rd', dir0: 'To Oregon City TC and Clackamas Community College', dir1: 'To Milwaukie and Clackamas Town Center' },
+    { id: '34', label: '34 – Linwood/River Rd', dir0: 'To Clackamas Heights', dir1: 'To Clackamas Town Center' },
+    { id: '35', label: '35 – Macadam/Greeley', dir0: 'To Oregon City Transit Center', dir1: 'To University of Portland' },
+    { id: '37', label: '37 – Lake Grove', dir0: 'To Tualatin Park & Ride', dir1: 'To Lake Oswego Transit Center' },
+    { id: '38', label: '38 – Boones Ferry Rd', dir0: 'To Tualatin Park & Ride', dir1: 'To Portland City Center' },
+    { id: '39', label: '39 – Arnold Creek/Hillsdale', dir0: 'To Barbur Transit Center', dir1: 'To Hillsdale' },
+    { id: '40', label: '40 – Tacoma/Swan Island', dir0: 'To SE Tacoma Park & Ride', dir1: 'To Swan Island' },
+    { id: '43', label: '43 – Taylors Ferry/Marquam Hill', dir0: 'To Tigard Transit Center', dir1: 'To Marquam Hill' },
+    { id: '44', label: '44 – Capitol Hwy/Mocks Crest', dir0: 'To PCC Sylvania', dir1: 'To St Johns' },
+    { id: '45', label: '45 – Garden Home', dir0: 'To Tigard Transit Center', dir1: 'To Portland City Center' },
+    { id: '46', label: '46 – North Hillsboro', dir0: 'To Hillsboro Brookwood Library', dir1: 'To Hillsboro Transit Center' },
+    { id: '47', label: '47 – Main/Baseline', dir0: 'To Hillsboro Transit Center', dir1: 'To Willow Creek Transit Center' },
+    { id: '48', label: '48 – Cornell', dir0: 'To Hillsboro Transit Center', dir1: 'To Sunset Transit Center' },
+    { id: '51', label: '51 – Vista/Sunset Blvd', dir0: 'To Bertha & Barbur or Council Crest', dir1: 'To SW Columbia & 18th' },
+    { id: '52', label: '52 – Farmington/185th', dir0: 'To PCC Rock Creek', dir1: 'To Beaverton Transit Center' },
+    { id: '53', label: '53 – Arctic/Allen', dir0: 'Evening Loop', dir1: 'Morning Loop' },
+    { id: '54', label: '54 – Beaverton-Hillsdale Hwy', dir0: 'To Beaverton Transit Center', dir1: 'To Portland City Center' },
+    { id: '55', label: '55 – Hamilton', dir0: 'To Raleigh Hills', dir1: 'To Portland City Center' },
+    { id: '56', label: '56 – Scholls Ferry/Marquam Hill', dir0: 'To Washington Square Transit Center', dir1: 'To Marquam Hill' },
+    { id: '57', label: '57 – TV Hwy/Forest Grove', dir0: 'To Forest Grove', dir1: 'To Beaverton Transit Center' },
+    { id: '58', label: '58 – Canyon Rd', dir0: 'To Beaverton Transit Center', dir1: 'To Portland City Center' },
+    { id: '59', label: '59 – Walker/Park Way', dir0: 'To Willow Creek/SW 185th Ave Transit Center', dir1: 'To Sunset Transit Center' },
+    { id: '62', label: '62 – Murray Blvd', dir0: 'To Washington Square Transit Center', dir1: 'To Sunset Transit Center' },
+    { id: '63', label: '63 – Washington Park/SW 6th', dir0: 'To Rose Garden/Japanese Garden', dir1: 'To Portland City Center' },
+    { id: '67', label: '67 – Bethany/158th', dir0: 'To PCC Rock Creek', dir1: 'To Merlo Rd/158th Ave' },
+    { id: '70', label: '70 – 12th/NE 33rd Ave', dir0: 'To 33rd & Sunderland', dir1: 'To Milwaukie' },
+    { id: '71', label: '71 – 60th Ave', dir0: 'To Clackamas Town Center', dir1: 'To Parkrose Transit Center' },
+    { id: '72', label: '72 – Killingsworth/82nd Ave', dir0: 'To Swan Island', dir1: 'To Clackamas Town Center' },
+    { id: '73', label: '73 – 122nd Ave', dir0: 'To Foster & 94th', dir1: 'To Parkrose Transit Center' },
+    { id: '74', label: '74 – 162nd Ave', dir0: 'To 158th & Airport Way', dir1: 'To Powell & 182nd' },
+    { id: '75', label: '75 – Cesar Chavez/Lombard', dir0: 'To St Johns', dir1: 'To Milwaukie' },
+    { id: '76', label: '76 – Hall/Greenburg', dir0: 'To Meridian Park Hospital or Oregon City TC', dir1: 'To Beaverton Transit Center' },
+    { id: '77', label: '77 – Broadway/Halsey', dir0: 'To Troutdale Frontage Rd or TRIP', dir1: 'To Montgomery Park' },
+    { id: '78', label: '78 – Denney/Kerr Pkwy', dir0: 'To Lake Oswego Transit Center', dir1: 'To Beaverton Transit Center' },
+    { id: '79', label: '79 – Clackamas/Oregon City', dir0: 'To Oregon City Transit Center', dir1: 'To Clackamas Town Center' },
+    { id: '81', label: '81 – Kane/257th', dir0: 'To Troutdale Reynolds Industrial Park', dir1: 'To Gresham Central Transit Center' },
+    { id: '82', label: '82 – South Gresham', dir0: 'To Powell & 182nd', dir1: 'To Gresham Village' },
+    { id: '84', label: '84 – Powell Valley/Orient Dr', dir0: 'Evening Loop', dir1: 'Morning Loop' },
+    { id: '86', label: '86 – 148th Ave', dir0: 'To Relay Resources', dir1: 'To Foster & 94th' },
+    { id: '87', label: '87 – Airport Way/181st', dir0: 'To Powell & 182nd', dir1: 'To Gateway Transit Center' },
+    { id: '88', label: '88 – Hart/198th', dir0: 'To Willow Creek/SW 185th Ave Transit Center', dir1: 'To Beaverton Transit Center' },
+    { id: '94', label: '94 – Tigard/Sherwood', dir0: 'To Sherwood', dir1: 'To Tigard' },
+    { id: '96', label: '96 – Tualatin/I-5', dir0: 'To Commerce Circle', dir1: 'To Portland City Center' },
+    { id: '97', label: '97 – Tualatin-Sherwood Rd', dir0: 'To SW Langer Dr/Sherwood Plaza', dir1: 'To Tualatin WES Station' },
+    { id: '98', label: '98 – MAX Shuttle', dir0: 'Eastbound', dir1: 'Westbound' },
+    { id: '152', label: '152 – Milwaukie', dir0: 'To Clackamas Town Center', dir1: 'To Milwaukie' },
+    { id: '153', label: '153 – Stafford/Salamo', dir0: 'To Willamette', dir1: 'To Lake Oswego Transit Center' },
+    { id: '155', label: '155 – Sunnyside', dir0: 'To 172nd', dir1: 'To Clackamas Town Center' },
+    { id: '156', label: '156 – Mather Rd', dir0: 'To 147th & Oregon Trail', dir1: 'To Clackamas Town Center' },
+    { id: '287', label: '287 – Blue Eastside Bus', dir0: 'To Cleveland Ave Park & Ride', dir1: 'To Goose Hollow/SW Jefferson' },
+    { id: '288', label: '288 – Blue Westside Bus', dir0: 'To Willow Creek TC or Hatfield Government Center', dir1: 'To Willow Creek TC or Rose Quarter TC' },
+    { id: '291', label: '291 – Orange Bus', dir0: 'To Milwaukie', dir1: 'To Portland City Center' },
+    { id: '292', label: '292 – Red Bus', dir0: 'To Portland International Airport', dir1: 'To Goose Hollow/SW Jefferson' },
+    { id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
+  ]; // Fallback if routes_index.js not loaded
   
   /**
    * Show the bus routes modal
@@ -4454,15 +4460,15 @@
   // === SECTION: RAIL ROUTES MODAL ===
   // Modal for selecting rail routes to overlay on the map
   
-  // Rail routes list (from railroutes.html)
-  const RAIL_ROUTES = [
+  // Rail routes list (loaded from routes_index.js)
+  const RAIL_ROUTES = cityRoutes.railRoutes || [
     { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
     { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
     { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
     { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
     { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
     { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
-  ];
+  ]; // Fallback if routes_index.js not loaded
   
   /**
    * Show the rail routes modal
@@ -4903,7 +4909,9 @@
       const mapSetup = initMetroFeedMap('map', {
         defaultCenter: CITY_CONFIG.defaultCenter,
         defaultZoom: CITY_CONFIG.defaultZoom,
-        bounds: PORTLAND_BOUNDS
+        bounds: PORTLAND_BOUNDS,
+        dayStyle: CITY_CONFIG.dayStyle,
+        nightStyle: CITY_CONFIG.nightStyle
       });
       
       map = mapSetup.map;
@@ -4974,7 +4982,9 @@
       const fallbackMapSetup = initMetroFeedMap('map', {
         defaultCenter: CITY_CONFIG.defaultCenter,
         defaultZoom: CITY_CONFIG.defaultZoom,
-        bounds: PORTLAND_BOUNDS
+        bounds: PORTLAND_BOUNDS,
+        dayStyle: CITY_CONFIG.dayStyle,
+        nightStyle: CITY_CONFIG.nightStyle
       });
       map = fallbackMapSetup.map;
       dayStyle = fallbackMapSetup.dayStyle;
