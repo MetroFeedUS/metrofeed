@@ -4914,15 +4914,12 @@
     try {
       console.log('[Map Init] Initializing MapLibre GL JS map...');
       console.log('[Map Init] Center coordinates:', CITY_CONFIG.defaultCenter);
-      console.log('[Map Init] Bounds:', [
-        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
-        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
-      ]);
+      console.log('[Map Init] Bounds:', CITY_CONFIG.bounds);
       
       const mapSetup = initMetroFeedMap('map', {
         defaultCenter: CITY_CONFIG.defaultCenter,
         defaultZoom: CITY_CONFIG.defaultZoom,
-        bounds: PORTLAND_BOUNDS,
+        bounds: CITY_CONFIG.bounds,
         dayStyle: CITY_CONFIG.dayStyle,
         nightStyle: CITY_CONFIG.nightStyle
       });
@@ -4967,6 +4964,12 @@
       
       map.on('error', (e) => {
         console.error('[Map] Map error:', e);
+        console.error('[Map] Error details:', e.error);
+        // Only use fallback if it's a style loading error and custom server fails
+        if (e.error && e.error.message && e.error.message.includes('style')) {
+          console.warn('[Map] Custom tile server failed, attempting fallback CartoDB style...');
+          map.setStyle('https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
+        }
       });
       
       map.on('styledata', () => {
@@ -4995,7 +4998,7 @@
       const fallbackMapSetup = initMetroFeedMap('map', {
         defaultCenter: CITY_CONFIG.defaultCenter,
         defaultZoom: CITY_CONFIG.defaultZoom,
-        bounds: PORTLAND_BOUNDS,
+        bounds: CITY_CONFIG.bounds,
         dayStyle: CITY_CONFIG.dayStyle,
         nightStyle: CITY_CONFIG.nightStyle
       });
