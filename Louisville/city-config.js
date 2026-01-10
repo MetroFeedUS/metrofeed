@@ -72,8 +72,8 @@ const CITIES = {
       west: -85.9
     },
     // Map Tile Styles (base map API) - Louisville TileServer-GL (custom hosted OpenStreetMap)
-    dayStyle: "http://45.77.209.137:8082/styles/0/style.json",
-    nightStyle: "http://45.77.209.137:8082/styles/0/style.json",
+    dayStyle: "https://45.77.209.137:8082/styles/0/style.json",
+    nightStyle: "https://45.77.209.137:8082/styles/0/style.json",
     
     // File Paths
     mastermapFile: "mastermap.js",
