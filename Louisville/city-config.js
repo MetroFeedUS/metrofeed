@@ -35,7 +35,7 @@ const CITIES = {
     },
     // Map Tile Styles (base map API)
     dayStyle:   "https://tiles.metrofeedus.com/louisville/styles/0/style.json",
-    nightStyle:"https://tiles.metrofeedus.com/louisville/styles/1/style.json"
+    nightStyle:"https://tiles.metrofeedus.com/louisville/styles/1/style.json",
 
     
     // File Paths
