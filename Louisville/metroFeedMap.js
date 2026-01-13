@@ -47,6 +47,16 @@ function initMetroFeedMap(containerId, options) {
   const dayStyle = options.dayStyle || 'https://maps.metrofeedus.com/styles/0/style.json';
   const nightStyle = options.nightStyle || 'https://maps.metrofeedus.com/styles/1/style.json';
 
+  // Transform request to force HTTPS for all metrofeedus.com resources
+  // This fixes mixed content errors when style.json files contain http:// URLs
+  const transformRequest = (url, resourceType) => {
+    // Convert any http:// URLs to https:// for metrofeedus.com domains
+    if (url && url.startsWith('http://') && url.includes('metrofeedus.com')) {
+      url = url.replace('http://', 'https://');
+    }
+    return { url: url };
+  };
+
   // Create map instance
   const map = new maplibregl.Map({
     container: containerId,
@@ -59,7 +69,8 @@ function initMetroFeedMap(containerId, options) {
       [config.bounds.west, config.bounds.south],
       [config.bounds.east, config.bounds.north]
     ],
-    attributionControl: true
+    attributionControl: true,
+    transformRequest: transformRequest
   });
 
   // Force attribution to be collapsed by default
