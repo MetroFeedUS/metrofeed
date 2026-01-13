@@ -47,13 +47,27 @@ function initMetroFeedMap(containerId, options) {
   const dayStyle = options.dayStyle || 'https://maps.metrofeedus.com/styles/0/style.json';
   const nightStyle = options.nightStyle || 'https://maps.metrofeedus.com/styles/1/style.json';
 
-  // Transform request to force HTTPS for all metrofeedus.com resources
-  // This fixes mixed content errors when style.json files contain http:// URLs
+  // Transform request to force HTTPS and remove city path prefixes for metrofeedus.com resources
+  // This fixes mixed content errors and removes city path prefixes from tile URLs
   const transformRequest = (url, resourceType) => {
-    // Convert any http:// URLs to https:// for metrofeedus.com domains
-    if (url && url.startsWith('http://') && url.includes('metrofeedus.com')) {
+    if (!url || !url.includes('metrofeedus.com')) {
+      return { url: url };
+    }
+    
+    // Convert http:// to https://
+    if (url.startsWith('http://')) {
       url = url.replace('http://', 'https://');
     }
+    
+    // Remove city path prefixes and ports from tiles.metrofeedus.com URLs
+    if (url.includes('tiles.metrofeedus.com')) {
+      // Remove /louisville or /portland path prefixes
+      url = url.replace(/\/louisville\//g, '/').replace(/\/portland\//g, '/');
+      
+      // Remove port numbers (e.g., :8441, :8442)
+      url = url.replace(/tiles\.metrofeedus\.com:\d+/, 'tiles.metrofeedus.com');
+    }
+    
     return { url: url };
   };
 

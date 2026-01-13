@@ -34,8 +34,8 @@ const CITIES = {
       west: -123.35
     },
     // Map Tile Styles (base map API)
-    dayStyle: "https://maps.metrofeedus.com/styles/0/style.json",
-    nightStyle: "https://maps.metrofeedus.com/styles/1/style.json",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
     
     // File Paths
     mastermapFile: "mastermap.js",
@@ -71,6 +71,9 @@ const CITIES = {
       east: -85.4,
       west: -85.9
     },
+    // Map Tile Styles (base map API) - Louisville TileServer-GL (custom hosted OpenStreetMap)
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
     
     // File Paths
     mastermapFile: "mastermap.js",
