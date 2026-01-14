@@ -4,9 +4,11 @@
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Route 93 - Inbound | MetroFeed Portland</title>
+<title>Route 93 - Inbound | MetroFeed Louisville</title>
+
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
 <style>
   :root{
     /* MetroFeed Blue */
@@ -61,32 +63,6 @@
     fill: #fff;
   }
 
-  .theme-toggle-fixed {
-    position: fixed;
-    top: 15px;
-    right: 20px;
-    width: 35px;
-    height: 35px;
-    background-color: var(--mf-blue);
-    border: 2px solid #000;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1001;
-    box-shadow: 0 0 10px var(--mf-blue);
-    cursor: pointer;
-    transition: background 0.2s;
-    outline: none;
-  }
-  .theme-toggle-fixed:active, .theme-toggle-fixed:focus {
-    background-color: var(--mf-blue-hover);
-  }
-  .theme-toggle-fixed img {
-    width: 16px;
-    height: 16px;
-  }
-
   header {
     background-color: var(--mf-bg);
     border-top: 4px solid var(--mf-blue);
@@ -120,28 +96,6 @@
     margin: 0 auto;
     display: block;
     border-radius: 8px;
-  }
-
-  .button-bar {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0;
-  }
-
-  .button-bar a, .back-button {
-    background: var(--mf-blue);
-    color: var(--mf-bg);
-    padding: 0.6rem 1.2rem;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 0 10px var(--mf-blue);
-  }
-
-  .back-button:hover {
-    background-color: var(--mf-blue-hover);
   }
 
   .site-footer {
@@ -225,26 +179,6 @@
   right: 0 !important;
   z-index: 1000 !important;
 }
-
-.maplibregl-ctrl-attrib.maplibregl-compact-show {
-  max-width: 200px !important;
-  min-height: auto !important;
-  transform: translateY(-30px) !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact {
-  min-height: 20px !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
-  display: none !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
-  display: block !important;
-}
-
-/* Mobile-specific attribution positioning */
 @media (max-width: 768px) {
   .maplibregl-ctrl-attrib {
     bottom: 50px !important;
@@ -266,13 +200,11 @@
   justify-content: center;
   gap: 10px;
 }
-
 .beta-banner-content {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 .beta-close {
   color: #aaa;
   font-size: 18px;
@@ -281,17 +213,19 @@
   transition: color 0.2s;
   margin-left: auto;
 }
-
 .beta-close:hover,
 .beta-close:focus {
   color: var(--mf-blue);
 }
 </style>
 </head>
+
 <body>
-  
+
   <header>
-    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+    <!-- IMPORTANT: Make sure Louisville has its own logo file. -->
+    <!-- If you want: MetroFeedLouisvilleLogo.png -->
+    <img src="MetroFeedLouisvilleLogo.png" alt="MetroFeed Louisville">
   </header>
 
   <!-- Beta Banner -->
@@ -303,13 +237,13 @@
     </div>
   </div>
 
-<!-- Favorite Route Button (Top Right) with Dropdown -->
-<div class="favorite-save-box">
-  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
-  <div class="fav-dropdown" id="fav-dropdown">
-    <button id="fav-dropdown-btn">Add to Favorites</button>
+  <!-- Favorite Route Button (Top Right) with Dropdown -->
+  <div class="favorite-save-box">
+    <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+    <div class="fav-dropdown" id="fav-dropdown">
+      <button id="fav-dropdown-btn">Add to Favorites</button>
+    </div>
   </div>
-</div>
 
   <!-- Back button -->
   <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
@@ -318,73 +252,58 @@
     </svg>
   </button>
 
-  <!-- Theme Toggle Button - DISABLED FOR FREE VERSION -->
-  <!-- <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
-    <img src="008-night.svg" alt="Theme Toggle" />
-  </button> -->
-
   <h1 id="route-title">Route 93 - Inbound</h1>
-  <span id="route-type" style="display:none;"></span>
 
   <div class="content-box">
     <div id="map"></div>
     <div style="text-align:right; font-size: 0.7rem; color: var(--mf-muted); margin-top: 0.5rem;">
-      Data courtesy of TriMet.
+      Data courtesy of MetroFeed / GTFS.
     </div>
   </div>
 
-  <!-- TriMet Disclaimer -->
+  <!-- Disclaimer -->
   <div class="disclaimer" style="margin: 2rem auto 1rem; max-width: 600px; font-size: 0.75rem; color: var(--mf-muted2); text-align: center; padding: 0.5rem 1rem;">
-    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:var(--mf-blue);">trimet.org</a>.
+    This tool is not affiliated with or endorsed by any transit agency. For official schedules and service alerts, visit your local agency website.
   </div>
 
   <script>
-    // Beta Banner Functions
     function closeBetaBanner() {
       document.getElementById('betaBanner').style.display = 'none';
     }
 
-    // Theme toggle functionality - DISABLED FOR FREE VERSION
-    // let isNightMode = false;
-    // function toggleTheme() {
-    //   // Night mode functionality removed for free version
-    //   // Available in premium version
-    // }
     if (document.referrer === "" && performance.navigation.type === 0) {
       window.location.href = "/index.html";
     }
 
-    const apiKey = "2C4447D4A42083BCD84DE3B8E";
-    const routeNumber = 93;
-    const direction = parseInt(1);
+    // These are injected by Python:
+    //  - TILES_BASE_URL (your city-specific tileserver base)
+    //  - ROUTE_NUMBER, DIRECTION_ID, SHAPE_DATA
 
-    // Portland Metro Area Bounds
-    const PORTLAND_BOUNDS = {
-      north: 45.80,
-      south: 45.20,
-      east: -122.15,
-      west: -123.35
-    };
+    const tilesBase = "http://45.77.209.137:8082";
 
-    // Initialize MapLibre GL JS map with vector tiles
-    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
-    // const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json'; // DISABLED FOR FREE VERSION
-    
+    // If tilesBase is empty, the map won't load. This makes failures obvious instead of silently showing Portland.
+    if (!tilesBase) {
+      console.error("TILES_BASE_URL is empty. Check build_test_routes.py TILESERVER_HOST + city port/path mapping.");
+    }
+
+    // IMPORTANT:
+    // Your style.json must be served by the city-specific TileServer instance.
+    // Example TileServer-GL default: http(s)://host:port/styles/<style>/style.json
+    // Adjust <style> name if yours isn't "0".
+    const dayStyle = `${tilesBase}/styles/0/style.json`;
+
     const map = new maplibregl.Map({
       container: 'map',
       style: dayStyle,
-      center: [-122.67, 45.52],
+      // Louisville-ish center (downtown)
+      center: [-85.7585, 38.2527],
       zoom: 12,
       maxZoom: 18,
       minZoom: 8,
-      maxBounds: [
-        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
-        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
-      ],
       attributionControl: true
     });
 
-    // Force attribution to be collapsed by default
+    // Collapse attribution by default
     map.on('load', () => {
       const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
       if (attributionControl) {
@@ -393,7 +312,6 @@
       }
     });
 
-    // Also ensure attribution is collapsed after style changes
     map.on('styledata', () => {
       setTimeout(() => {
         const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
@@ -404,7 +322,7 @@
       }, 100);
     });
 
-    // Add route shape when map loads
+    // Add route shape + stops
     map.on('load', () => {
       const shapeOutbound = [
   [38.15814, -85.73141],
@@ -655,56 +573,55 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "3404", name: "UPS Worldport", lat: 38.161101, lon: -85.724218, times: ["3:27 AM", "4:39 AM"] },
-  { stop_id: "50035", name: "Grade @ Ashbottom", lat: 38.158142, lon: -85.731521, times: ["3:30 AM", "4:43 AM"] },
-  { stop_id: "50040", name: "Grade @ Crittenden", lat: 38.153315, lon: -85.734199, times: ["3:32 AM", "4:45 AM"] },
-  { stop_id: "50041", name: "Allmond @ Strawberry", lat: 38.176026, lon: -85.75394, times: ["3:39 AM", "4:52 AM"] },
-  { stop_id: "50043", name: "Allmond @ Woodlawn", lat: 38.180349, lon: -85.75882, times: ["3:41 AM", "4:54 AM"] },
-  { stop_id: "1097", name: "Crittenden @ Dakota", lat: 38.194698, lon: -85.750799, times: ["3:46 AM", "4:59 AM"] },
-  { stop_id: "1110", name: "Crittenden @ KFEC Gate 2", lat: 38.197853, lon: -85.750755, times: ["3:47 AM", "5:00 AM"] },
-  { stop_id: "1120", name: "Crittenden @ KFEC Gate 3", lat: 38.19953, lon: -85.750714, times: ["3:47 AM", "5:00 AM"] },
-  { stop_id: "1125", name: "Crittenden @ Central", lat: 38.202462, lon: -85.750621, times: ["3:48 AM", "5:01 AM"] },
-  { stop_id: "1135", name: "Crittenden @ Cracker Barrel", lat: 38.20436, lon: -85.750581, times: ["3:48 AM", "5:01 AM"] },
-  { stop_id: "1145", name: "Crittenden @ Maylawn", lat: 38.208593, lon: -85.750965, times: ["3:49 AM", "5:02 AM"] },
-  { stop_id: "1150", name: "Crittenden @ Reed", lat: 38.209782, lon: -85.751054, times: ["3:49 AM", "5:02 AM"] },
-  { stop_id: "1155", name: "Crittenden @ Eastern Parkway", lat: 38.212008, lon: -85.751297, times: ["3:50 AM", "5:03 AM"] },
-  { stop_id: "60180", name: "Warnock @ Crittenden", lat: 38.214259, lon: -85.751268, times: ["3:50 AM", "5:03 AM"] },
-  { stop_id: "60185", name: "Warnock @ S Floyd", lat: 38.214613, lon: -85.754646, times: ["3:51 AM", "5:04 AM"] },
-  { stop_id: "3519", name: "Student Activity Center", lat: 38.217223, lon: -85.754598, times: ["3:52 AM", "5:05 AM"] },
-  { stop_id: "1190", name: "Cardinal @ Brook", lat: 38.220099, lon: -85.756395, times: ["3:52 AM", "5:05 AM"] },
-  { stop_id: "1195", name: "Cardinal @ 1st", lat: 38.220302, lon: -85.758138, times: ["3:52 AM", "5:05 AM"] },
-  { stop_id: "25615", name: "3rd @ Brandeis", lat: 38.219141, lon: -85.761541, times: ["3:53 AM", "5:06 AM"] },
-  { stop_id: "25620", name: "S 3rd opp Ekstrom Library", lat: 38.216798, lon: -85.761912, times: ["3:54 AM", "5:07 AM"] },
-  { stop_id: "25625", name: "3rd @ Eastern Pkwy", lat: 38.213987, lon: -85.762435, times: ["3:54 AM", "5:07 AM"] },
-  { stop_id: "14590", name: "2520 S. 3rd Street", lat: 38.212207, lon: -85.762679, times: ["3:55 AM", "5:08 AM"] },
-  { stop_id: "2750", name: "4th @ Montana", lat: 38.211304, lon: -85.764422, times: ["3:56 AM", "5:09 AM"] },
-  { stop_id: "2755", name: "4th @ Industry", lat: 38.213612, lon: -85.764004, times: ["3:56 AM", "5:09 AM"] },
-  { stop_id: "2765", name: "4th @ Stansbury Park", lat: 38.216658, lon: -85.763467, times: ["3:57 AM", "5:10 AM"] },
-  { stop_id: "2770", name: "4th @ Brandeis", lat: 38.219321, lon: -85.762956, times: ["3:57 AM", "5:10 AM"] },
-  { stop_id: "2775", name: "4th @ Cardinal", lat: 38.220365, lon: -85.762777, times: ["3:58 AM", "5:11 AM"] },
-  { stop_id: "2785", name: "4th @ Lee", lat: 38.223296, lon: -85.762297, times: ["3:59 AM", "5:12 AM"] },
-  { stop_id: "2777", name: "6th @ Hill", lat: 38.22581, lon: -85.765189, times: ["4:00 AM", "5:13 AM"] },
-  { stop_id: "2778", name: "Shipp @ The Bellamy-The Province", lat: 38.224979, lon: -85.767379, times: ["4:03 AM", "5:16 AM"] },
-  { stop_id: "2781", name: "Lee @ 5th", lat: 38.223456, lon: -85.763871, times: ["4:03 AM", "5:16 AM"] },
-  { stop_id: "1220", name: "2nd @ Hill", lat: 38.225549, lon: -85.758546, times: ["4:05 AM", "5:18 AM"] },
-  { stop_id: "1225", name: "S 2nd @ W Burnett", lat: 38.227186, lon: -85.758264, times: ["4:06 AM", "5:19 AM"] },
-  { stop_id: "1230", name: "S 2nd @ W Magnolia", lat: 38.228676, lon: -85.757994, times: ["4:06 AM", "5:19 AM"] },
-  { stop_id: "1235", name: "S 2nd @ 1353", lat: 38.230606, lon: -85.757663, times: ["4:07 AM", "5:20 AM"] },
-  { stop_id: "1240", name: "S 2nd @ W Ormsby", lat: 38.232797, lon: -85.757283, times: ["4:08 AM", "5:21 AM"] },
-  { stop_id: "1245", name: "2nd @ Oak", lat: 38.234615, lon: -85.756948, times: ["4:08 AM", "5:21 AM"] },
-  { stop_id: "1250", name: "S 2nd @ W St. Catherine", lat: 38.237374, lon: -85.75646, times: ["4:09 AM", "5:22 AM"] },
-  { stop_id: "1255", name: "S 2nd @ W Kentucky", lat: 38.238868, lon: -85.756202, times: ["4:09 AM", "5:22 AM"] },
-  { stop_id: "1260", name: "2nd @ Breckenridge", lat: 38.241441, lon: -85.755749, times: ["4:10 AM", "5:23 AM"] },
-  { stop_id: "1265", name: "2nd @ York", lat: 38.243981, lon: -85.755305, times: ["4:11 AM", "5:24 AM"] },
-  { stop_id: "14960", name: "W Broadway @ S 4th", lat: 38.246213, lon: -85.758866, times: ["4:13 AM", "5:26 AM"] },
-  { stop_id: "24910", name: "W Broadway @ 5th", lat: 38.246281, lon: -85.760339, times: ["4:13 AM", "5:26 AM"] },
-  { stop_id: "24915", name: "W Broadway @ 6th", lat: 38.24637, lon: -85.76162, times: ["4:13 AM", "5:26 AM"] },
-  { stop_id: "24925", name: "W Broadway @ 8th", lat: 38.246697, lon: -85.764885, times: ["4:14 AM", "5:27 AM"] },
-  { stop_id: "36175", name: "Roy Wilkins @ W Broadway", lat: 38.247169, lon: -85.7662, times: ["4:15 AM", "5:28 AM"] },
-  { stop_id: "3639", name: "Chestnut @ 8th", lat: 38.249606, lon: -85.7646, times: ["4:17 AM", "5:30 AM"] },
+  { stop_id: "3404", name: "UPS Worldport", lat: 38.161101, lon: -85.724218, times: ["3:50 AM", "5:05 AM"] },
+  { stop_id: "50035", name: "Grade @ Ashbottom", lat: 38.158142, lon: -85.731521, times: ["3:53 AM", "5:08 AM"] },
+  { stop_id: "50040", name: "Grade @ Crittenden", lat: 38.153315, lon: -85.734199, times: ["11:34 PM", "3:55 AM", "5:10 AM"] },
+  { stop_id: "50041", name: "Allmond @ Strawberry", lat: 38.176026, lon: -85.75394, times: ["11:36 PM", "4:02 AM", "5:17 AM"] },
+  { stop_id: "50043", name: "Allmond @ Woodlawn", lat: 38.180349, lon: -85.75882, times: ["11:37 PM", "4:04 AM", "5:19 AM"] },
+  { stop_id: "1097", name: "Crittenden @ Dakota", lat: 38.194698, lon: -85.750799, times: ["11:38 PM", "4:09 AM", "5:24 AM"] },
+  { stop_id: "1110", name: "Crittenden @ KFEC Gate 2", lat: 38.197853, lon: -85.750755, times: ["11:39 PM", "4:10 AM", "5:25 AM"] },
+  { stop_id: "1120", name: "Crittenden @ KFEC Gate 3", lat: 38.19953, lon: -85.750714, times: ["11:39 PM", "4:10 AM", "5:25 AM"] },
+  { stop_id: "1125", name: "Crittenden @ Central", lat: 38.202462, lon: -85.750621, times: ["11:39 PM", "4:11 AM", "5:26 AM"] },
+  { stop_id: "1135", name: "Crittenden @ Cracker Barrel", lat: 38.20436, lon: -85.750581, times: ["11:39 PM", "4:11 AM", "5:26 AM"] },
+  { stop_id: "1145", name: "Crittenden @ Maylawn", lat: 38.208593, lon: -85.750965, times: ["4:12 AM", "5:27 AM"] },
+  { stop_id: "1150", name: "Crittenden @ Reed", lat: 38.209782, lon: -85.751054, times: ["4:12 AM", "5:27 AM"] },
+  { stop_id: "1155", name: "Crittenden @ Eastern Parkway", lat: 38.212008, lon: -85.751297, times: ["4:13 AM", "5:28 AM"] },
+  { stop_id: "60180", name: "Warnock @ Crittenden", lat: 38.214259, lon: -85.751268, times: ["4:13 AM", "5:28 AM"] },
+  { stop_id: "60185", name: "Warnock @ S Floyd", lat: 38.214613, lon: -85.754646, times: ["4:14 AM", "5:29 AM"] },
+  { stop_id: "3519", name: "Student Activity Center", lat: 38.217223, lon: -85.754598, times: ["4:15 AM", "5:30 AM"] },
+  { stop_id: "1190", name: "Cardinal @ Brook", lat: 38.220099, lon: -85.756395, times: ["4:15 AM", "5:30 AM"] },
+  { stop_id: "1195", name: "Cardinal @ 1st", lat: 38.220302, lon: -85.758138, times: ["4:16 AM", "5:31 AM"] },
+  { stop_id: "25615", name: "3rd @ Brandeis", lat: 38.219141, lon: -85.761541, times: ["4:16 AM", "5:31 AM"] },
+  { stop_id: "25620", name: "S 3rd opp Ekstrom Library", lat: 38.216798, lon: -85.761912, times: ["4:17 AM", "5:32 AM"] },
+  { stop_id: "25625", name: "3rd @ Eastern Pkwy", lat: 38.213987, lon: -85.762435, times: ["4:17 AM", "5:32 AM"] },
+  { stop_id: "14590", name: "2520 S. 3rd Street", lat: 38.212207, lon: -85.762679, times: ["4:18 AM", "5:33 AM"] },
+  { stop_id: "2750", name: "4th @ Montana", lat: 38.211304, lon: -85.764422, times: ["4:19 AM", "5:34 AM"] },
+  { stop_id: "2755", name: "4th @ Industry", lat: 38.213612, lon: -85.764004, times: ["4:19 AM", "5:34 AM"] },
+  { stop_id: "2765", name: "4th @ Stansbury Park", lat: 38.216658, lon: -85.763467, times: ["4:20 AM", "5:35 AM"] },
+  { stop_id: "2770", name: "4th @ Brandeis", lat: 38.219321, lon: -85.762956, times: ["4:20 AM", "5:35 AM"] },
+  { stop_id: "2775", name: "4th @ Cardinal", lat: 38.220365, lon: -85.762777, times: ["4:21 AM", "5:36 AM"] },
+  { stop_id: "2785", name: "4th @ Lee", lat: 38.223296, lon: -85.762297, times: ["4:22 AM", "5:37 AM"] },
+  { stop_id: "2777", name: "6th @ Hill", lat: 38.22581, lon: -85.765189, times: ["4:23 AM", "5:38 AM"] },
+  { stop_id: "2778", name: "Shipp @ The Bellamy-The Province", lat: 38.224979, lon: -85.767379, times: ["4:26 AM", "5:41 AM"] },
+  { stop_id: "2781", name: "Lee @ 5th", lat: 38.223456, lon: -85.763871, times: ["4:26 AM", "5:41 AM"] },
+  { stop_id: "1220", name: "2nd @ Hill", lat: 38.225549, lon: -85.758546, times: ["4:28 AM", "5:43 AM"] },
+  { stop_id: "1225", name: "S 2nd @ W Burnett", lat: 38.227186, lon: -85.758264, times: ["4:29 AM", "5:44 AM"] },
+  { stop_id: "1230", name: "S 2nd @ W Magnolia", lat: 38.228676, lon: -85.757994, times: ["4:29 AM", "5:44 AM"] },
+  { stop_id: "1235", name: "S 2nd @ 1353", lat: 38.230606, lon: -85.757663, times: ["4:30 AM", "5:45 AM"] },
+  { stop_id: "1240", name: "S 2nd @ W Ormsby", lat: 38.232797, lon: -85.757283, times: ["4:31 AM", "5:46 AM"] },
+  { stop_id: "1245", name: "2nd @ Oak", lat: 38.234615, lon: -85.756948, times: ["4:31 AM", "5:46 AM"] },
+  { stop_id: "1250", name: "S 2nd @ W St. Catherine", lat: 38.237374, lon: -85.75646, times: ["4:32 AM", "5:47 AM"] },
+  { stop_id: "1255", name: "S 2nd @ W Kentucky", lat: 38.238868, lon: -85.756202, times: ["4:32 AM", "5:47 AM"] },
+  { stop_id: "1260", name: "2nd @ Breckenridge", lat: 38.241441, lon: -85.755749, times: ["4:33 AM", "5:48 AM"] },
+  { stop_id: "1265", name: "2nd @ York", lat: 38.243981, lon: -85.755305, times: ["4:34 AM", "5:49 AM"] },
+  { stop_id: "14960", name: "W Broadway @ S 4th", lat: 38.246213, lon: -85.758866, times: ["11:44 PM", "4:36 AM", "5:51 AM"] },
+  { stop_id: "24910", name: "W Broadway @ 5th", lat: 38.246281, lon: -85.760339, times: ["11:44 PM", "4:36 AM", "5:51 AM"] },
+  { stop_id: "24915", name: "W Broadway @ 6th", lat: 38.24637, lon: -85.76162, times: ["11:44 PM", "4:36 AM", "5:51 AM"] },
+  { stop_id: "24925", name: "W Broadway @ 8th", lat: 38.246697, lon: -85.764885, times: ["11:45 PM", "4:37 AM", "5:52 AM"] },
+  { stop_id: "36175", name: "Roy Wilkins @ W Broadway", lat: 38.247169, lon: -85.7662, times: ["11:46 PM", "4:38 AM", "5:53 AM"] },
+  { stop_id: "3639", name: "Chestnut @ 8th", lat: 38.249606, lon: -85.7646, times: ["11:48 PM", "4:40 AM", "5:55 AM"] },
 ]
 
-      // Add route line
       map.addSource('route-line', {
         type: 'geojson',
         data: {
@@ -712,7 +629,7 @@ const stops = [
           properties: {},
           geometry: {
             type: 'LineString',
-            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]]) // Convert lat/lon to lon/lat
+            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]])
           }
         }
       });
@@ -722,24 +639,26 @@ const stops = [
         type: 'line',
         source: 'route-line',
         paint: {
-          'line-color': 'var(--mf-blue)',
+          // NOTE: MapLibre expects a literal color string, not CSS var().
+          // If you want mf-blue, you must hardcode the hex.
+          'line-color': '#1E90FF',
           'line-width': 4,
           'line-opacity': 0.7
         }
       });
 
-      // Fit map to route bounds (but maintain minimum zoom level)
       const bounds = new maplibregl.LngLatBounds();
       shapeOutbound.forEach(coord => bounds.extend([coord[1], coord[0]]));
       map.fitBounds(bounds, { padding: 20, maxZoom: 12 });
 
-      // Add stops
-      const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+      // Times highlight uses browser local time; if you want city TZ here we can inject CITY_TZ later.
+      const nowLocal = new Date();
+      const nowMins = nowLocal.getHours() * 60 + nowLocal.getMinutes();
 
       stops.forEach(stop => {
         let highlightedTimes = [];
         let foundNext = false;
+
         stop.times.forEach(timeStr => {
           let cleanTime = timeStr.trim();
           let [h, m] = cleanTime.split(":");
@@ -755,7 +674,6 @@ const stops = [
           }
         });
 
-        // Create stop marker element
         const stopElement = document.createElement('div');
         stopElement.style.width = '12px';
         stopElement.style.height = '12px';
@@ -764,12 +682,9 @@ const stops = [
         stopElement.style.border = '2px solid var(--mf-blue)';
         stopElement.style.opacity = '0.9';
 
-        const stopMarker = new maplibregl.Marker({
-          element: stopElement
-        });
-        stopMarker.setLngLat([stop.lon, stop.lat]);
-        
-        // Create popup content
+        const stopMarker = new maplibregl.Marker({ element: stopElement })
+          .setLngLat([stop.lon, stop.lat]);
+
         const popupContent = document.createElement('div');
         popupContent.innerHTML = `
           <div style='border:1px solid var(--mf-blue); border-radius:8px; padding:10px; background:#222; color:#fff;'>
@@ -778,67 +693,10 @@ const stops = [
             ${highlightedTimes.join("<br>") || 'No scheduled times'}
           </div>
         `;
-        
-        const popup = new maplibregl.Popup().setDOMContent(popupContent);
-        stopMarker.setPopup(popup);
+
+        stopMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent));
         stopMarker.addTo(map);
       });
-    });
-
-    // Live bus tracking
-    let busMarkers = {};
-    async function fetchAndDisplay() {
-      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-      const data = await res.json();
-      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
-
-      // Remove existing bus markers
-      Object.values(busMarkers).forEach(marker => marker.remove());
-      busMarkers = {};
-      
-      if (!buses.length) return;
-
-      buses.forEach(bus => {
-        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-        
-        // Create bus marker element
-        const busElement = document.createElement('div');
-        busElement.style.textAlign = 'center';
-        busElement.innerHTML = `
-          <div style="background:var(--mf-blue);color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
-          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid var(--mf-blue);margin:auto;"></div>
-        `;
-
-        const busMarker = new maplibregl.Marker({
-          element: busElement
-        });
-        busMarker.setLngLat([bus.longitude, bus.latitude]);
-        
-        // Create popup for bus
-        const popupContent = document.createElement('div');
-        popupContent.innerHTML = `
-          <div style='border:2px solid var(--mf-blue); border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
-            <div style='text-align:center; margin-bottom:8px;'>
-              <div style='background:var(--mf-blue);color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
-            </div>
-            <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNumber}</div>
-            <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
-            <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
-            <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
-          </div>
-        `;
-        
-        const popup = new maplibregl.Popup().setDOMContent(popupContent);
-        busMarker.setPopup(popup);
-        busMarker.addTo(map);
-        busMarkers[bus.vehicleID] = busMarker;
-      });
-    }
-
-    // Start bus tracking after map loads
-    map.on('load', () => {
-      fetchAndDisplay();
-      setInterval(fetchAndDisplay, 15000);
     });
   </script>
 
@@ -852,7 +710,6 @@ const stops = [
 
 <script>
 // ---- Favorite Star Dropdown: Auto-detect route info, menu UI ----
-
 function getRouteInfoFromPage() {
   let routeNumber = "";
   let routeType = "";
@@ -863,29 +720,20 @@ function getRouteInfoFromPage() {
     let match = titleEl.textContent.match(/Route\s+(\d+)[^\d]?/i);
     if (match) routeNumber = match[1];
   }
-  let typeEl = document.getElementById('route-type');
-  if (typeEl) {
-    routeType = typeEl.textContent.trim().toLowerCase();
-  }
+
   routeLink = window.location.pathname + window.location.search;
+  if (!routeLink) routeLink = window.location.href;
 
   if (!routeNumber) {
     let titleMatch = document.title.match(/Route\s+(\d+)/i);
     if (titleMatch) routeNumber = titleMatch[1];
   }
-  if (!routeType) {
-    routeType = document.body.className.includes('rail') ? 'rail' : 
-                document.body.className.includes('max') ? 'max' :
-                document.body.className.includes('streetcar') ? 'streetcar' :
-                'bus';
-  }
-  if (!routeLink) routeLink = window.location.href;
   if (!routeNumber) return null;
-  return {
-    number: routeNumber,
-    link: routeLink,
-    type: routeType
-  };
+
+  // Default type if not present in template
+  routeType = "bus";
+
+  return { number: routeNumber, link: routeLink, type: routeType };
 }
 
 function updateStarIcon() {
@@ -896,19 +744,16 @@ function updateStarIcon() {
   const btn = document.getElementById('fav-star');
   if (btn) btn.textContent = isFavorite ? "★" : "☆";
 
-  // Update dropdown button label
   const ddBtn = document.getElementById('fav-dropdown-btn');
   if (ddBtn) ddBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
 }
 
-// Show/hide dropdown on star click
 function showFavDropdown(e) {
   e.stopPropagation();
   const dd = document.getElementById('fav-dropdown');
   dd.style.display = dd.style.display === "block" ? "none" : "block";
   updateStarIcon();
 
-  // When dropdown opens, add outside click listener
   if (dd.style.display === "block") {
     setTimeout(() => {
       document.addEventListener('click', closeFavDropdown);
@@ -916,7 +761,6 @@ function showFavDropdown(e) {
   }
 }
 
-// Actually add/remove on dropdown click
 document.addEventListener("DOMContentLoaded", function() {
   updateStarIcon();
   const ddBtn = document.getElementById('fav-dropdown-btn');
@@ -940,7 +784,6 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// Close dropdown if clicked anywhere else
 function closeFavDropdown(e) {
   const dropdown = document.getElementById('fav-dropdown');
   if (!dropdown.contains(e.target)) {
@@ -948,7 +791,6 @@ function closeFavDropdown(e) {
     document.removeEventListener('click', closeFavDropdown);
   }
 }
-
 </script>
 </body>
 </html>

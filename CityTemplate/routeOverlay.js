@@ -133,8 +133,38 @@ function attachRouteToMap(map, routeId, directionId, options) {
     }
 
     // ---------- Stops + popups ----------
-    const nowPT   = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
-    const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+    // Get timezone from route metadata or fallback
+    const agencyTimezone = (routeData.meta && routeData.meta.agency_timezone) 
+      ? routeData.meta.agency_timezone 
+      : "America/New_York"; // Default fallback
+    
+    // Get current time in the correct timezone (proper timezone-aware calculation)
+    const now = new Date();
+    const timeFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: agencyTimezone,
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+      day: "numeric"
+    });
+    const parts = timeFormatter.formatToParts(now);
+    const hour = parseInt(parts.find(p => p.type === "hour").value, 10);
+    const minute = parseInt(parts.find(p => p.type === "minute").value, 10);
+    const nowMins = hour * 60 + minute;
+    const currentDay = now.getDay(); // Use local day (should match timezone day)
+    
+    // Determine which schedule bucket to use
+    let scheduleBucket = "weekday";
+    if (currentDay === 0) {
+      scheduleBucket = "sunday";
+    } else if (currentDay === 6) {
+      scheduleBucket = "saturday";
+    } else {
+      scheduleBucket = "weekday";
+    }
+    
+    // Get weeklyTimes from routeData (new format) or fallback to legacy stop.times
+    const weeklyTimes = routeData.weeklyTimes || {};
 
     stops.forEach((stop) => {
       const lat = stop.lat;
@@ -142,68 +172,128 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
       if (typeof lat !== "number" || typeof lon !== "number") return;
 
-      // Highlight next time and limit to next 10 times
-      const highlightedTimes = [];
-      let   foundNext        = false;
-      const maxTimesToShow   = 10; // Limit to next 10 times
-      let   timesAdded       = 0;
+      // Get times for this stop from weeklyTimes
+      const stopId = String(stop.stop_id || "");
+      let timesArray = [];
+      
+      // Try to get from weeklyTimes first (new format)
+      if (weeklyTimes[scheduleBucket] && weeklyTimes[scheduleBucket][stopId]) {
+        timesArray = weeklyTimes[scheduleBucket][stopId];
+      } else if (weeklyTimes.weekday && weeklyTimes.weekday[stopId]) {
+        // Fallback to weekday if current day bucket doesn't exist
+        timesArray = weeklyTimes.weekday[stopId];
+      } else if (Array.isArray(stop.times)) {
+        // Legacy fallback to stop.times
+        timesArray = stop.times;
+      }
 
-      if (Array.isArray(stop.times)) {
-        // First, collect all future times with their scheduled minutes
-        const futureTimes = [];
-        stop.times.forEach((timeStrRaw) => {
-          let cleanTime = String(timeStrRaw).trim();
-          let schedMins;
-
-          // Case 1: "H:MM AM/PM"
-          if (cleanTime.includes("AM") || cleanTime.includes("PM")) {
-            const parts = cleanTime.split(" ");
-            const timePart = parts[0];
-            const ampm  = parts[1];
-            const [hStr, mStr] = timePart.split(":");
-            let h = parseInt(hStr, 10);
-            const m = parseInt(mStr, 10);
-            if (ampm === "PM" && h !== 12) h += 12;
-            if (ampm === "AM" && h === 12) h = 0;
-            schedMins = h * 60 + m;
-          } else {
-            // Case 2: "HH:MM:SS"
-            const [hStr, mStr] = cleanTime.split(":");
-            const h = parseInt(hStr, 10);
-            const m = parseInt(mStr, 10);
-            schedMins = h * 60 + m;
-
-            // Convert to 12-hour display
-            let displayH = h;
-            let ampm     = displayH >= 12 ? "PM" : "AM";
-            if (displayH > 12) displayH -= 12;
-            if (displayH === 0) displayH = 12;
-            cleanTime = `${displayH}:${mStr} ${ampm}`;
-          }
-
-          // Handle "after midnight" wrap
-          if (schedMins < nowMins && nowMins - schedMins > 720) {
-            schedMins += 1440;
-          }
-
-          // Only include future times
-          if (schedMins >= nowMins) {
-            futureTimes.push({ cleanTime, schedMins });
-          }
+      // Process times: convert to minutes and find next upcoming time
+      const allTimes = [];
+      timesArray.forEach((timeStrRaw) => {
+        let timeStr = String(timeStrRaw).trim();
+        if (!timeStr) return;
+        
+        // Parse HH:MM:SS or HH:MM format
+        const parts = timeStr.split(":");
+        if (parts.length < 2) return;
+        
+        let h = parseInt(parts[0], 10);
+        let m = parseInt(parts[1], 10);
+        
+        if (isNaN(h) || isNaN(m)) return;
+        
+        // Handle times > 24:00:00 (next day)
+        if (h >= 24) {
+          h = h - 24;
+        }
+        
+        const schedMins = h * 60 + m;
+        
+        // Handle past times: if time is in the past (even by a minute), treat it as tomorrow
+        // This ensures we always show future times
+        let adjustedMins = schedMins;
+        if (schedMins < nowMins) {
+          // Time is in the past, add 1440 minutes (24 hours) to make it "tomorrow"
+          adjustedMins = schedMins + 1440;
+        }
+        
+        // Convert to 12-hour display format
+        let displayH = h;
+        const ampm = displayH >= 12 ? "PM" : "AM";
+        if (displayH > 12) displayH -= 12;
+        if (displayH === 0) displayH = 12;
+        const mStr = String(m).padStart(2, "0");
+        const displayTime = `${displayH}:${mStr} ${ampm}`;
+        
+        allTimes.push({
+          displayTime: displayTime,
+          schedMins: adjustedMins,
+          originalMins: schedMins
         });
+      });
 
-        // Sort by scheduled time
-        futureTimes.sort((a, b) => a.schedMins - b.schedMins);
-
-        // Add up to maxTimesToShow times, highlighting the first one
-        futureTimes.slice(0, maxTimesToShow).forEach((timeData, index) => {
+      // Sort all times by scheduled minutes
+      allTimes.sort((a, b) => a.schedMins - b.schedMins);
+      
+      // Find the next upcoming time (first time >= nowMins)
+      let nextTimeIndex = -1;
+      for (let i = 0; i < allTimes.length; i++) {
+        if (allTimes[i].schedMins >= nowMins) {
+          nextTimeIndex = i;
+          break;
+        }
+      }
+      
+      // If no future time found, use the first time (next day)
+      if (nextTimeIndex === -1 && allTimes.length > 0) {
+        nextTimeIndex = 0;
+      }
+      
+      // Build display: 2 before, next (highlighted), 5 after (8 total)
+      const highlightedTimes = [];
+      const timesToShow = 8;
+      const timesBefore = 2;
+      const timesAfter = 5;
+      
+      if (nextTimeIndex >= 0) {
+        // Get times before next
+        const beforeStart = Math.max(0, nextTimeIndex - timesBefore);
+        const beforeTimes = allTimes.slice(beforeStart, nextTimeIndex);
+        
+        // Add before times
+        beforeTimes.forEach(timeData => {
+          highlightedTimes.push(timeData.displayTime);
+        });
+        
+        // Add next time (highlighted)
+        highlightedTimes.push(
+          `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${allTimes[nextTimeIndex].displayTime}</span>`
+        );
+        
+        // Add after times (up to 5)
+        const afterEnd = Math.min(allTimes.length, nextTimeIndex + 1 + timesAfter);
+        const afterTimes = allTimes.slice(nextTimeIndex + 1, afterEnd);
+        
+        afterTimes.forEach(timeData => {
+          highlightedTimes.push(timeData.displayTime);
+        });
+        
+        // If we don't have enough times, wrap around to beginning of array
+        if (highlightedTimes.length < timesToShow && allTimes.length > 0) {
+          const needed = timesToShow - highlightedTimes.length;
+          for (let i = 0; i < needed && i < allTimes.length; i++) {
+            highlightedTimes.push(allTimes[i].displayTime);
+          }
+        }
+      } else if (allTimes.length > 0) {
+        // No next time found, just show first 8 times
+        allTimes.slice(0, timesToShow).forEach((timeData, index) => {
           if (index === 0) {
-            // Highlight the next upcoming time
             highlightedTimes.push(
-              `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${timeData.cleanTime}</span>`
+              `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${timeData.displayTime}</span>`
             );
           } else {
-            highlightedTimes.push(timeData.cleanTime);
+            highlightedTimes.push(timeData.displayTime);
           }
         });
       }

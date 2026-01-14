@@ -4,9 +4,11 @@
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Route 10 - Inbound | MetroFeed Portland</title>
+<title>Route 10 - Inbound | MetroFeed Louisville</title>
+
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
 <style>
   :root{
     /* MetroFeed Blue */
@@ -61,32 +63,6 @@
     fill: #fff;
   }
 
-  .theme-toggle-fixed {
-    position: fixed;
-    top: 15px;
-    right: 20px;
-    width: 35px;
-    height: 35px;
-    background-color: var(--mf-blue);
-    border: 2px solid #000;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1001;
-    box-shadow: 0 0 10px var(--mf-blue);
-    cursor: pointer;
-    transition: background 0.2s;
-    outline: none;
-  }
-  .theme-toggle-fixed:active, .theme-toggle-fixed:focus {
-    background-color: var(--mf-blue-hover);
-  }
-  .theme-toggle-fixed img {
-    width: 16px;
-    height: 16px;
-  }
-
   header {
     background-color: var(--mf-bg);
     border-top: 4px solid var(--mf-blue);
@@ -120,28 +96,6 @@
     margin: 0 auto;
     display: block;
     border-radius: 8px;
-  }
-
-  .button-bar {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0;
-  }
-
-  .button-bar a, .back-button {
-    background: var(--mf-blue);
-    color: var(--mf-bg);
-    padding: 0.6rem 1.2rem;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 0 10px var(--mf-blue);
-  }
-
-  .back-button:hover {
-    background-color: var(--mf-blue-hover);
   }
 
   .site-footer {
@@ -225,26 +179,6 @@
   right: 0 !important;
   z-index: 1000 !important;
 }
-
-.maplibregl-ctrl-attrib.maplibregl-compact-show {
-  max-width: 200px !important;
-  min-height: auto !important;
-  transform: translateY(-30px) !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact {
-  min-height: 20px !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
-  display: none !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
-  display: block !important;
-}
-
-/* Mobile-specific attribution positioning */
 @media (max-width: 768px) {
   .maplibregl-ctrl-attrib {
     bottom: 50px !important;
@@ -266,13 +200,11 @@
   justify-content: center;
   gap: 10px;
 }
-
 .beta-banner-content {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 .beta-close {
   color: #aaa;
   font-size: 18px;
@@ -281,17 +213,19 @@
   transition: color 0.2s;
   margin-left: auto;
 }
-
 .beta-close:hover,
 .beta-close:focus {
   color: var(--mf-blue);
 }
 </style>
 </head>
+
 <body>
-  
+
   <header>
-    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+    <!-- IMPORTANT: Make sure Louisville has its own logo file. -->
+    <!-- If you want: MetroFeedLouisvilleLogo.png -->
+    <img src="MetroFeedLouisvilleLogo.png" alt="MetroFeed Louisville">
   </header>
 
   <!-- Beta Banner -->
@@ -303,13 +237,13 @@
     </div>
   </div>
 
-<!-- Favorite Route Button (Top Right) with Dropdown -->
-<div class="favorite-save-box">
-  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
-  <div class="fav-dropdown" id="fav-dropdown">
-    <button id="fav-dropdown-btn">Add to Favorites</button>
+  <!-- Favorite Route Button (Top Right) with Dropdown -->
+  <div class="favorite-save-box">
+    <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+    <div class="fav-dropdown" id="fav-dropdown">
+      <button id="fav-dropdown-btn">Add to Favorites</button>
+    </div>
   </div>
-</div>
 
   <!-- Back button -->
   <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
@@ -318,73 +252,58 @@
     </svg>
   </button>
 
-  <!-- Theme Toggle Button - DISABLED FOR FREE VERSION -->
-  <!-- <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
-    <img src="008-night.svg" alt="Theme Toggle" />
-  </button> -->
-
   <h1 id="route-title">Route 10 - Inbound</h1>
-  <span id="route-type" style="display:none;"></span>
 
   <div class="content-box">
     <div id="map"></div>
     <div style="text-align:right; font-size: 0.7rem; color: var(--mf-muted); margin-top: 0.5rem;">
-      Data courtesy of TriMet.
+      Data courtesy of MetroFeed / GTFS.
     </div>
   </div>
 
-  <!-- TriMet Disclaimer -->
+  <!-- Disclaimer -->
   <div class="disclaimer" style="margin: 2rem auto 1rem; max-width: 600px; font-size: 0.75rem; color: var(--mf-muted2); text-align: center; padding: 0.5rem 1rem;">
-    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:var(--mf-blue);">trimet.org</a>.
+    This tool is not affiliated with or endorsed by any transit agency. For official schedules and service alerts, visit your local agency website.
   </div>
 
   <script>
-    // Beta Banner Functions
     function closeBetaBanner() {
       document.getElementById('betaBanner').style.display = 'none';
     }
 
-    // Theme toggle functionality - DISABLED FOR FREE VERSION
-    // let isNightMode = false;
-    // function toggleTheme() {
-    //   // Night mode functionality removed for free version
-    //   // Available in premium version
-    // }
     if (document.referrer === "" && performance.navigation.type === 0) {
       window.location.href = "/index.html";
     }
 
-    const apiKey = "2C4447D4A42083BCD84DE3B8E";
-    const routeNumber = 10;
-    const direction = parseInt(1);
+    // These are injected by Python:
+    //  - TILES_BASE_URL (your city-specific tileserver base)
+    //  - ROUTE_NUMBER, DIRECTION_ID, SHAPE_DATA
 
-    // Portland Metro Area Bounds
-    const PORTLAND_BOUNDS = {
-      north: 45.80,
-      south: 45.20,
-      east: -122.15,
-      west: -123.35
-    };
+    const tilesBase = "http://45.77.209.137:8082";
 
-    // Initialize MapLibre GL JS map with vector tiles
-    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
-    // const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json'; // DISABLED FOR FREE VERSION
-    
+    // If tilesBase is empty, the map won't load. This makes failures obvious instead of silently showing Portland.
+    if (!tilesBase) {
+      console.error("TILES_BASE_URL is empty. Check build_test_routes.py TILESERVER_HOST + city port/path mapping.");
+    }
+
+    // IMPORTANT:
+    // Your style.json must be served by the city-specific TileServer instance.
+    // Example TileServer-GL default: http(s)://host:port/styles/<style>/style.json
+    // Adjust <style> name if yours isn't "0".
+    const dayStyle = `${tilesBase}/styles/0/style.json`;
+
     const map = new maplibregl.Map({
       container: 'map',
       style: dayStyle,
-      center: [-122.67, 45.52],
+      // Louisville-ish center (downtown)
+      center: [-85.7585, 38.2527],
       zoom: 12,
       maxZoom: 18,
       minZoom: 8,
-      maxBounds: [
-        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
-        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
-      ],
       attributionControl: true
     });
 
-    // Force attribution to be collapsed by default
+    // Collapse attribution by default
     map.on('load', () => {
       const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
       if (attributionControl) {
@@ -393,7 +312,6 @@
       }
     });
 
-    // Also ensure attribution is collapsed after style changes
     map.on('styledata', () => {
       setTimeout(() => {
         const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
@@ -404,7 +322,7 @@
       }, 100);
     });
 
-    // Add route shape when map loads
+    // Add route shape + stops
     map.on('load', () => {
       const shapeOutbound = [
   [38.09933, -85.87177],
@@ -511,38 +429,37 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "15565", name: "Dixie Hwy @ Dixie Garden Dr", lat: 38.099369, lon: -85.871556, times: ["12:10 PM", "12:30 PM", "12:50 PM", "1:10 PM", "1:30 PM", "1:50 PM", "2:10 PM", "2:30 PM"] },
-  { stop_id: "15575", name: "Dixie @ Barrett", lat: 38.103328, lon: -85.869248, times: ["12:09 PM", "12:29 PM", "12:49 PM", "1:09 PM", "1:29 PM", "1:49 PM", "2:09 PM", "2:29 PM"] },
-  { stop_id: "15585", name: "Dixie @ Valley Station", lat: 38.107998, lon: -85.866339, times: ["12:10 PM", "12:30 PM", "12:50 PM", "1:10 PM", "1:30 PM", "1:50 PM", "2:10 PM", "2:30 PM"] },
-  { stop_id: "15610", name: "Dixie @ Meijer", lat: 38.113562, lon: -85.862095, times: ["12:10 PM", "12:30 PM", "12:50 PM", "1:10 PM", "1:30 PM", "1:50 PM", "2:10 PM", "2:30 PM"] },
-  { stop_id: "15630", name: "Dixie @ Stonestreet", lat: 38.12173, lon: -85.855059, times: ["12:11 PM", "12:31 PM", "12:51 PM", "1:11 PM", "1:31 PM", "1:51 PM", "2:11 PM", "2:31 PM"] },
-  { stop_id: "15631", name: "Dixie @ Park Place Mall (NB)", lat: 38.124396, lon: -85.852855, times: ["12:12 PM", "12:32 PM", "12:52 PM", "1:12 PM", "1:32 PM", "1:52 PM", "2:12 PM", "2:32 PM"] },
-  { stop_id: "15649", name: "Dixie @ East Pages", lat: 38.129964, lon: -85.847841, times: ["12:13 PM", "12:33 PM", "12:53 PM", "1:13 PM", "1:33 PM", "1:53 PM", "2:13 PM", "2:33 PM"] },
-  { stop_id: "99920", name: "Dixie @ St. Andrews Church Rd.", lat: 38.143695, lon: -85.839426, times: ["12:16 PM", "12:36 PM", "12:56 PM", "1:16 PM", "1:36 PM", "1:56 PM", "2:16 PM", "2:36 PM"] },
-  { stop_id: "15726", name: "Dixie @ Dixie Manor", lat: 38.152283, lon: -85.836221, times: ["12:17 PM", "12:37 PM", "12:57 PM", "1:17 PM", "1:37 PM", "1:57 PM", "2:17 PM", "2:37 PM"] },
-  { stop_id: "15745", name: "Dixie @ Blanton", lat: 38.157706, lon: -85.833651, times: ["12:18 PM", "12:38 PM", "12:58 PM", "1:18 PM", "1:38 PM", "1:58 PM", "2:18 PM", "2:38 PM"] },
-  { stop_id: "15770", name: "Dixie @ Meyers", lat: 38.165148, lon: -85.830122, times: ["12:20 PM", "12:40 PM", "1:00 PM", "1:20 PM", "1:40 PM", "2:00 PM", "2:20 PM", "2:40 PM"] },
-  { stop_id: "15785", name: "Dixie @ Upper Hunters Trace", lat: 38.168757, lon: -85.828184, times: ["12:21 PM", "12:41 PM", "1:01 PM", "1:21 PM", "1:41 PM", "2:01 PM", "2:21 PM", "2:41 PM"] },
-  { stop_id: "15800", name: "Dixie @ Rockford", lat: 38.174437, lon: -85.823057, times: ["12:22 PM", "12:42 PM", "1:02 PM", "1:22 PM", "1:42 PM", "2:02 PM", "2:22 PM", "2:42 PM"] },
-  { stop_id: "15815", name: "Dixie @ San Jose", lat: 38.178041, lon: -85.818893, times: ["12:03 PM", "12:23 PM", "12:43 PM", "1:03 PM", "1:23 PM", "1:43 PM", "2:03 PM", "2:23 PM"] },
-  { stop_id: "16162", name: "Dixie @ Stewart Lane", lat: 38.180388, lon: -85.816443, times: ["12:04 PM", "12:24 PM", "12:44 PM", "1:04 PM", "1:24 PM", "1:44 PM", "2:04 PM", "2:24 PM"] },
-  { stop_id: "13540", name: "Dixie @ Garrs", lat: 38.189312, lon: -85.809885, times: ["12:07 PM", "12:27 PM", "12:47 PM", "1:07 PM", "1:27 PM", "1:47 PM", "2:07 PM", "2:27 PM"] },
-  { stop_id: "20055", name: "Dixie @ Crums NB", lat: 38.19241, lon: -85.80781, times: ["12:08 PM", "12:28 PM", "12:48 PM", "1:08 PM", "1:28 PM", "1:48 PM", "2:08 PM", "2:28 PM"] },
-  { stop_id: "20110", name: "Dixie @ Ralph", lat: 38.205955, lon: -85.799375, times: ["12:11 PM", "12:31 PM", "12:51 PM", "1:11 PM", "1:31 PM", "1:51 PM", "2:11 PM", "2:31 PM"] },
-  { stop_id: "20155", name: "Dixie @ Millers Ln", lat: 38.214851, lon: -85.795866, times: ["12:13 PM", "12:33 PM", "12:53 PM", "1:13 PM", "1:33 PM", "1:53 PM", "2:13 PM", "2:33 PM"] },
-  { stop_id: "1672", name: "Dixie @ Algonquin Parkway", lat: 38.223286, lon: -85.79233, times: ["12:14 PM", "12:34 PM", "12:54 PM", "1:14 PM", "1:34 PM", "1:54 PM", "2:14 PM", "2:34 PM"] },
-  { stop_id: "20276", name: "Dixie @ Hill Street", lat: 38.228472, lon: -85.79031, times: ["12:16 PM", "12:36 PM", "12:56 PM", "1:16 PM", "1:36 PM", "1:56 PM", "2:16 PM", "2:36 PM"] },
-  { stop_id: "20321", name: "Dixie Hwy @ Oak St", lat: 38.237746, lon: -85.786486, times: ["12:19 PM", "12:39 PM", "12:59 PM", "1:19 PM", "1:39 PM", "1:59 PM", "2:19 PM", "2:39 PM"] },
-  { stop_id: "20350", name: "Dixie @ Garland", lat: 38.243115, lon: -85.784437, times: ["12:20 PM", "12:40 PM", "1:00 PM", "1:20 PM", "1:40 PM", "2:00 PM", "2:20 PM", "2:40 PM"] },
-  { stop_id: "22995", name: "W Broadway @ Dixie", lat: 38.248847, lon: -85.781203, times: ["12:23 PM", "12:43 PM", "1:03 PM", "1:23 PM", "1:43 PM", "2:03 PM", "2:23 PM", "2:43 PM"] },
-  { stop_id: "23030", name: "W Broadway @ S 10th", lat: 38.247005, lon: -85.768515, times: ["12:07 PM", "12:27 PM", "12:47 PM", "1:07 PM", "1:27 PM", "1:47 PM", "2:07 PM", "2:27 PM"] },
-  { stop_id: "1608", name: "S Roy Wilkins @ W Muhammad Ali", lat: 38.252157, lon: -85.765342, times: ["12:11 PM", "12:31 PM", "12:51 PM", "1:11 PM", "1:31 PM", "1:51 PM", "2:11 PM", "2:31 PM"] },
-  { stop_id: "3284", name: "S 9th @ W Market St", lat: 38.256002, lon: -85.765036, times: ["12:14 PM", "12:34 PM", "12:54 PM", "1:14 PM", "1:34 PM", "1:54 PM", "2:14 PM", "2:34 PM"] },
-  { stop_id: "3295", name: "Market @ S 6th", lat: 38.255507, lon: -85.760353, times: ["12:16 PM", "12:36 PM", "12:56 PM", "1:16 PM", "1:36 PM", "1:56 PM", "2:16 PM", "2:36 PM"] },
-  { stop_id: "1325", name: "Market @ S 2nd", lat: 38.254829, lon: -85.754038, times: ["12:20 PM", "12:40 PM", "1:00 PM", "1:20 PM", "1:40 PM", "2:00 PM", "2:20 PM", "2:40 PM"] },
+  { stop_id: "15565", name: "Dixie Hwy @ Dixie Garden Dr", lat: 38.099369, lon: -85.871556, times: ["6:26 PM", "6:46 PM", "7:06 PM", "7:26 PM", "7:46 PM", "8:06 PM", "8:26 PM", "8:46 PM"] },
+  { stop_id: "15575", name: "Dixie @ Barrett", lat: 38.103328, lon: -85.869248, times: ["6:26 PM", "6:46 PM", "7:06 PM", "7:26 PM", "7:46 PM", "8:06 PM", "8:26 PM", "8:46 PM"] },
+  { stop_id: "15585", name: "Dixie @ Valley Station", lat: 38.107998, lon: -85.866339, times: ["6:27 PM", "6:47 PM", "7:07 PM", "7:27 PM", "7:47 PM", "8:07 PM", "8:27 PM", "8:47 PM"] },
+  { stop_id: "15610", name: "Dixie @ Meijer", lat: 38.113562, lon: -85.862095, times: ["6:28 PM", "6:48 PM", "7:08 PM", "7:28 PM", "7:48 PM", "8:08 PM", "8:28 PM", "8:48 PM"] },
+  { stop_id: "15630", name: "Dixie @ Stonestreet", lat: 38.12173, lon: -85.855059, times: ["6:29 PM", "6:49 PM", "7:09 PM", "7:29 PM", "7:49 PM", "8:09 PM", "8:29 PM", "8:49 PM"] },
+  { stop_id: "15631", name: "Dixie @ Park Place Mall (NB)", lat: 38.124396, lon: -85.852855, times: ["6:30 PM", "6:50 PM", "7:10 PM", "7:30 PM", "7:50 PM", "8:10 PM", "8:30 PM", "8:50 PM"] },
+  { stop_id: "15649", name: "Dixie @ East Pages", lat: 38.129964, lon: -85.847841, times: ["6:31 PM", "6:51 PM", "7:11 PM", "7:31 PM", "7:51 PM", "8:11 PM", "8:31 PM", "8:51 PM"] },
+  { stop_id: "99920", name: "Dixie @ St. Andrews Church Rd.", lat: 38.143695, lon: -85.839426, times: ["6:34 PM", "6:54 PM", "7:14 PM", "7:34 PM", "7:54 PM", "8:14 PM", "8:34 PM", "8:54 PM"] },
+  { stop_id: "15726", name: "Dixie @ Dixie Manor", lat: 38.152283, lon: -85.836221, times: ["6:16 PM", "6:36 PM", "6:56 PM", "7:16 PM", "7:36 PM", "7:56 PM", "8:16 PM", "8:36 PM"] },
+  { stop_id: "15745", name: "Dixie @ Blanton", lat: 38.157706, lon: -85.833651, times: ["6:18 PM", "6:38 PM", "6:58 PM", "7:18 PM", "7:38 PM", "7:58 PM", "8:18 PM", "8:38 PM"] },
+  { stop_id: "15770", name: "Dixie @ Meyers", lat: 38.165148, lon: -85.830122, times: ["6:20 PM", "6:40 PM", "7:00 PM", "7:20 PM", "7:40 PM", "8:00 PM", "8:20 PM", "8:40 PM"] },
+  { stop_id: "15785", name: "Dixie @ Upper Hunters Trace", lat: 38.168757, lon: -85.828184, times: ["6:21 PM", "6:41 PM", "7:01 PM", "7:21 PM", "7:41 PM", "8:01 PM", "8:21 PM", "8:41 PM"] },
+  { stop_id: "15800", name: "Dixie @ Rockford", lat: 38.174437, lon: -85.823057, times: ["6:23 PM", "6:43 PM", "7:03 PM", "7:23 PM", "7:43 PM", "8:03 PM", "8:23 PM", "8:43 PM"] },
+  { stop_id: "15815", name: "Dixie @ San Jose", lat: 38.178041, lon: -85.818893, times: ["6:25 PM", "6:45 PM", "7:05 PM", "7:25 PM", "7:45 PM", "8:05 PM", "8:25 PM", "8:45 PM"] },
+  { stop_id: "16162", name: "Dixie @ Stewart Lane", lat: 38.180388, lon: -85.816443, times: ["6:26 PM", "6:46 PM", "7:06 PM", "7:26 PM", "7:46 PM", "8:06 PM", "8:26 PM", "8:46 PM"] },
+  { stop_id: "13540", name: "Dixie @ Garrs", lat: 38.189312, lon: -85.809885, times: ["6:29 PM", "6:49 PM", "7:09 PM", "7:29 PM", "7:49 PM", "8:09 PM", "8:29 PM", "8:49 PM"] },
+  { stop_id: "20055", name: "Dixie @ Crums NB", lat: 38.19241, lon: -85.80781, times: ["6:31 PM", "6:51 PM", "7:11 PM", "7:31 PM", "7:51 PM", "8:11 PM", "8:31 PM", "8:51 PM"] },
+  { stop_id: "20110", name: "Dixie @ Ralph", lat: 38.205955, lon: -85.799375, times: ["6:34 PM", "6:54 PM", "7:14 PM", "7:34 PM", "7:54 PM", "8:14 PM", "8:34 PM", "8:54 PM"] },
+  { stop_id: "20155", name: "Dixie @ Millers Ln", lat: 38.214851, lon: -85.795866, times: ["6:16 PM", "6:36 PM", "6:56 PM", "7:16 PM", "7:36 PM", "7:56 PM", "8:16 PM", "8:36 PM"] },
+  { stop_id: "1672", name: "Dixie @ Algonquin Parkway", lat: 38.223286, lon: -85.79233, times: ["6:17 PM", "6:37 PM", "6:57 PM", "7:17 PM", "7:37 PM", "7:57 PM", "8:17 PM", "8:37 PM"] },
+  { stop_id: "20276", name: "Dixie @ Hill Street", lat: 38.228472, lon: -85.79031, times: ["6:19 PM", "6:39 PM", "6:59 PM", "7:19 PM", "7:39 PM", "7:59 PM", "8:19 PM", "8:39 PM"] },
+  { stop_id: "20321", name: "Dixie Hwy @ Oak St", lat: 38.237746, lon: -85.786486, times: ["6:22 PM", "6:42 PM", "7:02 PM", "7:22 PM", "7:42 PM", "8:02 PM", "8:22 PM", "8:42 PM"] },
+  { stop_id: "20350", name: "Dixie @ Garland", lat: 38.243115, lon: -85.784437, times: ["6:23 PM", "6:43 PM", "7:03 PM", "7:23 PM", "7:43 PM", "8:03 PM", "8:23 PM", "8:43 PM"] },
+  { stop_id: "22995", name: "W Broadway @ Dixie", lat: 38.248847, lon: -85.781203, times: ["6:26 PM", "6:46 PM", "7:06 PM", "7:26 PM", "7:46 PM", "8:06 PM", "8:26 PM", "8:46 PM"] },
+  { stop_id: "23030", name: "W Broadway @ S 10th", lat: 38.247005, lon: -85.768515, times: ["6:29 PM", "6:49 PM", "7:09 PM", "7:29 PM", "7:49 PM", "8:09 PM", "8:29 PM", "8:49 PM"] },
+  { stop_id: "1608", name: "S Roy Wilkins @ W Muhammad Ali", lat: 38.252157, lon: -85.765342, times: ["6:32 PM", "6:52 PM", "7:12 PM", "7:32 PM", "7:52 PM", "8:12 PM", "8:32 PM", "8:52 PM"] },
+  { stop_id: "3284", name: "S 9th @ W Market St", lat: 38.256002, lon: -85.765036, times: ["6:35 PM", "6:55 PM", "7:15 PM", "7:35 PM", "7:55 PM", "8:15 PM", "8:35 PM", "8:55 PM"] },
+  { stop_id: "3295", name: "Market @ S 6th", lat: 38.255507, lon: -85.760353, times: ["6:17 PM", "6:37 PM", "6:57 PM", "7:17 PM", "7:37 PM", "7:57 PM", "8:17 PM", "8:37 PM"] },
+  { stop_id: "1325", name: "Market @ S 2nd", lat: 38.254829, lon: -85.754038, times: ["6:20 PM", "6:40 PM", "7:00 PM", "7:20 PM", "7:40 PM", "8:00 PM", "8:20 PM", "8:40 PM"] },
 ]
 
-      // Add route line
       map.addSource('route-line', {
         type: 'geojson',
         data: {
@@ -550,7 +467,7 @@ const stops = [
           properties: {},
           geometry: {
             type: 'LineString',
-            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]]) // Convert lat/lon to lon/lat
+            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]])
           }
         }
       });
@@ -560,24 +477,26 @@ const stops = [
         type: 'line',
         source: 'route-line',
         paint: {
-          'line-color': 'var(--mf-blue)',
+          // NOTE: MapLibre expects a literal color string, not CSS var().
+          // If you want mf-blue, you must hardcode the hex.
+          'line-color': '#1E90FF',
           'line-width': 4,
           'line-opacity': 0.7
         }
       });
 
-      // Fit map to route bounds (but maintain minimum zoom level)
       const bounds = new maplibregl.LngLatBounds();
       shapeOutbound.forEach(coord => bounds.extend([coord[1], coord[0]]));
       map.fitBounds(bounds, { padding: 20, maxZoom: 12 });
 
-      // Add stops
-      const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+      // Times highlight uses browser local time; if you want city TZ here we can inject CITY_TZ later.
+      const nowLocal = new Date();
+      const nowMins = nowLocal.getHours() * 60 + nowLocal.getMinutes();
 
       stops.forEach(stop => {
         let highlightedTimes = [];
         let foundNext = false;
+
         stop.times.forEach(timeStr => {
           let cleanTime = timeStr.trim();
           let [h, m] = cleanTime.split(":");
@@ -593,7 +512,6 @@ const stops = [
           }
         });
 
-        // Create stop marker element
         const stopElement = document.createElement('div');
         stopElement.style.width = '12px';
         stopElement.style.height = '12px';
@@ -602,12 +520,9 @@ const stops = [
         stopElement.style.border = '2px solid var(--mf-blue)';
         stopElement.style.opacity = '0.9';
 
-        const stopMarker = new maplibregl.Marker({
-          element: stopElement
-        });
-        stopMarker.setLngLat([stop.lon, stop.lat]);
-        
-        // Create popup content
+        const stopMarker = new maplibregl.Marker({ element: stopElement })
+          .setLngLat([stop.lon, stop.lat]);
+
         const popupContent = document.createElement('div');
         popupContent.innerHTML = `
           <div style='border:1px solid var(--mf-blue); border-radius:8px; padding:10px; background:#222; color:#fff;'>
@@ -616,67 +531,10 @@ const stops = [
             ${highlightedTimes.join("<br>") || 'No scheduled times'}
           </div>
         `;
-        
-        const popup = new maplibregl.Popup().setDOMContent(popupContent);
-        stopMarker.setPopup(popup);
+
+        stopMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent));
         stopMarker.addTo(map);
       });
-    });
-
-    // Live bus tracking
-    let busMarkers = {};
-    async function fetchAndDisplay() {
-      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-      const data = await res.json();
-      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
-
-      // Remove existing bus markers
-      Object.values(busMarkers).forEach(marker => marker.remove());
-      busMarkers = {};
-      
-      if (!buses.length) return;
-
-      buses.forEach(bus => {
-        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-        
-        // Create bus marker element
-        const busElement = document.createElement('div');
-        busElement.style.textAlign = 'center';
-        busElement.innerHTML = `
-          <div style="background:var(--mf-blue);color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
-          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid var(--mf-blue);margin:auto;"></div>
-        `;
-
-        const busMarker = new maplibregl.Marker({
-          element: busElement
-        });
-        busMarker.setLngLat([bus.longitude, bus.latitude]);
-        
-        // Create popup for bus
-        const popupContent = document.createElement('div');
-        popupContent.innerHTML = `
-          <div style='border:2px solid var(--mf-blue); border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
-            <div style='text-align:center; margin-bottom:8px;'>
-              <div style='background:var(--mf-blue);color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
-            </div>
-            <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNumber}</div>
-            <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
-            <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
-            <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
-          </div>
-        `;
-        
-        const popup = new maplibregl.Popup().setDOMContent(popupContent);
-        busMarker.setPopup(popup);
-        busMarker.addTo(map);
-        busMarkers[bus.vehicleID] = busMarker;
-      });
-    }
-
-    // Start bus tracking after map loads
-    map.on('load', () => {
-      fetchAndDisplay();
-      setInterval(fetchAndDisplay, 15000);
     });
   </script>
 
@@ -690,7 +548,6 @@ const stops = [
 
 <script>
 // ---- Favorite Star Dropdown: Auto-detect route info, menu UI ----
-
 function getRouteInfoFromPage() {
   let routeNumber = "";
   let routeType = "";
@@ -701,29 +558,20 @@ function getRouteInfoFromPage() {
     let match = titleEl.textContent.match(/Route\s+(\d+)[^\d]?/i);
     if (match) routeNumber = match[1];
   }
-  let typeEl = document.getElementById('route-type');
-  if (typeEl) {
-    routeType = typeEl.textContent.trim().toLowerCase();
-  }
+
   routeLink = window.location.pathname + window.location.search;
+  if (!routeLink) routeLink = window.location.href;
 
   if (!routeNumber) {
     let titleMatch = document.title.match(/Route\s+(\d+)/i);
     if (titleMatch) routeNumber = titleMatch[1];
   }
-  if (!routeType) {
-    routeType = document.body.className.includes('rail') ? 'rail' : 
-                document.body.className.includes('max') ? 'max' :
-                document.body.className.includes('streetcar') ? 'streetcar' :
-                'bus';
-  }
-  if (!routeLink) routeLink = window.location.href;
   if (!routeNumber) return null;
-  return {
-    number: routeNumber,
-    link: routeLink,
-    type: routeType
-  };
+
+  // Default type if not present in template
+  routeType = "bus";
+
+  return { number: routeNumber, link: routeLink, type: routeType };
 }
 
 function updateStarIcon() {
@@ -734,19 +582,16 @@ function updateStarIcon() {
   const btn = document.getElementById('fav-star');
   if (btn) btn.textContent = isFavorite ? "★" : "☆";
 
-  // Update dropdown button label
   const ddBtn = document.getElementById('fav-dropdown-btn');
   if (ddBtn) ddBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
 }
 
-// Show/hide dropdown on star click
 function showFavDropdown(e) {
   e.stopPropagation();
   const dd = document.getElementById('fav-dropdown');
   dd.style.display = dd.style.display === "block" ? "none" : "block";
   updateStarIcon();
 
-  // When dropdown opens, add outside click listener
   if (dd.style.display === "block") {
     setTimeout(() => {
       document.addEventListener('click', closeFavDropdown);
@@ -754,7 +599,6 @@ function showFavDropdown(e) {
   }
 }
 
-// Actually add/remove on dropdown click
 document.addEventListener("DOMContentLoaded", function() {
   updateStarIcon();
   const ddBtn = document.getElementById('fav-dropdown-btn');
@@ -778,7 +622,6 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// Close dropdown if clicked anywhere else
 function closeFavDropdown(e) {
   const dropdown = document.getElementById('fav-dropdown');
   if (!dropdown.contains(e.target)) {
@@ -786,7 +629,6 @@ function closeFavDropdown(e) {
     document.removeEventListener('click', closeFavDropdown);
   }
 }
-
 </script>
 </body>
 </html>

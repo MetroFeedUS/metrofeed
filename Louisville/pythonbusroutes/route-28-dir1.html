@@ -4,9 +4,11 @@
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Route 28 - Inbound | MetroFeed Portland</title>
+<title>Route 28 - Inbound | MetroFeed Louisville</title>
+
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
 <style>
   :root{
     /* MetroFeed Blue */
@@ -61,32 +63,6 @@
     fill: #fff;
   }
 
-  .theme-toggle-fixed {
-    position: fixed;
-    top: 15px;
-    right: 20px;
-    width: 35px;
-    height: 35px;
-    background-color: var(--mf-blue);
-    border: 2px solid #000;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1001;
-    box-shadow: 0 0 10px var(--mf-blue);
-    cursor: pointer;
-    transition: background 0.2s;
-    outline: none;
-  }
-  .theme-toggle-fixed:active, .theme-toggle-fixed:focus {
-    background-color: var(--mf-blue-hover);
-  }
-  .theme-toggle-fixed img {
-    width: 16px;
-    height: 16px;
-  }
-
   header {
     background-color: var(--mf-bg);
     border-top: 4px solid var(--mf-blue);
@@ -120,28 +96,6 @@
     margin: 0 auto;
     display: block;
     border-radius: 8px;
-  }
-
-  .button-bar {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0;
-  }
-
-  .button-bar a, .back-button {
-    background: var(--mf-blue);
-    color: var(--mf-bg);
-    padding: 0.6rem 1.2rem;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 0 10px var(--mf-blue);
-  }
-
-  .back-button:hover {
-    background-color: var(--mf-blue-hover);
   }
 
   .site-footer {
@@ -225,26 +179,6 @@
   right: 0 !important;
   z-index: 1000 !important;
 }
-
-.maplibregl-ctrl-attrib.maplibregl-compact-show {
-  max-width: 200px !important;
-  min-height: auto !important;
-  transform: translateY(-30px) !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact {
-  min-height: 20px !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
-  display: none !important;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
-  display: block !important;
-}
-
-/* Mobile-specific attribution positioning */
 @media (max-width: 768px) {
   .maplibregl-ctrl-attrib {
     bottom: 50px !important;
@@ -266,13 +200,11 @@
   justify-content: center;
   gap: 10px;
 }
-
 .beta-banner-content {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 .beta-close {
   color: #aaa;
   font-size: 18px;
@@ -281,17 +213,19 @@
   transition: color 0.2s;
   margin-left: auto;
 }
-
 .beta-close:hover,
 .beta-close:focus {
   color: var(--mf-blue);
 }
 </style>
 </head>
+
 <body>
-  
+
   <header>
-    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+    <!-- IMPORTANT: Make sure Louisville has its own logo file. -->
+    <!-- If you want: MetroFeedLouisvilleLogo.png -->
+    <img src="MetroFeedLouisvilleLogo.png" alt="MetroFeed Louisville">
   </header>
 
   <!-- Beta Banner -->
@@ -303,13 +237,13 @@
     </div>
   </div>
 
-<!-- Favorite Route Button (Top Right) with Dropdown -->
-<div class="favorite-save-box">
-  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
-  <div class="fav-dropdown" id="fav-dropdown">
-    <button id="fav-dropdown-btn">Add to Favorites</button>
+  <!-- Favorite Route Button (Top Right) with Dropdown -->
+  <div class="favorite-save-box">
+    <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+    <div class="fav-dropdown" id="fav-dropdown">
+      <button id="fav-dropdown-btn">Add to Favorites</button>
+    </div>
   </div>
-</div>
 
   <!-- Back button -->
   <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
@@ -318,73 +252,58 @@
     </svg>
   </button>
 
-  <!-- Theme Toggle Button - DISABLED FOR FREE VERSION -->
-  <!-- <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
-    <img src="008-night.svg" alt="Theme Toggle" />
-  </button> -->
-
   <h1 id="route-title">Route 28 - Inbound</h1>
-  <span id="route-type" style="display:none;"></span>
 
   <div class="content-box">
     <div id="map"></div>
     <div style="text-align:right; font-size: 0.7rem; color: var(--mf-muted); margin-top: 0.5rem;">
-      Data courtesy of TriMet.
+      Data courtesy of MetroFeed / GTFS.
     </div>
   </div>
 
-  <!-- TriMet Disclaimer -->
+  <!-- Disclaimer -->
   <div class="disclaimer" style="margin: 2rem auto 1rem; max-width: 600px; font-size: 0.75rem; color: var(--mf-muted2); text-align: center; padding: 0.5rem 1rem;">
-    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:var(--mf-blue);">trimet.org</a>.
+    This tool is not affiliated with or endorsed by any transit agency. For official schedules and service alerts, visit your local agency website.
   </div>
 
   <script>
-    // Beta Banner Functions
     function closeBetaBanner() {
       document.getElementById('betaBanner').style.display = 'none';
     }
 
-    // Theme toggle functionality - DISABLED FOR FREE VERSION
-    // let isNightMode = false;
-    // function toggleTheme() {
-    //   // Night mode functionality removed for free version
-    //   // Available in premium version
-    // }
     if (document.referrer === "" && performance.navigation.type === 0) {
       window.location.href = "/index.html";
     }
 
-    const apiKey = "2C4447D4A42083BCD84DE3B8E";
-    const routeNumber = 28;
-    const direction = parseInt(1);
+    // These are injected by Python:
+    //  - TILES_BASE_URL (your city-specific tileserver base)
+    //  - ROUTE_NUMBER, DIRECTION_ID, SHAPE_DATA
 
-    // Portland Metro Area Bounds
-    const PORTLAND_BOUNDS = {
-      north: 45.80,
-      south: 45.20,
-      east: -122.15,
-      west: -123.35
-    };
+    const tilesBase = "http://45.77.209.137:8082";
 
-    // Initialize MapLibre GL JS map with vector tiles
-    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
-    // const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json'; // DISABLED FOR FREE VERSION
-    
+    // If tilesBase is empty, the map won't load. This makes failures obvious instead of silently showing Portland.
+    if (!tilesBase) {
+      console.error("TILES_BASE_URL is empty. Check build_test_routes.py TILESERVER_HOST + city port/path mapping.");
+    }
+
+    // IMPORTANT:
+    // Your style.json must be served by the city-specific TileServer instance.
+    // Example TileServer-GL default: http(s)://host:port/styles/<style>/style.json
+    // Adjust <style> name if yours isn't "0".
+    const dayStyle = `${tilesBase}/styles/0/style.json`;
+
     const map = new maplibregl.Map({
       container: 'map',
       style: dayStyle,
-      center: [-122.67, 45.52],
+      // Louisville-ish center (downtown)
+      center: [-85.7585, 38.2527],
       zoom: 12,
       maxZoom: 18,
       minZoom: 8,
-      maxBounds: [
-        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
-        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
-      ],
       attributionControl: true
     });
 
-    // Force attribution to be collapsed by default
+    // Collapse attribution by default
     map.on('load', () => {
       const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
       if (attributionControl) {
@@ -393,7 +312,6 @@
       }
     });
 
-    // Also ensure attribution is collapsed after style changes
     map.on('styledata', () => {
       setTimeout(() => {
         const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
@@ -404,77 +322,48 @@
       }, 100);
     });
 
-    // Add route shape when map loads
+    // Add route shape + stops
     map.on('load', () => {
       const shapeOutbound = [
-  [38.13933, -85.67514],
-  [38.13917, -85.67515],
-  [38.13807, -85.67524],
-  [38.13799, -85.67524],
-  [38.13791, -85.67525],
-  [38.13785, -85.67377],
-  [38.13776, -85.67167],
-  [38.13767, -85.66949],
-  [38.13728, -85.66952],
-  [38.13706, -85.66954],
-  [38.13691, -85.66956],
-  [38.13555, -85.66965],
-  [38.13516, -85.66942],
-  [38.13464, -85.67048],
-  [38.13413, -85.67155],
-  [38.13371, -85.67244],
-  [38.13359, -85.67251],
-  [38.13207, -85.67159],
-  [38.13165, -85.67134],
-  [38.13121, -85.67107],
-  [38.13093, -85.6709],
-  [38.13081, -85.67083],
-  [38.13052, -85.67156],
-  [38.13035, -85.67199],
-  [38.13151, -85.67269],
-  [38.13142, -85.67295],
-  [38.13135, -85.67316],
-  [38.1312, -85.6736],
-  [38.13087, -85.67453],
-  [38.12987, -85.67742],
-  [38.1296, -85.67817],
-  [38.12923, -85.67886],
-  [38.12918, -85.67898],
-  [38.12901, -85.67949],
-  [38.12864, -85.68053],
-  [38.12844, -85.68113],
-  [38.12842, -85.68118],
-  [38.12841, -85.68122],
-  [38.12872, -85.6814],
-  [38.1299, -85.68203],
-  [38.13011, -85.68215],
-  [38.13165, -85.683],
-  [38.13169, -85.68289],
-  [38.13168, -85.68291],
-  [38.13165, -85.683],
-  [38.13185, -85.68312],
-  [38.13343, -85.68397],
-  [38.13671, -85.68579],
-  [38.137, -85.68594],
-  [38.13884, -85.68688],
-  [38.14053, -85.68788],
-  [38.14081, -85.68804],
-  [38.1417, -85.68854],
-  [38.14202, -85.68872],
-  [38.1423, -85.68887],
-  [38.14245, -85.68895],
-  [38.14255, -85.68901],
-  [38.14476, -85.69024],
-  [38.1449, -85.69031],
-  [38.14648, -85.69118],
-  [38.14636, -85.69112],
-  [38.14882, -85.69249],
-  [38.14886, -85.69251],
-  [38.14947, -85.69278],
-  [38.15001, -85.69316],
-  [38.15127, -85.69382],
-  [38.15346, -85.69507],
-  [38.15489, -85.69577],
+  [38.15814, -85.73141],
+  [38.15874, -85.73107],
+  [38.15902, -85.73081],
+  [38.15928, -85.73043],
+  [38.1594, -85.72992],
+  [38.15941, -85.72949],
+  [38.15933, -85.72911],
+  [38.15892, -85.72787],
+  [38.15884, -85.72739],
+  [38.15885, -85.72516],
+  [38.15885, -85.7239],
+  [38.15893, -85.72346],
+  [38.15908, -85.72305],
+  [38.15927, -85.72274],
+  [38.15947, -85.72251],
+  [38.15974, -85.72228],
+  [38.16008, -85.72213],
+  [38.16103, -85.72204],
+  [38.16107, -85.72419],
+  [38.1581, -85.73144],
+  [38.15756, -85.73173],
+  [38.15738, -85.73182],
+  [38.15713, -85.73194],
+  [38.15753, -85.72978],
+  [38.15753, -85.72733],
+  [38.15762, -85.72593],
+  [38.15784, -85.72375],
+  [38.15789, -85.72114],
+  [38.15772, -85.71891],
+  [38.15718, -85.714],
+  [38.15723, -85.7139],
+  [38.15708, -85.71213],
+  [38.15702, -85.70829],
+  [38.15698, -85.70059],
+  [38.15694, -85.69989],
+  [38.15657, -85.69793],
+  [38.15674, -85.69698],
+  [38.15677, -85.6969],
+  [38.1568, -85.69681],
   [38.1573, -85.69711],
   [38.15835, -85.69774],
   [38.15838, -85.69784],
@@ -702,99 +591,98 @@ const stopNames = {
 };
 
 const stops = [
-  { stop_id: "3404", name: "UPS Worldport", lat: 38.161101, lon: -85.724218, times: ["12:32 PM", "2:32 PM", "4:26 PM", "6:31 PM", "8:27 PM", "5:32 AM", "6:12 AM", "7:27 AM"] },
-  { stop_id: "50035", name: "Grade @ Ashbottom", lat: 38.158142, lon: -85.731521, times: ["12:57 PM", "2:57 PM", "4:27 PM", "7:03 PM", "9:03 PM", "5:33 AM", "6:33 AM", "8:03 AM"] },
-  { stop_id: "21691", name: "Fern Valley @ Fern Grade", lat: 38.157594, lon: -85.725931, times: ["12:58 PM", "2:58 PM", "4:28 PM", "7:04 PM", "9:04 PM", "5:34 AM", "6:34 AM", "8:04 AM"] },
-  { stop_id: "21692", name: "Fern Valley @ Paramount Park", lat: 38.157038, lon: -85.712136, times: ["1:00 PM", "3:00 PM", "4:30 PM", "7:06 PM", "9:06 PM", "5:36 AM", "6:36 AM", "8:06 AM"] },
-  { stop_id: "21693", name: "Fern Valley @ Ulrich", lat: 38.156924, lon: -85.708292, times: ["1:01 PM", "3:01 PM", "4:31 PM", "7:06 PM", "9:06 PM", "5:36 AM", "6:36 AM", "8:06 AM"] },
-  { stop_id: "21685", name: "Preston @ Fern Valley", lat: 38.157276, lon: -85.697163, times: ["12:33 PM", "1:03 PM", "1:33 PM", "2:03 PM", "2:33 PM", "3:03 PM", "3:33 PM", "4:03 PM"] },
-  { stop_id: "21690", name: "Preston @ Wansee", lat: 38.159247, lon: -85.698208, times: ["12:33 PM", "1:03 PM", "1:33 PM", "2:03 PM", "2:33 PM", "3:03 PM", "3:33 PM", "4:03 PM"] },
-  { stop_id: "21695", name: "Preston @ Forest", lat: 38.161531, lon: -85.699458, times: ["12:04 PM", "12:34 PM", "1:04 PM", "1:34 PM", "2:04 PM", "2:34 PM", "3:04 PM", "3:34 PM"] },
-  { stop_id: "21700", name: "Preston @ Prestwood", lat: 38.162595, lon: -85.700222, times: ["12:04 PM", "12:34 PM", "1:04 PM", "1:34 PM", "2:04 PM", "2:34 PM", "3:04 PM", "3:34 PM"] },
-  { stop_id: "21705", name: "Preston @ Post", lat: 38.164519, lon: -85.701926, times: ["12:04 PM", "12:34 PM", "1:04 PM", "1:34 PM", "2:04 PM", "2:34 PM", "3:04 PM", "3:34 PM"] },
-  { stop_id: "21710", name: "Preston @ Vinewood", lat: 38.166293, lon: -85.70384, times: ["12:05 PM", "12:35 PM", "1:05 PM", "1:35 PM", "2:05 PM", "2:35 PM", "3:05 PM", "3:35 PM"] },
-  { stop_id: "21715", name: "Preston @ Indian Trail Square", lat: 38.168202, lon: -85.705847, times: ["12:05 PM", "12:35 PM", "1:05 PM", "1:35 PM", "2:05 PM", "2:35 PM", "3:05 PM", "3:35 PM"] },
-  { stop_id: "21725", name: "Preston @ W. Indian Trail", lat: 38.169223, lon: -85.706897, times: ["12:06 PM", "12:36 PM", "1:06 PM", "1:36 PM", "2:06 PM", "2:36 PM", "3:06 PM", "3:36 PM"] },
-  { stop_id: "21740", name: "Preston @ Becker", lat: 38.171502, lon: -85.709327, times: ["12:06 PM", "12:36 PM", "1:06 PM", "1:36 PM", "2:06 PM", "2:36 PM", "3:06 PM", "3:36 PM"] },
-  { stop_id: "21745", name: "Preston @ Vim", lat: 38.172037, lon: -85.709849, times: ["12:07 PM", "12:37 PM", "1:07 PM", "1:37 PM", "2:07 PM", "2:37 PM", "3:07 PM", "3:37 PM"] },
-  { stop_id: "59590", name: "Preston @ Gilmore", lat: 38.174927, lon: -85.712888, times: ["12:07 PM", "12:37 PM", "1:07 PM", "1:37 PM", "2:07 PM", "2:37 PM", "3:07 PM", "3:37 PM"] },
-  { stop_id: "21750", name: "Preston @ Pidgeon  Pass", lat: 38.175858, lon: -85.71382, times: ["12:08 PM", "12:38 PM", "1:08 PM", "1:38 PM", "2:08 PM", "2:38 PM", "3:08 PM", "3:38 PM"] },
-  { stop_id: "21765", name: "Preston @ Preston", lat: 38.179126, lon: -85.71729, times: ["12:09 PM", "12:39 PM", "1:09 PM", "1:39 PM", "2:09 PM", "2:39 PM", "3:09 PM", "3:39 PM"] },
-  { stop_id: "21770", name: "Preston @ Grade", lat: 38.180602, lon: -85.718842, times: ["12:09 PM", "12:39 PM", "1:09 PM", "1:39 PM", "2:09 PM", "2:39 PM", "3:09 PM", "3:39 PM"] },
-  { stop_id: "21775", name: "Preston @ Standiford", lat: 38.182788, lon: -85.72109, times: ["12:10 PM", "12:40 PM", "1:10 PM", "1:40 PM", "2:10 PM", "2:40 PM", "3:10 PM", "3:40 PM"] },
-  { stop_id: "21790", name: "Preston @ 4276", lat: 38.187283, lon: -85.72471, times: ["12:11 PM", "12:41 PM", "1:11 PM", "1:41 PM", "2:11 PM", "2:41 PM", "3:11 PM", "3:41 PM"] },
-  { stop_id: "21795", name: "Preston @ Morgan", lat: 38.193002, lon: -85.728422, times: ["12:13 PM", "12:43 PM", "1:13 PM", "1:43 PM", "2:13 PM", "2:43 PM", "3:13 PM", "3:43 PM"] },
-  { stop_id: "21805", name: "Preston @ Belmar", lat: 38.194669, lon: -85.729509, times: ["12:13 PM", "12:43 PM", "1:13 PM", "1:43 PM", "2:13 PM", "2:43 PM", "3:13 PM", "3:43 PM"] },
-  { stop_id: "21820", name: "Preston @ Phillips", lat: 38.198001, lon: -85.731696, times: ["12:14 PM", "12:44 PM", "1:14 PM", "1:44 PM", "2:14 PM", "2:44 PM", "3:14 PM", "3:44 PM"] },
-  { stop_id: "21830", name: "Preston @ Hart", lat: 38.200053, lon: -85.733036, times: ["12:14 PM", "12:44 PM", "1:14 PM", "1:44 PM", "2:14 PM", "2:44 PM", "3:14 PM", "3:44 PM"] },
-  { stop_id: "21840", name: "Preston @ Audubon Parkway", lat: 38.202713, lon: -85.734768, times: ["12:15 PM", "12:45 PM", "1:15 PM", "1:45 PM", "2:15 PM", "2:45 PM", "3:15 PM", "3:45 PM"] },
-  { stop_id: "21850", name: "Preston @ Hess", lat: 38.205334, lon: -85.736432, times: ["12:16 PM", "12:46 PM", "1:16 PM", "1:46 PM", "2:16 PM", "2:46 PM", "3:16 PM", "3:46 PM"] },
-  { stop_id: "21855", name: "Preston @ Locust", lat: 38.206748, lon: -85.737283, times: ["12:16 PM", "12:46 PM", "1:16 PM", "1:46 PM", "2:16 PM", "2:46 PM", "3:16 PM", "3:46 PM"] },
-  { stop_id: "21865", name: "Preston @ Perennial", lat: 38.20903, lon: -85.738757, times: ["12:17 PM", "12:47 PM", "1:17 PM", "1:47 PM", "2:17 PM", "2:47 PM", "3:17 PM", "3:47 PM"] },
-  { stop_id: "21870", name: "Preston @ Melford", lat: 38.210368, lon: -85.739603, times: ["12:17 PM", "12:47 PM", "1:17 PM", "1:47 PM", "2:17 PM", "2:47 PM", "3:17 PM", "3:47 PM"] },
-  { stop_id: "21880", name: "Preston @ Clarks", lat: 38.212838, lon: -85.741373, times: ["12:18 PM", "12:48 PM", "1:18 PM", "1:48 PM", "2:18 PM", "2:48 PM", "3:18 PM", "3:48 PM"] },
-  { stop_id: "14545", name: "Eastern Parkway @ Preston", lat: 38.214478, lon: -85.74352, times: ["12:19 PM", "12:49 PM", "1:19 PM", "1:49 PM", "2:19 PM", "2:49 PM", "3:19 PM", "3:49 PM"] },
-  { stop_id: "14555", name: "Eastern Parkway @ Bradley", lat: 38.212683, lon: -85.746988, times: ["12:20 PM", "12:50 PM", "1:20 PM", "1:50 PM", "2:20 PM", "2:50 PM", "3:20 PM", "3:50 PM"] },
-  { stop_id: "14565", name: "Eastern Parkway @ Concord", lat: 38.211723, lon: -85.749472, times: ["12:21 PM", "12:51 PM", "1:21 PM", "1:51 PM", "2:21 PM", "2:51 PM", "3:21 PM", "3:51 PM"] },
-  { stop_id: "1155", name: "Crittenden @ Eastern Parkway", lat: 38.212008, lon: -85.751297, times: ["12:21 PM", "12:51 PM", "1:21 PM", "1:51 PM", "2:21 PM", "2:51 PM", "3:21 PM", "3:51 PM"] },
-  { stop_id: "60180", name: "Warnock @ Crittenden", lat: 38.214259, lon: -85.751268, times: ["12:22 PM", "12:52 PM", "1:22 PM", "1:52 PM", "2:22 PM", "2:52 PM", "3:22 PM", "3:52 PM"] },
-  { stop_id: "60185", name: "Warnock @ S Floyd", lat: 38.214613, lon: -85.754646, times: ["12:23 PM", "12:53 PM", "1:23 PM", "1:53 PM", "2:23 PM", "2:53 PM", "3:23 PM", "3:53 PM"] },
-  { stop_id: "3519", name: "Student Activity Center", lat: 38.217223, lon: -85.754598, times: ["12:25 PM", "12:55 PM", "1:25 PM", "1:55 PM", "2:25 PM", "2:55 PM", "3:25 PM", "3:55 PM"] },
-  { stop_id: "1190", name: "Cardinal @ Brook", lat: 38.220099, lon: -85.756395, times: ["12:26 PM", "12:56 PM", "1:26 PM", "1:56 PM", "2:26 PM", "2:56 PM", "3:26 PM", "3:56 PM"] },
-  { stop_id: "60190", name: "Brook @ Lee", lat: 38.222508, lon: -85.755764, times: ["12:27 PM", "12:57 PM", "1:27 PM", "1:57 PM", "2:27 PM", "2:57 PM", "3:27 PM", "3:57 PM"] },
-  { stop_id: "60195", name: "Brook @ E Hill", lat: 38.225533, lon: -85.755191, times: ["12:28 PM", "12:58 PM", "1:28 PM", "1:58 PM", "2:28 PM", "2:58 PM", "3:28 PM", "3:58 PM"] },
-  { stop_id: "60200", name: "Burnett @ S Floyd", lat: 38.22632, lon: -85.75262, times: ["12:28 PM", "12:58 PM", "1:28 PM", "1:58 PM", "2:28 PM", "2:58 PM", "3:28 PM", "3:58 PM"] },
-  { stop_id: "60202", name: "S Preston @ S Jackson", lat: 38.227705, lon: -85.750489, times: ["12:29 PM", "12:59 PM", "1:29 PM", "1:59 PM", "2:29 PM", "2:59 PM", "3:29 PM", "3:59 PM"] },
-  { stop_id: "22260", name: "S Jackson @ Marrett", lat: 38.23028, lon: -85.748092, times: ["12:31 PM", "1:01 PM", "1:31 PM", "2:01 PM", "2:31 PM", "3:01 PM", "3:31 PM", "4:01 PM"] },
-  { stop_id: "22265", name: "S Jackson @ Camp", lat: 38.231663, lon: -85.747864, times: ["12:31 PM", "1:01 PM", "1:31 PM", "2:01 PM", "2:31 PM", "3:01 PM", "3:31 PM", "4:01 PM"] },
-  { stop_id: "12165", name: "S Jackson @ E Oak", lat: 38.234454, lon: -85.74737, times: ["12:32 PM", "1:02 PM", "1:32 PM", "2:02 PM", "2:32 PM", "3:02 PM", "3:32 PM", "4:02 PM"] },
-  { stop_id: "22270", name: "S Jackson @ E St Catherine", lat: 38.235588, lon: -85.747205, times: ["12:32 PM", "1:02 PM", "1:32 PM", "2:02 PM", "2:32 PM", "3:02 PM", "3:32 PM", "4:02 PM"] },
-  { stop_id: "22275", name: "S Jackson @ E Kentucky", lat: 38.237769, lon: -85.746814, times: ["12:33 PM", "1:03 PM", "1:33 PM", "2:03 PM", "2:33 PM", "3:03 PM", "3:33 PM", "4:03 PM"] },
-  { stop_id: "22280", name: "S Jackson @ E Caldwell", lat: 38.238992, lon: -85.746621, times: ["12:03 PM", "12:33 PM", "1:03 PM", "1:33 PM", "2:03 PM", "2:33 PM", "3:03 PM", "3:33 PM"] },
-  { stop_id: "22285", name: "S Jackson @ E Breckinridge", lat: 38.240371, lon: -85.746339, times: ["12:04 PM", "12:34 PM", "1:04 PM", "1:34 PM", "2:04 PM", "2:34 PM", "3:04 PM", "3:34 PM"] },
-  { stop_id: "22290", name: "S Jackson @ Lampton", lat: 38.24228, lon: -85.746023, times: ["12:04 PM", "12:34 PM", "1:04 PM", "1:34 PM", "2:04 PM", "2:34 PM", "3:04 PM", "3:34 PM"] },
-  { stop_id: "22295", name: "S Jackson @ E Finzer", lat: 38.243283, lon: -85.745886, times: ["12:05 PM", "12:35 PM", "1:05 PM", "1:35 PM", "2:05 PM", "2:35 PM", "3:05 PM", "3:35 PM"] },
-  { stop_id: "22305", name: "S Jackson @ E Broadway", lat: 38.245359, lon: -85.745502, times: ["12:06 PM", "12:36 PM", "1:06 PM", "1:36 PM", "2:06 PM", "2:36 PM", "3:06 PM", "3:36 PM"] },
-  { stop_id: "22315", name: "S Jackson @ E Chestnut", lat: 38.24796, lon: -85.745066, times: ["12:07 PM", "12:37 PM", "1:07 PM", "1:37 PM", "2:07 PM", "2:37 PM", "3:07 PM", "3:37 PM"] },
-  { stop_id: "22325", name: "S Jackson @ E Liberty", lat: 38.250951, lon: -85.744505, times: ["12:08 PM", "12:38 PM", "1:08 PM", "1:38 PM", "2:08 PM", "2:38 PM", "3:08 PM", "3:38 PM"] },
-  { stop_id: "3775", name: "E Jefferson @ S Preston", lat: 38.252807, lon: -85.746683, times: ["12:09 PM", "12:39 PM", "1:09 PM", "1:39 PM", "2:09 PM", "2:39 PM", "3:09 PM", "3:39 PM"] },
-  { stop_id: "3780", name: "E Jefferson @ S Floyd", lat: 38.252974, lon: -85.748264, times: ["12:10 PM", "12:40 PM", "1:10 PM", "1:40 PM", "2:10 PM", "2:40 PM", "3:10 PM", "3:40 PM"] },
-  { stop_id: "3785", name: "E Jefferson @ S Brook", lat: 38.253191, lon: -85.750259, times: ["12:11 PM", "12:41 PM", "1:11 PM", "1:41 PM", "2:11 PM", "2:41 PM", "3:11 PM", "3:41 PM"] },
-  { stop_id: "3790", name: "W Jefferson @ S 1st", lat: 38.253405, lon: -85.752252, times: ["12:12 PM", "12:42 PM", "1:12 PM", "1:42 PM", "2:12 PM", "2:42 PM", "3:12 PM", "3:42 PM"] },
-  { stop_id: "3795", name: "W. Jefferson @ 2nd", lat: 38.253616, lon: -85.754423, times: ["12:12 PM", "12:42 PM", "1:12 PM", "1:42 PM", "2:12 PM", "2:42 PM", "3:12 PM", "3:42 PM"] },
-  { stop_id: "3810", name: "W Jefferson @ S 4th", lat: 38.253988, lon: -85.757612, times: ["12:13 PM", "12:43 PM", "1:13 PM", "1:43 PM", "2:13 PM", "2:43 PM", "3:13 PM", "3:43 PM"] },
-  { stop_id: "3815", name: "W Jefferson @ S 5th", lat: 38.254138, lon: -85.75896, times: ["12:14 PM", "12:44 PM", "1:14 PM", "1:44 PM", "2:14 PM", "2:44 PM", "3:14 PM", "3:44 PM"] },
-  { stop_id: "3820", name: "W Jefferson @ S 6th", lat: 38.254326, lon: -85.760754, times: ["12:15 PM", "12:45 PM", "1:15 PM", "1:45 PM", "2:15 PM", "2:45 PM", "3:15 PM", "3:45 PM"] },
-  { stop_id: "21292", name: "Jefferson Blvd. @ Bates", lat: 38.139705, lon: -85.675215, times: ["12:20 PM", "1:21 PM", "1:51 PM", "3:15 PM", "3:21 PM", "3:51 PM", "4:51 PM", "5:21 PM"] },
-  { stop_id: "21288", name: "Outer Loop @ Laurel Ridge", lat: 38.137798, lon: -85.673943, times: ["12:15 PM", "1:15 PM", "1:45 PM", "2:15 PM", "3:15 PM", "3:45 PM", "4:46 PM", "5:18 PM"] },
-  { stop_id: "59599", name: "Outer Loop @ 4810", lat: 38.137688, lon: -85.671676, times: ["12:16 PM", "1:16 PM", "1:46 PM", "2:16 PM", "3:16 PM", "3:46 PM", "4:47 PM", "5:19 PM"] },
-  { stop_id: "21545", name: "Judge Blvd @ Outer Loop", lat: 38.136928, lon: -85.669649, times: ["12:17 PM", "1:17 PM", "1:47 PM", "2:17 PM", "3:17 PM", "3:47 PM", "4:48 PM", "5:20 PM"] },
-  { stop_id: "21555", name: "Annella Way @ Pina Way", lat: 38.134714, lon: -85.670451, times: ["12:17 PM", "1:17 PM", "1:47 PM", "2:17 PM", "3:17 PM", "3:47 PM", "4:48 PM", "5:20 PM"] },
-  { stop_id: "21560", name: "Annella Way @ Rory Way", lat: 38.13417, lon: -85.671555, times: ["12:18 PM", "1:18 PM", "1:48 PM", "2:18 PM", "3:18 PM", "3:48 PM", "4:49 PM", "5:21 PM"] },
-  { stop_id: "21565", name: "Annella Way @ 8102", lat: 38.132007, lon: -85.671622, times: ["12:19 PM", "1:19 PM", "1:49 PM", "2:19 PM", "3:19 PM", "3:49 PM", "4:50 PM", "5:22 PM"] },
-  { stop_id: "21570", name: "Annella Way @ Famous Way", lat: 38.130829, lon: -85.670929, times: ["12:19 PM", "1:19 PM", "1:49 PM", "2:19 PM", "3:19 PM", "3:49 PM", "4:50 PM", "5:22 PM"] },
-  { stop_id: "21575", name: "Siesta Way @ Famous Way", lat: 38.130707, lon: -85.672149, times: ["12:21 PM", "1:21 PM", "1:51 PM", "2:21 PM", "3:21 PM", "3:51 PM", "4:52 PM", "5:24 PM"] },
-  { stop_id: "21580", name: "St Rita @ Siesta Way", lat: 38.131409, lon: -85.673139, times: ["12:21 PM", "1:21 PM", "1:51 PM", "2:21 PM", "3:21 PM", "3:51 PM", "4:52 PM", "5:24 PM"] },
-  { stop_id: "21585", name: "St Rita @ Smithton", lat: 38.130896, lon: -85.674604, times: ["12:22 PM", "1:22 PM", "1:52 PM", "2:22 PM", "3:22 PM", "3:52 PM", "4:53 PM", "5:25 PM"] },
-  { stop_id: "21595", name: "St Rita @ Linda", lat: 38.129946, lon: -85.67734, times: ["12:23 PM", "1:23 PM", "1:53 PM", "2:23 PM", "3:23 PM", "3:53 PM", "4:54 PM", "5:26 PM"] },
-  { stop_id: "21600", name: "St Rita @ Newstead", lat: 38.129275, lon: -85.678765, times: ["12:23 PM", "1:23 PM", "1:53 PM", "2:23 PM", "3:23 PM", "3:53 PM", "4:54 PM", "5:26 PM"] },
-  { stop_id: "21605", name: "St Rita @ Preston", lat: 38.128632, lon: -85.680745, times: ["12:23 PM", "1:23 PM", "1:53 PM", "2:23 PM", "3:23 PM", "3:53 PM", "4:54 PM", "5:26 PM"] },
-  { stop_id: "21610", name: "Preston @ Trio", lat: 38.129845, lon: -85.681866, times: ["12:24 PM", "1:24 PM", "1:54 PM", "2:24 PM", "3:24 PM", "3:54 PM", "4:55 PM", "5:27 PM"] },
-  { stop_id: "21615", name: "Preston @ Serenity Hope Dr", lat: 38.131723, lon: -85.682899, times: ["12:25 PM", "1:25 PM", "1:55 PM", "2:25 PM", "3:25 PM", "3:55 PM", "4:56 PM", "5:28 PM"] },
-  { stop_id: "21200", name: "Preston Hwy @ Blue Lick", lat: 38.133367, lon: -85.683842, times: ["12:26 PM", "1:26 PM", "1:56 PM", "2:26 PM", "3:26 PM", "3:56 PM", "4:57 PM", "5:29 PM"] },
-  { stop_id: "21630", name: "Preston @ Okolona Terrace", lat: 38.136557, lon: -85.685569, times: ["12:26 PM", "1:26 PM", "1:56 PM", "2:26 PM", "3:26 PM", "3:56 PM", "4:57 PM", "5:29 PM"] },
-  { stop_id: "21635", name: "Preston @ Outer Loop", lat: 38.138883, lon: -85.686787, times: ["12:27 PM", "1:27 PM", "1:57 PM", "2:27 PM", "3:27 PM", "3:57 PM", "4:58 PM", "5:30 PM"] },
-  { stop_id: "21640", name: "Preston @ Bates", lat: 38.140514, lon: -85.687744, times: ["12:28 PM", "1:28 PM", "1:58 PM", "2:28 PM", "3:28 PM", "3:58 PM", "4:59 PM", "5:31 PM"] },
-  { stop_id: "21645", name: "Preston @ Huntington", lat: 38.141682, lon: -85.688378, times: ["12:28 PM", "1:28 PM", "1:58 PM", "2:28 PM", "3:28 PM", "3:58 PM", "4:59 PM", "5:31 PM"] },
-  { stop_id: "21650", name: "Preston @ Lipps", lat: 38.142578, lon: -85.688908, times: ["12:28 PM", "1:28 PM", "1:58 PM", "2:28 PM", "3:28 PM", "3:58 PM", "4:59 PM", "5:31 PM"] },
-  { stop_id: "21655", name: "Preston @ McCawley", lat: 38.144716, lon: -85.690027, times: ["12:29 PM", "1:29 PM", "1:59 PM", "2:29 PM", "3:29 PM", "3:59 PM", "5:00 PM", "5:32 PM"] },
-  { stop_id: "21660", name: "Preston @ Canal", lat: 38.14633, lon: -85.690953, times: ["12:29 PM", "1:29 PM", "1:59 PM", "2:29 PM", "3:29 PM", "3:59 PM", "5:00 PM", "5:32 PM"] },
-  { stop_id: "21665", name: "Preston @ Oaklawn", lat: 38.148837, lon: -85.692332, times: ["12:30 PM", "1:30 PM", "2:00 PM", "2:30 PM", "3:30 PM", "4:00 PM", "5:01 PM", "5:33 PM"] },
-  { stop_id: "21675", name: "Preston @ Tower", lat: 38.151326, lon: -85.693716, times: ["12:31 PM", "1:31 PM", "2:01 PM", "2:31 PM", "3:31 PM", "4:01 PM", "5:02 PM", "5:34 PM"] },
-  { stop_id: "21680", name: "Preston @ Old Fern Valley", lat: 38.154903, lon: -85.695745, times: ["12:32 PM", "1:32 PM", "2:02 PM", "2:32 PM", "3:32 PM", "4:02 PM", "5:03 PM", "5:35 PM"] },
+  { stop_id: "22305", name: "S Jackson @ E Broadway", lat: 38.245359, lon: -85.745502, times: ["6:21 PM", "6:36 PM", "6:51 PM", "7:21 PM", "7:36 PM", "8:06 PM", "8:21 PM", "8:51 PM"] },
+  { stop_id: "22315", name: "S Jackson @ E Chestnut", lat: 38.24796, lon: -85.745066, times: ["6:22 PM", "6:37 PM", "6:52 PM", "7:22 PM", "7:37 PM", "8:07 PM", "8:22 PM", "8:52 PM"] },
+  { stop_id: "22325", name: "S Jackson @ E Liberty", lat: 38.250951, lon: -85.744505, times: ["6:23 PM", "6:38 PM", "6:53 PM", "7:23 PM", "7:38 PM", "8:08 PM", "8:23 PM", "8:53 PM"] },
+  { stop_id: "3775", name: "E Jefferson @ S Preston", lat: 38.252807, lon: -85.746683, times: ["6:24 PM", "6:39 PM", "6:54 PM", "7:24 PM", "7:39 PM", "8:09 PM", "8:24 PM", "8:54 PM"] },
+  { stop_id: "3780", name: "E Jefferson @ S Floyd", lat: 38.252974, lon: -85.748264, times: ["6:25 PM", "6:40 PM", "6:55 PM", "7:25 PM", "7:40 PM", "8:10 PM", "8:25 PM", "8:55 PM"] },
+  { stop_id: "3785", name: "E Jefferson @ S Brook", lat: 38.253191, lon: -85.750259, times: ["6:26 PM", "6:41 PM", "6:56 PM", "7:26 PM", "7:41 PM", "8:11 PM", "8:26 PM", "8:56 PM"] },
+  { stop_id: "3790", name: "W Jefferson @ S 1st", lat: 38.253405, lon: -85.752252, times: ["6:26 PM", "6:41 PM", "6:56 PM", "7:26 PM", "7:41 PM", "8:11 PM", "8:26 PM", "8:56 PM"] },
+  { stop_id: "3795", name: "W. Jefferson @ 2nd", lat: 38.253616, lon: -85.754423, times: ["6:27 PM", "6:42 PM", "6:57 PM", "7:27 PM", "7:42 PM", "8:12 PM", "8:27 PM", "8:57 PM"] },
+  { stop_id: "3810", name: "W Jefferson @ S 4th", lat: 38.253988, lon: -85.757612, times: ["6:28 PM", "6:43 PM", "6:58 PM", "7:28 PM", "7:43 PM", "8:13 PM", "8:28 PM", "8:58 PM"] },
+  { stop_id: "3815", name: "W Jefferson @ S 5th", lat: 38.254138, lon: -85.75896, times: ["6:28 PM", "6:43 PM", "6:58 PM", "7:28 PM", "7:43 PM", "8:13 PM", "8:28 PM", "8:58 PM"] },
+  { stop_id: "3820", name: "W Jefferson @ S 6th", lat: 38.254326, lon: -85.760754, times: ["6:30 PM", "6:45 PM", "7:00 PM", "7:30 PM", "7:45 PM", "8:15 PM", "8:30 PM", "9:00 PM"] },
+  { stop_id: "3404", name: "UPS Worldport", lat: 38.161101, lon: -85.724218, times: ["6:40 PM", "7:40 PM", "8:40 PM", "9:41 PM", "10:44 PM", "11:00 PM", "11:24 PM", "4:43 AM"] },
+  { stop_id: "50035", name: "Grade @ Ashbottom", lat: 38.158142, lon: -85.731521, times: ["6:42 PM", "7:42 PM", "8:42 PM", "9:43 PM", "10:46 PM", "11:02 PM", "11:26 PM", "4:45 AM"] },
+  { stop_id: "21691", name: "Fern Valley @ Fern Grade", lat: 38.157594, lon: -85.725931, times: ["6:44 PM", "7:44 PM", "8:44 PM", "9:45 PM", "10:47 PM", "11:03 PM", "11:27 PM", "4:46 AM"] },
+  { stop_id: "21692", name: "Fern Valley @ Paramount Park", lat: 38.157038, lon: -85.712136, times: ["6:16 PM", "6:46 PM", "7:46 PM", "8:46 PM", "9:47 PM", "10:49 PM", "11:05 PM", "11:29 PM"] },
+  { stop_id: "21693", name: "Fern Valley @ Ulrich", lat: 38.156924, lon: -85.708292, times: ["6:16 PM", "6:46 PM", "7:46 PM", "8:46 PM", "9:47 PM", "10:50 PM", "11:06 PM", "11:30 PM"] },
+  { stop_id: "21685", name: "Preston @ Fern Valley", lat: 38.157276, lon: -85.697163, times: ["6:19 PM", "6:49 PM", "7:04 PM", "7:34 PM", "7:49 PM", "8:19 PM", "8:49 PM", "9:19 PM"] },
+  { stop_id: "21690", name: "Preston @ Wansee", lat: 38.159247, lon: -85.698208, times: ["6:19 PM", "6:49 PM", "7:04 PM", "7:34 PM", "7:49 PM", "8:19 PM", "8:49 PM", "9:19 PM"] },
+  { stop_id: "21695", name: "Preston @ Forest", lat: 38.161531, lon: -85.699458, times: ["6:19 PM", "6:49 PM", "7:04 PM", "7:34 PM", "7:49 PM", "8:19 PM", "8:49 PM", "9:19 PM"] },
+  { stop_id: "21700", name: "Preston @ Prestwood", lat: 38.162595, lon: -85.700222, times: ["6:20 PM", "6:50 PM", "7:05 PM", "7:35 PM", "7:50 PM", "8:20 PM", "8:50 PM", "9:20 PM"] },
+  { stop_id: "21705", name: "Preston @ Post", lat: 38.164519, lon: -85.701926, times: ["6:20 PM", "6:50 PM", "7:05 PM", "7:35 PM", "7:50 PM", "8:20 PM", "8:50 PM", "9:20 PM"] },
+  { stop_id: "21710", name: "Preston @ Vinewood", lat: 38.166293, lon: -85.70384, times: ["6:21 PM", "6:51 PM", "7:06 PM", "7:36 PM", "7:51 PM", "8:21 PM", "8:51 PM", "9:21 PM"] },
+  { stop_id: "21715", name: "Preston @ Indian Trail Square", lat: 38.168202, lon: -85.705847, times: ["6:21 PM", "6:51 PM", "7:06 PM", "7:36 PM", "7:51 PM", "8:21 PM", "8:51 PM", "9:21 PM"] },
+  { stop_id: "21725", name: "Preston @ W. Indian Trail", lat: 38.169223, lon: -85.706897, times: ["6:21 PM", "6:51 PM", "7:06 PM", "7:36 PM", "7:51 PM", "8:21 PM", "8:51 PM", "9:21 PM"] },
+  { stop_id: "21740", name: "Preston @ Becker", lat: 38.171502, lon: -85.709327, times: ["6:22 PM", "6:52 PM", "7:07 PM", "7:37 PM", "7:52 PM", "8:22 PM", "8:52 PM", "9:22 PM"] },
+  { stop_id: "21745", name: "Preston @ Vim", lat: 38.172037, lon: -85.709849, times: ["6:22 PM", "6:52 PM", "7:07 PM", "7:37 PM", "7:52 PM", "8:22 PM", "8:52 PM", "9:22 PM"] },
+  { stop_id: "59590", name: "Preston @ Gilmore", lat: 38.174927, lon: -85.712888, times: ["6:23 PM", "6:53 PM", "7:08 PM", "7:38 PM", "7:53 PM", "8:23 PM", "8:53 PM", "9:23 PM"] },
+  { stop_id: "21750", name: "Preston @ Pidgeon  Pass", lat: 38.175858, lon: -85.71382, times: ["6:23 PM", "6:53 PM", "7:08 PM", "7:38 PM", "7:53 PM", "8:23 PM", "8:53 PM", "9:23 PM"] },
+  { stop_id: "21765", name: "Preston @ Preston", lat: 38.179126, lon: -85.71729, times: ["6:24 PM", "6:54 PM", "7:09 PM", "7:39 PM", "7:54 PM", "8:24 PM", "8:54 PM", "9:24 PM"] },
+  { stop_id: "21770", name: "Preston @ Grade", lat: 38.180602, lon: -85.718842, times: ["6:24 PM", "6:54 PM", "7:09 PM", "7:39 PM", "7:54 PM", "8:24 PM", "8:54 PM", "9:24 PM"] },
+  { stop_id: "21775", name: "Preston @ Standiford", lat: 38.182788, lon: -85.72109, times: ["6:25 PM", "6:55 PM", "7:10 PM", "7:40 PM", "7:55 PM", "8:25 PM", "8:55 PM", "9:25 PM"] },
+  { stop_id: "21790", name: "Preston @ 4276", lat: 38.187283, lon: -85.72471, times: ["6:26 PM", "6:56 PM", "7:11 PM", "7:41 PM", "7:56 PM", "8:26 PM", "8:56 PM", "9:26 PM"] },
+  { stop_id: "21795", name: "Preston @ Morgan", lat: 38.193002, lon: -85.728422, times: ["6:27 PM", "6:57 PM", "7:12 PM", "7:42 PM", "7:57 PM", "8:27 PM", "8:57 PM", "9:27 PM"] },
+  { stop_id: "21805", name: "Preston @ Belmar", lat: 38.194669, lon: -85.729509, times: ["6:28 PM", "6:58 PM", "7:13 PM", "7:43 PM", "7:58 PM", "8:28 PM", "8:58 PM", "9:28 PM"] },
+  { stop_id: "21820", name: "Preston @ Phillips", lat: 38.198001, lon: -85.731696, times: ["6:28 PM", "6:58 PM", "7:13 PM", "7:43 PM", "7:58 PM", "8:28 PM", "8:58 PM", "9:28 PM"] },
+  { stop_id: "21830", name: "Preston @ Hart", lat: 38.200053, lon: -85.733036, times: ["6:29 PM", "6:59 PM", "7:14 PM", "7:44 PM", "7:59 PM", "8:29 PM", "8:59 PM", "9:29 PM"] },
+  { stop_id: "21840", name: "Preston @ Audubon Parkway", lat: 38.202713, lon: -85.734768, times: ["6:29 PM", "6:59 PM", "7:14 PM", "7:44 PM", "7:59 PM", "8:29 PM", "8:59 PM", "9:29 PM"] },
+  { stop_id: "21850", name: "Preston @ Hess", lat: 38.205334, lon: -85.736432, times: ["6:30 PM", "7:00 PM", "7:15 PM", "7:45 PM", "8:00 PM", "8:30 PM", "9:00 PM", "9:30 PM"] },
+  { stop_id: "21855", name: "Preston @ Locust", lat: 38.206748, lon: -85.737283, times: ["6:30 PM", "7:00 PM", "7:15 PM", "7:45 PM", "8:00 PM", "8:30 PM", "9:00 PM", "9:30 PM"] },
+  { stop_id: "21865", name: "Preston @ Perennial", lat: 38.20903, lon: -85.738757, times: ["6:16 PM", "6:31 PM", "7:01 PM", "7:16 PM", "7:46 PM", "8:01 PM", "8:31 PM", "9:01 PM"] },
+  { stop_id: "21870", name: "Preston @ Melford", lat: 38.210368, lon: -85.739603, times: ["6:16 PM", "6:31 PM", "7:01 PM", "7:16 PM", "7:46 PM", "8:01 PM", "8:31 PM", "9:01 PM"] },
+  { stop_id: "21880", name: "Preston @ Clarks", lat: 38.212838, lon: -85.741373, times: ["6:17 PM", "6:32 PM", "7:02 PM", "7:17 PM", "7:47 PM", "8:02 PM", "8:32 PM", "9:02 PM"] },
+  { stop_id: "14545", name: "Eastern Parkway @ Preston", lat: 38.214478, lon: -85.74352, times: ["6:18 PM", "6:33 PM", "7:03 PM", "7:18 PM", "7:48 PM", "8:03 PM", "8:33 PM", "9:03 PM"] },
+  { stop_id: "14555", name: "Eastern Parkway @ Bradley", lat: 38.212683, lon: -85.746988, times: ["6:19 PM", "6:34 PM", "7:04 PM", "7:19 PM", "7:49 PM", "8:04 PM", "8:34 PM", "9:04 PM"] },
+  { stop_id: "14565", name: "Eastern Parkway @ Concord", lat: 38.211723, lon: -85.749472, times: ["6:19 PM", "6:34 PM", "7:04 PM", "7:19 PM", "7:49 PM", "8:04 PM", "8:34 PM", "9:04 PM"] },
+  { stop_id: "1155", name: "Crittenden @ Eastern Parkway", lat: 38.212008, lon: -85.751297, times: ["6:20 PM", "6:35 PM", "7:05 PM", "7:20 PM", "7:50 PM", "8:05 PM", "8:35 PM", "9:05 PM"] },
+  { stop_id: "60180", name: "Warnock @ Crittenden", lat: 38.214259, lon: -85.751268, times: ["6:21 PM", "6:36 PM", "7:06 PM", "7:21 PM", "7:51 PM", "8:06 PM", "8:36 PM", "9:06 PM"] },
+  { stop_id: "60185", name: "Warnock @ S Floyd", lat: 38.214613, lon: -85.754646, times: ["6:21 PM", "6:36 PM", "7:06 PM", "7:21 PM", "7:51 PM", "8:06 PM", "8:36 PM", "9:06 PM"] },
+  { stop_id: "3519", name: "Student Activity Center", lat: 38.217223, lon: -85.754598, times: ["6:23 PM", "6:38 PM", "7:08 PM", "7:23 PM", "7:53 PM", "8:08 PM", "8:38 PM", "9:08 PM"] },
+  { stop_id: "1190", name: "Cardinal @ Brook", lat: 38.220099, lon: -85.756395, times: ["6:24 PM", "6:39 PM", "7:09 PM", "7:24 PM", "7:54 PM", "8:09 PM", "8:39 PM", "9:09 PM"] },
+  { stop_id: "60190", name: "Brook @ Lee", lat: 38.222508, lon: -85.755764, times: ["6:25 PM", "6:40 PM", "7:10 PM", "7:25 PM", "7:55 PM", "8:10 PM", "8:40 PM", "9:10 PM"] },
+  { stop_id: "60195", name: "Brook @ E Hill", lat: 38.225533, lon: -85.755191, times: ["6:26 PM", "6:41 PM", "7:11 PM", "7:26 PM", "7:56 PM", "8:11 PM", "8:41 PM", "9:11 PM"] },
+  { stop_id: "60200", name: "Burnett @ S Floyd", lat: 38.22632, lon: -85.75262, times: ["6:27 PM", "6:42 PM", "7:12 PM", "7:27 PM", "7:57 PM", "8:12 PM", "8:42 PM", "9:12 PM"] },
+  { stop_id: "60202", name: "S Preston @ S Jackson", lat: 38.227705, lon: -85.750489, times: ["6:28 PM", "6:43 PM", "7:13 PM", "7:28 PM", "7:58 PM", "8:13 PM", "8:43 PM", "9:13 PM"] },
+  { stop_id: "22260", name: "S Jackson @ Marrett", lat: 38.23028, lon: -85.748092, times: ["6:30 PM", "6:45 PM", "7:15 PM", "7:30 PM", "8:00 PM", "8:15 PM", "8:45 PM", "9:15 PM"] },
+  { stop_id: "22265", name: "S Jackson @ Camp", lat: 38.231663, lon: -85.747864, times: ["6:30 PM", "6:45 PM", "7:15 PM", "7:30 PM", "8:00 PM", "8:15 PM", "8:45 PM", "9:15 PM"] },
+  { stop_id: "12165", name: "S Jackson @ E Oak", lat: 38.234454, lon: -85.74737, times: ["6:16 PM", "6:31 PM", "6:46 PM", "7:16 PM", "7:31 PM", "8:01 PM", "8:16 PM", "8:46 PM"] },
+  { stop_id: "22270", name: "S Jackson @ E St Catherine", lat: 38.235588, lon: -85.747205, times: ["6:17 PM", "6:32 PM", "6:47 PM", "7:17 PM", "7:32 PM", "8:02 PM", "8:17 PM", "8:47 PM"] },
+  { stop_id: "22275", name: "S Jackson @ E Kentucky", lat: 38.237769, lon: -85.746814, times: ["6:18 PM", "6:33 PM", "6:48 PM", "7:18 PM", "7:33 PM", "8:03 PM", "8:18 PM", "8:48 PM"] },
+  { stop_id: "22280", name: "S Jackson @ E Caldwell", lat: 38.238992, lon: -85.746621, times: ["6:18 PM", "6:33 PM", "6:48 PM", "7:18 PM", "7:33 PM", "8:03 PM", "8:18 PM", "8:48 PM"] },
+  { stop_id: "22285", name: "S Jackson @ E Breckinridge", lat: 38.240371, lon: -85.746339, times: ["6:18 PM", "6:33 PM", "6:48 PM", "7:18 PM", "7:33 PM", "8:03 PM", "8:18 PM", "8:48 PM"] },
+  { stop_id: "22290", name: "S Jackson @ Lampton", lat: 38.24228, lon: -85.746023, times: ["6:19 PM", "6:34 PM", "6:49 PM", "7:19 PM", "7:34 PM", "8:04 PM", "8:19 PM", "8:49 PM"] },
+  { stop_id: "22295", name: "S Jackson @ E Finzer", lat: 38.243283, lon: -85.745886, times: ["6:20 PM", "6:35 PM", "6:50 PM", "7:20 PM", "7:35 PM", "8:05 PM", "8:20 PM", "8:50 PM"] },
+  { stop_id: "21292", name: "Jefferson Blvd. @ Bates", lat: 38.139705, lon: -85.675215, times: ["6:50 PM", "7:20 PM", "8:05 PM", "9:05 PM", "10:08 PM", "5:18 AM", "5:51 AM", "6:20 AM"] },
+  { stop_id: "21288", name: "Outer Loop @ Laurel Ridge", lat: 38.137798, lon: -85.673943, times: ["6:50 PM", "7:20 PM", "8:05 PM", "9:05 PM", "10:08 PM", "5:18 AM", "5:51 AM", "6:20 AM"] },
+  { stop_id: "59599", name: "Outer Loop @ 4810", lat: 38.137688, lon: -85.671676, times: ["6:51 PM", "7:21 PM", "8:06 PM", "9:06 PM", "10:09 PM", "5:18 AM", "5:51 AM", "6:20 AM"] },
+  { stop_id: "21545", name: "Judge Blvd @ Outer Loop", lat: 38.136928, lon: -85.669649, times: ["6:51 PM", "7:21 PM", "8:06 PM", "9:06 PM", "10:09 PM", "5:19 AM", "5:52 AM", "6:21 AM"] },
+  { stop_id: "21555", name: "Annella Way @ Pina Way", lat: 38.134714, lon: -85.670451, times: ["6:52 PM", "7:22 PM", "8:07 PM", "9:07 PM", "10:10 PM", "5:19 AM", "5:52 AM", "6:21 AM"] },
+  { stop_id: "21560", name: "Annella Way @ Rory Way", lat: 38.13417, lon: -85.671555, times: ["6:52 PM", "7:22 PM", "8:07 PM", "9:07 PM", "10:10 PM", "5:20 AM", "5:53 AM", "6:22 AM"] },
+  { stop_id: "21565", name: "Annella Way @ 8102", lat: 38.132007, lon: -85.671622, times: ["6:53 PM", "7:23 PM", "8:08 PM", "9:08 PM", "10:11 PM", "5:20 AM", "5:53 AM", "6:22 AM"] },
+  { stop_id: "21570", name: "Annella Way @ Famous Way", lat: 38.130829, lon: -85.670929, times: ["6:53 PM", "7:23 PM", "8:08 PM", "9:08 PM", "10:11 PM", "5:20 AM", "5:53 AM", "6:22 AM"] },
+  { stop_id: "21575", name: "Siesta Way @ Famous Way", lat: 38.130707, lon: -85.672149, times: ["6:53 PM", "7:23 PM", "8:08 PM", "9:08 PM", "10:11 PM", "5:21 AM", "5:54 AM", "6:23 AM"] },
+  { stop_id: "21580", name: "St Rita @ Siesta Way", lat: 38.131409, lon: -85.673139, times: ["6:54 PM", "7:24 PM", "8:09 PM", "9:09 PM", "10:12 PM", "5:21 AM", "5:54 AM", "6:23 AM"] },
+  { stop_id: "21585", name: "St Rita @ Smithton", lat: 38.130896, lon: -85.674604, times: ["6:54 PM", "7:24 PM", "8:09 PM", "9:09 PM", "10:12 PM", "5:21 AM", "5:54 AM", "6:23 AM"] },
+  { stop_id: "21595", name: "St Rita @ Linda", lat: 38.129946, lon: -85.67734, times: ["6:54 PM", "7:24 PM", "8:09 PM", "9:09 PM", "10:12 PM", "5:22 AM", "5:55 AM", "6:24 AM"] },
+  { stop_id: "21600", name: "St Rita @ Newstead", lat: 38.129275, lon: -85.678765, times: ["6:55 PM", "7:25 PM", "8:10 PM", "9:10 PM", "10:13 PM", "5:22 AM", "5:55 AM", "6:24 AM"] },
+  { stop_id: "21605", name: "St Rita @ Preston", lat: 38.128632, lon: -85.680745, times: ["6:55 PM", "7:25 PM", "8:10 PM", "9:10 PM", "10:13 PM", "5:22 AM", "5:55 AM", "6:24 AM"] },
+  { stop_id: "21610", name: "Preston @ Trio", lat: 38.129845, lon: -85.681866, times: ["6:56 PM", "7:26 PM", "8:11 PM", "9:11 PM", "10:14 PM", "5:23 AM", "5:56 AM", "6:25 AM"] },
+  { stop_id: "21615", name: "Preston @ Serenity Hope Dr", lat: 38.131723, lon: -85.682899, times: ["6:56 PM", "7:26 PM", "8:11 PM", "9:11 PM", "10:14 PM", "5:23 AM", "5:56 AM", "6:25 AM"] },
+  { stop_id: "21200", name: "Preston Hwy @ Blue Lick", lat: 38.133367, lon: -85.683842, times: ["6:57 PM", "7:27 PM", "8:12 PM", "9:12 PM", "10:15 PM", "5:24 AM", "5:57 AM", "6:26 AM"] },
+  { stop_id: "21630", name: "Preston @ Okolona Terrace", lat: 38.136557, lon: -85.685569, times: ["6:57 PM", "7:27 PM", "8:12 PM", "9:12 PM", "10:15 PM", "5:24 AM", "5:57 AM", "6:26 AM"] },
+  { stop_id: "21635", name: "Preston @ Outer Loop", lat: 38.138883, lon: -85.686787, times: ["6:58 PM", "7:28 PM", "8:13 PM", "9:13 PM", "10:16 PM", "5:25 AM", "5:58 AM", "6:27 AM"] },
+  { stop_id: "21640", name: "Preston @ Bates", lat: 38.140514, lon: -85.687744, times: ["6:59 PM", "7:29 PM", "8:14 PM", "9:14 PM", "10:17 PM", "5:26 AM", "5:59 AM", "6:28 AM"] },
+  { stop_id: "21645", name: "Preston @ Huntington", lat: 38.141682, lon: -85.688378, times: ["6:59 PM", "7:29 PM", "8:14 PM", "9:14 PM", "10:17 PM", "5:26 AM", "5:59 AM", "6:28 AM"] },
+  { stop_id: "21650", name: "Preston @ Lipps", lat: 38.142578, lon: -85.688908, times: ["6:59 PM", "7:29 PM", "8:14 PM", "9:14 PM", "10:17 PM", "5:26 AM", "5:59 AM", "6:28 AM"] },
+  { stop_id: "21655", name: "Preston @ McCawley", lat: 38.144716, lon: -85.690027, times: ["7:00 PM", "7:30 PM", "8:15 PM", "9:15 PM", "10:18 PM", "5:27 AM", "6:00 AM", "6:29 AM"] },
+  { stop_id: "21660", name: "Preston @ Canal", lat: 38.14633, lon: -85.690953, times: ["7:00 PM", "7:30 PM", "8:15 PM", "9:15 PM", "10:18 PM", "5:27 AM", "6:00 AM", "6:29 AM"] },
+  { stop_id: "21665", name: "Preston @ Oaklawn", lat: 38.148837, lon: -85.692332, times: ["7:01 PM", "7:31 PM", "8:16 PM", "9:16 PM", "10:19 PM", "5:28 AM", "6:01 AM", "6:30 AM"] },
+  { stop_id: "21675", name: "Preston @ Tower", lat: 38.151326, lon: -85.693716, times: ["7:02 PM", "7:32 PM", "8:17 PM", "9:17 PM", "10:20 PM", "5:29 AM", "6:02 AM", "6:31 AM"] },
+  { stop_id: "21680", name: "Preston @ Old Fern Valley", lat: 38.154903, lon: -85.695745, times: ["7:03 PM", "7:33 PM", "8:18 PM", "9:18 PM", "10:21 PM", "5:30 AM", "6:03 AM", "6:32 AM"] },
 ]
 
-      // Add route line
       map.addSource('route-line', {
         type: 'geojson',
         data: {
@@ -802,7 +690,7 @@ const stops = [
           properties: {},
           geometry: {
             type: 'LineString',
-            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]]) // Convert lat/lon to lon/lat
+            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]])
           }
         }
       });
@@ -812,24 +700,26 @@ const stops = [
         type: 'line',
         source: 'route-line',
         paint: {
-          'line-color': 'var(--mf-blue)',
+          // NOTE: MapLibre expects a literal color string, not CSS var().
+          // If you want mf-blue, you must hardcode the hex.
+          'line-color': '#1E90FF',
           'line-width': 4,
           'line-opacity': 0.7
         }
       });
 
-      // Fit map to route bounds (but maintain minimum zoom level)
       const bounds = new maplibregl.LngLatBounds();
       shapeOutbound.forEach(coord => bounds.extend([coord[1], coord[0]]));
       map.fitBounds(bounds, { padding: 20, maxZoom: 12 });
 
-      // Add stops
-      const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+      // Times highlight uses browser local time; if you want city TZ here we can inject CITY_TZ later.
+      const nowLocal = new Date();
+      const nowMins = nowLocal.getHours() * 60 + nowLocal.getMinutes();
 
       stops.forEach(stop => {
         let highlightedTimes = [];
         let foundNext = false;
+
         stop.times.forEach(timeStr => {
           let cleanTime = timeStr.trim();
           let [h, m] = cleanTime.split(":");
@@ -845,7 +735,6 @@ const stops = [
           }
         });
 
-        // Create stop marker element
         const stopElement = document.createElement('div');
         stopElement.style.width = '12px';
         stopElement.style.height = '12px';
@@ -854,12 +743,9 @@ const stops = [
         stopElement.style.border = '2px solid var(--mf-blue)';
         stopElement.style.opacity = '0.9';
 
-        const stopMarker = new maplibregl.Marker({
-          element: stopElement
-        });
-        stopMarker.setLngLat([stop.lon, stop.lat]);
-        
-        // Create popup content
+        const stopMarker = new maplibregl.Marker({ element: stopElement })
+          .setLngLat([stop.lon, stop.lat]);
+
         const popupContent = document.createElement('div');
         popupContent.innerHTML = `
           <div style='border:1px solid var(--mf-blue); border-radius:8px; padding:10px; background:#222; color:#fff;'>
@@ -868,67 +754,10 @@ const stops = [
             ${highlightedTimes.join("<br>") || 'No scheduled times'}
           </div>
         `;
-        
-        const popup = new maplibregl.Popup().setDOMContent(popupContent);
-        stopMarker.setPopup(popup);
+
+        stopMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent));
         stopMarker.addTo(map);
       });
-    });
-
-    // Live bus tracking
-    let busMarkers = {};
-    async function fetchAndDisplay() {
-      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
-      const data = await res.json();
-      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
-
-      // Remove existing bus markers
-      Object.values(busMarkers).forEach(marker => marker.remove());
-      busMarkers = {};
-      
-      if (!buses.length) return;
-
-      buses.forEach(bus => {
-        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
-        
-        // Create bus marker element
-        const busElement = document.createElement('div');
-        busElement.style.textAlign = 'center';
-        busElement.innerHTML = `
-          <div style="background:var(--mf-blue);color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
-          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid var(--mf-blue);margin:auto;"></div>
-        `;
-
-        const busMarker = new maplibregl.Marker({
-          element: busElement
-        });
-        busMarker.setLngLat([bus.longitude, bus.latitude]);
-        
-        // Create popup for bus
-        const popupContent = document.createElement('div');
-        popupContent.innerHTML = `
-          <div style='border:2px solid var(--mf-blue); border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
-            <div style='text-align:center; margin-bottom:8px;'>
-              <div style='background:var(--mf-blue);color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
-            </div>
-            <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNumber}</div>
-            <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
-            <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
-            <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
-          </div>
-        `;
-        
-        const popup = new maplibregl.Popup().setDOMContent(popupContent);
-        busMarker.setPopup(popup);
-        busMarker.addTo(map);
-        busMarkers[bus.vehicleID] = busMarker;
-      });
-    }
-
-    // Start bus tracking after map loads
-    map.on('load', () => {
-      fetchAndDisplay();
-      setInterval(fetchAndDisplay, 15000);
     });
   </script>
 
@@ -942,7 +771,6 @@ const stops = [
 
 <script>
 // ---- Favorite Star Dropdown: Auto-detect route info, menu UI ----
-
 function getRouteInfoFromPage() {
   let routeNumber = "";
   let routeType = "";
@@ -953,29 +781,20 @@ function getRouteInfoFromPage() {
     let match = titleEl.textContent.match(/Route\s+(\d+)[^\d]?/i);
     if (match) routeNumber = match[1];
   }
-  let typeEl = document.getElementById('route-type');
-  if (typeEl) {
-    routeType = typeEl.textContent.trim().toLowerCase();
-  }
+
   routeLink = window.location.pathname + window.location.search;
+  if (!routeLink) routeLink = window.location.href;
 
   if (!routeNumber) {
     let titleMatch = document.title.match(/Route\s+(\d+)/i);
     if (titleMatch) routeNumber = titleMatch[1];
   }
-  if (!routeType) {
-    routeType = document.body.className.includes('rail') ? 'rail' : 
-                document.body.className.includes('max') ? 'max' :
-                document.body.className.includes('streetcar') ? 'streetcar' :
-                'bus';
-  }
-  if (!routeLink) routeLink = window.location.href;
   if (!routeNumber) return null;
-  return {
-    number: routeNumber,
-    link: routeLink,
-    type: routeType
-  };
+
+  // Default type if not present in template
+  routeType = "bus";
+
+  return { number: routeNumber, link: routeLink, type: routeType };
 }
 
 function updateStarIcon() {
@@ -986,19 +805,16 @@ function updateStarIcon() {
   const btn = document.getElementById('fav-star');
   if (btn) btn.textContent = isFavorite ? "★" : "☆";
 
-  // Update dropdown button label
   const ddBtn = document.getElementById('fav-dropdown-btn');
   if (ddBtn) ddBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
 }
 
-// Show/hide dropdown on star click
 function showFavDropdown(e) {
   e.stopPropagation();
   const dd = document.getElementById('fav-dropdown');
   dd.style.display = dd.style.display === "block" ? "none" : "block";
   updateStarIcon();
 
-  // When dropdown opens, add outside click listener
   if (dd.style.display === "block") {
     setTimeout(() => {
       document.addEventListener('click', closeFavDropdown);
@@ -1006,7 +822,6 @@ function showFavDropdown(e) {
   }
 }
 
-// Actually add/remove on dropdown click
 document.addEventListener("DOMContentLoaded", function() {
   updateStarIcon();
   const ddBtn = document.getElementById('fav-dropdown-btn');
@@ -1030,7 +845,6 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// Close dropdown if clicked anywhere else
 function closeFavDropdown(e) {
   const dropdown = document.getElementById('fav-dropdown');
   if (!dropdown.contains(e.target)) {
@@ -1038,7 +852,6 @@ function closeFavDropdown(e) {
     document.removeEventListener('click', closeFavDropdown);
   }
 }
-
 </script>
 </body>
 </html>
