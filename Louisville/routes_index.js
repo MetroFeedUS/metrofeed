@@ -104,6 +104,12 @@ const ROUTES = {
             "dir1": "Inbound"
       },
       {
+            "id": "41",
+            "label": "41 \u2013 In Town Shopper",
+            "dir0": "Outbound",
+            "dir1": "Inbound"
+      },
+      {
             "id": "43",
             "label": "43 \u2013 Portland Poplar Level",
             "dir0": "Outbound",
@@ -119,6 +125,12 @@ const ROUTES = {
             "id": "72",
             "label": "72 \u2013 Clarksville",
             "dir0": "Outbound",
+            "dir1": "Inbound"
+      },
+      {
+            "id": "83",
+            "label": "83 \u2013 Southern Indiana Shopper",
+            "dir0": "",
             "dir1": "Inbound"
       },
       {
