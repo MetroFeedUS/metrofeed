@@ -1,6 +1,6 @@
 /* Auto-generated: mastermap.js (data core) */
 // City: Louisville
-// Generated: 2026-01-15T04:10:04.742880-05:00
+// Generated: 2026-01-15T05:10:04.655302-05:00
 
 const masterRoutes = [
   {
