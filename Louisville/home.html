@@ -1253,6 +1253,8 @@
   // === CITY CONFIGURATION ===
   // Config already loaded above
   const CITY_CONFIG = CITY_CONFIG_TEMP || getCityConfig();
+  // Make CITY_CONFIG globally available for routeOverlay.js
+  window.CITY_CONFIG = CITY_CONFIG;
   
   // Update dynamic city name placeholders in the page
   document.addEventListener('DOMContentLoaded', function() {
@@ -2776,11 +2778,94 @@
   }
   
   // Enhanced function to fetch and display buses for multiple routes
+  /**
+   * Fetch buses from the appropriate API based on city configuration
+   * @returns {Promise<Array>} Array of bus objects in standardized format
+   */
+  async function fetchBusesFromAPI() {
+    const busApiType = CITY_CONFIG.busApiType || 'trimet';
+    
+    if (busApiType === 'tarc-gtfs-rt') {
+      // TARC GTFS-RT format
+      try {
+        const gtfsRtUrl = CITY_CONFIG.gtfsRtUrl || CITY_CONFIG.busApi;
+        if (!gtfsRtUrl) {
+          console.error('[fetchBusesFromAPI] No GTFS-RT URL configured');
+          return [];
+        }
+        
+        // Try JSON format first (some GTFS-RT endpoints support ?format=json)
+        let res = await fetch(gtfsRtUrl + (gtfsRtUrl.includes('?') ? '&' : '?') + 'format=json');
+        let data;
+        
+        // Check if response is JSON
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          data = await res.json();
+        } else {
+          // If not JSON, try without format parameter (might be protobuf)
+          res = await fetch(gtfsRtUrl);
+          const buffer = await res.arrayBuffer();
+          
+          // Try to parse as JSON (some endpoints return JSON by default)
+          try {
+            const text = new TextDecoder().decode(buffer);
+            data = JSON.parse(text);
+          } catch (e) {
+            // If not JSON, it's protobuf - we'll need a library for that
+            console.warn('[fetchBusesFromAPI] GTFS-RT appears to be protobuf format. JSON parsing failed.');
+            console.warn('[fetchBusesFromAPI] Consider using a protobuf library like protobufjs');
+            return [];
+          }
+        }
+        
+        // Parse GTFS-RT FeedMessage format
+        // GTFS-RT structure: { entity: [{ id, vehicle: { trip, position, vehicle: { id, label } } }] }
+        const vehicles = [];
+        if (data.entity && Array.isArray(data.entity)) {
+          data.entity.forEach(entity => {
+            if (entity.vehicle && entity.vehicle.position && entity.vehicle.trip) {
+              const vehicle = entity.vehicle;
+              const trip = vehicle.trip;
+              const position = vehicle.position;
+              
+              // Map GTFS-RT format to standardized format
+              vehicles.push({
+                vehicleID: vehicle.vehicle?.id || vehicle.vehicle?.label || entity.id || 'Unknown',
+                routeNumber: trip.routeId || null,
+                direction: trip.directionId !== undefined ? parseInt(trip.directionId) : null,
+                latitude: position.latitude || null,
+                longitude: position.longitude || null,
+                blockID: trip.tripId || null,
+                speed: null, // GTFS-RT doesn't always include speed
+                tripId: trip.tripId || null,
+                currentStopSequence: position.currentStopSequence || null
+              });
+            }
+          });
+        }
+        
+        return vehicles;
+      } catch (error) {
+        console.error('[fetchBusesFromAPI] Error fetching GTFS-RT data:', error);
+        return [];
+      }
+    } else {
+      // TriMet API format (default)
+      try {
+        const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
+        const data = await res.json();
+        return data.resultSet.vehicle || [];
+      } catch (error) {
+        console.error('[fetchBusesFromAPI] Error fetching TriMet data:', error);
+        return [];
+      }
+    }
+  }
+
   async function fetchAndDisplayBuses(routesToTrack = null) {
     try {
-      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
-      const data = await res.json();
-      const allBuses = data.resultSet.vehicle || [];
+      const allBuses = await fetchBusesFromAPI();
       
       // Store for debugging
       window.lastBusData = { resultSet: { vehicle: allBuses } };
@@ -2865,7 +2950,7 @@
           
           // Create markers for OTP buses
           routeBuses.forEach(bus => {
-            if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+            if (!bus.latitude || !bus.longitude) return; // blockID is optional for GTFS-RT
             
             // Use OTP route color
             const routeColor = route.color || getRouteColor(route.mode);
@@ -2896,7 +2981,7 @@
                 <div style='margin-bottom:6px;'><strong>${translateText('route')}:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
                 <div style='margin-bottom:6px;'><strong>${translateText('direction')}:</strong> ${bus.direction}</div>
                 <div style='margin-bottom:6px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
-                <div style='margin-bottom:6px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:6px;'><strong>${translateText('block')}:</strong> ${bus.blockID || bus.tripId || 'N/A'}</div>
                 <div style='color:#1E90FF; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                 <div style='margin-top:10px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
                   <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${trimetRouteNumber}", "direction:", ${bus.direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${trimetRouteNumber}", ${bus.direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
@@ -2928,7 +3013,7 @@
         // Group buses by route for better organization
         const busesByRoute = {};
         allBuses.forEach(bus => {
-          if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+          if (!bus.latitude || !bus.longitude) return; // blockID is optional for GTFS-RT
           
           const routeKey = `${bus.routeNumber}-${bus.direction}`;
           if (!busesByRoute[routeKey]) {
@@ -2959,7 +3044,7 @@
                 <div style='margin-bottom:4px;'><strong>${translateText('route')}:</strong> ${routeNumber}</div>
                 <div style='margin-bottom:4px;'><strong>${translateText('direction')}:</strong> ${direction}</div>
                 <div style='margin-bottom:4px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
-                <div style='margin-bottom:4px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:4px;'><strong>${translateText('block')}:</strong> ${bus.blockID || bus.tripId || 'N/A'}</div>
                 <div style='margin-top:8px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
                   <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${routeNumber}", "direction:", ${direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${routeNumber}", ${direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
                   <button onclick='event.stopPropagation(); const routeData = masterRoutes && masterRoutes.find(r => String(r.route_id) === "${routeNumber}" && r.direction_id === ${direction}); if(routeData && typeof showRouteScheduleModal === "function") { showRouteScheduleModal(routeData); } else { console.error("Route data or showRouteScheduleModal not available"); }' style='background:${routeColor};color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Search all stop times</button>
@@ -4162,7 +4247,9 @@
       routePageUrl: routePageUrl,
       fitBounds: false, // Don't auto-fit on main map
       apiKey: apiKey, // Pass API key for bus tracking
-      trackBuses: true // Enable bus tracking for route overlay
+      trackBuses: true, // Enable bus tracking for route overlay
+      busApiType: CITY_CONFIG.busApiType, // Pass bus API type
+      gtfsRtUrl: CITY_CONFIG.gtfsRtUrl || CITY_CONFIG.busApi // Pass GTFS-RT URL if available
     });
     
     window.activeRouteOverlays[overlayKey] = overlay;

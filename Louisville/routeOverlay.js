@@ -629,14 +629,78 @@ function attachRouteToMap(map, routeId, directionId, options) {
             return;
           }
           
-          const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNum}&appID=${apiKey}&json=true`);
-          const data = await res.json();
-          const allBuses = data.resultSet.vehicle || [];
+          // Get bus API configuration
+          const busApiType = (options.busApiType || (typeof window !== 'undefined' && window.CITY_CONFIG && window.CITY_CONFIG.busApiType)) || 'trimet';
+          let allBuses = [];
+          
+          if (busApiType === 'tarc-gtfs-rt') {
+            // TARC GTFS-RT format
+            try {
+              const gtfsRtUrl = (options.gtfsRtUrl || (typeof window !== 'undefined' && window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl)) || 
+                                (typeof window !== 'undefined' && window.CITY_CONFIG && window.CITY_CONFIG.busApi);
+              if (!gtfsRtUrl) {
+                console.error('[attachRouteToMap] No GTFS-RT URL configured');
+                return;
+              }
+              
+              // Try JSON format first
+              let res = await fetch(gtfsRtUrl + (gtfsRtUrl.includes('?') ? '&' : '?') + 'format=json');
+              let data;
+              
+              const contentType = res.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                data = await res.json();
+              } else {
+                res = await fetch(gtfsRtUrl);
+                const buffer = await res.arrayBuffer();
+                try {
+                  const text = new TextDecoder().decode(buffer);
+                  data = JSON.parse(text);
+                } catch (e) {
+                  console.warn('[attachRouteToMap] GTFS-RT appears to be protobuf format. JSON parsing failed.');
+                  return;
+                }
+              }
+              
+              // Parse GTFS-RT format
+              if (data.entity && Array.isArray(data.entity)) {
+                data.entity.forEach(entity => {
+                  if (entity.vehicle && entity.vehicle.position && entity.vehicle.trip) {
+                    const vehicle = entity.vehicle;
+                    const trip = vehicle.trip;
+                    const position = vehicle.position;
+                    
+                    allBuses.push({
+                      vehicleID: vehicle.vehicle?.id || vehicle.vehicle?.label || entity.id || 'Unknown',
+                      routeNumber: trip.routeId || null,
+                      direction: trip.directionId !== undefined ? parseInt(trip.directionId) : null,
+                      latitude: position.latitude || null,
+                      longitude: position.longitude || null,
+                      blockID: trip.tripId || null,
+                      speed: null,
+                      tripId: trip.tripId || null
+                    });
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('[attachRouteToMap] Error fetching GTFS-RT data:', error);
+              return;
+            }
+          } else {
+            // TriMet API format (default)
+            const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNum}&appID=${apiKey}&json=true`);
+            const data = await res.json();
+            allBuses = data.resultSet.vehicle || [];
+          }
           
           // Filter buses for this route and direction
-          const routeBuses = allBuses.filter(v => 
-            v.routeNumber == routeNum && v.direction == directionId
-          );
+          // GTFS-RT uses routeId which might match route_id, so try both routeNum and routeId
+          const routeBuses = allBuses.filter(v => {
+            const routeMatch = v.routeNumber == routeNum || String(v.routeNumber) === String(routeId);
+            const directionMatch = v.direction == directionId || v.direction === directionId;
+            return routeMatch && directionMatch;
+          });
           
           // Remove old bus markers from map and overlayElements
           Object.keys(busMarkers).forEach(vehicleId => {
@@ -654,7 +718,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           
           // Create markers for buses (matching "All Buses Mode" style)
           routeBuses.forEach(bus => {
-            if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+            if (!bus.latitude || !bus.longitude) return; // blockID is optional for GTFS-RT
             
             // Create bus marker element matching createBusMarker style
             const busElement = document.createElement('div');
@@ -681,7 +745,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                 <div style='margin-bottom:4px;'><strong>Direction:</strong> ${bus.direction}</div>
                 <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
-                <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID || bus.tripId || 'N/A'}</div>
               </div>
             `;
             
