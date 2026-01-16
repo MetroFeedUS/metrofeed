@@ -69,7 +69,7 @@ const CITIES = {
       north: 38.5,
       south: 38.0,
       east: -85.4,
-      west: -85.9
+      west: -85.95  // Widened west side by 10% (was -85.9, now -85.95)
     },
     // Map Tile Styles (base map API) - Louisville TileServer-GL (custom hosted OpenStreetMap)
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
