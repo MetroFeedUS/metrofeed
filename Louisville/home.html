@@ -345,11 +345,14 @@
     /* Route Schedule Modal */
     .route-schedule-modal { max-width: 80vw; width: 80vw; max-height: 90vh; overflow-y: auto; }
     .route-schedule-modal h2 { margin-bottom: 1rem; }
-    .route-schedule-dropdown { width: 100%; padding: 0.75rem; margin-bottom: 1rem; background: #1e1e1e; color: #fff; border: 2px solid #1E90FF; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+    .route-schedule-dropdown-wrapper { position: relative; margin-bottom: 1rem; }
+    .route-schedule-dropdown { width: 100%; padding: 0.75rem; background: #1e1e1e; color: #fff; border: 2px solid #1E90FF; border-radius: 8px; font-size: 1rem; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; padding-right: 2.5rem; }
     .route-schedule-dropdown:disabled { opacity: 0.5; cursor: not-allowed; }
+    .route-schedule-dropdown-wrapper::after { content: '▼'; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: #1E90FF; font-size: 0.75rem; }
     .route-schedule-times { margin-top: 1rem; padding: 1rem; background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; min-height: 100px; }
     .route-schedule-times-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.5rem; }
     .route-schedule-time { padding: 0.5rem; background: #0d0d0d; border: 1px solid #1E90FF; border-radius: 4px; text-align: center; color: #fff; }
+    .route-schedule-day-divider { grid-column: 1 / -1; padding: 0.5rem; margin: 0.5rem 0; background: #1E90FF; color: #0d0d0d; text-align: center; font-weight: bold; border-radius: 4px; font-size: 0.9rem; }
     .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid #1E90FF; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
     #installPrompt { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 1.5rem; text-align: center; border: 2px solid #1E90FF; border-radius: 12px; max-width: 390px; width: 95vw; min-width: 0; z-index: 10000; box-shadow: 0 0 10px #1E90FF; margin: 0; box-sizing: border-box; }
     #installPrompt button { display: block; margin: 0.5rem auto; padding: 0.6rem 1.2rem; background-color: #1E90FF; color: #0d0d0d; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 90%; max-width: 240px; }
@@ -1195,18 +1198,22 @@
       
       <!-- Day Dropdown -->
       <label style="display: block; color: #fff; margin-bottom: 0.5rem; font-weight: bold;">Select Day:</label>
-      <select id="routeScheduleDay" class="route-schedule-dropdown" onchange="updateRouteScheduleStops()">
-        <option value="">-- Select Day --</option>
-        <option value="weekday">Weekday</option>
-        <option value="saturday">Saturday</option>
-        <option value="sunday">Sunday</option>
-      </select>
+      <div class="route-schedule-dropdown-wrapper">
+        <select id="routeScheduleDay" class="route-schedule-dropdown" onchange="updateRouteScheduleStops()">
+          <option value="">-- Select Day --</option>
+          <option value="weekday">Weekday</option>
+          <option value="saturday">Saturday</option>
+          <option value="sunday">Sunday</option>
+        </select>
+      </div>
       
       <!-- Stop Dropdown -->
       <label style="display: block; color: #fff; margin-bottom: 0.5rem; font-weight: bold; margin-top: 1rem;">Select Stop:</label>
-      <select id="routeScheduleStop" class="route-schedule-dropdown" disabled onchange="updateRouteScheduleTimes()">
-        <option value="">-- Select Stop First --</option>
-      </select>
+      <div class="route-schedule-dropdown-wrapper">
+        <select id="routeScheduleStop" class="route-schedule-dropdown" disabled onchange="updateRouteScheduleTimes()">
+          <option value="">-- Select Stop First --</option>
+        </select>
+      </div>
       
       <!-- Times Display -->
       <div id="routeScheduleTimes" class="route-schedule-times" style="display: none;">
@@ -4346,12 +4353,16 @@
       }
     }
     
-    // Convert times to 12-hour format and display
+    // Convert times to 12-hour format and display with next-day indicators
     timesGrid.innerHTML = '';
     if (times.length === 0) {
       timesGrid.innerHTML = '<div style="grid-column: 1 / -1; color: #888; text-align: center; padding: 1rem;">No times available for this stop</div>';
     } else {
-      times.forEach(timeStr => {
+      let prevHour = null;
+      let prevMinutes = null;
+      let addedDivider = false;
+      
+      times.forEach((timeStr, index) => {
         const time = String(timeStr).trim();
         if (!time) return;
         
@@ -4361,12 +4372,30 @@
         
         let h = parseInt(parts[0], 10);
         let m = parseInt(parts[1], 10);
+        const originalH = h; // Keep original for comparison
         
         if (isNaN(h) || isNaN(m)) return;
         
-        // Handle times > 24:00:00
+        // Handle times > 24:00:00 (next day in GTFS format)
         if (h >= 24) {
           h = h - 24;
+        }
+        
+        // Detect next-day transition: if hour decreases significantly (e.g., 23 -> 0, or 10 -> 4)
+        // This indicates we've wrapped to the next day
+        if (prevHour !== null && prevMinutes !== null && !addedDivider) {
+          const prevTotalMins = prevHour * 60 + prevMinutes;
+          const currTotalMins = h * 60 + m;
+          
+          // If time goes backwards significantly (more than 6 hours), it's likely next day
+          // Or if original hour was >= 24, it's definitely next day
+          if (originalH >= 24 || (prevTotalMins > currTotalMins && (prevTotalMins - currTotalMins) > 360)) {
+            const divider = document.createElement('div');
+            divider.className = 'route-schedule-day-divider';
+            divider.textContent = '→ Next Day';
+            timesGrid.appendChild(divider);
+            addedDivider = true;
+          }
         }
         
         // Convert to 12-hour format
@@ -4381,6 +4410,9 @@
         timeDiv.className = 'route-schedule-time';
         timeDiv.textContent = displayTime;
         timesGrid.appendChild(timeDiv);
+        
+        prevHour = h;
+        prevMinutes = m;
       });
     }
     
