@@ -144,14 +144,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       timeZone: agencyTimezone,
       hour: "numeric",
       minute: "numeric",
-      hour12: false,
-      day: "numeric"
+      hour12: false
     });
     const parts = timeFormatter.formatToParts(now);
     const hour = parseInt(parts.find(p => p.type === "hour").value, 10);
     const minute = parseInt(parts.find(p => p.type === "minute").value, 10);
     const nowMins = hour * 60 + minute;
-    const currentDay = now.getDay(); // Use local day (should match timezone day)
+    
+    // Get current day in the timezone
+    const dayFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: agencyTimezone,
+      weekday: "long"
+    });
+    const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
     
     // Determine which schedule bucket to use
     let scheduleBucket = "weekday";
@@ -232,19 +237,36 @@ function attachRouteToMap(map, routeId, directionId, options) {
         });
       });
 
-      // Sort all times by scheduled minutes
+      // Sort all times by adjusted minutes (schedMins contains adjusted value)
       allTimes.sort((a, b) => a.schedMins - b.schedMins);
       
-      // Find the next upcoming time (first time >= nowMins)
+      // Find the next upcoming time
+      // Priority: times today (originalMins >= nowMins) over times tomorrow (adjustedMins >= 1440)
       let nextTimeIndex = -1;
+      
+      // First pass: look for times today that are in the future
       for (let i = 0; i < allTimes.length; i++) {
-        if (allTimes[i].schedMins >= nowMins) {
+        const timeData = allTimes[i];
+        // If this is a today time (originalMins < 1440) and it's in the future
+        if (timeData.originalMins < 1440 && timeData.originalMins >= nowMins) {
           nextTimeIndex = i;
           break;
         }
       }
       
-      // If no future time found, use the first time (next day)
+      // Second pass: if no today time found, use first tomorrow time
+      if (nextTimeIndex === -1) {
+        for (let i = 0; i < allTimes.length; i++) {
+          const timeData = allTimes[i];
+          // If this is a tomorrow time (originalMins was in the past, so adjustedMins >= 1440)
+          if (timeData.schedMins >= 1440) {
+            nextTimeIndex = i;
+            break;
+          }
+        }
+      }
+      
+      // Fallback: use first time if nothing found
       if (nextTimeIndex === -1 && allTimes.length > 0) {
         nextTimeIndex = 0;
       }
@@ -718,3 +740,4 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
 // Expose globally for both route pages and main map
 window.attachRouteToMap = attachRouteToMap;
+

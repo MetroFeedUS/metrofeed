@@ -562,15 +562,24 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Content wrapper
       const contentDiv = document.createElement("div");
       contentDiv.className = "route-info-content";
+      
+      // Store routeData globally for modal access
+      if (!window.routeDataCache) {
+        window.routeDataCache = {};
+      }
+      const cacheKey = `${routeId}-${directionId}`;
+      window.routeDataCache[cacheKey] = routeData;
+      
       contentDiv.innerHTML = `
         <div style="margin-bottom:8px; padding-right:20px;">
           <strong style="color:#1E90FF;font-size:1em;">${routeTitle}</strong>
         </div>
-        <a href="${options.routePageUrl}"
-           style="color:#1E90FF;text-decoration:none;font-weight:bold;display:inline-block;margin-top:8px;font-size:0.9em;"
-           target="_blank">
-          Open full route page →
-        </a>
+        <button onclick="if(typeof showRouteScheduleModal === 'function') { const routeData = window.routeDataCache && window.routeDataCache['${cacheKey}']; if(routeData) { showRouteScheduleModal(routeData); } else { console.error('Route data not found in cache'); } } else { console.error('showRouteScheduleModal not available'); }"
+           style="color:#1E90FF;background:transparent;border:1px solid #1E90FF;border-radius:6px;padding:6px 12px;font-weight:bold;cursor:pointer;display:inline-block;margin-top:8px;font-size:0.9em;transition:all 0.2s;"
+           onmouseover="this.style.background='#1E90FF';this.style.color='#0d0d0d';"
+           onmouseout="this.style.background='transparent';this.style.color='#1E90FF';">
+          Search all stop times
+        </button>
       `;
       
       // Collapsed route number (circle display)

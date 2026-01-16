@@ -342,6 +342,14 @@
     .mf-actions { display: flex; gap: 0.65rem; margin-bottom: 1.1rem; justify-content: center; flex-wrap: wrap; }
     .mf-btn { flex: 1; background: #0d0d0d; color: #1E90FF; border: 2px solid #fff; font-size: 1.01rem; border-radius: 8px; padding: 0.68rem 0.5rem; font-weight: bold; cursor: pointer; transition: background .15s, color .12s, border .18s; margin-bottom: 2px; min-width: 105px; outline: none; box-shadow: 0 0 6px #1E90FFaa;}
     .mf-btn:hover, .mf-btn:focus { background: #1E90FF; color: #0d0d0d; border-color: #fff; }
+    /* Route Schedule Modal */
+    .route-schedule-modal { max-width: 80vw; width: 80vw; max-height: 90vh; overflow-y: auto; }
+    .route-schedule-modal h2 { margin-bottom: 1rem; }
+    .route-schedule-dropdown { width: 100%; padding: 0.75rem; margin-bottom: 1rem; background: #1e1e1e; color: #fff; border: 2px solid #1E90FF; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+    .route-schedule-dropdown:disabled { opacity: 0.5; cursor: not-allowed; }
+    .route-schedule-times { margin-top: 1rem; padding: 1rem; background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; min-height: 100px; }
+    .route-schedule-times-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.5rem; }
+    .route-schedule-time { padding: 0.5rem; background: #0d0d0d; border: 1px solid #1E90FF; border-radius: 4px; text-align: center; color: #fff; }
     .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid #1E90FF; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
     #installPrompt { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 1.5rem; text-align: center; border: 2px solid #1E90FF; border-radius: 12px; max-width: 390px; width: 95vw; min-width: 0; z-index: 10000; box-shadow: 0 0 10px #1E90FF; margin: 0; box-sizing: border-box; }
     #installPrompt button { display: block; margin: 0.5rem auto; padding: 0.6rem 1.2rem; background-color: #1E90FF; color: #0d0d0d; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 90%; max-width: 240px; }
@@ -1171,6 +1179,39 @@
       </p>
       <div style="width: 100%; max-width: 100%; background: #1a1a1a; border-radius: 8px; padding: 1.5rem; border: 1px solid #333; text-align: center; box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 200px;">
         <img id="sponsorModalImage" src="sponsor-ad-placeholder.png" alt="Sponsor" style="max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; display: block;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- -- ROUTE SCHEDULE MODAL -- -->
+<div id="routeScheduleModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal route-schedule-modal">
+    <button onclick="hideRouteScheduleModal()" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; z-index: 10; transition: background-color 0.2s ease;" title="Close" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+      ×
+    </button>
+    <div style="padding: 1.5rem;">
+      <h2 id="routeScheduleTitle" style="color: #1E90FF; margin-bottom: 1rem; font-size: 1.5rem;">Route Schedule</h2>
+      
+      <!-- Day Dropdown -->
+      <label style="display: block; color: #fff; margin-bottom: 0.5rem; font-weight: bold;">Select Day:</label>
+      <select id="routeScheduleDay" class="route-schedule-dropdown" onchange="updateRouteScheduleStops()">
+        <option value="">-- Select Day --</option>
+        <option value="weekday">Weekday</option>
+        <option value="saturday">Saturday</option>
+        <option value="sunday">Sunday</option>
+      </select>
+      
+      <!-- Stop Dropdown -->
+      <label style="display: block; color: #fff; margin-bottom: 0.5rem; font-weight: bold; margin-top: 1rem;">Select Stop:</label>
+      <select id="routeScheduleStop" class="route-schedule-dropdown" disabled onchange="updateRouteScheduleTimes()">
+        <option value="">-- Select Stop First --</option>
+      </select>
+      
+      <!-- Times Display -->
+      <div id="routeScheduleTimes" class="route-schedule-times" style="display: none;">
+        <h3 style="color: #1E90FF; margin-bottom: 0.75rem; font-size: 1.1rem;">Stop Times:</h3>
+        <div id="routeScheduleTimesGrid" class="route-schedule-times-grid"></div>
       </div>
     </div>
   </div>
@@ -2852,7 +2893,7 @@
                 <div style='color:#1E90FF; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                 <div style='margin-top:10px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
                   <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${trimetRouteNumber}", "direction:", ${bus.direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${trimetRouteNumber}", ${bus.direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>${translateText('view_route_details')}</a>
+                  <button onclick='event.stopPropagation(); const routeData = masterRoutes && masterRoutes.find(r => String(r.route_id) === "${trimetRouteNumber}" && r.direction_id === ${bus.direction}); if(routeData && typeof showRouteScheduleModal === "function") { showRouteScheduleModal(routeData); } else { console.error("Route data or showRouteScheduleModal not available"); }' style='background:${routeColor};color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Search all stop times</button>
                 </div>
               </div>
             `;
@@ -2914,7 +2955,7 @@
                 <div style='margin-bottom:4px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
                 <div style='margin-top:8px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
                   <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${routeNumber}", "direction:", ${direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${routeNumber}", ${direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>${translateText('view_route_details')}</a>
+                  <button onclick='event.stopPropagation(); const routeData = masterRoutes && masterRoutes.find(r => String(r.route_id) === "${routeNumber}" && r.direction_id === ${direction}); if(routeData && typeof showRouteScheduleModal === "function") { showRouteScheduleModal(routeData); } else { console.error("Route data or showRouteScheduleModal not available"); }' style='background:${routeColor};color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Search all stop times</button>
                 </div>
               </div>
             `;
@@ -4145,6 +4186,218 @@
     window.activeRouteOverlays = {};
     console.log('[clearAllRouteOverlays] All route overlays cleared');
   };
+
+  // === SECTION: ROUTE SCHEDULE MODAL ===
+  // Modal for displaying weekly route schedules with progressive dropdowns
+  
+  let currentRouteScheduleData = null;
+  
+  /**
+   * Show the route schedule modal
+   * @param {Object} routeData - Route data object from masterRoutes (or routeId/directionId to look up)
+   */
+  window.showRouteScheduleModal = function(routeData) {
+    // If routeData is not an object, try to look it up
+    if (!routeData || typeof routeData !== 'object') {
+      console.error('[showRouteScheduleModal] Invalid route data provided');
+      return;
+    }
+    
+    // Ensure we have the route data
+    if (!routeData.stops && typeof masterRoutes !== 'undefined' && Array.isArray(masterRoutes)) {
+      // Try to find route data from masterRoutes
+      const found = masterRoutes.find(r => 
+        String(r.route_id) === String(routeData.route_id) && 
+        r.direction_id === routeData.direction_id
+      );
+      if (found) {
+        routeData = found;
+      }
+    }
+    
+    if (!routeData.stops) {
+      console.error('[showRouteScheduleModal] Route data missing stops array', routeData);
+      return;
+    }
+    
+    currentRouteScheduleData = routeData;
+    const modal = document.getElementById('routeScheduleModal');
+    const title = document.getElementById('routeScheduleTitle');
+    
+    if (!modal || !title) {
+      console.error('[showRouteScheduleModal] Modal elements not found');
+      return;
+    }
+    
+    // Set title
+    title.textContent = routeData.route_title || `Route ${routeData.route_number || routeData.route_id}`;
+    
+    // Reset dropdowns
+    const daySelect = document.getElementById('routeScheduleDay');
+    const stopSelect = document.getElementById('routeScheduleStop');
+    const timesDiv = document.getElementById('routeScheduleTimes');
+    
+    daySelect.value = '';
+    stopSelect.innerHTML = '<option value="">-- Select Stop First --</option>';
+    stopSelect.disabled = true;
+    timesDiv.style.display = 'none';
+    
+    // Show modal
+    modal.style.display = 'flex';
+  };
+  
+  /**
+   * Hide the route schedule modal
+   */
+  window.hideRouteScheduleModal = function() {
+    const modal = document.getElementById('routeScheduleModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+    currentRouteScheduleData = null;
+  };
+  
+  /**
+   * Update stop dropdown based on selected day
+   */
+  window.updateRouteScheduleStops = function() {
+    if (!currentRouteScheduleData) return;
+    
+    const daySelect = document.getElementById('routeScheduleDay');
+    const stopSelect = document.getElementById('routeScheduleStop');
+    const timesDiv = document.getElementById('routeScheduleTimes');
+    const selectedDay = daySelect.value;
+    
+    if (!selectedDay) {
+      stopSelect.innerHTML = '<option value="">-- Select Stop First --</option>';
+      stopSelect.disabled = true;
+      timesDiv.style.display = 'none';
+      return;
+    }
+    
+    // Get weeklyTimes or fallback to stops
+    const weeklyTimes = currentRouteScheduleData.weeklyTimes || {};
+    const dayTimes = weeklyTimes[selectedDay] || {};
+    
+    // If no weeklyTimes, use stops array
+    let stopsList = [];
+    if (Object.keys(dayTimes).length > 0) {
+      // Use weeklyTimes - get all stop IDs for this day
+      const stopIds = Object.keys(dayTimes);
+      // Match with stops array to get stop names
+      stopsList = currentRouteScheduleData.stops
+        .filter(stop => stopIds.includes(String(stop.stop_id)))
+        .map(stop => ({
+          stop_id: stop.stop_id,
+          name: stop.name
+        }));
+    } else if (currentRouteScheduleData.stops && currentRouteScheduleData.stops.length > 0) {
+      // Fallback to stops array
+      stopsList = currentRouteScheduleData.stops.map(stop => ({
+        stop_id: stop.stop_id,
+        name: stop.name
+      }));
+    }
+    
+    // Populate stop dropdown
+    stopSelect.innerHTML = '<option value="">-- Select Stop --</option>';
+    stopsList.forEach(stop => {
+      const option = document.createElement('option');
+      option.value = stop.stop_id;
+      option.textContent = stop.name || `Stop ${stop.stop_id}`;
+      stopSelect.appendChild(option);
+    });
+    
+    stopSelect.disabled = false;
+    timesDiv.style.display = 'none';
+  };
+  
+  /**
+   * Update times display based on selected stop
+   */
+  window.updateRouteScheduleTimes = function() {
+    if (!currentRouteScheduleData) return;
+    
+    const daySelect = document.getElementById('routeScheduleDay');
+    const stopSelect = document.getElementById('routeScheduleStop');
+    const timesDiv = document.getElementById('routeScheduleTimes');
+    const timesGrid = document.getElementById('routeScheduleTimesGrid');
+    
+    const selectedDay = daySelect.value;
+    const selectedStopId = stopSelect.value;
+    
+    if (!selectedDay || !selectedStopId) {
+      timesDiv.style.display = 'none';
+      return;
+    }
+    
+    // Get times for this stop and day
+    let times = [];
+    const weeklyTimes = currentRouteScheduleData.weeklyTimes || {};
+    
+    if (weeklyTimes[selectedDay] && weeklyTimes[selectedDay][selectedStopId]) {
+      // Use weeklyTimes
+      times = weeklyTimes[selectedDay][selectedStopId];
+    } else {
+      // Fallback to stop.times
+      const stop = currentRouteScheduleData.stops.find(s => String(s.stop_id) === String(selectedStopId));
+      if (stop && Array.isArray(stop.times)) {
+        times = stop.times;
+      }
+    }
+    
+    // Convert times to 12-hour format and display
+    timesGrid.innerHTML = '';
+    if (times.length === 0) {
+      timesGrid.innerHTML = '<div style="grid-column: 1 / -1; color: #888; text-align: center; padding: 1rem;">No times available for this stop</div>';
+    } else {
+      times.forEach(timeStr => {
+        const time = String(timeStr).trim();
+        if (!time) return;
+        
+        // Parse HH:MM:SS or HH:MM
+        const parts = time.split(':');
+        if (parts.length < 2) return;
+        
+        let h = parseInt(parts[0], 10);
+        let m = parseInt(parts[1], 10);
+        
+        if (isNaN(h) || isNaN(m)) return;
+        
+        // Handle times > 24:00:00
+        if (h >= 24) {
+          h = h - 24;
+        }
+        
+        // Convert to 12-hour format
+        let displayH = h;
+        const ampm = displayH >= 12 ? 'PM' : 'AM';
+        if (displayH > 12) displayH -= 12;
+        if (displayH === 0) displayH = 12;
+        const mStr = String(m).padStart(2, '0');
+        const displayTime = `${displayH}:${mStr} ${ampm}`;
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'route-schedule-time';
+        timeDiv.textContent = displayTime;
+        timesGrid.appendChild(timeDiv);
+      });
+    }
+    
+    timesDiv.style.display = 'block';
+  };
+  
+  // Close modal when clicking overlay
+  document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('routeScheduleModal');
+    if (modal) {
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          hideRouteScheduleModal();
+        }
+      });
+    }
+  });
 
   // === SECTION: BUS ROUTES MODAL ===
   // Modal for selecting bus routes to overlay on the map
