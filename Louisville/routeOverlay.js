@@ -655,7 +655,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 const buffer = await res.arrayBuffer();
                 try {
                   const text = new TextDecoder().decode(buffer);
-                  data = JSON.parse(text);
+                  // Check if it's XML (ashx endpoints sometimes return XML)
+                  if (text.trim().startsWith('<?xml') || text.trim().startsWith('<')) {
+                    console.warn('[attachRouteToMap] Response appears to be XML, not GTFS-RT protobuf');
+                    return;
+                  }
+                  // Try JSON
+                  if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    data = JSON.parse(text);
+                  } else {
+                    throw new Error('Not JSON format');
+                  }
                 } catch (e) {
                   // If not JSON, it's protobuf - parse using protobufjs
                   try {
@@ -839,19 +849,41 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     const root = await protobuf.load(protoDataUri);
                     const FeedMessage = root.lookupType('transit_realtime.FeedMessage');
                     
-                    // Decode the protobuf binary data
-                    const message = FeedMessage.decode(new Uint8Array(buffer));
-                    const decoded = FeedMessage.toObject(message, {
-                      longs: String,
-                      enums: String,
-                      bytes: String,
-                      defaults: true,
-                      arrays: true,
-                      objects: true,
-                      oneofs: true
-                    });
+                    // Validate buffer
+                    if (!buffer || buffer.byteLength === 0) {
+                      console.warn('[attachRouteToMap] Invalid or empty buffer');
+                      return;
+                    }
                     
-                    data = decoded;
+                    // Decode the protobuf binary data with verification
+                    try {
+                      // Verify the message first
+                      const errMsg = FeedMessage.verify(new Uint8Array(buffer));
+                      if (errMsg) {
+                        console.error('[attachRouteToMap] Protobuf verification failed:', errMsg);
+                        return;
+                      }
+                      
+                      const message = FeedMessage.decode(new Uint8Array(buffer));
+                      const decoded = FeedMessage.toObject(message, {
+                        longs: String,
+                        enums: String,
+                        bytes: String,
+                        defaults: true,
+                        arrays: true,
+                        objects: true,
+                        oneofs: true
+                      });
+                      
+                      data = decoded;
+                    } catch (decodeError) {
+                      console.error('[attachRouteToMap] Protobuf decode error:', decodeError);
+                      console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
+                      // Log first few bytes for debugging
+                      const uint8 = new Uint8Array(buffer);
+                      console.error('[attachRouteToMap] First 20 bytes:', Array.from(uint8.slice(0, 20)));
+                      return;
+                    }
                   } catch (protoError) {
                     console.error('[attachRouteToMap] Error parsing GTFS-RT protobuf:', protoError);
                     return;

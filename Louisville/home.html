@@ -2807,10 +2807,20 @@
           res = await fetch(gtfsRtUrl);
           const buffer = await res.arrayBuffer();
           
-          // Try to parse as JSON (some endpoints return JSON by default)
+          // Try to parse as JSON or check format (some endpoints return JSON by default)
           try {
             const text = new TextDecoder().decode(buffer);
-            data = JSON.parse(text);
+            // Check if it's XML (ashx endpoints sometimes return XML)
+            if (text.trim().startsWith('<?xml') || text.trim().startsWith('<')) {
+              console.warn('[fetchBusesFromAPI] Response appears to be XML, not GTFS-RT protobuf');
+              return [];
+            }
+            // Try JSON
+            if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+              data = JSON.parse(text);
+            } else {
+              throw new Error('Not JSON format');
+            }
           } catch (e) {
             // If not JSON, it's protobuf - parse using protobufjs
             try {
@@ -2994,19 +3004,41 @@
               const root = await protobuf.load(protoDataUri);
               const FeedMessage = root.lookupType('transit_realtime.FeedMessage');
               
-              // Decode the protobuf binary data
-              const message = FeedMessage.decode(new Uint8Array(buffer));
-              const decoded = FeedMessage.toObject(message, {
-                longs: String,
-                enums: String,
-                bytes: String,
-                defaults: true,
-                arrays: true,
-                objects: true,
-                oneofs: true
-              });
+              // Validate buffer
+              if (!buffer || buffer.byteLength === 0) {
+                console.warn('[fetchBusesFromAPI] Invalid or empty buffer');
+                return [];
+              }
               
-              data = decoded;
+              // Decode the protobuf binary data with verification
+              try {
+                // Verify the message first
+                const errMsg = FeedMessage.verify(new Uint8Array(buffer));
+                if (errMsg) {
+                  console.error('[fetchBusesFromAPI] Protobuf verification failed:', errMsg);
+                  return [];
+                }
+                
+                const message = FeedMessage.decode(new Uint8Array(buffer));
+                const decoded = FeedMessage.toObject(message, {
+                  longs: String,
+                  enums: String,
+                  bytes: String,
+                  defaults: true,
+                  arrays: true,
+                  objects: true,
+                  oneofs: true
+                });
+                
+                data = decoded;
+              } catch (decodeError) {
+                console.error('[fetchBusesFromAPI] Protobuf decode error:', decodeError);
+                console.error('[fetchBusesFromAPI] Buffer size:', buffer.byteLength, 'bytes');
+                // Log first few bytes for debugging
+                const uint8 = new Uint8Array(buffer);
+                console.error('[fetchBusesFromAPI] First 20 bytes:', Array.from(uint8.slice(0, 20)));
+                return [];
+              }
             } catch (protoError) {
               console.error('[fetchBusesFromAPI] Error parsing GTFS-RT protobuf:', protoError);
               return [];
