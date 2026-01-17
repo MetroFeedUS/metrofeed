@@ -2783,9 +2783,12 @@
    * @returns {Promise<Array>} Array of bus objects in standardized format
    */
   async function fetchBusesFromAPI() {
+    console.log('🚌 [fetchBusesFromAPI] ===== FUNCTION CALLED =====');
     const busApiType = CITY_CONFIG.busApiType || 'trimet';
+    console.log('🚌 [fetchBusesFromAPI] Bus API Type:', busApiType);
     
     if (busApiType === 'tarc-gtfs-rt') {
+      console.log('🚌 [fetchBusesFromAPI] Using TARC GTFS-RT format');
       // TARC GTFS-RT format
       try {
         const gtfsRtUrl = CITY_CONFIG.gtfsRtUrl || CITY_CONFIG.busApi;
@@ -3209,8 +3212,12 @@
   }
 
   async function fetchAndDisplayBuses(routesToTrack = null) {
+    console.log('🚌🚌🚌 [fetchAndDisplayBuses] ===== STARTING =====');
+    console.log('🚌 [fetchAndDisplayBuses] Routes to track:', routesToTrack);
     try {
+      console.log('🚌 [fetchAndDisplayBuses] Calling fetchBusesFromAPI()...');
       const allBuses = await fetchBusesFromAPI();
+      console.log('🚌 [fetchAndDisplayBuses] Got', allBuses.length, 'buses from API');
       
       // Store for debugging
       window.lastBusData = { resultSet: { vehicle: allBuses } };
