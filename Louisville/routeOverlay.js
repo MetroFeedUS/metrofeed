@@ -680,12 +680,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       buffer = await decompressedResponse.arrayBuffer();
                       console.log('[attachRouteToMap] ✅ Decompressed successfully! New size:', buffer.byteLength, 'bytes');
                     } else {
-                      console.warn('[attachRouteToMap] ⚠️ DecompressionStream not available. Browser should have auto-decompressed.');
-                      console.warn('[attachRouteToMap] ⚠️ If this fails, the endpoint may require manual decompression.');
+                      console.warn('[attachRouteToMap] DecompressionStream not available. Browser should have auto-decompressed.');
+                      console.warn('[attachRouteToMap] If this fails, the endpoint may require manual decompression.');
                     }
                   } catch (decompressError) {
-                    console.error('[attachRouteToMap] ❌ Decompression failed:', decompressError);
-                    console.warn('[attachRouteToMap] ⚠️ Continuing with compressed buffer (will likely fail)');
+                    console.error('[attachRouteToMap] Decompression failed:', decompressError);
+                    console.warn('[attachRouteToMap] Continuing with compressed buffer (will likely fail)');
                   }
                 } else if (contentEncoding && (contentEncoding.includes('gzip') || contentEncoding.includes('deflate'))) {
                   console.log('[attachRouteToMap] Content-Encoding header indicates compression, but buffer does not look compressed.');
@@ -915,13 +915,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       try {
                         message = FeedMessage.decode(uint8Buffer);
                       } catch (decodeErr) {
-                        console.error('[attachRouteToMap] ❌ Protobuf decode failed at message level:', decodeErr.message);
-                        console.error('[attachRouteToMap] This suggests the data format doesn't match the GTFS-RT schema.');
+                        console.error('[attachRouteToMap] Protobuf decode failed at message level:', decodeErr.message);
+                        console.error('[attachRouteToMap] This suggests the data format does not match the GTFS-RT schema.');
                         console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
                         const uint8 = new Uint8Array(buffer);
                         console.error('[attachRouteToMap] First 50 bytes:', Array.from(uint8.slice(0, 50)));
-                        console.warn('[attachRouteToMap] ⚠️ Cannot decode GTFS-RT data. The endpoint may return a different format.');
-                        console.warn('[attachRouteToMap] 💡 TARC endpoint might need a different parsing approach.');
+                        console.warn('[attachRouteToMap] Cannot decode GTFS-RT data. The endpoint may return a different format.');
+                        console.warn('[attachRouteToMap] TARC endpoint might need a different parsing approach.');
                         return;
                       }
                       
@@ -938,7 +938,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       data = decoded;
                       console.log('[attachRouteToMap] ✅ Successfully decoded GTFS-RT protobuf, entities:', decoded.entity?.length || 0);
                     } catch (decodeError) {
-                      console.error('[attachRouteToMap] ❌ Protobuf decode error:', decodeError);
+                      console.error('[attachRouteToMap] Protobuf decode error:', decodeError);
                       console.error('[attachRouteToMap] Error type:', decodeError.constructor.name);
                       console.error('[attachRouteToMap] Error message:', decodeError.message);
                       console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
@@ -946,8 +946,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       const uint8 = new Uint8Array(buffer);
                       console.error('[attachRouteToMap] First 50 bytes:', Array.from(uint8.slice(0, 50)));
                       console.error('[attachRouteToMap] Stack trace:', decodeError.stack);
-                      console.warn('[attachRouteToMap] ⚠️ GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
-                      console.warn('[attachRouteToMap] 💡 The TARC GTFS-RT endpoint may not be fully compatible with the standard GTFS-RT schema.');
+                      console.warn('[attachRouteToMap] GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
+                      console.warn('[attachRouteToMap] The TARC GTFS-RT endpoint may not be fully compatible with the standard GTFS-RT schema.');
                       return;
                     }
                   } catch (protobufError) {
