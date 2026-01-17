@@ -27,7 +27,9 @@
 
 "use strict";
 
+// Immediate execution check
 console.log('[routeOverlay.js] 🔄 Script loading...');
+console.log('[routeOverlay.js] ✅ Script file is executing!');
 
 /**
  * Attach a route overlay to a MapLibre map

@@ -1245,6 +1245,17 @@
 <script src="cameraIcon.js"></script>
 <!-- -- SHARED ROUTE OVERLAY MODULE -- -->
 <script src="routeOverlay.js"></script>
+<script>
+  // Verify routeOverlay.js loaded
+  console.log('[home.html] Checking routeOverlay.js after load...');
+  console.log('[home.html] window.attachRouteToMap:', typeof window.attachRouteToMap);
+  if (typeof window.attachRouteToMap === 'undefined') {
+    console.error('[home.html] ❌ routeOverlay.js did not export attachRouteToMap!');
+    console.error('[home.html] Check browser console for JavaScript errors in routeOverlay.js');
+  } else {
+    console.log('[home.html] ✅ routeOverlay.js loaded successfully!');
+  }
+</script>
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>
 <!-- -- MARKETPLACE OVERLAY MODULE -- -->
