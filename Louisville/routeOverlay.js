@@ -833,8 +833,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       }
                     `;
                     
-                    // Parse the proto schema
-                    const root = protobuf.parse(gtfsRtProto);
+                    // Parse the proto schema using protobufjs
+                    // Use protobuf.load() with a data URI to avoid CORS and parsing issues
+                    const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
+                    const root = await protobuf.load(protoDataUri);
                     const FeedMessage = root.lookupType('transit_realtime.FeedMessage');
                     
                     // Decode the protobuf binary data
