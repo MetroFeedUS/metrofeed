@@ -844,15 +844,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     `;
                     
                     // Parse the proto schema using protobufjs
-                    // Try loading from official GTFS-RT proto file first, fallback to inline
+                    // SKIP CDN - use inline schema directly to avoid URL prefixing issues
                     let root, FeedMessage;
                     try {
-                      // SKIP CDN - use inline schema directly to avoid URL prefixing issues
                       console.log('[attachRouteToMap] Loading inline proto schema (skipping CDN)...');
                       const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
                       root = await protobuf.load(protoDataUri);
                       FeedMessage = root.lookupType('transit_realtime.FeedMessage');
                       console.log('[attachRouteToMap] ✅ Loaded inline proto schema');
+                    } catch (protoLoadError) {
+                      console.error('[attachRouteToMap] Error loading proto schema:', protoLoadError);
+                      return;
+                    }
                     
                     // Validate buffer
                     if (!buffer || buffer.byteLength === 0) {
@@ -886,10 +889,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       console.warn('[attachRouteToMap] GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
                       return;
                     }
-                  } catch (protoError) {
-                    console.error('[attachRouteToMap] Error parsing GTFS-RT protobuf:', protoError);
-                    return;
-                  }
                 }
               }
               
