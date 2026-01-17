@@ -1260,10 +1260,19 @@
       console.error('[home.html] ❌ routeOverlay.js did not export attachRouteToMap!');
       console.error('[home.html] Check browser console for JavaScript errors in routeOverlay.js');
       console.error('[home.html] Check Network tab to see if routeOverlay.js loaded (should be 200, not 404)');
+      
+      // Fallback: Define a minimal version to prevent crashes
+      console.warn('[home.html] ⚠️ Creating fallback attachRouteToMap function...');
+      window.attachRouteToMap = function(map, routeId, directionId, options) {
+        console.error('[attachRouteToMap] ❌ routeOverlay.js did not load properly. This is a fallback function.');
+        console.error('[attachRouteToMap] Please check the browser console and Network tab for errors.');
+        alert('Route overlay system failed to load. Please refresh the page. If the problem persists, check the browser console for errors.');
+        return { remove: function() {} };
+      };
     } else {
       console.log('[home.html] ✅ routeOverlay.js loaded and exported successfully!');
     }
-  }, 100);
+  }, 500); // Increased delay to ensure script has time to execute
 </script>
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>

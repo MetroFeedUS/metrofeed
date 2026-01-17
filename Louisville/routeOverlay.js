@@ -27,9 +27,14 @@
 
 "use strict";
 
-// Immediate execution check
-console.log('[routeOverlay.js] 🔄 Script loading...');
-console.log('[routeOverlay.js] ✅ Script file is executing!');
+// Immediate execution check - this should ALWAYS run if the script loads
+try {
+  console.log('[routeOverlay.js] 🔄 Script loading...');
+  console.log('[routeOverlay.js] ✅ Script file is executing!');
+  console.log('[routeOverlay.js] Current time:', new Date().toISOString());
+} catch (e) {
+  console.error('[routeOverlay.js] ❌ CRITICAL: Script failed at the very beginning:', e);
+}
 
 /**
  * Attach a route overlay to a MapLibre map
@@ -1119,8 +1124,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
 }
 
 // Expose globally for both route pages and main map
-console.log('[routeOverlay.js] 📤 Exporting attachRouteToMap to window...');
-console.log('[routeOverlay.js] attachRouteToMap type:', typeof attachRouteToMap);
-window.attachRouteToMap = attachRouteToMap;
-console.log('[routeOverlay.js] ✅ attachRouteToMap exported. window.attachRouteToMap:', typeof window.attachRouteToMap);
+try {
+  console.log('[routeOverlay.js] 📤 Exporting attachRouteToMap to window...');
+  console.log('[routeOverlay.js] attachRouteToMap type:', typeof attachRouteToMap);
+  
+  if (typeof attachRouteToMap === 'function') {
+    window.attachRouteToMap = attachRouteToMap;
+    console.log('[routeOverlay.js] ✅ attachRouteToMap exported. window.attachRouteToMap:', typeof window.attachRouteToMap);
+  } else {
+    console.error('[routeOverlay.js] ❌ attachRouteToMap is not a function! Type:', typeof attachRouteToMap);
+    console.error('[routeOverlay.js] This means the function definition failed. Check for syntax errors above.');
+  }
+} catch (exportError) {
+  console.error('[routeOverlay.js] ❌ CRITICAL: Failed to export attachRouteToMap:', exportError);
+  console.error('[routeOverlay.js] Stack:', exportError.stack);
+}
 
