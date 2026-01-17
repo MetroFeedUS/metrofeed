@@ -1244,36 +1244,8 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- SHARED ROUTE OVERLAY MODULE -- -->
-<script>
-  console.log('[home.html] 📍 About to load routeOverlay.js...');
-</script>
-<script src="routeOverlay.js" onerror="console.error('[home.html] ❌ CRITICAL: Failed to load routeOverlay.js! Check Network tab for 404 or CORS error.'); window.routeOverlayLoadError = true;" onload="console.log('[home.html] ✅ routeOverlay.js script tag loaded successfully'); window.routeOverlayScriptTagLoaded = true;"></script>
-<script>
-  console.log('[home.html] 📍 Script tag processed. Loaded:', typeof window.routeOverlayScriptTagLoaded !== 'undefined');
-</script>
-<script>
-  // Verify routeOverlay.js loaded (run after a brief delay to ensure script execution)
-  setTimeout(function() {
-    console.log('[home.html] 🔍 Checking routeOverlay.js after load...');
-    console.log('[home.html] window.attachRouteToMap:', typeof window.attachRouteToMap);
-    if (typeof window.attachRouteToMap === 'undefined') {
-      console.error('[home.html] ❌ routeOverlay.js did not export attachRouteToMap!');
-      console.error('[home.html] Check browser console for JavaScript errors in routeOverlay.js');
-      console.error('[home.html] Check Network tab to see if routeOverlay.js loaded (should be 200, not 404)');
-      
-      // Fallback: Define a minimal version to prevent crashes
-      console.warn('[home.html] ⚠️ Creating fallback attachRouteToMap function...');
-      window.attachRouteToMap = function(map, routeId, directionId, options) {
-        console.error('[attachRouteToMap] ❌ routeOverlay.js did not load properly. This is a fallback function.');
-        console.error('[attachRouteToMap] Please check the browser console and Network tab for errors.');
-        alert('Route overlay system failed to load. Please refresh the page. If the problem persists, check the browser console for errors.');
-        return { remove: function() {} };
-      };
-    } else {
-      console.log('[home.html] ✅ routeOverlay.js loaded and exported successfully!');
-    }
-  }, 500); // Increased delay to ensure script has time to execute
-</script>
+<!-- -- SHARED ROUTE OVERLAY MODULE -- -->
+<script src="routeOverlay.js"></script>
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>
 <!-- -- MARKETPLACE OVERLAY MODULE -- -->

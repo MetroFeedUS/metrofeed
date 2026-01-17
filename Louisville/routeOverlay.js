@@ -688,8 +688,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     console.warn('[attachRouteToMap] ⚠️ Continuing with compressed buffer (will likely fail)');
                   }
                 } else if (contentEncoding && (contentEncoding.includes('gzip') || contentEncoding.includes('deflate'))) {
-                  console.log('[attachRouteToMap] ℹ️ Content-Encoding header indicates compression, but buffer doesn\'t look compressed.');
-                  console.log('[attachRouteToMap] ℹ️ Browser likely already decompressed it automatically.');
+                  console.log('[attachRouteToMap] Content-Encoding header indicates compression, but buffer does not look compressed.');
+                  console.log('[attachRouteToMap] Browser likely already decompressed it automatically.');
                 }
                 
                 try {
