@@ -680,17 +680,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       package transit_realtime;
                       
                       message FeedMessage {
-                        required FeedHeader header = 1;
+                        optional FeedHeader header = 1;
                         repeated FeedEntity entity = 2;
                       }
                       
                       message FeedHeader {
-                        required string gtfs_realtime_version = 1;
+                        optional string gtfs_realtime_version = 1;
                         optional uint64 timestamp = 2;
                       }
                       
                       message FeedEntity {
-                        required string id = 1;
+                        optional string id = 1;
                         optional bool is_deleted = 2 [default = false];
                         optional TripUpdate trip_update = 3;
                         optional VehiclePosition vehicle = 4;
@@ -844,10 +844,20 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     `;
                     
                     // Parse the proto schema using protobufjs
-                    // Use protobuf.load() with a data URI to avoid CORS and parsing issues
-                    const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
-                    const root = await protobuf.load(protoDataUri);
-                    const FeedMessage = root.lookupType('transit_realtime.FeedMessage');
+                    // Try loading from official GTFS-RT proto file first, fallback to inline
+                    let root, FeedMessage;
+                    try {
+                      // Try loading from jsDelivr CDN (CORS-enabled)
+                      root = await protobuf.load('https://cdn.jsdelivr.net/gh/google/transit@master/gtfs-realtime/proto/gtfs-realtime.proto');
+                      FeedMessage = root.lookupType('transit_realtime.FeedMessage');
+                      console.log('[attachRouteToMap] Loaded GTFS-RT proto from CDN');
+                    } catch (cdnError) {
+                      console.warn('[attachRouteToMap] Failed to load from CDN, using inline schema:', cdnError.message);
+                      // Fallback to inline schema
+                      const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
+                      root = await protobuf.load(protoDataUri);
+                      FeedMessage = root.lookupType('transit_realtime.FeedMessage');
+                    }
                     
                     // Validate buffer
                     if (!buffer || buffer.byteLength === 0) {
@@ -856,14 +866,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     }
                     
                     // Decode the protobuf binary data
-                    // Note: Skip verification as it may be too strict - try decoding directly
+                    // Try decoding - if it fails, the schema might not match the data format
                     try {
-                      const message = FeedMessage.decode(new Uint8Array(buffer));
+                      const uint8Buffer = new Uint8Array(buffer);
+                      const message = FeedMessage.decode(uint8Buffer);
                       const decoded = FeedMessage.toObject(message, {
                         longs: String,
                         enums: String,
                         bytes: String,
-                        defaults: true,
+                        defaults: false,
                         arrays: true,
                         objects: true,
                         oneofs: true
@@ -877,6 +888,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       // Log first few bytes for debugging
                       const uint8 = new Uint8Array(buffer);
                       console.error('[attachRouteToMap] First 20 bytes:', Array.from(uint8.slice(0, 20)));
+                      console.warn('[attachRouteToMap] GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
                       return;
                     }
                   } catch (protoError) {

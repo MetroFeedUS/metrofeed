@@ -2794,40 +2794,84 @@
           return [];
         }
         
-        // Try JSON format first (some GTFS-RT endpoints support ?format=json)
-        let res = await fetch(gtfsRtUrl + (gtfsRtUrl.includes('?') ? '&' : '?') + 'format=json');
+        console.log('[fetchBusesFromAPI] 🔍 Fetching GTFS-RT from:', gtfsRtUrl);
+        
+        // Fetch the endpoint
+        const res = await fetch(gtfsRtUrl);
+        const buffer = await res.arrayBuffer();
+        const contentType = res.headers.get('content-type') || '';
+        
+        console.log('[fetchBusesFromAPI] 📦 Response received:');
+        console.log('  - Status:', res.status, res.statusText);
+        console.log('  - Content-Type:', contentType);
+        console.log('  - Buffer size:', buffer.byteLength, 'bytes');
+        
+        // Inspect the first bytes to determine format
+        const uint8 = new Uint8Array(buffer);
+        const firstBytes = Array.from(uint8.slice(0, 50));
+        console.log('[fetchBusesFromAPI] 🔢 First 50 bytes:', firstBytes);
+        
+        // Try to decode as text to see if it's readable
+        try {
+          const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+          const preview = text.substring(0, 200);
+          console.log('[fetchBusesFromAPI] 📝 Text preview (first 200 chars):', preview);
+          
+          // Check what format it is
+          if (text.trim().startsWith('<?xml') || text.trim().startsWith('<')) {
+            console.warn('[fetchBusesFromAPI] ⚠️ Response appears to be XML, not protobuf!');
+            console.warn('[fetchBusesFromAPI] Full XML response:', text.substring(0, 1000));
+            return [];
+          } else if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+            console.log('[fetchBusesFromAPI] ✅ Response appears to be JSON');
+            try {
+              data = JSON.parse(text);
+              console.log('[fetchBusesFromAPI] ✅ Successfully parsed as JSON');
+              // Continue to entity parsing below
+            } catch (jsonErr) {
+              console.error('[fetchBusesFromAPI] ❌ JSON parse failed:', jsonErr);
+              return [];
+            }
+          } else {
+            console.log('[fetchBusesFromAPI] 🔷 Response appears to be binary (protobuf)');
+            // Continue to protobuf parsing below
+          }
+        } catch (textErr) {
+          console.log('[fetchBusesFromAPI] 🔷 Response is binary (cannot decode as text)');
+        }
+        
         let data;
         
-        // Check if response is JSON
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          data = await res.json();
+        // If we already parsed as JSON above, skip to entity parsing
+        if (data) {
+          console.log('[fetchBusesFromAPI] ✅ Using JSON data');
         } else {
-          // If not JSON, try without format parameter (might be protobuf)
-          res = await fetch(gtfsRtUrl);
-          const buffer = await res.arrayBuffer();
-          
           // Try to parse as JSON or check format (some endpoints return JSON by default)
           try {
-            const text = new TextDecoder().decode(buffer);
+            const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
             // Check if it's XML (ashx endpoints sometimes return XML)
             if (text.trim().startsWith('<?xml') || text.trim().startsWith('<')) {
-              console.warn('[fetchBusesFromAPI] Response appears to be XML, not GTFS-RT protobuf');
+              console.warn('[fetchBusesFromAPI] ⚠️ Response appears to be XML, not GTFS-RT protobuf');
               return [];
             }
             // Try JSON
             if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+              console.log('[fetchBusesFromAPI] 🔄 Attempting JSON parse...');
               data = JSON.parse(text);
+              console.log('[fetchBusesFromAPI] ✅ Successfully parsed as JSON');
             } else {
               throw new Error('Not JSON format');
             }
           } catch (e) {
+            console.log('[fetchBusesFromAPI] 🔄 Not JSON, attempting protobuf parse...');
             // If not JSON, it's protobuf - parse using protobufjs
             try {
               if (typeof protobuf === 'undefined') {
-                console.error('[fetchBusesFromAPI] protobufjs library not loaded');
+                console.error('[fetchBusesFromAPI] ❌ protobufjs library not loaded');
                 return [];
               }
+              
+              console.log('[fetchBusesFromAPI] 🔧 Loading GTFS-RT protobuf schema...');
               
               // Define GTFS-RT FeedMessage schema inline to avoid CORS issues
               const gtfsRtProto = `
@@ -2835,17 +2879,17 @@
                 package transit_realtime;
                 
                 message FeedMessage {
-                  required FeedHeader header = 1;
+                  optional FeedHeader header = 1;
                   repeated FeedEntity entity = 2;
                 }
                 
                 message FeedHeader {
-                  required string gtfs_realtime_version = 1;
+                  optional string gtfs_realtime_version = 1;
                   optional uint64 timestamp = 2;
                 }
                 
                 message FeedEntity {
-                  required string id = 1;
+                  optional string id = 1;
                   optional bool is_deleted = 2 [default = false];
                   optional TripUpdate trip_update = 3;
                   optional VehiclePosition vehicle = 4;
@@ -2999,10 +3043,23 @@
               `;
               
               // Parse the proto schema using protobufjs
-              // Use protobuf.load() with a data URI to avoid CORS and parsing issues
-              const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
-              const root = await protobuf.load(protoDataUri);
-              const FeedMessage = root.lookupType('transit_realtime.FeedMessage');
+              // Try loading from official GTFS-RT proto file first, fallback to inline
+              let root, FeedMessage;
+              try {
+                console.log('[fetchBusesFromAPI] 🌐 Attempting to load GTFS-RT proto from CDN...');
+                // Try loading from jsDelivr CDN (CORS-enabled)
+                root = await protobuf.load('https://cdn.jsdelivr.net/gh/google/transit@master/gtfs-realtime/proto/gtfs-realtime.proto');
+                FeedMessage = root.lookupType('transit_realtime.FeedMessage');
+                console.log('[fetchBusesFromAPI] ✅ Loaded GTFS-RT proto from CDN');
+              } catch (cdnError) {
+                console.warn('[fetchBusesFromAPI] ⚠️ Failed to load from CDN, using inline schema:', cdnError.message);
+                // Fallback to inline schema
+                const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
+                console.log('[fetchBusesFromAPI] 🔧 Loading inline proto schema...');
+                root = await protobuf.load(protoDataUri);
+                FeedMessage = root.lookupType('transit_realtime.FeedMessage');
+                console.log('[fetchBusesFromAPI] ✅ Loaded inline proto schema');
+              }
               
               // Validate buffer
               if (!buffer || buffer.byteLength === 0) {
@@ -3011,27 +3068,59 @@
               }
               
               // Decode the protobuf binary data
-              // Note: Skip verification as it may be too strict - try decoding directly
+              // Try decoding - if it fails, the schema might not match the data format
               try {
-                const message = FeedMessage.decode(new Uint8Array(buffer));
+                console.log('[fetchBusesFromAPI] 🔓 Attempting to decode protobuf message...');
+                const uint8Buffer = new Uint8Array(buffer);
+                
+                // Try to verify first (non-fatal)
+                try {
+                  const verifyErr = FeedMessage.verify(uint8Buffer);
+                  if (verifyErr) {
+                    console.warn('[fetchBusesFromAPI] ⚠️ Protobuf verification warning (non-fatal):', verifyErr);
+                  } else {
+                    console.log('[fetchBusesFromAPI] ✅ Protobuf verification passed');
+                  }
+                } catch (verifyErr) {
+                  console.warn('[fetchBusesFromAPI] ⚠️ Verification check failed (continuing anyway):', verifyErr.message);
+                }
+                
+                console.log('[fetchBusesFromAPI] 🔓 Decoding message...');
+                const message = FeedMessage.decode(uint8Buffer);
+                console.log('[fetchBusesFromAPI] ✅ Message decoded successfully');
+                
+                console.log('[fetchBusesFromAPI] 🔄 Converting to object...');
                 const decoded = FeedMessage.toObject(message, {
                   longs: String,
                   enums: String,
                   bytes: String,
-                  defaults: true,
+                  defaults: false,
                   arrays: true,
                   objects: true,
                   oneofs: true
                 });
                 
+                console.log('[fetchBusesFromAPI] ✅ Conversion complete');
+                console.log('[fetchBusesFromAPI] 📊 Decoded data structure:', {
+                  hasHeader: !!decoded.header,
+                  entityCount: decoded.entity?.length || 0,
+                  headerVersion: decoded.header?.gtfs_realtime_version,
+                  headerTimestamp: decoded.header?.timestamp
+                });
+                
                 data = decoded;
-                console.log('[fetchBusesFromAPI] Successfully decoded GTFS-RT protobuf, entities:', decoded.entity?.length || 0);
+                console.log('[fetchBusesFromAPI] ✅ Successfully decoded GTFS-RT protobuf, entities:', decoded.entity?.length || 0);
               } catch (decodeError) {
-                console.error('[fetchBusesFromAPI] Protobuf decode error:', decodeError);
+                console.error('[fetchBusesFromAPI] ❌ Protobuf decode error:', decodeError);
+                console.error('[fetchBusesFromAPI] Error type:', decodeError.constructor.name);
+                console.error('[fetchBusesFromAPI] Error message:', decodeError.message);
                 console.error('[fetchBusesFromAPI] Buffer size:', buffer.byteLength, 'bytes');
                 // Log first few bytes for debugging
                 const uint8 = new Uint8Array(buffer);
-                console.error('[fetchBusesFromAPI] First 20 bytes:', Array.from(uint8.slice(0, 20)));
+                console.error('[fetchBusesFromAPI] First 50 bytes:', Array.from(uint8.slice(0, 50)));
+                console.error('[fetchBusesFromAPI] Stack trace:', decodeError.stack);
+                console.warn('[fetchBusesFromAPI] ⚠️ GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
+                console.warn('[fetchBusesFromAPI] 💡 Consider checking if the endpoint supports JSON format or verify the data structure.');
                 return [];
               }
             } catch (protoError) {
@@ -3043,30 +3132,64 @@
         
         // Parse GTFS-RT FeedMessage format
         // GTFS-RT structure: { entity: [{ id, vehicle: { trip, position, vehicle: { id, label } } }] }
+        console.log('[fetchBusesFromAPI] 🔄 Parsing GTFS-RT data structure...');
+        console.log('[fetchBusesFromAPI] Data keys:', Object.keys(data || {}));
+        console.log('[fetchBusesFromAPI] Has entity array?', Array.isArray(data?.entity));
+        console.log('[fetchBusesFromAPI] Entity count:', data?.entity?.length || 0);
+        
         const vehicles = [];
         if (data.entity && Array.isArray(data.entity)) {
-          data.entity.forEach(entity => {
+          console.log('[fetchBusesFromAPI] 🔄 Processing', data.entity.length, 'entities...');
+          let processedCount = 0;
+          let skippedCount = 0;
+          
+          data.entity.forEach((entity, index) => {
             if (entity.vehicle && entity.vehicle.position && entity.vehicle.trip) {
               const vehicle = entity.vehicle;
               const trip = vehicle.trip;
               const position = vehicle.position;
               
               // Map GTFS-RT format to standardized format
-              vehicles.push({
+              const vehicleData = {
                 vehicleID: vehicle.vehicle?.id || vehicle.vehicle?.label || entity.id || 'Unknown',
                 routeNumber: trip.routeId || null,
                 direction: trip.directionId !== undefined ? parseInt(trip.directionId) : null,
                 latitude: position.latitude || null,
                 longitude: position.longitude || null,
                 blockID: trip.tripId || null,
-                speed: null, // GTFS-RT doesn't always include speed
+                speed: position.speed || null,
                 tripId: trip.tripId || null,
                 currentStopSequence: position.currentStopSequence || null
-              });
+              };
+              
+              // Only add if we have valid coordinates
+              if (vehicleData.latitude && vehicleData.longitude) {
+                vehicles.push(vehicleData);
+                processedCount++;
+                if (processedCount <= 3) { // Log first 3 for debugging
+                  console.log('[fetchBusesFromAPI] ✅ Vehicle', processedCount, ':', vehicleData.vehicleID, 'Route', vehicleData.routeNumber);
+                }
+              } else {
+                skippedCount++;
+                if (index < 3) { // Log first few skipped for debugging
+                  console.warn('[fetchBusesFromAPI] ⚠️ Skipped entity', index, '- missing coordinates');
+                }
+              }
+            } else {
+              skippedCount++;
+              if (index < 3) { // Log first few skipped for debugging
+                console.warn('[fetchBusesFromAPI] ⚠️ Skipped entity', index, '- missing vehicle/trip/position');
+              }
             }
           });
+          
+          console.log('[fetchBusesFromAPI] ✅ Processed', processedCount, 'vehicles, skipped', skippedCount);
+        } else {
+          console.warn('[fetchBusesFromAPI] ⚠️ No entity array found in data');
+          console.warn('[fetchBusesFromAPI] Data structure:', JSON.stringify(data, null, 2).substring(0, 500));
         }
         
+        console.log('[fetchBusesFromAPI] 🎯 Returning', vehicles.length, 'vehicles');
         return vehicles;
       } catch (error) {
         console.error('[fetchBusesFromAPI] Error fetching GTFS-RT data:', error);
