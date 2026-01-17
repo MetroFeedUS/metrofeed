@@ -27,6 +27,8 @@
 
 "use strict";
 
+console.log('[routeOverlay.js] 🔄 Script loading...');
+
 /**
  * Attach a route overlay to a MapLibre map
  *
@@ -668,11 +670,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
                   }
                 } catch (e) {
                   // If not JSON, it's protobuf - parse using protobufjs
+                  if (typeof protobuf === 'undefined') {
+                    console.error('[attachRouteToMap] protobufjs library not loaded');
+                    return;
+                  }
+                  
                   try {
-                    if (typeof protobuf === 'undefined') {
-                      console.error('[attachRouteToMap] protobufjs library not loaded');
-                      return;
-                    }
                     
                     // Define GTFS-RT FeedMessage schema inline (same as in home.html)
                     const gtfsRtProto = `
@@ -889,6 +892,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       console.warn('[attachRouteToMap] GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
                       return;
                     }
+                  } catch (protobufError) {
+                    console.error('[attachRouteToMap] Error in protobuf parsing:', protobufError);
+                    return;
+                  }
                 }
               }
               
@@ -1051,5 +1058,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
 }
 
 // Expose globally for both route pages and main map
+console.log('[routeOverlay.js] 📤 Exporting attachRouteToMap to window...');
+console.log('[routeOverlay.js] attachRouteToMap type:', typeof attachRouteToMap);
 window.attachRouteToMap = attachRouteToMap;
+console.log('[routeOverlay.js] ✅ attachRouteToMap exported. window.attachRouteToMap:', typeof window.attachRouteToMap);
 
