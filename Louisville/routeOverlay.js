@@ -654,9 +654,47 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 data = await res.json();
               } else {
                 res = await fetch(gtfsRtUrl);
-                const buffer = await res.arrayBuffer();
+                
+                // Check for compression
+                const contentEncoding = res.headers.get('content-encoding');
+                console.log('[attachRouteToMap] 📋 Response headers:');
+                console.log('  - Content-Encoding:', contentEncoding || 'none');
+                console.log('  - Content-Type:', res.headers.get('content-type') || 'unknown');
+                console.log('  - Content-Length:', res.headers.get('content-length') || 'unknown');
+                
+                let buffer = await res.arrayBuffer();
+                console.log('[attachRouteToMap] 📦 Received buffer size:', buffer.byteLength, 'bytes');
+                
+                // Check if buffer starts with gzip magic bytes (1f 8b) - indicates compressed data
+                const uint8Check = new Uint8Array(buffer);
+                const isGzipCompressed = buffer.byteLength >= 2 && uint8Check[0] === 0x1f && uint8Check[1] === 0x8b;
+                
+                if (isGzipCompressed) {
+                  console.log('[attachRouteToMap] 🔍 Detected gzip compression (magic bytes: 1f 8b)');
+                  console.log('[attachRouteToMap] 🔓 Attempting to decompress...');
+                  try {
+                    // Use the DecompressionStream API if available (modern browsers)
+                    if (typeof DecompressionStream !== 'undefined') {
+                      const stream = new DecompressionStream('gzip');
+                      const decompressedStream = new Response(buffer).body.pipeThrough(stream);
+                      const decompressedResponse = new Response(decompressedStream);
+                      buffer = await decompressedResponse.arrayBuffer();
+                      console.log('[attachRouteToMap] ✅ Decompressed successfully! New size:', buffer.byteLength, 'bytes');
+                    } else {
+                      console.warn('[attachRouteToMap] ⚠️ DecompressionStream not available. Browser should have auto-decompressed.');
+                      console.warn('[attachRouteToMap] ⚠️ If this fails, the endpoint may require manual decompression.');
+                    }
+                  } catch (decompressError) {
+                    console.error('[attachRouteToMap] ❌ Decompression failed:', decompressError);
+                    console.warn('[attachRouteToMap] ⚠️ Continuing with compressed buffer (will likely fail)');
+                  }
+                } else if (contentEncoding && (contentEncoding.includes('gzip') || contentEncoding.includes('deflate'))) {
+                  console.log('[attachRouteToMap] ℹ️ Content-Encoding header indicates compression, but buffer doesn\'t look compressed.');
+                  console.log('[attachRouteToMap] ℹ️ Browser likely already decompressed it automatically.');
+                }
+                
                 try {
-                  const text = new TextDecoder().decode(buffer);
+                  const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
                   // Check if it's XML (ashx endpoints sometimes return XML)
                   if (text.trim().startsWith('<?xml') || text.trim().startsWith('<')) {
                     console.warn('[attachRouteToMap] Response appears to be XML, not GTFS-RT protobuf');
@@ -738,11 +776,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
                         optional string id = 1;
                         optional string label = 2;
                         optional string license_plate = 3;
+                        // Allow unknown fields
                       }
                       
                       message Position {
-                        required float latitude = 1;
-                        required float longitude = 2;
+                        optional float latitude = 1;
+                        optional float longitude = 2;
                         optional float bearing = 3;
                         optional double odometer = 4;
                         optional float speed = 5;
@@ -867,29 +906,49 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     }
                     
                     // Decode the protobuf binary data
-                    // Try decoding - if it fails, the schema might not match the data format
+                    // The TARC endpoint may return data that doesn't perfectly match the GTFS-RT spec
+                    // Try decoding with error handling
                     try {
                       const uint8Buffer = new Uint8Array(buffer);
-                      const message = FeedMessage.decode(uint8Buffer);
+                      
+                      // Try to decode - if it fails, the data might be corrupted or use a different format
+                      let message;
+                      try {
+                        message = FeedMessage.decode(uint8Buffer);
+                      } catch (decodeErr) {
+                        console.error('[attachRouteToMap] ❌ Protobuf decode failed at message level:', decodeErr.message);
+                        console.error('[attachRouteToMap] This suggests the data format doesn't match the GTFS-RT schema.');
+                        console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
+                        const uint8 = new Uint8Array(buffer);
+                        console.error('[attachRouteToMap] First 50 bytes:', Array.from(uint8.slice(0, 50)));
+                        console.warn('[attachRouteToMap] ⚠️ Cannot decode GTFS-RT data. The endpoint may return a different format.');
+                        console.warn('[attachRouteToMap] 💡 TARC endpoint might need a different parsing approach.');
+                        return;
+                      }
+                      
                       const decoded = FeedMessage.toObject(message, {
                         longs: String,
                         enums: String,
                         bytes: String,
-                        defaults: false,
+                        defaults: true,  // Use defaults to handle missing fields gracefully
                         arrays: true,
                         objects: true,
                         oneofs: true
                       });
                       
                       data = decoded;
-                      console.log('[attachRouteToMap] Successfully decoded GTFS-RT protobuf, entities:', decoded.entity?.length || 0);
+                      console.log('[attachRouteToMap] ✅ Successfully decoded GTFS-RT protobuf, entities:', decoded.entity?.length || 0);
                     } catch (decodeError) {
-                      console.error('[attachRouteToMap] Protobuf decode error:', decodeError);
+                      console.error('[attachRouteToMap] ❌ Protobuf decode error:', decodeError);
+                      console.error('[attachRouteToMap] Error type:', decodeError.constructor.name);
+                      console.error('[attachRouteToMap] Error message:', decodeError.message);
                       console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
                       // Log first few bytes for debugging
                       const uint8 = new Uint8Array(buffer);
-                      console.error('[attachRouteToMap] First 20 bytes:', Array.from(uint8.slice(0, 20)));
-                      console.warn('[attachRouteToMap] GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
+                      console.error('[attachRouteToMap] First 50 bytes:', Array.from(uint8.slice(0, 50)));
+                      console.error('[attachRouteToMap] Stack trace:', decodeError.stack);
+                      console.warn('[attachRouteToMap] ⚠️ GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
+                      console.warn('[attachRouteToMap] 💡 The TARC GTFS-RT endpoint may not be fully compatible with the standard GTFS-RT schema.');
                       return;
                     }
                   } catch (protobufError) {

@@ -2801,12 +2801,47 @@
         
         // Fetch the endpoint
         const res = await fetch(gtfsRtUrl);
-        const buffer = await res.arrayBuffer();
+        
+        // Check for compression
+        const contentEncoding = res.headers.get('content-encoding');
         const contentType = res.headers.get('content-type') || '';
         
         console.log('[fetchBusesFromAPI] 📦 Response received:');
         console.log('  - Status:', res.status, res.statusText);
         console.log('  - Content-Type:', contentType);
+        console.log('  - Content-Encoding:', contentEncoding || 'none');
+        console.log('  - Content-Length:', res.headers.get('content-length') || 'unknown');
+        
+        let buffer = await res.arrayBuffer();
+        console.log('[fetchBusesFromAPI] 📦 Received buffer size:', buffer.byteLength, 'bytes');
+        
+        // Check if buffer starts with gzip magic bytes (1f 8b) - indicates compressed data
+        const uint8Check = new Uint8Array(buffer);
+        const isGzipCompressed = buffer.byteLength >= 2 && uint8Check[0] === 0x1f && uint8Check[1] === 0x8b;
+        
+        if (isGzipCompressed) {
+          console.log('[fetchBusesFromAPI] 🔍 Detected gzip compression (magic bytes: 1f 8b)');
+          console.log('[fetchBusesFromAPI] 🔓 Attempting to decompress...');
+          try {
+            // Use the DecompressionStream API if available (modern browsers)
+            if (typeof DecompressionStream !== 'undefined') {
+              const stream = new DecompressionStream('gzip');
+              const decompressedStream = new Response(buffer).body.pipeThrough(stream);
+              const decompressedResponse = new Response(decompressedStream);
+              buffer = await decompressedResponse.arrayBuffer();
+              console.log('[fetchBusesFromAPI] ✅ Decompressed successfully! New size:', buffer.byteLength, 'bytes');
+            } else {
+              console.warn('[fetchBusesFromAPI] ⚠️ DecompressionStream not available. Browser should have auto-decompressed.');
+              console.warn('[fetchBusesFromAPI] ⚠️ If this fails, the endpoint may require manual decompression.');
+            }
+          } catch (decompressError) {
+            console.error('[fetchBusesFromAPI] ❌ Decompression failed:', decompressError);
+            console.warn('[fetchBusesFromAPI] ⚠️ Continuing with compressed buffer (will likely fail)');
+          }
+        } else if (contentEncoding && (contentEncoding.includes('gzip') || contentEncoding.includes('deflate'))) {
+          console.log('[fetchBusesFromAPI] ℹ️ Content-Encoding header indicates compression, but buffer doesn\'t look compressed.');
+          console.log('[fetchBusesFromAPI] ℹ️ Browser likely already decompressed it automatically.');
+        }
         console.log('  - Buffer size:', buffer.byteLength, 'bytes');
         
         // Inspect the first bytes to determine format
