@@ -3010,15 +3010,9 @@
                 return [];
               }
               
-              // Decode the protobuf binary data with verification
+              // Decode the protobuf binary data
+              // Note: Skip verification as it may be too strict - try decoding directly
               try {
-                // Verify the message first
-                const errMsg = FeedMessage.verify(new Uint8Array(buffer));
-                if (errMsg) {
-                  console.error('[fetchBusesFromAPI] Protobuf verification failed:', errMsg);
-                  return [];
-                }
-                
                 const message = FeedMessage.decode(new Uint8Array(buffer));
                 const decoded = FeedMessage.toObject(message, {
                   longs: String,
@@ -3031,6 +3025,7 @@
                 });
                 
                 data = decoded;
+                console.log('[fetchBusesFromAPI] Successfully decoded GTFS-RT protobuf, entities:', decoded.entity?.length || 0);
               } catch (decodeError) {
                 console.error('[fetchBusesFromAPI] Protobuf decode error:', decodeError);
                 console.error('[fetchBusesFromAPI] Buffer size:', buffer.byteLength, 'bytes');

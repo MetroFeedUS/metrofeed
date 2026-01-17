@@ -855,15 +855,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       return;
                     }
                     
-                    // Decode the protobuf binary data with verification
+                    // Decode the protobuf binary data
+                    // Note: Skip verification as it may be too strict - try decoding directly
                     try {
-                      // Verify the message first
-                      const errMsg = FeedMessage.verify(new Uint8Array(buffer));
-                      if (errMsg) {
-                        console.error('[attachRouteToMap] Protobuf verification failed:', errMsg);
-                        return;
-                      }
-                      
                       const message = FeedMessage.decode(new Uint8Array(buffer));
                       const decoded = FeedMessage.toObject(message, {
                         longs: String,
@@ -876,6 +870,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       });
                       
                       data = decoded;
+                      console.log('[attachRouteToMap] Successfully decoded GTFS-RT protobuf, entities:', decoded.entity?.length || 0);
                     } catch (decodeError) {
                       console.error('[attachRouteToMap] Protobuf decode error:', decodeError);
                       console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
