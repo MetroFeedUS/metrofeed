@@ -847,17 +847,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     // Try loading from official GTFS-RT proto file first, fallback to inline
                     let root, FeedMessage;
                     try {
-                      // Try loading from jsDelivr CDN (CORS-enabled)
-                      root = await protobuf.load('https://cdn.jsdelivr.net/gh/google/transit@master/gtfs-realtime/proto/gtfs-realtime.proto');
-                      FeedMessage = root.lookupType('transit_realtime.FeedMessage');
-                      console.log('[attachRouteToMap] Loaded GTFS-RT proto from CDN');
-                    } catch (cdnError) {
-                      console.warn('[attachRouteToMap] Failed to load from CDN, using inline schema:', cdnError.message);
-                      // Fallback to inline schema
+                      // SKIP CDN - use inline schema directly to avoid URL prefixing issues
+                      console.log('[attachRouteToMap] Loading inline proto schema (skipping CDN)...');
                       const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
                       root = await protobuf.load(protoDataUri);
                       FeedMessage = root.lookupType('transit_realtime.FeedMessage');
-                    }
+                      console.log('[attachRouteToMap] ✅ Loaded inline proto schema');
                     
                     // Validate buffer
                     if (!buffer || buffer.byteLength === 0) {

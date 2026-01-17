@@ -3046,23 +3046,12 @@
               `;
               
               // Parse the proto schema using protobufjs
-              // Try loading from official GTFS-RT proto file first, fallback to inline
-              let root, FeedMessage;
-              try {
-                console.log('[fetchBusesFromAPI] 🌐 Attempting to load GTFS-RT proto from CDN...');
-                // Try loading from jsDelivr CDN (CORS-enabled)
-                root = await protobuf.load('https://cdn.jsdelivr.net/gh/google/transit@master/gtfs-realtime/proto/gtfs-realtime.proto');
-                FeedMessage = root.lookupType('transit_realtime.FeedMessage');
-                console.log('[fetchBusesFromAPI] ✅ Loaded GTFS-RT proto from CDN');
-              } catch (cdnError) {
-                console.warn('[fetchBusesFromAPI] ⚠️ Failed to load from CDN, using inline schema:', cdnError.message);
-                // Fallback to inline schema
-                const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
-                console.log('[fetchBusesFromAPI] 🔧 Loading inline proto schema...');
-                root = await protobuf.load(protoDataUri);
-                FeedMessage = root.lookupType('transit_realtime.FeedMessage');
-                console.log('[fetchBusesFromAPI] ✅ Loaded inline proto schema');
-              }
+              // SKIP CDN - use inline schema directly to avoid URL prefixing issues
+              console.log('[fetchBusesFromAPI] 🔧 Loading inline proto schema (skipping CDN)...');
+              const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
+              const root = await protobuf.load(protoDataUri);
+              const FeedMessage = root.lookupType('transit_realtime.FeedMessage');
+              console.log('[fetchBusesFromAPI] ✅ Loaded inline proto schema');
               
               // Validate buffer
               if (!buffer || buffer.byteLength === 0) {
@@ -3074,21 +3063,16 @@
               // Try decoding - if it fails, the schema might not match the data format
               try {
                 console.log('[fetchBusesFromAPI] 🔓 Attempting to decode protobuf message...');
+                console.log('[fetchBusesFromAPI] 📏 Buffer details:', {
+                  size: buffer.byteLength,
+                  first20Bytes: Array.from(new Uint8Array(buffer.slice(0, 20))),
+                  last20Bytes: Array.from(new Uint8Array(buffer.slice(-20)))
+                });
+                
                 const uint8Buffer = new Uint8Array(buffer);
                 
-                // Try to verify first (non-fatal)
-                try {
-                  const verifyErr = FeedMessage.verify(uint8Buffer);
-                  if (verifyErr) {
-                    console.warn('[fetchBusesFromAPI] ⚠️ Protobuf verification warning (non-fatal):', verifyErr);
-                  } else {
-                    console.log('[fetchBusesFromAPI] ✅ Protobuf verification passed');
-                  }
-                } catch (verifyErr) {
-                  console.warn('[fetchBusesFromAPI] ⚠️ Verification check failed (continuing anyway):', verifyErr.message);
-                }
-                
-                console.log('[fetchBusesFromAPI] 🔓 Decoding message...');
+                // Skip verification - it's too strict and might fail on valid data
+                console.log('[fetchBusesFromAPI] 🔓 Decoding message directly (skipping verification)...');
                 const message = FeedMessage.decode(uint8Buffer);
                 console.log('[fetchBusesFromAPI] ✅ Message decoded successfully');
                 
