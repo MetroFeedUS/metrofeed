@@ -517,86 +517,20 @@
             updateVehicleStatus('Logs cleared. Ready to test.');
         }
         
-        // Helper function to check if proxy is running
-        async function checkProxy() {
+        // Helper function to fetch GTFS-RT data (same as map implementation)
+        async function fetchGTFSRT(url) {
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
-                
-                const testRes = await fetch('http://localhost:8001/health', { 
-                    method: 'GET',
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                
-                if (testRes.ok) {
-                    const data = await testRes.json();
-                    return data.status === 'ok';
-                }
-                return false;
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    vehicleLog(`Proxy health check timed out - proxy may not be running`, 'warn');
-                } else {
-                    vehicleLog(`Proxy health check failed: ${error.message}`, 'warn');
-                }
-                return false;
-            }
-        }
-        
-        // Helper function to fetch with proxy fallback
-        async function fetchWithProxy(url) {
-            const PROXY_URL = 'http://localhost:8001/?url=';
-            
-            try {
-                // Try direct fetch first
                 const res = await fetch(url);
-                if (res.ok) {
-                    return await res.arrayBuffer();
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 }
-                throw new Error('Direct fetch failed');
+                return await res.arrayBuffer();
             } catch (error) {
-                // If direct fetch fails (CORS), use proxy
-                vehicleLog(`Direct fetch failed, trying proxy...`, 'warn');
-                
-                // Check if proxy is running
-                const proxyRunning = await checkProxy();
-                if (!proxyRunning) {
-                    throw new Error('Proxy server is not running! Make sure START-GTFS-TEST.bat started the proxy on port 8001.');
+                // Check if it's a CORS error
+                if (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.name === 'TypeError') {
+                    throw new Error(`CORS blocked: This endpoint doesn't allow cross-origin requests. The agency needs to configure CORS headers on their server.`);
                 }
-                
-                const proxyUrl = PROXY_URL + encodeURIComponent(url);
-                vehicleLog(`Proxy URL: ${proxyUrl}`, 'info');
-                
-                try {
-                    vehicleLog(`Attempting proxy fetch...`, 'info');
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000);
-                    
-                    const proxyRes = await fetch(proxyUrl, {
-                        method: 'GET',
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    vehicleLog(`Proxy response status: ${proxyRes.status} ${proxyRes.statusText}`, 'info');
-                    
-                    if (!proxyRes.ok) {
-                        const errorText = await proxyRes.text();
-                        vehicleLog(`Proxy error response: ${errorText}`, 'error');
-                        throw new Error(`Proxy fetch failed: ${proxyRes.status} ${proxyRes.statusText}. ${errorText}`);
-                    }
-                    
-                    const buffer = await proxyRes.arrayBuffer();
-                    vehicleLog(`Proxy fetch successful: ${buffer.byteLength} bytes`, 'success');
-                    return buffer;
-                } catch (proxyError) {
-                    if (proxyError.name === 'AbortError' || proxyError.name === 'TimeoutError') {
-                        throw new Error('Proxy request timed out after 30 seconds. Check proxy window for details.');
-                    }
-                    vehicleLog(`Proxy fetch exception: ${proxyError.message}`, 'error');
-                    throw new Error(`Proxy error: ${proxyError.message}. Check the "CORS Proxy" window for details.`);
-                }
+                throw error;
             }
         }
         
@@ -613,7 +547,7 @@
             vehicleLog(`Starting VehiclePosition test: ${endpointUrl}`, 'info');
             
             try {
-                const buffer = await fetchWithProxy(endpointUrl);
+                const buffer = await fetchGTFSRT(endpointUrl);
                 
                 vehicleLog(`Received ${buffer.byteLength} bytes`, 'success');
                 vehicleLog(`Content-Type: application/octet-stream`, 'info');
@@ -978,57 +912,19 @@
             updateTripStatus('Logs cleared. Ready to test.');
         }
         
-        // Helper function to fetch with proxy fallback (for Trip Updates)
-        async function fetchWithProxyTrip(url) {
-            const PROXY_URL = 'http://localhost:8001/?url=';
-            
+        // Helper function to fetch GTFS-RT data (for Trip Updates)
+        async function fetchGTFSRTTrip(url) {
             try {
                 const res = await fetch(url);
-                if (res.ok) {
-                    return await res.arrayBuffer();
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 }
-                throw new Error('Direct fetch failed');
+                return await res.arrayBuffer();
             } catch (error) {
-                tripLog(`Direct fetch failed, trying proxy...`, 'warn');
-                
-                // Check if proxy is running
-                const proxyRunning = await checkProxy();
-                if (!proxyRunning) {
-                    throw new Error('Proxy server is not running! Make sure START-GTFS-TEST.bat started the proxy on port 8001.');
+                if (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.name === 'TypeError') {
+                    throw new Error(`CORS blocked: This endpoint doesn't allow cross-origin requests. The agency needs to configure CORS headers on their server.`);
                 }
-                
-                const proxyUrl = PROXY_URL + encodeURIComponent(url);
-                tripLog(`Proxy URL: ${proxyUrl}`, 'info');
-                
-                try {
-                    tripLog(`Attempting proxy fetch...`, 'info');
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000);
-                    
-                    const proxyRes = await fetch(proxyUrl, {
-                        method: 'GET',
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    tripLog(`Proxy response status: ${proxyRes.status} ${proxyRes.statusText}`, 'info');
-                    
-                    if (!proxyRes.ok) {
-                        const errorText = await proxyRes.text();
-                        tripLog(`Proxy error response: ${errorText}`, 'error');
-                        throw new Error(`Proxy fetch failed: ${proxyRes.status} ${proxyRes.statusText}. ${errorText}`);
-                    }
-                    
-                    const buffer = await proxyRes.arrayBuffer();
-                    tripLog(`Proxy fetch successful: ${buffer.byteLength} bytes`, 'success');
-                    return buffer;
-                } catch (proxyError) {
-                    if (proxyError.name === 'AbortError' || proxyError.name === 'TimeoutError') {
-                        throw new Error('Proxy request timed out after 30 seconds. Check proxy window for details.');
-                    }
-                    tripLog(`Proxy fetch exception: ${proxyError.message}`, 'error');
-                    throw new Error(`Proxy error: ${proxyError.message}. Check the "CORS Proxy" window for details.`);
-                }
+                throw error;
             }
         }
         
@@ -1045,7 +941,7 @@
             tripLog(`Starting TripUpdate test: ${endpointUrl}`, 'info');
             
             try {
-                const buffer = await fetchWithProxyTrip(endpointUrl);
+                const buffer = await fetchGTFSRTTrip(endpointUrl);
                 
                 tripLog(`Received ${buffer.byteLength} bytes`, 'success');
                 tripLog(`Content-Type: application/octet-stream`, 'info');
@@ -1350,57 +1246,19 @@
             updateAlertStatus('Logs cleared. Ready to test.');
         }
         
-        // Helper function to fetch with proxy fallback (for Service Alerts)
-        async function fetchWithProxyAlert(url) {
-            const PROXY_URL = 'http://localhost:8001/?url=';
-            
+        // Helper function to fetch GTFS-RT data (for Service Alerts)
+        async function fetchGTFSRTAlert(url) {
             try {
                 const res = await fetch(url);
-                if (res.ok) {
-                    return await res.arrayBuffer();
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 }
-                throw new Error('Direct fetch failed');
+                return await res.arrayBuffer();
             } catch (error) {
-                alertLog(`Direct fetch failed, trying proxy...`, 'warn');
-                
-                // Check if proxy is running
-                const proxyRunning = await checkProxy();
-                if (!proxyRunning) {
-                    throw new Error('Proxy server is not running! Make sure START-GTFS-TEST.bat started the proxy on port 8001.');
+                if (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.name === 'TypeError') {
+                    throw new Error(`CORS blocked: This endpoint doesn't allow cross-origin requests. The agency needs to configure CORS headers on their server.`);
                 }
-                
-                const proxyUrl = PROXY_URL + encodeURIComponent(url);
-                alertLog(`Proxy URL: ${proxyUrl}`, 'info');
-                
-                try {
-                    alertLog(`Attempting proxy fetch...`, 'info');
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000);
-                    
-                    const proxyRes = await fetch(proxyUrl, {
-                        method: 'GET',
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    alertLog(`Proxy response status: ${proxyRes.status} ${proxyRes.statusText}`, 'info');
-                    
-                    if (!proxyRes.ok) {
-                        const errorText = await proxyRes.text();
-                        alertLog(`Proxy error response: ${errorText}`, 'error');
-                        throw new Error(`Proxy fetch failed: ${proxyRes.status} ${proxyRes.statusText}. ${errorText}`);
-                    }
-                    
-                    const buffer = await proxyRes.arrayBuffer();
-                    alertLog(`Proxy fetch successful: ${buffer.byteLength} bytes`, 'success');
-                    return buffer;
-                } catch (proxyError) {
-                    if (proxyError.name === 'AbortError' || proxyError.name === 'TimeoutError') {
-                        throw new Error('Proxy request timed out after 30 seconds. Check proxy window for details.');
-                    }
-                    alertLog(`Proxy fetch exception: ${proxyError.message}`, 'error');
-                    throw new Error(`Proxy error: ${proxyError.message}. Check the "CORS Proxy" window for details.`);
-                }
+                throw error;
             }
         }
         
@@ -1417,7 +1275,7 @@
             alertLog(`Starting ServiceAlert test: ${endpointUrl}`, 'info');
             
             try {
-                const buffer = await fetchWithProxyAlert(endpointUrl);
+                const buffer = await fetchGTFSRTAlert(endpointUrl);
                 
                 alertLog(`Received ${buffer.byteLength} bytes`, 'success');
                 alertLog(`Content-Type: application/octet-stream`, 'info');
