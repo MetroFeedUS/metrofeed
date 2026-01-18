@@ -58,7 +58,7 @@ const CITIES = {
     // APIs
     apiKey: "2C4447D4A42083BCD84DE3B8E",
     otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan", // (unchanged)
-    busApi: "https://tarc.rideralerts.com/InfoPoint/GTFS-realtime.ashx?Type=VehiclePosition",
+    busApi: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition",
     trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
     tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
     
@@ -82,8 +82,14 @@ const CITIES = {
     // Bus API Type
     busApiType: "tarc-gtfs-rt",
     
-    // GTFS-RT endpoint
-    gtfsRtUrl: "https://tarc.rideralerts.com/InfoPoint/GTFS-realtime.ashx?Type=VehiclePosition"
+    // GTFS-RT endpoint (TARC official - capital R)
+    gtfsRtUrl: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition",
+    
+    // Alternative GTFS-RT endpoint (MobilityDatabase - lowercase r) - try if main endpoint fails
+    gtfsRtUrlAlt: "https://tarc.rideralerts.com/InfoPoint/gtfs-realtime.ashx?Type=VehiclePosition",
+    
+    // TripUpdate endpoint (for delays/updates)
+    gtfsRtTripUpdateUrl: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=TripUpdate"
   }
 };
 
