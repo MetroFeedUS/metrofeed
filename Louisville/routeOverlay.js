@@ -947,27 +947,23 @@ function attachRouteToMap(map, routeId, directionId, options) {
                             console.log('[attachRouteToMap] Header decode succeeded, but full message fails');
                             throw truncErr; // Still can't use partial data
                           } catch (headerErr) {
-                            throw lenientErr; // Re-throw original error
+                            // All decode attempts failed
+                            console.error('[attachRouteToMap] All decode attempts failed');
+                            console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
+                            const uint8 = new Uint8Array(buffer);
+                            console.error('[attachRouteToMap] First 50 bytes:', Array.from(uint8.slice(0, 50)));
+                            console.error('[attachRouteToMap] Last 20 bytes:', Array.from(uint8.slice(-20)));
+                            
+                            // Check if we can see any readable strings in the buffer (route IDs, vehicle IDs)
+                            try {
+                              const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+                              const readableStrings = text.match(/[a-zA-Z0-9\-_]{3,}/g) || [];
+                              console.log('[attachRouteToMap] Found readable strings in buffer:', readableStrings.slice(0, 10));
+                            } catch (e) {}
+                            
+                            console.warn('[attachRouteToMap] Cannot decode GTFS-RT data. Other apps work, so this is likely a decoder issue.');
+                            return;
                           }
-                        }
-                      } catch (lenientErr) {
-                          // If that fails, the data might have a different structure
-                          // Since other apps work, try to extract what we can
-                          console.error('[attachRouteToMap] All decode attempts failed');
-                          console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
-                          const uint8 = new Uint8Array(buffer);
-                          console.error('[attachRouteToMap] First 50 bytes:', Array.from(uint8.slice(0, 50)));
-                          console.error('[attachRouteToMap] Last 20 bytes:', Array.from(uint8.slice(-20)));
-                          
-                          // Check if we can see any readable strings in the buffer (route IDs, vehicle IDs)
-                          try {
-                            const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
-                            const readableStrings = text.match(/[a-zA-Z0-9\-_]{3,}/g) || [];
-                            console.log('[attachRouteToMap] Found readable strings in buffer:', readableStrings.slice(0, 10));
-                          } catch (e) {}
-                          
-                          console.warn('[attachRouteToMap] Cannot decode GTFS-RT data. Other apps work, so this is likely a decoder issue.');
-                          return;
                         }
                       }
                       
