@@ -763,6 +763,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     // Parse FeedMessage manually
                     const entities = [];
                     let pos = 0;
+                    let entityCount = 0;
+                    let vehicleCount = 0;
+                    
+                    console.log('[attachRouteToMap] 🔍 Starting manual parse, buffer size:', uint8Buffer.length);
                     
                     // Skip header (field 1) - we don't need it
                     while (pos < uint8Buffer.length) {
@@ -777,6 +781,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                       if (fieldNum === 1) { // FeedHeader - skip it
                         pos = skipField(uint8Buffer, pos, wireType);
                       } else if (fieldNum === 2) { // FeedEntity (repeated)
+                        entityCount++;
+                        console.log('[attachRouteToMap] 🔍 Found entity #' + entityCount + ' at pos', pos - 1);
                         if (wireType === 2) { // length-delimited
                           const { value: entityLength, pos: lengthPos } = parseVarint(uint8Buffer, pos);
                           const entityStart = lengthPos;
@@ -803,10 +809,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                 entityPos = strLenPos + strLen;
                               }
                             } else if (entityFieldNum === 4) { // vehicle (VehiclePosition)
+                              vehicleCount++;
+                              console.log('[attachRouteToMap] 🔍 Found vehicle field in entity #' + entityCount);
                               if (entityWireType === 2) {
                                 const { value: vehicleLength, pos: vehicleLenPos } = parseVarint(uint8Buffer, entityPos);
                                 const vehicleStart = vehicleLenPos;
                                 const vehicleEnd = vehicleStart + vehicleLength;
+                                
+                                console.log('[attachRouteToMap] 🔍 VehiclePosition length:', vehicleLength, 'bytes');
                                 
                                 // Parse VehiclePosition
                                 let vehiclePos = vehicleStart;
@@ -914,6 +924,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                   }
                                 }
                                 
+                                console.log('[attachRouteToMap] 🔍 Extracted: vehicleId=' + vehicleId + ', routeId=' + routeId + ', lat=' + lat + ', lon=' + lon);
+                                
                                 if (vehicleId && lat !== null && lon !== null) {
                                   vehicle = {
                                     vehicle: {
@@ -926,6 +938,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                       bearing: bearing || 0
                                     }
                                   };
+                                  console.log('[attachRouteToMap] ✅ Vehicle parsed successfully');
+                                } else {
+                                  console.warn('[attachRouteToMap] ⚠️ Vehicle missing required fields. vehicleId:', vehicleId, 'lat:', lat, 'lon:', lon);
                                 }
                                 
                                 entityPos = vehicleEnd;
@@ -954,7 +969,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     }
                     
                     data = { entity: entities };
-                    console.log('[attachRouteToMap] ✅ Manual parser extracted', entities.length, 'vehicles');
+                    console.log('[attachRouteToMap] ✅ Manual parser: found', entityCount, 'entities,', vehicleCount, 'vehicle fields, extracted', entities.length, 'complete vehicles');
                   } catch (parseError) {
                     console.error('[attachRouteToMap] Manual parser error:', parseError);
                     console.error('[attachRouteToMap] Stack:', parseError.stack);
