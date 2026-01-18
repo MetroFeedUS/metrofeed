@@ -714,286 +714,250 @@ function attachRouteToMap(map, routeId, directionId, options) {
                     throw new Error('Not JSON format');
                   }
                 } catch (e) {
-                  // If not JSON, it's protobuf - parse using protobufjs
-                  if (typeof protobuf === 'undefined') {
-                    console.error('[attachRouteToMap] protobufjs library not loaded');
-                    return;
-                  }
+                  // If not JSON, it's protobuf - use manual parser instead of protobufjs
+                  console.log('[attachRouteToMap] Using manual GTFS-RT parser (bypassing protobufjs)');
                   
                   try {
+                    const uint8Buffer = new Uint8Array(buffer);
                     
-                    // Define GTFS-RT FeedMessage schema inline (same as in home.html)
-                    const gtfsRtProto = `
-                      syntax = "proto2";
-                      package transit_realtime;
-                      
-                      message FeedMessage {
-                        optional FeedHeader header = 1;
-                        repeated FeedEntity entity = 2;
-                      }
-                      
-                      message FeedHeader {
-                        optional string gtfs_realtime_version = 1;
-                        optional uint64 timestamp = 2;
-                      }
-                      
-                      message FeedEntity {
-                        optional string id = 1;
-                        optional bool is_deleted = 2 [default = false];
-                        optional TripUpdate trip_update = 3;
-                        optional VehiclePosition vehicle = 4;
-                        optional Alert alert = 5;
-                      }
-                      
-                      message VehiclePosition {
-                        optional TripDescriptor trip = 1;
-                        optional VehicleDescriptor vehicle = 2;
-                        optional Position position = 3;
-                        optional uint32 current_stop_sequence = 4;
-                        optional string stop_id = 5;
-                        optional VehiclePosition.VehicleStopStatus current_status = 6 [default = IN_TRANSIT_TO];
-                        optional uint64 timestamp = 7;
-                        optional CongestionLevel congestion_level = 8;
-                        optional OccupancyStatus occupancy_status = 9;
-                        
-                        enum VehicleStopStatus {
-                          INCOMING_AT = 0;
-                          STOPPED_AT = 1;
-                          IN_TRANSIT_TO = 2;
-                        }
-                      }
-                      
-                      message TripDescriptor {
-                        optional string trip_id = 1;
-                        optional string route_id = 2;
-                        optional uint32 direction_id = 3;
-                        optional string start_time = 4;
-                        optional string start_date = 5;
-                        optional TripDescriptor.ScheduleRelationship schedule_relationship = 6;
-                        
-                        enum ScheduleRelationship {
-                          SCHEDULED = 0;
-                          ADDED = 1;
-                          UNSCHEDULED = 2;
-                          CANCELED = 3;
-                        }
-                      }
-                      
-                      message VehicleDescriptor {
-                        optional string id = 1;
-                        optional string label = 2;
-                        optional string license_plate = 3;
-                        // Allow unknown fields
-                      }
-                      
-                      message Position {
-                        optional float latitude = 1;
-                        optional float longitude = 2;
-                        optional float bearing = 3;
-                        optional double odometer = 4;
-                        optional float speed = 5;
-                      }
-                      
-                      message TripUpdate {
-                        optional TripDescriptor trip = 1;
-                        repeated StopTimeUpdate stop_time_update = 2;
-                      }
-                      
-                      message StopTimeUpdate {
-                        optional uint32 stop_sequence = 1;
-                        optional string stop_id = 2;
-                        optional StopTimeEvent arrival = 3;
-                        optional StopTimeEvent departure = 4;
-                      }
-                      
-                      message StopTimeEvent {
-                        optional int64 time = 1;
-                        optional int32 delay = 2;
-                        optional uint32 uncertainty = 3;
-                      }
-                      
-                      message Alert {
-                        repeated TimeRange active_period = 1;
-                        repeated EntitySelector informed_entity = 2;
-                        optional Cause cause = 3 [default = UNKNOWN_CAUSE];
-                        optional Effect effect = 4 [default = UNKNOWN_EFFECT];
-                        optional TranslatedString url = 5;
-                        optional TranslatedString header_text = 6;
-                        optional TranslatedString description_text = 7;
-                      }
-                      
-                      message TimeRange {
-                        optional uint64 start = 1;
-                        optional uint64 end = 2;
-                      }
-                      
-                      message EntitySelector {
-                        optional string agency_id = 1;
-                        optional string route_id = 2;
-                        optional uint32 route_type = 3;
-                        optional TripDescriptor trip = 4;
-                        optional string stop_id = 5;
-                      }
-                      
-                      message TranslatedString {
-                        repeated Translation translation = 1;
-                      }
-                      
-                      message Translation {
-                        required string text = 1;
-                        optional string language = 2;
-                      }
-                      
-                      enum Cause {
-                        UNKNOWN_CAUSE = 1;
-                        OTHER_CAUSE = 2;
-                        TECHNICAL_PROBLEM = 3;
-                        STRIKE = 4;
-                        DEMONSTRATION = 5;
-                        ACCIDENT = 6;
-                        HOLIDAY = 7;
-                        WEATHER = 8;
-                        MAINTENANCE = 9;
-                        CONSTRUCTION = 10;
-                        POLICE_ACTIVITY = 11;
-                        MEDICAL_EMERGENCY = 12;
-                      }
-                      
-                      enum Effect {
-                        NO_SERVICE = 1;
-                        REDUCED_SERVICE = 2;
-                        SIGNIFICANT_DELAYS = 3;
-                        DETOUR = 4;
-                        ADDITIONAL_SERVICE = 5;
-                        MODIFIED_SERVICE = 6;
-                        OTHER_EFFECT = 7;
-                        UNKNOWN_EFFECT = 8;
-                        STOP_MOVED = 9;
-                        NO_EFFECT = 10;
-                        ACCESSIBILITY_ISSUE = 11;
-                      }
-                      
-                      enum CongestionLevel {
-                        UNKNOWN_CONGESTION_LEVEL = 0;
-                        RUNNING_SMOOTHLY = 1;
-                        STOP_AND_GO = 2;
-                        CONGESTION = 3;
-                        SEVERE_CONGESTION = 4;
-                      }
-                      
-                      enum OccupancyStatus {
-                        EMPTY = 0;
-                        MANY_SEATS_AVAILABLE = 1;
-                        FEW_SEATS_AVAILABLE = 2;
-                        STANDING_ROOM_ONLY = 3;
-                        CRUSHED_STANDING_ROOM_ONLY = 4;
-                        FULL = 5;
-                        NOT_ACCEPTING_PASSENGERS = 6;
-                      }
-                    `;
-                    
-                    // Parse the proto schema using protobufjs
-                    // SKIP CDN - use inline schema directly to avoid URL prefixing issues
-                    let root, FeedMessage;
-                    try {
-                      console.log('[attachRouteToMap] Loading inline proto schema (skipping CDN)...');
-                      const protoDataUri = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(gtfsRtProto)));
-                      root = await protobuf.load(protoDataUri);
-                      FeedMessage = root.lookupType('transit_realtime.FeedMessage');
-                      console.log('[attachRouteToMap] ✅ Loaded inline proto schema');
-                    } catch (protoLoadError) {
-                      console.error('[attachRouteToMap] Error loading proto schema:', protoLoadError);
-                      return;
+                    // Simple manual protobuf parser for GTFS-RT VehiclePosition
+                    // This extracts only the fields we need: vehicle ID, route ID, lat, lon, bearing
+                    function parseVarint(buf, pos) {
+                      let result = 0;
+                      let shift = 0;
+                      let byte;
+                      do {
+                        if (pos >= buf.length) throw new Error('Buffer overflow');
+                        byte = buf[pos++];
+                        result |= (byte & 0x7F) << shift;
+                        shift += 7;
+                      } while (byte & 0x80);
+                      return { value: result, pos };
                     }
                     
-                    // Validate buffer
-                    if (!buffer || buffer.byteLength === 0) {
-                      console.warn('[attachRouteToMap] Invalid or empty buffer');
-                      return;
+                    function readString(buf, pos, length) {
+                      const bytes = buf.slice(pos, pos + length);
+                      return new TextDecoder('utf-8').decode(bytes);
                     }
                     
-                    // Decode the protobuf binary data
-                    // The TARC endpoint may return data that doesn't perfectly match the GTFS-RT spec
-                    // Try decoding with error handling
-                    try {
-                      const uint8Buffer = new Uint8Array(buffer);
+                    function readFloat(buf, pos) {
+                      const view = new DataView(buf.buffer, buf.byteOffset + pos, 4);
+                      return view.getFloat32(0, true); // little-endian
+                    }
+                    
+                    function skipField(buf, pos, wireType) {
+                      if (wireType === 0) { // varint
+                        const { pos: newPos } = parseVarint(buf, pos);
+                        return newPos;
+                      } else if (wireType === 1) { // fixed64
+                        return pos + 8;
+                      } else if (wireType === 2) { // length-delimited
+                        const { value: length, pos: lengthPos } = parseVarint(buf, pos);
+                        return lengthPos + length;
+                      } else if (wireType === 5) { // fixed32
+                        return pos + 4;
+                      }
+                      return pos;
+                    }
+                    
+                    // Parse FeedMessage manually
+                    const entities = [];
+                    let pos = 0;
+                    
+                    // Skip header (field 1) - we don't need it
+                    while (pos < uint8Buffer.length) {
+                      if (pos >= uint8Buffer.length) break;
                       
-                      // Try to decode - use lenient approach since other apps successfully decode this data
-                      // The "index out of range" error suggests a length field issue, but data is valid
-                      let message;
-                      try {
-                        // First, try standard decode
-                        message = FeedMessage.decode(uint8Buffer);
-                        console.log('[attachRouteToMap] Standard decode succeeded');
-                      } catch (decodeErr) {
-                        console.warn('[attachRouteToMap] Standard decode failed:', decodeErr.message);
-                        console.log('[attachRouteToMap] Attempting to work around length field issue...');
-                        
-                        // The error "index out of range: 5532 + 10 > 5532" suggests a malformed length field
-                        // Try decoding with error recovery - skip the problematic field
-                        try {
-                          // The error suggests a length field issue - try to decode with a truncated buffer
-                          // Sometimes the last few bytes are padding or checksums that cause issues
-                          const truncatedBuffer = uint8Buffer.slice(0, Math.max(0, buffer.byteLength - 20));
-                          console.log('[attachRouteToMap] Trying decode with truncated buffer (removed last 20 bytes)');
-                          message = FeedMessage.decode(truncatedBuffer);
-                        } catch (truncErr) {
-                          // If truncation doesn't work, the issue is elsewhere
-                          // Try to see if we can at least decode the header
-                          try {
-                            const headerBuffer = uint8Buffer.slice(0, Math.min(200, buffer.byteLength));
-                            console.log('[attachRouteToMap] Trying to decode just header (first 200 bytes)');
-                            const headerMsg = FeedMessage.decode(headerBuffer);
-                            console.log('[attachRouteToMap] Header decode succeeded, but full message fails');
-                            throw truncErr; // Still can't use partial data
-                          } catch (headerErr) {
-                            // All decode attempts failed
-                            console.error('[attachRouteToMap] All decode attempts failed');
-                            console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
-                            const uint8 = new Uint8Array(buffer);
-                            console.error('[attachRouteToMap] First 50 bytes:', Array.from(uint8.slice(0, 50)));
-                            console.error('[attachRouteToMap] Last 20 bytes:', Array.from(uint8.slice(-20)));
+                      const tag = uint8Buffer[pos++];
+                      if (!tag) break;
+                      
+                      const fieldNum = tag >> 3;
+                      const wireType = tag & 0x07;
+                      
+                      if (fieldNum === 1) { // FeedHeader - skip it
+                        pos = skipField(uint8Buffer, pos, wireType);
+                      } else if (fieldNum === 2) { // FeedEntity (repeated)
+                        if (wireType === 2) { // length-delimited
+                          const { value: entityLength, pos: lengthPos } = parseVarint(uint8Buffer, pos);
+                          const entityStart = lengthPos;
+                          const entityEnd = entityStart + entityLength;
+                          
+                          if (entityEnd > uint8Buffer.length) break;
+                          
+                          // Parse entity
+                          let entityPos = entityStart;
+                          let entityId = null;
+                          let vehicle = null;
+                          
+                          while (entityPos < entityEnd) {
+                            const entityTag = uint8Buffer[entityPos++];
+                            if (!entityTag) break;
                             
-                            // Check if we can see any readable strings in the buffer (route IDs, vehicle IDs)
-                            try {
-                              const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
-                              const readableStrings = text.match(/[a-zA-Z0-9\-_]{3,}/g) || [];
-                              console.log('[attachRouteToMap] Found readable strings in buffer:', readableStrings.slice(0, 10));
-                            } catch (e) {}
+                            const entityFieldNum = entityTag >> 3;
+                            const entityWireType = entityTag & 0x07;
                             
-                            console.warn('[attachRouteToMap] Cannot decode GTFS-RT data. Other apps work, so this is likely a decoder issue.');
-                            return;
+                            if (entityFieldNum === 1) { // id
+                              if (entityWireType === 2) {
+                                const { value: strLen, pos: strLenPos } = parseVarint(uint8Buffer, entityPos);
+                                entityId = readString(uint8Buffer, strLenPos, strLen);
+                                entityPos = strLenPos + strLen;
+                              }
+                            } else if (entityFieldNum === 4) { // vehicle (VehiclePosition)
+                              if (entityWireType === 2) {
+                                const { value: vehicleLength, pos: vehicleLenPos } = parseVarint(uint8Buffer, entityPos);
+                                const vehicleStart = vehicleLenPos;
+                                const vehicleEnd = vehicleStart + vehicleLength;
+                                
+                                // Parse VehiclePosition
+                                let vehiclePos = vehicleStart;
+                                let vehicleId = null;
+                                let routeId = null;
+                                let lat = null;
+                                let lon = null;
+                                let bearing = null;
+                                
+                                while (vehiclePos < vehicleEnd) {
+                                  const vehicleTag = uint8Buffer[vehiclePos++];
+                                  if (!vehicleTag) break;
+                                  
+                                  const vehicleFieldNum = vehicleTag >> 3;
+                                  const vehicleWireType = vehicleTag & 0x07;
+                                  
+                                  if (vehicleFieldNum === 1) { // trip (TripDescriptor)
+                                    if (vehicleWireType === 2) {
+                                      const { value: tripLength, pos: tripLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                                      const tripStart = tripLenPos;
+                                      const tripEnd = tripStart + tripLength;
+                                      
+                                      // Parse TripDescriptor for route_id
+                                      let tripPos = tripStart;
+                                      while (tripPos < tripEnd) {
+                                        const tripTag = uint8Buffer[tripPos++];
+                                        if (!tripTag) break;
+                                        
+                                        const tripFieldNum = tripTag >> 3;
+                                        const tripWireType = tripTag & 0x07;
+                                        
+                                        if (tripFieldNum === 2 && tripWireType === 2) { // route_id
+                                          const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
+                                          routeId = readString(uint8Buffer, routeIdLenPos, routeIdLen);
+                                          tripPos = routeIdLenPos + routeIdLen;
+                                        } else {
+                                          tripPos = skipField(uint8Buffer, tripPos, tripWireType);
+                                        }
+                                      }
+                                      vehiclePos = tripEnd;
+                                    } else {
+                                      vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                                    }
+                                  } else if (vehicleFieldNum === 2) { // vehicle (VehicleDescriptor)
+                                    if (vehicleWireType === 2) {
+                                      const { value: vehDescLength, pos: vehDescLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                                      const vehDescStart = vehDescLenPos;
+                                      const vehDescEnd = vehDescStart + vehDescLength;
+                                      
+                                      // Parse VehicleDescriptor for vehicle id
+                                      let vehDescPos = vehDescStart;
+                                      while (vehDescPos < vehDescEnd) {
+                                        const vehDescTag = uint8Buffer[vehDescPos++];
+                                        if (!vehDescTag) break;
+                                        
+                                        const vehDescFieldNum = vehDescTag >> 3;
+                                        const vehDescWireType = vehDescTag & 0x07;
+                                        
+                                        if (vehDescFieldNum === 1 && vehDescWireType === 2) { // id
+                                          const { value: vehIdLen, pos: vehIdLenPos } = parseVarint(uint8Buffer, vehDescPos);
+                                          vehicleId = readString(uint8Buffer, vehIdLenPos, vehIdLen);
+                                          vehDescPos = vehIdLenPos + vehIdLen;
+                                        } else {
+                                          vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
+                                        }
+                                      }
+                                      vehiclePos = vehDescEnd;
+                                    } else {
+                                      vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                                    }
+                                  } else if (vehicleFieldNum === 3) { // position (Position)
+                                    if (vehicleWireType === 2) {
+                                      const { value: posLength, pos: posLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                                      const posStart = posLenPos;
+                                      const posEnd = posStart + posLength;
+                                      
+                                      // Parse Position for lat/lon/bearing
+                                      let posPos = posStart;
+                                      while (posPos < posEnd) {
+                                        const posTag = uint8Buffer[posPos++];
+                                        if (!posTag) break;
+                                        
+                                        const posFieldNum = posTag >> 3;
+                                        const posWireType = posTag & 0x07;
+                                        
+                                        if (posFieldNum === 1 && posWireType === 5) { // latitude (fixed32/float)
+                                          lat = readFloat(uint8Buffer, posPos);
+                                          posPos += 4;
+                                        } else if (posFieldNum === 2 && posWireType === 5) { // longitude (fixed32/float)
+                                          lon = readFloat(uint8Buffer, posPos);
+                                          posPos += 4;
+                                        } else if (posFieldNum === 3 && posWireType === 5) { // bearing (fixed32/float)
+                                          bearing = readFloat(uint8Buffer, posPos);
+                                          posPos += 4;
+                                        } else {
+                                          posPos = skipField(uint8Buffer, posPos, posWireType);
+                                        }
+                                      }
+                                      vehiclePos = posEnd;
+                                    } else {
+                                      vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                                    }
+                                  } else {
+                                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                                  }
+                                }
+                                
+                                if (vehicleId && lat !== null && lon !== null) {
+                                  vehicle = {
+                                    vehicle: {
+                                      id: vehicleId
+                                    },
+                                    trip: routeId ? { route_id: routeId } : null,
+                                    position: {
+                                      latitude: lat,
+                                      longitude: lon,
+                                      bearing: bearing || 0
+                                    }
+                                  };
+                                }
+                                
+                                entityPos = vehicleEnd;
+                              } else {
+                                entityPos = skipField(uint8Buffer, entityPos, entityWireType);
+                              }
+                            } else {
+                              entityPos = skipField(uint8Buffer, entityPos, entityWireType);
+                            }
                           }
+                          
+                          if (vehicle) {
+                            entities.push({
+                              id: entityId || 'unknown',
+                              vehicle: vehicle
+                            });
+                          }
+                          
+                          pos = entityEnd;
+                        } else {
+                          pos = skipField(uint8Buffer, pos, wireType);
                         }
+                      } else {
+                        pos = skipField(uint8Buffer, pos, wireType);
                       }
-                      
-                      const decoded = FeedMessage.toObject(message, {
-                        longs: String,
-                        enums: String,
-                        bytes: String,
-                        defaults: true,  // Use defaults to handle missing fields gracefully
-                        arrays: true,
-                        objects: true,
-                        oneofs: true
-                      });
-                      
-                      data = decoded;
-                      console.log('[attachRouteToMap] ✅ Successfully decoded GTFS-RT protobuf, entities:', decoded.entity?.length || 0);
-                    } catch (decodeError) {
-                      console.error('[attachRouteToMap] Protobuf decode error:', decodeError);
-                      console.error('[attachRouteToMap] Error type:', decodeError.constructor.name);
-                      console.error('[attachRouteToMap] Error message:', decodeError.message);
-                      console.error('[attachRouteToMap] Buffer size:', buffer.byteLength, 'bytes');
-                      // Log first few bytes for debugging
-                      const uint8 = new Uint8Array(buffer);
-                      console.error('[attachRouteToMap] First 50 bytes:', Array.from(uint8.slice(0, 50)));
-                      console.error('[attachRouteToMap] Stack trace:', decodeError.stack);
-                      console.warn('[attachRouteToMap] GTFS-RT protobuf decoding failed. The endpoint might return a different format.');
-                      console.warn('[attachRouteToMap] The TARC GTFS-RT endpoint may not be fully compatible with the standard GTFS-RT schema.');
-                      return;
                     }
-                  } catch (protobufError) {
-                    console.error('[attachRouteToMap] Error in protobuf parsing:', protobufError);
+                    
+                    data = { entity: entities };
+                    console.log('[attachRouteToMap] ✅ Manual parser extracted', entities.length, 'vehicles');
+                  } catch (parseError) {
+                    console.error('[attachRouteToMap] Manual parser error:', parseError);
+                    console.error('[attachRouteToMap] Stack:', parseError.stack);
                     return;
                   }
                 }
