@@ -951,13 +951,76 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                       }
                                       vehiclePos = posEnd;
                                     } else if (vehicleWireType === 0) {
-                                      // Position might be encoded as varint (unlikely but handle it)
+                                      // Field 3 is varint - this might be current_stop_sequence, not Position!
+                                      // Position might be in a different field or encoded differently
                                       const { value: posValue, pos: newPos } = parseVarint(uint8Buffer, vehiclePos);
                                       vehiclePos = newPos;
-                                      console.log('[attachRouteToMap] ⚠️ Position field 3 is varint (unexpected), value:', posValue);
+                                      console.log('[attachRouteToMap] ⚠️ Field 3 is varint (likely current_stop_sequence), value:', posValue);
                                     } else {
                                       vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
                                     }
+                                  } else if (vehicleFieldNum === 7 && vehicleWireType === 2) { // field 7 - might be Position or timestamp
+                                    const { value: field7Length, pos: field7LenPos } = parseVarint(uint8Buffer, vehiclePos);
+                                    const field7Start = field7LenPos;
+                                    const field7End = field7Start + field7Length;
+                                    
+                                    console.log('[attachRouteToMap] 🔍 Field 7 (length-delimited,', field7Length, 'bytes) - checking for Position data');
+                                    
+                                    // Try parsing as Position message
+                                    let field7Pos = field7Start;
+                                    while (field7Pos < field7End && (lat === null || lon === null)) {
+                                      const field7Tag = uint8Buffer[field7Pos++];
+                                      if (!field7Tag) break;
+                                      
+                                      const field7FieldNum = field7Tag >> 3;
+                                      const field7WireType = field7Tag & 0x07;
+                                      
+                                      console.log('[attachRouteToMap] 🔍 Field 7 sub-field:', field7FieldNum, 'wireType:', field7WireType);
+                                      
+                                      if (field7FieldNum === 1 && field7WireType === 5) { // latitude
+                                        lat = readFloat(uint8Buffer, field7Pos);
+                                        field7Pos += 4;
+                                        console.log('[attachRouteToMap] ✅ Read latitude from field 7:', lat);
+                                      } else if (field7FieldNum === 2 && field7WireType === 5) { // longitude
+                                        lon = readFloat(uint8Buffer, field7Pos);
+                                        field7Pos += 4;
+                                        console.log('[attachRouteToMap] ✅ Read longitude from field 7:', lon);
+                                      } else {
+                                        field7Pos = skipField(uint8Buffer, field7Pos, field7WireType);
+                                      }
+                                    }
+                                    vehiclePos = field7End;
+                                  } else if (vehicleFieldNum === 8 && vehicleWireType === 2) { // field 8 - might be Position
+                                    const { value: field8Length, pos: field8LenPos } = parseVarint(uint8Buffer, vehiclePos);
+                                    const field8Start = field8LenPos;
+                                    const field8End = field8Start + field8Length;
+                                    
+                                    console.log('[attachRouteToMap] 🔍 Field 8 (length-delimited,', field8Length, 'bytes) - checking for Position data');
+                                    
+                                    // Try parsing as Position message
+                                    let field8Pos = field8Start;
+                                    while (field8Pos < field8End && (lat === null || lon === null)) {
+                                      const field8Tag = uint8Buffer[field8Pos++];
+                                      if (!field8Tag) break;
+                                      
+                                      const field8FieldNum = field8Tag >> 3;
+                                      const field8WireType = field8Tag & 0x07;
+                                      
+                                      console.log('[attachRouteToMap] 🔍 Field 8 sub-field:', field8FieldNum, 'wireType:', field8WireType);
+                                      
+                                      if (field8FieldNum === 1 && field8WireType === 5) { // latitude
+                                        lat = readFloat(uint8Buffer, field8Pos);
+                                        field8Pos += 4;
+                                        console.log('[attachRouteToMap] ✅ Read latitude from field 8:', lat);
+                                      } else if (field8FieldNum === 2 && field8WireType === 5) { // longitude
+                                        lon = readFloat(uint8Buffer, field8Pos);
+                                        field8Pos += 4;
+                                        console.log('[attachRouteToMap] ✅ Read longitude from field 8:', lon);
+                                      } else {
+                                        field8Pos = skipField(uint8Buffer, field8Pos, field8WireType);
+                                      }
+                                    }
+                                    vehiclePos = field8End;
                                   } else {
                                     vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
                                   }
