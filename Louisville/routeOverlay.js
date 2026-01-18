@@ -1021,8 +1021,60 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                       }
                                     }
                                     vehiclePos = field8End;
+                                  } else if (vehicleFieldNum === 2 && vehicleWireType === 2) {
+                                    // We already handled VehicleDescriptor, but let's check if Position might be embedded here
+                                    // Actually, we already parse this above, so skip
+                                    const { value: vehDescLength, pos: vehDescLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                                    vehiclePos = vehDescLenPos + vehDescLength;
+                                  } else if (vehicleWireType === 5) {
+                                    // Any fixed32 field might be lat/lon if Position is encoded directly
+                                    // Check if this could be lat (field 3 should be Position, but maybe it's encoded differently)
+                                    if (vehicleFieldNum === 3 && lat === null) {
+                                      // Try reading as float - might be latitude if Position is encoded as direct fields
+                                      const testLat = readFloat(uint8Buffer, vehiclePos);
+                                      if (testLat > -90 && testLat < 90) {
+                                        lat = testLat;
+                                        console.log('[attachRouteToMap] ✅ Read latitude as direct field 3 (fixed32):', lat);
+                                      }
+                                      vehiclePos += 4;
+                                    } else if (vehicleFieldNum === 4 && lon === null) {
+                                      // Try reading as float - might be longitude
+                                      const testLon = readFloat(uint8Buffer, vehiclePos);
+                                      if (testLon > -180 && testLon < 180) {
+                                        lon = testLon;
+                                        console.log('[attachRouteToMap] ✅ Read longitude as direct field 4 (fixed32):', lon);
+                                      }
+                                      vehiclePos += 4;
+                                    } else {
+                                      vehiclePos += 4;
+                                    }
                                   } else {
                                     vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                                  }
+                                }
+                                
+                                // If we still don't have lat/lon, try scanning the entire VehiclePosition for any fixed32 values that look like coordinates
+                                if (vehicleId && (lat === null || lon === null)) {
+                                  console.log('[attachRouteToMap] ⚠️ Missing coordinates, scanning VehiclePosition buffer for lat/lon...');
+                                  let scanPos = vehicleStart;
+                                  while (scanPos < vehicleEnd && (lat === null || lon === null)) {
+                                    if (scanPos + 4 <= vehicleEnd) {
+                                      const testFloat = readFloat(uint8Buffer, scanPos);
+                                      // Check if this looks like a valid latitude (-90 to 90)
+                                      if (lat === null && testFloat >= -90 && testFloat <= 90 && Math.abs(testFloat) > 0.1) {
+                                        // Verify it's not just noise - check if next float is valid longitude
+                                        if (scanPos + 8 <= vehicleEnd) {
+                                          const nextFloat = readFloat(uint8Buffer, scanPos + 4);
+                                          if (nextFloat >= -180 && nextFloat <= 180 && Math.abs(nextFloat) > 0.1) {
+                                            lat = testFloat;
+                                            lon = nextFloat;
+                                            console.log('[attachRouteToMap] ✅ Found coordinates by scanning: lat=' + lat + ', lon=' + lon);
+                                            break;
+                                          }
+                                        }
+                                      }
+                                    }
+                                    scanPos++;
                                   }
                                 }
                                 
