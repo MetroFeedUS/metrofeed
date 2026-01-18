@@ -833,6 +833,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                   const vehicleFieldNum = vehicleTag >> 3;
                                   const vehicleWireType = vehicleTag & 0x07;
                                   
+                                  console.log('[attachRouteToMap] 🔍 VehiclePosition field:', vehicleFieldNum, 'wireType:', vehicleWireType, 'at pos', vehiclePos - 1);
+                                  
                                   if (vehicleFieldNum === 1) { // trip (TripDescriptor)
                                     if (vehicleWireType === 2) {
                                       const { value: tripLength, pos: tripLenPos } = parseVarint(uint8Buffer, vehiclePos);
@@ -847,6 +849,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                         
                                         const tripFieldNum = tripTag >> 3;
                                         const tripWireType = tripTag & 0x07;
+                                        
+                                        console.log('[attachRouteToMap] 🔍 TripDescriptor field:', tripFieldNum, 'wireType:', tripWireType);
                                         
                                         if (tripFieldNum === 2 && tripWireType === 2) { // route_id
                                           const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
@@ -875,6 +879,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                         const vehDescFieldNum = vehDescTag >> 3;
                                         const vehDescWireType = vehDescTag & 0x07;
                                         
+                                        console.log('[attachRouteToMap] 🔍 VehicleDescriptor field:', vehDescFieldNum, 'wireType:', vehDescWireType);
+                                        
                                         if (vehDescFieldNum === 1 && vehDescWireType === 2) { // id
                                           const { value: vehIdLen, pos: vehIdLenPos } = parseVarint(uint8Buffer, vehDescPos);
                                           vehicleId = readString(uint8Buffer, vehIdLenPos, vehIdLen);
@@ -901,6 +907,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                         
                                         const posFieldNum = posTag >> 3;
                                         const posWireType = posTag & 0x07;
+                                        
+                                        console.log('[attachRouteToMap] 🔍 Position field:', posFieldNum, 'wireType:', posWireType);
                                         
                                         if (posFieldNum === 1 && posWireType === 5) { // latitude (fixed32/float)
                                           lat = readFloat(uint8Buffer, posPos);
