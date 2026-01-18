@@ -852,10 +852,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                         
                                         console.log('[attachRouteToMap] 🔍 TripDescriptor field:', tripFieldNum, 'wireType:', tripWireType);
                                         
-                                        if (tripFieldNum === 2 && tripWireType === 2) { // route_id
+                                        if (tripFieldNum === 2 && tripWireType === 2) { // route_id as string
                                           const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
                                           routeId = readString(uint8Buffer, routeIdLenPos, routeIdLen);
                                           tripPos = routeIdLenPos + routeIdLen;
+                                          console.log('[attachRouteToMap] ✅ Read route_id:', routeId);
+                                        } else if (tripFieldNum === 1 && tripWireType === 2) { // trip_id - might contain route info
+                                          const { value: tripIdLen, pos: tripIdLenPos } = parseVarint(uint8Buffer, tripPos);
+                                          const tripId = readString(uint8Buffer, tripIdLenPos, tripIdLen);
+                                          tripPos = tripIdLenPos + tripIdLen;
+                                          // Try to extract route from trip_id (e.g., "t806-b46D3C-sl4-vA" -> route might be in trip_id)
+                                          // For now, we'll try to get route from vehicle label or other fields
+                                          console.log('[attachRouteToMap] 🔍 trip_id:', tripId);
                                         } else {
                                           tripPos = skipField(uint8Buffer, tripPos, tripWireType);
                                         }
@@ -881,10 +889,25 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                         
                                         console.log('[attachRouteToMap] 🔍 VehicleDescriptor field:', vehDescFieldNum, 'wireType:', vehDescWireType);
                                         
-                                        if (vehDescFieldNum === 1 && vehDescWireType === 2) { // id
-                                          const { value: vehIdLen, pos: vehIdLenPos } = parseVarint(uint8Buffer, vehDescPos);
-                                          vehicleId = readString(uint8Buffer, vehIdLenPos, vehIdLen);
-                                          vehDescPos = vehIdLenPos + vehIdLen;
+                                        if (vehDescFieldNum === 1) {
+                                          if (vehDescWireType === 2) { // id as string
+                                            const { value: vehIdLen, pos: vehIdLenPos } = parseVarint(uint8Buffer, vehDescPos);
+                                            vehicleId = readString(uint8Buffer, vehIdLenPos, vehIdLen);
+                                            vehDescPos = vehIdLenPos + vehIdLen;
+                                          } else if (vehDescWireType === 5) { // id as fixed32 (float/int)
+                                            // Read as float, convert to string
+                                            const idFloat = readFloat(uint8Buffer, vehDescPos);
+                                            vehicleId = String(Math.round(idFloat)); // Convert to integer string
+                                            vehDescPos += 4;
+                                            console.log('[attachRouteToMap] ✅ Read vehicle ID as fixed32:', vehicleId);
+                                          } else if (vehDescWireType === 0) { // id as varint
+                                            const { value: idValue, pos: idPos } = parseVarint(uint8Buffer, vehDescPos);
+                                            vehicleId = String(idValue);
+                                            vehDescPos = idPos;
+                                            console.log('[attachRouteToMap] ✅ Read vehicle ID as varint:', vehicleId);
+                                          } else {
+                                            vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
+                                          }
                                         } else {
                                           vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
                                         }
@@ -895,6 +918,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                     }
                                   } else if (vehicleFieldNum === 3) { // position (Position)
                                     if (vehicleWireType === 2) {
+                                      // Position as length-delimited message
                                       const { value: posLength, pos: posLenPos } = parseVarint(uint8Buffer, vehiclePos);
                                       const posStart = posLenPos;
                                       const posEnd = posStart + posLength;
@@ -913,9 +937,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                         if (posFieldNum === 1 && posWireType === 5) { // latitude (fixed32/float)
                                           lat = readFloat(uint8Buffer, posPos);
                                           posPos += 4;
+                                          console.log('[attachRouteToMap] ✅ Read latitude:', lat);
                                         } else if (posFieldNum === 2 && posWireType === 5) { // longitude (fixed32/float)
                                           lon = readFloat(uint8Buffer, posPos);
                                           posPos += 4;
+                                          console.log('[attachRouteToMap] ✅ Read longitude:', lon);
                                         } else if (posFieldNum === 3 && posWireType === 5) { // bearing (fixed32/float)
                                           bearing = readFloat(uint8Buffer, posPos);
                                           posPos += 4;
@@ -924,6 +950,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
                                         }
                                       }
                                       vehiclePos = posEnd;
+                                    } else if (vehicleWireType === 0) {
+                                      // Position might be encoded as varint (unlikely but handle it)
+                                      const { value: posValue, pos: newPos } = parseVarint(uint8Buffer, vehiclePos);
+                                      vehiclePos = newPos;
+                                      console.log('[attachRouteToMap] ⚠️ Position field 3 is varint (unexpected), value:', posValue);
                                     } else {
                                       vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
                                     }
