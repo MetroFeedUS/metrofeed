@@ -101,19 +101,19 @@ const CITIES = {
     tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
     
     // Map Settings
-    defaultCenter: [-71.0589, 42.3601], // [longitude, latitude] for MapLibre GL JS
+    defaultCenter: [-71.0589, 42.3601], // [longitude, latitude] for MapLibre GL JS (Boston downtown)
     defaultZoom: 11,
     bounds: {
-      north: 42.5,
-      south: 42.2,
-      east: -70.8,
-      west: -71.3
+      // Boston bounding box: [[-71.1912, 42.2279], [-70.9232, 42.3995]]
+      north: 42.3995,
+      south: 42.2279,
+      east: -70.9232,
+      west: -71.1912
     },
     // Map Tile Styles (base map API)
-    // TODO: Replace with hosted Boston-specific tiles when available (e.g., "https://tiles.metrofeedus.com/styles/X/style.json")
-    // For now, using public MapLibre OSM style as placeholder
-    dayStyle: "https://demotiles.maplibre.org/style.json",
-    nightStyle: "https://demotiles.maplibre.org/style.json", // Same for now, will be updated with night style when hosted tiles are ready
+    // New England map (shared across multiple cities, bounds locked per city)
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json"
     
     // File Paths
     mastermapFile: null, // Boston uses lazy-loading, not mastermap.js
