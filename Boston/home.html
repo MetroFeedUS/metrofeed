@@ -4354,12 +4354,13 @@
   // Initialize as empty, will be populated when routes index loads
   let BUS_ROUTES = [];
   
-  // Function to initialize BUS_ROUTES from routes data
+  // Function to initialize BUS_ROUTES and RAIL_ROUTES from routes data
   function initializeBusRoutes() {
     try {
       const cityRoutes = getCityRoutes();
       BUS_ROUTES = cityRoutes.busRoutes || [];
-      console.log('[initializeBusRoutes] Loaded', BUS_ROUTES.length, 'bus routes');
+      RAIL_ROUTES = cityRoutes.railRoutes || [];
+      console.log('[initializeBusRoutes] Loaded', BUS_ROUTES.length, 'bus routes and', RAIL_ROUTES.length, 'rail routes');
     } catch (error) {
       console.error('[initializeBusRoutes] Error loading routes:', error);
       BUS_ROUTES = [
@@ -4444,6 +4445,7 @@
     { id: '292', label: '292 – Red Bus', dir0: 'To Portland International Airport', dir1: 'To Goose Hollow/SW Jefferson' },
     { id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
       ]; // Fallback if routes_index.js not loaded
+      RAIL_ROUTES = RAIL_ROUTES_FALLBACK;
     }
   }
   
@@ -4692,19 +4694,33 @@
   // Modal for selecting rail routes to overlay on the map
   
   // Rail routes list (loaded from routes_index.js)
-  const RAIL_ROUTES = cityRoutes.railRoutes || [
+  // Initialize as empty, will be populated when routes index loads
+  let RAIL_ROUTES = [];
+  
+  // Fallback rail routes (will be used if routes_index.js not loaded)
+  const RAIL_ROUTES_FALLBACK = [
     { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
     { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
     { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
     { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
     { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
     { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
-  ]; // Fallback if routes_index.js not loaded
+  ];
+  
+  // Initialize RAIL_ROUTES with fallback if not already initialized
+  if (RAIL_ROUTES.length === 0) {
+    RAIL_ROUTES = RAIL_ROUTES_FALLBACK;
+  }
   
   /**
    * Show the rail routes modal
    */
   function showRailRoutesModal() {
+    // Initialize routes if not already done
+    if (RAIL_ROUTES.length === 0) {
+      initializeBusRoutes();
+    }
+    
     console.log('[showRailRoutesModal] Function called');
     const modal = document.getElementById('railRoutesModal');
     const routeList = document.getElementById('railRouteList');
