@@ -1,5 +1,5 @@
 const routesIndex = {
-  "version": "20260120-2007",
+  "version": "20260121-0759",
   "routes": [
     {
       "route_id": "1",
@@ -5764,5 +5764,4 @@ const routesIndex = {
   ]
 };
 
-// Export for routeLoader.js
 window.routesIndex = routesIndex;
