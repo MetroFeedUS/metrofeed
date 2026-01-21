@@ -176,6 +176,7 @@ MetroFeed uses your location and third-party services for login and payment. We 
     <select id="city">
       <option value="Louisville/home.html">Louisville, KY</option>
       <option value="Portland/home.html">Portland, OR</option>
+      <option value="Boston/home.html">Boston, MA</option>
     </select>
     <button onclick="manualRedirect()">Go</button>
   </div>
@@ -256,6 +257,10 @@ MetroFeed uses your location and third-party services for login and payment. We 
       return lat >= 45.20 && lat <= 45.80 && lon >= -123.35 && lon <= -122.15;
     }
 
+    function inBostonBounds(lat, lon) {
+      return lat >= 42.2 && lat <= 42.5 && lon >= -71.3 && lon <= -70.8;
+    }
+
     function showMainContent(message, showDropdown) {
       document.getElementById("loader").style.display = "none";
       document.getElementById("status").innerText = message;
@@ -286,6 +291,8 @@ MetroFeed uses your location and third-party services for login and payment. We 
               window.location.href = "Louisville/home.html";
             } else if (inPortlandBounds(lat, lon)) {
               window.location.href = "Portland/home.html";
+            } else if (inBostonBounds(lat, lon)) {
+              window.location.href = "Boston/home.html";
             } else {
               showMainContent(" 😭 We don't serve your location... yet 😎.", true);
             }
