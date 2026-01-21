@@ -113,7 +113,7 @@ const CITIES = {
     // Map Tile Styles (base map API)
     // New England map (shared across multiple cities, bounds locked per city)
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
-    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json"
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
     
     // File Paths
     mastermapFile: null, // Boston uses lazy-loading, not mastermap.js
