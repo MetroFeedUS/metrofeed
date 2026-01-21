@@ -101,14 +101,19 @@ const CITIES = {
     tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
     
     // Map Settings
-    defaultCenter: [-71.0589, 42.3601], // [longitude, latitude] for MapLibre GL JS (Boston downtown)
+    // Downtown Boston center (Park Street/Downtown Crossing area)
+    defaultCenter: [-71.0619, 42.3551], // [longitude, latitude] for MapLibre GL JS
     defaultZoom: 11,
     bounds: {
-      // Boston bounding box: [[-71.1912, 42.2279], [-70.9232, 42.3995]]
-      north: 42.3995,
-      south: 42.2279,
-      east: -70.9232,
-      west: -71.1912
+      // Expanded bounds to cover full MBTA system:
+      // - North: Alewife (Red Line), Wonderland (Blue Line)
+      // - South: Braintree (Red Line), Forest Hills (Orange Line)
+      // - East: Wonderland/Logan Airport (Blue/Silver Lines)
+      // - West: Riverside (Green Line D), Alewife (Red Line)
+      north: 42.45,
+      south: 42.20,
+      east: -70.90,
+      west: -71.30
     },
     // Map Tile Styles (base map API)
     // New England map (shared across multiple cities, bounds locked per city)
