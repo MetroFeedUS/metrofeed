@@ -1338,6 +1338,51 @@
     }
   }
   
+  // Helper function to get city routes (compatible with both old ROUTES and new routesIndex)
+  function getCityRoutes() {
+    if (CITY_CONFIG.useLazyLoading) {
+      // Boston: Convert routesIndex to old format for compatibility
+      const index = getRoutesIndex();
+      if (!index || !index.routes) {
+        return { busRoutes: [], railRoutes: [] };
+      }
+      
+      // Group routes by route_id and create bus/rail arrays
+      const routeMap = new Map();
+      index.routes.forEach(route => {
+        const key = route.route_id;
+        if (!routeMap.has(key)) {
+          routeMap.set(key, {
+            id: String(route.route_id),
+            label: route.route_title || `${route.route_id}`,
+            dir0: null,
+            dir1: null
+          });
+        }
+        const routeEntry = routeMap.get(key);
+        if (route.direction_id === 0) {
+          routeEntry.dir0 = route.direction_name || 'Direction 0';
+        } else if (route.direction_id === 1) {
+          routeEntry.dir1 = route.direction_name || 'Direction 1';
+        }
+      });
+      
+      const busRoutes = Array.from(routeMap.values());
+      // For now, assume all are bus routes (you can add route_type filtering later)
+      return { busRoutes, railRoutes: [] };
+    } else {
+      // Old system: Use window.ROUTES if available
+      if (typeof window.getCityRoutes === 'function') {
+        return window.getCityRoutes();
+      }
+      if (typeof window.ROUTES !== 'undefined') {
+        const cityId = getCityIdFromPath();
+        return window.ROUTES[cityId] || { busRoutes: [], railRoutes: [] };
+      }
+      return { busRoutes: [], railRoutes: [] };
+    }
+  }
+  
   // Function to process stop times intelligently
   function processStopTimes(times) {
     const nowMins = getPortlandMinutes();
@@ -4028,6 +4073,12 @@
   
   // Function to toggle traffic overlay
   function toggleTrafficOverlay() {
+    // Check if map is initialized
+    if (!map) {
+      console.error('[Traffic] Map not initialized yet');
+      return;
+    }
+    
     if (trafficLayerActive) {
       // Remove traffic layer
       if (map.getLayer('tomtom-traffic')) {
@@ -4300,8 +4351,18 @@
   // Modal for selecting bus routes to overlay on the map
   
   // Bus routes list (loaded from routes_index.js)
-  const cityRoutes = getCityRoutes();
-  const BUS_ROUTES = cityRoutes.busRoutes || [
+  // Initialize as empty, will be populated when routes index loads
+  let BUS_ROUTES = [];
+  
+  // Function to initialize BUS_ROUTES from routes data
+  function initializeBusRoutes() {
+    try {
+      const cityRoutes = getCityRoutes();
+      BUS_ROUTES = cityRoutes.busRoutes || [];
+      console.log('[initializeBusRoutes] Loaded', BUS_ROUTES.length, 'bus routes');
+    } catch (error) {
+      console.error('[initializeBusRoutes] Error loading routes:', error);
+      BUS_ROUTES = [
     { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
     { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
     { id: '4', label: '4 – Fessenden', dir0: 'To St Johns', dir1: 'To Portland City Center' },
@@ -4382,12 +4443,19 @@
     { id: '291', label: '291 – Orange Bus', dir0: 'To Milwaukie', dir1: 'To Portland City Center' },
     { id: '292', label: '292 – Red Bus', dir0: 'To Portland International Airport', dir1: 'To Goose Hollow/SW Jefferson' },
     { id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
-  ]; // Fallback if routes_index.js not loaded
+      ]; // Fallback if routes_index.js not loaded
+    }
+  }
   
   /**
    * Show the bus routes modal
    */
   function showBusRoutesModal() {
+    // Initialize routes if not already done
+    if (BUS_ROUTES.length === 0) {
+      initializeBusRoutes();
+    }
+    
     const modal = document.getElementById('busRoutesModal');
     const routeList = document.getElementById('busRouteList');
     
@@ -5056,6 +5124,33 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     console.log('[DOMContentLoaded] Initializing map and event listeners...');
+    
+    // Initialize bus routes when routes index is ready
+    if (CITY_CONFIG.useLazyLoading) {
+      // For Boston: Wait for routeLoader to be ready
+      if (window.routeLoader) {
+        window.routeLoader.loadRoutesIndex().then(() => {
+          initializeBusRoutes();
+        }).catch(err => {
+          console.error('[DOMContentLoaded] Failed to load routes index:', err);
+          initializeBusRoutes(); // Use fallback
+        });
+      } else {
+        // RouteLoader not loaded yet, try again after a delay
+        setTimeout(() => {
+          if (window.routeLoader) {
+            window.routeLoader.loadRoutesIndex().then(() => {
+              initializeBusRoutes();
+            }).catch(() => initializeBusRoutes());
+          } else {
+            initializeBusRoutes(); // Use fallback
+          }
+        }, 500);
+      }
+    } else {
+      // For other cities: Initialize immediately
+      initializeBusRoutes();
+    }
     
     // Initialize sponsor modal
     initSponsorModal();
