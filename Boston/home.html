@@ -2828,11 +2828,20 @@
   
   // Parse MBTA GTFS-RT VehiclePositions feed
   async function parseMBTAGTFSRT(buffer) {
+    console.log('[parseMBTAGTFSRT] ===== PARSER CALLED (home.html) =====');
+    console.log('[parseMBTAGTFSRT] Buffer size:', buffer.byteLength, 'bytes');
+    
     const uint8Buffer = new Uint8Array(buffer);
     const vehicles = [];
     let pos = 0;
     
+    console.log('[parseMBTAGTFSRT] First 20 bytes:', Array.from(uint8Buffer.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+    
     // Parse FeedMessage
+    let headerFound = false;
+    let entitiesFound = 0;
+    let vehiclesSkipped = 0;
+    
     while (pos < uint8Buffer.length) {
       if (pos >= uint8Buffer.length) break;
       
@@ -2847,12 +2856,16 @@
         pos = skipField(uint8Buffer, pos, wireType);
       } else if (fieldNum === 2) {
         // Entity
+        entitiesFound++;
         if (wireType === 2) {
           const { value: entityLength, pos: lengthPos } = parseVarint(uint8Buffer, pos);
           const entityStart = lengthPos;
           const entityEnd = entityStart + entityLength;
           
-          if (entityEnd > uint8Buffer.length) break;
+          if (entityEnd > uint8Buffer.length) {
+            console.warn('[parseMBTAGTFSRT] Entity extends beyond buffer, stopping');
+            break;
+          }
           
           let entityPos = entityStart;
           let entityId = null;
@@ -3020,6 +3033,30 @@
                     speed: speed ? (speed * 2.237) : null, // Convert m/s to mph
                     blockID: entityId || vehicleId // Use entity ID as block ID if available
                   });
+                  
+                  // Log first few vehicles for debugging
+                  if (vehicles.length <= 3) {
+                    console.log(`[parseMBTAGTFSRT] ✅ Vehicle ${vehicles.length}:`, {
+                      vehicleID: vehicleId,
+                      routeNumber: routeId,
+                      direction: directionId,
+                      lat: lat,
+                      lon: lon
+                    });
+                  }
+                } else {
+                  vehiclesSkipped++;
+                  // Log why vehicle was skipped (only first few to avoid spam)
+                  if (vehiclesSkipped <= 5) {
+                    console.warn('[parseMBTAGTFSRT] ⚠️ Skipped vehicle (missing data):', {
+                      entityId: entityId || 'MISSING',
+                      vehicleId: vehicleId || 'MISSING',
+                      routeId: routeId !== null ? routeId : 'MISSING',
+                      lat: lat !== null ? lat : 'MISSING',
+                      lon: lon !== null ? lon : 'MISSING',
+                      directionId: directionId !== null ? directionId : 'MISSING'
+                    });
+                  }
                 }
               }
             } else {
@@ -3031,6 +3068,23 @@
         }
       } else {
         pos = skipField(uint8Buffer, pos, wireType);
+      }
+    }
+    
+    console.log(`[parseMBTAGTFSRT] ===== PARSE COMPLETE (home.html) =====`);
+    console.log(`[parseMBTAGTFSRT] Header found: ${headerFound}`);
+    console.log(`[parseMBTAGTFSRT] Entities found: ${entitiesFound}`);
+    console.log(`[parseMBTAGTFSRT] Vehicles parsed: ${vehicles.length}`);
+    console.log(`[parseMBTAGTFSRT] Vehicles skipped: ${vehiclesSkipped}`);
+    
+    if (vehicles.length === 0 && buffer.byteLength > 100) {
+      console.error('[parseMBTAGTFSRT] ❌ Large buffer but no vehicles parsed!');
+      console.error('[parseMBTAGTFSRT] Header found:', headerFound);
+      console.error('[parseMBTAGTFSRT] Entities found:', entitiesFound);
+      console.error('[parseMBTAGTFSRT] Vehicles skipped:', vehiclesSkipped);
+      if (entitiesFound > 0 && vehicles.length === 0) {
+        console.error('[parseMBTAGTFSRT] ⚠️ Entities were found but no vehicles extracted!');
+        console.error('[parseMBTAGTFSRT] This suggests vehicle field parsing is failing.');
       }
     }
     
