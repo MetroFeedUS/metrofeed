@@ -94,7 +94,7 @@ const CITIES = {
     // APIs
     apiKey: "2C4447D4A42083BCD84DE3B8E",
     otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
-    busApi: "https://cdn.mbta.com/realtime/VehiclePositions.pb",
+    busApi: "https://maps.metrofeedus.com/api/mbta/VehiclePositions.pb", // Proxied through VPS
     // trafficApi: Removed - will use state DOT APIs in the future
     
     // Map Settings
@@ -125,8 +125,11 @@ const CITIES = {
     // Bus API Type
     busApiType: "mbta-gtfs-rt",
     
-    // GTFS-RT endpoint
-    gtfsRtUrl: "https://cdn.mbta.com/realtime/VehiclePositions.pb",
+    // GTFS-RT endpoints (proxied through VPS to avoid CORS)
+    gtfsRtUrl: "https://maps.metrofeedus.com/api/mbta/VehiclePositions.pb",
+    // Additional GTFS-RT endpoints (ready for future use):
+    gtfsRtTripUpdatesUrl: "https://maps.metrofeedus.com/api/mbta/TripUpdates.pb",
+    gtfsRtAlertsUrl: "https://maps.metrofeedus.com/api/mbta/Alerts.pb",
     
     // Lazy loading flag
     useLazyLoading: true
