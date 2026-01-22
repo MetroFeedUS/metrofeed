@@ -142,6 +142,9 @@ async function parseMBTAGTFSRT(buffer) {
               let bearing = null;
               let speed = null;
               
+              // Debug: track what fields we find
+              let foundFields = [];
+              
               while (vehiclePos < vehicleEnd) {
                 const vehicleTag = uint8Buffer[vehiclePos++];
                 if (!vehicleTag) break;
@@ -151,10 +154,12 @@ async function parseMBTAGTFSRT(buffer) {
                 
                 if (vehicleFieldNum === 1) {
                   // vehicle.trip
+                  foundFields.push('vehicle.trip(f1) found');
                   if (vehicleWireType === 2) {
                     const { value: tripLength, pos: tripLenPos } = parseVarint(uint8Buffer, vehiclePos);
                     const tripStart = tripLenPos;
                     const tripEnd = tripStart + tripLength;
+                    foundFields.push(`trip.length=${tripLength}`);
                     
                     let tripPos = tripStart;
                     while (tripPos < tripEnd) {
@@ -174,24 +179,22 @@ async function parseMBTAGTFSRT(buffer) {
                         const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
                         tripPos = routeIdLenPos + routeIdLen;
                       } else if (tripFieldNum === 3 && tripWireType === 2) {
-                        // trip.route_id (field 3 in GTFS-RT spec)
+                        // Skip field 3 - MBTA doesn't use this for route_id (it's often a date like '20260122')
+                        // MBTA uses field 5 for route_id
                         const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
-                        const routeIdValue = readString(uint8Buffer, routeIdLenPos, routeIdLen);
-                        // Only set if it doesn't look like a time
-                        if (!routeIdValue.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
-                          routeId = routeIdValue;
-                        }
                         tripPos = routeIdLenPos + routeIdLen;
                       } else if (tripFieldNum === 5 && tripWireType === 2) {
                         // trip.route_id (field 5 - MBTA uses this, hex shows "Green-D" here)
-                        // This is the actual route_id, always overwrite any previous value
+                        // This is the ONLY field we use for route_id
                         const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
                         routeId = readString(uint8Buffer, routeIdLenPos, routeIdLen);
+                        foundFields.push(`trip.route_id(f5)=${routeId}`);
                         tripPos = routeIdLenPos + routeIdLen;
                       } else if (tripFieldNum === 6 && tripWireType === 0) {
                         // trip.direction_id (field 6 in GTFS-RT)
                         const { value: dirValue, pos: dirPos } = parseVarint(uint8Buffer, tripPos);
                         directionId = dirValue;
+                        foundFields.push(`trip.direction_id(f6)=${directionId}`);
                         tripPos = dirPos;
                       } else {
                         tripPos = skipField(uint8Buffer, tripPos, tripWireType);
@@ -203,10 +206,12 @@ async function parseMBTAGTFSRT(buffer) {
                   }
                 } else if (vehicleFieldNum === 2) {
                   // vehicle.vehicle
+                  foundFields.push('vehicle.vehicle(f2) found');
                   if (vehicleWireType === 2) {
                     const { value: vehDescLength, pos: vehDescLenPos } = parseVarint(uint8Buffer, vehiclePos);
                     const vehDescStart = vehDescLenPos;
                     const vehDescEnd = vehDescStart + vehDescLength;
+                    foundFields.push(`vehicle.length=${vehDescLength}`);
                     
                     let vehDescPos = vehDescStart;
                     while (vehDescPos < vehDescEnd) {
@@ -221,14 +226,17 @@ async function parseMBTAGTFSRT(buffer) {
                         if (vehDescWireType === 2) {
                           const { value: vehIdLen, pos: vehIdLenPos } = parseVarint(uint8Buffer, vehDescPos);
                           vehicleId = readString(uint8Buffer, vehIdLenPos, vehIdLen);
+                          foundFields.push(`vehicle.id(f1)=${vehicleId}`);
                           vehDescPos = vehIdLenPos + vehIdLen;
                         } else if (vehDescWireType === 5) {
                           const idFloat = readFloat(uint8Buffer, vehDescPos);
                           vehicleId = String(Math.round(idFloat));
+                          foundFields.push(`vehicle.id(f1,float)=${vehicleId}`);
                           vehDescPos += 4;
                         } else if (vehDescWireType === 0) {
                           const { value: idValue, pos: idPos } = parseVarint(uint8Buffer, vehDescPos);
                           vehicleId = String(idValue);
+                          foundFields.push(`vehicle.id(f1,varint)=${vehicleId}`);
                           vehDescPos = idPos;
                         } else {
                           vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
@@ -243,10 +251,12 @@ async function parseMBTAGTFSRT(buffer) {
                   }
                 } else if (vehicleFieldNum === 3) {
                   // vehicle.position
+                  foundFields.push('vehicle.position(f3) found');
                   if (vehicleWireType === 2) {
                     const { value: posLength, pos: posLenPos } = parseVarint(uint8Buffer, vehiclePos);
                     const posStart = posLenPos;
                     const posEnd = posStart + posLength;
+                    foundFields.push(`position.length=${posLength}`);
                     
                     let posPos = posStart;
                     while (posPos < posEnd) {
@@ -258,17 +268,22 @@ async function parseMBTAGTFSRT(buffer) {
                       
                       if (posFieldNum === 1 && posWireType === 5) {
                         lat = readFloat(uint8Buffer, posPos);
+                        foundFields.push(`position.lat(f1)=${lat}`);
                         posPos += 4;
                       } else if (posFieldNum === 2 && posWireType === 5) {
                         lon = readFloat(uint8Buffer, posPos);
+                        foundFields.push(`position.lon(f2)=${lon}`);
                         posPos += 4;
                       } else if (posFieldNum === 3 && posWireType === 5) {
                         bearing = readFloat(uint8Buffer, posPos);
+                        foundFields.push(`position.bearing(f3)=${bearing}`);
                         posPos += 4;
                       } else if (posFieldNum === 4 && posWireType === 5) {
                         speed = readFloat(uint8Buffer, posPos);
+                        foundFields.push(`position.speed(f4)=${speed}`);
                         posPos += 4;
                       } else {
+                        foundFields.push(`position.unknown(f${posFieldNum},wt${posWireType})`);
                         posPos = skipField(uint8Buffer, posPos, posWireType);
                       }
                     }
@@ -314,7 +329,8 @@ async function parseMBTAGTFSRT(buffer) {
                     routeId: routeId !== null ? routeId : 'MISSING',
                     lat: lat !== null ? lat : 'MISSING',
                     lon: lon !== null ? lon : 'MISSING',
-                    directionId: directionId !== null ? directionId : 'MISSING'
+                    directionId: directionId !== null ? directionId : 'MISSING',
+                    foundFields: foundFields.length > 0 ? foundFields.join(', ') : 'NONE'
                   });
                 }
               }
