@@ -862,16 +862,28 @@ function attachRouteToMap(map, routeId, directionId, options) {
         try {
           let allBuses = [];
           
+          console.log('[attachRouteToMap] fetchAndDisplayBuses called for route:', routeId, 'direction:', directionId);
+          console.log('[attachRouteToMap] busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
+          
           if (busApiType === 'mbta-gtfs-rt' && gtfsRtUrl) {
             // MBTA GTFS-RT feed
-            console.log('[attachRouteToMap] Using MBTA GTFS-RT feed:', gtfsRtUrl);
+            console.log('[attachRouteToMap] Fetching MBTA GTFS-RT feed:', gtfsRtUrl);
             const res = await fetch(gtfsRtUrl);
+            console.log('[attachRouteToMap] Fetch response status:', res.status, res.statusText);
             if (!res.ok) {
               throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             }
             const buffer = await res.arrayBuffer();
+            console.log('[attachRouteToMap] Received buffer size:', buffer.byteLength, 'bytes');
             allBuses = await parseMBTAGTFSRT(buffer);
             console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
+            
+            if (allBuses.length === 0) {
+              console.warn('[attachRouteToMap] ⚠️ No buses found in GTFS-RT feed. This could mean:');
+              console.warn('[attachRouteToMap]   1. No buses are currently running');
+              console.warn('[attachRouteToMap]   2. The feed is empty or malformed');
+              console.warn('[attachRouteToMap]   3. There was a parsing error');
+            }
           } else {
             console.warn('[attachRouteToMap] MBTA GTFS-RT not configured. busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
             return;
@@ -979,8 +991,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
           });
           
           console.log(`[attachRouteToMap] Displayed ${routeBuses.length} buses for route ${routeNum} direction ${directionId}`);
+          
+          if (routeBuses.length === 0 && allBuses.length > 0) {
+            console.warn(`[attachRouteToMap] ⚠️ No buses matched for route "${routeNum}" direction ${directionId}, but ${allBuses.length} total buses found in feed`);
+            console.warn(`[attachRouteToMap] This suggests a route ID mismatch. Check route matching logic.`);
+          }
         } catch (error) {
           console.error('[attachRouteToMap] Error fetching buses:', error);
+          console.error('[attachRouteToMap] Error stack:', error.stack);
         }
       }
       
