@@ -72,7 +72,11 @@ async function parseMBTAGTFSRT(buffer) {
   const vehicles = [];
   let pos = 0;
   
+  console.log('[parseMBTAGTFSRT] Starting parse, buffer size:', buffer.byteLength, 'bytes');
+  console.log('[parseMBTAGTFSRT] First 20 bytes:', Array.from(uint8Buffer.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+  
   // Parse FeedMessage
+  let entityCount = 0;
   while (pos < uint8Buffer.length) {
     if (pos >= uint8Buffer.length) break;
     
@@ -259,6 +263,28 @@ async function parseMBTAGTFSRT(buffer) {
                   speed: speed ? (speed * 2.237) : null, // Convert m/s to mph
                   blockID: entityId || vehicleId // Use entity ID as block ID if available
                 });
+                
+                // Log first few vehicles for debugging
+                if (vehicles.length <= 3) {
+                  console.log(`[parseMBTAGTFSRT] Vehicle ${vehicles.length}:`, {
+                    vehicleID: vehicleId,
+                    routeNumber: routeId,
+                    direction: directionId,
+                    lat: lat,
+                    lon: lon
+                  });
+                }
+              } else {
+                // Log why vehicle was skipped (only first few to avoid spam)
+                if (entityId && vehicles.length < 3) {
+                  console.warn('[parseMBTAGTFSRT] Skipped vehicle (missing data):', {
+                    entityId,
+                    vehicleId: vehicleId || 'MISSING',
+                    routeId: routeId !== null ? routeId : 'MISSING',
+                    lat: lat !== null ? lat : 'MISSING',
+                    lon: lon !== null ? lon : 'MISSING'
+                  });
+                }
               }
             }
           } else {
@@ -271,6 +297,12 @@ async function parseMBTAGTFSRT(buffer) {
     } else {
       pos = skipField(uint8Buffer, pos, wireType);
     }
+  }
+  
+  console.log(`[parseMBTAGTFSRT] Parse complete. Processed entities, returning ${vehicles.length} vehicles`);
+  if (vehicles.length === 0 && buffer.byteLength > 100) {
+    console.warn('[parseMBTAGTFSRT] ⚠️ Large buffer but no vehicles parsed. Possible parsing issue.');
+    console.warn('[parseMBTAGTFSRT] Check protobuf field numbers and wire types match MBTA feed format.');
   }
   
   return vehicles;
