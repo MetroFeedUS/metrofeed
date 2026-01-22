@@ -271,19 +271,24 @@ function attachRouteToMap(map, routeId, directionId, options) {
         nextTimeIndex = 0;
       }
       
-      // Build display: 2 before, next (highlighted), 5 after (8 total)
+      // Build display: 2 before, next (highlighted), 3 after (6 total, no repeats)
       const highlightedTimes = [];
-      const timesToShow = 8;
+      const timesToShow = 6;
       const timesBefore = 2;
-      const timesAfter = 5;
+      const timesAfter = 3;
       
       if (nextTimeIndex >= 0) {
-        // Get times before next
-        const beforeStart = Math.max(0, nextTimeIndex - timesBefore);
-        const beforeTimes = allTimes.slice(beforeStart, nextTimeIndex);
+        // Get past times (originalMins < nowMins) - these are actual past times from today
+        const pastTimes = allTimes.filter(timeData => 
+          timeData.originalMins < 1440 && timeData.originalMins < nowMins
+        );
+        // Sort past times by originalMins descending (most recent first)
+        pastTimes.sort((a, b) => b.originalMins - a.originalMins);
+        // Get the 2 most recent past times
+        const beforeTimes = pastTimes.slice(0, timesBefore);
         
-        // Add before times
-        beforeTimes.forEach(timeData => {
+        // Add before times (most recent past times first)
+        beforeTimes.reverse().forEach(timeData => {
           highlightedTimes.push(timeData.displayTime);
         });
         
@@ -292,7 +297,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${allTimes[nextTimeIndex].displayTime}</span>`
         );
         
-        // Add after times (up to 5)
+        // Add after times (up to 3, no wrap-around)
         const afterEnd = Math.min(allTimes.length, nextTimeIndex + 1 + timesAfter);
         const afterTimes = allTimes.slice(nextTimeIndex + 1, afterEnd);
         
@@ -300,15 +305,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           highlightedTimes.push(timeData.displayTime);
         });
         
-        // If we don't have enough times, wrap around to beginning of array
-        if (highlightedTimes.length < timesToShow && allTimes.length > 0) {
-          const needed = timesToShow - highlightedTimes.length;
-          for (let i = 0; i < needed && i < allTimes.length; i++) {
-            highlightedTimes.push(allTimes[i].displayTime);
-          }
-        }
+        // No wrap-around - just show what we have (max 6 times)
       } else if (allTimes.length > 0) {
-        // No next time found, just show first 8 times
+        // No next time found, just show first 6 times
         allTimes.slice(0, timesToShow).forEach((timeData, index) => {
           if (index === 0) {
             highlightedTimes.push(
