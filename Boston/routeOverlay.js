@@ -68,17 +68,20 @@ function skipField(buf, pos, wireType) {
 
 // Parse MBTA GTFS-RT VehiclePositions feed
 async function parseMBTAGTFSRT(buffer) {
+  console.log('[parseMBTAGTFSRT] ===== PARSER CALLED =====');
+  console.log('[parseMBTAGTFSRT] Buffer size:', buffer.byteLength, 'bytes');
+  
   const uint8Buffer = new Uint8Array(buffer);
   const vehicles = [];
   let pos = 0;
   
-  console.log('[parseMBTAGTFSRT] Starting parse, buffer size:', buffer.byteLength, 'bytes');
   console.log('[parseMBTAGTFSRT] First 20 bytes:', Array.from(uint8Buffer.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
   
   // Parse FeedMessage
   let entityCount = 0;
   let headerFound = false;
   let entitiesFound = 0;
+  let vehiclesSkipped = 0;
   
   while (pos < uint8Buffer.length) {
     if (pos >= uint8Buffer.length) break;
@@ -283,14 +286,16 @@ async function parseMBTAGTFSRT(buffer) {
                   });
                 }
               } else {
+                vehiclesSkipped++;
                 // Log why vehicle was skipped (only first few to avoid spam)
-                if (entityId && vehicles.length < 3) {
-                  console.warn('[parseMBTAGTFSRT] Skipped vehicle (missing data):', {
-                    entityId,
+                if (vehiclesSkipped <= 5) {
+                  console.warn('[parseMBTAGTFSRT] ⚠️ Skipped vehicle (missing data):', {
+                    entityId: entityId || 'MISSING',
                     vehicleId: vehicleId || 'MISSING',
                     routeId: routeId !== null ? routeId : 'MISSING',
                     lat: lat !== null ? lat : 'MISSING',
-                    lon: lon !== null ? lon : 'MISSING'
+                    lon: lon !== null ? lon : 'MISSING',
+                    directionId: directionId !== null ? directionId : 'MISSING'
                   });
                 }
               }
@@ -307,10 +312,21 @@ async function parseMBTAGTFSRT(buffer) {
     }
   }
   
-  console.log(`[parseMBTAGTFSRT] Parse complete. Processed entities, returning ${vehicles.length} vehicles`);
+  console.log(`[parseMBTAGTFSRT] ===== PARSE COMPLETE =====`);
+  console.log(`[parseMBTAGTFSRT] Header found: ${headerFound}`);
+  console.log(`[parseMBTAGTFSRT] Entities found: ${entitiesFound}`);
+  console.log(`[parseMBTAGTFSRT] Vehicles parsed: ${vehicles.length}`);
+  console.log(`[parseMBTAGTFSRT] Vehicles skipped: ${vehiclesSkipped}`);
+  
   if (vehicles.length === 0 && buffer.byteLength > 100) {
-    console.warn('[parseMBTAGTFSRT] ⚠️ Large buffer but no vehicles parsed. Possible parsing issue.');
-    console.warn('[parseMBTAGTFSRT] Check protobuf field numbers and wire types match MBTA feed format.');
+    console.error('[parseMBTAGTFSRT] ❌ Large buffer but no vehicles parsed!');
+    console.error('[parseMBTAGTFSRT] Header found:', headerFound);
+    console.error('[parseMBTAGTFSRT] Entities found:', entitiesFound);
+    console.error('[parseMBTAGTFSRT] Vehicles skipped:', vehiclesSkipped);
+    if (entitiesFound > 0 && vehicles.length === 0) {
+      console.error('[parseMBTAGTFSRT] ⚠️ Entities were found but no vehicles extracted!');
+      console.error('[parseMBTAGTFSRT] This suggests vehicle field parsing is failing.');
+    }
   }
   
   return vehicles;
