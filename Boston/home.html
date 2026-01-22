@@ -1130,12 +1130,30 @@
 <div id="busRoutesModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
     <h2>🚌 Bus Routes</h2>
-    <div style="margin-bottom: 1rem; padding: 0 1rem;">
-      <input type="text" id="busRouteSearch" placeholder="Search routes..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+    
+    <!-- Category Selection Screen -->
+    <div id="busCategorySelection" style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem; flex: 1; overflow-y: auto;">
+      <button class="mf-btn" onclick="showBusCategory('bus')" style="padding: 1.5rem; font-size: 1.2rem; text-align: center;">
+        🚌 Regular Bus Routes<br>
+        <span style="font-size: 0.9rem; opacity: 0.8;">160 routes</span>
+      </button>
+      <button class="mf-btn" onclick="showBusCategory('shuttle')" style="padding: 1.5rem; font-size: 1.2rem; text-align: center;">
+        🚐 Shuttle Routes<br>
+        <span style="font-size: 0.9rem; opacity: 0.8;">185 routes</span>
+      </button>
     </div>
-    <div id="busRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
-      <!-- Route list will be populated here -->
+    
+    <!-- Route List Screen -->
+    <div id="busRouteListScreen" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
+      <div style="margin-bottom: 1rem; padding: 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <button onclick="showBusCategorySelection()" style="background: #1E90FF; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">← Back</button>
+        <input type="text" id="busRouteSearch" placeholder="Search routes..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+      </div>
+      <div id="busRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
+        <!-- Route list will be populated here -->
+      </div>
     </div>
+    
     <div style="padding: 1rem; border-top: 1px solid #333; margin-top: auto;">
       <button class="mf-btn" onclick="hideBusRoutesModal()" style="width: 100%;" data-translate="close">Close</button>
     </div>
@@ -1146,12 +1164,30 @@
 <div id="railRoutesModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
     <h2>🚆 Rail Routes</h2>
-    <div style="margin-bottom: 1rem; padding: 0 1rem;">
-      <input type="text" id="railRouteSearch" placeholder="Search routes..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+    
+    <!-- Category Selection Screen -->
+    <div id="railCategorySelection" style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem; flex: 1; overflow-y: auto;">
+      <button class="mf-btn" onclick="showRailCategory('subway')" style="padding: 1.5rem; font-size: 1.2rem; text-align: center;">
+        🚇 Subway Lines<br>
+        <span style="font-size: 0.9rem; opacity: 0.8;">7 lines (Red, Orange, Blue, Green)</span>
+      </button>
+      <button class="mf-btn" onclick="showRailCategory('commuter')" style="padding: 1.5rem; font-size: 1.2rem; text-align: center;">
+        🚂 Commuter Rail<br>
+        <span style="font-size: 0.9rem; opacity: 0.8;">13 lines</span>
+      </button>
     </div>
-    <div id="railRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
-      <!-- Route list will be populated here -->
+    
+    <!-- Route List Screen -->
+    <div id="railRouteListScreen" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
+      <div style="margin-bottom: 1rem; padding: 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <button onclick="showRailCategorySelection()" style="background: #1E90FF; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">← Back</button>
+        <input type="text" id="railRouteSearch" placeholder="Search routes..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+      </div>
+      <div id="railRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
+        <!-- Route list will be populated here -->
+      </div>
     </div>
+    
     <div style="padding: 1rem; border-top: 1px solid #333; margin-top: auto;">
       <button class="mf-btn" onclick="hideRailRoutesModal()" style="width: 100%;" data-translate="close">Close</button>
     </div>
@@ -1179,7 +1215,7 @@
 <!-- -- CITY CONFIGURATION (MUST LOAD FIRST) -- -->
 <script src="city-config.js"></script>
 <!-- -- ROUTES INDEX (MUST LOAD AFTER CITY CONFIG) -- -->
-<script src="routes_index.js"></script>
+<!-- routes_index.js is loaded dynamically by routeLoader.js -->
 
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -1347,16 +1383,54 @@
         return { busRoutes: [], railRoutes: [] };
       }
       
-      // Group routes by route_id and create bus/rail arrays
-      const routeMap = new Map();
+      // Identify rail routes by route_id pattern (MBTA specific)
+      const railRouteIds = new Set(['Red', 'Orange', 'Green', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E']);
+      // Also check for Commuter Rail (CR-*) and other rail patterns
+      const isRailRoute = (routeId) => {
+        const id = String(routeId);
+        return railRouteIds.has(id) || id.startsWith('CR-') || id.startsWith('Green-');
+      };
+      
+      // Group routes by route_id and separate bus/shuttle/rail
+      const busRouteMap = new Map();
+      const railRouteMap = new Map();
+      
       index.routes.forEach(route => {
         const key = route.route_id;
+        const isRail = isRailRoute(key);
+        const isShuttle = String(key).startsWith('Shuttle');
+        const routeMap = isRail ? railRouteMap : busRouteMap;
+        
+        // Note: Bus and Shuttle both go in busRouteMap, we'll filter later
         if (!routeMap.has(key)) {
+          // Build route label with name if available
+          // Priority: route_name field > route_long_name > route_title (cleaned) > route_id
+          let routeLabel;
+          
+          if (route.route_name) {
+            // If route_name exists (e.g., "Brightheart Parkway"), format as "19 - Brightheart Parkway"
+            routeLabel = `${route.route_number || route.route_id} - ${route.route_name}`;
+          } else if (route.route_long_name) {
+            // If route_long_name exists, use it
+            routeLabel = `${route.route_number || route.route_id} - ${route.route_long_name}`;
+          } else {
+            // Fallback: Extract from route_title (remove direction suffix)
+            // "Route 1 - Outbound" -> "Route 1"
+            routeLabel = route.route_title || `${route.route_id}`;
+            if (routeLabel.includes(' - ')) {
+              // Remove direction suffix (everything after " - ")
+              routeLabel = routeLabel.split(' - ')[0];
+            }
+            // If it's still "Route X", simplify to just "X"
+            routeLabel = routeLabel.replace(/^Route\s+/i, '');
+          }
+          
           routeMap.set(key, {
             id: String(route.route_id),
-            label: route.route_title || `${route.route_id}`,
+            label: routeLabel,
             dir0: null,
-            dir1: null
+            dir1: null,
+            className: isRail ? getRailLineClassName(key) : null
           });
         }
         const routeEntry = routeMap.get(key);
@@ -1367,9 +1441,12 @@
         }
       });
       
-      const busRoutes = Array.from(routeMap.values());
-      // For now, assume all are bus routes (you can add route_type filtering later)
-      return { busRoutes, railRoutes: [] };
+      // All bus routes (including shuttle) - will be separated in initializeBusRoutes()
+      const busRoutes = Array.from(busRouteMap.values());
+      const railRoutes = Array.from(railRouteMap.values());
+      
+      console.log('[getCityRoutes] Separated routes:', busRoutes.length, 'bus/shuttle,', railRoutes.length, 'rail');
+      return { busRoutes, railRoutes };
     } else {
       // Old system: Use window.ROUTES if available
       if (typeof window.getCityRoutes === 'function') {
@@ -1381,6 +1458,17 @@
       }
       return { busRoutes: [], railRoutes: [] };
     }
+  }
+  
+  // Helper to get CSS class name for rail lines (for styling)
+  function getRailLineClassName(routeId) {
+    const id = String(routeId).toLowerCase();
+    if (id === 'red') return 'red-line';
+    if (id === 'orange') return 'orange-line';
+    if (id === 'blue') return 'blue-line';
+    if (id.startsWith('green')) return 'green-line';
+    if (id.startsWith('cr-')) return 'commuter-rail';
+    return null;
   }
   
   // Function to process stop times intelligently
@@ -4354,16 +4442,38 @@
   // Initialize as empty, will be populated when routes index loads
   let BUS_ROUTES = [];
   
-  // Function to initialize BUS_ROUTES and RAIL_ROUTES from routes data
+  // Separate route arrays for categories
+  let BUS_ROUTES_REGULAR = [];
+  let BUS_ROUTES_SHUTTLE = [];
+  let RAIL_ROUTES_SUBWAY = [];
+  let RAIL_ROUTES_COMMUTER = [];
+  
+  // Function to initialize all route categories from routes data
   function initializeBusRoutes() {
     try {
       const cityRoutes = getCityRoutes();
+      
+      // Separate bus routes from shuttle routes
+      BUS_ROUTES_REGULAR = (cityRoutes.busRoutes || []).filter(route => !route.id.startsWith('Shuttle'));
+      BUS_ROUTES_SHUTTLE = (cityRoutes.busRoutes || []).filter(route => route.id.startsWith('Shuttle'));
+      
+      // Separate subway from commuter rail
+      const subwayIds = ['Red', 'Orange', 'Green', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E'];
+      RAIL_ROUTES_SUBWAY = (cityRoutes.railRoutes || []).filter(route => subwayIds.includes(route.id));
+      RAIL_ROUTES_COMMUTER = (cityRoutes.railRoutes || []).filter(route => route.id.startsWith('CR-'));
+      
+      // Legacy arrays for backward compatibility (combined)
       BUS_ROUTES = cityRoutes.busRoutes || [];
       RAIL_ROUTES = cityRoutes.railRoutes || [];
-      console.log('[initializeBusRoutes] Loaded', BUS_ROUTES.length, 'bus routes and', RAIL_ROUTES.length, 'rail routes');
+      
+      console.log('[initializeBusRoutes] Loaded:', 
+        BUS_ROUTES_REGULAR.length, 'bus,', 
+        BUS_ROUTES_SHUTTLE.length, 'shuttle,',
+        RAIL_ROUTES_SUBWAY.length, 'subway,',
+        RAIL_ROUTES_COMMUTER.length, 'commuter rail');
     } catch (error) {
       console.error('[initializeBusRoutes] Error loading routes:', error);
-      BUS_ROUTES = [
+      BUS_ROUTES_REGULAR = [
     { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
     { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
     { id: '4', label: '4 – Fessenden', dir0: 'To St Johns', dir1: 'To Portland City Center' },
@@ -4445,30 +4555,53 @@
     { id: '292', label: '292 – Red Bus', dir0: 'To Portland International Airport', dir1: 'To Goose Hollow/SW Jefferson' },
     { id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
       ]; // Fallback if routes_index.js not loaded
-      RAIL_ROUTES = RAIL_ROUTES_FALLBACK;
+      BUS_ROUTES_SHUTTLE = [];
+      RAIL_ROUTES_SUBWAY = RAIL_ROUTES_FALLBACK.filter(r => ['Red', 'Orange', 'Blue', 'Green'].includes(r.id));
+      RAIL_ROUTES_COMMUTER = [];
+      BUS_ROUTES = BUS_ROUTES_REGULAR;
+      RAIL_ROUTES = RAIL_ROUTES_SUBWAY;
     }
   }
   
   /**
-   * Show the bus routes modal
+   * Show bus category selection screen
    */
-  function showBusRoutesModal() {
+  function showBusCategorySelection() {
+    const categoryScreen = document.getElementById('busCategorySelection');
+    const listScreen = document.getElementById('busRouteListScreen');
+    if (categoryScreen) categoryScreen.style.display = 'flex';
+    if (listScreen) listScreen.style.display = 'none';
+  }
+  
+  /**
+   * Show bus routes for selected category
+   */
+  function showBusCategory(category) {
     // Initialize routes if not already done
-    if (BUS_ROUTES.length === 0) {
+    if (BUS_ROUTES_REGULAR.length === 0 && BUS_ROUTES_SHUTTLE.length === 0) {
       initializeBusRoutes();
     }
     
-    const modal = document.getElementById('busRoutesModal');
+    const categoryScreen = document.getElementById('busCategorySelection');
+    const listScreen = document.getElementById('busRouteListScreen');
     const routeList = document.getElementById('busRouteList');
+    const searchInput = document.getElementById('busRouteSearch');
     
-    if (!modal || !routeList) {
-      console.error('[showBusRoutesModal] Modal elements not found');
+    if (!categoryScreen || !listScreen || !routeList) {
+      console.error('[showBusCategory] Modal elements not found');
       return;
     }
     
-    // Populate route list
+    // Hide category screen, show list screen
+    categoryScreen.style.display = 'none';
+    listScreen.style.display = 'flex';
+    
+    // Get routes for selected category
+    const routesToShow = category === 'bus' ? BUS_ROUTES_REGULAR : BUS_ROUTES_SHUTTLE;
+    
+    // Clear and populate route list
     routeList.innerHTML = '';
-    BUS_ROUTES.forEach(route => {
+    routesToShow.forEach(route => {
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
@@ -4518,7 +4651,6 @@
     });
     
     // Setup search
-    const searchInput = document.getElementById('busRouteSearch');
     if (searchInput) {
       searchInput.value = '';
       searchInput.oninput = function() {
@@ -4530,7 +4662,25 @@
         });
       };
     }
+  }
+  
+  /**
+   * Show the bus routes modal (starts with category selection)
+   */
+  function showBusRoutesModal() {
+    // Initialize routes if not already done
+    if (BUS_ROUTES_REGULAR.length === 0 && BUS_ROUTES_SHUTTLE.length === 0) {
+      initializeBusRoutes();
+    }
     
+    const modal = document.getElementById('busRoutesModal');
+    if (!modal) {
+      console.error('[showBusRoutesModal] Modal not found');
+      return;
+    }
+    
+    // Reset to category selection screen
+    showBusCategorySelection();
     modal.style.display = 'flex';
   }
   
@@ -4713,28 +4863,34 @@
   }
   
   /**
-   * Show the rail routes modal
+   * Show rail routes for selected category
    */
-  function showRailRoutesModal() {
+  function showRailCategory(category) {
     // Initialize routes if not already done
-    if (RAIL_ROUTES.length === 0) {
+    if (RAIL_ROUTES_SUBWAY.length === 0 && RAIL_ROUTES_COMMUTER.length === 0) {
       initializeBusRoutes();
     }
     
-    console.log('[showRailRoutesModal] Function called');
-    const modal = document.getElementById('railRoutesModal');
+    const categoryScreen = document.getElementById('railCategorySelection');
+    const listScreen = document.getElementById('railRouteListScreen');
     const routeList = document.getElementById('railRouteList');
+    const searchInput = document.getElementById('railRouteSearch');
     
-    if (!modal || !routeList) {
-      console.error('[showRailRoutesModal] Modal elements not found', { modal, routeList });
+    if (!categoryScreen || !listScreen || !routeList) {
+      console.error('[showRailCategory] Modal elements not found');
       return;
     }
     
-    console.log('[showRailRoutesModal] Modal and routeList found, opening modal');
+    // Hide category screen, show list screen
+    categoryScreen.style.display = 'none';
+    listScreen.style.display = 'flex';
     
-    // Populate route list
+    // Get routes for selected category
+    const routesToShow = category === 'subway' ? RAIL_ROUTES_SUBWAY : RAIL_ROUTES_COMMUTER;
+    
+    // Clear and populate route list
     routeList.innerHTML = '';
-    RAIL_ROUTES.forEach(route => {
+    routesToShow.forEach(route => {
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
@@ -4770,7 +4926,6 @@
     });
     
     // Setup search
-    const searchInput = document.getElementById('railRouteSearch');
     if (searchInput) {
       searchInput.value = '';
       searchInput.oninput = function() {
@@ -4782,7 +4937,25 @@
         });
       };
     }
+  }
+  
+  /**
+   * Show the rail routes modal (starts with category selection)
+   */
+  function showRailRoutesModal() {
+    // Initialize routes if not already done
+    if (RAIL_ROUTES_SUBWAY.length === 0 && RAIL_ROUTES_COMMUTER.length === 0) {
+      initializeBusRoutes();
+    }
     
+    const modal = document.getElementById('railRoutesModal');
+    if (!modal) {
+      console.error('[showRailRoutesModal] Modal not found');
+      return;
+    }
+    
+    // Reset to category selection screen
+    showRailCategorySelection();
     modal.style.display = 'flex';
   }
   
@@ -5330,4 +5503,5 @@
   });
 </script>
 </body>
+</html>
 </html>
