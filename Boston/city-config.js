@@ -21,8 +21,7 @@ const CITIES = {
     apiKey: "2C4447D4A42083BCD84DE3B8E",
     otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
     busApi: "https://developer.trimet.org/ws/v2/vehicles",
-    trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
-    tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
+    // trafficApi: Removed - will use state DOT APIs in the future
     
     // Map Settings
     defaultCenter: [-122.6784, 45.5152], // [longitude, latitude] for MapLibre GL JS
@@ -59,8 +58,7 @@ const CITIES = {
     apiKey: "2C4447D4A42083BCD84DE3B8E",
     otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
     busApi: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition",
-    trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
-    tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
+    // trafficApi: Removed - will use state DOT APIs in the future
     
     // Map Settings
     defaultCenter: [-85.76, 38.25], // [longitude, latitude] for MapLibre GL JS
@@ -97,8 +95,7 @@ const CITIES = {
     apiKey: "2C4447D4A42083BCD84DE3B8E",
     otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
     busApi: "https://cdn.mbta.com/realtime/VehiclePositions.pb",
-    trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
-    tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
+    // trafficApi: Removed - will use state DOT APIs in the future
     
     // Map Settings
     // Downtown Boston center (Park Street/Downtown Crossing area)
