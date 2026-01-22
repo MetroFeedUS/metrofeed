@@ -77,6 +77,9 @@ async function parseMBTAGTFSRT(buffer) {
   
   // Parse FeedMessage
   let entityCount = 0;
+  let headerFound = false;
+  let entitiesFound = 0;
+  
   while (pos < uint8Buffer.length) {
     if (pos >= uint8Buffer.length) break;
     
@@ -88,15 +91,20 @@ async function parseMBTAGTFSRT(buffer) {
     
     if (fieldNum === 1) {
       // Skip header
+      headerFound = true;
       pos = skipField(uint8Buffer, pos, wireType);
     } else if (fieldNum === 2) {
       // Entity
+      entitiesFound++;
       if (wireType === 2) {
         const { value: entityLength, pos: lengthPos } = parseVarint(uint8Buffer, pos);
         const entityStart = lengthPos;
         const entityEnd = entityStart + entityLength;
         
-        if (entityEnd > uint8Buffer.length) break;
+        if (entityEnd > uint8Buffer.length) {
+          console.warn('[parseMBTAGTFSRT] Entity extends beyond buffer, stopping');
+          break;
+        }
         
         let entityPos = entityStart;
         let entityId = null;
@@ -907,8 +915,23 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
             const buffer = await res.arrayBuffer();
             console.log('[attachRouteToMap] Received buffer size:', buffer.byteLength, 'bytes');
-            allBuses = await parseMBTAGTFSRT(buffer);
-            console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
+            
+            // Check content type
+            const contentType = res.headers.get('content-type');
+            console.log('[attachRouteToMap] Response Content-Type:', contentType);
+            
+            // Log first few bytes to verify it's protobuf
+            const uint8Preview = new Uint8Array(buffer.slice(0, 50));
+            console.log('[attachRouteToMap] First 50 bytes (hex):', Array.from(uint8Preview).map(b => b.toString(16).padStart(2, '0')).join(' '));
+            
+            try {
+              allBuses = await parseMBTAGTFSRT(buffer);
+              console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
+            } catch (parseError) {
+              console.error('[attachRouteToMap] Error parsing GTFS-RT:', parseError);
+              console.error('[attachRouteToMap] Parse error stack:', parseError.stack);
+              throw parseError;
+            }
             
             if (allBuses.length === 0) {
               console.warn('[attachRouteToMap] ⚠️ No buses found in GTFS-RT feed. This could mean:');
