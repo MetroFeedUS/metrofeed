@@ -164,13 +164,32 @@ async function parseMBTAGTFSRT(buffer) {
                       const tripFieldNum = tripTag >> 3;
                       const tripWireType = tripTag & 0x07;
                       
-                      if (tripFieldNum === 2 && tripWireType === 2) {
-                        // trip.route_id
+                      if (tripFieldNum === 1 && tripWireType === 2) {
+                        // trip.trip_id (skip it, we don't need it)
+                        const { value: tripIdLen, pos: tripIdLenPos } = parseVarint(uint8Buffer, tripPos);
+                        tripPos = tripIdLenPos + tripIdLen;
+                      } else if (tripFieldNum === 2 && tripWireType === 2) {
+                        // Skip field 2 - it's not route_id (it appears to be a time field)
+                        // MBTA uses field 5 for route_id
+                        const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
+                        tripPos = routeIdLenPos + routeIdLen;
+                      } else if (tripFieldNum === 3 && tripWireType === 2) {
+                        // trip.route_id (field 3 in GTFS-RT spec)
+                        const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
+                        const routeIdValue = readString(uint8Buffer, routeIdLenPos, routeIdLen);
+                        // Only set if it doesn't look like a time
+                        if (!routeIdValue.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
+                          routeId = routeIdValue;
+                        }
+                        tripPos = routeIdLenPos + routeIdLen;
+                      } else if (tripFieldNum === 5 && tripWireType === 2) {
+                        // trip.route_id (field 5 - MBTA uses this, hex shows "Green-D" here)
+                        // This is the actual route_id, always overwrite any previous value
                         const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
                         routeId = readString(uint8Buffer, routeIdLenPos, routeIdLen);
                         tripPos = routeIdLenPos + routeIdLen;
-                      } else if (tripFieldNum === 5 && tripWireType === 0) {
-                        // trip.direction_id
+                      } else if (tripFieldNum === 6 && tripWireType === 0) {
+                        // trip.direction_id (field 6 in GTFS-RT)
                         const { value: dirValue, pos: dirPos } = parseVarint(uint8Buffer, tripPos);
                         directionId = dirValue;
                         tripPos = dirPos;
