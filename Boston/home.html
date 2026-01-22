@@ -1093,6 +1093,46 @@
   </div>
 </div>
 
+<!-- -- STOP TIMES MODAL -- -->
+<div id="stopTimesModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+    <h2>🕐 <span data-translate="stop_times">Stop Times</span></h2>
+    <div style="text-align: left; margin-top: 1rem;">
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Route:</label>
+        <input type="text" id="stopTimesRouteInput" placeholder="Search or select route..." style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #1E90FF; border-radius: 6px; box-sizing: border-box;">
+        <div id="stopTimesRouteDropdown" style="display: none; max-height: 200px; overflow-y: auto; background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 6px; margin-top: 4px; position: absolute; z-index: 1000; width: calc(100% - 2rem); max-width: 468px;"></div>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Stop:</label>
+        <input type="text" id="stopTimesStopInput" placeholder="Search or select stop..." style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #1E90FF; border-radius: 6px; box-sizing: border-box;">
+        <div id="stopTimesStopDropdown" style="display: none; max-height: 200px; overflow-y: auto; background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 6px; margin-top: 4px; position: absolute; z-index: 1000; width: calc(100% - 2rem); max-width: 468px;"></div>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Day Type:</label>
+        <select id="stopTimesDayType" style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #1E90FF; border-radius: 6px;">
+          <option value="weekday">Weekday</option>
+          <option value="saturday">Saturday</option>
+          <option value="sunday">Sunday</option>
+        </select>
+      </div>
+      
+      <div style="margin-top: 1.5rem;">
+        <button class="mf-btn" onclick="loadStopTimes()" style="width: 100%; background: #1E90FF; border-color: #1E90FF; color: #fff; font-weight: bold;">Show Times</button>
+      </div>
+      
+      <div id="stopTimesList" style="margin-top: 1.5rem; min-height: 100px;">
+        <!-- Times will be displayed here -->
+      </div>
+    </div>
+    <div class="mf-actions" style="margin-top: 1.5rem;">
+      <button class="mf-btn" onclick="hideStopTimesModal()" data-translate="close">Close</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- -- TRAFFIC CAMERA MODAL -- -->
 <div id="cameraModal" class="mf-overlay" style="display: none;">
@@ -2747,6 +2787,256 @@
   let busMarkers = {};
   let currentTrackingRoutes = new Set(); // Track which routes we're currently showing buses for
   
+  // === GTFS-RT Parser Functions (for MBTA) ===
+  function parseVarint(buf, pos) {
+    let result = 0;
+    let shift = 0;
+    let byte;
+    do {
+      if (pos >= buf.length) throw new Error('Buffer overflow');
+      byte = buf[pos++];
+      result |= (byte & 0x7F) << shift;
+      shift += 7;
+    } while (byte & 0x80);
+    return { value: result, pos };
+  }
+  
+  function readString(buf, pos, length) {
+    const bytes = buf.slice(pos, pos + length);
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+  
+  function readFloat(buf, pos) {
+    const view = new DataView(buf.buffer, buf.byteOffset + pos, 4);
+    return view.getFloat32(0, true);
+  }
+  
+  function skipField(buf, pos, wireType) {
+    if (wireType === 0) {
+      const { pos: newPos } = parseVarint(buf, pos);
+      return newPos;
+    } else if (wireType === 1) {
+      return pos + 8;
+    } else if (wireType === 2) {
+      const { value: length, pos: lengthPos } = parseVarint(buf, pos);
+      return lengthPos + length;
+    } else if (wireType === 5) {
+      return pos + 4;
+    }
+    return pos;
+  }
+  
+  // Parse MBTA GTFS-RT VehiclePositions feed
+  async function parseMBTAGTFSRT(buffer) {
+    const uint8Buffer = new Uint8Array(buffer);
+    const vehicles = [];
+    let pos = 0;
+    
+    // Parse FeedMessage
+    while (pos < uint8Buffer.length) {
+      if (pos >= uint8Buffer.length) break;
+      
+      const tag = uint8Buffer[pos++];
+      if (!tag) break;
+      
+      const fieldNum = tag >> 3;
+      const wireType = tag & 0x07;
+      
+      if (fieldNum === 1) {
+        // Skip header
+        pos = skipField(uint8Buffer, pos, wireType);
+      } else if (fieldNum === 2) {
+        // Entity
+        if (wireType === 2) {
+          const { value: entityLength, pos: lengthPos } = parseVarint(uint8Buffer, pos);
+          const entityStart = lengthPos;
+          const entityEnd = entityStart + entityLength;
+          
+          if (entityEnd > uint8Buffer.length) break;
+          
+          let entityPos = entityStart;
+          let entityId = null;
+          let vehicle = null;
+          
+          while (entityPos < entityEnd) {
+            const entityTag = uint8Buffer[entityPos++];
+            if (!entityTag) break;
+            
+            const entityFieldNum = entityTag >> 3;
+            const entityWireType = entityTag & 0x07;
+            
+            if (entityFieldNum === 1) {
+              // entity.id
+              if (entityWireType === 2) {
+                const { value: strLen, pos: strLenPos } = parseVarint(uint8Buffer, entityPos);
+                entityId = readString(uint8Buffer, strLenPos, strLen);
+                entityPos = strLenPos + strLen;
+              }
+            } else if (entityFieldNum === 4) {
+              // entity.vehicle
+              if (entityWireType === 2) {
+                const { value: vehicleLength, pos: vehicleLenPos } = parseVarint(uint8Buffer, entityPos);
+                const vehicleStart = vehicleLenPos;
+                const vehicleEnd = vehicleStart + vehicleLength;
+                
+                let vehiclePos = vehicleStart;
+                let vehicleId = null;
+                let routeId = null;
+                let directionId = null;
+                let lat = null;
+                let lon = null;
+                let bearing = null;
+                let speed = null;
+                
+                while (vehiclePos < vehicleEnd) {
+                  const vehicleTag = uint8Buffer[vehiclePos++];
+                  if (!vehicleTag) break;
+                  
+                  const vehicleFieldNum = vehicleTag >> 3;
+                  const vehicleWireType = vehicleTag & 0x07;
+                  
+                  if (vehicleFieldNum === 1) {
+                    // vehicle.trip
+                    if (vehicleWireType === 2) {
+                      const { value: tripLength, pos: tripLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                      const tripStart = tripLenPos;
+                      const tripEnd = tripStart + tripLength;
+                      
+                      let tripPos = tripStart;
+                      while (tripPos < tripEnd) {
+                        const tripTag = uint8Buffer[tripPos++];
+                        if (!tripTag) break;
+                        
+                        const tripFieldNum = tripTag >> 3;
+                        const tripWireType = tripTag & 0x07;
+                        
+                        if (tripFieldNum === 2 && tripWireType === 2) {
+                          // trip.route_id
+                          const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
+                          routeId = readString(uint8Buffer, routeIdLenPos, routeIdLen);
+                          tripPos = routeIdLenPos + routeIdLen;
+                        } else if (tripFieldNum === 5 && tripWireType === 0) {
+                          // trip.direction_id
+                          const { value: dirValue, pos: dirPos } = parseVarint(uint8Buffer, tripPos);
+                          directionId = dirValue;
+                          tripPos = dirPos;
+                        } else {
+                          tripPos = skipField(uint8Buffer, tripPos, tripWireType);
+                        }
+                      }
+                      vehiclePos = tripEnd;
+                    } else {
+                      vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                    }
+                  } else if (vehicleFieldNum === 2) {
+                    // vehicle.vehicle
+                    if (vehicleWireType === 2) {
+                      const { value: vehDescLength, pos: vehDescLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                      const vehDescStart = vehDescLenPos;
+                      const vehDescEnd = vehDescStart + vehDescLength;
+                      
+                      let vehDescPos = vehDescStart;
+                      while (vehDescPos < vehDescEnd) {
+                        const vehDescTag = uint8Buffer[vehDescPos++];
+                        if (!vehDescTag) break;
+                        
+                        const vehDescFieldNum = vehDescTag >> 3;
+                        const vehDescWireType = vehDescTag & 0x07;
+                        
+                        if (vehDescFieldNum === 1) {
+                          // vehicle.vehicle.id
+                          if (vehDescWireType === 2) {
+                            const { value: vehIdLen, pos: vehIdLenPos } = parseVarint(uint8Buffer, vehDescPos);
+                            vehicleId = readString(uint8Buffer, vehIdLenPos, vehIdLen);
+                            vehDescPos = vehIdLenPos + vehIdLen;
+                          } else if (vehDescWireType === 5) {
+                            const idFloat = readFloat(uint8Buffer, vehDescPos);
+                            vehicleId = String(Math.round(idFloat));
+                            vehDescPos += 4;
+                          } else if (vehDescWireType === 0) {
+                            const { value: idValue, pos: idPos } = parseVarint(uint8Buffer, vehDescPos);
+                            vehicleId = String(idValue);
+                            vehDescPos = idPos;
+                          } else {
+                            vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
+                          }
+                        } else {
+                          vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
+                        }
+                      }
+                      vehiclePos = vehDescEnd;
+                    } else {
+                      vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                    }
+                  } else if (vehicleFieldNum === 3) {
+                    // vehicle.position
+                    if (vehicleWireType === 2) {
+                      const { value: posLength, pos: posLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                      const posStart = posLenPos;
+                      const posEnd = posStart + posLength;
+                      
+                      let posPos = posStart;
+                      while (posPos < posEnd) {
+                        const posTag = uint8Buffer[posPos++];
+                        if (!posTag) break;
+                        
+                        const posFieldNum = posTag >> 3;
+                        const posWireType = posTag & 0x07;
+                        
+                        if (posFieldNum === 1 && posWireType === 5) {
+                          lat = readFloat(uint8Buffer, posPos);
+                          posPos += 4;
+                        } else if (posFieldNum === 2 && posWireType === 5) {
+                          lon = readFloat(uint8Buffer, posPos);
+                          posPos += 4;
+                        } else if (posFieldNum === 3 && posWireType === 5) {
+                          bearing = readFloat(uint8Buffer, posPos);
+                          posPos += 4;
+                        } else if (posFieldNum === 4 && posWireType === 5) {
+                          speed = readFloat(uint8Buffer, posPos);
+                          posPos += 4;
+                        } else {
+                          posPos = skipField(uint8Buffer, posPos, posWireType);
+                        }
+                      }
+                      vehiclePos = posEnd;
+                    } else {
+                      vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                    }
+                  } else {
+                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                  }
+                }
+                
+                // Only add vehicle if we have required fields
+                if (vehicleId && routeId !== null && lat !== null && lon !== null) {
+                  vehicles.push({
+                    vehicleID: vehicleId,
+                    routeNumber: routeId,
+                    direction: directionId !== null ? directionId : 0,
+                    latitude: lat,
+                    longitude: lon,
+                    bearing: bearing,
+                    speed: speed ? (speed * 2.237) : null, // Convert m/s to mph
+                    blockID: entityId || vehicleId // Use entity ID as block ID if available
+                  });
+                }
+              }
+            } else {
+              entityPos = skipField(uint8Buffer, entityPos, entityWireType);
+            }
+          }
+        } else {
+          pos = skipField(uint8Buffer, pos, wireType);
+        }
+      } else {
+        pos = skipField(uint8Buffer, pos, wireType);
+      }
+    }
+    
+    return vehicles;
+  }
+  
   // Function to update the find me button state
   function updateFindMeButtonState() {
     const findMeBtn = document.getElementById('findMeBtn');
@@ -3025,9 +3315,23 @@
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
     try {
-      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?appID=${apiKey}&json=true`);
-      const data = await res.json();
-      const allBuses = data.resultSet.vehicle || [];
+      let allBuses = [];
+      
+      // Check which API type to use
+      if (CITY_CONFIG.busApiType === 'mbta-gtfs-rt') {
+        // MBTA GTFS-RT feed
+        console.log('[fetchAndDisplayBuses] Using MBTA GTFS-RT feed:', CITY_CONFIG.gtfsRtUrl);
+        const res = await fetch(CITY_CONFIG.gtfsRtUrl);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        const buffer = await res.arrayBuffer();
+        allBuses = await parseMBTAGTFSRT(buffer);
+        console.log('[fetchAndDisplayBuses] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
+      } else {
+        console.error('[fetchAndDisplayBuses] Unsupported busApiType:', CITY_CONFIG.busApiType);
+        return;
+      }
       
       // Store for debugging
       window.lastBusData = data;
@@ -4348,7 +4652,9 @@
       routeData: routeData,  // Pass routeData explicitly (required by new version)
       routePageUrl: routePageUrl,
       fitBounds: false, // Don't auto-fit on main map
-      apiKey: apiKey, // Pass API key for bus tracking
+      apiKey: apiKey, // Pass API key for bus tracking (TriMet)
+      busApiType: CITY_CONFIG.busApiType, // Pass bus API type (mbta-gtfs-rt or trimet)
+      gtfsRtUrl: CITY_CONFIG.gtfsRtUrl, // Pass GTFS-RT URL for MBTA
       trackBuses: true // Enable bus tracking for route overlay
     });
     
@@ -5141,6 +5447,226 @@
     document.getElementById('otpOptionsModal').style.display = 'none';
   }
 
+  // ==== STOP TIMES MODAL FUNCTIONS ====
+  // Store selected route/stop data
+  let stopTimesModalData = {
+    routeId: null,
+    directionId: null,
+    stopId: null,
+    stopName: null,
+    routeData: null
+  };
+
+  // Show stop times modal with pre-filled route and stop
+  window.showStopTimesModal = function(routeId, directionId, stopId, stopName) {
+    console.log('[showStopTimesModal] Opening modal with:', { routeId, directionId, stopId, stopName });
+    
+    // Store the data
+    stopTimesModalData.routeId = routeId;
+    stopTimesModalData.directionId = directionId;
+    stopTimesModalData.stopId = stopId;
+    stopTimesModalData.stopName = stopName;
+    
+    // Pre-fill route input (we'll need to get the route label)
+    const routeInput = document.getElementById('stopTimesRouteInput');
+    const stopInput = document.getElementById('stopTimesStopInput');
+    
+    if (routeInput) {
+      // Try to get route label from routesIndex or use routeId
+      let routeLabel = routeId;
+      if (window.routesIndex && window.routesIndex.routes) {
+        const routeInfo = window.routesIndex.routes.find(r => 
+          r.route_id === routeId && r.direction_id === directionId
+        );
+        if (routeInfo) {
+          routeLabel = routeInfo.route_title || routeInfo.route_name || routeId;
+        }
+      }
+      routeInput.value = routeLabel;
+      routeInput.dataset.routeId = routeId;
+      routeInput.dataset.directionId = directionId;
+    }
+    
+    if (stopInput) {
+      stopInput.value = stopName || `Stop ${stopId}`;
+      stopInput.dataset.stopId = stopId;
+    }
+    
+    // Set current day type based on today
+    const dayTypeSelect = document.getElementById('stopTimesDayType');
+    if (dayTypeSelect) {
+      const today = new Date().getDay();
+      if (today === 0) {
+        dayTypeSelect.value = 'sunday';
+      } else if (today === 6) {
+        dayTypeSelect.value = 'saturday';
+      } else {
+        dayTypeSelect.value = 'weekday';
+      }
+    }
+    
+    // Show modal
+    document.getElementById('stopTimesModal').style.display = 'flex';
+    
+    // Load route data and populate stops dropdown, then auto-load times
+    loadRouteDataForStopTimes(routeId, directionId).then(() => {
+      // Auto-load times after route data is loaded
+      setTimeout(() => {
+        loadStopTimes();
+      }, 100);
+    });
+  };
+
+  function hideStopTimesModal() {
+    document.getElementById('stopTimesModal').style.display = 'none';
+    // Clear dropdowns
+    document.getElementById('stopTimesRouteDropdown').style.display = 'none';
+    document.getElementById('stopTimesStopDropdown').style.display = 'none';
+    document.getElementById('stopTimesList').innerHTML = '';
+  }
+
+  // Load route data for stop times modal
+  async function loadRouteDataForStopTimes(routeId, directionId) {
+    try {
+      const routeData = await getRouteData(routeId, directionId);
+      stopTimesModalData.routeData = routeData;
+      
+      // Populate stops dropdown
+      const stopInput = document.getElementById('stopTimesStopInput');
+      const stopDropdown = document.getElementById('stopTimesStopDropdown');
+      
+      if (routeData && routeData.stops && Array.isArray(routeData.stops)) {
+        stopDropdown.innerHTML = '';
+        routeData.stops.forEach(stop => {
+          const stopDiv = document.createElement('div');
+          stopDiv.style.cssText = 'padding: 0.5rem; cursor: pointer; border-bottom: 1px solid #333;';
+          stopDiv.style.color = '#fff';
+          stopDiv.textContent = stop.name || `Stop ${stop.stop_id}`;
+          stopDiv.onmouseover = () => stopDiv.style.background = '#333';
+          stopDiv.onmouseout = () => stopDiv.style.background = 'transparent';
+          stopDiv.onclick = () => {
+            stopInput.value = stop.name || `Stop ${stop.stop_id}`;
+            stopInput.dataset.stopId = stop.stop_id;
+            stopDropdown.style.display = 'none';
+            stopTimesModalData.stopId = stop.stop_id;
+            stopTimesModalData.stopName = stop.name;
+            // Auto-load times when stop is selected
+            loadStopTimes();
+          };
+          stopDropdown.appendChild(stopDiv);
+        });
+      }
+      
+      return routeData;
+    } catch (error) {
+      console.error('[loadRouteDataForStopTimes] Error:', error);
+      throw error;
+    }
+  }
+
+  // Load and display all times for selected stop/day
+  async function loadStopTimes() {
+    const routeInput = document.getElementById('stopTimesRouteInput');
+    const stopInput = document.getElementById('stopTimesStopInput');
+    const dayTypeSelect = document.getElementById('stopTimesDayType');
+    const timesList = document.getElementById('stopTimesList');
+    
+    const routeId = routeInput.dataset.routeId || stopTimesModalData.routeId;
+    const directionId = routeInput.dataset.directionId || stopTimesModalData.directionId;
+    const stopId = stopInput.dataset.stopId || stopTimesModalData.stopId;
+    const dayType = dayTypeSelect.value;
+    
+    if (!routeId || directionId === null || !stopId) {
+      timesList.innerHTML = '<div style="color: #f55; padding: 1rem;">Please select a route and stop.</div>';
+      return;
+    }
+    
+    timesList.innerHTML = '<div style="color: #1E90FF; padding: 1rem;">Loading times...</div>';
+    
+    try {
+      // Load route data if not already loaded
+      let routeData = stopTimesModalData.routeData;
+      if (!routeData || routeData.route_id !== routeId || routeData.direction_id !== directionId) {
+        routeData = await getRouteData(routeId, directionId);
+        stopTimesModalData.routeData = routeData;
+      }
+      
+      // Get times for this stop and day
+      const weeklyTimes = routeData.weeklyTimes || {};
+      const stopIdStr = String(stopId);
+      let timesArray = [];
+      
+      if (weeklyTimes[dayType] && weeklyTimes[dayType][stopIdStr]) {
+        timesArray = weeklyTimes[dayType][stopIdStr];
+      } else if (weeklyTimes.weekday && weeklyTimes.weekday[stopIdStr]) {
+        // Fallback to weekday
+        timesArray = weeklyTimes.weekday[stopIdStr];
+      } else {
+        // Try to find stop in routeData.stops
+        const stop = routeData.stops?.find(s => String(s.stop_id) === stopIdStr);
+        if (stop && Array.isArray(stop.times)) {
+          timesArray = stop.times;
+        }
+      }
+      
+      if (!timesArray || timesArray.length === 0) {
+        timesList.innerHTML = '<div style="color: #f55; padding: 1rem;">No times available for this stop and day type.</div>';
+        return;
+      }
+      
+      // Format and display times
+      const now = new Date();
+      const agencyTimezone = routeData.meta?.timezone || 'America/New_York';
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      
+      // Sort and format times
+      const formattedTimes = timesArray.map(timeStr => {
+        let timeStrClean = String(timeStr).trim();
+        const parts = timeStrClean.split(':');
+        if (parts.length < 2) return null;
+        
+        let h = parseInt(parts[0], 10);
+        let m = parseInt(parts[1], 10);
+        if (isNaN(h) || isNaN(m)) return null;
+        
+        if (h >= 24) h = h - 24;
+        const schedMins = h * 60 + m;
+        
+        // Convert to 12-hour format
+        let displayH = h;
+        const ampm = displayH >= 12 ? 'PM' : 'AM';
+        if (displayH > 12) displayH -= 12;
+        if (displayH === 0) displayH = 12;
+        const mStr = String(m).padStart(2, '0');
+        
+        return {
+          display: `${displayH}:${mStr} ${ampm}`,
+          schedMins: schedMins,
+          isPast: schedMins < nowMins
+        };
+      }).filter(t => t !== null).sort((a, b) => a.schedMins - b.schedMins);
+      
+      // Build HTML
+      let html = `<div style="margin-bottom: 1rem; color: #1E90FF; font-weight: bold;">${formattedTimes.length} scheduled times for ${dayType}:</div>`;
+      html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; max-height: 400px; overflow-y: auto;">';
+      
+      formattedTimes.forEach((time, index) => {
+        const isNext = !time.isPast && (index === 0 || formattedTimes[index - 1].isPast);
+        const style = isNext 
+          ? 'background: #1E90FF; color: #fff; padding: 0.5rem; border-radius: 6px; text-align: center; font-weight: bold;'
+          : 'background: #333; color: #fff; padding: 0.5rem; border-radius: 6px; text-align: center;';
+        html += `<div style="${style}">${time.display}</div>`;
+      });
+      
+      html += '</div>';
+      timesList.innerHTML = html;
+      
+    } catch (error) {
+      console.error('[loadStopTimes] Error:', error);
+      timesList.innerHTML = '<div style="color: #f55; padding: 1rem;">Error loading times. Please try again.</div>';
+    }
+  }
+
   function planTripWithOptions() {
     console.log('[planTripWithOptions] Function called');
     console.log('[planTripWithOptions] Stored coordinates:', window.otpStartCoords, window.otpEndCoords);
@@ -5267,8 +5793,138 @@
     }
   }
 
+  // Setup route/stop search functionality for stop times modal
+  function setupStopTimesModalSearch() {
+    // Route input search
+    const routeInput = document.getElementById('stopTimesRouteInput');
+    const routeDropdown = document.getElementById('stopTimesRouteDropdown');
+    
+    if (routeInput) {
+      routeInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        if (!query) {
+          routeDropdown.style.display = 'none';
+          return;
+        }
+        
+        // Search routes from routesIndex
+        if (window.routesIndex && window.routesIndex.routes) {
+          const matches = window.routesIndex.routes.filter(r => {
+            const title = (r.route_title || r.route_name || r.route_id || '').toLowerCase();
+            return title.includes(query);
+          }).slice(0, 20); // Limit to 20 results
+          
+          routeDropdown.innerHTML = '';
+          if (matches.length > 0) {
+            matches.forEach(route => {
+              const routeDiv = document.createElement('div');
+              routeDiv.style.cssText = 'padding: 0.5rem; cursor: pointer; border-bottom: 1px solid #333;';
+              routeDiv.style.color = '#fff';
+              routeDiv.textContent = route.route_title || route.route_name || route.route_id;
+              routeDiv.onmouseover = () => routeDiv.style.background = '#333';
+              routeDiv.onmouseout = () => routeDiv.style.background = 'transparent';
+              routeDiv.onclick = async () => {
+                routeInput.value = route.route_title || route.route_name || route.route_id;
+                routeInput.dataset.routeId = route.route_id;
+                routeInput.dataset.directionId = route.direction_id;
+                routeDropdown.style.display = 'none';
+                stopTimesModalData.routeId = route.route_id;
+                stopTimesModalData.directionId = route.direction_id;
+                // Load stops for this route
+                await loadRouteDataForStopTimes(route.route_id, route.direction_id);
+                // Clear stop selection
+                const stopInput = document.getElementById('stopTimesStopInput');
+                stopInput.value = '';
+                stopInput.dataset.stopId = '';
+                document.getElementById('stopTimesList').innerHTML = '';
+              };
+              routeDropdown.appendChild(routeDiv);
+            });
+            routeDropdown.style.display = 'block';
+          } else {
+            routeDropdown.style.display = 'none';
+          }
+        }
+      });
+      
+      routeInput.addEventListener('blur', function() {
+        // Hide dropdown after a short delay to allow clicks
+        setTimeout(() => {
+          routeDropdown.style.display = 'none';
+        }, 200);
+      });
+    }
+    
+    // Stop input search
+    const stopInput = document.getElementById('stopTimesStopInput');
+    const stopDropdown = document.getElementById('stopTimesStopDropdown');
+    
+    if (stopInput) {
+      stopInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        if (!query || !stopTimesModalData.routeData) {
+          stopDropdown.style.display = 'none';
+          return;
+        }
+        
+        // Search stops from current route data
+        const routeData = stopTimesModalData.routeData;
+        if (routeData && routeData.stops) {
+          const matches = routeData.stops.filter(s => {
+            const name = (s.name || `Stop ${s.stop_id}` || '').toLowerCase();
+            return name.includes(query);
+          }).slice(0, 20);
+          
+          stopDropdown.innerHTML = '';
+          if (matches.length > 0) {
+            matches.forEach(stop => {
+              const stopDiv = document.createElement('div');
+              stopDiv.style.cssText = 'padding: 0.5rem; cursor: pointer; border-bottom: 1px solid #333;';
+              stopDiv.style.color = '#fff';
+              stopDiv.textContent = stop.name || `Stop ${stop.stop_id}`;
+              stopDiv.onmouseover = () => stopDiv.style.background = '#333';
+              stopDiv.onmouseout = () => stopDiv.style.background = 'transparent';
+              stopDiv.onclick = () => {
+                stopInput.value = stop.name || `Stop ${stop.stop_id}`;
+                stopInput.dataset.stopId = stop.stop_id;
+                stopDropdown.style.display = 'none';
+                stopTimesModalData.stopId = stop.stop_id;
+                stopTimesModalData.stopName = stop.name;
+              };
+              stopDropdown.appendChild(stopDiv);
+            });
+            stopDropdown.style.display = 'block';
+          } else {
+            stopDropdown.style.display = 'none';
+          }
+        }
+      });
+      
+      stopInput.addEventListener('blur', function() {
+        setTimeout(() => {
+          stopDropdown.style.display = 'none';
+        }, 200);
+      });
+    }
+    
+    // Auto-load times when day type changes (if route and stop are selected)
+    const dayTypeSelect = document.getElementById('stopTimesDayType');
+    if (dayTypeSelect) {
+      dayTypeSelect.addEventListener('change', function() {
+        const routeInput = document.getElementById('stopTimesRouteInput');
+        const stopInput = document.getElementById('stopTimesStopInput');
+        if (routeInput.dataset.routeId && stopInput.dataset.stopId) {
+          loadStopTimes();
+        }
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     console.log('[DOMContentLoaded] Initializing map and event listeners...');
+    
+    // Setup stop times modal search
+    setupStopTimesModalSearch();
     
     // Initialize bus routes when routes index is ready
     if (CITY_CONFIG.useLazyLoading) {
