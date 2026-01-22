@@ -4158,6 +4158,49 @@
 
   // Traffic overlay functionality
   let trafficLayerActive = false;
+  let trafficTileCount = 0; // Session counter for actual API calls (not cached)
+  let trafficSessionStartTime = null;
+  let handleTrafficTileLoad = null; // Event handler reference for cleanup
+  let originalFetch = null; // Store original fetch for interception
+  
+  // Diagnostic function to log zoom level and tile usage
+  function logTrafficDiagnostics() {
+    if (!map || !trafficLayerActive) return;
+    
+    const currentZoom = map.getZoom();
+    const bounds = map.getBounds();
+    
+    // Calculate number of tiles at current zoom level
+    // Formula: tiles = (2^zoom)^2 for full world, but we need visible tiles only
+    const nw = bounds.getNorthWest();
+    const se = bounds.getSouthEast();
+    
+    // Convert lat/lon to tile coordinates
+    function lat2tile(lat, zoom) {
+      return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+    }
+    
+    function lon2tile(lon, zoom) {
+      return Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
+    }
+    
+    const xMin = lon2tile(nw.lng, currentZoom);
+    const xMax = lon2tile(se.lng, currentZoom);
+    const yMin = lat2tile(nw.lat, currentZoom);
+    const yMax = lat2tile(se.lat, currentZoom);
+    
+    const tilesX = Math.abs(xMax - xMin) + 1;
+    const tilesY = Math.abs(yMax - yMin) + 1;
+    const totalTiles = tilesX * tilesY;
+    
+    // Calculate session duration
+    const sessionDuration = trafficSessionStartTime ? 
+      Math.floor((Date.now() - trafficSessionStartTime) / 1000) : 0;
+    const minutes = Math.floor(sessionDuration / 60);
+    const seconds = sessionDuration % 60;
+    
+    console.log(`[Traffic Diagnostics] Zoom: ${currentZoom.toFixed(2)} | Visible Tiles: ${totalTiles} (${tilesX} x ${tilesY}) | Session API Calls: ${trafficTileCount} (actual network requests, not cached) | Session Duration: ${minutes}m ${seconds}s | Bounds: [${nw.lat.toFixed(4)}, ${nw.lng.toFixed(4)}] to [${se.lat.toFixed(4)}, ${se.lng.toFixed(4)}]`);
+  }
   
   // Function to toggle traffic overlay
   function toggleTrafficOverlay() {
@@ -4173,10 +4216,26 @@
         map.removeLayer('tomtom-traffic');
       }
       if (map.getSource('tomtom-traffic')) {
+        // Restore original fetch if we overrode it
+        if (originalFetch && window.fetch !== originalFetch) {
+          window.fetch = originalFetch;
+          originalFetch = null;
+        }
         map.removeSource('tomtom-traffic');
       }
       trafficLayerActive = false;
-      console.log('[Traffic] Traffic overlay disabled');
+      
+      // Log final session stats
+      const sessionDuration = trafficSessionStartTime ? 
+        Math.floor((Date.now() - trafficSessionStartTime) / 1000) : 0;
+      const minutes = Math.floor(sessionDuration / 60);
+      const seconds = sessionDuration % 60;
+      console.log(`[Traffic] Traffic overlay disabled | Final Session Stats: ${trafficTileCount} API calls (not cached) in ${minutes}m ${seconds}s`);
+      
+      // Reset counters
+      trafficTileCount = 0;
+      trafficSessionStartTime = null;
+      handleTrafficTileLoad = null;
     } else {
       // Add traffic layer with 5-minute caching
       if (!map.getSource('tomtom-traffic')) {
@@ -4206,10 +4265,66 @@
             'raster-opacity': 0.6
           }
         }, beforeLayer); // Insert before bus markers if they exist, otherwise at top
+        
+        // Reset session counters
+        trafficTileCount = 0;
+        trafficSessionStartTime = Date.now();
+        
+        // Intercept fetch requests to count actual API calls (not cached)
+        // Store original fetch if not already stored
+        if (!originalFetch) {
+          originalFetch = window.fetch;
+        }
+        
+        // Override fetch to intercept TomTom API calls
+        window.fetch = function(...args) {
+          const url = args[0];
+          const urlString = typeof url === 'string' ? url : url.url || '';
+          
+          // Check if this is a TomTom traffic API request
+          if (urlString.includes('api.tomtom.com/traffic/map/4/tile/flow/relative')) {
+            // This is an actual API call (not cached)
+            return originalFetch.apply(this, args).then(response => {
+              // Only count if it's a successful network request (not from cache)
+              // Check if response came from cache
+              if (response.headers.get('x-cache') !== 'HIT' && 
+                  response.headers.get('cf-cache-status') !== 'HIT' &&
+                  !response.headers.get('x-sw-cache')) {
+                // This is a real API call, not cached
+                trafficTileCount++;
+                const zoomMatch = urlString.match(/\/tile\/flow\/relative\/(\d+)\//);
+                const zoomLevel = zoomMatch ? zoomMatch[1] : 'unknown';
+                console.log(`[Traffic API Call] 🌐 API request! Zoom: ${zoomLevel} | Total API calls this session: ${trafficTileCount}`);
+              } else {
+                console.log(`[Traffic API Call] 💾 Cached tile (not counted)`);
+              }
+              return response;
+            }).catch(error => {
+              console.error('[Traffic API Call] ❌ Request failed:', error);
+              throw error;
+            });
+          }
+          
+          // Not a TomTom request, use original fetch
+          return originalFetch.apply(this, args);
+        };
+        
+        // Add diagnostics: log zoom level and tile count when layer is added
+        logTrafficDiagnostics();
+        
+        // Add zoom change listener to track usage (throttle to avoid spam)
+        let zoomTimeout;
+        map.on('zoom', () => {
+          clearTimeout(zoomTimeout);
+          zoomTimeout = setTimeout(logTrafficDiagnostics, 100);
+        });
+        
+        // Add moveend listener to track when tiles are loaded
+        map.on('moveend', logTrafficDiagnostics);
       }
       
       trafficLayerActive = true;
-      console.log('[Traffic] Traffic overlay enabled');
+      console.log('[Traffic] Traffic overlay enabled | Session started');
     }
     // Update button active state
     updateDropdownButtonStates();
