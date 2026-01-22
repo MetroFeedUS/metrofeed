@@ -27,6 +27,255 @@
 
 "use strict";
 
+// === GTFS-RT Parser Functions (for MBTA) ===
+function parseVarint(buf, pos) {
+  let result = 0;
+  let shift = 0;
+  let byte;
+  do {
+    if (pos >= buf.length) throw new Error('Buffer overflow');
+    byte = buf[pos++];
+    result |= (byte & 0x7F) << shift;
+    shift += 7;
+  } while (byte & 0x80);
+  return { value: result, pos };
+}
+
+function readString(buf, pos, length) {
+  const bytes = buf.slice(pos, pos + length);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+function readFloat(buf, pos) {
+  const view = new DataView(buf.buffer, buf.byteOffset + pos, 4);
+  return view.getFloat32(0, true);
+}
+
+function skipField(buf, pos, wireType) {
+  if (wireType === 0) {
+    const { pos: newPos } = parseVarint(buf, pos);
+    return newPos;
+  } else if (wireType === 1) {
+    return pos + 8;
+  } else if (wireType === 2) {
+    const { value: length, pos: lengthPos } = parseVarint(buf, pos);
+    return lengthPos + length;
+  } else if (wireType === 5) {
+    return pos + 4;
+  }
+  return pos;
+}
+
+// Parse MBTA GTFS-RT VehiclePositions feed
+async function parseMBTAGTFSRT(buffer) {
+  const uint8Buffer = new Uint8Array(buffer);
+  const vehicles = [];
+  let pos = 0;
+  
+  // Parse FeedMessage
+  while (pos < uint8Buffer.length) {
+    if (pos >= uint8Buffer.length) break;
+    
+    const tag = uint8Buffer[pos++];
+    if (!tag) break;
+    
+    const fieldNum = tag >> 3;
+    const wireType = tag & 0x07;
+    
+    if (fieldNum === 1) {
+      // Skip header
+      pos = skipField(uint8Buffer, pos, wireType);
+    } else if (fieldNum === 2) {
+      // Entity
+      if (wireType === 2) {
+        const { value: entityLength, pos: lengthPos } = parseVarint(uint8Buffer, pos);
+        const entityStart = lengthPos;
+        const entityEnd = entityStart + entityLength;
+        
+        if (entityEnd > uint8Buffer.length) break;
+        
+        let entityPos = entityStart;
+        let entityId = null;
+        
+        while (entityPos < entityEnd) {
+          const entityTag = uint8Buffer[entityPos++];
+          if (!entityTag) break;
+          
+          const entityFieldNum = entityTag >> 3;
+          const entityWireType = entityTag & 0x07;
+          
+          if (entityFieldNum === 1) {
+            // entity.id
+            if (entityWireType === 2) {
+              const { value: strLen, pos: strLenPos } = parseVarint(uint8Buffer, entityPos);
+              entityId = readString(uint8Buffer, strLenPos, strLen);
+              entityPos = strLenPos + strLen;
+            }
+          } else if (entityFieldNum === 4) {
+            // entity.vehicle
+            if (entityWireType === 2) {
+              const { value: vehicleLength, pos: vehicleLenPos } = parseVarint(uint8Buffer, entityPos);
+              const vehicleStart = vehicleLenPos;
+              const vehicleEnd = vehicleStart + vehicleLength;
+              
+              let vehiclePos = vehicleStart;
+              let vehicleId = null;
+              let routeId = null;
+              let directionId = null;
+              let lat = null;
+              let lon = null;
+              let bearing = null;
+              let speed = null;
+              
+              while (vehiclePos < vehicleEnd) {
+                const vehicleTag = uint8Buffer[vehiclePos++];
+                if (!vehicleTag) break;
+                
+                const vehicleFieldNum = vehicleTag >> 3;
+                const vehicleWireType = vehicleTag & 0x07;
+                
+                if (vehicleFieldNum === 1) {
+                  // vehicle.trip
+                  if (vehicleWireType === 2) {
+                    const { value: tripLength, pos: tripLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                    const tripStart = tripLenPos;
+                    const tripEnd = tripStart + tripLength;
+                    
+                    let tripPos = tripStart;
+                    while (tripPos < tripEnd) {
+                      const tripTag = uint8Buffer[tripPos++];
+                      if (!tripTag) break;
+                      
+                      const tripFieldNum = tripTag >> 3;
+                      const tripWireType = tripTag & 0x07;
+                      
+                      if (tripFieldNum === 2 && tripWireType === 2) {
+                        // trip.route_id
+                        const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
+                        routeId = readString(uint8Buffer, routeIdLenPos, routeIdLen);
+                        tripPos = routeIdLenPos + routeIdLen;
+                      } else if (tripFieldNum === 5 && tripWireType === 0) {
+                        // trip.direction_id
+                        const { value: dirValue, pos: dirPos } = parseVarint(uint8Buffer, tripPos);
+                        directionId = dirValue;
+                        tripPos = dirPos;
+                      } else {
+                        tripPos = skipField(uint8Buffer, tripPos, tripWireType);
+                      }
+                    }
+                    vehiclePos = tripEnd;
+                  } else {
+                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                  }
+                } else if (vehicleFieldNum === 2) {
+                  // vehicle.vehicle
+                  if (vehicleWireType === 2) {
+                    const { value: vehDescLength, pos: vehDescLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                    const vehDescStart = vehDescLenPos;
+                    const vehDescEnd = vehDescStart + vehDescLength;
+                    
+                    let vehDescPos = vehDescStart;
+                    while (vehDescPos < vehDescEnd) {
+                      const vehDescTag = uint8Buffer[vehDescPos++];
+                      if (!vehDescTag) break;
+                      
+                      const vehDescFieldNum = vehDescTag >> 3;
+                      const vehDescWireType = vehDescTag & 0x07;
+                      
+                      if (vehDescFieldNum === 1) {
+                        // vehicle.vehicle.id
+                        if (vehDescWireType === 2) {
+                          const { value: vehIdLen, pos: vehIdLenPos } = parseVarint(uint8Buffer, vehDescPos);
+                          vehicleId = readString(uint8Buffer, vehIdLenPos, vehIdLen);
+                          vehDescPos = vehIdLenPos + vehIdLen;
+                        } else if (vehDescWireType === 5) {
+                          const idFloat = readFloat(uint8Buffer, vehDescPos);
+                          vehicleId = String(Math.round(idFloat));
+                          vehDescPos += 4;
+                        } else if (vehDescWireType === 0) {
+                          const { value: idValue, pos: idPos } = parseVarint(uint8Buffer, vehDescPos);
+                          vehicleId = String(idValue);
+                          vehDescPos = idPos;
+                        } else {
+                          vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
+                        }
+                      } else {
+                        vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
+                      }
+                    }
+                    vehiclePos = vehDescEnd;
+                  } else {
+                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                  }
+                } else if (vehicleFieldNum === 3) {
+                  // vehicle.position
+                  if (vehicleWireType === 2) {
+                    const { value: posLength, pos: posLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                    const posStart = posLenPos;
+                    const posEnd = posStart + posLength;
+                    
+                    let posPos = posStart;
+                    while (posPos < posEnd) {
+                      const posTag = uint8Buffer[posPos++];
+                      if (!posTag) break;
+                      
+                      const posFieldNum = posTag >> 3;
+                      const posWireType = posTag & 0x07;
+                      
+                      if (posFieldNum === 1 && posWireType === 5) {
+                        lat = readFloat(uint8Buffer, posPos);
+                        posPos += 4;
+                      } else if (posFieldNum === 2 && posWireType === 5) {
+                        lon = readFloat(uint8Buffer, posPos);
+                        posPos += 4;
+                      } else if (posFieldNum === 3 && posWireType === 5) {
+                        bearing = readFloat(uint8Buffer, posPos);
+                        posPos += 4;
+                      } else if (posFieldNum === 4 && posWireType === 5) {
+                        speed = readFloat(uint8Buffer, posPos);
+                        posPos += 4;
+                      } else {
+                        posPos = skipField(uint8Buffer, posPos, posWireType);
+                      }
+                    }
+                    vehiclePos = posEnd;
+                  } else {
+                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                  }
+                } else {
+                  vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                }
+              }
+              
+              // Only add vehicle if we have required fields
+              if (vehicleId && routeId !== null && lat !== null && lon !== null) {
+                vehicles.push({
+                  vehicleID: vehicleId,
+                  routeNumber: routeId,
+                  direction: directionId !== null ? directionId : 0,
+                  latitude: lat,
+                  longitude: lon,
+                  bearing: bearing,
+                  speed: speed ? (speed * 2.237) : null, // Convert m/s to mph
+                  blockID: entityId || vehicleId // Use entity ID as block ID if available
+                });
+              }
+            }
+          } else {
+            entityPos = skipField(uint8Buffer, entityPos, entityWireType);
+          }
+        }
+      } else {
+        pos = skipField(uint8Buffer, pos, wireType);
+      }
+    } else {
+      pos = skipField(uint8Buffer, pos, wireType);
+    }
+  }
+  
+  return vehicles;
+}
+
 /**
  * Attach a route overlay to a MapLibre map
  *
@@ -342,6 +591,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
               ? `
             <hr style="border:none;border-top:1px solid #1E90FF;margin:6px 0;">
             ${highlightedTimes.join("<br>")}
+            <hr style="border:none;border-top:1px solid #1E90FF;margin:8px 0;">
+            <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${(stop.name || `Stop ${stop.stop_id}`).replace(/'/g, "\\'")}')" style="width:100%;background:#1E90FF;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
           `
               : ""
           }
@@ -599,25 +850,78 @@ function attachRouteToMap(map, routeId, directionId, options) {
     }
 
     // ---------- Bus tracking (for mainOverlay mode only) ----------
-    if (trackBuses && apiKey && mode === "mainOverlay") {
+    if (trackBuses && mode === "mainOverlay") {
       const busMarkers = {}; // Store bus markers separately
+      
+      // Get API configuration from options or global CITY_CONFIG
+      const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
+      const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
+      const apiKey = options.apiKey || null;
       
       async function fetchAndDisplayBuses() {
         try {
-          const routeNum = String(routeId).replace(/[^0-9]/g, ''); // Extract numeric route ID
-          if (!routeNum) {
-            console.warn('[attachRouteToMap] Invalid route ID for bus tracking:', routeId);
+          let allBuses = [];
+          
+          if (busApiType === 'mbta-gtfs-rt' && gtfsRtUrl) {
+            // MBTA GTFS-RT feed
+            console.log('[attachRouteToMap] Using MBTA GTFS-RT feed:', gtfsRtUrl);
+            const res = await fetch(gtfsRtUrl);
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            const buffer = await res.arrayBuffer();
+            allBuses = await parseMBTAGTFSRT(buffer);
+            console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
+          } else {
+            console.warn('[attachRouteToMap] MBTA GTFS-RT not configured. busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
             return;
           }
           
-          const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNum}&appID=${apiKey}&json=true`);
-          const data = await res.json();
-          const allBuses = data.resultSet.vehicle || [];
-          
           // Filter buses for this route and direction
-          const routeBuses = allBuses.filter(v => 
-            v.routeNumber == routeNum && v.direction == directionId
-          );
+          // For MBTA, routeId might be a string like "1", "Red", "Green-B", etc.
+          // Also check routeData.route_id if available (from routes_index.js)
+          const routeNum = String(routeId);
+          const routeDataRouteId = routeData?.route_id || routeData?.meta?.route_id || null;
+          
+          // Debug: Log what we're looking for and what we have
+          console.log(`[attachRouteToMap] Looking for route: "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ''}, direction: ${directionId}`);
+          if (allBuses.length > 0) {
+            const uniqueRoutes = [...new Set(allBuses.map(v => v.routeNumber))];
+            console.log(`[attachRouteToMap] Available routes in GTFS-RT:`, uniqueRoutes.slice(0, 20));
+            const uniqueDirections = [...new Set(allBuses.map(v => v.direction))];
+            console.log(`[attachRouteToMap] Available directions:`, uniqueDirections);
+            
+            // Show sample buses for debugging
+            const sampleBuses = allBuses.slice(0, 5);
+            console.log(`[attachRouteToMap] Sample buses:`, sampleBuses.map(v => ({ route: v.routeNumber, dir: v.direction, vehicle: v.vehicleID })));
+          }
+          
+          const routeBuses = allBuses.filter(v => {
+            // Try multiple matching strategies:
+            // 1. Exact match with routeId parameter
+            const exactMatch = String(v.routeNumber) === routeNum;
+            
+            // 2. Match with routeData.route_id if available
+            const routeIdMatch = routeDataRouteId && String(v.routeNumber) === String(routeDataRouteId);
+            
+            // 3. Extract numeric part from route IDs for comparison
+            // MBTA route IDs might be "7", "7-0", "Red", etc.
+            const routeNumClean = routeNum.replace(/[^0-9]/g, ''); // Extract digits only
+            const vRouteNumClean = String(v.routeNumber).replace(/[^0-9]/g, ''); // Extract digits only
+            const numericMatch = routeNumClean && vRouteNumClean && routeNumClean === vRouteNumClean;
+            
+            // 4. String match as fallback
+            const stringMatch = String(v.routeNumber) === String(routeId);
+            
+            const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
+            const directionMatch = v.direction == directionId;
+            
+            if (routeMatch && directionMatch) {
+              console.log(`[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ''}, direction ${v.direction} == ${directionId}`);
+            }
+            
+            return routeMatch && directionMatch;
+          });
           
           // Remove old bus markers from map and overlayElements
           Object.keys(busMarkers).forEach(vehicleId => {
