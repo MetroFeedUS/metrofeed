@@ -329,9 +329,13 @@ async function parseMBTAGTFSRT(buffer) {
                     routeId: routeId !== null ? routeId : 'MISSING',
                     lat: lat !== null ? lat : 'MISSING',
                     lon: lon !== null ? lon : 'MISSING',
-                    directionId: directionId !== null ? directionId : 'MISSING',
-                    foundFields: foundFields.length > 0 ? foundFields.join(', ') : 'NONE'
+                    directionId: directionId !== null ? directionId : 'MISSING'
                   });
+                  if (foundFields.length > 0) {
+                    console.warn('[parseMBTAGTFSRT] Found fields:', foundFields.join(', '));
+                  } else {
+                    console.warn('[parseMBTAGTFSRT] ⚠️ NO FIELDS FOUND - parser may not be entering vehicle blocks');
+                  }
                 }
               }
             }
@@ -339,6 +343,8 @@ async function parseMBTAGTFSRT(buffer) {
             entityPos = skipField(uint8Buffer, entityPos, entityWireType);
           }
         }
+        // After parsing entity, advance pos to entityEnd to continue to next entity
+        pos = entityEnd;
       } else {
         pos = skipField(uint8Buffer, pos, wireType);
       }
