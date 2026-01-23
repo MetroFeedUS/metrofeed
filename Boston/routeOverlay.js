@@ -259,12 +259,16 @@ async function parseMBTAGTFSRT(buffer) {
                     foundFields.push(`position.length=${posLength}`);
                     
                     let posPos = posStart;
+                    let positionFieldsFound = [];
                     while (posPos < posEnd) {
                       const posTag = uint8Buffer[posPos++];
                       if (!posTag) break;
                       
                       const posFieldNum = posTag >> 3;
                       const posWireType = posTag & 0x07;
+                      
+                      // Log ALL position fields we encounter
+                      positionFieldsFound.push(`f${posFieldNum}:wt${posWireType}`);
                       
                       if (posFieldNum === 1 && posWireType === 5) {
                         lat = readFloat(uint8Buffer, posPos);
@@ -283,9 +287,14 @@ async function parseMBTAGTFSRT(buffer) {
                         foundFields.push(`position.speed(f4)=${speed}`);
                         posPos += 4;
                       } else {
-                        foundFields.push(`position.unknown(f${posFieldNum},wt${posWireType})`);
                         posPos = skipField(uint8Buffer, posPos, posWireType);
                       }
+                    }
+                    // Log all position fields found (only for first few entities to avoid spam)
+                    if (entitiesFound <= 3 && positionFieldsFound.length > 0) {
+                      foundFields.push(`position.fields:[${positionFieldsFound.join(',')}]`);
+                    } else if (entitiesFound <= 3 && positionFieldsFound.length === 0) {
+                      foundFields.push(`position.fields:EMPTY`);
                     }
                     vehiclePos = posEnd;
                   } else {
