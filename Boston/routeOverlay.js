@@ -251,12 +251,16 @@ async function parseMBTAGTFSRT(buffer) {
                   }
                 } else if (vehicleFieldNum === 3) {
                   // vehicle.position
-                  foundFields.push('vehicle.position(f3) found');
+                  foundFields.push(`vehicle.position(f3) found, wireType=${vehicleWireType}`);
                   if (vehicleWireType === 2) {
                     const { value: posLength, pos: posLenPos } = parseVarint(uint8Buffer, vehiclePos);
                     const posStart = posLenPos;
                     const posEnd = posStart + posLength;
                     foundFields.push(`position.length=${posLength}, start=${posStart}, end=${posEnd}`);
+                    // Direct console log for debugging
+                    if (entitiesFound <= 3) {
+                      console.log(`[parseMBTAGTFSRT] Position block: length=${posLength}, start=${posStart}, end=${posEnd}`);
+                    }
                     
                     let posPos = posStart;
                     let positionFieldsFound = [];
@@ -300,8 +304,10 @@ async function parseMBTAGTFSRT(buffer) {
                       foundFields.push(`position.loop.iterations=${loopIterations}`);
                       if (positionFieldsFound.length > 0) {
                         foundFields.push(`position.fields:[${positionFieldsFound.join(',')}]`);
+                        console.log(`[parseMBTAGTFSRT] Position fields found:`, positionFieldsFound);
                       } else {
                         foundFields.push(`position.fields:EMPTY (posStart=${posStart}, posEnd=${posEnd}, posPos=${posPos})`);
+                        console.log(`[parseMBTAGTFSRT] Position block EMPTY! start=${posStart}, end=${posEnd}, pos=${posPos}`);
                       }
                     }
                     vehiclePos = posEnd;
