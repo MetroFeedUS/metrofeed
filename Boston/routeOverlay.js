@@ -66,6 +66,213 @@ function skipField(buf, pos, wireType) {
   return pos;
 }
 
+// === MBTA V3 API Functions ===
+
+/**
+ * Fetch MBTA V3 predictions (ETAs) for a route and direction
+ * @param {string} routeId - Route ID (e.g., "7", "15")
+ * @param {number} directionId - Direction ID (0 or 1)
+ * @returns {Promise<{predictions: Array, stopsMap: Object, vehiclesMap: Object}>}
+ */
+async function fetchMBTAV3Predictions(routeId, directionId) {
+  try {
+    const url = `https://maps.metrofeedus.com/api/mbta/v3/predictions?filter[route]=${routeId}&filter[direction_id]=${directionId}&include=stop,vehicle`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`V3 predictions HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Parse JSON:API format
+    const stopsMap = {};
+    const vehiclesMap = {};
+    
+    // Build stop lookup from included stops
+    if (data.included) {
+      data.included.forEach(item => {
+        if (item.type === 'stop' && item.attributes) {
+          stopsMap[item.id] = item.attributes.name || item.id;
+        }
+        if (item.type === 'vehicle' && item.attributes) {
+          vehiclesMap[item.id] = item.attributes.occupancy_status || 'Unknown';
+        }
+      });
+    }
+    
+    // Extract predictions
+    const predictions = [];
+    if (data.data && Array.isArray(data.data)) {
+      data.data.forEach(pred => {
+        if (!pred.attributes) return;
+        
+        // Get ETA: arrival_time if present, else departure_time
+        const eta = pred.attributes.arrival_time || pred.attributes.departure_time;
+        if (!eta) return; // Skip predictions with no ETA
+        
+        const stopId = pred.relationships?.stop?.data?.id;
+        const vehicleId = pred.relationships?.vehicle?.data?.id;
+        
+        predictions.push({
+          stopId: stopId || 'unknown',
+          stopName: stopsMap[stopId] || stopId || 'Unknown Stop',
+          eta: eta,
+          occupancy: vehicleId ? (vehiclesMap[vehicleId] || 'Unknown') : 'Unknown'
+        });
+      });
+    }
+    
+    // Sort by ETA (soonest first)
+    predictions.sort((a, b) => new Date(a.eta) - new Date(b.eta));
+    
+    return { predictions, stopsMap, vehiclesMap };
+  } catch (error) {
+    console.warn('[MBTA V3] Error fetching predictions:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch MBTA V3 vehicles as fallback when GTFS-RT has vehicles but none match route+direction
+ * @param {string} routeId - Route ID
+ * @returns {Promise<Array>} Array of vehicles in GTFS-RT format
+ */
+async function fetchMBTAV3VehiclesFallback(routeId) {
+  try {
+    const url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeId}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`V3 vehicles HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    const vehicles = [];
+    
+    if (data.data && Array.isArray(data.data)) {
+      data.data.forEach(vehicle => {
+        if (!vehicle.attributes) return;
+        
+        // Use route relationship if available, otherwise fallback to routeId
+        const routeNumber = vehicle.relationships?.route?.data?.id || routeId;
+        
+        vehicles.push({
+          vehicleID: vehicle.id,
+          routeNumber: routeNumber,
+          direction: vehicle.attributes.direction_id,
+          latitude: vehicle.attributes.latitude,
+          longitude: vehicle.attributes.longitude,
+          speed: vehicle.attributes.speed || null,
+          bearing: vehicle.attributes.bearing || null,
+          blockID: vehicle.attributes.label || vehicle.id
+        });
+      });
+    }
+    
+    return vehicles;
+  } catch (error) {
+    console.warn('[MBTA V3] Error fetching vehicles fallback:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get or create the ETA panel dynamically
+ * @returns {HTMLElement} The ETA panel element
+ */
+function getOrCreateETAPanel() {
+  let panel = document.getElementById('etaPanel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'etaPanel';
+    panel.className = 'eta-panel';
+    panel.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 600px;
+      max-height: 300px;
+      background: rgba(30, 30, 30, 0.95);
+      border: 2px solid #1E90FF;
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      z-index: 1000;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      display: none;
+    `;
+    
+    // Insert after map container or at end of body
+    const mapContainer = document.getElementById('map');
+    if (mapContainer && mapContainer.parentNode) {
+      mapContainer.parentNode.insertBefore(panel, mapContainer.nextSibling);
+    } else {
+      document.body.appendChild(panel);
+    }
+  }
+  return panel;
+}
+
+/**
+ * Display ETAs in the panel
+ * @param {Array} predictions - Array of prediction objects
+ */
+function displayETAs(predictions) {
+  const panel = getOrCreateETAPanel();
+  
+  if (!predictions || predictions.length === 0) {
+    panel.innerHTML = '<div style="text-align: center; padding: 10px; color: #888;">ETAs unavailable</div>';
+    panel.style.display = 'block';
+    return;
+  }
+  
+  // Show next 10 predictions
+  const displayPredictions = predictions.slice(0, 10);
+  
+  let html = '<div style="font-weight: bold; margin-bottom: 8px; color: #1E90FF; text-align: center;">⏰ Next Arrivals</div>';
+  html += '<div style="max-height: 250px; overflow-y: auto;">';
+  
+  displayPredictions.forEach(pred => {
+    const etaDate = new Date(pred.eta);
+    const now = new Date();
+    const minutes = Math.floor((etaDate - now) / 60000);
+    const seconds = Math.floor(((etaDate - now) % 60000) / 1000);
+    
+    // Format time
+    let timeStr;
+    if (minutes < 0) {
+      timeStr = 'Now';
+    } else if (minutes < 1) {
+      timeStr = `${seconds}s`;
+    } else {
+      timeStr = `${minutes}m ${seconds}s`;
+    }
+    
+    // Format occupancy
+    const occupancyStr = pred.occupancy || 'Unknown';
+    
+    html += `
+      <div style="padding: 6px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+        <div style="flex: 1;">
+          <div style="font-weight: bold; color: #fff;">${pred.stopName}</div>
+          <div style="font-size: 12px; color: #888;">${occupancyStr}</div>
+        </div>
+        <div style="color: #1E90FF; font-weight: bold; margin-left: 12px;">${timeStr}</div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+}
+
 // Parse MBTA GTFS-RT VehiclePositions feed
 async function parseMBTAGTFSRT(buffer) {
   console.log('[parseMBTAGTFSRT] ===== PARSER CALLED =====');
@@ -1267,6 +1474,35 @@ function attachRouteToMap(map, routeId, directionId, options) {
             return routeMatch && directionMatch;
           });
           
+          // V3 Fallback: If GTFS-RT parsed vehicles but none matched route+direction
+          const totalParsedVehicles = allBuses.length;
+          if (busApiType === 'mbta-gtfs-rt' && totalParsedVehicles > 0 && routeBuses.length === 0) {
+            console.warn(`[attachRouteToMap] GTFS-RT parsed ${totalParsedVehicles} vehicles but 0 matched route "${routeNum}" direction ${directionId}. Trying V3 fallback...`);
+            try {
+              // Use routeNum (already defined in this scope from line 1434)
+              const v3Vehicles = await fetchMBTAV3VehiclesFallback(routeNum);
+              
+              // Client-filter by direction
+              let filteredV3Vehicles = v3Vehicles.filter(v => v.direction == directionId);
+              
+              if (filteredV3Vehicles.length === 0 && v3Vehicles.length > 0) {
+                console.warn(`[attachRouteToMap] MBTA direction mismatch — showing route vehicles only`);
+                filteredV3Vehicles = v3Vehicles; // Show all route vehicles if direction doesn't match
+              }
+              
+              if (filteredV3Vehicles.length > 0) {
+                // Convert V3 vehicles to same format and add to routeBuses
+                filteredV3Vehicles.forEach(v => {
+                  routeBuses.push(v);
+                });
+                console.log(`[attachRouteToMap] V3 fallback added ${filteredV3Vehicles.length} vehicles`);
+              }
+            } catch (v3Error) {
+              console.warn('[attachRouteToMap] V3 fallback failed:', v3Error);
+              // Continue with empty routeBuses - don't break anything
+            }
+          }
+          
           // Remove old bus markers from map and overlayElements
           Object.keys(busMarkers).forEach(vehicleId => {
             const marker = busMarkers[vehicleId];
@@ -1340,6 +1576,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Update buses every 15 seconds
       const busInterval = setInterval(fetchAndDisplayBuses, 15000);
       overlayElements.intervals.push(busInterval);
+      
+      // MBTA V3 ETAs: Fetch and display predictions
+      let etaInterval = null;
+      if (busApiType === 'mbta-gtfs-rt') {
+        // Get route number for ETA calls (same logic as in fetchAndDisplayBuses)
+        const routeNumForETAs = String(routeId);
+        
+        const fetchETAs = async () => {
+          try {
+            const { predictions } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
+            displayETAs(predictions);
+          } catch (error) {
+            console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
+            displayETAs([]); // Show "ETAs unavailable"
+          }
+        };
+        
+        // Fetch ETAs immediately
+        fetchETAs();
+        
+        // Update ETAs every 25 seconds
+        etaInterval = setInterval(fetchETAs, 25000);
+        overlayElements.intervals.push(etaInterval);
+      }
     }
   };
 
@@ -1353,6 +1613,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
   // ==== Cleanup handle =======================================================
   return {
     remove: function () {
+      // Hide ETA panel when route overlay is removed
+      const etaPanel = document.getElementById('etaPanel');
+      if (etaPanel) {
+        etaPanel.style.display = 'none';
+      }
+      
       // Layers
       overlayElements.layers.forEach((layerId) => {
         if (map.getLayer && map.getLayer(layerId)) {
