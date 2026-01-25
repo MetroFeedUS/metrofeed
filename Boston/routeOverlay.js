@@ -213,9 +213,26 @@ async function parseMBTAGTFSRT(buffer) {
                   // vehicle.trip
                   foundFields.push('vehicle.trip(f1) found');
                   if (vehicleWireType === 2) {
+                    // ===== LENGTH-DELIMITED FIELD INSTRUMENTATION: TRIP =====
+                    const cursorBeforeVarint = vehiclePos;
                     const { value: tripLength, pos: tripLenPos } = parseVarint(uint8Buffer, vehiclePos);
                     const tripStart = tripLenPos;
                     const tripEnd = tripStart + tripLength;
+                    
+                    // BEFORE consuming bytes, log everything
+                    if (entitiesFound <= 3) {
+                      const first12Bytes = Array.from(uint8Buffer.slice(tripStart, Math.min(tripStart + 12, tripEnd)))
+                        .map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+                      console.log(`[parseMBTAGTFSRT] ===== TRIP FIELD (f1, wt2) =====`);
+                      console.log(`[parseMBTAGTFSRT] tripLength (varint value): ${tripLength}`);
+                      console.log(`[parseMBTAGTFSRT] cursorBeforeVarint: ${cursorBeforeVarint}`);
+                      console.log(`[parseMBTAGTFSRT] tripLenPos (after varint): ${tripLenPos}`);
+                      console.log(`[parseMBTAGTFSRT] tripStart: ${tripStart}`);
+                      console.log(`[parseMBTAGTFSRT] tripEnd: ${tripEnd}`);
+                      console.log(`[parseMBTAGTFSRT] vehicleMsgEndOffset: ${vehicleEnd}`);
+                      console.log(`[parseMBTAGTFSRT] First 12 bytes of trip payload (hex): ${first12Bytes}`);
+                    }
+                    
                     foundFields.push(`trip.length=${tripLength}`);
                     
                     let tripPos = tripStart;
@@ -257,32 +274,86 @@ async function parseMBTAGTFSRT(buffer) {
                         tripPos = skipField(uint8Buffer, tripPos, tripWireType);
                       }
                     }
+                    
+                    // AFTER consuming trip payload, verify cursor position
+                    const cursorAfterTrip = tripPos;
                     vehiclePos = tripEnd;
+                    
+                    if (entitiesFound <= 3) {
+                      console.log(`[parseMBTAGTFSRT] cursorAfterTrip (tripPos): ${cursorAfterTrip}`);
+                      console.log(`[parseMBTAGTFSRT] tripEnd (expected): ${tripEnd}`);
+                      if (cursorAfterTrip !== tripEnd) {
+                        console.error(`[parseMBTAGTFSRT] ❌ ERROR: cursorAfterTrip (${cursorAfterTrip}) !== tripEnd (${tripEnd}) - CURSOR MISALIGNMENT!`);
+                        console.error(`[parseMBTAGTFSRT] Difference: ${cursorAfterTrip - tripEnd} bytes`);
+                        // Stop parsing this vehicle
+                        break;
+                      } else {
+                        console.log(`[parseMBTAGTFSRT] ✅ cursorAfterTrip === tripEnd (${tripEnd})`);
+                      }
+                      console.log(`[parseMBTAGTFSRT] vehiclePos set to: ${vehiclePos}`);
+                      console.log(`[parseMBTAGTFSRT] Next 8 bytes after trip: ${Array.from(uint8Buffer.slice(vehiclePos, Math.min(vehiclePos + 8, vehicleEnd))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
+                    }
                   } else {
                     // ===== 3. UNKNOWN FIELD SKIPPING =====
                     const skipBefore = vehiclePos;
-                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
-                    const bytesSkipped = vehiclePos - skipBefore;
-                    if (entitiesFound <= 3) {
-                      console.log(`[parseMBTAGTFSRT] Skipped field: f${vehicleFieldNum}, wt${vehicleWireType}, bytes=${bytesSkipped}, newCursor=${vehiclePos}`);
+                    if (vehicleWireType === 2) {
+                      // For wt2 (length-delimited), log the length varint value and start/end offsets
+                      const { value: skipLength, pos: skipLenPos } = parseVarint(uint8Buffer, vehiclePos);
+                      const skipStart = skipLenPos;
+                      const skipEnd = skipStart + skipLength;
+                      vehiclePos = skipEnd;
+                      if (entitiesFound <= 3) {
+                        console.log(`[parseMBTAGTFSRT] Skipped unknown wt2 field: f${vehicleFieldNum}, lengthVarint=${skipLength}, start=${skipStart}, end=${skipEnd}, newCursor=${vehiclePos}`);
+                      }
+                    } else {
+                      vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
+                      const bytesSkipped = vehiclePos - skipBefore;
+                      if (entitiesFound <= 3) {
+                        console.log(`[parseMBTAGTFSRT] Skipped field: f${vehicleFieldNum}, wt${vehicleWireType}, bytes=${bytesSkipped}, newCursor=${vehiclePos}`);
+                      }
                     }
                   }
                 } else if (vehicleFieldNum === 2) {
                   // vehicle.vehicle
                   foundFields.push('vehicle.vehicle(f2) found');
                   if (vehicleWireType === 2) {
+                    // ===== LENGTH-DELIMITED FIELD INSTRUMENTATION: VEHICLE DESCRIPTOR =====
+                    const cursorBeforeVarint = vehiclePos;
                     const { value: vehDescLength, pos: vehDescLenPos } = parseVarint(uint8Buffer, vehiclePos);
                     const vehDescStart = vehDescLenPos;
                     const vehDescEnd = vehDescStart + vehDescLength;
+                    
+                    // BEFORE consuming bytes, log everything
+                    if (entitiesFound <= 3) {
+                      const first12Bytes = Array.from(uint8Buffer.slice(vehDescStart, Math.min(vehDescStart + 12, vehDescEnd)))
+                        .map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+                      console.log(`[parseMBTAGTFSRT] ===== VEHICLE DESCRIPTOR FIELD (f2, wt2) =====`);
+                      console.log(`[parseMBTAGTFSRT] vehDescLength (varint value): ${vehDescLength}`);
+                      console.log(`[parseMBTAGTFSRT] cursorBeforeVarint: ${cursorBeforeVarint}`);
+                      console.log(`[parseMBTAGTFSRT] vehDescLenPos (after varint): ${vehDescLenPos}`);
+                      console.log(`[parseMBTAGTFSRT] vehDescStart: ${vehDescStart}`);
+                      console.log(`[parseMBTAGTFSRT] vehDescEnd: ${vehDescEnd}`);
+                      console.log(`[parseMBTAGTFSRT] vehicleMsgEndOffset: ${vehicleEnd}`);
+                      console.log(`[parseMBTAGTFSRT] First 12 bytes of vehicle descriptor payload (hex): ${first12Bytes}`);
+                    }
+                    
                     foundFields.push(`vehicle.length=${vehDescLength}`);
                     
                     let vehDescPos = vehDescStart;
+                    let vehDescFieldsSeen = [];
                     while (vehDescPos < vehDescEnd) {
-                      const vehDescTag = uint8Buffer[vehDescPos++];
+                      const vehDescTag = uint8Buffer[vehDescPos];
+                      const vehDescTagOffset = vehDescPos;
+                      vehDescPos++;
                       if (!vehDescTag) break;
                       
                       const vehDescFieldNum = vehDescTag >> 3;
                       const vehDescWireType = vehDescTag & 0x07;
+                      vehDescFieldsSeen.push(`f${vehDescFieldNum}:wt${vehDescWireType}`);
+                      
+                      if (entitiesFound <= 3) {
+                        console.log(`[parseMBTAGTFSRT] vehicle.vehicle field: f${vehDescFieldNum}, wt${vehDescWireType}, at offset=${vehDescTagOffset}`);
+                      }
                       
                       if (vehDescFieldNum === 1) {
                         // vehicle.vehicle.id
@@ -302,13 +373,40 @@ async function parseMBTAGTFSRT(buffer) {
                           foundFields.push(`vehicle.id(f1,varint)=${vehicleId}`);
                           vehDescPos = idPos;
                         } else {
+                          const skipBefore = vehDescPos;
                           vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
+                          if (entitiesFound <= 3) {
+                            console.log(`[parseMBTAGTFSRT] Skipped vehicle.vehicle field: f${vehDescFieldNum}, wt${vehDescWireType}, bytes=${vehDescPos - skipBefore}`);
+                          }
                         }
                       } else {
+                        const skipBefore = vehDescPos;
                         vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
+                        if (entitiesFound <= 3) {
+                          console.log(`[parseMBTAGTFSRT] Skipped vehicle.vehicle field: f${vehDescFieldNum}, wt${vehDescWireType}, bytes=${vehDescPos - skipBefore}`);
+                        }
                       }
                     }
+                    
+                    // AFTER consuming vehicle descriptor payload, verify cursor position
+                    const cursorAfterVehDesc = vehDescPos;
                     vehiclePos = vehDescEnd;
+                    
+                    if (entitiesFound <= 3) {
+                      console.log(`[parseMBTAGTFSRT] cursorAfterVehDesc (vehDescPos): ${cursorAfterVehDesc}`);
+                      console.log(`[parseMBTAGTFSRT] vehDescEnd (expected): ${vehDescEnd}`);
+                      if (cursorAfterVehDesc !== vehDescEnd) {
+                        console.error(`[parseMBTAGTFSRT] ❌ ERROR: cursorAfterVehDesc (${cursorAfterVehDesc}) !== vehDescEnd (${vehDescEnd}) - CURSOR MISALIGNMENT!`);
+                        console.error(`[parseMBTAGTFSRT] Difference: ${cursorAfterVehDesc - vehDescEnd} bytes`);
+                        // Stop parsing this vehicle
+                        break;
+                      } else {
+                        console.log(`[parseMBTAGTFSRT] ✅ cursorAfterVehDesc === vehDescEnd (${vehDescEnd})`);
+                      }
+                      console.log(`[parseMBTAGTFSRT] vehiclePos set to: ${vehiclePos}`);
+                      console.log(`[parseMBTAGTFSRT] fieldsSeen=[${vehDescFieldsSeen.join(', ')}]`);
+                      console.log(`[parseMBTAGTFSRT] Next 8 bytes after vehicle.vehicle: ${Array.from(uint8Buffer.slice(vehiclePos, Math.min(vehiclePos + 8, vehicleEnd))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
+                    }
                   } else {
                     // ===== 3. UNKNOWN FIELD SKIPPING =====
                     const skipBefore = vehiclePos;
@@ -321,16 +419,29 @@ async function parseMBTAGTFSRT(buffer) {
                 } else if (vehicleFieldNum === 3) {
                   // ===== 2. ENFORCE CORRECT WIRE-TYPE RULES FOR POSITION =====
                   if (vehicleWireType === 2) {
+                    // ===== LENGTH-DELIMITED FIELD INSTRUMENTATION: POSITION =====
                     // vehicle.position - CORRECT: field 3 with wireType 2 (length-delimited)
                     foundFields.push(`vehicle.position(f3) found, wireType=2 (CORRECT)`);
+                    const cursorBeforeVarint = vehiclePos;
                     const { value: posLength, pos: posLenPos } = parseVarint(uint8Buffer, vehiclePos);
                     const posStart = posLenPos;
                     const posEnd = posStart + posLength;
-                    foundFields.push(`position.length=${posLength}, start=${posStart}, end=${posEnd}`);
-                    // Direct console log for debugging
+                    
+                    // BEFORE consuming bytes, log everything
                     if (entitiesFound <= 3) {
-                      console.log(`[parseMBTAGTFSRT] Position block: length=${posLength}, start=${posStart}, end=${posEnd}`);
+                      const first12Bytes = Array.from(uint8Buffer.slice(posStart, Math.min(posStart + 12, posEnd)))
+                        .map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+                      console.log(`[parseMBTAGTFSRT] ===== POSITION FIELD (f3, wt2) =====`);
+                      console.log(`[parseMBTAGTFSRT] posLength (varint value): ${posLength}`);
+                      console.log(`[parseMBTAGTFSRT] cursorBeforeVarint: ${cursorBeforeVarint}`);
+                      console.log(`[parseMBTAGTFSRT] posLenPos (after varint): ${posLenPos}`);
+                      console.log(`[parseMBTAGTFSRT] posStart: ${posStart}`);
+                      console.log(`[parseMBTAGTFSRT] posEnd: ${posEnd}`);
+                      console.log(`[parseMBTAGTFSRT] vehicleMsgEndOffset: ${vehicleEnd}`);
+                      console.log(`[parseMBTAGTFSRT] First 12 bytes of position payload (hex): ${first12Bytes}`);
                     }
+                    
+                    foundFields.push(`position.length=${posLength}, start=${posStart}, end=${posEnd}`);
                     
                     let posPos = posStart;
                     let positionFieldsFound = [];
@@ -369,6 +480,11 @@ async function parseMBTAGTFSRT(buffer) {
                         posPos = skipField(uint8Buffer, posPos, posWireType);
                       }
                     }
+                    
+                    // AFTER consuming position payload, verify cursor position
+                    const cursorAfterPosition = posPos;
+                    vehiclePos = posEnd;
+                    
                     // Always log position fields for first few entities
                     if (entitiesFound <= 3) {
                       foundFields.push(`position.loop.iterations=${loopIterations}`);
@@ -379,8 +495,19 @@ async function parseMBTAGTFSRT(buffer) {
                         foundFields.push(`position.fields:EMPTY (posStart=${posStart}, posEnd=${posEnd}, posPos=${posPos})`);
                         console.log(`[parseMBTAGTFSRT] Position block EMPTY! start=${posStart}, end=${posEnd}, pos=${posPos}`);
                       }
+                      console.log(`[parseMBTAGTFSRT] cursorAfterPosition (posPos): ${cursorAfterPosition}`);
+                      console.log(`[parseMBTAGTFSRT] posEnd (expected): ${posEnd}`);
+                      if (cursorAfterPosition !== posEnd) {
+                        console.error(`[parseMBTAGTFSRT] ❌ ERROR: cursorAfterPosition (${cursorAfterPosition}) !== posEnd (${posEnd}) - CURSOR MISALIGNMENT!`);
+                        console.error(`[parseMBTAGTFSRT] Difference: ${cursorAfterPosition - posEnd} bytes`);
+                        // Stop parsing this vehicle
+                        break;
+                      } else {
+                        console.log(`[parseMBTAGTFSRT] ✅ cursorAfterPosition === posEnd (${posEnd})`);
+                      }
+                      console.log(`[parseMBTAGTFSRT] vehiclePos set to: ${vehiclePos}`);
+                      console.log(`[parseMBTAGTFSRT] Next 8 bytes after position: ${Array.from(uint8Buffer.slice(vehiclePos, Math.min(vehiclePos + 8, vehicleEnd))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
                     }
-                    vehiclePos = posEnd;
                   } else {
                     // ===== 2. POSITION WITH WRONG WIRE TYPE =====
                     console.error(`[parseMBTAGTFSRT] ⚠️ Field 3 seen with wireType=${vehicleWireType} — this is NOT position and indicates cursor misalignment.`);
