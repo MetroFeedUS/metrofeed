@@ -359,21 +359,25 @@ function pulseStopsWithETAs(predictions, stopMarkers) {
   
   // Match stop markers to predictions and pulse them
   stopMarkers.forEach(({ marker, element, stopName, stopId }) => {
-    if (!stopName) return;
+    if (!stopName || !element) return;
     
-    const normalizedStopName = stopName.toLowerCase().trim();
-    const hasETA = stopsWithETAs.has(normalizedStopName);
-    
-    if (hasETA) {
-      // Keep blue color and add pulse animation
-      element.style.backgroundColor = "#1E90FF";
-      element.style.animation = "pulse 2s ease-in-out infinite";
-      element.style.boxShadow = "0 0 0 0 rgba(30, 144, 255, 0.7)";
-    } else {
-      // Reset to blue, no animation
-      element.style.backgroundColor = "#1E90FF";
-      element.style.animation = "none";
-      element.style.boxShadow = "none";
+    try {
+      const normalizedStopName = stopName.toLowerCase().trim();
+      const hasETA = stopsWithETAs.has(normalizedStopName);
+      
+      if (hasETA) {
+        // Keep blue color and add pulse animation
+        element.style.backgroundColor = "#1E90FF";
+        element.style.animation = "pulse 2s ease-in-out infinite";
+        element.style.boxShadow = "0 0 0 0 rgba(30, 144, 255, 0.7)";
+      } else {
+        // Reset to blue, no animation
+        element.style.backgroundColor = "#1E90FF";
+        element.style.animation = "none";
+        element.style.boxShadow = "none";
+      }
+    } catch (error) {
+      console.warn('[pulseStopsWithETAs] Error updating marker:', error);
     }
   });
 }
@@ -1292,6 +1296,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       overlayElements.markers.push(stopMarker);
       
       // Store stop marker with its name for ETA-based pulsing
+      if (!overlayElements.stopMarkers) {
+        overlayElements.stopMarkers = [];
+      }
       overlayElements.stopMarkers.push({
         marker: stopMarker,
         element: stopElement,
@@ -1793,8 +1800,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
             // Display ETAs in bottom panel (bulk list)
             displayETAs(predictions);
             
-            // Pulse stops that have ETAs
-            pulseStopsWithETAs(predictions, overlayElements.stopMarkers);
+            // Pulse stops that have ETAs (only if stopMarkers exist)
+            if (overlayElements.stopMarkers && overlayElements.stopMarkers.length > 0) {
+              pulseStopsWithETAs(predictions, overlayElements.stopMarkers);
+            }
           } catch (error) {
             console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
             // Clear global state on error
@@ -1802,8 +1811,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
           }
         };
         
-        // Fetch ETAs immediately
-        fetchETAs();
+        // Fetch ETAs after a short delay to ensure stop markers are created first
+        setTimeout(() => {
+          fetchETAs();
+        }, 500);
         
         // Update ETAs every 25 seconds
         etaInterval = setInterval(fetchETAs, 25000);
