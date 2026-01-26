@@ -358,10 +358,14 @@ function pulseStopsWithETAs(predictions, stopMarkers) {
   }
   
   // Match stop markers to predictions and pulse them
-  stopMarkers.forEach(({ marker, element, stopName, stopId }) => {
-    if (!stopName || !element) return;
+  stopMarkers.forEach(({ marker, stopName, stopId }) => {
+    if (!stopName || !marker) return;
     
     try {
+      // Get the element from the marker (fresh reference)
+      const element = marker.getElement();
+      if (!element) return;
+      
       const normalizedStopName = stopName.toLowerCase().trim();
       const hasETA = stopsWithETAs.has(normalizedStopName);
       
@@ -1301,7 +1305,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
       overlayElements.stopMarkers.push({
         marker: stopMarker,
-        element: stopElement,
         stopName: stop.name,
         stopId: stopId
       });
