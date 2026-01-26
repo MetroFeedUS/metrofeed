@@ -1756,8 +1756,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                 <div style='margin-bottom:4px;'><strong>Direction:</strong> ${bus.direction}</div>
                 ${nextStopHTML}
-                <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
-                <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
                 <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${occupancyText}</div>
               </div>
             `;
