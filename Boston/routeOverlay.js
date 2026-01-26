@@ -1190,106 +1190,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const stopMarker = new maplibregl.Marker({ element: stopElement })
         .setLngLat([lon, lat]);
 
-      // Function to get ETA display (reads latest data from global currentRouteETAs)
-      // Uses the same matching logic that worked for the bulk modal
+      // Simple ETA display - removed complex matching for now
       const getETADisplay = () => {
-        if (!window.currentRouteETAs) {
-          return '<div style="color:#888;font-size:0.9em;margin-bottom:6px;">Next bus ETA: Not available</div>';
-        }
-        
-        // Try multiple matching strategies
-        let stopPredictions = null;
-        let matchedStopId = null;
-        let matchMethod = null;
-        
-        // STRATEGY 1: Match by normalized stop name (same as bulk modal used)
-        if (stop.name && window.currentRouteETAs.stopIdByName) {
-          const normalizedName = stop.name.toLowerCase().trim().replace(/\s+/g, ' ');
-          matchedStopId = window.currentRouteETAs.stopIdByName[normalizedName];
-          if (matchedStopId && window.currentRouteETAs.stopETAs[matchedStopId]) {
-            stopPredictions = window.currentRouteETAs.stopETAs[matchedStopId];
-            matchMethod = 'name_normalized';
-          }
-        }
-        
-        // STRATEGY 2: Match by exact stop_id
-        if (!stopPredictions && stopId && window.currentRouteETAs.stopETAs) {
-          if (window.currentRouteETAs.stopETAs[stopId]) {
-            stopPredictions = window.currentRouteETAs.stopETAs[stopId];
-            matchedStopId = stopId;
-            matchMethod = 'stop_id_exact';
-          }
-        }
-        
-        // STRATEGY 3: Use predictions array (same as bulk modal) - match by stopName
-        if (!stopPredictions && stop.name && window.currentRouteETAs.predictions) {
-          const routeStopName = stop.name.toLowerCase().trim();
-          // Find predictions that match this stop name
-          const matchingPreds = window.currentRouteETAs.predictions.filter(pred => {
-            const predStopName = (pred.stopName || '').toLowerCase().trim();
-            return predStopName === routeStopName || 
-                   predStopName.includes(routeStopName) || 
-                   routeStopName.includes(predStopName);
-          });
-          
-          if (matchingPreds.length > 0) {
-            // Get the stopId from the first matching prediction
-            matchedStopId = matchingPreds[0].stopId;
-            if (matchedStopId && window.currentRouteETAs.stopETAs[matchedStopId]) {
-              stopPredictions = window.currentRouteETAs.stopETAs[matchedStopId];
-              matchMethod = 'predictions_array';
-            }
-          }
-        }
-        
-        // STRATEGY 4: Fuzzy name match - try partial matches in stopIdByName
-        if (!stopPredictions && stop.name && window.currentRouteETAs.stopIdByName) {
-          const routeStopName = stop.name.toLowerCase().trim();
-          // Try to find a V3 stop name that contains our route stop name, or vice versa
-          for (const [v3NormalizedName, v3StopId] of Object.entries(window.currentRouteETAs.stopIdByName)) {
-            if (v3NormalizedName.includes(routeStopName) || routeStopName.includes(v3NormalizedName)) {
-              if (window.currentRouteETAs.stopETAs[v3StopId]) {
-                stopPredictions = window.currentRouteETAs.stopETAs[v3StopId];
-                matchedStopId = v3StopId;
-                matchMethod = 'name_fuzzy';
-                break;
-              }
-            }
-          }
-        }
-        
-        // Debug logging (only log failures to reduce console noise)
-        if (!stopPredictions) {
-          console.log('[Stop ETA] No match found:', {
-            routeStop: {
-              stop_id: stopId,
-              name: stop.name,
-              normalizedName: stop.name ? stop.name.toLowerCase().trim().replace(/\s+/g, ' ') : null
-            },
-            availableV3Data: {
-              totalStopsWithETAs: window.currentRouteETAs.stopETAs ? Object.keys(window.currentRouteETAs.stopETAs).length : 0,
-              sampleV3StopIds: window.currentRouteETAs.stopETAs ? Object.keys(window.currentRouteETAs.stopETAs).slice(0, 3) : [],
-              sampleV3StopNames: window.currentRouteETAs.stopIdByName ? Object.keys(window.currentRouteETAs.stopIdByName).slice(0, 3) : []
-            }
-          });
-        }
-        
-        if (stopPredictions && stopPredictions.length > 0) {
-          const nextETA = stopPredictions[0];
-          const etaText = formatETA(nextETA.etaDate);
-          let display = `<div style="color:#4CAF50;font-weight:bold;margin-bottom:6px;font-size:0.95em;">⏰ Next bus ETA: ${etaText}</div>`;
-          
-          // Optional: Show 2 more ETAs if available
-          if (stopPredictions.length > 1) {
-            const nextETAs = stopPredictions.slice(1, 3).map(p => formatETA(p.etaDate)).join(', ');
-            if (nextETAs) {
-              display += `<div style="color:#888;font-size:0.85em;margin-bottom:6px;">Then: ${nextETAs}</div>`;
-            }
-          }
-          return display;
-        }
-        
-        return '<div style="color:#888;font-size:0.9em;margin-bottom:6px;">Next bus ETA: Not available</div>';
+        return ''; // No ETA in popup for now
       };
       
       // Popup content (reads latest ETA data when created/updated)
@@ -1809,18 +1712,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const { predictions, stopETAs, vehicleInfo, stopIdByName } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
             
             // Store in global currentRouteETAs for stop popups and bus markers
-            // Also store predictions array for easier name-based matching (like bulk modal used)
             window.currentRouteETAs = {
               routeId: routeNumForETAs,
               directionId: directionId,
               stopETAs: stopETAs,
               vehicleInfo: vehicleInfo,
-              stopIdByName: stopIdByName, // For name-based matching (primary method)
-              predictions: predictions, // Store predictions array for easier matching
+              stopIdByName: stopIdByName,
               fetchedAt: new Date()
             };
             
-            // Don't display bottom ETA panel - ETAs are shown in stop popups instead
+            // Display ETAs in bottom panel (bulk list)
+            displayETAs(predictions);
           } catch (error) {
             console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
             // Clear global state on error
