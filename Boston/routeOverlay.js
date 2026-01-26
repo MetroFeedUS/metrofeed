@@ -1748,13 +1748,16 @@ function attachRouteToMap(map, routeId, directionId, options) {
               nextStopHTML = '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> Not available</div>';
             }
             
+            // Format direction for display: 1 = Inbound, 0 = Outbound
+            const directionText = bus.direction === 1 ? 'Inbound' : bus.direction === 0 ? 'Outbound' : bus.direction;
+            
             popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                 <div style='text-align:center; margin-bottom:6px;'>
                   <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
                 </div>
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
-                <div style='margin-bottom:4px;'><strong>Direction:</strong> ${bus.direction}</div>
+                <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
                 ${nextStopHTML}
                 <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${occupancyText}</div>
               </div>

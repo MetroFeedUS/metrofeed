@@ -102,14 +102,14 @@ const CITIES = {
     defaultCenter: [-71.0619, 42.3551], // [longitude, latitude] for MapLibre GL JS
     defaultZoom: 11,
     bounds: {
-      // Expanded bounds to cover full MBTA system (expanded N, S, E by 20%):
+      // Expanded bounds to cover full MBTA system (expanded N, S, E by 40% total):
       // - North: Alewife (Red Line), Wonderland (Blue Line)
       // - South: Braintree (Red Line), Forest Hills (Orange Line)
       // - East: Wonderland/Logan Airport (Blue/Silver Lines)
       // - West: Riverside (Green Line D), Alewife (Red Line)
-      north: 42.50,   // Expanded from 42.45 (+0.05, 20% of 0.25 range)
-      south: 42.15,   // Expanded from 42.20 (-0.05, 20% of 0.25 range)
-      east: -70.82,   // Expanded from -70.90 (+0.08, 20% of 0.40 range)
+      north: 42.55,   // Expanded from 42.45 (+0.10, 40% of 0.25 range)
+      south: 42.10,   // Expanded from 42.20 (-0.10, 40% of 0.25 range)
+      east: -70.74,   // Expanded from -70.90 (+0.16, 40% of 0.40 range)
       west: -71.30    // Unchanged
     },
     // Map Tile Styles (base map API)
