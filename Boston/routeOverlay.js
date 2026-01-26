@@ -91,10 +91,16 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
     const vehicleInfo = {}; // { vehicleId: { occupancy_status, label, updated_at } }
     
     // Build stop lookup and vehicle info from included items
+    const stopIdByName = {}; // Reverse lookup: stopName -> stopId (for fallback matching)
     if (data.included) {
       data.included.forEach(item => {
         if (item.type === 'stop' && item.attributes) {
           stopsMap[item.id] = item.attributes.name || item.id;
+          // Build reverse lookup by normalized name
+          const normalizedName = (item.attributes.name || '').toLowerCase().trim();
+          if (normalizedName) {
+            stopIdByName[normalizedName] = item.id;
+          }
         }
         if (item.type === 'vehicle' && item.attributes) {
           vehicleInfo[item.id] = {
@@ -161,7 +167,7 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
     });
     predictions.sort((a, b) => new Date(a.eta) - new Date(b.eta));
     
-    return { predictions, stopETAs, vehicleInfo };
+    return { predictions, stopETAs, vehicleInfo, stopIdByName };
   } catch (error) {
     console.warn('[MBTA V3] Error fetching predictions:', error);
     throw error;
@@ -1186,7 +1192,37 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Function to get ETA display (reads latest data from global currentRouteETAs)
       const getETADisplay = () => {
         if (window.currentRouteETAs && window.currentRouteETAs.stopETAs) {
-          const stopPredictions = window.currentRouteETAs.stopETAs[stopId];
+          // Try exact match first
+          let stopPredictions = window.currentRouteETAs.stopETAs[stopId];
+          
+          // If no exact match, try fallback by stop name (normalized)
+          if (!stopPredictions && window.currentRouteETAs.stopIdByName && stop.name) {
+            const normalizedName = stop.name.toLowerCase().trim();
+            const matchedStopId = window.currentRouteETAs.stopIdByName[normalizedName];
+            if (matchedStopId) {
+              stopPredictions = window.currentRouteETAs.stopETAs[matchedStopId];
+              // Log this fallback match once for debugging
+              if (!window._stopNameFallbackLogged) {
+                console.log('[Stop ETA] Using name fallback match:', {
+                  routeStopId: stopId,
+                  routeStopName: stop.name,
+                  v3StopId: matchedStopId
+                });
+                window._stopNameFallbackLogged = true;
+              }
+            }
+          }
+          
+          // Debug logging (first time only)
+          if (!stopPredictions && !window._stopIdDebugLogged) {
+            const availableStopIds = Object.keys(window.currentRouteETAs.stopETAs);
+            console.log('[Stop ETA] No match found for stopId:', stopId);
+            console.log('[Stop ETA] Route stop:', { stop_id: stop.stop_id, name: stop.name });
+            console.log('[Stop ETA] Available V3 stop IDs (first 10):', availableStopIds.slice(0, 10));
+            console.log('[Stop ETA] Total stops with ETAs:', availableStopIds.length);
+            window._stopIdDebugLogged = true;
+          }
+          
           if (stopPredictions && stopPredictions.length > 0) {
             const nextETA = stopPredictions[0];
             const etaText = formatETA(nextETA.etaDate);
@@ -1727,6 +1763,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               directionId: directionId,
               stopETAs: stopETAs,
               vehicleInfo: vehicleInfo,
+              stopIdByName: stopIdByName, // For fallback name matching
               fetchedAt: new Date()
             };
             
