@@ -941,7 +941,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     layers:   [],
     markers:  [],
     controls: [],
-    intervals: [] // For bus tracking intervals
+    intervals: [], // For bus tracking intervals
+    stopMarkers: [] // Store stop markers with their stop data for ETA updates
   };
 
   // ==== Internal: build & attach =================================================
@@ -1028,6 +1029,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
     
     // Get weeklyTimes from routeData (new format) or fallback to legacy stop.times
     const weeklyTimes = routeData.weeklyTimes || {};
+    
+    // Helper function to check if a stop has ETA data (used for marker styling)
+    const checkHasETAData = (stopData, stopIdValue) => {
+      if (window.currentRouteETAs && window.currentRouteETAs.stopETAs && window.currentRouteETAs.stopIdByName) {
+        let stopPredictions = null;
+        
+        // PRIORITY 1: Match by stop name (normalized)
+        if (stopData.name) {
+          const normalizedName = stopData.name.toLowerCase().trim().replace(/\s+/g, ' ');
+          const matchedStopId = window.currentRouteETAs.stopIdByName[normalizedName];
+          if (matchedStopId) {
+            stopPredictions = window.currentRouteETAs.stopETAs[matchedStopId];
+          }
+        }
+        
+        // PRIORITY 2: Fallback to exact stop_id match
+        if (!stopPredictions && stopIdValue) {
+          stopPredictions = window.currentRouteETAs.stopETAs[stopIdValue];
+        }
+        
+        return stopPredictions && stopPredictions.length > 0;
+      }
+      return false;
+    };
 
     stops.forEach((stop) => {
       const lat = stop.lat;
@@ -1177,15 +1202,47 @@ function attachRouteToMap(map, routeId, directionId, options) {
         });
       }
 
+      // Check if this stop has ETA data (initial check)
+      const hasETA = checkHasETAData(stop, stopId);
+      
       // Stop marker element
       const stopElement = document.createElement("div");
       stopElement.style.width          = "12px";
       stopElement.style.height         = "12px";
-      stopElement.style.backgroundColor= "#1E90FF";
+      stopElement.style.backgroundColor= hasETA ? "#FF8C00" : "#1E90FF"; // Orange if has ETA, blue otherwise
       stopElement.style.borderRadius   = "50%";
       stopElement.style.border         = "2px solid #fff";
       stopElement.style.opacity        = "0.9";
       stopElement.style.cursor         = "pointer";
+      
+      // Add pulsing animation if stop has ETA
+      if (hasETA) {
+        stopElement.style.animation = "pulse 2s ease-in-out infinite";
+        stopElement.style.boxShadow = "0 0 0 0 rgba(255, 140, 0, 0.7)";
+        
+        // Inject CSS for pulse animation if not already added
+        if (!document.getElementById('stop-pulse-animation')) {
+          const style = document.createElement('style');
+          style.id = 'stop-pulse-animation';
+          style.textContent = `
+            @keyframes pulse {
+              0% {
+                box-shadow: 0 0 0 0 rgba(255, 140, 0, 0.7);
+                transform: scale(1);
+              }
+              50% {
+                box-shadow: 0 0 0 8px rgba(255, 140, 0, 0);
+                transform: scale(1.05);
+              }
+              100% {
+                box-shadow: 0 0 0 0 rgba(255, 140, 0, 0);
+                transform: scale(1);
+              }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+      }
 
       const stopMarker = new maplibregl.Marker({ element: stopElement })
         .setLngLat([lon, lat]);
@@ -1296,6 +1353,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
       stopMarker.addTo(map);
 
       overlayElements.markers.push(stopMarker);
+      
+      // Store stop marker with its data for ETA-based style updates
+      overlayElements.stopMarkers.push({
+        marker: stopMarker,
+        element: stopElement,
+        stop: stop,
+        stopId: stopId
+      });
     });
 
     // ---------- Route info panel (mainOverlay only) ----------
@@ -1787,6 +1852,42 @@ function attachRouteToMap(map, routeId, directionId, options) {
               stopIdByName: stopIdByName, // For name-based matching (primary method)
               fetchedAt: new Date()
             };
+            
+            // Update stop marker styles based on ETA availability
+            overlayElements.stopMarkers.forEach(({ marker, element, stop, stopId }) => {
+              const hasETA = checkHasETAData(stop, stopId);
+              if (hasETA) {
+                // Update to orange with pulse animation
+                element.style.backgroundColor = "#FF8C00";
+                if (!element.style.animation) {
+                  element.style.animation = "pulse 2s ease-in-out infinite";
+                  element.style.boxShadow = "0 0 0 0 rgba(255, 140, 0, 0.7)";
+                  
+                  // Inject CSS for pulse animation if not already added
+                  if (!document.getElementById('stop-pulse-animation')) {
+                    const style = document.createElement('style');
+                    style.id = 'stop-pulse-animation';
+                    style.textContent = `
+                      @keyframes pulse {
+                        0% {
+                          box-shadow: 0 0 0 0 rgba(255, 140, 0, 0.7);
+                          transform: scale(1);
+                        }
+                        50% {
+                          box-shadow: 0 0 0 8px rgba(255, 140, 0, 0);
+                          transform: scale(1.05);
+                        }
+                        100% {
+                          box-shadow: 0 0 0 0 rgba(255, 140, 0, 0);
+                          transform: scale(1);
+                        }
+                      }
+                    `;
+                    document.head.appendChild(style);
+                  }
+                }
+              }
+            });
             
             // Don't display bottom ETA panel - ETAs are shown in stop popups instead
           } catch (error) {
