@@ -97,7 +97,8 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
         if (item.type === 'stop' && item.attributes) {
           stopsMap[item.id] = item.attributes.name || item.id;
           // Build reverse lookup by normalized name
-          const normalizedName = (item.attributes.name || '').toLowerCase().trim();
+          // Normalize: lowercase, trim, collapse multiple spaces
+          let normalizedName = (item.attributes.name || '').toLowerCase().trim().replace(/\s+/g, ' ');
           if (normalizedName) {
             stopIdByName[normalizedName] = item.id;
           }
@@ -1190,37 +1191,41 @@ function attachRouteToMap(map, routeId, directionId, options) {
         .setLngLat([lon, lat]);
 
       // Function to get ETA display (reads latest data from global currentRouteETAs)
+      // Matches by stop name first (same logic as bottom modal), then falls back to stop_id
       const getETADisplay = () => {
-        if (window.currentRouteETAs && window.currentRouteETAs.stopETAs) {
-          // Try exact match first
-          let stopPredictions = window.currentRouteETAs.stopETAs[stopId];
+        if (window.currentRouteETAs && window.currentRouteETAs.stopETAs && window.currentRouteETAs.stopIdByName) {
+          let stopPredictions = null;
+          let matchedStopId = null;
           
-          // If no exact match, try fallback by stop name (normalized)
-          if (!stopPredictions && window.currentRouteETAs.stopIdByName && stop.name) {
-            const normalizedName = stop.name.toLowerCase().trim();
-            const matchedStopId = window.currentRouteETAs.stopIdByName[normalizedName];
+          // PRIORITY 1: Match by stop name (normalized) - same as bottom modal
+          if (stop.name) {
+            // Normalize: lowercase, trim, collapse multiple spaces (same as V3 normalization)
+            const normalizedName = stop.name.toLowerCase().trim().replace(/\s+/g, ' ');
+            matchedStopId = window.currentRouteETAs.stopIdByName[normalizedName];
             if (matchedStopId) {
               stopPredictions = window.currentRouteETAs.stopETAs[matchedStopId];
-              // Log this fallback match once for debugging
-              if (!window._stopNameFallbackLogged) {
-                console.log('[Stop ETA] Using name fallback match:', {
-                  routeStopId: stopId,
-                  routeStopName: stop.name,
-                  v3StopId: matchedStopId
-                });
-                window._stopNameFallbackLogged = true;
-              }
+            }
+          }
+          
+          // PRIORITY 2: Fallback to exact stop_id match
+          if (!stopPredictions && stopId) {
+            stopPredictions = window.currentRouteETAs.stopETAs[stopId];
+            if (stopPredictions) {
+              matchedStopId = stopId;
             }
           }
           
           // Debug logging (first time only)
-          if (!stopPredictions && !window._stopIdDebugLogged) {
+          if (!stopPredictions && !window._stopEtaDebugLogged) {
             const availableStopIds = Object.keys(window.currentRouteETAs.stopETAs);
-            console.log('[Stop ETA] No match found for stopId:', stopId);
-            console.log('[Stop ETA] Route stop:', { stop_id: stop.stop_id, name: stop.name });
-            console.log('[Stop ETA] Available V3 stop IDs (first 10):', availableStopIds.slice(0, 10));
-            console.log('[Stop ETA] Total stops with ETAs:', availableStopIds.length);
-            window._stopIdDebugLogged = true;
+            console.log('[Stop ETA] No match found:', {
+              routeStopId: stopId,
+              routeStopName: stop.name,
+              normalizedName: stop.name ? stop.name.toLowerCase().trim() : null,
+              availableV3Stops: availableStopIds.length,
+              sampleV3StopIds: availableStopIds.slice(0, 5)
+            });
+            window._stopEtaDebugLogged = true;
           }
           
           if (stopPredictions && stopPredictions.length > 0) {
@@ -1763,14 +1768,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
               directionId: directionId,
               stopETAs: stopETAs,
               vehicleInfo: vehicleInfo,
-              stopIdByName: stopIdByName, // For fallback name matching
+              stopIdByName: stopIdByName, // For name-based matching (primary method)
               fetchedAt: new Date()
             };
             
-            displayETAs(predictions);
+            // Don't display bottom ETA panel - ETAs are shown in stop popups instead
           } catch (error) {
             console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
-            displayETAs([]); // Show "ETAs unavailable"
             // Clear global state on error
             window.currentRouteETAs = null;
           }
