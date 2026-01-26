@@ -319,146 +319,25 @@ function getOrCreateETAPanel() {
 }
 
 /**
- * Pulse stop markers that have ETAs
- * @param {Array} predictions - Array of prediction objects with stopName
- * @param {Array} stopMarkers - Array of stop marker objects
- */
-function pulseStopsWithETAs(predictions, stopMarkers) {
-  if (!predictions || !stopMarkers) return;
-  
-  // Get unique stop names from predictions
-  const stopsWithETAs = new Set();
-  predictions.forEach(pred => {
-    if (pred.stopName) {
-      stopsWithETAs.add(pred.stopName.toLowerCase().trim());
-    }
-  });
-  
-  // Inject CSS for pulse animation if not already added
-  if (!document.getElementById('stop-pulse-animation')) {
-    const style = document.createElement('style');
-    style.id = 'stop-pulse-animation';
-    style.textContent = `
-      @keyframes pulse {
-        0% {
-          box-shadow: 0 0 0 0 rgba(30, 144, 255, 0.7);
-          transform: scale(1);
-        }
-        50% {
-          box-shadow: 0 0 0 8px rgba(30, 144, 255, 0);
-          transform: scale(1.1);
-        }
-        100% {
-          box-shadow: 0 0 0 0 rgba(30, 144, 255, 0);
-          transform: scale(1);
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-  
-  // Match stop markers to predictions and pulse them
-  stopMarkers.forEach(({ marker, stopName, stopId }) => {
-    if (!stopName || !marker) return;
-    
-    try {
-      // Get the element from the marker (fresh reference)
-      const element = marker.getElement();
-      if (!element) return;
-      
-      const normalizedStopName = stopName.toLowerCase().trim();
-      const hasETA = stopsWithETAs.has(normalizedStopName);
-      
-      if (hasETA) {
-        // Keep blue color and add pulse animation
-        element.style.backgroundColor = "#1E90FF";
-        element.style.animation = "pulse 2s ease-in-out infinite";
-        element.style.boxShadow = "0 0 0 0 rgba(30, 144, 255, 0.7)";
-      } else {
-        // Reset to blue, no animation
-        element.style.backgroundColor = "#1E90FF";
-        element.style.animation = "none";
-        element.style.boxShadow = "none";
-      }
-    } catch (error) {
-      console.warn('[pulseStopsWithETAs] Error updating marker:', error);
-    }
-  });
-}
-
-/**
- * Get or create the new ETA modal (separate from old panel)
- */
-function getOrCreateETAModal() {
-  let modal = document.getElementById('etaModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'etaModal';
-    modal.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90%;
-      max-width: 500px;
-      max-height: 400px;
-      background: rgba(30, 30, 30, 0.98);
-      border: 2px solid #1E90FF;
-      border-radius: 8px;
-      padding: 12px;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      z-index: 1001;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      display: none;
-    `;
-    
-    // Add close button
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '×';
-    closeBtn.style.cssText = `
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: transparent;
-      border: none;
-      color: #fff;
-      font-size: 24px;
-      cursor: pointer;
-      width: 30px;
-      height: 30px;
-      line-height: 1;
-      padding: 0;
-    `;
-    closeBtn.onclick = () => {
-      modal.style.display = 'none';
-    };
-    modal.appendChild(closeBtn);
-    
-    document.body.appendChild(modal);
-  }
-  return modal;
-}
-
-/**
- * Display ETAs in the new modal
+ * Display ETAs in the panel
  * @param {Array} predictions - Array of prediction objects
  */
-function displayETAsInModal(predictions) {
-  const modal = getOrCreateETAModal();
+function displayETAs(predictions) {
+  const panel = getOrCreateETAPanel();
   
   if (!predictions || predictions.length === 0) {
-    modal.innerHTML = '<div style="text-align: center; padding: 10px; color: #888;">ETAs unavailable</div>';
-    modal.style.display = 'block';
+    panel.innerHTML = '<div style="text-align: center; padding: 10px; color: #888;">ETAs unavailable</div>';
+    panel.style.display = 'block';
     return;
   }
   
-  let html = '<button onclick="document.getElementById(\'etaModal\').style.display=\'none\'" style="position:absolute;top:8px;right:8px;background:transparent;border:none;color:#fff;font-size:24px;cursor:pointer;width:30px;height:30px;line-height:1;padding:0;">×</button>';
-  html += '<div style="font-weight: bold; margin-bottom: 8px; color: #1E90FF; text-align: center; padding-right: 30px;">⏰ Next Arrivals</div>';
-  html += '<div style="max-height: 320px; overflow-y: auto; padding-right: 8px;">';
+  // Show next 10 predictions
+  const displayPredictions = predictions.slice(0, 10);
   
-  predictions.forEach(pred => {
+  let html = '<div style="font-weight: bold; margin-bottom: 8px; color: #1E90FF; text-align: center;">⏰ Next Arrivals</div>';
+  html += '<div style="max-height: 250px; overflow-y: auto;">';
+  
+  displayPredictions.forEach(pred => {
     const etaDate = new Date(pred.eta);
     const timeStr = formatETA(etaDate);
     const occupancyStr = formatOccupancy(pred.occupancy);
@@ -466,27 +345,17 @@ function displayETAsInModal(predictions) {
     html += `
       <div style="padding: 6px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
         <div style="flex: 1;">
-          <div style="font-weight: bold; color: #fff; font-size: 13px;">${pred.stopName}</div>
-          <div style="font-size: 11px; color: #888;">${occupancyStr}</div>
+          <div style="font-weight: bold; color: #fff;">${pred.stopName}</div>
+          <div style="font-size: 12px; color: #888;">${occupancyStr}</div>
         </div>
-        <div style="color: #1E90FF; font-weight: bold; margin-left: 12px; font-size: 13px;">${timeStr}</div>
+        <div style="color: #1E90FF; font-weight: bold; margin-left: 12px;">${timeStr}</div>
       </div>
     `;
   });
   
   html += '</div>';
-  modal.innerHTML = html;
-  modal.style.display = 'block';
-}
-
-/**
- * Display ETAs in the panel (old function - keeping for compatibility but not using)
- * @param {Array} predictions - Array of prediction objects
- */
-function displayETAs(predictions) {
-  // Don't display in old panel - use new modal instead
-  // This prevents interference with stop markers
-  return;
+  panel.innerHTML = html;
+  panel.style.display = 'block';
 }
 
 // Parse MBTA GTFS-RT VehiclePositions feed
@@ -1361,16 +1230,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
       stopMarker.addTo(map);
 
       overlayElements.markers.push(stopMarker);
-      
-      // Store stop marker with its name for ETA-based pulsing
-      if (!overlayElements.stopMarkers) {
-        overlayElements.stopMarkers = [];
-      }
-      overlayElements.stopMarkers.push({
-        marker: stopMarker,
-        stopName: stop.name,
-        stopId: stopId
-      });
     });
 
     // ---------- Route info panel (mainOverlay only) ----------
@@ -1863,13 +1722,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
               fetchedAt: new Date()
             };
             
-            // Display ETAs in new modal (separate from old panel)
-            displayETAsInModal(predictions);
-            
-            // Pulse stops that have ETAs (only if stopMarkers exist)
-            if (overlayElements.stopMarkers && overlayElements.stopMarkers.length > 0) {
-              pulseStopsWithETAs(predictions, overlayElements.stopMarkers);
-            }
+            // Display ETAs in bottom panel (bulk list)
+            displayETAs(predictions);
           } catch (error) {
             console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
             // Clear global state on error
@@ -1877,10 +1731,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
           }
         };
         
-        // Fetch ETAs after a short delay to ensure stop markers are created first
-        setTimeout(() => {
-          fetchETAs();
-        }, 500);
+        // Fetch ETAs immediately
+        fetchETAs();
         
         // Update ETAs every 25 seconds
         etaInterval = setInterval(fetchETAs, 25000);
@@ -1946,7 +1798,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
       overlayElements.markers  = [];
       overlayElements.controls = [];
       overlayElements.intervals = [];
-      overlayElements.stopMarkers = [];
     }
   };
 }
