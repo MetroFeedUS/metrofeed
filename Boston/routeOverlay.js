@@ -1033,7 +1033,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
     if (fitBounds && shape.length > 0) {
       const bounds = new maplibregl.LngLatBounds();
       shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
-      map.fitBounds(bounds, { padding: 40, maxZoom: 14 });
+      
+      // Auto-expand bounds by 20% to ensure route fits (especially for long commuter rail routes)
+      const currentBounds = bounds.toArray();
+      const [[west, south], [east, north]] = currentBounds;
+      const latRange = north - south;
+      const lonRange = east - west;
+      const expansion = 0.20; // 20% expansion
+      
+      const expandedBounds = new maplibregl.LngLatBounds();
+      expandedBounds.extend([west - (lonRange * expansion), south - (latRange * expansion)]);
+      expandedBounds.extend([east + (lonRange * expansion), north + (latRange * expansion)]);
+      
+      map.fitBounds(expandedBounds, { padding: 40, maxZoom: 14 });
     }
 
     // ---------- Stops + popups ----------

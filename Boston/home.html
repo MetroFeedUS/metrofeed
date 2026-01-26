@@ -1610,9 +1610,69 @@
   
   // Initialize allStops based on city
   if (CITY_CONFIG.useLazyLoading) {
-    // Boston: Defer stop list population (would require loading all routes)
-    // Will be populated on-demand when search is used
-    console.log('[Boston] Stop list will be populated on-demand');
+    // Boston: Load stops from routes index when available (lazy, on-demand)
+    async function loadBostonStops() {
+      if (window.routeLoader && window.routeLoader.isRoutesIndexLoaded()) {
+        const routesIndex = window.routeLoader.getRoutesIndex();
+        if (routesIndex && routesIndex.routes && allStops.length === 0) {
+          console.log('[Boston] Loading stops for autocomplete...');
+          // Load stops from a sample of routes (first 50 to avoid loading all 720 routes)
+          const sampleRoutes = routesIndex.routes.slice(0, 50);
+          const stopPromises = sampleRoutes.map(async (route) => {
+            try {
+              const routeData = await window.routeLoader.loadRoute(route.route_id, route.direction_id);
+              if (routeData && routeData.stops) {
+                return routeData.stops.map(stop => decodeHTMLEntities(stop.name || `Stop ${stop.stop_id}`));
+              }
+            } catch (err) {
+              return [];
+            }
+            return [];
+          });
+          
+          const allStopArrays = await Promise.allSettled(stopPromises);
+          const allStopsList = allStopArrays
+            .filter(result => result.status === 'fulfilled')
+            .flatMap(result => result.value);
+          
+          allStops = [...new Set(allStopsList)];
+          console.log('[Boston] Loaded', allStops.length, 'unique stops for autocomplete (from sample routes)');
+        }
+      }
+    }
+    
+    // Try to load stops when routeLoader is ready (background, non-blocking)
+    if (window.routeLoader) {
+      window.routeLoader.loadRoutesIndex().then(() => {
+        // Load stops in background (don't block)
+        loadBostonStops();
+      }).catch(() => {});
+    } else {
+      // Wait for routeLoader to be available
+      const checkRouteLoader = setInterval(() => {
+        if (window.routeLoader) {
+          clearInterval(checkRouteLoader);
+          window.routeLoader.loadRoutesIndex().then(() => {
+            loadBostonStops();
+          }).catch(() => {});
+        }
+      }, 500);
+      
+      setTimeout(() => clearInterval(checkRouteLoader), 10000);
+    }
+    
+    // Also try to load stops when user starts typing (on-demand)
+    const startInput = document.getElementById("startInput");
+    const endInput = document.getElementById("endInput");
+    [startInput, endInput].forEach(input => {
+      if (input) {
+        input.addEventListener('focus', () => {
+          if (allStops.length === 0) {
+            loadBostonStops();
+          }
+        });
+      }
+    });
   } else {
     // Other cities: Use masterRoutes
     if (typeof masterRoutes !== 'undefined' && masterRoutes && masterRoutes.length > 0) {
@@ -1680,7 +1740,7 @@
   
   // Check if this is the first time opening the dropdown in this session
   // Using sessionStorage so tooltips show once per app reload/opening
-  let hasShownTooltips = sessionStorage.getItem('dropdownTooltipsShown');
+  let hasShownTooltips = sessionStorage.getItem('dropdownTooltipsShown') === 'true';
   
   menuBtn.addEventListener('click', () => {
     const isOpening = dropdownMenu.style.display !== 'flex';
