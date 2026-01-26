@@ -172,6 +172,8 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
     // Build vehicleETAs lookup: vehicleETAs[vehicleId] = [predictions...] (sorted soonest-first)
     const vehicleETAs = {};
     if (data.data && Array.isArray(data.data)) {
+      console.log('[fetchMBTAV3Predictions] Building vehicleETAs lookup from', data.data.length, 'predictions');
+      
       data.data.forEach(pred => {
         if (!pred.attributes) return;
         
@@ -197,6 +199,9 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
           etaDate: etaDate
         });
       });
+      
+      console.log('[fetchMBTAV3Predictions] Built vehicleETAs with', Object.keys(vehicleETAs).length, 'vehicles');
+      console.log('[fetchMBTAV3Predictions] Sample vehicle IDs:', Object.keys(vehicleETAs).slice(0, 10));
     }
     
     // Sort each vehicle's predictions by ETA (soonest first)
@@ -1686,15 +1691,33 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             // Get next stop ETA for this bus
             let nextStopETA = null;
-            if (window.currentRouteETAs && window.currentRouteETAs.vehicleETAs && window.currentRouteETAs.vehicleETAs[bus.vehicleID]) {
-              const vehiclePredictions = window.currentRouteETAs.vehicleETAs[bus.vehicleID];
-              if (vehiclePredictions.length > 0) {
-                const nextPred = vehiclePredictions[0];
-                nextStopETA = {
-                  stopName: nextPred.stopName,
-                  eta: formatETA(nextPred.etaDate)
-                };
+            console.log('[Bus Marker] Looking up ETA for vehicleID:', bus.vehicleID);
+            console.log('[Bus Marker] currentRouteETAs exists:', !!window.currentRouteETAs);
+            console.log('[Bus Marker] vehicleETAs exists:', !!(window.currentRouteETAs && window.currentRouteETAs.vehicleETAs));
+            
+            if (window.currentRouteETAs && window.currentRouteETAs.vehicleETAs) {
+              console.log('[Bus Marker] Available vehicle IDs in vehicleETAs:', Object.keys(window.currentRouteETAs.vehicleETAs).slice(0, 10));
+              
+              if (window.currentRouteETAs.vehicleETAs[bus.vehicleID]) {
+                const vehiclePredictions = window.currentRouteETAs.vehicleETAs[bus.vehicleID];
+                console.log('[Bus Marker] Found predictions for vehicleID:', bus.vehicleID, 'count:', vehiclePredictions.length);
+                console.log('[Bus Marker] First prediction:', vehiclePredictions[0]);
+                
+                if (vehiclePredictions.length > 0) {
+                  const nextPred = vehiclePredictions[0];
+                  nextStopETA = {
+                    stopName: nextPred.stopName,
+                    eta: formatETA(nextPred.etaDate)
+                  };
+                  console.log('[Bus Marker] Next stop ETA set:', nextStopETA);
+                }
+              } else {
+                console.log('[Bus Marker] No predictions found for vehicleID:', bus.vehicleID);
+                console.log('[Bus Marker] Vehicle ID type:', typeof bus.vehicleID);
+                console.log('[Bus Marker] Sample vehicle IDs in data:', Object.keys(window.currentRouteETAs.vehicleETAs).slice(0, 5));
               }
+            } else {
+              console.log('[Bus Marker] No vehicleETAs data available');
             }
             
             // Create bus marker element matching createBusMarker style
@@ -1770,7 +1793,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
         
         const fetchETAs = async () => {
           try {
-            const { predictions, stopETAs, vehicleInfo, stopIdByName } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
+            const { predictions, stopETAs, vehicleInfo, stopIdByName, vehicleETAs } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
+            
+            console.log('[fetchETAs] Received vehicleETAs from fetchMBTAV3Predictions:', !!vehicleETAs);
+            console.log('[fetchETAs] vehicleETAs count:', vehicleETAs ? Object.keys(vehicleETAs).length : 0);
             
             // Store in global currentRouteETAs for stop popups and bus markers
             window.currentRouteETAs = {
@@ -1782,6 +1808,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
               vehicleETAs: vehicleETAs, // Lookup by vehicleId
               fetchedAt: new Date()
             };
+            
+            console.log('[fetchETAs] Stored vehicleETAs with', Object.keys(vehicleETAs).length, 'vehicles');
+            console.log('[fetchETAs] Sample vehicle IDs in stored data:', Object.keys(vehicleETAs).slice(0, 10));
             
             // Display ETAs in bottom panel (bulk list)
             displayETAs(predictions);
