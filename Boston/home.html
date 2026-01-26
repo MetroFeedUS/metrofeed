@@ -974,7 +974,7 @@
   <a href="#" id="dropdownRailBtn" onclick="event.preventDefault(); event.stopPropagation(); console.log('[RailBtn] Clicked'); showRailRoutesModal(); return false;"><img src="001-train-station.svg" alt="Rail Routes"></a>
   <a href="#" id="dropdownTrafficBtn" onclick="toggleTrafficFromDropdown()"><img src="003-warning.svg" alt="Traffic Overlay"></a>
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
-  <a href="weather.html"><img src="005-weather-radar.svg" alt="Weather"></a>
+  <a href="#" id="dropdownWeatherBtn" onclick="event.preventDefault(); showWeatherForecastModal();"><img src="005-weather-radar.svg" alt="Weather"></a>
   <!-- ADA and Official Resources button in dropdown -->
   <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA and Official Resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA and Official Resources"></a>
   <a href="#" id="dropdownMarketplaceBtn" onclick="event.preventDefault(); toggleMarketplaceFromDropdown();"><img src="store.svg" alt="Alerts" onerror="this.onerror=null; this.src='008-danger.svg';"></a>
@@ -1041,6 +1041,17 @@
   <a href="dmca.html" data-translate="dmca">DMCA</a>
   <a href="privacy.html" data-translate="privacy">Privacy</a>
 </footer>
+
+<!-- -- WEATHER FORECAST MODAL -- -->
+<div id="weatherForecastModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+    <h2>🌤️ <span data-translate="sevenDayForecast">7-Day Forecast</span></h2>
+    <div id="weatherForecastContent" style="text-align: left; margin-top: 1rem; color: #ccc;">
+      <div data-translate="loadingForecast">Loading 7-day forecast...</div>
+    </div>
+    <button class="mf-btn" onclick="hideWeatherForecastModal()" style="margin-top: 1rem;" data-translate="close">Close</button>
+  </div>
+</div>
 
 <!-- -- OTP TRIP PLANNING MODAL -- -->
 <div id="otpModal" class="mf-overlay" style="display: none;">
@@ -4496,6 +4507,102 @@
   }
 
   // ==== MODAL CONTROLS ====
+  // Weather Forecast Modal Functions
+  function showWeatherForecastModal() {
+    const modal = document.getElementById('weatherForecastModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      loadWeatherForecast();
+    }
+  }
+
+  function hideWeatherForecastModal() {
+    const modal = document.getElementById('weatherForecastModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  // Close modal when clicking outside
+  document.addEventListener('DOMContentLoaded', function() {
+    const weatherModal = document.getElementById('weatherForecastModal');
+    if (weatherModal) {
+      weatherModal.addEventListener('click', function(e) {
+        if (e.target === weatherModal) {
+          hideWeatherForecastModal();
+        }
+      });
+    }
+  });
+
+  function getWeatherEmoji(forecast) {
+    forecast = forecast.toLowerCase();
+    if (forecast.includes('thunder')) return '⛈️';
+    if (forecast.includes('storm')) return '🌩️';
+    if (forecast.includes('snow')) return '❄️';
+    if (forecast.includes('rain') || forecast.includes('showers')) return '🌧️';
+    if (forecast.includes('sunny') && forecast.includes('partly')) return '🌤️';
+    if (forecast.includes('mostly sunny')) return '🌤️';
+    if (forecast.includes('sunny')) return '☀️';
+    if (forecast.includes('cloudy') && forecast.includes('partly')) return '⛅';
+    if (forecast.includes('mostly cloudy')) return '🌥️';
+    if (forecast.includes('cloudy')) return '☁️';
+    if (forecast.includes('fog') || forecast.includes('haze')) return '🌫️';
+    if (forecast.includes('mostly clear')) return '🌙';
+    if (forecast.includes('clear')) return '🌙';
+    return '❓';
+  }
+
+  function loadWeatherForecast() {
+    const forecastContent = document.getElementById('weatherForecastContent');
+    if (!forecastContent) return;
+    
+    // Show loading state
+    forecastContent.innerHTML = '<div data-translate="loadingForecast">Loading 7-day forecast...</div>';
+    
+    // Boston coordinates: 42.3551, -71.0619 (latitude, longitude)
+    const apiUrl = 'https://api.weather.gov/points/42.3551,-71.0619';
+    
+    fetch(apiUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch weather point data');
+        return res.json();
+      })
+      .then(data => {
+        if (!data.properties || !data.properties.forecast) {
+          throw new Error('No forecast URL in response');
+        }
+        return fetch(data.properties.forecast);
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch forecast data');
+        return res.json();
+      })
+      .then(data => {
+        const periods = data.properties.periods.slice(0, 7);
+        let html = '';
+        
+        periods.forEach(period => {
+          const emoji = getWeatherEmoji(period.shortForecast);
+          html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 0.6rem 0;">
+              <div style="flex: 1;">
+                <div style="color:#F7630C; font-weight:bold; font-size:1rem;">${period.name} ${emoji}</div>
+                <div style="font-size:0.9rem; color:#ccc; margin-top:0.25rem;">${period.shortForecast}</div>
+              </div>
+              <div style="color:#1DA1F2; font-weight:bold; font-size:1.1rem; margin-left:1rem;">${period.temperature}°${period.temperatureUnit}</div>
+            </div>
+          `;
+        });
+        
+        forecastContent.innerHTML = html;
+      })
+      .catch(error => {
+        console.error('[loadWeatherForecast] Error:', error);
+        forecastContent.innerHTML = '<div style="color:#f55; padding:1rem;">' + (typeof translateText !== 'undefined' ? translateText('failedToLoadForecast') : 'Failed to load forecast') + '</div>';
+      });
+  }
+
   function showOtpModal() {
     document.getElementById('otpModal').style.display = 'flex';
     // Remove minimized class if it exists
