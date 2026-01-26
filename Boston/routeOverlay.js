@@ -162,13 +162,49 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
           stopId: stopId,
           stopName: stopsMap[stopId] || stopId || 'Unknown Stop',
           eta: pred.eta,
-          occupancy: pred.occupancy
+          occupancy: pred.occupancy,
+          vehicleId: pred.vehicleId
         });
       });
     });
     predictions.sort((a, b) => new Date(a.eta) - new Date(b.eta));
     
-    return { predictions, stopETAs, vehicleInfo, stopIdByName };
+    // Build vehicleETAs lookup: vehicleETAs[vehicleId] = [predictions...] (sorted soonest-first)
+    const vehicleETAs = {};
+    if (data.data && Array.isArray(data.data)) {
+      data.data.forEach(pred => {
+        if (!pred.attributes) return;
+        
+        const eta = pred.attributes.arrival_time || pred.attributes.departure_time;
+        if (!eta) return;
+        
+        const etaDate = new Date(eta);
+        if (etaDate < (now - graceSeconds * 1000)) return;
+        
+        const stopId = pred.relationships?.stop?.data?.id;
+        const vehicleId = pred.relationships?.vehicle?.data?.id;
+        
+        if (!stopId || !vehicleId) return;
+        
+        if (!vehicleETAs[vehicleId]) {
+          vehicleETAs[vehicleId] = [];
+        }
+        
+        vehicleETAs[vehicleId].push({
+          stopId: stopId,
+          stopName: stopsMap[stopId] || stopId || 'Unknown Stop',
+          eta: eta,
+          etaDate: etaDate
+        });
+      });
+    }
+    
+    // Sort each vehicle's predictions by ETA (soonest first)
+    Object.keys(vehicleETAs).forEach(vehicleId => {
+      vehicleETAs[vehicleId].sort((a, b) => a.etaDate - b.etaDate);
+    });
+    
+    return { predictions, stopETAs, vehicleInfo, stopIdByName, vehicleETAs };
   } catch (error) {
     console.warn('[MBTA V3] Error fetching predictions:', error);
     throw error;
@@ -1645,12 +1681,28 @@ function attachRouteToMap(map, routeId, directionId, options) {
                             null;
             const occupancyText = occupancy ? formatOccupancy(occupancy) : 'Unknown';
             
+            // Format vehicle ID for display (remove non-numeric characters, visual only)
+            const displayVehicleID = (bus.vehicleID || '').replace(/\D/g, '') || bus.vehicleID;
+            
+            // Get next stop ETA for this bus
+            let nextStopETA = null;
+            if (window.currentRouteETAs && window.currentRouteETAs.vehicleETAs && window.currentRouteETAs.vehicleETAs[bus.vehicleID]) {
+              const vehiclePredictions = window.currentRouteETAs.vehicleETAs[bus.vehicleID];
+              if (vehiclePredictions.length > 0) {
+                const nextPred = vehiclePredictions[0];
+                nextStopETA = {
+                  stopName: nextPred.stopName,
+                  eta: formatETA(nextPred.etaDate)
+                };
+              }
+            }
+            
             // Create bus marker element matching createBusMarker style
             const busElement = document.createElement('div');
             busElement.style.textAlign = 'center';
             busElement.innerHTML = `
               <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
-                <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNum}</span>${bus.vehicleID}
+                <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNum}</span>${displayVehicleID}
               </div>
               <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
             `;
@@ -1662,13 +1714,21 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             // Create popup for bus (matching "All Buses Mode" style)
             const popupContent = document.createElement('div');
+            let nextStopHTML = '';
+            if (nextStopETA) {
+              nextStopHTML = `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopETA.stopName}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${nextStopETA.eta}</div>`;
+            } else {
+              nextStopHTML = '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> Not available</div>';
+            }
+            
             popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                 <div style='text-align:center; margin-bottom:6px;'>
-                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${bus.vehicleID}</div>
+                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
                 </div>
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                 <div style='margin-bottom:4px;'><strong>Direction:</strong> ${bus.direction}</div>
+                ${nextStopHTML}
                 <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                 <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
                 <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${occupancyText}</div>
@@ -1719,6 +1779,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               stopETAs: stopETAs,
               vehicleInfo: vehicleInfo,
               stopIdByName: stopIdByName,
+              vehicleETAs: vehicleETAs, // Lookup by vehicleId
               fetchedAt: new Date()
             };
             
