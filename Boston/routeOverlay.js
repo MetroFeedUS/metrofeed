@@ -70,9 +70,10 @@ function skipField(buf, pos, wireType) {
 
 /**
  * Fetch MBTA V3 predictions (ETAs) for a route and direction
+ * Builds stopETAs and vehicleInfo lookups for per-stop ETAs and occupancy
  * @param {string} routeId - Route ID (e.g., "7", "15")
  * @param {number} directionId - Direction ID (0 or 1)
- * @returns {Promise<{predictions: Array, stopsMap: Object, vehiclesMap: Object}>}
+ * @returns {Promise<{predictions: Array, stopETAs: Object, vehicleInfo: Object}>}
  */
 async function fetchMBTAV3Predictions(routeId, directionId) {
   try {
@@ -87,22 +88,29 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
     
     // Parse JSON:API format
     const stopsMap = {};
-    const vehiclesMap = {};
+    const vehicleInfo = {}; // { vehicleId: { occupancy_status, label, updated_at } }
     
-    // Build stop lookup from included stops
+    // Build stop lookup and vehicle info from included items
     if (data.included) {
       data.included.forEach(item => {
         if (item.type === 'stop' && item.attributes) {
           stopsMap[item.id] = item.attributes.name || item.id;
         }
         if (item.type === 'vehicle' && item.attributes) {
-          vehiclesMap[item.id] = item.attributes.occupancy_status || 'Unknown';
+          vehicleInfo[item.id] = {
+            occupancy_status: item.attributes.occupancy_status || 'Unknown',
+            label: item.attributes.label || item.id,
+            updated_at: item.attributes.updated_at || null
+          };
         }
       });
     }
     
-    // Extract predictions
-    const predictions = [];
+    // Build stopETAs lookup: stopETAs[stopId] = [predictions...] (sorted soonest-first)
+    const stopETAs = {};
+    const now = new Date();
+    const graceSeconds = 15; // Allow predictions up to 15 seconds in the past
+    
     if (data.data && Array.isArray(data.data)) {
       data.data.forEach(pred => {
         if (!pred.attributes) return;
@@ -111,22 +119,49 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
         const eta = pred.attributes.arrival_time || pred.attributes.departure_time;
         if (!eta) return; // Skip predictions with no ETA
         
+        const etaDate = new Date(eta);
+        // Only keep future predictions (with grace period)
+        if (etaDate < (now - graceSeconds * 1000)) return;
+        
         const stopId = pred.relationships?.stop?.data?.id;
         const vehicleId = pred.relationships?.vehicle?.data?.id;
         
-        predictions.push({
-          stopId: stopId || 'unknown',
-          stopName: stopsMap[stopId] || stopId || 'Unknown Stop',
+        if (!stopId) return;
+        
+        // Initialize array for this stop if needed
+        if (!stopETAs[stopId]) {
+          stopETAs[stopId] = [];
+        }
+        
+        stopETAs[stopId].push({
           eta: eta,
-          occupancy: vehicleId ? (vehiclesMap[vehicleId] || 'Unknown') : 'Unknown'
+          etaDate: etaDate,
+          vehicleId: vehicleId || null,
+          occupancy: vehicleId ? (vehicleInfo[vehicleId]?.occupancy_status || 'Unknown') : 'Unknown'
         });
       });
     }
     
-    // Sort by ETA (soonest first)
+    // Sort each stop's predictions by ETA (soonest first)
+    Object.keys(stopETAs).forEach(stopId => {
+      stopETAs[stopId].sort((a, b) => a.etaDate - b.etaDate);
+    });
+    
+    // Legacy predictions array for bulk display (keep for compatibility)
+    const predictions = [];
+    Object.keys(stopETAs).forEach(stopId => {
+      stopETAs[stopId].forEach(pred => {
+        predictions.push({
+          stopId: stopId,
+          stopName: stopsMap[stopId] || stopId || 'Unknown Stop',
+          eta: pred.eta,
+          occupancy: pred.occupancy
+        });
+      });
+    });
     predictions.sort((a, b) => new Date(a.eta) - new Date(b.eta));
     
-    return { predictions, stopsMap, vehiclesMap };
+    return { predictions, stopETAs, vehicleInfo };
   } catch (error) {
     console.warn('[MBTA V3] Error fetching predictions:', error);
     throw error;
@@ -134,13 +169,14 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
 }
 
 /**
- * Fetch MBTA V3 vehicles as fallback when GTFS-RT has vehicles but none match route+direction
+ * Fetch MBTA V3 vehicles for bus markers (primary source for V3-only mode)
  * @param {string} routeId - Route ID
+ * @param {number} directionId - Direction ID (optional, for filtering)
  * @returns {Promise<Array>} Array of vehicles in GTFS-RT format
  */
-async function fetchMBTAV3VehiclesFallback(routeId) {
+async function fetchMBTAV3Vehicles(routeId, directionId = null) {
   try {
-    const url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeId}`;
+    let url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeId}`;
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -154,6 +190,11 @@ async function fetchMBTAV3VehiclesFallback(routeId) {
       data.data.forEach(vehicle => {
         if (!vehicle.attributes) return;
         
+        // Filter by direction if specified
+        if (directionId !== null && vehicle.attributes.direction_id != directionId) {
+          return;
+        }
+        
         // Use route relationship if available, otherwise fallback to routeId
         const routeNumber = vehicle.relationships?.route?.data?.id || routeId;
         
@@ -165,15 +206,66 @@ async function fetchMBTAV3VehiclesFallback(routeId) {
           longitude: vehicle.attributes.longitude,
           speed: vehicle.attributes.speed || null,
           bearing: vehicle.attributes.bearing || null,
-          blockID: vehicle.attributes.label || vehicle.id
+          blockID: vehicle.attributes.label || vehicle.id,
+          occupancy: vehicle.attributes.occupancy_status || null
         });
       });
     }
     
     return vehicles;
   } catch (error) {
-    console.warn('[MBTA V3] Error fetching vehicles fallback:', error);
+    console.warn('[MBTA V3] Error fetching vehicles:', error);
     throw error;
+  }
+}
+
+/**
+ * Fetch MBTA V3 vehicles as fallback when GTFS-RT has vehicles but none match route+direction
+ * @param {string} routeId - Route ID
+ * @returns {Promise<Array>} Array of vehicles in GTFS-RT format
+ */
+async function fetchMBTAV3VehiclesFallback(routeId) {
+  return fetchMBTAV3Vehicles(routeId, null);
+}
+
+/**
+ * Format occupancy status to friendly text
+ * @param {string} occupancy - Raw occupancy status from V3 API
+ * @returns {string} Friendly occupancy text
+ */
+function formatOccupancy(occupancy) {
+  if (!occupancy || occupancy === 'Unknown') return 'Unknown';
+  
+  const occupancyMap = {
+    'MANY_SEATS_AVAILABLE': 'Many Seats Available',
+    'FEW_SEATS_AVAILABLE': 'Few Seats Available',
+    'STANDING_ROOM_ONLY': 'Standing Room Only',
+    'CRUSHED_STANDING_ROOM_ONLY': 'Crushed Standing Room Only',
+    'FULL': 'Full',
+    'NOT_ACCEPTING_PASSENGERS': 'Not Accepting Passengers'
+  };
+  
+  return occupancyMap[occupancy] || occupancy;
+}
+
+/**
+ * Format ETA time to human-readable string
+ * @param {Date} etaDate - ETA date object
+ * @returns {string} Formatted time (e.g., "2m 30s", "Now")
+ */
+function formatETA(etaDate) {
+  const now = new Date();
+  const diffMs = etaDate - now;
+  
+  if (diffMs < 0) return 'Now';
+  
+  const minutes = Math.floor(diffMs / 60000);
+  const seconds = Math.floor((diffMs % 60000) / 1000);
+  
+  if (minutes < 1) {
+    return `${seconds}s`;
+  } else {
+    return `${minutes}m ${seconds > 0 ? seconds + 's' : ''}`.trim();
   }
 }
 
@@ -240,22 +332,8 @@ function displayETAs(predictions) {
   
   displayPredictions.forEach(pred => {
     const etaDate = new Date(pred.eta);
-    const now = new Date();
-    const minutes = Math.floor((etaDate - now) / 60000);
-    const seconds = Math.floor(((etaDate - now) % 60000) / 1000);
-    
-    // Format time
-    let timeStr;
-    if (minutes < 0) {
-      timeStr = 'Now';
-    } else if (minutes < 1) {
-      timeStr = `${seconds}s`;
-    } else {
-      timeStr = `${minutes}m ${seconds}s`;
-    }
-    
-    // Format occupancy
-    const occupancyStr = pred.occupancy || 'Unknown';
+    const timeStr = formatETA(etaDate);
+    const occupancyStr = formatOccupancy(pred.occupancy);
     
     html += `
       <div style="padding: 6px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
@@ -1105,25 +1183,57 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const stopMarker = new maplibregl.Marker({ element: stopElement })
         .setLngLat([lon, lat]);
 
-      // Popup content
-      const popupContent = document.createElement("div");
-      popupContent.innerHTML = `
-        <div style="border:1px solid #1E90FF;border-radius:8px;padding:10px;background:#222;color:#fff;min-width:200px;">
-          <strong style="color:#1E90FF;">${stop.name || `Stop ${stop.stop_id}`}</strong>
-          ${
-            highlightedTimes.length
-              ? `
-            <hr style="border:none;border-top:1px solid #1E90FF;margin:6px 0;">
-            ${highlightedTimes.join("<br>")}
-            <hr style="border:none;border-top:1px solid #1E90FF;margin:8px 0;">
-            <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${(stop.name || `Stop ${stop.stop_id}`).replace(/'/g, "\\'")}')" style="width:100%;background:#1E90FF;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
-          `
-              : ""
+      // Function to get ETA display (reads latest data from global currentRouteETAs)
+      const getETADisplay = () => {
+        if (window.currentRouteETAs && window.currentRouteETAs.stopETAs) {
+          const stopPredictions = window.currentRouteETAs.stopETAs[stopId];
+          if (stopPredictions && stopPredictions.length > 0) {
+            const nextETA = stopPredictions[0];
+            const etaText = formatETA(nextETA.etaDate);
+            let display = `<div style="color:#4CAF50;font-weight:bold;margin-bottom:6px;font-size:0.95em;">⏰ Next bus ETA: ${etaText}</div>`;
+            
+            // Optional: Show 2 more ETAs if available
+            if (stopPredictions.length > 1) {
+              const nextETAs = stopPredictions.slice(1, 3).map(p => formatETA(p.etaDate)).join(', ');
+              if (nextETAs) {
+                display += `<div style="color:#888;font-size:0.85em;margin-bottom:6px;">Then: ${nextETAs}</div>`;
+              }
+            }
+            return display;
           }
-        </div>
-      `;
-
+        }
+        return '<div style="color:#888;font-size:0.9em;margin-bottom:6px;">Next bus ETA: Not available</div>';
+      };
+      
+      // Popup content (reads latest ETA data when created/updated)
+      const popupContent = document.createElement("div");
+      const updatePopupContent = () => {
+        const etaDisplay = getETADisplay();
+        popupContent.innerHTML = `
+          <div style="border:1px solid #1E90FF;border-radius:8px;padding:10px;background:#222;color:#fff;min-width:200px;">
+            <strong style="color:#1E90FF;">${stop.name || `Stop ${stop.stop_id}`}</strong>
+            ${etaDisplay}
+            ${
+              highlightedTimes.length
+                ? `
+              <hr style="border:none;border-top:1px solid #1E90FF;margin:6px 0;">
+              ${highlightedTimes.join("<br>")}
+              <hr style="border:none;border-top:1px solid #1E90FF;margin:8px 0;">
+              <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${(stop.name || `Stop ${stop.stop_id}`).replace(/'/g, "\\'")}')" style="width:100%;background:#1E90FF;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
+            `
+                : ""
+            }
+          </div>
+        `;
+      };
+      
+      // Initial content (reads current ETA data)
+      updatePopupContent();
+      
       const popup = new maplibregl.Popup().setDOMContent(popupContent);
+      
+      // Store reference to update function so we can refresh ETA when data updates
+      // (Popup will show latest data when opened since getETADisplay reads from global state)
 
       stopMarker.setPopup(popup);
       stopMarker.addTo(map);
@@ -1517,9 +1627,32 @@ function attachRouteToMap(map, routeId, directionId, options) {
             delete busMarkers[vehicleId];
           });
           
+          // For MBTA V3: Fetch V3 vehicles for bus markers (instead of GTFS-RT)
+          let v3VehiclesForMarkers = [];
+          if (busApiType === 'mbta-gtfs-rt') {
+            try {
+              v3VehiclesForMarkers = await fetchMBTAV3Vehicles(routeNum, directionId);
+              console.log(`[attachRouteToMap] Fetched ${v3VehiclesForMarkers.length} V3 vehicles for bus markers`);
+            } catch (v3Error) {
+              console.warn('[attachRouteToMap] V3 vehicles unavailable, using GTFS-RT vehicles:', v3Error);
+              // Fall back to GTFS-RT vehicles
+              v3VehiclesForMarkers = routeBuses;
+            }
+          } else {
+            // Non-MBTA: use GTFS-RT vehicles
+            v3VehiclesForMarkers = routeBuses;
+          }
+          
           // Create markers for buses (matching "All Buses Mode" style)
-          routeBuses.forEach(bus => {
+          v3VehiclesForMarkers.forEach(bus => {
             if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+            
+            // Get occupancy from vehicleInfo if available
+            const occupancy = bus.occupancy || 
+                            (window.currentRouteETAs && window.currentRouteETAs.vehicleInfo && 
+                             window.currentRouteETAs.vehicleInfo[bus.vehicleID]?.occupancy_status) || 
+                            null;
+            const occupancyText = occupancy ? formatOccupancy(occupancy) : 'Unknown';
             
             // Create bus marker element matching createBusMarker style
             const busElement = document.createElement('div');
@@ -1547,6 +1680,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 <div style='margin-bottom:4px;'><strong>Direction:</strong> ${bus.direction}</div>
                 <div style='margin-bottom:4px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
                 <div style='margin-bottom:4px;'><strong>Block:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${occupancyText}</div>
               </div>
             `;
             
@@ -1577,7 +1711,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busInterval = setInterval(fetchAndDisplayBuses, 15000);
       overlayElements.intervals.push(busInterval);
       
-      // MBTA V3 ETAs: Fetch and display predictions
+      // MBTA V3 ETAs: Fetch and display predictions, store in global lookup
       let etaInterval = null;
       if (busApiType === 'mbta-gtfs-rt') {
         // Get route number for ETA calls (same logic as in fetchAndDisplayBuses)
@@ -1585,11 +1719,23 @@ function attachRouteToMap(map, routeId, directionId, options) {
         
         const fetchETAs = async () => {
           try {
-            const { predictions } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
+            const { predictions, stopETAs, vehicleInfo } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
+            
+            // Store in global currentRouteETAs for stop popups and bus markers
+            window.currentRouteETAs = {
+              routeId: routeNumForETAs,
+              directionId: directionId,
+              stopETAs: stopETAs,
+              vehicleInfo: vehicleInfo,
+              fetchedAt: new Date()
+            };
+            
             displayETAs(predictions);
           } catch (error) {
             console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
             displayETAs([]); // Show "ETAs unavailable"
+            // Clear global state on error
+            window.currentRouteETAs = null;
           }
         };
         
@@ -1617,6 +1763,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const etaPanel = document.getElementById('etaPanel');
       if (etaPanel) {
         etaPanel.style.display = 'none';
+      }
+      
+      // Clear global currentRouteETAs when this overlay is removed
+      if (window.currentRouteETAs && 
+          window.currentRouteETAs.routeId === String(routeId) && 
+          window.currentRouteETAs.directionId === directionId) {
+        window.currentRouteETAs = null;
       }
       
       // Layers
