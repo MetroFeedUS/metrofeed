@@ -1196,6 +1196,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (window.currentRouteETAs && window.currentRouteETAs.stopETAs && window.currentRouteETAs.stopIdByName) {
           let stopPredictions = null;
           let matchedStopId = null;
+          let matchMethod = null;
           
           // PRIORITY 1: Match by stop name (normalized) - same as bottom modal
           if (stop.name) {
@@ -1204,6 +1205,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             matchedStopId = window.currentRouteETAs.stopIdByName[normalizedName];
             if (matchedStopId) {
               stopPredictions = window.currentRouteETAs.stopETAs[matchedStopId];
+              matchMethod = 'name';
             }
           }
           
@@ -1212,21 +1214,29 @@ function attachRouteToMap(map, routeId, directionId, options) {
             stopPredictions = window.currentRouteETAs.stopETAs[stopId];
             if (stopPredictions) {
               matchedStopId = stopId;
+              matchMethod = 'stop_id';
             }
           }
           
-          // Debug logging (first time only)
-          if (!stopPredictions && !window._stopEtaDebugLogged) {
-            const availableStopIds = Object.keys(window.currentRouteETAs.stopETAs);
-            console.log('[Stop ETA] No match found:', {
-              routeStopId: stopId,
-              routeStopName: stop.name,
-              normalizedName: stop.name ? stop.name.toLowerCase().trim() : null,
-              availableV3Stops: availableStopIds.length,
-              sampleV3StopIds: availableStopIds.slice(0, 5)
-            });
-            window._stopEtaDebugLogged = true;
-          }
+          // Debug logging for THIS specific stop (always log for debugging)
+          console.log('[Stop ETA Debug]', {
+            routeStop: {
+              stop_id: stopId,
+              name: stop.name,
+              normalizedName: stop.name ? stop.name.toLowerCase().trim().replace(/\s+/g, ' ') : null
+            },
+            matchResult: {
+              found: !!stopPredictions,
+              method: matchMethod,
+              matchedStopId: matchedStopId,
+              predictionsCount: stopPredictions ? stopPredictions.length : 0
+            },
+            availableData: {
+              totalStopsWithETAs: Object.keys(window.currentRouteETAs.stopETAs).length,
+              sampleV3StopIds: Object.keys(window.currentRouteETAs.stopETAs).slice(0, 5),
+              sampleV3StopNames: Object.keys(window.currentRouteETAs.stopIdByName).slice(0, 5)
+            }
+          });
           
           if (stopPredictions && stopPredictions.length > 0) {
             const nextETA = stopPredictions[0];
@@ -1242,6 +1252,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
             return display;
           }
+        } else {
+          console.log('[Stop ETA Debug] No currentRouteETAs data available', {
+            hasCurrentRouteETAs: !!window.currentRouteETAs,
+            hasStopETAs: !!(window.currentRouteETAs && window.currentRouteETAs.stopETAs),
+            hasStopIdByName: !!(window.currentRouteETAs && window.currentRouteETAs.stopIdByName)
+          });
         }
         return '<div style="color:#888;font-size:0.9em;margin-bottom:6px;">Next bus ETA: Not available</div>';
       };
