@@ -366,9 +366,13 @@ function getOrCreateETAPanel() {
 function displayETAs(predictions) {
   const panel = getOrCreateETAPanel();
   
+  // Hide the panel (don't display it, but keep the logic intact)
+  panel.style.display = 'none';
+  
+  // Keep the logic below for potential future use, but don't render
   if (!predictions || predictions.length === 0) {
-    panel.innerHTML = '<div style="text-align: center; padding: 10px; color: #888;">ETAs unavailable</div>';
-    panel.style.display = 'block';
+    // panel.innerHTML = '<div style="text-align: center; padding: 10px; color: #888;">ETAs unavailable</div>';
+    // panel.style.display = 'block';
     return;
   }
   
@@ -396,7 +400,7 @@ function displayETAs(predictions) {
   
   html += '</div>';
   panel.innerHTML = html;
-  panel.style.display = 'block';
+  // panel.style.display = 'block'; // Don't show it
 }
 
 // Parse MBTA GTFS-RT VehiclePositions feed
