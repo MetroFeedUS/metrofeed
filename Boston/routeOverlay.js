@@ -1755,7 +1755,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         
         const fetchETAs = async () => {
           try {
-            const { predictions, stopETAs, vehicleInfo } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
+            const { predictions, stopETAs, vehicleInfo, stopIdByName } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
             
             // Store in global currentRouteETAs for stop popups and bus markers
             window.currentRouteETAs = {
