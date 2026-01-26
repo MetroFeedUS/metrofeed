@@ -319,6 +319,66 @@ function getOrCreateETAPanel() {
 }
 
 /**
+ * Pulse stop markers that have ETAs
+ * @param {Array} predictions - Array of prediction objects with stopName
+ * @param {Array} stopMarkers - Array of stop marker objects
+ */
+function pulseStopsWithETAs(predictions, stopMarkers) {
+  if (!predictions || !stopMarkers) return;
+  
+  // Get unique stop names from predictions
+  const stopsWithETAs = new Set();
+  predictions.forEach(pred => {
+    if (pred.stopName) {
+      stopsWithETAs.add(pred.stopName.toLowerCase().trim());
+    }
+  });
+  
+  // Inject CSS for pulse animation if not already added
+  if (!document.getElementById('stop-pulse-animation')) {
+    const style = document.createElement('style');
+    style.id = 'stop-pulse-animation';
+    style.textContent = `
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(30, 144, 255, 0.7);
+          transform: scale(1);
+        }
+        50% {
+          box-shadow: 0 0 0 8px rgba(30, 144, 255, 0);
+          transform: scale(1.1);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(30, 144, 255, 0);
+          transform: scale(1);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // Match stop markers to predictions and pulse them
+  stopMarkers.forEach(({ marker, element, stopName, stopId }) => {
+    if (!stopName) return;
+    
+    const normalizedStopName = stopName.toLowerCase().trim();
+    const hasETA = stopsWithETAs.has(normalizedStopName);
+    
+    if (hasETA) {
+      // Keep blue color and add pulse animation
+      element.style.backgroundColor = "#1E90FF";
+      element.style.animation = "pulse 2s ease-in-out infinite";
+      element.style.boxShadow = "0 0 0 0 rgba(30, 144, 255, 0.7)";
+    } else {
+      // Reset to blue, no animation
+      element.style.backgroundColor = "#1E90FF";
+      element.style.animation = "none";
+      element.style.boxShadow = "none";
+    }
+  });
+}
+
+/**
  * Display ETAs in the panel
  * @param {Array} predictions - Array of prediction objects
  */
@@ -941,7 +1001,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     layers:   [],
     markers:  [],
     controls: [],
-    intervals: [] // For bus tracking intervals
+    intervals: [], // For bus tracking intervals
+    stopMarkers: [] // Store stop markers with their data for pulsing
   };
 
   // ==== Internal: build & attach =================================================
@@ -1229,6 +1290,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
       stopMarker.addTo(map);
 
       overlayElements.markers.push(stopMarker);
+      
+      // Store stop marker with its name for ETA-based pulsing
+      overlayElements.stopMarkers.push({
+        marker: stopMarker,
+        element: stopElement,
+        stopName: stop.name,
+        stopId: stopId
+      });
     });
 
     // ---------- Route info panel (mainOverlay only) ----------
@@ -1723,6 +1792,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             // Display ETAs in bottom panel (bulk list)
             displayETAs(predictions);
+            
+            // Pulse stops that have ETAs
+            pulseStopsWithETAs(predictions, overlayElements.stopMarkers);
           } catch (error) {
             console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
             // Clear global state on error
@@ -1797,6 +1869,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       overlayElements.markers  = [];
       overlayElements.controls = [];
       overlayElements.intervals = [];
+      overlayElements.stopMarkers = [];
     }
   };
 }
