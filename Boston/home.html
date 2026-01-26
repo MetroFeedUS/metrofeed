@@ -1610,6 +1610,12 @@
   // Store stop data with coordinates for pinning: { name: { lat, lon, stop_id } }
   let stopDataMap = {};
   
+  function decodeHTMLEntities(text) {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = text;
+    return txt.value;
+  }
+  
   // Initialize allStops based on city
   if (CITY_CONFIG.useLazyLoading) {
     // Boston: Load stops from routes index when available (lazy, on-demand)
@@ -1723,13 +1729,28 @@
   
   // Function to find stop by name and get coordinates
   async function findStopByName(stopName) {
-    if (!stopName || !stopName.trim()) return null;
+    console.log('[findStopByName] Searching for:', stopName);
+    
+    if (!stopName || !stopName.trim()) {
+      console.warn('[findStopByName] Empty stop name');
+      return null;
+    }
     
     const normalizedName = stopName.trim().toLowerCase();
+    console.log('[findStopByName] Normalized name:', normalizedName);
+    console.log('[findStopByName] stopDataMap keys:', Object.keys(stopDataMap).slice(0, 10), '... (total:', Object.keys(stopDataMap).length, ')');
     
     // Check cached stopDataMap first
     if (stopDataMap[normalizedName]) {
+      console.log('[findStopByName] ✅ Found in cache:', stopDataMap[normalizedName]);
       return stopDataMap[normalizedName];
+    }
+    
+    // Try fuzzy match (case-insensitive partial match)
+    const fuzzyMatch = Object.keys(stopDataMap).find(key => key === normalizedName || key.includes(normalizedName) || normalizedName.includes(key));
+    if (fuzzyMatch) {
+      console.log('[findStopByName] ✅ Found fuzzy match:', fuzzyMatch, stopDataMap[fuzzyMatch]);
+      return stopDataMap[fuzzyMatch];
     }
     
     // For Boston: try to find in loaded routes
@@ -1737,6 +1758,7 @@
       try {
         const routesIndex = window.routeLoader.getRoutesIndex();
         if (routesIndex && routesIndex.routes) {
+          console.log('[findStopByName] Searching through', routesIndex.routes.length, 'routes...');
           // Search through a sample of routes (first 50)
           const sampleRoutes = routesIndex.routes.slice(0, 50);
           for (const route of sampleRoutes) {
@@ -1754,6 +1776,7 @@
                     };
                     // Cache it
                     stopDataMap[normalizedName] = stopData;
+                    console.log('[findStopByName] ✅ Found in route data and cached:', stopData);
                     return stopData;
                   }
                 }
@@ -1768,12 +1791,33 @@
       }
     }
     
+    console.warn('[findStopByName] ❌ Stop not found:', stopName);
     return null;
   }
   
   // Function to pin a stop on the map
   function pinStopOnMap(stopData, isStart) {
-    if (!stopData || !stopData.lat || !stopData.lon) return;
+    console.log('[pinStopOnMap] Called with:', { stopData, isStart, mapExists: typeof map !== 'undefined' && map !== null });
+    
+    if (!stopData || !stopData.lat || !stopData.lon) {
+      console.warn('[pinStopOnMap] Invalid stop data:', stopData);
+      return;
+    }
+    
+    // Check if map is available
+    if (typeof map === 'undefined' || map === null) {
+      console.warn('[pinStopOnMap] Map not initialized yet, waiting...');
+      // Wait for map to be ready
+      const checkMap = setInterval(() => {
+        if (typeof map !== 'undefined' && map !== null) {
+          clearInterval(checkMap);
+          pinStopOnMap(stopData, isStart);
+        }
+      }, 100);
+      // Give up after 5 seconds
+      setTimeout(() => clearInterval(checkMap), 5000);
+      return;
+    }
     
     // Remove existing pin
     if (isStart && startPin) {
@@ -1791,22 +1835,26 @@
     pinElement.style.width = '24px';
     pinElement.style.height = '24px';
     
-    const newPin = new maplibregl.Marker({
-      element: pinElement
-    });
-    newPin.setLngLat([stopData.lon, stopData.lat]);
-    newPin.addTo(map);
-    
-    // Store reference and coordinates
-    if (isStart) {
-      startPin = newPin;
-      window.startCoords = { lat: stopData.lat, lng: stopData.lon };
-    } else {
-      destinationPin = newPin;
-      window.endCoords = { lat: stopData.lat, lng: stopData.lon };
+    try {
+      const newPin = new maplibregl.Marker({
+        element: pinElement
+      });
+      newPin.setLngLat([stopData.lon, stopData.lat]);
+      newPin.addTo(map);
+      
+      // Store reference and coordinates
+      if (isStart) {
+        startPin = newPin;
+        window.startCoords = { lat: stopData.lat, lng: stopData.lon };
+      } else {
+        destinationPin = newPin;
+        window.endCoords = { lat: stopData.lat, lng: stopData.lon };
+      }
+      
+      console.log('[pinStopOnMap] ✅ Successfully pinned', isStart ? 'start' : 'destination', 'stop:', stopData.name, 'at', stopData.lat, stopData.lon);
+    } catch (error) {
+      console.error('[pinStopOnMap] Error creating pin:', error);
     }
-    
-    console.log('[pinStopOnMap] Pinned', isStart ? 'start' : 'destination', 'stop:', stopData.name, 'at', stopData.lat, stopData.lon);
   }
   
   function decodeHTMLEntities(text) {
@@ -1860,10 +1908,14 @@
           input.value = name;
           dropdown.style.display = "none";
           // Auto-pin when stop is selected
+          console.log('[Autocomplete] Stop selected from dropdown:', name);
           const stopData = await findStopByName(name);
+          console.log('[Autocomplete] Stop data found:', stopData);
           if (stopData) {
             const isStart = input.id === 'startInput';
             pinStopOnMap(stopData, isStart);
+          } else {
+            console.warn('[Autocomplete] Could not find stop data for:', name);
           }
         });
         dropdown.appendChild(option);
@@ -1873,15 +1925,22 @@
       // Check if the current input matches a valid stop name exactly
       const exactMatch = allStops.find(name => name.toLowerCase() === query);
       if (exactMatch) {
+        console.log('[Autocomplete] Exact match found:', exactMatch);
         // Debounce: wait a bit to see if user is still typing
         clearTimeout(input._pinTimeout);
         input._pinTimeout = setTimeout(async () => {
+          console.log('[Autocomplete] Debounce complete, looking up stop:', exactMatch);
           const stopData = await findStopByName(exactMatch);
+          console.log('[Autocomplete] Stop data found:', stopData);
           if (stopData) {
             const isStart = input.id === 'startInput';
             pinStopOnMap(stopData, isStart);
+          } else {
+            console.warn('[Autocomplete] Could not find stop data for:', exactMatch);
           }
         }, 500); // Wait 500ms after user stops typing
+      } else {
+        console.log('[Autocomplete] No exact match for:', query, 'Available stops:', allStops.slice(0, 5));
       }
     });
 
