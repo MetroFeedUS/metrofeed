@@ -1047,6 +1047,28 @@
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
     <h2>🌤️ <span>Weather Forecast</span></h2>
     
+    <!-- Weather Alerts Section -->
+    <details id="weatherAlertsDetails" style="margin-top: 1rem; margin-bottom: 1rem;">
+      <summary id="weatherAlertsSummary" style="cursor: pointer; padding: 0.75rem; border-radius: 6px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; background: #4CAF50; color: #fff; border: 2px solid #4CAF50;">
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+          <span id="weatherAlertsIcon">⚠️</span>
+          <span id="weatherAlertsText">Weather Alerts (Tap to View)</span>
+        </span>
+        <span id="weatherAlertsArrow" style="transition: transform 0.3s;">▼</span>
+      </summary>
+      <div id="weatherAlertsContent" style="margin-top: 0.5rem; padding: 0.75rem; background: #111; border-radius: 6px; color: #ccc; border: 1px solid #333;">
+        <div data-translate="checkingAlerts">Checking for alerts...</div>
+      </div>
+    </details>
+    <style>
+      #weatherAlertsDetails summary::-webkit-details-marker {
+        display: none;
+      }
+      #weatherAlertsDetails[open] #weatherAlertsArrow {
+        transform: rotate(180deg);
+      }
+    </style>
+    
     <!-- Tabs -->
     <div style="display: flex; gap: 0.5rem; margin-top: 1rem; border-bottom: 2px solid #333;">
       <button id="weatherTabHourly" class="weather-tab active" onclick="switchWeatherTab('hourly')" style="flex: 1; padding: 0.75rem; background: #1E90FF; color: #fff; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 0.95rem;">Hourly</button>
@@ -4526,9 +4548,73 @@
     const modal = document.getElementById('weatherForecastModal');
     if (modal) {
       modal.style.display = 'flex';
-      // Load hourly by default
+      // Load alerts and hourly by default
+      loadWeatherAlerts();
       switchWeatherTab('hourly');
     }
+  }
+
+  function loadWeatherAlerts() {
+    const alertsContent = document.getElementById('weatherAlertsContent');
+    const alertsSummary = document.getElementById('weatherAlertsSummary');
+    const alertsText = document.getElementById('weatherAlertsText');
+    if (!alertsContent || !alertsSummary || !alertsText) return;
+    
+    // Show loading state
+    alertsContent.innerHTML = '<div data-translate="checkingAlerts">Checking for alerts...</div>';
+    
+    // Boston area NWS zone - using Suffolk County zone (MAZ015)
+    // You can also use multiple zones or area-based queries
+    const alertUrl = 'https://api.weather.gov/alerts/active?zone=MAZ015';
+    
+    fetch(alertUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch alerts');
+        return res.json();
+      })
+      .then(data => {
+        if (!data.features || data.features.length === 0) {
+          // No alerts - green bar
+          alertsSummary.style.background = '#4CAF50';
+          alertsSummary.style.borderColor = '#4CAF50';
+          alertsText.textContent = 'No Active Weather Alerts';
+          alertsContent.innerHTML = '<div style="color:#4CAF50;font-weight:bold;">✅ No active alerts for this area.</div>';
+          return;
+        }
+        
+        // Has alerts - red bar
+        alertsSummary.style.background = '#f44336';
+        alertsSummary.style.borderColor = '#f44336';
+        alertsText.textContent = `⚠️ ${data.features.length} Active Alert${data.features.length > 1 ? 's' : ''}`;
+        
+        // Display alerts
+        let html = '';
+        data.features.forEach((feature, index) => {
+          const alert = feature.properties;
+          html += `
+            <div style="margin-bottom: ${index < data.features.length - 1 ? '1rem' : '0'}; padding-bottom: ${index < data.features.length - 1 ? '1rem' : '0'}; border-bottom: ${index < data.features.length - 1 ? '1px solid #333' : 'none'};">
+              <div style="color:#f44336; font-weight:bold; font-size:1.1rem; margin-bottom:0.5rem;">⚠️ ${alert.event}</div>
+              <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${alert.headline || alert.description || 'No description available'}</div>
+              ${alert.instruction ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${alert.instruction}</div>` : ''}
+            </div>
+          `;
+        });
+        
+        alertsContent.innerHTML = html;
+        
+        // Auto-expand if there are alerts
+        const alertsDetails = document.getElementById('weatherAlertsDetails');
+        if (alertsDetails) {
+          alertsDetails.open = true;
+        }
+      })
+      .catch(error => {
+        console.error('[loadWeatherAlerts] Error:', error);
+        alertsSummary.style.background = '#ff9800';
+        alertsSummary.style.borderColor = '#ff9800';
+        alertsText.textContent = 'Unable to Load Alerts';
+        alertsContent.innerHTML = '<div style="color:#ff9800; padding:1rem;">Unable to load weather alerts. Please check weather.gov for official alerts.</div>';
+      });
   }
 
   function hideWeatherForecastModal() {
