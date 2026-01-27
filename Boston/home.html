@@ -4526,7 +4526,8 @@
     const modal = document.getElementById('weatherForecastModal');
     if (modal) {
       modal.style.display = 'flex';
-      loadWeatherForecast();
+      // Load hourly by default
+      switchWeatherTab('hourly');
     }
   }
 
@@ -4534,6 +4535,39 @@
     const modal = document.getElementById('weatherForecastModal');
     if (modal) {
       modal.style.display = 'none';
+    }
+  }
+
+  function switchWeatherTab(tab) {
+    const hourlyTab = document.getElementById('weatherTabHourly');
+    const dayTab = document.getElementById('weatherTab7Day');
+    const hourlyContent = document.getElementById('weatherHourlyContent');
+    const dayContent = document.getElementById('weather7DayContent');
+    
+    if (tab === 'hourly') {
+      hourlyTab.classList.add('active');
+      hourlyTab.style.background = '#1E90FF';
+      hourlyTab.style.color = '#fff';
+      dayTab.classList.remove('active');
+      dayTab.style.background = '#222';
+      dayTab.style.color = '#ccc';
+      
+      hourlyContent.style.display = 'block';
+      dayContent.style.display = 'none';
+      
+      loadWeatherHourly();
+    } else {
+      dayTab.classList.add('active');
+      dayTab.style.background = '#1E90FF';
+      dayTab.style.color = '#fff';
+      hourlyTab.classList.remove('active');
+      hourlyTab.style.background = '#222';
+      hourlyTab.style.color = '#ccc';
+      
+      hourlyContent.style.display = 'none';
+      dayContent.style.display = 'block';
+      
+      loadWeatherForecast();
     }
   }
 
