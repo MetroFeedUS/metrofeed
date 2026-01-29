@@ -4265,39 +4265,63 @@
   let activeTripSelected = false; // Track if user has selected a trip option
 
   // ==== OTP CORE LOGIC FOR METROFEED ====
+  // OTP 2.9 GraphQL API - POST /otp/transmodel/v3
   async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWalkDistance = 800, departureType = 'now', departureTime = '', modes = 'TRANSIT,WALK') {
     console.log('[fetchAndShowOtpItineraries] Function called with params:', { fromLat, fromLon, toLat, toLon, maxWalkDistance, departureType, departureTime, modes });
     
-    const from = `${fromLat},${fromLon}`;
-    const to = `${toLat},${toLon}`;
+    // GraphQL query for OTP 2.9 transmodel/v3
+    // OTP 2.9 uses GraphQL POST endpoint /otp/transmodel/v3
+    // Response structure: data.trip.tripPatterns[].legs[]
+    // Bus legs: { mode: "bus", line: { publicCode: "504", name: "..." } }
+    const graphqlQuery = `
+      query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $maxWalkDistance: Float!, $numItineraries: Int!) {
+        trip(
+          from: { lat: $fromLat, lon: $fromLon }
+          to: { lat: $toLat, lon: $toLon }
+          numTripPatterns: $numItineraries
+          maxWalkDistance: $maxWalkDistance
+        ) {
+          tripPatterns {
+            startTime
+            endTime
+            duration
+            legs {
+              mode
+              distance
+              duration
+              fromPlace {
+                name
+                lat
+                lon
+              }
+              toPlace {
+                name
+                lat
+                lon
+              }
+              line {
+                publicCode
+                name
+              }
+              serviceJourney {
+                id
+              }
+            }
+          }
+        }
+      }
+    `;
     
-    // Build the URL with options
-    let url = `${OTP_API}?fromPlace=${from}&toPlace=${to}&numItineraries=4`;
+    const variables = {
+      fromLat: fromLat,
+      fromLon: fromLon,
+      toLat: toLat,
+      toLon: toLon,
+      maxWalkDistance: maxWalkDistance,
+      numItineraries: 4
+    };
     
-    // Add max walk distance
-    url += `&maxWalkDistance=${maxWalkDistance}`;
-    
-    // Add departure time
-    if (departureType === 'time' && departureTime) {
-      // Convert time to current date with specified time in Portland timezone
-      const today = new Date();
-      const [hours, minutes] = departureTime.split(':');
-      
-      // Create a date in Portland timezone
-      const portlandDate = new Date(today.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
-      portlandDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      
-      // Convert to ISO string and then to timestamp
-      const timestamp = portlandDate.getTime();
-      url += `&time=${timestamp}`;
-      
-      console.log('[fetchAndShowOtpItineraries] Departure time:', departureTime, 'Portland time:', portlandDate.toLocaleString(), 'Timestamp:', timestamp);
-    }
-    
-    // Add transport modes
-    url += `&mode=${modes}`;
-    
-    console.log('[fetchAndShowOtpItineraries] OTP API URL:', url);
+    console.log('[fetchAndShowOtpItineraries] GraphQL query variables:', variables);
     
     // Clear previous state for multiple trips
     window.otpBusInfo = {};
@@ -4335,25 +4359,87 @@
     showOtpModal();
 
     try {
-      const res = await fetch(url);
+      // POST GraphQL request
+      const res = await fetch(OTP_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: graphqlQuery,
+          variables: variables
+        })
+      });
+      
       if (!res.ok) throw new Error("OTP server error: " + res.status);
-      const data = await res.json();
+      const response = await res.json();
 
-      console.log('Full OTP response:', data); // Debug the full response
+      console.log('Full OTP GraphQL response:', response); // Debug the full response
 
-      // OTP v2+ always returns {plan: { itineraries: [...] }} if results are found
-      if (!data.plan || !data.plan.itineraries || !data.plan.itineraries.length) {
+      // Check for GraphQL errors
+      if (response.errors) {
+        console.error('GraphQL errors:', response.errors);
+        itinList.innerHTML = `<em style='color: #f55;'>Error: ${response.errors.map(e => e.message).join(', ')}</em>`;
+        return;
+      }
+
+      // OTP 2.9 GraphQL returns { data: { trip: { tripPatterns: [...] } } }
+      if (!response.data || !response.data.trip || !response.data.trip.tripPatterns || !response.data.trip.tripPatterns.length) {
         itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
         return;
       }
 
-      // Store itineraries globally and render
-      currentItins = data.plan.itineraries;
-      console.log('Stored itineraries:', currentItins); // Debug stored data
+      // Convert GraphQL response to format expected by existing code
+      const tripPatterns = response.data.trip.tripPatterns;
+      const convertedItineraries = tripPatterns.map(pattern => {
+        // Convert tripPattern to itinerary format
+        const itinerary = {
+          startTime: pattern.startTime,
+          endTime: pattern.endTime,
+          duration: pattern.duration,
+          legs: pattern.legs.map(leg => {
+            // Convert GraphQL leg to expected format
+            const convertedLeg = {
+              mode: leg.mode === 'bus' ? 'BUS' : leg.mode === 'walk' ? 'WALK' : leg.mode.toUpperCase(),
+              duration: leg.duration,
+              distance: leg.distance,
+              from: leg.fromPlace ? {
+                name: leg.fromPlace.name,
+                lat: leg.fromPlace.lat,
+                lon: leg.fromPlace.lon
+              } : null,
+              to: leg.toPlace ? {
+                name: leg.toPlace.name,
+                lat: leg.toPlace.lat,
+                lon: leg.toPlace.lon
+              } : null
+            };
+            
+            // For bus legs, extract route info from line
+            if (leg.mode === 'bus' && leg.line) {
+              convertedLeg.route = leg.line.publicCode; // Route number (e.g., "504")
+              convertedLeg.routeShortName = leg.line.publicCode;
+              convertedLeg.routeLongName = leg.line.name || leg.line.publicCode;
+            }
+            
+            // Service journey ID if available
+            if (leg.serviceJourney) {
+              convertedLeg.tripId = leg.serviceJourney.id;
+            }
+            
+            return convertedLeg;
+          })
+        };
+        return itinerary;
+      });
+
+      // Store converted itineraries globally
+      currentItins = convertedItineraries;
+      console.log('Converted itineraries:', currentItins);
       
       // Enhanced OTP route debugging
-      console.log('=== OTP ROUTE ANALYSIS ===');
-      data.plan.itineraries.forEach((itin, idx) => {
+      console.log('=== OTP ROUTE ANALYSIS (GraphQL) ===');
+      convertedItineraries.forEach((itin, idx) => {
         console.log(`\n--- Itinerary ${idx + 1} ---`);
         console.log(`Total Duration: ${Math.round(itin.duration/60)} minutes`);
         console.log(`Start Time: ${new Date(itin.startTime).toLocaleTimeString()}`);
@@ -4362,13 +4448,11 @@
           if (leg.mode !== 'WALK') {
             console.log(`Leg ${legIdx}:`);
             console.log(`  Mode: ${leg.mode}`);
-            console.log(`  Route ID: ${leg.route}`);
-            console.log(`  Route Short Name: ${leg.routeShortName}`);
-            console.log(`  Route Long Name: ${leg.routeLongName}`);
-            console.log(`  Direction: ${leg.direction}`);
+            console.log(`  Route: ${leg.route || 'N/A'}`);
+            console.log(`  Route Short Name: ${leg.routeShortName || 'N/A'}`);
+            console.log(`  Route Long Name: ${leg.routeLongName || 'N/A'}`);
             console.log(`  From: ${leg.from?.name} (${leg.from?.lat}, ${leg.from?.lon})`);
             console.log(`  To: ${leg.to?.name} (${leg.to?.lat}, ${leg.to?.lon})`);
-            console.log(`  Agency: ${leg.agencyId} - ${leg.agencyName}`);
             console.log(`  Duration: ${Math.round(leg.duration/60)} minutes`);
           } else {
             console.log(`Leg ${legIdx}: WALK ${Math.round(leg.duration/60)} minutes`);
@@ -4376,27 +4460,8 @@
         });
       });
       console.log('=== END OTP ROUTE ANALYSIS ===');
-      console.log('Sample leg data:', currentItins[0]?.legs?.map(leg => ({
-        mode: leg.mode,
-        route: leg.route,
-        routeLongName: leg.routeLongName,
-        routeShortName: leg.routeShortName,
-        headsign: leg.headsign,
-        agencyId: leg.agencyId,
-        agencyName: leg.agencyName,
-        routeId: leg.routeId,
-        tripId: leg.tripId
-      })));
-      const otpRoutes = currentItins.flatMap(itin => 
-        itin.legs.filter(leg => leg.mode !== 'WALK').map(leg => ({
-          mode: leg.mode,
-          route: leg.route,
-          routeLongName: leg.routeLongName,
-          routeShortName: leg.routeShortName
-        }))
-      );
-      console.log('All route IDs from OTP:', otpRoutes);
-      renderItinListVisual(data.plan.itineraries);
+      
+      renderItinListVisual(convertedItineraries);
 
     } catch (e) {
       console.error('OTP Error:', e);
