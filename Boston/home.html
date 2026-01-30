@@ -3993,13 +3993,12 @@
         const buffer = await res.arrayBuffer();
         allBuses = await parseMBTAGTFSRT(buffer);
         console.log('[fetchAndDisplayBuses] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
+        // Store for debugging
+        window.lastBusData = allBuses;
       } else {
         console.error('[fetchAndDisplayBuses] Unsupported busApiType:', CITY_CONFIG.busApiType);
         return;
       }
-      
-      // Store for debugging
-      window.lastBusData = data;
       
       // Clear existing bus markers
       Object.values(busMarkers).forEach(m => m.remove());
