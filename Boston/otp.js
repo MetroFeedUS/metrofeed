@@ -421,8 +421,15 @@ function renderItinListVisual(itins) {
   });
 }
 
-// Export functions to window for global access
+// Export functions and variables to window for global access
 window.fetchAndShowOtpItineraries = fetchAndShowOtpItineraries;
 window.renderItinListVisual = renderItinListVisual;
 window.decodePolyline = decodePolyline;
+
+// Export state variables (for backward compatibility)
+// Note: currentItins is also set on window.currentItins in fetchAndShowOtpItineraries
+Object.defineProperty(window, 'currentItins', {
+  get: () => currentItins,
+  set: (value) => { currentItins = value; }
+});
 
