@@ -6482,6 +6482,12 @@
         // Only process BUS and RAIL legs (skip WALK)
         if (legInfo.mode === 'WALK') continue;
         
+        // Skip legs without route information
+        if (!legInfo.route) {
+          console.log('[drawExtendedRoutes] Skipping leg without route:', legKey, 'Mode:', legInfo.mode);
+          continue;
+        }
+        
         console.log('[drawExtendedRoutes] Processing leg:', legKey, 'Route:', legInfo.route, 'Direction:', legInfo.direction);
         
         let routeData = null;
