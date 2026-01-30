@@ -1338,6 +1338,8 @@
 <script src="cameraIcon.js"></script>
 <!-- -- SHARED ROUTE OVERLAY MODULE -- -->
 <script src="routeOverlay.js"></script>
+<!-- -- OTP INTEGRATION MODULE -- -->
+<script src="otp.js"></script>
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>
 <!-- -- MARKETPLACE OVERLAY MODULE -- -->
@@ -4308,6 +4310,9 @@
               serviceJourney {
                 id
               }
+              legGeometry {
+                points
+              }
             }
           }
         }
@@ -4390,20 +4395,29 @@
         return;
       }
 
-      // Convert GraphQL response to format expected by existing code
+      // Work directly with GraphQL response structure
       const tripPatterns = response.data.trip.tripPatterns;
       const convertedItineraries = tripPatterns.map(pattern => {
-        // Convert tripPattern to itinerary format
+        // Map GraphQL tripPattern to simplified format (keeping GraphQL structure where possible)
         const itinerary = {
           startTime: pattern.startTime,
           endTime: pattern.endTime,
           duration: pattern.duration,
           legs: pattern.legs.map(leg => {
-            // Convert GraphQL leg to expected format
+            // Normalize mode to uppercase for consistency
+            const normalizedMode = leg.mode === 'bus' ? 'BUS' : (leg.mode === 'walk' || leg.mode === 'foot') ? 'WALK' : leg.mode.toUpperCase();
+            
+            // Build leg object with GraphQL data
             const convertedLeg = {
-              mode: leg.mode === 'bus' ? 'BUS' : (leg.mode === 'walk' || leg.mode === 'foot') ? 'WALK' : leg.mode.toUpperCase(),
+              mode: normalizedMode,
               duration: leg.duration,
               distance: leg.distance,
+              // Preserve GraphQL Place structure (using latitude/longitude)
+              fromPlace: leg.fromPlace,
+              toPlace: leg.toPlace,
+              // Keep legGeometry for path rendering
+              legGeometry: leg.legGeometry,
+              // For compatibility, also provide from/to with lat/lon
               from: leg.fromPlace ? {
                 name: leg.fromPlace.name,
                 lat: leg.fromPlace.latitude || null,
@@ -4416,16 +4430,19 @@
               } : null
             };
             
-            // For bus legs, extract route info from line
-            if (leg.mode === 'bus' && leg.line) {
-              convertedLeg.route = leg.line.publicCode; // Route number (e.g., "504")
+            // Extract route info from line (for all transit legs: bus, rail, tram, etc.)
+            if (leg.line) {
+              convertedLeg.route = leg.line.publicCode; // Route number/code (e.g., "504", "Red", "CR-Fairmount")
               convertedLeg.routeShortName = leg.line.publicCode;
               convertedLeg.routeLongName = leg.line.name || leg.line.publicCode;
+              // Also preserve line object for direct access
+              convertedLeg.line = leg.line;
             }
             
             // Service journey ID if available
             if (leg.serviceJourney) {
               convertedLeg.tripId = leg.serviceJourney.id;
+              convertedLeg.serviceJourney = leg.serviceJourney;
             }
             
             return convertedLeg;
@@ -5196,20 +5213,19 @@
         // Assign unique color to each transit leg
         color = legColors[legIndex % legColors.length];
         
-        // Extract route description from itinerary
+        // Extract route description from GraphQL data
         let routeDescription = '';
-        routeNumber = leg.route; // Set routeNumber for transit legs
+        routeNumber = leg.route; // Set routeNumber for transit legs (from line.publicCode)
         
-        if (leg.routeLongName) {
+        // Use GraphQL line data directly
+        if (leg.line && leg.line.name) {
+          routeDescription = leg.line.name;
+        } else if (leg.routeLongName) {
           routeDescription = leg.routeLongName;
         } else if (leg.routeShortName) {
           routeDescription = leg.routeShortName;
         } else if (leg.route) {
-          // Try to find route info in masterRoutes
-          const masterRoute = masterRoutes.find(r => r.route_id === leg.route);
-          if (masterRoute) {
-            routeDescription = masterRoute.route_title.split(' - ')[1] || masterRoute.route_title;
-          }
+          routeDescription = leg.route; // Fallback to route code
         }
         
         // Try to find the actual route number using the description
@@ -5438,15 +5454,29 @@
         console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription, 'direction:', direction);
       }
       
+      // Render path from legGeometry for ALL legs (including walking)
       let coords = [];
       if (leg.legGeometry && leg.legGeometry.points) {
+        // Decode encoded polyline from OTP
         coords = decodePolyline(leg.legGeometry.points);
+        console.log(`[showRoute] Decoded ${coords.length} points from legGeometry for ${leg.mode} leg ${legIndex}`);
       } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
+        // Fallback: use coordinates array if provided
         coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        console.log(`[showRoute] Using coordinates array for ${leg.mode} leg ${legIndex}`);
+      } else {
+        console.warn(`[showRoute] No legGeometry available for ${leg.mode} leg ${legIndex}`);
       }
+      
+      // Render path for all legs with geometry (walking and transit)
       if (coords.length) {
         // Convert coordinates to [lng, lat] format for MapLibre GL JS
         const lineCoords = coords.map(coord => [coord[1], coord[0]]);
+        
+        // Adjust line style based on mode
+        const lineWidth = leg.mode === 'WALK' ? 3 : 4; // Slightly thinner for walking
+        const lineOpacity = leg.mode === 'WALK' ? 0.6 : 0.7;
+        const dashArray = leg.mode === 'WALK' ? [5, 5] : null; // Dashed for walking
         
         // Create a unique source and layer ID for this line
         const lineId = `routeLeg-${legIndex}`;
@@ -5455,7 +5485,10 @@
           type: 'geojson',
           data: {
             type: 'Feature',
-            properties: {},
+            properties: {
+              mode: leg.mode,
+              legIndex: legIndex
+            },
             geometry: {
               type: 'LineString',
               coordinates: lineCoords
@@ -5463,15 +5496,22 @@
           }
         });
         
+        const layerPaint = {
+          'line-color': color,
+          'line-width': lineWidth,
+          'line-opacity': lineOpacity
+        };
+        
+        // Add dash array for walking segments
+        if (dashArray) {
+          layerPaint['line-dasharray'] = dashArray;
+        }
+        
         map.addLayer({
           id: lineId,
           type: 'line',
           source: lineId,
-          paint: {
-            'line-color': color,
-            'line-width': 4,
-            'line-opacity': 0.7
-          }
+          paint: layerPaint
         });
         
         // Store the layer ID for removal
