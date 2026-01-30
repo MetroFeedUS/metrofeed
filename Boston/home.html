@@ -3760,7 +3760,7 @@
   // Function to map OTP route names to Trimet route numbers using masterRoutes data
   function mapOtpRouteToTrimet(otpRouteName) {
     console.log('[mapOtpRouteToTrimet] Mapping OTP route:', otpRouteName);
-    console.log('[mapOtpRouteToTrimet] masterRoutes available:', masterRoutes ? masterRoutes.length : 'undefined');
+    console.log('[mapOtpRouteToTrimet] masterRoutes available:', typeof masterRoutes !== 'undefined' && masterRoutes ? masterRoutes.length : 'undefined');
     
     // If it's already a number, use it directly
     if (!isNaN(otpRouteName)) {
@@ -4402,7 +4402,7 @@
           legs: pattern.legs.map(leg => {
             // Convert GraphQL leg to expected format
             const convertedLeg = {
-              mode: leg.mode === 'bus' ? 'BUS' : leg.mode === 'walk' ? 'WALK' : leg.mode.toUpperCase(),
+              mode: leg.mode === 'bus' ? 'BUS' : (leg.mode === 'walk' || leg.mode === 'foot') ? 'WALK' : leg.mode.toUpperCase(),
               duration: leg.duration,
               distance: leg.distance,
               from: leg.fromPlace ? {
@@ -4482,7 +4482,7 @@
         let icon = '';
         let segClass = '';
         let label = '';
-        if (leg.mode === 'WALK') {
+        if (leg.mode === 'WALK' || leg.mode === 'FOOT') {
           icon = '🚶‍♂️';
           segClass = 'seg-walk';
           label = 'Walk';
@@ -4538,7 +4538,7 @@
       }).join('');
       // Overlay details for route info
       const details = itin.legs.map((leg, j) => {
-        let modeTxt = leg.mode === 'WALK' ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode;
+        let modeTxt = (leg.mode === 'WALK' || leg.mode === 'FOOT') ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode;
         let lineInfo = '';
         if (leg.mode === 'BUS' && leg.route) {
           // Use route data from OTP GraphQL response
@@ -5091,7 +5091,7 @@
   
   // Function to find route in mastermap.js by route name/description
   function findRouteByDescription(description) {
-    if (!masterRoutes) return null;
+    if (typeof masterRoutes === 'undefined' || !masterRoutes) return null;
     
     // Clean the description (remove common prefixes/suffixes)
     const cleanDesc = description.toLowerCase()
@@ -6474,62 +6474,87 @@
     // Limit to max 3 legs as requested
     const legsToProcess = Object.keys(legColorMapping).slice(0, 3);
     
-    legsToProcess.forEach((legKey, index) => {
-      const legInfo = legColorMapping[legKey];
-      
-      // Only process BUS and RAIL legs (skip WALK)
-      if (legInfo.mode === 'WALK') return;
-      
-      console.log('[drawExtendedRoutes] Processing leg:', legKey, 'Route:', legInfo.route, 'Direction:', legInfo.direction);
-      
-      // Find the route in mastermap
-      const masterRoute = masterRoutes.find(r => 
-        r.route_number === legInfo.route && 
-        r.direction_id === legInfo.direction
-      );
-      
-      if (!masterRoute) {
-        console.log('[drawExtendedRoutes] Route not found in mastermap:', legInfo.route, 'direction:', legInfo.direction);
-        return;
-      }
-      
-      console.log('[drawExtendedRoutes] Found mastermap route:', masterRoute.route_title);
-      
-      // Convert shape coordinates from [lat, lng] to [lng, lat] for MapLibre
-      const lineCoords = masterRoute.shape.map(coord => [coord[1], coord[0]]);
-      
-      // Create unique source and layer ID for extended route
-      const extendedLineId = `extendedRoute-${index}`;
-      
-      map.addSource(extendedLineId, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: lineCoords
+    // Process legs (async for Boston lazy-loading)
+    const processLegs = async () => {
+      for (let index = 0; index < legsToProcess.length; index++) {
+        const legKey = legsToProcess[index];
+        const legInfo = legColorMapping[legKey];
+        
+        // Only process BUS and RAIL legs (skip WALK)
+        if (legInfo.mode === 'WALK') continue;
+        
+        console.log('[drawExtendedRoutes] Processing leg:', legKey, 'Route:', legInfo.route, 'Direction:', legInfo.direction);
+        
+        let routeData = null;
+        
+        // Get route data based on city system
+        if (CITY_CONFIG.useLazyLoading) {
+          // Boston: Use lazy-loading system
+          try {
+            routeData = await getRouteData(legInfo.route, legInfo.direction);
+            console.log('[drawExtendedRoutes] Loaded route data for Boston:', routeData.route_title || routeData.route_id);
+          } catch (error) {
+            console.error('[drawExtendedRoutes] Error loading route data:', error);
+            continue;
           }
+        } else {
+          // Other cities: Use masterRoutes
+          if (typeof masterRoutes === 'undefined' || !masterRoutes) {
+            console.log('[drawExtendedRoutes] masterRoutes not available');
+            continue;
+          }
+          routeData = masterRoutes.find(r => 
+            r.route_number === legInfo.route && 
+            r.direction_id === legInfo.direction
+          );
         }
-      });
-      
-      map.addLayer({
-        id: extendedLineId,
-        type: 'line',
-        source: extendedLineId,
-        paint: {
-          'line-color': legInfo.color,
-          'line-width': 2,
-          'line-opacity': 0.4,
-          'line-dasharray': [2, 2] // Small dots
+        
+        if (!routeData || !routeData.shape) {
+          console.log('[drawExtendedRoutes] Route not found or no shape data:', legInfo.route, 'direction:', legInfo.direction);
+          continue;
         }
-      });
-      
-      // Store the layer ID for removal
-      window.extendedRouteLines.push(extendedLineId);
-      
-      console.log('[drawExtendedRoutes] Added extended route:', extendedLineId, 'for route:', legInfo.route);
-    });
+        
+        console.log('[drawExtendedRoutes] Found route:', routeData.route_title || routeData.route_id);
+        
+        // Convert shape coordinates from [lat, lng] to [lng, lat] for MapLibre
+        const lineCoords = routeData.shape.map(coord => [coord[1], coord[0]]);
+        
+        // Create unique source and layer ID for extended route
+        const extendedLineId = `extendedRoute-${index}`;
+        
+        map.addSource(extendedLineId, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: lineCoords
+            }
+          }
+        });
+        
+        map.addLayer({
+          id: extendedLineId,
+          type: 'line',
+          source: extendedLineId,
+          paint: {
+            'line-color': legInfo.color,
+            'line-width': 2,
+            'line-opacity': 0.4,
+            'line-dasharray': [2, 2] // Small dots
+          }
+        });
+        
+        // Store the layer ID for removal
+        window.extendedRouteLines.push(extendedLineId);
+        
+        console.log('[drawExtendedRoutes] Added extended route:', extendedLineId, 'for route:', legInfo.route);
+      }
+    };
+    
+    // Call the async function
+    processLegs();
     
     console.log('[drawExtendedRoutes] Completed. Added', window.extendedRouteLines.length, 'extended routes');
   }
