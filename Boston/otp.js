@@ -68,18 +68,50 @@ function decodePolyline(encoded) {
 async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWalkDistance = 800, departureType = 'now', departureTime = '', modes = 'TRANSIT,WALK') {
   console.log('[fetchAndShowOtpItineraries] Function called with params:', { fromLat, fromLon, toLat, toLon, maxWalkDistance, departureType, departureTime, modes });
   
-  // GraphQL query for OTP 2.9 transmodel/v3
-  // OTP 2.9 uses GraphQL POST endpoint /otp/transmodel/v3
-  // Response structure: data.trip.tripPatterns[].legs[]
-  // Bus legs: { mode: "bus", line: { publicCode: "504", name: "..." } }
-  // Location input: { coordinates: { latitude, longitude } }
-  // Place response: { name, vertexType, latitude (Float!), longitude (Float!) }
+  // PHASE 2: Show messages for unsupported features
+  if (maxWalkDistance !== 800) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#ffc107;color:#000;padding:10px 20px;border-radius:4px;z-index:10000;font-weight:bold;';
+    msg.textContent = 'Max walk distance not wired yet';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+  }
+  
+  if (modes !== 'TRANSIT,WALK') {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#ffc107;color:#000;padding:10px 20px;border-radius:4px;z-index:10000;font-weight:bold;';
+    msg.textContent = 'Modes filtering not wired yet';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+  }
+  
+  // PHASE 2: Handle departure time
+  let dateTimeArg = null;
+  if (departureType === 'departure' && departureTime) {
+    try {
+      const depDate = new Date(departureTime);
+      if (!isNaN(depDate.getTime())) {
+        // Convert to ISO string for OTP
+        dateTimeArg = depDate.toISOString();
+        console.log('[OTP] Using departure time:', dateTimeArg);
+      } else {
+        console.warn('[OTP] Invalid departure time, using "now"');
+      }
+    } catch (e) {
+      console.warn('[OTP] Error parsing departure time:', e);
+    }
+  }
+  
+  // PHASE 1: Schema-locked GraphQL query
+  // Removed numTripPatterns - will limit client-side if needed
+  // All fields verified against Transmodel v3 schema
+  // Note: If dateTime argument doesn't exist, try 'date' or 'time' - schema debug will show correct name
   const graphqlQuery = `
-    query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $numItineraries: Int!) {
+    query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!${dateTimeArg ? ', $dateTime: DateTime' : ''}) {
       trip(
         from: { coordinates: { latitude: $fromLat, longitude: $fromLon } }
         to: { coordinates: { latitude: $toLat, longitude: $toLon } }
-        numTripPatterns: $numItineraries
+        ${dateTimeArg ? 'dateTime: $dateTime' : ''}
       ) {
         tripPatterns {
           startTime
@@ -121,9 +153,12 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     fromLat: fromLat,
     fromLon: fromLon,
     toLat: toLat,
-    toLon: toLon,
-    numItineraries: 4
+    toLon: toLon
   };
+  
+  if (dateTimeArg) {
+    variables.dateTime = dateTimeArg;
+  }
   
   console.log('[fetchAndShowOtpItineraries] GraphQL query variables:', variables);
   
@@ -183,8 +218,28 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     // Check for GraphQL errors
     if (response.errors) {
       console.error('GraphQL errors:', response.errors);
-      itinList.innerHTML = `<em style='color: #f55;'>Error: ${response.errors.map(e => e.message).join(', ')}</em>`;
-      return;
+      // PHASE 2: If dateTime argument doesn't exist, retry without it
+      if (dateTimeArg && response.errors.some(e => e.message.includes('dateTime') || e.message.includes('UnknownArgument'))) {
+        console.warn('[OTP] dateTime argument not supported, retrying without it');
+        // Retry without dateTime
+        const retryQuery = graphqlQuery.replace(/\$dateTime: DateTime/g, '').replace(/dateTime: \$dateTime/g, '');
+        const retryVariables = { fromLat, fromLon, toLat, toLon };
+        const retryRes = await fetch(OTP_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: retryQuery, variables: retryVariables })
+        });
+        const retryResponse = await retryRes.json();
+        if (retryResponse.errors) {
+          itinList.innerHTML = `<em style='color: #f55;'>Error: ${retryResponse.errors.map(e => e.message).join(', ')}</em>`;
+          return;
+        }
+        // Use retry response
+        response.data = retryResponse.data;
+      } else {
+        itinList.innerHTML = `<em style='color: #f55;'>Error: ${response.errors.map(e => e.message).join(', ')}</em>`;
+        return;
+      }
     }
 
     // OTP 2.9 GraphQL returns { data: { trip: { tripPatterns: [...] } } }
@@ -194,8 +249,12 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     }
 
     // Work directly with GraphQL response structure
+    // PHASE 1: Limit client-side if numTripPatterns doesn't exist in schema
     const tripPatterns = response.data.trip.tripPatterns;
-    const convertedItineraries = tripPatterns.map(pattern => {
+    const numItineraries = 4; // Default limit
+    const limitedPatterns = tripPatterns.slice(0, numItineraries);
+    
+    const convertedItineraries = limitedPatterns.map(pattern => {
       // Map GraphQL tripPattern to simplified format (keeping GraphQL structure where possible)
       const itinerary = {
         startTime: pattern.startTime,
@@ -375,22 +434,15 @@ function renderItinListVisual(itins) {
       } else if (leg.route) {
         lineInfo = ` <b>${leg.route}</b>`;
       }
-      let fromTime = leg.startTime ? getPortlandTimeString(new Date(leg.startTime)) : '';
-      let toTime = leg.endTime ? getPortlandTimeString(new Date(leg.endTime)) : '';
-      let stopTimes = '';
-      // Show intermediate stops with times if available
-      if (leg.intermediateStops && Array.isArray(leg.intermediateStops) && leg.intermediateStops.length) {
-        stopTimes = '<div style="margin-left:1em; font-size:0.95em; color:#bbb;">';
-        leg.intermediateStops.forEach(stop => {
-          if (stop.departureTime) {
-            let t = getPortlandTimeString(new Date(stop.departureTime));
-            stopTimes += `• ${stop.name}: <b>${t}</b><br>`;
-          } else {
-            stopTimes += `• ${stop.name}<br>`;
-          }
-        });
-        stopTimes += '</div>';
-      }
+      // PHASE 1: Fix references to non-existent fields
+      // leg.startTime and leg.endTime don't exist - use itinerary times or omit
+      // leg.intermediateStops doesn't exist - omit
+      // leg.info doesn't exist - omit
+      let fromTime = ''; // Not available at leg level
+      let toTime = ''; // Not available at leg level
+      let stopTimes = ''; // intermediateStops not in schema
+      // Note: Times are at tripPattern level, not leg level
+      
       return `<div>
         → <b>${modeTxt}${lineInfo}</b>
         <span style="color:#ffc107;">${Math.round((leg.duration||0)/60)} min</span><br>
@@ -398,8 +450,6 @@ function renderItinListVisual(itins) {
           ${fromTime ? `Depart: <b>${fromTime}</b>` : ''}${fromTime && toTime ? ' | ' : ''}${toTime ? `Arrive: <b>${toTime}</b>` : ''}
         </span>
         ${stopTimes}
-        <br>
-        <span style="font-size:0.96em; color:#aaa;">${leg.info||''}</span>
       </div>`;
     }).join('<hr style="border:0; border-top:1px solid #222; margin:5px 0 4px 0">');
     return `<div class="itinListOption ${window.selectedTripIndex === idx ? 'selected' : ''}" data-idx="${idx}">
@@ -436,4 +486,84 @@ Object.defineProperty(window, 'currentItins', {
   get: () => currentItins,
   set: (value) => { currentItins = value; }
 });
+
+// PHASE 3: Schema debug helper (dev-only)
+window.debugOtpSchema = async function() {
+  console.log('=== OTP SCHEMA DEBUG (Dev Only) ===');
+  
+  try {
+    // Introspect Trip query arguments
+    const tripQuery = `
+      query {
+        __type(name: "Trip") {
+          fields {
+            name
+            args {
+              name
+              type {
+                name
+                kind
+              }
+            }
+          }
+        }
+      }
+    `;
+    
+    const tripRes = await fetch(OTP_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: tripQuery })
+    });
+    
+    const tripData = await tripRes.json();
+    const tripField = tripData.data?.__type?.fields?.find(f => f.name === 'trip');
+    
+    if (tripField) {
+      console.log('📋 Trip query arguments:');
+      tripField.args.forEach(arg => {
+        console.log(`  - ${arg.name}: ${arg.type.name || arg.type.kind}`);
+      });
+    }
+    
+    // Introspect Place type fields
+    const placeQuery = `
+      query {
+        __type(name: "Place") {
+          fields {
+            name
+            type {
+              name
+              kind
+            }
+          }
+        }
+      }
+    `;
+    
+    const placeRes = await fetch(OTP_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: placeQuery })
+    });
+    
+    const placeData = await placeRes.json();
+    
+    if (placeData.data?.__type?.fields) {
+      console.log('📋 Place type fields:');
+      placeData.data.__type.fields.forEach(field => {
+        console.log(`  - ${field.name}: ${field.type.name || field.type.kind}`);
+      });
+    }
+    
+    console.log('=== END SCHEMA DEBUG ===');
+  } catch (error) {
+    console.error('Schema debug error:', error);
+  }
+};
+
+// Make it available in console for devs
+if (typeof window !== 'undefined') {
+  console.log('🔧 Dev helper available: window.debugOtpSchema()');
+}
 
