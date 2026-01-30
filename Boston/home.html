@@ -4274,7 +4274,7 @@
     // Response structure: data.trip.tripPatterns[].legs[]
     // Bus legs: { mode: "bus", line: { publicCode: "504", name: "..." } }
     // Location input: { coordinates: { latitude, longitude } }
-    // Place response: { coordinates: { latitude, longitude }, name }
+    // Place response: { name, vertexType, latitude (Float!), longitude (Float!) }
     const graphqlQuery = `
       query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $numItineraries: Int!) {
         trip(
@@ -4292,17 +4292,15 @@
               duration
               fromPlace {
                 name
-                coordinates {
-                  latitude
-                  longitude
-                }
+                vertexType
+                latitude
+                longitude
               }
               toPlace {
                 name
-                coordinates {
-                  latitude
-                  longitude
-                }
+                vertexType
+                latitude
+                longitude
               }
               line {
                 publicCode
@@ -4409,13 +4407,13 @@
               distance: leg.distance,
               from: leg.fromPlace ? {
                 name: leg.fromPlace.name,
-                lat: leg.fromPlace.coordinates?.latitude || null,
-                lon: leg.fromPlace.coordinates?.longitude || null
+                lat: leg.fromPlace.latitude || null,
+                lon: leg.fromPlace.longitude || null
               } : null,
               to: leg.toPlace ? {
                 name: leg.toPlace.name,
-                lat: leg.toPlace.coordinates?.latitude || null,
-                lon: leg.toPlace.coordinates?.longitude || null
+                lat: leg.toPlace.latitude || null,
+                lon: leg.toPlace.longitude || null
               } : null
             };
             
