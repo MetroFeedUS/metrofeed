@@ -21,6 +21,10 @@ const legColors = [
 // Keep walk color consistent
 const WALK_COLOR = "#666";
 
+// Export constants to window for global access
+window.legColors = legColors;
+window.WALK_COLOR = WALK_COLOR;
+
 /**
  * Decode encoded polyline string to coordinate array
  * @param {string} encoded - Encoded polyline string
