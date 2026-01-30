@@ -93,7 +93,7 @@ const CITIES = {
     
     // APIs
     apiKey: "2C4447D4A42083BCD84DE3B8E",
-    otpApi: "https://otp.metrofeedus.com/otp/transmodel/v3",
+    otpApi: "https://otp.metrofeedus.com/otp/transmodel/v3", // Direct endpoint (CORS fixed on server)
     busApi: "https://maps.metrofeedus.com/api/mbta/VehiclePositions.pb", // Proxied through VPS
     // trafficApi: Removed - will use state DOT APIs in the future
     

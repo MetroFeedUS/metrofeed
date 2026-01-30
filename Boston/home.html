@@ -4273,13 +4273,14 @@
     // OTP 2.9 uses GraphQL POST endpoint /otp/transmodel/v3
     // Response structure: data.trip.tripPatterns[].legs[]
     // Bus legs: { mode: "bus", line: { publicCode: "504", name: "..." } }
+    // Location input: { coordinates: { latitude, longitude } }
+    // Place response: { coordinates: { latitude, longitude }, name }
     const graphqlQuery = `
-      query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $maxWalkDistance: Float!, $numItineraries: Int!) {
+      query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $numItineraries: Int!) {
         trip(
-          from: { lat: $fromLat, lon: $fromLon }
-          to: { lat: $toLat, lon: $toLon }
+          from: { coordinates: { latitude: $fromLat, longitude: $fromLon } }
+          to: { coordinates: { latitude: $toLat, longitude: $toLon } }
           numTripPatterns: $numItineraries
-          maxWalkDistance: $maxWalkDistance
         ) {
           tripPatterns {
             startTime
@@ -4291,13 +4292,17 @@
               duration
               fromPlace {
                 name
-                lat
-                lon
+                coordinates {
+                  latitude
+                  longitude
+                }
               }
               toPlace {
                 name
-                lat
-                lon
+                coordinates {
+                  latitude
+                  longitude
+                }
               }
               line {
                 publicCode
@@ -4317,7 +4322,6 @@
       fromLon: fromLon,
       toLat: toLat,
       toLon: toLon,
-      maxWalkDistance: maxWalkDistance,
       numItineraries: 4
     };
     
@@ -4405,13 +4409,13 @@
               distance: leg.distance,
               from: leg.fromPlace ? {
                 name: leg.fromPlace.name,
-                lat: leg.fromPlace.lat,
-                lon: leg.fromPlace.lon
+                lat: leg.fromPlace.coordinates?.latitude || null,
+                lon: leg.fromPlace.coordinates?.longitude || null
               } : null,
               to: leg.toPlace ? {
                 name: leg.toPlace.name,
-                lat: leg.toPlace.lat,
-                lon: leg.toPlace.lon
+                lat: leg.toPlace.coordinates?.latitude || null,
+                lon: leg.toPlace.coordinates?.longitude || null
               } : null
             };
             
