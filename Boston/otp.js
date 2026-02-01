@@ -140,9 +140,6 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
             serviceJourney {
               id
             }
-            legGeometry {
-              points
-            }
           }
         }
       }
@@ -272,8 +269,8 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
             // Preserve GraphQL Place structure (using latitude/longitude)
             fromPlace: leg.fromPlace,
             toPlace: leg.toPlace,
-            // Keep legGeometry for path rendering
-            legGeometry: leg.legGeometry,
+            // Note: legGeometry not available in Transmodel v3 Leg type
+            // Path rendering will need to use fromPlace/toPlace coordinates
             // For compatibility, also provide from/to with lat/lon
             from: leg.fromPlace ? {
               name: leg.fromPlace.name,

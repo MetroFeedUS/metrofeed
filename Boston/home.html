@@ -5451,18 +5451,19 @@
         console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription, 'direction:', direction);
       }
       
-      // Render path from legGeometry for ALL legs (including walking)
+      // Render path for ALL legs (including walking)
+      // Note: legGeometry not available in Transmodel v3 schema
+      // Fallback: Use fromPlace/toPlace coordinates to draw simple line
       let coords = [];
-      if (leg.legGeometry && leg.legGeometry.points) {
-        // Decode encoded polyline from OTP
-        coords = decodePolyline(leg.legGeometry.points);
-        console.log(`[showRoute] Decoded ${coords.length} points from legGeometry for ${leg.mode} leg ${legIndex}`);
-      } else if (leg.legGeometry && Array.isArray(leg.legGeometry.coordinates)) {
-        // Fallback: use coordinates array if provided
-        coords = leg.legGeometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        console.log(`[showRoute] Using coordinates array for ${leg.mode} leg ${legIndex}`);
+      if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
+        // Use fromPlace and toPlace coordinates to create a simple straight line
+        coords = [
+          [leg.fromPlace.latitude, leg.fromPlace.longitude],
+          [leg.toPlace.latitude, leg.toPlace.longitude]
+        ];
+        console.log(`[showRoute] Using fromPlace/toPlace coordinates for ${leg.mode} leg ${legIndex}`);
       } else {
-        console.warn(`[showRoute] No legGeometry available for ${leg.mode} leg ${legIndex}`);
+        console.warn(`[showRoute] No coordinates available for ${leg.mode} leg ${legIndex}`);
       }
       
       // Render path for all legs with geometry (walking and transit)
