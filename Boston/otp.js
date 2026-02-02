@@ -228,7 +228,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
               id
             }
             serviceJourneyEstimatedCalls {
-              stopPlace {
+              quay {
                 name
                 latitude
                 longitude
@@ -597,7 +597,7 @@ function renderItinListVisual(itins) {
       // Build stop list from estimated calls
       if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
         const stops = leg.estimatedCalls.map((call, idx) => {
-          const stopName = call.stopPlace?.name || 'Unknown Stop';
+          const stopName = call.quay?.name || 'Unknown Stop';
           const arrivalTime = call.expectedArrivalTime || call.aimedArrivalTime;
           const departureTime = call.expectedDepartureTime || call.aimedDepartureTime;
           const timeStr = arrivalTime || departureTime;
