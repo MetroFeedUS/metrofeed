@@ -227,7 +227,6 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
             serviceJourney {
               id
             }
-            steps
           }
         }
       }
@@ -389,7 +388,6 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
           
           // Store geometry data from OTP
           convertedLeg.pointsOnLink = leg.pointsOnLink || null;
-          convertedLeg.steps = leg.steps || null;
           
           return convertedLeg;
         })
@@ -935,27 +933,10 @@ async function showRoute(idx) {
 
     // ----------------------------
     // 2) Walking geometry (best effort)
-    //    - Prefer OTP steps if they include lat/lon (schema-dependent)
-    //    - Else OSRM fallback
+    //    - Use OSRM for walking paths
     // ----------------------------
     if (leg.mode === "WALK") {
-      // Attempt to derive from steps if they contain coordinates
-      if (Array.isArray(leg.steps) && leg.steps.length) {
-        const stepCoords = [];
-        for (const s of leg.steps) {
-          const lat = s?.latitude ?? s?.lat ?? s?.location?.latitude ?? null;
-          const lon = s?.longitude ?? s?.lon ?? s?.location?.longitude ?? null;
-          if (typeof lat === "number" && typeof lon === "number") {
-            stepCoords.push([lat, lon]);
-          }
-        }
-        if (stepCoords.length > 1) {
-          coords = stepCoords;
-          console.log(`[showRoute] ✅ Using OTP steps for walking leg ${legIndex}, ${coords.length} points`);
-        }
-      }
-
-      // OSRM fallback if still empty
+      // Use OSRM for walking paths
       if (!coords.length && fromLat && fromLon && toLat && toLon) {
         try {
           const osrmUrl = `https://router.project-osrm.org/route/v1/walking/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
