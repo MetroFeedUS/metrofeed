@@ -800,21 +800,44 @@ async function showRoute(idx) {
     }
     
     // Render path for ALL legs (including walking)
-    // For transit legs: Load actual route shape data and clip to start/end stops
+    // For transit legs: Load actual route shape data (FULL route, not clipped)
     // For walking legs: Get actual walking path using OSRM
     let coords = [];
+    let routeShapeInfo = null; // Store info about where to split for solid/dashed later
+    
+    console.log(`[showRoute] Processing ${leg.mode} leg ${legIndex}:`, {
+      mode: leg.mode,
+      route: leg.route,
+      direction: leg.direction,
+      hasFromPlace: !!(leg.fromPlace && leg.fromPlace.latitude),
+      hasToPlace: !!(leg.toPlace && leg.toPlace.latitude)
+    });
     
     if (leg.mode !== 'WALK' && leg.route && leg.direction !== undefined) {
-      // Transit leg: Load actual route shape and clip to start/end stops
+      // Transit leg: Load actual route shape (FULL route)
+      console.log(`[showRoute] Loading route shape for ${leg.mode} leg ${legIndex}, route ${leg.route}, direction ${leg.direction}`);
+      
       try {
         // Use window.getRouteData if available
         if (typeof window.getRouteData !== 'function') {
           throw new Error('getRouteData function not available');
         }
         
+        console.log(`[showRoute] Calling getRouteData(${leg.route}, ${leg.direction})`);
         const routeData = await window.getRouteData(leg.route, leg.direction);
+        console.log(`[showRoute] Route data loaded:`, {
+          hasShape: !!(routeData && routeData.shape),
+          shapeLength: routeData?.shape?.length || 0,
+          hasStops: !!(routeData && routeData.stops),
+          stopsLength: routeData?.stops?.length || 0
+        });
+        
         if (routeData && routeData.shape && Array.isArray(routeData.shape) && routeData.shape.length > 0) {
-          // Find start and end stops in the route
+          // Use the FULL route shape (not clipped)
+          coords = routeData.shape;
+          console.log(`[showRoute] ✅ Using FULL route shape for route ${leg.route}, ${coords.length} points`);
+          
+          // Find start and end stops in the route for later solid/dashed styling
           const fromLat = leg.fromPlace?.latitude;
           const fromLon = leg.fromPlace?.longitude;
           const toLat = leg.toPlace?.latitude;
@@ -847,13 +870,11 @@ async function showRoute(idx) {
               }
             });
             
-            // Clip shape to segment between start and end stops
+            // Find shape points closest to start and end stops (for solid/dashed split later)
             if (startStopIdx >= 0 && endStopIdx >= 0 && startStopIdx !== endStopIdx) {
-              // Ensure start is before end
               const actualStart = Math.min(startStopIdx, endStopIdx);
               const actualEnd = Math.max(startStopIdx, endStopIdx);
               
-              // Find shape points closest to start and end stops
               const startStop = routeData.stops[actualStart];
               const endStop = routeData.stops[actualEnd];
               
@@ -882,33 +903,18 @@ async function showRoute(idx) {
                 }
               });
               
-              // Extract clipped segment
-              if (startShapeIdx < endShapeIdx) {
-                coords = routeData.shape.slice(startShapeIdx, endShapeIdx + 1);
-                // Ensure we include the actual from/to places at the ends
-                coords = [
-                  [fromLat, fromLon],
-                  ...coords,
-                  [toLat, toLon]
-                ];
-                console.log(`[showRoute] Clipped route shape for ${leg.mode} leg ${legIndex}, route ${leg.route}, ${coords.length} points (from stop ${actualStart} to ${actualEnd})`);
-              } else {
-                // Fallback: use full shape
-                coords = routeData.shape;
-                console.log(`[showRoute] Using full route shape (could not clip), ${coords.length} points`);
-              }
-            } else {
-              // Fallback: use full shape
-              coords = routeData.shape;
-              console.log(`[showRoute] Using full route shape (could not find stops), ${coords.length} points`);
+              // Store split points for solid/dashed styling (we'll use this later)
+              routeShapeInfo = {
+                startShapeIdx: Math.min(startShapeIdx, endShapeIdx),
+                endShapeIdx: Math.max(startShapeIdx, endShapeIdx),
+                startStopIdx: actualStart,
+                endStopIdx: actualEnd
+              };
+              console.log(`[showRoute] Found stop indices: ${actualStart} to ${actualEnd}, shape indices: ${routeShapeInfo.startShapeIdx} to ${routeShapeInfo.endShapeIdx}`);
             }
-          } else {
-            // No stops data, use full shape
-            coords = routeData.shape;
-            console.log(`[showRoute] Using full route shape (no stops data), ${coords.length} points`);
           }
         } else {
-          console.warn(`[showRoute] Route ${leg.route} has no shape data, falling back to straight line`);
+          console.warn(`[showRoute] ❌ Route ${leg.route} has no shape data, falling back to straight line`);
           // Fallback to straight line
           if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
             coords = [
@@ -918,7 +924,8 @@ async function showRoute(idx) {
           }
         }
       } catch (error) {
-        console.warn(`[showRoute] Error loading route shape for ${leg.route}:`, error, 'Falling back to straight line');
+        console.error(`[showRoute] ❌ Error loading route shape for ${leg.route}:`, error);
+        console.error(`[showRoute] Error details:`, error.message, error.stack);
         // Fallback to straight line
         if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
           coords = [
@@ -981,6 +988,11 @@ async function showRoute(idx) {
     
     // Render path for all legs with geometry (walking and transit)
     if (coords.length) {
+      console.log(`[showRoute] Rendering ${leg.mode} leg ${legIndex} with ${coords.length} coordinates`);
+      if (coords.length === 2) {
+        console.warn(`[showRoute] ⚠️ Only 2 coordinates (straight line fallback) for ${leg.mode} leg ${legIndex}`);
+      }
+      
       // Convert coordinates to [lng, lat] format for MapLibre GL JS
       const lineCoords = coords.map(coord => [coord[1], coord[0]]);
       
