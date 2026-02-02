@@ -4909,7 +4909,7 @@
     return null;
   }
 
-  window.showRoute = function(idx) {
+  window.showRoute = async function(idx) {
     console.log('[showRoute] Called with idx:', idx);
     if (!window.currentItins || !window.currentItins[idx]) {
       console.error('[showRoute] Trip data not found.');
@@ -4962,7 +4962,8 @@
     let legColorMapping = {}; // Store color mapping for each leg
     let legIndex = 0; // Track leg index for color assignment
     
-    window.currentItins[idx].legs.forEach(leg => {
+    // Use for...of loop to support await
+    for (const leg of window.currentItins[idx].legs) {
       let color;
       let legKey;
       let routeNumber = null; // Initialize routeNumber for all legs
@@ -5212,22 +5213,57 @@
           description: routeDescription
         };
         
+        // Also store direction on leg object for route loading
+        leg.direction = direction;
+        leg.route = routeNumber; // Ensure route is set
+        
         console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription, 'direction:', direction);
       }
       
       // Render path for ALL legs (including walking)
-      // Note: legGeometry not available in Transmodel v3 schema
-      // Fallback: Use fromPlace/toPlace coordinates to draw simple line
+      // For transit legs: Load actual route shape data
+      // For walking legs: Use straight line between fromPlace/toPlace
       let coords = [];
-      if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
-        // Use fromPlace and toPlace coordinates to create a simple straight line
-        coords = [
-          [leg.fromPlace.latitude, leg.fromPlace.longitude],
-          [leg.toPlace.latitude, leg.toPlace.longitude]
-        ];
-        console.log(`[showRoute] Using fromPlace/toPlace coordinates for ${leg.mode} leg ${legIndex}`);
+      
+      if (leg.mode !== 'WALK' && leg.route && leg.direction !== undefined) {
+        // Transit leg: Try to load actual route shape
+        try {
+          const routeData = await getRouteData(leg.route, leg.direction);
+          if (routeData && routeData.shape && Array.isArray(routeData.shape) && routeData.shape.length > 0) {
+            // Use actual route shape (already in [lat, lng] format)
+            coords = routeData.shape;
+            console.log(`[showRoute] Using actual route shape for ${leg.mode} leg ${legIndex}, route ${leg.route}, ${coords.length} points`);
+          } else {
+            console.warn(`[showRoute] Route ${leg.route} has no shape data, falling back to straight line`);
+            // Fallback to straight line
+            if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
+              coords = [
+                [leg.fromPlace.latitude, leg.fromPlace.longitude],
+                [leg.toPlace.latitude, leg.toPlace.longitude]
+              ];
+            }
+          }
+        } catch (error) {
+          console.warn(`[showRoute] Error loading route shape for ${leg.route}:`, error, 'Falling back to straight line');
+          // Fallback to straight line
+          if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
+            coords = [
+              [leg.fromPlace.latitude, leg.fromPlace.longitude],
+              [leg.toPlace.latitude, leg.toPlace.longitude]
+            ];
+          }
+        }
       } else {
-        console.warn(`[showRoute] No coordinates available for ${leg.mode} leg ${legIndex}`);
+        // Walking leg or no route: Use straight line between fromPlace/toPlace
+        if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
+          coords = [
+            [leg.fromPlace.latitude, leg.fromPlace.longitude],
+            [leg.toPlace.latitude, leg.toPlace.longitude]
+          ];
+          console.log(`[showRoute] Using fromPlace/toPlace coordinates for ${leg.mode} leg ${legIndex}`);
+        } else {
+          console.warn(`[showRoute] No coordinates available for ${leg.mode} leg ${legIndex}`);
+        }
       }
       
       // Render path for all legs with geometry (walking and transit)
@@ -5304,7 +5340,7 @@
           mode: leg.mode
         });
       }
-    });
+    }
     
     if (window.routeLegLines.length) {
       const bounds = new maplibregl.LngLatBounds();
