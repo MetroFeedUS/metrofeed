@@ -55,6 +55,90 @@ function decodePolyline(encoded) {
 }
 
 /**
+ * Calculate distance between two points using Haversine formula
+ * @param {number} aLat - Latitude of point A
+ * @param {number} aLon - Longitude of point A
+ * @param {number} bLat - Latitude of point B
+ * @param {number} bLon - Longitude of point B
+ * @returns {number} Distance in meters
+ */
+function haversineMeters(aLat, aLon, bLat, bLon) {
+  const R = 6371000;
+  const toRad = x => (x * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLon = toRad(bLon - aLon);
+  const lat1 = toRad(aLat);
+  const lat2 = toRad(bLat);
+
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+/**
+ * Find the index of the nearest point in an array to a target coordinate
+ * @param {Array} latLonPoints - Array of [lat, lon] coordinates
+ * @param {number} targetLat - Target latitude
+ * @param {number} targetLon - Target longitude
+ * @returns {number} Index of nearest point
+ */
+function findNearestPointIndex(latLonPoints, targetLat, targetLon) {
+  let bestIdx = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < latLonPoints.length; i++) {
+    const p = latLonPoints[i];
+    const d = haversineMeters(p[0], p[1], targetLat, targetLon);
+    if (d < bestDist) { bestDist = d; bestIdx = i; }
+  }
+  return bestIdx;
+}
+
+/**
+ * Convert [lat, lon] coordinates to [lng, lat] for MapLibre GL JS
+ * @param {Array} latLonPoints - Array of [lat, lon] coordinates
+ * @returns {Array} Array of [lng, lat] coordinates
+ */
+function toMapLibreCoords(latLonPoints) {
+  return latLonPoints.map(p => [p[1], p[0]]); // [lng, lat]
+}
+
+/**
+ * Safely remove a layer and source from the map
+ * @param {Object} map - MapLibre map instance
+ * @param {string} id - Layer/source ID
+ */
+function safeRemoveLayerAndSource(map, id) {
+  try { if (map.getLayer(id)) map.removeLayer(id); } catch (_) {}
+  try { if (map.getSource(id)) map.removeSource(id); } catch (_) {}
+}
+
+/**
+ * Add a line layer to the map
+ * @param {Object} map - MapLibre map instance
+ * @param {string} id - Layer/source ID
+ * @param {Array} lngLatCoords - Array of [lng, lat] coordinates
+ * @param {Object} paint - Paint properties for the line
+ * @returns {string} The layer ID
+ */
+function addLine(map, id, lngLatCoords, paint) {
+  safeRemoveLayerAndSource(map, id);
+
+  map.addSource(id, {
+    type: "geojson",
+    data: {
+      type: "Feature",
+      properties: {},
+      geometry: { type: "LineString", coordinates: lngLatCoords }
+    }
+  });
+
+  map.addLayer({ id, type: "line", source: id, paint });
+  return id;
+}
+
+/**
  * Fetch and display OTP itineraries using GraphQL API
  * @param {number} fromLat - Starting latitude
  * @param {number} fromLon - Starting longitude
@@ -133,6 +217,9 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
               latitude
               longitude
             }
+            pointsOnLink {
+              points
+            }
             line {
               publicCode
               name
@@ -140,6 +227,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
             serviceJourney {
               id
             }
+            steps
           }
         }
       }
@@ -299,6 +387,10 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
             convertedLeg.serviceJourney = leg.serviceJourney;
           }
           
+          // Store geometry data from OTP
+          convertedLeg.pointsOnLink = leg.pointsOnLink || null;
+          convertedLeg.steps = leg.steps || null;
+          
           return convertedLeg;
         })
       };
@@ -306,13 +398,28 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     });
 
     // Store converted itineraries globally
-    currentItins = convertedItineraries;
-    window.currentItins = convertedItineraries; // Also set on window for compatibility
+    // Filter itineraries to max 2 transfers (walk legs don't count)
+    const MAX_TRANSFERS = 2;
+    function countTransfers(itin) {
+      const transitLegs = (itin.legs || []).filter(l => l.mode !== 'WALK');
+      return Math.max(0, transitLegs.length - 1);
+    }
+    
+    // Sort by duration (shortest first)
+    convertedItineraries.sort((a, b) => a.duration - b.duration);
+    
+    // Filter to max transfers
+    const filtered = convertedItineraries.filter(it => countTransfers(it) <= MAX_TRANSFERS);
+    
+    // Use filtered if available, otherwise fall back to all (so user isn't stuck)
+    currentItins = filtered.length ? filtered : convertedItineraries;
+    window.currentItins = currentItins; // Also set on window for compatibility
     console.log('Converted itineraries:', currentItins);
+    console.log(`Filtered ${convertedItineraries.length} itineraries to ${currentItins.length} (max ${MAX_TRANSFERS} transfers)`);
     
     // Enhanced OTP route debugging
     console.log('=== OTP ROUTE ANALYSIS (GraphQL) ===');
-    convertedItineraries.forEach((itin, idx) => {
+    currentItins.forEach((itin, idx) => {
       console.log(`\n--- Itinerary ${idx + 1} ---`);
       console.log(`Total Duration: ${Math.round(itin.duration/60)} minutes`);
       console.log(`Start Time: ${new Date(itin.startTime).toLocaleTimeString()}`);
@@ -334,7 +441,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     });
     console.log('=== END OTP ROUTE ANALYSIS ===');
     
-    renderItinListVisual(convertedItineraries);
+    renderItinListVisual(currentItins);
 
   } catch (e) {
     console.error('OTP Error:', e);
@@ -799,249 +906,159 @@ async function showRoute(idx) {
       console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription, 'direction:', direction);
     }
     
-    // Render path for ALL legs (including walking)
-    // For transit legs: Load actual route shape data (FULL route, not clipped)
-    // For walking legs: Get actual walking path using OSRM
+    // --- Geometry-first leg rendering ---
+    // Goal:
+    // - WALK: solid gray, uses OTP steps if available (fallback OSRM, then straight line)
+    // - TRANSIT: dashed prefix/suffix and solid middle, using pointsOnLink.points and snapping split indices to from/to.
     let coords = [];
-    let routeShapeInfo = null; // Store info about where to split for solid/dashed later
-    
-    console.log(`[showRoute] Processing ${leg.mode} leg ${legIndex}:`, {
-      mode: leg.mode,
-      route: leg.route,
-      direction: leg.direction,
-      hasFromPlace: !!(leg.fromPlace && leg.fromPlace.latitude),
-      hasToPlace: !!(leg.toPlace && leg.toPlace.latitude)
-    });
-    
-    if (leg.mode !== 'WALK' && leg.route && leg.direction !== undefined) {
-      // Transit leg: Load actual route shape (FULL route)
-      console.log(`[showRoute] Loading route shape for ${leg.mode} leg ${legIndex}, route ${leg.route}, direction ${leg.direction}`);
-      
-      try {
-        // Use window.getRouteData if available
-        if (typeof window.getRouteData !== 'function') {
-          throw new Error('getRouteData function not available');
-        }
-        
-        console.log(`[showRoute] Calling getRouteData(${leg.route}, ${leg.direction})`);
-        const routeData = await window.getRouteData(leg.route, leg.direction);
-        console.log(`[showRoute] Route data loaded:`, {
-          hasShape: !!(routeData && routeData.shape),
-          shapeLength: routeData?.shape?.length || 0,
-          hasStops: !!(routeData && routeData.stops),
-          stopsLength: routeData?.stops?.length || 0
-        });
-        
-        if (routeData && routeData.shape && Array.isArray(routeData.shape) && routeData.shape.length > 0) {
-          // Use the FULL route shape (not clipped)
-          coords = routeData.shape;
-          console.log(`[showRoute] ✅ Using FULL route shape for route ${leg.route}, ${coords.length} points`);
-          
-          // Find start and end stops in the route for later solid/dashed styling
-          const fromLat = leg.fromPlace?.latitude;
-          const fromLon = leg.fromPlace?.longitude;
-          const toLat = leg.toPlace?.latitude;
-          const toLon = leg.toPlace?.longitude;
-          
-          if (fromLat && fromLon && toLat && toLon && routeData.stops && Array.isArray(routeData.stops)) {
-            // Find closest stops to fromPlace and toPlace
-            let startStopIdx = -1;
-            let endStopIdx = -1;
-            let minStartDist = Infinity;
-            let minEndDist = Infinity;
-            
-            routeData.stops.forEach((stop, idx) => {
-              if (stop.lat && stop.lon) {
-                const distToStart = Math.sqrt(
-                  Math.pow(stop.lat - fromLat, 2) + Math.pow(stop.lon - fromLon, 2)
-                );
-                const distToEnd = Math.sqrt(
-                  Math.pow(stop.lat - toLat, 2) + Math.pow(stop.lon - toLon, 2)
-                );
-                
-                if (distToStart < minStartDist) {
-                  minStartDist = distToStart;
-                  startStopIdx = idx;
-                }
-                if (distToEnd < minEndDist) {
-                  minEndDist = distToEnd;
-                  endStopIdx = idx;
-                }
-              }
-            });
-            
-            // Find shape points closest to start and end stops (for solid/dashed split later)
-            if (startStopIdx >= 0 && endStopIdx >= 0 && startStopIdx !== endStopIdx) {
-              const actualStart = Math.min(startStopIdx, endStopIdx);
-              const actualEnd = Math.max(startStopIdx, endStopIdx);
-              
-              const startStop = routeData.stops[actualStart];
-              const endStop = routeData.stops[actualEnd];
-              
-              let startShapeIdx = 0;
-              let endShapeIdx = routeData.shape.length - 1;
-              let minStartShapeDist = Infinity;
-              let minEndShapeDist = Infinity;
-              
-              routeData.shape.forEach((shapePoint, idx) => {
-                if (shapePoint && shapePoint.length === 2) {
-                  const distToStart = Math.sqrt(
-                    Math.pow(shapePoint[0] - startStop.lat, 2) + Math.pow(shapePoint[1] - startStop.lon, 2)
-                  );
-                  const distToEnd = Math.sqrt(
-                    Math.pow(shapePoint[0] - endStop.lat, 2) + Math.pow(shapePoint[1] - endStop.lon, 2)
-                  );
-                  
-                  if (distToStart < minStartShapeDist) {
-                    minStartShapeDist = distToStart;
-                    startShapeIdx = idx;
-                  }
-                  if (distToEnd < minEndShapeDist) {
-                    minEndShapeDist = distToEnd;
-                    endShapeIdx = idx;
-                  }
-                }
-              });
-              
-              // Store split points for solid/dashed styling (we'll use this later)
-              routeShapeInfo = {
-                startShapeIdx: Math.min(startShapeIdx, endShapeIdx),
-                endShapeIdx: Math.max(startShapeIdx, endShapeIdx),
-                startStopIdx: actualStart,
-                endStopIdx: actualEnd
-              };
-              console.log(`[showRoute] Found stop indices: ${actualStart} to ${actualEnd}, shape indices: ${routeShapeInfo.startShapeIdx} to ${routeShapeInfo.endShapeIdx}`);
-            }
-          }
-        } else {
-          console.warn(`[showRoute] ❌ Route ${leg.route} has no shape data, falling back to straight line`);
-          // Fallback to straight line
-          if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
-            coords = [
-              [leg.fromPlace.latitude, leg.fromPlace.longitude],
-              [leg.toPlace.latitude, leg.toPlace.longitude]
-            ];
-          }
-        }
-      } catch (error) {
-        console.error(`[showRoute] ❌ Error loading route shape for ${leg.route}:`, error);
-        console.error(`[showRoute] Error details:`, error.message, error.stack);
-        // Fallback to straight line
-        if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
-          coords = [
-            [leg.fromPlace.latitude, leg.fromPlace.longitude],
-            [leg.toPlace.latitude, leg.toPlace.longitude]
-          ];
-        }
-      }
-    } else if (leg.mode === 'WALK' && leg.fromPlace && leg.toPlace) {
-      // Walking leg: Get actual walking path using OSRM (free routing service)
-      const fromLat = leg.fromPlace.latitude;
-      const fromLon = leg.fromPlace.longitude;
-      const toLat = leg.toPlace.latitude;
-      const toLon = leg.toPlace.longitude;
-      
-      if (fromLat && fromLon && toLat && toLon) {
+    const fromLat = leg.fromPlace?.latitude;
+    const fromLon = leg.fromPlace?.longitude;
+    const toLat = leg.toPlace?.latitude;
+    const toLon = leg.toPlace?.longitude;
+
+    // ----------------------------
+    // 1) Transit geometry from OTP pointsOnLink
+    // ----------------------------
+    if (leg.mode !== "WALK") {
+      const otpPts = leg.pointsOnLink?.points;
+      if (otpPts) {
         try {
-          // Use OSRM (Open Source Routing Machine) for walking directions
-          // OSRM demo server: http://router.project-osrm.org
-          const osrmUrl = `https://router.project-osrm.org/route/v1/walking/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
-          
-          const response = await fetch(osrmUrl);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.code === 'Ok' && data.routes && data.routes.length > 0 && data.routes[0].geometry) {
-              // OSRM returns coordinates in [lng, lat] format
-              const geometry = data.routes[0].geometry.coordinates;
-              // Convert to [lat, lng] format to match our system
-              coords = geometry.map(coord => [coord[1], coord[0]]);
-              console.log(`[showRoute] Using OSRM walking path for leg ${legIndex}, ${coords.length} points`);
-            } else {
-              throw new Error('OSRM returned no route');
-            }
-          } else {
-            throw new Error(`OSRM request failed: ${response.status}`);
-          }
-        } catch (error) {
-          console.warn(`[showRoute] Error getting walking path from OSRM:`, error, 'Falling back to straight line');
-          // Fallback to straight line
-          coords = [
-            [fromLat, fromLon],
-            [toLat, toLon]
-          ];
+          coords = decodePolyline(otpPts); // returns [lat, lon]
+          console.log(`[showRoute] ✅ Using OTP pointsOnLink for ${leg.mode} leg ${legIndex}, ${coords.length} points`);
+          if (!Array.isArray(coords) || coords.length < 2) coords = [];
+        } catch (e) {
+          console.warn("[showRoute] Failed to decode OTP pointsOnLink.points:", e);
+          coords = [];
         }
-      } else {
-        console.warn(`[showRoute] No coordinates available for walking leg ${legIndex}`);
-      }
-    } else {
-      // No route and not walking: Use straight line
-      if (leg.fromPlace && leg.toPlace && leg.fromPlace.latitude && leg.fromPlace.longitude && leg.toPlace.latitude && leg.toPlace.longitude) {
-        coords = [
-          [leg.fromPlace.latitude, leg.fromPlace.longitude],
-          [leg.toPlace.latitude, leg.toPlace.longitude]
-        ];
-        console.log(`[showRoute] Using fromPlace/toPlace coordinates for ${leg.mode} leg ${legIndex}`);
-      } else {
-        console.warn(`[showRoute] No coordinates available for ${leg.mode} leg ${legIndex}`);
       }
     }
-    
-    // Render path for all legs with geometry (walking and transit)
-    if (coords.length) {
-      console.log(`[showRoute] Rendering ${leg.mode} leg ${legIndex} with ${coords.length} coordinates`);
-      if (coords.length === 2) {
-        console.warn(`[showRoute] ⚠️ Only 2 coordinates (straight line fallback) for ${leg.mode} leg ${legIndex}`);
-      }
-      
-      // Convert coordinates to [lng, lat] format for MapLibre GL JS
-      const lineCoords = coords.map(coord => [coord[1], coord[0]]);
-      
-      // Adjust line style based on mode
-      const lineWidth = leg.mode === 'WALK' ? 3 : 4; // Slightly thinner for walking
-      const lineOpacity = leg.mode === 'WALK' ? 0.6 : 0.7;
-      const dashArray = leg.mode === 'WALK' ? [5, 5] : null; // Dashed for walking
-      
-      // Create a unique source and layer ID for this line
-      const lineId = `routeLeg-${legIndex}`;
-      
-      map.addSource(lineId, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {
-            mode: leg.mode,
-            legIndex: legIndex
-          },
-          geometry: {
-            type: 'LineString',
-            coordinates: lineCoords
+
+    // ----------------------------
+    // 2) Walking geometry (best effort)
+    //    - Prefer OTP steps if they include lat/lon (schema-dependent)
+    //    - Else OSRM fallback
+    // ----------------------------
+    if (leg.mode === "WALK") {
+      // Attempt to derive from steps if they contain coordinates
+      if (Array.isArray(leg.steps) && leg.steps.length) {
+        const stepCoords = [];
+        for (const s of leg.steps) {
+          const lat = s?.latitude ?? s?.lat ?? s?.location?.latitude ?? null;
+          const lon = s?.longitude ?? s?.lon ?? s?.location?.longitude ?? null;
+          if (typeof lat === "number" && typeof lon === "number") {
+            stepCoords.push([lat, lon]);
           }
         }
-      });
-      
-      const layerPaint = {
-        'line-color': color,
-        'line-width': lineWidth,
-        'line-opacity': lineOpacity
-      };
-      
-      // Add dash array for walking segments
-      if (dashArray) {
-        layerPaint['line-dasharray'] = dashArray;
+        if (stepCoords.length > 1) {
+          coords = stepCoords;
+          console.log(`[showRoute] ✅ Using OTP steps for walking leg ${legIndex}, ${coords.length} points`);
+        }
       }
-      
-      map.addLayer({
-        id: lineId,
-        type: 'line',
-        source: lineId,
-        paint: layerPaint
-      });
-      
-      // Store the layer ID for removal
-      if (!window.routeLegLines) {
-        window.routeLegLines = [];
+
+      // OSRM fallback if still empty
+      if (!coords.length && fromLat && fromLon && toLat && toLon) {
+        try {
+          const osrmUrl = `https://router.project-osrm.org/route/v1/walking/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
+          const r = await fetch(osrmUrl);
+          if (r.ok) {
+            const data = await r.json();
+            const geometry = data?.routes?.[0]?.geometry?.coordinates;
+            if (geometry && geometry.length > 1) {
+              coords = geometry.map(c => [c[1], c[0]]); // [lat, lon]
+              console.log(`[showRoute] ✅ Using OSRM for walking leg ${legIndex}, ${coords.length} points`);
+            }
+          }
+        } catch (e) {
+          console.warn("[showRoute] OSRM walking fallback failed:", e);
+        }
       }
-      window.routeLegLines.push(lineId);
+    }
+
+    // ----------------------------
+    // 3) Last resort: straight line
+    // ----------------------------
+    if (!coords.length && fromLat && fromLon && toLat && toLon) {
+      coords = [[fromLat, fromLon], [toLat, toLon]];
+      console.warn(`[showRoute] ⚠️ Using straight line fallback for ${leg.mode} leg ${legIndex}`);
+    }
+
+    // ----------------------------
+    // 4) Draw it:
+    //    WALK = solid gray
+    //    TRANSIT = dashed ends + solid middle (same color)
+    // ----------------------------
+    if (coords.length > 1) {
+      const baseId = `routeLeg-${legIndex}`;
+      window.routeLegLines = window.routeLegLines || [];
+
+      if (leg.mode === "WALK") {
+        // ✅ WALK = SOLID GRAY
+        const walkId = `${baseId}-walk`;
+        addLine(map, walkId, toMapLibreCoords(coords), {
+          "line-color": "#777",
+          "line-width": 4,
+          "line-opacity": 0.85
+        });
+        window.routeLegLines.push(walkId);
+
+      } else {
+        // ✅ TRANSIT = dashed prefix, solid middle, dashed suffix (same color)
+        // Find split indices by snapping to nearest geometry point to from/to coordinates
+        let startIdx = 0;
+        let endIdx = coords.length - 1;
+
+        if (fromLat && fromLon && toLat && toLon && coords.length > 10) {
+          const a = findNearestPointIndex(coords, fromLat, fromLon);
+          const b = findNearestPointIndex(coords, toLat, toLon);
+          startIdx = Math.min(a, b);
+          endIdx = Math.max(a, b);
+        }
+
+        // ensure mid has meaningful length
+        if ((endIdx - startIdx) < 2) {
+          startIdx = 0;
+          endIdx = coords.length - 1;
+        }
+
+        const pre = coords.slice(0, startIdx + 1);
+        const mid = coords.slice(startIdx, endIdx + 1);
+        const post = coords.slice(endIdx);
+
+        const dash = [2, 2]; // short dashed ends
+
+        if (pre.length > 1) {
+          const preId = `${baseId}-pre`;
+          addLine(map, preId, toMapLibreCoords(pre), {
+            "line-color": color,
+            "line-width": 5,
+            "line-opacity": 0.65,
+            "line-dasharray": dash
+          });
+          window.routeLegLines.push(preId);
+        }
+
+        if (mid.length > 1) {
+          const midId = `${baseId}-mid`;
+          addLine(map, midId, toMapLibreCoords(mid), {
+            "line-color": color,
+            "line-width": 6,      // slightly thicker for the "selected segment"
+            "line-opacity": 0.95
+          });
+          window.routeLegLines.push(midId);
+        }
+
+        if (post.length > 1) {
+          const postId = `${baseId}-post`;
+          addLine(map, postId, toMapLibreCoords(post), {
+            "line-color": color,
+            "line-width": 5,
+            "line-opacity": 0.65,
+            "line-dasharray": dash
+          });
+          window.routeLegLines.push(postId);
+        }
+      }
+
       allCoords = allCoords.concat(coords);
     }
     
