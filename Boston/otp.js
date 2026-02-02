@@ -227,6 +227,17 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
             serviceJourney {
               id
             }
+            serviceJourneyEstimatedCalls {
+              stopPlace {
+                name
+                latitude
+                longitude
+              }
+              aimedArrivalTime
+              aimedDepartureTime
+              expectedArrivalTime
+              expectedDepartureTime
+            }
           }
         }
       }
@@ -399,6 +410,12 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
             convertedLeg.serviceJourney = leg.serviceJourney;
           }
           
+          // Store estimated calls (stops) if available
+          if (leg.serviceJourneyEstimatedCalls && Array.isArray(leg.serviceJourneyEstimatedCalls)) {
+            convertedLeg.estimatedCalls = leg.serviceJourneyEstimatedCalls;
+            console.log(`[OTP] Found ${leg.serviceJourneyEstimatedCalls.length} estimated calls for ${leg.mode} leg`);
+          }
+          
           // Store geometry data from OTP
           convertedLeg.pointsOnLink = leg.pointsOnLink || null;
           
@@ -540,43 +557,91 @@ function renderItinListVisual(itins) {
     }).join('');
     // Overlay details for route info
     const details = itin.legs.map((leg, j) => {
-      let modeTxt = (leg.mode === 'WALK' || leg.mode === 'FOOT') ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode;
+      let modeTxt = (leg.mode === 'WALK' || leg.mode === 'FOOT') ? 'Walk' : leg.mode === 'BUS' ? 'Bus' : leg.mode === 'TRAIN' ? 'Train' : leg.mode === 'TRAM' ? 'Tram' : leg.mode === 'SUBWAY' || leg.mode === 'METRO' ? 'Subway' : leg.mode;
       let lineInfo = '';
-      if (leg.mode === 'BUS' && leg.route) {
-        // Use route data from OTP GraphQL response
-        const routeNumber = leg.routeShortName || leg.route;
+      let unitInfo = '';
+      let stopList = '';
+      
+      // Build route/line information
+      if (leg.mode !== 'WALK' && leg.mode !== 'FOOT') {
+        const routeNumber = leg.routeShortName || leg.route || '';
         const routeName = leg.routeLongName || routeNumber;
         
-        // Check if we have live bus info for this route
-        let busNumbers = '';
-        if (window.otpBusInfo && window.otpBusInfo[leg.route]) {
+        // Get unit numbers (bus/tram numbers) from live data
+        if (window.otpBusInfo && leg.route && window.otpBusInfo[leg.route]) {
           const buses = window.otpBusInfo[leg.route];
-          busNumbers = buses.map(b => b.vehicleID).join(', ');
-          lineInfo = ` <b>Bus ${routeNumber} (${busNumbers}) - ${routeName}</b>`;
-        } else {
-          lineInfo = ` <b>Bus ${routeNumber} - ${routeName}</b>`;
+          const unitNumbers = buses.map(b => {
+            // Clean vehicle ID (remove 'y' prefix if present)
+            const vid = String(b.vehicleID || '').replace(/^[^0-9]+/, '');
+            return vid;
+          }).filter(v => v).join(', ');
+          if (unitNumbers) {
+            unitInfo = ` <span style="color:#4CAF50;">Unit${buses.length > 1 ? 's' : ''}: ${unitNumbers}</span>`;
+          }
         }
-      } else if (leg.route) {
-        lineInfo = ` <b>${leg.route}</b>`;
+        
+        // Build line info based on mode
+        if (leg.mode === 'BUS') {
+          lineInfo = ` <b>Bus ${routeNumber}</b>${routeName && routeName !== routeNumber ? ` - ${routeName}` : ''}`;
+        } else if (leg.mode === 'TRAM') {
+          lineInfo = ` <b>Tram ${routeNumber}</b>${routeName && routeName !== routeNumber ? ` - ${routeName}` : ''}`;
+        } else if (leg.mode === 'SUBWAY' || leg.mode === 'METRO') {
+          lineInfo = ` <b>Subway ${routeNumber}</b>${routeName && routeName !== routeNumber ? ` - ${routeName}` : ''}`;
+        } else if (leg.mode === 'RAIL' || leg.mode === 'TRAIN') {
+          lineInfo = ` <b>Train ${routeNumber}</b>${routeName && routeName !== routeNumber ? ` - ${routeName}` : ''}`;
+        } else if (leg.route) {
+          lineInfo = ` <b>${leg.mode} ${routeNumber}</b>${routeName && routeName !== routeNumber ? ` - ${routeName}` : ''}`;
+        }
       }
-      // PHASE 1: Fix references to non-existent fields
-      // leg.startTime and leg.endTime don't exist - use itinerary times or omit
-      // leg.intermediateStops doesn't exist - omit
-      // leg.info doesn't exist - omit
-      let fromTime = ''; // Not available at leg level
-      let toTime = ''; // Not available at leg level
-      let stopTimes = ''; // intermediateStops not in schema
-      // Note: Times are at tripPattern level, not leg level
       
-      return `<div>
-        → <b>${modeTxt}${lineInfo}</b>
-        <span style="color:#ffc107;">${Math.round((leg.duration||0)/60)} min</span><br>
-        <span style="font-size:0.96em; color:#aaa;">
-          ${fromTime ? `Depart: <b>${fromTime}</b>` : ''}${fromTime && toTime ? ' | ' : ''}${toTime ? `Arrive: <b>${toTime}</b>` : ''}
-        </span>
-        ${stopTimes}
+      // Build stop list from estimated calls
+      if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
+        const stops = leg.estimatedCalls.map((call, idx) => {
+          const stopName = call.stopPlace?.name || 'Unknown Stop';
+          const arrivalTime = call.expectedArrivalTime || call.aimedArrivalTime;
+          const departureTime = call.expectedDepartureTime || call.aimedDepartureTime;
+          const timeStr = arrivalTime || departureTime;
+          
+          let timeDisplay = '';
+          if (timeStr) {
+            try {
+              const time = new Date(timeStr);
+              timeDisplay = getPortlandTimeString(time);
+            } catch (e) {
+              // Ignore time parsing errors
+            }
+          }
+          
+          // Highlight start and end stops
+          const isStart = idx === 0;
+          const isEnd = idx === leg.estimatedCalls.length - 1;
+          const stopStyle = isStart || isEnd ? 'font-weight:bold; color:#4CAF50;' : 'color:#ccc;';
+          
+          return `<div style="${stopStyle} font-size:0.9em; margin-left:15px; margin-top:2px;">
+            ${isStart ? '📍' : isEnd ? '🎯' : '•'} ${stopName}${timeDisplay ? ` <span style="color:#ffc107;">(${timeDisplay})</span>` : ''}
+          </div>`;
+        }).join('');
+        
+        stopList = `<div style="margin-top:5px; max-height:200px; overflow-y:auto;">
+          <div style="font-size:0.85em; color:#888; margin-bottom:3px;">Stops:</div>
+          ${stops}
+        </div>`;
+      } else {
+        // Fallback: show from/to places if no estimated calls
+        if (leg.fromPlace && leg.toPlace) {
+          stopList = `<div style="margin-top:5px; font-size:0.9em; color:#ccc;">
+            <div style="margin-left:15px;">📍 ${leg.fromPlace.name || 'Start'}</div>
+            <div style="margin-left:15px;">🎯 ${leg.toPlace.name || 'End'}</div>
+          </div>`;
+        }
+      }
+      
+      return `<div style="margin-bottom:8px;">
+        → <b>${modeTxt}${lineInfo}</b>${unitInfo}
+        <span style="color:#ffc107;">${Math.round((leg.duration||0)/60)} min</span>
+        ${stopList}
       </div>`;
-    }).join('<hr style="border:0; border-top:1px solid #222; margin:5px 0 4px 0">');
+    }).join('<hr style="border:0; border-top:1px solid #222; margin:8px 0">');
     return `<div class="itinListOption ${window.selectedTripIndex === idx ? 'selected' : ''}" data-idx="${idx}">
       <button class="itin-dropdown-btn" onclick="event.stopPropagation();toggleDropdown(${idx})">&#9660;</button>
       <div onclick="showRoute(${idx})">
@@ -956,25 +1021,38 @@ async function showRoute(idx) {
 
     // ----------------------------
     // 2) Walking geometry (best effort)
-    //    - Use OSRM for walking paths
+    //    - Use OSRM for walking paths (follows actual streets)
     // ----------------------------
     if (leg.mode === "WALK") {
-      // Use OSRM for walking paths
+      // Use OSRM for walking paths (follows actual streets, not straight lines)
       if (!coords.length && fromLat && fromLon && toLat && toLon) {
         try {
+          console.log(`[showRoute] Fetching OSRM walking path from (${fromLat}, ${fromLon}) to (${toLat}, ${toLon})`);
           const osrmUrl = `https://router.project-osrm.org/route/v1/walking/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
           const r = await fetch(osrmUrl);
           if (r.ok) {
             const data = await r.json();
-            const geometry = data?.routes?.[0]?.geometry?.coordinates;
-            if (geometry && geometry.length > 1) {
-              coords = geometry.map(c => [c[1], c[0]]); // [lat, lon]
-              console.log(`[showRoute] ✅ Using OSRM for walking leg ${legIndex}, ${coords.length} points`);
+            if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+              const geometry = data.routes[0].geometry?.coordinates;
+              if (geometry && geometry.length > 1) {
+                coords = geometry.map(c => [c[1], c[0]]); // [lat, lon]
+                const distance = data.routes[0].distance || 0;
+                console.log(`[showRoute] ✅ Using OSRM for walking leg ${legIndex}, ${coords.length} points, ${Math.round(distance)}m distance`);
+                console.log(`[showRoute] OSRM path follows streets (not straight line)`);
+              } else {
+                console.warn(`[showRoute] OSRM returned no geometry`);
+              }
+            } else {
+              console.warn(`[showRoute] OSRM returned error: ${data.code}`);
             }
+          } else {
+            console.warn(`[showRoute] OSRM request failed: ${r.status}`);
           }
         } catch (e) {
           console.warn("[showRoute] OSRM walking fallback failed:", e);
         }
+      } else if (!coords.length) {
+        console.warn(`[showRoute] Cannot fetch walking path - missing coordinates`);
       }
     }
 
