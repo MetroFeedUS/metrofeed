@@ -346,7 +346,20 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
         duration: pattern.duration,
         legs: pattern.legs.map(leg => {
           // Normalize mode to uppercase for consistency
-          const normalizedMode = leg.mode === 'bus' ? 'BUS' : (leg.mode === 'walk' || leg.mode === 'foot') ? 'WALK' : leg.mode.toUpperCase();
+          // OTP returns lowercase modes: bus, walk, foot, subway, metro, rail, tram, ferry, etc.
+          let normalizedMode = leg.mode;
+          if (leg.mode === 'bus') {
+            normalizedMode = 'BUS';
+          } else if (leg.mode === 'walk' || leg.mode === 'foot') {
+            normalizedMode = 'WALK';
+          } else if (leg.mode === 'subway' || leg.mode === 'metro') {
+            normalizedMode = 'SUBWAY';
+          } else if (leg.mode === 'rail' || leg.mode === 'train') {
+            normalizedMode = 'RAIL';
+          } else {
+            // Uppercase other modes (tram, ferry, cable_car, etc.)
+            normalizedMode = leg.mode.toUpperCase();
+          }
           
           // Build leg object with GraphQL data
           const convertedLeg = {
@@ -504,7 +517,17 @@ function renderItinListVisual(itins) {
         icon = '⛴️';
         segClass = 'seg-ferry';
         label = leg.route ? `Ferry ${leg.route}` : 'Ferry';
+      } else if (leg.mode === 'SUBWAY' || leg.mode === 'METRO') {
+        icon = '🚇';
+        segClass = 'seg-subway';
+        label = leg.route ? `Subway ${leg.route}` : 'Subway';
+      } else if (leg.mode === 'CABLE_CAR' || leg.mode === 'GONDOLA' || leg.mode === 'FUNICULAR') {
+        icon = '🚠';
+        segClass = 'seg-cablecar';
+        label = leg.route ? `${leg.mode.replace('_', ' ')} ${leg.route}` : leg.mode.replace('_', ' ');
       } else {
+        // Unknown mode - log it for debugging
+        console.warn(`[renderItinListVisual] Unknown leg mode: "${leg.mode}"`);
         icon = '❓';
         segClass = '';
         label = leg.mode;
