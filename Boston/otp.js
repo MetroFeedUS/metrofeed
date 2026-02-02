@@ -1106,14 +1106,14 @@ async function showRoute(idx) {
         const mid = coords.slice(startIdx, endIdx + 1);
         const post = coords.slice(endIdx);
 
-        const dash = [2, 2]; // short dashed ends
+        const dash = [5, 3]; // more pronounced dashed ends
 
         if (pre.length > 1) {
           const preId = `${baseId}-pre`;
           addLine(map, preId, toMapLibreCoords(pre), {
             "line-color": color,
-            "line-width": 5,
-            "line-opacity": 0.65,
+            "line-width": 6,      // increased from 5 for more visibility
+            "line-opacity": 0.8,  // increased from 0.65 for more visibility
             "line-dasharray": dash
           });
           window.routeLegLines.push(preId);
@@ -1133,8 +1133,8 @@ async function showRoute(idx) {
           const postId = `${baseId}-post`;
           addLine(map, postId, toMapLibreCoords(post), {
             "line-color": color,
-            "line-width": 5,
-            "line-opacity": 0.65,
+            "line-width": 6,      // increased from 5 for more visibility
+            "line-opacity": 0.8,  // increased from 0.65 for more visibility
             "line-dasharray": dash
           });
           window.routeLegLines.push(postId);
