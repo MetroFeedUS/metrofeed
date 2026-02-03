@@ -791,15 +791,36 @@ async function normalizeItineraries(convertedItineraries) {
  * @returns {Object} { routeNumber, direction, line }
  */
 async function extractRouteInfo(leg, legIdx) {
-  let routeNumber = leg.route || null;
+  let routeNumber = null;
   let direction = 0; // Default
-  let line = {
+  
+  // Preserve original leg.line if available (contains publicCode, name, etc.)
+  let line = leg.line ? {
+    id: leg.line.publicCode || leg.route || null,
+    name: leg.line.name || leg.routeLongName || leg.routeShortName || leg.route || null,
+    publicCode: leg.line.publicCode || null,
+    color: null // Will be assigned later
+  } : {
     id: leg.route || null,
     name: leg.routeLongName || leg.routeShortName || leg.route || null,
+    publicCode: null,
     color: null // Will be assigned later
   };
   
-  // Extract route description
+  // ⚠️ PRIORITY 1: Use OTP's publicCode directly (most reliable for Boston)
+  if (leg.line && leg.line.publicCode) {
+    routeNumber = leg.line.publicCode;
+    console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}):`);
+    console.log(`🔍 [extractRouteInfo]   ✅ Using OTP publicCode:`, routeNumber);
+  }
+  // ⚠️ PRIORITY 2: Use leg.route if publicCode not available
+  else if (leg.route) {
+    routeNumber = leg.route;
+    console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}):`);
+    console.log(`🔍 [extractRouteInfo]   ✅ Using leg.route:`, routeNumber);
+  }
+  
+  // Extract route description for logging/fallback
   let routeDescription = '';
   if (leg.line && leg.line.name) {
     routeDescription = leg.line.name;
@@ -811,25 +832,28 @@ async function extractRouteInfo(leg, legIdx) {
     routeDescription = leg.route;
   }
   
-  console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}):`);
-  console.log(`🔍 [extractRouteInfo]   Raw route:`, leg.route);
-  console.log(`🔍 [extractRouteInfo]   Description:`, routeDescription);
+  if (!routeNumber) {
+    console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}):`);
+    console.log(`🔍 [extractRouteInfo]   Raw route:`, leg.route);
+    console.log(`🔍 [extractRouteInfo]   Description:`, routeDescription);
+  }
   
-  // Try to decode route number using mapping function
-  if (routeDescription && typeof window.mapOtpRouteToTrimet === 'function') {
+  // ⚠️ PRIORITY 3: Try to decode route number using mapping function (LAST RESORT)
+  // Only use this if we don't have a route number yet
+  if (!routeNumber && routeDescription && typeof window.mapOtpRouteToTrimet === 'function') {
     const decodedRouteNumber = window.mapOtpRouteToTrimet(routeDescription);
     if (decodedRouteNumber) {
       routeNumber = decodedRouteNumber;
-      console.log(`🔍 [extractRouteInfo]   ✅ Decoded route:`, routeNumber);
+      console.log(`🔍 [extractRouteInfo]   ⚠️ Decoded route via mapOtpRouteToTrimet:`, routeNumber);
     }
   }
   
-  // Fallback to masterRoutes search (if available)
+  // ⚠️ PRIORITY 4: Fallback to masterRoutes search (if available)
   if (!routeNumber && typeof window.findRouteByDescription === 'function') {
     const foundRoute = window.findRouteByDescription(routeDescription);
     if (foundRoute) {
       routeNumber = foundRoute.route_id;
-      console.log(`🔍 [extractRouteInfo]   ✅ Found via masterRoutes:`, routeNumber);
+      console.log(`🔍 [extractRouteInfo]   ⚠️ Found via masterRoutes:`, routeNumber);
     }
   }
   
@@ -1027,8 +1051,7 @@ function drawJourney(journey) {
   }
   
   let allCoords = [];
-  const routesToTrack = [];
-  const legColorMapping = {};
+  const routeList = []; // Store routes for selector modal
   
   // Render each leg
   journey.legs.forEach((leg, legIdx) => {
@@ -1052,65 +1075,26 @@ function drawJourney(journey) {
       allCoords = allCoords.concat(leg.solidSegment);
     }
     
-    // Draw transit leg (dashed/solid/dashed)
-    if (leg.type === 'TRANSIT') {
-      const baseId = `routeLeg-${leg.index}`;
+    // Draw transit leg (simple solid line - no dashed segments)
+    if (leg.type === 'TRANSIT' && leg.solidSegment && leg.solidSegment.length > 1) {
+      const transitId = `routeLeg-${leg.index}-transit`;
+      addLine(map, transitId, toMapLibreCoords(leg.solidSegment), {
+        "line-color": color,
+        "line-width": 6,
+        "line-opacity": 0.95
+      });
+      window.routeLegLines.push(transitId);
+      allCoords = allCoords.concat(leg.solidSegment);
       
-      // Draw dashed before segment
-      if (leg.dashedBefore && leg.dashedBefore.length > 1) {
-        const preId = `${baseId}-pre`;
-        addLine(map, preId, toMapLibreCoords(leg.dashedBefore), {
-          "line-color": color,
-          "line-width": 6,
-          "line-opacity": 0.8,
-          "line-dasharray": [5, 3]
-        });
-        window.routeLegLines.push(preId);
-      }
-      
-      // Draw solid middle segment
-      if (leg.solidSegment && leg.solidSegment.length > 1) {
-        const midId = `${baseId}-mid`;
-        addLine(map, midId, toMapLibreCoords(leg.solidSegment), {
-          "line-color": color,
-          "line-width": 6,
-          "line-opacity": 0.95
-        });
-        window.routeLegLines.push(midId);
-        allCoords = allCoords.concat(leg.solidSegment);
-      }
-      
-      // Draw dashed after segment
-      if (leg.dashedAfter && leg.dashedAfter.length > 1) {
-        const postId = `${baseId}-post`;
-        addLine(map, postId, toMapLibreCoords(leg.dashedAfter), {
-          "line-color": color,
-          "line-width": 6,
-          "line-opacity": 0.8,
-          "line-dasharray": [5, 3]
-        });
-        window.routeLegLines.push(postId);
-      }
-      
-      // Collect route for bus tracking (only bus-trackable modes)
-      const busTrackableModes = ['BUS', 'TRAM', 'RAIL', 'TRAIN', 'FERRY'];
-      if (busTrackableModes.includes(leg.mode) && leg.routeNumber) {
-        routesToTrack.push({
-          route_id: leg.routeNumber,
-          direction_id: leg.direction || 0,
-          mode: leg.mode
-        });
-        
-        // Store color mapping
-        const legKey = `${leg.mode}-${leg.routeNumber}-${leg.direction || 0}`;
-        legColorMapping[legKey] = {
-          color: color,
-          route: leg.routeNumber,
-          direction: leg.direction || 0,
-          mode: leg.mode,
-          description: leg.line?.name || `Route ${leg.routeNumber}`
-        };
-      }
+      // Store route info for selector modal
+      routeList.push({
+        routeId: leg.routeNumber,
+        directionId: leg.direction || 0,
+        mode: leg.mode,
+        color: color,
+        name: leg.line?.name || `Route ${leg.routeNumber}`,
+        legIndex: legIdx
+      });
     }
   });
   
@@ -1121,34 +1105,193 @@ function drawJourney(journey) {
     map.fitBounds(bounds, { padding: [40, 40] });
   }
   
-  // Store for bus tracking
-  window.routesToTrack = routesToTrack;
-  window.currentLegColorMapping = legColorMapping;
-  console.log('🎨 [drawJourney] Routes to track:', routesToTrack);
+  // Store route list for modal
+  window.otpRouteList = routeList;
+  console.log('🎨 [drawJourney] ✅ Extracted', routeList.length, 'routes for selector');
   
-  // Start bus tracking
-  if (routesToTrack.length > 0 && typeof window.fetchAndDisplayBuses === 'function') {
-    window.activeTripSelected = true;
-    window.fetchAndDisplayBuses([]); // Clear first
-    setTimeout(() => {
-      window.fetchAndDisplayBuses(routesToTrack);
-    }, 100);
-    
-    if (window.otpBusTrackingInterval) {
-      clearInterval(window.otpBusTrackingInterval);
-    }
-    window.otpBusTrackingInterval = setInterval(() => {
-      window.fetchAndDisplayBuses(routesToTrack);
-    }, 15000);
-  }
-  
-  // Draw extended routes if available
-  if (typeof window.drawExtendedRoutes === 'function') {
-    window.drawExtendedRoutes(legColorMapping);
+  // Show route selector modal
+  if (routeList.length > 0) {
+    showOtpRouteSelector(routeList);
   }
   
   // Log summary after drawing
   console.log('🎨 [drawJourney] ✅ Journey drawn successfully');
+}
+
+/**
+ * Show route selector modal with color-coordinated buttons
+ * @param {Array} routeList - Array of route objects with {routeId, directionId, mode, color, name}
+ */
+function showOtpRouteSelector(routeList) {
+  // Remove existing modal if present
+  const existingModal = document.getElementById('otpRouteSelectorModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  // Create modal container
+  const modal = document.createElement('div');
+  modal.id = 'otpRouteSelectorModal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: rgba(20, 20, 20, 0.95);
+    border: 2px solid #444;
+    border-radius: 8px;
+    padding: 12px;
+    z-index: 10000;
+    min-width: 200px;
+    max-width: 280px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+  
+  // Title
+  const title = document.createElement('div');
+  title.textContent = 'Routes in Trip';
+  title.style.cssText = `
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+  `;
+  modal.appendChild(title);
+  
+  // Route buttons container
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  `;
+  
+  // Create button for each route
+  routeList.forEach((route, idx) => {
+    const button = document.createElement('button');
+    button.textContent = route.name || `Route ${route.routeId}`;
+    button.style.cssText = `
+      background: ${route.color};
+      color: #fff;
+      border: 2px solid ${route.color};
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      position: relative;
+      padding-left: 40px;
+    `;
+    
+    // Color indicator dot
+    const dot = document.createElement('span');
+    dot.style.cssText = `
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 12px;
+      background: ${route.color};
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px ${route.color};
+    `;
+    button.appendChild(dot);
+    
+    // Hover effects
+    button.onmouseenter = () => {
+      button.style.opacity = '0.85';
+      button.style.transform = 'scale(1.02)';
+    };
+    button.onmouseleave = () => {
+      button.style.opacity = '1';
+      button.style.transform = 'scale(1)';
+    };
+    
+    // Track active state
+    let isActive = false;
+    const overlayKey = `${route.routeId}-${route.directionId}`;
+    
+    // Check if route is already active
+    if (window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]) {
+      isActive = true;
+      button.style.border = '2px solid #fff';
+      button.style.boxShadow = `0 0 8px ${route.color}`;
+    }
+    
+    // Click handler - toggle route overlay
+    button.onclick = () => {
+      console.log('🎨 [OtpRouteSelector] Clicked route:', route.routeId, 'direction:', route.directionId);
+      
+      // Toggle route overlay using existing system
+      if (typeof window.showRouteOverlay === 'function') {
+        window.showRouteOverlay(route.routeId, route.directionId);
+        
+        // Update button state after a short delay (to let overlay system update)
+        setTimeout(() => {
+          const nowActive = window.activeRouteOverlays && window.activeRouteOverlays[overlayKey];
+          if (nowActive) {
+            button.style.border = '2px solid #fff';
+            button.style.boxShadow = `0 0 8px ${route.color}`;
+            isActive = true;
+          } else {
+            button.style.border = `2px solid ${route.color}`;
+            button.style.boxShadow = 'none';
+            isActive = false;
+          }
+        }, 100);
+      } else {
+        console.error('🎨 [OtpRouteSelector] showRouteOverlay not available');
+        alert('Route overlay system not ready. Please refresh the page.');
+      }
+    };
+    
+    buttonsContainer.appendChild(button);
+  });
+  
+  modal.appendChild(buttonsContainer);
+  
+  // Close button
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 18px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  `;
+  closeBtn.onmouseenter = () => {
+    closeBtn.style.background = '#333';
+    closeBtn.style.color = '#fff';
+  };
+  closeBtn.onmouseleave = () => {
+    closeBtn.style.background = 'transparent';
+    closeBtn.style.color = '#999';
+  };
+  closeBtn.onclick = () => {
+    modal.remove();
+  };
+  modal.appendChild(closeBtn);
+  
+  // Append to body
+  document.body.appendChild(modal);
+  
+  console.log('🎨 [showOtpRouteSelector] Modal created with', routeList.length, 'routes');
 }
 
 /**
@@ -1158,6 +1301,17 @@ function drawJourney(journey) {
  */
 async function showRoute(idx) {
   console.log('🎨 [showRoute] Called with idx:', idx);
+  
+  // ⚠️ CRITICAL: Clear stale route tracking data FIRST
+  window.routesToTrack = [];
+  window.currentLegColorMapping = {};
+  console.log('🎨 [showRoute] ✅ Cleared stale routesToTrack and legColorMapping');
+  
+  // Clear existing route selector modal
+  const existingModal = document.getElementById('otpRouteSelectorModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
   
   // Get the normalized Journey object
   if (!window.journeys || !window.journeys[idx]) {
@@ -1179,6 +1333,15 @@ async function showRoute(idx) {
   }
   
   const journey = window.journeys[idx];
+  
+  // Log which journey we're drawing
+  console.log('🎨 [showRoute] Drawing Journey', idx, ':');
+  console.log('🎨 [showRoute]   Legs:', journey.legs.length);
+  journey.legs.forEach((leg, legIdx) => {
+    if (leg.mode !== 'WALK') {
+      console.log(`🎨 [showRoute]   Leg ${legIdx}: ${leg.mode} - Route ${leg.routeNumber || 'N/A'} (dir ${leg.direction || 0})`);
+    }
+  });
   
   // Store selected index
   window.selectedTripIndex = idx;
