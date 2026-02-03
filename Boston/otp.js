@@ -748,14 +748,31 @@ async function normalizeItineraries(convertedItineraries) {
   const journeys = [];
   
   for (let itinIdx = 0; itinIdx < convertedItineraries.length; itinIdx++) {
-    const itin = convertedItineraries[itinIdx];
-    const journey = new Journey(itin);
-    journey.id = itinIdx;
-    
-    console.log(`🔄 [normalizeItineraries] Processing itinerary ${itinIdx + 1}`);
-    
-    // Process each leg
-    for (let legIdx = 0; legIdx < itin.legs.length; legIdx++) {
+    try {
+      const itin = convertedItineraries[itinIdx];
+      console.log(`🔄 [normalizeItineraries] Processing itinerary ${itinIdx + 1}`, {
+        hasItin: !!itin,
+        hasLegs: !!(itin && itin.legs),
+        legsCount: itin?.legs?.length || 0
+      });
+      
+      if (!itin) {
+        console.warn(`⚠️ [normalizeItineraries] Itinerary ${itinIdx + 1} is null/undefined, skipping`);
+        continue;
+      }
+      
+      if (!itin.legs || !Array.isArray(itin.legs) || itin.legs.length === 0) {
+        console.warn(`⚠️ [normalizeItineraries] Itinerary ${itinIdx + 1} has no legs, skipping`);
+        continue;
+      }
+      
+      const journey = new Journey(itin);
+      journey.id = itinIdx;
+      
+      console.log(`🔄 [normalizeItineraries] Created Journey for itinerary ${itinIdx + 1}, processing ${itin.legs.length} legs`);
+      
+      // Process each leg
+      for (let legIdx = 0; legIdx < itin.legs.length; legIdx++) {
       try {
         const leg = itin.legs[legIdx];
         console.log(`🔄 [normalizeItineraries] Processing leg ${legIdx} of itinerary ${itinIdx + 1} (${leg.mode})`);
@@ -765,7 +782,7 @@ async function normalizeItineraries(convertedItineraries) {
         // Extract and normalize route number (for transit legs only)
         if (journeyLeg.type === 'TRANSIT') {
           console.log(`🔄 [normalizeItineraries] Extracting route info for leg ${legIdx}...`);
-          const routeInfo = await extractRouteInfo(leg, legIdx);
+          const routeInfo = extractRouteInfo(leg, legIdx);
           journeyLeg.routeNumber = routeInfo.routeNumber;
           journeyLeg.direction = routeInfo.direction;
           journeyLeg.line = routeInfo.line;
@@ -784,10 +801,15 @@ async function normalizeItineraries(convertedItineraries) {
         // Continue with next leg even if this one fails
         continue;
       }
+      }
+      
+      journeys.push(journey);
+      console.log(`🔄 [normalizeItineraries] ✅ Normalized itinerary ${itinIdx + 1}: ${journey.legs.length} legs, ${journey.transfers} transfers`);
+    } catch (error) {
+      console.error(`❌ [normalizeItineraries] Error processing itinerary ${itinIdx + 1}:`, error);
+      // Continue with next itinerary even if this one fails
+      continue;
     }
-    
-    journeys.push(journey);
-    console.log(`🔄 [normalizeItineraries] ✅ Normalized itinerary ${itinIdx + 1}: ${journey.legs.length} legs, ${journey.transfers} transfers`);
   }
   
   console.log('🔄 [normalizeItineraries] ✅ Normalization complete:', journeys.length, 'journeys');
@@ -801,7 +823,7 @@ async function normalizeItineraries(convertedItineraries) {
  * @param {number} legIdx - Leg index
  * @returns {Object} { routeNumber, direction, line }
  */
-async function extractRouteInfo(leg, legIdx) {
+function extractRouteInfo(leg, legIdx) {
   let routeNumber = null;
   let direction = 0; // Default
   
@@ -871,7 +893,7 @@ async function extractRouteInfo(leg, legIdx) {
   // Calculate direction (only for bus-trackable modes)
   const busTrackableModes = ['BUS', 'TRAM', 'RAIL', 'TRAIN', 'FERRY'];
   if (busTrackableModes.includes(leg.mode) && routeNumber) {
-    direction = await calculateDirection(leg, routeNumber, routeDescription);
+    direction = calculateDirection(leg, routeNumber, routeDescription);
     console.log(`🔍 [extractRouteInfo]   ✅ Direction:`, direction);
   }
   
@@ -885,7 +907,7 @@ async function extractRouteInfo(leg, legIdx) {
  * @param {string} routeDescription - Route description
  * @returns {number} Direction ID (0 or 1)
  */
-async function calculateDirection(leg, routeNumber, routeDescription) {
+function calculateDirection(leg, routeNumber, routeDescription) {
   let direction = 0; // Default fallback
   
   // Helper function
