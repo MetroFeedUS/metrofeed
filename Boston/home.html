@@ -4011,11 +4011,31 @@
       Object.values(busMarkers).forEach(m => m.remove());
       busMarkers = {};
       
-      // ⚠️ CRITICAL: If route overlays are active, don't show all buses - let overlays handle it
-      const hasActiveOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
-      if (hasActiveOverlays && !window.activeTripSelected) {
-        console.log('[fetchAndDisplayBuses] Route overlays are managing buses - skipping all buses mode');
-        return; // Exit early - route overlays will show their own buses
+      // ⚠️ CRITICAL: If OTP trip is active, don't show all buses
+      // Route overlays will handle buses, or we'll use routesToTrack
+      if (window.activeTripSelected) {
+        const hasActiveOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
+        const hasRoutesToTrack = window.routesToTrack && window.routesToTrack.length > 0;
+        
+        console.log('[fetchAndDisplayBuses] 🔍 OTP trip active - checking bus display mode');
+        console.log('[fetchAndDisplayBuses]   hasActiveOverlays:', hasActiveOverlays);
+        console.log('[fetchAndDisplayBuses]   hasRoutesToTrack:', hasRoutesToTrack);
+        
+        // If route overlays are active, let them handle buses (route selector modal)
+        if (hasActiveOverlays) {
+          console.log('[fetchAndDisplayBuses] ⚠️ EXITING: OTP trip active + route overlays active - route overlays will show buses');
+          return; // Exit early - route overlays will show their own buses
+        }
+        
+        // If no overlays but we have routesToTrack, we'll filter below (old OTP mode)
+        // If no overlays and no routesToTrack, still don't show all buses (route selector not clicked yet)
+        if (!hasRoutesToTrack) {
+          console.log('[fetchAndDisplayBuses] ⚠️ EXITING: OTP trip active but no routes to track - waiting for route selection');
+          return; // Exit early - don't show all buses when OTP is active
+        }
+        
+        // If we get here, we have routesToTrack (old mode) - continue to filter below
+        console.log('[fetchAndDisplayBuses] ✅ Continuing with routesToTrack filtering (old OTP mode)');
       }
       
       // Determine display mode
