@@ -1032,6 +1032,51 @@ async function clipLegGeometry(journeyLeg, leg) {
  * Simple renderer - just draws what's in the Journey object
  * @param {Journey} journey - Journey object to render
  */
+/**
+ * Map subway route codes to route names (MBTA specific)
+ * OTP returns codes like "200" for Red Line, but system expects "Red"
+ */
+function mapSubwayRouteCode(routeId, routeName) {
+  // If it's already a name (Red, Orange, etc.), return as-is
+  if (['Red', 'Orange', 'Blue', 'Green', 'Green-B', 'Green-C', 'Green-D', 'Green-E'].includes(routeId)) {
+    return routeId;
+  }
+  
+  // Map numeric codes to names
+  const codeMap = {
+    '200': 'Red',
+    '201': 'Orange',
+    '202': 'Blue',
+    '203': 'Green',
+    '204': 'Green-B',
+    '205': 'Green-C',
+    '206': 'Green-D',
+    '207': 'Green-E'
+  };
+  
+  if (codeMap[routeId]) {
+    return codeMap[routeId];
+  }
+  
+  // Try to extract from route name
+  if (routeName) {
+    const nameLower = routeName.toLowerCase();
+    if (nameLower.includes('red line')) return 'Red';
+    if (nameLower.includes('orange line')) return 'Orange';
+    if (nameLower.includes('blue line')) return 'Blue';
+    if (nameLower.includes('green line')) {
+      if (nameLower.includes('green-b') || nameLower.includes('green b')) return 'Green-B';
+      if (nameLower.includes('green-c') || nameLower.includes('green c')) return 'Green-C';
+      if (nameLower.includes('green-d') || nameLower.includes('green d')) return 'Green-D';
+      if (nameLower.includes('green-e') || nameLower.includes('green e')) return 'Green-E';
+      return 'Green';
+    }
+  }
+  
+  // Fallback: return original
+  return routeId;
+}
+
 function drawJourney(journey) {
   const map = window.map;
   if (!map) {
@@ -1086,13 +1131,17 @@ function drawJourney(journey) {
       window.routeLegLines.push(transitId);
       allCoords = allCoords.concat(leg.solidSegment);
       
-      // Store route info for selector modal
+      // Store route info for selector modal (map subway codes)
+      const routeName = leg.line?.name || `Route ${leg.routeNumber}`;
+      const mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
+      
       routeList.push({
-        routeId: leg.routeNumber,
+        routeId: mappedRouteId, // Use mapped ID (e.g., "Red" instead of "200")
+        originalRouteId: leg.routeNumber, // Keep original for reference
         directionId: leg.direction || 0,
         mode: leg.mode,
         color: color,
-        name: leg.line?.name || `Route ${leg.routeNumber}`,
+        name: routeName,
         legIndex: legIdx
       });
     }
@@ -1134,7 +1183,7 @@ function showOtpRouteSelector(routeList) {
   modal.id = 'otpRouteSelectorModal';
   modal.style.cssText = `
     position: fixed;
-    top: 80px;
+    top: 150px;
     right: 20px;
     background: rgba(20, 20, 20, 0.95);
     border: 2px solid #444;
@@ -1146,6 +1195,46 @@ function showOtpRouteSelector(routeList) {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   `;
+  
+  // Responsive styles for mobile
+  const mediaQuery = window.matchMedia('(max-width: 768px)');
+  function handleMobileView(e) {
+    if (e.matches) {
+      modal.style.cssText = `
+        position: fixed;
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        background: rgba(20, 20, 20, 0.95);
+        border: 2px solid #444;
+        border-radius: 8px;
+        padding: 10px;
+        z-index: 10000;
+        max-width: none;
+        width: calc(100% - 40px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      `;
+    } else {
+      modal.style.cssText = `
+        position: fixed;
+        top: 150px;
+        right: 20px;
+        background: rgba(20, 20, 20, 0.95);
+        border: 2px solid #444;
+        border-radius: 8px;
+        padding: 12px;
+        z-index: 10000;
+        min-width: 200px;
+        max-width: 280px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      `;
+    }
+  }
+  handleMobileView(mediaQuery);
+  mediaQuery.addEventListener('change', handleMobileView);
   
   // Title
   const title = document.createElement('div');
@@ -1170,21 +1259,28 @@ function showOtpRouteSelector(routeList) {
   
   // Create button for each route
   routeList.forEach((route, idx) => {
+    // Route ID is already mapped in drawJourney()
+    const mappedRouteId = route.routeId;
+    
     const button = document.createElement('button');
-    button.textContent = route.name || `Route ${route.routeId}`;
+    button.textContent = route.name || `Route ${mappedRouteId}`;
+    // Responsive button sizing
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
     button.style.cssText = `
       background: ${route.color};
       color: #fff;
       border: 2px solid ${route.color};
       border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 13px;
+      padding: ${isMobile ? '12px 16px' : '10px 14px'};
+      font-size: ${isMobile ? '14px' : '13px'};
       font-weight: 600;
       cursor: pointer;
       text-align: left;
       transition: all 0.2s;
       position: relative;
-      padding-left: 40px;
+      padding-left: ${isMobile ? '45px' : '40px'};
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     `;
     
     // Color indicator dot
@@ -1215,7 +1311,7 @@ function showOtpRouteSelector(routeList) {
     
     // Track active state
     let isActive = false;
-    const overlayKey = `${route.routeId}-${route.directionId}`;
+    const overlayKey = `${mappedRouteId}-${route.directionId}`;
     
     // Check if route is already active
     if (window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]) {
@@ -1226,11 +1322,16 @@ function showOtpRouteSelector(routeList) {
     
     // Click handler - toggle route overlay
     button.onclick = () => {
-      console.log('🎨 [OtpRouteSelector] Clicked route:', route.routeId, 'direction:', route.directionId);
+      console.log('🎨 [OtpRouteSelector] Clicked route:', mappedRouteId, '(original:', route.routeId, ') direction:', route.directionId);
       
-      // Toggle route overlay using existing system
+      // Clear all buses first (to avoid showing all city buses)
+      if (typeof window.fetchAndDisplayBuses === 'function') {
+        window.fetchAndDisplayBuses([]);
+      }
+      
+      // Toggle route overlay using existing system (use mapped route ID)
       if (typeof window.showRouteOverlay === 'function') {
-        window.showRouteOverlay(route.routeId, route.directionId);
+        window.showRouteOverlay(mappedRouteId, route.directionId);
         
         // Update button state after a short delay (to let overlay system update)
         setTimeout(() => {
@@ -1353,9 +1454,14 @@ async function showRoute(idx) {
   }
   window.activeTripSelected = false;
   
-  // Clear all bus markers
+  // Clear all bus markers and route overlays
   if (typeof window.fetchAndDisplayBuses === 'function') {
     window.fetchAndDisplayBuses([]);
+  }
+  
+  // Clear all route overlays
+  if (typeof window.clearAllRouteOverlays === 'function') {
+    window.clearAllRouteOverlays();
   }
   
   // Clear previous map elements
