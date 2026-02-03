@@ -5802,16 +5802,14 @@
    * Get endpoint station names for a route direction
    * @param {string} routeId - Route ID (e.g., "Red", "Green-B")
    * @param {number} directionId - Direction ID (0 or 1)
-   * @returns {Promise<string>} Endpoint station name
+   * @returns {Promise<string>} Endpoint station name (last stop of the direction)
    */
   async function getRouteEndpoint(routeId, directionId) {
     try {
       const routeData = await getRouteData(routeId, directionId);
       if (routeData && routeData.stops && routeData.stops.length > 0) {
-        // For direction 0, endpoint is the last stop; for direction 1, endpoint is the first stop
-        const endpointStop = directionId === 0 
-          ? routeData.stops[routeData.stops.length - 1]  // Last stop for dir 0
-          : routeData.stops[0];                           // First stop for dir 1
+        // Always get the last stop - this is the terminal station for this direction
+        const endpointStop = routeData.stops[routeData.stops.length - 1];
         return endpointStop.name || 'Unknown';
       }
     } catch (err) {
@@ -5857,7 +5855,7 @@
       if (isRouteGroup(route.id)) {
         routeGroups.push(route);
       } else {
-        // Show all routes individually, including Green branches
+        // Show all routes individually, including Green branches and Red Line
         regularRoutes.push(route);
       }
     });
@@ -5978,11 +5976,15 @@
     });
     
     const groupElements = await Promise.all(groupPromises);
+    
+    // Clear route list before adding all routes
+    routeList.innerHTML = '';
+    
+    // Add group elements first
     groupElements.forEach(routeDiv => routeList.appendChild(routeDiv));
     
     // Render regular routes (non-groups, non-branches)
     // Load endpoint stations for all routes
-    routeList.innerHTML = '';
     const routePromises = regularRoutes.map(async (route) => {
       // Format route name: "Red" -> "Red Line", "Green-B" -> "Green Line B", etc.
       let routeName = route.label;
@@ -5997,21 +5999,32 @@
         routeName = `Green Line ${branch}`;
       }
       
-      // Get endpoint stations for both directions
-      const [endpoint0, endpoint1] = await Promise.all([
-        getRouteEndpoint(route.id, 0),
-        getRouteEndpoint(route.id, 1)
+      // Get terminal stations for both directions
+      // For display: show first stop of dir0 to last stop of dir0 (the two terminals)
+      const [routeData0, routeData1] = await Promise.all([
+        getRouteData(route.id, 0).catch(() => null),
+        getRouteData(route.id, 1).catch(() => null)
       ]);
       
-      const dir0Text = endpoint0 || route.dir0 || 'Unknown';
-      const dir1Text = endpoint1 || route.dir1 || 'Unknown';
+      let terminal0 = 'Unknown';
+      let terminal1 = 'Unknown';
+      
+      if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
+        // Direction 0: first stop is one terminal, last stop is the other
+        terminal0 = routeData0.stops[0].name || 'Unknown';
+        terminal1 = routeData0.stops[routeData0.stops.length - 1].name || 'Unknown';
+      } else if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
+        // Fallback: use direction 1 data (reversed)
+        terminal0 = routeData1.stops[routeData1.stops.length - 1].name || 'Unknown';
+        terminal1 = routeData1.stops[0].name || 'Unknown';
+      }
       
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
       
-      // Format: "Route Name endpoint0 to endpoint1"
-      const routeLabel = `${routeName} ${dir0Text} to ${dir1Text}`;
+      // Format: "Route Name terminal0 to terminal1" (showing the two terminal stations)
+      const routeLabel = `${routeName} ${terminal0} to ${terminal1}`;
       
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem;';
@@ -6020,17 +6033,20 @@
       const directionsDiv = document.createElement('div');
       directionsDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;';
       
-      if (route.dir0 || endpoint0) {
+      // Show buttons with the terminal stations for each direction
+      if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
+        const dir0Terminal = routeData0.stops[routeData0.stops.length - 1].name;
         const dir0Btn = document.createElement('button');
-        dir0Btn.textContent = `➡ ${endpoint0 || route.dir0}`;
+        dir0Btn.textContent = `➡ ${dir0Terminal}`;
         dir0Btn.style.cssText = 'width: 100%; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRailRoute(route.id, 0);
         directionsDiv.appendChild(dir0Btn);
       }
       
-      if (route.dir1 || endpoint1) {
+      if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
+        const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
         const dir1Btn = document.createElement('button');
-        dir1Btn.textContent = `⬅ ${endpoint1 || route.dir1}`;
+        dir1Btn.textContent = `⬅ ${dir1Terminal}`;
         dir1Btn.style.cssText = 'width: 100%; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir1Btn.onclick = () => selectRailRoute(route.id, 1);
         directionsDiv.appendChild(dir1Btn);
