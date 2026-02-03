@@ -1164,24 +1164,37 @@ async function showRoute(idx) {
     
     // Collect route information for bus tracking (skip WALK legs)
     if (leg.mode !== 'WALK' && routeNumber) {
-      console.log('[showRoute] Found transit leg:', leg, 'with processed route number:', routeNumber);
+      console.log('🚌 [showRoute] ==========================================');
+      console.log('🚌 [showRoute] Processing transit leg for bus tracking');
+      console.log('🚌 [showRoute] Leg mode:', leg.mode);
+      console.log('🚌 [showRoute] Route number (raw):', leg.route);
+      console.log('🚌 [showRoute] Route number (processed):', routeNumber);
+      console.log('🚌 [showRoute] Leg key:', legKey);
+      console.log('🚌 [showRoute] Leg color mapping:', legColorMapping);
       
       // Retrieve the direction that was already calculated in the first block
       // This ensures both legs use the same fixed direction matching logic
       let direction = 0; // Default fallback
       if (legKey && legColorMapping[legKey]) {
         direction = legColorMapping[legKey].direction;
-        console.log('[showRoute] ✅ Reusing direction from legColorMapping for leg:', legIndex, 'route:', routeNumber, 'direction:', direction, 'legKey:', legKey);
+        console.log('🚌 [showRoute] ✅ Found direction in legColorMapping:', direction);
       } else {
-        console.warn('[showRoute] ⚠️ WARNING: Could not find direction in legColorMapping for legKey:', legKey, '- route:', routeNumber, '- Using default 0');
-        console.warn('[showRoute] Available legKeys:', Object.keys(legColorMapping));
+        console.warn('🚌 [showRoute] ⚠️ WARNING: Could not find direction in legColorMapping');
+        console.warn('🚌 [showRoute] LegKey:', legKey);
+        console.warn('🚌 [showRoute] Available legKeys:', Object.keys(legColorMapping));
+        console.warn('🚌 [showRoute] Using default direction: 0');
       }
       
-      routesToTrack.push({
+      const routeToTrack = {
         route_id: routeNumber, // Use the processed route number, not leg.route
         direction_id: direction, // Use the direction from legColorMapping (already calculated in first block)
         mode: leg.mode
-      });
+      };
+      
+      console.log('🚌 [showRoute] Adding route to track:', routeToTrack);
+      routesToTrack.push(routeToTrack);
+      console.log('🚌 [showRoute] Total routes to track so far:', routesToTrack.length);
+      console.log('🚌 [showRoute] ==========================================');
     }
   }
   
@@ -1202,10 +1215,14 @@ async function showRoute(idx) {
   
   // Store routesToTrack globally for bus tracking
   window.routesToTrack = routesToTrack;
+  console.log('🚌 [showRoute] ==========================================');
+  console.log('🚌 [showRoute] FINAL: Routes to track:', JSON.stringify(routesToTrack, null, 2));
+  console.log('🚌 [showRoute] Total routes:', routesToTrack.length);
+  console.log('🚌 [showRoute] ==========================================');
   
   // Start tracking buses for the routes in this trip
   if (routesToTrack.length > 0) {
-    console.log('[showRoute] Tracking buses for routes:', routesToTrack);
+    console.log('🚌 [showRoute] Starting bus tracking for', routesToTrack.length, 'routes');
     
     // Stop closest route tracking when OTP tracking starts
     if (window.closestRouteInterval) {

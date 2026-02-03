@@ -4016,23 +4016,29 @@
       if (window.activeTripSelected && window.routesToTrack && window.routesToTrack.length > 0) {
         // OTP trip is active - isolate only trip buses
         displayMode = 'otp-only';
-        console.log('[fetchAndDisplayBuses] OTP trip detected!');
-        console.log('[fetchAndDisplayBuses] routesToTrack:', window.routesToTrack);
-        console.log('[fetchAndDisplayBuses] currentLegColorMapping:', window.currentLegColorMapping);
+        console.log('🚌 [fetchAndDisplayBuses] ==========================================');
+        console.log('🚌 [fetchAndDisplayBuses] OTP TRIP MODE ACTIVATED');
+        console.log('🚌 [fetchAndDisplayBuses] activeTripSelected:', window.activeTripSelected);
+        console.log('🚌 [fetchAndDisplayBuses] routesToTrack (raw):', JSON.stringify(window.routesToTrack, null, 2));
+        console.log('🚌 [fetchAndDisplayBuses] routesToTrack length:', window.routesToTrack.length);
+        console.log('🚌 [fetchAndDisplayBuses] currentLegColorMapping:', window.currentLegColorMapping);
         
         otpRoutes = window.routesToTrack.map((route, index) => {
           const legInfo = window.currentLegColorMapping ? 
             Object.values(window.currentLegColorMapping)[index] : null;
-          return {
+          const processedRoute = {
             route_id: route.route_id,
             direction_id: route.direction_id,
             mode: route.mode,
             color: legInfo ? legInfo.color : getRouteColor(route.mode),
             description: legInfo ? legInfo.description : `Route ${route.route_id}`
           };
+          console.log(`🚌 [fetchAndDisplayBuses] Processing route ${index + 1}:`, processedRoute);
+          return processedRoute;
         });
-        console.log('[fetchAndDisplayBuses] Processed OTP routes:', otpRoutes);
-        console.log('[fetchAndDisplayBuses] OTP mode - isolating buses for trip routes:', otpRoutes);
+        console.log('🚌 [fetchAndDisplayBuses] Processed OTP routes:', JSON.stringify(otpRoutes, null, 2));
+        console.log('🚌 [fetchAndDisplayBuses] Total OTP routes to filter:', otpRoutes.length);
+        console.log('🚌 [fetchAndDisplayBuses] ==========================================');
         
 
       } else {
@@ -4045,10 +4051,15 @@
       
       if (displayMode === 'otp-only') {
         // OTP MODE: Only show buses that are part of the user's trip
-        console.log('[fetchAndDisplayBuses] Filtering for OTP trip buses only');
+        console.log('🚌 [fetchAndDisplayBuses] ==========================================');
+        console.log('🚌 [fetchAndDisplayBuses] FILTERING FOR OTP TRIP BUSES ONLY');
+        console.log('🚌 [fetchAndDisplayBuses] Total buses available:', allBuses.length);
+        console.log('🚌 [fetchAndDisplayBuses] OTP routes to match:', otpRoutes.length);
+        console.log('🚌 [fetchAndDisplayBuses] ==========================================');
         
-        otpRoutes.forEach(route => {
-          console.log('[fetchAndDisplayBuses] Processing OTP route:', route);
+        otpRoutes.forEach((route, routeIndex) => {
+          console.log('🚌 [fetchAndDisplayBuses] -----------------------------------------');
+          console.log(`🚌 [fetchAndDisplayBuses] Processing OTP route ${routeIndex + 1}/${otpRoutes.length}:`, route);
           
           // Get route number from OTP leg
           let trimetRouteNumber = null;
@@ -4056,9 +4067,10 @@
           // Try to get route number from the leg info
           if (route.route_id && !isNaN(route.route_id)) {
             trimetRouteNumber = route.route_id;
-            console.log('[fetchAndDisplayBuses] Using route_id:', trimetRouteNumber);
+            console.log('🚌 [fetchAndDisplayBuses] ✅ Using route_id:', trimetRouteNumber, '(type:', typeof trimetRouteNumber, ')');
           } else {
-            console.log('[fetchAndDisplayBuses] No valid route number found for:', route);
+            console.error('🚌 [fetchAndDisplayBuses] ❌ No valid route number found for:', route);
+            console.error('🚌 [fetchAndDisplayBuses] route.route_id:', route.route_id, '(type:', typeof route.route_id, ')');
             return; // Skip this route if we can't determine the number
           }
           
@@ -4066,12 +4078,14 @@
           let otpDirection = 0; // Default to 0
           if (route.direction_id !== undefined && route.direction_id !== null) {
             otpDirection = parseInt(route.direction_id);
-            console.log('[fetchAndDisplayBuses] Using OTP direction:', otpDirection);
+            console.log('🚌 [fetchAndDisplayBuses] ✅ Using OTP direction:', otpDirection, '(type:', typeof otpDirection, ')');
           } else {
-            console.log('[fetchAndDisplayBuses] Using default direction 0');
+            console.warn('🚌 [fetchAndDisplayBuses] ⚠️ Using default direction 0');
           }
           
-          console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
+          console.log('🚌 [fetchAndDisplayBuses] Looking for buses matching:');
+          console.log('🚌 [fetchAndDisplayBuses]   Route:', trimetRouteNumber);
+          console.log('🚌 [fetchAndDisplayBuses]   Direction:', otpDirection);
           
           // Filter buses for this specific route and direction
           // Normalize route numbers for comparison (handle string/number and variations like "15" vs "15-0")
@@ -4083,6 +4097,14 @@
           };
           
           const normalizedTargetRoute = normalizeRouteNumber(trimetRouteNumber);
+          console.log('🚌 [fetchAndDisplayBuses] Normalized target route:', normalizedTargetRoute);
+          
+          // Log all available buses for debugging
+          console.log('🚌 [fetchAndDisplayBuses] Available buses (first 10):');
+          allBuses.slice(0, 10).forEach((v, idx) => {
+            const normalizedBusRoute = normalizeRouteNumber(v.routeNumber);
+            console.log(`🚌 [fetchAndDisplayBuses]   Bus ${idx + 1}: ID=${v.vehicleID}, route="${v.routeNumber}" (normalized: ${normalizedBusRoute}), dir=${v.direction}`);
+          });
           
           let routeBuses = allBuses.filter(v => {
             const normalizedBusRoute = normalizeRouteNumber(v.routeNumber);
@@ -4090,13 +4112,22 @@
             const directionMatch = v.direction == otpDirection;
             
             if (routeMatch && directionMatch) {
-              console.log(`[fetchAndDisplayBuses] ✅ Matched bus ${v.vehicleID}: route "${v.routeNumber}" (normalized: ${normalizedBusRoute}) == "${trimetRouteNumber}" (normalized: ${normalizedTargetRoute}), dir ${v.direction} == ${otpDirection}`);
+              console.log(`🚌 [fetchAndDisplayBuses] ✅ MATCHED bus ${v.vehicleID}: route "${v.routeNumber}" (normalized: ${normalizedBusRoute}) == "${trimetRouteNumber}" (normalized: ${normalizedTargetRoute}), dir ${v.direction} == ${otpDirection}`);
+            } else {
+              // Log why it didn't match (but only for first few to avoid spam)
+              if (allBuses.indexOf(v) < 5) {
+                console.log(`🚌 [fetchAndDisplayBuses] ❌ NO MATCH bus ${v.vehicleID}: route "${v.routeNumber}" (normalized: ${normalizedBusRoute}) vs "${trimetRouteNumber}" (normalized: ${normalizedTargetRoute}) [${routeMatch ? '✓' : '✗'}], dir ${v.direction} vs ${otpDirection} [${directionMatch ? '✓' : '✗'}]`);
+              }
             }
             
             return routeMatch && directionMatch;
           });
           
-          console.log('[fetchAndDisplayBuses] Found', routeBuses.length, 'buses for route', trimetRouteNumber, 'direction', otpDirection);
+          console.log('🚌 [fetchAndDisplayBuses] ✅ Found', routeBuses.length, 'buses for route', trimetRouteNumber, 'direction', otpDirection);
+          if (routeBuses.length > 0) {
+            console.log('🚌 [fetchAndDisplayBuses] Matched bus IDs:', routeBuses.map(b => b.vehicleID).join(', '));
+          }
+          console.log('🚌 [fetchAndDisplayBuses] -----------------------------------------');
           
           // Create markers for OTP buses
           routeBuses.forEach(bus => {
