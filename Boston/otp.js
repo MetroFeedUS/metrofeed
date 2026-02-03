@@ -447,6 +447,13 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     console.log('Converted itineraries:', currentItins);
     console.log(`Filtered ${convertedItineraries.length} itineraries to ${currentItins.length} (max ${MAX_TRANSFERS} transfers)`);
     
+    // PHASE 1: Normalize itineraries into clean Journey objects
+    // This is where ALL the logic happens - route matching, geometry clipping, etc.
+    console.log('🔄 [fetchAndShowOtpItineraries] Normalizing itineraries into Journey objects...');
+    const journeys = await normalizeItineraries(currentItins);
+    window.journeys = journeys; // Store globally for rendering
+    console.log('🔄 [fetchAndShowOtpItineraries] ✅ Normalized', journeys.length, 'journeys');
+    
     // Enhanced OTP route debugging
     console.log('=== OTP ROUTE ANALYSIS (GraphQL) ===');
     currentItins.forEach((itin, idx) => {
@@ -668,25 +675,506 @@ function renderItinListVisual(itins) {
 }
 
 /**
+ * Journey Object Model - Clean normalized representation of an OTP itinerary
+ * This is the "source of truth" after OTP response is processed
+ */
+class Journey {
+  constructor(itin) {
+    this.id = itin.id || null;
+    this.startTime = itin.startTime;
+    this.endTime = itin.endTime;
+    this.duration = itin.duration;
+    this.transfers = this._countTransfers(itin.legs);
+    this.legs = [];
+  }
+  
+  _countTransfers(legs) {
+    const transitLegs = legs.filter(l => l.mode !== 'WALK');
+    return Math.max(0, transitLegs.length - 1);
+  }
+}
+
+class JourneyLeg {
+  constructor(leg, index) {
+    this.index = index;
+    this.type = leg.mode === 'WALK' ? 'WALK' : 'TRANSIT';
+    this.mode = leg.mode;
+    this.duration = leg.duration;
+    this.distance = leg.distance;
+    
+    // Geometry (already clipped and split into segments)
+    this.geometry = null; // Full geometry [lat, lng][]
+    this.solidSegment = null; // [lat, lng][] - the ridden portion
+    this.dashedBefore = null; // [lat, lng][] - before boarding
+    this.dashedAfter = null; // [lat, lng][] - after alighting
+    
+    // Transit-specific
+    this.line = null; // { id, name, color }
+    this.routeNumber = null; // Normalized route number for bus tracking
+    this.direction = null; // Direction ID (0 or 1)
+    this.serviceJourneyId = leg.tripId || null;
+    
+    // Places
+    this.boardingPoint = leg.fromPlace ? {
+      name: leg.fromPlace.name,
+      lat: leg.fromPlace.latitude,
+      lng: leg.fromPlace.longitude
+    } : null;
+    this.alightingPoint = leg.toPlace ? {
+      name: leg.toPlace.name,
+      lat: leg.toPlace.latitude,
+      lng: leg.toPlace.longitude
+    } : null;
+    
+    // Stops (if available)
+    this.stops = leg.estimatedCalls || null;
+  }
+}
+
+/**
+ * Normalize OTP itineraries into clean Journey objects
+ * This is where ALL the logic happens - route matching, geometry clipping, etc.
+ * After this, rendering is just "draw what's in the Journey object"
+ * 
+ * @param {Array} convertedItineraries - Raw OTP itineraries from GraphQL
+ * @returns {Array<Journey>} Normalized Journey objects
+ */
+async function normalizeItineraries(convertedItineraries) {
+  console.log('🔄 [normalizeItineraries] Starting normalization of', convertedItineraries.length, 'itineraries');
+  
+  const journeys = [];
+  
+  for (let itinIdx = 0; itinIdx < convertedItineraries.length; itinIdx++) {
+    const itin = convertedItineraries[itinIdx];
+    const journey = new Journey(itin);
+    journey.id = itinIdx;
+    
+    console.log(`🔄 [normalizeItineraries] Processing itinerary ${itinIdx + 1}`);
+    
+    // Process each leg
+    for (let legIdx = 0; legIdx < itin.legs.length; legIdx++) {
+      const leg = itin.legs[legIdx];
+      const journeyLeg = new JourneyLeg(leg, legIdx);
+      
+      // Extract and normalize route number (for transit legs only)
+      if (journeyLeg.type === 'TRANSIT') {
+        const routeInfo = await extractRouteInfo(leg, legIdx);
+        journeyLeg.routeNumber = routeInfo.routeNumber;
+        journeyLeg.direction = routeInfo.direction;
+        journeyLeg.line = routeInfo.line;
+        
+        console.log(`🔄 [normalizeItineraries] Leg ${legIdx} (${leg.mode}): route=${journeyLeg.routeNumber}, direction=${journeyLeg.direction}`);
+      }
+      
+      // Clip geometry once (for all legs)
+      await clipLegGeometry(journeyLeg, leg);
+      
+      journey.legs.push(journeyLeg);
+    }
+    
+    journeys.push(journey);
+    console.log(`🔄 [normalizeItineraries] ✅ Normalized itinerary ${itinIdx + 1}: ${journey.legs.length} legs, ${journey.transfers} transfers`);
+  }
+  
+  console.log('🔄 [normalizeItineraries] ✅ Normalization complete:', journeys.length, 'journeys');
+  return journeys;
+}
+
+/**
+ * Extract route information from an OTP leg
+ * Handles all the route matching, direction calculation, etc.
+ * @param {Object} leg - OTP leg object
+ * @param {number} legIdx - Leg index
+ * @returns {Object} { routeNumber, direction, line }
+ */
+async function extractRouteInfo(leg, legIdx) {
+  let routeNumber = leg.route || null;
+  let direction = 0; // Default
+  let line = {
+    id: leg.route || null,
+    name: leg.routeLongName || leg.routeShortName || leg.route || null,
+    color: null // Will be assigned later
+  };
+  
+  // Extract route description
+  let routeDescription = '';
+  if (leg.line && leg.line.name) {
+    routeDescription = leg.line.name;
+  } else if (leg.routeLongName) {
+    routeDescription = leg.routeLongName;
+  } else if (leg.routeShortName) {
+    routeDescription = leg.routeShortName;
+  } else if (leg.route) {
+    routeDescription = leg.route;
+  }
+  
+  console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}):`);
+  console.log(`🔍 [extractRouteInfo]   Raw route:`, leg.route);
+  console.log(`🔍 [extractRouteInfo]   Description:`, routeDescription);
+  
+  // Try to decode route number using mapping function
+  if (routeDescription && typeof window.mapOtpRouteToTrimet === 'function') {
+    const decodedRouteNumber = window.mapOtpRouteToTrimet(routeDescription);
+    if (decodedRouteNumber) {
+      routeNumber = decodedRouteNumber;
+      console.log(`🔍 [extractRouteInfo]   ✅ Decoded route:`, routeNumber);
+    }
+  }
+  
+  // Fallback to masterRoutes search (if available)
+  if (!routeNumber && typeof window.findRouteByDescription === 'function') {
+    const foundRoute = window.findRouteByDescription(routeDescription);
+    if (foundRoute) {
+      routeNumber = foundRoute.route_id;
+      console.log(`🔍 [extractRouteInfo]   ✅ Found via masterRoutes:`, routeNumber);
+    }
+  }
+  
+  // Calculate direction (only for bus-trackable modes)
+  const busTrackableModes = ['BUS', 'TRAM', 'RAIL', 'TRAIN', 'FERRY'];
+  if (busTrackableModes.includes(leg.mode) && routeNumber) {
+    direction = await calculateDirection(leg, routeNumber, routeDescription);
+    console.log(`🔍 [extractRouteInfo]   ✅ Direction:`, direction);
+  }
+  
+  return { routeNumber, direction, line };
+}
+
+/**
+ * Calculate direction for a transit leg
+ * @param {Object} leg - OTP leg object
+ * @param {string} routeNumber - Route number
+ * @param {string} routeDescription - Route description
+ * @returns {number} Direction ID (0 or 1)
+ */
+async function calculateDirection(leg, routeNumber, routeDescription) {
+  let direction = 0; // Default fallback
+  
+  // Helper function
+  function normalizeString(str) {
+    return (str || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .replace(/\s+/g, '');
+  }
+  
+  // Only try direction matching if masterRoutes is available
+  if (leg.headsign && typeof window.masterRoutes !== 'undefined' && window.masterRoutes && routeNumber) {
+    console.log('🔍 [calculateDirection] Processing route:', routeNumber);
+    
+    const dir0Route = window.masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 0);
+    const dir1Route = window.masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 1);
+    
+    if (dir0Route && dir1Route) {
+      let matched = false;
+      
+      // Simple destination matching
+      function containsDestination(headsign, directionName) {
+        const headLower = headsign.toLowerCase();
+        const dirLower = directionName.toLowerCase();
+        const destinations = ['gresham', 'gateway', 'beaverton', 'hillsboro', 'city', 'downtown', 'center', 'tc', 'transit'];
+        for (const dest of destinations) {
+          if (headLower.includes(dest) && dirLower.includes(dest)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      
+      // Check Direction 0
+      if (dir0Route.direction_name && containsDestination(leg.headsign, dir0Route.direction_name)) {
+        direction = 0;
+        matched = true;
+        console.log('🔍 [calculateDirection] ✅ Matched direction 0 via headsign');
+      }
+      
+      // Check Direction 1
+      if (!matched && dir1Route.direction_name && containsDestination(leg.headsign, dir1Route.direction_name)) {
+        direction = 1;
+        matched = true;
+        console.log('🔍 [calculateDirection] ✅ Matched direction 1 via headsign');
+      }
+      
+      // Fallback: stop name matching
+      if (!matched) {
+        const otpFrom = normalizeString(leg.from?.name);
+        const otpTo = normalizeString(leg.to?.name);
+        const dir0From = normalizeString(dir0Route.stops?.[0]?.name);
+        const dir0To = normalizeString(dir0Route.stops?.[dir0Route.stops.length - 1]?.name);
+        const dir1From = normalizeString(dir1Route.stops?.[0]?.name);
+        const dir1To = normalizeString(dir1Route.stops?.[dir1Route.stops.length - 1]?.name);
+        
+        if ((otpFrom && otpFrom === dir0From) || (otpTo && otpTo === dir0To)) {
+          direction = 0;
+          matched = true;
+          console.log('🔍 [calculateDirection] ✅ Matched direction 0 via stop names');
+        } else if ((otpFrom && otpFrom === dir1From) || (otpTo && otpTo === dir1To)) {
+          direction = 1;
+          matched = true;
+          console.log('🔍 [calculateDirection] ✅ Matched direction 1 via stop names');
+        }
+      }
+    }
+  }
+  
+  console.log('🔍 [calculateDirection] Final direction:', direction);
+  return direction;
+}
+
+/**
+ * Clip leg geometry into solid/dashed segments
+ * This happens ONCE during normalization, not every render
+ * @param {JourneyLeg} journeyLeg - Journey leg to populate
+ * @param {Object} leg - OTP leg object with geometry
+ */
+async function clipLegGeometry(journeyLeg, leg) {
+  const fromLat = journeyLeg.boardingPoint?.lat;
+  const fromLon = journeyLeg.boardingPoint?.lng;
+  const toLat = journeyLeg.alightingPoint?.lat;
+  const toLon = journeyLeg.alightingPoint?.lng;
+  
+  if (!fromLat || !fromLon || !toLat || !toLon) {
+    console.warn(`⚠️ [clipLegGeometry] Missing coordinates for leg ${journeyLeg.index}`);
+    return;
+  }
+  
+  let coords = [];
+  
+  // For transit: use OTP pointsOnLink
+  if (journeyLeg.type === 'TRANSIT' && leg.pointsOnLink?.points) {
+    try {
+      coords = decodePolyline(leg.pointsOnLink.points);
+      console.log(`✂️ [clipLegGeometry] Transit leg ${journeyLeg.index}: decoded ${coords.length} points from OTP`);
+    } catch (e) {
+      console.warn(`⚠️ [clipLegGeometry] Failed to decode OTP geometry:`, e);
+    }
+  }
+  
+  // For walking: use OSRM
+  if (journeyLeg.type === 'WALK' && !coords.length) {
+    try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/walking/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
+      const r = await fetch(osrmUrl);
+      if (r.ok) {
+        const data = await r.json();
+        if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
+          coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]); // [lat, lng]
+          console.log(`✂️ [clipLegGeometry] Walking leg ${journeyLeg.index}: got ${coords.length} points from OSRM`);
+        }
+      }
+    } catch (e) {
+      console.warn(`⚠️ [clipLegGeometry] OSRM failed:`, e);
+    }
+  }
+  
+  // Fallback: straight line
+  if (!coords.length) {
+    coords = [[fromLat, fromLon], [toLat, toLon]];
+    console.log(`✂️ [clipLegGeometry] Leg ${journeyLeg.index}: using straight line fallback`);
+  }
+  
+  // Store full geometry
+  journeyLeg.geometry = coords;
+  
+  // For transit: split into solid/dashed segments
+  if (journeyLeg.type === 'TRANSIT' && coords.length > 10) {
+    const startIdx = findNearestPointIndex(coords, fromLat, fromLon);
+    const endIdx = findNearestPointIndex(coords, toLat, toLon);
+    const actualStart = Math.min(startIdx, endIdx);
+    const actualEnd = Math.max(startIdx, endIdx);
+    
+    // Ensure meaningful middle segment
+    if ((actualEnd - actualStart) >= 2) {
+      journeyLeg.dashedBefore = coords.slice(0, actualStart + 1);
+      journeyLeg.solidSegment = coords.slice(actualStart, actualEnd + 1);
+      journeyLeg.dashedAfter = coords.slice(actualEnd);
+      console.log(`✂️ [clipLegGeometry] Transit leg ${journeyLeg.index}: split into ${journeyLeg.dashedBefore.length} + ${journeyLeg.solidSegment.length} + ${journeyLeg.dashedAfter.length} points`);
+    } else {
+      // Not enough points to split, use full geometry as solid
+      journeyLeg.solidSegment = coords;
+      console.log(`✂️ [clipLegGeometry] Transit leg ${journeyLeg.index}: using full geometry (couldn't split)`);
+    }
+  } else {
+    // Walking or short transit: use full geometry as solid
+    journeyLeg.solidSegment = coords;
+  }
+}
+
+/**
+ * Draw a Journey on the map
+ * Simple renderer - just draws what's in the Journey object
+ * @param {Journey} journey - Journey object to render
+ */
+function drawJourney(journey) {
+  const map = window.map;
+  if (!map) {
+    console.error('[drawJourney] Map not available');
+    return;
+  }
+  
+  console.log('🎨 [drawJourney] Rendering journey:', journey.id, 'with', journey.legs.length, 'legs');
+  
+  // Clear previous lines
+  if (window.routeLegLines && window.routeLegLines.length) {
+    window.routeLegLines.forEach(lineId => {
+      if (map.getLayer(lineId)) map.removeLayer(lineId);
+      if (map.getSource(lineId)) map.removeSource(lineId);
+    });
+    window.routeLegLines = [];
+  }
+  
+  let allCoords = [];
+  const routesToTrack = [];
+  const legColorMapping = {};
+  
+  // Render each leg
+  journey.legs.forEach((leg, legIdx) => {
+    const color = leg.type === 'WALK' ? WALK_COLOR : legColors[legIdx % legColors.length];
+    
+    // Assign color to leg
+    if (leg.line) {
+      leg.line.color = color;
+    }
+    
+    // Draw walking leg (solid gray)
+    if (leg.type === 'WALK' && leg.solidSegment) {
+      const walkId = `routeLeg-${leg.index}-walk`;
+      addLine(map, walkId, toMapLibreCoords(leg.solidSegment), {
+        "line-color": "#777",
+        "line-width": 4,
+        "line-opacity": 0.85
+      });
+      window.routeLegLines = window.routeLegLines || [];
+      window.routeLegLines.push(walkId);
+      allCoords = allCoords.concat(leg.solidSegment);
+    }
+    
+    // Draw transit leg (dashed/solid/dashed)
+    if (leg.type === 'TRANSIT') {
+      const baseId = `routeLeg-${leg.index}`;
+      
+      // Draw dashed before segment
+      if (leg.dashedBefore && leg.dashedBefore.length > 1) {
+        const preId = `${baseId}-pre`;
+        addLine(map, preId, toMapLibreCoords(leg.dashedBefore), {
+          "line-color": color,
+          "line-width": 6,
+          "line-opacity": 0.8,
+          "line-dasharray": [5, 3]
+        });
+        window.routeLegLines.push(preId);
+      }
+      
+      // Draw solid middle segment
+      if (leg.solidSegment && leg.solidSegment.length > 1) {
+        const midId = `${baseId}-mid`;
+        addLine(map, midId, toMapLibreCoords(leg.solidSegment), {
+          "line-color": color,
+          "line-width": 6,
+          "line-opacity": 0.95
+        });
+        window.routeLegLines.push(midId);
+        allCoords = allCoords.concat(leg.solidSegment);
+      }
+      
+      // Draw dashed after segment
+      if (leg.dashedAfter && leg.dashedAfter.length > 1) {
+        const postId = `${baseId}-post`;
+        addLine(map, postId, toMapLibreCoords(leg.dashedAfter), {
+          "line-color": color,
+          "line-width": 6,
+          "line-opacity": 0.8,
+          "line-dasharray": [5, 3]
+        });
+        window.routeLegLines.push(postId);
+      }
+      
+      // Collect route for bus tracking (only bus-trackable modes)
+      const busTrackableModes = ['BUS', 'TRAM', 'RAIL', 'TRAIN', 'FERRY'];
+      if (busTrackableModes.includes(leg.mode) && leg.routeNumber) {
+        routesToTrack.push({
+          route_id: leg.routeNumber,
+          direction_id: leg.direction || 0,
+          mode: leg.mode
+        });
+        
+        // Store color mapping
+        const legKey = `${leg.mode}-${leg.routeNumber}-${leg.direction || 0}`;
+        legColorMapping[legKey] = {
+          color: color,
+          route: leg.routeNumber,
+          direction: leg.direction || 0,
+          mode: leg.mode,
+          description: leg.line?.name || `Route ${leg.routeNumber}`
+        };
+      }
+    }
+  });
+  
+  // Fit map to bounds
+  if (allCoords.length > 0) {
+    const bounds = new maplibregl.LngLatBounds();
+    allCoords.forEach(coord => bounds.extend([coord[1], coord[0]]));
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }
+  
+  // Store for bus tracking
+  window.routesToTrack = routesToTrack;
+  window.currentLegColorMapping = legColorMapping;
+  console.log('🎨 [drawJourney] Routes to track:', routesToTrack);
+  
+  // Start bus tracking
+  if (routesToTrack.length > 0 && typeof window.fetchAndDisplayBuses === 'function') {
+    window.activeTripSelected = true;
+    window.fetchAndDisplayBuses([]); // Clear first
+    setTimeout(() => {
+      window.fetchAndDisplayBuses(routesToTrack);
+    }, 100);
+    
+    if (window.otpBusTrackingInterval) {
+      clearInterval(window.otpBusTrackingInterval);
+    }
+    window.otpBusTrackingInterval = setInterval(() => {
+      window.fetchAndDisplayBuses(routesToTrack);
+    }, 15000);
+  }
+  
+  // Draw extended routes if available
+  if (typeof window.drawExtendedRoutes === 'function') {
+    window.drawExtendedRoutes(legColorMapping);
+  }
+}
+
+/**
  * Show route visualization for a selected itinerary
+ * NOW: Just gets the Journey and calls drawJourney - no logic!
  * @param {number} idx - Index of the itinerary to display
  */
 async function showRoute(idx) {
-  console.log('[showRoute] Called with idx:', idx);
-  if (!window.currentItins || !window.currentItins[idx]) {
-    console.error('[showRoute] Trip data not found.');
-    alert("Trip data not found. Please try again.");
-    return;
+  console.log('🎨 [showRoute] Called with idx:', idx);
+  
+  // Get the normalized Journey object
+  if (!window.journeys || !window.journeys[idx]) {
+    console.error('[showRoute] Journey not found. Normalizing...');
+    if (window.currentItins && window.currentItins[idx]) {
+      // Fallback: normalize on the fly if needed
+      const journeys = await normalizeItineraries([window.currentItins[idx]]);
+      if (journeys[0]) {
+        window.journeys = window.journeys || [];
+        window.journeys[idx] = journeys[0];
+      } else {
+        alert("Trip data not found. Please try again.");
+        return;
+      }
+    } else {
+      alert("Trip data not found. Please try again.");
+      return;
+    }
   }
   
-  // Get map from window (set by home.html)
-  const map = window.map;
-  if (!map) {
-    console.error('[showRoute] Map not available');
-    return;
-  }
+  const journey = window.journeys[idx];
   
-  // Store the selected trip index globally
+  // Store selected index
   window.selectedTripIndex = idx;
   
   // Clear previous bus tracking
@@ -694,571 +1182,54 @@ async function showRoute(idx) {
     clearInterval(window.otpBusTrackingInterval);
     window.otpBusTrackingInterval = null;
   }
-  window.routesToTrack = []; // Clear old routes
-  window.activeTripSelected = false; // Reset trip selection flag
+  window.activeTripSelected = false;
   
   // Clear all bus markers
   if (typeof window.fetchAndDisplayBuses === 'function') {
-    // Clear buses by calling with empty routes
     window.fetchAndDisplayBuses([]);
   }
   
-  // Remove previous lines
-  if (window.routeLine) {
-    map.removeLayer(window.routeLine);
-    window.routeLine = null;
-  }
-  if (window.routeLegLines && window.routeLegLines.length) {
-    window.routeLegLines.forEach(lineId => {
-      if (map.getLayer(lineId)) {
-        map.removeLayer(lineId);
-      }
-      if (map.getSource(lineId)) {
-        map.removeSource(lineId);
-      }
-    });
-    window.routeLegLines = [];
-  }
-  
-  // Clear extended routes
-  if (window.extendedRouteLines && window.extendedRouteLines.length) {
-    window.extendedRouteLines.forEach(lineId => {
-      if (map.getLayer(lineId)) {
-        map.removeLayer(lineId);
-      }
-      if (map.getSource(lineId)) {
-        map.removeSource(lineId);
-      }
-    });
-    window.extendedRouteLines = [];
-  }
-  if (window.routeStopMarkers && window.routeStopMarkers.length) {
-    window.routeStopMarkers.forEach(marker => map.removeLayer(marker));
-  }
-  window.routeStopMarkers = [];
-
-  console.log('[showRoute] Trip:', window.currentItins[idx]);
-
-  let allCoords = [];
-  let addedStops = new Set();
-  let routesToTrack = []; // Collect routes for bus tracking
-  let legColorMapping = {}; // Store color mapping for each leg
-  let legIndex = 0; // Track leg index for color assignment
-  
-  // Use for...of loop to support await
-  for (const leg of window.currentItins[idx].legs) {
-    let color;
-    let legKey;
-    let routeNumber = null; // Initialize routeNumber for all legs
-    
-    if (leg.mode === 'WALK') {
-      color = WALK_COLOR;
-      legKey = `walk-${legIndex}`;
-    } else {
-      // Assign unique color to each transit leg
-      color = legColors[legIndex % legColors.length];
-      
-      // Extract route description from GraphQL data
-      let routeDescription = '';
-      routeNumber = leg.route; // Set routeNumber for transit legs (from line.publicCode)
-      
-      // Use GraphQL line data directly
-      if (leg.line && leg.line.name) {
-        routeDescription = leg.line.name;
-      } else if (leg.routeLongName) {
-        routeDescription = leg.routeLongName;
-      } else if (leg.routeShortName) {
-        routeDescription = leg.routeShortName;
-      } else if (leg.route) {
-        routeDescription = leg.route; // Fallback to route code
-      }
-      
-      // Try to find the actual route number using the description
-      if (routeDescription) {
-        // First try to decode using our mapping function (if available)
-        if (typeof window.mapOtpRouteToTrimet === 'function') {
-          const decodedRouteNumber = window.mapOtpRouteToTrimet(routeDescription);
-          if (decodedRouteNumber) {
-            routeNumber = decodedRouteNumber;
-            console.log('[showRoute] Decoded route number:', routeNumber, 'for description:', routeDescription);
-          }
-        }
-        
-        // Fallback to masterRoutes search (if available)
-        if (!routeNumber && typeof window.findRouteByDescription === 'function') {
-          const foundRoute = window.findRouteByDescription(routeDescription);
-          if (foundRoute) {
-            routeNumber = foundRoute.route_id;
-            console.log('[showRoute] Found route number via masterRoutes:', routeNumber, 'for description:', routeDescription);
-          }
-        }
-      }
-      
-      // Calculate direction BEFORE creating the mapping
-      let direction = 0; // Default fallback
-      
-      // OTP provides direction in different ways:
-      // 1. leg.headsign - contains the direction description
-      // 2. leg.direction - might contain direction info
-      // 3. We need to match this with mastermap direction_name
-      
-      // Enhanced direction matching logic with comprehensive debugging
-      function normalizeString(str) {
-        return (str || '')
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, '')
-          .replace(/\s+/g, '');
-      }
-      
-      // Only try direction matching if masterRoutes is available
-      if (leg.headsign && typeof window.masterRoutes !== 'undefined' && window.masterRoutes) {
-        console.log('🔍 [DIRECTION DEBUG] ==========================================');
-        console.log('🔍 [DIRECTION DEBUG] Processing leg for route:', routeNumber);
-        console.log('🔍 [DIRECTION DEBUG] OTP headsign:', leg.headsign);
-        console.log('🔍 [DIRECTION DEBUG] OTP from stop:', leg.from?.name);
-        console.log('🔍 [DIRECTION DEBUG] OTP to stop:', leg.to?.name);
-        
-        const normHeadsign = normalizeString(leg.headsign);
-        console.log('🔍 [DIRECTION DEBUG] Normalized headsign:', normHeadsign);
-        
-        const masterRoute = window.masterRoutes.find(r => r.route_number === routeNumber);
-        if (masterRoute) {
-          const dir0Route = window.masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 0);
-          const dir1Route = window.masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 1);
-          
-          console.log('🔍 [DIRECTION DEBUG] Found master routes:');
-          console.log('🔍 [DIRECTION DEBUG]   Direction 0:', dir0Route ? {
-            direction_name: dir0Route.direction_name,
-            direction_name_raw: dir0Route.direction_name,
-            first_stop: dir0Route.stops?.[0]?.name,
-            last_stop: dir0Route.stops?.[dir0Route.stops?.length - 1]?.name,
-            route_title: dir0Route.route_title
-          } : 'NOT FOUND');
-          console.log('🔍 [DIRECTION DEBUG]   Direction 1:', dir1Route ? {
-            direction_name: dir1Route.direction_name,
-            direction_name_raw: dir1Route.direction_name,
-            first_stop: dir1Route.stops?.[0]?.name,
-            last_stop: dir1Route.stops?.[dir1Route.stops?.length - 1]?.name,
-            route_title: dir1Route.route_title
-          } : 'NOT FOUND');
-          
-          let matched = false;
-          
-          // SIMPLE HEADSIGN MATCHING
-          console.log('🔍 [DIRECTION DEBUG] --- SIMPLE HEADSIGN MATCHING ---');
-          
-          // Simple function to check if a destination is mentioned
-          function containsDestination(headsign, directionName) {
-            const headLower = headsign.toLowerCase();
-            const dirLower = directionName.toLowerCase();
-            
-            // Common destination keywords
-            const destinations = ['gresham', 'gateway', 'beaverton', 'hillsboro', 'city', 'downtown', 'center', 'tc', 'transit'];
-            
-            for (const dest of destinations) {
-              if (headLower.includes(dest) && dirLower.includes(dest)) {
-                return true;
-              }
-            }
-            return false;
-          }
-          
-          console.log('🔍 [DIRECTION DEBUG] OTP headsign:', leg.headsign);
-          console.log('🔍 [DIRECTION DEBUG] Looking for destination match...');
-          
-          // Check Direction 0
-          if (dir0Route && dir0Route.direction_name) {
-            const dir0Match = containsDestination(leg.headsign, dir0Route.direction_name);
-            console.log('🔍 [DIRECTION DEBUG] Direction 0:', dir0Route.direction_name);
-            console.log('🔍 [DIRECTION DEBUG] Direction 0 match?', dir0Match);
-            
-            if (dir0Match) {
-              direction = 0;
-              matched = true;
-              console.log('✅ [DIRECTION DEBUG] SUCCESS: Direction 0 matches!');
-            }
-          }
-          
-          // Check Direction 1
-          if (!matched && dir1Route && dir1Route.direction_name) {
-            const dir1Match = containsDestination(leg.headsign, dir1Route.direction_name);
-            console.log('🔍 [DIRECTION DEBUG] Direction 1:', dir1Route.direction_name);
-            console.log('🔍 [DIRECTION DEBUG] Direction 1 match?', dir1Match);
-            
-            if (dir1Match) {
-              direction = 1;
-              matched = true;
-              console.log('✅ [DIRECTION DEBUG] SUCCESS: Direction 1 matches!');
-            }
-          }
-          
-          if (!matched) {
-            console.log('❌ [DIRECTION DEBUG] No destination match found');
-          }
-          
-          // Fallback: try to infer by comparing from/to stop names
-          if (!matched && dir0Route && dir1Route) {
-            console.log('🔍 [DIRECTION DEBUG] --- TRYING STOP NAME FALLBACK ---');
-            
-            const otpFrom = normalizeString(leg.from?.name);
-            const otpTo = normalizeString(leg.to?.name);
-            const dir0From = normalizeString(dir0Route.stops?.[0]?.name);
-            const dir0To = normalizeString(dir0Route.stops?.[dir0Route.stops.length - 1]?.name);
-            const dir1From = normalizeString(dir1Route.stops?.[0]?.name);
-            const dir1To = normalizeString(dir1Route.stops?.[dir1Route.stops.length - 1]?.name);
-            
-            console.log('🔍 [DIRECTION DEBUG] Stop comparisons:');
-            console.log('🔍 [DIRECTION DEBUG]   OTP From:', otpFrom, '| OTP To:', otpTo);
-            console.log('🔍 [DIRECTION DEBUG]   Dir0 From:', dir0From, '| Dir0 To:', dir0To);
-            console.log('🔍 [DIRECTION DEBUG]   Dir1 From:', dir1From, '| Dir1 To:', dir1To);
-            
-            const fromMatch0 = otpFrom && dir0From && otpFrom === dir0From;
-            const toMatch0 = otpTo && dir0To && otpTo === dir0To;
-            const fromMatch1 = otpFrom && dir1From && otpFrom === dir1From;
-            const toMatch1 = otpTo && dir1To && otpTo === dir1To;
-            
-            console.log('🔍 [DIRECTION DEBUG] Stop matches:');
-            console.log('🔍 [DIRECTION DEBUG]   Dir0 From match?', fromMatch0);
-            console.log('🔍 [DIRECTION DEBUG]   Dir0 To match?', toMatch0);
-            console.log('🔍 [DIRECTION DEBUG]   Dir1 From match?', fromMatch1);
-            console.log('🔍 [DIRECTION DEBUG]   Dir1 To match?', toMatch1);
-            
-            if (fromMatch0 || toMatch0) {
-              direction = 0;
-              matched = true;
-              console.log('✅ [DIRECTION DEBUG] SUCCESS: Fallback matched stops to direction 0');
-              console.log('✅ [DIRECTION DEBUG] Match type:', fromMatch0 ? 'FROM stop' : 'TO stop');
-            } else if (fromMatch1 || toMatch1) {
-              direction = 1;
-              matched = true;
-              console.log('✅ [DIRECTION DEBUG] SUCCESS: Fallback matched stops to direction 1');
-              console.log('✅ [DIRECTION DEBUG] Match type:', fromMatch1 ? 'FROM stop' : 'TO stop');
-            } else {
-              console.log('❌ [DIRECTION DEBUG] FAILED: Stop name fallback');
-            }
-          }
-          
-          // Additional fallback: try to extract direction from route title if direction_name is corrupted
-          if (!matched) {
-            console.log('🔍 [DIRECTION DEBUG] --- TRYING ROUTE TITLE FALLBACK ---');
-            
-            // Check if direction_name looks corrupted (too long, no spaces, etc.)
-            const isCorrupted = (name) => name && (name.length > 50 || !name.includes(' ') || name.includes('montgomerypkoryeon'));
-            
-            if (dir0Route && isCorrupted(dir0Route.direction_name)) {
-              console.log('🔍 [DIRECTION DEBUG] Direction 0 name appears corrupted, trying route title');
-              const routeTitle = dir0Route.route_title || '';
-              console.log('🔍 [DIRECTION DEBUG] Route title:', routeTitle);
-              
-              // Try to extract direction info from route title
-              const titleLower = routeTitle.toLowerCase();
-              if (titleLower.includes('gateway') || titleLower.includes('tc')) {
-                direction = 0;
-                matched = true;
-                console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched route title to direction 0 (Gateway)');
-              }
-            }
-            
-            if (!matched && dir1Route && isCorrupted(dir1Route.direction_name)) {
-              console.log('🔍 [DIRECTION DEBUG] Direction 1 name appears corrupted, trying route title');
-              const routeTitle = dir1Route.route_title || '';
-              console.log('🔍 [DIRECTION DEBUG] Route title:', routeTitle);
-              
-              const titleLower = routeTitle.toLowerCase();
-              if (titleLower.includes('gateway') || titleLower.includes('tc')) {
-                direction = 1;
-                matched = true;
-                console.log('✅ [DIRECTION DEBUG] SUCCESS: Matched route title to direction 1 (Gateway)');
-              }
-            }
-          }
-          
-          if (!matched) {
-            direction = 0; // fallback
-            console.log('⚠️ [DIRECTION DEBUG] WARNING: Could not match headsign or stops to direction, using default 0');
-          }
-          
-          console.log('🔍 [DIRECTION DEBUG] FINAL RESULT: Direction =', direction);
-          console.log('🔍 [DIRECTION DEBUG] ==========================================');
-        } else {
-          console.log('❌ [DIRECTION DEBUG] ERROR: No master route found for route number:', routeNumber);
-          console.log('🔍 [DIRECTION DEBUG] ==========================================');
-        }
-      } else {
-        console.log('🔍 [DIRECTION DEBUG] No headsign available or masterRoutes not available');
-        console.log('🔍 [DIRECTION DEBUG] ==========================================');
-      }
-      
-      // NOW create the legKey and mapping with the calculated direction
-      legKey = `${leg.mode}-${routeNumber}-${direction}`;
-      
-      // Store color mapping for bus matching
-      legColorMapping[legKey] = {
-        color: color,
-        route: routeNumber,
-        direction: direction, // Use the calculated direction
-        mode: leg.mode,
-        description: routeDescription
-      };
-      
-      // Also store direction on leg object for route loading
-      leg.direction = direction;
-      leg.route = routeNumber; // Ensure route is set
-      
-      console.log('[showRoute] Created leg mapping:', legKey, 'for route:', routeNumber, 'description:', routeDescription, 'direction:', direction);
+  // Clear previous map elements
+  const map = window.map;
+  if (map) {
+    if (window.routeLegLines && window.routeLegLines.length) {
+      window.routeLegLines.forEach(lineId => {
+        if (map.getLayer(lineId)) map.removeLayer(lineId);
+        if (map.getSource(lineId)) map.removeSource(lineId);
+      });
+      window.routeLegLines = [];
     }
     
-    // --- Geometry-first leg rendering ---
-    // Goal:
-    // - WALK: solid gray, uses OTP steps if available (fallback OSRM, then straight line)
-    // - TRANSIT: dashed prefix/suffix and solid middle, using pointsOnLink.points and snapping split indices to from/to.
-    let coords = [];
-    const fromLat = leg.fromPlace?.latitude;
-    const fromLon = leg.fromPlace?.longitude;
-    const toLat = leg.toPlace?.latitude;
-    const toLon = leg.toPlace?.longitude;
-
-    // ----------------------------
-    // 1) Transit geometry from OTP pointsOnLink
-    // ----------------------------
-    if (leg.mode !== "WALK") {
-      const otpPts = leg.pointsOnLink?.points;
-      if (otpPts) {
-        try {
-          coords = decodePolyline(otpPts); // returns [lat, lon]
-          console.log(`[showRoute] ✅ Using OTP pointsOnLink for ${leg.mode} leg ${legIndex}, ${coords.length} points`);
-          if (!Array.isArray(coords) || coords.length < 2) coords = [];
-        } catch (e) {
-          console.warn("[showRoute] Failed to decode OTP pointsOnLink.points:", e);
-          coords = [];
-        }
-      }
-    }
-
-    // ----------------------------
-    // 2) Walking geometry (best effort)
-    //    - Use OSRM for walking paths (follows actual streets)
-    // ----------------------------
-    if (leg.mode === "WALK") {
-      // Use OSRM for walking paths (follows actual streets, not straight lines)
-      if (!coords.length && fromLat && fromLon && toLat && toLon) {
-        try {
-          console.log(`[showRoute] Fetching OSRM walking path from (${fromLat}, ${fromLon}) to (${toLat}, ${toLon})`);
-          const osrmUrl = `https://router.project-osrm.org/route/v1/walking/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
-          const r = await fetch(osrmUrl);
-          if (r.ok) {
-            const data = await r.json();
-            if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-              const geometry = data.routes[0].geometry?.coordinates;
-              if (geometry && geometry.length > 1) {
-                coords = geometry.map(c => [c[1], c[0]]); // [lat, lon]
-                const distance = data.routes[0].distance || 0;
-                console.log(`[showRoute] ✅ Using OSRM for walking leg ${legIndex}, ${coords.length} points, ${Math.round(distance)}m distance`);
-                console.log(`[showRoute] OSRM path follows streets (not straight line)`);
-              } else {
-                console.warn(`[showRoute] OSRM returned no geometry`);
-              }
-            } else {
-              console.warn(`[showRoute] OSRM returned error: ${data.code}`);
-            }
-          } else {
-            console.warn(`[showRoute] OSRM request failed: ${r.status}`);
-          }
-        } catch (e) {
-          console.warn("[showRoute] OSRM walking fallback failed:", e);
-        }
-      } else if (!coords.length) {
-        console.warn(`[showRoute] Cannot fetch walking path - missing coordinates`);
-      }
-    }
-
-    // ----------------------------
-    // 3) Last resort: straight line
-    // ----------------------------
-    if (!coords.length && fromLat && fromLon && toLat && toLon) {
-      coords = [[fromLat, fromLon], [toLat, toLon]];
-      console.warn(`[showRoute] ⚠️ Using straight line fallback for ${leg.mode} leg ${legIndex}`);
-    }
-
-    // ----------------------------
-    // 4) Draw it:
-    //    WALK = solid gray
-    //    TRANSIT = dashed ends + solid middle (same color)
-    // ----------------------------
-    if (coords.length > 1) {
-      const baseId = `routeLeg-${legIndex}`;
-      window.routeLegLines = window.routeLegLines || [];
-
-      if (leg.mode === "WALK") {
-        // ✅ WALK = SOLID GRAY
-        const walkId = `${baseId}-walk`;
-        addLine(map, walkId, toMapLibreCoords(coords), {
-          "line-color": "#777",
-          "line-width": 4,
-          "line-opacity": 0.85
-        });
-        window.routeLegLines.push(walkId);
-
-      } else {
-        // ✅ TRANSIT = dashed prefix, solid middle, dashed suffix (same color)
-        // Find split indices by snapping to nearest geometry point to from/to coordinates
-        let startIdx = 0;
-        let endIdx = coords.length - 1;
-
-        if (fromLat && fromLon && toLat && toLon && coords.length > 10) {
-          const a = findNearestPointIndex(coords, fromLat, fromLon);
-          const b = findNearestPointIndex(coords, toLat, toLon);
-          startIdx = Math.min(a, b);
-          endIdx = Math.max(a, b);
-        }
-
-        // ensure mid has meaningful length
-        if ((endIdx - startIdx) < 2) {
-          startIdx = 0;
-          endIdx = coords.length - 1;
-        }
-
-        const pre = coords.slice(0, startIdx + 1);
-        const mid = coords.slice(startIdx, endIdx + 1);
-        const post = coords.slice(endIdx);
-
-        const dash = [5, 3]; // more pronounced dashed ends
-
-        if (pre.length > 1) {
-          const preId = `${baseId}-pre`;
-          addLine(map, preId, toMapLibreCoords(pre), {
-            "line-color": color,
-            "line-width": 6,      // increased from 5 for more visibility
-            "line-opacity": 0.8,  // increased from 0.65 for more visibility
-            "line-dasharray": dash
-          });
-          window.routeLegLines.push(preId);
-        }
-
-        if (mid.length > 1) {
-          const midId = `${baseId}-mid`;
-          addLine(map, midId, toMapLibreCoords(mid), {
-            "line-color": color,
-            "line-width": 6,      // slightly thicker for the "selected segment"
-            "line-opacity": 0.95
-          });
-          window.routeLegLines.push(midId);
-        }
-
-        if (post.length > 1) {
-          const postId = `${baseId}-post`;
-          addLine(map, postId, toMapLibreCoords(post), {
-            "line-color": color,
-            "line-width": 6,      // increased from 5 for more visibility
-            "line-opacity": 0.8,  // increased from 0.65 for more visibility
-            "line-dasharray": dash
-          });
-          window.routeLegLines.push(postId);
-        }
-      }
-
-      allCoords = allCoords.concat(coords);
-    }
-    
-    legIndex++;
-    
-    // Collect route information for bus tracking (skip WALK legs)
-    if (leg.mode !== 'WALK' && routeNumber) {
-      console.log('🚌 [showRoute] ==========================================');
-      console.log('🚌 [showRoute] Processing transit leg for bus tracking');
-      console.log('🚌 [showRoute] Leg mode:', leg.mode);
-      console.log('🚌 [showRoute] Route number (raw):', leg.route);
-      console.log('🚌 [showRoute] Route number (processed):', routeNumber);
-      console.log('🚌 [showRoute] Leg key:', legKey);
-      console.log('🚌 [showRoute] Leg color mapping:', legColorMapping);
-      
-      // Retrieve the direction that was already calculated in the first block
-      // This ensures both legs use the same fixed direction matching logic
-      let direction = 0; // Default fallback
-      if (legKey && legColorMapping[legKey]) {
-        direction = legColorMapping[legKey].direction;
-        console.log('🚌 [showRoute] ✅ Found direction in legColorMapping:', direction);
-      } else {
-        console.warn('🚌 [showRoute] ⚠️ WARNING: Could not find direction in legColorMapping');
-        console.warn('🚌 [showRoute] LegKey:', legKey);
-        console.warn('🚌 [showRoute] Available legKeys:', Object.keys(legColorMapping));
-        console.warn('🚌 [showRoute] Using default direction: 0');
-      }
-      
-      const routeToTrack = {
-        route_id: routeNumber, // Use the processed route number, not leg.route
-        direction_id: direction, // Use the direction from legColorMapping (already calculated in first block)
-        mode: leg.mode
-      };
-      
-      console.log('🚌 [showRoute] Adding route to track:', routeToTrack);
-      routesToTrack.push(routeToTrack);
-      console.log('🚌 [showRoute] Total routes to track so far:', routesToTrack.length);
-      console.log('🚌 [showRoute] ==========================================');
+    if (window.extendedRouteLines && window.extendedRouteLines.length) {
+      window.extendedRouteLines.forEach(lineId => {
+        if (map.getLayer(lineId)) map.removeLayer(lineId);
+        if (map.getSource(lineId)) map.removeSource(lineId);
+      });
+      window.extendedRouteLines = [];
     }
   }
   
-  if (window.routeLegLines && window.routeLegLines.length) {
-    const bounds = new maplibregl.LngLatBounds();
-    allCoords.forEach(coord => bounds.extend([coord[1], coord[0]]));
-    map.fitBounds(bounds, { padding: [40, 40] });
-  }
+  // Just draw the journey - that's it!
+  drawJourney(journey);
   
-  // Store leg color mapping globally for bus matching
-  window.currentLegColorMapping = legColorMapping;
-  console.log('[showRoute] Leg color mapping:', legColorMapping);
-  
-  // Draw extended routes from mastermap (if function available)
-  if (typeof window.drawExtendedRoutes === 'function') {
-    window.drawExtendedRoutes(legColorMapping);
-  }
-  
-  // Store routesToTrack globally for bus tracking
-  window.routesToTrack = routesToTrack;
-  console.log('🚌 [showRoute] ==========================================');
-  console.log('🚌 [showRoute] FINAL: Routes to track:', JSON.stringify(routesToTrack, null, 2));
-  console.log('🚌 [showRoute] Total routes:', routesToTrack.length);
-  console.log('🚌 [showRoute] ==========================================');
-  
-  // Start tracking buses for the routes in this trip
-  if (routesToTrack.length > 0) {
-    console.log('🚌 [showRoute] Starting bus tracking for', routesToTrack.length, 'routes');
-    
-    // Stop closest route tracking when OTP tracking starts
-    if (window.closestRouteInterval) {
-      console.log('[showRoute] Stopping closest route tracking for OTP');
-      clearInterval(window.closestRouteInterval);
-      window.closestRouteInterval = null;
-    }
-    
-    // Use window.fetchAndDisplayBuses if available
-    if (typeof window.fetchAndDisplayBuses === 'function') {
-      window.fetchAndDisplayBuses(routesToTrack);
-      // Set up continuous tracking for this trip
-      if (window.otpBusTrackingInterval) {
-        clearInterval(window.otpBusTrackingInterval);
-      }
-      window.otpBusTrackingInterval = setInterval(() => {
-        window.fetchAndDisplayBuses(routesToTrack);
-      }, 15000);
-    }
-  } else {
-    // If no routes to track, resume closest route tracking
-    if (window.closestRoute && typeof window.fetchAndDisplayBuses === 'function') {
-      // Show buses for closest route
-      window.fetchAndDisplayBuses();
-    }
-  }
-  
-  // Mark that a trip has been selected
-  activeTripSelected = true;
-  window.activeTripSelected = true; // Also set on window for home.html access
-  
-  // Minimize the modal instead of hiding it (if function available)
+  // Minimize modal if available
   if (typeof window.minimizeItineraryModal === 'function') {
     window.minimizeItineraryModal();
   }
 }
+
+// Export functions and variables to window for global access
+window.fetchAndShowOtpItineraries = fetchAndShowOtpItineraries;
+window.renderItinListVisual = renderItinListVisual;
+window.decodePolyline = decodePolyline;
+window.showRoute = showRoute;
+
+// Export state variables (for backward compatibility)
+// Note: currentItins is also set on window.currentItins in fetchAndShowOtpItineraries
+Object.defineProperty(window, 'currentItins', {
+  get: () => currentItins,
+  set: (value) => { currentItins = value; }
+});
 
 // Export functions and variables to window for global access
 window.fetchAndShowOtpItineraries = fetchAndShowOtpItineraries;
