@@ -5905,14 +5905,24 @@
       const routeLabel = `${routeName} ${dir0Text} to ${dir1Text}`;
       
       const routeHeader = document.createElement('div');
-      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem;';
-      routeHeader.textContent = routeLabel;
+      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;';
+      routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = 'rgba(30, 144, 255, 0.1)';
+      routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
       // Discover branches for this route group
       const branches = discoverRouteBranches(route.id);
       
       const branchesDiv = document.createElement('div');
-      branchesDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;';
+      branchesDiv.id = `rail-branches-${route.id}`;
+      branchesDiv.style.cssText = 'display: none; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(30, 144, 255, 0.3);';
+      
+      // Toggle function for expanding/collapsing branches
+      routeHeader.onclick = () => {
+        const isExpanded = branchesDiv.style.display !== 'none';
+        branchesDiv.style.display = isExpanded ? 'none' : 'flex';
+        routeHeader.querySelector('span:last-child').textContent = isExpanded ? '▼' : '▲';
+      };
       
       // Render each branch with endpoint stations
       const branchPromises = branches.map(async (branch) => {
@@ -6047,11 +6057,21 @@
       const routeLabel = `${routeName} ${terminal0} to ${terminal1}`;
       
       const routeHeader = document.createElement('div');
-      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem;';
-      routeHeader.textContent = routeLabel;
+      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;';
+      routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = 'rgba(30, 144, 255, 0.1)';
+      routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
       const directionsDiv = document.createElement('div');
-      directionsDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;';
+      directionsDiv.id = `rail-directions-${route.id}`;
+      directionsDiv.style.cssText = 'display: none; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(30, 144, 255, 0.3);';
+      
+      // Toggle function for expanding/collapsing directions
+      routeHeader.onclick = () => {
+        const isExpanded = directionsDiv.style.display !== 'none';
+        directionsDiv.style.display = isExpanded ? 'none' : 'flex';
+        routeHeader.querySelector('span:last-child').textContent = isExpanded ? '▼' : '▲';
+      };
       
       // Show buttons with the terminal stations for each direction
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {

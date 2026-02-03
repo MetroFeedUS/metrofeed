@@ -997,6 +997,16 @@ function calculateDirection(leg, routeNumber, routeDescription) {
       console.log(`🔍 [calculateDirection] ${leg.mode} route in Boston: using default direction 0 (will be flipped in overlay)`);
       direction = 0;
     }
+    
+    // For Boston buses: Try to use routeLoader if available (but don't await - this is sync)
+    // Note: This is a best-effort attempt; if routeLoader isn't ready, we'll use default
+    // The direction will be corrected later when the route is actually displayed
+    if (isBoston && leg.mode === 'BUS' && routeNumber) {
+      // For now, default to 0 - buses will be flipped in showOtpRouteSelector
+      // TODO: Could enhance this by pre-loading route data or using a cache
+      console.log(`🔍 [calculateDirection] Boston bus ${routeNumber}: using default direction 0 (will be flipped in overlay)`);
+      direction = 0;
+    }
   }
   
   console.log('🔍 [calculateDirection] Final direction:', direction);
@@ -1181,6 +1191,10 @@ function drawJourney(journey) {
       const routeName = leg.line?.name || `Route ${leg.routeNumber}`;
       const mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
       
+      // Get from/to stops from the leg for better direction matching
+      const fromStop = leg.from?.name || '';
+      const toStop = leg.to?.name || '';
+      
       routeList.push({
         routeId: mappedRouteId, // Use mapped ID (e.g., "Red" instead of "200")
         originalRouteId: leg.routeNumber, // Keep original for reference
@@ -1188,7 +1202,9 @@ function drawJourney(journey) {
         mode: leg.mode,
         color: color,
         name: routeName,
-        legIndex: legIdx
+        legIndex: legIdx,
+        fromStop: fromStop, // Store for direction matching
+        toStop: toStop      // Store for direction matching
       });
     }
   });
@@ -1648,9 +1664,112 @@ function showOtpRouteSelector(routeList) {
     // ⚠️ FLIP DIRECTION: OTP directions are backward for BUS/TRAM/RAIL, but NOT for SUBWAY/METRO
     // Buses/rail need flipping, but subways are already correct
     const needsFlip = !(route.mode === 'SUBWAY' || route.mode === 'METRO');
-    const flippedDirection = needsFlip 
-      ? (route.directionId === 0 ? 1 : 0)  // Flip for buses/rail
-      : route.directionId;                   // Don't flip for subways
+    
+    // For buses: Try to verify direction by loading route data and matching stops
+    // This provides a better filter than just blindly flipping
+    let flippedDirection = route.directionId;
+    
+    if (needsFlip && route.mode === 'BUS' && mappedRouteId && window.routeLoader) {
+      // Try to verify the direction by checking route data
+      // Load both directions and see which one matches better
+      Promise.all([
+        window.routeLoader.loadRoute(mappedRouteId, 0).catch(() => null),
+        window.routeLoader.loadRoute(mappedRouteId, 1).catch(() => null)
+      ]).then(([dir0Data, dir1Data]) => {
+        if (dir0Data && dir1Data && dir0Data.stops && dir1Data.stops) {
+          // Get OTP leg stops
+          const otpFrom = (route.fromStop || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          const otpTo = (route.toStop || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          
+          // Get route terminal stops
+          const dir0First = (dir0Data.stops[0]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          const dir0Last = (dir0Data.stops[dir0Data.stops.length - 1]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          const dir1First = (dir1Data.stops[0]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          const dir1Last = (dir1Data.stops[dir1Data.stops.length - 1]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          
+          // Improved scoring system for direction matching
+          function calculateDirectionScore(otpFrom, otpTo, routeStops) {
+            if (!routeStops || routeStops.length === 0) return 0;
+            
+            let score = 0;
+            const firstStop = normalizeStopName(routeStops[0]?.name);
+            const lastStop = normalizeStopName(routeStops[routeStops.length - 1]?.name);
+            
+            // Exact terminal matches get highest weight
+            if (otpFrom && otpFrom === firstStop) score += 5;
+            if (otpTo && otpTo === lastStop) score += 5;
+            
+            // Partial terminal matches (substring) get medium weight
+            if (otpFrom && (otpFrom.includes(firstStop) || firstStop.includes(otpFrom)) && otpFrom !== firstStop) score += 3;
+            if (otpTo && (otpTo.includes(lastStop) || lastStop.includes(otpTo)) && otpTo !== lastStop) score += 3;
+            
+            // Check if OTP stops appear in route sequence (with position weighting)
+            const otpFromNorm = normalizeStopName(otpFrom);
+            const otpToNorm = normalizeStopName(otpTo);
+            
+            routeStops.forEach((stop, idx) => {
+              const stopName = normalizeStopName(stop.name);
+              if (stopName === otpFromNorm || stopName === otpToNorm) {
+                // Give more weight to matches near terminals (first/last 3 stops)
+                const isNearTerminal = idx < 3 || idx > routeStops.length - 4;
+                score += isNearTerminal ? 2 : 1;
+              }
+            });
+            
+            return score;
+          }
+          
+          function normalizeStopName(name) {
+            return (name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          }
+          
+          // Calculate scores for each direction
+          const dir0Score = calculateDirectionScore(route.fromStop, route.toStop, dir0Data.stops);
+          const dir1Score = calculateDirectionScore(route.fromStop, route.toStop, dir1Data.stops);
+          
+          // Determine best direction (higher score wins, tie goes to original direction)
+          const bestDirection = dir1Score > dir0Score ? 1 : (dir0Score > dir1Score ? 0 : route.directionId);
+          const shouldFlip = route.directionId !== bestDirection;
+          
+          if (shouldFlip) {
+            flippedDirection = route.directionId === 0 ? 1 : 0;
+            console.log(`🎨 [OtpRouteSelector] Route ${mappedRouteId}: OTP direction ${route.directionId} → Flipped to ${flippedDirection} (dir0: ${dir0Score}, dir1: ${dir1Score}, from: "${route.fromStop}", to: "${route.toStop}")`);
+          } else {
+            flippedDirection = route.directionId;
+            console.log(`🎨 [OtpRouteSelector] Route ${mappedRouteId}: OTP direction ${route.directionId} is correct (dir0: ${dir0Score}, dir1: ${dir1Score}, from: "${route.fromStop}", to: "${route.toStop}")`);
+          }
+          
+          // Update the overlay if it's already displayed
+          const overlayKey = `${mappedRouteId}-${flippedDirection}`;
+          if (window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]) {
+            // Direction was verified, overlay is already correct
+          } else {
+            // If overlay exists with wrong direction, update it
+            const oldKey = `${mappedRouteId}-${route.directionId === 0 ? 1 : 0}`;
+            if (window.activeRouteOverlays && window.activeRouteOverlays[oldKey]) {
+              window.activeRouteOverlays[oldKey].remove();
+              delete window.activeRouteOverlays[oldKey];
+              if (typeof window.showRouteOverlay === 'function') {
+                window.showRouteOverlay(mappedRouteId, flippedDirection);
+              }
+            }
+          }
+        }
+      }).catch(err => {
+        console.warn(`🎨 [OtpRouteSelector] Could not verify direction for route ${mappedRouteId}, using default flip logic:`, err);
+        // Fallback to default flip logic
+        flippedDirection = needsFlip ? (route.directionId === 0 ? 1 : 0) : route.directionId;
+      });
+      
+      // Use default flip logic initially (will be corrected by Promise above if route data loads)
+      flippedDirection = needsFlip ? (route.directionId === 0 ? 1 : 0) : route.directionId;
+    } else if (needsFlip) {
+      // Default: Flip for buses/rail
+      flippedDirection = route.directionId === 0 ? 1 : 0;
+    } else {
+      // Don't flip for subways/metro
+      flippedDirection = route.directionId;
+    }
     
     // Track active state (use flipped direction for key since we flip when showing)
     let isActive = false;
