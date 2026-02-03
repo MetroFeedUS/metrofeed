@@ -1628,7 +1628,8 @@
       }
       
       // Identify rail routes by route_id pattern (MBTA specific)
-      const railRouteIds = new Set(['Red', 'Orange', 'Green', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E']);
+      // Note: Green branches (Green-B, Green-C, Green-D, Green-E) are identified by Green- prefix
+      const railRouteIds = new Set(['Red', 'Orange', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E']);
       // Also check for Commuter Rail (CR-*) and other rail patterns
       const isRailRoute = (routeId) => {
         const id = String(routeId);
@@ -5382,7 +5383,8 @@
       BUS_ROUTES_SHUTTLE = (cityRoutes.busRoutes || []).filter(route => route.id.startsWith('Shuttle'));
       
       // Separate subway from commuter rail
-      const subwayIds = ['Red', 'Orange', 'Green', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E'];
+      // Note: Green branches (Green-B, Green-C, Green-D, Green-E) are shown individually, not grouped
+      const subwayIds = ['Red', 'Orange', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E'];
       RAIL_ROUTES_SUBWAY = (cityRoutes.railRoutes || []).filter(route => subwayIds.includes(route.id));
       RAIL_ROUTES_COMMUTER = (cityRoutes.railRoutes || []).filter(route => route.id.startsWith('CR-'));
       
@@ -5480,7 +5482,7 @@
     { id: '293', label: '293 – Yellow Bus', dir0: 'To Expo Center', dir1: 'To Portland City Center' }
       ]; // Fallback if routes_index.js not loaded
       BUS_ROUTES_SHUTTLE = [];
-      RAIL_ROUTES_SUBWAY = RAIL_ROUTES_FALLBACK.filter(r => ['Red', 'Orange', 'Blue', 'Green'].includes(r.id));
+      RAIL_ROUTES_SUBWAY = RAIL_ROUTES_FALLBACK.filter(r => ['Red', 'Orange', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E'].includes(r.id));
       RAIL_ROUTES_COMMUTER = [];
       BUS_ROUTES = BUS_ROUTES_REGULAR;
       RAIL_ROUTES = RAIL_ROUTES_SUBWAY;
@@ -5833,10 +5835,8 @@
       if (isRouteGroup(route.id)) {
         routeGroups.push(route);
       } else {
-        // Skip branch routes (they'll be shown under their parent group)
-        if (!route.id.startsWith('Green-')) {
-          regularRoutes.push(route);
-        }
+        // Show all routes individually, including Green branches
+        regularRoutes.push(route);
       }
     });
     
@@ -6015,14 +6015,15 @@
         // Note: Red Line branches aren't separate files yet, so we show the main route with both directions
         // When Red-Ashmont and Red-Braintree files exist, they'll be discovered here
       },
-      'Green': {
-        branches: [
-          { id: 'Green-B', label: 'Green Line - B Branch', dir0: null, dir1: null },
-          { id: 'Green-C', label: 'Green Line - C Branch', dir0: null, dir1: null },
-          { id: 'Green-D', label: 'Green Line - D Branch', dir0: null, dir1: null },
-          { id: 'Green-E', label: 'Green Line - E Branch', dir0: null, dir1: null }
-        ]
-      }
+      // Green branches are now shown individually, not as a group
+      // 'Green': {
+      //   branches: [
+      //     { id: 'Green-B', label: 'Green Line - B Branch', dir0: null, dir1: null },
+      //     { id: 'Green-C', label: 'Green Line - C Branch', dir0: null, dir1: null },
+      //     { id: 'Green-D', label: 'Green Line - D Branch', dir0: null, dir1: null },
+      //     { id: 'Green-E', label: 'Green Line - E Branch', dir0: null, dir1: null }
+      //   ]
+      // }
     };
     
     // Check if this is a known route group
@@ -6067,7 +6068,7 @@
    */
   function isRouteGroup(routeId) {
     const routeIdStr = String(routeId);
-    return routeIdStr === 'Red' || routeIdStr === 'Green';
+    return routeIdStr === 'Red'; // Green branches are shown individually, not as a group
   }
   
   // Make functions globally accessible
