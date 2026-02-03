@@ -1470,9 +1470,12 @@ function showOtpRouteSelector(routeList) {
       button.style.zIndex = 'auto';
     };
     
-    // ⚠️ FLIP DIRECTION: OTP directions might be backward
-    // Calculate flipped direction once (0 ↔ 1)
-    const flippedDirection = route.directionId === 0 ? 1 : 0;
+    // ⚠️ FLIP DIRECTION: OTP directions are backward for BUS/TRAM/RAIL, but NOT for SUBWAY/METRO
+    // Buses/rail need flipping, but subways are already correct
+    const needsFlip = !(route.mode === 'SUBWAY' || route.mode === 'METRO');
+    const flippedDirection = needsFlip 
+      ? (route.directionId === 0 ? 1 : 0)  // Flip for buses/rail
+      : route.directionId;                   // Don't flip for subways
     
     // Track active state (use flipped direction for key since we flip when showing)
     let isActive = false;
@@ -1488,7 +1491,7 @@ function showOtpRouteSelector(routeList) {
     // Click handler - toggle route overlay
     button.onclick = () => {
       console.log('🎨 [OtpRouteSelector] Clicked route:', mappedRouteId, '(original:', route.routeId, ')');
-      console.log('🎨 [OtpRouteSelector] OTP direction:', route.directionId, '→ Flipped to:', flippedDirection);
+      console.log('🎨 [OtpRouteSelector] Mode:', route.mode, 'OTP direction:', route.directionId, needsFlip ? `→ Flipped to: ${flippedDirection}` : `(no flip needed: ${flippedDirection})`);
       
       // ⚠️ CRITICAL: Clear ALL bus markers and overlays first
       // Clear home.html bus markers (but keep OTP mode active)
