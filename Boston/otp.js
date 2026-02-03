@@ -261,7 +261,9 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
   window.otpBusInfo = {};
   currentItins = null;
   activeTripSelected = false;
+  window.activeTripSelected = false; // Also clear on window
   window.currentLegColorMapping = null;
+  window.routesToTrack = []; // Clear routes to track
   
   // Clear any existing OTP route lines and stop markers
   if (window.routeLegLines && window.routeLegLines.length) {
@@ -686,6 +688,20 @@ async function showRoute(idx) {
   
   // Store the selected trip index globally
   window.selectedTripIndex = idx;
+  
+  // Clear previous bus tracking
+  if (window.otpBusTrackingInterval) {
+    clearInterval(window.otpBusTrackingInterval);
+    window.otpBusTrackingInterval = null;
+  }
+  window.routesToTrack = []; // Clear old routes
+  window.activeTripSelected = false; // Reset trip selection flag
+  
+  // Clear all bus markers
+  if (typeof window.fetchAndDisplayBuses === 'function') {
+    // Clear buses by calling with empty routes
+    window.fetchAndDisplayBuses([]);
+  }
   
   // Remove previous lines
   if (window.routeLine) {
@@ -1219,6 +1235,7 @@ async function showRoute(idx) {
   
   // Mark that a trip has been selected
   activeTripSelected = true;
+  window.activeTripSelected = true; // Also set on window for home.html access
   
   // Minimize the modal instead of hiding it (if function available)
   if (typeof window.minimizeItineraryModal === 'function') {

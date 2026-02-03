@@ -4013,7 +4013,7 @@
       let displayMode = 'all'; // 'all' or 'otp-only'
       let otpRoutes = [];
       
-      if (activeTripSelected && window.routesToTrack) {
+      if (window.activeTripSelected && window.routesToTrack && window.routesToTrack.length > 0) {
         // OTP trip is active - isolate only trip buses
         displayMode = 'otp-only';
         console.log('[fetchAndDisplayBuses] OTP trip detected!');
@@ -4074,10 +4074,25 @@
           console.log('[fetchAndDisplayBuses] Looking for buses on route:', trimetRouteNumber, 'direction:', otpDirection);
           
           // Filter buses for this specific route and direction
+          // Normalize route numbers for comparison (handle string/number and variations like "15" vs "15-0")
+          const normalizeRouteNumber = (routeNum) => {
+            if (!routeNum) return null;
+            // Convert to string, extract numeric part
+            const numStr = String(routeNum).replace(/[^0-9]/g, '');
+            return numStr || null;
+          };
+          
+          const normalizedTargetRoute = normalizeRouteNumber(trimetRouteNumber);
+          
           let routeBuses = allBuses.filter(v => {
-            const routeMatch = v.routeNumber == trimetRouteNumber;
+            const normalizedBusRoute = normalizeRouteNumber(v.routeNumber);
+            const routeMatch = normalizedBusRoute && normalizedTargetRoute && normalizedBusRoute === normalizedTargetRoute;
             const directionMatch = v.direction == otpDirection;
-            console.log(`[fetchAndDisplayBuses] Bus ${v.vehicleID}: route ${v.routeNumber}==${trimetRouteNumber} (${routeMatch}), dir ${v.direction}==${otpDirection} (${directionMatch})`);
+            
+            if (routeMatch && directionMatch) {
+              console.log(`[fetchAndDisplayBuses] ✅ Matched bus ${v.vehicleID}: route "${v.routeNumber}" (normalized: ${normalizedBusRoute}) == "${trimetRouteNumber}" (normalized: ${normalizedTargetRoute}), dir ${v.direction} == ${otpDirection}`);
+            }
+            
             return routeMatch && directionMatch;
           });
           
