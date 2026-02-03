@@ -1214,6 +1214,181 @@ function drawJourney(journey) {
 }
 
 /**
+ * Show branch selection menu for route groups (Red, Green) in OTP selector
+ * @param {string} routeGroupId - Route group ID (e.g., "Red", "Green")
+ * @param {Object} route - Original route object from routeList
+ * @param {HTMLElement} button - The button that was clicked
+ * @param {HTMLElement} buttonsContainer - Container for buttons
+ */
+function showOtpBranchSelection(routeGroupId, route, button, buttonsContainer) {
+  // Remove existing branch menu if present
+  const existingMenu = document.getElementById('otpBranchSelectionMenu');
+  if (existingMenu) {
+    existingMenu.remove();
+  }
+  
+  // Discover branches for this route group
+  if (!window.discoverRouteBranches) {
+    console.error('🎨 [showOtpBranchSelection] discoverRouteBranches not available');
+    return;
+  }
+  
+  const branches = window.discoverRouteBranches(routeGroupId);
+  if (branches.length === 0) {
+    console.log('🎨 [showOtpBranchSelection] No branches found for', routeGroupId);
+    return;
+  }
+  
+  // Create branch selection menu
+  const menu = document.createElement('div');
+  menu.id = 'otpBranchSelectionMenu';
+  menu.style.cssText = `
+    position: absolute;
+    background: rgba(20, 20, 20, 0.98);
+    border: 2px solid ${route.color};
+    border-radius: 8px;
+    padding: 12px;
+    z-index: 10001;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+  
+  const menuTitle = document.createElement('div');
+  menuTitle.textContent = `Select ${routeGroupId} Line Branch:`;
+  menuTitle.style.cssText = `
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 12px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 6px;
+  `;
+  menu.appendChild(menuTitle);
+  
+  // Add branch options
+  branches.forEach(branch => {
+    const branchDiv = document.createElement('div');
+    branchDiv.style.cssText = 'margin-bottom: 8px;';
+    
+    const branchLabel = document.createElement('div');
+    branchLabel.textContent = branch.label;
+    branchLabel.style.cssText = `
+      color: ${route.color};
+      font-weight: 600;
+      font-size: 11px;
+      margin-bottom: 4px;
+    `;
+    branchDiv.appendChild(branchLabel);
+    
+    const branchButtons = document.createElement('div');
+    branchButtons.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+    
+    if (branch.dir0) {
+      const dir0Btn = document.createElement('button');
+      dir0Btn.textContent = `➡ ${branch.dir0}`;
+      dir0Btn.style.cssText = `
+        width: 100%;
+        padding: 6px;
+        background: ${route.color};
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 10px;
+        text-align: left;
+      `;
+      dir0Btn.onclick = () => {
+        menu.remove();
+        // Use the same logic as regular route selection
+        selectOtpBranchRoute(branch.routeId, 0, route, routeGroupId);
+      };
+      branchButtons.appendChild(dir0Btn);
+    }
+    
+    if (branch.dir1) {
+      const dir1Btn = document.createElement('button');
+      dir1Btn.textContent = `⬅ ${branch.dir1}`;
+      dir1Btn.style.cssText = `
+        width: 100%;
+        padding: 6px;
+        background: ${route.color};
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 10px;
+        text-align: left;
+      `;
+      dir1Btn.onclick = () => {
+        menu.remove();
+        selectOtpBranchRoute(branch.routeId, 1, route, routeGroupId);
+      };
+      branchButtons.appendChild(dir1Btn);
+    }
+    
+    branchDiv.appendChild(branchButtons);
+    menu.appendChild(branchDiv);
+  });
+  
+  // Position menu near the button
+  const buttonRect = button.getBoundingClientRect();
+  menu.style.left = `${buttonRect.left}px`;
+  menu.style.top = `${buttonRect.bottom + 8}px`;
+  
+  // Close menu when clicking outside
+  const closeMenu = (e) => {
+    if (!menu.contains(e.target) && e.target !== button) {
+      menu.remove();
+      document.removeEventListener('click', closeMenu);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeMenu), 100);
+  
+  document.body.appendChild(menu);
+}
+
+/**
+ * Select a branch route from OTP route selector
+ * @param {string} branchRouteId - Branch route ID (e.g., "Green-B")
+ * @param {number} directionId - Direction ID
+ * @param {Object} originalRoute - Original route object from OTP routeList
+ * @param {string} routeGroupId - Route group ID (e.g., "Red", "Green")
+ */
+function selectOtpBranchRoute(branchRouteId, directionId, originalRoute, routeGroupId) {
+  console.log('🎨 [selectOtpBranchRoute] Selected branch:', branchRouteId, 'direction:', directionId);
+  
+  // Determine if direction needs flipping (same logic as regular routes)
+  const needsFlip = !(originalRoute.mode === 'SUBWAY' || originalRoute.mode === 'METRO');
+  const flippedDirection = needsFlip 
+    ? (directionId === 0 ? 1 : 0)
+    : directionId;
+  
+  // ⚠️ CRITICAL: Clear ALL bus markers and overlays first
+  if (typeof window.fetchAndDisplayBuses === 'function') {
+    window.fetchAndDisplayBuses([]);
+  }
+  
+  if (typeof window.clearAllRouteOverlays === 'function') {
+    window.clearAllRouteOverlays();
+  }
+  
+  if (window.activeRouteOverlays) {
+    window.activeRouteOverlays = {};
+  }
+  
+  window.activeTripSelected = true;
+  
+  // Show route overlay using existing system
+  if (typeof window.showRouteOverlay === 'function') {
+    window.showRouteOverlay(branchRouteId, flippedDirection);
+  } else {
+    console.error('🎨 [selectOtpBranchRoute] showRouteOverlay not available');
+    alert('Route overlay system not ready. Please refresh the page.');
+  }
+}
+
+/**
  * Show route selector modal with color-coordinated buttons
  * @param {Array} routeList - Array of route objects with {routeId, directionId, mode, color, name}
  */
@@ -1488,9 +1663,18 @@ function showOtpRouteSelector(routeList) {
       button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
     }
     
-    // Click handler - toggle route overlay
+    // Click handler - toggle route overlay or show branch selection for route groups
     button.onclick = () => {
       console.log('🎨 [OtpRouteSelector] Clicked route:', mappedRouteId, '(original:', route.routeId, ')');
+      
+      // Check if this is a route group (Red, Green)
+      if (window.isRouteGroup && window.isRouteGroup(mappedRouteId)) {
+        // Show branch selection menu
+        showOtpBranchSelection(mappedRouteId, route, button, buttonsContainer);
+        return;
+      }
+      
+      // Regular route - show overlay directly
       console.log('🎨 [OtpRouteSelector] Mode:', route.mode, 'OTP direction:', route.directionId, needsFlip ? `→ Flipped to: ${flippedDirection}` : `(no flip needed: ${flippedDirection})`);
       
       // ⚠️ CRITICAL: Clear ALL bus markers and overlays first

@@ -1425,8 +1425,10 @@
    * 
    * GTFS Pipeline Acceptance Criteria:
    * - Generate shapes[] per (route_label, direction_id) by collecting all unique shape_ids
-   * - UI renders every shape in shapes[] as faint context (line-only, no duplicate stops/vehicles)
-   * - OTP segment stays thick on top
+   * - UI renders every shape in shapes[] (line-only, no duplicate stops/vehicles)
+   * - Basic route display: Normal opacity (0.8) - shows all branches clearly
+   * - OTP context mode: Faint opacity (0.25) - provides context when OTP is active
+   * - OTP segment stays thick on top when active
    * - If multiple shapes overlap, that's fine; correctness > minimalism
    * 
    * @param {Object} routeData - Route data object
@@ -5822,7 +5824,96 @@
     
     // Clear and populate route list
     routeList.innerHTML = '';
+    
+    // Separate route groups from regular routes
+    const routeGroups = [];
+    const regularRoutes = [];
+    
     routesToShow.forEach(route => {
+      if (isRouteGroup(route.id)) {
+        routeGroups.push(route);
+      } else {
+        // Skip branch routes (they'll be shown under their parent group)
+        if (!route.id.startsWith('Green-')) {
+          regularRoutes.push(route);
+        }
+      }
+    });
+    
+    // Render route groups first (with expandable branches)
+    routeGroups.forEach(route => {
+      const routeDiv = document.createElement('div');
+      routeDiv.className = 'route-entry-modal';
+      routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
+      
+      const routeHeader = document.createElement('div');
+      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
+      
+      const routeLabel = document.createElement('span');
+      routeLabel.textContent = route.label || route.id;
+      routeHeader.appendChild(routeLabel);
+      
+      const expandIcon = document.createElement('span');
+      expandIcon.textContent = '▼';
+      expandIcon.style.cssText = 'font-size: 0.8em; margin-left: 0.5rem;';
+      routeHeader.appendChild(expandIcon);
+      
+      routeHeader.onclick = () => {
+        const branchesDiv = document.getElementById(`rail-branches-${route.id}`);
+        if (branchesDiv) {
+          const isExpanded = branchesDiv.style.display !== 'none';
+          branchesDiv.style.display = isExpanded ? 'none' : 'block';
+          expandIcon.textContent = isExpanded ? '▼' : '▲';
+        }
+      };
+      
+      // Discover branches for this route group
+      const branches = discoverRouteBranches(route.id);
+      
+      const branchesDiv = document.createElement('div');
+      branchesDiv.id = `rail-branches-${route.id}`;
+      branchesDiv.style.cssText = 'display: none; margin-top: 0.5rem;';
+      
+      // Render each branch
+      branches.forEach(branch => {
+        const branchDiv = document.createElement('div');
+        branchDiv.style.cssText = 'margin-left: 1rem; margin-bottom: 0.5rem; padding: 0.5rem; background: rgba(30, 144, 255, 0.1); border-radius: 4px;';
+        
+        const branchLabel = document.createElement('div');
+        branchLabel.textContent = branch.label;
+        branchLabel.style.cssText = 'font-weight: 600; color: #1E90FF; margin-bottom: 0.25rem; font-size: 0.9em;';
+        branchDiv.appendChild(branchLabel);
+        
+        const branchDirections = document.createElement('div');
+        branchDirections.style.cssText = 'display: flex; flex-direction: column; gap: 0.25rem;';
+        
+        if (branch.dir0) {
+          const dir0Btn = document.createElement('button');
+          dir0Btn.textContent = `➡ ${branch.dir0}`;
+          dir0Btn.style.cssText = 'width: 100%; padding: 0.4rem; background: #1E90FF; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;';
+          dir0Btn.onclick = () => selectRailRoute(branch.routeId, 0);
+          branchDirections.appendChild(dir0Btn);
+        }
+        
+        if (branch.dir1) {
+          const dir1Btn = document.createElement('button');
+          dir1Btn.textContent = `⬅ ${branch.dir1}`;
+          dir1Btn.style.cssText = 'width: 100%; padding: 0.4rem; background: #1E90FF; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;';
+          dir1Btn.onclick = () => selectRailRoute(branch.routeId, 1);
+          branchDirections.appendChild(dir1Btn);
+        }
+        
+        branchDiv.appendChild(branchDirections);
+        branchesDiv.appendChild(branchDiv);
+      });
+      
+      routeDiv.appendChild(routeHeader);
+      routeDiv.appendChild(branchesDiv);
+      routeList.appendChild(routeDiv);
+    });
+    
+    // Render regular routes (non-groups, non-branches)
+    regularRoutes.forEach(route => {
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
@@ -5902,12 +5993,104 @@
   }
   
   /**
+   * Discover branches for a route group (e.g., "Red" → branches, "Green" → Green-B/C/D/E)
+   * Returns array of branch route objects with {routeId, label, dir0, dir1}
+   * Made global for use in OTP route selector
+   */
+  function discoverRouteBranches(routeId) {
+    const index = getRoutesIndex();
+    if (!index || !index.routes) {
+      return [];
+    }
+    
+    const routeIdStr = String(routeId);
+    const branches = [];
+    
+    // Route groups that have branches
+    const routeGroups = {
+      'Red': {
+        branches: [
+          { id: 'Red', label: 'Red Line (Ashmont/Braintree)', dir0: 'Outbound', dir1: 'Inbound' }
+        ],
+        // Note: Red Line branches aren't separate files yet, so we show the main route with both directions
+        // When Red-Ashmont and Red-Braintree files exist, they'll be discovered here
+      },
+      'Green': {
+        branches: [
+          { id: 'Green-B', label: 'Green Line - B Branch', dir0: null, dir1: null },
+          { id: 'Green-C', label: 'Green Line - C Branch', dir0: null, dir1: null },
+          { id: 'Green-D', label: 'Green Line - D Branch', dir0: null, dir1: null },
+          { id: 'Green-E', label: 'Green Line - E Branch', dir0: null, dir1: null }
+        ]
+      }
+    };
+    
+    // Check if this is a known route group
+    if (routeGroups[routeIdStr]) {
+      const group = routeGroups[routeIdStr];
+      
+      // For each potential branch, check if it exists in routes index
+      group.branches.forEach(branchTemplate => {
+        // Find all routes matching this branch ID
+        const matchingRoutes = index.routes.filter(r => 
+          String(r.route_id) === String(branchTemplate.id)
+        );
+        
+        if (matchingRoutes.length > 0) {
+          // Build branch object with directions from routes index
+          const branch = {
+            routeId: branchTemplate.id,
+            label: branchTemplate.label,
+            dir0: null,
+            dir1: null
+          };
+          
+          matchingRoutes.forEach(route => {
+            if (route.direction_id === 0) {
+              branch.dir0 = route.direction_name || 'Outbound';
+            } else if (route.direction_id === 1) {
+              branch.dir1 = route.direction_name || 'Inbound';
+            }
+          });
+          
+          branches.push(branch);
+        }
+      });
+    }
+    
+    return branches;
+  }
+  
+  /**
+   * Check if a route is a route group (has branches)
+   * Made global for use in OTP route selector
+   */
+  function isRouteGroup(routeId) {
+    const routeIdStr = String(routeId);
+    return routeIdStr === 'Red' || routeIdStr === 'Green';
+  }
+  
+  // Make functions globally accessible
+  window.discoverRouteBranches = discoverRouteBranches;
+  window.isRouteGroup = isRouteGroup;
+  
+  /**
    * Toggle rail route directions visibility
    */
   function toggleRailRouteDirections(routeId) {
     const dirDiv = document.getElementById(`rail-directions-${routeId}`);
     if (dirDiv) {
       dirDiv.style.display = dirDiv.style.display === 'none' ? 'block' : 'none';
+    }
+  }
+  
+  /**
+   * Toggle rail route branches visibility (for route groups)
+   */
+  function toggleRailRouteBranches(routeId) {
+    const branchesDiv = document.getElementById(`rail-branches-${routeId}`);
+    if (branchesDiv) {
+      branchesDiv.style.display = branchesDiv.style.display === 'none' ? 'block' : 'none';
     }
   }
   
