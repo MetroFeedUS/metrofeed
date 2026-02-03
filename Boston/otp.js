@@ -1445,7 +1445,7 @@ function showOtpRouteSelector(routeList) {
       console.log('🎨 [OtpRouteSelector] OTP direction:', route.directionId, '→ Flipped to:', flippedDirection);
       
       // ⚠️ CRITICAL: Clear ALL bus markers and overlays first
-      // Clear home.html bus markers
+      // Clear home.html bus markers (but keep OTP mode active)
       if (typeof window.fetchAndDisplayBuses === 'function') {
         window.fetchAndDisplayBuses([]);
       }
@@ -1459,6 +1459,10 @@ function showOtpRouteSelector(routeList) {
       if (window.activeRouteOverlays) {
         window.activeRouteOverlays = {};
       }
+      
+      // ⚠️ IMPORTANT: Keep OTP trip active (prevents "all buses" mode)
+      // Don't clear activeTripSelected - we want route overlays to manage buses
+      window.activeTripSelected = true;
       
       // Show route overlay using existing system (use mapped route ID, flipped direction)
       if (typeof window.showRouteOverlay === 'function') {
@@ -1565,6 +1569,10 @@ async function showRoute(idx) {
   window.routesToTrack = [];
   window.currentLegColorMapping = {};
   console.log('🎨 [showRoute] ✅ Cleared stale routesToTrack and legColorMapping');
+  
+  // ⚠️ IMPORTANT: Set OTP trip as active (prevents "all buses" mode)
+  window.activeTripSelected = true;
+  console.log('🎨 [showRoute] ✅ Set activeTripSelected = true (prevents all buses mode)');
   
   // Clear existing route selector modal
   const existingModal = document.getElementById('otpRouteSelectorModal');

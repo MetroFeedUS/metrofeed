@@ -2731,7 +2731,9 @@
     }
     window.closestRouteInterval = setInterval(() => {
       // Track closest route and show buses
-      if (!window.otpBusTrackingInterval) {
+      // Don't run if OTP trip is active OR if route overlays are managing buses
+      const hasActiveOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
+      if (!window.otpBusTrackingInterval && !window.activeTripSelected && !hasActiveOverlays) {
         fetchAndDisplayBuses();
       }
     }, 15000);
@@ -4009,6 +4011,13 @@
       Object.values(busMarkers).forEach(m => m.remove());
       busMarkers = {};
       
+      // ⚠️ CRITICAL: If route overlays are active, don't show all buses - let overlays handle it
+      const hasActiveOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
+      if (hasActiveOverlays && !window.activeTripSelected) {
+        console.log('[fetchAndDisplayBuses] Route overlays are managing buses - skipping all buses mode');
+        return; // Exit early - route overlays will show their own buses
+      }
+      
       // Determine display mode
       let displayMode = 'all'; // 'all' or 'otp-only'
       let otpRoutes = [];
@@ -4043,10 +4052,9 @@
 
       } else {
         // Show all active buses (page load or no OTP trip)
+        // Note: We already checked for active overlays above, so this is safe
         displayMode = 'all';
         console.log('[fetchAndDisplayBuses] All buses mode - showing all active buses');
-        
-
       }
       
       if (displayMode === 'otp-only') {
