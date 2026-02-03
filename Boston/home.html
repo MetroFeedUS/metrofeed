@@ -1508,9 +1508,14 @@
       
       // Try to load branch routes
       // For Green Line: try B, C, D, E
-      const branchPatterns = baseRoute === 'Green' 
-        ? ['B', 'C', 'D', 'E'] 
-        : []; // Add other patterns as needed
+      // For Red Line: try Ashmont and Braintree (if they exist as separate files)
+      let branchPatterns = [];
+      if (baseRoute === 'Green') {
+        branchPatterns = ['B', 'C', 'D', 'E'];
+      } else if (baseRoute === 'Red') {
+        // Try to load Red-Ashmont and Red-Braintree if they exist
+        branchPatterns = ['Ashmont', 'Braintree'];
+      }
       
       for (const pattern of branchPatterns) {
         const branchId = `${baseRoute}-${pattern}`;
@@ -1522,6 +1527,21 @@
           }
         } catch (error) {
           // Branch doesn't exist or failed to load - that's okay
+        }
+      }
+      
+      // For Red Line: The route file currently only contains one branch (Braintree)
+      // The route file needs to be regenerated with a shapes[] array containing both Ashmont and Braintree branches
+      // For now, we'll log a warning that only one branch is available
+      if (baseRoute === 'Red' && shapes.length === 1) {
+        console.warn(`[processTrunkAndBranchRoute] Red Line only has one branch in route file. Route file needs to be regenerated with shapes[] array containing both Ashmont and Braintree branches.`);
+        // Check if route has stops indicating which branch this is
+        if (routeData.stops) {
+          const hasAshmont = routeData.stops.some(stop => stop.name && stop.name.includes('Ashmont'));
+          const hasBraintree = routeData.stops.some(stop => stop.name && stop.name.includes('Braintree'));
+          if (hasBraintree && !hasAshmont) {
+            console.warn(`[processTrunkAndBranchRoute] Red Line route file only contains Braintree branch. Ashmont branch data is missing.`);
+          }
         }
       }
       

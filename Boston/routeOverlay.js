@@ -952,7 +952,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
   options = options || {};
 
   const mode        = options.mode || "mainOverlay";
-  const routeColor  = options.routeColor || "#0071CE"; // MetroFeed blue-ish
+  const routeColor  = options.routeColor || "#0052A3"; // Deeper, more saturated blue for better visibility
   const fitBounds   =
     options.fitBounds !== undefined
       ? options.fitBounds
@@ -1006,7 +1006,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     // ⚠️ CRITICAL: shapes[] rendering is LINE-ONLY
     // 
     // When rendering multiple shapes for a route (trunk-and-branch):
-    // - Each shape in shapes[] is rendered as a faint line (context layer)
+    // - Each shape in shapes[] is rendered as a line
     // - Stops are rendered ONCE from routeData.stops (deduped by stop_id)
     // - Vehicles are fetched ONCE by (routeId, directionId) - not per shape
     // 
@@ -1018,8 +1018,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
     // - route_id: File key (e.g., "Green-B", "Red")
     // - shapes[]: All unique shape_ids for this route_label (from GTFS pipeline)
     //
-    // ---------- Render all shapes as faint context layers (for trunk-and-branch routes) ----------
-    // All shapes are rendered as faint context; OTP segment will be highlighted on top separately
+    // ⚠️ SEPARATION: Basic route display vs OTP context
+    // - Basic route display: Normal opacity (0.8), normal width (4px) - shows all branches clearly
+    // - OTP context mode: Faint opacity (0.25), thinner width (3px) - provides context for OTP highlight
+    //
+    // ---------- Render all shapes (for trunk-and-branch routes) ----------
+    // All shapes in shapes[] are rendered; opacity/width depends on OTP state
     shapes.forEach((shape, shapeIndex) => {
       const isPrimaryShape = shapeIndex === 0;
       const routeSourceId = `route-line-${routeId}-${directionId}-${shapeIndex}`;
@@ -1046,12 +1050,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
       });
       overlayElements.sources.push(routeSourceId);
 
-      // Render all shapes as faint context layers
-      // OTP segments (from drawJourney) will be rendered on top separately
-      // Find the first OTP layer to place route overlay layers before it
+      // Determine if OTP is active (for context layer styling)
+      // OTP is active if routeLegLines exist (OTP journey is drawn)
+      const isOtpActive = window.routeLegLines && window.routeLegLines.length > 0;
+      
+      // Find the first OTP layer to place route overlay layers before it (if OTP active)
       let beforeId = undefined;
-      if (window.routeLegLines && window.routeLegLines.length > 0) {
-        // Find the first existing OTP layer to place route overlay before it
+      if (isOtpActive) {
         for (const otpLayerId of window.routeLegLines) {
           if (map.getLayer(otpLayerId)) {
             beforeId = otpLayerId;
@@ -1060,16 +1065,22 @@ function attachRouteToMap(map, routeId, directionId, options) {
         }
       }
       
+      // ⚠️ SEPARATION: Basic route display vs OTP context
+      // - Basic route display (no OTP): Normal opacity (0.9), normal width (4px)
+      // - OTP context (OTP active): Faint opacity (0.25), thinner width (3px) for context
+      const lineOpacity = isOtpActive ? 0.25 : 0.9;  // Slightly higher opacity for better visibility
+      const lineWidth = isOtpActive ? 3 : 4;          // Normal width
+      
       map.addLayer({
         id: routeLayerId,
         type: "line",
         source: routeSourceId,
         paint: {
           "line-color": routeColor,
-          "line-width": 3,
-          "line-opacity": 0.25 // Faint context layer
+          "line-width": lineWidth,
+          "line-opacity": lineOpacity
         },
-        // Place route overlay layers before OTP segments so OTP stays on top
+        // Place route overlay layers before OTP segments (only if OTP active)
         beforeId: beforeId
       });
       overlayElements.layers.push(routeLayerId);
