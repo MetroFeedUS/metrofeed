@@ -1003,6 +1003,21 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
   // ==== Internal: build & attach =================================================
   const addRouteToMap = () => {
+    // ⚠️ CRITICAL: shapes[] rendering is LINE-ONLY
+    // 
+    // When rendering multiple shapes for a route (trunk-and-branch):
+    // - Each shape in shapes[] is rendered as a faint line (context layer)
+    // - Stops are rendered ONCE from routeData.stops (deduped by stop_id)
+    // - Vehicles are fetched ONCE by (routeId, directionId) - not per shape
+    // 
+    // This prevents duplicate stop markers and vehicle markers when multiple shapes overlap
+    // (e.g., Green Line branches sharing the trunk segment, Red Line branches at JFK/UMass)
+    //
+    // Route identity model:
+    // - route_label: User-facing group (e.g., "Green Line", "Red Line")
+    // - route_id: File key (e.g., "Green-B", "Red")
+    // - shapes[]: All unique shape_ids for this route_label (from GTFS pipeline)
+    //
     // ---------- Render all shapes as faint context layers (for trunk-and-branch routes) ----------
     // All shapes are rendered as faint context; OTP segment will be highlighted on top separately
     shapes.forEach((shape, shapeIndex) => {
@@ -1085,6 +1100,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
     }
 
     // ---------- Stops + popups ----------
+    // ⚠️ SANITY CHECK: Stops are rendered ONCE from routeData.stops, not per shape
+    // This ensures no duplicate stop markers even when multiple shapes share stops
+    // (e.g., Green Line branches sharing Park Street, Red Line branches sharing JFK/UMass)
+    //
     // Get timezone from route metadata or fallback
     const agencyTimezone = (routeData.meta && routeData.meta.agency_timezone) 
       ? routeData.meta.agency_timezone 
@@ -1711,6 +1730,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
             delete busMarkers[vehicleId];
           });
           
+          // ⚠️ SANITY CHECK: Vehicles are fetched ONCE by (routeId, directionId), not per shape
+          // This ensures no duplicate vehicle markers even when multiple shapes exist for the route
+          // Vehicles are keyed by vehicleId, so duplicates are naturally prevented
+          //
           // For MBTA V3: Fetch V3 vehicles for bus markers (instead of GTFS-RT)
           let v3VehiclesForMarkers = [];
           if (busApiType === 'mbta-gtfs-rt') {
@@ -1728,6 +1751,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           }
           
           // Create markers for buses (matching "All Buses Mode" style)
+          // Note: Vehicles are deduped by vehicleId, so no duplicates even with multiple shapes
           v3VehiclesForMarkers.forEach(bus => {
             if (!bus.latitude || !bus.longitude || !bus.blockID) return;
             

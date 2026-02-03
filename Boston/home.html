@@ -1408,73 +1408,128 @@
   
   // === BOSTON LAZY-LOADING SYSTEM ===
   /**
-   * Post-process route data to detect trunk-and-branch routes (like Red Line)
-   * and create a shapes array if needed
+   * Post-process route data to collect all shapes for a route label
+   * 
+   * Core principle: Route context = collection of all shapes for that route label
+   * 
+   * Route identity model:
+   * - route_label: User-facing group (e.g., "Green Line", "Red Line") - what users see
+   * - route_id: File key (e.g., "Green-B", "Red") - how data files are keyed
+   * - shapes[]: All unique shape_ids for this route_label (from GTFS pipeline)
+   * 
+   * This function:
+   * 1. ✅ BEST: If routeData already has shapes[] array → use it (GTFS pipeline generated it)
+   * 2. ⚠️ FALLBACK: If route label matches known branch pattern → try to load sibling branches
+   *    (Temporary until GTFS pipeline is updated - pattern-based discovery is a crutch)
+   * 3. ✅ BACKWARD COMPAT: Otherwise → use single shape (backward compatible)
+   * 
+   * GTFS Pipeline Acceptance Criteria:
+   * - Generate shapes[] per (route_label, direction_id) by collecting all unique shape_ids
+   * - UI renders every shape in shapes[] as faint context (line-only, no duplicate stops/vehicles)
+   * - OTP segment stays thick on top
+   * - If multiple shapes overlap, that's fine; correctness > minimalism
+   * 
    * @param {Object} routeData - Route data object
-   * @param {string} routeId - Route ID
+   * @param {string} routeId - Route ID (file key, may be branch-specific like "Green-B")
    * @param {number} directionId - Direction ID
-   * @returns {Object} Processed route data with shapes array if applicable
+   * @returns {Promise<Object>} Processed route data with shapes array if applicable
    */
-  function processTrunkAndBranchRoute(routeData, routeId, directionId) {
-    // Only process if route doesn't already have shapes array
+  async function processTrunkAndBranchRoute(routeData, routeId, directionId) {
+    // ✅ BEST CASE: GTFS pipeline already generated shapes[] array
+    // This is the ideal state - all unique shape_ids for this route_label are already collected
     if (routeData.shapes && Array.isArray(routeData.shapes) && routeData.shapes.length > 0) {
-      return routeData; // Already has shapes, no processing needed
+      console.log(`[processTrunkAndBranchRoute] Route ${routeId} already has ${routeData.shapes.length} shapes from GTFS pipeline`);
+      return routeData; // Perfect - use what GTFS gave us
     }
     
-    // Detect Red Line (trunk-and-branch route)
-    if (routeId === 'Red' && routeData.shape && routeData.stops) {
-      console.log('[processTrunkAndBranchRoute] Detected Red Line - creating shapes array');
+    // ⚠️ FALLBACK: Try to discover branch routes by pattern matching
+    // This is a temporary compatibility layer until GTFS pipeline is updated
+    // Pattern: If route is "Green", try to load "Green-B", "Green-C", "Green-D", "Green-E"
+    // Pattern: If route is "Green-B", try to load siblings "Green-C", "Green-D", "Green-E", and base "Green"
+    
+    const baseRouteMatch = routeId.match(/^(Green|Red|Blue|Orange)(?:-(.+))?$/);
+    if (!baseRouteMatch) {
+      return routeData; // Not a route that might have branches
+    }
+    
+    const baseRoute = baseRouteMatch[1]; // "Green", "Red", etc.
+    const branchSuffix = baseRouteMatch[2]; // "B", "C", "D", "E", or undefined
+    
+    // If this is already a branch route (e.g., "Green-B"), collect all sibling branches
+    if (branchSuffix) {
+      console.log(`[processTrunkAndBranchRoute] Detected branch route: ${routeId}, collecting siblings for ${baseRoute}`);
       
-      // Find JFK/UMass stop (split point)
-      const jfkStopIndex = routeData.stops.findIndex(stop => 
-        stop.name && stop.name.toLowerCase().includes('jfk')
-      );
+      const shapes = [];
       
-      if (jfkStopIndex >= 0) {
-        // Find Ashmont and Braintree stops
-        const ashmontStop = routeData.stops.find(stop => 
-          stop.name && stop.name.toLowerCase().includes('ashmont')
-        );
-        const braintreeStop = routeData.stops.find(stop => 
-          stop.name && stop.name.toLowerCase().includes('braintree')
-        );
+      // Add this route's own shape
+      if (routeData.shape && Array.isArray(routeData.shape)) {
+        shapes.push(routeData.shape);
+      }
+      
+      // Try to load sibling branches
+      // For Green Line: try B, C, D, E
+      // For other routes: this pattern can be extended
+      const branchPatterns = baseRoute === 'Green' 
+        ? ['B', 'C', 'D', 'E'] 
+        : []; // Add other patterns as needed
+      
+      for (const pattern of branchPatterns) {
+        if (pattern === branchSuffix) continue; // Skip self
         
-        // Find closest shape points to JFK/UMass, Ashmont, and Braintree
-        const jfkStop = routeData.stops[jfkStopIndex];
-        let jfkShapeIndex = 0;
-        let minDist = Infinity;
-        
-        // Find closest shape point to JFK/UMass
-        routeData.shape.forEach((point, idx) => {
-          const dist = Math.sqrt(
-            Math.pow(point[0] - jfkStop.lat, 2) + 
-            Math.pow(point[1] - jfkStop.lon, 2)
-          );
-          if (dist < minDist) {
-            minDist = dist;
-            jfkShapeIndex = idx;
+        const siblingId = `${baseRoute}-${pattern}`;
+        try {
+          const siblingData = await window.routeLoader.loadRoute(siblingId, directionId);
+          if (siblingData && siblingData.shape && Array.isArray(siblingData.shape)) {
+            shapes.push(siblingData.shape);
+            console.log(`[processTrunkAndBranchRoute] Loaded sibling branch: ${siblingId} (${siblingData.shape.length} points)`);
           }
-        });
-        
-        // Split shape at JFK/UMass
-        const trunkShape = routeData.shape.slice(0, jfkShapeIndex + 1);
-        const branchShape = routeData.shape.slice(jfkShapeIndex);
-        
-        // Create shapes array: trunk + branch (for now, use same branch for both)
-        // TODO: When separate branch route files are available, load them here
-        routeData.shapes = [
-          trunkShape,      // Trunk: Alewife → JFK/UMass
-          branchShape,     // Branch 1: JFK/UMass → Braintree (or Ashmont)
-          branchShape      // Branch 2: JFK/UMass → Ashmont (or Braintree) - duplicate for now
-        ];
-        
-        console.log('[processTrunkAndBranchRoute] Created shapes array:', routeData.shapes.length, 'shapes');
-        console.log('[processTrunkAndBranchRoute] Trunk points:', trunkShape.length, 'Branch points:', branchShape.length);
-      } else {
-        console.log('[processTrunkAndBranchRoute] JFK/UMass stop not found, using single shape');
+        } catch (error) {
+          // Sibling doesn't exist or failed to load - that's okay
+        }
+      }
+      
+      if (shapes.length > 1) {
+        routeData.shapes = shapes;
+        console.log(`[processTrunkAndBranchRoute] Collected ${shapes.length} shapes for ${baseRoute} from branch routes`);
+      }
+    }
+    // If this is the base route (e.g., "Green" without suffix), try to load all branch routes
+    else {
+      console.log(`[processTrunkAndBranchRoute] Detected base route: ${routeId}, collecting branch routes`);
+      
+      const shapes = [];
+      
+      // Add base route's own shape
+      if (routeData.shape && Array.isArray(routeData.shape)) {
+        shapes.push(routeData.shape);
+      }
+      
+      // Try to load branch routes
+      // For Green Line: try B, C, D, E
+      const branchPatterns = baseRoute === 'Green' 
+        ? ['B', 'C', 'D', 'E'] 
+        : []; // Add other patterns as needed
+      
+      for (const pattern of branchPatterns) {
+        const branchId = `${baseRoute}-${pattern}`;
+        try {
+          const branchData = await window.routeLoader.loadRoute(branchId, directionId);
+          if (branchData && branchData.shape && Array.isArray(branchData.shape)) {
+            shapes.push(branchData.shape);
+            console.log(`[processTrunkAndBranchRoute] Loaded branch: ${branchId} (${branchData.shape.length} points)`);
+          }
+        } catch (error) {
+          // Branch doesn't exist or failed to load - that's okay
+        }
+      }
+      
+      if (shapes.length > 1) {
+        routeData.shapes = shapes;
+        console.log(`[processTrunkAndBranchRoute] Collected ${shapes.length} shapes for ${baseRoute} (base + branches)`);
       }
     }
     
+    // If we still don't have shapes[], that's fine - use single shape (backward compatible)
     return routeData;
   }
   
@@ -1497,7 +1552,7 @@
         let routeData = await window.routeLoader.loadRoute(routeId, directionId);
         
         // Post-process: Detect trunk-and-branch routes and create shapes array
-        routeData = processTrunkAndBranchRoute(routeData, routeId, directionId);
+        routeData = await processTrunkAndBranchRoute(routeData, routeId, directionId);
         
         return routeData;
       } catch (error) {
