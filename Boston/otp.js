@@ -1178,171 +1178,302 @@ function showOtpRouteSelector(routeList) {
     existingModal.remove();
   }
   
-  // Create modal container
+  // Track collapsed state
+  let isCollapsed = false;
+  
+  // Create modal container (centered by default)
   const modal = document.createElement('div');
   modal.id = 'otpRouteSelectorModal';
   modal.style.cssText = `
     position: fixed;
-    top: 150px;
-    right: 20px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background: rgba(20, 20, 20, 0.95);
-    border: 2px solid #444;
-    border-radius: 8px;
-    padding: 12px;
+    border: 3px solid #555;
+    border-radius: 12px;
+    padding: 16px;
     z-index: 10000;
-    min-width: 200px;
-    max-width: 280px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: all 0.3s ease;
   `;
   
-  // Responsive styles for mobile
-  const mediaQuery = window.matchMedia('(max-width: 768px)');
-  function handleMobileView(e) {
-    if (e.matches) {
-      modal.style.cssText = `
-        position: fixed;
-        top: auto;
-        bottom: 20px;
-        right: 20px;
-        left: 20px;
-        background: rgba(20, 20, 20, 0.95);
-        border: 2px solid #444;
-        border-radius: 8px;
-        padding: 10px;
-        z-index: 10000;
-        max-width: none;
-        width: calc(100% - 40px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      `;
-    } else {
-      modal.style.cssText = `
-        position: fixed;
-        top: 150px;
-        right: 20px;
-        background: rgba(20, 20, 20, 0.95);
-        border: 2px solid #444;
-        border-radius: 8px;
-        padding: 12px;
-        z-index: 10000;
-        min-width: 200px;
-        max-width: 280px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      `;
-    }
-  }
-  handleMobileView(mediaQuery);
-  mediaQuery.addEventListener('change', handleMobileView);
+  // Title with collapse button
+  const titleBar = document.createElement('div');
+  titleBar.style.cssText = `
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #444;
+  `;
   
-  // Title
   const title = document.createElement('div');
   title.textContent = 'Routes in Trip';
   title.style.cssText = `
     color: #fff;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #444;
-    padding-bottom: 8px;
   `;
-  modal.appendChild(title);
+  titleBar.appendChild(title);
   
-  // Route buttons container
+  // Collapse button
+  const collapseBtn = document.createElement('button');
+  collapseBtn.textContent = '◄';
+  collapseBtn.style.cssText = `
+    background: transparent;
+    border: 1px solid #666;
+    color: #fff;
+    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  `;
+  collapseBtn.onmouseenter = () => {
+    collapseBtn.style.background = '#333';
+    collapseBtn.style.borderColor = '#888';
+  };
+  collapseBtn.onmouseleave = () => {
+    collapseBtn.style.background = 'transparent';
+    collapseBtn.style.borderColor = '#666';
+  };
+  
+  // Collapse/expand functionality
+  collapseBtn.onclick = () => {
+    isCollapsed = !isCollapsed;
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    
+    if (isCollapsed) {
+      // Collapse to right side - vertical strip
+      if (isMobile) {
+        modal.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          transform: none;
+          background: rgba(20, 20, 20, 0.95);
+          border: 3px solid #555;
+          border-radius: 12px;
+          padding: 10px 8px;
+          z-index: 10000;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          transition: all 0.3s ease;
+        `;
+      } else {
+        modal.style.cssText = `
+          position: fixed;
+          top: 50%;
+          right: 20px;
+          transform: translateY(-50%);
+          background: rgba(20, 20, 20, 0.95);
+          border: 3px solid #555;
+          border-radius: 12px;
+          padding: 12px 8px;
+          z-index: 10000;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          transition: all 0.3s ease;
+        `;
+      }
+      title.style.display = 'none';
+      buttonsContainer.style.flexDirection = 'column';
+      buttonsContainer.style.gap = '10px';
+      buttonsContainer.style.justifyContent = 'flex-start';
+      collapseBtn.textContent = '►';
+      // Keep button sizes the same when collapsed
+    } else {
+      // Expand to center
+      if (isMobile) {
+        modal.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(20, 20, 20, 0.95);
+          border: 3px solid #555;
+          border-radius: 12px;
+          padding: 12px;
+          z-index: 10000;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          transition: all 0.3s ease;
+          max-width: 90vw;
+        `;
+      } else {
+        modal.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(20, 20, 20, 0.95);
+          border: 3px solid #555;
+          border-radius: 12px;
+          padding: 16px;
+          z-index: 10000;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          transition: all 0.3s ease;
+        `;
+      }
+      title.style.display = 'block';
+      buttonsContainer.style.flexDirection = 'row';
+      buttonsContainer.style.gap = '12px';
+      buttonsContainer.style.flexWrap = 'wrap';
+      buttonsContainer.style.justifyContent = 'center';
+      collapseBtn.textContent = '◄';
+    }
+  };
+  
+  titleBar.appendChild(collapseBtn);
+  modal.appendChild(titleBar);
+  
+  // Route buttons container (border box)
   const buttonsContainer = document.createElement('div');
+  buttonsContainer.id = 'otpRouteButtonsContainer';
   buttonsContainer.style.cssText = `
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    border: 2px solid #444;
+    border-radius: 8px;
+    padding: 12px;
+    background: rgba(10, 10, 10, 0.5);
   `;
   
-  // Create button for each route
+  // Create square button for each route (keep in order - descending = first to last leg)
   routeList.forEach((route, idx) => {
     // Route ID is already mapped in drawJourney()
     const mappedRouteId = route.routeId;
     
     const button = document.createElement('button');
-    button.textContent = route.name || `Route ${mappedRouteId}`;
-    // Responsive button sizing
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    button.title = route.name || `Route ${mappedRouteId}`; // Tooltip for collapsed state
+    
+    // Square button styling
+    const buttonSize = 60; // Square size
     button.style.cssText = `
       background: ${route.color};
       color: #fff;
-      border: 2px solid ${route.color};
-      border-radius: 6px;
-      padding: ${isMobile ? '12px 16px' : '10px 14px'};
-      font-size: ${isMobile ? '14px' : '13px'};
-      font-weight: 600;
+      border: 3px solid ${route.color};
+      border-radius: 8px;
+      width: ${buttonSize}px;
+      height: ${buttonSize}px;
+      font-size: 11px;
+      font-weight: 700;
       cursor: pointer;
-      text-align: left;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       transition: all 0.2s;
       position: relative;
-      padding-left: ${isMobile ? '45px' : '40px'};
+      padding: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
       word-wrap: break-word;
-      overflow-wrap: break-word;
+      overflow: hidden;
     `;
     
-    // Color indicator dot
-    const dot = document.createElement('span');
-    dot.style.cssText = `
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 12px;
-      height: 12px;
-      background: ${route.color};
-      border: 2px solid #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 0 2px ${route.color};
+    // Route number/label (centered in square)
+    const routeLabel = document.createElement('div');
+    routeLabel.textContent = mappedRouteId || '?';
+    routeLabel.style.cssText = `
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     `;
-    button.appendChild(dot);
+    button.appendChild(routeLabel);
     
-    // Hover effects
+    // Route name (smaller, below number if space allows)
+    if (route.name && route.name.length < 15) {
+      const routeName = document.createElement('div');
+      routeName.textContent = route.name;
+      routeName.style.cssText = `
+        font-size: 9px;
+        margin-top: 2px;
+        opacity: 0.9;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        line-height: 1.1;
+        max-height: 20px;
+        overflow: hidden;
+      `;
+      button.appendChild(routeName);
+    }
+    
+    // Hover effects for square buttons
     button.onmouseenter = () => {
-      button.style.opacity = '0.85';
-      button.style.transform = 'scale(1.02)';
+      button.style.transform = 'scale(1.1)';
+      button.style.boxShadow = `0 4px 12px ${route.color}`;
+      button.style.zIndex = '10001';
     };
     button.onmouseleave = () => {
-      button.style.opacity = '1';
       button.style.transform = 'scale(1)';
+      if (!isActive) {
+        button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
+      }
+      button.style.zIndex = 'auto';
     };
     
-    // Track active state
+    // ⚠️ FLIP DIRECTION: OTP directions might be backward
+    // Calculate flipped direction once (0 ↔ 1)
+    const flippedDirection = route.directionId === 0 ? 1 : 0;
+    
+    // Track active state (use flipped direction for key since we flip when showing)
     let isActive = false;
-    const overlayKey = `${mappedRouteId}-${route.directionId}`;
+    const overlayKey = `${mappedRouteId}-${flippedDirection}`;
     
     // Check if route is already active
     if (window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]) {
       isActive = true;
-      button.style.border = '2px solid #fff';
-      button.style.boxShadow = `0 0 8px ${route.color}`;
+      button.style.border = '3px solid #fff';
+      button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
     }
     
     // Click handler - toggle route overlay
     button.onclick = () => {
-      console.log('🎨 [OtpRouteSelector] Clicked route:', mappedRouteId, '(original:', route.routeId, ') direction:', route.directionId);
+      console.log('🎨 [OtpRouteSelector] Clicked route:', mappedRouteId, '(original:', route.routeId, ')');
+      console.log('🎨 [OtpRouteSelector] OTP direction:', route.directionId, '→ Flipped to:', flippedDirection);
       
-      // Clear all buses first (to avoid showing all city buses)
+      // ⚠️ CRITICAL: Clear ALL bus markers and overlays first
+      // Clear home.html bus markers
       if (typeof window.fetchAndDisplayBuses === 'function') {
         window.fetchAndDisplayBuses([]);
       }
       
-      // Toggle route overlay using existing system (use mapped route ID)
+      // Clear ALL route overlays (removes their bus markers too)
+      if (typeof window.clearAllRouteOverlays === 'function') {
+        window.clearAllRouteOverlays();
+      }
+      
+      // Also manually clear activeRouteOverlays
+      if (window.activeRouteOverlays) {
+        window.activeRouteOverlays = {};
+      }
+      
+      // Show route overlay using existing system (use mapped route ID, flipped direction)
       if (typeof window.showRouteOverlay === 'function') {
-        window.showRouteOverlay(mappedRouteId, route.directionId);
+        window.showRouteOverlay(mappedRouteId, flippedDirection);
         
         // Update button state after a short delay (to let overlay system update)
         setTimeout(() => {
           const nowActive = window.activeRouteOverlays && window.activeRouteOverlays[overlayKey];
           if (nowActive) {
-            button.style.border = '2px solid #fff';
-            button.style.boxShadow = `0 0 8px ${route.color}`;
+            button.style.border = '3px solid #fff';
+            button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
             isActive = true;
           } else {
-            button.style.border = `2px solid ${route.color}`;
-            button.style.boxShadow = 'none';
+            button.style.border = `3px solid ${route.color}`;
+            button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
             isActive = false;
           }
         }, 100);
@@ -1357,37 +1488,64 @@ function showOtpRouteSelector(routeList) {
   
   modal.appendChild(buttonsContainer);
   
-  // Close button
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.style.cssText = `
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: transparent;
-    border: none;
-    color: #999;
-    font-size: 18px;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-  `;
-  closeBtn.onmouseenter = () => {
-    closeBtn.style.background = '#333';
-    closeBtn.style.color = '#fff';
-  };
-  closeBtn.onmouseleave = () => {
-    closeBtn.style.background = 'transparent';
-    closeBtn.style.color = '#999';
-  };
-  closeBtn.onclick = () => {
-    modal.remove();
-  };
-  modal.appendChild(closeBtn);
+  // Mobile responsiveness
+  const mediaQuery = window.matchMedia('(max-width: 768px)');
+  function handleMobileView(e) {
+    if (e.matches) {
+      // Mobile: smaller squares, adjust layout
+      if (!isCollapsed) {
+        modal.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(20, 20, 20, 0.95);
+          border: 3px solid #555;
+          border-radius: 12px;
+          padding: 12px;
+          z-index: 10000;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          transition: all 0.3s ease;
+          max-width: 90vw;
+        `;
+        buttonsContainer.style.gap = '8px';
+        // Make buttons slightly smaller on mobile
+        document.querySelectorAll('#otpRouteButtonsContainer button').forEach(btn => {
+          btn.style.width = '50px';
+          btn.style.height = '50px';
+          btn.style.fontSize = '10px';
+        });
+      } else {
+        // Collapsed on mobile: bottom right
+        modal.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          transform: none;
+          background: rgba(20, 20, 20, 0.95);
+          border: 3px solid #555;
+          border-radius: 12px;
+          padding: 10px 8px;
+          z-index: 10000;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          transition: all 0.3s ease;
+        `;
+      }
+    } else {
+      // Desktop: restore original sizes
+      if (!isCollapsed) {
+        document.querySelectorAll('#otpRouteButtonsContainer button').forEach(btn => {
+          btn.style.width = '60px';
+          btn.style.height = '60px';
+          btn.style.fontSize = '11px';
+        });
+      }
+    }
+  }
+  handleMobileView(mediaQuery);
+  mediaQuery.addEventListener('change', handleMobileView);
   
   // Append to body
   document.body.appendChild(modal);
