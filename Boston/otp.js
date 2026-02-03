@@ -1618,7 +1618,9 @@ async function showRoute(idx) {
     clearInterval(window.otpBusTrackingInterval);
     window.otpBusTrackingInterval = null;
   }
-  window.activeTripSelected = false;
+  
+  // ⚠️ DON'T clear activeTripSelected here - we want to keep OTP mode active!
+  // window.activeTripSelected = false; // REMOVED - keep OTP mode active
   
   // Clear all bus markers and route overlays
   if (typeof window.fetchAndDisplayBuses === 'function') {

@@ -4071,8 +4071,16 @@
         
 
       } else {
+        // ⚠️ DOUBLE CHECK: If OTP trip is active, NEVER show all buses
+        if (window.activeTripSelected) {
+          console.log('[fetchAndDisplayBuses] ⚠️ BLOCKED: OTP trip active - refusing to show all buses');
+          console.log('[fetchAndDisplayBuses]   activeTripSelected:', window.activeTripSelected);
+          console.log('[fetchAndDisplayBuses]   activeRouteOverlays:', window.activeRouteOverlays ? Object.keys(window.activeRouteOverlays).length : 0);
+          console.log('[fetchAndDisplayBuses]   routesToTrack:', window.routesToTrack ? window.routesToTrack.length : 0);
+          return; // Exit - don't show all buses when OTP is active
+        }
+        
         // Show all active buses (page load or no OTP trip)
-        // Note: We already checked for active overlays above, so this is safe
         displayMode = 'all';
         console.log('[fetchAndDisplayBuses] All buses mode - showing all active buses');
       }
