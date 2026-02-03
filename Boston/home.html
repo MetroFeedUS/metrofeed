@@ -1407,6 +1407,77 @@
   const getPortlandMinutes = getCityMinutes;
   
   // === BOSTON LAZY-LOADING SYSTEM ===
+  /**
+   * Post-process route data to detect trunk-and-branch routes (like Red Line)
+   * and create a shapes array if needed
+   * @param {Object} routeData - Route data object
+   * @param {string} routeId - Route ID
+   * @param {number} directionId - Direction ID
+   * @returns {Object} Processed route data with shapes array if applicable
+   */
+  function processTrunkAndBranchRoute(routeData, routeId, directionId) {
+    // Only process if route doesn't already have shapes array
+    if (routeData.shapes && Array.isArray(routeData.shapes) && routeData.shapes.length > 0) {
+      return routeData; // Already has shapes, no processing needed
+    }
+    
+    // Detect Red Line (trunk-and-branch route)
+    if (routeId === 'Red' && routeData.shape && routeData.stops) {
+      console.log('[processTrunkAndBranchRoute] Detected Red Line - creating shapes array');
+      
+      // Find JFK/UMass stop (split point)
+      const jfkStopIndex = routeData.stops.findIndex(stop => 
+        stop.name && stop.name.toLowerCase().includes('jfk')
+      );
+      
+      if (jfkStopIndex >= 0) {
+        // Find Ashmont and Braintree stops
+        const ashmontStop = routeData.stops.find(stop => 
+          stop.name && stop.name.toLowerCase().includes('ashmont')
+        );
+        const braintreeStop = routeData.stops.find(stop => 
+          stop.name && stop.name.toLowerCase().includes('braintree')
+        );
+        
+        // Find closest shape points to JFK/UMass, Ashmont, and Braintree
+        const jfkStop = routeData.stops[jfkStopIndex];
+        let jfkShapeIndex = 0;
+        let minDist = Infinity;
+        
+        // Find closest shape point to JFK/UMass
+        routeData.shape.forEach((point, idx) => {
+          const dist = Math.sqrt(
+            Math.pow(point[0] - jfkStop.lat, 2) + 
+            Math.pow(point[1] - jfkStop.lon, 2)
+          );
+          if (dist < minDist) {
+            minDist = dist;
+            jfkShapeIndex = idx;
+          }
+        });
+        
+        // Split shape at JFK/UMass
+        const trunkShape = routeData.shape.slice(0, jfkShapeIndex + 1);
+        const branchShape = routeData.shape.slice(jfkShapeIndex);
+        
+        // Create shapes array: trunk + branch (for now, use same branch for both)
+        // TODO: When separate branch route files are available, load them here
+        routeData.shapes = [
+          trunkShape,      // Trunk: Alewife → JFK/UMass
+          branchShape,     // Branch 1: JFK/UMass → Braintree (or Ashmont)
+          branchShape      // Branch 2: JFK/UMass → Ashmont (or Braintree) - duplicate for now
+        ];
+        
+        console.log('[processTrunkAndBranchRoute] Created shapes array:', routeData.shapes.length, 'shapes');
+        console.log('[processTrunkAndBranchRoute] Trunk points:', trunkShape.length, 'Branch points:', branchShape.length);
+      } else {
+        console.log('[processTrunkAndBranchRoute] JFK/UMass stop not found, using single shape');
+      }
+    }
+    
+    return routeData;
+  }
+  
   // Helper function to get route data (works with both old masterRoutes and new lazy-loading)
   async function getRouteData(routeId, directionId) {
     // Check if Boston uses lazy loading
@@ -1423,7 +1494,11 @@
       
       // Load the route
       try {
-        const routeData = await window.routeLoader.loadRoute(routeId, directionId);
+        let routeData = await window.routeLoader.loadRoute(routeId, directionId);
+        
+        // Post-process: Detect trunk-and-branch routes and create shapes array
+        routeData = processTrunkAndBranchRoute(routeData, routeId, directionId);
+        
         return routeData;
       } catch (error) {
         console.error('[getRouteData] Error loading route:', error);
