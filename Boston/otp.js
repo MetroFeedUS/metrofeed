@@ -454,6 +454,9 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     window.journeys = journeys; // Store globally for rendering
     console.log('🔄 [fetchAndShowOtpItineraries] ✅ Normalized', journeys.length, 'journeys');
     
+    // Log summary after normalization
+    logOtpSummary('AFTER_NORMALIZE');
+    
     // Enhanced OTP route debugging
     console.log('=== OTP ROUTE ANALYSIS (GraphQL) ===');
     currentItins.forEach((itin, idx) => {
@@ -1143,6 +1146,9 @@ function drawJourney(journey) {
   if (typeof window.drawExtendedRoutes === 'function') {
     window.drawExtendedRoutes(legColorMapping);
   }
+  
+  // Log summary after drawing
+  console.log('🎨 [drawJourney] ✅ Journey drawn successfully');
 }
 
 /**
@@ -1216,6 +1222,80 @@ async function showRoute(idx) {
   if (typeof window.minimizeItineraryModal === 'function') {
     window.minimizeItineraryModal();
   }
+  
+  // Log summary after route is drawn
+  logOtpSummary('AFTER_SHOW_ROUTE', idx);
+}
+
+/**
+ * Comprehensive OTP summary log - shows key state at different stages
+ * @param {string} stage - 'AFTER_NORMALIZE' or 'AFTER_SHOW_ROUTE'
+ * @param {number} selectedIdx - Selected itinerary index (for AFTER_SHOW_ROUTE)
+ */
+function logOtpSummary(stage, selectedIdx = null) {
+  console.log('\n' + '='.repeat(80));
+  console.log('📊 OTP SUMMARY LOG -', stage);
+  console.log('='.repeat(80));
+  
+  // Show normalized journeys
+  if (window.journeys && window.journeys.length > 0) {
+    console.log(`\n✅ Normalized Journeys: ${window.journeys.length}`);
+    window.journeys.forEach((journey, idx) => {
+      console.log(`\n  Journey ${idx + 1} (${selectedIdx === idx ? '⭐ SELECTED' : ''}):`);
+      console.log(`    Duration: ${Math.round(journey.duration / 60)} min`);
+      console.log(`    Legs: ${journey.legs.length}`);
+      journey.legs.forEach((leg, legIdx) => {
+        if (leg.mode !== 'WALK') {
+          console.log(`      Leg ${legIdx}: ${leg.mode} - Route ${leg.routeNumber || 'N/A'} (dir ${leg.direction || 0})`);
+          console.log(`        From: ${leg.fromPlace?.name || 'N/A'}`);
+          console.log(`        To: ${leg.toPlace?.name || 'N/A'}`);
+          console.log(`        Geometry: ${leg.solidSegment ? `${leg.solidSegment.length} points` : 'NONE'}`);
+        } else {
+          console.log(`      Leg ${legIdx}: WALK (${Math.round(leg.duration / 60)} min)`);
+        }
+      });
+    });
+  } else {
+    console.log('❌ No normalized journeys found');
+  }
+  
+  // Show routes being tracked
+  if (window.routesToTrack && window.routesToTrack.length > 0) {
+    console.log(`\n🚌 Routes Being Tracked: ${window.routesToTrack.length}`);
+    window.routesToTrack.forEach((route, idx) => {
+      console.log(`  ${idx + 1}. Route ${route.route_id} (dir ${route.direction_id}) - ${route.mode}`);
+    });
+  } else {
+    console.log('\n❌ No routes being tracked');
+  }
+  
+  // Show leg color mapping
+  if (window.currentLegColorMapping && Object.keys(window.currentLegColorMapping).length > 0) {
+    console.log(`\n🎨 Leg Color Mapping: ${Object.keys(window.currentLegColorMapping).length} legs`);
+    Object.entries(window.currentLegColorMapping).forEach(([key, info]) => {
+      console.log(`  ${key}: ${info.color} - Route ${info.route} (dir ${info.direction})`);
+    });
+  } else {
+    console.log('\n❌ No leg color mapping found');
+  }
+  
+  // Show current itineraries (raw)
+  if (window.currentItins && window.currentItins.length > 0) {
+    console.log(`\n📋 Raw Itineraries: ${window.currentItins.length}`);
+    window.currentItins.forEach((itin, idx) => {
+      const transitLegs = (itin.legs || []).filter(l => l.mode !== 'WALK');
+      console.log(`  Itinerary ${idx + 1}: ${transitLegs.length} transit legs, ${Math.round(itin.duration / 60)} min`);
+    });
+  }
+  
+  // Show active trip state
+  console.log(`\n🔧 State:`);
+  console.log(`  activeTripSelected: ${window.activeTripSelected || false}`);
+  console.log(`  selectedTripIndex: ${window.selectedTripIndex !== undefined ? window.selectedTripIndex : 'N/A'}`);
+  console.log(`  routeLegLines: ${window.routeLegLines ? window.routeLegLines.length : 0} lines`);
+  console.log(`  extendedRouteLines: ${window.extendedRouteLines ? window.extendedRouteLines.length : 0} lines`);
+  
+  console.log('='.repeat(80) + '\n');
 }
 
 // Export functions and variables to window for global access
