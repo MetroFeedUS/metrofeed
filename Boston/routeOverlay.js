@@ -937,7 +937,8 @@ async function parseMBTAGTFSRT(buffer) {
  * @param {string|number}  routeId          - Route ID / number (for labels only)
  * @param {number}         directionId      - Direction ID (0 or 1, for labels only)
  * @param {Object}         options
- * @param {Object}         options.routeData   - REQUIRED: { shape: [[lat,lon]...], stops: [...] }
+ * @param {Object}         options.routeData   - REQUIRED: { shape: [[lat,lon]...] OR shapes: [[[lat,lon]...], ...], stops: [...] }
+ *                                               Supports both single shape (backward compatible) and multiple shapes (trunk-and-branch routes)
  * @param {string}         options.mode        - "singleRoutePage" | "mainOverlay" (default: "mainOverlay")
  * @param {string}         options.routePageUrl- Optional: URL to full route page
  * @param {string}         options.routeColor  - Optional: line color (default MetroFeed blue)
@@ -967,16 +968,26 @@ function attachRouteToMap(map, routeId, directionId, options) {
     return { remove: function () {} };
   }
 
-  if (!routeData || !Array.isArray(routeData.shape) || !Array.isArray(routeData.stops)) {
-    console.error("[attachRouteToMap] routeData with shape[] and stops[] is REQUIRED.", {
+  // Support both single shape (backward compatibility) and multiple shapes (trunk-and-branch routes)
+  const hasShapes = Array.isArray(routeData.shapes) && routeData.shapes.length > 0;
+  const hasSingleShape = Array.isArray(routeData.shape) && routeData.shape.length > 0;
+  
+  if (!routeData || (!hasShapes && !hasSingleShape) || !Array.isArray(routeData.stops)) {
+    console.error("[attachRouteToMap] routeData with shape[] or shapes[] and stops[] is REQUIRED.", {
       routeId,
       directionId,
-      routeData
+      routeData,
+      hasShapes,
+      hasSingleShape
     });
     return { remove: function () {} };
   }
 
-  const shape      = routeData.shape; // [[lat,lon], ...]
+  // Normalize to shapes array for consistent processing
+  // If shapes array exists, use it; otherwise wrap single shape in array
+  const shapes = hasShapes ? routeData.shapes : [routeData.shape];
+  const primaryShape = hasShapes ? routeData.shapes[0] : routeData.shape; // Use first shape for bounds/stops
+  
   const stops      = routeData.stops; // [{lat,lon,times,name,stop_id}, ...]
   const routeTitle = routeData.route_title || `Route ${routeId}`;
 
@@ -992,47 +1003,72 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
   // ==== Internal: build & attach =================================================
   const addRouteToMap = () => {
-    // ---------- Route line ----------
-    const routeSourceId = `route-line-${routeId}-${directionId}`;
-    const routeLayerId  = `route-layer-${routeId}-${directionId}`;
+    // ---------- Render all shapes as faint context layers (for trunk-and-branch routes) ----------
+    // All shapes are rendered as faint context; OTP segment will be highlighted on top separately
+    shapes.forEach((shape, shapeIndex) => {
+      const isPrimaryShape = shapeIndex === 0;
+      const routeSourceId = `route-line-${routeId}-${directionId}-${shapeIndex}`;
+      const routeLayerId  = `route-layer-${routeId}-${directionId}-${shapeIndex}`;
 
-    // Guard against duplicate IDs
-    if (map.getLayer(routeLayerId)) {
-      map.removeLayer(routeLayerId);
-    }
-    if (map.getSource(routeSourceId)) {
-      map.removeSource(routeSourceId);
-    }
+      // Guard against duplicate IDs
+      if (map.getLayer(routeLayerId)) {
+        map.removeLayer(routeLayerId);
+      }
+      if (map.getSource(routeSourceId)) {
+        map.removeSource(routeSourceId);
+      }
 
-    map.addSource(routeSourceId, {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: shape.map((coord) => [coord[1], coord[0]]) // [lat,lon] -> [lon,lat]
+      map.addSource(routeSourceId, {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates: shape.map((coord) => [coord[1], coord[0]]) // [lat,lon] -> [lon,lat]
+          }
+        }
+      });
+      overlayElements.sources.push(routeSourceId);
+
+      // Render all shapes as faint context layers
+      // OTP segments (from drawJourney) will be rendered on top separately
+      // Find the first OTP layer to place route overlay layers before it
+      let beforeId = undefined;
+      if (window.routeLegLines && window.routeLegLines.length > 0) {
+        // Find the first existing OTP layer to place route overlay before it
+        for (const otpLayerId of window.routeLegLines) {
+          if (map.getLayer(otpLayerId)) {
+            beforeId = otpLayerId;
+            break;
+          }
         }
       }
+      
+      map.addLayer({
+        id: routeLayerId,
+        type: "line",
+        source: routeSourceId,
+        paint: {
+          "line-color": routeColor,
+          "line-width": 3,
+          "line-opacity": 0.25 // Faint context layer
+        },
+        // Place route overlay layers before OTP segments so OTP stays on top
+        beforeId: beforeId
+      });
+      overlayElements.layers.push(routeLayerId);
     });
-    overlayElements.sources.push(routeSourceId);
-
-    map.addLayer({
-      id: routeLayerId,
-      type: "line",
-      source: routeSourceId,
-      paint: {
-        "line-color": routeColor,
-        "line-width": 4,
-        "line-opacity": 0.8
-      }
-    });
-    overlayElements.layers.push(routeLayerId);
 
     // ---------- Fit bounds (if desired) ----------
-    if (fitBounds && shape.length > 0) {
+    // Calculate bounds from all shapes
+    if (fitBounds && primaryShape.length > 0) {
       const bounds = new maplibregl.LngLatBounds();
-      shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
+      
+      // Include all shapes in bounds calculation
+      shapes.forEach(shape => {
+        shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
+      });
       
       // Auto-expand bounds by 20% to ensure route fits (especially for long commuter rail routes)
       const currentBounds = bounds.toArray();
