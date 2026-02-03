@@ -756,23 +756,34 @@ async function normalizeItineraries(convertedItineraries) {
     
     // Process each leg
     for (let legIdx = 0; legIdx < itin.legs.length; legIdx++) {
-      const leg = itin.legs[legIdx];
-      const journeyLeg = new JourneyLeg(leg, legIdx);
-      
-      // Extract and normalize route number (for transit legs only)
-      if (journeyLeg.type === 'TRANSIT') {
-        const routeInfo = await extractRouteInfo(leg, legIdx);
-        journeyLeg.routeNumber = routeInfo.routeNumber;
-        journeyLeg.direction = routeInfo.direction;
-        journeyLeg.line = routeInfo.line;
+      try {
+        const leg = itin.legs[legIdx];
+        console.log(`🔄 [normalizeItineraries] Processing leg ${legIdx} of itinerary ${itinIdx + 1} (${leg.mode})`);
         
-        console.log(`🔄 [normalizeItineraries] Leg ${legIdx} (${leg.mode}): route=${journeyLeg.routeNumber}, direction=${journeyLeg.direction}`);
+        const journeyLeg = new JourneyLeg(leg, legIdx);
+        
+        // Extract and normalize route number (for transit legs only)
+        if (journeyLeg.type === 'TRANSIT') {
+          console.log(`🔄 [normalizeItineraries] Extracting route info for leg ${legIdx}...`);
+          const routeInfo = await extractRouteInfo(leg, legIdx);
+          journeyLeg.routeNumber = routeInfo.routeNumber;
+          journeyLeg.direction = routeInfo.direction;
+          journeyLeg.line = routeInfo.line;
+          
+          console.log(`🔄 [normalizeItineraries] Leg ${legIdx} (${leg.mode}): route=${journeyLeg.routeNumber}, direction=${journeyLeg.direction}`);
+        }
+        
+        // Clip geometry once (for all legs)
+        console.log(`🔄 [normalizeItineraries] Clipping geometry for leg ${legIdx}...`);
+        await clipLegGeometry(journeyLeg, leg);
+        console.log(`🔄 [normalizeItineraries] ✅ Completed leg ${legIdx}`);
+        
+        journey.legs.push(journeyLeg);
+      } catch (error) {
+        console.error(`❌ [normalizeItineraries] Error processing leg ${legIdx} of itinerary ${itinIdx + 1}:`, error);
+        // Continue with next leg even if this one fails
+        continue;
       }
-      
-      // Clip geometry once (for all legs)
-      await clipLegGeometry(journeyLeg, leg);
-      
-      journey.legs.push(journeyLeg);
     }
     
     journeys.push(journey);
@@ -977,21 +988,12 @@ async function clipLegGeometry(journeyLeg, leg) {
     }
   }
   
-  // For walking: use OSRM
+  // For walking: use OSRM (with timeout to prevent hangs)
+  // NOTE: OSRM is blocked by CORS, so we skip it and use fallback immediately
   if (journeyLeg.type === 'WALK' && !coords.length) {
-    try {
-      const osrmUrl = `https://router.project-osrm.org/route/v1/walking/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
-      const r = await fetch(osrmUrl);
-      if (r.ok) {
-        const data = await r.json();
-        if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
-          coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]); // [lat, lng]
-          console.log(`✂️ [clipLegGeometry] Walking leg ${journeyLeg.index}: got ${coords.length} points from OSRM`);
-        }
-      }
-    } catch (e) {
-      console.warn(`⚠️ [clipLegGeometry] OSRM failed:`, e);
-    }
+    // Skip OSRM due to CORS - use straight line fallback immediately
+    // TODO: Use a proxy or alternative routing service if needed
+    console.log(`✂️ [clipLegGeometry] Walking leg ${journeyLeg.index}: skipping OSRM (CORS blocked), using straight line`);
   }
   
   // Fallback: straight line
