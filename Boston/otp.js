@@ -924,13 +924,17 @@ async function calculateDirection(leg, routeNumber, routeDescription) {
   if (routeNumber && leg.fromPlace && leg.toPlace) {
     console.log(`🔍 [calculateDirection] Processing ${leg.mode} route:`, routeNumber);
     
-    // For Boston: Load route data and match direction based on from/to stops
-    if (isBoston && window.routeLoader && leg.fromPlace && leg.toPlace) {
+    // For Boston: Use OTP's stop sequence (estimatedCalls) to match direction
+    // OTP gives us the exact stops in order - this is much more reliable than just from/to
+    if (isBoston && window.routeLoader && leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
       try {
         // Ensure routes index is loaded
         if (!window.routeLoader.isRoutesIndexLoaded()) {
           await window.routeLoader.loadRoutesIndex();
         }
+        
+        // Get OTP stop names in order (the actual sequence from the trip)
+        const otpStopNames = leg.estimatedCalls.map(call => normalizeString(call.quay?.name || ''));
         
         // Load both directions
         const [dir0Data, dir1Data] = await Promise.all([
@@ -939,72 +943,123 @@ async function calculateDirection(leg, routeNumber, routeDescription) {
         ]);
         
         if (dir0Data && dir1Data && dir0Data.stops && dir1Data.stops) {
-          const normalizeStop = (name) => (name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-          const otpFrom = normalizeStop(leg.fromPlace.name);
-          const otpTo = normalizeStop(leg.toPlace.name);
-          
-          // Calculate direction score for each direction
-          function calculateDirectionScore(otpFrom, otpTo, routeStops) {
+          // Match OTP's stop sequence against our route data
+          function matchStopSequence(otpStops, routeStops) {
             if (!routeStops || routeStops.length === 0) return 0;
             
-            let score = 0;
-            const firstStop = normalizeStop(routeStops[0]?.name);
-            const lastStop = normalizeStop(routeStops[routeStops.length - 1]?.name);
+            let matches = 0;
+            let consecutiveMatches = 0;
+            let maxConsecutive = 0;
+            let lastMatchIndex = -1;
             
-            // Exact terminal matches get highest weight
-            if (otpFrom && otpFrom === firstStop) score += 5;
-            if (otpTo && otpTo === lastStop) score += 5;
-            
-            // Partial terminal matches (substring) get medium weight
-            if (otpFrom && (otpFrom.includes(firstStop) || firstStop.includes(otpFrom)) && otpFrom !== firstStop) score += 3;
-            if (otpTo && (otpTo.includes(lastStop) || lastStop.includes(otpTo)) && otpTo !== lastStop) score += 3;
-            
-            // Check if OTP stops appear in route sequence (with position weighting)
-            const otpFromNorm = normalizeStop(otpFrom);
-            const otpToNorm = normalizeStop(otpTo);
-            
-            routeStops.forEach((stop, idx) => {
-              const stopName = normalizeStop(stop.name);
-              if (stopName === otpFromNorm || stopName === otpToNorm) {
-                // Give more weight to matches near terminals (first/last 3 stops)
-                const isNearTerminal = idx < 3 || idx > routeStops.length - 4;
-                score += isNearTerminal ? 2 : 1;
+            // Check how many OTP stops appear in the route, and in what order
+            for (let i = 0; i < otpStops.length; i++) {
+              const otpStop = otpStops[i];
+              const routeIndex = routeStops.findIndex(s => normalizeString(s.name) === otpStop);
+              
+              if (routeIndex >= 0) {
+                matches++;
+                // Check if this stop comes after the previous match (consecutive in order)
+                if (lastMatchIndex < 0 || routeIndex > lastMatchIndex) {
+                  consecutiveMatches++;
+                  maxConsecutive = Math.max(maxConsecutive, consecutiveMatches);
+                  lastMatchIndex = routeIndex;
+                } else {
+                  consecutiveMatches = 1;
+                  lastMatchIndex = routeIndex;
+                }
               }
-            });
+            }
             
-            return score;
+            // Score based on matches and sequence order (consecutive matches are very important)
+            return matches * 2 + maxConsecutive * 10;
           }
           
-          // Calculate scores for each direction
-          const dir0Score = calculateDirectionScore(leg.fromPlace.name, leg.toPlace.name, dir0Data.stops);
-          const dir1Score = calculateDirectionScore(leg.fromPlace.name, leg.toPlace.name, dir1Data.stops);
+          const dir0Score = matchStopSequence(otpStopNames, dir0Data.stops);
+          const dir1Score = matchStopSequence(otpStopNames, dir1Data.stops);
           
-          // Determine best direction (higher score wins)
+          // Determine best direction
           if (dir1Score > dir0Score) {
             direction = 1;
             calculated = true;
-            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 1 (dir0: ${dir0Score}, dir1: ${dir1Score}, from: "${leg.fromPlace.name}", to: "${leg.toPlace.name}")`);
+            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 1 using OTP stop sequence (dir0: ${dir0Score}, dir1: ${dir1Score}, ${otpStopNames.length} stops)`);
           } else if (dir0Score > dir1Score) {
             direction = 0;
             calculated = true;
-            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 0 (dir0: ${dir0Score}, dir1: ${dir1Score}, from: "${leg.fromPlace.name}", to: "${leg.toPlace.name}")`);
+            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 0 using OTP stop sequence (dir0: ${dir0Score}, dir1: ${dir1Score}, ${otpStopNames.length} stops)`);
           } else {
-            // Tie - default to 0
-            direction = 0;
-            calculated = false;
-            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: tie (dir0: ${dir0Score}, dir1: ${dir1Score}), defaulting to 0`);
+            // Fallback to from/to matching if sequence doesn't clearly match
+            const otpFrom = normalizeString(leg.fromPlace.name);
+            const otpTo = normalizeString(leg.toPlace.name);
+            const dir0First = normalizeString(dir0Data.stops[0]?.name);
+            const dir0Last = normalizeString(dir0Data.stops[dir0Data.stops.length - 1]?.name);
+            const dir1First = normalizeString(dir1Data.stops[0]?.name);
+            const dir1Last = normalizeString(dir1Data.stops[dir1Data.stops.length - 1]?.name);
+            
+            // Simple terminal matching
+            if ((otpFrom === dir0First || otpTo === dir0Last) && !(otpFrom === dir1First || otpTo === dir1Last)) {
+              direction = 0;
+              calculated = true;
+              console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 0 via terminal stops (fallback)`);
+            } else if ((otpFrom === dir1First || otpTo === dir1Last) && !(otpFrom === dir0First || otpTo === dir0Last)) {
+              direction = 1;
+              calculated = true;
+              console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 1 via terminal stops (fallback)`);
+            } else {
+              direction = 0;
+              calculated = false;
+              console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: couldn't determine direction, defaulting to 0`);
+            }
           }
         } else {
-          // Couldn't load route data - default to 0
           direction = 0;
           calculated = false;
           console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: couldn't load route data, defaulting to 0`);
         }
       } catch (error) {
-        // Error loading route data - default to 0
         direction = 0;
         calculated = false;
-        console.warn(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: error loading route data:`, error);
+        console.warn(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: error:`, error);
+      }
+    } else if (isBoston && window.routeLoader && leg.fromPlace && leg.toPlace) {
+      // Fallback: Use from/to stops if estimatedCalls not available
+      try {
+        if (!window.routeLoader.isRoutesIndexLoaded()) {
+          await window.routeLoader.loadRoutesIndex();
+        }
+        
+        const [dir0Data, dir1Data] = await Promise.all([
+          window.routeLoader.loadRoute(routeNumber, 0).catch(() => null),
+          window.routeLoader.loadRoute(routeNumber, 1).catch(() => null)
+        ]);
+        
+        if (dir0Data && dir1Data && dir0Data.stops && dir1Data.stops) {
+          const otpFrom = normalizeString(leg.fromPlace.name);
+          const otpTo = normalizeString(leg.toPlace.name);
+          const dir0First = normalizeString(dir0Data.stops[0]?.name);
+          const dir0Last = normalizeString(dir0Data.stops[dir0Data.stops.length - 1]?.name);
+          const dir1First = normalizeString(dir1Data.stops[0]?.name);
+          const dir1Last = normalizeString(dir1Data.stops[dir1Data.stops.length - 1]?.name);
+          
+          // Simple terminal matching
+          if ((otpFrom === dir0First || otpTo === dir0Last) && !(otpFrom === dir1First || otpTo === dir1Last)) {
+            direction = 0;
+            calculated = true;
+            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 0 via terminal stops`);
+          } else if ((otpFrom === dir1First || otpTo === dir1Last) && !(otpFrom === dir0First || otpTo === dir0Last)) {
+            direction = 1;
+            calculated = true;
+            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 1 via terminal stops`);
+          } else {
+            direction = 0;
+            calculated = false;
+            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: couldn't determine direction, defaulting to 0`);
+          }
+        }
+      } catch (error) {
+        direction = 0;
+        calculated = false;
+        console.warn(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: error:`, error);
       }
     } else {
       // Not Boston or routeLoader not available - default to 0
@@ -1037,28 +1092,20 @@ async function clipLegGeometry(journeyLeg, leg) {
   
   let coords = [];
   
-  // For transit: use OTP pointsOnLink
-  if (journeyLeg.type === 'TRANSIT' && leg.pointsOnLink?.points) {
+  // Use OTP pointsOnLink for both transit and walking legs
+  if (leg.pointsOnLink?.points) {
     try {
       coords = decodePolyline(leg.pointsOnLink.points);
-      console.log(`✂️ [clipLegGeometry] Transit leg ${journeyLeg.index}: decoded ${coords.length} points from OTP`);
+      console.log(`✂️ [clipLegGeometry] ${journeyLeg.type} leg ${journeyLeg.index}: decoded ${coords.length} points from OTP`);
     } catch (e) {
       console.warn(`⚠️ [clipLegGeometry] Failed to decode OTP geometry:`, e);
     }
   }
   
-  // For walking: use OSRM (with timeout to prevent hangs)
-  // NOTE: OSRM is blocked by CORS, so we skip it and use fallback immediately
-  if (journeyLeg.type === 'WALK' && !coords.length) {
-    // Skip OSRM due to CORS - use straight line fallback immediately
-    // TODO: Use a proxy or alternative routing service if needed
-    console.log(`✂️ [clipLegGeometry] Walking leg ${journeyLeg.index}: skipping OSRM (CORS blocked), using straight line`);
-  }
-  
-  // Fallback: straight line
+  // Fallback: straight line (only if OTP didn't provide geometry)
   if (!coords.length) {
     coords = [[fromLat, fromLon], [toLat, toLon]];
-    console.log(`✂️ [clipLegGeometry] Leg ${journeyLeg.index}: using straight line fallback`);
+    console.log(`✂️ [clipLegGeometry] Leg ${journeyLeg.index}: using straight line fallback (no OTP geometry)`);
   }
   
   // Store full geometry
