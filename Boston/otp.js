@@ -782,10 +782,11 @@ async function normalizeItineraries(convertedItineraries) {
         // Extract and normalize route number (for transit legs only)
         if (journeyLeg.type === 'TRANSIT') {
           console.log(`🔄 [normalizeItineraries] Extracting route info for leg ${legIdx}...`);
-          const routeInfo = extractRouteInfo(leg, legIdx);
+          const routeInfo = await extractRouteInfo(leg, legIdx);
           journeyLeg.routeNumber = routeInfo.routeNumber;
           journeyLeg.direction = routeInfo.direction;
           journeyLeg.line = routeInfo.line;
+          journeyLeg.directionCalculated = routeInfo.directionCalculated || false;
           
           console.log(`🔄 [normalizeItineraries] Leg ${legIdx} (${leg.mode}): route=${journeyLeg.routeNumber}, direction=${journeyLeg.direction}`);
         }
@@ -823,7 +824,7 @@ async function normalizeItineraries(convertedItineraries) {
  * @param {number} legIdx - Leg index
  * @returns {Object} { routeNumber, direction, line }
  */
-function extractRouteInfo(leg, legIdx) {
+async function extractRouteInfo(leg, legIdx) {
   let routeNumber = null;
   let direction = 0; // Default
   
@@ -881,24 +882,20 @@ function extractRouteInfo(leg, legIdx) {
     }
   }
   
-  // ⚠️ PRIORITY 4: Fallback to masterRoutes search (if available)
-  if (!routeNumber && typeof window.findRouteByDescription === 'function') {
-    const foundRoute = window.findRouteByDescription(routeDescription);
-    if (foundRoute) {
-      routeNumber = foundRoute.route_id;
-      console.log(`🔍 [extractRouteInfo]   ⚠️ Found via masterRoutes:`, routeNumber);
-    }
-  }
+  // ⚠️ PRIORITY 4: Fallback removed - masterRoutes no longer used
   
   // Calculate direction for all transit modes (including SUBWAY, METRO, RAIL)
   // All transit modes need direction calculation so they can be flipped correctly
   const transitModes = ['BUS', 'TRAM', 'RAIL', 'TRAIN', 'FERRY', 'SUBWAY', 'METRO'];
+  let directionCalculated = false; // Track if direction was actually calculated or just defaulted
   if (transitModes.includes(leg.mode) && routeNumber) {
-    direction = calculateDirection(leg, routeNumber, routeDescription);
-    console.log(`🔍 [extractRouteInfo]   ✅ Direction for ${leg.mode}:`, direction);
+    const directionResult = await calculateDirection(leg, routeNumber, routeDescription);
+    direction = directionResult.direction;
+    directionCalculated = directionResult.calculated || false;
+    console.log(`🔍 [extractRouteInfo]   ✅ Direction for ${leg.mode}:`, direction, directionCalculated ? '(calculated)' : '(defaulted)');
   }
   
-  return { routeNumber, direction, line };
+  return { routeNumber, direction, line, directionCalculated };
 }
 
 /**
@@ -908,8 +905,9 @@ function extractRouteInfo(leg, legIdx) {
  * @param {string} routeDescription - Route description
  * @returns {number} Direction ID (0 or 1)
  */
-function calculateDirection(leg, routeNumber, routeDescription) {
+async function calculateDirection(leg, routeNumber, routeDescription) {
   let direction = 0; // Default fallback
+  let calculated = false; // Track if direction was actually calculated (not just defaulted)
   
   // Helper function
   function normalizeString(str) {
@@ -923,94 +921,101 @@ function calculateDirection(leg, routeNumber, routeDescription) {
   // For other cities: Use masterRoutes
   const isBoston = typeof window.CITY_CONFIG !== 'undefined' && window.CITY_CONFIG.useLazyLoading;
   
-  if (routeNumber && leg.headsign) {
+  if (routeNumber && leg.fromPlace && leg.toPlace) {
     console.log(`🔍 [calculateDirection] Processing ${leg.mode} route:`, routeNumber);
     
-    // Try masterRoutes first (for non-Boston cities or if available)
-    if (typeof window.masterRoutes !== 'undefined' && window.masterRoutes) {
-      const dir0Route = window.masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 0);
-      const dir1Route = window.masterRoutes.find(r => r.route_number === routeNumber && r.direction_id === 1);
-      
-      if (dir0Route && dir1Route) {
-        let matched = false;
-        
-        // Simple destination matching
-        function containsDestination(headsign, directionName) {
-          const headLower = headsign.toLowerCase();
-          const dirLower = directionName.toLowerCase();
-          const destinations = ['gresham', 'gateway', 'beaverton', 'hillsboro', 'city', 'downtown', 'center', 'tc', 'transit'];
-          for (const dest of destinations) {
-            if (headLower.includes(dest) && dirLower.includes(dest)) {
-              return true;
-            }
-          }
-          return false;
+    // For Boston: Load route data and match direction based on from/to stops
+    if (isBoston && window.routeLoader && leg.fromPlace && leg.toPlace) {
+      try {
+        // Ensure routes index is loaded
+        if (!window.routeLoader.isRoutesIndexLoaded()) {
+          await window.routeLoader.loadRoutesIndex();
         }
         
-        // Check Direction 0
-        if (dir0Route.direction_name && containsDestination(leg.headsign, dir0Route.direction_name)) {
-          direction = 0;
-          matched = true;
-          console.log('🔍 [calculateDirection] ✅ Matched direction 0 via headsign');
-        }
+        // Load both directions
+        const [dir0Data, dir1Data] = await Promise.all([
+          window.routeLoader.loadRoute(routeNumber, 0).catch(() => null),
+          window.routeLoader.loadRoute(routeNumber, 1).catch(() => null)
+        ]);
         
-        // Check Direction 1
-        if (!matched && dir1Route.direction_name && containsDestination(leg.headsign, dir1Route.direction_name)) {
-          direction = 1;
-          matched = true;
-          console.log('🔍 [calculateDirection] ✅ Matched direction 1 via headsign');
-        }
-        
-        // Fallback: stop name matching
-        if (!matched) {
-          const otpFrom = normalizeString(leg.from?.name);
-          const otpTo = normalizeString(leg.to?.name);
-          const dir0From = normalizeString(dir0Route.stops?.[0]?.name);
-          const dir0To = normalizeString(dir0Route.stops?.[dir0Route.stops.length - 1]?.name);
-          const dir1From = normalizeString(dir1Route.stops?.[0]?.name);
-          const dir1To = normalizeString(dir1Route.stops?.[dir1Route.stops.length - 1]?.name);
+        if (dir0Data && dir1Data && dir0Data.stops && dir1Data.stops) {
+          const normalizeStop = (name) => (name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          const otpFrom = normalizeStop(leg.fromPlace.name);
+          const otpTo = normalizeStop(leg.toPlace.name);
           
-          if ((otpFrom && otpFrom === dir0From) || (otpTo && otpTo === dir0To)) {
-            direction = 0;
-            matched = true;
-            console.log('🔍 [calculateDirection] ✅ Matched direction 0 via stop names');
-          } else if ((otpFrom && otpFrom === dir1From) || (otpTo && otpTo === dir1To)) {
-            direction = 1;
-            matched = true;
-            console.log('🔍 [calculateDirection] ✅ Matched direction 1 via stop names');
+          // Calculate direction score for each direction
+          function calculateDirectionScore(otpFrom, otpTo, routeStops) {
+            if (!routeStops || routeStops.length === 0) return 0;
+            
+            let score = 0;
+            const firstStop = normalizeStop(routeStops[0]?.name);
+            const lastStop = normalizeStop(routeStops[routeStops.length - 1]?.name);
+            
+            // Exact terminal matches get highest weight
+            if (otpFrom && otpFrom === firstStop) score += 5;
+            if (otpTo && otpTo === lastStop) score += 5;
+            
+            // Partial terminal matches (substring) get medium weight
+            if (otpFrom && (otpFrom.includes(firstStop) || firstStop.includes(otpFrom)) && otpFrom !== firstStop) score += 3;
+            if (otpTo && (otpTo.includes(lastStop) || lastStop.includes(otpTo)) && otpTo !== lastStop) score += 3;
+            
+            // Check if OTP stops appear in route sequence (with position weighting)
+            const otpFromNorm = normalizeStop(otpFrom);
+            const otpToNorm = normalizeStop(otpTo);
+            
+            routeStops.forEach((stop, idx) => {
+              const stopName = normalizeStop(stop.name);
+              if (stopName === otpFromNorm || stopName === otpToNorm) {
+                // Give more weight to matches near terminals (first/last 3 stops)
+                const isNearTerminal = idx < 3 || idx > routeStops.length - 4;
+                score += isNearTerminal ? 2 : 1;
+              }
+            });
+            
+            return score;
           }
+          
+          // Calculate scores for each direction
+          const dir0Score = calculateDirectionScore(leg.fromPlace.name, leg.toPlace.name, dir0Data.stops);
+          const dir1Score = calculateDirectionScore(leg.fromPlace.name, leg.toPlace.name, dir1Data.stops);
+          
+          // Determine best direction (higher score wins)
+          if (dir1Score > dir0Score) {
+            direction = 1;
+            calculated = true;
+            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 1 (dir0: ${dir0Score}, dir1: ${dir1Score}, from: "${leg.fromPlace.name}", to: "${leg.toPlace.name}")`);
+          } else if (dir0Score > dir1Score) {
+            direction = 0;
+            calculated = true;
+            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: matched direction 0 (dir0: ${dir0Score}, dir1: ${dir1Score}, from: "${leg.fromPlace.name}", to: "${leg.toPlace.name}")`);
+          } else {
+            // Tie - default to 0
+            direction = 0;
+            calculated = false;
+            console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: tie (dir0: ${dir0Score}, dir1: ${dir1Score}), defaulting to 0`);
+          }
+        } else {
+          // Couldn't load route data - default to 0
+          direction = 0;
+          calculated = false;
+          console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: couldn't load route data, defaulting to 0`);
         }
-        
-        if (matched) {
-          console.log('🔍 [calculateDirection] Final direction:', direction);
-          return direction;
-        }
+      } catch (error) {
+        // Error loading route data - default to 0
+        direction = 0;
+        calculated = false;
+        console.warn(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: error loading route data:`, error);
       }
-    }
-    
-    // For Boston subways/rail: Use simple heuristic based on from/to stops
-    // Since we can't easily load route data during normalization, use a basic approach
-    // The direction will be flipped later in showOtpRouteSelector anyway
-    if (isBoston && (leg.mode === 'SUBWAY' || leg.mode === 'METRO' || leg.mode === 'RAIL' || leg.mode === 'TRAIN')) {
-      // For now, default to 0 - it will be flipped in showOtpRouteSelector
-      // TODO: Could enhance this by checking stop sequences if route data is pre-loaded
-      console.log(`🔍 [calculateDirection] ${leg.mode} route in Boston: using default direction 0 (will be flipped in overlay)`);
+    } else {
+      // Not Boston or routeLoader not available - default to 0
       direction = 0;
-    }
-    
-    // For Boston buses: Try to use routeLoader if available (but don't await - this is sync)
-    // Note: This is a best-effort attempt; if routeLoader isn't ready, we'll use default
-    // The direction will be corrected later when the route is actually displayed
-    if (isBoston && leg.mode === 'BUS' && routeNumber) {
-      // For now, default to 0 - buses will be flipped in showOtpRouteSelector
-      // TODO: Could enhance this by pre-loading route data or using a cache
-      console.log(`🔍 [calculateDirection] Boston bus ${routeNumber}: using default direction 0 (will be flipped in overlay)`);
-      direction = 0;
+      calculated = false;
+      console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: not Boston or routeLoader not available, defaulting to 0`);
     }
   }
   
-  console.log('🔍 [calculateDirection] Final direction:', direction);
-  return direction;
+  console.log('🔍 [calculateDirection] Final direction:', direction, calculated ? '(calculated)' : '(defaulted)');
+  return { direction, calculated };
 }
 
 /**
@@ -1204,7 +1209,8 @@ function drawJourney(journey) {
         name: routeName,
         legIndex: legIdx,
         fromStop: fromStop, // Store for direction matching
-        toStop: toStop      // Store for direction matching
+        toStop: toStop,      // Store for direction matching
+        directionCalculated: leg.directionCalculated || false // Track if direction was calculated
       });
     }
   });
@@ -1762,10 +1768,22 @@ function showOtpRouteSelector(routeList) {
       });
       
       // Use default flip logic initially (will be corrected by Promise above if route data loads)
+      // BUT: Only flip if we're confident the direction needs flipping
+      // If direction was calculated correctly in calculateDirection, don't flip
       flippedDirection = needsFlip ? (route.directionId === 0 ? 1 : 0) : route.directionId;
     } else if (needsFlip) {
       // Default: Flip for buses/rail
-      flippedDirection = route.directionId === 0 ? 1 : 0;
+      // However, if the direction was calculated correctly in calculateDirection (not defaulted),
+      // we should trust it and NOT flip it
+      if (route.directionCalculated) {
+        // Direction was calculated, trust it
+        flippedDirection = route.directionId;
+        console.log(`🎨 [OtpRouteSelector] Route ${mappedRouteId}: Direction was calculated (${route.directionId}), not flipping`);
+      } else {
+        // Direction was defaulted, flip it
+        flippedDirection = route.directionId === 0 ? 1 : 0;
+        console.log(`🎨 [OtpRouteSelector] Route ${mappedRouteId}: Direction was defaulted (${route.directionId}), flipping to ${flippedDirection}`);
+      }
     } else {
       // Don't flip for subways/metro
       flippedDirection = route.directionId;
