@@ -19,15 +19,11 @@ const CSL_CONFIG = {
   contributorTTL: 5 * 60 * 1000,  // 5 minutes
   roomExpiration: 10 * 60 * 1000,  // 10 minutes
   
-  // GPS validation
-  corridorRadius: 50,  // 50 meters
-  stopProximityRadius: 50  // 50 meters
 };
 
 // CSL State
 let cslState = {
   consentAccepted: false,
-  gpsEnabled: false,
   activeRooms: new Map(),  // roomKey -> room data
   userContributions: new Map(),  // roomKey -> user contribution data
   roomAdapter: null,
@@ -420,7 +416,7 @@ roomAdapter.initialize().then(() => {
 
 /**
  * Show CSL consent modal (required on first use)
- * @returns {Promise<{accepted: boolean, gpsEnabled: boolean}>}
+ * @returns {Promise<{accepted: boolean}>}
  */
 function showCSLConsentModal() {
   return new Promise((resolve) => {
@@ -429,8 +425,7 @@ function showCSLConsentModal() {
     if (stored) {
       const parsed = JSON.parse(stored);
       cslState.consentAccepted = true;
-      cslState.gpsEnabled = parsed.gpsEnabled || false;
-      resolve({ accepted: true, gpsEnabled: cslState.gpsEnabled });
+      resolve({ accepted: true });
       return;
     }
     
@@ -474,14 +469,6 @@ function showCSLConsentModal() {
           <li>Use responsibly and verify information when possible</li>
         </ul>
         
-        <p style="margin-top: 20px;"><strong>GPS-Assisted Mode (Optional):</strong></p>
-        <label style="display: flex; align-items: start; margin: 10px 0; cursor: pointer;">
-          <input type="checkbox" id="csl-gps-consent" style="margin-right: 10px; margin-top: 4px; cursor: pointer;">
-          <span>Enable GPS-assisted CSL</span>
-        </label>
-        <div style="font-size: 0.9em; color: #888; margin-left: 26px; margin-top: 5px;">
-          Uses coarse (~50m) location to verify bus location plausibility. Only active during CSL sessions. Can be disabled anytime.
-        </div>
       </div>
       
       <div style="display: flex; gap: 10px; margin-top: 30px;">
@@ -514,24 +501,21 @@ function showCSLConsentModal() {
     document.body.appendChild(modal);
     
     document.getElementById('csl-consent-accept').onclick = () => {
-      const gpsEnabled = document.getElementById('csl-gps-consent').checked;
       cslState.consentAccepted = true;
-      cslState.gpsEnabled = gpsEnabled;
       
       // Store consent
       localStorage.setItem('csl_consent', JSON.stringify({
         accepted: true,
-        gpsEnabled: gpsEnabled,
         timestamp: Date.now()
       }));
       
       document.body.removeChild(modal);
-      resolve({ accepted: true, gpsEnabled: gpsEnabled });
+      resolve({ accepted: true });
     };
     
     document.getElementById('csl-consent-decline').onclick = () => {
       document.body.removeChild(modal);
-      resolve({ accepted: false, gpsEnabled: false });
+      resolve({ accepted: false });
     };
   });
 }
@@ -1388,33 +1372,45 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
         const isContributor = data.contributors && data.contributors.some(c => c.userId === userId);
         
         if (isContributor) {
-          // Departed button
+          // Departed button - marks bus as departed from current stop (doesn't move)
           const departedBtn = expandedContent.querySelector('#csl-departed');
           if (departedBtn) {
             departedBtn.onclick = async () => {
+              await adapter.updateContributor(roomKey, userId, {
+                departed: true,
+                departedAt: Date.now()
+              });
+            };
+          }
+          
+          // Arrived button - moves bus to next stop
+          const arrivedBtn = expandedContent.querySelector('#csl-arrived');
+          if (arrivedBtn) {
+            arrivedBtn.onclick = async () => {
+              // Find current stop index
               const currentStopIdx = routeData.stops.findIndex(s => 
                 (s.stop_id && s.stop_id === data.currentStop) || 
                 (s.name === data.currentStopName)
               );
+              
+              // Move to next stop
               if (currentStopIdx >= 0 && currentStopIdx < routeData.stops.length - 1) {
                 const nextStop = routeData.stops[currentStopIdx + 1];
                 await adapter.updateContributor(roomKey, userId, {
-                  currentStop: nextStop.stop_id || currentStopIdx + 1,
-                  currentStopName: nextStop.name
+                  currentStop: nextStop.stop_id || (currentStopIdx + 1),
+                  currentStopName: nextStop.name,
+                  arrived: true,
+                  arrivedAt: Date.now()
                 });
-                // Aggregate update will happen via subscription
+                // Marker will update via subscription
+              } else {
+                // End of route
+                await adapter.updateContributor(roomKey, userId, {
+                  arrived: true,
+                  arrivedAt: Date.now(),
+                  endOfRoute: true
+                });
               }
-            };
-          }
-          
-          // Arrived button
-          const arrivedBtn = expandedContent.querySelector('#csl-arrived');
-          if (arrivedBtn) {
-            arrivedBtn.onclick = async () => {
-              await adapter.updateContributor(roomKey, userId, {
-                arrived: true,
-                arrivedAt: Date.now()
-              });
             };
           }
           
@@ -1476,7 +1472,6 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
  */
 function resetCSLState() {
   cslState.consentAccepted = false;
-  cslState.gpsEnabled = false;
   cslState.activeRooms.clear();
   cslState.userContributions.clear();
   localStorage.removeItem('csl_consent');
@@ -1620,6 +1615,13 @@ async function simulateContributorUpdate(roomKey, action = 'departed') {
   }
   
   if (action === 'departed') {
+    // Just mark as departed
+    await adapter.updateContributor(roomKey, userId, {
+      departed: true,
+      departedAt: Date.now()
+    });
+    console.log('[CSL Test] Simulated "Departed"');
+  } else if (action === 'arrived') {
     // Move to next stop
     const currentStopIdx = stops.findIndex(s => 
       (s.stop_id && s.stop_id === room.currentStop) || 
@@ -1629,16 +1631,14 @@ async function simulateContributorUpdate(roomKey, action = 'departed') {
       const nextStop = stops[currentStopIdx + 1];
       await adapter.updateContributor(roomKey, userId, {
         currentStop: nextStop.stop_id || currentStopIdx + 1,
-        currentStopName: nextStop.name
+        currentStopName: nextStop.name,
+        arrived: true,
+        arrivedAt: Date.now()
       });
-      console.log('[CSL Test] Simulated "Departed" - moved to:', nextStop.name);
+      console.log('[CSL Test] Simulated "Arrived" - moved to:', nextStop.name);
+    } else {
+      console.log('[CSL Test] Simulated "Arrived" - end of route');
     }
-  } else if (action === 'arrived') {
-    await adapter.updateContributor(roomKey, userId, {
-      arrived: true,
-      arrivedAt: Date.now()
-    });
-    console.log('[CSL Test] Simulated "Arrived"');
   } else if (action === 'late') {
     await adapter.updateContributor(roomKey, userId, {
       late: true,
