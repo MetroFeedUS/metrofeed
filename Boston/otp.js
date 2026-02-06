@@ -916,7 +916,7 @@ async function extractRouteInfo(leg, legIdx) {
   }
   
   // BUS: Primary key is line.publicCode (e.g., "75")
-  if (leg.mode === 'BUS' || leg.mode === 'TRAM') {
+  if (leg.mode === 'BUS') {
     if (leg.line && leg.line.publicCode) {
       routeNumber = leg.line.publicCode;
       console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using publicCode:`, routeNumber);
@@ -927,6 +927,35 @@ async function extractRouteInfo(leg, legIdx) {
         verified = verifyResult.verified;
         if (!verified) {
           console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} failed stop verification - ${verifyResult.reason}`);
+        } else {
+          console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} verified - ${verifyResult.reason}`);
+        }
+      }
+    } else {
+      console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): No publicCode available`);
+    }
+  }
+  // TRAM: Green Line branches - publicCode is single letter (B, C, D, E), map to "Green-X"
+  else if (leg.mode === 'TRAM') {
+    if (leg.line && leg.line.publicCode) {
+      const branchCode = leg.line.publicCode;
+      // Map single letter to Green Line branch (e.g., "D" -> "Green-D")
+      if (/^[BCDE]$/.test(branchCode)) {
+        routeNumber = `Green-${branchCode}`;
+        console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Mapped publicCode "${branchCode}" to route:`, routeNumber);
+      } else {
+        routeNumber = branchCode;
+        console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using publicCode:`, routeNumber);
+      }
+      
+      // Verify by stop sequence if available
+      if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
+        const verifyResult = await verifyRouteByStops(routeNumber, leg.estimatedCalls);
+        verified = verifyResult.verified;
+        if (!verified) {
+          console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} failed stop verification - ${verifyResult.reason}`);
+        } else {
+          console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} verified - ${verifyResult.reason}`);
         }
       }
     } else {
