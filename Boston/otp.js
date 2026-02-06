@@ -1959,6 +1959,18 @@ function drawJourney(journey) {
   
   // Render each leg
   journey.legs.forEach((leg, legIdx) => {
+    addDebugLog(
+      `Leg ${legIdx}: Processing`,
+      {
+        type: leg.type,
+        mode: leg.mode,
+        routeNumber: leg.routeNumber,
+        routeVerified: leg.routeVerified,
+        hasSolidSegment: !!leg.solidSegment
+      },
+      `Processing leg ${legIdx}: ${leg.type} ${leg.mode || ''} ${leg.routeNumber || ''}`
+    );
+    
     const color = leg.type === 'WALK' ? WALK_COLOR : legColors[legIdx % legColors.length];
     
     // Assign color to leg
@@ -1981,6 +1993,16 @@ function drawJourney(journey) {
     
     // Draw transit leg (simple solid line - no dashed segments)
     if (leg.type === 'TRANSIT' && leg.solidSegment && leg.solidSegment.length > 1) {
+      addDebugLog(
+        `Leg ${legIdx}: Drawing TRANSIT`,
+        {
+          routeNumber: leg.routeNumber,
+          routeVerified: leg.routeVerified,
+          mode: leg.mode,
+          solidSegmentLength: leg.solidSegment.length
+        },
+        `Drawing TRANSIT leg ${legIdx}: ${leg.routeNumber || 'N/A'} (verified: ${leg.routeVerified})`
+      );
       const transitId = `routeLeg-${leg.index}-transit`;
       addLine(map, transitId, toMapLibreCoords(leg.solidSegment), {
         "line-color": color,
@@ -2044,6 +2066,19 @@ function drawJourney(journey) {
       // Only add to route list if route is verified (or if we can't verify, assume it's correct)
       // This prevents wrong route overlays
       const shouldAddRoute = leg.routeVerified !== false; // Add if verified=true or undefined (can't verify)
+      
+      // Debug: Log route verification status
+      addDebugLog(
+        `Leg ${legIdx}: Route List Check`,
+        {
+          routeId: mappedRouteId,
+          routeVerified: leg.routeVerified,
+          shouldAddRoute: shouldAddRoute,
+          mode: leg.mode,
+          type: leg.type
+        },
+        `Route ${mappedRouteId}: verified=${leg.routeVerified}, willAdd=${shouldAddRoute}`
+      );
       
       if (shouldAddRoute) {
         routeList.push({
