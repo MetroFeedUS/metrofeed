@@ -2161,9 +2161,11 @@ function showOtpRouteSelector(routeList) {
   `;
   
   // Create square button for each route (keep in order - descending = first to last leg)
+  console.log('🎨 [showOtpRouteSelector] Creating buttons for routes:', routeList.map(r => ({ id: r.routeId, name: r.name, mode: r.mode })));
   routeList.forEach((route, idx) => {
     // Route ID is already mapped in drawJourney()
     const mappedRouteId = route.routeId;
+    console.log(`🎨 [showOtpRouteSelector] Creating button ${idx + 1}/${routeList.length}: routeId="${mappedRouteId}", name="${route.name}", color="${route.color}"`);
     
     const button = document.createElement('button');
     button.title = route.name || `Route ${mappedRouteId}`; // Tooltip for collapsed state
@@ -2425,9 +2427,12 @@ function showOtpRouteSelector(routeList) {
     };
     
     buttonsContainer.appendChild(button);
+    console.log(`🎨 [showOtpRouteSelector] ✅ Button ${idx + 1} appended to container (routeId="${mappedRouteId}")`);
   });
   
+  console.log('🎨 [showOtpRouteSelector] Total buttons in container:', buttonsContainer.children.length);
   modal.appendChild(buttonsContainer);
+  console.log('🎨 [showOtpRouteSelector] ✅ buttonsContainer appended to modal');
   
   // Mobile responsiveness
   const mediaQuery = window.matchMedia('(max-width: 768px)');
