@@ -391,6 +391,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
             }
             serviceJourneyEstimatedCalls {
               quay {
+                id
                 name
                 latitude
                 longitude
@@ -941,6 +942,7 @@ class JourneyLeg {
     this.routeNumber = null; // Normalized route number for bus tracking
     this.direction = null; // Direction ID (0 or 1)
     this.serviceJourneyId = leg.tripId || null;
+    this.routeVerified = false; // Whether route was verified by stop sequence match
     
     // Places
     this.boardingPoint = leg.fromPlace ? {
@@ -1012,8 +1014,9 @@ async function normalizeItineraries(convertedItineraries) {
           journeyLeg.direction = routeInfo.direction;
           journeyLeg.line = routeInfo.line;
           journeyLeg.directionCalculated = routeInfo.directionCalculated || false;
+          journeyLeg.routeVerified = routeInfo.verified || false; // Track if route was verified by stops
           
-          console.log(`🔄 [normalizeItineraries] Leg ${legIdx} (${leg.mode}): route=${journeyLeg.routeNumber}, direction=${journeyLeg.direction}`);
+          console.log(`🔄 [normalizeItineraries] Leg ${legIdx} (${leg.mode}): route=${journeyLeg.routeNumber}, direction=${journeyLeg.direction}, verified=${journeyLeg.routeVerified}`);
         }
         
         // Clip geometry once (for all legs)
@@ -1052,8 +1055,9 @@ async function normalizeItineraries(convertedItineraries) {
 async function extractRouteInfo(leg, legIdx) {
   let routeNumber = null;
   let direction = 0; // Default
+  let verified = false; // Whether route was verified by stop sequence
   
-  // Preserve original leg.line if available (contains publicCode, name, etc.)
+  // Preserve original leg.line if available
   let line = leg.line ? {
     id: leg.line.publicCode || leg.route || null,
     name: leg.line.name || leg.routeLongName || leg.routeShortName || leg.route || null,
@@ -1066,61 +1070,94 @@ async function extractRouteInfo(leg, legIdx) {
     color: null // Will be assigned later
   };
   
-  // ⚠️ PRIORITY 1: Use OTP's publicCode directly (most reliable for Boston)
-  if (leg.line && leg.line.publicCode) {
-    routeNumber = leg.line.publicCode;
-    console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}):`);
-    console.log(`🔍 [extractRouteInfo]   ✅ Using OTP publicCode:`, routeNumber);
-  }
-  // ⚠️ PRIORITY 2: Use leg.route if publicCode not available
-  else if (leg.route) {
-    routeNumber = leg.route;
-    console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}):`);
-    console.log(`🔍 [extractRouteInfo]   ✅ Using leg.route:`, routeNumber);
+  // WALK/FOOT: Never try to match to route files, just use OTP geometry
+  if (leg.mode === 'WALK' || leg.mode === 'FOOT') {
+    console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Walking leg - no route matching`);
+    return { routeNumber: null, direction: 0, line, directionCalculated: false, verified: false };
   }
   
-  // Extract route description for logging/fallback
-  let routeDescription = '';
-  if (leg.line && leg.line.name) {
-    routeDescription = leg.line.name;
-  } else if (leg.routeLongName) {
-    routeDescription = leg.routeLongName;
-  } else if (leg.routeShortName) {
-    routeDescription = leg.routeShortName;
-  } else if (leg.route) {
-    routeDescription = leg.route;
+  // BUS: Primary key is line.publicCode (e.g., "75")
+  if (leg.mode === 'BUS' || leg.mode === 'TRAM') {
+    if (leg.line && leg.line.publicCode) {
+      routeNumber = leg.line.publicCode;
+      console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using publicCode:`, routeNumber);
+      
+      // Verify by stop sequence if available
+      if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
+        const verifyResult = await verifyRouteByStops(routeNumber, leg.estimatedCalls);
+        verified = verifyResult.verified;
+        if (!verified) {
+          console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} failed stop verification - ${verifyResult.reason}`);
+        }
+      }
+    } else {
+      console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): No publicCode available`);
+    }
   }
-  
-  if (!routeNumber) {
-    console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}):`);
-    console.log(`🔍 [extractRouteInfo]   Raw route:`, leg.route);
-    console.log(`🔍 [extractRouteInfo]   Description:`, routeDescription);
+  // METRO/SUBWAY: Primary key is line.name (e.g., "Red Line"), determine branch from stops
+  else if (leg.mode === 'METRO' || leg.mode === 'SUBWAY') {
+    if (leg.line && leg.line.name) {
+      // Extract base route name (e.g., "Red Line" -> "Red")
+      const lineName = leg.line.name;
+      console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using line.name:`, lineName);
+      
+      // Map to our route ID format
+      routeNumber = mapSubwayRouteCode(null, lineName);
+      
+      // Determine branch from stop sequence
+      if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
+        // For Green Line: determine branch
+        if (routeNumber === 'Green') {
+          const branch = determineGreenLineBranch(leg.estimatedCalls);
+          if (branch) {
+            routeNumber = `Green-${branch}`;
+            console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Determined branch: ${branch}`);
+          }
+        }
+        // For Red Line: determine branch (Ashmont vs Braintree)
+        else if (routeNumber === 'Red') {
+          const branch = determineRedLineBranch(leg.estimatedCalls);
+          if (branch) {
+            routeNumber = `Red-${branch}`;
+            console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Determined branch: ${branch}`);
+          }
+        }
+        
+        // Verify by stop sequence
+        const verifyResult = await verifyRouteByStops(routeNumber, leg.estimatedCalls);
+        verified = verifyResult.verified;
+        if (!verified) {
+          console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} failed stop verification - ${verifyResult.reason}`);
+        } else {
+          console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} verified - ${verifyResult.reason}`);
+        }
+      }
+    } else {
+      console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): No line.name available`);
+    }
   }
-  
-  // ⚠️ PRIORITY 3: Try to decode route number using mapping function (LAST RESORT)
-  // Only use this if we don't have a route number yet
-  if (!routeNumber && routeDescription && typeof window.mapOtpRouteToTrimet === 'function') {
-    const decodedRouteNumber = window.mapOtpRouteToTrimet(routeDescription);
-    if (decodedRouteNumber) {
-      routeNumber = decodedRouteNumber;
-      console.log(`🔍 [extractRouteInfo]   ⚠️ Decoded route via mapOtpRouteToTrimet:`, routeNumber);
+  // RAIL/TRAIN/FERRY: Use publicCode if available, otherwise line.name
+  else if (leg.mode === 'RAIL' || leg.mode === 'TRAIN' || leg.mode === 'FERRY') {
+    if (leg.line && leg.line.publicCode) {
+      routeNumber = leg.line.publicCode;
+      console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using publicCode:`, routeNumber);
+    } else if (leg.line && leg.line.name) {
+      routeNumber = leg.line.name;
+      console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using line.name:`, routeNumber);
     }
   }
   
-  // ⚠️ PRIORITY 4: Fallback removed - masterRoutes no longer used
-  
-  // Calculate direction for all transit modes (including SUBWAY, METRO, RAIL)
-  // All transit modes need direction calculation so they can be flipped correctly
+  // Calculate direction for transit modes (if we have a route number)
   const transitModes = ['BUS', 'TRAM', 'RAIL', 'TRAIN', 'FERRY', 'SUBWAY', 'METRO'];
-  let directionCalculated = false; // Track if direction was actually calculated or just defaulted
+  let directionCalculated = false;
   if (transitModes.includes(leg.mode) && routeNumber) {
-    const directionResult = await calculateDirection(leg, routeNumber, routeDescription);
+    const directionResult = await calculateDirection(leg, routeNumber, leg.line?.name || '');
     direction = directionResult.direction;
     directionCalculated = directionResult.calculated || false;
     console.log(`🔍 [extractRouteInfo]   ✅ Direction for ${leg.mode}:`, direction, directionCalculated ? '(calculated)' : '(defaulted)');
   }
   
-  return { routeNumber, direction, line, directionCalculated };
+  return { routeNumber, direction, line, directionCalculated, verified };
 }
 
 /**
@@ -1411,6 +1448,279 @@ function mapSubwayRouteCode(routeId, routeName) {
 }
 
 /**
+ * Calculate distance between two coordinates (Haversine formula)
+ * @param {number} lat1 
+ * @param {number} lon1 
+ * @param {number} lat2 
+ * @param {number} lon2 
+ * @returns {number} Distance in meters
+ */
+function distanceBetweenCoords(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Earth radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+/**
+ * Verify route match by comparing OTP stop sequence to our route stops
+ * Uses stable IDs when available, falls back to coordinates, then names
+ * @param {string} routeNumber - Route number to verify
+ * @param {Array} estimatedCalls - OTP estimated calls (stops) array
+ * @returns {Object} { verified: boolean, reason: string }
+ */
+async function verifyRouteByStops(routeNumber, estimatedCalls) {
+  if (!routeNumber || !estimatedCalls || !Array.isArray(estimatedCalls) || estimatedCalls.length === 0) {
+    return { verified: false, reason: 'No stops available' };
+  }
+  
+  const isBoston = typeof window.CITY_CONFIG !== 'undefined' && window.CITY_CONFIG.useLazyLoading;
+  if (!isBoston || !window.routeLoader) {
+    return { verified: true, reason: 'Cannot verify (not Boston or routeLoader unavailable)' };
+  }
+  
+  try {
+    // Ensure routes index is loaded
+    if (!window.routeLoader.isRoutesIndexLoaded()) {
+      await window.routeLoader.loadRoutesIndex();
+    }
+    
+    // Extract OTP stop data with IDs, coordinates, and names
+    const otpStops = estimatedCalls.map(call => ({
+      id: call.quay?.id || null,
+      name: call.quay?.name || call.name || '',
+      lat: call.quay?.latitude || null,
+      lon: call.quay?.longitude || null
+    }));
+    
+    // Try both directions
+    const [dir0Data, dir1Data] = await Promise.all([
+      window.routeLoader.loadRoute(routeNumber, 0).catch(() => null),
+      window.routeLoader.loadRoute(routeNumber, 1).catch(() => null)
+    ]);
+    
+    // Adaptive thresholds based on stop count
+    const stopCount = otpStops.length;
+    let minMatchRatio, minConsecutive;
+    
+    if (stopCount <= 3) {
+      // Very short legs: very forgiving (express patterns, short hops)
+      minMatchRatio = 0.33; // At least 1 of 3 stops
+      minConsecutive = 1;
+    } else if (stopCount <= 5) {
+      // Short legs: forgiving
+      minMatchRatio = 0.4; // At least 2 of 5 stops
+      minConsecutive = 2;
+    } else if (stopCount <= 10) {
+      // Medium legs: moderate
+      minMatchRatio = 0.45; // At least 45% match
+      minConsecutive = 3;
+    } else {
+      // Long legs: strict
+      minMatchRatio = 0.5; // At least 50% match
+      minConsecutive = 4;
+    }
+    
+    // Check if OTP stops match either direction
+    function checkStopMatch(otpStops, routeStops) {
+      if (!routeStops || routeStops.length === 0) {
+        return { match: false, reason: 'Route has no stops' };
+      }
+      
+      let matches = 0;
+      let idMatches = 0;
+      let coordMatches = 0;
+      let nameMatches = 0;
+      let consecutiveMatches = 0;
+      let maxConsecutive = 0;
+      let lastMatchIndex = -1;
+      let hasIds = false;
+      let hasCoords = false;
+      
+      // Check if we have IDs or coordinates available
+      const otpHasIds = otpStops.some(s => s.id);
+      const otpHasCoords = otpStops.some(s => s.lat && s.lon);
+      const routeHasIds = routeStops.some(s => s.id || s.stop_id);
+      const routeHasCoords = routeStops.some(s => s.lat && s.lon);
+      
+      hasIds = otpHasIds && routeHasIds;
+      hasCoords = otpHasCoords && routeHasCoords;
+      
+      // One-time debug output: Compare ID systems for first stop
+      let idSystemDebugged = false;
+      
+      for (let i = 0; i < otpStops.length; i++) {
+        const otpStop = otpStops[i];
+        let routeIndex = -1;
+        let matchType = 'none';
+        
+        // Priority 1: Match by ID (most reliable)
+        if (hasIds && otpStop.id) {
+          routeIndex = routeStops.findIndex(s => {
+            const routeId = s.id || s.stop_id || s.quay_id;
+            // Handle both string and number IDs
+            if (routeId && otpStop.id) {
+              return String(routeId) === String(otpStop.id) || routeId === otpStop.id;
+            }
+            return false;
+          });
+          if (routeIndex >= 0) {
+            matchType = 'id';
+            idMatches++;
+          }
+          
+          // One-time debug: Compare ID systems for first stop
+          if (!idSystemDebugged && i === 0) {
+            idSystemDebugged = true;
+            // Find closest route stop for comparison
+            let closestStop = null;
+            let closestDist = Infinity;
+            routeStops.forEach(s => {
+              if (s.lat && s.lon && otpStop.lat && otpStop.lon) {
+                const dist = distanceBetweenCoords(otpStop.lat, otpStop.lon, s.lat, s.lon);
+                if (dist < closestDist) {
+                  closestDist = dist;
+                  closestStop = s;
+                }
+              }
+            });
+            
+            console.log(`🔍 [verifyRouteByStops] ID SYSTEM COMPARISON (Route ${routeNumber}):`);
+            console.log(`🔍   OTP Stop: quay.id="${otpStop.id}", name="${otpStop.name}"`);
+            if (closestStop) {
+              const routeId = closestStop.id || closestStop.stop_id || closestStop.quay_id || 'N/A';
+              console.log(`🔍   Route Stop: stop_id="${routeId}", name="${closestStop.name || 'N/A'}"`);
+              console.log(`🔍   Distance: ${closestDist.toFixed(1)}m`);
+              if (otpStop.id && routeId && String(otpStop.id) !== String(routeId)) {
+                console.warn(`🔍   ⚠️ ID MISMATCH: OTP uses "${otpStop.id}" but route uses "${routeId}" - different ID systems!`);
+              } else if (otpStop.id && routeId && String(otpStop.id) === String(routeId)) {
+                console.log(`🔍   ✅ ID MATCH: Same ID system confirmed`);
+              }
+            } else {
+              console.warn(`🔍   ⚠️ Could not find closest route stop for comparison`);
+            }
+          }
+        }
+        
+        // Priority 2: Match by coordinates (mode-specific threshold)
+        // Rail stations: larger threshold (multiple platforms, big entrances)
+        // Bus stops: tighter threshold (avoid matching wrong stop on wrong street)
+        const coordThreshold = routeNumber && (routeNumber === 'Red' || routeNumber === 'Orange' || routeNumber === 'Blue' || routeNumber.startsWith('Green') || routeNumber.startsWith('CR-'))
+          ? 150  // Rail: 150 meters (stations can be spread out)
+          : 50;  // Bus: 50 meters (tighter to avoid wrong matches)
+        
+        if (routeIndex < 0 && hasCoords && otpStop.lat && otpStop.lon) {
+          routeIndex = routeStops.findIndex(s => {
+            if (!s.lat || !s.lon) return false;
+            const dist = distanceBetweenCoords(otpStop.lat, otpStop.lon, s.lat, s.lon);
+            return dist < coordThreshold;
+          });
+          if (routeIndex >= 0) {
+            matchType = 'coord';
+            coordMatches++;
+          }
+        }
+        
+        // Priority 3: Match by name (fallback, least reliable)
+        if (routeIndex < 0) {
+          const otpNameNorm = (otpStop.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+          routeIndex = routeStops.findIndex(s => {
+            const routeNameNorm = (s.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+            return routeNameNorm && routeNameNorm === otpNameNorm;
+          });
+          if (routeIndex >= 0) {
+            matchType = 'name';
+            nameMatches++;
+          }
+        }
+        
+        if (routeIndex >= 0) {
+          matches++;
+          if (lastMatchIndex < 0 || routeIndex > lastMatchIndex) {
+            consecutiveMatches++;
+            maxConsecutive = Math.max(maxConsecutive, consecutiveMatches);
+            lastMatchIndex = routeIndex;
+          } else {
+            consecutiveMatches = 1;
+            lastMatchIndex = routeIndex;
+          }
+        }
+      }
+      
+      const matchRatio = matches / otpStops.length;
+      const passed = matchRatio >= minMatchRatio && maxConsecutive >= minConsecutive;
+      
+      let reason = '';
+      if (!passed) {
+        if (matchRatio < minMatchRatio) {
+          reason = `Match ratio too low (${(matchRatio * 100).toFixed(1)}% < ${(minMatchRatio * 100).toFixed(0)}%)`;
+        } else if (maxConsecutive < minConsecutive) {
+          reason = `Insufficient consecutive matches (${maxConsecutive} < ${minConsecutive})`;
+        }
+      } else {
+        const matchTypes = [];
+        if (idMatches > 0) matchTypes.push(`${idMatches} by ID`);
+        if (coordMatches > 0) matchTypes.push(`${coordMatches} by coordinates`);
+        if (nameMatches > 0) matchTypes.push(`${nameMatches} by name`);
+        reason = `Verified: ${matches}/${otpStops.length} stops matched (${matchTypes.join(', ')})`;
+      }
+      
+      return { match: passed, reason, matchRatio, maxConsecutive, matches, total: otpStops.length };
+    }
+    
+    const dir0Result = dir0Data && dir0Data.stops ? checkStopMatch(otpStops, dir0Data.stops) : { match: false, reason: 'Direction 0 data unavailable' };
+    const dir1Result = dir1Data && dir1Data.stops ? checkStopMatch(otpStops, dir1Data.stops) : { match: false, reason: 'Direction 1 data unavailable' };
+    
+    const verified = dir0Result.match || dir1Result.match;
+    const reason = verified 
+      ? (dir0Result.match ? `dir0: ${dir0Result.reason}` : `dir1: ${dir1Result.reason}`)
+      : `Both directions failed: dir0(${dir0Result.reason}), dir1(${dir1Result.reason})`;
+    
+    console.log(`🔍 [verifyRouteByStops] Route ${routeNumber} (${stopCount} stops): ${verified ? 'VERIFIED' : 'FAILED'} - ${reason}`);
+    
+    return { verified, reason };
+  } catch (error) {
+    console.warn(`🔍 [verifyRouteByStops] Error verifying route ${routeNumber}:`, error);
+    return { verified: true, reason: `Error during verification: ${error.message}` }; // On error, assume it's correct
+  }
+}
+
+/**
+ * Determine Red Line branch from OTP stop sequence
+ * @param {Array} estimatedCalls - OTP estimated calls (stops) array
+ * @returns {string|null} Branch name ("Ashmont" or "Braintree") or null if can't determine
+ */
+function determineRedLineBranch(estimatedCalls) {
+  if (!estimatedCalls || !Array.isArray(estimatedCalls)) return null;
+  
+  // Get all stop names from the sequence
+  const stopNames = estimatedCalls.map(call => {
+    const name = call.quay?.name || call.name || '';
+    return name.toLowerCase();
+  });
+  const allStops = stopNames.join(' ');
+  
+  // Check for terminal stops
+  if (allStops.includes('ashmont')) {
+    return 'Ashmont';
+  }
+  if (allStops.includes('braintree')) {
+    return 'Braintree';
+  }
+  
+  // Check for branch-specific stops
+  if (allStops.includes('fields corner') || allStops.includes('shawmut') || allStops.includes('savin hill')) {
+    return 'Ashmont';
+  }
+  
+  return null;
+}
+
+/**
  * Determine Green Line branch from OTP stop sequence
  * @param {Array} estimatedCalls - OTP estimated calls (stops) array
  * @returns {string|null} Branch letter (B, C, D, E) or null if can't determine
@@ -1523,18 +1833,27 @@ function drawJourney(journey) {
       const fromStop = leg.from?.name || '';
       const toStop = leg.to?.name || '';
       
-      routeList.push({
-        routeId: mappedRouteId, // Use mapped ID (e.g., "Red" instead of "200", or "Green-B" instead of "Green")
-        originalRouteId: leg.routeNumber, // Keep original for reference
-        directionId: leg.direction || 0,
-        mode: leg.mode,
-        color: color,
-        name: routeName,
-        legIndex: legIdx,
-        fromStop: fromStop, // Store for direction matching
-        toStop: toStop,      // Store for direction matching
-        directionCalculated: leg.directionCalculated || false // Track if direction was calculated
-      });
+      // Only add to route list if route is verified (or if we can't verify, assume it's correct)
+      // This prevents wrong route overlays
+      const shouldAddRoute = leg.routeVerified !== false; // Add if verified=true or undefined (can't verify)
+      
+      if (shouldAddRoute) {
+        routeList.push({
+          routeId: mappedRouteId, // Use mapped ID (e.g., "Red" instead of "200", or "Green-B" instead of "Green")
+          originalRouteId: leg.routeNumber, // Keep original for reference
+          directionId: leg.direction || 0,
+          mode: leg.mode,
+          color: color,
+          name: routeName,
+          legIndex: legIdx,
+          fromStop: fromStop, // Store for direction matching
+          toStop: toStop,      // Store for direction matching
+          directionCalculated: leg.directionCalculated || false, // Track if direction was calculated
+          routeVerified: leg.routeVerified || false // Track if route was verified
+        });
+      } else {
+        console.warn(`🎨 [drawJourney] Skipping route ${mappedRouteId} - failed verification`);
+      }
     }
   });
   
