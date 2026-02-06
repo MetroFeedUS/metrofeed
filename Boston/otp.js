@@ -1296,12 +1296,39 @@ async function clipLegGeometry(journeyLeg, leg) {
  * @param {Journey} journey - Journey object to render
  */
 /**
+ * Get MBTA subway route color
+ * @param {string} routeId - Route ID (e.g., "Orange", "Red", "Blue", "Green-D")
+ * @returns {string} Hex color code
+ */
+function getSubwayRouteColor(routeId) {
+  if (!routeId) return '#1E3A8A'; // Default blue
+  
+  const routeIdUpper = routeId.toUpperCase();
+  
+  // MBTA official colors
+  if (routeIdUpper === 'RED' || routeIdUpper.startsWith('RED-')) {
+    return '#DA291C'; // MBTA Red
+  } else if (routeIdUpper === 'ORANGE' || routeIdUpper.startsWith('ORANGE-')) {
+    return '#ED8B00'; // MBTA Orange
+  } else if (routeIdUpper === 'BLUE' || routeIdUpper.startsWith('BLUE-')) {
+    return '#003DA5'; // MBTA Blue
+  } else if (routeIdUpper === 'GREEN' || routeIdUpper.startsWith('GREEN-')) {
+    return '#00843D'; // MBTA Green
+  }
+  
+  // Fallback to default
+  return '#1E3A8A';
+}
+
+/**
  * Map subway route codes to route names (MBTA specific)
  * OTP returns codes like "200" for Red Line, but system expects "Red"
  */
 function mapSubwayRouteCode(routeId, routeName) {
-  // If it's already a name (Red, Orange, etc.), return as-is
-  if (['Red', 'Orange', 'Blue', 'Green', 'Green-B', 'Green-C', 'Green-D', 'Green-E'].includes(routeId)) {
+  // If it's already a name with branch suffix (e.g., "Red-Ashmont", "Green-D"), return as-is
+  if (routeId && (routeId.startsWith('Red-') || routeId.startsWith('Green-') || 
+      routeId === 'Red' || routeId === 'Orange' || routeId === 'Blue' || routeId === 'Green' ||
+      ['Green-B', 'Green-C', 'Green-D', 'Green-E'].includes(routeId))) {
     return routeId;
   }
   
@@ -1742,21 +1769,43 @@ function drawJourney(journey) {
       const routeName = leg.line?.name || `Route ${leg.routeNumber}`;
       let mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
       
-      // If OTP returned "Green" (not a specific branch), try to determine which branch from stops
-      // Check both leg.estimatedCalls (from OTP) and leg.stops (from JourneyLeg)
+      // If routeNumber already has a branch suffix (from extractRouteInfo), preserve it
+      // Otherwise, try to determine branch from stops if we have a base route
       const estimatedCalls = leg.estimatedCalls || leg.stops || null;
-      if (mappedRouteId === 'Green' && estimatedCalls && Array.isArray(estimatedCalls) && estimatedCalls.length > 0) {
-        // Try to match stops to determine which Green Line branch
-        const branch = determineGreenLineBranch(estimatedCalls);
-        if (branch) {
-          mappedRouteId = `Green-${branch}`;
-          console.log(`🎨 [drawJourney] Mapped Green Line to branch ${branch} based on stops`);
+      if (estimatedCalls && Array.isArray(estimatedCalls) && estimatedCalls.length > 0) {
+        // If OTP returned "Green" (not a specific branch), try to determine which branch from stops
+        if (mappedRouteId === 'Green') {
+          const branch = determineGreenLineBranch(estimatedCalls);
+          if (branch) {
+            mappedRouteId = `Green-${branch}`;
+            console.log(`🎨 [drawJourney] Mapped Green Line to branch ${branch} based on stops`);
+          }
         }
+        // If OTP returned "Red" (not a specific branch), try to determine which branch from stops
+        else if (mappedRouteId === 'Red') {
+          const branch = determineRedLineBranch(estimatedCalls);
+          if (branch) {
+            mappedRouteId = `Red-${branch}`;
+            console.log(`🎨 [drawJourney] Mapped Red Line to branch ${branch} based on stops`);
+          }
+        }
+      }
+      
+      // If leg.routeNumber already has a branch suffix, use it (extractRouteInfo may have determined it)
+      if (leg.routeNumber && (leg.routeNumber.startsWith('Red-') || leg.routeNumber.startsWith('Green-'))) {
+        mappedRouteId = leg.routeNumber;
+        console.log(`🎨 [drawJourney] Using branch route from extractRouteInfo: ${mappedRouteId}`);
       }
       
       // Get from/to stops from the leg for better direction matching
       const fromStop = leg.from?.name || '';
       const toStop = leg.to?.name || '';
+      
+      // Determine route color: Use MBTA subway colors if subway/tram, otherwise use leg color
+      let routeColor = color; // Default to leg color
+      if (leg.mode === 'SUBWAY' || leg.mode === 'METRO' || leg.mode === 'TRAM') {
+        routeColor = getSubwayRouteColor(mappedRouteId);
+      }
       
       // Only add to route list if route is verified (or if we can't verify, assume it's correct)
       // This prevents wrong route overlays
@@ -1768,7 +1817,7 @@ function drawJourney(journey) {
           originalRouteId: leg.routeNumber, // Keep original for reference
           directionId: leg.direction || 0,
           mode: leg.mode,
-          color: color,
+          color: routeColor, // Use MBTA subway color if subway/tram, otherwise leg color
           name: routeName,
           legIndex: legIdx,
           fromStop: fromStop, // Store for direction matching
