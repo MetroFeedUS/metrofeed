@@ -1579,6 +1579,23 @@
         
         return routeData;
       } catch (error) {
+        // If route has a branch suffix (e.g., "Red-Ashmont"), try falling back to base route (e.g., "Red")
+        if (routeId.includes('-') && (routeId.startsWith('Red-') || routeId.startsWith('Green-'))) {
+          const baseRoute = routeId.split('-')[0];
+          console.log(`[getRouteData] Branch route ${routeId} not found, trying base route ${baseRoute}`);
+          try {
+            let routeData = await window.routeLoader.loadRoute(baseRoute, directionId);
+            
+            // Post-process: Detect trunk-and-branch routes and create shapes array
+            routeData = await processTrunkAndBranchRoute(routeData, baseRoute, directionId);
+            
+            return routeData;
+          } catch (fallbackError) {
+            console.error('[getRouteData] Error loading base route:', fallbackError);
+            throw new Error(`Route not found: ${routeId} direction ${directionId} (also tried base route ${baseRoute})`);
+          }
+        }
+        
         console.error('[getRouteData] Error loading route:', error);
         throw error;
       }

@@ -25,6 +25,160 @@ const WALK_COLOR = "#666";
 window.legColors = legColors;
 window.WALK_COLOR = WALK_COLOR;
 
+// Debug modal system
+let debugLogs = [];
+let debugModalOpen = false;
+
+/**
+ * Add a debug log entry
+ * @param {string} step - Step name (e.g., "Route Extraction", "Branch Determination")
+ * @param {Object} data - Data to display
+ * @param {string} decision - Human-readable decision/result
+ */
+function addDebugLog(step, data, decision) {
+  debugLogs.push({
+    step,
+    data: JSON.parse(JSON.stringify(data)), // Deep clone
+    decision,
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * Show debug modal with all collected logs
+ */
+function showDebugModal() {
+  if (debugModalOpen) return; // Prevent multiple modals
+  
+  debugModalOpen = true;
+  
+  const modal = document.createElement('div');
+  modal.id = 'otp-debug-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 100000;
+    overflow-y: auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  `;
+  
+  const content = document.createElement('div');
+  content.style.cssText = `
+    max-width: 1200px;
+    margin: 20px auto;
+    background: #1e1e1e;
+    border-radius: 8px;
+    padding: 20px;
+    color: #fff;
+  `;
+  
+  const header = document.createElement('div');
+  header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #1E90FF; padding-bottom: 10px;';
+  header.innerHTML = `
+    <h2 style="margin: 0; color: #1E90FF;">🔍 OTP Debug Log</h2>
+    <button id="close-debug-modal" style="background: #1E90FF; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Close</button>
+  `;
+  
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = 'Clear Logs';
+  clearBtn.style.cssText = 'background: #666; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;';
+  clearBtn.onclick = () => {
+    debugLogs = [];
+    content.removeChild(logsContainer);
+    logsContainer = createLogsContainer();
+    content.appendChild(logsContainer);
+  };
+  header.appendChild(clearBtn);
+  
+  function createLogsContainer() {
+    const container = document.createElement('div');
+    container.id = 'debug-logs-container';
+    
+    if (debugLogs.length === 0) {
+      container.innerHTML = '<p style="color: #888; text-align: center; padding: 40px;">No debug logs yet. Process a trip to see debug information.</p>';
+      return container;
+    }
+    
+    debugLogs.forEach((log, idx) => {
+      const logEntry = document.createElement('div');
+      logEntry.style.cssText = `
+        background: #2a2a2a;
+        border-left: 4px solid #1E90FF;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+      `;
+      
+      const stepHeader = document.createElement('div');
+      stepHeader.style.cssText = 'font-weight: bold; color: #1E90FF; font-size: 16px; margin-bottom: 10px;';
+      stepHeader.textContent = `${idx + 1}. ${log.step}`;
+      
+      const decisionDiv = document.createElement('div');
+      decisionDiv.style.cssText = 'background: #333; padding: 10px; border-radius: 4px; margin: 10px 0; color: #4CAF50; font-weight: bold;';
+      decisionDiv.textContent = `✅ Decision: ${log.decision}`;
+      
+      const dataDiv = document.createElement('details');
+      dataDiv.style.cssText = 'margin-top: 10px;';
+      const summary = document.createElement('summary');
+      summary.style.cssText = 'cursor: pointer; color: #888; user-select: none;';
+      summary.textContent = '📊 View Data';
+      const pre = document.createElement('pre');
+      pre.style.cssText = 'background: #1a1a1a; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; margin-top: 10px;';
+      pre.textContent = JSON.stringify(log.data, null, 2);
+      dataDiv.appendChild(summary);
+      dataDiv.appendChild(pre);
+      
+      const timestamp = document.createElement('div');
+      timestamp.style.cssText = 'color: #666; font-size: 11px; margin-top: 5px;';
+      timestamp.textContent = `Time: ${new Date(log.timestamp).toLocaleTimeString()}`;
+      
+      logEntry.appendChild(stepHeader);
+      logEntry.appendChild(decisionDiv);
+      logEntry.appendChild(dataDiv);
+      logEntry.appendChild(timestamp);
+      container.appendChild(logEntry);
+    });
+    
+    return container;
+  }
+  
+  let logsContainer = createLogsContainer();
+  
+  content.appendChild(header);
+  content.appendChild(logsContainer);
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  
+  document.getElementById('close-debug-modal').onclick = () => {
+    document.body.removeChild(modal);
+    debugModalOpen = false;
+  };
+  
+  // Close on Escape key
+  const escapeHandler = (e) => {
+    if (e.key === 'Escape' && debugModalOpen) {
+      document.body.removeChild(modal);
+      debugModalOpen = false;
+      document.removeEventListener('keydown', escapeHandler);
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
+}
+
+// Export to window for global access
+window.showDebugModal = showDebugModal;
+window.addDebugLog = addDebugLog;
+window.clearDebugLogs = () => { debugLogs = []; console.log('🔍 Debug logs cleared'); };
+
+// Console command to show debug modal
+console.log('%c🔍 OTP Debug Tools Available:', 'color: #1E90FF; font-weight: bold;');
+console.log('%c  - showDebugModal() - Show debug log modal', 'color: #888;');
+console.log('%c  - clearDebugLogs() - Clear all debug logs', 'color: #888;');
+
 /**
  * Decode encoded polyline string to coordinate array
  * @param {string} encoded - Encoded polyline string
@@ -269,6 +423,10 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
   window.activeTripSelected = false; // Also clear on window
   window.currentLegColorMapping = null;
   window.routesToTrack = []; // Clear routes to track
+  
+  // Clear debug logs for new trip
+  debugLogs = [];
+  console.log('🔍 [Debug] Cleared debug logs for new trip');
   
   // Clear any existing OTP route lines and stop markers
   if (window.routeLegLines && window.routeLegLines.length) {
@@ -912,6 +1070,11 @@ async function extractRouteInfo(leg, legIdx) {
   // WALK/FOOT: Never try to match to route files, just use OTP geometry
   if (leg.mode === 'WALK' || leg.mode === 'FOOT') {
     console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Walking leg - no route matching`);
+    addDebugLog(
+      `Leg ${legIdx}: Route Extraction`,
+      { mode: leg.mode, legIndex: legIdx },
+      `Walking leg - skipping route matching (uses OTP geometry only)`
+    );
     return { routeNumber: null, direction: 0, line, directionCalculated: false, verified: false };
   }
   
@@ -921,9 +1084,20 @@ async function extractRouteInfo(leg, legIdx) {
       routeNumber = leg.line.publicCode;
       console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using publicCode:`, routeNumber);
       
+      addDebugLog(
+        `Leg ${legIdx}: Route Extraction (BUS)`,
+        {
+          mode: leg.mode,
+          publicCode: leg.line.publicCode,
+          lineName: leg.line.name,
+          stopCount: leg.estimatedCalls?.length || 0
+        },
+        `Identified as BUS route ${routeNumber} using publicCode from OTP`
+      );
+      
       // Verify by stop sequence if available
       if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
-        const verifyResult = await verifyRouteByStops(routeNumber, leg.estimatedCalls);
+        const verifyResult = await verifyRouteByStops(routeNumber, leg.estimatedCalls, leg.mode);
         verified = verifyResult.verified;
         if (!verified) {
           console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} failed stop verification - ${verifyResult.reason}`);
@@ -933,6 +1107,11 @@ async function extractRouteInfo(leg, legIdx) {
       }
     } else {
       console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): No publicCode available`);
+      addDebugLog(
+        `Leg ${legIdx}: Route Extraction (BUS)`,
+        { mode: leg.mode, line: leg.line },
+        `⚠️ No publicCode available - cannot identify route`
+      );
     }
   }
   // TRAM: Green Line branches - publicCode is single letter (B, C, D, E), map to "Green-X"
@@ -972,6 +1151,17 @@ async function extractRouteInfo(leg, legIdx) {
       // Map to our route ID format
       routeNumber = mapSubwayRouteCode(null, lineName);
       
+      addDebugLog(
+        `Leg ${legIdx}: Route Extraction (${leg.mode})`,
+        {
+          mode: leg.mode,
+          lineName: lineName,
+          mappedRoute: routeNumber,
+          stopCount: leg.estimatedCalls?.length || 0
+        },
+        `Mapped "${lineName}" to route ID: ${routeNumber}`
+      );
+      
       // Determine branch from stop sequence
       if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
         // For Green Line: determine branch
@@ -980,6 +1170,14 @@ async function extractRouteInfo(leg, legIdx) {
           if (branch) {
             routeNumber = `Green-${branch}`;
             console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Determined branch: ${branch}`);
+            addDebugLog(
+              `Leg ${legIdx}: Branch Determination (Green Line)`,
+              {
+                stops: leg.estimatedCalls.map(c => c.quay?.name || c.name).slice(0, 5),
+                totalStops: leg.estimatedCalls.length
+              },
+              `Determined branch: ${branch} based on stop sequence`
+            );
           }
         }
         // For Red Line: determine branch (Ashmont vs Braintree)
@@ -988,11 +1186,19 @@ async function extractRouteInfo(leg, legIdx) {
           if (branch) {
             routeNumber = `Red-${branch}`;
             console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Determined branch: ${branch}`);
+            addDebugLog(
+              `Leg ${legIdx}: Branch Determination (Red Line)`,
+              {
+                stops: leg.estimatedCalls.map(c => c.quay?.name || c.name),
+                totalStops: leg.estimatedCalls.length
+              },
+              `Determined branch: ${branch} (terminal: ${leg.estimatedCalls[leg.estimatedCalls.length - 1]?.quay?.name || 'unknown'})`
+            );
           }
         }
         
         // Verify by stop sequence
-        const verifyResult = await verifyRouteByStops(routeNumber, leg.estimatedCalls);
+        const verifyResult = await verifyRouteByStops(routeNumber, leg.estimatedCalls, leg.mode);
         verified = verifyResult.verified;
         if (!verified) {
           console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Route ${routeNumber} failed stop verification - ${verifyResult.reason}`);
@@ -1002,6 +1208,11 @@ async function extractRouteInfo(leg, legIdx) {
       }
     } else {
       console.warn(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): No line.name available`);
+      addDebugLog(
+        `Leg ${legIdx}: Route Extraction (${leg.mode})`,
+        { mode: leg.mode, line: leg.line },
+        `⚠️ No line.name available - cannot identify route`
+      );
     }
   }
   // RAIL/TRAIN/FERRY: Use publicCode if available, otherwise line.name
@@ -1634,6 +1845,20 @@ async function verifyRouteByStops(routeNumber, estimatedCalls) {
     
     console.log(`🔍 [verifyRouteByStops] Route ${routeNumber} (${stopCount} stops): ${verified ? 'VERIFIED' : 'FAILED'} - ${reason}`);
     
+    // Add debug log
+    addDebugLog(
+      `Route Verification: ${routeNumber}`,
+      {
+        routeNumber,
+        stopCount: otpStops.length,
+        thresholds: { minMatchRatio, minConsecutive },
+        dir0Result: dir0Result.match ? { match: true, reason: dir0Result.reason, matchRatio: dir0Result.matchRatio, maxConsecutive: dir0Result.maxConsecutive } : { match: false, reason: dir0Result.reason },
+        dir1Result: dir1Result.match ? { match: true, reason: dir1Result.reason, matchRatio: dir1Result.matchRatio, maxConsecutive: dir1Result.maxConsecutive } : { match: false, reason: dir1Result.reason },
+        sampleStops: otpStops.slice(0, 3).map(s => ({ name: s.name, id: s.id }))
+      },
+      `${verified ? '✅ VERIFIED' : '❌ FAILED'}: ${reason}`
+    );
+    
     return { verified, reason };
   } catch (error) {
     console.warn(`🔍 [verifyRouteByStops] Error verifying route ${routeNumber}:`, error);
@@ -1795,6 +2020,15 @@ function drawJourney(journey) {
       if (leg.routeNumber && (leg.routeNumber.startsWith('Red-') || leg.routeNumber.startsWith('Green-'))) {
         mappedRouteId = leg.routeNumber;
         console.log(`🎨 [drawJourney] Using branch route from extractRouteInfo: ${mappedRouteId}`);
+        addDebugLog(
+          `Leg ${legIdx}: Route Mapping`,
+          {
+            originalRouteId: leg.routeNumber,
+            mappedRouteId: mappedRouteId,
+            mode: leg.mode
+          },
+          `Using branch route ${mappedRouteId} from extractRouteInfo`
+        );
       }
       
       // Get from/to stops from the leg for better direction matching
@@ -1825,8 +2059,28 @@ function drawJourney(journey) {
           directionCalculated: leg.directionCalculated || false, // Track if direction was calculated
           routeVerified: leg.routeVerified || false // Track if route was verified
         });
+        
+        addDebugLog(
+          `Leg ${legIdx}: Added to Route List`,
+          {
+            routeId: mappedRouteId,
+            originalRouteId: leg.routeNumber,
+            direction: leg.direction || 0,
+            color: routeColor,
+            verified: leg.routeVerified
+          },
+          `✅ Added route ${mappedRouteId} (direction ${leg.direction || 0}) to selector modal`
+        );
       } else {
         console.warn(`🎨 [drawJourney] Skipping route ${mappedRouteId} - failed verification`);
+        addDebugLog(
+          `Leg ${legIdx}: Route Skipped`,
+          {
+            routeId: mappedRouteId,
+            reason: 'Failed verification'
+          },
+          `❌ Skipped route ${mappedRouteId} - failed stop verification`
+        );
       }
     }
   });
@@ -2062,6 +2316,7 @@ function showOtpRouteSelector(routeList) {
   const titleBar = document.createElement('div');
   titleBar.style.cssText = `
     display: flex;
+    position: relative;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
@@ -2192,6 +2447,26 @@ function showOtpRouteSelector(routeList) {
   };
   
   titleBar.appendChild(collapseBtn);
+  
+  // Add debug button to title bar
+  const debugBtn = document.createElement('button');
+  debugBtn.textContent = '🔍 Debug';
+  debugBtn.style.cssText = `
+    background: #666;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    margin-left: 8px;
+  `;
+  debugBtn.onclick = () => {
+    showDebugModal();
+  };
+  debugBtn.title = 'View debug logs for route processing';
+  titleBar.appendChild(debugBtn);
+  
   modal.appendChild(titleBar);
   
   // Route buttons container (border box)
