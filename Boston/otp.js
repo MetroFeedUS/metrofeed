@@ -1185,6 +1185,45 @@ function mapSubwayRouteCode(routeId, routeName) {
   return routeId;
 }
 
+/**
+ * Determine Green Line branch from OTP stop sequence
+ * @param {Array} estimatedCalls - OTP estimated calls (stops) array
+ * @returns {string|null} Branch letter (B, C, D, E) or null if can't determine
+ */
+function determineGreenLineBranch(estimatedCalls) {
+  if (!estimatedCalls || !Array.isArray(estimatedCalls)) return null;
+  
+  // Get all stop names from the sequence
+  // Handle both OTP format (call.quay?.name) and JourneyLeg format (call.name or call.quay?.name)
+  const stopNames = estimatedCalls.map(call => {
+    const name = call.quay?.name || call.name || '';
+    return name.toLowerCase();
+  });
+  const allStops = stopNames.join(' ');
+  
+  // Green Line branch terminal stops (common patterns)
+  // Green-B: Boston College
+  // Green-C: Cleveland Circle
+  // Green-D: Riverside
+  // Green-E: Heath Street
+  
+  if (allStops.includes('boston college') || allStops.includes('babcock') || allStops.includes('packards corner')) {
+    return 'B';
+  }
+  if (allStops.includes('cleveland circle') || allStops.includes('dean road') || allStops.includes('tappan street')) {
+    return 'C';
+  }
+  if (allStops.includes('riverside') || allStops.includes('newton') || allStops.includes('waban')) {
+    return 'D';
+  }
+  if (allStops.includes('heath street') || allStops.includes('brigham circle') || allStops.includes('northeastern')) {
+    return 'E';
+  }
+  
+  // If we can't determine, return null (will use "Green" and show branch selection)
+  return null;
+}
+
 function drawJourney(journey) {
   const map = window.map;
   if (!map) {
@@ -1241,14 +1280,26 @@ function drawJourney(journey) {
       
       // Store route info for selector modal (map subway codes)
       const routeName = leg.line?.name || `Route ${leg.routeNumber}`;
-      const mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
+      let mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
+      
+      // If OTP returned "Green" (not a specific branch), try to determine which branch from stops
+      // Check both leg.estimatedCalls (from OTP) and leg.stops (from JourneyLeg)
+      const estimatedCalls = leg.estimatedCalls || leg.stops || null;
+      if (mappedRouteId === 'Green' && estimatedCalls && Array.isArray(estimatedCalls) && estimatedCalls.length > 0) {
+        // Try to match stops to determine which Green Line branch
+        const branch = determineGreenLineBranch(estimatedCalls);
+        if (branch) {
+          mappedRouteId = `Green-${branch}`;
+          console.log(`🎨 [drawJourney] Mapped Green Line to branch ${branch} based on stops`);
+        }
+      }
       
       // Get from/to stops from the leg for better direction matching
       const fromStop = leg.from?.name || '';
       const toStop = leg.to?.name || '';
       
       routeList.push({
-        routeId: mappedRouteId, // Use mapped ID (e.g., "Red" instead of "200")
+        routeId: mappedRouteId, // Use mapped ID (e.g., "Red" instead of "200", or "Green-B" instead of "Green")
         originalRouteId: leg.routeNumber, // Keep original for reference
         directionId: leg.direction || 0,
         mode: leg.mode,

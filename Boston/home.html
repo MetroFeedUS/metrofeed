@@ -6204,7 +6204,12 @@
    */
   function isRouteGroup(routeId) {
     const routeIdStr = String(routeId);
-    // Red Line and Green Line branches are shown individually, not as groups
+    // "Green" and "Red" (without branch suffix) are route groups that need branch selection
+    // But "Green-B", "Green-C", etc. are individual routes, not groups
+    if (routeIdStr === 'Green' || routeIdStr === 'Red') {
+      return true;
+    }
+    // All other routes (including branch routes like "Green-B") are not groups
     return false;
   }
   
