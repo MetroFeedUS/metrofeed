@@ -1364,21 +1364,56 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const routeInfoPanel = document.createElement("div");
       routeInfoPanel.id = panelId;
       routeInfoPanel.className = "route-info-panel";
+      
+      // Start collapsed as a circle in the corner
+      // Find the next available position (highest existing index + 1)
+      const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel'));
+      const collapsedPanels = allPanels.filter(panel => 
+        panel.getAttribute('data-collapsed') === 'true'
+      );
+      
+      // Find the highest index from stored collapse-index attributes
+      let maxIndex = -1;
+      collapsedPanels.forEach(panel => {
+        const storedIndex = panel.getAttribute('data-collapse-index');
+        if (storedIndex !== null) {
+          maxIndex = Math.max(maxIndex, parseInt(storedIndex, 10));
+        }
+      });
+      
+      const panelIndex = maxIndex + 1; // Next available position
+      const circleSize = 40; // Circle size
+      const circleSpacing = 10; // Space between circles
+      const topOffset = 250; // Start from top to avoid overlapping with other UI elements
+      const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
+      
+      // Set initial collapsed state (circle in corner)
+      routeInfoPanel.setAttribute('data-collapsed', 'true');
+      routeInfoPanel.setAttribute('data-collapse-index', panelIndex.toString());
+      
       routeInfoPanel.style.cssText = `
         position:absolute;
-        top:50%;
-        left:50%;
-        transform:translate(-50%, -50%);
-        background:rgba(30,30,30,0.95);
-        border:2px solid #1E90FF;
-        border-radius:8px;
-        padding:12px;
+        left:calc(100% - ${circleSize + 10}px);
+        top:${verticalPosition}px;
+        width:${circleSize}px;
+        height:${circleSize}px;
+        min-width:${circleSize}px;
+        max-width:${circleSize}px;
+        min-height:${circleSize}px;
+        max-height:${circleSize}px;
+        padding:0;
+        border-radius:50%;
+        border:3px solid #fff;
+        background:#FF6B35;
         color:#fff;
         z-index:1000;
-        max-width:280px;
-        min-width:200px;
         box-shadow:0 4px 12px rgba(0,0,0,0.5);
         transition:all 0.3s ease;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       `;
       
       // Create collapse button (starts pointing right ▶ to collapse)
@@ -1400,7 +1435,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapseBtn.onmouseover = () => collapseBtn.style.background = "rgba(255,255,255,0.2)";
       collapseBtn.onmouseout = () => collapseBtn.style.background = "transparent";
       
-      let isCollapsed = false;
+      let isCollapsed = true; // Start collapsed
       
       // Make the panel clickable when collapsed to expand it
       routeInfoPanel.addEventListener('click', function(e) {
@@ -1552,27 +1587,38 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const contentDiv = document.createElement("div");
       contentDiv.className = "route-info-content";
       contentDiv.innerHTML = `
-        <div style="margin-bottom:8px; padding-right:20px;">
+        <div style="margin-bottom:12px; padding-right:20px;">
           <strong style="color:#1E90FF;font-size:1em;">${routeTitle}</strong>
         </div>
-        <a href="${options.routePageUrl}"
-           style="color:#1E90FF;text-decoration:none;font-weight:bold;display:inline-block;margin-top:8px;font-size:0.9em;"
-           target="_blank">
-          Open full route page →
-        </a>
+        <button id="close-route-btn" style="background:#1E90FF;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:0.9em;width:100%;">Close</button>
       `;
+      
+      // Add close button functionality
+      const closeRouteBtn = contentDiv.querySelector('#close-route-btn');
+      if (closeRouteBtn) {
+        closeRouteBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeBtn.onclick(e);
+        };
+      }
       
       // Collapsed route number (circle display)
       const collapsedName = document.createElement("div");
       collapsedName.className = "route-name-collapsed";
       // Use the parent route ID (routeId parameter) - this is the actual route number
       // For bus routes: routeId is like "15", "4", "12", etc.
-      // For rail routes: routeId is like "90" (MAX Red), "100" (MAX Blue), etc.
+      // For rail routes: routeId is like "Red", "Orange", "Red-Ashmont", etc.
       let routeNumber = String(routeId);
-      // Extract just the numeric part if routeId has non-numeric characters
-      const numericMatch = routeNumber.match(/\d+/);
-      if (numericMatch) {
-        routeNumber = numericMatch[0];
+      
+      // Handle branch routes: "Red-Ashmont" -> "Red", "Green-D" -> "Green"
+      if (routeNumber.includes('-') && (routeNumber.startsWith('Red-') || routeNumber.startsWith('Green-'))) {
+        routeNumber = routeNumber.split('-')[0]; // "Red" or "Green"
+      } else {
+        // Extract just the numeric part if routeId has non-numeric characters
+        const numericMatch = routeNumber.match(/\d+/);
+        if (numericMatch) {
+          routeNumber = numericMatch[0];
+        }
       }
       collapsedName.innerHTML = routeNumber;
       collapsedName.style.cssText = `
@@ -1592,6 +1638,16 @@ function attachRouteToMap(map, routeId, directionId, options) {
       routeInfoPanel.appendChild(contentDiv);
       routeInfoPanel.appendChild(collapsedName);
       routeInfoPanel.appendChild(collapseBtn);
+      
+      // Initially hide content and collapse button, show collapsed name (circle state)
+      closeBtn.style.display = "none";
+      contentDiv.style.display = "none";
+      collapseBtn.style.display = "none";
+      collapsedName.style.display = "block";
+      collapsedName.style.color = "#fff";
+      collapsedName.style.fontWeight = "bold";
+      collapsedName.style.fontSize = "1rem";
+      collapsedName.style.pointerEvents = "none"; // Don't block clicks on the circle
 
       map.getContainer().appendChild(routeInfoPanel);
       overlayElements.controls.push(routeInfoPanel);
