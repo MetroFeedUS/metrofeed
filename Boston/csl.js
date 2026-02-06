@@ -30,7 +30,8 @@ let cslState = {
   gpsEnabled: false,
   activeRooms: new Map(),  // roomKey -> room data
   userContributions: new Map(),  // roomKey -> user contribution data
-  roomAdapter: null
+  roomAdapter: null,
+  busMarkers: new Map()  // roomKey -> MapLibre marker
 };
 
 /**
@@ -983,6 +984,107 @@ async function showCSLBusCreation() {
 }
 
 /**
+ * Add or update CSL bus marker on map
+ */
+function updateCSLBusMarker(roomKey, roomData, routeData) {
+  if (!window.map || !roomData) {
+    return;
+  }
+  
+  // Find current stop coordinates
+  const currentStop = routeData?.stops?.find(s => 
+    (s.stop_id && s.stop_id === roomData.currentStop) || 
+    s.name === roomData.currentStopName
+  );
+  
+  if (!currentStop || !currentStop.lat || !currentStop.lon) {
+    console.warn('[CSL] Cannot create marker - stop coordinates not found');
+    return;
+  }
+  
+  // Remove existing marker if present
+  if (cslState.busMarkers.has(roomKey)) {
+    cslState.busMarkers.get(roomKey).remove();
+  }
+  
+  // Create marker element
+  const markerElement = document.createElement('div');
+  markerElement.style.cssText = `
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #1E90FF;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  `;
+  markerElement.textContent = roomData.busNumber || '?';
+  markerElement.onmouseover = () => markerElement.style.transform = 'scale(1.1)';
+  markerElement.onmouseout = () => markerElement.style.transform = 'scale(1)';
+  
+  // Create marker
+  const marker = new maplibregl.Marker({
+    element: markerElement,
+    anchor: 'center'
+  })
+    .setLngLat([currentStop.lon, currentStop.lat])
+    .addTo(window.map);
+  
+  // Create popup
+  const popupContent = document.createElement('div');
+  popupContent.style.cssText = `
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 8px;
+    color: #333;
+  `;
+  popupContent.innerHTML = `
+    <div style="font-weight: bold; margin-bottom: 4px;">CSL Bus ${roomData.busNumber}</div>
+    <div style="font-size: 0.9em; color: #666;">${roomData.routeId} - ${roomData.currentStopName || 'Unknown'}</div>
+    <div style="font-size: 0.8em; color: #888; margin-top: 4px;">Click to open</div>
+  `;
+  
+  const popup = new maplibregl.Popup({ offset: 25 })
+    .setDOMContent(popupContent);
+  marker.setPopup(popup);
+  
+  // Click handler to expand modal
+  markerElement.onclick = () => {
+    const modal = document.getElementById(`csl-bus-modal-${roomKey}`);
+    if (modal) {
+      // Expand if collapsed
+      if (modal.getAttribute('data-collapsed') === 'true') {
+        const collapseBtn = modal.querySelector('#csl-collapse-btn');
+        if (collapseBtn) collapseBtn.click();
+      }
+      // Bring to front
+      modal.style.zIndex = '100003';
+      setTimeout(() => {
+        modal.style.zIndex = '100002';
+      }, 100);
+    }
+  };
+  
+  cslState.busMarkers.set(roomKey, marker);
+}
+
+/**
+ * Remove CSL bus marker from map
+ */
+function removeCSLBusMarker(roomKey) {
+  if (cslState.busMarkers.has(roomKey)) {
+    cslState.busMarkers.get(roomKey).remove();
+    cslState.busMarkers.delete(roomKey);
+  }
+}
+
+/**
  * Show CSL bus modal (main interface for viewing/contributing to a CSL bus)
  */
 function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
@@ -991,39 +1093,189 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
   const adapter = window.CSL.getAdapter();
   
   // Remove existing modal if present
-  const existing = document.getElementById('csl-bus-modal');
+  const existing = document.getElementById(`csl-bus-modal-${roomKey}`);
   if (existing) {
     existing.remove();
   }
   
+  // Find next available position for collapsed modals
+  const allModals = Array.from(document.querySelectorAll('[id^="csl-bus-modal-"]'));
+  const collapsedModals = allModals.filter(m => m.getAttribute('data-collapsed') === 'true');
+  let maxIndex = -1;
+  collapsedModals.forEach(m => {
+    const storedIndex = m.getAttribute('data-collapse-index');
+    if (storedIndex !== null) {
+      maxIndex = Math.max(maxIndex, parseInt(storedIndex, 10));
+    }
+  });
+  const modalIndex = maxIndex + 1;
+  const circleSize = 50;
+  const circleSpacing = 10;
+  const topOffset = 300;
+  const verticalPosition = topOffset + (modalIndex * (circleSize + circleSpacing));
+  
   // Create modal
   const modal = document.createElement('div');
-  modal.id = 'csl-bus-modal';
+  modal.id = `csl-bus-modal-${roomKey}`;
+  modal.setAttribute('data-room-key', roomKey);
+  modal.setAttribute('data-collapsed', 'true');
+  modal.setAttribute('data-collapse-index', modalIndex.toString());
+  
+  // Initial collapsed state (circle in corner)
   modal.style.cssText = `
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #1e1e1e;
-    border: 2px solid #1E90FF;
-    border-radius: 12px;
-    padding: 20px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
+    left: calc(100% - ${circleSize + 10}px);
+    top: ${verticalPosition}px;
+    width: ${circleSize}px;
+    height: ${circleSize}px;
+    min-width: ${circleSize}px;
+    max-width: ${circleSize}px;
+    min-height: ${circleSize}px;
+    max-height: ${circleSize}px;
+    padding: 0;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: #1E90FF;
     color: #fff;
     z-index: 100002;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: bold;
+    font-size: 16px;
   `;
   
   // Get initial room data
   let roomData = null;
   let unsubscribe = null;
   
+  // Collapsed content (bus number in circle)
+  const collapsedContent = document.createElement('div');
+  collapsedContent.className = 'csl-collapsed-content';
+  collapsedContent.textContent = busNumber;
+  collapsedContent.style.cssText = `
+    position: relative;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    pointer-events: none;
+    text-align: center;
+    line-height: 1;
+  `;
+  
+  // Expanded content container
+  const expandedContent = document.createElement('div');
+  expandedContent.className = 'csl-expanded-content';
+  expandedContent.style.cssText = `
+    display: none;
+    width: 100%;
+    height: 100%;
+  `;
+  
+  // Collapse button
+  const collapseBtn = document.createElement('button');
+  collapseBtn.id = 'csl-collapse-btn';
+  collapseBtn.innerHTML = '▶';
+  collapseBtn.style.cssText = `
+    position: absolute;
+    right: 32px;
+    top: 4px;
+    background: transparent;
+    color: #fff;
+    border: none;
+    padding: 2px 6px;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 1001;
+    line-height: 1;
+    display: none;
+  `;
+  collapseBtn.onmouseover = () => collapseBtn.style.background = 'rgba(255,255,255,0.2)';
+  collapseBtn.onmouseout = () => collapseBtn.style.background = 'transparent';
+  
+  let isCollapsed = true;
+  
+  // Click handler for collapsed circle
+  modal.onclick = (e) => {
+    if (isCollapsed && !e.target.closest('button')) {
+      collapseBtn.click();
+    }
+  };
+  
+  collapseBtn.onclick = (e) => {
+    e.stopPropagation();
+    isCollapsed = !isCollapsed;
+    
+    if (isCollapsed) {
+      // Collapse
+      modal.setAttribute('data-collapsed', 'true');
+      modal.style.cssText = `
+        position: fixed;
+        left: calc(100% - ${circleSize + 10}px);
+        top: ${verticalPosition}px;
+        width: ${circleSize}px;
+        height: ${circleSize}px;
+        min-width: ${circleSize}px;
+        max-width: ${circleSize}px;
+        min-height: ${circleSize}px;
+        max-height: ${circleSize}px;
+        padding: 0;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        background: #1E90FF;
+        color: #fff;
+        z-index: 100002;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: bold;
+        font-size: 16px;
+      `;
+      collapsedContent.style.display = 'block';
+      expandedContent.style.display = 'none';
+      collapseBtn.style.display = 'none';
+      collapseBtn.innerHTML = '▶';
+    } else {
+      // Expand
+      modal.setAttribute('data-collapsed', 'false');
+      modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #1e1e1e;
+        border: 2px solid #1E90FF;
+        border-radius: 12px;
+        padding: 20px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: #fff;
+        z-index: 100002;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      `;
+      collapsedContent.style.display = 'none';
+      expandedContent.style.display = 'block';
+      collapseBtn.style.display = 'block';
+      collapseBtn.innerHTML = '◀';
+    }
+  };
+  
   function updateModal(data) {
     roomData = data;
+    
+    // Update marker position
+    updateCSLBusMarker(roomKey, data, routeData);
     
     // Calculate confidence (based on contributor count and agreement)
     const contributorCount = data.contributors ? data.contributors.length : 0;
@@ -1033,20 +1285,22 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
     const currentStopName = data.currentStopName || 'Unknown';
     const nextStopName = data.nextStopName || 'Not set';
     
-    modal.innerHTML = `
+    expandedContent.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h2 style="color: #1E90FF; margin: 0;">CSL Bus ${busNumber}</h2>
-        <button id="csl-close-modal" style="
-          background: transparent;
-          color: #fff;
-          border: none;
-          font-size: 24px;
-          cursor: pointer;
-          padding: 0;
-          width: 30px;
-          height: 30px;
-          line-height: 1;
-        ">×</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button id="csl-close-modal" style="
+            background: transparent;
+            color: #fff;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
+          ">×</button>
+        </div>
       </div>
       
       <div style="margin-bottom: 15px; padding: 15px; background: #2a2a2a; border-radius: 8px;">
@@ -1118,64 +1372,90 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
       </div>
     `;
     
-    // Add event listeners
-    document.getElementById('csl-close-modal').onclick = () => {
-      if (unsubscribe) unsubscribe();
-      document.body.removeChild(modal);
-    };
-    
-    // Action buttons (only if user is a contributor)
-    adapter.getUserId().then(async (userId) => {
-      const isContributor = data.contributors && data.contributors.some(c => c.userId === userId);
-      
-      if (isContributor) {
-        // Departed button
-        document.getElementById('csl-departed').onclick = async () => {
-          const currentStopIdx = routeData.stops.findIndex(s => 
-            (s.stop_id && s.stop_id === data.currentStop) || 
-            (s.name === data.currentStopName)
-          );
-          if (currentStopIdx >= 0 && currentStopIdx < routeData.stops.length - 1) {
-            const nextStop = routeData.stops[currentStopIdx + 1];
-            await adapter.updateContributor(roomKey, userId, {
-              currentStop: nextStop.stop_id || currentStopIdx + 1,
-              currentStopName: nextStop.name
-            });
-            // Aggregate update will happen via subscription
-          }
+    // Add event listeners after content is set
+    setTimeout(() => {
+      const closeBtn = expandedContent.querySelector('#csl-close-modal');
+      if (closeBtn) {
+        closeBtn.onclick = () => {
+          if (unsubscribe) unsubscribe();
+          removeCSLBusMarker(roomKey);
+          document.body.removeChild(modal);
         };
-        
-        // Arrived button
-        document.getElementById('csl-arrived').onclick = async () => {
-          // Mark as arrived at current stop
-          await adapter.updateContributor(roomKey, userId, {
-            arrived: true,
-            arrivedAt: Date.now()
-          });
-        };
-        
-        // Late button
-        document.getElementById('csl-late').onclick = async () => {
-          await adapter.updateContributor(roomKey, userId, {
-            late: true,
-            lateReportedAt: Date.now()
-          });
-        };
-      } else {
-        // Disable buttons if not a contributor
-        document.querySelectorAll('.csl-action-btn').forEach(btn => {
-          btn.disabled = true;
-          btn.style.opacity = '0.5';
-          btn.style.cursor = 'not-allowed';
-        });
       }
-    });
+      
+      // Action buttons (only if user is a contributor)
+      adapter.getUserId().then(async (userId) => {
+        const isContributor = data.contributors && data.contributors.some(c => c.userId === userId);
+        
+        if (isContributor) {
+          // Departed button
+          const departedBtn = expandedContent.querySelector('#csl-departed');
+          if (departedBtn) {
+            departedBtn.onclick = async () => {
+              const currentStopIdx = routeData.stops.findIndex(s => 
+                (s.stop_id && s.stop_id === data.currentStop) || 
+                (s.name === data.currentStopName)
+              );
+              if (currentStopIdx >= 0 && currentStopIdx < routeData.stops.length - 1) {
+                const nextStop = routeData.stops[currentStopIdx + 1];
+                await adapter.updateContributor(roomKey, userId, {
+                  currentStop: nextStop.stop_id || currentStopIdx + 1,
+                  currentStopName: nextStop.name
+                });
+                // Aggregate update will happen via subscription
+              }
+            };
+          }
+          
+          // Arrived button
+          const arrivedBtn = expandedContent.querySelector('#csl-arrived');
+          if (arrivedBtn) {
+            arrivedBtn.onclick = async () => {
+              await adapter.updateContributor(roomKey, userId, {
+                arrived: true,
+                arrivedAt: Date.now()
+              });
+            };
+          }
+          
+          // Late button
+          const lateBtn = expandedContent.querySelector('#csl-late');
+          if (lateBtn) {
+            lateBtn.onclick = async () => {
+              await adapter.updateContributor(roomKey, userId, {
+                late: true,
+                lateReportedAt: Date.now()
+              });
+            };
+          }
+        } else {
+          // Disable buttons if not a contributor
+          expandedContent.querySelectorAll('.csl-action-btn').forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+          });
+        }
+      });
+    }, 0);
   }
+  
+  // Append elements to modal
+  modal.appendChild(collapsedContent);
+  modal.appendChild(expandedContent);
+  modal.appendChild(collapseBtn);
+  
+  // Initially show collapsed content only
+  collapsedContent.style.display = 'block';
+  expandedContent.style.display = 'none';
+  collapseBtn.style.display = 'none';
   
   // Subscribe to room updates
   adapter.getRoom(roomKey).then(initialData => {
     if (initialData) {
       updateModal(initialData);
+      // Create marker on initial load
+      updateCSLBusMarker(roomKey, initialData, routeData);
     }
     
     // Subscribe to real-time updates
@@ -1185,6 +1465,251 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
   });
   
   document.body.appendChild(modal);
+}
+
+// ============================================================================
+// TESTING & DEBUG UTILITIES
+// ============================================================================
+
+/**
+ * Reset CSL state (for testing)
+ */
+function resetCSLState() {
+  cslState.consentAccepted = false;
+  cslState.gpsEnabled = false;
+  cslState.activeRooms.clear();
+  cslState.userContributions.clear();
+  localStorage.removeItem('csl_consent');
+  console.log('[CSL] State reset');
+}
+
+/**
+ * Create a test room (for testing)
+ */
+async function createTestRoom(routeId = 'Red', directionId = 0, busNumber = '1234', startingStop = 'Alewife') {
+  const cityId = (window.CITY_CONFIG && window.CITY_CONFIG.cityId) || 'boston';
+  const roomKey = `${cityId}:${routeId}:${directionId}:${busNumber}`;
+  
+  const adapter = window.CSL.getAdapter();
+  
+  // Load route data
+  let routeData = null;
+  try {
+    if (window.routeLoader) {
+      routeData = await window.routeLoader.loadRoute(routeId, directionId);
+    }
+  } catch (e) {
+    console.warn('[CSL Test] Could not load route data:', e);
+  }
+  
+  // Find starting stop
+  let startingStopId = startingStop;
+  let startingStopName = startingStop;
+  if (routeData && routeData.stops) {
+    const stop = routeData.stops.find(s => 
+      s.name === startingStop || s.stop_id === startingStop
+    );
+    if (stop) {
+      startingStopId = stop.stop_id || startingStop;
+      startingStopName = stop.name || startingStop;
+    }
+  }
+  
+  // Create room
+  const initialData = {
+    cityId: cityId,
+    routeId: routeId,
+    directionId: directionId,
+    busNumber: busNumber,
+    routeTitle: routeData?.route_title || routeId,
+    stops: routeData?.stops || [],
+    shape: routeData?.shape || null,
+    currentStop: startingStopId,
+    currentStopName: startingStopName,
+    nextStop: null,
+    nextStopName: null,
+    contributors: [],
+    confidence: 0,
+    createdAt: Date.now()
+  };
+  
+  const created = await adapter.createRoom(roomKey, initialData);
+  if (!created) {
+    console.warn('[CSL Test] Room already exists:', roomKey);
+  }
+  
+  // Join as contributor
+  const userId = await adapter.getUserId();
+  await adapter.joinRoom(roomKey, {
+    currentStop: startingStopId,
+    currentStopName: startingStopName
+  });
+  
+  console.log('[CSL Test] Created test room:', roomKey);
+  
+  // Open modal
+  showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData);
+  
+  return roomKey;
+}
+
+/**
+ * Add test contributors to a room (for testing)
+ */
+async function addTestContributors(roomKey, count = 3) {
+  const adapter = window.CSL.getAdapter();
+  const room = await adapter.getRoom(roomKey);
+  
+  if (!room) {
+    console.error('[CSL Test] Room not found:', roomKey);
+    return;
+  }
+  
+  // Get stops for random selection
+  const stops = room.stops || [];
+  if (stops.length === 0) {
+    console.warn('[CSL Test] No stops available in room');
+    return;
+  }
+  
+  // Create test contributors with different stops
+  for (let i = 0; i < count; i++) {
+    const testUserId = `test_user_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+    const randomStop = stops[Math.floor(Math.random() * stops.length)];
+    
+    // Manually add to MockAdapter's contributors map
+    if (adapter instanceof MockRoomAdapter) {
+      if (!adapter.contributors.has(roomKey)) {
+        adapter.contributors.set(roomKey, new Map());
+      }
+      adapter.contributors.get(roomKey).set(testUserId, {
+        userId: testUserId,
+        currentStop: randomStop.stop_id || randomStop.name,
+        currentStopName: randomStop.name || `Stop ${i}`,
+        joinedAt: Date.now(),
+        lastActivity: Date.now()
+      });
+    }
+  }
+  
+  // Trigger aggregation
+  if (adapter instanceof MockRoomAdapter && adapter._aggregateRoomState) {
+    adapter._aggregateRoomState(roomKey);
+  }
+  
+  console.log(`[CSL Test] Added ${count} test contributors to room:`, roomKey);
+}
+
+/**
+ * Simulate contributor updates (for testing)
+ */
+async function simulateContributorUpdate(roomKey, action = 'departed') {
+  const adapter = window.CSL.getAdapter();
+  const userId = await adapter.getUserId();
+  const room = await adapter.getRoom(roomKey);
+  
+  if (!room) {
+    console.error('[CSL Test] Room not found:', roomKey);
+    return;
+  }
+  
+  const stops = room.stops || [];
+  if (stops.length === 0) {
+    console.warn('[CSL Test] No stops available');
+    return;
+  }
+  
+  if (action === 'departed') {
+    // Move to next stop
+    const currentStopIdx = stops.findIndex(s => 
+      (s.stop_id && s.stop_id === room.currentStop) || 
+      s.name === room.currentStopName
+    );
+    if (currentStopIdx >= 0 && currentStopIdx < stops.length - 1) {
+      const nextStop = stops[currentStopIdx + 1];
+      await adapter.updateContributor(roomKey, userId, {
+        currentStop: nextStop.stop_id || currentStopIdx + 1,
+        currentStopName: nextStop.name
+      });
+      console.log('[CSL Test] Simulated "Departed" - moved to:', nextStop.name);
+    }
+  } else if (action === 'arrived') {
+    await adapter.updateContributor(roomKey, userId, {
+      arrived: true,
+      arrivedAt: Date.now()
+    });
+    console.log('[CSL Test] Simulated "Arrived"');
+  } else if (action === 'late') {
+    await adapter.updateContributor(roomKey, userId, {
+      late: true,
+      lateReportedAt: Date.now()
+    });
+    console.log('[CSL Test] Simulated "Running Late"');
+  }
+}
+
+/**
+ * List all active rooms (for testing)
+ */
+async function listActiveRooms() {
+  const adapter = window.CSL.getAdapter();
+  
+  if (adapter instanceof MockRoomAdapter) {
+    const rooms = Array.from(adapter.rooms.entries());
+    console.log('[CSL Test] Active rooms:', rooms.length);
+    rooms.forEach(([key, data]) => {
+      console.log(`  - ${key}: ${data.contributors?.length || 0} contributors, confidence: ${data.confidence || 0}%`);
+    });
+    return rooms;
+  } else {
+    console.log('[CSL Test] Room listing not available for this adapter');
+    return [];
+  }
+}
+
+/**
+ * Force cleanup expired rooms (for testing)
+ */
+function forceCleanup() {
+  const adapter = window.CSL.getAdapter();
+  if (adapter instanceof MockRoomAdapter && adapter.cleanup) {
+    adapter.cleanup();
+    console.log('[CSL Test] Forced cleanup executed');
+  } else {
+    console.log('[CSL Test] Cleanup not available for this adapter');
+  }
+}
+
+/**
+ * Set adapter mode (for testing)
+ */
+async function setAdapterMode(mode = 'mock') {
+  if (mode === 'mock') {
+    const newAdapter = new MockRoomAdapter();
+    await newAdapter.initialize();
+    window.CSL.setAdapter(newAdapter);
+    console.log('[CSL Test] Switched to MockAdapter');
+  } else if (mode === 'firebase') {
+    console.log('[CSL Test] Firebase adapter not yet implemented');
+    // TODO: When FirebaseRoomAdapter is ready
+    // const newAdapter = new FirebaseRoomAdapter();
+    // await newAdapter.initialize();
+    // window.CSL.setAdapter(newAdapter);
+  } else {
+    console.error('[CSL Test] Unknown adapter mode:', mode);
+  }
+}
+
+/**
+ * Get current adapter info (for testing)
+ */
+function getAdapterInfo() {
+  const adapter = window.CSL.getAdapter();
+  return {
+    type: adapter.constructor.name,
+    isMock: adapter instanceof MockRoomAdapter,
+    userId: adapter.userId || 'N/A'
+  };
 }
 
 // Export to window for global access
@@ -1201,6 +1726,28 @@ window.CSL = {
   openCSL,
   showCSLConsentModal,
   isCSLSupported,
-  showCSLBusModal
+  showCSLBusModal,
+  // Testing utilities
+  test: {
+    reset: resetCSLState,
+    createRoom: createTestRoom,
+    addContributors: addTestContributors,
+    simulateUpdate: simulateContributorUpdate,
+    listRooms: listActiveRooms,
+    cleanup: forceCleanup,
+    setAdapter: setAdapterMode,
+    getAdapterInfo: getAdapterInfo
+  }
 };
+
+// Log testing utilities to console
+console.log('%c[CSL] Testing utilities available:', 'color: #1E90FF; font-weight: bold;');
+console.log('  window.CSL.test.reset() - Reset CSL state');
+console.log('  window.CSL.test.createRoom(routeId, directionId, busNumber, startingStop) - Create test room');
+console.log('  window.CSL.test.addContributors(roomKey, count) - Add test contributors');
+console.log('  window.CSL.test.simulateUpdate(roomKey, action) - Simulate update (departed/arrived/late)');
+console.log('  window.CSL.test.listRooms() - List all active rooms');
+console.log('  window.CSL.test.cleanup() - Force cleanup expired rooms');
+console.log('  window.CSL.test.setAdapter(mode) - Switch adapter (mock/firebase)');
+console.log('  window.CSL.test.getAdapterInfo() - Get current adapter info');
 
