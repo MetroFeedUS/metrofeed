@@ -2555,30 +2555,62 @@ function showOtpRouteSelector(routeList) {
     `;
     
     // Route number/label (centered in square)
+    // For branch routes like "Red-Ashmont", show "Red" on top and "Ashmont" below
     const routeLabel = document.createElement('div');
-    routeLabel.textContent = mappedRouteId || '?';
-    routeLabel.style.cssText = `
-      font-size: 14px;
-      font-weight: bold;
-      line-height: 1.2;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    `;
-    button.appendChild(routeLabel);
+    let displayText = mappedRouteId || '?';
     
-    // Route name (smaller, below number if space allows)
-    if (route.name && route.name.length < 15) {
-      const routeName = document.createElement('div');
-      routeName.textContent = route.name;
-      routeName.style.cssText = `
-        font-size: 9px;
+    // Handle branch routes: "Red-Ashmont" -> show "Red" on top, "Ashmont" below
+    if (mappedRouteId && mappedRouteId.includes('-') && (mappedRouteId.startsWith('Red-') || mappedRouteId.startsWith('Green-'))) {
+      const parts = mappedRouteId.split('-');
+      displayText = parts[0]; // "Red" or "Green"
+      
+      routeLabel.textContent = displayText;
+      routeLabel.style.cssText = `
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 1.2;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      `;
+      button.appendChild(routeLabel);
+      
+      // Show branch name below
+      const branchLabel = document.createElement('div');
+      branchLabel.textContent = parts[1]; // "Ashmont", "Braintree", "B", "C", "D", "E"
+      branchLabel.style.cssText = `
+        font-size: 10px;
         margin-top: 2px;
-        opacity: 0.9;
+        opacity: 0.95;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         line-height: 1.1;
-        max-height: 20px;
-        overflow: hidden;
+        font-weight: 600;
       `;
-      button.appendChild(routeName);
+      button.appendChild(branchLabel);
+    } else {
+      // Regular routes: show route number
+      routeLabel.textContent = displayText;
+      routeLabel.style.cssText = `
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 1.2;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      `;
+      button.appendChild(routeLabel);
+      
+      // Route name (smaller, below number if space allows)
+      if (route.name && route.name.length < 15 && !mappedRouteId.match(/^\d+$/)) {
+        const routeName = document.createElement('div');
+        routeName.textContent = route.name;
+        routeName.style.cssText = `
+          font-size: 9px;
+          margin-top: 2px;
+          opacity: 0.9;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+          line-height: 1.1;
+          max-height: 20px;
+          overflow: hidden;
+        `;
+        button.appendChild(routeName);
+      }
     }
     
     // Hover effects for square buttons
