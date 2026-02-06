@@ -7018,7 +7018,12 @@
         console.log('[Map] Testing route overlay availability:');
         console.log('[Map]   - attachRouteToMap:', typeof window.attachRouteToMap);
         console.log('[Map]   - showRouteOverlay:', typeof window.showRouteOverlay);
-        console.log('[Map]   - masterRoutes:', typeof masterRoutes, 'length:', masterRoutes?.length);
+        // masterRoutes removed - using lazy loading for Boston
+        if (!CITY_CONFIG.useLazyLoading) {
+          console.log('[Map]   - masterRoutes:', typeof masterRoutes, 'length:', masterRoutes?.length);
+        } else {
+          console.log('[Map]   - Using lazy loading (routeLoader)');
+        }
         // Initialize traffic cameras overlay
         if (typeof TrafficCamerasOverlay !== 'undefined') {
           TrafficCamerasOverlay.init(map);

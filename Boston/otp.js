@@ -1039,10 +1039,34 @@ async function calculateDirection(leg, routeNumber, routeDescription) {
         const otpStopNames = leg.estimatedCalls.map(call => normalizeString(call.quay?.name || ''));
         
         // Load both directions
-        const [dir0Data, dir1Data] = await Promise.all([
-          window.routeLoader.loadRoute(routeNumber, 0).catch(() => null),
-          window.routeLoader.loadRoute(routeNumber, 1).catch(() => null)
-        ]);
+        // If routeNumber has a branch suffix (e.g., "Red-Ashmont"), try that first, then fall back to base route
+        let dir0Data = null;
+        let dir1Data = null;
+        
+        try {
+          [dir0Data, dir1Data] = await Promise.all([
+            window.routeLoader.loadRoute(routeNumber, 0).catch(() => null),
+            window.routeLoader.loadRoute(routeNumber, 1).catch(() => null)
+          ]);
+        } catch (e) {
+          // Ignore - will try fallback below
+        }
+        
+        // If branch route doesn't exist or failed, try base route (e.g., "Red-Ashmont" -> "Red")
+        if ((!dir0Data || !dir1Data) && routeNumber.includes('-')) {
+          const baseRoute = routeNumber.split('-')[0];
+          console.log(`🔍 [calculateDirection] Branch route ${routeNumber} not found, trying base route ${baseRoute}`);
+          try {
+            const [baseDir0, baseDir1] = await Promise.all([
+              window.routeLoader.loadRoute(baseRoute, 0).catch(() => null),
+              window.routeLoader.loadRoute(baseRoute, 1).catch(() => null)
+            ]);
+            if (baseDir0) dir0Data = baseDir0;
+            if (baseDir1) dir1Data = baseDir1;
+          } catch (e) {
+            // Ignore
+          }
+        }
         
         if (dir0Data && dir1Data && dir0Data.stops && dir1Data.stops) {
           // Match OTP's stop sequence against our route data
@@ -1339,10 +1363,34 @@ async function verifyRouteByStops(routeNumber, estimatedCalls) {
     }));
     
     // Try both directions
-    const [dir0Data, dir1Data] = await Promise.all([
-      window.routeLoader.loadRoute(routeNumber, 0).catch(() => null),
-      window.routeLoader.loadRoute(routeNumber, 1).catch(() => null)
-    ]);
+    // If routeNumber has a branch suffix (e.g., "Red-Ashmont"), try that first, then fall back to base route
+    let dir0Data = null;
+    let dir1Data = null;
+    
+    try {
+      [dir0Data, dir1Data] = await Promise.all([
+        window.routeLoader.loadRoute(routeNumber, 0).catch(() => null),
+        window.routeLoader.loadRoute(routeNumber, 1).catch(() => null)
+      ]);
+    } catch (e) {
+      // Ignore - will try fallback below
+    }
+    
+    // If branch route doesn't exist or failed, try base route (e.g., "Red-Ashmont" -> "Red")
+    if ((!dir0Data || !dir1Data) && routeNumber.includes('-')) {
+      const baseRoute = routeNumber.split('-')[0];
+      console.log(`🔍 [verifyRouteByStops] Branch route ${routeNumber} not found, trying base route ${baseRoute}`);
+      try {
+        const [baseDir0, baseDir1] = await Promise.all([
+          window.routeLoader.loadRoute(baseRoute, 0).catch(() => null),
+          window.routeLoader.loadRoute(baseRoute, 1).catch(() => null)
+        ]);
+        if (baseDir0) dir0Data = baseDir0;
+        if (baseDir1) dir1Data = baseDir1;
+      } catch (e) {
+        // Ignore
+      }
+    }
     
     // Adaptive thresholds based on stop count
     const stopCount = otpStops.length;
@@ -1404,8 +1452,11 @@ async function verifyRouteByStops(routeNumber, estimatedCalls) {
           routeIndex = routeStops.findIndex(s => {
             const routeId = s.id || s.stop_id || s.quay_id;
             // Handle both string and number IDs
+            // Strip OTP prefixes like "mbta-ma-us:" from quay.id
             if (routeId && otpStop.id) {
-              return String(routeId) === String(otpStop.id) || routeId === otpStop.id;
+              const otpId = String(otpStop.id).replace(/^[^:]+:/, ''); // Remove prefix (e.g., "mbta-ma-us:2137" -> "2137")
+              const routeIdStr = String(routeId);
+              return otpId === routeIdStr || String(routeId) === String(otpStop.id) || routeId === otpStop.id;
             }
             return false;
           });
@@ -1434,13 +1485,17 @@ async function verifyRouteByStops(routeNumber, estimatedCalls) {
             console.log(`🔍   OTP Stop: quay.id="${otpStop.id}", name="${otpStop.name}"`);
             if (closestStop) {
               const routeId = closestStop.id || closestStop.stop_id || closestStop.quay_id || 'N/A';
-              console.log(`🔍   Route Stop: stop_id="${routeId}", name="${closestStop.name || 'N/A'}"`);
-              console.log(`🔍   Distance: ${closestDist.toFixed(1)}m`);
-              if (otpStop.id && routeId && String(otpStop.id) !== String(routeId)) {
-                console.warn(`🔍   ⚠️ ID MISMATCH: OTP uses "${otpStop.id}" but route uses "${routeId}" - different ID systems!`);
-              } else if (otpStop.id && routeId && String(otpStop.id) === String(routeId)) {
-                console.log(`🔍   ✅ ID MATCH: Same ID system confirmed`);
-              }
+            console.log(`🔍   Route Stop: stop_id="${routeId}", name="${closestStop.name || 'N/A'}"`);
+            console.log(`🔍   Distance: ${closestDist.toFixed(1)}m`);
+            // Strip OTP prefix for comparison (e.g., "mbta-ma-us:2137" -> "2137")
+            const otpIdStripped = otpStop.id ? String(otpStop.id).replace(/^[^:]+:/, '') : null;
+            const routeIdStr = routeId ? String(routeId) : null;
+            
+            if (otpIdStripped && routeIdStr && otpIdStripped !== routeIdStr) {
+              console.warn(`🔍   ⚠️ ID MISMATCH: OTP uses "${otpStop.id}" (stripped: "${otpIdStripped}") but route uses "${routeId}" - different ID systems!`);
+            } else if (otpIdStripped && routeIdStr && otpIdStripped === routeIdStr) {
+              console.log(`🔍   ✅ ID MATCH: Same ID system confirmed (OTP: "${otpStop.id}" -> "${otpIdStripped}", Route: "${routeId}")`);
+            }
             } else {
               console.warn(`🔍   ⚠️ Could not find closest route stop for comparison`);
             }
