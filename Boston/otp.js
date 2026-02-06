@@ -1020,7 +1020,8 @@ async function calculateDirection(leg, routeNumber, routeDescription) {
   
   // For Boston (lazy-loading): Try to use route data if available
   // For other cities: Use masterRoutes
-  const isBoston = typeof window.CITY_CONFIG !== 'undefined' && window.CITY_CONFIG.useLazyLoading;
+  const isBoston = (typeof window.CITY_CONFIG !== 'undefined' && window.CITY_CONFIG.useLazyLoading) ||
+                   (typeof CITY_CONFIG !== 'undefined' && CITY_CONFIG.useLazyLoading);
   
   if (routeNumber && leg.fromPlace && leg.toPlace) {
     console.log(`🔍 [calculateDirection] Processing ${leg.mode} route:`, routeNumber);
@@ -1317,7 +1318,8 @@ async function verifyRouteByStops(routeNumber, estimatedCalls) {
     return { verified: false, reason: 'No stops available' };
   }
   
-  const isBoston = typeof window.CITY_CONFIG !== 'undefined' && window.CITY_CONFIG.useLazyLoading;
+  const isBoston = (typeof window.CITY_CONFIG !== 'undefined' && window.CITY_CONFIG.useLazyLoading) ||
+                   (typeof CITY_CONFIG !== 'undefined' && CITY_CONFIG.useLazyLoading);
   if (!isBoston || !window.routeLoader) {
     return { verified: true, reason: 'Cannot verify (not Boston or routeLoader unavailable)' };
   }
