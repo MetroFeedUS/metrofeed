@@ -139,6 +139,168 @@ function addLine(map, id, lngLatCoords, paint) {
 }
 
 /**
+ * Show raw OTP data in a modal for diagnosis
+ * @param {Array} patterns - OTP trip patterns
+ */
+function showOtpRawDataModal(patterns) {
+  // Remove existing modal if present
+  const existingModal = document.getElementById('otpRawDataModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  // Create modal
+  const modal = document.createElement('div');
+  modal.id = 'otpRawDataModal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+  `;
+  
+  // Create content container
+  const content = document.createElement('div');
+  content.style.cssText = `
+    background: #1e1e1e;
+    border: 2px solid #1E90FF;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    position: relative;
+  `;
+  
+  // Close button
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ Close';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff4444;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+  `;
+  closeBtn.onclick = () => modal.remove();
+  
+  // Title
+  const title = document.createElement('h2');
+  title.textContent = '🔍 Raw OTP Response Data';
+  title.style.cssText = 'color: #1E90FF; margin: 0 0 20px 0; font-size: 18px;';
+  
+  // Build content
+  let html = '<div style="line-height: 1.6;">';
+  
+  patterns.forEach((pattern, idx) => {
+    html += `<div style="margin-bottom: 30px; padding: 15px; background: #2a2a2a; border-radius: 8px; border-left: 4px solid #1E90FF;">`;
+    html += `<h3 style="color: #1E90FF; margin-top: 0;">Itinerary ${idx + 1}</h3>`;
+    html += `<div style="margin-bottom: 15px;"><strong>Start:</strong> ${pattern.startTime || 'N/A'}</div>`;
+    html += `<div style="margin-bottom: 15px;"><strong>End:</strong> ${pattern.endTime || 'N/A'}</div>`;
+    html += `<div style="margin-bottom: 15px;"><strong>Duration:</strong> ${pattern.duration || 'N/A'} seconds</div>`;
+    html += `<div style="margin-bottom: 15px;"><strong>Legs:</strong> ${pattern.legs?.length || 0}</div>`;
+    
+    pattern.legs?.forEach((leg, legIdx) => {
+      html += `<div style="margin-top: 20px; padding: 15px; background: #333; border-radius: 6px; border-left: 4px solid #4CAF50;">`;
+      html += `<h4 style="color: #4CAF50; margin-top: 0;">Leg ${legIdx + 1}: ${leg.mode || 'Unknown'}</h4>`;
+      
+      // Basic info
+      html += `<div style="margin-bottom: 10px;"><strong>Duration:</strong> ${leg.duration || 'N/A'}s</div>`;
+      html += `<div style="margin-bottom: 10px;"><strong>Distance:</strong> ${leg.distance || 'N/A'}m</div>`;
+      
+      // From/To places
+      if (leg.fromPlace) {
+        html += `<div style="margin-bottom: 10px;"><strong>From:</strong> ${leg.fromPlace.name || 'Unknown'} `;
+        html += `(${leg.fromPlace.latitude?.toFixed(6) || 'N/A'}, ${leg.fromPlace.longitude?.toFixed(6) || 'N/A'})`;
+        html += ` [${leg.fromPlace.vertexType || 'N/A'}]</div>`;
+      }
+      if (leg.toPlace) {
+        html += `<div style="margin-bottom: 10px;"><strong>To:</strong> ${leg.toPlace.name || 'Unknown'} `;
+        html += `(${leg.toPlace.latitude?.toFixed(6) || 'N/A'}, ${leg.toPlace.longitude?.toFixed(6) || 'N/A'})`;
+        html += ` [${leg.toPlace.vertexType || 'N/A'}]</div>`;
+      }
+      
+      // Line info
+      if (leg.line) {
+        html += `<div style="margin-top: 15px; padding: 10px; background: #444; border-radius: 4px;">`;
+        html += `<div style="color: #FFD700;"><strong>Line Information:</strong></div>`;
+        html += `<div><strong>publicCode:</strong> <span style="color: #FFD700;">${leg.line.publicCode || 'N/A'}</span></div>`;
+        html += `<div><strong>name:</strong> ${leg.line.name || 'N/A'}</div>`;
+        html += `<div><strong>id:</strong> ${leg.line.id || 'N/A'}</div>`;
+        html += `</div>`;
+      }
+      
+      // Service journey
+      if (leg.serviceJourney) {
+        html += `<div style="margin-top: 10px;"><strong>Service Journey ID:</strong> <code style="background: #555; padding: 2px 6px; border-radius: 3px;">${leg.serviceJourney.id || 'N/A'}</code></div>`;
+      }
+      
+      // Estimated calls (stops)
+      if (leg.serviceJourneyEstimatedCalls && leg.serviceJourneyEstimatedCalls.length > 0) {
+        html += `<div style="margin-top: 15px; padding: 10px; background: #444; border-radius: 4px;">`;
+        html += `<div style="color: #FFD700;"><strong>Stop Sequence (${leg.serviceJourneyEstimatedCalls.length} stops):</strong></div>`;
+        leg.serviceJourneyEstimatedCalls.forEach((call, stopIdx) => {
+          const stopName = call.quay?.name || 'Unknown';
+          const time = call.expectedArrivalTime || call.aimedArrivalTime || 'no time';
+          html += `<div style="margin: 5px 0; padding-left: 20px;">`;
+          html += `<span style="color: #888;">${stopIdx + 1}.</span> `;
+          html += `<strong>${stopName}</strong> `;
+          html += `<span style="color: #888;">(${time})</span>`;
+          html += `</div>`;
+        });
+        html += `</div>`;
+      }
+      
+      // Points on link
+      if (leg.pointsOnLink) {
+        html += `<div style="margin-top: 10px;"><strong>Geometry:</strong> `;
+        html += `${leg.pointsOnLink.points ? `${leg.pointsOnLink.points.length} points` : 'No points'}`;
+        html += `</div>`;
+      }
+      
+      html += `</div>`;
+    });
+    
+    html += `</div>`;
+  });
+  
+  html += '</div>';
+  
+  content.appendChild(closeBtn);
+  content.appendChild(title);
+  content.innerHTML += html;
+  
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  
+  // Close on escape key
+  const escapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove();
+      document.removeEventListener('keydown', escapeHandler);
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
+}
+
+/**
  * Fetch and display OTP itineraries using GraphQL API
  * @param {number} fromLat - Starting latitude
  * @param {number} fromLon - Starting longitude
@@ -350,6 +512,69 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     const tripPatterns = response.data.trip.tripPatterns;
     const numItineraries = 4; // Default limit
     const limitedPatterns = tripPatterns.slice(0, numItineraries);
+    
+    // 🔍 LOG RAW OTP RESPONSE
+    console.log('🔍 [OTP] ===== RAW OTP RESPONSE =====');
+    console.log('🔍 [OTP] Number of itineraries:', limitedPatterns.length);
+    
+    // Also show in modal for easier diagnosis
+    showOtpRawDataModal(limitedPatterns);
+    
+    limitedPatterns.forEach((pattern, idx) => {
+      console.log(`🔍 [OTP] Itinerary ${idx + 1}:`, {
+        startTime: pattern.startTime,
+        endTime: pattern.endTime,
+        duration: pattern.duration,
+        legsCount: pattern.legs?.length || 0
+      });
+      
+      pattern.legs?.forEach((leg, legIdx) => {
+        console.log(`🔍 [OTP]   Leg ${legIdx + 1} (${leg.mode}):`, {
+          mode: leg.mode,
+          duration: leg.duration,
+          distance: leg.distance,
+          fromPlace: leg.fromPlace ? {
+            name: leg.fromPlace.name,
+            lat: leg.fromPlace.latitude,
+            lon: leg.fromPlace.longitude,
+            vertexType: leg.fromPlace.vertexType
+          } : null,
+          toPlace: leg.toPlace ? {
+            name: leg.toPlace.name,
+            lat: leg.toPlace.latitude,
+            lon: leg.toPlace.longitude,
+            vertexType: leg.toPlace.vertexType
+          } : null,
+          line: leg.line ? {
+            publicCode: leg.line.publicCode,
+            name: leg.line.name,
+            id: leg.line.id || null
+          } : null,
+          serviceJourney: leg.serviceJourney ? {
+            id: leg.serviceJourney.id
+          } : null,
+          estimatedCallsCount: leg.serviceJourneyEstimatedCalls?.length || 0,
+          estimatedCalls: leg.serviceJourneyEstimatedCalls?.slice(0, 5).map(call => ({
+            quay: call.quay?.name || null,
+            aimedArrival: call.aimedArrivalTime,
+            expectedArrival: call.expectedArrivalTime
+          })) || null,
+          pointsOnLink: leg.pointsOnLink ? {
+            hasPoints: !!leg.pointsOnLink.points,
+            pointsLength: leg.pointsOnLink.points?.length || 0
+          } : null
+        });
+        
+        // Show full stop sequence if available
+        if (leg.serviceJourneyEstimatedCalls && leg.serviceJourneyEstimatedCalls.length > 0) {
+          console.log(`🔍 [OTP]     Full stop sequence (${leg.serviceJourneyEstimatedCalls.length} stops):`);
+          leg.serviceJourneyEstimatedCalls.forEach((call, stopIdx) => {
+            console.log(`🔍 [OTP]       Stop ${stopIdx + 1}: ${call.quay?.name || 'Unknown'} (${call.aimedArrivalTime || call.expectedArrivalTime || 'no time'})`);
+          });
+        }
+      });
+    });
+    console.log('🔍 [OTP] ===== END RAW OTP RESPONSE =====');
     
     const convertedItineraries = limitedPatterns.map(pattern => {
       // Map GraphQL tripPattern to simplified format (keeping GraphQL structure where possible)
