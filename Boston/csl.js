@@ -129,6 +129,14 @@ class RoomAdapter {
   async getUserId() {
     throw new Error('RoomAdapter.getUserId() must be implemented');
   }
+  
+  /**
+   * Get all active rooms (for public viewing)
+   * @returns {Promise<Array<{roomKey: string, roomData: Object}>>}
+   */
+  async getAllActiveRooms() {
+    throw new Error('RoomAdapter.getAllActiveRooms() must be implemented');
+  }
 }
 
 /**
@@ -367,6 +375,23 @@ class MockRoomAdapter extends RoomAdapter {
   
   async getUserId() {
     return this.userId;
+  }
+  
+  async getAllActiveRooms() {
+    const now = Date.now();
+    const activeRooms = [];
+    
+    for (const [roomKey, room] of this.rooms.entries()) {
+      // Only return rooms that haven't expired
+      if (now - room.lastUpdate < CSL_CONFIG.roomExpiration) {
+        activeRooms.push({
+          roomKey: roomKey,
+          roomData: room
+        });
+      }
+    }
+    
+    return activeRooms;
   }
   
   _notifySubscribers(roomKey) {
@@ -968,7 +993,7 @@ async function showCSLBusCreation() {
 }
 
 /**
- * Add or update CSL bus marker on map
+ * Add or update CSL bus marker on map (matches normal bus marker style)
  */
 function updateCSLBusMarker(roomKey, roomData, routeData) {
   if (!window.map || !roomData) {
@@ -991,67 +1016,76 @@ function updateCSLBusMarker(roomKey, roomData, routeData) {
     cslState.busMarkers.get(roomKey).remove();
   }
   
-  // Create marker element
+  // Create marker element (same style as normal bus markers)
   const markerElement = document.createElement('div');
-  markerElement.style.cssText = `
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #1E90FF;
-    border: 3px solid #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: bold;
-    font-size: 14px;
-    cursor: pointer;
-    transition: transform 0.2s;
+  markerElement.style.textAlign = 'center';
+  markerElement.innerHTML = `
+    <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${roomData.busNumber || '?'}</div>
+    <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #0071CE;margin:auto;"></div>
   `;
-  markerElement.textContent = roomData.busNumber || '?';
-  markerElement.onmouseover = () => markerElement.style.transform = 'scale(1.1)';
-  markerElement.onmouseout = () => markerElement.style.transform = 'scale(1)';
   
-  // Create marker
+  // Create marker (anchored at bottom of triangle, not center)
   const marker = new maplibregl.Marker({
     element: markerElement,
-    anchor: 'center'
+    anchor: 'bottom'  // Anchor at bottom of triangle (stop location)
   })
     .setLngLat([currentStop.lon, currentStop.lat])
     .addTo(window.map);
   
-  // Create popup
+  // Create popup (same style as normal bus popups)
   const popupContent = document.createElement('div');
-  popupContent.style.cssText = `
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    padding: 8px;
-    color: #333;
-  `;
   popupContent.innerHTML = `
-    <div style="font-weight: bold; margin-bottom: 4px;">CSL Bus ${roomData.busNumber}</div>
-    <div style="font-size: 0.9em; color: #666;">${roomData.routeId} - ${roomData.currentStopName || 'Unknown'}</div>
-    <div style="font-size: 0.8em; color: #888; margin-top: 4px;">Click to open</div>
+    <div style='border:2px solid #0071CE; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
+      <div style='text-align:center; margin-bottom:8px;'>
+        <div style='background:#0071CE;color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 CSL Bus ${roomData.busNumber || '?'}</div>
+      </div>
+      <div style='margin-bottom:6px;'><strong>Route:</strong> ${roomData.routeId || 'N/A'}</div>
+      <div style='margin-bottom:6px;'><strong>Direction:</strong> ${roomData.directionId !== undefined ? roomData.directionId : 'N/A'}</div>
+      <div style='margin-bottom:6px;'><strong>Current Stop:</strong> ${roomData.currentStopName || 'Unknown'}</div>
+      <div style='margin-bottom:6px;'><strong>Contributors:</strong> ${roomData.contributors ? roomData.contributors.length : 0}</div>
+      <div style='margin-bottom:6px;'><strong>Confidence:</strong> ${Math.min(100, (roomData.contributors ? roomData.contributors.length : 0) * 20)}%</div>
+      <div style='margin-top:8px; padding-top:8px; border-top:1px solid #444; font-size:0.85em; color:#aaa;'>CSL data is advisory only</div>
+    </div>
   `;
   
   const popup = new maplibregl.Popup({ offset: 25 })
     .setDOMContent(popupContent);
   marker.setPopup(popup);
   
-  // Click handler to expand modal
-  markerElement.onclick = () => {
-    const modal = document.getElementById(`csl-bus-modal-${roomKey}`);
-    if (modal) {
+  // Click handler to show/view modal (for all users)
+  markerElement.onclick = async (e) => {
+    e.stopPropagation();
+    // Check if user is a contributor
+    const adapter = window.CSL.getAdapter();
+    const userId = await adapter.getUserId();
+    const room = await adapter.getRoom(roomKey);
+    const isContributor = room && room.contributors && room.contributors.some(c => c.userId === userId);
+    
+    // Show modal (view-only if not contributor)
+    const existingModal = document.getElementById(`csl-bus-modal-${roomKey}`);
+    if (existingModal) {
       // Expand if collapsed
-      if (modal.getAttribute('data-collapsed') === 'true') {
-        const collapseBtn = modal.querySelector('#csl-collapse-btn');
+      if (existingModal.getAttribute('data-collapsed') === 'true') {
+        const collapseBtn = existingModal.querySelector('#csl-collapse-btn');
         if (collapseBtn) collapseBtn.click();
       }
       // Bring to front
-      modal.style.zIndex = '100003';
+      existingModal.style.zIndex = '100003';
       setTimeout(() => {
-        modal.style.zIndex = '100002';
+        existingModal.style.zIndex = '100002';
       }, 100);
+    } else {
+      // Load route data if needed
+      let routeDataForModal = routeData;
+      if (!routeDataForModal && window.routeLoader) {
+        try {
+          routeDataForModal = await window.routeLoader.loadRoute(room.routeId, room.directionId);
+        } catch (e) {
+          console.warn('[CSL] Could not load route data for modal:', e);
+        }
+      }
+      // Create new modal in view-only mode if not contributor
+      showCSLBusModal(roomKey, room.routeId, room.directionId, room.busNumber, routeDataForModal, !isContributor);
     }
   };
   
@@ -1071,8 +1105,8 @@ function removeCSLBusMarker(roomKey) {
 /**
  * Show CSL bus modal (main interface for viewing/contributing to a CSL bus)
  */
-function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
-  console.log('[CSL] Opening bus modal for:', roomKey);
+function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData, viewOnly = false) {
+  console.log('[CSL] Opening bus modal for:', roomKey, viewOnly ? '(view-only)' : '(contributor)');
   
   const adapter = window.CSL.getAdapter();
   
@@ -1317,39 +1351,55 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
         </div>
       </div>
       
-      <div style="margin-bottom: 15px;">
-        <div style="font-size: 0.9em; color: #888; margin-bottom: 10px;">Update Status (Contributors Only)</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <button id="csl-departed" class="csl-action-btn" style="
-            background: #4CAF50;
-            color: #fff;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-          ">Departed</button>
-          <button id="csl-arrived" class="csl-action-btn" style="
-            background: #2196F3;
-            color: #fff;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-          ">Arrived</button>
-          <button id="csl-late" class="csl-action-btn" style="
-            background: #FF9800;
-            color: #fff;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            grid-column: 1 / -1;
-          ">Running Late</button>
+      ${!viewOnly ? `
+        <div style="margin-bottom: 15px;">
+          <div style="font-size: 0.9em; color: #888; margin-bottom: 10px;">Update Status (Contributors Only)</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button id="csl-departed" class="csl-action-btn" style="
+              background: #4CAF50;
+              color: #fff;
+              border: none;
+              padding: 12px;
+              border-radius: 6px;
+              font-weight: bold;
+              cursor: pointer;
+            ">Departed</button>
+            <button id="csl-arrived" class="csl-action-btn" style="
+              background: #2196F3;
+              color: #fff;
+              border: none;
+              padding: 12px;
+              border-radius: 6px;
+              font-weight: bold;
+              cursor: pointer;
+            ">Arrived</button>
+            <button id="csl-late" class="csl-action-btn" style="
+              background: #FF9800;
+              color: #fff;
+              border: none;
+              padding: 12px;
+              border-radius: 6px;
+              font-weight: bold;
+              cursor: pointer;
+              grid-column: 1 / -1;
+            ">Running Late</button>
+          </div>
         </div>
-      </div>
+      ` : `
+        <div style="margin-bottom: 15px; padding: 15px; background: #2a2a2a; border-radius: 8px; text-align: center;">
+          <div style="font-size: 0.9em; color: #888; margin-bottom: 8px;">View Only</div>
+          <button id="csl-join-as-contributor" style="
+            background: #1E90FF;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+          ">Join as Contributor</button>
+        </div>
+      `}
       
       <div style="font-size: 0.85em; color: #888; text-align: center; margin-top: 20px;">
         CSL data is advisory only and not official
@@ -1362,16 +1412,32 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
       if (closeBtn) {
         closeBtn.onclick = () => {
           if (unsubscribe) unsubscribe();
-          removeCSLBusMarker(roomKey);
+          // Don't remove marker - it should stay visible for all users
           document.body.removeChild(modal);
         };
       }
       
-      // Action buttons (only if user is a contributor)
-      adapter.getUserId().then(async (userId) => {
-        const isContributor = data.contributors && data.contributors.some(c => c.userId === userId);
-        
-        if (isContributor) {
+      // Join as contributor button (view-only mode)
+      const joinBtn = expandedContent.querySelector('#csl-join-as-contributor');
+      if (joinBtn) {
+        joinBtn.onclick = async () => {
+          const userId = await adapter.getUserId();
+          await adapter.joinRoom(roomKey, {
+            currentStop: data.currentStop,
+            currentStopName: data.currentStopName
+          });
+          // Reload modal in contributor mode
+          document.body.removeChild(modal);
+          showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData, false);
+        };
+      }
+      
+      // Action buttons (only if user is a contributor and not view-only)
+      if (!viewOnly) {
+        adapter.getUserId().then(async (userId) => {
+          const isContributor = data.contributors && data.contributors.some(c => c.userId === userId);
+          
+          if (isContributor) {
           // Departed button - marks bus as departed from current stop (doesn't move)
           const departedBtn = expandedContent.querySelector('#csl-departed');
           if (departedBtn) {
@@ -1433,6 +1499,7 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData) {
           });
         }
       });
+    }
     }, 0);
   }
   
@@ -1712,6 +1779,76 @@ function getAdapterInfo() {
   };
 }
 
+/**
+ * Display all active CSL buses on the map (for all users to see)
+ */
+async function displayAllCSLBuses() {
+  if (!window.map) {
+    console.warn('[CSL] Map not available, cannot display buses');
+    return;
+  }
+  
+  const adapter = window.CSL.getAdapter();
+  
+  try {
+    const activeRooms = await adapter.getAllActiveRooms();
+    console.log(`[CSL] Displaying ${activeRooms.length} active CSL buses`);
+    
+    // Load route data and create markers for each room
+    for (const { roomKey, roomData } of activeRooms) {
+      // Skip if marker already exists
+      if (cslState.busMarkers.has(roomKey)) {
+        continue;
+      }
+      
+      // Load route data
+      let routeData = null;
+      try {
+        if (window.routeLoader) {
+          routeData = await window.routeLoader.loadRoute(roomData.routeId, roomData.directionId);
+        }
+      } catch (e) {
+        console.warn(`[CSL] Could not load route data for ${roomData.routeId}:`, e);
+        continue;
+      }
+      
+      // Create marker
+      updateCSLBusMarker(roomKey, roomData, routeData);
+    }
+  } catch (e) {
+    console.error('[CSL] Error displaying CSL buses:', e);
+  }
+}
+
+/**
+ * Initialize CSL bus display (call on page load)
+ */
+function initializeCSLBusDisplay() {
+  // Display all CSL buses on load
+  if (window.map) {
+    displayAllCSLBuses();
+  } else {
+    // Wait for map to load
+    if (window.addEventListener) {
+      window.addEventListener('load', () => {
+        setTimeout(() => displayAllCSLBuses(), 1000);
+      });
+    }
+  }
+  
+  // Refresh CSL buses every 30 seconds
+  setInterval(() => {
+    displayAllCSLBuses();
+  }, 30000);
+}
+
+// Initialize on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeCSLBusDisplay);
+} else {
+  initializeCSLBusDisplay();
+}
+
 // Export to window for global access
 window.CSL = {
   config: CSL_CONFIG,
@@ -1727,6 +1864,8 @@ window.CSL = {
   showCSLConsentModal,
   isCSLSupported,
   showCSLBusModal,
+  displayAllCSLBuses,
+  initializeCSLBusDisplay,
   // Testing utilities
   test: {
     reset: resetCSLState,
