@@ -1044,7 +1044,6 @@
   <div class="itinerary-info">
     <div class="itinerary-title" data-translate="itinerary">Itinerary</div>
     <div class="itinerary-details" data-translate="itinerary_details">Click to view details</div>
-    <button class="restore-btn" onclick="event.stopPropagation(); restoreItineraryModal()" data-translate="restore">Restore</button>
   </div>
 </div>
 
@@ -1111,8 +1110,11 @@
 
 <!-- -- OTP TRIP PLANNING MODAL -- -->
 <div id="otpModal" class="mf-overlay" style="display: none;">
-  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-    <h2>🚌 <span data-translate="trip_options">Trip Options</span></h2>
+  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto; position: relative;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2 style="margin: 0;">🚌 <span data-translate="trip_options">Trip Options</span></h2>
+      <button onclick="minimizeItineraryModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Minimize">−</button>
+    </div>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
       <!-- Trip itineraries will be rendered here -->
     </div>
@@ -2464,6 +2466,57 @@
     
     // Clear OTP leg color mapping
     window.currentLegColorMapping = null;
+    
+    // Clear ALL route overlays (return map to baseline)
+    if (typeof window.clearAllRouteOverlays === 'function') {
+      window.clearAllRouteOverlays();
+    }
+    
+    // Clear route selector modal if open
+    const routeSelectorModal = document.getElementById('otpRouteSelectorModal');
+    if (routeSelectorModal) {
+      routeSelectorModal.remove();
+    }
+    
+    // Clear OTP modal if open
+    const otpModal = document.getElementById('otpModal');
+    if (otpModal) {
+      otpModal.style.display = 'none';
+    }
+    
+    // Hide minimized itinerary bar
+    const minimizedBar = document.getElementById('minimizedItinerary');
+    if (minimizedBar) {
+      minimizedBar.style.display = 'none';
+    }
+    
+    // Clear active route overlays tracking
+    if (window.activeRouteOverlays) {
+      window.activeRouteOverlays = {};
+    }
+    
+    // Clear routes to track
+    if (window.routesToTrack) {
+      window.routesToTrack = [];
+    }
+    
+    // Clear journeys
+    if (window.journeys) {
+      window.journeys = [];
+    }
+    
+    // Clear current itineraries
+    if (window.currentItins) {
+      window.currentItins = [];
+    }
+    
+    // Clear active trip data
+    window.activeTrip = null;
+    window.activeItinerary = null;
+    window.activeRoutePolylines = [];
+    window.activeBusMarkers = [];
+    
+    console.log('[clearTripPlan] Map cleared to baseline state');
   }
 
   // For Boston: These functions are deferred (require loading all routes)

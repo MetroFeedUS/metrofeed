@@ -2329,14 +2329,14 @@ function showOtpRouteSelector(routeList) {
   // Track collapsed state
   let isCollapsed = false;
   
-  // Create modal container (centered by default)
+  // Create modal container (opens on right side, vertically)
   const modal = document.createElement('div');
   modal.id = 'otpRouteSelectorModal';
   modal.style.cssText = `
     position: fixed;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    right: 20px;
+    transform: translateY(-50%);
     background: rgba(20, 20, 20, 0.95);
     border: 3px solid #555;
     border-radius: 12px;
@@ -2345,6 +2345,9 @@ function showOtpRouteSelector(routeList) {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     transition: all 0.3s ease;
+    max-width: 300px;
+    max-height: 80vh;
+    overflow-y: auto;
   `;
   
   // Title with collapse button
@@ -2367,6 +2370,37 @@ function showOtpRouteSelector(routeList) {
     font-weight: bold;
   `;
   titleBar.appendChild(title);
+  
+  // Close button (when expanded)
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.style.cssText = `
+    background: transparent;
+    border: 1px solid #666;
+    color: #fff;
+    font-size: 20px;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-left: 8px;
+  `;
+  closeBtn.onmouseenter = () => {
+    closeBtn.style.background = '#ff4444';
+    closeBtn.style.borderColor = '#ff6666';
+  };
+  closeBtn.onmouseleave = () => {
+    closeBtn.style.background = 'transparent';
+    closeBtn.style.borderColor = '#666';
+  };
+  closeBtn.onclick = () => {
+    modal.remove();
+  };
+  titleBar.appendChild(closeBtn);
   
   // Collapse button
   const collapseBtn = document.createElement('button');
@@ -2415,6 +2449,7 @@ function showOtpRouteSelector(routeList) {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
+          max-width: 80px;
         `;
       } else {
         modal.style.cssText = `
@@ -2430,22 +2465,24 @@ function showOtpRouteSelector(routeList) {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
+          max-width: 80px;
         `;
       }
       title.style.display = 'none';
+      closeBtn.style.display = 'none';
+      debugBtn.style.display = 'none';
       buttonsContainer.style.flexDirection = 'column';
       buttonsContainer.style.gap = '10px';
       buttonsContainer.style.justifyContent = 'flex-start';
       collapseBtn.textContent = '►';
-      // Keep button sizes the same when collapsed
     } else {
-      // Expand to center
+      // Expand to right side (vertical layout)
       if (isMobile) {
         modal.style.cssText = `
           position: fixed;
           top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
+          right: 20px;
+          transform: translateY(-50%);
           background: rgba(20, 20, 20, 0.95);
           border: 3px solid #555;
           border-radius: 12px;
@@ -2455,13 +2492,15 @@ function showOtpRouteSelector(routeList) {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
           max-width: 90vw;
+          max-height: 80vh;
+          overflow-y: auto;
         `;
       } else {
         modal.style.cssText = `
           position: fixed;
           top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
+          right: 20px;
+          transform: translateY(-50%);
           background: rgba(20, 20, 20, 0.95);
           border: 3px solid #555;
           border-radius: 12px;
@@ -2470,20 +2509,25 @@ function showOtpRouteSelector(routeList) {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
+          max-width: 300px;
+          max-height: 80vh;
+          overflow-y: auto;
         `;
       }
       title.style.display = 'block';
-      buttonsContainer.style.flexDirection = 'row';
+      closeBtn.style.display = 'flex';
+      debugBtn.style.display = 'block';
+      buttonsContainer.style.flexDirection = 'column';
       buttonsContainer.style.gap = '12px';
-      buttonsContainer.style.flexWrap = 'wrap';
-      buttonsContainer.style.justifyContent = 'center';
+      buttonsContainer.style.flexWrap = 'nowrap';
+      buttonsContainer.style.justifyContent = 'flex-start';
       collapseBtn.textContent = '◄';
     }
   };
   
   titleBar.appendChild(collapseBtn);
   
-  // Add debug button to title bar
+  // Add debug button to title bar (only when expanded)
   const debugBtn = document.createElement('button');
   debugBtn.textContent = '🔍 Debug';
   debugBtn.style.cssText = `
@@ -2502,17 +2546,22 @@ function showOtpRouteSelector(routeList) {
   debugBtn.title = 'View debug logs for route processing';
   titleBar.appendChild(debugBtn);
   
+  // Hide debug button when collapsed
+  const updateDebugButtonVisibility = () => {
+    debugBtn.style.display = isCollapsed ? 'none' : 'block';
+  };
+  
   modal.appendChild(titleBar);
   
-  // Route buttons container (border box)
+  // Route buttons container (border box) - vertical layout
   const buttonsContainer = document.createElement('div');
   buttonsContainer.id = 'otpRouteButtonsContainer';
   buttonsContainer.style.cssText = `
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
     gap: 12px;
-    justify-content: center;
+    justify-content: flex-start;
     border: 2px solid #444;
     border-radius: 8px;
     padding: 12px;
@@ -2612,20 +2661,6 @@ function showOtpRouteSelector(routeList) {
         button.appendChild(routeName);
       }
     }
-    
-    // Hover effects for square buttons
-    button.onmouseenter = () => {
-      button.style.transform = 'scale(1.1)';
-      button.style.boxShadow = `0 4px 12px ${route.color}`;
-      button.style.zIndex = '10001';
-    };
-    button.onmouseleave = () => {
-      button.style.transform = 'scale(1)';
-      if (!isActive) {
-        button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
-      }
-      button.style.zIndex = 'auto';
-    };
     
     // ⚠️ FLIP DIRECTION: OTP directions are backward for BUS/TRAM/RAIL, but NOT for SUBWAY/METRO
     // Buses/rail need flipping, but subways are already correct
@@ -2750,15 +2785,62 @@ function showOtpRouteSelector(routeList) {
     }
     
     // Track active state (use flipped direction for key since we flip when showing)
-    let isActive = false;
     const overlayKey = `${mappedRouteId}-${flippedDirection}`;
     
-    // Check if route is already active
-    if (window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]) {
-      isActive = true;
-      button.style.border = '3px solid #fff';
-      button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
-    }
+    // Function to update button active state (must be defined before use)
+    const updateButtonState = (active) => {
+      if (active) {
+        button.style.border = '3px solid #fff';
+        button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
+        button.setAttribute('data-active', 'true');
+      } else {
+        button.style.border = `3px solid ${route.color}`;
+        button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
+        button.setAttribute('data-active', 'false');
+      }
+    };
+    
+    // Hover effects for square buttons
+    button.onmouseenter = () => {
+      if (button.getAttribute('data-active') !== 'true') {
+        button.style.transform = 'scale(1.1)';
+        button.style.boxShadow = `0 4px 12px ${route.color}`;
+        button.style.zIndex = '10001';
+      }
+    };
+    button.onmouseleave = () => {
+      button.style.transform = 'scale(1)';
+      const isActive = button.getAttribute('data-active') === 'true';
+      if (!isActive) {
+        button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
+      } else {
+        button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
+      }
+      button.style.zIndex = 'auto';
+    };
+    
+    // Check if route is already active on load
+    const checkActiveState = () => {
+      return window.activeRouteOverlays && window.activeRouteOverlays[overlayKey];
+    };
+    
+    // Initial state check
+    const initialActive = checkActiveState();
+    updateButtonState(initialActive);
+    
+    // Listen for overlay changes to update button state (polling for now)
+    const checkInterval = setInterval(() => {
+      const nowActive = checkActiveState();
+      const currentActive = button.getAttribute('data-active') === 'true';
+      if (nowActive !== currentActive) {
+        updateButtonState(nowActive);
+      }
+    }, 500);
+    
+    // Clean up interval when modal is removed
+    modal.addEventListener('remove', () => {
+      clearInterval(checkInterval);
+    });
     
     // Click handler - toggle route overlay or show branch selection for route groups
     button.onclick = () => {
@@ -2796,21 +2878,25 @@ function showOtpRouteSelector(routeList) {
       
       // Show route overlay using existing system (use mapped route ID, flipped direction)
       if (typeof window.showRouteOverlay === 'function') {
-        window.showRouteOverlay(mappedRouteId, flippedDirection);
+        // Toggle overlay: if already active, hide it; otherwise show it
+        const wasActive = button.getAttribute('data-active') === 'true';
         
-        // Update button state after a short delay (to let overlay system update)
-        setTimeout(() => {
-          const nowActive = window.activeRouteOverlays && window.activeRouteOverlays[overlayKey];
-          if (nowActive) {
-            button.style.border = '3px solid #fff';
-            button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
-            isActive = true;
-          } else {
-            button.style.border = `3px solid ${route.color}`;
-            button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
-            isActive = false;
+        if (wasActive) {
+          // Hide overlay
+          if (typeof window.hideRouteOverlay === 'function') {
+            window.hideRouteOverlay(mappedRouteId, flippedDirection);
+          } else if (typeof window.clearAllRouteOverlays === 'function') {
+            window.clearAllRouteOverlays();
           }
-        }, 100);
+          // Update button state immediately
+          updateButtonState(false);
+        } else {
+          // Show overlay
+          window.showRouteOverlay(mappedRouteId, flippedDirection);
+          
+          // Update button state immediately (optimistic update)
+          updateButtonState(true);
+        }
       } else {
         console.error('🎨 [OtpRouteSelector] showRouteOverlay not available');
         alert('Route overlay system not ready. Please refresh the page.');
@@ -2834,8 +2920,8 @@ function showOtpRouteSelector(routeList) {
         modal.style.cssText = `
           position: fixed;
           top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
+          right: 20px;
+          transform: translateY(-50%);
           background: rgba(20, 20, 20, 0.95);
           border: 3px solid #555;
           border-radius: 12px;
@@ -2845,6 +2931,8 @@ function showOtpRouteSelector(routeList) {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
           max-width: 90vw;
+          max-height: 80vh;
+          overflow-y: auto;
         `;
         buttonsContainer.style.gap = '8px';
         // Make buttons slightly smaller on mobile
@@ -2868,6 +2956,7 @@ function showOtpRouteSelector(routeList) {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
+          max-width: 80px;
         `;
       }
     } else {
@@ -2883,6 +2972,15 @@ function showOtpRouteSelector(routeList) {
   }
   handleMobileView(mediaQuery);
   mediaQuery.addEventListener('change', handleMobileView);
+  
+  // Cleanup function when modal is removed
+  const originalRemove = modal.remove.bind(modal);
+  modal.remove = function() {
+    if (this._cleanupFunctions) {
+      this._cleanupFunctions.forEach(fn => fn());
+    }
+    originalRemove();
+  };
   
   // Append to body
   document.body.appendChild(modal);
