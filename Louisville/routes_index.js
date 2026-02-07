@@ -128,12 +128,6 @@ const ROUTES = {
             "dir1": "Inbound"
       },
       {
-            "id": "94",
-            "label": "94 \u2013 UofL Cardinal Shuttle",
-            "dir0": "",
-            "dir1": "Inbound"
-      },
-      {
             "id": "99",
             "label": "99 \u2013 UPS West Louisville",
             "dir0": "Outbound",
