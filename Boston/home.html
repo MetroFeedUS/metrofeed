@@ -1110,7 +1110,7 @@
 
 <!-- -- OTP TRIP PLANNING MODAL -- -->
 <div id="otpModal" class="mf-overlay" style="display: none;">
-  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto; position: relative;">
+  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
       <h2 style="margin: 0;">🚌 <span data-translate="trip_options">Trip Options</span></h2>
       <button onclick="minimizeItineraryModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Minimize">−</button>
@@ -5111,9 +5111,20 @@
   }
 
   function showOtpModal() {
-    document.getElementById('otpModal').style.display = 'flex';
+    const modal = document.getElementById('otpModal');
+    const modalContent = modal.querySelector('.mf-modal');
+    modal.style.display = 'flex';
     // Remove minimized class if it exists
-    document.getElementById('otpModal').classList.remove('otp-modal-minimized');
+    modal.classList.remove('minimized-overlay');
+    if (modalContent) {
+      modalContent.classList.remove('otp-modal-minimized');
+      // Ensure modal content is properly positioned (reset any inline styles that might interfere)
+      modalContent.style.position = '';
+      modalContent.style.top = '';
+      modalContent.style.left = '';
+      modalContent.style.bottom = '';
+      modalContent.style.transform = '';
+    }
   }
   
   function hideOtpModal() {
@@ -5266,9 +5277,21 @@
   function restoreItineraryModal() {
     console.log('[restoreItineraryModal] Function called');
     const modal = document.getElementById('otpModal');
+    const modalContent = modal ? modal.querySelector('.mf-modal') : null;
     const minimizedBar = document.getElementById('minimizedItinerary');
     
-    if (modal) modal.style.display = 'block';
+    if (modal) {
+      modal.style.display = 'flex';
+      // Ensure modal content is properly positioned
+      if (modalContent) {
+        modalContent.classList.remove('otp-modal-minimized');
+        modalContent.style.position = '';
+        modalContent.style.top = '';
+        modalContent.style.left = '';
+        modalContent.style.bottom = '';
+        modalContent.style.transform = '';
+      }
+    }
     if (minimizedBar) minimizedBar.style.display = 'none';
   }
 

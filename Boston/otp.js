@@ -2357,17 +2357,18 @@ function showOtpRouteSelector(routeList) {
     position: relative;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #444;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #444;
   `;
   
   const title = document.createElement('div');
   title.textContent = 'Routes in Trip';
   title.style.cssText = `
     color: #fff;
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
   `;
   titleBar.appendChild(title);
   
@@ -2470,7 +2471,6 @@ function showOtpRouteSelector(routeList) {
       }
       title.style.display = 'none';
       closeBtn.style.display = 'none';
-      debugBtn.style.display = 'none';
       buttonsContainer.style.flexDirection = 'column';
       buttonsContainer.style.gap = '10px';
       buttonsContainer.style.justifyContent = 'flex-start';
@@ -2516,7 +2516,6 @@ function showOtpRouteSelector(routeList) {
       }
       title.style.display = 'block';
       closeBtn.style.display = 'flex';
-      debugBtn.style.display = 'block';
       buttonsContainer.style.flexDirection = 'column';
       buttonsContainer.style.gap = '12px';
       buttonsContainer.style.flexWrap = 'nowrap';
@@ -2527,30 +2526,6 @@ function showOtpRouteSelector(routeList) {
   
   titleBar.appendChild(collapseBtn);
   
-  // Add debug button to title bar (only when expanded)
-  const debugBtn = document.createElement('button');
-  debugBtn.textContent = '🔍 Debug';
-  debugBtn.style.cssText = `
-    background: #666;
-    color: #fff;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 11px;
-    margin-left: 8px;
-  `;
-  debugBtn.onclick = () => {
-    showDebugModal();
-  };
-  debugBtn.title = 'View debug logs for route processing';
-  titleBar.appendChild(debugBtn);
-  
-  // Hide debug button when collapsed
-  const updateDebugButtonVisibility = () => {
-    debugBtn.style.display = isCollapsed ? 'none' : 'block';
-  };
-  
   modal.appendChild(titleBar);
   
   // Route buttons container (border box) - vertical layout
@@ -2560,12 +2535,10 @@ function showOtpRouteSelector(routeList) {
     display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
-    gap: 12px;
+    gap: 10px;
     justify-content: flex-start;
-    border: 2px solid #444;
-    border-radius: 8px;
-    padding: 12px;
-    background: rgba(10, 10, 10, 0.5);
+    padding: 8px 0;
+    background: transparent;
   `;
   
   // Create square button for each route (keep in order - descending = first to last leg)
