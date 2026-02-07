@@ -1,16 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-tier="free">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed <span id="city-name-placeholder">City</span> Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
-  <!-- Sponsor Image Configuration -->
+  <!-- Tier Configuration -->
+  <script src="tierConfig.js"></script>
+  
+  <!-- Sponsor Image Configuration (Free tier only) -->
   <script>
     // Easy placement code for sponsor image
     // Change this filename to update the sponsor image
-    const SPONSOR_IMAGE = "sponsor.png";
+    // Only loaded on Free tier
+    if (window.TIER_CONFIG && window.TIER_CONFIG.hasFeature('sponsors')) {
+      const SPONSOR_IMAGE = "sponsor.png";
+    }
   </script>
   
   <!-- Language System -->
@@ -128,10 +134,10 @@
       background-color: #CC0000;
       box-shadow: 0 0 6px #FF0000;
     }
-    /* CSL (Crowd-Sourced Location) button - Orange */
+    /* CSL (Crowd-Sourced Location) button - Orange (Premium only) */
     .dropdown a#advertiseBtn {
       background-color: #FF8C00;
-      display: flex;
+      display: none; /* Hidden on Free tier */
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -954,12 +960,20 @@
 </div>
 
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
-<div class="sponsor-box">
+<!-- Sponsor Box (Free tier only) -->
+<div class="sponsor-box" id="sponsorBox">
   <img src="sponsor.png" alt="Sponsor" id="sponsorImage" />
 </div>
 <script>
-  // Set sponsor image from configuration constant
+  // Set sponsor image from configuration constant (Free tier only)
   (function() {
+    // Only show sponsors on Free tier
+    if (window.TIER_CONFIG && !window.TIER_CONFIG.hasFeature('sponsors')) {
+      const sponsorBox = document.getElementById('sponsorBox');
+      if (sponsorBox) sponsorBox.style.display = 'none';
+      return;
+    }
+    
     const sponsorImg = document.getElementById('sponsorImage');
     if (sponsorImg && typeof SPONSOR_IMAGE !== 'undefined') {
       sponsorImg.src = SPONSOR_IMAGE;
@@ -981,7 +995,8 @@
   <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="Change City"></a>
   <div class="dropdown-divider"></div>
   <!-- CSL (Crowd-Sourced Location) button in dropdown -->
-  <a id="advertiseBtn" href="#" onclick="event.preventDefault(); if(typeof window.CSL !== 'undefined' && window.CSL.openCSL) { window.CSL.openCSL(); } else { alert('CSL module not loaded'); }"><img src="megaphone.svg" alt="Crowd-Sourced Location"></a>
+  <!-- CSL is Premium-only, button hidden on Free tier -->
+  <a id="advertiseBtn" href="#" onclick="event.preventDefault(); alert('CSL is available in Premium. Visit premium.html');" style="display: none;"><img src="megaphone.svg" alt="Crowd-Sourced Location"></a>
 </div>
 
 <!-- -- SEARCH BAR -- -->
@@ -1341,7 +1356,7 @@
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <!-- -- CSL (Crowdsourced Live) MODULE -- -->
-<script src="csl.js"></script>
+<!-- CSL (Crowdsourced Live) MODULE - Premium only, not loaded on Free tier -->
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>
 <!-- -- MARKETPLACE OVERLAY MODULE -- -->

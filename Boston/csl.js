@@ -1032,61 +1032,48 @@ function updateCSLBusMarker(roomKey, roomData, routeData) {
     .setLngLat([currentStop.lon, currentStop.lat])
     .addTo(window.map);
   
-  // Create popup (same style as normal bus popups)
-  const popupContent = document.createElement('div');
-  popupContent.innerHTML = `
-    <div style='border:2px solid #0071CE; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
-      <div style='text-align:center; margin-bottom:8px;'>
-        <div style='background:#0071CE;color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 CSL Bus ${roomData.busNumber || '?'}</div>
+  // Function to create popup content (matching normal bus popup format)
+  function createPopupContent(data) {
+    const contributorCount = data.contributors ? data.contributors.length : 0;
+    const confidence = Math.min(100, contributorCount * 20);
+    const currentStopName = data.currentStopName || 'Unknown';
+    const nextStopName = data.nextStopName || null;
+    
+    // Format direction (similar to normal buses: 1 = Inbound, 0 = Outbound)
+    let directionText = 'N/A';
+    if (data.directionId !== undefined) {
+      directionText = data.directionId === 1 ? 'Inbound' : data.directionId === 0 ? 'Outbound' : `Direction ${data.directionId}`;
+    }
+    
+    // Create popup (matching normal bus popup format exactly from routeOverlay.js)
+    const popupContent = document.createElement('div');
+    popupContent.innerHTML = `
+      <div style='border:1px solid #0071CE; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
+        <div style='text-align:center; margin-bottom:6px;'>
+          <div style='background:#0071CE;color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${data.busNumber || '?'}</div>
+        </div>
+        <div style='margin-bottom:4px;'><strong>Route:</strong> ${data.routeId || 'N/A'}</div>
+        <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
+        <div style='margin-bottom:4px;'><strong>Current Stop:</strong> ${currentStopName}</div>
+        ${nextStopName ? `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopName}</div>` : ''}
+        <div style='margin-bottom:4px; color:#4CAF50;'><strong>Status:</strong> At Stop</div>
+        <div style='margin-bottom:4px; color:#1E90FF;'><strong>Contributors:</strong> ${contributorCount} | <strong>Confidence:</strong> ${confidence}%</div>
+        <div style='margin-top:6px; padding-top:6px; border-top:1px solid #444; font-size:0.7em; color:#888;'>CSL data is advisory only</div>
       </div>
-      <div style='margin-bottom:6px;'><strong>Route:</strong> ${roomData.routeId || 'N/A'}</div>
-      <div style='margin-bottom:6px;'><strong>Direction:</strong> ${roomData.directionId !== undefined ? roomData.directionId : 'N/A'}</div>
-      <div style='margin-bottom:6px;'><strong>Current Stop:</strong> ${roomData.currentStopName || 'Unknown'}</div>
-      <div style='margin-bottom:6px;'><strong>Contributors:</strong> ${roomData.contributors ? roomData.contributors.length : 0}</div>
-      <div style='margin-bottom:6px;'><strong>Confidence:</strong> ${Math.min(100, (roomData.contributors ? roomData.contributors.length : 0) * 20)}%</div>
-      <div style='margin-top:8px; padding-top:8px; border-top:1px solid #444; font-size:0.85em; color:#aaa;'>CSL data is advisory only</div>
-    </div>
-  `;
+    `;
+    
+    return popupContent;
+  }
   
+  // Create initial popup
   const popup = new maplibregl.Popup({ offset: 25 })
-    .setDOMContent(popupContent);
+    .setDOMContent(createPopupContent(roomData));
   marker.setPopup(popup);
   
-  // Click handler to show/view modal (for all users)
-  markerElement.onclick = async (e) => {
-    e.stopPropagation();
-    // Check if user is a contributor
-    const adapter = window.CSL.getAdapter();
-    const userId = await adapter.getUserId();
-    const room = await adapter.getRoom(roomKey);
-    const isContributor = room && room.contributors && room.contributors.some(c => c.userId === userId);
-    
-    // Show modal (view-only if not contributor)
-    const existingModal = document.getElementById(`csl-bus-modal-${roomKey}`);
-    if (existingModal) {
-      // Expand if collapsed
-      if (existingModal.getAttribute('data-collapsed') === 'true') {
-        const collapseBtn = existingModal.querySelector('#csl-collapse-btn');
-        if (collapseBtn) collapseBtn.click();
-      }
-      // Bring to front
-      existingModal.style.zIndex = '100003';
-      setTimeout(() => {
-        existingModal.style.zIndex = '100002';
-      }, 100);
-    } else {
-      // Load route data if needed
-      let routeDataForModal = routeData;
-      if (!routeDataForModal && window.routeLoader) {
-        try {
-          routeDataForModal = await window.routeLoader.loadRoute(room.routeId, room.directionId);
-        } catch (e) {
-          console.warn('[CSL] Could not load route data for modal:', e);
-        }
-      }
-      // Create new modal in view-only mode if not contributor
-      showCSLBusModal(roomKey, room.routeId, room.directionId, room.busNumber, routeDataForModal, !isContributor);
-    }
+  // Store update function on marker for later updates
+  marker._updatePopup = (newData) => {
+    const newContent = createPopupContent(newData || roomData);
+    popup.setDOMContent(newContent);
   };
   
   cslState.busMarkers.set(roomKey, marker);
@@ -1319,8 +1306,26 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData, vi
   function updateModal(data) {
     roomData = data;
     
-    // Update marker position
-    updateCSLBusMarker(roomKey, data, routeData);
+    // Update marker position and popup
+    const marker = cslState.busMarkers.get(roomKey);
+    if (marker) {
+      // Update marker position if stop changed
+      const currentStop = routeData?.stops?.find(s => 
+        (s.stop_id && s.stop_id === data.currentStop) || 
+        s.name === data.currentStopName
+      );
+      if (currentStop && currentStop.lat && currentStop.lon) {
+        marker.setLngLat([currentStop.lon, currentStop.lat]);
+      }
+      
+      // Update popup content if popup exists
+      if (marker._updatePopup) {
+        marker._updatePopup(data);
+      }
+    } else {
+      // Create marker if it doesn't exist
+      updateCSLBusMarker(roomKey, data, routeData);
+    }
     
     // Calculate confidence (based on contributor count and agreement)
     const contributorCount = data.contributors ? data.contributors.length : 0;
