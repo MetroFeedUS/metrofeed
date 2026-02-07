@@ -826,19 +826,20 @@
     /* -- MINIMIZED ITINERARY BAR -- */
     .minimized-itinerary {
       position: absolute;
-      bottom: 140px; /* Positioned above the favorites bar */
+      bottom: 140px; /* Positioned above the favorites bar (will be updated dynamically) */
       left: 50%;
       transform: translateX(-50%);
       background-color: rgba(30,30,30,0.95);
-      padding: 6px 12px;
+      padding: 6px 4px; /* Match favorites padding */
       border-radius: 8px;
-      font-size: 0.8rem;
+      font-size: 0.75rem; /* Match favorites font size */
       color: #1E90FF;
       text-align: center;
       border: 1px solid #1E90FF;
       white-space: nowrap;
-      width: auto;
-      min-width: 200px;
+      width: fit-content; /* Match favorites width */
+      min-width: auto; /* Match favorites */
+      max-width: calc(50vw - 20px); /* Match favorites max-width */
       box-sizing: border-box;
       margin: 0 auto;
       height: 25px;
@@ -847,6 +848,7 @@
       display: none;
       z-index: 1000;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.3s ease; /* Match favorites transition */
     }
     .minimized-itinerary:hover {
       background-color: rgba(30,30,30,1);
@@ -2276,6 +2278,34 @@
   
   // === SECTION: FAVORITES COLLAPSE TOGGLE ===
   const favoritesWrapper = document.getElementById('favoritesWrapper');
+  const minimizedItinerary = document.getElementById('minimizedItinerary');
+  
+  // Function to update itinerary bar position based on favorites bar state
+  function updateItineraryBarPosition() {
+    const minimizedItinerary = document.getElementById('minimizedItinerary');
+    const favoritesWrapper = document.getElementById('favoritesWrapper');
+    
+    if (!minimizedItinerary || !favoritesWrapper) return;
+    
+    if (minimizedItinerary.style.display === 'none') return; // Don't update if hidden
+    
+    const favoritesRect = favoritesWrapper.getBoundingClientRect();
+    const favoritesHeight = favoritesRect.height;
+    const favoritesBottom = parseInt(getComputedStyle(favoritesWrapper).bottom, 10);
+    
+    // Position itinerary bar above favorites bar with 10px gap
+    const itineraryBottom = favoritesBottom + favoritesHeight + 10;
+    minimizedItinerary.style.bottom = `${itineraryBottom}px`;
+    
+    // Match the width of favorites bar
+    const favoritesWidth = favoritesRect.width;
+    minimizedItinerary.style.width = `${favoritesWidth}px`;
+    minimizedItinerary.style.maxWidth = getComputedStyle(favoritesWrapper).maxWidth;
+  }
+  
+  // Make function globally accessible
+  window.updateItineraryBarPosition = updateItineraryBarPosition;
+  
   if (favoritesWrapper) {
     // Check localStorage for saved state (default to expanded)
     const isCollapsed = localStorage.getItem('favoritesCollapsed') === 'true';
@@ -2283,6 +2313,10 @@
       favoritesWrapper.classList.add('collapsed');
     }
     
+    // Initial position update
+    setTimeout(updateItineraryBarPosition, 100);
+    
+    // Update position when favorites bar is toggled
     favoritesWrapper.addEventListener('click', function(e) {
       // Don't toggle if clicking on a favorite button
       if (e.target.closest('.favorite-btn')) {
@@ -2292,7 +2326,23 @@
       favoritesWrapper.classList.toggle('collapsed');
       // Save state to localStorage
       localStorage.setItem('favoritesCollapsed', favoritesWrapper.classList.contains('collapsed'));
+      
+      // Update itinerary bar position after transition
+      setTimeout(updateItineraryBarPosition, 350); // Slightly after transition completes
     });
+    
+    // Update position on window resize
+    window.addEventListener('resize', updateItineraryBarPosition);
+    
+    // Watch for itinerary bar visibility changes
+    if (minimizedItinerary) {
+      const observer = new MutationObserver(() => {
+        if (minimizedItinerary.style.display !== 'none') {
+          setTimeout(updateItineraryBarPosition, 100);
+        }
+      });
+      observer.observe(minimizedItinerary, { attributes: true, attributeFilter: ['style'] });
+    }
   }
   
   // === SECTION: MAP STYLE TOGGLE LOGIC ===
@@ -5275,7 +5325,13 @@
     const minimizedBar = document.getElementById('minimizedItinerary');
     
     if (modal) modal.style.display = 'none';
-    if (minimizedBar) minimizedBar.style.display = 'block';
+    if (minimizedBar) {
+      minimizedBar.style.display = 'block';
+      // Update position to match favorites bar
+      if (window.updateItineraryBarPosition) {
+        setTimeout(() => window.updateItineraryBarPosition(), 100);
+      }
+    }
   }
 
   // Function to restore OTP itinerary modal

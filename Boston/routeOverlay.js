@@ -1153,15 +1153,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     
     console.log(`[attachRouteToMap] 📅 Today is ${dayNames[currentDay]} (day ${currentDay}) - Using schedule bucket: "${scheduleBucket}"`);
     
-    // Validate data currency and service day
-    let dataCurrencyWarning = null;
+    // Check service day for holiday adjustments
     if (window.routeLoader) {
-      const currencyCheck = window.routeLoader.validateDataCurrency();
-      if (currencyCheck.warning) {
-        dataCurrencyWarning = currencyCheck.warning;
-        console.warn(`[attachRouteToMap] ⚠️ ${currencyCheck.warning}`);
-      }
-      
       const serviceCheck = window.routeLoader.checkServiceDay(now);
       if (serviceCheck.isHoliday) {
         console.warn(`[attachRouteToMap] ⚠️ Today (${serviceCheck.dayName}) may be a holiday - schedules may differ`);

@@ -37,18 +37,6 @@
           routesIndexLoaded = true;
           console.log('[routeLoader] Routes index loaded:', routesIndex.routes.length, 'routes');
           
-          // Validate data currency on load
-          const currencyCheck = validateDataCurrency();
-          if (currencyCheck.warning) {
-            console.warn(`[routeLoader] ⚠️ ${currencyCheck.warning}`);
-            // Show user-visible warning if data is very stale
-            if (currencyCheck.ageDays > 14) {
-              console.error(`[routeLoader] ❌ Route data is ${currencyCheck.ageDays} days old - schedules may be inaccurate!`);
-            }
-          } else if (currencyCheck.ageDays !== null) {
-            console.log(`[routeLoader] ✅ Route data is current (${currencyCheck.ageDays} days old, version: ${routesIndex.version})`);
-          }
-          
           // Check service day
           const serviceCheck = checkServiceDay();
           if (serviceCheck.isHoliday) {
@@ -259,13 +247,7 @@
       
       // Validate route data currency
       if (routeData.meta && routeData.meta.generated_date) {
-        const generatedDate = new Date(routeData.meta.generated_date);
-        const now = new Date();
-        const ageDays = Math.floor((now - generatedDate) / (1000 * 60 * 60 * 24));
-        
-        if (ageDays > 14) {
-          console.warn(`[routeLoader] ⚠️ Route ${routeId} data is ${ageDays} days old (generated ${generatedDate.toLocaleDateString()})`);
-        }
+        // Route data loaded successfully
       }
       
       // Cache the route data
