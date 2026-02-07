@@ -2403,9 +2403,9 @@ function showOtpRouteSelector(routeList) {
   };
   titleBar.appendChild(closeBtn);
   
-  // Collapse button
+  // Collapse button (starts expanded, so shows collapse arrow pointing right)
   const collapseBtn = document.createElement('button');
-  collapseBtn.textContent = '◄';
+  collapseBtn.textContent = '►';
   collapseBtn.style.cssText = `
     background: transparent;
     border: 1px solid #666;
@@ -2474,7 +2474,7 @@ function showOtpRouteSelector(routeList) {
       buttonsContainer.style.flexDirection = 'column';
       buttonsContainer.style.gap = '10px';
       buttonsContainer.style.justifyContent = 'flex-start';
-      collapseBtn.textContent = '►';
+      collapseBtn.textContent = '◄';
     } else {
       // Expand to right side (vertical layout)
       if (isMobile) {
@@ -2520,7 +2520,7 @@ function showOtpRouteSelector(routeList) {
       buttonsContainer.style.gap = '12px';
       buttonsContainer.style.flexWrap = 'nowrap';
       buttonsContainer.style.justifyContent = 'flex-start';
-      collapseBtn.textContent = '◄';
+      collapseBtn.textContent = '►';
     }
   };
   
@@ -2802,18 +2802,53 @@ function showOtpRouteSelector(routeList) {
     updateButtonState(initialActive);
     
     // Listen for overlay changes to update button state (polling for now)
+    // Store interval ID on button for cleanup
     const checkInterval = setInterval(() => {
       const nowActive = checkActiveState();
       const currentActive = button.getAttribute('data-active') === 'true';
       if (nowActive !== currentActive) {
         updateButtonState(nowActive);
       }
-    }, 500);
+    }, 300); // Check more frequently for better responsiveness
+    
+    // Store interval on button for cleanup
+    button._checkInterval = checkInterval;
+    
+    // Also update state when overlay is toggled (immediate feedback)
+    // This helps when multiple routes are active
+    const originalOnclick = button.onclick;
+    button.onclick = function(...args) {
+      originalOnclick.apply(this, args);
+      // After a short delay, verify all button states
+      setTimeout(() => {
+        // Update all buttons in the container
+        const allButtons = buttonsContainer.querySelectorAll('button[data-active]');
+        allButtons.forEach(btn => {
+          if (btn._overlayKey) {
+            const isActive = window.activeRouteOverlays && window.activeRouteOverlays[btn._overlayKey];
+            const currentActive = btn.getAttribute('data-active') === 'true';
+            if (isActive !== currentActive && btn._updateButtonState) {
+              btn._updateButtonState(isActive);
+            }
+          }
+        });
+      }, 100);
+    };
+    
+    // Store update function and overlay key on button for cross-button updates
+    button._updateButtonState = updateButtonState;
+    button._overlayKey = overlayKey;
     
     // Clean up interval when modal is removed
-    modal.addEventListener('remove', () => {
-      clearInterval(checkInterval);
-    });
+    const cleanup = () => {
+      if (button._checkInterval) {
+        clearInterval(button._checkInterval);
+      }
+    };
+    if (!modal._cleanupFunctions) {
+      modal._cleanupFunctions = [];
+    }
+    modal._cleanupFunctions.push(cleanup);
     
     // Click handler - toggle route overlay or show branch selection for route groups
     button.onclick = () => {
@@ -2829,24 +2864,7 @@ function showOtpRouteSelector(routeList) {
       // Regular route - show overlay directly
       console.log('🎨 [OtpRouteSelector] Mode:', route.mode, 'OTP direction:', route.directionId, needsFlip ? `→ Flipped to: ${flippedDirection}` : `(no flip needed: ${flippedDirection})`);
       
-      // ⚠️ CRITICAL: Clear ALL bus markers and overlays first
-      // Clear home.html bus markers (but keep OTP mode active)
-      if (typeof window.fetchAndDisplayBuses === 'function') {
-        window.fetchAndDisplayBuses([]);
-      }
-      
-      // Clear ALL route overlays (removes their bus markers too)
-      if (typeof window.clearAllRouteOverlays === 'function') {
-        window.clearAllRouteOverlays();
-      }
-      
-      // Also manually clear activeRouteOverlays
-      if (window.activeRouteOverlays) {
-        window.activeRouteOverlays = {};
-      }
-      
       // ⚠️ IMPORTANT: Keep OTP trip active (prevents "all buses" mode)
-      // Don't clear activeTripSelected - we want route overlays to manage buses
       window.activeTripSelected = true;
       
       // Show route overlay using existing system (use mapped route ID, flipped direction)
@@ -2855,16 +2873,14 @@ function showOtpRouteSelector(routeList) {
         const wasActive = button.getAttribute('data-active') === 'true';
         
         if (wasActive) {
-          // Hide overlay
+          // Hide this specific overlay (don't clear all)
           if (typeof window.hideRouteOverlay === 'function') {
             window.hideRouteOverlay(mappedRouteId, flippedDirection);
-          } else if (typeof window.clearAllRouteOverlays === 'function') {
-            window.clearAllRouteOverlays();
           }
           // Update button state immediately
           updateButtonState(false);
         } else {
-          // Show overlay
+          // Show overlay (this will add to existing overlays, not replace them)
           window.showRouteOverlay(mappedRouteId, flippedDirection);
           
           // Update button state immediately (optimistic update)
