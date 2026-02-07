@@ -830,9 +830,9 @@
       left: 50%;
       transform: translateX(-50%);
       background-color: rgba(30,30,30,0.95);
-      padding: 6px 4px; /* Match favorites padding */
+      padding: 4px 6px; /* Reduced padding to fit text */
       border-radius: 8px;
-      font-size: 0.75rem; /* Match favorites font size */
+      font-size: 0.7rem; /* Reduced from 0.75rem (about 7% smaller) */
       color: #1E90FF;
       text-align: center;
       border: 1px solid #1E90FF;
@@ -843,12 +843,14 @@
       box-sizing: border-box;
       margin: 0 auto;
       height: 25px;
-      line-height: 13px;
+      line-height: 17px; /* Adjusted for better vertical centering */
       cursor: pointer;
       display: none;
       z-index: 1000;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       transition: all 0.3s ease; /* Match favorites transition */
+      overflow: hidden; /* Prevent text overflow */
+      text-overflow: ellipsis; /* Show ellipsis if text is too long */
     }
     .minimized-itinerary:hover {
       background-color: rgba(30,30,30,1);
@@ -866,7 +868,7 @@
     }
     .minimized-itinerary .itinerary-details {
       color: #ccc;
-      font-size: 0.7rem;
+      font-size: 0.65rem; /* Reduced to fit better */
     }
     .minimized-itinerary .restore-btn {
       background: #1E90FF;
@@ -6036,6 +6038,23 @@
     return null;
   }
 
+  // Helper function to get MBTA route color
+  function getSubwayRouteColor(routeId) {
+    const routeColors = {
+      'Red': '#DA291C',
+      'Red-Ashmont': '#DA291C',
+      'Red-Braintree': '#DA291C',
+      'Orange': '#ED8B00',
+      'Blue': '#003DA5',
+      'Green-B': '#00843D',
+      'Green-C': '#00843D',
+      'Green-D': '#00843D',
+      'Green-E': '#00843D',
+      'Green': '#00843D'
+    };
+    return routeColors[routeId] || '#1E90FF'; // Default to blue if not found
+  }
+  
   /**
    * Show rail routes for selected category
    */
@@ -6095,17 +6114,18 @@
       const dir0Text = endpoint0 || route.dir0 || 'Unknown';
       const dir1Text = endpoint1 || route.dir1 || 'Unknown';
       
+      const routeColor = getSubwayRouteColor(route.id);
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
-      routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
+      routeDiv.style.cssText = `background: #1e1e1e; border: 2px solid ${routeColor}; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;`;
       
       // Format: "Route Name endpoint0 to endpoint1"
       const routeLabel = `${routeName} ${dir0Text} to ${dir1Text}`;
       
       const routeHeader = document.createElement('div');
-      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;';
+      routeHeader.style.cssText = `font-weight: bold; color: ${routeColor}; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;`;
       routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
-      routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = 'rgba(30, 144, 255, 0.1)';
+      routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = `${routeColor}15`; // 15 = ~8% opacity
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
       // Discover branches for this route group
@@ -6140,12 +6160,13 @@
         const branchDir1Text = branchEndpoint1 || branch.dir1 || 'Unknown';
         const branchLabelText = `${branchName} ${branchDir0Text} to ${branchDir1Text}`;
         
+        const branchColor = getSubwayRouteColor(branch.routeId);
         const branchDiv = document.createElement('div');
-        branchDiv.style.cssText = 'padding: 0.5rem; background: rgba(30, 144, 255, 0.1); border-radius: 4px;';
+        branchDiv.style.cssText = `padding: 0.5rem; background: ${branchColor}15; border-left: 3px solid ${branchColor}; border-radius: 4px;`;
         
         const branchLabel = document.createElement('div');
         branchLabel.textContent = branchLabelText;
-        branchLabel.style.cssText = 'font-weight: 600; color: #1E90FF; margin-bottom: 0.5rem; font-size: 0.9em;';
+        branchLabel.style.cssText = `font-weight: 600; color: ${branchColor}; margin-bottom: 0.5rem; font-size: 0.9em;`;
         branchDiv.appendChild(branchLabel);
         
         const branchDirections = document.createElement('div');
@@ -6154,7 +6175,7 @@
         if (branch.dir0 || branchEndpoint0) {
           const dir0Btn = document.createElement('button');
           dir0Btn.textContent = `➡ ${branchEndpoint0 || branch.dir0}`;
-          dir0Btn.style.cssText = 'width: 100%; padding: 0.4rem; background: #1E90FF; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;';
+          dir0Btn.style.cssText = `width: 100%; padding: 0.4rem; background: ${branchColor}; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;`;
           dir0Btn.onclick = () => selectRailRoute(branch.routeId, 0);
           branchDirections.appendChild(dir0Btn);
         }
@@ -6162,7 +6183,7 @@
         if (branch.dir1 || branchEndpoint1) {
           const dir1Btn = document.createElement('button');
           dir1Btn.textContent = `⬅ ${branchEndpoint1 || branch.dir1}`;
-          dir1Btn.style.cssText = 'width: 100%; padding: 0.4rem; background: #1E90FF; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;';
+          dir1Btn.style.cssText = `width: 100%; padding: 0.4rem; background: ${branchColor}; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;`;
           dir1Btn.onclick = () => selectRailRoute(branch.routeId, 1);
           branchDirections.appendChild(dir1Btn);
         }
@@ -6179,10 +6200,11 @@
         const mainDirectionsDiv = document.createElement('div');
         mainDirectionsDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem;';
         
+        const routeColor = getSubwayRouteColor(route.id);
         if (route.dir0 || endpoint0) {
           const dir0Btn = document.createElement('button');
           dir0Btn.textContent = `➡ ${endpoint0 || route.dir0}`;
-          dir0Btn.style.cssText = 'width: 100%; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+          dir0Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
           dir0Btn.onclick = () => selectRailRoute(route.id, 0);
           mainDirectionsDiv.appendChild(dir0Btn);
         }
@@ -6190,7 +6212,7 @@
         if (route.dir1 || endpoint1) {
           const dir1Btn = document.createElement('button');
           dir1Btn.textContent = `⬅ ${endpoint1 || route.dir1}`;
-          dir1Btn.style.cssText = 'width: 100%; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+          dir1Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
           dir1Btn.onclick = () => selectRailRoute(route.id, 1);
           mainDirectionsDiv.appendChild(dir1Btn);
         }
@@ -6247,17 +6269,18 @@
         terminal1 = routeData1.stops[0].name || 'Unknown';
       }
       
+      const routeColor = getSubwayRouteColor(route.id);
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
-      routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
+      routeDiv.style.cssText = `background: #1e1e1e; border: 2px solid ${routeColor}; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;`;
       
       // Format: "Route Name terminal0 to terminal1" (showing the two terminal stations)
       const routeLabel = `${routeName} ${terminal0} to ${terminal1}`;
       
       const routeHeader = document.createElement('div');
-      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;';
+      routeHeader.style.cssText = `font-weight: bold; color: ${routeColor}; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;`;
       routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
-      routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = 'rgba(30, 144, 255, 0.1)';
+      routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = `${routeColor}15`; // 15 = ~8% opacity
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
       const directionsDiv = document.createElement('div');
@@ -6272,11 +6295,12 @@
       };
       
       // Show buttons with the terminal stations for each direction
+      const routeColor = getSubwayRouteColor(route.id);
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
         const dir0Terminal = routeData0.stops[routeData0.stops.length - 1].name;
         const dir0Btn = document.createElement('button');
         dir0Btn.textContent = `➡ ${dir0Terminal}`;
-        dir0Btn.style.cssText = 'width: 100%; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir0Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
         dir0Btn.onclick = () => selectRailRoute(route.id, 0);
         directionsDiv.appendChild(dir0Btn);
       }
@@ -6285,7 +6309,7 @@
         const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
         const dir1Btn = document.createElement('button');
         dir1Btn.textContent = `⬅ ${dir1Terminal}`;
-        dir1Btn.style.cssText = 'width: 100%; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir1Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
         dir1Btn.onclick = () => selectRailRoute(route.id, 1);
         directionsDiv.appendChild(dir1Btn);
       }
