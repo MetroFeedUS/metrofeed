@@ -456,6 +456,22 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
   const itinList = document.getElementById('itinList');
   itinList.innerHTML = "<em style='color: #1E90FF;'>Loading trip options...</em>";
   showOtpModal();
+  
+  // Validate route data currency before planning trip
+  if (window.routeLoader && window.routeLoader.validateDataCurrency) {
+    const currencyCheck = window.routeLoader.validateDataCurrency();
+    if (currencyCheck.warning) {
+      console.warn(`[OTP] ⚠️ ${currencyCheck.warning}`);
+      if (currencyCheck.ageDays > 14) {
+        console.error(`[OTP] ❌ Route data is ${currencyCheck.ageDays} days old - trip planning may be inaccurate!`);
+      }
+    }
+    
+    const serviceCheck = window.routeLoader.checkServiceDay();
+    if (serviceCheck.isHoliday) {
+      console.warn(`[OTP] ⚠️ Today (${serviceCheck.dayName}) may be a holiday - schedules may differ from normal`);
+    }
+  }
 
   try {
     // POST GraphQL request

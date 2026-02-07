@@ -36,6 +36,25 @@
           routesIndex = window.routesIndex;
           routesIndexLoaded = true;
           console.log('[routeLoader] Routes index loaded:', routesIndex.routes.length, 'routes');
+          
+          // Validate data currency on load
+          const currencyCheck = validateDataCurrency();
+          if (currencyCheck.warning) {
+            console.warn(`[routeLoader] ⚠️ ${currencyCheck.warning}`);
+            // Show user-visible warning if data is very stale
+            if (currencyCheck.ageDays > 14) {
+              console.error(`[routeLoader] ❌ Route data is ${currencyCheck.ageDays} days old - schedules may be inaccurate!`);
+            }
+          } else if (currencyCheck.ageDays !== null) {
+            console.log(`[routeLoader] ✅ Route data is current (${currencyCheck.ageDays} days old, version: ${routesIndex.version})`);
+          }
+          
+          // Check service day
+          const serviceCheck = checkServiceDay();
+          if (serviceCheck.isHoliday) {
+            console.warn(`[routeLoader] ⚠️ Today (${serviceCheck.dayName}) may be a holiday - schedules may differ`);
+          }
+          
           resolve(routesIndex);
         } else {
           reject(new Error('routesIndex not found after loading routes_index.js'));
@@ -57,6 +76,113 @@
     }
     // Fallback to timestamp if version missing
     return Date.now().toString();
+  }
+  
+  /**
+   * Parse version string to date
+   * Format: "YYYYMMDD-HHMM" or timestamp
+   * @param {string} version - Version string
+   * @returns {Date|null} Parsed date or null if invalid
+   */
+  function parseVersionDate(version) {
+    if (!version) return null;
+    
+    // Try format "YYYYMMDD-HHMM"
+    const match = version.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})$/);
+    if (match) {
+      const [, year, month, day, hour, minute] = match;
+      return new Date(
+        parseInt(year, 10),
+        parseInt(month, 10) - 1, // Month is 0-indexed
+        parseInt(day, 10),
+        parseInt(hour, 10),
+        parseInt(minute, 10)
+      );
+    }
+    
+    // Try timestamp
+    const timestamp = parseInt(version, 10);
+    if (!isNaN(timestamp)) {
+      return new Date(timestamp);
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Check if route data is current for today
+   * @returns {Object} { isCurrent: boolean, ageDays: number, warning: string|null }
+   */
+  function validateDataCurrency() {
+    if (!routesIndex || !routesIndex.version) {
+      return {
+        isCurrent: false,
+        ageDays: null,
+        warning: 'No version information available'
+      };
+    }
+    
+    const versionDate = parseVersionDate(routesIndex.version);
+    if (!versionDate) {
+      return {
+        isCurrent: false,
+        ageDays: null,
+        warning: `Invalid version format: ${routesIndex.version}`
+      };
+    }
+    
+    const now = new Date();
+    const ageMs = now - versionDate;
+    const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+    
+    // Consider data stale if older than 7 days
+    const isCurrent = ageDays <= 7;
+    
+    let warning = null;
+    if (ageDays > 14) {
+      warning = `Route data is ${ageDays} days old (generated ${versionDate.toLocaleDateString()}). Schedules may be inaccurate.`;
+    } else if (ageDays > 7) {
+      warning = `Route data is ${ageDays} days old. Consider refreshing.`;
+    }
+    
+    return {
+      isCurrent,
+      ageDays,
+      versionDate,
+      warning
+    };
+  }
+  
+  /**
+   * Check if today is a service day based on GTFS service calendar
+   * This is a simplified check - full implementation would require calendar.txt
+   * @param {Date} date - Date to check (defaults to today)
+   * @returns {Object} { isServiceDay: boolean, dayType: string, isHoliday: boolean }
+   */
+  function checkServiceDay(date = new Date()) {
+    const dayOfWeek = date.getDay(); // 0=Sunday, 6=Saturday
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayType = dayOfWeek === 0 ? 'sunday' : (dayOfWeek === 6 ? 'saturday' : 'weekday');
+    
+    // Simple holiday check (could be expanded with a holiday calendar)
+    // Common US holidays that might affect transit
+    const month = date.getMonth();
+    const day = date.getDate();
+    const year = date.getFullYear();
+    
+    // New Year's Day, Independence Day, Christmas
+    const isHoliday = (
+      (month === 0 && day === 1) || // Jan 1
+      (month === 6 && day === 4) || // Jul 4
+      (month === 11 && day === 25)  // Dec 25
+    );
+    
+    return {
+      isServiceDay: !isHoliday, // Simplified - assumes holidays use Sunday schedule
+      dayType,
+      dayName: dayNames[dayOfWeek],
+      isHoliday
+    };
   }
   
   /**
@@ -131,6 +257,17 @@
         throw new Error('Response superseded by newer request');
       }
       
+      // Validate route data currency
+      if (routeData.meta && routeData.meta.generated_date) {
+        const generatedDate = new Date(routeData.meta.generated_date);
+        const now = new Date();
+        const ageDays = Math.floor((now - generatedDate) / (1000 * 60 * 60 * 24));
+        
+        if (ageDays > 14) {
+          console.warn(`[routeLoader] ⚠️ Route ${routeId} data is ${ageDays} days old (generated ${generatedDate.toLocaleDateString()})`);
+        }
+      }
+      
       // Cache the route data
       routeCache[cacheKey] = routeData;
       
@@ -197,7 +334,10 @@
     getRoutesIndex,
     isRoutesIndexLoaded,
     clearCache,
-    getCacheStats
+    getCacheStats,
+    validateDataCurrency,
+    checkServiceDay,
+    parseVersionDate
   };
   
   console.log('[routeLoader] Module initialized');

@@ -1141,6 +1141,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
     
     // Determine which schedule bucket to use
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     let scheduleBucket = "weekday";
     if (currentDay === 0) {
       scheduleBucket = "sunday";
@@ -1150,8 +1151,44 @@ function attachRouteToMap(map, routeId, directionId, options) {
       scheduleBucket = "weekday";
     }
     
+    console.log(`[attachRouteToMap] 📅 Today is ${dayNames[currentDay]} (day ${currentDay}) - Using schedule bucket: "${scheduleBucket}"`);
+    
+    // Validate data currency and service day
+    let dataCurrencyWarning = null;
+    if (window.routeLoader) {
+      const currencyCheck = window.routeLoader.validateDataCurrency();
+      if (currencyCheck.warning) {
+        dataCurrencyWarning = currencyCheck.warning;
+        console.warn(`[attachRouteToMap] ⚠️ ${currencyCheck.warning}`);
+      }
+      
+      const serviceCheck = window.routeLoader.checkServiceDay(now);
+      if (serviceCheck.isHoliday) {
+        console.warn(`[attachRouteToMap] ⚠️ Today (${serviceCheck.dayName}) may be a holiday - schedules may differ`);
+        // On holidays, many agencies use Sunday schedule
+        if (scheduleBucket === "weekday") {
+          scheduleBucket = "sunday";
+          console.log(`[attachRouteToMap] 📅 Holiday detected - Changed schedule bucket to: "sunday"`);
+        }
+      }
+    }
+    
     // Get weeklyTimes from routeData (new format) or fallback to legacy stop.times
     const weeklyTimes = routeData.weeklyTimes || {};
+    
+    // Log available schedule buckets
+    const availableBuckets = Object.keys(weeklyTimes);
+    console.log(`[attachRouteToMap] 📋 Available schedule buckets in route data: ${availableBuckets.length > 0 ? availableBuckets.join(', ') : 'none (using legacy format)'}`);
+    
+    // Warn if schedule bucket doesn't exist
+    if (!weeklyTimes[scheduleBucket] && Object.keys(weeklyTimes).length > 0) {
+      console.warn(`[attachRouteToMap] ⚠️ Schedule bucket "${scheduleBucket}" not found in route data. Available: ${availableBuckets.join(', ')}. Falling back to weekday.`);
+      scheduleBucket = "weekday";
+    } else if (weeklyTimes[scheduleBucket]) {
+      console.log(`[attachRouteToMap] ✅ Using "${scheduleBucket}" schedule (${Object.keys(weeklyTimes[scheduleBucket]).length} stops have times)`);
+    } else {
+      console.warn(`[attachRouteToMap] ⚠️ No weeklyTimes data found - using legacy stop.times format`);
+    }
 
     stops.forEach((stop) => {
       const lat = stop.lat;
@@ -1162,16 +1199,28 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Get times for this stop from weeklyTimes
       const stopId = String(stop.stop_id || "");
       let timesArray = [];
+      let timesSource = 'none';
       
       // Try to get from weeklyTimes first (new format)
       if (weeklyTimes[scheduleBucket] && weeklyTimes[scheduleBucket][stopId]) {
         timesArray = weeklyTimes[scheduleBucket][stopId];
+        timesSource = scheduleBucket;
       } else if (weeklyTimes.weekday && weeklyTimes.weekday[stopId]) {
         // Fallback to weekday if current day bucket doesn't exist
         timesArray = weeklyTimes.weekday[stopId];
+        timesSource = 'weekday (fallback)';
+        if (scheduleBucket !== 'weekday') {
+          console.warn(`[attachRouteToMap] ⚠️ Stop ${stopId} (${stop.name}) has no "${scheduleBucket}" times - using weekday schedule`);
+        }
       } else if (Array.isArray(stop.times)) {
         // Legacy fallback to stop.times
         timesArray = stop.times;
+        timesSource = 'legacy stop.times';
+      }
+      
+      // Log first stop to show what's being used
+      if (stops.indexOf(stop) === 0 && timesArray.length > 0) {
+        console.log(`[attachRouteToMap] 📍 First stop "${stop.name}" (${stopId}): Using ${timesArray.length} times from "${timesSource}" schedule`);
       }
 
       // Process times: convert to minutes and find next upcoming time
