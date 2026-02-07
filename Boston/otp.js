@@ -2541,6 +2541,20 @@ function showOtpRouteSelector(routeList) {
     background: transparent;
   `;
   
+  // Function to update all button states (defined outside loop so all buttons can use it)
+  const updateAllButtonStates = () => {
+    const allButtons = buttonsContainer.querySelectorAll('button');
+    allButtons.forEach(btn => {
+      if (btn._overlayKey && btn._updateButtonState) {
+        const isActive = window.activeRouteOverlays && window.activeRouteOverlays[btn._overlayKey];
+        const currentActive = btn.getAttribute('data-active') === 'true';
+        if (isActive !== currentActive) {
+          btn._updateButtonState(isActive);
+        }
+      }
+    });
+  };
+  
   // Create square button for each route (keep in order - descending = first to last leg)
   console.log('🎨 [showOtpRouteSelector] Creating buttons for routes:', routeList.map(r => ({ id: r.routeId, name: r.name, mode: r.mode })));
   routeList.forEach((route, idx) => {
@@ -2814,27 +2828,6 @@ function showOtpRouteSelector(routeList) {
     // Store interval on button for cleanup
     button._checkInterval = checkInterval;
     
-    // Also update state when overlay is toggled (immediate feedback)
-    // This helps when multiple routes are active
-    const originalOnclick = button.onclick;
-    button.onclick = function(...args) {
-      originalOnclick.apply(this, args);
-      // After a short delay, verify all button states
-      setTimeout(() => {
-        // Update all buttons in the container
-        const allButtons = buttonsContainer.querySelectorAll('button[data-active]');
-        allButtons.forEach(btn => {
-          if (btn._overlayKey) {
-            const isActive = window.activeRouteOverlays && window.activeRouteOverlays[btn._overlayKey];
-            const currentActive = btn.getAttribute('data-active') === 'true';
-            if (isActive !== currentActive && btn._updateButtonState) {
-              btn._updateButtonState(isActive);
-            }
-          }
-        });
-      }, 100);
-    };
-    
     // Store update function and overlay key on button for cross-button updates
     button._updateButtonState = updateButtonState;
     button._overlayKey = overlayKey;
@@ -2877,14 +2870,23 @@ function showOtpRouteSelector(routeList) {
           if (typeof window.hideRouteOverlay === 'function') {
             window.hideRouteOverlay(mappedRouteId, flippedDirection);
           }
-          // Update button state immediately
-          updateButtonState(false);
+          // Update all button states after a short delay to ensure overlay is removed
+          setTimeout(() => {
+            updateAllButtonStates();
+          }, 150);
         } else {
           // Show overlay (this will add to existing overlays, not replace them)
-          window.showRouteOverlay(mappedRouteId, flippedDirection);
-          
-          // Update button state immediately (optimistic update)
-          updateButtonState(true);
+          window.showRouteOverlay(mappedRouteId, flippedDirection).then(() => {
+            // Update all button states after overlay is created
+            setTimeout(() => {
+              updateAllButtonStates();
+            }, 150);
+          }).catch(() => {
+            // Even on error, update states
+            setTimeout(() => {
+              updateAllButtonStates();
+            }, 150);
+          });
         }
       } else {
         console.error('🎨 [OtpRouteSelector] showRouteOverlay not available');

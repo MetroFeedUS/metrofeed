@@ -1115,10 +1115,10 @@
       <h2 style="margin: 0;">🚌 <span data-translate="trip_options">Trip Options</span></h2>
       <button onclick="minimizeItineraryModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Minimize">−</button>
     </div>
-    <div style="background: #ffa500; color: #000; padding: 12px; border-radius: 8px; margin-bottom: 1rem; border: 2px solid #ff8c00;">
-      <div style="font-weight: bold; margin-bottom: 6px; font-size: 14px;">Trip Planning is in Beta</div>
-      <div style="font-size: 12px; line-height: 1.4; margin-bottom: 8px;">We're actively improving routes and timing accuracy.</div>
-      <div style="font-size: 12px; line-height: 1.4;">See something off? Tap "Report a Problem" — it helps us fix it faster.</div>
+    <div style="background: #2a2a2a; color: #ccc; padding: 10px 12px; border-radius: 4px; margin-bottom: 1rem; border-left: 2px solid #1E90FF; border-top: none; border-right: none; border-bottom: none;">
+      <div style="font-weight: 500; margin-bottom: 4px; font-size: 12px; color: #aaa;">Trip Planning (Beta)</div>
+      <div style="font-size: 11px; line-height: 1.4; color: #999;">Routes and timing are actively being refined.</div>
+      <div style="font-size: 11px; line-height: 1.4; color: #999; margin-top: 4px;">See something off? Tap <span style="color: #1E90FF; text-decoration: underline; cursor: pointer;" onclick="document.querySelector('footer a[href*=\"problem\"]')?.click()">Report a Problem</span> — it helps us improve faster.</div>
     </div>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
       <!-- Trip itineraries will be rendered here -->
@@ -5406,12 +5406,35 @@
     }
     
     // Get route data (works for both Boston and other cities)
-    const routeNumber = String(routeId);
-    console.log('[showRouteOverlay] Looking for route:', routeNumber, 'direction:', directionId);
+    // For branch routes (e.g., "Red-Ashmont"), try the branch first, then fall back to base route
+    let routeNumber = String(routeId);
+    let baseRouteNumber = routeNumber;
+    
+    // Extract base route for subway branches (e.g., "Red-Ashmont" -> "Red")
+    if (routeNumber.includes('-')) {
+      const parts = routeNumber.split('-');
+      if (parts[0] === 'Red' || parts[0] === 'Green' || parts[0] === 'Blue' || parts[0] === 'Orange') {
+        baseRouteNumber = parts[0];
+      }
+    }
+    
+    console.log('[showRouteOverlay] Looking for route:', routeNumber, '(base:', baseRouteNumber, ') direction:', directionId);
     
     let routeData;
     try {
-      routeData = await getRouteData(routeNumber, directionId);
+      // Try branch route first, then fall back to base route
+      try {
+        routeData = await getRouteData(routeNumber, directionId);
+      } catch (branchError) {
+        if (baseRouteNumber !== routeNumber) {
+          console.log('[showRouteOverlay] Branch route not found, trying base route:', baseRouteNumber);
+          routeData = await getRouteData(baseRouteNumber, directionId);
+          // Update routeNumber to base for bus tracking
+          routeNumber = baseRouteNumber;
+        } else {
+          throw branchError;
+        }
+      }
     } catch (error) {
       console.error('[showRouteOverlay] Error loading route:', error);
       
@@ -5456,7 +5479,10 @@
     }
     
     // Create overlay with explicit routeData
-    const overlay = window.attachRouteToMap(map, routeId, directionId, {
+    // For bus tracking, use base route number (e.g., "Red" instead of "Red-Ashmont")
+    // This ensures subway routes match correctly in GTFS-RT feed
+    const busTrackingRouteId = baseRouteNumber !== String(routeId) ? baseRouteNumber : routeId;
+    const overlay = window.attachRouteToMap(map, busTrackingRouteId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)
       routePageUrl: routePageUrl,
