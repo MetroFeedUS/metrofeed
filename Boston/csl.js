@@ -1116,21 +1116,21 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData, vi
     existing.remove();
   }
   
-  // Find next available position for collapsed modals
+  // Find next available position for collapsed bars (above favorites bar)
   const allModals = Array.from(document.querySelectorAll('[id^="csl-bus-modal-"]'));
   const collapsedModals = allModals.filter(m => m.getAttribute('data-collapsed') === 'true');
-  let maxIndex = -1;
-  collapsedModals.forEach(m => {
-    const storedIndex = m.getAttribute('data-collapse-index');
-    if (storedIndex !== null) {
-      maxIndex = Math.max(maxIndex, parseInt(storedIndex, 10));
-    }
-  });
-  const modalIndex = maxIndex + 1;
-  const circleSize = 50;
-  const circleSpacing = 10;
-  const topOffset = 300;
-  const verticalPosition = topOffset + (modalIndex * (circleSize + circleSpacing));
+  const modalIndex = collapsedModals.length;
+  const barHeight = 40;
+  const barSpacing = 8;
+  const favoritesBarBottom = 40; // Favorites bar is at bottom: 40px
+  const favoritesBarHeight = 50; // Approximate height of favorites bar
+  const bottomOffset = favoritesBarBottom + favoritesBarHeight + 10; // 10px spacing above favorites
+  const verticalOffset = bottomOffset + (modalIndex * (barHeight + barSpacing));
+  
+  // Helper function to get collapsed bar position
+  function getCollapsedBarPosition(index) {
+    return bottomOffset + (index * (barHeight + barSpacing));
+  }
   
   // Create modal
   const modal = document.createElement('div');
@@ -1139,50 +1139,69 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData, vi
   modal.setAttribute('data-collapsed', 'true');
   modal.setAttribute('data-collapse-index', modalIndex.toString());
   
-  // Initial collapsed state (circle in corner)
+  // Get initial room data
+  let roomData = null;
+  let unsubscribe = null;
+  
+  // Collapsed content (horizontal bar above favorites)
+  const collapsedContent = document.createElement('div');
+  collapsedContent.className = 'csl-collapsed-content';
+  collapsedContent.style.cssText = `
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    gap: 10px;
+  `;
+  
+  // Initial collapsed bar content
+  collapsedContent.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+      <div style="background: #1E90FF; color: #fff; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 14px;">
+        CSL Bus ${busNumber}
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 0.85em; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          ${routeId} - Loading...
+        </div>
+      </div>
+    </div>
+    <button id="csl-expand-from-bar" style="
+      background: #1E90FF;
+      color: #fff;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: bold;
+      white-space: nowrap;
+    ">Expand</button>
+  `;
+  
+  // Initial collapsed state (horizontal bar above favorites)
   modal.style.cssText = `
     position: fixed;
-    left: calc(100% - ${circleSize + 10}px);
-    top: ${verticalPosition}px;
-    width: ${circleSize}px;
-    height: ${circleSize}px;
-    min-width: ${circleSize}px;
-    max-width: ${circleSize}px;
-    min-height: ${circleSize}px;
-    max-height: ${circleSize}px;
+    bottom: ${getCollapsedBarPosition(modalIndex)}px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    min-width: 300px;
+    max-width: calc(50vw - 20px);
+    height: ${barHeight}px;
     padding: 0;
-    border-radius: 50%;
-    border: 3px solid #fff;
-    background: #1E90FF;
+    border-radius: 8px;
+    border: 1px solid #1E90FF;
+    background: rgba(30,30,30,0.95);
     color: #fff;
     z-index: 100002;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    justify-content: center;
     cursor: pointer;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-weight: bold;
-    font-size: 16px;
-  `;
-  
-  // Get initial room data
-  let roomData = null;
-  let unsubscribe = null;
-  
-  // Collapsed content (bus number in circle)
-  const collapsedContent = document.createElement('div');
-  collapsedContent.className = 'csl-collapsed-content';
-  collapsedContent.textContent = busNumber;
-  collapsedContent.style.cssText = `
-    position: relative;
-    color: #fff;
-    font-weight: bold;
-    font-size: 16px;
-    pointer-events: none;
-    text-align: center;
-    line-height: 1;
   `;
   
   // Expanded content container
@@ -1217,50 +1236,58 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData, vi
   
   let isCollapsed = true;
   
-  // Click handler for collapsed circle
+  // Click handler for collapsed bar (expand on click)
   modal.onclick = (e) => {
     if (isCollapsed && !e.target.closest('button')) {
       collapseBtn.click();
     }
   };
   
+  // Expand button in collapsed bar
+  const expandFromBarBtn = collapsedContent.querySelector('#csl-expand-from-bar');
+  if (expandFromBarBtn) {
+    expandFromBarBtn.onclick = (e) => {
+      e.stopPropagation();
+      collapseBtn.click();
+    };
+  }
+  
   collapseBtn.onclick = (e) => {
     e.stopPropagation();
     isCollapsed = !isCollapsed;
     
     if (isCollapsed) {
-      // Collapse
+      // Collapse to horizontal bar above favorites
       modal.setAttribute('data-collapsed', 'true');
+      // Recalculate position (in case other modals were added/removed)
+      const currentIndex = parseInt(modal.getAttribute('data-collapse-index') || '0', 10);
+      const currentBottom = getCollapsedBarPosition(currentIndex);
       modal.style.cssText = `
         position: fixed;
-        left: calc(100% - ${circleSize + 10}px);
-        top: ${verticalPosition}px;
-        width: ${circleSize}px;
-        height: ${circleSize}px;
-        min-width: ${circleSize}px;
-        max-width: ${circleSize}px;
-        min-height: ${circleSize}px;
-        max-height: ${circleSize}px;
+        bottom: ${currentBottom}px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: auto;
+        min-width: 300px;
+        max-width: calc(50vw - 20px);
+        height: ${barHeight}px;
         padding: 0;
-        border-radius: 50%;
-        border: 3px solid #fff;
-        background: #1E90FF;
+        border-radius: 8px;
+        border: 1px solid #1E90FF;
+        background: rgba(30,30,30,0.95);
         color: #fff;
         z-index: 100002;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
-        justify-content: center;
         cursor: pointer;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        font-weight: bold;
-        font-size: 16px;
       `;
-      collapsedContent.style.display = 'block';
+      collapsedContent.style.display = 'flex';
       expandedContent.style.display = 'none';
       collapseBtn.style.display = 'none';
-      collapseBtn.innerHTML = '▶';
+      collapseBtn.innerHTML = '▼';
     } else {
       // Expand
       modal.setAttribute('data-collapsed', 'false');
@@ -1508,8 +1535,8 @@ function showCSLBusModal(roomKey, routeId, directionId, busNumber, routeData, vi
   modal.appendChild(expandedContent);
   modal.appendChild(collapseBtn);
   
-  // Initially show collapsed content only
-  collapsedContent.style.display = 'block';
+  // Initially show collapsed content only (horizontal bar)
+  collapsedContent.style.display = 'flex';
   expandedContent.style.display = 'none';
   collapseBtn.style.display = 'none';
   
