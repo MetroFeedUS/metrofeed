@@ -1224,13 +1224,20 @@ async function extractRouteInfo(leg, legIdx) {
     }
   }
   // RAIL/TRAIN/FERRY: Use publicCode if available, otherwise line.name
+  // For commuter rail, map line names like "Fitchburg Line" to route IDs like "CR-Fitchburg"
   else if (leg.mode === 'RAIL' || leg.mode === 'TRAIN' || leg.mode === 'FERRY') {
     if (leg.line && leg.line.publicCode) {
       routeNumber = leg.line.publicCode;
       console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using publicCode:`, routeNumber);
+      
+      // If publicCode doesn't start with "CR-", try to map it
+      if (!routeNumber.startsWith('CR-') && leg.mode === 'RAIL') {
+        routeNumber = mapCommuterRailRoute(routeNumber, leg.line?.name);
+      }
     } else if (leg.line && leg.line.name) {
-      routeNumber = leg.line.name;
-      console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Using line.name:`, routeNumber);
+      // Map commuter rail line names to route IDs
+      routeNumber = mapCommuterRailRoute(leg.line.name, leg.line.name);
+      console.log(`🔍 [extractRouteInfo] Leg ${legIdx} (${leg.mode}): Mapped line.name "${leg.line.name}" to route:`, routeNumber);
     }
   }
   
@@ -1583,6 +1590,75 @@ function mapSubwayRouteCode(routeId, routeName) {
   }
   
   // Fallback: return original
+  return routeId;
+}
+
+/**
+ * Map commuter rail route names to route IDs (MBTA specific)
+ * OTP returns names like "Fitchburg Line" but system expects "CR-Fitchburg"
+ * @param {string} routeId - Route ID or name from OTP
+ * @param {string} routeName - Route name from OTP (for lookup)
+ * @returns {string} Mapped route ID (e.g., "CR-Fitchburg")
+ */
+function mapCommuterRailRoute(routeId, routeName) {
+  // If it already starts with "CR-", return as-is
+  if (routeId && routeId.startsWith('CR-')) {
+    return routeId;
+  }
+  
+  // Try to look up from routesIndex if available
+  const isBoston = (typeof window.CITY_CONFIG !== 'undefined' && window.CITY_CONFIG.useLazyLoading) ||
+                   (typeof CITY_CONFIG !== 'undefined' && CITY_CONFIG.useLazyLoading);
+  if (isBoston && window.routeLoader && window.routeLoader.isRoutesIndexLoaded()) {
+    const routesIndex = window.routeLoader.getRoutesIndex();
+    if (routesIndex && routesIndex.routes) {
+      // Look for commuter rail routes that match
+      const nameToMatch = (routeName || routeId || '').toLowerCase();
+      const routeMatch = routesIndex.routes.find(r => {
+        if (!r.route_id || !r.route_id.startsWith('CR-')) return false;
+        
+        // Check if route name matches
+        const routeTitle = (r.route_title || '').toLowerCase();
+        const routeLongName = (r.route_long_name || '').toLowerCase();
+        const routeNameField = (r.route_name || '').toLowerCase();
+        
+        // Extract line name from "CR-Fitchburg" -> "Fitchburg"
+        const crLineName = r.route_id.replace('CR-', '').toLowerCase();
+        
+        // Match patterns:
+        // "Fitchburg Line" -> "CR-Fitchburg"
+        // "Fitchburg" -> "CR-Fitchburg"
+        return nameToMatch.includes(crLineName) || 
+               nameToMatch.includes(r.route_id.toLowerCase()) ||
+               routeTitle.includes(nameToMatch) ||
+               routeLongName.includes(nameToMatch) ||
+               routeNameField.includes(nameToMatch);
+      });
+      
+      if (routeMatch) {
+        console.log(`🔍 [mapCommuterRailRoute] Mapped "${routeId}" to "${routeMatch.route_id}"`);
+        return routeMatch.route_id;
+      }
+    }
+  }
+  
+  // Fallback: Try to extract from common patterns
+  // "Fitchburg Line" -> "CR-Fitchburg"
+  // "Fairmount Line" -> "CR-Fairmount"
+  if (routeName || routeId) {
+    const name = (routeName || routeId).toLowerCase();
+    if (name.includes('line')) {
+      // Extract line name: "Fitchburg Line" -> "Fitchburg"
+      const lineName = name.replace(/\s*line\s*$/i, '').trim();
+      if (lineName) {
+        // Capitalize first letter: "fitchburg" -> "Fitchburg"
+        const capitalized = lineName.charAt(0).toUpperCase() + lineName.slice(1);
+        return `CR-${capitalized}`;
+      }
+    }
+  }
+  
+  // Final fallback: return original
   return routeId;
 }
 
@@ -2020,9 +2096,31 @@ function drawJourney(journey) {
       window.routeLegLines.push(transitId);
       allCoords = allCoords.concat(leg.solidSegment);
       
-      // Store route info for selector modal (map subway codes)
+      // Store route info for selector modal (map subway and commuter rail codes)
       const routeName = leg.line?.name || `Route ${leg.routeNumber}`;
-      let mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
+      let mappedRouteId;
+      
+      // Map commuter rail routes (RAIL/TRAIN mode)
+      // Check if it's already mapped to CR- prefix, or if it contains "Line" (commuter rail naming)
+      if ((leg.mode === 'RAIL' || leg.mode === 'TRAIN') && leg.routeNumber) {
+        if (leg.routeNumber.startsWith('CR-')) {
+          // Already mapped
+          mappedRouteId = leg.routeNumber;
+        } else if (leg.routeNumber.includes('Line') || routeName.includes('Line')) {
+          // Needs mapping: "Fitchburg Line" -> "CR-Fitchburg"
+          mappedRouteId = mapCommuterRailRoute(leg.routeNumber, routeName);
+        } else {
+          // Try mapping anyway (might be commuter rail without "Line" in name)
+          mappedRouteId = mapCommuterRailRoute(leg.routeNumber, routeName);
+          // If mapping didn't change it and it doesn't start with CR-, try subway mapping
+          if (mappedRouteId === leg.routeNumber && !mappedRouteId.startsWith('CR-')) {
+            mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
+          }
+        }
+      } else {
+        // Map subway routes
+        mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
+      }
       
       // If routeNumber already has a branch suffix (from extractRouteInfo), preserve it
       // Otherwise, try to determine branch from stops if we have a base route
@@ -2336,34 +2434,69 @@ function showOtpRouteSelector(routeList) {
     existingModal.remove();
   }
   
-  // Track collapsed state
-  let isCollapsed = false;
+  // Track collapsed state - START MINIMIZED
+  let isCollapsed = true;
   
-  // Create modal container (opens on right side, vertically)
+  // Create modal container - starts minimized (small square box)
   const modal = document.createElement('div');
   modal.id = 'otpRouteSelectorModal';
+  
+  // Find position for minimized box (top-right, similar to route info panels)
+  const allPanels = Array.from(document.querySelectorAll('.route-info-panel[data-collapsed="true"]'));
+  const maxIndex = allPanels.length > 0 
+    ? Math.max(...allPanels.map(p => parseInt(p.getAttribute('data-collapse-index') || '0', 10)))
+    : -1;
+  const panelIndex = maxIndex + 1;
+  const boxSize = 60; // Square size when minimized
+  const boxSpacing = 10;
+  const topOffset = 250; // Start from top to avoid overlapping with other UI elements
+  const verticalPosition = topOffset + (panelIndex * (boxSize + boxSpacing));
+  
+  // Initial minimized state
   modal.style.cssText = `
     position: fixed;
-    top: 50%;
+    top: ${verticalPosition}px;
     right: 20px;
-    transform: translateY(-50%);
+    transform: none;
     background: rgba(20, 20, 20, 0.95);
     border: 3px solid #555;
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 8px;
+    padding: 0;
     z-index: 10000;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     transition: all 0.3s ease;
-    max-width: 300px;
-    max-height: 80vh;
-    overflow-y: auto;
+    width: ${boxSize}px;
+    height: ${boxSize}px;
+    min-width: ${boxSize}px;
+    max-width: ${boxSize}px;
+    min-height: ${boxSize}px;
+    max-height: ${boxSize}px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
   `;
+  modal.setAttribute('data-collapsed', 'true');
+  modal.setAttribute('data-collapse-index', panelIndex.toString());
   
-  // Title with collapse button
+  // Minimized view content (shown when collapsed)
+  const minimizedLabel = document.createElement('div');
+  minimizedLabel.textContent = routeList.length > 0 ? `${routeList.length}` : '0';
+  minimizedLabel.style.cssText = `
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1;
+  `;
+  modal.appendChild(minimizedLabel);
+  
+  // Title with collapse button (shown when expanded)
   const titleBar = document.createElement('div');
   titleBar.style.cssText = `
-    display: flex;
+    display: none;
     position: relative;
     justify-content: space-between;
     align-items: center;
@@ -2408,12 +2541,13 @@ function showOtpRouteSelector(routeList) {
     closeBtn.style.background = 'transparent';
     closeBtn.style.borderColor = '#666';
   };
-  closeBtn.onclick = () => {
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
     modal.remove();
   };
   titleBar.appendChild(closeBtn);
   
-  // Collapse button (starts expanded, so shows collapse arrow pointing right)
+  // Collapse button (when expanded)
   const collapseBtn = document.createElement('button');
   collapseBtn.textContent = '►';
   collapseBtn.style.cssText = `
@@ -2425,7 +2559,7 @@ function showOtpRouteSelector(routeList) {
     height: 28px;
     border-radius: 4px;
     cursor: pointer;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
@@ -2439,60 +2573,57 @@ function showOtpRouteSelector(routeList) {
     collapseBtn.style.borderColor = '#666';
   };
   
-  // Collapse/expand functionality
-  collapseBtn.onclick = () => {
+  // Expand/collapse functionality
+  const toggleExpand = (e) => {
+    if (e) e.stopPropagation();
     isCollapsed = !isCollapsed;
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
     
     if (isCollapsed) {
-      // Collapse to right side - vertical strip
-      if (isMobile) {
-        modal.style.cssText = `
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          transform: none;
-          background: rgba(20, 20, 20, 0.95);
-          border: 3px solid #555;
-          border-radius: 12px;
-          padding: 10px 8px;
-          z-index: 10000;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          transition: all 0.3s ease;
-          max-width: 80px;
-        `;
-      } else {
-        modal.style.cssText = `
-          position: fixed;
-          top: 50%;
-          right: 20px;
-          transform: translateY(-50%);
-          background: rgba(20, 20, 20, 0.95);
-          border: 3px solid #555;
-          border-radius: 12px;
-          padding: 12px 8px;
-          z-index: 10000;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          transition: all 0.3s ease;
-          max-width: 80px;
-        `;
-      }
-      title.style.display = 'none';
-      closeBtn.style.display = 'none';
-      buttonsContainer.style.flexDirection = 'column';
-      buttonsContainer.style.gap = '10px';
-      buttonsContainer.style.justifyContent = 'flex-start';
-      collapseBtn.textContent = '◄';
+      // Collapse to small square box
+      const storedIndex = modal.getAttribute('data-collapse-index') || '0';
+      const storedTop = topOffset + (parseInt(storedIndex, 10) * (boxSize + boxSpacing));
+      
+      modal.style.cssText = `
+        position: fixed;
+        top: ${storedTop}px;
+        right: 20px;
+        transform: none;
+        background: rgba(20, 20, 20, 0.95);
+        border: 3px solid #555;
+        border-radius: 8px;
+        padding: 0;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        transition: all 0.3s ease;
+        width: ${boxSize}px;
+        height: ${boxSize}px;
+        min-width: ${boxSize}px;
+        max-width: ${boxSize}px;
+        min-height: ${boxSize}px;
+        max-height: ${boxSize}px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        overflow: hidden;
+      `;
+      modal.setAttribute('data-collapsed', 'true');
+      titleBar.style.display = 'none';
+      buttonsContainer.style.display = 'none';
+      minimizedLabel.style.display = 'block';
+      collapseBtn.style.display = 'none';
     } else {
-      // Expand to right side (vertical layout)
+      // Expand to show routes
       if (isMobile) {
         modal.style.cssText = `
           position: fixed;
-          top: 50%;
+          top: auto;
+          bottom: 100px;
           right: 20px;
-          transform: translateY(-50%);
+          left: auto;
+          transform: none;
           background: rgba(20, 20, 20, 0.95);
           border: 3px solid #555;
           border-radius: 12px;
@@ -2501,9 +2632,15 @@ function showOtpRouteSelector(routeList) {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
-          max-width: 90vw;
-          max-height: 80vh;
+          max-width: calc(100vw - 40px);
+          max-height: calc(100vh - 140px);
+          width: auto;
+          min-width: 200px;
+          height: auto;
+          min-height: auto;
           overflow-y: auto;
+          display: block;
+          cursor: default;
         `;
       } else {
         modal.style.cssText = `
@@ -2521,16 +2658,29 @@ function showOtpRouteSelector(routeList) {
           transition: all 0.3s ease;
           max-width: 300px;
           max-height: 80vh;
+          width: auto;
+          min-width: 200px;
+          height: auto;
+          min-height: auto;
           overflow-y: auto;
+          display: block;
+          cursor: default;
         `;
       }
-      title.style.display = 'block';
-      closeBtn.style.display = 'flex';
-      buttonsContainer.style.flexDirection = 'column';
-      buttonsContainer.style.gap = '12px';
-      buttonsContainer.style.flexWrap = 'nowrap';
-      buttonsContainer.style.justifyContent = 'flex-start';
-      collapseBtn.textContent = '►';
+      modal.removeAttribute('data-collapsed');
+      titleBar.style.display = 'flex';
+      buttonsContainer.style.display = 'flex';
+      minimizedLabel.style.display = 'none';
+      collapseBtn.style.display = 'flex';
+    }
+  };
+  
+  collapseBtn.onclick = toggleExpand;
+  
+  // Click modal when minimized to expand
+  modal.onclick = () => {
+    if (isCollapsed) {
+      toggleExpand();
     }
   };
   
@@ -2542,7 +2692,7 @@ function showOtpRouteSelector(routeList) {
   const buttonsContainer = document.createElement('div');
   buttonsContainer.id = 'otpRouteButtonsContainer';
   buttonsContainer.style.cssText = `
-    display: flex;
+    display: none;
     flex-direction: column;
     flex-wrap: nowrap;
     gap: 10px;
@@ -2595,9 +2745,10 @@ function showOtpRouteSelector(routeList) {
       transition: all 0.2s;
       position: relative;
       padding: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
       word-wrap: break-word;
       overflow: hidden;
+      opacity: 0.9;
     `;
     
     // Route number/label (centered in square)
@@ -2784,35 +2935,31 @@ function showOtpRouteSelector(routeList) {
     // Track active state (use flipped direction for key since we flip when showing)
     const overlayKey = `${mappedRouteId}-${flippedDirection}`;
     
-    // Function to update button active state (must be defined before use)
+    // Function to update button active state (NO GLOW - just border change)
     const updateButtonState = (active) => {
       if (active) {
         button.style.border = '3px solid #fff';
-        button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
+        button.style.opacity = '1';
         button.setAttribute('data-active', 'true');
       } else {
         button.style.border = `3px solid ${route.color}`;
-        button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
+        button.style.opacity = '0.9';
         button.setAttribute('data-active', 'false');
       }
     };
     
-    // Hover effects for square buttons
+    // Hover effects for square buttons (NO GLOW)
     button.onmouseenter = () => {
       if (button.getAttribute('data-active') !== 'true') {
-        button.style.transform = 'scale(1.1)';
-        button.style.boxShadow = `0 4px 12px ${route.color}`;
+        button.style.transform = 'scale(1.05)';
+        button.style.opacity = '1';
         button.style.zIndex = '10001';
       }
     };
     button.onmouseleave = () => {
       button.style.transform = 'scale(1)';
       const isActive = button.getAttribute('data-active') === 'true';
-      if (!isActive) {
-        button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
-      } else {
-        button.style.boxShadow = `0 0 12px ${route.color}, 0 0 6px #fff`;
-      }
+      button.style.opacity = isActive ? '1' : '0.9';
       button.style.zIndex = 'auto';
     };
     
@@ -2912,67 +3059,8 @@ function showOtpRouteSelector(routeList) {
   modal.appendChild(buttonsContainer);
   console.log('🎨 [showOtpRouteSelector] ✅ buttonsContainer appended to modal');
   
-  // Mobile responsiveness
-  const mediaQuery = window.matchMedia('(max-width: 768px)');
-  function handleMobileView(e) {
-    if (e.matches) {
-      // Mobile: smaller squares, adjust layout
-      if (!isCollapsed) {
-        modal.style.cssText = `
-          position: fixed;
-          top: 50%;
-          right: 20px;
-          transform: translateY(-50%);
-          background: rgba(20, 20, 20, 0.95);
-          border: 3px solid #555;
-          border-radius: 12px;
-          padding: 12px;
-          z-index: 10000;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          transition: all 0.3s ease;
-          max-width: 90vw;
-          max-height: 80vh;
-          overflow-y: auto;
-        `;
-        buttonsContainer.style.gap = '8px';
-        // Make buttons slightly smaller on mobile
-        document.querySelectorAll('#otpRouteButtonsContainer button').forEach(btn => {
-          btn.style.width = '50px';
-          btn.style.height = '50px';
-          btn.style.fontSize = '10px';
-        });
-      } else {
-        // Collapsed on mobile: bottom right
-        modal.style.cssText = `
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          transform: none;
-          background: rgba(20, 20, 20, 0.95);
-          border: 3px solid #555;
-          border-radius: 12px;
-          padding: 10px 8px;
-          z-index: 10000;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          transition: all 0.3s ease;
-          max-width: 80px;
-        `;
-      }
-    } else {
-      // Desktop: restore original sizes
-      if (!isCollapsed) {
-        document.querySelectorAll('#otpRouteButtonsContainer button').forEach(btn => {
-          btn.style.width = '60px';
-          btn.style.height = '60px';
-          btn.style.fontSize = '11px';
-        });
-      }
-    }
-  }
-  handleMobileView(mediaQuery);
-  mediaQuery.addEventListener('change', handleMobileView);
+  // Mobile responsiveness - handled in toggleExpand function
+  // No separate handler needed since toggleExpand handles mobile positioning
   
   // Cleanup function when modal is removed
   const originalRemove = modal.remove.bind(modal);
