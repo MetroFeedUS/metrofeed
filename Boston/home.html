@@ -2402,20 +2402,66 @@
         window.activeRouteOverlays = {};
       }
 
-      keys.forEach((overlayKey) => {
-        const d = descriptors[overlayKey];
-        if (!d || !d.options || !d.attachRouteId) {
-          console.warn('[restoreRouteOverlaysAfterStyleChange] Invalid descriptor for:', overlayKey, d);
-          return;
+      // Restore all routes sequentially to avoid conflicts
+      // Use async/await to ensure each route is fully restored before moving to the next
+      (async () => {
+        for (const overlayKey of keys) {
+          const d = descriptors[overlayKey];
+          if (!d || !d.options) {
+            console.warn('[restoreRouteOverlaysAfterStyleChange] Invalid descriptor for:', overlayKey, d);
+            continue;
+          }
+          
+          // Use originalRouteId if available (for unique layer IDs), otherwise fall back to attachRouteId
+          const routeIdForLayers = d.originalRouteId || d.attachRouteId;
+          const routeIdForTracking = d.attachRouteId; // For bus tracking (base route ID)
+          
+          if (!routeIdForLayers || !d.directionId) {
+            console.warn('[restoreRouteOverlaysAfterStyleChange] Missing routeId or directionId for:', overlayKey, d);
+            continue;
+          }
+          
+          try {
+            console.log('[restoreRouteOverlaysAfterStyleChange] Restoring overlay:', overlayKey, 'route (layers):', routeIdForLayers, 'route (tracking):', routeIdForTracking, 'direction:', d.directionId);
+            
+            // Check if routeData exists and has required fields
+            if (!d.options.routeData) {
+              console.error('[restoreRouteOverlaysAfterStyleChange] Missing routeData in descriptor for:', overlayKey);
+              continue;
+            }
+            
+            // Validate routeData structure
+            if (!d.options.routeData.shape && !d.options.routeData.shapes) {
+              console.error('[restoreRouteOverlaysAfterStyleChange] Invalid routeData (no shape/shapes) for:', overlayKey);
+              continue;
+            }
+            
+            // IMPORTANT: Use originalRouteId for attachRouteToMap to ensure unique layer IDs
+            // The routeData in options already contains the correct branch-specific data
+            // But we need to pass the original routeId so layer IDs don't conflict
+            const restoreOptions = {
+              ...d.options,
+              // Override routeId in options if needed (attachRouteToMap uses the routeId parameter for layer IDs)
+            };
+            
+            // Restore the overlay - use originalRouteId for unique layer IDs
+            const overlay = window.attachRouteToMap(map, routeIdForLayers, d.directionId, restoreOptions);
+            if (overlay) {
+              window.activeRouteOverlays[overlayKey] = overlay;
+              console.log('[restoreRouteOverlaysAfterStyleChange] ✅ Successfully restored:', overlayKey);
+            } else {
+              console.error('[restoreRouteOverlaysAfterStyleChange] ❌ attachRouteToMap returned null/undefined for:', overlayKey);
+            }
+            
+            // Small delay between restorations to avoid overwhelming the map
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (err) {
+            console.error('[restoreRouteOverlaysAfterStyleChange] ❌ Failed to restore overlay:', overlayKey, err);
+            console.error('[restoreRouteOverlaysAfterStyleChange] Error details:', err.stack);
+          }
         }
-        try {
-          console.log('[restoreRouteOverlaysAfterStyleChange] Restoring overlay:', overlayKey, 'route:', d.attachRouteId, 'direction:', d.directionId);
-          window.activeRouteOverlays[overlayKey] = window.attachRouteToMap(map, d.attachRouteId, d.directionId, d.options);
-          console.log('[restoreRouteOverlaysAfterStyleChange] Successfully restored:', overlayKey);
-        } catch (err) {
-          console.error('[restoreRouteOverlaysAfterStyleChange] Failed to restore overlay:', overlayKey, err);
-        }
-      });
+        console.log('[restoreRouteOverlaysAfterStyleChange] ✅ Restoration complete. Total restored:', Object.keys(window.activeRouteOverlays).length, 'of', keys.length);
+      })();
     } catch (err) {
       console.warn('[restoreRouteOverlaysAfterStyleChange] Unexpected error:', err);
     }
@@ -5692,7 +5738,8 @@
       trackBuses: true
     };
     window.activeRouteOverlayDescriptors[overlayKey] = {
-      attachRouteId: busTrackingRouteId,
+      attachRouteId: busTrackingRouteId, // For bus tracking (base route ID)
+      originalRouteId: routeId, // Original route ID (e.g., "Red-Ashmont") for layer IDs
       directionId,
       options: descriptorOptions
     };
