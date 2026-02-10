@@ -2376,6 +2376,39 @@
   }
   
   // === SECTION: MAP STYLE TOGGLE LOGIC ===
+  // MapLibre setStyle() clears ALL layers/sources. Our route overlays are layers, so we must restore them
+  // after a day/night map style swap. (Markers can survive because they are DOM elements.)
+  function restoreRouteOverlaysAfterStyleChange() {
+    try {
+      if (!map || !window.attachRouteToMap) return;
+      const descriptors = window.activeRouteOverlayDescriptors || {};
+      const keys = Object.keys(descriptors);
+      if (keys.length === 0) return;
+
+      // Remove existing overlay handles first to avoid duplicating DOM markers/panels
+      if (window.activeRouteOverlays) {
+        Object.keys(window.activeRouteOverlays).forEach(k => {
+          try { window.activeRouteOverlays[k].remove(); } catch (e) {}
+        });
+        window.activeRouteOverlays = {};
+      } else {
+        window.activeRouteOverlays = {};
+      }
+
+      keys.forEach((overlayKey) => {
+        const d = descriptors[overlayKey];
+        if (!d || !d.options || !d.attachRouteId) return;
+        try {
+          window.activeRouteOverlays[overlayKey] = window.attachRouteToMap(map, d.attachRouteId, d.directionId, d.options);
+        } catch (err) {
+          console.warn('[restoreRouteOverlaysAfterStyleChange] Failed to restore overlay:', overlayKey, err);
+        }
+      });
+    } catch (err) {
+      console.warn('[restoreRouteOverlaysAfterStyleChange] Unexpected error:', err);
+    }
+  }
+
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   
   if (themeToggleBtn) {
@@ -2383,6 +2416,15 @@
       isNightMode = !isNightMode;
       // Make isNightMode globally accessible for camera markers
       window.isNightMode = isNightMode;
+
+      // After style swap, restore route overlays (line layers) so shapes persist.
+      // Use `once` so we don't stack listeners.
+      if (map && typeof map.once === 'function') {
+        map.once('style.load', () => {
+          // small delay helps ensure sprite/fonts are ready before adding layers
+          setTimeout(restoreRouteOverlaysAfterStyleChange, 50);
+        });
+      }
       
       if (isNightMode) {
         map.setStyle(nightStyle);
@@ -5441,6 +5483,10 @@
   if (!window.activeRouteOverlays) {
     window.activeRouteOverlays = {};
   }
+  // Persist enough info to rebuild overlays after map.setStyle() day/night swaps
+  if (!window.activeRouteOverlayDescriptors) {
+    window.activeRouteOverlayDescriptors = {};
+  }
   
   /**
    * Show a route overlay on the main map
@@ -5474,6 +5520,9 @@
     if (window.activeRouteOverlays[overlayKey]) {
       window.activeRouteOverlays[overlayKey].remove();
       delete window.activeRouteOverlays[overlayKey];
+      if (window.activeRouteOverlayDescriptors) {
+        delete window.activeRouteOverlayDescriptors[overlayKey];
+      }
       console.log('[showRouteOverlay] Route overlay toggled off:', overlayKey);
       return;
     }
@@ -5580,6 +5629,21 @@
     });
     
     window.activeRouteOverlays[overlayKey] = overlay;
+    // Save descriptor so we can restore after day/night style changes
+    window.activeRouteOverlayDescriptors[overlayKey] = {
+      attachRouteId: busTrackingRouteId,
+      directionId,
+      options: {
+        mode: 'mainOverlay',
+        routeData,
+        routePageUrl,
+        fitBounds: false,
+        apiKey,
+        busApiType: CITY_CONFIG.busApiType,
+        gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
+        trackBuses: true
+      }
+    };
     console.log('[showRouteOverlay] Route overlay added:', overlayKey);
   };
   
@@ -5593,6 +5657,9 @@
     if (window.activeRouteOverlays[overlayKey]) {
       window.activeRouteOverlays[overlayKey].remove();
       delete window.activeRouteOverlays[overlayKey];
+      if (window.activeRouteOverlayDescriptors) {
+        delete window.activeRouteOverlayDescriptors[overlayKey];
+      }
       console.log('[hideRouteOverlay] Route overlay removed:', overlayKey);
     }
   };
@@ -5605,6 +5672,9 @@
       window.activeRouteOverlays[key].remove();
     });
     window.activeRouteOverlays = {};
+    if (window.activeRouteOverlayDescriptors) {
+      window.activeRouteOverlayDescriptors = {};
+    }
     console.log('[clearAllRouteOverlays] All route overlays cleared');
   };
 

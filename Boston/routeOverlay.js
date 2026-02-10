@@ -983,9 +983,13 @@ function getRouteColorByName(routeName) {
   }
   
   // Generate a color from the hash (avoid too dark/light colors)
+  // Bounds ensure colors are visible and distinct:
+  // - Hue: 0-360 (full spectrum)
+  // - Saturation: 50-85% (vibrant, not washed out)
+  // - Lightness: 40-70% (visible, avoiding near-black and near-white)
   const hue = Math.abs(hash) % 360;
-  const saturation = 60 + (Math.abs(hash) % 20); // 60-80% saturation
-  const lightness = 45 + (Math.abs(hash) % 15); // 45-60% lightness
+  const saturation = 50 + (Math.abs(hash) % 35); // 50-85% saturation
+  const lightness = 40 + (Math.abs(hash) % 30); // 40-70% lightness
   
   // Convert HSL to hex
   const h = hue / 360;
@@ -1014,6 +1018,27 @@ function getRouteColorByName(routeName) {
   r = Math.round((r + m) * 255);
   g = Math.round((g + m) * 255);
   b = Math.round((b + m) * 255);
+  
+  // Safety check: ensure color is not too close to black or white
+  // If any RGB component is too low (< 30) or too high (> 240), adjust it
+  const minComponent = 30;  // Minimum RGB value (prevents near-black)
+  const maxComponent = 240; // Maximum RGB value (prevents near-white)
+  
+  if (r < minComponent && g < minComponent && b < minComponent) {
+    // Too dark, brighten it
+    const avg = (r + g + b) / 3;
+    const scale = minComponent / avg;
+    r = Math.min(255, Math.round(r * scale));
+    g = Math.min(255, Math.round(g * scale));
+    b = Math.min(255, Math.round(b * scale));
+  } else if (r > maxComponent && g > maxComponent && b > maxComponent) {
+    // Too light, darken it
+    const avg = (r + g + b) / 3;
+    const scale = maxComponent / avg;
+    r = Math.max(0, Math.round(r * scale));
+    g = Math.max(0, Math.round(g * scale));
+    b = Math.max(0, Math.round(b * scale));
+  }
   
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
