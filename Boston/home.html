@@ -2431,19 +2431,22 @@
 
       // After style swap, restore route overlays (line layers) so shapes persist.
       // Use `once` so we don't stack listeners.
+      console.log('[Theme Toggle] Setting up route overlay restoration after style change');
       if (map && typeof map.once === 'function') {
+        // Listen for style.load first
         map.once('style.load', () => {
-          // Delay helps ensure sprite/fonts are ready before adding layers
-          // Also wait for map to be fully loaded
-          const restoreWhenReady = () => {
-            if (map.loaded() && map.isStyleLoaded()) {
+          console.log('[Theme Toggle] style.load event fired, waiting for map to be ready...');
+          // Then wait for idle event (map is fully loaded and rendered)
+          map.once('idle', () => {
+            console.log('[Theme Toggle] Map is idle, restoring route overlays...');
+            // Small delay to ensure everything is settled
+            setTimeout(() => {
               restoreRouteOverlaysAfterStyleChange();
-            } else {
-              setTimeout(restoreWhenReady, 100);
-            }
-          };
-          setTimeout(restoreWhenReady, 200);
+            }, 300);
+          });
         });
+      } else {
+        console.warn('[Theme Toggle] Map or map.once not available, cannot restore overlays');
       }
       
       if (isNightMode) {
