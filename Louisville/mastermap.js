@@ -1,6 +1,6 @@
 /* Auto-generated: mastermap.js (data core) */
 // City: Louisville
-// Generated: 2026-02-09T23:10:05.593560-05:00
+// Generated: 2026-02-10T00:10:04.996855-05:00
 
 const masterRoutes = [
   {
@@ -2396,7 +2396,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13295_shp-vA"
     }
@@ -4575,7 +4575,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13296_shp-vA"
     }
@@ -6240,7 +6240,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13298_shp-vA"
     }
@@ -8031,7 +8031,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13300_shp-vA"
     }
@@ -11026,7 +11026,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13302_shp-vA"
     }
@@ -14642,7 +14642,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13306_shp-vA"
     }
@@ -16403,7 +16403,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13308_shp-vA"
     }
@@ -18045,7 +18045,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13272_shp-vA"
     }
@@ -20789,7 +20789,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13264_shp-vA"
     }
@@ -23583,7 +23583,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13268_shp-vA"
     }
@@ -28414,7 +28414,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13289_shp-vA"
     }
@@ -32766,7 +32766,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13283_shp-vA"
     }
@@ -34071,7 +34071,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13292_shp-vA"
     }
@@ -35277,7 +35277,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13267_shp-vA"
     }
@@ -39307,7 +39307,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13309_shp-vA"
     }
@@ -43115,7 +43115,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13312_shp-vA"
     }
@@ -50918,7 +50918,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13324_shp-vA"
     }
@@ -58546,7 +58546,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13319_shp-vA"
     }
@@ -63042,7 +63042,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13273_shp-vA"
     }
@@ -67454,7 +67454,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "10332_shp-vA"
     }
@@ -70762,7 +70762,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13327_shp-vA"
     }
@@ -74137,7 +74137,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13329_shp-vA"
     }
@@ -79420,7 +79420,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13332_shp-vA"
     }
@@ -84699,7 +84699,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13336_shp-vA"
     }
@@ -89940,7 +89940,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13278_shp-vA"
     }
@@ -95294,7 +95294,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13265_shp-vA"
     }
@@ -98360,7 +98360,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13338_shp-vA"
     }
@@ -101655,7 +101655,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "10334_shp-vA"
     }
@@ -105330,7 +105330,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13374_shp-vA"
     }
@@ -109235,7 +109235,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "10328_shp-vA"
     }
@@ -111877,7 +111877,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13341_shp-vA"
     }
@@ -114542,7 +114542,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13342_shp-vA"
     }
@@ -115312,7 +115312,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": false,
       "shape_id_used": "13246_shp-vA"
     }
@@ -115845,7 +115845,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": false,
       "shape_id_used": "13248_shp-vA"
     }
@@ -119951,7 +119951,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13348_shp-vA"
     }
@@ -123802,7 +123802,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13343_shp-vA"
     }
@@ -124348,7 +124348,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": false,
       "shape_id_used": "13249_shp-vA"
     }
@@ -124732,7 +124732,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": false,
       "shape_id_used": "13251_shp-vA"
     }
@@ -127935,7 +127935,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "10329_shp-vA"
     }
@@ -130690,7 +130690,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13293_shp-vA"
     }
@@ -133423,7 +133423,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13357_shp-vA"
     }
@@ -136271,7 +136271,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13354_shp-vA"
     }
@@ -137833,7 +137833,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "10337_shp-vA"
     }
@@ -139407,7 +139407,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13361_shp-vA"
     }
@@ -140554,7 +140554,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": false,
       "shape_id_used": "13252_shp-vA"
     }
@@ -141356,7 +141356,8 @@ const masterRoutes = [
         "lon": -85.7646,
         "times": [
           "22:30:00",
-          "23:48:00"
+          "23:48:00",
+          "4:41:00"
         ]
       },
       {
@@ -141366,7 +141367,8 @@ const masterRoutes = [
         "lon": -85.762962,
         "times": [
           "22:30:54",
-          "23:48:54"
+          "23:48:54",
+          "4:41:43"
         ]
       },
       {
@@ -141376,7 +141378,8 @@ const masterRoutes = [
         "lon": -85.761333,
         "times": [
           "22:31:23",
-          "23:49:23"
+          "23:49:23",
+          "4:42:06"
         ]
       },
       {
@@ -141386,7 +141389,8 @@ const masterRoutes = [
         "lon": -85.759132,
         "times": [
           "22:32:03",
-          "23:50:03"
+          "23:50:03",
+          "4:42:38"
         ]
       },
       {
@@ -141396,7 +141400,8 @@ const masterRoutes = [
         "lon": -85.755392,
         "times": [
           "22:33:11",
-          "23:51:11"
+          "23:51:11",
+          "4:43:33"
         ]
       },
       {
@@ -141406,7 +141411,8 @@ const masterRoutes = [
         "lon": -85.753986,
         "times": [
           "22:33:37",
-          "23:51:37"
+          "23:51:37",
+          "4:43:53"
         ]
       },
       {
@@ -141416,7 +141422,8 @@ const masterRoutes = [
         "lon": -85.753056,
         "times": [
           "22:34:04",
-          "23:52:04"
+          "23:52:04",
+          "4:44:15"
         ]
       },
       {
@@ -141426,7 +141433,8 @@ const masterRoutes = [
         "lon": -85.753444,
         "times": [
           "22:35:00",
-          "23:53:00"
+          "23:53:00",
+          "4:45:00"
         ]
       },
       {
@@ -141726,7 +141734,9 @@ const masterRoutes = [
         "lon": -85.718691,
         "times": [
           "23:10:00",
-          "24:28:00"
+          "24:28:00",
+          "3:42:00",
+          "5:00:00"
         ]
       },
       {
@@ -141736,13 +141746,15 @@ const masterRoutes = [
         "lon": -85.724218,
         "times": [
           "23:13:00",
-          "24:31:00"
+          "24:31:00",
+          "3:45:00",
+          "5:03:00"
         ]
       }
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13365_shp-vA"
     }
@@ -141755,6 +141767,102 @@ const masterRoutes = [
     "route_type": "3",
     "direction_name": "Downtown via UL",
     "shape": [
+      [
+        38.15814,
+        -85.73141
+      ],
+      [
+        38.15874,
+        -85.73107
+      ],
+      [
+        38.15902,
+        -85.73081
+      ],
+      [
+        38.15928,
+        -85.73043
+      ],
+      [
+        38.1594,
+        -85.72992
+      ],
+      [
+        38.15941,
+        -85.72949
+      ],
+      [
+        38.15933,
+        -85.72911
+      ],
+      [
+        38.15892,
+        -85.72787
+      ],
+      [
+        38.15884,
+        -85.72739
+      ],
+      [
+        38.15885,
+        -85.72516
+      ],
+      [
+        38.15885,
+        -85.7239
+      ],
+      [
+        38.15893,
+        -85.72346
+      ],
+      [
+        38.15908,
+        -85.72305
+      ],
+      [
+        38.15927,
+        -85.72274
+      ],
+      [
+        38.15947,
+        -85.72251
+      ],
+      [
+        38.15974,
+        -85.72228
+      ],
+      [
+        38.16008,
+        -85.72213
+      ],
+      [
+        38.16103,
+        -85.72204
+      ],
+      [
+        38.16107,
+        -85.72419
+      ],
+      [
+        38.1581,
+        -85.73144
+      ],
+      [
+        38.15323,
+        -85.73392
+      ],
+      [
+        38.15324,
+        -85.73399
+      ],
+      [
+        38.15325,
+        -85.73405
+      ],
+      [
+        38.15326,
+        -85.73414
+      ],
       [
         38.15327,
         -85.7342
@@ -141988,164 +142096,392 @@ const masterRoutes = [
         -85.75071
       ],
       [
-        38.20739,
-        -85.75098
+        38.20853,
+        -85.75106
       ],
       [
-        38.20747,
-        -85.75094
+        38.20866,
+        -85.75107
       ],
       [
-        38.20774,
-        -85.75073
+        38.20878,
+        -85.75108
       ],
       [
-        38.20781,
-        -85.75039
+        38.20983,
+        -85.75115
       ],
       [
-        38.20736,
-        -85.74751
+        38.21201,
+        -85.75126
       ],
       [
-        38.20714,
-        -85.74726
+        38.21419,
+        -85.75096
       ],
       [
-        38.20686,
-        -85.74735
+        38.21423,
+        -85.75127
       ],
       [
-        38.20677,
-        -85.74757
+        38.21457,
+        -85.75467
       ],
       [
-        38.20673,
-        -85.74832
+        38.21462,
+        -85.75511
       ],
       [
-        38.20675,
-        -85.74855
+        38.215,
+        -85.75504
       ],
       [
-        38.2069,
-        -85.74948
+        38.21723,
+        -85.75461
       ],
       [
-        38.20709,
-        -85.75015
+        38.21818,
+        -85.75437
       ],
       [
-        38.20747,
-        -85.75094
+        38.21836,
+        -85.75426
       ],
       [
-        38.20791,
-        -85.75158
+        38.21839,
+        -85.7542
       ],
       [
-        38.20835,
-        -85.75208
+        38.21861,
+        -85.7541
       ],
       [
-        38.20893,
-        -85.75252
+        38.2187,
+        -85.75422
       ],
       [
-        38.20952,
-        -85.75281
+        38.21868,
+        -85.75437
       ],
       [
-        38.21027,
-        -85.75299
+        38.21872,
+        -85.75457
       ],
       [
-        38.21119,
-        -85.75296
+        38.21887,
+        -85.75487
       ],
       [
-        38.21499,
-        -85.7523
+        38.21927,
+        -85.75524
       ],
       [
-        38.2183,
-        -85.75215
+        38.21976,
+        -85.75591
       ],
       [
-        38.22064,
-        -85.75147
+        38.22003,
+        -85.75643
       ],
       [
-        38.22329,
-        -85.75098
+        38.22006,
+        -85.75651
       ],
       [
-        38.2242,
-        -85.751
+        38.22008,
+        -85.75657
       ],
       [
-        38.22628,
-        -85.75149
+        38.2201,
+        -85.75664
       ],
       [
-        38.22687,
-        -85.75155
+        38.22011,
+        -85.75673
       ],
       [
-        38.22762,
-        -85.75149
+        38.22013,
+        -85.75682
       ],
       [
-        38.23096,
-        -85.75092
+        38.22017,
+        -85.75716
       ],
       [
-        38.23283,
-        -85.75071
+        38.22025,
+        -85.75789
       ],
       [
-        38.23347,
-        -85.75075
+        38.22027,
+        -85.75803
       ],
       [
-        38.23431,
-        -85.75097
+        38.22028,
+        -85.75814
       ],
       [
-        38.23791,
-        -85.75282
+        38.2206,
+        -85.76117
       ],
       [
-        38.23874,
-        -85.75309
+        38.22057,
+        -85.76118
       ],
       [
-        38.23977,
-        -85.75312
+        38.21941,
+        -85.76137
       ],
       [
-        38.24224,
-        -85.75269
+        38.21883,
+        -85.7616
       ],
       [
-        38.24243,
-        -85.75257
+        38.21834,
+        -85.76158
       ],
       [
-        38.24507,
-        -85.75184
+        38.21679,
+        -85.76185
       ],
       [
-        38.24523,
-        -85.7518
+        38.21392,
+        -85.76232
       ],
       [
-        38.2456,
-        -85.75173
+        38.2122,
+        -85.76261
       ],
       [
-        38.24562,
-        -85.75201
+        38.21133,
+        -85.76285
+      ],
+      [
+        38.21019,
+        -85.763
+      ],
+      [
+        38.21033,
+        -85.76467
+      ],
+      [
+        38.21067,
+        -85.76461
+      ],
+      [
+        38.21089,
+        -85.76457
+      ],
+      [
+        38.21133,
+        -85.7645
+      ],
+      [
+        38.21164,
+        -85.76444
+      ],
+      [
+        38.21294,
+        -85.76418
+      ],
+      [
+        38.21347,
+        -85.7641
+      ],
+      [
+        38.21361,
+        -85.76408
+      ],
+      [
+        38.21365,
+        -85.76407
+      ],
+      [
+        38.21826,
+        -85.76324
+      ],
+      [
+        38.21948,
+        -85.76302
+      ],
+      [
+        38.22019,
+        -85.76289
+      ],
+      [
+        38.22054,
+        -85.76283
+      ],
+      [
+        38.22061,
+        -85.76286
+      ],
+      [
+        38.22339,
+        -85.76237
+      ],
+      [
+        38.22423,
+        -85.76224
+      ],
+      [
+        38.22442,
+        -85.76221
+      ],
+      [
+        38.2247,
+        -85.76216
+      ],
+      [
+        38.22475,
+        -85.76266
+      ],
+      [
+        38.22496,
+        -85.76464
+      ],
+      [
+        38.22506,
+        -85.7651
+      ],
+      [
+        38.22525,
+        -85.76532
+      ],
+      [
+        38.22532,
+        -85.76534
+      ],
+      [
+        38.22579,
+        -85.76533
+      ],
+      [
+        38.22508,
+        -85.76739
+      ],
+      [
+        38.22615,
+        -85.76907
+      ],
+      [
+        38.22623,
+        -85.76935
+      ],
+      [
+        38.2268,
+        -85.76902
+      ],
+      [
+        38.22634,
+        -85.76524
+      ],
+      [
+        38.22579,
+        -85.76533
+      ],
+      [
+        38.22505,
+        -85.76733
+      ],
+      [
+        38.22433,
+        -85.76617
+      ],
+      [
+        38.22379,
+        -85.76564
+      ],
+      [
+        38.22377,
+        -85.76559
+      ],
+      [
+        38.22354,
+        -85.76386
+      ],
+      [
+        38.22302,
+        -85.75908
+      ],
+      [
+        38.22394,
+        -85.75892
+      ],
+      [
+        38.22565,
+        -85.75861
+      ],
+      [
+        38.22721,
+        -85.75834
+      ],
+      [
+        38.22834,
+        -85.75814
+      ],
+      [
+        38.22852,
+        -85.75811
+      ],
+      [
+        38.22868,
+        -85.75808
+      ],
+      [
+        38.23055,
+        -85.75774
+      ],
+      [
+        38.23274,
+        -85.75737
+      ],
+      [
+        38.23321,
+        -85.75728
+      ],
+      [
+        38.23471,
+        -85.75702
+      ],
+      [
+        38.23736,
+        -85.75656
+      ],
+      [
+        38.23789,
+        -85.75646
+      ],
+      [
+        38.23858,
+        -85.75634
+      ],
+      [
+        38.23888,
+        -85.75629
+      ],
+      [
+        38.23889,
+        -85.75629
+      ],
+      [
+        38.24154,
+        -85.75582
+      ],
+      [
+        38.24382,
+        -85.75543
+      ],
+      [
+        38.24487,
+        -85.75523
+      ],
+      [
+        38.24497,
+        -85.75524
+      ],
+      [
+        38.24585,
+        -85.75514
       ],
       [
         38.24608,
@@ -142214,12 +142550,34 @@ const masterRoutes = [
     ],
     "stops": [
       {
+        "stop_id": "3404",
+        "name": "UPS Worldport",
+        "lat": 38.161101,
+        "lon": -85.724218,
+        "times": [
+          "3:50:00",
+          "5:05:00"
+        ]
+      },
+      {
+        "stop_id": "50035",
+        "name": "Grade @ Ashbottom",
+        "lat": 38.158142,
+        "lon": -85.731521,
+        "times": [
+          "3:53:31",
+          "5:08:31"
+        ]
+      },
+      {
         "stop_id": "50040",
         "name": "Grade @ Crittenden",
         "lat": 38.153315,
         "lon": -85.734199,
         "times": [
-          "23:34:00"
+          "23:34:00",
+          "3:55:00",
+          "5:10:00"
         ]
       },
       {
@@ -142228,7 +142586,9 @@ const masterRoutes = [
         "lat": 38.176026,
         "lon": -85.75394,
         "times": [
-          "23:36:38"
+          "23:36:38",
+          "4:02:34",
+          "5:17:34"
         ]
       },
       {
@@ -142237,7 +142597,9 @@ const masterRoutes = [
         "lat": 38.180349,
         "lon": -85.75882,
         "times": [
-          "23:37:13"
+          "23:37:13",
+          "4:04:16",
+          "5:19:16"
         ]
       },
       {
@@ -142246,7 +142608,9 @@ const masterRoutes = [
         "lat": 38.194698,
         "lon": -85.750799,
         "times": [
-          "23:38:58"
+          "23:38:58",
+          "4:09:18",
+          "5:24:18"
         ]
       },
       {
@@ -142255,7 +142619,9 @@ const masterRoutes = [
         "lat": 38.197853,
         "lon": -85.750755,
         "times": [
-          "23:39:12"
+          "23:39:12",
+          "4:10:00",
+          "5:25:00"
         ]
       },
       {
@@ -142264,7 +142630,9 @@ const masterRoutes = [
         "lat": 38.19953,
         "lon": -85.750714,
         "times": [
-          "23:39:19"
+          "23:39:19",
+          "4:10:22",
+          "5:25:22"
         ]
       },
       {
@@ -142273,7 +142641,9 @@ const masterRoutes = [
         "lat": 38.202462,
         "lon": -85.750621,
         "times": [
-          "23:39:32"
+          "23:39:32",
+          "4:11:01",
+          "5:26:01"
         ]
       },
       {
@@ -142282,7 +142652,319 @@ const masterRoutes = [
         "lat": 38.20436,
         "lon": -85.750581,
         "times": [
-          "23:39:40"
+          "23:39:40",
+          "4:11:26",
+          "5:26:26"
+        ]
+      },
+      {
+        "stop_id": "1145",
+        "name": "Crittenden @ Maylawn",
+        "lat": 38.208593,
+        "lon": -85.750965,
+        "times": [
+          "4:12:22",
+          "5:27:22"
+        ]
+      },
+      {
+        "stop_id": "1150",
+        "name": "Crittenden @ Reed",
+        "lat": 38.209782,
+        "lon": -85.751054,
+        "times": [
+          "4:12:38",
+          "5:27:38"
+        ]
+      },
+      {
+        "stop_id": "1155",
+        "name": "Crittenden @ Eastern Parkway",
+        "lat": 38.212008,
+        "lon": -85.751297,
+        "times": [
+          "4:13:08",
+          "5:28:08"
+        ]
+      },
+      {
+        "stop_id": "60180",
+        "name": "Warnock @ Crittenden",
+        "lat": 38.214259,
+        "lon": -85.751268,
+        "times": [
+          "4:13:40",
+          "5:28:40"
+        ]
+      },
+      {
+        "stop_id": "60185",
+        "name": "Warnock @ S Floyd",
+        "lat": 38.214613,
+        "lon": -85.754646,
+        "times": [
+          "4:14:15",
+          "5:29:15"
+        ]
+      },
+      {
+        "stop_id": "3519",
+        "name": "Student Activity Center",
+        "lat": 38.217223,
+        "lon": -85.754598,
+        "times": [
+          "4:15:00",
+          "5:30:00"
+        ]
+      },
+      {
+        "stop_id": "1190",
+        "name": "Cardinal @ Brook",
+        "lat": 38.220099,
+        "lon": -85.756395,
+        "times": [
+          "4:15:46",
+          "5:30:46"
+        ]
+      },
+      {
+        "stop_id": "1195",
+        "name": "Cardinal @ 1st",
+        "lat": 38.220302,
+        "lon": -85.758138,
+        "times": [
+          "4:16:02",
+          "5:31:02"
+        ]
+      },
+      {
+        "stop_id": "25615",
+        "name": "3rd @ Brandeis",
+        "lat": 38.219141,
+        "lon": -85.761541,
+        "times": [
+          "4:16:49",
+          "5:31:49"
+        ]
+      },
+      {
+        "stop_id": "25620",
+        "name": "S 3rd opp Ekstrom Library",
+        "lat": 38.216798,
+        "lon": -85.761912,
+        "times": [
+          "4:17:17",
+          "5:32:17"
+        ]
+      },
+      {
+        "stop_id": "25625",
+        "name": "3rd @ Eastern Pkwy",
+        "lat": 38.213987,
+        "lon": -85.762435,
+        "times": [
+          "4:17:51",
+          "5:32:51"
+        ]
+      },
+      {
+        "stop_id": "14590",
+        "name": "2520 S. 3rd Street",
+        "lat": 38.212207,
+        "lon": -85.762679,
+        "times": [
+          "4:18:12",
+          "5:33:12"
+        ]
+      },
+      {
+        "stop_id": "2750",
+        "name": "4th @ Montana",
+        "lat": 38.211304,
+        "lon": -85.764422,
+        "times": [
+          "4:19:04",
+          "5:34:04"
+        ]
+      },
+      {
+        "stop_id": "2755",
+        "name": "4th @ Industry",
+        "lat": 38.213612,
+        "lon": -85.764004,
+        "times": [
+          "4:19:32",
+          "5:34:32"
+        ]
+      },
+      {
+        "stop_id": "2765",
+        "name": "4th @ Stansbury Park",
+        "lat": 38.216658,
+        "lon": -85.763467,
+        "times": [
+          "4:20:09",
+          "5:35:09"
+        ]
+      },
+      {
+        "stop_id": "2770",
+        "name": "4th @ Brandeis",
+        "lat": 38.219321,
+        "lon": -85.762956,
+        "times": [
+          "4:20:41",
+          "5:35:41"
+        ]
+      },
+      {
+        "stop_id": "2775",
+        "name": "4th @ Cardinal",
+        "lat": 38.220365,
+        "lon": -85.762777,
+        "times": [
+          "4:21:00",
+          "5:36:00"
+        ]
+      },
+      {
+        "stop_id": "2785",
+        "name": "4th @ Lee",
+        "lat": 38.223296,
+        "lon": -85.762297,
+        "times": [
+          "4:22:04",
+          "5:37:04"
+        ]
+      },
+      {
+        "stop_id": "2777",
+        "name": "6th @ Hill",
+        "lat": 38.22581,
+        "lon": -85.765189,
+        "times": [
+          "4:23:45",
+          "5:38:45"
+        ]
+      },
+      {
+        "stop_id": "2778",
+        "name": "Shipp @ The Bellamy-The Province",
+        "lat": 38.224979,
+        "lon": -85.767379,
+        "times": [
+          "4:26:00",
+          "5:41:00"
+        ]
+      },
+      {
+        "stop_id": "2781",
+        "name": "Lee @ 5th",
+        "lat": 38.223456,
+        "lon": -85.763871,
+        "times": [
+          "4:26:58",
+          "5:41:58"
+        ]
+      },
+      {
+        "stop_id": "1220",
+        "name": "2nd @ Hill",
+        "lat": 38.225549,
+        "lon": -85.758546,
+        "times": [
+          "4:28:51",
+          "5:43:51"
+        ]
+      },
+      {
+        "stop_id": "1225",
+        "name": "S 2nd @ W Burnett",
+        "lat": 38.227186,
+        "lon": -85.758264,
+        "times": [
+          "4:29:21",
+          "5:44:21"
+        ]
+      },
+      {
+        "stop_id": "1230",
+        "name": "S 2nd @ W Magnolia",
+        "lat": 38.228676,
+        "lon": -85.757994,
+        "times": [
+          "4:29:48",
+          "5:44:48"
+        ]
+      },
+      {
+        "stop_id": "1235",
+        "name": "S 2nd @ 1353",
+        "lat": 38.230606,
+        "lon": -85.757663,
+        "times": [
+          "4:30:23",
+          "5:45:23"
+        ]
+      },
+      {
+        "stop_id": "1240",
+        "name": "S 2nd @ W Ormsby",
+        "lat": 38.232797,
+        "lon": -85.757283,
+        "times": [
+          "4:31:03",
+          "5:46:03"
+        ]
+      },
+      {
+        "stop_id": "1245",
+        "name": "2nd @ Oak",
+        "lat": 38.234615,
+        "lon": -85.756948,
+        "times": [
+          "4:31:36",
+          "5:46:36"
+        ]
+      },
+      {
+        "stop_id": "1250",
+        "name": "S 2nd @ W St. Catherine",
+        "lat": 38.237374,
+        "lon": -85.75646,
+        "times": [
+          "4:32:26",
+          "5:47:26"
+        ]
+      },
+      {
+        "stop_id": "1255",
+        "name": "S 2nd @ W Kentucky",
+        "lat": 38.238868,
+        "lon": -85.756202,
+        "times": [
+          "4:32:53",
+          "5:47:53"
+        ]
+      },
+      {
+        "stop_id": "1260",
+        "name": "2nd @ Breckenridge",
+        "lat": 38.241441,
+        "lon": -85.755749,
+        "times": [
+          "4:33:40",
+          "5:48:40"
+        ]
+      },
+      {
+        "stop_id": "1265",
+        "name": "2nd @ York",
+        "lat": 38.243981,
+        "lon": -85.755305,
+        "times": [
+          "4:34:26",
+          "5:49:26"
         ]
       },
       {
@@ -142291,7 +142973,9 @@ const masterRoutes = [
         "lat": 38.246213,
         "lon": -85.758866,
         "times": [
-          "23:44:00"
+          "23:44:00",
+          "4:36:00",
+          "5:51:00"
         ]
       },
       {
@@ -142300,7 +142984,9 @@ const masterRoutes = [
         "lat": 38.246281,
         "lon": -85.760339,
         "times": [
-          "23:44:27"
+          "23:44:27",
+          "4:36:26",
+          "5:51:26"
         ]
       },
       {
@@ -142309,7 +142995,9 @@ const masterRoutes = [
         "lat": 38.24637,
         "lon": -85.76162,
         "times": [
-          "23:44:51"
+          "23:44:51",
+          "4:36:49",
+          "5:51:49"
         ]
       },
       {
@@ -142318,7 +143006,9 @@ const masterRoutes = [
         "lat": 38.246697,
         "lon": -85.764885,
         "times": [
-          "23:45:52"
+          "23:45:52",
+          "4:37:49",
+          "5:52:49"
         ]
       },
       {
@@ -142327,7 +143017,9 @@ const masterRoutes = [
         "lat": 38.247169,
         "lon": -85.7662,
         "times": [
-          "23:46:28"
+          "23:46:28",
+          "4:38:24",
+          "5:53:24"
         ]
       },
       {
@@ -142336,15 +143028,17 @@ const masterRoutes = [
         "lat": 38.249606,
         "lon": -85.7646,
         "times": [
-          "23:48:00"
+          "23:48:00",
+          "4:40:00",
+          "5:55:00"
         ]
       }
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
-      "shape_id_used": "13368_shp-vA"
+      "shape_id_used": "13369_shp-vA"
     }
   },
   {
@@ -144498,7 +145192,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
       "shape_id_used": "13370_shp-vA"
     }
@@ -144511,818 +145205,6 @@ const masterRoutes = [
     "route_type": "3",
     "direction_name": "UPS West Louisville",
     "shape": [
-      [
-        38.24711,
-        -85.76833
-      ],
-      [
-        38.24731,
-        -85.76983
-      ],
-      [
-        38.2476,
-        -85.77158
-      ],
-      [
-        38.24784,
-        -85.77327
-      ],
-      [
-        38.24788,
-        -85.77408
-      ],
-      [
-        38.24824,
-        -85.77657
-      ],
-      [
-        38.24845,
-        -85.77811
-      ],
-      [
-        38.24868,
-        -85.77976
-      ],
-      [
-        38.2489,
-        -85.78143
-      ],
-      [
-        38.24906,
-        -85.78343
-      ],
-      [
-        38.249,
-        -85.78216
-      ],
-      [
-        38.2489,
-        -85.78143
-      ],
-      [
-        38.24906,
-        -85.78343
-      ],
-      [
-        38.24917,
-        -85.78653
-      ],
-      [
-        38.24948,
-        -85.78647
-      ],
-      [
-        38.25066,
-        -85.78627
-      ],
-      [
-        38.25206,
-        -85.78604
-      ],
-      [
-        38.2526,
-        -85.78594
-      ],
-      [
-        38.25315,
-        -85.78583
-      ],
-      [
-        38.25369,
-        -85.78574
-      ],
-      [
-        38.25424,
-        -85.78564
-      ],
-      [
-        38.25446,
-        -85.7856
-      ],
-      [
-        38.25493,
-        -85.78552
-      ],
-      [
-        38.2555,
-        -85.78541
-      ],
-      [
-        38.25562,
-        -85.78539
-      ],
-      [
-        38.25625,
-        -85.78529
-      ],
-      [
-        38.25677,
-        -85.78521
-      ],
-      [
-        38.25817,
-        -85.78495
-      ],
-      [
-        38.25834,
-        -85.78493
-      ],
-      [
-        38.25905,
-        -85.78479
-      ],
-      [
-        38.25966,
-        -85.78469
-      ],
-      [
-        38.26141,
-        -85.78441
-      ],
-      [
-        38.26246,
-        -85.78466
-      ],
-      [
-        38.26281,
-        -85.78486
-      ],
-      [
-        38.26314,
-        -85.78523
-      ],
-      [
-        38.26342,
-        -85.78541
-      ],
-      [
-        38.2638,
-        -85.78538
-      ],
-      [
-        38.26429,
-        -85.78508
-      ],
-      [
-        38.26489,
-        -85.78473
-      ],
-      [
-        38.26543,
-        -85.78441
-      ],
-      [
-        38.26549,
-        -85.78438
-      ],
-      [
-        38.26657,
-        -85.78357
-      ],
-      [
-        38.26796,
-        -85.78277
-      ],
-      [
-        38.26824,
-        -85.78262
-      ],
-      [
-        38.26827,
-        -85.78256
-      ],
-      [
-        38.26836,
-        -85.78248
-      ],
-      [
-        38.2684,
-        -85.78256
-      ],
-      [
-        38.26896,
-        -85.78413
-      ],
-      [
-        38.2693,
-        -85.78505
-      ],
-      [
-        38.26931,
-        -85.7851
-      ],
-      [
-        38.27016,
-        -85.78748
-      ],
-      [
-        38.27077,
-        -85.78915
-      ],
-      [
-        38.27083,
-        -85.78932
-      ],
-      [
-        38.27107,
-        -85.78999
-      ],
-      [
-        38.27117,
-        -85.79028
-      ],
-      [
-        38.27184,
-        -85.79214
-      ],
-      [
-        38.2723,
-        -85.79343
-      ],
-      [
-        38.27241,
-        -85.79376
-      ],
-      [
-        38.27261,
-        -85.79431
-      ],
-      [
-        38.27277,
-        -85.79477
-      ],
-      [
-        38.27323,
-        -85.79603
-      ],
-      [
-        38.27426,
-        -85.7989
-      ],
-      [
-        38.27471,
-        -85.80012
-      ],
-      [
-        38.27496,
-        -85.80093
-      ],
-      [
-        38.27484,
-        -85.80254
-      ],
-      [
-        38.27496,
-        -85.80092
-      ],
-      [
-        38.27484,
-        -85.80254
-      ],
-      [
-        38.27483,
-        -85.80277
-      ],
-      [
-        38.27471,
-        -85.80458
-      ],
-      [
-        38.27462,
-        -85.80457
-      ],
-      [
-        38.27432,
-        -85.80453
-      ],
-      [
-        38.27428,
-        -85.80453
-      ],
-      [
-        38.27286,
-        -85.80437
-      ],
-      [
-        38.27209,
-        -85.80437
-      ],
-      [
-        38.27134,
-        -85.80477
-      ],
-      [
-        38.27055,
-        -85.80489
-      ],
-      [
-        38.26954,
-        -85.80507
-      ],
-      [
-        38.26891,
-        -85.80584
-      ],
-      [
-        38.26886,
-        -85.80587
-      ],
-      [
-        38.26755,
-        -85.80606
-      ],
-      [
-        38.26501,
-        -85.80634
-      ],
-      [
-        38.26223,
-        -85.80669
-      ],
-      [
-        38.26177,
-        -85.80675
-      ],
-      [
-        38.26093,
-        -85.80688
-      ],
-      [
-        38.26051,
-        -85.80702
-      ],
-      [
-        38.25671,
-        -85.80769
-      ],
-      [
-        38.25642,
-        -85.80768
-      ],
-      [
-        38.25599,
-        -85.80737
-      ],
-      [
-        38.25579,
-        -85.80733
-      ],
-      [
-        38.2527,
-        -85.80785
-      ],
-      [
-        38.24989,
-        -85.80793
-      ],
-      [
-        38.24987,
-        -85.80746
-      ],
-      [
-        38.2498,
-        -85.80544
-      ],
-      [
-        38.24973,
-        -85.80347
-      ],
-      [
-        38.24962,
-        -85.80011
-      ],
-      [
-        38.24958,
-        -85.79828
-      ],
-      [
-        38.24953,
-        -85.79659
-      ],
-      [
-        38.24944,
-        -85.79455
-      ],
-      [
-        38.24934,
-        -85.79157
-      ],
-      [
-        38.24924,
-        -85.78852
-      ],
-      [
-        38.24923,
-        -85.7882
-      ],
-      [
-        38.24922,
-        -85.78792
-      ],
-      [
-        38.24916,
-        -85.78625
-      ],
-      [
-        38.24902,
-        -85.78243
-      ],
-      [
-        38.24887,
-        -85.7812
-      ],
-      [
-        38.24847,
-        -85.77823
-      ],
-      [
-        38.24824,
-        -85.77657
-      ],
-      [
-        38.24775,
-        -85.77328
-      ],
-      [
-        38.24751,
-        -85.77173
-      ],
-      [
-        38.24751,
-        -85.77124
-      ],
-      [
-        38.24713,
-        -85.76849
-      ],
-      [
-        38.24689,
-        -85.76668
-      ],
-      [
-        38.24667,
-        -85.76505
-      ],
-      [
-        38.24689,
-        -85.76668
-      ],
-      [
-        38.24667,
-        -85.76505
-      ],
-      [
-        38.24645,
-        -85.7634
-      ],
-      [
-        38.24632,
-        -85.76174
-      ],
-      [
-        38.24625,
-        -85.76082
-      ],
-      [
-        38.2462,
-        -85.76005
-      ],
-      [
-        38.24605,
-        -85.75799
-      ],
-      [
-        38.24585,
-        -85.75514
-      ],
-      [
-        38.24605,
-        -85.75799
-      ],
-      [
-        38.24585,
-        -85.75514
-      ],
-      [
-        38.24569,
-        -85.7531
-      ],
-      [
-        38.24556,
-        -85.75124
-      ],
-      [
-        38.24552,
-        -85.75073
-      ],
-      [
-        38.24544,
-        -85.7497
-      ],
-      [
-        38.24529,
-        -85.74761
-      ],
-      [
-        38.24289,
-        -85.74796
-      ],
-      [
-        38.2409,
-        -85.7483
-      ],
-      [
-        38.24074,
-        -85.74833
-      ],
-      [
-        38.24024,
-        -85.74842
-      ],
-      [
-        38.23944,
-        -85.74856
-      ],
-      [
-        38.23929,
-        -85.74859
-      ],
-      [
-        38.23777,
-        -85.74885
-      ],
-      [
-        38.23755,
-        -85.74889
-      ],
-      [
-        38.23592,
-        -85.74916
-      ],
-      [
-        38.23554,
-        -85.74922
-      ],
-      [
-        38.23421,
-        -85.74946
-      ],
-      [
-        38.23406,
-        -85.74948
-      ],
-      [
-        38.23356,
-        -85.74957
-      ],
-      [
-        38.23294,
-        -85.74968
-      ],
-      [
-        38.23098,
-        -85.75001
-      ],
-      [
-        38.22845,
-        -85.75045
-      ],
-      [
-        38.22836,
-        -85.75049
-      ],
-      [
-        38.22811,
-        -85.75078
-      ],
-      [
-        38.22809,
-        -85.75167
-      ],
-      [
-        38.22799,
-        -85.75191
-      ],
-      [
-        38.22782,
-        -85.75206
-      ],
-      [
-        38.22749,
-        -85.75207
-      ],
-      [
-        38.22626,
-        -85.75166
-      ],
-      [
-        38.22622,
-        -85.75165
-      ],
-      [
-        38.22413,
-        -85.75112
-      ],
-      [
-        38.22361,
-        -85.7511
-      ],
-      [
-        38.22068,
-        -85.7516
-      ],
-      [
-        38.21831,
-        -85.75229
-      ],
-      [
-        38.21518,
-        -85.75242
-      ],
-      [
-        38.21101,
-        -85.75314
-      ],
-      [
-        38.21015,
-        -85.75312
-      ],
-      [
-        38.20944,
-        -85.7529
-      ],
-      [
-        38.20902,
-        -85.75268
-      ],
-      [
-        38.20804,
-        -85.75187
-      ],
-      [
-        38.20736,
-        -85.751
-      ],
-      [
-        38.20717,
-        -85.75062
-      ],
-      [
-        38.20673,
-        -85.74914
-      ],
-      [
-        38.20631,
-        -85.74551
-      ],
-      [
-        38.20577,
-        -85.74363
-      ],
-      [
-        38.2053,
-        -85.74256
-      ],
-      [
-        38.20271,
-        -85.73753
-      ],
-      [
-        38.2022,
-        -85.73668
-      ],
-      [
-        38.20163,
-        -85.73594
-      ],
-      [
-        38.20052,
-        -85.73493
-      ],
-      [
-        38.19951,
-        -85.73437
-      ],
-      [
-        38.1984,
-        -85.73403
-      ],
-      [
-        38.19604,
-        -85.73362
-      ],
-      [
-        38.19539,
-        -85.73339
-      ],
-      [
-        38.19467,
-        -85.73301
-      ],
-      [
-        38.19325,
-        -85.73199
-      ],
-      [
-        38.18749,
-        -85.72699
-      ],
-      [
-        38.18382,
-        -85.72335
-      ],
-      [
-        38.18211,
-        -85.72215
-      ],
-      [
-        38.18188,
-        -85.72207
-      ],
-      [
-        38.17972,
-        -85.72098
-      ],
-      [
-        38.17829,
-        -85.72094
-      ],
-      [
-        38.17733,
-        -85.72062
-      ],
-      [
-        38.17668,
-        -85.72021
-      ],
-      [
-        38.17627,
-        -85.72014
-      ],
-      [
-        38.17578,
-        -85.72019
-      ],
-      [
-        38.17412,
-        -85.72077
-      ],
-      [
-        38.17254,
-        -85.72107
-      ],
-      [
-        38.1681,
-        -85.72125
-      ],
-      [
-        38.16815,
-        -85.72151
-      ],
-      [
-        38.16834,
-        -85.72189
-      ],
-      [
-        38.16864,
-        -85.72198
-      ],
-      [
-        38.16884,
-        -85.72194
-      ],
-      [
-        38.16917,
-        -85.72149
-      ],
-      [
-        38.16924,
-        -85.72116
-      ],
-      [
-        38.16919,
-        -85.71721
-      ],
-      [
-        38.16876,
-        -85.71722
-      ],
-      [
-        38.16672,
-        -85.71727
-      ],
-      [
-        38.16554,
-        -85.7173
-      ],
-      [
-        38.16557,
-        -85.71829
-      ],
-      [
-        38.16566,
-        -85.71842
-      ],
       [
         38.16555,
         -85.71854
@@ -145418,687 +145300,13 @@ const masterRoutes = [
     ],
     "stops": [
       {
-        "stop_id": "24935",
-        "name": "W Broadway @ S 10th",
-        "lat": 38.24714,
-        "lon": -85.768231,
-        "times": [
-          "22:10:00"
-        ]
-      },
-      {
-        "stop_id": "24940",
-        "name": "W Broadway @ S 11th",
-        "lat": 38.247362,
-        "lon": -85.769823,
-        "times": [
-          "22:10:31"
-        ]
-      },
-      {
-        "stop_id": "24945",
-        "name": "W Broadway @ S 12th",
-        "lat": 38.247625,
-        "lon": -85.771398,
-        "times": [
-          "22:10:52"
-        ]
-      },
-      {
-        "stop_id": "24950",
-        "name": "W Broadway @ S 13th",
-        "lat": 38.247814,
-        "lon": -85.77318,
-        "times": [
-          "22:11:16"
-        ]
-      },
-      {
-        "stop_id": "24955",
-        "name": "W Broadway @ S 15th",
-        "lat": 38.248266,
-        "lon": -85.776457,
-        "times": [
-          "22:12:01"
-        ]
-      },
-      {
-        "stop_id": "24960",
-        "name": "W Broadway @ S 16th",
-        "lat": 38.248505,
-        "lon": -85.778107,
-        "times": [
-          "22:12:23"
-        ]
-      },
-      {
-        "stop_id": "24965",
-        "name": "W Broadway @ S 17th",
-        "lat": 38.248762,
-        "lon": -85.779745,
-        "times": [
-          "22:12:45"
-        ]
-      },
-      {
-        "stop_id": "24970",
-        "name": "W Broadway @ S 18th",
-        "lat": 38.248966,
-        "lon": -85.781418,
-        "times": [
-          "22:13:08"
-        ]
-      },
-      {
-        "stop_id": "24975",
-        "name": "W Broadway @ S 19th",
-        "lat": 38.249106,
-        "lon": -85.783426,
-        "times": [
-          "22:13:35"
-        ]
-      },
-      {
-        "stop_id": "10735",
-        "name": "WJ Hodge @ Magazine",
-        "lat": 38.250647,
-        "lon": -85.786197,
-        "times": [
-          "22:14:43"
-        ]
-      },
-      {
-        "stop_id": "10740",
-        "name": "WJ Hodge @ W Chestnut",
-        "lat": 38.251952,
-        "lon": -85.785972,
-        "times": [
-          "22:15:06"
-        ]
-      },
-      {
-        "stop_id": "10745",
-        "name": "WJ Hodge @ W Madison",
-        "lat": 38.253046,
-        "lon": -85.785774,
-        "times": [
-          "22:15:25"
-        ]
-      },
-      {
-        "stop_id": "10750",
-        "name": "WJ Hodge @ W Muhammad Ali",
-        "lat": 38.254136,
-        "lon": -85.785579,
-        "times": [
-          "22:15:44"
-        ]
-      },
-      {
-        "stop_id": "10755",
-        "name": "WJ Hodge @ Cedar",
-        "lat": 38.255484,
-        "lon": -85.785342,
-        "times": [
-          "22:16:07"
-        ]
-      },
-      {
-        "stop_id": "10760",
-        "name": "WJ Hodge @ W Jefferson",
-        "lat": 38.256729,
-        "lon": -85.78513,
-        "times": [
-          "22:16:29"
-        ]
-      },
-      {
-        "stop_id": "10765",
-        "name": "WJ Hodge @ W Market",
-        "lat": 38.258236,
-        "lon": -85.784858,
-        "times": [
-          "22:16:56"
-        ]
-      },
-      {
-        "stop_id": "10770",
-        "name": "WJ Hodge @ W Main",
-        "lat": 38.259596,
-        "lon": -85.78462,
-        "times": [
-          "22:17:20"
-        ]
-      },
-      {
-        "stop_id": "10775",
-        "name": "WJ Hodge @ Rowan",
-        "lat": 38.261431,
-        "lon": -85.784316,
-        "times": [
-          "22:17:52"
-        ]
-      },
-      {
-        "stop_id": "10780",
-        "name": "WJ Hodge @ Duncan",
-        "lat": 38.26239,
-        "lon": -85.784556,
-        "times": [
-          "22:18:09"
-        ]
-      },
-      {
-        "stop_id": "10785",
-        "name": "22nd @ Griffiths",
-        "lat": 38.264254,
-        "lon": -85.785066,
-        "times": [
-          "22:18:46"
-        ]
-      },
-      {
-        "stop_id": "10790",
-        "name": "22nd @ St. Xavier",
-        "lat": 38.265309,
-        "lon": -85.784396,
-        "times": [
-          "22:19:06"
-        ]
-      },
-      {
-        "stop_id": "10795",
-        "name": "22nd @ Bank",
-        "lat": 38.266522,
-        "lon": -85.783524,
-        "times": [
-          "22:19:30"
-        ]
-      },
-      {
-        "stop_id": "10800",
-        "name": "N 22nd @ Portland",
-        "lat": 38.267695,
-        "lon": -85.782828,
-        "times": [
-          "22:19:52"
-        ]
-      },
-      {
-        "stop_id": "10805",
-        "name": "Portland @ Carter",
-        "lat": 38.269082,
-        "lon": -85.784264,
-        "times": [
-          "22:20:30"
-        ]
-      },
-      {
-        "stop_id": "3938",
-        "name": "Portland @ Family Health Center",
-        "lat": 38.26934,
-        "lon": -85.785087,
-        "times": [
-          "22:20:42"
-        ]
-      },
-      {
-        "stop_id": "3945",
-        "name": "Portland @ N 24th",
-        "lat": 38.2702,
-        "lon": -85.787464,
-        "times": [
-          "22:21:17"
-        ]
-      },
-      {
-        "stop_id": "3950",
-        "name": "Portland @ N 25th",
-        "lat": 38.270828,
-        "lon": -85.789134,
-        "times": [
-          "22:21:42"
-        ]
-      },
-      {
-        "stop_id": "3955",
-        "name": "Portland @ N 26th",
-        "lat": 38.271202,
-        "lon": -85.790266,
-        "times": [
-          "22:21:58"
-        ]
-      },
-      {
-        "stop_id": "3960",
-        "name": "Portland @ N 27th",
-        "lat": 38.271883,
-        "lon": -85.792172,
-        "times": [
-          "22:22:26"
-        ]
-      },
-      {
-        "stop_id": "3965",
-        "name": "Portland @ N 28th",
-        "lat": 38.272462,
-        "lon": -85.793746,
-        "times": [
-          "22:22:49"
-        ]
-      },
-      {
-        "stop_id": "3970",
-        "name": "Portland @ N 29th",
-        "lat": 38.27281,
-        "lon": -85.794754,
-        "times": [
-          "22:23:04"
-        ]
-      },
-      {
-        "stop_id": "3975",
-        "name": "Portland @ N30th",
-        "lat": 38.273263,
-        "lon": -85.796021,
-        "times": [
-          "22:23:23"
-        ]
-      },
-      {
-        "stop_id": "3138",
-        "name": "Portland @ N 32nd",
-        "lat": 38.274294,
-        "lon": -85.798885,
-        "times": [
-          "22:24:06"
-        ]
-      },
-      {
-        "stop_id": "12185",
-        "name": "Northwestern Pkwy @ Portland",
-        "lat": 38.274944,
-        "lon": -85.800709,
-        "times": [
-          "22:24:33"
-        ]
-      },
-      {
-        "stop_id": "12190",
-        "name": "Northwestern @ N 34th",
-        "lat": 38.2749,
-        "lon": -85.802546,
-        "times": [
-          "22:24:57"
-        ]
-      },
-      {
-        "stop_id": "44130",
-        "name": "35th @ Northwestern Pkwy",
-        "lat": 38.274273,
-        "lon": -85.804592,
-        "times": [
-          "22:25:32"
-        ]
-      },
-      {
-        "stop_id": "44135",
-        "name": "35th @ Bank",
-        "lat": 38.272824,
-        "lon": -85.804442,
-        "times": [
-          "22:25:57"
-        ]
-      },
-      {
-        "stop_id": "44140",
-        "name": "35th @ Kroger",
-        "lat": 38.270576,
-        "lon": -85.805062,
-        "times": [
-          "22:27:00"
-        ]
-      },
-      {
-        "stop_id": "44145",
-        "name": "34th @ Jewel",
-        "lat": 38.267568,
-        "lon": -85.806164,
-        "times": [
-          "22:27:58"
-        ]
-      },
-      {
-        "stop_id": "44150",
-        "name": "34th @ Duncan",
-        "lat": 38.265012,
-        "lon": -85.806394,
-        "times": [
-          "22:28:43"
-        ]
-      },
-      {
-        "stop_id": "2717",
-        "name": "S 34th @ W Market",
-        "lat": 38.261023,
-        "lon": -85.806913,
-        "times": [
-          "22:29:54"
-        ]
-      },
-      {
-        "stop_id": "22935",
-        "name": "W Broadway @ S 32nd",
-        "lat": 38.249743,
-        "lon": -85.805448,
-        "times": [
-          "22:33:48"
-        ]
-      },
-      {
-        "stop_id": "22940",
-        "name": "W Broadway @ S 31st",
-        "lat": 38.249674,
-        "lon": -85.803475,
-        "times": [
-          "22:34:15"
-        ]
-      },
-      {
-        "stop_id": "22950",
-        "name": "W Broadway @ 29th Eastbound",
-        "lat": 38.249528,
-        "lon": -85.800236,
-        "times": [
-          "22:35:00"
-        ]
-      },
-      {
-        "stop_id": "22955",
-        "name": "W Broadway @ S 28th",
-        "lat": 38.24951,
-        "lon": -85.798388,
-        "times": [
-          "22:35:21"
-        ]
-      },
-      {
-        "stop_id": "22960",
-        "name": "W Broadway @ S 27th",
-        "lat": 38.249458,
-        "lon": -85.796657,
-        "times": [
-          "22:35:40"
-        ]
-      },
-      {
-        "stop_id": "22965",
-        "name": "W Broadway @ S 26th",
-        "lat": 38.249362,
-        "lon": -85.794558,
-        "times": [
-          "22:36:04"
-        ]
-      },
-      {
-        "stop_id": "22970",
-        "name": "W Broadway @ S 24th",
-        "lat": 38.249267,
-        "lon": -85.791662,
-        "times": [
-          "22:36:37"
-        ]
-      },
-      {
-        "stop_id": "22980",
-        "name": "W Broadway @ S 22nd",
-        "lat": 38.249164,
-        "lon": -85.788524,
-        "times": [
-          "22:37:13"
-        ]
-      },
-      {
-        "stop_id": "22985",
-        "name": "W Broadway @ S 21st",
-        "lat": 38.249095,
-        "lon": -85.786252,
-        "times": [
-          "22:37:39"
-        ]
-      },
-      {
-        "stop_id": "22995",
-        "name": "W Broadway @ Dixie",
-        "lat": 38.248847,
-        "lon": -85.781203,
-        "times": [
-          "22:38:37"
-        ]
-      },
-      {
-        "stop_id": "23005",
-        "name": "W Broadway @ S 16th",
-        "lat": 38.248433,
-        "lon": -85.778314,
-        "times": [
-          "22:39:10"
-        ]
-      },
-      {
-        "stop_id": "23010",
-        "name": "W Broadway @ S 15th",
-        "lat": 38.248203,
-        "lon": -85.776676,
-        "times": [
-          "22:39:29"
-        ]
-      },
-      {
-        "stop_id": "23015",
-        "name": "W Broadway @ S 13th",
-        "lat": 38.247751,
-        "lon": -85.773388,
-        "times": [
-          "22:40:07"
-        ]
-      },
-      {
-        "stop_id": "23020",
-        "name": "W Broadway @ S 12th",
-        "lat": 38.247521,
-        "lon": -85.771749,
-        "times": [
-          "22:40:26"
-        ]
-      },
-      {
-        "stop_id": "23030",
-        "name": "W Broadway @ S 10th",
-        "lat": 38.247005,
-        "lon": -85.768515,
-        "times": [
-          "22:41:03"
-        ]
-      },
-      {
-        "stop_id": "23035",
-        "name": "W Broadway @ S Roy Wilkins",
-        "lat": 38.246783,
-        "lon": -85.766766,
-        "times": [
-          "22:41:23"
-        ]
-      },
-      {
-        "stop_id": "23040",
-        "name": "W Broadway @ S 8th",
-        "lat": 38.246608,
-        "lon": -85.765115,
-        "times": [
-          "22:41:42"
-        ]
-      },
-      {
-        "stop_id": "23045",
-        "name": "W Broadway @ S 7th",
-        "lat": 38.246404,
-        "lon": -85.763523,
-        "times": [
-          "22:42:00"
-        ]
-      },
-      {
-        "stop_id": "23050",
-        "name": "W Broadway @ S 6th",
-        "lat": 38.246253,
-        "lon": -85.761839,
-        "times": [
-          "22:42:19"
-        ]
-      },
-      {
-        "stop_id": "1425",
-        "name": "W Broadway @ S 5th",
-        "lat": 38.246139,
-        "lon": -85.760166,
-        "times": [
-          "22:42:38"
-        ]
-      },
-      {
-        "stop_id": "23055",
-        "name": "Broadway @ 4th",
-        "lat": 38.24598,
-        "lon": -85.757997,
-        "times": [
-          "22:43:03"
-        ]
-      },
-      {
-        "stop_id": "23065",
-        "name": "W Broadway @ S 2nd",
-        "lat": 38.245768,
-        "lon": -85.755125,
-        "times": [
-          "22:43:36"
-        ]
-      },
-      {
-        "stop_id": "23070",
-        "name": "E Broadway @ S 1st",
-        "lat": 38.245627,
-        "lon": -85.753106,
-        "times": [
-          "22:43:59"
-        ]
-      },
-      {
-        "stop_id": "23075",
-        "name": "E Broadway @ S Brook",
-        "lat": 38.245439,
-        "lon": -85.751253,
-        "times": [
-          "22:44:20"
-        ]
-      },
-      {
-        "stop_id": "23080",
-        "name": "E Broadway @ S Floyd",
-        "lat": 38.245389,
-        "lon": -85.749795,
-        "times": [
-          "22:44:36"
-        ]
-      },
-      {
-        "stop_id": "23085",
-        "name": "E Broadway @ S Preston",
-        "lat": 38.245229,
-        "lon": -85.74773,
-        "times": [
-          "22:44:59"
-        ]
-      },
-      {
-        "stop_id": "20450",
-        "name": "S Preston @ Roselane",
-        "lat": 38.24291,
-        "lon": -85.748039,
-        "times": [
-          "22:45:36"
-        ]
-      },
-      {
-        "stop_id": "20455",
-        "name": "S Preston @ E Breckinridge",
-        "lat": 38.24091,
-        "lon": -85.748342,
-        "times": [
-          "22:46:06"
-        ]
-      },
-      {
-        "stop_id": "20460",
-        "name": "S Preston @ E Caldwell",
-        "lat": 38.239443,
-        "lon": -85.748597,
-        "times": [
-          "22:46:27"
-        ]
-      },
-      {
-        "stop_id": "20465",
-        "name": "S Preston @ E Kentucky",
-        "lat": 38.237555,
-        "lon": -85.748926,
-        "times": [
-          "22:46:55"
-        ]
-      },
-      {
-        "stop_id": "20470",
-        "name": "S Preston @ E St Catherine",
-        "lat": 38.235927,
-        "lon": -85.749209,
-        "times": [
-          "22:47:19"
-        ]
-      },
-      {
-        "stop_id": "20475",
-        "name": "S Preston @ E Oak",
-        "lat": 38.234218,
-        "lon": -85.749514,
-        "times": [
-          "22:47:44"
-        ]
-      },
-      {
-        "stop_id": "20480",
-        "name": "S Preston @ Stein",
-        "lat": 38.2329,
-        "lon": -85.749742,
-        "times": [
-          "22:48:03"
-        ]
-      },
-      {
-        "stop_id": "20485",
-        "name": "S Preston @ Ormsby",
-        "lat": 38.230937,
-        "lon": -85.750023,
-        "times": [
-          "22:48:32"
-        ]
-      },
-      {
         "stop_id": "60075",
         "name": "UPS Edgewood Lot",
         "lat": 38.165511,
         "lon": -85.718691,
         "times": [
-          "23:10:00"
+          "23:10:00",
+          "4:29:00"
         ]
       },
       {
@@ -146107,15 +145315,16 @@ const masterRoutes = [
         "lat": 38.161101,
         "lon": -85.724218,
         "times": [
-          "23:14:00"
+          "23:14:00",
+          "4:33:00"
         ]
       }
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
+      "generated_date": "20260210",
       "used_today_service_filter": true,
-      "shape_id_used": "13371_shp-vA"
+      "shape_id_used": "13372_shp-vA"
     }
   },
   {
@@ -148436,8 +147645,8 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260209",
-      "used_today_service_filter": false,
+      "generated_date": "20260210",
+      "used_today_service_filter": true,
       "shape_id_used": "13373_shp-vA"
     }
   }
