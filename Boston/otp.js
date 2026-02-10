@@ -2071,9 +2071,11 @@ function drawJourney(journey) {
         routeColor = getSubwayRouteColor(mappedRouteId);
       }
       
-      // Only add to route list if route is verified (or if we can't verify, assume it's correct)
-      // This prevents wrong route overlays
-      const shouldAddRoute = leg.routeVerified !== false; // Add if verified=true or undefined (can't verify)
+      // Add route to list if we have a routeNumber (even if verification failed)
+      // Verification is a safety check, but shouldn't block routes from showing
+      // User can see the route and decide if it's correct
+      // Only skip if routeNumber is null/undefined (can't identify route at all)
+      const shouldAddRoute = mappedRouteId !== null && mappedRouteId !== undefined;
       
       // Debug: Log route verification status
       addDebugLog(
@@ -2085,7 +2087,7 @@ function drawJourney(journey) {
           mode: leg.mode,
           type: leg.type
         },
-        `Route ${mappedRouteId}: verified=${leg.routeVerified}, willAdd=${shouldAddRoute}`
+        `Route ${mappedRouteId}: verified=${leg.routeVerified || false}, willAdd=${shouldAddRoute}${!shouldAddRoute ? ' (no route ID)' : leg.routeVerified === false ? ' (verification failed, but adding anyway)' : ''}`
       );
       
       if (shouldAddRoute) {
@@ -2115,14 +2117,14 @@ function drawJourney(journey) {
           `✅ Added route ${mappedRouteId} (direction ${leg.direction || 0}) to selector modal`
         );
       } else {
-        console.warn(`🎨 [drawJourney] Skipping route ${mappedRouteId} - failed verification`);
+        console.warn(`🎨 [drawJourney] Skipping route - no route ID available`);
         addDebugLog(
           `Leg ${legIdx}: Route Skipped`,
           {
             routeId: mappedRouteId,
-            reason: 'Failed verification'
+            reason: 'No route ID available'
           },
-          `❌ Skipped route ${mappedRouteId} - failed stop verification`
+          `❌ Skipped leg ${legIdx} - cannot identify route (mode: ${leg.mode})`
         );
       }
     }

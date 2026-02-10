@@ -1714,24 +1714,50 @@
         
         // Note: Bus and Shuttle both go in busRouteMap, we'll filter later
         if (!routeMap.has(key)) {
-          // Build route label with name if available
-          // Priority: route_name field > route_long_name > route_title (cleaned) > route_id
+          // Build route label - MBTA structure: route number/name only (NO destination)
+          // Priority: route_name field > route_long_name (cleaned) > route_title (cleaned) > route_id
           let routeLabel;
           
           if (route.route_name) {
             // If route_name exists (e.g., "Brightheart Parkway"), format as "19 - Brightheart Parkway"
+            // route_name should NOT contain destination info
             routeLabel = `${route.route_number || route.route_id} - ${route.route_name}`;
           } else if (route.route_long_name) {
-            // If route_long_name exists, use it
-            routeLabel = `${route.route_number || route.route_id} - ${route.route_long_name}`;
+            // route_long_name often contains destination info like "Route 7 to Downtown" or "Route 7 - Downtown via Main St"
+            // Strip destination patterns: " to X", " - X", " via X", etc.
+            let cleanedName = route.route_long_name;
+            
+            // Remove common destination patterns
+            // "Route 7 to Downtown Crossing" -> "Route 7"
+            // "Route 7 - Downtown Crossing via Main St" -> "Route 7"
+            // "Route 7 via Main St" -> "Route 7"
+            cleanedName = cleanedName.replace(/\s+(to|via|through)\s+.*$/i, '');
+            cleanedName = cleanedName.replace(/\s*-\s*[^-]*$/, ''); // Remove everything after last " - "
+            
+            // If we still have a route number prefix, use it; otherwise use route_number/route_id
+            const routeNumber = route.route_number || route.route_id;
+            if (cleanedName.toLowerCase().includes('route')) {
+              // Extract route number from cleaned name if it contains "Route X"
+              const match = cleanedName.match(/route\s+(\d+)/i);
+              if (match) {
+                routeLabel = match[1]; // Just the number
+              } else {
+                routeLabel = routeNumber;
+              }
+            } else {
+              // Use route number with cleaned name (if name is meaningful)
+              routeLabel = cleanedName.trim() ? `${routeNumber} - ${cleanedName.trim()}` : routeNumber;
+            }
           } else {
-            // Fallback: Extract from route_title (remove direction suffix)
-            // "Route 1 - Outbound" -> "Route 1"
+            // Fallback: Extract from route_title (remove direction/destination suffix)
+            // "Route 1 - Outbound" -> "Route 1" -> "1"
             routeLabel = route.route_title || `${route.route_id}`;
             if (routeLabel.includes(' - ')) {
-              // Remove direction suffix (everything after " - ")
+              // Remove direction/destination suffix (everything after " - ")
               routeLabel = routeLabel.split(' - ')[0];
             }
+            // Remove "to X", "via X" patterns
+            routeLabel = routeLabel.replace(/\s+(to|via|through)\s+.*$/i, '');
             // If it's still "Route X", simplify to just "X"
             routeLabel = routeLabel.replace(/^Route\s+/i, '');
           }
@@ -1746,9 +1772,11 @@
         }
         const routeEntry = routeMap.get(key);
         if (route.direction_id === 0) {
-          routeEntry.dir0 = route.direction_name || 'Direction 0';
+          // direction_name should contain destination info (e.g., "Outbound to Downtown")
+          // If it doesn't, we'll add it later when loading route data
+          routeEntry.dir0 = route.direction_name || 'Outbound';
         } else if (route.direction_id === 1) {
-          routeEntry.dir1 = route.direction_name || 'Direction 1';
+          routeEntry.dir1 = route.direction_name || 'Inbound';
         }
       });
       
@@ -5722,7 +5750,7 @@
   /**
    * Show bus routes for selected category
    */
-  function showBusCategory(category) {
+  async function showBusCategory(category) {
     // Initialize routes if not already done
     if (BUS_ROUTES_REGULAR.length === 0 && BUS_ROUTES_SHUTTLE.length === 0) {
       initializeBusRoutes();
@@ -5745,13 +5773,65 @@
     // Get routes for selected category
     const routesToShow = category === 'bus' ? BUS_ROUTES_REGULAR : BUS_ROUTES_SHUTTLE;
     
-    // Clear and populate route list
-    routeList.innerHTML = '';
-    routesToShow.forEach(route => {
+    // Clear route list
+    routeList.innerHTML = '<em style="color: #1E90FF;">Loading routes...</em>';
+    
+    // Load route data for all routes to get terminal stations
+    const routePromises = routesToShow.map(async (route) => {
+      // Get terminal stations for both directions
+      const [routeData0, routeData1] = await Promise.all([
+        getRouteData(route.id, 0).catch(() => null),
+        getRouteData(route.id, 1).catch(() => null)
+      ]);
+      
+      // Get terminal stations (last stop of each direction)
+      let terminal0 = null;
+      let terminal1 = null;
+      
+      if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
+        terminal0 = routeData0.stops[routeData0.stops.length - 1].name || null;
+      }
+      if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
+        terminal1 = routeData1.stops[routeData1.stops.length - 1].name || null;
+      }
+      
+      // Determine Inbound/Outbound labels
+      // Extract direction label from direction_name (e.g., "Inbound" or "Outbound")
+      // If direction_name contains "Inbound" or "Outbound", use that; otherwise default
+      let dir0Label = 'Outbound';
+      let dir1Label = 'Inbound';
+      
+      if (route.dir0) {
+        const dir0Lower = route.dir0.toLowerCase();
+        if (dir0Lower.includes('inbound')) {
+          dir0Label = 'Inbound';
+        } else if (dir0Lower.includes('outbound')) {
+          dir0Label = 'Outbound';
+        } else {
+          dir0Label = route.dir0; // Use as-is if it doesn't contain Inbound/Outbound
+        }
+      }
+      
+      if (route.dir1) {
+        const dir1Lower = route.dir1.toLowerCase();
+        if (dir1Lower.includes('inbound')) {
+          dir1Label = 'Inbound';
+        } else if (dir1Lower.includes('outbound')) {
+          dir1Label = 'Outbound';
+        } else {
+          dir1Label = route.dir1; // Use as-is if it doesn't contain Inbound/Outbound
+        }
+      }
+      
+      // Format direction buttons: "Inbound to [terminal]" or "Outbound to [terminal]"
+      const dir0Text = terminal0 ? `${dir0Label} to ${terminal0}` : dir0Label;
+      const dir1Text = terminal1 ? `${dir1Label} to ${terminal1}` : dir1Label;
+      
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
       
+      // Route header: Just the route number/name (no destination)
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
       routeHeader.innerHTML = `<span>${route.label}</span>`;
@@ -5761,12 +5841,12 @@
       directionsDiv.id = `directions-${route.id}`;
       directionsDiv.style.cssText = 'display: none; margin-top: 0.5rem;';
       
-      if (route.dir0) {
+      if (route.dir0 || terminal0) {
         const dir0BtnWrapper = document.createElement('div');
         dir0BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;';
         
         const dir0Btn = document.createElement('button');
-        dir0Btn.textContent = `➡ ${route.dir0}`;
+        dir0Btn.textContent = `➡ ${dir0Text}`;
         dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRoute(route.id, 0);
         
@@ -5776,12 +5856,12 @@
         directionsDiv.appendChild(dir0BtnWrapper);
       }
       
-      if (route.dir1) {
+      if (route.dir1 || terminal1) {
         const dir1BtnWrapper = document.createElement('div');
         dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;';
         
         const dir1Btn = document.createElement('button');
-        dir1Btn.textContent = `⬅ ${route.dir1}`;
+        dir1Btn.textContent = `⬅ ${dir1Text}`;
         dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir1Btn.onclick = () => selectRoute(route.id, 1);
         
@@ -5793,8 +5873,13 @@
       
       routeDiv.appendChild(routeHeader);
       routeDiv.appendChild(directionsDiv);
-      routeList.appendChild(routeDiv);
+      return routeDiv;
     });
+    
+    // Wait for all routes to load, then populate the list
+    const routeElements = await Promise.all(routePromises);
+    routeList.innerHTML = '';
+    routeElements.forEach(routeDiv => routeList.appendChild(routeDiv));
     
     // Setup search
     if (searchInput) {
