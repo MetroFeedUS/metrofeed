@@ -1,13 +1,10 @@
 // MetroFeed Portland Translations
 // Comprehensive translation system for portlandindex.html
 
-console.log('🚀 translations.js is loading...');
-
 // Global variables
 let currentLanguage = 'en';
 
 // Define translations object first
-console.log('🔍 Creating translations object...');
 const translations = {
   en: {
     // Page title
@@ -325,10 +322,7 @@ const translations = {
   }
 };
 
-console.log('🔍 Translations object created with EN keys:', Object.keys(translations.en).length);
-console.log('🔍 Translations object created with ES keys:', Object.keys(translations.es).length);
-console.log('🔍 Weather keys in EN:', Object.keys(translations.en).filter(key => key.includes('weather')));
-console.log('🔍 Weather keys in ES:', Object.keys(translations.es).filter(key => key.includes('weather')));
+// Translations object created
 
 // Simple, direct functions
 function getCurrentLanguage() {
@@ -368,42 +362,28 @@ function translateText(key) {
 }
 
 function updatePageLanguage() {
-  console.log('🔄 updatePageLanguage called, currentLanguage:', currentLanguage);
-  console.log('🔄 Document readyState:', document.readyState);
-  console.log('🔄 translations object available:', typeof translations);
   document.documentElement.lang = currentLanguage;
   
   // Only update title if there's a data-translate attribute on the title element
   const titleElement = document.querySelector('title[data-translate]');
-  console.log('🔄 Title element found:', !!titleElement);
   if (titleElement) {
     const titleKey = titleElement.getAttribute('data-translate');
-    console.log('🔄 Title key:', titleKey);
     const titleTranslation = translateText(titleKey);
-    console.log('🔄 Title translation:', titleTranslation);
     document.title = titleTranslation;
   }
   
   const translateElements = document.querySelectorAll('[data-translate]');
-  console.log('📝 Found', translateElements.length, 'elements to translate');
-  translateElements.forEach((element, index) => {
+  translateElements.forEach((element) => {
     const key = element.getAttribute('data-translate');
-    console.log(`🔍 Processing element ${index + 1}/${translateElements.length} with key:`, key);
-    console.log('🔍 Element tagName:', element.tagName);
-    console.log('🔍 Element original text:', element.textContent);
     const translation = translateText(key);
-    console.log('📄 Translation result:', translation);
     if (translation) {
       // Check if this element should preserve HTML formatting
       const preserveHTML = element.hasAttribute('data-translate-html');
-      console.log('🔍 Preserve HTML:', preserveHTML);
       if (preserveHTML) {
-        console.log('🔍 Setting innerHTML to:', translation);
         element.innerHTML = translation;
       } else {
         element.textContent = translation;
       }
-      console.log('✅ Applied translation to element');
     }
   });
   
@@ -459,14 +439,12 @@ window.getCurrentLanguage = getCurrentLanguage;
 
 // Initialize currentLanguage immediately
 currentLanguage = getCurrentLanguage();
-console.log('🌍 Current language set to:', currentLanguage);
 
 // Test that the function is available
-console.log('toggleLanguageDropdown available:', typeof window.toggleLanguageDropdown);
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-console.log('✅ translations.js loaded completely! (v15)'); 
+// translations.js loaded (v15) 

@@ -3167,17 +3167,6 @@ function logOtpSummary(stage, selectedIdx = null) {
 
 // Export functions and variables to window for global access
 window.fetchAndShowOtpItineraries = fetchAndShowOtpItineraries;
-window.renderItinListVisual = renderItinListVisual;
-window.decodePolyline = decodePolyline;
-window.showRoute = showRoute;
-
-// Export state variables (for backward compatibility)
-// Note: currentItins is also set on window.currentItins in fetchAndShowOtpItineraries
-Object.defineProperty(window, 'currentItins', {
-  get: () => currentItins,
-  set: (value) => { currentItins = value; }
-});
-
 // Export functions and variables to window for global access
 window.fetchAndShowOtpItineraries = fetchAndShowOtpItineraries;
 window.renderItinListVisual = renderItinListVisual;
@@ -3186,10 +3175,14 @@ window.showRoute = showRoute;
 
 // Export state variables (for backward compatibility)
 // Note: currentItins is also set on window.currentItins in fetchAndShowOtpItineraries
-Object.defineProperty(window, 'currentItins', {
-  get: () => currentItins,
-  set: (value) => { currentItins = value; }
-});
+// Only define if not already defined to avoid redefinition errors
+if (!window.hasOwnProperty('currentItins') || !Object.getOwnPropertyDescriptor(window, 'currentItins')) {
+  Object.defineProperty(window, 'currentItins', {
+    get: () => currentItins,
+    set: (value) => { currentItins = value; },
+    configurable: true
+  });
+}
 
 // PHASE 3: Schema debug helper (dev-only)
 window.debugOtpSchema = async function() {
