@@ -1849,6 +1849,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
             try {
               v3VehiclesForMarkers = await fetchMBTAV3Vehicles(routeNum, directionId);
               console.log(`[attachRouteToMap] Fetched ${v3VehiclesForMarkers.length} V3 vehicles for bus markers`);
+              
+              // If V3 returns 0 vehicles but we have GTFS-RT vehicles, fall back to GTFS-RT
+              if (v3VehiclesForMarkers.length === 0 && routeBuses.length > 0) {
+                console.log(`[attachRouteToMap] V3 returned 0 vehicles, falling back to ${routeBuses.length} GTFS-RT vehicles`);
+                v3VehiclesForMarkers = routeBuses;
+              }
             } catch (v3Error) {
               console.warn('[attachRouteToMap] V3 vehicles unavailable, using GTFS-RT vehicles:', v3Error);
               // Fall back to GTFS-RT vehicles
@@ -1952,7 +1958,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             overlayElements.markers.push(busMarker);
           });
           
-          console.log(`[attachRouteToMap] Displayed ${routeBuses.length} buses for route ${routeNum} direction ${directionId}`);
+          console.log(`[attachRouteToMap] Displayed ${v3VehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
           
           if (routeBuses.length === 0 && allBuses.length > 0) {
             console.warn(`[attachRouteToMap] ⚠️ No buses matched for route "${routeNum}" direction ${directionId}, but ${allBuses.length} total buses found in feed`);
