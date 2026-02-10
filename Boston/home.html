@@ -2380,10 +2380,17 @@
   // after a day/night map style swap. (Markers can survive because they are DOM elements.)
   function restoreRouteOverlaysAfterStyleChange() {
     try {
-      if (!map || !window.attachRouteToMap) return;
+      if (!map || !window.attachRouteToMap) {
+        console.warn('[restoreRouteOverlaysAfterStyleChange] Map or attachRouteToMap not available');
+        return;
+      }
       const descriptors = window.activeRouteOverlayDescriptors || {};
       const keys = Object.keys(descriptors);
-      if (keys.length === 0) return;
+      console.log('[restoreRouteOverlaysAfterStyleChange] Found', keys.length, 'overlay descriptors to restore:', keys);
+      if (keys.length === 0) {
+        console.log('[restoreRouteOverlaysAfterStyleChange] No overlays to restore');
+        return;
+      }
 
       // Remove existing overlay handles first to avoid duplicating DOM markers/panels
       if (window.activeRouteOverlays) {
@@ -2397,11 +2404,16 @@
 
       keys.forEach((overlayKey) => {
         const d = descriptors[overlayKey];
-        if (!d || !d.options || !d.attachRouteId) return;
+        if (!d || !d.options || !d.attachRouteId) {
+          console.warn('[restoreRouteOverlaysAfterStyleChange] Invalid descriptor for:', overlayKey, d);
+          return;
+        }
         try {
+          console.log('[restoreRouteOverlaysAfterStyleChange] Restoring overlay:', overlayKey, 'route:', d.attachRouteId, 'direction:', d.directionId);
           window.activeRouteOverlays[overlayKey] = window.attachRouteToMap(map, d.attachRouteId, d.directionId, d.options);
+          console.log('[restoreRouteOverlaysAfterStyleChange] Successfully restored:', overlayKey);
         } catch (err) {
-          console.warn('[restoreRouteOverlaysAfterStyleChange] Failed to restore overlay:', overlayKey, err);
+          console.error('[restoreRouteOverlaysAfterStyleChange] Failed to restore overlay:', overlayKey, err);
         }
       });
     } catch (err) {
@@ -2421,8 +2433,16 @@
       // Use `once` so we don't stack listeners.
       if (map && typeof map.once === 'function') {
         map.once('style.load', () => {
-          // small delay helps ensure sprite/fonts are ready before adding layers
-          setTimeout(restoreRouteOverlaysAfterStyleChange, 50);
+          // Delay helps ensure sprite/fonts are ready before adding layers
+          // Also wait for map to be fully loaded
+          const restoreWhenReady = () => {
+            if (map.loaded() && map.isStyleLoaded()) {
+              restoreRouteOverlaysAfterStyleChange();
+            } else {
+              setTimeout(restoreWhenReady, 100);
+            }
+          };
+          setTimeout(restoreWhenReady, 200);
         });
       }
       
@@ -5483,6 +5503,11 @@
   if (!window.activeRouteOverlays) {
     window.activeRouteOverlays = {};
   }
+  
+  // Initialize overlay descriptors for style-change restoration
+  if (!window.activeRouteOverlayDescriptors) {
+    window.activeRouteOverlayDescriptors = {};
+  }
   // Persist enough info to rebuild overlays after map.setStyle() day/night swaps
   if (!window.activeRouteOverlayDescriptors) {
     window.activeRouteOverlayDescriptors = {};
@@ -5630,21 +5655,23 @@
     
     window.activeRouteOverlays[overlayKey] = overlay;
     // Save descriptor so we can restore after day/night style changes
+    // IMPORTANT: Deep clone routeData to avoid reference issues when map style changes
+    const descriptorOptions = {
+      mode: 'mainOverlay',
+      routeData: JSON.parse(JSON.stringify(routeData)), // Deep clone
+      routePageUrl,
+      fitBounds: false,
+      apiKey,
+      busApiType: CITY_CONFIG.busApiType,
+      gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
+      trackBuses: true
+    };
     window.activeRouteOverlayDescriptors[overlayKey] = {
       attachRouteId: busTrackingRouteId,
       directionId,
-      options: {
-        mode: 'mainOverlay',
-        routeData,
-        routePageUrl,
-        fitBounds: false,
-        apiKey,
-        busApiType: CITY_CONFIG.busApiType,
-        gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
-        trackBuses: true
-      }
+      options: descriptorOptions
     };
-    console.log('[showRouteOverlay] Route overlay added:', overlayKey);
+    console.log('[showRouteOverlay] Route overlay added:', overlayKey, 'descriptor saved for restoration');
   };
   
   /**
