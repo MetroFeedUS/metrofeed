@@ -2429,26 +2429,48 @@
       // Make isNightMode globally accessible for camera markers
       window.isNightMode = isNightMode;
 
-      // After style swap, restore route overlays (line layers) so shapes persist.
-      // Use `once` so we don't stack listeners.
-      console.log('[Theme Toggle] Setting up route overlay restoration after style change');
+      // IMPORTANT: Set up restoration listener BEFORE calling setStyle()
+      // The style.load event fires when setStyle() is called
+      console.log('[Theme Toggle] Setting up route overlay restoration before style change');
+      let restorationScheduled = false;
+      
+      const scheduleRestoration = () => {
+        if (restorationScheduled) return;
+        restorationScheduled = true;
+        console.log('[Theme Toggle] Scheduling route overlay restoration...');
+        // Wait for map to be fully loaded and rendered
+        const restoreWhenReady = () => {
+          if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
+            console.log('[Theme Toggle] Map is ready, restoring route overlays...');
+            restoreRouteOverlaysAfterStyleChange();
+          } else {
+            // Keep checking every 100ms, max 5 seconds
+            setTimeout(restoreWhenReady, 100);
+          }
+        };
+        // Start checking after a short delay
+        setTimeout(restoreWhenReady, 500);
+      };
+      
       if (map && typeof map.once === 'function') {
-        // Listen for style.load first
+        // Listen for style.load (fires when style JSON is loaded)
         map.once('style.load', () => {
-          console.log('[Theme Toggle] style.load event fired, waiting for map to be ready...');
-          // Then wait for idle event (map is fully loaded and rendered)
-          map.once('idle', () => {
-            console.log('[Theme Toggle] Map is idle, restoring route overlays...');
-            // Small delay to ensure everything is settled
-            setTimeout(() => {
-              restoreRouteOverlaysAfterStyleChange();
-            }, 300);
-          });
+          console.log('[Theme Toggle] style.load event fired');
+          scheduleRestoration();
+        });
+        
+        // Also listen for styledata as a fallback
+        map.once('styledata', () => {
+          console.log('[Theme Toggle] styledata event fired (fallback)');
+          scheduleRestoration();
         });
       } else {
-        console.warn('[Theme Toggle] Map or map.once not available, cannot restore overlays');
+        console.warn('[Theme Toggle] Map or map.once not available, using timeout fallback');
+        // Fallback: just wait and restore
+        setTimeout(scheduleRestoration, 1000);
       }
       
+      // Now change the style (this will trigger style.load event)
       if (isNightMode) {
         map.setStyle(nightStyle);
         themeToggleBtn.querySelector('img').src = '008-night.svg'; // Keep moon icon
