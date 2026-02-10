@@ -948,11 +948,94 @@ async function parseMBTAGTFSRT(buffer) {
  *
  * @returns {{ remove: function }} overlay handle
  */
+/**
+ * Get route color based on route name
+ * Returns a consistent color for routes with the same name
+ * @param {string} routeName - Route name (route_title, route_label, route_name, etc.)
+ * @returns {string} Hex color code
+ */
+function getRouteColorByName(routeName) {
+  if (!routeName) return "#708090"; // Default steel grey
+  
+  const name = String(routeName).toLowerCase().trim();
+  
+  // MBTA Subway colors (exact matches)
+  if (name.includes('red line') || name === 'red') return "#DA291C";
+  if (name.includes('orange line') || name === 'orange') return "#ED8B00";
+  if (name.includes('blue line') || name === 'blue') return "#003DA5";
+  if (name.includes('green line') || name.startsWith('green')) return "#00843D";
+  
+  // Commuter Rail (purple-ish)
+  if (name.includes('commuter') || name.includes('cr-') || name.startsWith('fitchburg') || 
+      name.startsWith('lowell') || name.startsWith('haverhill') || name.startsWith('newburyport') ||
+      name.startsWith('rockport') || name.startsWith('fairmount') || name.startsWith('needham') ||
+      name.startsWith('franklin') || name.startsWith('providence') || name.startsWith('middleborough') ||
+      name.startsWith('kingston') || name.startsWith('greenbush') || name.startsWith('worcester') ||
+      name.startsWith('framingham') || name.startsWith('foxboro')) {
+    return "#80276C";
+  }
+  
+  // Generate consistent color from route name hash
+  // This ensures same route name always gets same color
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  // Generate a color from the hash (avoid too dark/light colors)
+  const hue = Math.abs(hash) % 360;
+  const saturation = 60 + (Math.abs(hash) % 20); // 60-80% saturation
+  const lightness = 45 + (Math.abs(hash) % 15); // 45-60% lightness
+  
+  // Convert HSL to hex
+  const h = hue / 360;
+  const s = saturation / 100;
+  const l = lightness / 100;
+  
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+  const m = l - c / 2;
+  
+  let r, g, b;
+  if (h < 1/6) {
+    r = c; g = x; b = 0;
+  } else if (h < 2/6) {
+    r = x; g = c; b = 0;
+  } else if (h < 3/6) {
+    r = 0; g = c; b = x;
+  } else if (h < 4/6) {
+    r = 0; g = x; b = c;
+  } else if (h < 5/6) {
+    r = x; g = 0; b = c;
+  } else {
+    r = c; g = 0; b = x;
+  }
+  
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+  
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
 function attachRouteToMap(map, routeId, directionId, options) {
   options = options || {};
 
   const mode        = options.mode || "mainOverlay";
-  const routeColor  = options.routeColor || "#0052A3"; // Deeper, more saturated blue for better visibility
+  
+  // Get route color: use provided color, or determine from route name, or default to steel grey
+  let routeColor = options.routeColor;
+  if (!routeColor && options.routeData) {
+    // Try to get route name from routeData
+    const routeName = options.routeData.route_label || 
+                      options.routeData.route_title || 
+                      options.routeData.route_name || 
+                      options.routeData.route_long_name || 
+                      routeId;
+    routeColor = getRouteColorByName(routeName);
+  }
+  routeColor = routeColor || "#708090"; // Default steel grey (#708090)
+  
   const fitBounds   =
     options.fitBounds !== undefined
       ? options.fitBounds
