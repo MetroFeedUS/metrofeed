@@ -338,29 +338,6 @@ const translations = {
   }
 };
 
-// Ensure missing keys are added to translations object (fallback injection)
-if (translations && translations.en) {
-  if (!translations.en.nextHours) translations.en.nextHours = 'Next few hours';
-  if (!translations.en.noActiveWeatherAlerts) translations.en.noActiveWeatherAlerts = 'No Active Weather Alerts';
-  if (!translations.en.stop_times) translations.en.stop_times = 'Stop Times';
-  if (!translations.en.android_instructions) translations.en.android_instructions = 'Android Instructions';
-  if (!translations.en.apple_instructions) translations.en.apple_instructions = 'Apple Instructions';
-  if (!translations.en.weatherForecast) translations.en.weatherForecast = 'Weather Forecast';
-  if (!translations.en.hourly) translations.en.hourly = 'Hourly';
-  if (!translations.en.loadingHourlyForecast) translations.en.loadingHourlyForecast = 'Loading hourly forecast...';
-}
-
-if (translations && translations.es) {
-  if (!translations.es.nextHours) translations.es.nextHours = 'Próximas Horas';
-  if (!translations.es.noActiveWeatherAlerts) translations.es.noActiveWeatherAlerts = 'No Hay Alertas Meteorológicas Activas';
-  if (!translations.es.stop_times) translations.es.stop_times = 'Horarios de Parada';
-  if (!translations.es.android_instructions) translations.es.android_instructions = 'Instrucciones Android';
-  if (!translations.es.apple_instructions) translations.es.apple_instructions = 'Instrucciones Apple';
-  if (!translations.es.weatherForecast) translations.es.weatherForecast = 'Pronóstico del Tiempo';
-  if (!translations.es.hourly) translations.es.hourly = 'Por Horas';
-  if (!translations.es.loadingHourlyForecast) translations.es.loadingHourlyForecast = 'Cargando pronóstico por horas...';
-}
-
 // Translations object created
 
 // Simple, direct functions
@@ -377,7 +354,6 @@ function getCurrentLanguage() {
 }
 
 function translateText(key) {
-  // Safety check - if translations object isn't loaded yet, return the key
   if (!translations || !translations[currentLanguage]) {
     return key;
   }
@@ -386,22 +362,6 @@ function translateText(key) {
     return translations[currentLanguage][key];
   } else if (translations.en && translations.en[key]) {
     return translations.en[key];
-  }
-  
-  // Temporary fallback for missing keys (until server file is updated)
-  const fallbacks = {
-    'nextHours': currentLanguage === 'es' ? 'Próximas Horas' : 'Next few hours',
-    'noActiveWeatherAlerts': currentLanguage === 'es' ? 'No Hay Alertas Meteorológicas Activas' : 'No Active Weather Alerts',
-    'stop_times': currentLanguage === 'es' ? 'Horarios de Parada' : 'Stop Times',
-    'android_instructions': currentLanguage === 'es' ? 'Instrucciones Android' : 'Android Instructions',
-    'apple_instructions': currentLanguage === 'es' ? 'Instrucciones Apple' : 'Apple Instructions',
-    'weatherForecast': currentLanguage === 'es' ? 'Pronóstico del Tiempo' : 'Weather Forecast',
-    'hourly': currentLanguage === 'es' ? 'Por Horas' : 'Hourly',
-    'loadingHourlyForecast': currentLanguage === 'es' ? 'Cargando pronóstico por horas...' : 'Loading hourly forecast...'
-  };
-  
-  if (fallbacks[key]) {
-    return fallbacks[key];
   }
   
   return key;
@@ -493,4 +453,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-// translations.js loaded (v21) 
+// translations.js loaded (v22) 
