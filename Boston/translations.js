@@ -354,26 +354,33 @@ function getCurrentLanguage() {
 }
 
 function translateText(key) {
-  // Verbose logging removed - was flooding console
-  // console.log('🔍 translateText called with key:', key);
-  // console.log('🔍 currentLanguage:', currentLanguage);
-  // console.log('🔍 translations object exists:', !!translations);
-  // console.log('🔍 translations[currentLanguage] exists:', !!translations[currentLanguage]);
-  
   // Safety check - if translations object isn't loaded yet, return the key
   if (!translations || !translations[currentLanguage]) {
-    // console.warn('❌ Translations not loaded yet, returning key:', key);
     return key;
   }
   
   if (translations[currentLanguage] && translations[currentLanguage][key]) {
-    // console.log('✅ Found translation for', key, ':', translations[currentLanguage][key]);
     return translations[currentLanguage][key];
   } else if (translations.en && translations.en[key]) {
-    // console.log('⚠️ Key not found in', currentLanguage, 'using English:', key);
     return translations.en[key];
   }
-  console.warn('❌ Translation key not found:', key);
+  
+  // Temporary fallback for missing keys (until server file is updated)
+  const fallbacks = {
+    'nextHours': currentLanguage === 'es' ? 'Próximas Horas' : 'Next few hours',
+    'noActiveWeatherAlerts': currentLanguage === 'es' ? 'No Hay Alertas Meteorológicas Activas' : 'No Active Weather Alerts',
+    'stop_times': currentLanguage === 'es' ? 'Horarios de Parada' : 'Stop Times',
+    'android_instructions': currentLanguage === 'es' ? 'Instrucciones Android' : 'Android Instructions',
+    'apple_instructions': currentLanguage === 'es' ? 'Instrucciones Apple' : 'Apple Instructions',
+    'weatherForecast': currentLanguage === 'es' ? 'Pronóstico del Tiempo' : 'Weather Forecast',
+    'hourly': currentLanguage === 'es' ? 'Por Horas' : 'Hourly',
+    'loadingHourlyForecast': currentLanguage === 'es' ? 'Cargando pronóstico por horas...' : 'Loading hourly forecast...'
+  };
+  
+  if (fallbacks[key]) {
+    return fallbacks[key];
+  }
+  
   return key;
 }
 
@@ -463,4 +470,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-// translations.js loaded (v19) 
+// translations.js loaded (v20) 
