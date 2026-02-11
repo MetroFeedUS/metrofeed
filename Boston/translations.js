@@ -128,7 +128,7 @@ const translations = {
     "weatherBetaMessage": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
     "weatherAlerts": "⚠️ Weather Alerts (Tap to View)",
     "checkingAlerts": "Checking for alerts...",
-    "noActiveAlerts": "✅ No active alerts at this time.",
+    "noActiveAlerts": "No active alerts for this area.",
     "unableToLoadAlerts": "⚠️ Unable to load alert data.",
     "jumpToForecast": "Jump to Forecast",
     "tornadoWarning": "Tornado Warning",
