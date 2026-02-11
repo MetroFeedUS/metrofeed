@@ -463,4 +463,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-// translations.js loaded (v17) 
+// translations.js loaded (v18) 
