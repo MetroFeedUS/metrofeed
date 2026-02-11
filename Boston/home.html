@@ -6824,22 +6824,23 @@
 
     try {
       // Use MBTA V3 API for alerts (JSON format, easier than protobuf)
-      const url = 'https://maps.metrofeedus.com/api/mbta/v3/alerts?filter[active]=true&sort=-created_at&page[limit]=50';
-      const headers = {};
-      
-      // Add API key if available
-      if (CITY_CONFIG && CITY_CONFIG.apiKey) {
-        headers['X-API-Key'] = CITY_CONFIG.apiKey;
-      }
-      
-      const response = await fetch(url, { headers });
+      // Proxy handles authentication server-side
+      // Fetch recent alerts and filter active ones client-side
+      const url = 'https://maps.metrofeedus.com/api/mbta/v3/alerts?sort=-created_at&page[limit]=50';
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
-      const alerts = data.data || [];
+      let alerts = data.data || [];
+
+      // Filter for active alerts (check lifecycle field)
+      alerts = alerts.filter(alert => {
+        const lifecycle = alert.attributes?.lifecycle;
+        return lifecycle === 'new' || lifecycle === 'ongoing' || lifecycle === 'ongoing_upcoming';
+      });
 
       if (alerts.length === 0) {
         alertsContent.innerHTML = '<div style="color: #4CAF50; padding: 1rem; text-align: center;">✅ No active MBTA alerts at this time.</div>';
