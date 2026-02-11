@@ -1721,15 +1721,35 @@ function attachRouteToMap(map, routeId, directionId, options) {
       `;
       closeBtn.onmouseover = () => closeBtn.style.background = "rgba(255,255,255,0.2)";
       closeBtn.onmouseout = () => closeBtn.style.background = "transparent";
+      // Get the actual overlay key from options (for branch routes like "Red-Ashmont-0")
+      // If not provided, construct from routeId (for non-branch routes)
+      const actualOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
+      
+      // Store overlay key in panel for reference
+      routeInfoPanel.setAttribute('data-overlay-key', actualOverlayKey);
+      
       closeBtn.onclick = (e) => {
         e.stopPropagation();
-        // Find and remove this overlay
+        // Find and remove this overlay using the actual overlay key
         if (window.activeRouteOverlays) {
-          const overlayKey = `${routeId}-${directionId}`;
-          if (window.activeRouteOverlays[overlayKey]) {
-            window.activeRouteOverlays[overlayKey].remove();
-            delete window.activeRouteOverlays[overlayKey];
+          if (window.activeRouteOverlays[actualOverlayKey]) {
+            window.activeRouteOverlays[actualOverlayKey].remove();
+            delete window.activeRouteOverlays[actualOverlayKey];
+          } else {
+            // Fallback: try to find by routeId if stored key doesn't match
+            console.warn('[routeOverlay] Overlay key not found:', actualOverlayKey, 'Available keys:', Object.keys(window.activeRouteOverlays));
+            // Try alternative key format
+            const altKey = `${routeId}-${directionId}`;
+            if (window.activeRouteOverlays[altKey]) {
+              window.activeRouteOverlays[altKey].remove();
+              delete window.activeRouteOverlays[altKey];
+            }
           }
+        }
+        
+        // Also remove from descriptors
+        if (window.activeRouteOverlayDescriptors) {
+          delete window.activeRouteOverlayDescriptors[actualOverlayKey];
         }
       };
       

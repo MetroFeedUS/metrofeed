@@ -5315,7 +5315,7 @@
         if (hourlyData && hourlyData.properties && hourlyData.properties.periods) {
           const periods = hourlyData.properties.periods.slice(0, 18);
           
-          html += '<div style="font-weight: bold; color: #1E90FF; margin-bottom: 0.75rem; font-size: 1rem;">' + (typeof translateText !== 'undefined' ? translateText('nextHours') : 'Next 18 Hours') + '</div>';
+          html += '<div style="font-weight: bold; color: #1E90FF; margin-bottom: 0.75rem; font-size: 1rem;">' + (typeof translateText !== 'undefined' ? translateText('nextHours') : 'Next few hours') + '</div>';
           html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; max-height: 400px; overflow-y: auto;">';
           
           periods.forEach(period => {
@@ -5750,7 +5750,8 @@
       apiKey: apiKey, // Pass API key for bus tracking (TriMet)
       busApiType: CITY_CONFIG.busApiType, // Pass bus API type (mbta-gtfs-rt or trimet)
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl, // Pass GTFS-RT URL for MBTA
-      trackBuses: true // Enable bus tracking for route overlay
+      trackBuses: true, // Enable bus tracking for route overlay
+      overlayKey: overlayKey // Pass the actual overlay key for close button to use
     });
     
     window.activeRouteOverlays[overlayKey] = overlay;

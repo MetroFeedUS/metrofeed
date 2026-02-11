@@ -143,7 +143,7 @@ const translations = {
     "weatherForecast": "Weather Forecast",
     "hourly": "Hourly",
     "currentConditions": "Current Conditions",
-    "nextHours": "Next 18 Hours",
+    "nextHours": "Next few hours",
     "noActiveWeatherAlerts": "No Active Weather Alerts",
     "viewDetails": "View Details",
     "viewOnWeatherGov": "View on weather.gov",
