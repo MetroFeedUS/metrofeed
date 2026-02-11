@@ -6885,36 +6885,92 @@
         return;
       }
 
-      let html = '';
+      // Organize alerts by category
+      const categories = {
+        service: { name: 'Service', alerts: [], icon: '🚇' },
+        elevator: { name: 'Elevator & Escalator', alerts: [], icon: '🛗' },
+        bike: { name: 'Bike', alerts: [], icon: '🚲' },
+        parking: { name: 'Parking', alerts: [], icon: '🅿️' },
+        other: { name: 'Other', alerts: [], icon: 'ℹ️' }
+      };
+
+      // Categorize alerts by effect type
       alerts.forEach(alert => {
         const attrs = alert.attributes || {};
-        const header = attrs.header || 'Alert';
-        const description = attrs.description || '';
-        const severity = attrs.severity || 'unknown';
-        const created = attrs.created_at ? new Date(attrs.created_at).toLocaleString() : '';
-        const updated = attrs.updated_at ? new Date(attrs.updated_at).toLocaleString() : '';
+        const effect = attrs.effect || '';
+        const header = (attrs.header || '').toLowerCase();
         
-        // Get affected routes
-        const routeIds = alert.relationships?.route?.data?.map(r => r.id) || [];
-        const routes = routeIds.length > 0 ? routeIds.join(', ') : 'All routes';
+        // Determine category based on effect and header
+        if (effect === 'ACCESS_ISSUE' || header.includes('elevator') || header.includes('escalator')) {
+          categories.elevator.alerts.push(alert);
+        } else if (header.includes('bike') || header.includes('bicycle')) {
+          categories.bike.alerts.push(alert);
+        } else if (header.includes('parking')) {
+          categories.parking.alerts.push(alert);
+        } else if (effect === 'DELAY' || effect === 'DETOUR' || effect === 'SHUTTLE' || 
+                   effect === 'MODIFIED_SERVICE' || effect === 'NO_SERVICE' || effect === 'REDUCED_SERVICE' ||
+                   effect === 'STATION_CLOSURE' || effect === 'STOP_CLOSURE' || header.includes('delay') ||
+                   header.includes('shuttle') || header.includes('service')) {
+          categories.service.alerts.push(alert);
+        } else {
+          categories.other.alerts.push(alert);
+        }
+      });
 
-        // Severity color
-        let severityColor = '#ffa500'; // orange default
-        if (severity === 'severe') severityColor = '#ff4444';
-        else if (severity === 'moderate') severityColor = '#ffa500';
-        else if (severity === 'minor') severityColor = '#4CAF50';
+      // Build HTML organized by category
+      let html = '';
+      
+      // Display categories that have alerts
+      Object.keys(categories).forEach(categoryKey => {
+        const category = categories[categoryKey];
+        if (category.alerts.length === 0) return;
 
         html += `
-          <div style="background: #23272a; border-left: 4px solid ${severityColor}; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-              <h3 style="margin: 0; color: ${severityColor}; font-size: 1.1rem;">${header}</h3>
-              <span style="background: ${severityColor}; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">${severity}</span>
-            </div>
-            ${routes ? `<div style="color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">Routes: ${routes}</div>` : ''}
-            ${description ? `<div style="color: #ccc; margin-bottom: 0.5rem; line-height: 1.5;">${description}</div>` : ''}
-            ${created ? `<div style="color: #666; font-size: 0.75rem;">Created: ${created}${updated && updated !== created ? ` | Updated: ${updated}` : ''}</div>` : ''}
-          </div>
+          <div style="margin-bottom: 2rem;">
+            <h3 style="color: #1E90FF; font-size: 1.1rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #333;">
+              ${category.icon} ${category.name} (${category.alerts.length})
+            </h3>
         `;
+
+        category.alerts.forEach(alert => {
+          const attrs = alert.attributes || {};
+          const header = attrs.header || 'Alert';
+          const description = attrs.description || '';
+          const severity = attrs.severity || 'unknown';
+          const effect = attrs.effect || '';
+          const lifecycle = attrs.lifecycle || '';
+          const created = attrs.created_at ? new Date(attrs.created_at).toLocaleString() : '';
+          const updated = attrs.updated_at ? new Date(attrs.updated_at).toLocaleString() : '';
+          
+          // Get affected routes
+          const routeIds = alert.relationships?.route?.data?.map(r => r.id) || [];
+          const routes = routeIds.length > 0 ? routeIds.join(', ') : 'All routes';
+
+          // Severity color
+          let severityColor = '#ffa500'; // orange default
+          if (severity === 'severe') severityColor = '#ff4444';
+          else if (severity === 'moderate') severityColor = '#ffa500';
+          else if (severity === 'minor') severityColor = '#4CAF50';
+
+          // Lifecycle badge
+          let lifecycleBadge = '';
+          if (lifecycle === 'ongoing') lifecycleBadge = '<span style="background: #ff4444; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; margin-left: 0.5rem;">ONGOING</span>';
+          else if (lifecycle === 'upcoming') lifecycleBadge = '<span style="background: #ffa500; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; margin-left: 0.5rem;">UPCOMING</span>';
+
+          html += `
+            <div style="background: #23272a; border-left: 4px solid ${severityColor}; border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                <h4 style="margin: 0; color: ${severityColor}; font-size: 1rem; flex: 1;">${header}${lifecycleBadge}</h4>
+                <span style="background: ${severityColor}; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-left: 0.5rem;">${severity}</span>
+              </div>
+              ${routes && routes !== 'All routes' ? `<div style="color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">Routes: ${routes}</div>` : ''}
+              ${description ? `<div style="color: #ccc; margin-bottom: 0.5rem; line-height: 1.5; font-size: 0.9rem;">${description}</div>` : ''}
+              ${created ? `<div style="color: #666; font-size: 0.75rem;">Created: ${created}${updated && updated !== created ? ` | Updated: ${updated}` : ''}</div>` : ''}
+            </div>
+          `;
+        });
+
+        html += `</div>`;
       });
 
       alertsContent.innerHTML = html;
