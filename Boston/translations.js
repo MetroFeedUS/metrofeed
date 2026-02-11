@@ -73,7 +73,9 @@ const translations = {
     
     // Install prompt
     "androidInstructions": "Android Instructions",
-    "appleInstructions": "Apple Instructions", 
+    "android_instructions": "Android Instructions",
+    "appleInstructions": "Apple Instructions",
+    "apple_instructions": "Apple Instructions", 
     "later": "Later",
     "installPromptTitle": "📲 Add MetroFeed Portland to your home screen",
     "installPromptSubtitle": "Use MetroFeed like an app for faster access!",
@@ -152,6 +154,7 @@ const translations = {
     "unableToLoadWeatherAlerts": "Unable to load weather alerts. Please check weather.gov for official alerts.",
     "failedToLoadForecast": "Failed to load forecast.",
     "goBack": "Go back",
+    "stop_times": "Stop Times",
     
     // Alerts page specific
     "alertsTitle": "Portland Alerts - MetroFeed",
@@ -236,7 +239,9 @@ const translations = {
     
     // Install prompt
     "androidInstructions": "Instrucciones Android",
+    "android_instructions": "Instrucciones Android",
     "appleInstructions": "Instrucciones Apple",
+    "apple_instructions": "Instrucciones Apple",
     "later": "Más Tarde",
     "installPromptTitle": "📲 Agregar MetroFeed Portland a tu pantalla de inicio",
     "installPromptSubtitle": "¡Usa MetroFeed como una aplicación para acceso más rápido!",
@@ -301,9 +306,20 @@ const translations = {
     "winterStormWarning": "Advertencia de Tormenta Invernal",
     "specialWeatherStatement": "Declaración Meteorológica Especial",
     "loadingForecast": "Cargando pronóstico de 7 días...",
+    "loadingHourlyForecast": "Cargando pronóstico por horas...",
     "sevenDayForecast": "Pronóstico de 7 Días",
+    "weatherForecast": "Pronóstico del Tiempo",
+    "hourly": "Por Horas",
+    "currentConditions": "Condiciones Actuales",
+    "nextHours": "Próximas Horas",
+    "noActiveWeatherAlerts": "No Hay Alertas Meteorológicas Activas",
+    "viewDetails": "Ver Detalles",
+    "viewOnWeatherGov": "Ver en weather.gov",
+    "noHourlyData": "No hay datos de pronóstico por horas disponibles",
+    "failedToLoadHourly": "Error al cargar el pronóstico por horas",
     "failedToLoadForecast": "Error al cargar el pronóstico.",
     "goBack": "Volver",
+    "stop_times": "Horarios de Parada",
     
     // Alerts page specific
     "alertsTitle": "Alertas de Portland - MetroFeed",
@@ -447,4 +463,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-// translations.js loaded (v15) 
+// translations.js loaded (v17) 
