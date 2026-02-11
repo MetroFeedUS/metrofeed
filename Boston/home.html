@@ -19,8 +19,14 @@
     }
   </script>
   
-  <!-- Language System -->
-  	<script src="../translations.js?v=22"></script>
+  <!-- Language System - DISABLED TEMPORARILY -->
+  	<!-- <script src="../translations.js?v=22"></script> -->
+  	<script>
+  		// Stub function to prevent errors
+  		function translateText(key) {
+  			return key;
+  		}
+  	</script>
   <style>
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
     html, body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
@@ -1063,19 +1069,19 @@
 <!-- -- WEATHER FORECAST MODAL -- -->
 <div id="weatherForecastModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-    <h2>🌤️ <span data-translate="weatherForecast">Weather Forecast</span></h2>
+    <h2>🌤️ Weather Forecast</h2>
     
     <!-- Weather Alerts Section -->
     <details id="weatherAlertsDetails" style="margin-top: 1rem; margin-bottom: 1rem;">
       <summary id="weatherAlertsSummary" style="cursor: pointer; padding: 0.75rem; border-radius: 6px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; background: #4CAF50; color: #fff; border: 2px solid #4CAF50;">
         <span style="display: flex; align-items: center; gap: 0.5rem;">
           <span id="weatherAlertsIcon">⚠️</span>
-          <span id="weatherAlertsText" data-translate="weatherAlerts">Weather Alerts (Tap to View)</span>
+          <span id="weatherAlertsText">⚠️ Weather Alerts (Tap to View)</span>
         </span>
         <span id="weatherAlertsArrow" style="transition: transform 0.3s;">▼</span>
       </summary>
       <div id="weatherAlertsContent" style="margin-top: 0.5rem; padding: 0.75rem; background: #111; border-radius: 6px; color: #ccc; border: 1px solid #333;">
-        <div data-translate="checkingAlerts">Checking for alerts...</div>
+        <div>Checking for alerts...</div>
       </div>
     </details>
     <style>
@@ -1089,21 +1095,21 @@
     
     <!-- Tabs -->
     <div style="display: flex; gap: 0.5rem; margin-top: 1rem; border-bottom: 2px solid #333;">
-      <button id="weatherTabHourly" class="weather-tab active" onclick="switchWeatherTab('hourly')" style="flex: 1; padding: 0.75rem; background: #1E90FF; color: #fff; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 0.95rem;" data-translate="hourly">Hourly</button>
-      <button id="weatherTab7Day" class="weather-tab" onclick="switchWeatherTab('7day')" style="flex: 1; padding: 0.75rem; background: #222; color: #ccc; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 0.95rem;" data-translate="sevenDayForecast">7 Day</button>
+      <button id="weatherTabHourly" class="weather-tab active" onclick="switchWeatherTab('hourly')" style="flex: 1; padding: 0.75rem; background: #1E90FF; color: #fff; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 0.95rem;">Hourly</button>
+      <button id="weatherTab7Day" class="weather-tab" onclick="switchWeatherTab('7day')" style="flex: 1; padding: 0.75rem; background: #222; color: #ccc; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 0.95rem;">7-Day Forecast</button>
     </div>
     
     <!-- Tab Content -->
     <div id="weatherTabContent" style="text-align: left; margin-top: 1rem; color: #ccc; min-height: 300px;">
       <div id="weatherHourlyContent" style="display: block;">
-        <div data-translate="loadingHourlyForecast">Loading hourly forecast...</div>
+        <div>Loading hourly forecast...</div>
       </div>
       <div id="weather7DayContent" style="display: none;">
-        <div data-translate="loadingForecast">Loading 7-day forecast...</div>
+        <div>Loading 7-day forecast...</div>
       </div>
     </div>
     
-    <button class="mf-btn" onclick="hideWeatherForecastModal()" style="margin-top: 1rem;" data-translate="close">Close</button>
+    <button class="mf-btn" onclick="hideWeatherForecastModal()" style="margin-top: 1rem;">Close</button>
     
     <!-- Disclaimer -->
     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #333; font-size: 0.75rem; color: #888; line-height: 1.4;">
@@ -5005,8 +5011,8 @@
           // No alerts - green bar
           alertsSummary.style.background = '#4CAF50';
           alertsSummary.style.borderColor = '#4CAF50';
-          alertsText.textContent = typeof translateText !== 'undefined' ? translateText('noActiveWeatherAlerts') : 'No Active Weather Alerts';
-          alertsContent.innerHTML = '<div style="color:#4CAF50;font-weight:bold;">✅ ' + (typeof translateText !== 'undefined' ? translateText('noActiveAlerts') : 'No active alerts for this area.') + '</div>';
+          alertsText.textContent = 'No Active Weather Alerts';
+          alertsContent.innerHTML = '<div style="color:#4CAF50;font-weight:bold;">✅ No active alerts for this area.</div>';
           return;
         }
         
@@ -5060,7 +5066,7 @@
               <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${alert.headline || (alert.description ? alert.description.substring(0, 200) + '...' : 'No description available')}</div>
               ${alert.instruction ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${alert.instruction.substring(0, 150)}${alert.instruction.length > 150 ? '...' : ''}</div>` : ''}
               <div style="margin-top:0.5rem;">
-                <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">${typeof translateText !== 'undefined' ? translateText('viewOnWeatherGov') : 'View on weather.gov'} →</a>
+                <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">View on weather.gov →</a>
               </div>
             </div>
           `;
@@ -5078,8 +5084,8 @@
         console.error('[loadWeatherAlerts] Error:', error);
         alertsSummary.style.background = '#ff9800';
         alertsSummary.style.borderColor = '#ff9800';
-        alertsText.textContent = typeof translateText !== 'undefined' ? translateText('unableToLoadAlerts') : 'Unable to Load Alerts';
-        alertsContent.innerHTML = '<div style="color:#ff9800; padding:1rem;">' + (typeof translateText !== 'undefined' ? translateText('unableToLoadWeatherAlerts') : 'Unable to load weather alerts. Please check weather.gov for official alerts.') + '</div>';
+        alertsText.textContent = 'Unable to Load Alerts';
+        alertsContent.innerHTML = '<div style="color:#ff9800; padding:1rem;">Unable to load weather alerts. Please check weather.gov for official alerts.</div>';
       });
   }
 
@@ -5112,7 +5118,7 @@
         ${instruction ? `<div style="color:#aaa; font-size:0.9rem; font-style:italic; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333; line-height:1.4;">${instruction}</div>` : ''}
         ${areaDesc ? `<div style="color:#888; font-size:0.85rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333;">Areas affected: ${areaDesc}</div>` : ''}
         <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #333; text-align:center;">
-          <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">${typeof translateText !== 'undefined' ? translateText('viewOnWeatherGov') : 'View full alert on weather.gov'} →</a>
+          <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">View full alert on weather.gov →</a>
         </div>
       </div>
     `;
@@ -5253,7 +5259,7 @@
     if (!hourlyContent) return;
     
     // Show loading state
-    hourlyContent.innerHTML = '<div data-translate="loadingHourlyForecast">Loading hourly forecast...</div>';
+    hourlyContent.innerHTML = '<div>Loading hourly forecast...</div>';
     
     // Boston coordinates: 42.3551, -71.0619 (latitude, longitude)
     const apiUrl = 'https://api.weather.gov/points/42.3551,-71.0619';
@@ -5304,7 +5310,7 @@
           
           html += `
             <div style="background: linear-gradient(135deg, #1E90FF 0%, #1C7AE6 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: #fff;">
-              <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">${typeof translateText !== 'undefined' ? translateText('currentConditions') : 'Current Conditions'} ${emoji}</div>
+              <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">Current Conditions ${emoji}</div>
               <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem;">${temp}°F</div>
               <div style="font-size: 0.9rem; opacity: 0.9;">${textDesc}</div>
             </div>
@@ -5315,7 +5321,7 @@
         if (hourlyData && hourlyData.properties && hourlyData.properties.periods) {
           const periods = hourlyData.properties.periods.slice(0, 18);
           
-          html += '<div style="font-weight: bold; color: #1E90FF; margin-bottom: 0.75rem; font-size: 1rem;">' + (typeof translateText !== 'undefined' ? translateText('nextHours') : 'Next few hours') + '</div>';
+          html += '<div style="font-weight: bold; color: #1E90FF; margin-bottom: 0.75rem; font-size: 1rem;">Next few hours</div>';
           html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; max-height: 400px; overflow-y: auto;">';
           
           periods.forEach(period => {
@@ -5337,14 +5343,14 @@
           
           html += '</div>';
         } else {
-          html += '<div style="color:#f55; padding:1rem;">' + (typeof translateText !== 'undefined' ? translateText('noHourlyData') : 'No hourly forecast data available') + '</div>';
+          html += '<div style="color:#f55; padding:1rem;">No hourly forecast data available</div>';
         }
         
         hourlyContent.innerHTML = html;
       })
       .catch(error => {
         console.error('[loadWeatherHourly] Error:', error);
-        hourlyContent.innerHTML = '<div style="color:#f55; padding:1rem;">' + (typeof translateText !== 'undefined' ? translateText('failedToLoadHourly') : 'Failed to load hourly forecast') + '</div>';
+        hourlyContent.innerHTML = '<div style="color:#f55; padding:1rem;">Failed to load hourly forecast</div>';
       });
   }
 
