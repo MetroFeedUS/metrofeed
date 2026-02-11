@@ -1360,6 +1360,7 @@
 <script id="mastermap-loader"></script>
 <!-- -- SHARED MAP INITIALIZATION -- -->
 <script src="metroFeedMap.js"></script>
+<script src="mapBoundsManager.js"></script>
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- SHARED ROUTE OVERLAY MODULE -- -->
@@ -5639,6 +5640,15 @@
         delete window.activeRouteOverlayDescriptors[overlayKey];
       }
       console.log('[showRouteOverlay] Route overlay toggled off:', overlayKey);
+      
+      // Update map bounds after route removal
+      if (window.MapBoundsManager) {
+        window.MapBoundsManager.updateForRoutes(
+          window.activeRouteOverlays,
+          window.activeRouteOverlayDescriptors,
+          { autoFit: false }
+        );
+      }
       return;
     }
     
@@ -5763,6 +5773,15 @@
       options: descriptorOptions
     };
     console.log('[showRouteOverlay] Route overlay added:', overlayKey, 'descriptor saved for restoration');
+    
+    // Update map bounds to accommodate routes that extend beyond default bounds
+    if (window.MapBoundsManager) {
+      window.MapBoundsManager.updateForRoutes(
+        window.activeRouteOverlays,
+        window.activeRouteOverlayDescriptors,
+        { autoFit: false } // Don't auto-fit, just expand bounds
+      );
+    }
   };
   
   /**
@@ -5779,6 +5798,15 @@
         delete window.activeRouteOverlayDescriptors[overlayKey];
       }
       console.log('[hideRouteOverlay] Route overlay removed:', overlayKey);
+      
+      // Update map bounds after route removal
+      if (window.MapBoundsManager) {
+        window.MapBoundsManager.updateForRoutes(
+          window.activeRouteOverlays,
+          window.activeRouteOverlayDescriptors,
+          { autoFit: false }
+        );
+      }
     }
   };
   
@@ -5794,6 +5822,11 @@
       window.activeRouteOverlayDescriptors = {};
     }
     console.log('[clearAllRouteOverlays] All route overlays cleared');
+    
+    // Reset map bounds to default
+    if (window.MapBoundsManager) {
+      window.MapBoundsManager.reset();
+    }
   };
 
   // === SECTION: BUS ROUTES MODAL ===
@@ -7502,6 +7535,12 @@
       
       console.log('[Map Init] Day style URL:', dayStyle);
       console.log('[Map Init] Night style URL:', nightStyle);
+      
+      // Initialize bounds manager for dynamic bounds expansion
+      if (window.MapBoundsManager) {
+        window.MapBoundsManager.init(map, CITY_BOUNDS);
+        console.log('[Map Init] Bounds manager initialized');
+      }
       
       // Track active route overlays
       window.activeRouteOverlays = {};
