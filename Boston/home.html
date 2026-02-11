@@ -6835,12 +6835,50 @@
 
       const data = await response.json();
       let alerts = data.data || [];
+      
+      console.log('[loadMBTAAlerts] Total alerts received:', alerts.length);
+      if (alerts.length > 0) {
+        console.log('[loadMBTAAlerts] Sample alert:', alerts[0]);
+        console.log('[loadMBTAAlerts] Sample alert attributes:', alerts[0].attributes);
+      }
 
-      // Filter for active alerts (check lifecycle field)
+      // Filter for active alerts
+      // MBTA alerts are active if they have an active_period that includes the current time
+      // or if lifecycle is 'new', 'ongoing', or 'ongoing_upcoming'
+      const now = new Date();
+      const beforeFilter = alerts.length;
       alerts = alerts.filter(alert => {
-        const lifecycle = alert.attributes?.lifecycle;
-        return lifecycle === 'new' || lifecycle === 'ongoing' || lifecycle === 'ongoing_upcoming';
+        const attrs = alert.attributes || {};
+        const lifecycle = attrs.lifecycle;
+        
+        // Check lifecycle first (simpler check)
+        if (lifecycle === 'new' || lifecycle === 'ongoing' || lifecycle === 'ongoing_upcoming') {
+          return true;
+        }
+        
+        // Check active_period if lifecycle check didn't match
+        const activePeriod = attrs.active_period;
+        if (activePeriod && Array.isArray(activePeriod)) {
+          return activePeriod.some(period => {
+            const start = period.start ? new Date(period.start) : null;
+            const end = period.end ? new Date(period.end) : null;
+            
+            // If no end time, alert is ongoing
+            if (!end) return true;
+            
+            // Check if current time is within the period
+            if (start && end) {
+              return now >= start && now <= end;
+            }
+            return false;
+          });
+        }
+        
+        // If no active_period, check if lifecycle is not 'archived' or 'upcoming'
+        return lifecycle !== 'archived' && lifecycle !== 'upcoming';
       });
+      
+      console.log('[loadMBTAAlerts] Alerts before filter:', beforeFilter, 'after filter:', alerts.length);
 
       if (alerts.length === 0) {
         alertsContent.innerHTML = '<div style="color: #4CAF50; padding: 1rem; text-align: center;">✅ No active MBTA alerts at this time.</div>';
