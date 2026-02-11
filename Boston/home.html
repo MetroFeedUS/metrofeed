@@ -7042,7 +7042,8 @@
 
     alertsContent.innerHTML = '<div>Loading alerts...</div>';
 
-    const alerts = await fetchAlertsData();
+    try {
+      const alerts = await fetchAlertsData();
 
       if (alerts.length === 0) {
         alertsContent.innerHTML = '<div style="color: #4CAF50; padding: 1rem; text-align: center;">✅ No active MBTA alerts at this time.</div>';
