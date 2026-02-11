@@ -7538,8 +7538,12 @@
       
       // Initialize bounds manager for dynamic bounds expansion
       if (window.MapBoundsManager) {
-        window.MapBoundsManager.init(map, CITY_BOUNDS);
+        const maxExtendedBounds = CITY_CONFIG.maxExtendedBounds || null;
+        window.MapBoundsManager.init(map, CITY_BOUNDS, maxExtendedBounds);
         console.log('[Map Init] Bounds manager initialized');
+        if (maxExtendedBounds) {
+          console.log('[Map Init] Maximum extended bounds:', maxExtendedBounds);
+        }
       }
       
       // Track active route overlays
