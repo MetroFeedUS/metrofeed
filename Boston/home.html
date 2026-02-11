@@ -111,8 +111,8 @@
     .dropdown a#dropdownCamerasBtn img {
       filter: none;
     }
-    /* Ensure marketplace button SVG is white */
-    .dropdown a#dropdownMarketplaceBtn img {
+    /* Ensure alerts button SVG is white */
+    .dropdown a#dropdownAlertsBtn img {
       filter: brightness(0) invert(1);
     }
     .dropdown a:last-child {
@@ -1001,7 +1001,7 @@
   <a href="#" id="dropdownWeatherBtn" onclick="event.preventDefault(); showWeatherForecastModal();"><img src="005-weather-radar.svg" alt="Weather"></a>
   <!-- ADA and Official Resources button in dropdown -->
   <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA and Official Resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA and Official Resources"></a>
-  <a href="#" id="dropdownMarketplaceBtn" onclick="event.preventDefault(); toggleMarketplaceFromDropdown();"><img src="store.svg" alt="Alerts" onerror="this.onerror=null; this.src='008-danger.svg';"></a>
+  <a href="#" id="dropdownAlertsBtn" onclick="event.preventDefault(); showMBTAAlertsModal();"><img src="008-danger.svg" alt="Alerts"></a>
   <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="Change City"></a>
   <div class="dropdown-divider"></div>
   <!-- CSL (Crowd-Sourced Location) button in dropdown -->
@@ -1250,20 +1250,15 @@
   </div>
 </div>
 
-<!-- -- MARKETPLACE COMING SOON MODAL -- -->
-<div id="marketplaceComingSoonModal" class="mf-overlay" style="display: none;">
-  <div class="mf-modal" style="max-width: 500px; max-height: 90vh;">
-    <button onclick="MarketplaceOverlay.hideComingSoonModal()" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; z-index: 10; transition: background-color 0.2s ease;" title="Close" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-      ×
-    </button>
-    <div style="padding: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center;">
-      <h2 style="color: #1E90FF; margin-bottom: 1rem; font-size: 1.5rem; width: 100%;">MetroFeed Marketplace</h2>
-      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.5; width: 100%;">
-        MetroFeed Marketplace is a planned network of MetroFeed-branded convenience locations, designed to complement transit use and support riders at key points throughout the city.
-      </p>
-      <p style="color: #888; font-size: 0.85rem; line-height: 1.5; width: 100%;">
-        Locations will appear here as the Marketplace rolls out.
-      </p>
+<!-- -- MBTA ALERTS MODAL -- -->
+<div id="mbtaAlertsModal" class="mf-overlay" style="display: none;">
+  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2 style="margin: 0; color: #1E90FF;">🚨 MBTA Alerts</h2>
+      <button onclick="hideMBTAAlertsModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Close</button>
+    </div>
+    <div id="mbtaAlertsContent" style="color: #ccc;">
+      <div>Loading alerts...</div>
     </div>
   </div>
 </div>
@@ -1377,8 +1372,7 @@
 <!-- CSL (Crowdsourced Live) MODULE - Premium only, not loaded on Free tier -->
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
 <script src="trafficCamerasOverlay.js"></script>
-<!-- -- MARKETPLACE OVERLAY MODULE -- -->
-<script src="marketplaceOverlay.js"></script>
+<!-- -- MBTA ALERTS (replaces marketplace) -- -->
 <script>
   // === CITY CONFIGURATION ===
   // Load city config from external file (auto-detects city from path)
@@ -2276,7 +2270,7 @@
       { selector: '#dropdownCamerasBtn', text: 'Traffic Cameras' },
       { selector: 'a[href*="weather"]', text: 'Weather' },
       { selector: '#dropdownAiChatBtn', text: 'ADA and Official Resources' },
-      { selector: '#dropdownMarketplaceBtn', text: 'Alerts' },
+      { selector: '#dropdownAlertsBtn', text: 'Alerts' },
       { selector: 'a[href*="freecitychanger"]', text: 'Change City' },
       { selector: '#advertiseBtn', text: 'Crowd-Sourced Location (CSL)' }
     ];
@@ -5570,15 +5564,7 @@
       }
     }
     
-    // Marketplace button
-    const marketplaceBtn = document.getElementById('dropdownMarketplaceBtn');
-    if (marketplaceBtn && typeof MarketplaceOverlay !== 'undefined') {
-      if (MarketplaceOverlay.isActive()) {
-        marketplaceBtn.classList.add('active');
-      } else {
-        marketplaceBtn.classList.remove('active');
-      }
-    }
+    // Alerts button (no active state needed)
     
     // ADA and Official Resources button - track if resources window is open
     const aiChatBtn = document.getElementById('dropdownAiChatBtn');
@@ -6811,26 +6797,85 @@
     // Don't close dropdown menu - let user keep it open
   }
 
-  // === SECTION: MARKETPLACE OVERLAY ===
-  // Marketplace overlay is handled by marketplaceOverlay.js module
-  // The module loads marketplace data from data/marketplace.json and manages markers
-  //
-  // To update marketplace locations:
-  // 1. Open MarketplaceEditor.html in browser → add locations and drop pins
-  // 2. Export JSON → paste into data/marketplace.json → deploy
-  // 3. Set MARKETPLACE_ENABLED to true in marketplaceOverlay.js when ready to launch
-  //
-  // Feature Toggle: Set MARKETPLACE_ENABLED in marketplaceOverlay.js
-  // - When disabled: Shows "coming soon" modal
-  // - When enabled: Shows map markers if locations exist
+  // === SECTION: MBTA ALERTS ===
+  // MBTA Alerts modal - displays active alerts from MBTA V3 API
 
-  // Function to toggle marketplace from dropdown menu
-  async function toggleMarketplaceFromDropdown() {
-    console.log('[toggleMarketplaceFromDropdown] Function called');
-    await MarketplaceOverlay.toggle();
-    // Update button active state after toggle completes
-    updateDropdownButtonStates();
-    // Don't close dropdown menu - let user keep it open
+  // Function to show MBTA Alerts modal
+  function showMBTAAlertsModal() {
+    const modal = document.getElementById('mbtaAlertsModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      loadMBTAAlerts();
+    }
+  }
+
+  function hideMBTAAlertsModal() {
+    const modal = document.getElementById('mbtaAlertsModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  async function loadMBTAAlerts() {
+    const alertsContent = document.getElementById('mbtaAlertsContent');
+    if (!alertsContent) return;
+
+    alertsContent.innerHTML = '<div>Loading alerts...</div>';
+
+    try {
+      // Use MBTA V3 API for alerts (JSON format, easier than protobuf)
+      const url = 'https://maps.metrofeedus.com/api/mbta/v3/alerts?filter[active]=true&sort=-created_at&page[limit]=50';
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const alerts = data.data || [];
+
+      if (alerts.length === 0) {
+        alertsContent.innerHTML = '<div style="color: #4CAF50; padding: 1rem; text-align: center;">✅ No active MBTA alerts at this time.</div>';
+        return;
+      }
+
+      let html = '';
+      alerts.forEach(alert => {
+        const attrs = alert.attributes || {};
+        const header = attrs.header || 'Alert';
+        const description = attrs.description || '';
+        const severity = attrs.severity || 'unknown';
+        const created = attrs.created_at ? new Date(attrs.created_at).toLocaleString() : '';
+        const updated = attrs.updated_at ? new Date(attrs.updated_at).toLocaleString() : '';
+        
+        // Get affected routes
+        const routeIds = alert.relationships?.route?.data?.map(r => r.id) || [];
+        const routes = routeIds.length > 0 ? routeIds.join(', ') : 'All routes';
+
+        // Severity color
+        let severityColor = '#ffa500'; // orange default
+        if (severity === 'severe') severityColor = '#ff4444';
+        else if (severity === 'moderate') severityColor = '#ffa500';
+        else if (severity === 'minor') severityColor = '#4CAF50';
+
+        html += `
+          <div style="background: #23272a; border-left: 4px solid ${severityColor}; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+              <h3 style="margin: 0; color: ${severityColor}; font-size: 1.1rem;">${header}</h3>
+              <span style="background: ${severityColor}; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">${severity}</span>
+            </div>
+            ${routes ? `<div style="color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">Routes: ${routes}</div>` : ''}
+            ${description ? `<div style="color: #ccc; margin-bottom: 0.5rem; line-height: 1.5;">${description}</div>` : ''}
+            ${created ? `<div style="color: #666; font-size: 0.75rem;">Created: ${created}${updated && updated !== created ? ` | Updated: ${updated}` : ''}</div>` : ''}
+          </div>
+        `;
+      });
+
+      alertsContent.innerHTML = html;
+    } catch (error) {
+      console.error('[loadMBTAAlerts] Error:', error);
+      alertsContent.innerHTML = '<div style="color: #ff4444; padding: 1rem; text-align: center;">⚠️ Failed to load MBTA alerts. Please try again later.</div>';
+    }
   }
 
   // Function to show camera feed in modal (called by overlay module)
@@ -7573,10 +7618,7 @@
           TrafficCamerasOverlay.init(map);
         }
         
-        // Initialize marketplace overlay
-        if (typeof MarketplaceOverlay !== 'undefined') {
-          MarketplaceOverlay.init(map);
-        }
+        // MBTA Alerts modal (no initialization needed)
         
         // Initialize dropdown button states
         if (typeof updateDropdownButtonStates === 'function') {
