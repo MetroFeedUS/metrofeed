@@ -338,6 +338,29 @@ const translations = {
   }
 };
 
+// Ensure missing keys are added to translations object (fallback injection)
+if (translations && translations.en) {
+  if (!translations.en.nextHours) translations.en.nextHours = 'Next few hours';
+  if (!translations.en.noActiveWeatherAlerts) translations.en.noActiveWeatherAlerts = 'No Active Weather Alerts';
+  if (!translations.en.stop_times) translations.en.stop_times = 'Stop Times';
+  if (!translations.en.android_instructions) translations.en.android_instructions = 'Android Instructions';
+  if (!translations.en.apple_instructions) translations.en.apple_instructions = 'Apple Instructions';
+  if (!translations.en.weatherForecast) translations.en.weatherForecast = 'Weather Forecast';
+  if (!translations.en.hourly) translations.en.hourly = 'Hourly';
+  if (!translations.en.loadingHourlyForecast) translations.en.loadingHourlyForecast = 'Loading hourly forecast...';
+}
+
+if (translations && translations.es) {
+  if (!translations.es.nextHours) translations.es.nextHours = 'Próximas Horas';
+  if (!translations.es.noActiveWeatherAlerts) translations.es.noActiveWeatherAlerts = 'No Hay Alertas Meteorológicas Activas';
+  if (!translations.es.stop_times) translations.es.stop_times = 'Horarios de Parada';
+  if (!translations.es.android_instructions) translations.es.android_instructions = 'Instrucciones Android';
+  if (!translations.es.apple_instructions) translations.es.apple_instructions = 'Instrucciones Apple';
+  if (!translations.es.weatherForecast) translations.es.weatherForecast = 'Pronóstico del Tiempo';
+  if (!translations.es.hourly) translations.es.hourly = 'Por Horas';
+  if (!translations.es.loadingHourlyForecast) translations.es.loadingHourlyForecast = 'Cargando pronóstico por horas...';
+}
+
 // Translations object created
 
 // Simple, direct functions
@@ -470,4 +493,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-// translations.js loaded (v20) 
+// translations.js loaded (v21) 
