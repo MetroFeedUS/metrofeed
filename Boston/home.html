@@ -2378,92 +2378,104 @@
   // === SECTION: MAP STYLE TOGGLE LOGIC ===
   // MapLibre setStyle() clears ALL layers/sources. Our route overlays are layers, so we must restore them
   // after a day/night map style swap. (Markers can survive because they are DOM elements.)
-  function restoreRouteOverlaysAfterStyleChange() {
+  async function restoreRouteOverlaysAfterStyleChange() {
     try {
       if (!map || !window.attachRouteToMap) {
         console.warn('[restoreRouteOverlaysAfterStyleChange] Map or attachRouteToMap not available');
         return;
       }
+      
+      // Wait for map to be fully loaded and ready
+      if (!map.loaded() || !map.isStyleLoaded()) {
+        console.log('[restoreRouteOverlaysAfterStyleChange] Map not ready, waiting...');
+        await new Promise((resolve) => {
+          const checkReady = () => {
+            if (map.loaded() && map.isStyleLoaded()) {
+              resolve();
+            } else {
+              setTimeout(checkReady, 100);
+            }
+          };
+          checkReady();
+        });
+      }
+      
       const descriptors = window.activeRouteOverlayDescriptors || {};
       const keys = Object.keys(descriptors);
+      console.log('[restoreRouteOverlaysAfterStyleChange] 🔍 Checking descriptors...');
       console.log('[restoreRouteOverlaysAfterStyleChange] Found', keys.length, 'overlay descriptors to restore:', keys);
+      console.log('[restoreRouteOverlaysAfterStyleChange] Descriptors object:', descriptors);
       if (keys.length === 0) {
-        console.log('[restoreRouteOverlaysAfterStyleChange] No overlays to restore');
+        console.warn('[restoreRouteOverlaysAfterStyleChange] ⚠️ No overlays to restore - descriptors may have been cleared!');
         return;
       }
 
-      // Remove existing overlay handles first to avoid duplicating DOM markers/panels
+      // Clear existing overlay handles (they're invalid after style change anyway)
       if (window.activeRouteOverlays) {
         Object.keys(window.activeRouteOverlays).forEach(k => {
-          try { window.activeRouteOverlays[k].remove(); } catch (e) {}
+          try { 
+            if (window.activeRouteOverlays[k] && typeof window.activeRouteOverlays[k].remove === 'function') {
+              window.activeRouteOverlays[k].remove(); 
+            }
+          } catch (e) {
+            console.warn('[restoreRouteOverlaysAfterStyleChange] Error removing old overlay:', k, e);
+          }
         });
-        window.activeRouteOverlays = {};
-      } else {
-        window.activeRouteOverlays = {};
       }
+      window.activeRouteOverlays = {};
 
-      // Restore all routes sequentially to avoid conflicts
-      // Use async/await to ensure each route is fully restored before moving to the next
-      (async () => {
-        for (const overlayKey of keys) {
-          const d = descriptors[overlayKey];
-          if (!d || !d.options) {
-            console.warn('[restoreRouteOverlaysAfterStyleChange] Invalid descriptor for:', overlayKey, d);
-            continue;
-          }
-          
-          // Use originalRouteId if available (for unique layer IDs), otherwise fall back to attachRouteId
-          const routeIdForLayers = d.originalRouteId || d.attachRouteId;
-          const routeIdForTracking = d.attachRouteId; // For bus tracking (base route ID)
-          
-          if (!routeIdForLayers || !d.directionId) {
-            console.warn('[restoreRouteOverlaysAfterStyleChange] Missing routeId or directionId for:', overlayKey, d);
-            continue;
-          }
-          
-          try {
-            console.log('[restoreRouteOverlaysAfterStyleChange] Restoring overlay:', overlayKey, 'route (layers):', routeIdForLayers, 'route (tracking):', routeIdForTracking, 'direction:', d.directionId);
-            
-            // Check if routeData exists and has required fields
-            if (!d.options.routeData) {
-              console.error('[restoreRouteOverlaysAfterStyleChange] Missing routeData in descriptor for:', overlayKey);
-              continue;
-            }
-            
-            // Validate routeData structure
-            if (!d.options.routeData.shape && !d.options.routeData.shapes) {
-              console.error('[restoreRouteOverlaysAfterStyleChange] Invalid routeData (no shape/shapes) for:', overlayKey);
-              continue;
-            }
-            
-            // IMPORTANT: Use originalRouteId for attachRouteToMap to ensure unique layer IDs
-            // The routeData in options already contains the correct branch-specific data
-            // But we need to pass the original routeId so layer IDs don't conflict
-            const restoreOptions = {
-              ...d.options,
-              // Override routeId in options if needed (attachRouteToMap uses the routeId parameter for layer IDs)
-            };
-            
-            // Restore the overlay - use originalRouteId for unique layer IDs
-            const overlay = window.attachRouteToMap(map, routeIdForLayers, d.directionId, restoreOptions);
-            if (overlay) {
-              window.activeRouteOverlays[overlayKey] = overlay;
-              console.log('[restoreRouteOverlaysAfterStyleChange] ✅ Successfully restored:', overlayKey);
-            } else {
-              console.error('[restoreRouteOverlaysAfterStyleChange] ❌ attachRouteToMap returned null/undefined for:', overlayKey);
-            }
-            
-            // Small delay between restorations to avoid overwhelming the map
-            await new Promise(resolve => setTimeout(resolve, 100));
-          } catch (err) {
-            console.error('[restoreRouteOverlaysAfterStyleChange] ❌ Failed to restore overlay:', overlayKey, err);
-            console.error('[restoreRouteOverlaysAfterStyleChange] Error details:', err.stack);
-          }
+      // Restore all routes sequentially
+      for (const overlayKey of keys) {
+        const d = descriptors[overlayKey];
+        if (!d || !d.options) {
+          console.warn('[restoreRouteOverlaysAfterStyleChange] Invalid descriptor for:', overlayKey, d);
+          continue;
         }
-        console.log('[restoreRouteOverlaysAfterStyleChange] ✅ Restoration complete. Total restored:', Object.keys(window.activeRouteOverlays).length, 'of', keys.length);
-      })();
+        
+        // Use originalRouteId if available (for unique layer IDs), otherwise fall back to attachRouteId
+        const routeIdForLayers = d.originalRouteId || d.attachRouteId;
+        
+        if (!routeIdForLayers || d.directionId === undefined || d.directionId === null) {
+          console.warn('[restoreRouteOverlaysAfterStyleChange] Missing routeId or directionId for:', overlayKey, d);
+          continue;
+        }
+        
+        try {
+          console.log('[restoreRouteOverlaysAfterStyleChange] Restoring overlay:', overlayKey, 'route:', routeIdForLayers, 'direction:', d.directionId);
+          
+          // Check if routeData exists and has required fields
+          if (!d.options.routeData) {
+            console.error('[restoreRouteOverlaysAfterStyleChange] Missing routeData in descriptor for:', overlayKey);
+            continue;
+          }
+          
+          // Validate routeData structure
+          if (!d.options.routeData.shape && !d.options.routeData.shapes) {
+            console.error('[restoreRouteOverlaysAfterStyleChange] Invalid routeData (no shape/shapes) for:', overlayKey);
+            continue;
+          }
+          
+          // Restore the overlay - use originalRouteId for unique layer IDs
+          const overlay = window.attachRouteToMap(map, routeIdForLayers, d.directionId, d.options);
+          if (overlay) {
+            window.activeRouteOverlays[overlayKey] = overlay;
+            console.log('[restoreRouteOverlaysAfterStyleChange] ✅ Successfully restored:', overlayKey);
+          } else {
+            console.error('[restoreRouteOverlaysAfterStyleChange] ❌ attachRouteToMap returned null/undefined for:', overlayKey);
+          }
+          
+          // Small delay between restorations to avoid overwhelming the map
+          await new Promise(resolve => setTimeout(resolve, 150));
+        } catch (err) {
+          console.error('[restoreRouteOverlaysAfterStyleChange] ❌ Failed to restore overlay:', overlayKey, err);
+          console.error('[restoreRouteOverlaysAfterStyleChange] Error details:', err.stack);
+        }
+      }
+      
+      console.log('[restoreRouteOverlaysAfterStyleChange] ✅ Restoration complete. Total restored:', Object.keys(window.activeRouteOverlays).length, 'of', keys.length);
     } catch (err) {
-      console.warn('[restoreRouteOverlaysAfterStyleChange] Unexpected error:', err);
+      console.error('[restoreRouteOverlaysAfterStyleChange] ❌ Unexpected error:', err);
+      console.error('[restoreRouteOverlaysAfterStyleChange] Error stack:', err.stack);
     }
   }
 
@@ -2488,13 +2500,20 @@
         const restoreWhenReady = () => {
           if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
             console.log('[Theme Toggle] Map is ready, restoring route overlays...');
-            restoreRouteOverlaysAfterStyleChange();
+            // Double-check descriptors still exist before restoring
+            const descCount = Object.keys(window.activeRouteOverlayDescriptors || {}).length;
+            console.log('[Theme Toggle] Descriptors count before restoration:', descCount);
+            if (descCount > 0) {
+              restoreRouteOverlaysAfterStyleChange();
+            } else {
+              console.warn('[Theme Toggle] ⚠️ No descriptors found - they may have been cleared!');
+            }
           } else {
-            // Keep checking every 100ms, max 5 seconds
+            // Keep checking every 100ms, max 10 seconds
             setTimeout(restoreWhenReady, 100);
           }
         };
-        // Start checking after a short delay
+        // Start checking after a short delay to let style load
         setTimeout(restoreWhenReady, 500);
       };
       
