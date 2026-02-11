@@ -6049,7 +6049,13 @@
       // Route header: Just the route number/name (no destination)
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
-      routeHeader.innerHTML = `<span>${route.label}</span>`;
+      
+      // Check for alerts for this route
+      const alerts = await fetchAlertsData();
+      const routeAlertInfo = getRouteAlerts(route.id, alerts);
+      const alertBadge = createAlertBadge(route.id, routeAlertInfo);
+      
+      routeHeader.innerHTML = `<span style="display: flex; align-items: center;">${alertBadge}<span>${route.label}</span></span>`;
       routeHeader.onclick = () => toggleRouteDirections(route.id);
       
       const directionsDiv = document.createElement('div');
@@ -6424,7 +6430,13 @@
       
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = `font-weight: bold; color: ${routeColor}; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;`;
-      routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      
+      // Check for alerts for this route
+      const alerts = await fetchAlertsData();
+      const routeAlertInfo = getRouteAlerts(route.id, alerts);
+      const alertBadge = createAlertBadge(route.id, routeAlertInfo);
+      
+      routeHeader.innerHTML = `<span style="display: flex; align-items: center;">${alertBadge}<span>${routeLabel}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
       routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = `${routeColor}15`; // 15 = ~8% opacity
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
@@ -6465,8 +6477,14 @@
         branchDiv.style.cssText = `padding: 0.5rem; background: ${branchColor}15; border-left: 3px solid ${branchColor}; border-radius: 4px;`;
         
         const branchLabel = document.createElement('div');
-        branchLabel.textContent = branchLabelText;
-        branchLabel.style.cssText = `font-weight: 600; color: ${branchColor}; margin-bottom: 0.5rem; font-size: 0.9em;`;
+        
+        // Check for alerts for this branch route
+        const alerts = await fetchAlertsData();
+        const branchAlertInfo = getRouteAlerts(branch.routeId, alerts);
+        const branchAlertBadge = createAlertBadge(branch.routeId, branchAlertInfo);
+        
+        branchLabel.innerHTML = `${branchAlertBadge}<span>${branchLabelText}</span>`;
+        branchLabel.style.cssText = `font-weight: 600; color: ${branchColor}; margin-bottom: 0.5rem; font-size: 0.9em; display: flex; align-items: center;`;
         branchDiv.appendChild(branchLabel);
         
         const branchDirections = document.createElement('div');
@@ -6579,7 +6597,13 @@
       
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = `font-weight: bold; color: ${routeColor}; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;`;
-      routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      
+      // Check for alerts for this route
+      const alerts = await fetchAlertsData();
+      const routeAlertInfo = getRouteAlerts(route.id, alerts);
+      const alertBadge = createAlertBadge(route.id, routeAlertInfo);
+      
+      routeHeader.innerHTML = `<span style="display: flex; align-items: center;">${alertBadge}<span>${routeLabel}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
       routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = `${routeColor}15`; // 15 = ~8% opacity
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
@@ -6843,16 +6867,20 @@
     }
   }
 
-  async function loadMBTAAlerts() {
-    const alertsContent = document.getElementById('mbtaAlertsContent');
-    if (!alertsContent) return;
+  // Cache for alerts data (to avoid refetching when checking routes)
+  let cachedAlerts = null;
+  let alertsCacheTime = null;
+  const ALERTS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-    alertsContent.innerHTML = '<div>Loading alerts...</div>';
+  // Fetch and cache alerts data
+  async function fetchAlertsData() {
+    const cacheNow = Date.now();
+    // Return cached data if still fresh
+    if (cachedAlerts && alertsCacheTime && (cacheNow - alertsCacheTime) < ALERTS_CACHE_DURATION) {
+      return cachedAlerts;
+    }
 
     try {
-      // Use MBTA V3 API for alerts (JSON format, easier than protobuf)
-      // Proxy handles authentication server-side
-      // Fetch recent alerts and filter active ones client-side
       const url = 'https://maps.metrofeedus.com/api/mbta/v3/alerts?sort=-created_at&page[limit]=50';
       const response = await fetch(url);
 
@@ -6862,12 +6890,6 @@
 
       const data = await response.json();
       let alerts = data.data || [];
-      
-      console.log('[loadMBTAAlerts] Total alerts received:', alerts.length);
-      if (alerts.length > 0) {
-        console.log('[loadMBTAAlerts] Sample alert:', alerts[0]);
-        console.log('[loadMBTAAlerts] Sample alert attributes:', alerts[0].attributes);
-      }
 
       // Filter for active alerts
       // MBTA alerts are active if they have an active_period that includes the current time
@@ -6905,7 +6927,122 @@
         return lifecycle !== 'archived' && lifecycle !== 'upcoming';
       });
       
-      console.log('[loadMBTAAlerts] Alerts before filter:', beforeFilter, 'after filter:', alerts.length);
+      // Cache the filtered alerts
+      cachedAlerts = alerts;
+      alertsCacheTime = cacheNow;
+
+      return alerts;
+    } catch (error) {
+      console.error('[fetchAlertsData] Error:', error);
+      return [];
+    }
+  }
+
+  // Get alert info for a specific route
+  function getRouteAlerts(routeId, alerts) {
+    if (!alerts || alerts.length === 0) return null;
+    
+    const routeAlerts = alerts.filter(alert => {
+      const routeIds = alert.relationships?.route?.data?.map(r => r.id) || [];
+      // Check if routeId matches any of the alert's route IDs
+      // Handle base route matching (e.g., "Red" matches "Red-Ashmont")
+      return routeIds.some(id => {
+        if (id === routeId) return true;
+        // Check if routeId is a base route (e.g., "Red" matches "Red-Ashmont")
+        if (id.startsWith(routeId + '-')) return true;
+        // Check if alert route is base route (e.g., "Red-Ashmont" matches "Red")
+        if (routeId.startsWith(id + '-')) return true;
+        return false;
+      });
+    });
+
+    if (routeAlerts.length === 0) return null;
+
+    // Get highest severity
+    let highestSeverity = 'minor';
+    routeAlerts.forEach(alert => {
+      const severity = alert.attributes?.severity || 'minor';
+      if (severity === 'severe') highestSeverity = 'severe';
+      else if (severity === 'moderate' && highestSeverity !== 'severe') highestSeverity = 'moderate';
+    });
+
+    return {
+      count: routeAlerts.length,
+      severity: highestSeverity,
+      alerts: routeAlerts
+    };
+  }
+
+  // Create alert badge HTML
+  function createAlertBadge(routeId, alertInfo) {
+    if (!alertInfo) return '';
+
+    let severityColor = '#ffa500'; // orange default
+    if (alertInfo.severity === 'severe') severityColor = '#ff4444';
+    else if (alertInfo.severity === 'moderate') severityColor = '#ffa500';
+    else if (alertInfo.severity === 'minor') severityColor = '#ffd700';
+
+    const badgeId = `alert-badge-${routeId.replace(/[^a-zA-Z0-9]/g, '-')}`;
+    return `
+      <span 
+        id="${badgeId}"
+        onclick="event.stopPropagation(); openAlertsForRoute('${routeId}');"
+        style="
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: ${severityColor};
+          color: #000;
+          font-size: 0.7rem;
+          font-weight: bold;
+          padding: 2px 6px;
+          border-radius: 10px;
+          margin-right: 0.5rem;
+          cursor: pointer;
+          min-width: 18px;
+          height: 18px;
+          transition: transform 0.2s, opacity 0.2s;
+        "
+        onmouseover="this.style.transform='scale(1.1)'; this.style.opacity='0.9';"
+        onmouseout="this.style.transform='scale(1)'; this.style.opacity='1';"
+        title="Click to view ${alertInfo.count} alert${alertInfo.count > 1 ? 's' : ''} for this route"
+      >
+        ${alertInfo.count > 1 ? alertInfo.count : '⚠'}
+      </span>
+    `;
+  }
+
+  // Open alerts modal and scroll to route's alerts
+  async function openAlertsForRoute(routeId) {
+    // Open alerts modal
+    showMBTAAlertsModal();
+    
+    // Wait a bit for modal to render, then expand categories
+    setTimeout(() => {
+      // Expand all categories
+      const alertsContent = document.getElementById('mbtaAlertsContent');
+      if (!alertsContent) return;
+
+      const categoryButtons = alertsContent.querySelectorAll('[id$="-arrow"]');
+      categoryButtons.forEach(arrow => {
+        const categoryId = arrow.id.replace('-arrow', '');
+        if (categoryId && categoryId.startsWith('category-')) {
+          toggleAlertCategory(categoryId);
+        }
+      });
+
+      // Scroll to top of alerts
+      alertsContent.scrollTop = 0;
+    }, 300);
+  }
+
+  async function loadMBTAAlerts() {
+    const alertsContent = document.getElementById('mbtaAlertsContent');
+    if (!alertsContent) return;
+
+    alertsContent.innerHTML = '<div>Loading alerts...</div>';
+
+    const alerts = await fetchAlertsData();
 
       if (alerts.length === 0) {
         alertsContent.innerHTML = '<div style="color: #4CAF50; padding: 1rem; text-align: center;">✅ No active MBTA alerts at this time.</div>';
