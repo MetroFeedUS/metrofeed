@@ -15,7 +15,7 @@
     // Change this filename to update the sponsor image
     // Only loaded on Free tier
     if (window.TIER_CONFIG && window.TIER_CONFIG.hasFeature('sponsors')) {
-      const SPONSOR_IMAGE = "sponsor.png";
+    const SPONSOR_IMAGE = "sponsor.png";
     }
   </script>
   
@@ -1743,7 +1743,7 @@
               const match = cleanedName.match(/route\s+(\d+)/i);
               if (match) {
                 routeLabel = match[1]; // Just the number
-              } else {
+          } else {
                 routeLabel = routeNumber;
               }
             } else {
@@ -2488,7 +2488,7 @@
       isNightMode = !isNightMode;
       // Make isNightMode globally accessible for camera markers
       window.isNightMode = isNightMode;
-
+      
       // IMPORTANT: Set up restoration listener BEFORE calling setStyle()
       // The style.load event fires when setStyle() is called
       console.log('[Theme Toggle] Setting up route overlay restoration before style change');
@@ -5676,8 +5676,8 @@
     let routeData;
     try {
       // Try branch route first, then fall back to base route
-      try {
-        routeData = await getRouteData(routeNumber, directionId);
+    try {
+      routeData = await getRouteData(routeNumber, directionId);
       } catch (branchError) {
         if (baseRouteNumber !== routeNumber) {
           console.log('[showRouteOverlay] Branch route not found, trying base route:', baseRouteNumber);
@@ -6393,7 +6393,7 @@
         routeGroups.push(route);
       } else {
         // Show all routes individually, including Green branches and Red Line
-        regularRoutes.push(route);
+          regularRoutes.push(route);
       }
     });
     
@@ -6437,7 +6437,7 @@
       
       // Toggle function for expanding/collapsing branches
       routeHeader.onclick = () => {
-        const isExpanded = branchesDiv.style.display !== 'none';
+          const isExpanded = branchesDiv.style.display !== 'none';
         branchesDiv.style.display = isExpanded ? 'none' : 'flex';
         routeHeader.querySelector('span:last-child').textContent = isExpanded ? '▼' : '▲';
       };
@@ -6817,6 +6817,32 @@
     }
   }
 
+  // Toggle category dropdown
+  function toggleAlertCategory(categoryId) {
+    const categoryDiv = document.getElementById(categoryId);
+    const arrow = document.getElementById(categoryId + '-arrow');
+    if (categoryDiv.style.display === 'none' || !categoryDiv.style.display) {
+      categoryDiv.style.display = 'block';
+      arrow.style.transform = 'rotate(180deg)';
+    } else {
+      categoryDiv.style.display = 'none';
+      arrow.style.transform = 'rotate(0deg)';
+    }
+  }
+
+  // Toggle individual alert details
+  function toggleAlert(alertId) {
+    const detailsDiv = document.getElementById(alertId + '-details');
+    const arrow = document.getElementById(alertId + '-arrow');
+    if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
+      detailsDiv.style.display = 'block';
+      arrow.style.transform = 'rotate(90deg)';
+    } else {
+      detailsDiv.style.display = 'none';
+      arrow.style.transform = 'rotate(0deg)';
+    }
+  }
+
   async function loadMBTAAlerts() {
     const alertsContent = document.getElementById('mbtaAlertsContent');
     if (!alertsContent) return;
@@ -6918,22 +6944,46 @@
         }
       });
 
-      // Build HTML organized by category
+      // Build HTML organized by category with collapsible sections
       let html = '';
+      let alertIndex = 0;
       
       // Display categories that have alerts
       Object.keys(categories).forEach(categoryKey => {
         const category = categories[categoryKey];
         if (category.alerts.length === 0) return;
 
+        const categoryId = `category-${categoryKey}`;
         html += `
-          <div style="margin-bottom: 2rem;">
-            <h3 style="color: #1E90FF; font-size: 1.1rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #333;">
-              ${category.icon} ${category.name} (${category.alerts.length})
-            </h3>
+          <div style="margin-bottom: 1rem;">
+            <button 
+              onclick="toggleAlertCategory('${categoryId}')" 
+              style="
+                width: 100%;
+                background: #1a1a1a;
+                border: 2px solid #333;
+                border-radius: 6px;
+                padding: 0.75rem 1rem;
+                color: #fff;
+                font-size: 1rem;
+                font-weight: bold;
+                cursor: pointer;
+                text-align: left;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                transition: all 0.2s;
+              "
+              onmouseover="this.style.background='#23272a'; this.style.borderColor='#1E90FF';"
+              onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#333';"
+            >
+              <span>${category.icon} ${category.name} <span style="color: #888; font-weight: normal;">(${category.alerts.length})</span></span>
+              <span id="${categoryId}-arrow" style="font-size: 1.2rem; transition: transform 0.2s;">▼</span>
+            </button>
+            <div id="${categoryId}" style="display: none; margin-top: 0.5rem;">
         `;
 
-        category.alerts.forEach(alert => {
+        category.alerts.forEach((alert, idx) => {
           const attrs = alert.attributes || {};
           const header = attrs.header || 'Alert';
           const description = attrs.description || '';
@@ -6958,20 +7008,55 @@
           if (lifecycle === 'ongoing') lifecycleBadge = '<span style="background: #ff4444; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; margin-left: 0.5rem;">ONGOING</span>';
           else if (lifecycle === 'upcoming') lifecycleBadge = '<span style="background: #ffa500; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; margin-left: 0.5rem;">UPCOMING</span>';
 
+          const alertId = `alert-${alertIndex++}`;
+          
+          // Escape HTML in description for safety
+          const safeDescription = description.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const safeHeader = header.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const safeRoutes = routes.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
           html += `
-            <div style="background: #23272a; border-left: 4px solid ${severityColor}; border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem;">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                <h4 style="margin: 0; color: ${severityColor}; font-size: 1rem; flex: 1;">${header}${lifecycleBadge}</h4>
-                <span style="background: ${severityColor}; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-left: 0.5rem;">${severity}</span>
+            <div style="background: #23272a; border-left: 4px solid ${severityColor}; border-radius: 6px; margin-bottom: 0.5rem; overflow: hidden;">
+              <button 
+                onclick="toggleAlert('${alertId}')"
+                style="
+                  width: 100%;
+                  background: transparent;
+                  border: none;
+                  padding: 0.75rem 1rem;
+                  color: #fff;
+                  text-align: left;
+                  cursor: pointer;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  transition: background 0.2s;
+                "
+                onmouseover="this.style.background='#2a2f35';"
+                onmouseout="this.style.background='transparent';"
+              >
+                <div style="flex: 1;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span style="color: ${severityColor}; font-weight: bold; font-size: 0.95rem;">${safeHeader}</span>
+                    ${lifecycleBadge}
+                    <span style="background: ${severityColor}; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">${severity}</span>
+                  </div>
+                  <div style="color: #888; font-size: 0.85rem;">Routes: ${safeRoutes}</div>
+                </div>
+                <span id="${alertId}-arrow" style="font-size: 1rem; margin-left: 0.5rem; transition: transform 0.2s;">▶</span>
+              </button>
+              <div id="${alertId}-details" style="display: none; padding: 0 1rem 1rem 1rem; border-top: 1px solid #333;">
+                ${safeDescription ? `<div style="color: #ccc; margin-top: 0.75rem; line-height: 1.5; font-size: 0.9rem; white-space: pre-wrap;">${safeDescription}</div>` : ''}
+                ${created ? `<div style="color: #666; font-size: 0.75rem; margin-top: 0.75rem;">Created: ${created}${updated && updated !== created ? ` | Updated: ${updated}` : ''}</div>` : ''}
               </div>
-              ${routes && routes !== 'All routes' ? `<div style="color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">Routes: ${routes}</div>` : ''}
-              ${description ? `<div style="color: #ccc; margin-bottom: 0.5rem; line-height: 1.5; font-size: 0.9rem;">${description}</div>` : ''}
-              ${created ? `<div style="color: #666; font-size: 0.75rem;">Created: ${created}${updated && updated !== created ? ` | Updated: ${updated}` : ''}</div>` : ''}
             </div>
           `;
         });
 
-        html += `</div>`;
+        html += `
+            </div>
+          </div>
+        `;
       });
 
       alertsContent.innerHTML = html;
@@ -7712,7 +7797,7 @@
         console.log('[Map]   - showRouteOverlay:', typeof window.showRouteOverlay);
         // masterRoutes removed - using lazy loading for Boston
         if (!CITY_CONFIG.useLazyLoading) {
-          console.log('[Map]   - masterRoutes:', typeof masterRoutes, 'length:', masterRoutes?.length);
+        console.log('[Map]   - masterRoutes:', typeof masterRoutes, 'length:', masterRoutes?.length);
         } else {
           console.log('[Map]   - Using lazy loading (routeLoader)');
         }
