@@ -6825,7 +6825,14 @@
     try {
       // Use MBTA V3 API for alerts (JSON format, easier than protobuf)
       const url = 'https://maps.metrofeedus.com/api/mbta/v3/alerts?filter[active]=true&sort=-created_at&page[limit]=50';
-      const response = await fetch(url);
+      const headers = {};
+      
+      // Add API key if available
+      if (CITY_CONFIG && CITY_CONFIG.apiKey) {
+        headers['X-API-Key'] = CITY_CONFIG.apiKey;
+      }
+      
+      const response = await fetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
