@@ -5631,10 +5631,14 @@
    */
   async function updateAlertIndicator() {
     const indicator = document.getElementById('routeAlertIndicator');
-    if (!indicator) return;
+    if (!indicator) {
+      console.warn('[updateAlertIndicator] Indicator element not found');
+      return;
+    }
     
     // Get all active route IDs
-    const activeRouteIds = Array.from(window.activeRouteIds);
+    const activeRouteIds = Array.from(window.activeRouteIds || []);
+    console.log('[updateAlertIndicator] Active route IDs:', activeRouteIds);
     
     if (activeRouteIds.length === 0) {
       indicator.style.display = 'none';
@@ -5644,14 +5648,19 @@
     // Fetch alerts and check for active routes
     try {
       const alerts = await fetchAlertsData();
+      console.log('[updateAlertIndicator] Fetched alerts:', alerts.length);
+      
       const routesWithAlerts = [];
       
       activeRouteIds.forEach(routeId => {
         const alertInfo = getRouteAlerts(routeId, alerts);
+        console.log(`[updateAlertIndicator] Route ${routeId} alerts:`, alertInfo);
         if (alertInfo && alertInfo.count > 0) {
           routesWithAlerts.push(routeId);
         }
       });
+      
+      console.log('[updateAlertIndicator] Routes with alerts:', routesWithAlerts);
       
       if (routesWithAlerts.length === 0) {
         indicator.style.display = 'none';
@@ -5667,6 +5676,7 @@
       
       // Store routes with alerts for click handler
       indicator.dataset.routesWithAlerts = JSON.stringify(routesWithAlerts);
+      console.log('[updateAlertIndicator] Indicator shown with', routesWithAlerts.length, 'routes with alerts');
       
     } catch (err) {
       console.warn('[updateAlertIndicator] Error checking alerts:', err);
@@ -5941,6 +5951,7 @@
       window.activeRouteIds = new Set();
     }
     window.activeRouteIds.add(baseRouteId);
+    console.log('[showRouteOverlay] Added route ID to activeRouteIds:', baseRouteId, 'All active routes:', Array.from(window.activeRouteIds));
     
     // Update alert indicator
     updateAlertIndicator();
@@ -7155,16 +7166,20 @@
   function getRouteAlerts(routeId, alerts) {
     if (!alerts || alerts.length === 0) return null;
     
+    // Normalize routeId to string for comparison
+    const normalizedRouteId = String(routeId);
+    
     const routeAlerts = alerts.filter(alert => {
-      const routeIds = alert.relationships?.route?.data?.map(r => r.id) || [];
+      const routeIds = alert.relationships?.route?.data?.map(r => String(r.id)) || [];
       // Check if routeId matches any of the alert's route IDs
       // Handle base route matching (e.g., "Red" matches "Red-Ashmont")
       return routeIds.some(id => {
-        if (id === routeId) return true;
+        // Exact match
+        if (id === normalizedRouteId) return true;
         // Check if routeId is a base route (e.g., "Red" matches "Red-Ashmont")
-        if (id.startsWith(routeId + '-')) return true;
+        if (id.startsWith(normalizedRouteId + '-')) return true;
         // Check if alert route is base route (e.g., "Red-Ashmont" matches "Red")
-        if (routeId.startsWith(id + '-')) return true;
+        if (normalizedRouteId.startsWith(id + '-')) return true;
         return false;
       });
     });
