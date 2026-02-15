@@ -7169,6 +7169,15 @@
     // Normalize routeId to string for comparison
     const normalizedRouteId = String(routeId);
     
+    // Debug: collect all unique route IDs from alerts to see what format they use
+    const allAlertRouteIds = new Set();
+    alerts.forEach(alert => {
+      const routeIds = alert.relationships?.route?.data?.map(r => String(r.id)) || [];
+      routeIds.forEach(id => allAlertRouteIds.add(id));
+    });
+    console.log(`[getRouteAlerts] Checking route "${normalizedRouteId}" against ${allAlertRouteIds.size} unique route IDs in alerts`);
+    console.log(`[getRouteAlerts] Sample alert route IDs:`, Array.from(allAlertRouteIds).slice(0, 10));
+    
     const routeAlerts = alerts.filter(alert => {
       const routeIds = alert.relationships?.route?.data?.map(r => String(r.id)) || [];
       // Check if routeId matches any of the alert's route IDs
@@ -7184,6 +7193,7 @@
       });
     });
 
+    console.log(`[getRouteAlerts] Found ${routeAlerts.length} alerts for route "${normalizedRouteId}"`);
     if (routeAlerts.length === 0) return null;
 
     // Get highest severity
