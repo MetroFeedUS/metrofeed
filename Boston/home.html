@@ -1626,7 +1626,12 @@
           }
         }
         
-        console.error('[getRouteData] Error loading route:', error);
+        // Only log unexpected errors (not simple "route not found" which is normal for one-way routes)
+        // This prevents console spam when loading routes that only have one direction
+        const isRouteNotFound = error && error.message && error.message.includes('Route not found');
+        if (!isRouteNotFound) {
+          console.error('[getRouteData] Error loading route:', error);
+        }
         throw error;
       }
     } else {
@@ -5993,12 +5998,27 @@
     // Clear route list
     routeList.innerHTML = '<em style="color: #1E90FF;">Loading routes...</em>';
     
+    // Fetch alerts data once (cached) before processing routes
+    let alertsData = [];
+    try {
+      alertsData = await fetchAlertsData();
+    } catch (err) {
+      console.warn('[showBusCategory] Failed to fetch alerts data, continuing without alert badges:', err);
+    }
+    
     // Load route data for all routes to get terminal stations
     const routePromises = routesToShow.map(async (route) => {
       // Get terminal stations for both directions
+      // Silently handle missing directions (some routes only run one way)
       const [routeData0, routeData1] = await Promise.all([
-        getRouteData(route.id, 0).catch(() => null),
-        getRouteData(route.id, 1).catch(() => null)
+        getRouteData(route.id, 0).catch((err) => {
+          // Silently return null for missing directions - this is expected for one-way routes
+          return null;
+        }),
+        getRouteData(route.id, 1).catch((err) => {
+          // Silently return null for missing directions - this is expected for one-way routes
+          return null;
+        })
       ]);
       
       // Get terminal stations (last stop of each direction)
@@ -6052,10 +6072,15 @@
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
       
-      // Check for alerts for this route
-      const alerts = await fetchAlertsData();
-      const routeAlertInfo = getRouteAlerts(route.id, alerts);
-      const alertBadge = createAlertBadge(route.id, routeAlertInfo);
+      // Check for alerts for this route (use pre-fetched alerts data)
+      let alertBadge = '';
+      try {
+        const routeAlertInfo = getRouteAlerts(route.id, alertsData);
+        alertBadge = createAlertBadge(route.id, routeAlertInfo);
+      } catch (err) {
+        // If alert badge creation fails, just continue without it
+        console.warn(`[showBusCategory] Failed to create alert badge for route ${route.id}:`, err);
+      }
       
       routeHeader.innerHTML = `<span style="display: flex; align-items: center;">${alertBadge}<span>${route.label}</span></span>`;
       routeHeader.onclick = () => toggleRouteDirections(route.id);
@@ -6100,9 +6125,27 @@
     });
     
     // Wait for all routes to load, then populate the list
-    const routeElements = await Promise.all(routePromises);
+    // Use Promise.allSettled to ensure all routes render even if some fail
+    const routeResults = await Promise.allSettled(routePromises);
     routeList.innerHTML = '';
-    routeElements.forEach(routeDiv => routeList.appendChild(routeDiv));
+    routeResults.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        routeList.appendChild(result.value);
+      } else {
+        // Log error but continue rendering other routes
+        const route = routesToShow[index];
+        console.warn(`[showBusCategory] Failed to load route ${route.id}:`, result.reason);
+        // Still create a basic route entry even if data loading failed
+        const routeDiv = document.createElement('div');
+        routeDiv.className = 'route-entry-modal';
+        routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
+        const routeHeader = document.createElement('div');
+        routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem;';
+        routeHeader.textContent = route.label;
+        routeDiv.appendChild(routeHeader);
+        routeList.appendChild(routeDiv);
+      }
+    });
     
     // Setup search
     if (searchInput) {
