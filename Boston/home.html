@@ -967,7 +967,24 @@
     <a href="#" onclick="document.getElementById('languageDropdown').style.display='none'"><img src="construction.svg" alt="Coming Soon"></a>
     <a href="#" onclick="document.getElementById('languageDropdown').style.display='none'"><img src="construction.svg" alt="Coming Soon"></a>
   </div>
+  
+  <!-- Route Alert Indicator (pulsing line symbol) -->
+  <div id="routeAlertIndicator" onclick="openAlertsForActiveRoutes()" style="display: none; position: absolute; top: 110px; right: 10px; width: 40px; height: 4px; background: #ff4444; border-radius: 2px; cursor: pointer; z-index: 1000; animation: pulse 2s infinite; box-shadow: 0 0 10px rgba(255, 68, 68, 0.6); align-items: center; justify-content: center;" title="View alerts for selected routes">
+    <span class="alert-count" style="position: absolute; top: -20px; right: -5px; background: #ff4444; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></span>
+  </div>
 </div>
+
+<style>
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scaleY(1); }
+    50% { opacity: 0.7; transform: scaleY(1.2); }
+  }
+  
+  #routeAlertIndicator:hover {
+    background: #ff6666;
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.8);
+  }
+</style>
 
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <!-- Sponsor Box (Free tier only) -->
@@ -1630,7 +1647,7 @@
         // This prevents console spam when loading routes that only have one direction
         const isRouteNotFound = error && error.message && error.message.includes('Route not found');
         if (!isRouteNotFound) {
-          console.error('[getRouteData] Error loading route:', error);
+        console.error('[getRouteData] Error loading route:', error);
         }
         throw error;
       }
@@ -5604,6 +5621,131 @@
     window.activeRouteOverlayDescriptors = {};
   }
   
+  // Track active route IDs for alert checking (Set of route IDs)
+  if (!window.activeRouteIds) {
+    window.activeRouteIds = new Set();
+  }
+  
+  /**
+   * Update alert indicator based on active routes
+   */
+  async function updateAlertIndicator() {
+    const indicator = document.getElementById('routeAlertIndicator');
+    if (!indicator) return;
+    
+    // Get all active route IDs
+    const activeRouteIds = Array.from(window.activeRouteIds);
+    
+    if (activeRouteIds.length === 0) {
+      indicator.style.display = 'none';
+      return;
+    }
+    
+    // Fetch alerts and check for active routes
+    try {
+      const alerts = await fetchAlertsData();
+      const routesWithAlerts = [];
+      
+      activeRouteIds.forEach(routeId => {
+        const alertInfo = getRouteAlerts(routeId, alerts);
+        if (alertInfo && alertInfo.count > 0) {
+          routesWithAlerts.push(routeId);
+        }
+      });
+      
+      if (routesWithAlerts.length === 0) {
+        indicator.style.display = 'none';
+        return;
+      }
+      
+      // Show indicator with count
+      indicator.style.display = 'flex';
+      const countBadge = indicator.querySelector('.alert-count');
+      if (countBadge) {
+        countBadge.textContent = routesWithAlerts.length > 1 ? routesWithAlerts.length : '';
+      }
+      
+      // Store routes with alerts for click handler
+      indicator.dataset.routesWithAlerts = JSON.stringify(routesWithAlerts);
+      
+    } catch (err) {
+      console.warn('[updateAlertIndicator] Error checking alerts:', err);
+      indicator.style.display = 'none';
+    }
+  }
+  
+  /**
+   * Open alerts modal filtered to active routes with alerts
+   */
+  async function openAlertsForActiveRoutes() {
+    const indicator = document.getElementById('routeAlertIndicator');
+    if (!indicator) return;
+    
+    const routesWithAlerts = JSON.parse(indicator.dataset.routesWithAlerts || '[]');
+    if (routesWithAlerts.length === 0) return;
+    
+    // Open alerts modal
+    const alertsModal = document.getElementById('mbtaAlertsModal');
+    if (!alertsModal) return;
+    
+    alertsModal.style.display = 'flex';
+    
+    // Load alerts
+    await loadMBTAAlerts();
+    
+    // After alerts are loaded, expand categories with relevant alerts and scroll to first
+    setTimeout(() => {
+      const allAlerts = cachedAlerts || [];
+      
+      // Find alerts for active routes
+      const relevantAlerts = allAlerts.filter(alert => {
+        const routeIds = alert.relationships?.route?.data?.map(r => r.id) || [];
+        return routesWithAlerts.some(activeRouteId => {
+          return routeIds.some(id => {
+            if (id === activeRouteId) return true;
+            if (id.startsWith(activeRouteId + '-')) return true;
+            if (activeRouteId.startsWith(id + '-')) return true;
+            return false;
+          });
+        });
+      });
+      
+      if (relevantAlerts.length === 0) return;
+      
+      // Find first category with relevant alerts and expand it
+      const categoryButtons = alertsModal.querySelectorAll('.alert-category-btn');
+      let firstCategoryExpanded = false;
+      
+      categoryButtons.forEach(btn => {
+        const categoryId = btn.dataset.category;
+        if (firstCategoryExpanded) return;
+        
+        // Check if this category has relevant alerts
+        const categoryAlerts = relevantAlerts.filter(alert => {
+          const effect = alert.attributes?.effect || 'OTHER';
+          const header = (alert.attributes?.header || '').toLowerCase();
+          
+          if (categoryId === 'service' && (effect === 'SUSPENSION' || effect === 'REDUCED_SERVICE' || effect === 'DETOUR' || effect === 'SIGNIFICANT_DELAYS')) return true;
+          if (categoryId === 'elevator' && header.includes('elevator')) return true;
+          if (categoryId === 'bike' && (header.includes('bike') || header.includes('bicycle'))) return true;
+          if (categoryId === 'parking' && header.includes('parking')) return true;
+          if (categoryId === 'other') return true;
+          return false;
+        });
+        
+        if (categoryAlerts.length > 0 && !firstCategoryExpanded) {
+          btn.click(); // Expand category
+          firstCategoryExpanded = true;
+          
+          // Scroll to this category
+          setTimeout(() => {
+            btn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+        }
+      });
+    }, 200);
+  }
+  
   /**
    * Show a route overlay on the main map
    * @param {string|number} routeId - Route ID or route number
@@ -5640,6 +5782,23 @@
         delete window.activeRouteOverlayDescriptors[overlayKey];
       }
       console.log('[showRouteOverlay] Route overlay toggled off:', overlayKey);
+      
+      // Remove route ID from active routes tracking
+      const baseRouteId = baseRouteNumber !== String(routeId) ? baseRouteNumber : String(routeId);
+      if (window.activeRouteIds) {
+        window.activeRouteIds.delete(baseRouteId);
+        // Check if any other overlays use this route ID
+        const hasOtherOverlays = Object.keys(window.activeRouteOverlays).some(key => {
+          const otherBaseRoute = key.split('-')[0];
+          return otherBaseRoute === baseRouteId || baseRouteId.startsWith(otherBaseRoute + '-') || otherBaseRoute.startsWith(baseRouteId + '-');
+        });
+        if (!hasOtherOverlays) {
+          window.activeRouteIds.delete(baseRouteId);
+        }
+      }
+      
+      // Update alert indicator
+      updateAlertIndicator();
       
       // Update map bounds after route removal
       if (window.MapBoundsManager) {
@@ -5775,6 +5934,17 @@
     };
     console.log('[showRouteOverlay] Route overlay added:', overlayKey, 'descriptor saved for restoration');
     
+    // Track active route ID for alert checking
+    // Use base route ID for alert matching (e.g., "Red" instead of "Red-Ashmont")
+    const baseRouteId = baseRouteNumber !== String(routeId) ? baseRouteNumber : String(routeId);
+    if (!window.activeRouteIds) {
+      window.activeRouteIds = new Set();
+    }
+    window.activeRouteIds.add(baseRouteId);
+    
+    // Update alert indicator
+    updateAlertIndicator();
+    
     // Update map bounds to accommodate routes that extend beyond default bounds
     if (window.MapBoundsManager) {
       window.MapBoundsManager.updateForRoutes(
@@ -5822,6 +5992,15 @@
     if (window.activeRouteOverlayDescriptors) {
       window.activeRouteOverlayDescriptors = {};
     }
+    
+    // Clear active route IDs tracking
+    if (window.activeRouteIds) {
+      window.activeRouteIds.clear();
+    }
+    
+    // Update alert indicator
+    updateAlertIndicator();
+    
     console.log('[clearAllRouteOverlays] All route overlays cleared');
     
     // Reset map bounds to default
@@ -6072,17 +6251,8 @@
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
       
-      // Check for alerts for this route (use pre-fetched alerts data)
-      let alertBadge = '';
-      try {
-        const routeAlertInfo = getRouteAlerts(route.id, alertsData);
-        alertBadge = createAlertBadge(route.id, routeAlertInfo);
-      } catch (err) {
-        // If alert badge creation fails, just continue without it
-        console.warn(`[showBusCategory] Failed to create alert badge for route ${route.id}:`, err);
-      }
-      
-      routeHeader.innerHTML = `<span style="display: flex; align-items: center;">${alertBadge}<span>${route.label}</span></span>`;
+      // Alert badges removed - alerts now shown via indicator when route is selected
+      routeHeader.innerHTML = `<span>${route.label}</span>`;
       routeHeader.onclick = () => toggleRouteDirections(route.id);
       
       const directionsDiv = document.createElement('div');
@@ -6143,7 +6313,7 @@
         routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem;';
         routeHeader.textContent = route.label;
         routeDiv.appendChild(routeHeader);
-        routeList.appendChild(routeDiv);
+      routeList.appendChild(routeDiv);
       }
     });
     
@@ -6525,10 +6695,8 @@
         
         // Check for alerts for this branch route
         const alerts = await fetchAlertsData();
-        const branchAlertInfo = getRouteAlerts(branch.routeId, alerts);
-        const branchAlertBadge = createAlertBadge(branch.routeId, branchAlertInfo);
-        
-        branchLabel.innerHTML = `${branchAlertBadge}<span>${branchLabelText}</span>`;
+        // Alert badges removed - alerts now shown via indicator when route is selected
+        branchLabel.innerHTML = `<span>${branchLabelText}</span>`;
         branchLabel.style.cssText = `font-weight: 600; color: ${branchColor}; margin-bottom: 0.5rem; font-size: 0.9em; display: flex; align-items: center;`;
         branchDiv.appendChild(branchLabel);
         
@@ -7141,6 +7309,8 @@
           <div style="margin-bottom: 1rem;">
             <button 
               onclick="toggleAlertCategory('${categoryId}')" 
+              class="alert-category-btn"
+              data-category="${categoryKey}"
               style="
                 width: 100%;
                 background: #1a1a1a;
