@@ -5708,13 +5708,20 @@
       const allAlerts = cachedAlerts || [];
       
       // Find alerts for active routes
+      // MBTA V3 API stores route IDs in informed_entity array
       const relevantAlerts = allAlerts.filter(alert => {
-        const routeIds = alert.relationships?.route?.data?.map(r => r.id) || [];
-        return routesWithAlerts.some(activeRouteId => {
-          return routeIds.some(id => {
-            if (id === activeRouteId) return true;
-            if (id.startsWith(activeRouteId + '-')) return true;
-            if (activeRouteId.startsWith(id + '-')) return true;
+        const attrs = alert.attributes || {};
+        const informedEntities = attrs.informed_entity || [];
+        
+        return informedEntities.some(entity => {
+          if (!entity.route) return false;
+          const alertRouteId = String(entity.route);
+          
+          return routesWithAlerts.some(activeRouteId => {
+            const normalizedActiveRouteId = String(activeRouteId);
+            if (alertRouteId === normalizedActiveRouteId) return true;
+            if (alertRouteId.startsWith(normalizedActiveRouteId + '-')) return true;
+            if (normalizedActiveRouteId.startsWith(alertRouteId + '-')) return true;
             return false;
           });
         });
@@ -7114,6 +7121,11 @@
 
       const data = await response.json();
       let alerts = data.data || [];
+      
+      // Debug: Log first alert structure to see how route IDs are stored
+      if (alerts.length > 0) {
+        console.log('[fetchAlertsData] Sample alert structure:', JSON.stringify(alerts[0], null, 2));
+      }
 
       // Filter for active alerts
       // MBTA alerts are active if they have an active_period that includes the current time
@@ -7169,26 +7181,23 @@
     // Normalize routeId to string for comparison
     const normalizedRouteId = String(routeId);
     
-    // Debug: collect all unique route IDs from alerts to see what format they use
-    const allAlertRouteIds = new Set();
-    alerts.forEach(alert => {
-      const routeIds = alert.relationships?.route?.data?.map(r => String(r.id)) || [];
-      routeIds.forEach(id => allAlertRouteIds.add(id));
-    });
-    console.log(`[getRouteAlerts] Checking route "${normalizedRouteId}" against ${allAlertRouteIds.size} unique route IDs in alerts`);
-    console.log(`[getRouteAlerts] Sample alert route IDs:`, Array.from(allAlertRouteIds).slice(0, 10));
-    
+    // MBTA V3 API stores route IDs in informed_entity array, not relationships.route.data
+    // Each informed_entity can have a route field with the route ID
     const routeAlerts = alerts.filter(alert => {
-      const routeIds = alert.relationships?.route?.data?.map(r => String(r.id)) || [];
-      // Check if routeId matches any of the alert's route IDs
-      // Handle base route matching (e.g., "Red" matches "Red-Ashmont")
-      return routeIds.some(id => {
+      const attrs = alert.attributes || {};
+      const informedEntities = attrs.informed_entity || [];
+      
+      // Check each informed entity for route matches
+      return informedEntities.some(entity => {
+        if (!entity.route) return false;
+        const alertRouteId = String(entity.route);
+        
         // Exact match
-        if (id === normalizedRouteId) return true;
+        if (alertRouteId === normalizedRouteId) return true;
         // Check if routeId is a base route (e.g., "Red" matches "Red-Ashmont")
-        if (id.startsWith(normalizedRouteId + '-')) return true;
+        if (alertRouteId.startsWith(normalizedRouteId + '-')) return true;
         // Check if alert route is base route (e.g., "Red-Ashmont" matches "Red")
-        if (normalizedRouteId.startsWith(id + '-')) return true;
+        if (normalizedRouteId.startsWith(alertRouteId + '-')) return true;
         return false;
       });
     });
@@ -7371,8 +7380,9 @@
           const created = attrs.created_at ? new Date(attrs.created_at).toLocaleString() : '';
           const updated = attrs.updated_at ? new Date(attrs.updated_at).toLocaleString() : '';
           
-          // Get affected routes
-          const routeIds = alert.relationships?.route?.data?.map(r => r.id) || [];
+          // Get affected routes (MBTA V3 API uses informed_entity array)
+          const informedEntities = attrs.informed_entity || [];
+          const routeIds = informedEntities.filter(e => e.route).map(e => e.route);
           const routes = routeIds.length > 0 ? routeIds.join(', ') : 'All routes';
 
           // Severity color
