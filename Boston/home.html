@@ -968,21 +968,23 @@
     <a href="#" onclick="document.getElementById('languageDropdown').style.display='none'"><img src="construction.svg" alt="Coming Soon"></a>
   </div>
   
-  <!-- Route Alert Indicator (pulsing line symbol) -->
-  <div id="routeAlertIndicator" onclick="openAlertsForActiveRoutes()" style="display: none; position: absolute; top: 110px; right: 10px; width: 40px; height: 4px; background: #ff4444; border-radius: 2px; cursor: pointer; z-index: 1000; animation: pulse 2s infinite; box-shadow: 0 0 10px rgba(255, 68, 68, 0.6); align-items: center; justify-content: center;" title="View alerts for selected routes">
-    <span class="alert-count" style="position: absolute; top: -20px; right: -5px; background: #ff4444; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></span>
+  <!-- Route Alert Indicator (pulsing text box) -->
+  <div id="routeAlertIndicator" onclick="openAlertsForActiveRoutes()" style="display: none; position: absolute; top: 110px; right: 10px; background: #ff4444; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; z-index: 1000; animation: pulseText 2s infinite; box-shadow: 0 2px 8px rgba(255, 68, 68, 0.6); font-size: 11px; font-weight: bold; white-space: nowrap; max-width: 200px; text-align: center;" title="View alerts for selected routes">
+    <span class="alert-text">Alert found for route</span>
+    <span class="alert-count" style="margin-left: 4px;"></span>
   </div>
 </div>
 
 <style>
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scaleY(1); }
-    50% { opacity: 0.7; transform: scaleY(1.2); }
+  @keyframes pulseText {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.05); }
   }
   
   #routeAlertIndicator:hover {
     background: #ff6666;
-    box-shadow: 0 0 15px rgba(255, 68, 68, 0.8);
+    box-shadow: 0 2px 12px rgba(255, 68, 68, 0.8);
+    transform: scale(1.02);
   }
 </style>
 
@@ -5668,10 +5670,21 @@
       }
       
       // Show indicator with count
-      indicator.style.display = 'flex';
+      indicator.style.display = 'block';
       const countBadge = indicator.querySelector('.alert-count');
+      const alertText = indicator.querySelector('.alert-text');
       if (countBadge) {
-        countBadge.textContent = routesWithAlerts.length > 1 ? routesWithAlerts.length : '';
+        if (routesWithAlerts.length > 1) {
+          countBadge.textContent = `(${routesWithAlerts.length})`;
+        } else {
+          countBadge.textContent = '';
+        }
+      }
+      // Update text if multiple routes
+      if (alertText && routesWithAlerts.length > 1) {
+        alertText.textContent = 'Alerts found for routes';
+      } else if (alertText) {
+        alertText.textContent = 'Alert found for route';
       }
       
       // Store routes with alerts for click handler
@@ -5700,66 +5713,21 @@
     
     alertsModal.style.display = 'flex';
     
-    // Load alerts
-    await loadMBTAAlerts();
+    // Load alerts filtered to active routes
+    await loadMBTAAlerts(routesWithAlerts);
     
-    // After alerts are loaded, expand categories with relevant alerts and scroll to first
+    // After alerts are loaded, expand first category and scroll to top
     setTimeout(() => {
-      const allAlerts = cachedAlerts || [];
-      
-      // Find alerts for active routes
-      // MBTA V3 API stores route IDs in informed_entity array
-      const relevantAlerts = allAlerts.filter(alert => {
-        const attrs = alert.attributes || {};
-        const informedEntities = attrs.informed_entity || [];
-        
-        return informedEntities.some(entity => {
-          if (!entity.route) return false;
-          const alertRouteId = String(entity.route);
-          
-          return routesWithAlerts.some(activeRouteId => {
-            const normalizedActiveRouteId = String(activeRouteId);
-            if (alertRouteId === normalizedActiveRouteId) return true;
-            if (alertRouteId.startsWith(normalizedActiveRouteId + '-')) return true;
-            if (normalizedActiveRouteId.startsWith(alertRouteId + '-')) return true;
-            return false;
-          });
-        });
-      });
-      
-      if (relevantAlerts.length === 0) return;
-      
-      // Find first category with relevant alerts and expand it
       const categoryButtons = alertsModal.querySelectorAll('.alert-category-btn');
-      let firstCategoryExpanded = false;
-      
-      categoryButtons.forEach(btn => {
-        const categoryId = btn.dataset.category;
-        if (firstCategoryExpanded) return;
+      if (categoryButtons.length > 0) {
+        // Expand first category that has alerts
+        categoryButtons[0].click();
         
-        // Check if this category has relevant alerts
-        const categoryAlerts = relevantAlerts.filter(alert => {
-          const effect = alert.attributes?.effect || 'OTHER';
-          const header = (alert.attributes?.header || '').toLowerCase();
-          
-          if (categoryId === 'service' && (effect === 'SUSPENSION' || effect === 'REDUCED_SERVICE' || effect === 'DETOUR' || effect === 'SIGNIFICANT_DELAYS')) return true;
-          if (categoryId === 'elevator' && header.includes('elevator')) return true;
-          if (categoryId === 'bike' && (header.includes('bike') || header.includes('bicycle'))) return true;
-          if (categoryId === 'parking' && header.includes('parking')) return true;
-          if (categoryId === 'other') return true;
-          return false;
-        });
-        
-        if (categoryAlerts.length > 0 && !firstCategoryExpanded) {
-          btn.click(); // Expand category
-          firstCategoryExpanded = true;
-          
-          // Scroll to this category
-          setTimeout(() => {
-            btn.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 100);
-        }
-      });
+        // Scroll to top
+        setTimeout(() => {
+          alertsModal.scrollTop = 0;
+        }, 100);
+      }
     }, 200);
   }
   
@@ -7283,17 +7251,41 @@
     }, 300);
   }
 
-  async function loadMBTAAlerts() {
+  async function loadMBTAAlerts(routeFilter) {
     const alertsContent = document.getElementById('mbtaAlertsContent');
     if (!alertsContent) return;
 
     alertsContent.innerHTML = '<div>Loading alerts...</div>';
 
     try {
-      const alerts = await fetchAlertsData();
+      let alerts = await fetchAlertsData();
+      
+      // Filter alerts by route if routeFilter is provided
+      if (routeFilter && Array.isArray(routeFilter) && routeFilter.length > 0) {
+        alerts = alerts.filter(alert => {
+          const attrs = alert.attributes || {};
+          const informedEntities = attrs.informed_entity || [];
+          
+          return informedEntities.some(entity => {
+            if (!entity.route) return false;
+            const alertRouteId = String(entity.route);
+            
+            return routeFilter.some(filterRouteId => {
+              const normalizedFilterRouteId = String(filterRouteId);
+              if (alertRouteId === normalizedFilterRouteId) return true;
+              if (alertRouteId.startsWith(normalizedFilterRouteId + '-')) return true;
+              if (normalizedFilterRouteId.startsWith(alertRouteId + '-')) return true;
+              return false;
+            });
+          });
+        });
+      }
 
       if (alerts.length === 0) {
-        alertsContent.innerHTML = '<div style="color: #4CAF50; padding: 1rem; text-align: center;">✅ No active MBTA alerts at this time.</div>';
+        const message = routeFilter && routeFilter.length > 0 
+          ? `✅ No active alerts for the selected route${routeFilter.length > 1 ? 's' : ''}.`
+          : '✅ No active MBTA alerts at this time.';
+        alertsContent.innerHTML = `<div style="color: #4CAF50; padding: 1rem; text-align: center;">${message}</div>`;
         return;
       }
 
