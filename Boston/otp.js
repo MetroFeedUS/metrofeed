@@ -2500,38 +2500,41 @@ function showOtpRouteSelector(routeList) {
     position: relative;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
-    padding-bottom: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
     border-bottom: 1px solid #444;
   `;
   
   const title = document.createElement('div');
   title.textContent = 'Routes in Trip';
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
   title.style.cssText = `
     color: #fff;
-    font-size: 15px;
+    font-size: ${isMobile ? '12px' : '13px'};
     font-weight: 600;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
   `;
   titleBar.appendChild(title);
   
   // Close button (when expanded)
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '×';
+  const isMobileCheck = window.matchMedia('(max-width: 768px)').matches;
   closeBtn.style.cssText = `
     background: transparent;
     border: 1px solid #666;
     color: #fff;
-    font-size: 20px;
-    width: 28px;
-    height: 28px;
+    font-size: ${isMobileCheck ? '18px' : '20px'};
+    width: ${isMobileCheck ? '24px' : '28px'};
+    height: ${isMobileCheck ? '24px' : '28px'};
     border-radius: 4px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    margin-left: 8px;
+    margin-left: 6px;
+    padding: 0;
   `;
   closeBtn.onmouseenter = () => {
     closeBtn.style.background = '#ff4444';
@@ -2554,15 +2557,16 @@ function showOtpRouteSelector(routeList) {
     background: transparent;
     border: 1px solid #666;
     color: #fff;
-    font-size: 14px;
-    width: 28px;
-    height: 28px;
+    font-size: ${isMobileCheck ? '12px' : '14px'};
+    width: ${isMobileCheck ? '24px' : '28px'};
+    height: ${isMobileCheck ? '24px' : '28px'};
     border-radius: 4px;
     cursor: pointer;
     display: none;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    padding: 0;
   `;
   collapseBtn.onmouseenter = () => {
     collapseBtn.style.background = '#333';
@@ -2620,22 +2624,22 @@ function showOtpRouteSelector(routeList) {
         modal.style.cssText = `
           position: fixed;
           top: auto;
-          bottom: 100px;
-          right: 20px;
+          bottom: 80px;
+          right: 10px;
           left: auto;
           transform: none;
           background: rgba(20, 20, 20, 0.95);
-          border: 3px solid #555;
-          border-radius: 12px;
-          padding: 12px;
+          border: 2px solid #555;
+          border-radius: 8px;
+          padding: 8px;
           z-index: 10000;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
-          max-width: calc(100vw - 40px);
-          max-height: calc(100vh - 140px);
+          max-width: calc(100vw - 20px);
+          max-height: calc(100vh - 160px);
           width: auto;
-          min-width: 200px;
+          min-width: 160px;
           height: auto;
           min-height: auto;
           overflow-y: auto;
@@ -2649,17 +2653,17 @@ function showOtpRouteSelector(routeList) {
           right: 20px;
           transform: translateY(-50%);
           background: rgba(20, 20, 20, 0.95);
-          border: 3px solid #555;
-          border-radius: 12px;
-          padding: 16px;
+          border: 2px solid #555;
+          border-radius: 8px;
+          padding: 10px;
           z-index: 10000;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           transition: all 0.3s ease;
-          max-width: 300px;
-          max-height: 80vh;
+          max-width: 220px;
+          max-height: 70vh;
           width: auto;
-          min-width: 200px;
+          min-width: 180px;
           height: auto;
           min-height: auto;
           overflow-y: auto;
@@ -2691,13 +2695,14 @@ function showOtpRouteSelector(routeList) {
   // Route buttons container (border box) - vertical layout
   const buttonsContainer = document.createElement('div');
   buttonsContainer.id = 'otpRouteButtonsContainer';
+  const isMobileForGap = window.matchMedia('(max-width: 768px)').matches;
   buttonsContainer.style.cssText = `
     display: none;
     flex-direction: column;
     flex-wrap: nowrap;
-    gap: 10px;
+    gap: ${isMobileForGap ? '6px' : '8px'};
     justify-content: flex-start;
-    padding: 8px 0;
+    padding: 4px 0;
     background: transparent;
   `;
   
@@ -2725,16 +2730,17 @@ function showOtpRouteSelector(routeList) {
     const button = document.createElement('button');
     button.title = route.name || `Route ${mappedRouteId}`; // Tooltip for collapsed state
     
-    // Square button styling
-    const buttonSize = 60; // Square size
+    // Square button styling - responsive size
+    const isMobileForButton = window.matchMedia('(max-width: 768px)').matches;
+    const buttonSize = isMobileForButton ? 45 : 55; // Smaller on mobile
     button.style.cssText = `
       background: ${route.color};
       color: #fff;
-      border: 3px solid ${route.color};
-      border-radius: 8px;
+      border: 2px solid ${route.color};
+      border-radius: 6px;
       width: ${buttonSize}px;
       height: ${buttonSize}px;
-      font-size: 11px;
+      font-size: ${isMobileForButton ? '9px' : '10px'};
       font-weight: 700;
       cursor: pointer;
       text-align: center;
@@ -2744,8 +2750,8 @@ function showOtpRouteSelector(routeList) {
       justify-content: center;
       transition: all 0.2s;
       position: relative;
-      padding: 4px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      padding: 3px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
       word-wrap: break-word;
       overflow: hidden;
       opacity: 0.9;
@@ -2762,8 +2768,9 @@ function showOtpRouteSelector(routeList) {
       displayText = parts[0]; // "Red" or "Green"
       
       routeLabel.textContent = displayText;
+      const isMobileForLabel = window.matchMedia('(max-width: 768px)').matches;
       routeLabel.style.cssText = `
-        font-size: 14px;
+        font-size: ${isMobileForLabel ? '11px' : '13px'};
         font-weight: bold;
         line-height: 1.2;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -2774,7 +2781,7 @@ function showOtpRouteSelector(routeList) {
       const branchLabel = document.createElement('div');
       branchLabel.textContent = parts[1]; // "Ashmont", "Braintree", "B", "C", "D", "E"
       branchLabel.style.cssText = `
-        font-size: 10px;
+        font-size: ${isMobileForLabel ? '8px' : '9px'};
         margin-top: 2px;
         opacity: 0.95;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -2785,8 +2792,9 @@ function showOtpRouteSelector(routeList) {
     } else {
       // Regular routes: show route number
       routeLabel.textContent = displayText;
+      const isMobileForRegularLabel = window.matchMedia('(max-width: 768px)').matches;
       routeLabel.style.cssText = `
-        font-size: 14px;
+        font-size: ${isMobileForRegularLabel ? '10px' : '12px'};
         font-weight: bold;
         line-height: 1.2;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
