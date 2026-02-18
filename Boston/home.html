@@ -6452,9 +6452,13 @@
     favorites.forEach((fav, index) => {
       const favBtn = index === 0 ? fav1 : index === 1 ? fav2 : fav3;
       if (favBtn) {
-        // Extract route number from label (e.g., "15 – Belmont/NW 23rd" -> "15")
-        const routeNumber = fav.label.split('–')[0].trim();
-        favBtn.textContent = routeNumber;
+        // Use routeId directly - it's already the route number/identifier
+        // For branch routes like "Red-Ashmont", show just "Red"
+        let displayText = fav.routeId;
+        if (displayText && displayText.includes('-')) {
+          displayText = displayText.split('-')[0];
+        }
+        favBtn.textContent = displayText;
         favBtn.style.cursor = 'pointer';
         favBtn.onclick = () => {
           if (typeof showRouteOverlay === 'function') {
