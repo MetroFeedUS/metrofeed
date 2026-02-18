@@ -2580,6 +2580,25 @@
           TrafficCamerasOverlay.toggle(); // Turn back on with new style
         }, 100);
       }
+      
+      // Restore traffic layers if active
+      if (trafficLayerActive && trafficData.links) {
+        // Traffic layers will be automatically removed by style change
+        // Restore them after style is loaded
+        const restoreTraffic = () => {
+          if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
+            if (trafficData.links) {
+              displayTrafficLinks(map, trafficData.links);
+            }
+            if (trafficData.signs) {
+              displayTrafficSigns(map, trafficData.signs);
+            }
+          } else {
+            setTimeout(restoreTraffic, 100);
+          }
+        };
+        setTimeout(restoreTraffic, 600); // Wait a bit longer than route overlays
+      }
     });
   }
   
@@ -5515,11 +5534,324 @@
   // showRoute function moved to otp.js
   // Use window.showRoute instead
 
-  // Traffic overlay functionality (placeholder for future state DOT API integration)
-  let trafficLayerActive = false;
+  // === SECTION: MASS DOT TRAFFIC OVERLAY ===
+  // MassDOT API integration for traffic data
+  const MASSDOT_API_KEY = CITY_CONFIG.massdotApiKey || null;
+  const MASSDOT_API_BASE = CITY_CONFIG.massdotApiBase || "https://data-api.massgotime.com/v1";
   
-  function toggleTrafficOverlay() {
-    alert('Traffic overlay coming soon! We\'re integrating state DOT traffic data APIs.');
+  let trafficLayerActive = false;
+  let trafficLayers = {
+    links: null,
+    routes: null,
+    signs: null
+  };
+  let trafficData = {
+    links: null,
+    routes: null,
+    signs: null
+  };
+  
+  /**
+   * Fetch traffic data from MassDOT API
+   */
+  async function fetchMassDOTTrafficData() {
+    if (!MASSDOT_API_KEY) {
+      console.error('[fetchMassDOTTrafficData] MassDOT API key not configured');
+      alert('Traffic data is not available. API key not configured.');
+      return null;
+    }
+    
+    const headers = {
+      "x-api-key": MASSDOT_API_KEY
+    };
+    
+    try {
+      console.log('[fetchMassDOTTrafficData] Fetching traffic data...');
+      
+      const [linksRes, routesRes, signsRes] = await Promise.allSettled([
+        fetch(`${MASSDOT_API_BASE}/status/links`, { headers }),
+        fetch(`${MASSDOT_API_BASE}/status/routes`, { headers }),
+        fetch(`${MASSDOT_API_BASE}/status/signs`, { headers })
+      ]);
+      
+      if (linksRes.status === 'fulfilled' && linksRes.value.ok) {
+        trafficData.links = await linksRes.value.json();
+        console.log('[fetchMassDOTTrafficData] Links data:', trafficData.links);
+      } else {
+        console.error('[fetchMassDOTTrafficData] Failed to fetch links:', linksRes.reason || linksRes.value?.statusText);
+      }
+      
+      if (routesRes.status === 'fulfilled' && routesRes.value.ok) {
+        trafficData.routes = await routesRes.value.json();
+        console.log('[fetchMassDOTTrafficData] Routes data:', trafficData.routes);
+      } else {
+        console.error('[fetchMassDOTTrafficData] Failed to fetch routes:', routesRes.reason || routesRes.value?.statusText);
+      }
+      
+      if (signsRes.status === 'fulfilled' && signsRes.value.ok) {
+        trafficData.signs = await signsRes.value.json();
+        console.log('[fetchMassDOTTrafficData] Signs data:', trafficData.signs);
+      } else {
+        console.error('[fetchMassDOTTrafficData] Failed to fetch signs:', signsRes.reason || signsRes.value?.statusText);
+      }
+      
+      return trafficData;
+    } catch (error) {
+      console.error('[fetchMassDOTTrafficData] Error:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Get color for traffic status
+   */
+  function getTrafficColor(status) {
+    // Map traffic status to colors (adjust based on actual API response format)
+    const statusLower = (status || '').toLowerCase();
+    if (statusLower.includes('heavy') || statusLower.includes('congested') || statusLower.includes('slow')) {
+      return '#ff4444'; // Red
+    } else if (statusLower.includes('moderate') || statusLower.includes('medium')) {
+      return '#ffa500'; // Orange
+    } else if (statusLower.includes('light') || statusLower.includes('free') || statusLower.includes('normal')) {
+      return '#4CAF50'; // Green
+    }
+    return '#888888'; // Gray (unknown/default)
+  }
+  
+  /**
+   * Display traffic links on map
+   */
+  function displayTrafficLinks(map, linksData) {
+    if (!map || !linksData || !Array.isArray(linksData)) {
+      console.warn('[displayTrafficLinks] Invalid data');
+      return;
+    }
+    
+    // Remove existing traffic links layer if present
+    if (trafficLayers.links && map.getLayer('traffic-links')) {
+      map.removeLayer('traffic-links');
+      map.removeSource('traffic-links');
+    }
+    
+    // Process links data and create GeoJSON
+    // Note: Adjust this based on actual API response structure
+    const features = linksData.map((link, index) => {
+      // Assuming link has geometry/coordinates - adjust based on actual API structure
+      const coordinates = link.geometry?.coordinates || link.coordinates || [];
+      
+      if (!coordinates || coordinates.length < 2) return null;
+      
+      return {
+        type: 'Feature',
+        properties: {
+          id: link.id || link.link_id || index,
+          status: link.status || link.traffic_status || 'unknown',
+          speed: link.speed || link.current_speed || null,
+          name: link.name || link.description || ''
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates
+        }
+      };
+    }).filter(f => f !== null);
+    
+    if (features.length === 0) {
+      console.warn('[displayTrafficLinks] No valid link features to display');
+      return;
+    }
+    
+    const geojson = {
+      type: 'FeatureCollection',
+      features: features
+    };
+    
+    // Add source
+    map.addSource('traffic-links', {
+      type: 'geojson',
+      data: geojson
+    });
+    
+    // Add layer with color based on status
+    map.addLayer({
+      id: 'traffic-links',
+      type: 'line',
+      source: 'traffic-links',
+      paint: {
+        'line-color': [
+          'case',
+          ['has', ['get', 'status'], ['literal', {}]],
+          [
+            'match',
+            ['get', 'status'],
+            'heavy', '#ff4444',
+            'congested', '#ff4444',
+            'slow', '#ff4444',
+            'moderate', '#ffa500',
+            'medium', '#ffa500',
+            'light', '#4CAF50',
+            'free', '#4CAF50',
+            'normal', '#4CAF50',
+            '#888888' // default
+          ],
+          '#888888' // default if no status
+        ],
+        'line-width': 4,
+        'line-opacity': 0.7
+      }
+    });
+    
+    trafficLayers.links = 'traffic-links';
+    console.log('[displayTrafficLinks] Displayed', features.length, 'traffic links');
+  }
+  
+  /**
+   * Display traffic signs on map
+   */
+  function displayTrafficSigns(map, signsData) {
+    if (!map || !signsData || !Array.isArray(signsData)) {
+      console.warn('[displayTrafficSigns] Invalid data');
+      return;
+    }
+    
+    // Remove existing traffic signs layer if present
+    if (trafficLayers.signs && map.getLayer('traffic-signs')) {
+      map.removeLayer('traffic-signs');
+      map.removeSource('traffic-signs');
+    }
+    
+    // Process signs data and create GeoJSON
+    const features = signsData.map((sign, index) => {
+      const coordinates = sign.location?.coordinates || sign.coordinates || [sign.longitude, sign.latitude];
+      
+      if (!coordinates || coordinates.length < 2) return null;
+      
+      return {
+        type: 'Feature',
+        properties: {
+          id: sign.id || sign.sign_id || index,
+          message: sign.message || sign.text || '',
+          name: sign.name || sign.description || ''
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: coordinates
+        }
+      };
+    }).filter(f => f !== null);
+    
+    if (features.length === 0) {
+      console.warn('[displayTrafficSigns] No valid sign features to display');
+      return;
+    }
+    
+    const geojson = {
+      type: 'FeatureCollection',
+      features: features
+    };
+    
+    // Add source
+    map.addSource('traffic-signs', {
+      type: 'geojson',
+      data: geojson
+    });
+    
+    // Add layer with markers
+    map.addLayer({
+      id: 'traffic-signs',
+      type: 'circle',
+      source: 'traffic-signs',
+      paint: {
+        'circle-radius': 6,
+        'circle-color': '#1E90FF',
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#fff',
+        'circle-opacity': 0.8
+      }
+    });
+    
+    // Add click handler for signs
+    map.on('click', 'traffic-signs', (e) => {
+      const props = e.features[0].properties;
+      const message = props.message || props.name || 'No message available';
+      new maplibregl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(`<div style="color: #000; padding: 4px;"><strong>Traffic Sign</strong><br>${message}</div>`)
+        .addTo(map);
+    });
+    
+    // Change cursor on hover
+    map.on('mouseenter', 'traffic-signs', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'traffic-signs', () => {
+      map.getCanvas().style.cursor = '';
+    });
+    
+    trafficLayers.signs = 'traffic-signs';
+    console.log('[displayTrafficSigns] Displayed', features.length, 'traffic signs');
+  }
+  
+  /**
+   * Remove all traffic layers from map
+   */
+  function removeTrafficLayers(map) {
+    if (!map) return;
+    
+    if (trafficLayers.links && map.getLayer('traffic-links')) {
+      map.removeLayer('traffic-links');
+      map.removeSource('traffic-links');
+      trafficLayers.links = null;
+    }
+    
+    if (trafficLayers.signs && map.getLayer('traffic-signs')) {
+      map.removeLayer('traffic-signs');
+      map.removeSource('traffic-signs');
+      trafficLayers.signs = null;
+    }
+    
+    console.log('[removeTrafficLayers] Removed all traffic layers');
+  }
+  
+  /**
+   * Toggle traffic overlay on/off
+   */
+  async function toggleTrafficOverlay() {
+    if (!window.map) {
+      console.error('[toggleTrafficOverlay] Map not available');
+      return;
+    }
+    
+    if (trafficLayerActive) {
+      // Turn off
+      removeTrafficLayers(window.map);
+      trafficLayerActive = false;
+      console.log('[toggleTrafficOverlay] Traffic overlay turned off');
+    } else {
+      // Turn on
+      console.log('[toggleTrafficOverlay] Fetching traffic data...');
+      const data = await fetchMassDOTTrafficData();
+      
+      if (data) {
+        // Display links if available
+        if (data.links) {
+          displayTrafficLinks(window.map, data.links);
+        }
+        
+        // Display signs if available
+        if (data.signs) {
+          displayTrafficSigns(window.map, data.signs);
+        }
+        
+        trafficLayerActive = true;
+        console.log('[toggleTrafficOverlay] Traffic overlay turned on');
+      } else {
+        alert('Failed to load traffic data. Please try again.');
+      }
+    }
+    
+    // Update button state
+    updateDropdownButtonStates();
   }
   
   function toggleTrafficFromDropdown() {
