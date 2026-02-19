@@ -1,6 +1,6 @@
 /* Auto-generated: mastermap.js (data core) */
 // City: Louisville
-// Generated: 2026-02-18T23:10:05.309126-05:00
+// Generated: 2026-02-19T00:10:05.151164-05:00
 
 const masterRoutes = [
   {
@@ -2396,7 +2396,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13295_shp-vA"
     }
@@ -4575,7 +4575,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13296_shp-vA"
     }
@@ -6240,7 +6240,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13298_shp-vA"
     }
@@ -8031,7 +8031,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13300_shp-vA"
     }
@@ -11026,7 +11026,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13302_shp-vA"
     }
@@ -14642,7 +14642,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13306_shp-vA"
     }
@@ -16403,7 +16403,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13308_shp-vA"
     }
@@ -18045,7 +18045,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13272_shp-vA"
     }
@@ -20789,7 +20789,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13264_shp-vA"
     }
@@ -23583,7 +23583,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13268_shp-vA"
     }
@@ -28414,7 +28414,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13289_shp-vA"
     }
@@ -32766,7 +32766,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13283_shp-vA"
     }
@@ -34071,7 +34071,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13292_shp-vA"
     }
@@ -35277,7 +35277,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13267_shp-vA"
     }
@@ -39307,7 +39307,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13309_shp-vA"
     }
@@ -43115,7 +43115,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13312_shp-vA"
     }
@@ -50918,7 +50918,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13324_shp-vA"
     }
@@ -58546,7 +58546,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13319_shp-vA"
     }
@@ -63042,7 +63042,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13273_shp-vA"
     }
@@ -67454,7 +67454,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "10332_shp-vA"
     }
@@ -70762,7 +70762,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13327_shp-vA"
     }
@@ -74137,7 +74137,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13329_shp-vA"
     }
@@ -79420,7 +79420,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13332_shp-vA"
     }
@@ -84699,7 +84699,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13336_shp-vA"
     }
@@ -89940,7 +89940,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13278_shp-vA"
     }
@@ -95294,7 +95294,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13265_shp-vA"
     }
@@ -98360,7 +98360,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13338_shp-vA"
     }
@@ -101655,7 +101655,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "10334_shp-vA"
     }
@@ -105330,7 +105330,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13374_shp-vA"
     }
@@ -109235,7 +109235,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "10328_shp-vA"
     }
@@ -111877,7 +111877,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13341_shp-vA"
     }
@@ -114542,7 +114542,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13342_shp-vA"
     }
@@ -115312,8 +115312,8 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
-      "used_today_service_filter": false,
+      "generated_date": "20260219",
+      "used_today_service_filter": true,
       "shape_id_used": "13246_shp-vA"
     }
   },
@@ -115845,8 +115845,8 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
-      "used_today_service_filter": false,
+      "generated_date": "20260219",
+      "used_today_service_filter": true,
       "shape_id_used": "13248_shp-vA"
     }
   },
@@ -119951,7 +119951,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13348_shp-vA"
     }
@@ -123802,7 +123802,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13343_shp-vA"
     }
@@ -124348,7 +124348,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": false,
       "shape_id_used": "13249_shp-vA"
     }
@@ -124732,7 +124732,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": false,
       "shape_id_used": "13251_shp-vA"
     }
@@ -127935,7 +127935,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "10329_shp-vA"
     }
@@ -130690,7 +130690,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13293_shp-vA"
     }
@@ -133423,7 +133423,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13357_shp-vA"
     }
@@ -136271,7 +136271,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13354_shp-vA"
     }
@@ -137833,7 +137833,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "10337_shp-vA"
     }
@@ -139407,7 +139407,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13361_shp-vA"
     }
@@ -140554,8 +140554,8 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
-      "used_today_service_filter": false,
+      "generated_date": "20260219",
+      "used_today_service_filter": true,
       "shape_id_used": "13252_shp-vA"
     }
   },
@@ -141754,7 +141754,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13365_shp-vA"
     }
@@ -143036,7 +143036,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13369_shp-vA"
     }
@@ -145192,7 +145192,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13370_shp-vA"
     }
@@ -145322,7 +145322,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13372_shp-vA"
     }
@@ -147645,7 +147645,7 @@ const masterRoutes = [
     ],
     "meta": {
       "agency_timezone": "America/New_York",
-      "generated_date": "20260218",
+      "generated_date": "20260219",
       "used_today_service_filter": true,
       "shape_id_used": "13373_shp-vA"
     }
