@@ -5548,8 +5548,8 @@
 
   // === SECTION: MASS DOT TRAFFIC OVERLAY ===
   // MassDOT API integration for traffic data
-  const MASSDOT_API_KEY = CITY_CONFIG.massdotApiKey || null;
-  const MASSDOT_API_BASE = CITY_CONFIG.massdotApiBase || "https://data-api.massgotime.com/v1";
+  // Using VPS proxy endpoint (handles authentication automatically)
+  const MASSDOT_API_PROXY = CITY_CONFIG.massdotApiProxy || "http://45.77.209.137:3000/traffic/v1";
   
   let trafficLayerActive = false;
   let trafficLayers = {
@@ -5564,26 +5564,24 @@
   };
   
   /**
-   * Fetch traffic data from MassDOT API
+   * Fetch traffic data from MassDOT API via VPS proxy
+   * Proxy handles authentication automatically - no headers needed
    */
   async function fetchMassDOTTrafficData() {
-    if (!MASSDOT_API_KEY) {
-      console.error('[fetchMassDOTTrafficData] MassDOT API key not configured');
-      alert('Traffic data is not available. API key not configured.');
+    if (!MASSDOT_API_PROXY) {
+      console.error('[fetchMassDOTTrafficData] MassDOT API proxy not configured');
+      alert('Traffic data is not available. Proxy endpoint not configured.');
       return null;
     }
     
-    const headers = {
-      "x-api-key": MASSDOT_API_KEY
-    };
-    
     try {
-      console.log('[fetchMassDOTTrafficData] Fetching traffic data...');
+      console.log('[fetchMassDOTTrafficData] Fetching traffic data via proxy...');
       
+      // Standard GET requests - no auth headers needed (proxy handles it)
       const [linksRes, routesRes, signsRes] = await Promise.allSettled([
-        fetch(`${MASSDOT_API_BASE}/status/links`, { headers }),
-        fetch(`${MASSDOT_API_BASE}/status/routes`, { headers }),
-        fetch(`${MASSDOT_API_BASE}/status/signs`, { headers })
+        fetch(`${MASSDOT_API_PROXY}/status/links`),
+        fetch(`${MASSDOT_API_PROXY}/status/routes`),
+        fetch(`${MASSDOT_API_PROXY}/status/signs`)
       ]);
       
       if (linksRes.status === 'fulfilled' && linksRes.value.ok) {
