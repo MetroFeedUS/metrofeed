@@ -96,7 +96,7 @@ const CITIES = {
     otpApi: "https://otp.metrofeedus.com/otp/transmodel/v3", // Direct endpoint (CORS fixed on server)
     busApi: "https://maps.metrofeedus.com/api/mbta/VehiclePositions.pb", // Proxied through VPS
     massdotApiKey: "404aed32-0626-451d-9e95-e42d5b0879f5", // MassDOT Traffic API key
-    massdotApiBase: "https://data-api.massgotime.com/v1" // MassDOT Traffic API base URL
+    massdotApiBase: "https://data-api.massgotime.com/v1", // MassDOT Traffic API base URL
     
     // Map Settings
     // Downtown Boston center (Park Street/Downtown Crossing area)

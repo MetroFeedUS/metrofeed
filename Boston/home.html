@@ -1396,6 +1396,18 @@
 <script>
   // === CITY CONFIGURATION ===
   // Load city config from external file (auto-detects city from path)
+  // Ensure getCityConfig is available (from city-config.js)
+  if (typeof getCityConfig === 'undefined' && typeof window.getCityConfig !== 'undefined') {
+    var getCityConfig = window.getCityConfig;
+  }
+  if (typeof getCityConfig === 'undefined') {
+    console.error('[home.html] getCityConfig is not defined. city-config.js may not have loaded.');
+    // Fallback: try to get from window
+    var getCityConfig = window.getCityConfig || function() {
+      console.error('[home.html] getCityConfig fallback failed');
+      return {};
+    };
+  }
   const CITY_CONFIG = getCityConfig();
   window.CITY_CONFIG = CITY_CONFIG; // Expose globally for otp.js and other modules
   
