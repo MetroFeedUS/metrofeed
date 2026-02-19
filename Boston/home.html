@@ -5548,8 +5548,8 @@
 
   // === SECTION: MASS DOT TRAFFIC OVERLAY ===
   // MassDOT API integration for traffic data
-  // Using VPS proxy endpoint (handles authentication automatically)
-  const MASSDOT_API_PROXY = CITY_CONFIG.massdotApiProxy || "http://45.77.209.137:3000/traffic/v1";
+  // Using official MetroFeed Traffic API endpoint over HTTPS (handles authentication automatically)
+  const MASSDOT_API_PROXY = CITY_CONFIG.massdotApiProxy || "https://traffic-api.metrofeedus.com/traffic/v1/status";
   
   let trafficLayerActive = false;
   let trafficLayers = {
@@ -5579,9 +5579,9 @@
       
       // Standard GET requests - no auth headers needed (proxy handles it)
       const [linksRes, routesRes, signsRes] = await Promise.allSettled([
-        fetch(`${MASSDOT_API_PROXY}/status/links`),
-        fetch(`${MASSDOT_API_PROXY}/status/routes`),
-        fetch(`${MASSDOT_API_PROXY}/status/signs`)
+        fetch(`${MASSDOT_API_PROXY}/links`),
+        fetch(`${MASSDOT_API_PROXY}/routes`),
+        fetch(`${MASSDOT_API_PROXY}/signs`)
       ]);
       
       if (linksRes.status === 'fulfilled' && linksRes.value.ok) {
