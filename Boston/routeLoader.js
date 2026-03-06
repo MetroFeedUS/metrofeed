@@ -16,25 +16,29 @@
   // Routes index (loaded on page load)
   let routesIndex = null;
   let routesIndexLoaded = false;
+  let routesIndexLoadPromise = null; // Single promise for parallel callers
   
   /**
    * Load routes_index.js
    * Must be called before any route loading
    */
   function loadRoutesIndex() {
-    return new Promise((resolve, reject) => {
-      if (routesIndexLoaded && routesIndex) {
-        resolve(routesIndex);
-        return;
-      }
-      
-      // Load routes_index.js via script tag (expects global routesIndex)
+    if (routesIndexLoaded && routesIndex) {
+      return Promise.resolve(routesIndex);
+    }
+    if (routesIndexLoadPromise) {
+      return routesIndexLoadPromise;
+    }
+    
+    routesIndexLoadPromise = new Promise((resolve, reject) => {
+      // Load routes_index.js via script tag (expects global window.routesIndex)
       const script = document.createElement('script');
       script.src = 'routes_index.js?v=' + Date.now(); // Cache bust
       script.onload = () => {
         if (typeof window.routesIndex !== 'undefined') {
           routesIndex = window.routesIndex;
           routesIndexLoaded = true;
+          routesIndexLoadPromise = null;
           console.log('[routeLoader] Routes index loaded:', routesIndex.routes.length, 'routes');
           
           // Check service day
@@ -45,14 +49,17 @@
           
           resolve(routesIndex);
         } else {
+          routesIndexLoadPromise = null;
           reject(new Error('routesIndex not found after loading routes_index.js'));
         }
       };
       script.onerror = () => {
+        routesIndexLoadPromise = null;
         reject(new Error('Failed to load routes_index.js'));
       };
       document.head.appendChild(script);
     });
+    return routesIndexLoadPromise;
   }
   
   /**

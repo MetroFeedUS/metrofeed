@@ -1,11 +1,9 @@
-const routesIndex = {
-  "version": "20260121-2031",
+window.routesIndex = {
+  "version": "20260120-2007",
   "routes": [
     {
       "route_id": "1",
       "route_number": "1",
-      "route_name": "Harvard Square - Nubian Station",
-      "route_long_name": "Harvard Square - Nubian Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 1 - Outbound",
@@ -14,8 +12,6 @@ const routesIndex = {
     {
       "route_id": "1",
       "route_number": "1",
-      "route_name": "Harvard Square - Nubian Station",
-      "route_long_name": "Harvard Square - Nubian Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 1 - Inbound",
@@ -24,8 +20,6 @@ const routesIndex = {
     {
       "route_id": "4",
       "route_number": "4",
-      "route_name": "North Station - Design Center",
-      "route_long_name": "North Station - Design Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 4 - Outbound",
@@ -34,8 +28,6 @@ const routesIndex = {
     {
       "route_id": "4",
       "route_number": "4",
-      "route_name": "North Station - Design Center",
-      "route_long_name": "North Station - Design Center",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 4 - Inbound",
@@ -44,8 +36,6 @@ const routesIndex = {
     {
       "route_id": "7",
       "route_number": "7",
-      "route_name": "City Point - Otis Street & Summer Street",
-      "route_long_name": "City Point - Otis Street & Summer Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 7 - Outbound",
@@ -54,8 +44,6 @@ const routesIndex = {
     {
       "route_id": "7",
       "route_number": "7",
-      "route_name": "City Point - Otis Street & Summer Street",
-      "route_long_name": "City Point - Otis Street & Summer Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 7 - Inbound",
@@ -64,8 +52,6 @@ const routesIndex = {
     {
       "route_id": "8",
       "route_number": "8",
-      "route_name": "Harbor Point - Kenmore Station",
-      "route_long_name": "Harbor Point - Kenmore Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 8 - Outbound",
@@ -74,8 +60,6 @@ const routesIndex = {
     {
       "route_id": "8",
       "route_number": "8",
-      "route_name": "Harbor Point - Kenmore Station",
-      "route_long_name": "Harbor Point - Kenmore Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 8 - Inbound",
@@ -84,8 +68,6 @@ const routesIndex = {
     {
       "route_id": "9",
       "route_number": "9",
-      "route_name": "City Point - Copley Square",
-      "route_long_name": "City Point - Copley Square",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 9 - Outbound",
@@ -94,8 +76,6 @@ const routesIndex = {
     {
       "route_id": "9",
       "route_number": "9",
-      "route_name": "City Point - Copley Square",
-      "route_long_name": "City Point - Copley Square",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 9 - Inbound",
@@ -104,8 +84,6 @@ const routesIndex = {
     {
       "route_id": "10",
       "route_number": "10",
-      "route_name": "City Point - Arlington Station",
-      "route_long_name": "City Point - Arlington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 10 - Outbound",
@@ -114,8 +92,6 @@ const routesIndex = {
     {
       "route_id": "10",
       "route_number": "10",
-      "route_name": "City Point - Arlington Station",
-      "route_long_name": "City Point - Arlington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 10 - Inbound",
@@ -124,8 +100,6 @@ const routesIndex = {
     {
       "route_id": "11",
       "route_number": "11",
-      "route_name": "City Point - Chauncy Street & Summer Street",
-      "route_long_name": "City Point - Chauncy Street & Summer Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 11 - Outbound",
@@ -134,8 +108,6 @@ const routesIndex = {
     {
       "route_id": "11",
       "route_number": "11",
-      "route_name": "City Point - Chauncy Street & Summer Street",
-      "route_long_name": "City Point - Chauncy Street & Summer Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 11 - Inbound",
@@ -144,8 +116,6 @@ const routesIndex = {
     {
       "route_id": "14",
       "route_number": "14",
-      "route_name": "Roslindale Square - Heath Street",
-      "route_long_name": "Roslindale Square - Heath Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 14 - Outbound",
@@ -154,8 +124,6 @@ const routesIndex = {
     {
       "route_id": "14",
       "route_number": "14",
-      "route_name": "Roslindale Square - Heath Street",
-      "route_long_name": "Roslindale Square - Heath Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 14 - Inbound",
@@ -164,8 +132,6 @@ const routesIndex = {
     {
       "route_id": "15",
       "route_number": "15",
-      "route_name": "Fields Corner Station - Ruggles Station",
-      "route_long_name": "Fields Corner Station - Ruggles Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 15 - Outbound",
@@ -174,8 +140,6 @@ const routesIndex = {
     {
       "route_id": "15",
       "route_number": "15",
-      "route_name": "Fields Corner Station - Ruggles Station",
-      "route_long_name": "Fields Corner Station - Ruggles Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 15 - Inbound",
@@ -184,8 +148,6 @@ const routesIndex = {
     {
       "route_id": "16",
       "route_number": "16",
-      "route_name": "Forest Hills Station - Andrew Station or Harbor Point",
-      "route_long_name": "Forest Hills Station - Andrew Station or Harbor Point",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 16 - Outbound",
@@ -194,8 +156,6 @@ const routesIndex = {
     {
       "route_id": "16",
       "route_number": "16",
-      "route_name": "Forest Hills Station - Andrew Station or Harbor Point",
-      "route_long_name": "Forest Hills Station - Andrew Station or Harbor Point",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 16 - Inbound",
@@ -204,8 +164,6 @@ const routesIndex = {
     {
       "route_id": "17",
       "route_number": "17",
-      "route_name": "Fields Corner Station - Andrew Station",
-      "route_long_name": "Fields Corner Station - Andrew Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 17 - Outbound",
@@ -214,8 +172,6 @@ const routesIndex = {
     {
       "route_id": "17",
       "route_number": "17",
-      "route_name": "Fields Corner Station - Andrew Station",
-      "route_long_name": "Fields Corner Station - Andrew Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 17 - Inbound",
@@ -224,8 +180,6 @@ const routesIndex = {
     {
       "route_id": "18",
       "route_number": "18",
-      "route_name": "Ashmont Station - Andrew Station",
-      "route_long_name": "Ashmont Station - Andrew Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 18 - Outbound",
@@ -234,8 +188,6 @@ const routesIndex = {
     {
       "route_id": "18",
       "route_number": "18",
-      "route_name": "Ashmont Station - Andrew Station",
-      "route_long_name": "Ashmont Station - Andrew Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 18 - Inbound",
@@ -244,8 +196,6 @@ const routesIndex = {
     {
       "route_id": "19",
       "route_number": "19",
-      "route_name": "Fields Corner Station - Kenmore or Ruggles Station",
-      "route_long_name": "Fields Corner Station - Kenmore or Ruggles Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 19 - Outbound",
@@ -254,8 +204,6 @@ const routesIndex = {
     {
       "route_id": "19",
       "route_number": "19",
-      "route_name": "Fields Corner Station - Kenmore or Ruggles Station",
-      "route_long_name": "Fields Corner Station - Kenmore or Ruggles Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 19 - Inbound",
@@ -264,8 +212,6 @@ const routesIndex = {
     {
       "route_id": "21",
       "route_number": "21",
-      "route_name": "Ashmont Station - Forest Hills Station",
-      "route_long_name": "Ashmont Station - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 21 - Outbound",
@@ -274,8 +220,6 @@ const routesIndex = {
     {
       "route_id": "21",
       "route_number": "21",
-      "route_name": "Ashmont Station - Forest Hills Station",
-      "route_long_name": "Ashmont Station - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 21 - Inbound",
@@ -284,8 +228,6 @@ const routesIndex = {
     {
       "route_id": "22",
       "route_number": "22",
-      "route_name": "Ashmont Station - Ruggles Station via Talbot Ave",
-      "route_long_name": "Ashmont Station - Ruggles Station via Talbot Ave",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 22 - Outbound",
@@ -294,8 +236,6 @@ const routesIndex = {
     {
       "route_id": "22",
       "route_number": "22",
-      "route_name": "Ashmont Station - Ruggles Station via Talbot Ave",
-      "route_long_name": "Ashmont Station - Ruggles Station via Talbot Ave",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 22 - Inbound",
@@ -304,8 +244,6 @@ const routesIndex = {
     {
       "route_id": "23",
       "route_number": "23",
-      "route_name": "Ashmont Station - Ruggles Station via Washington Street",
-      "route_long_name": "Ashmont Station - Ruggles Station via Washington Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 23 - Outbound",
@@ -314,8 +252,6 @@ const routesIndex = {
     {
       "route_id": "23",
       "route_number": "23",
-      "route_name": "Ashmont Station - Ruggles Station via Washington Street",
-      "route_long_name": "Ashmont Station - Ruggles Station via Washington Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 23 - Inbound",
@@ -324,8 +260,6 @@ const routesIndex = {
     {
       "route_id": "24",
       "route_number": "24",
-      "route_name": "Wakefield Avenue & Truman Parkway - Ashmont Station",
-      "route_long_name": "Wakefield Avenue & Truman Parkway - Ashmont Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 24 - Outbound",
@@ -334,8 +268,6 @@ const routesIndex = {
     {
       "route_id": "24",
       "route_number": "24",
-      "route_name": "Wakefield Avenue & Truman Parkway - Ashmont Station",
-      "route_long_name": "Wakefield Avenue & Truman Parkway - Ashmont Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 24 - Inbound",
@@ -344,8 +276,6 @@ const routesIndex = {
     {
       "route_id": "26",
       "route_number": "26",
-      "route_name": "Ashmont Station - Norfolk Street Loop",
-      "route_long_name": "Ashmont Station - Norfolk Street Loop",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 26 - Outbound",
@@ -354,8 +284,6 @@ const routesIndex = {
     {
       "route_id": "26",
       "route_number": "26",
-      "route_name": "Ashmont Station - Norfolk Street Loop",
-      "route_long_name": "Ashmont Station - Norfolk Street Loop",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 26 - Inbound",
@@ -364,8 +292,6 @@ const routesIndex = {
     {
       "route_id": "28",
       "route_number": "28",
-      "route_name": "Mattapan Station - Ruggles Station",
-      "route_long_name": "Mattapan Station - Ruggles Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 28 - Outbound",
@@ -374,8 +300,6 @@ const routesIndex = {
     {
       "route_id": "28",
       "route_number": "28",
-      "route_name": "Mattapan Station - Ruggles Station",
-      "route_long_name": "Mattapan Station - Ruggles Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 28 - Inbound",
@@ -384,8 +308,6 @@ const routesIndex = {
     {
       "route_id": "29",
       "route_number": "29",
-      "route_name": "Mattapan Station - Jackson Square Station",
-      "route_long_name": "Mattapan Station - Jackson Square Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 29 - Outbound",
@@ -394,8 +316,6 @@ const routesIndex = {
     {
       "route_id": "29",
       "route_number": "29",
-      "route_name": "Mattapan Station - Jackson Square Station",
-      "route_long_name": "Mattapan Station - Jackson Square Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 29 - Inbound",
@@ -404,8 +324,6 @@ const routesIndex = {
     {
       "route_id": "30",
       "route_number": "30",
-      "route_name": "Mattapan Station - Forest Hills Station via Cummins Highway and Roslindale Square",
-      "route_long_name": "Mattapan Station - Forest Hills Station via Cummins Highway and Roslindale Square",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 30 - Outbound",
@@ -414,8 +332,6 @@ const routesIndex = {
     {
       "route_id": "30",
       "route_number": "30",
-      "route_name": "Mattapan Station - Forest Hills Station via Cummins Highway and Roslindale Square",
-      "route_long_name": "Mattapan Station - Forest Hills Station via Cummins Highway and Roslindale Square",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 30 - Inbound",
@@ -424,8 +340,6 @@ const routesIndex = {
     {
       "route_id": "31",
       "route_number": "31",
-      "route_name": "Mattapan Station - Forest Hills Station via Morton Street",
-      "route_long_name": "Mattapan Station - Forest Hills Station via Morton Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 31 - Outbound",
@@ -434,8 +348,6 @@ const routesIndex = {
     {
       "route_id": "31",
       "route_number": "31",
-      "route_name": "Mattapan Station - Forest Hills Station via Morton Street",
-      "route_long_name": "Mattapan Station - Forest Hills Station via Morton Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 31 - Inbound",
@@ -444,8 +356,6 @@ const routesIndex = {
     {
       "route_id": "32",
       "route_number": "32",
-      "route_name": "Wolcott or Cleary Square - Forest Hills Station",
-      "route_long_name": "Wolcott or Cleary Square - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 32 - Outbound",
@@ -454,8 +364,6 @@ const routesIndex = {
     {
       "route_id": "32",
       "route_number": "32",
-      "route_name": "Wolcott or Cleary Square - Forest Hills Station",
-      "route_long_name": "Wolcott or Cleary Square - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 32 - Inbound",
@@ -464,8 +372,6 @@ const routesIndex = {
     {
       "route_id": "33",
       "route_number": "33",
-      "route_name": "River Street & Milton Street - Mattapan Station",
-      "route_long_name": "River Street & Milton Street - Mattapan Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 33 - Outbound",
@@ -474,8 +380,6 @@ const routesIndex = {
     {
       "route_id": "33",
       "route_number": "33",
-      "route_name": "River Street & Milton Street - Mattapan Station",
-      "route_long_name": "River Street & Milton Street - Mattapan Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 33 - Inbound",
@@ -484,8 +388,6 @@ const routesIndex = {
     {
       "route_id": "34",
       "route_number": "34",
-      "route_name": "Dedham Square - Forest Hills Station",
-      "route_long_name": "Dedham Square - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 34 - Outbound",
@@ -494,8 +396,6 @@ const routesIndex = {
     {
       "route_id": "34",
       "route_number": "34",
-      "route_name": "Dedham Square - Forest Hills Station",
-      "route_long_name": "Dedham Square - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 34 - Inbound",
@@ -504,8 +404,6 @@ const routesIndex = {
     {
       "route_id": "35",
       "route_number": "35",
-      "route_name": "Dedham Mall or Stimson Street - Forest Hills Station",
-      "route_long_name": "Dedham Mall or Stimson Street - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 35 - Outbound",
@@ -514,8 +412,6 @@ const routesIndex = {
     {
       "route_id": "35",
       "route_number": "35",
-      "route_name": "Dedham Mall or Stimson Street - Forest Hills Station",
-      "route_long_name": "Dedham Mall or Stimson Street - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 35 - Inbound",
@@ -524,8 +420,6 @@ const routesIndex = {
     {
       "route_id": "36",
       "route_number": "36",
-      "route_name": "Millennium Park or VA Hospital - Forest Hills Station",
-      "route_long_name": "Millennium Park or VA Hospital - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 36 - Outbound",
@@ -534,8 +428,6 @@ const routesIndex = {
     {
       "route_id": "36",
       "route_number": "36",
-      "route_name": "Millennium Park or VA Hospital - Forest Hills Station",
-      "route_long_name": "Millennium Park or VA Hospital - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 36 - Inbound",
@@ -544,8 +436,6 @@ const routesIndex = {
     {
       "route_id": "37",
       "route_number": "37",
-      "route_name": "Baker Street & Vermont Street - Forest Hills Station",
-      "route_long_name": "Baker Street & Vermont Street - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 37 - Outbound",
@@ -554,8 +444,6 @@ const routesIndex = {
     {
       "route_id": "37",
       "route_number": "37",
-      "route_name": "Baker Street & Vermont Street - Forest Hills Station",
-      "route_long_name": "Baker Street & Vermont Street - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 37 - Inbound",
@@ -564,8 +452,6 @@ const routesIndex = {
     {
       "route_id": "38",
       "route_number": "38",
-      "route_name": "Wren Street - Forest Hills Station",
-      "route_long_name": "Wren Street - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 38 - Outbound",
@@ -574,8 +460,6 @@ const routesIndex = {
     {
       "route_id": "38",
       "route_number": "38",
-      "route_name": "Wren Street - Forest Hills Station",
-      "route_long_name": "Wren Street - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 38 - Inbound",
@@ -584,8 +468,6 @@ const routesIndex = {
     {
       "route_id": "39",
       "route_number": "39",
-      "route_name": "Forest Hills Station - Back Bay Station",
-      "route_long_name": "Forest Hills Station - Back Bay Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 39 - Outbound",
@@ -594,8 +476,6 @@ const routesIndex = {
     {
       "route_id": "39",
       "route_number": "39",
-      "route_name": "Forest Hills Station - Back Bay Station",
-      "route_long_name": "Forest Hills Station - Back Bay Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 39 - Inbound",
@@ -604,8 +484,6 @@ const routesIndex = {
     {
       "route_id": "40",
       "route_number": "40",
-      "route_name": "Georgetowne - Forest Hills Station",
-      "route_long_name": "Georgetowne - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 40 - Outbound",
@@ -614,8 +492,6 @@ const routesIndex = {
     {
       "route_id": "40",
       "route_number": "40",
-      "route_name": "Georgetowne - Forest Hills Station",
-      "route_long_name": "Georgetowne - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 40 - Inbound",
@@ -624,8 +500,6 @@ const routesIndex = {
     {
       "route_id": "41",
       "route_number": "41",
-      "route_name": "Centre Street & Eliot Street - JFK/UMass Station",
-      "route_long_name": "Centre Street & Eliot Street - JFK/UMass Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 41 - Outbound",
@@ -634,8 +508,6 @@ const routesIndex = {
     {
       "route_id": "41",
       "route_number": "41",
-      "route_name": "Centre Street & Eliot Street - JFK/UMass Station",
-      "route_long_name": "Centre Street & Eliot Street - JFK/UMass Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 41 - Inbound",
@@ -644,8 +516,6 @@ const routesIndex = {
     {
       "route_id": "42",
       "route_number": "42",
-      "route_name": "Forest Hills Station - Nubian Station",
-      "route_long_name": "Forest Hills Station - Nubian Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 42 - Outbound",
@@ -654,8 +524,6 @@ const routesIndex = {
     {
       "route_id": "42",
       "route_number": "42",
-      "route_name": "Forest Hills Station - Nubian Station",
-      "route_long_name": "Forest Hills Station - Nubian Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 42 - Inbound",
@@ -664,8 +532,6 @@ const routesIndex = {
     {
       "route_id": "43",
       "route_number": "43",
-      "route_name": "Ruggles Station - Park Street Station",
-      "route_long_name": "Ruggles Station - Park Street Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 43 - Outbound",
@@ -674,8 +540,6 @@ const routesIndex = {
     {
       "route_id": "43",
       "route_number": "43",
-      "route_name": "Ruggles Station - Park Street Station",
-      "route_long_name": "Ruggles Station - Park Street Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 43 - Inbound",
@@ -684,8 +548,6 @@ const routesIndex = {
     {
       "route_id": "44",
       "route_number": "44",
-      "route_name": "Jackson Square Station - Ruggles Station",
-      "route_long_name": "Jackson Square Station - Ruggles Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 44 - Outbound",
@@ -694,8 +556,6 @@ const routesIndex = {
     {
       "route_id": "44",
       "route_number": "44",
-      "route_name": "Jackson Square Station - Ruggles Station",
-      "route_long_name": "Jackson Square Station - Ruggles Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 44 - Inbound",
@@ -704,8 +564,6 @@ const routesIndex = {
     {
       "route_id": "45",
       "route_number": "45",
-      "route_name": "Franklin Park - Ruggles Station",
-      "route_long_name": "Franklin Park - Ruggles Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 45 - Outbound",
@@ -714,8 +572,6 @@ const routesIndex = {
     {
       "route_id": "45",
       "route_number": "45",
-      "route_name": "Franklin Park - Ruggles Station",
-      "route_long_name": "Franklin Park - Ruggles Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 45 - Inbound",
@@ -724,8 +580,6 @@ const routesIndex = {
     {
       "route_id": "47",
       "route_number": "47",
-      "route_name": "Central Square, Cambridge - Broadway Station",
-      "route_long_name": "Central Square, Cambridge - Broadway Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 47 - Outbound",
@@ -734,8 +588,6 @@ const routesIndex = {
     {
       "route_id": "47",
       "route_number": "47",
-      "route_name": "Central Square, Cambridge - Broadway Station",
-      "route_long_name": "Central Square, Cambridge - Broadway Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 47 - Inbound",
@@ -744,8 +596,6 @@ const routesIndex = {
     {
       "route_id": "50",
       "route_number": "50",
-      "route_name": "Cleary Square - Forest Hills Station",
-      "route_long_name": "Cleary Square - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 50 - Outbound",
@@ -754,8 +604,6 @@ const routesIndex = {
     {
       "route_id": "50",
       "route_number": "50",
-      "route_name": "Cleary Square - Forest Hills Station",
-      "route_long_name": "Cleary Square - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 50 - Inbound",
@@ -764,8 +612,6 @@ const routesIndex = {
     {
       "route_id": "51",
       "route_number": "51",
-      "route_name": "Reservoir Station - Forest Hills Station",
-      "route_long_name": "Reservoir Station - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 51 - Outbound",
@@ -774,8 +620,6 @@ const routesIndex = {
     {
       "route_id": "51",
       "route_number": "51",
-      "route_name": "Reservoir Station - Forest Hills Station",
-      "route_long_name": "Reservoir Station - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 51 - Inbound",
@@ -784,8 +628,6 @@ const routesIndex = {
     {
       "route_id": "52",
       "route_number": "52",
-      "route_name": "Dedham Mall - Watertown Yard",
-      "route_long_name": "Dedham Mall - Watertown Yard",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 52 - Outbound",
@@ -794,8 +636,6 @@ const routesIndex = {
     {
       "route_id": "52",
       "route_number": "52",
-      "route_name": "Dedham Mall - Watertown Yard",
-      "route_long_name": "Dedham Mall - Watertown Yard",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 52 - Inbound",
@@ -804,8 +644,6 @@ const routesIndex = {
     {
       "route_id": "55",
       "route_number": "55",
-      "route_name": "West Fenway - Arlington Station",
-      "route_long_name": "West Fenway - Arlington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 55 - Outbound",
@@ -814,8 +652,6 @@ const routesIndex = {
     {
       "route_id": "55",
       "route_number": "55",
-      "route_name": "West Fenway - Arlington Station",
-      "route_long_name": "West Fenway - Arlington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 55 - Inbound",
@@ -824,8 +660,6 @@ const routesIndex = {
     {
       "route_id": "57",
       "route_number": "57",
-      "route_name": "Watertown Yard - Kenmore Station",
-      "route_long_name": "Watertown Yard - Kenmore Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 57 - Outbound",
@@ -834,8 +668,6 @@ const routesIndex = {
     {
       "route_id": "57",
       "route_number": "57",
-      "route_name": "Watertown Yard - Kenmore Station",
-      "route_long_name": "Watertown Yard - Kenmore Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 57 - Inbound",
@@ -844,8 +676,6 @@ const routesIndex = {
     {
       "route_id": "59",
       "route_number": "59",
-      "route_name": "Needham Junction - Watertown Square",
-      "route_long_name": "Needham Junction - Watertown Square",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 59 - Outbound",
@@ -854,8 +684,6 @@ const routesIndex = {
     {
       "route_id": "59",
       "route_number": "59",
-      "route_name": "Needham Junction - Watertown Square",
-      "route_long_name": "Needham Junction - Watertown Square",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 59 - Inbound",
@@ -864,8 +692,6 @@ const routesIndex = {
     {
       "route_id": "60",
       "route_number": "60",
-      "route_name": "Chestnut Hill - Kenmore Station",
-      "route_long_name": "Chestnut Hill - Kenmore Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 60 - Outbound",
@@ -874,8 +700,6 @@ const routesIndex = {
     {
       "route_id": "60",
       "route_number": "60",
-      "route_name": "Chestnut Hill - Kenmore Station",
-      "route_long_name": "Chestnut Hill - Kenmore Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 60 - Inbound",
@@ -884,8 +708,6 @@ const routesIndex = {
     {
       "route_id": "61",
       "route_number": "61",
-      "route_name": "North Waltham - Waltham Center",
-      "route_long_name": "North Waltham - Waltham Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 61 - Outbound",
@@ -894,8 +716,6 @@ const routesIndex = {
     {
       "route_id": "61",
       "route_number": "61",
-      "route_name": "North Waltham - Waltham Center",
-      "route_long_name": "North Waltham - Waltham Center",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 61 - Inbound",
@@ -904,8 +724,6 @@ const routesIndex = {
     {
       "route_id": "62",
       "route_number": "62",
-      "route_name": "Bedford VA Hospital - Alewife Station",
-      "route_long_name": "Bedford VA Hospital - Alewife Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 62 - Outbound",
@@ -914,8 +732,6 @@ const routesIndex = {
     {
       "route_id": "62",
       "route_number": "62",
-      "route_name": "Bedford VA Hospital - Alewife Station",
-      "route_long_name": "Bedford VA Hospital - Alewife Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 62 - Inbound",
@@ -924,8 +740,6 @@ const routesIndex = {
     {
       "route_id": "64",
       "route_number": "64",
-      "route_name": "Oak Square - University Park or Kendall/MIT Station",
-      "route_long_name": "Oak Square - University Park or Kendall/MIT Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 64 - Outbound",
@@ -934,8 +748,6 @@ const routesIndex = {
     {
       "route_id": "64",
       "route_number": "64",
-      "route_name": "Oak Square - University Park or Kendall/MIT Station",
-      "route_long_name": "Oak Square - University Park or Kendall/MIT Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 64 - Inbound",
@@ -944,8 +756,6 @@ const routesIndex = {
     {
       "route_id": "65",
       "route_number": "65",
-      "route_name": "Brighton Center - Kenmore Station",
-      "route_long_name": "Brighton Center - Kenmore Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 65 - Outbound",
@@ -954,8 +764,6 @@ const routesIndex = {
     {
       "route_id": "65",
       "route_number": "65",
-      "route_name": "Brighton Center - Kenmore Station",
-      "route_long_name": "Brighton Center - Kenmore Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 65 - Inbound",
@@ -964,8 +772,6 @@ const routesIndex = {
     {
       "route_id": "66",
       "route_number": "66",
-      "route_name": "Harvard Square - Nubian Station",
-      "route_long_name": "Harvard Square - Nubian Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 66 - Outbound",
@@ -974,8 +780,6 @@ const routesIndex = {
     {
       "route_id": "66",
       "route_number": "66",
-      "route_name": "Harvard Square - Nubian Station",
-      "route_long_name": "Harvard Square - Nubian Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 66 - Inbound",
@@ -984,8 +788,6 @@ const routesIndex = {
     {
       "route_id": "67",
       "route_number": "67",
-      "route_name": "Turkey Hill - Alewife Station",
-      "route_long_name": "Turkey Hill - Alewife Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 67 - Outbound",
@@ -994,8 +796,6 @@ const routesIndex = {
     {
       "route_id": "67",
       "route_number": "67",
-      "route_name": "Turkey Hill - Alewife Station",
-      "route_long_name": "Turkey Hill - Alewife Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 67 - Inbound",
@@ -1004,8 +804,6 @@ const routesIndex = {
     {
       "route_id": "68",
       "route_number": "68",
-      "route_name": "Harvard Square - Kendall/MIT Station",
-      "route_long_name": "Harvard Square - Kendall/MIT Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 68 - Outbound",
@@ -1014,8 +812,6 @@ const routesIndex = {
     {
       "route_id": "68",
       "route_number": "68",
-      "route_name": "Harvard Square - Kendall/MIT Station",
-      "route_long_name": "Harvard Square - Kendall/MIT Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 68 - Inbound",
@@ -1024,8 +820,6 @@ const routesIndex = {
     {
       "route_id": "69",
       "route_number": "69",
-      "route_name": "Harvard Square - Lechmere Station",
-      "route_long_name": "Harvard Square - Lechmere Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 69 - Outbound",
@@ -1034,8 +828,6 @@ const routesIndex = {
     {
       "route_id": "69",
       "route_number": "69",
-      "route_name": "Harvard Square - Lechmere Station",
-      "route_long_name": "Harvard Square - Lechmere Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 69 - Inbound",
@@ -1044,8 +836,6 @@ const routesIndex = {
     {
       "route_id": "70",
       "route_number": "70",
-      "route_name": "Market Place Drive or Waltham Center - University Park",
-      "route_long_name": "Market Place Drive or Waltham Center - University Park",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 70 - Outbound",
@@ -1054,8 +844,6 @@ const routesIndex = {
     {
       "route_id": "70",
       "route_number": "70",
-      "route_name": "Market Place Drive or Waltham Center - University Park",
-      "route_long_name": "Market Place Drive or Waltham Center - University Park",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 70 - Inbound",
@@ -1064,8 +852,6 @@ const routesIndex = {
     {
       "route_id": "71",
       "route_number": "71",
-      "route_name": "Watertown Square - Harvard Station",
-      "route_long_name": "Watertown Square - Harvard Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 71 - Outbound",
@@ -1074,8 +860,6 @@ const routesIndex = {
     {
       "route_id": "71",
       "route_number": "71",
-      "route_name": "Watertown Square - Harvard Station",
-      "route_long_name": "Watertown Square - Harvard Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 71 - Inbound",
@@ -1084,8 +868,6 @@ const routesIndex = {
     {
       "route_id": "73",
       "route_number": "73",
-      "route_name": "Waverley Square - Harvard Station",
-      "route_long_name": "Waverley Square - Harvard Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 73 - Outbound",
@@ -1094,8 +876,6 @@ const routesIndex = {
     {
       "route_id": "73",
       "route_number": "73",
-      "route_name": "Waverley Square - Harvard Station",
-      "route_long_name": "Waverley Square - Harvard Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 73 - Inbound",
@@ -1104,8 +884,6 @@ const routesIndex = {
     {
       "route_id": "74",
       "route_number": "74",
-      "route_name": "Belmont Center - Harvard via Concord Avenue",
-      "route_long_name": "Belmont Center - Harvard via Concord Avenue",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 74 - Outbound",
@@ -1114,8 +892,6 @@ const routesIndex = {
     {
       "route_id": "74",
       "route_number": "74",
-      "route_name": "Belmont Center - Harvard via Concord Avenue",
-      "route_long_name": "Belmont Center - Harvard via Concord Avenue",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 74 - Inbound",
@@ -1124,8 +900,6 @@ const routesIndex = {
     {
       "route_id": "75",
       "route_number": "75",
-      "route_name": "Belmont Center - Harvard via Huron Avenue",
-      "route_long_name": "Belmont Center - Harvard via Huron Avenue",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 75 - Outbound",
@@ -1134,8 +908,6 @@ const routesIndex = {
     {
       "route_id": "75",
       "route_number": "75",
-      "route_name": "Belmont Center - Harvard via Huron Avenue",
-      "route_long_name": "Belmont Center - Harvard via Huron Avenue",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 75 - Inbound",
@@ -1144,8 +916,6 @@ const routesIndex = {
     {
       "route_id": "76",
       "route_number": "76",
-      "route_name": "Lincoln Lab - Alewife Station",
-      "route_long_name": "Lincoln Lab - Alewife Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 76 - Outbound",
@@ -1154,8 +924,6 @@ const routesIndex = {
     {
       "route_id": "76",
       "route_number": "76",
-      "route_name": "Lincoln Lab - Alewife Station",
-      "route_long_name": "Lincoln Lab - Alewife Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 76 - Inbound",
@@ -1164,8 +932,6 @@ const routesIndex = {
     {
       "route_id": "77",
       "route_number": "77",
-      "route_name": "Arlington Heights - Harvard Station",
-      "route_long_name": "Arlington Heights - Harvard Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 77 - Outbound",
@@ -1174,8 +940,6 @@ const routesIndex = {
     {
       "route_id": "77",
       "route_number": "77",
-      "route_name": "Arlington Heights - Harvard Station",
-      "route_long_name": "Arlington Heights - Harvard Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 77 - Inbound",
@@ -1184,8 +948,6 @@ const routesIndex = {
     {
       "route_id": "78",
       "route_number": "78",
-      "route_name": "Arlmont Village - Harvard Station",
-      "route_long_name": "Arlmont Village - Harvard Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 78 - Outbound",
@@ -1194,8 +956,6 @@ const routesIndex = {
     {
       "route_id": "78",
       "route_number": "78",
-      "route_name": "Arlmont Village - Harvard Station",
-      "route_long_name": "Arlmont Village - Harvard Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 78 - Inbound",
@@ -1204,8 +964,6 @@ const routesIndex = {
     {
       "route_id": "80",
       "route_number": "80",
-      "route_name": "Arlington Center - Lechmere Station",
-      "route_long_name": "Arlington Center - Lechmere Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 80 - Outbound",
@@ -1214,8 +972,6 @@ const routesIndex = {
     {
       "route_id": "80",
       "route_number": "80",
-      "route_name": "Arlington Center - Lechmere Station",
-      "route_long_name": "Arlington Center - Lechmere Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 80 - Inbound",
@@ -1224,8 +980,6 @@ const routesIndex = {
     {
       "route_id": "83",
       "route_number": "83",
-      "route_name": "Rindge Avenue - Central Square, Cambridge",
-      "route_long_name": "Rindge Avenue - Central Square, Cambridge",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 83 - Outbound",
@@ -1234,8 +988,6 @@ const routesIndex = {
     {
       "route_id": "83",
       "route_number": "83",
-      "route_name": "Rindge Avenue - Central Square, Cambridge",
-      "route_long_name": "Rindge Avenue - Central Square, Cambridge",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 83 - Inbound",
@@ -1244,8 +996,6 @@ const routesIndex = {
     {
       "route_id": "85",
       "route_number": "85",
-      "route_name": "Spring Hill - Kendall/MIT Station",
-      "route_long_name": "Spring Hill - Kendall/MIT Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 85 - Outbound",
@@ -1254,8 +1004,6 @@ const routesIndex = {
     {
       "route_id": "85",
       "route_number": "85",
-      "route_name": "Spring Hill - Kendall/MIT Station",
-      "route_long_name": "Spring Hill - Kendall/MIT Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 85 - Inbound",
@@ -1264,8 +1012,6 @@ const routesIndex = {
     {
       "route_id": "86",
       "route_number": "86",
-      "route_name": "Harvard Square - Reservoir Station",
-      "route_long_name": "Harvard Square - Reservoir Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 86 - Outbound",
@@ -1274,8 +1020,6 @@ const routesIndex = {
     {
       "route_id": "86",
       "route_number": "86",
-      "route_name": "Harvard Square - Reservoir Station",
-      "route_long_name": "Harvard Square - Reservoir Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 86 - Inbound",
@@ -1284,8 +1028,6 @@ const routesIndex = {
     {
       "route_id": "87",
       "route_number": "87",
-      "route_name": "Clarendon Hill or Arlington Center - Lechmere Station",
-      "route_long_name": "Clarendon Hill or Arlington Center - Lechmere Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 87 - Outbound",
@@ -1294,8 +1036,6 @@ const routesIndex = {
     {
       "route_id": "87",
       "route_number": "87",
-      "route_name": "Clarendon Hill or Arlington Center - Lechmere Station",
-      "route_long_name": "Clarendon Hill or Arlington Center - Lechmere Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 87 - Inbound",
@@ -1304,8 +1044,6 @@ const routesIndex = {
     {
       "route_id": "88",
       "route_number": "88",
-      "route_name": "Clarendon Hill - Lechmere Station",
-      "route_long_name": "Clarendon Hill - Lechmere Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 88 - Outbound",
@@ -1314,8 +1052,6 @@ const routesIndex = {
     {
       "route_id": "88",
       "route_number": "88",
-      "route_name": "Clarendon Hill - Lechmere Station",
-      "route_long_name": "Clarendon Hill - Lechmere Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 88 - Inbound",
@@ -1324,8 +1060,6 @@ const routesIndex = {
     {
       "route_id": "89",
       "route_number": "89",
-      "route_name": "Clarendon Hill or Davis Station - Sullivan Square Station",
-      "route_long_name": "Clarendon Hill or Davis Station - Sullivan Square Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 89 - Outbound",
@@ -1334,8 +1068,6 @@ const routesIndex = {
     {
       "route_id": "89",
       "route_number": "89",
-      "route_name": "Clarendon Hill or Davis Station - Sullivan Square Station",
-      "route_long_name": "Clarendon Hill or Davis Station - Sullivan Square Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 89 - Inbound",
@@ -1344,8 +1076,6 @@ const routesIndex = {
     {
       "route_id": "90",
       "route_number": "90",
-      "route_name": "Davis Station - Assembly Row",
-      "route_long_name": "Davis Station - Assembly Row",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 90 - Outbound",
@@ -1354,8 +1084,6 @@ const routesIndex = {
     {
       "route_id": "90",
       "route_number": "90",
-      "route_name": "Davis Station - Assembly Row",
-      "route_long_name": "Davis Station - Assembly Row",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 90 - Inbound",
@@ -1364,8 +1092,6 @@ const routesIndex = {
     {
       "route_id": "91",
       "route_number": "91",
-      "route_name": "Sullivan Square Station - Central Square, Cambridge",
-      "route_long_name": "Sullivan Square Station - Central Square, Cambridge",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 91 - Outbound",
@@ -1374,8 +1100,6 @@ const routesIndex = {
     {
       "route_id": "91",
       "route_number": "91",
-      "route_name": "Sullivan Square Station - Central Square, Cambridge",
-      "route_long_name": "Sullivan Square Station - Central Square, Cambridge",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 91 - Inbound",
@@ -1384,8 +1108,6 @@ const routesIndex = {
     {
       "route_id": "92",
       "route_number": "92",
-      "route_name": "Sullivan Square Station - Downtown via Main Street",
-      "route_long_name": "Sullivan Square Station - Downtown via Main Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 92 - Outbound",
@@ -1394,8 +1116,6 @@ const routesIndex = {
     {
       "route_id": "92",
       "route_number": "92",
-      "route_name": "Sullivan Square Station - Downtown via Main Street",
-      "route_long_name": "Sullivan Square Station - Downtown via Main Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 92 - Inbound",
@@ -1404,8 +1124,6 @@ const routesIndex = {
     {
       "route_id": "93",
       "route_number": "93",
-      "route_name": "Sullivan Square Station - Downtown via Bunker Hill Street",
-      "route_long_name": "Sullivan Square Station - Downtown via Bunker Hill Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 93 - Outbound",
@@ -1414,8 +1132,6 @@ const routesIndex = {
     {
       "route_id": "93",
       "route_number": "93",
-      "route_name": "Sullivan Square Station - Downtown via Bunker Hill Street",
-      "route_long_name": "Sullivan Square Station - Downtown via Bunker Hill Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 93 - Inbound",
@@ -1424,8 +1140,6 @@ const routesIndex = {
     {
       "route_id": "94",
       "route_number": "94",
-      "route_name": "Medford Square - Davis Station",
-      "route_long_name": "Medford Square - Davis Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 94 - Outbound",
@@ -1434,8 +1148,6 @@ const routesIndex = {
     {
       "route_id": "94",
       "route_number": "94",
-      "route_name": "Medford Square - Davis Station",
-      "route_long_name": "Medford Square - Davis Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 94 - Inbound",
@@ -1444,8 +1156,6 @@ const routesIndex = {
     {
       "route_id": "95",
       "route_number": "95",
-      "route_name": "West Medford or Arlington Center - Sullivan Square Station",
-      "route_long_name": "West Medford or Arlington Center - Sullivan Square Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 95 - Outbound",
@@ -1454,8 +1164,6 @@ const routesIndex = {
     {
       "route_id": "95",
       "route_number": "95",
-      "route_name": "West Medford or Arlington Center - Sullivan Square Station",
-      "route_long_name": "West Medford or Arlington Center - Sullivan Square Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 95 - Inbound",
@@ -1464,8 +1172,6 @@ const routesIndex = {
     {
       "route_id": "96",
       "route_number": "96",
-      "route_name": "Medford Square - Harvard Station",
-      "route_long_name": "Medford Square - Harvard Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 96 - Outbound",
@@ -1474,8 +1180,6 @@ const routesIndex = {
     {
       "route_id": "96",
       "route_number": "96",
-      "route_name": "Medford Square - Harvard Station",
-      "route_long_name": "Medford Square - Harvard Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 96 - Inbound",
@@ -1484,8 +1188,6 @@ const routesIndex = {
     {
       "route_id": "97",
       "route_number": "97",
-      "route_name": "Malden Center Station - Wellington Station",
-      "route_long_name": "Malden Center Station - Wellington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 97 - Outbound",
@@ -1494,8 +1196,6 @@ const routesIndex = {
     {
       "route_id": "97",
       "route_number": "97",
-      "route_name": "Malden Center Station - Wellington Station",
-      "route_long_name": "Malden Center Station - Wellington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 97 - Inbound",
@@ -1504,8 +1204,6 @@ const routesIndex = {
     {
       "route_id": "99",
       "route_number": "99",
-      "route_name": "Woodland Road - Wellington Station",
-      "route_long_name": "Woodland Road - Wellington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 99 - Outbound",
@@ -1514,8 +1212,6 @@ const routesIndex = {
     {
       "route_id": "99",
       "route_number": "99",
-      "route_name": "Woodland Road - Wellington Station",
-      "route_long_name": "Woodland Road - Wellington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 99 - Inbound",
@@ -1524,8 +1220,6 @@ const routesIndex = {
     {
       "route_id": "100",
       "route_number": "100",
-      "route_name": "Elm Street - Wellington Station",
-      "route_long_name": "Elm Street - Wellington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 100 - Outbound",
@@ -1534,8 +1228,6 @@ const routesIndex = {
     {
       "route_id": "100",
       "route_number": "100",
-      "route_name": "Elm Street - Wellington Station",
-      "route_long_name": "Elm Street - Wellington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 100 - Inbound",
@@ -1544,8 +1236,6 @@ const routesIndex = {
     {
       "route_id": "101",
       "route_number": "101",
-      "route_name": "Malden Center Station - Sullivan Square Station via Winter Hill",
-      "route_long_name": "Malden Center Station - Sullivan Square Station via Winter Hill",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 101 - Outbound",
@@ -1554,8 +1244,6 @@ const routesIndex = {
     {
       "route_id": "101",
       "route_number": "101",
-      "route_name": "Malden Center Station - Sullivan Square Station via Winter Hill",
-      "route_long_name": "Malden Center Station - Sullivan Square Station via Winter Hill",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 101 - Inbound",
@@ -1564,8 +1252,6 @@ const routesIndex = {
     {
       "route_id": "104",
       "route_number": "104",
-      "route_name": "Malden Center Station - Airport Station",
-      "route_long_name": "Malden Center Station - Airport Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 104 - Outbound",
@@ -1574,8 +1260,6 @@ const routesIndex = {
     {
       "route_id": "104",
       "route_number": "104",
-      "route_name": "Malden Center Station - Airport Station",
-      "route_long_name": "Malden Center Station - Airport Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 104 - Inbound",
@@ -1584,8 +1268,6 @@ const routesIndex = {
     {
       "route_id": "105",
       "route_number": "105",
-      "route_name": "Malden Center Station - Sullivan Square Station via Newland Street Housing",
-      "route_long_name": "Malden Center Station - Sullivan Square Station via Newland Street Housing",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 105 - Outbound",
@@ -1594,8 +1276,6 @@ const routesIndex = {
     {
       "route_id": "105",
       "route_number": "105",
-      "route_name": "Malden Center Station - Sullivan Square Station via Newland Street Housing",
-      "route_long_name": "Malden Center Station - Sullivan Square Station via Newland Street Housing",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 105 - Inbound",
@@ -1604,8 +1284,6 @@ const routesIndex = {
     {
       "route_id": "106",
       "route_number": "106",
-      "route_name": "Lebanon Loop - Wellington Station",
-      "route_long_name": "Lebanon Loop - Wellington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 106 - Outbound",
@@ -1614,8 +1292,6 @@ const routesIndex = {
     {
       "route_id": "106",
       "route_number": "106",
-      "route_name": "Lebanon Loop - Wellington Station",
-      "route_long_name": "Lebanon Loop - Wellington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 106 - Inbound",
@@ -1624,8 +1300,6 @@ const routesIndex = {
     {
       "route_id": "108",
       "route_number": "108",
-      "route_name": "Linden Square - Wellington Station",
-      "route_long_name": "Linden Square - Wellington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 108 - Outbound",
@@ -1634,8 +1308,6 @@ const routesIndex = {
     {
       "route_id": "108",
       "route_number": "108",
-      "route_name": "Linden Square - Wellington Station",
-      "route_long_name": "Linden Square - Wellington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 108 - Inbound",
@@ -1644,8 +1316,6 @@ const routesIndex = {
     {
       "route_id": "109",
       "route_number": "109",
-      "route_name": "Linden Square - Harvard Square via Sullivan",
-      "route_long_name": "Linden Square - Harvard Square via Sullivan",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 109 - Outbound",
@@ -1654,8 +1324,6 @@ const routesIndex = {
     {
       "route_id": "109",
       "route_number": "109",
-      "route_name": "Linden Square - Harvard Square via Sullivan",
-      "route_long_name": "Linden Square - Harvard Square via Sullivan",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 109 - Inbound",
@@ -1664,8 +1332,6 @@ const routesIndex = {
     {
       "route_id": "110",
       "route_number": "110",
-      "route_name": "Wonderland Station - Wellington Station",
-      "route_long_name": "Wonderland Station - Wellington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 110 - Outbound",
@@ -1674,8 +1340,6 @@ const routesIndex = {
     {
       "route_id": "110",
       "route_number": "110",
-      "route_name": "Wonderland Station - Wellington Station",
-      "route_long_name": "Wonderland Station - Wellington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 110 - Inbound",
@@ -1684,8 +1348,6 @@ const routesIndex = {
     {
       "route_id": "111",
       "route_number": "111",
-      "route_name": "Woodlawn - Haymarket Station",
-      "route_long_name": "Woodlawn - Haymarket Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 111 - Outbound",
@@ -1694,8 +1356,6 @@ const routesIndex = {
     {
       "route_id": "111",
       "route_number": "111",
-      "route_name": "Woodlawn - Haymarket Station",
-      "route_long_name": "Woodlawn - Haymarket Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 111 - Inbound",
@@ -1704,8 +1364,6 @@ const routesIndex = {
     {
       "route_id": "112",
       "route_number": "112",
-      "route_name": "Wellington Station - Wood Island Station",
-      "route_long_name": "Wellington Station - Wood Island Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 112 - Outbound",
@@ -1714,8 +1372,6 @@ const routesIndex = {
     {
       "route_id": "112",
       "route_number": "112",
-      "route_name": "Wellington Station - Wood Island Station",
-      "route_long_name": "Wellington Station - Wood Island Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 112 - Inbound",
@@ -1724,8 +1380,6 @@ const routesIndex = {
     {
       "route_id": "114",
       "route_number": "114",
-      "route_name": "Market Basket - Maverick Station",
-      "route_long_name": "Market Basket - Maverick Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 114 - Outbound",
@@ -1734,8 +1388,6 @@ const routesIndex = {
     {
       "route_id": "114",
       "route_number": "114",
-      "route_name": "Market Basket - Maverick Station",
-      "route_long_name": "Market Basket - Maverick Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 114 - Inbound",
@@ -1744,8 +1396,6 @@ const routesIndex = {
     {
       "route_id": "116",
       "route_number": "116",
-      "route_name": "Wonderland Station - Maverick Station",
-      "route_long_name": "Wonderland Station - Maverick Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 116 - Outbound",
@@ -1754,8 +1404,6 @@ const routesIndex = {
     {
       "route_id": "116",
       "route_number": "116",
-      "route_name": "Wonderland Station - Maverick Station",
-      "route_long_name": "Wonderland Station - Maverick Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 116 - Inbound",
@@ -1764,8 +1412,6 @@ const routesIndex = {
     {
       "route_id": "119",
       "route_number": "119",
-      "route_name": "Northgate Shopping Center - Beachmont Station",
-      "route_long_name": "Northgate Shopping Center - Beachmont Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 119 - Outbound",
@@ -1774,8 +1420,6 @@ const routesIndex = {
     {
       "route_id": "119",
       "route_number": "119",
-      "route_name": "Northgate Shopping Center - Beachmont Station",
-      "route_long_name": "Northgate Shopping Center - Beachmont Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 119 - Inbound",
@@ -1784,8 +1428,6 @@ const routesIndex = {
     {
       "route_id": "120",
       "route_number": "120",
-      "route_name": "Orient Heights Station - Jeffries Point",
-      "route_long_name": "Orient Heights Station - Jeffries Point",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 120 - Outbound",
@@ -1794,8 +1436,6 @@ const routesIndex = {
     {
       "route_id": "120",
       "route_number": "120",
-      "route_name": "Orient Heights Station - Jeffries Point",
-      "route_long_name": "Orient Heights Station - Jeffries Point",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 120 - Inbound",
@@ -1804,8 +1444,6 @@ const routesIndex = {
     {
       "route_id": "121",
       "route_number": "121",
-      "route_name": "Wood Island Station - Maverick Station",
-      "route_long_name": "Wood Island Station - Maverick Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 121 - Outbound",
@@ -1814,8 +1452,6 @@ const routesIndex = {
     {
       "route_id": "121",
       "route_number": "121",
-      "route_name": "Wood Island Station - Maverick Station",
-      "route_long_name": "Wood Island Station - Maverick Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 121 - Inbound",
@@ -1824,8 +1460,6 @@ const routesIndex = {
     {
       "route_id": "131",
       "route_number": "131",
-      "route_name": "Melrose Highlands - Malden Center Station",
-      "route_long_name": "Melrose Highlands - Malden Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 131 - Outbound",
@@ -1834,8 +1468,6 @@ const routesIndex = {
     {
       "route_id": "131",
       "route_number": "131",
-      "route_name": "Melrose Highlands - Malden Center Station",
-      "route_long_name": "Melrose Highlands - Malden Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 131 - Inbound",
@@ -1844,8 +1476,6 @@ const routesIndex = {
     {
       "route_id": "132",
       "route_number": "132",
-      "route_name": "Redstone Shopping Center - Malden Center Station",
-      "route_long_name": "Redstone Shopping Center - Malden Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 132 - Outbound",
@@ -1854,8 +1484,6 @@ const routesIndex = {
     {
       "route_id": "132",
       "route_number": "132",
-      "route_name": "Redstone Shopping Center - Malden Center Station",
-      "route_long_name": "Redstone Shopping Center - Malden Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 132 - Inbound",
@@ -1864,8 +1492,6 @@ const routesIndex = {
     {
       "route_id": "134",
       "route_number": "134",
-      "route_name": "North Woburn - Wellington Station",
-      "route_long_name": "North Woburn - Wellington Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 134 - Outbound",
@@ -1874,8 +1500,6 @@ const routesIndex = {
     {
       "route_id": "134",
       "route_number": "134",
-      "route_name": "North Woburn - Wellington Station",
-      "route_long_name": "North Woburn - Wellington Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 134 - Inbound",
@@ -1884,8 +1508,6 @@ const routesIndex = {
     {
       "route_id": "137",
       "route_number": "137",
-      "route_name": "Reading Depot - Malden Center Station",
-      "route_long_name": "Reading Depot - Malden Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 137 - Outbound",
@@ -1894,8 +1516,6 @@ const routesIndex = {
     {
       "route_id": "137",
       "route_number": "137",
-      "route_name": "Reading Depot - Malden Center Station",
-      "route_long_name": "Reading Depot - Malden Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 137 - Inbound",
@@ -1904,8 +1524,6 @@ const routesIndex = {
     {
       "route_id": "171",
       "route_number": "171",
-      "route_name": "Logan Airport Terminals - Nubian Station",
-      "route_long_name": "Logan Airport Terminals - Nubian Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 171 - Outbound",
@@ -1914,8 +1532,6 @@ const routesIndex = {
     {
       "route_id": "201",
       "route_number": "201",
-      "route_name": "Fields Corner Loop via Neponset Ave",
-      "route_long_name": "Fields Corner Loop via Neponset Ave",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 201 - Outbound",
@@ -1924,8 +1540,6 @@ const routesIndex = {
     {
       "route_id": "201",
       "route_number": "201",
-      "route_name": "Fields Corner Loop via Neponset Ave",
-      "route_long_name": "Fields Corner Loop via Neponset Ave",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 201 - Inbound",
@@ -1934,8 +1548,6 @@ const routesIndex = {
     {
       "route_id": "202",
       "route_number": "202",
-      "route_name": "Fields Corner Loop via Adams Street",
-      "route_long_name": "Fields Corner Loop via Adams Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 202 - Outbound",
@@ -1944,8 +1556,6 @@ const routesIndex = {
     {
       "route_id": "202",
       "route_number": "202",
-      "route_name": "Fields Corner Loop via Adams Street",
-      "route_long_name": "Fields Corner Loop via Adams Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 202 - Inbound",
@@ -1954,8 +1564,6 @@ const routesIndex = {
     {
       "route_id": "210",
       "route_number": "210",
-      "route_name": "Quincy Center Station - Fields Corner Station",
-      "route_long_name": "Quincy Center Station - Fields Corner Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 210 - Outbound",
@@ -1964,8 +1572,6 @@ const routesIndex = {
     {
       "route_id": "210",
       "route_number": "210",
-      "route_name": "Quincy Center Station - Fields Corner Station",
-      "route_long_name": "Quincy Center Station - Fields Corner Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 210 - Inbound",
@@ -1974,8 +1580,6 @@ const routesIndex = {
     {
       "route_id": "211",
       "route_number": "211",
-      "route_name": "Quincy Center Station - Squantum",
-      "route_long_name": "Quincy Center Station - Squantum",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 211 - Outbound",
@@ -1984,8 +1588,6 @@ const routesIndex = {
     {
       "route_id": "211",
       "route_number": "211",
-      "route_name": "Quincy Center Station - Squantum",
-      "route_long_name": "Quincy Center Station - Squantum",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 211 - Inbound",
@@ -1994,8 +1596,6 @@ const routesIndex = {
     {
       "route_id": "215",
       "route_number": "215",
-      "route_name": "Quincy Center Station - Ashmont Station via West Quincy",
-      "route_long_name": "Quincy Center Station - Ashmont Station via West Quincy",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 215 - Outbound",
@@ -2004,8 +1604,6 @@ const routesIndex = {
     {
       "route_id": "215",
       "route_number": "215",
-      "route_name": "Quincy Center Station - Ashmont Station via West Quincy",
-      "route_long_name": "Quincy Center Station - Ashmont Station via West Quincy",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 215 - Inbound",
@@ -2014,8 +1612,6 @@ const routesIndex = {
     {
       "route_id": "216",
       "route_number": "216",
-      "route_name": "Houghs Neck - Quincy Center Station via Germantown",
-      "route_long_name": "Houghs Neck - Quincy Center Station via Germantown",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 216 - Outbound",
@@ -2024,8 +1620,6 @@ const routesIndex = {
     {
       "route_id": "216",
       "route_number": "216",
-      "route_name": "Houghs Neck - Quincy Center Station via Germantown",
-      "route_long_name": "Houghs Neck - Quincy Center Station via Germantown",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 216 - Inbound",
@@ -2034,8 +1628,6 @@ const routesIndex = {
     {
       "route_id": "217",
       "route_number": "217",
-      "route_name": "Quincy Center Station - Ashmont Station via Wollaston Station",
-      "route_long_name": "Quincy Center Station - Ashmont Station via Wollaston Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 217 - Outbound",
@@ -2044,8 +1636,6 @@ const routesIndex = {
     {
       "route_id": "217",
       "route_number": "217",
-      "route_name": "Quincy Center Station - Ashmont Station via Wollaston Station",
-      "route_long_name": "Quincy Center Station - Ashmont Station via Wollaston Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 217 - Inbound",
@@ -2054,8 +1644,6 @@ const routesIndex = {
     {
       "route_id": "220",
       "route_number": "220",
-      "route_name": "Hingham Depot - Quincy Center Station",
-      "route_long_name": "Hingham Depot - Quincy Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 220 - Outbound",
@@ -2064,8 +1652,6 @@ const routesIndex = {
     {
       "route_id": "220",
       "route_number": "220",
-      "route_name": "Hingham Depot - Quincy Center Station",
-      "route_long_name": "Hingham Depot - Quincy Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 220 - Inbound",
@@ -2074,8 +1660,6 @@ const routesIndex = {
     {
       "route_id": "222",
       "route_number": "222",
-      "route_name": "East Weymouth - Quincy Center Station",
-      "route_long_name": "East Weymouth - Quincy Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 222 - Outbound",
@@ -2084,8 +1668,6 @@ const routesIndex = {
     {
       "route_id": "222",
       "route_number": "222",
-      "route_name": "East Weymouth - Quincy Center Station",
-      "route_long_name": "East Weymouth - Quincy Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 222 - Inbound",
@@ -2094,8 +1676,6 @@ const routesIndex = {
     {
       "route_id": "225",
       "route_number": "225",
-      "route_name": "Weymouth Landing - Quincy Center Station",
-      "route_long_name": "Weymouth Landing - Quincy Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 225 - Outbound",
@@ -2104,8 +1684,6 @@ const routesIndex = {
     {
       "route_id": "225",
       "route_number": "225",
-      "route_name": "Weymouth Landing - Quincy Center Station",
-      "route_long_name": "Weymouth Landing - Quincy Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 225 - Inbound",
@@ -2114,8 +1692,6 @@ const routesIndex = {
     {
       "route_id": "226",
       "route_number": "226",
-      "route_name": "Columbian Square - Braintree Station",
-      "route_long_name": "Columbian Square - Braintree Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 226 - Outbound",
@@ -2124,8 +1700,6 @@ const routesIndex = {
     {
       "route_id": "226",
       "route_number": "226",
-      "route_name": "Columbian Square - Braintree Station",
-      "route_long_name": "Columbian Square - Braintree Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 226 - Inbound",
@@ -2134,8 +1708,6 @@ const routesIndex = {
     {
       "route_id": "230",
       "route_number": "230",
-      "route_name": "Montello Station - Quincy Center Station",
-      "route_long_name": "Montello Station - Quincy Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 230 - Outbound",
@@ -2144,8 +1716,6 @@ const routesIndex = {
     {
       "route_id": "230",
       "route_number": "230",
-      "route_name": "Montello Station - Quincy Center Station",
-      "route_long_name": "Montello Station - Quincy Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 230 - Inbound",
@@ -2154,8 +1724,6 @@ const routesIndex = {
     {
       "route_id": "236",
       "route_number": "236",
-      "route_name": "South Shore Plaza - Quincy Center Station",
-      "route_long_name": "South Shore Plaza - Quincy Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 236 - Outbound",
@@ -2164,8 +1732,6 @@ const routesIndex = {
     {
       "route_id": "236",
       "route_number": "236",
-      "route_name": "South Shore Plaza - Quincy Center Station",
-      "route_long_name": "South Shore Plaza - Quincy Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 236 - Inbound",
@@ -2174,8 +1740,6 @@ const routesIndex = {
     {
       "route_id": "238",
       "route_number": "238",
-      "route_name": "Holbrook/Randolph Station - Quincy Center Station",
-      "route_long_name": "Holbrook/Randolph Station - Quincy Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 238 - Outbound",
@@ -2184,8 +1748,6 @@ const routesIndex = {
     {
       "route_id": "238",
       "route_number": "238",
-      "route_name": "Holbrook/Randolph Station - Quincy Center Station",
-      "route_long_name": "Holbrook/Randolph Station - Quincy Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 238 - Inbound",
@@ -2194,8 +1756,6 @@ const routesIndex = {
     {
       "route_id": "240",
       "route_number": "240",
-      "route_name": "Avon Square - Ashmont Station",
-      "route_long_name": "Avon Square - Ashmont Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 240 - Outbound",
@@ -2204,8 +1764,6 @@ const routesIndex = {
     {
       "route_id": "240",
       "route_number": "240",
-      "route_name": "Avon Square - Ashmont Station",
-      "route_long_name": "Avon Square - Ashmont Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 240 - Inbound",
@@ -2214,8 +1772,6 @@ const routesIndex = {
     {
       "route_id": "245",
       "route_number": "245",
-      "route_name": "Quincy Center Station - Mattapan Station",
-      "route_long_name": "Quincy Center Station - Mattapan Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 245 - Outbound",
@@ -2224,8 +1780,6 @@ const routesIndex = {
     {
       "route_id": "245",
       "route_number": "245",
-      "route_name": "Quincy Center Station - Mattapan Station",
-      "route_long_name": "Quincy Center Station - Mattapan Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 245 - Inbound",
@@ -2234,8 +1788,6 @@ const routesIndex = {
     {
       "route_id": "350",
       "route_number": "350",
-      "route_name": "North Burlington - Alewife Station",
-      "route_long_name": "North Burlington - Alewife Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 350 - Outbound",
@@ -2244,8 +1796,6 @@ const routesIndex = {
     {
       "route_id": "350",
       "route_number": "350",
-      "route_name": "North Burlington - Alewife Station",
-      "route_long_name": "North Burlington - Alewife Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 350 - Inbound",
@@ -2254,8 +1804,6 @@ const routesIndex = {
     {
       "route_id": "351",
       "route_number": "351",
-      "route_name": "Bedford Woods Drive - Third Avenue",
-      "route_long_name": "Bedford Woods Drive - Third Avenue",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 351 - Outbound",
@@ -2264,8 +1812,6 @@ const routesIndex = {
     {
       "route_id": "351",
       "route_number": "351",
-      "route_name": "Bedford Woods Drive - Third Avenue",
-      "route_long_name": "Bedford Woods Drive - Third Avenue",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 351 - Inbound",
@@ -2274,8 +1820,6 @@ const routesIndex = {
     {
       "route_id": "354",
       "route_number": "354",
-      "route_name": "North Burlington - State Street, Boston",
-      "route_long_name": "North Burlington - State Street, Boston",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 354 - Outbound",
@@ -2284,8 +1828,6 @@ const routesIndex = {
     {
       "route_id": "354",
       "route_number": "354",
-      "route_name": "North Burlington - State Street, Boston",
-      "route_long_name": "North Burlington - State Street, Boston",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 354 - Inbound",
@@ -2294,8 +1836,6 @@ const routesIndex = {
     {
       "route_id": "411",
       "route_number": "411",
-      "route_name": "Kennedy Drive or Jack Satter House - Malden Center Station",
-      "route_long_name": "Kennedy Drive or Jack Satter House - Malden Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 411 - Outbound",
@@ -2304,8 +1844,6 @@ const routesIndex = {
     {
       "route_id": "411",
       "route_number": "411",
-      "route_name": "Kennedy Drive or Jack Satter House - Malden Center Station",
-      "route_long_name": "Kennedy Drive or Jack Satter House - Malden Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 411 - Inbound",
@@ -2314,8 +1852,6 @@ const routesIndex = {
     {
       "route_id": "424",
       "route_number": "424",
-      "route_name": "Eastern Avenue & Essex Street - Wonderland Station",
-      "route_long_name": "Eastern Avenue & Essex Street - Wonderland Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 424 - Outbound",
@@ -2324,8 +1860,6 @@ const routesIndex = {
     {
       "route_id": "424",
       "route_number": "424",
-      "route_name": "Eastern Avenue & Essex Street - Wonderland Station",
-      "route_long_name": "Eastern Avenue & Essex Street - Wonderland Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 424 - Inbound",
@@ -2334,8 +1868,6 @@ const routesIndex = {
     {
       "route_id": "426",
       "route_number": "426",
-      "route_name": "Central Square, Lynn - Haymarket or Wonderland Station",
-      "route_long_name": "Central Square, Lynn - Haymarket or Wonderland Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 426 - Outbound",
@@ -2344,8 +1876,6 @@ const routesIndex = {
     {
       "route_id": "426",
       "route_number": "426",
-      "route_name": "Central Square, Lynn - Haymarket or Wonderland Station",
-      "route_long_name": "Central Square, Lynn - Haymarket or Wonderland Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 426 - Inbound",
@@ -2354,8 +1884,6 @@ const routesIndex = {
     {
       "route_id": "428",
       "route_number": "428",
-      "route_name": "Oaklandvale - Haymarket Station",
-      "route_long_name": "Oaklandvale - Haymarket Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 428 - Outbound",
@@ -2364,8 +1892,6 @@ const routesIndex = {
     {
       "route_id": "428",
       "route_number": "428",
-      "route_name": "Oaklandvale - Haymarket Station",
-      "route_long_name": "Oaklandvale - Haymarket Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 428 - Inbound",
@@ -2374,8 +1900,6 @@ const routesIndex = {
     {
       "route_id": "429",
       "route_number": "429",
-      "route_name": "Northgate Shopping Center - Central Square, Lynn",
-      "route_long_name": "Northgate Shopping Center - Central Square, Lynn",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 429 - Outbound",
@@ -2384,8 +1908,6 @@ const routesIndex = {
     {
       "route_id": "429",
       "route_number": "429",
-      "route_name": "Northgate Shopping Center - Central Square, Lynn",
-      "route_long_name": "Northgate Shopping Center - Central Square, Lynn",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 429 - Inbound",
@@ -2394,8 +1916,6 @@ const routesIndex = {
     {
       "route_id": "430",
       "route_number": "430",
-      "route_name": "Saugus Center - Malden Center Station",
-      "route_long_name": "Saugus Center - Malden Center Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 430 - Outbound",
@@ -2404,8 +1924,6 @@ const routesIndex = {
     {
       "route_id": "430",
       "route_number": "430",
-      "route_name": "Saugus Center - Malden Center Station",
-      "route_long_name": "Saugus Center - Malden Center Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 430 - Inbound",
@@ -2414,8 +1932,6 @@ const routesIndex = {
     {
       "route_id": "435",
       "route_number": "435",
-      "route_name": "Liberty Tree Mall - Central Square, Lynn via Peabody Square",
-      "route_long_name": "Liberty Tree Mall - Central Square, Lynn via Peabody Square",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 435 - Outbound",
@@ -2424,8 +1940,6 @@ const routesIndex = {
     {
       "route_id": "435",
       "route_number": "435",
-      "route_name": "Liberty Tree Mall - Central Square, Lynn via Peabody Square",
-      "route_long_name": "Liberty Tree Mall - Central Square, Lynn via Peabody Square",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 435 - Inbound",
@@ -2434,8 +1948,6 @@ const routesIndex = {
     {
       "route_id": "436",
       "route_number": "436",
-      "route_name": "Liberty Tree Mall - Central Square, Lynn via Goodwin Circle",
-      "route_long_name": "Liberty Tree Mall - Central Square, Lynn via Goodwin Circle",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 436 - Outbound",
@@ -2444,8 +1956,6 @@ const routesIndex = {
     {
       "route_id": "436",
       "route_number": "436",
-      "route_name": "Liberty Tree Mall - Central Square, Lynn via Goodwin Circle",
-      "route_long_name": "Liberty Tree Mall - Central Square, Lynn via Goodwin Circle",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 436 - Inbound",
@@ -2454,8 +1964,6 @@ const routesIndex = {
     {
       "route_id": "439",
       "route_number": "439",
-      "route_name": "Nahant - Wonderland Station",
-      "route_long_name": "Nahant - Wonderland Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 439 - Outbound",
@@ -2464,8 +1972,6 @@ const routesIndex = {
     {
       "route_id": "439",
       "route_number": "439",
-      "route_name": "Nahant - Wonderland Station",
-      "route_long_name": "Nahant - Wonderland Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 439 - Inbound",
@@ -2474,8 +1980,6 @@ const routesIndex = {
     {
       "route_id": "441",
       "route_number": "441",
-      "route_name": "Marblehead - Wonderland Station via Paradise Road",
-      "route_long_name": "Marblehead - Wonderland Station via Paradise Road",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 441 - Outbound",
@@ -2484,8 +1988,6 @@ const routesIndex = {
     {
       "route_id": "441",
       "route_number": "441",
-      "route_name": "Marblehead - Wonderland Station via Paradise Road",
-      "route_long_name": "Marblehead - Wonderland Station via Paradise Road",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 441 - Inbound",
@@ -2494,8 +1996,6 @@ const routesIndex = {
     {
       "route_id": "442",
       "route_number": "442",
-      "route_name": "Marblehead - Wonderland Station via Humphrey Street",
-      "route_long_name": "Marblehead - Wonderland Station via Humphrey Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 442 - Outbound",
@@ -2504,8 +2004,6 @@ const routesIndex = {
     {
       "route_id": "442",
       "route_number": "442",
-      "route_name": "Marblehead - Wonderland Station via Humphrey Street",
-      "route_long_name": "Marblehead - Wonderland Station via Humphrey Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 442 - Inbound",
@@ -2514,8 +2012,6 @@ const routesIndex = {
     {
       "route_id": "450",
       "route_number": "450",
-      "route_name": "Salem Depot - Wonderland or Haymarket Station",
-      "route_long_name": "Salem Depot - Wonderland or Haymarket Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 450 - Outbound",
@@ -2524,8 +2020,6 @@ const routesIndex = {
     {
       "route_id": "450",
       "route_number": "450",
-      "route_name": "Salem Depot - Wonderland or Haymarket Station",
-      "route_long_name": "Salem Depot - Wonderland or Haymarket Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 450 - Inbound",
@@ -2534,8 +2028,6 @@ const routesIndex = {
     {
       "route_id": "451",
       "route_number": "451",
-      "route_name": "North Beverly Station - Salem Depot",
-      "route_long_name": "North Beverly Station - Salem Depot",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 451 - Outbound",
@@ -2544,8 +2036,6 @@ const routesIndex = {
     {
       "route_id": "451",
       "route_number": "451",
-      "route_name": "North Beverly Station - Salem Depot",
-      "route_long_name": "North Beverly Station - Salem Depot",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 451 - Inbound",
@@ -2554,8 +2044,6 @@ const routesIndex = {
     {
       "route_id": "455",
       "route_number": "455",
-      "route_name": "Salem Depot - Wonderland Station",
-      "route_long_name": "Salem Depot - Wonderland Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 455 - Outbound",
@@ -2564,8 +2052,6 @@ const routesIndex = {
     {
       "route_id": "455",
       "route_number": "455",
-      "route_name": "Salem Depot - Wonderland Station",
-      "route_long_name": "Salem Depot - Wonderland Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 455 - Inbound",
@@ -2574,8 +2060,6 @@ const routesIndex = {
     {
       "route_id": "456",
       "route_number": "456",
-      "route_name": "Salem Depot - Central Square, Lynn",
-      "route_long_name": "Salem Depot - Central Square, Lynn",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 456 - Outbound",
@@ -2584,8 +2068,6 @@ const routesIndex = {
     {
       "route_id": "456",
       "route_number": "456",
-      "route_name": "Salem Depot - Central Square, Lynn",
-      "route_long_name": "Salem Depot - Central Square, Lynn",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 456 - Inbound",
@@ -2594,8 +2076,6 @@ const routesIndex = {
     {
       "route_id": "501",
       "route_number": "501",
-      "route_name": "Brighton Center - Federal Street & Franklin Street",
-      "route_long_name": "Brighton Center - Federal Street & Franklin Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 501 - Outbound",
@@ -2604,8 +2084,6 @@ const routesIndex = {
     {
       "route_id": "501",
       "route_number": "501",
-      "route_name": "Brighton Center - Federal Street & Franklin Street",
-      "route_long_name": "Brighton Center - Federal Street & Franklin Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 501 - Inbound",
@@ -2614,8 +2092,6 @@ const routesIndex = {
     {
       "route_id": "504",
       "route_number": "504",
-      "route_name": "Watertown Yard - Federal Street & Franklin Street",
-      "route_long_name": "Watertown Yard - Federal Street & Franklin Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 504 - Outbound",
@@ -2624,8 +2100,6 @@ const routesIndex = {
     {
       "route_id": "504",
       "route_number": "504",
-      "route_name": "Watertown Yard - Federal Street & Franklin Street",
-      "route_long_name": "Watertown Yard - Federal Street & Franklin Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 504 - Inbound",
@@ -2634,8 +2108,6 @@ const routesIndex = {
     {
       "route_id": "505",
       "route_number": "505",
-      "route_name": "Waltham Center - Federal Street & Franklin Street",
-      "route_long_name": "Waltham Center - Federal Street & Franklin Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 505 - Outbound",
@@ -2644,8 +2116,6 @@ const routesIndex = {
     {
       "route_id": "505",
       "route_number": "505",
-      "route_name": "Waltham Center - Federal Street & Franklin Street",
-      "route_long_name": "Waltham Center - Federal Street & Franklin Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 505 - Inbound",
@@ -2654,8 +2124,6 @@ const routesIndex = {
     {
       "route_id": "553",
       "route_number": "553",
-      "route_name": "Roberts - Newton Corner",
-      "route_long_name": "Roberts - Newton Corner",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 553 - Outbound",
@@ -2664,8 +2132,6 @@ const routesIndex = {
     {
       "route_id": "553",
       "route_number": "553",
-      "route_name": "Roberts - Newton Corner",
-      "route_long_name": "Roberts - Newton Corner",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 553 - Inbound",
@@ -2674,8 +2140,6 @@ const routesIndex = {
     {
       "route_id": "554",
       "route_number": "554",
-      "route_name": "Waverley Square - Newton Corner",
-      "route_long_name": "Waverley Square - Newton Corner",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 554 - Outbound",
@@ -2684,8 +2148,6 @@ const routesIndex = {
     {
       "route_id": "554",
       "route_number": "554",
-      "route_name": "Waverley Square - Newton Corner",
-      "route_long_name": "Waverley Square - Newton Corner",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 554 - Inbound",
@@ -2694,8 +2156,6 @@ const routesIndex = {
     {
       "route_id": "556",
       "route_number": "556",
-      "route_name": "Waltham Highlands - Newton Corner",
-      "route_long_name": "Waltham Highlands - Newton Corner",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 556 - Outbound",
@@ -2704,8 +2164,6 @@ const routesIndex = {
     {
       "route_id": "556",
       "route_number": "556",
-      "route_name": "Waltham Highlands - Newton Corner",
-      "route_long_name": "Waltham Highlands - Newton Corner",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 556 - Inbound",
@@ -2714,8 +2172,6 @@ const routesIndex = {
     {
       "route_id": "558",
       "route_number": "558",
-      "route_name": "Riverside Station - Newton Corner",
-      "route_long_name": "Riverside Station - Newton Corner",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 558 - Outbound",
@@ -2724,8 +2180,6 @@ const routesIndex = {
     {
       "route_id": "558",
       "route_number": "558",
-      "route_name": "Riverside Station - Newton Corner",
-      "route_long_name": "Riverside Station - Newton Corner",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 558 - Inbound",
@@ -2734,8 +2188,6 @@ const routesIndex = {
     {
       "route_id": "712",
       "route_number": "712",
-      "route_name": "Point Shirley - Orient Heights Station via Revere Street",
-      "route_long_name": "Point Shirley - Orient Heights Station via Revere Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 712 - Outbound",
@@ -2744,8 +2196,6 @@ const routesIndex = {
     {
       "route_id": "712",
       "route_number": "712",
-      "route_name": "Point Shirley - Orient Heights Station via Revere Street",
-      "route_long_name": "Point Shirley - Orient Heights Station via Revere Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 712 - Inbound",
@@ -2754,8 +2204,6 @@ const routesIndex = {
     {
       "route_id": "713",
       "route_number": "713",
-      "route_name": "Point Shirley - Orient Heights Station via Winthrop Center",
-      "route_long_name": "Point Shirley - Orient Heights Station via Winthrop Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 713 - Outbound",
@@ -2764,8 +2212,6 @@ const routesIndex = {
     {
       "route_id": "713",
       "route_number": "713",
-      "route_name": "Point Shirley - Orient Heights Station via Winthrop Center",
-      "route_long_name": "Point Shirley - Orient Heights Station via Winthrop Center",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 713 - Inbound",
@@ -2774,8 +2220,6 @@ const routesIndex = {
     {
       "route_id": "714",
       "route_number": "714",
-      "route_name": "Pemberton Point, Hull - Station Street, Hingham",
-      "route_long_name": "Pemberton Point, Hull - Station Street, Hingham",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 714 - Outbound",
@@ -2784,8 +2228,6 @@ const routesIndex = {
     {
       "route_id": "714",
       "route_number": "714",
-      "route_name": "Pemberton Point, Hull - Station Street, Hingham",
-      "route_long_name": "Pemberton Point, Hull - Station Street, Hingham",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 714 - Inbound",
@@ -2794,8 +2236,6 @@ const routesIndex = {
     {
       "route_id": "716",
       "route_number": "716",
-      "route_name": "Cobbs Corner - Mattapan Station",
-      "route_long_name": "Cobbs Corner - Mattapan Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 716 - Outbound",
@@ -2804,8 +2244,6 @@ const routesIndex = {
     {
       "route_id": "716",
       "route_number": "716",
-      "route_name": "Cobbs Corner - Mattapan Station",
-      "route_long_name": "Cobbs Corner - Mattapan Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 716 - Inbound",
@@ -2814,8 +2252,6 @@ const routesIndex = {
     {
       "route_id": "34E",
       "route_number": "34E",
-      "route_name": "Walpole Center - Forest Hills Station",
-      "route_long_name": "Walpole Center - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 34E - Outbound",
@@ -2824,8 +2260,6 @@ const routesIndex = {
     {
       "route_id": "34E",
       "route_number": "34E",
-      "route_name": "Walpole Center - Forest Hills Station",
-      "route_long_name": "Walpole Center - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 34E - Inbound",
@@ -2834,8 +2268,6 @@ const routesIndex = {
     {
       "route_id": "4050",
       "route_number": "40/50",
-      "route_name": "Georgetowne - Forest Hills Station",
-      "route_long_name": "Georgetowne - Forest Hills Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 40/50 - Outbound",
@@ -2844,8 +2276,6 @@ const routesIndex = {
     {
       "route_id": "4050",
       "route_number": "40/50",
-      "route_name": "Georgetowne - Forest Hills Station",
-      "route_long_name": "Georgetowne - Forest Hills Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 40/50 - Inbound",
@@ -2854,8 +2284,6 @@ const routesIndex = {
     {
       "route_id": "441442",
       "route_number": "441/442",
-      "route_name": "Marblehead - Wonderland Station",
-      "route_long_name": "Marblehead - Wonderland Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route 441/442 - Outbound",
@@ -2864,8 +2292,6 @@ const routesIndex = {
     {
       "route_id": "441442",
       "route_number": "441/442",
-      "route_name": "Marblehead - Wonderland Station",
-      "route_long_name": "Marblehead - Wonderland Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 441/442 - Inbound",
@@ -2874,8 +2300,6 @@ const routesIndex = {
     {
       "route_id": "8993",
       "route_number": "89/93",
-      "route_name": "Clarendon Hill - Haymarket Station",
-      "route_long_name": "Clarendon Hill - Haymarket Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route 89/93 - Inbound",
@@ -2884,8 +2308,6 @@ const routesIndex = {
     {
       "route_id": "Green-B",
       "route_number": "B",
-      "route_name": "Green Line B",
-      "route_long_name": "Green Line B",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route B - Outbound",
@@ -2894,8 +2316,6 @@ const routesIndex = {
     {
       "route_id": "Green-B",
       "route_number": "B",
-      "route_name": "Green Line B",
-      "route_long_name": "Green Line B",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route B - Inbound",
@@ -2904,8 +2324,6 @@ const routesIndex = {
     {
       "route_id": "Blue",
       "route_number": "Blue",
-      "route_name": "Line",
-      "route_long_name": "Blue Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue - Outbound",
@@ -2914,8 +2332,6 @@ const routesIndex = {
     {
       "route_id": "Blue",
       "route_number": "Blue",
-      "route_name": "Line",
-      "route_long_name": "Blue Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue - Inbound",
@@ -2924,8 +2340,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportGovernmentCenterExpress",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Government Center (Express)",
-      "route_long_name": "Airport - Government Center (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -2934,8 +2348,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportGovernmentCenterLocal",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Government Center (Local)",
-      "route_long_name": "Airport - Government Center (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -2944,8 +2356,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportGovernmentCenterLocalViaGate",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Government Center via Maverick",
-      "route_long_name": "Airport - Government Center via Maverick",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -2954,8 +2364,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportMaverick",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Maverick",
-      "route_long_name": "Airport - Maverick",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -2964,8 +2372,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Wonderland",
-      "route_long_name": "Airport - Wonderland",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -2974,8 +2380,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Wonderland - Government Center",
-      "route_long_name": "Wonderland - Government Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -2984,8 +2388,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaymarketAirportExpress",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Haymarket - Airport (Express)",
-      "route_long_name": "Haymarket - Airport (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -2994,8 +2396,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaymarketAirportLocal",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Haymarket - Airport (Local)",
-      "route_long_name": "Haymarket - Airport (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -3004,8 +2404,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-MaverickWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Maverick - Wonderland",
-      "route_long_name": "Maverick - Wonderland",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -3014,8 +2412,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OrientHeightsGovernmentCenterExpress",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Orient Heights - Government Center (Express)",
-      "route_long_name": "Orient Heights - Government Center (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -3024,8 +2420,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OrientHeightsGovernmentCenterLocal",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Orient Heights - Government Center (Local)",
-      "route_long_name": "Orient Heights - Government Center (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -3034,8 +2428,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OrientHeightsWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Wonderland - Orient Heights",
-      "route_long_name": "Wonderland - Orient Heights",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -3044,8 +2436,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-SuffolkDownsWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Wonderland - Suffolk Downs",
-      "route_long_name": "Wonderland - Suffolk Downs",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -3054,8 +2444,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-WonderlandAirport",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Wonderland - Airport (Shuttle)",
-      "route_long_name": "Wonderland - Airport (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Blue Line Shuttle - Outbound",
@@ -3064,8 +2452,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportGovernmentCenterExpress",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Government Center (Express)",
-      "route_long_name": "Airport - Government Center (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3074,8 +2460,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportGovernmentCenterLocal",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Government Center (Local)",
-      "route_long_name": "Airport - Government Center (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3084,8 +2468,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportGovernmentCenterLocalViaGate",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Government Center via Maverick",
-      "route_long_name": "Airport - Government Center via Maverick",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3094,8 +2476,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportMaverick",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Maverick",
-      "route_long_name": "Airport - Maverick",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3104,8 +2484,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AirportWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Airport - Wonderland",
-      "route_long_name": "Airport - Wonderland",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3114,8 +2492,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Wonderland - Government Center",
-      "route_long_name": "Wonderland - Government Center",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3124,8 +2500,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaymarketAirportExpress",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Haymarket - Airport (Express)",
-      "route_long_name": "Haymarket - Airport (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3134,8 +2508,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaymarketAirportLocal",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Haymarket - Airport (Local)",
-      "route_long_name": "Haymarket - Airport (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3144,8 +2516,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-MaverickWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Maverick - Wonderland",
-      "route_long_name": "Maverick - Wonderland",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3154,8 +2524,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OrientHeightsGovernmentCenterExpress",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Orient Heights - Government Center (Express)",
-      "route_long_name": "Orient Heights - Government Center (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3164,8 +2532,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OrientHeightsGovernmentCenterLocal",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Orient Heights - Government Center (Local)",
-      "route_long_name": "Orient Heights - Government Center (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3174,8 +2540,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OrientHeightsWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Wonderland - Orient Heights",
-      "route_long_name": "Wonderland - Orient Heights",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3184,8 +2548,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-SuffolkDownsWonderland",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Wonderland - Suffolk Downs",
-      "route_long_name": "Wonderland - Suffolk Downs",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3194,8 +2556,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-WonderlandAirport",
       "route_number": "Blue Line Shuttle",
-      "route_name": "Wonderland - Airport (Shuttle)",
-      "route_long_name": "Wonderland - Airport (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Blue Line Shuttle - Inbound",
@@ -3204,8 +2564,6 @@ const routesIndex = {
     {
       "route_id": "Boat-EastBoston",
       "route_number": "Boat-EastBoston",
-      "route_name": "East Boston Ferry",
-      "route_long_name": "East Boston Ferry",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Boat-EastBoston - Outbound",
@@ -3214,8 +2572,6 @@ const routesIndex = {
     {
       "route_id": "Boat-EastBoston",
       "route_number": "Boat-EastBoston",
-      "route_name": "East Boston Ferry",
-      "route_long_name": "East Boston Ferry",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Boat-EastBoston - Inbound",
@@ -3224,8 +2580,6 @@ const routesIndex = {
     {
       "route_id": "Boat-F1",
       "route_number": "Boat-F1",
-      "route_name": "Hingham/Hull Ferry",
-      "route_long_name": "Hingham/Hull Ferry",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Boat-F1 - Outbound",
@@ -3234,8 +2588,6 @@ const routesIndex = {
     {
       "route_id": "Boat-F1",
       "route_number": "Boat-F1",
-      "route_name": "Hingham/Hull Ferry",
-      "route_long_name": "Hingham/Hull Ferry",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Boat-F1 - Inbound",
@@ -3244,8 +2596,6 @@ const routesIndex = {
     {
       "route_id": "Boat-F4",
       "route_number": "Boat-F4",
-      "route_name": "Charlestown Ferry",
-      "route_long_name": "Charlestown Ferry",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Boat-F4 - Outbound",
@@ -3254,8 +2604,6 @@ const routesIndex = {
     {
       "route_id": "Boat-F4",
       "route_number": "Boat-F4",
-      "route_name": "Charlestown Ferry",
-      "route_long_name": "Charlestown Ferry",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Boat-F4 - Inbound",
@@ -3264,8 +2612,6 @@ const routesIndex = {
     {
       "route_id": "Boat-F6",
       "route_number": "Boat-F6",
-      "route_name": "Winthrop Ferry",
-      "route_long_name": "Winthrop Ferry",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Boat-F6 - Inbound",
@@ -3274,8 +2620,6 @@ const routesIndex = {
     {
       "route_id": "Boat-F7",
       "route_number": "Boat-F7",
-      "route_name": "Quincy Ferry",
-      "route_long_name": "Quincy Ferry",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Boat-F7 - Inbound",
@@ -3284,8 +2628,6 @@ const routesIndex = {
     {
       "route_id": "Green-C",
       "route_number": "C",
-      "route_name": "Green Line C",
-      "route_long_name": "Green Line C",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route C - Outbound",
@@ -3294,8 +2636,6 @@ const routesIndex = {
     {
       "route_id": "Green-C",
       "route_number": "C",
-      "route_name": "Green Line C",
-      "route_long_name": "Green Line C",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route C - Inbound",
@@ -3304,8 +2644,6 @@ const routesIndex = {
     {
       "route_id": "CR-Fairmount",
       "route_number": "CR-Fairmount",
-      "route_name": "Fairmount Line",
-      "route_long_name": "Fairmount Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Fairmount - Outbound",
@@ -3314,8 +2652,6 @@ const routesIndex = {
     {
       "route_id": "CR-Fairmount",
       "route_number": "CR-Fairmount",
-      "route_name": "Fairmount Line",
-      "route_long_name": "Fairmount Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Fairmount - Inbound",
@@ -3324,8 +2660,6 @@ const routesIndex = {
     {
       "route_id": "CR-Fitchburg",
       "route_number": "CR-Fitchburg",
-      "route_name": "Fitchburg Line",
-      "route_long_name": "Fitchburg Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Fitchburg - Outbound",
@@ -3334,8 +2668,6 @@ const routesIndex = {
     {
       "route_id": "CR-Fitchburg",
       "route_number": "CR-Fitchburg",
-      "route_name": "Fitchburg Line",
-      "route_long_name": "Fitchburg Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Fitchburg - Inbound",
@@ -3344,8 +2676,6 @@ const routesIndex = {
     {
       "route_id": "CR-Foxboro",
       "route_number": "CR-Foxboro",
-      "route_name": "Foxboro Event Service",
-      "route_long_name": "Foxboro Event Service",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Foxboro - Outbound",
@@ -3354,8 +2684,6 @@ const routesIndex = {
     {
       "route_id": "CR-Foxboro",
       "route_number": "CR-Foxboro",
-      "route_name": "Foxboro Event Service",
-      "route_long_name": "Foxboro Event Service",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Foxboro - Inbound",
@@ -3364,8 +2692,6 @@ const routesIndex = {
     {
       "route_id": "CR-Franklin",
       "route_number": "CR-Franklin",
-      "route_name": "Franklin/Foxboro Line",
-      "route_long_name": "Franklin/Foxboro Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Franklin - Outbound",
@@ -3374,8 +2700,6 @@ const routesIndex = {
     {
       "route_id": "CR-Franklin",
       "route_number": "CR-Franklin",
-      "route_name": "Franklin/Foxboro Line",
-      "route_long_name": "Franklin/Foxboro Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Franklin - Inbound",
@@ -3384,8 +2708,6 @@ const routesIndex = {
     {
       "route_id": "CR-Greenbush",
       "route_number": "CR-Greenbush",
-      "route_name": "Greenbush Line",
-      "route_long_name": "Greenbush Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Greenbush - Outbound",
@@ -3394,8 +2716,6 @@ const routesIndex = {
     {
       "route_id": "CR-Greenbush",
       "route_number": "CR-Greenbush",
-      "route_name": "Greenbush Line",
-      "route_long_name": "Greenbush Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Greenbush - Inbound",
@@ -3404,8 +2724,6 @@ const routesIndex = {
     {
       "route_id": "CR-Haverhill",
       "route_number": "CR-Haverhill",
-      "route_name": "Haverhill Line",
-      "route_long_name": "Haverhill Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Haverhill - Outbound",
@@ -3414,8 +2732,6 @@ const routesIndex = {
     {
       "route_id": "CR-Haverhill",
       "route_number": "CR-Haverhill",
-      "route_name": "Haverhill Line",
-      "route_long_name": "Haverhill Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Haverhill - Inbound",
@@ -3424,8 +2740,6 @@ const routesIndex = {
     {
       "route_id": "CR-Kingston",
       "route_number": "CR-Kingston",
-      "route_name": "Kingston Line",
-      "route_long_name": "Kingston Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Kingston - Outbound",
@@ -3434,8 +2748,6 @@ const routesIndex = {
     {
       "route_id": "CR-Kingston",
       "route_number": "CR-Kingston",
-      "route_name": "Kingston Line",
-      "route_long_name": "Kingston Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Kingston - Inbound",
@@ -3444,8 +2756,6 @@ const routesIndex = {
     {
       "route_id": "CR-Lowell",
       "route_number": "CR-Lowell",
-      "route_name": "Lowell Line",
-      "route_long_name": "Lowell Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Lowell - Outbound",
@@ -3454,8 +2764,6 @@ const routesIndex = {
     {
       "route_id": "CR-Lowell",
       "route_number": "CR-Lowell",
-      "route_name": "Lowell Line",
-      "route_long_name": "Lowell Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Lowell - Inbound",
@@ -3464,8 +2772,6 @@ const routesIndex = {
     {
       "route_id": "CR-Needham",
       "route_number": "CR-Needham",
-      "route_name": "Needham Line",
-      "route_long_name": "Needham Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Needham - Outbound",
@@ -3474,8 +2780,6 @@ const routesIndex = {
     {
       "route_id": "CR-Needham",
       "route_number": "CR-Needham",
-      "route_name": "Needham Line",
-      "route_long_name": "Needham Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Needham - Inbound",
@@ -3484,8 +2788,6 @@ const routesIndex = {
     {
       "route_id": "CR-NewBedford",
       "route_number": "CR-NewBedford",
-      "route_name": "Fall River/New Bedford Line",
-      "route_long_name": "Fall River/New Bedford Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-NewBedford - Outbound",
@@ -3494,8 +2796,6 @@ const routesIndex = {
     {
       "route_id": "CR-NewBedford",
       "route_number": "CR-NewBedford",
-      "route_name": "Fall River/New Bedford Line",
-      "route_long_name": "Fall River/New Bedford Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-NewBedford - Inbound",
@@ -3504,8 +2804,6 @@ const routesIndex = {
     {
       "route_id": "CR-Newburyport",
       "route_number": "CR-Newburyport",
-      "route_name": "Newburyport/Rockport Line",
-      "route_long_name": "Newburyport/Rockport Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Newburyport - Outbound",
@@ -3514,8 +2812,6 @@ const routesIndex = {
     {
       "route_id": "CR-Newburyport",
       "route_number": "CR-Newburyport",
-      "route_name": "Newburyport/Rockport Line",
-      "route_long_name": "Newburyport/Rockport Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Newburyport - Inbound",
@@ -3524,8 +2820,6 @@ const routesIndex = {
     {
       "route_id": "CR-Providence",
       "route_number": "CR-Providence",
-      "route_name": "Providence/Stoughton Line",
-      "route_long_name": "Providence/Stoughton Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Providence - Outbound",
@@ -3534,8 +2828,6 @@ const routesIndex = {
     {
       "route_id": "CR-Providence",
       "route_number": "CR-Providence",
-      "route_name": "Providence/Stoughton Line",
-      "route_long_name": "Providence/Stoughton Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Providence - Inbound",
@@ -3544,8 +2836,6 @@ const routesIndex = {
     {
       "route_id": "CR-Worcester",
       "route_number": "CR-Worcester",
-      "route_name": "Framingham/Worcester Line",
-      "route_long_name": "Framingham/Worcester Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CR-Worcester - Outbound",
@@ -3554,8 +2844,6 @@ const routesIndex = {
     {
       "route_id": "CR-Worcester",
       "route_number": "CR-Worcester",
-      "route_name": "Framingham/Worcester Line",
-      "route_long_name": "Framingham/Worcester Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CR-Worcester - Inbound",
@@ -3564,8 +2852,6 @@ const routesIndex = {
     {
       "route_id": "747",
       "route_number": "CT2",
-      "route_name": "Sullivan Square Station - Ruggles Station",
-      "route_long_name": "Sullivan Square Station - Ruggles Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CT2 - Outbound",
@@ -3574,8 +2860,6 @@ const routesIndex = {
     {
       "route_id": "747",
       "route_number": "CT2",
-      "route_name": "Sullivan Square Station - Ruggles Station",
-      "route_long_name": "Sullivan Square Station - Ruggles Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CT2 - Inbound",
@@ -3584,8 +2868,6 @@ const routesIndex = {
     {
       "route_id": "708",
       "route_number": "CT3",
-      "route_name": "Beth Israel Deaconess Hospital - Andrew Station",
-      "route_long_name": "Beth Israel Deaconess Hospital - Andrew Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CT3 - Outbound",
@@ -3594,8 +2876,6 @@ const routesIndex = {
     {
       "route_id": "708",
       "route_number": "CT3",
-      "route_name": "Beth Israel Deaconess Hospital - Andrew Station",
-      "route_long_name": "Beth Israel Deaconess Hospital - Andrew Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CT3 - Inbound",
@@ -3604,8 +2884,6 @@ const routesIndex = {
     {
       "route_id": "CapeFlyer",
       "route_number": "CapeFlyer",
-      "route_name": "CapeFLYER",
-      "route_long_name": "CapeFLYER",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route CapeFlyer - Outbound",
@@ -3614,8 +2892,6 @@ const routesIndex = {
     {
       "route_id": "CapeFlyer",
       "route_number": "CapeFlyer",
-      "route_name": "CapeFLYER",
-      "route_long_name": "CapeFLYER",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route CapeFlyer - Inbound",
@@ -3624,8 +2900,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeSouthStationExpress",
       "route_number": "Commuter Rail Shuttle",
-      "route_name": "Braintree - South Station (Express)",
-      "route_long_name": "Braintree - South Station (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Commuter Rail Shuttle - Outbound",
@@ -3634,8 +2908,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeSouthStationExpress",
       "route_number": "Commuter Rail Shuttle",
-      "route_name": "Braintree - South Station (Express)",
-      "route_long_name": "Braintree - South Station (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Commuter Rail Shuttle - Inbound",
@@ -3644,8 +2916,6 @@ const routesIndex = {
     {
       "route_id": "Green-D",
       "route_number": "D",
-      "route_name": "Green Line D",
-      "route_long_name": "Green Line D",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route D - Outbound",
@@ -3654,8 +2924,6 @@ const routesIndex = {
     {
       "route_id": "Green-D",
       "route_number": "D",
-      "route_name": "Green Line D",
-      "route_long_name": "Green Line D",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route D - Inbound",
@@ -3664,8 +2932,6 @@ const routesIndex = {
     {
       "route_id": "Green-E",
       "route_number": "E",
-      "route_name": "Green Line E",
-      "route_long_name": "Green Line E",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route E - Outbound",
@@ -3674,8 +2940,6 @@ const routesIndex = {
     {
       "route_id": "Green-E",
       "route_number": "E",
-      "route_name": "Green Line E",
-      "route_long_name": "Green Line E",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route E - Inbound",
@@ -3684,8 +2948,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ReadvilleSouthStation",
       "route_number": "Fairmount Line Shuttle",
-      "route_name": "Readville - South Station",
-      "route_long_name": "Readville - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Fairmount Line Shuttle - Outbound",
@@ -3694,8 +2956,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ReadvilleSouthStation",
       "route_number": "Fairmount Line Shuttle",
-      "route_name": "Readville - South Station",
-      "route_long_name": "Readville - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Fairmount Line Shuttle - Inbound",
@@ -3704,8 +2964,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeLittletonExpress",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Littleton/Route 495 - Alewife (Express)",
-      "route_long_name": "Littleton/Route 495 - Alewife (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Fitchburg Line Shuttle - Outbound",
@@ -3714,8 +2972,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeLittletonLocal",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Littleton/Route 495 - Alewife (Local)",
-      "route_long_name": "Littleton/Route 495 - Alewife (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Fitchburg Line Shuttle - Outbound",
@@ -3724,8 +2980,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LittletonWachusett",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Wachusett - Littleton/Route 495",
-      "route_long_name": "Wachusett - Littleton/Route 495",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Fitchburg Line Shuttle - Outbound",
@@ -3734,8 +2988,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthLeominsterWachusett",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Wachusett - North Leominster",
-      "route_long_name": "Wachusett - North Leominster",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Fitchburg Line Shuttle - Outbound",
@@ -3744,8 +2996,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ShirleyWachusett",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Wachusett - Shirley",
-      "route_long_name": "Wachusett - Shirley",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Fitchburg Line Shuttle - Outbound",
@@ -3754,8 +3004,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeLittletonExpress",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Littleton/Route 495 - Alewife (Express)",
-      "route_long_name": "Littleton/Route 495 - Alewife (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Fitchburg Line Shuttle - Inbound",
@@ -3764,8 +3012,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeLittletonLocal",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Littleton/Route 495 - Alewife (Local)",
-      "route_long_name": "Littleton/Route 495 - Alewife (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Fitchburg Line Shuttle - Inbound",
@@ -3774,8 +3020,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LittletonWachusett",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Wachusett - Littleton/Route 495",
-      "route_long_name": "Wachusett - Littleton/Route 495",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Fitchburg Line Shuttle - Inbound",
@@ -3784,8 +3028,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthLeominsterWachusett",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Wachusett - North Leominster",
-      "route_long_name": "Wachusett - North Leominster",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Fitchburg Line Shuttle - Inbound",
@@ -3794,8 +3036,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ShirleyWachusett",
       "route_number": "Fitchburg Line Shuttle",
-      "route_name": "Wachusett - Shirley",
-      "route_long_name": "Wachusett - Shirley",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Fitchburg Line Shuttle - Inbound",
@@ -3804,8 +3044,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForgeParkNorwoodCentral",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Forge Park/495 - Norwood Central",
-      "route_long_name": "Forge Park/495 - Norwood Central",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Franklin Line Shuttle - Outbound",
@@ -3814,8 +3052,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForgeParkReadville",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Forge Park/495 - Readville",
-      "route_long_name": "Forge Park/495 - Readville",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Franklin Line Shuttle - Outbound",
@@ -3824,8 +3060,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForgeParkSouthStation",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Forge Park/495 - South Station",
-      "route_long_name": "Forge Park/495 - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Franklin Line Shuttle - Outbound",
@@ -3834,8 +3068,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForgeParkWalpole",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Forge Park/495 - Walpole",
-      "route_long_name": "Forge Park/495 - Walpole",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Franklin Line Shuttle - Outbound",
@@ -3844,8 +3076,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FoxboroWalpole",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Foxboro - Walpole",
-      "route_long_name": "Foxboro - Walpole",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Franklin Line Shuttle - Outbound",
@@ -3854,8 +3084,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForgeParkNorwoodCentral",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Forge Park/495 - Norwood Central",
-      "route_long_name": "Forge Park/495 - Norwood Central",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Franklin Line Shuttle - Inbound",
@@ -3864,8 +3092,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForgeParkReadville",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Forge Park/495 - Readville",
-      "route_long_name": "Forge Park/495 - Readville",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Franklin Line Shuttle - Inbound",
@@ -3874,8 +3100,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForgeParkSouthStation",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Forge Park/495 - South Station",
-      "route_long_name": "Forge Park/495 - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Franklin Line Shuttle - Inbound",
@@ -3884,8 +3108,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForgeParkWalpole",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Forge Park/495 - Walpole",
-      "route_long_name": "Forge Park/495 - Walpole",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Franklin Line Shuttle - Inbound",
@@ -3894,8 +3116,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FoxboroWalpole",
       "route_number": "Franklin Line Shuttle",
-      "route_name": "Foxboro - Walpole",
-      "route_long_name": "Foxboro - Walpole",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Franklin Line Shuttle - Inbound",
@@ -3904,8 +3124,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockBackBay",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Back Bay",
-      "route_long_name": "Babcock Street - Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3914,8 +3132,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockBlandford",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Blandford Street",
-      "route_long_name": "Babcock Street - Blandford Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3924,8 +3140,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockBostonCollege",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Babcock Street",
-      "route_long_name": "Boston College - Babcock Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3934,8 +3148,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockCopley",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Copley",
-      "route_long_name": "Babcock Street - Copley",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3944,8 +3156,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockKenmore",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Kenmore",
-      "route_long_name": "Babcock Street - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3954,8 +3164,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockStreetBackBayViaCopley",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Back Bay via Copley (Shuttle)",
-      "route_long_name": "Babcock Street - Back Bay via Copley (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3964,8 +3172,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayBostonUniversityEast",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston University East - Back Bay",
-      "route_long_name": "Boston University East - Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3974,8 +3180,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BlandfordBostonCollege",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Blandford Street",
-      "route_long_name": "Boston College - Blandford Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3984,8 +3188,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BlandfordWashington",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Washington Street - Blandford Street",
-      "route_long_name": "Washington Street - Blandford Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -3994,8 +3196,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonCollegeKenmore",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Kenmore",
-      "route_long_name": "Boston College - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -4004,8 +3204,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonCollegePackardsCorner",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Packard's Corner",
-      "route_long_name": "Boston College - Packard's Corner",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -4014,8 +3212,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonCollegeWashington",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Washington Street",
-      "route_long_name": "Boston College - Washington Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -4024,8 +3220,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreBackBayViaCopley",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Kenmore - Back Bay via Copley (Shuttle)",
-      "route_long_name": "Kenmore - Back Bay via Copley (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -4034,8 +3228,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreWashington",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Washington Street - Kenmore",
-      "route_long_name": "Washington Street - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line B Shuttle - Outbound",
@@ -4044,8 +3236,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockBackBay",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Back Bay",
-      "route_long_name": "Babcock Street - Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4054,8 +3244,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockBlandford",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Blandford Street",
-      "route_long_name": "Babcock Street - Blandford Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4064,8 +3252,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockBostonCollege",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Babcock Street",
-      "route_long_name": "Boston College - Babcock Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4074,8 +3260,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockCopley",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Copley",
-      "route_long_name": "Babcock Street - Copley",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4084,8 +3268,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockKenmore",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Kenmore",
-      "route_long_name": "Babcock Street - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4094,8 +3276,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BabcockStreetBackBayViaCopley",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Babcock Street - Back Bay via Copley (Shuttle)",
-      "route_long_name": "Babcock Street - Back Bay via Copley (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4104,8 +3284,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayBostonUniversityEast",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston University East - Back Bay",
-      "route_long_name": "Boston University East - Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4114,8 +3292,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BlandfordBostonCollege",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Blandford Street",
-      "route_long_name": "Boston College - Blandford Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4124,8 +3300,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BlandfordWashington",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Washington Street - Blandford Street",
-      "route_long_name": "Washington Street - Blandford Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4134,8 +3308,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonCollegeKenmore",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Kenmore",
-      "route_long_name": "Boston College - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4144,8 +3316,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonCollegePackardsCorner",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Packard's Corner",
-      "route_long_name": "Boston College - Packard's Corner",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4154,8 +3324,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonCollegeWashington",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Boston College - Washington Street",
-      "route_long_name": "Boston College - Washington Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4164,8 +3332,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreBackBayViaCopley",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Kenmore - Back Bay via Copley (Shuttle)",
-      "route_long_name": "Kenmore - Back Bay via Copley (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4174,8 +3340,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreWashington",
       "route_number": "Green Line B Shuttle",
-      "route_name": "Washington Street - Kenmore",
-      "route_long_name": "Washington Street - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line B Shuttle - Inbound",
@@ -4184,8 +3348,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayStMarys",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Saint Mary's Street - Back Bay",
-      "route_long_name": "Saint Mary's Street - Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line C Shuttle - Outbound",
@@ -4194,8 +3356,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ClevelandCircleCoolidgeCorner",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Cleveland Circle - Coolidge Corner",
-      "route_long_name": "Cleveland Circle - Coolidge Corner",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line C Shuttle - Outbound",
@@ -4204,8 +3364,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ClevelandCircleKenmore",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Cleveland Circle - Kenmore",
-      "route_long_name": "Cleveland Circle - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line C Shuttle - Outbound",
@@ -4214,8 +3372,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ClevelandCircleStMarys",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Cleveland Circle - Saint Mary's Street",
-      "route_long_name": "Cleveland Circle - Saint Mary's Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line C Shuttle - Outbound",
@@ -4224,8 +3380,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreStMarysNotFenway",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Saint Mary's Street - Kenmore",
-      "route_long_name": "Saint Mary's Street - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line C Shuttle - Outbound",
@@ -4234,8 +3388,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayStMarys",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Saint Mary's Street - Back Bay",
-      "route_long_name": "Saint Mary's Street - Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line C Shuttle - Inbound",
@@ -4244,8 +3396,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ClevelandCircleCoolidgeCorner",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Cleveland Circle - Coolidge Corner",
-      "route_long_name": "Cleveland Circle - Coolidge Corner",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line C Shuttle - Inbound",
@@ -4254,8 +3404,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ClevelandCircleKenmore",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Cleveland Circle - Kenmore",
-      "route_long_name": "Cleveland Circle - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line C Shuttle - Inbound",
@@ -4264,8 +3412,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ClevelandCircleStMarys",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Cleveland Circle - Saint Mary's Street",
-      "route_long_name": "Cleveland Circle - Saint Mary's Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line C Shuttle - Inbound",
@@ -4274,8 +3420,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreStMarysNotFenway",
       "route_number": "Green Line C Shuttle",
-      "route_name": "Saint Mary's Street - Kenmore",
-      "route_long_name": "Saint Mary's Street - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line C Shuttle - Inbound",
@@ -4284,8 +3428,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineHillsKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Brookline Hills - Kenmore",
-      "route_long_name": "Brookline Hills - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4294,8 +3436,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineHillsNewtonHighlands",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Brookline Hills",
-      "route_long_name": "Newton Highlands - Brookline Hills",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4304,8 +3444,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineHillsReservoir",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Reservoir - Brookline Hills",
-      "route_long_name": "Reservoir - Brookline Hills",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4314,8 +3452,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineHillsRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Brookline Hills",
-      "route_long_name": "Riverside - Brookline Hills",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4324,8 +3460,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineVillageRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Brookline Village",
-      "route_long_name": "Riverside - Brookline Village",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4334,8 +3468,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyRiversideExpress",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Copley (Express)",
-      "route_long_name": "Riverside - Copley (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4344,8 +3476,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyRiversideLimited",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Copley via Woodland (Express)",
-      "route_long_name": "Riverside - Copley via Woodland (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4354,8 +3484,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyWoodlandLimited",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Woodland - Copley via Riverside (Express)",
-      "route_long_name": "Woodland - Copley via Riverside (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4364,8 +3492,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FenwayKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Fenway - Kenmore",
-      "route_long_name": "Fenway - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4374,8 +3500,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FenwayNewtonHighlands",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Fenway",
-      "route_long_name": "Newton Highlands - Fenway",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4384,8 +3508,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FenwayReservoir",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Reservoir - Fenway",
-      "route_long_name": "Reservoir - Fenway",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4394,8 +3516,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FenwayRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Fenway",
-      "route_long_name": "Riverside - Fenway",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4404,8 +3524,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreReservoir",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Reservoir - Kenmore",
-      "route_long_name": "Reservoir - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4414,8 +3532,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Kenmore",
-      "route_long_name": "Riverside - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4424,8 +3540,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreStMarysRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Kenmore via Saint Mary's Street",
-      "route_long_name": "Riverside - Kenmore via Saint Mary's Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4434,8 +3548,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewtonHighlandsKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Kenmore",
-      "route_long_name": "Newton Highlands - Kenmore",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4444,8 +3556,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewtonHighlandsReservoir",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Reservoir",
-      "route_long_name": "Newton Highlands - Reservoir",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4454,8 +3564,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewtonHighlandsRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Newton Highlands",
-      "route_long_name": "Riverside - Newton Highlands",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4464,8 +3572,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewtonHighlandsStMarysKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Kenmore via Saint Mary's Street",
-      "route_long_name": "Newton Highlands - Kenmore via Saint Mary's Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4474,8 +3580,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ReservoirRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Reservoir",
-      "route_long_name": "Riverside - Reservoir",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4484,8 +3588,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RiversideCopley",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Copley (Shuttle)",
-      "route_long_name": "Riverside - Copley (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4494,8 +3596,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RiversideKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Kenmore (Shuttle)",
-      "route_long_name": "Riverside - Kenmore (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line D Shuttle - Outbound",
@@ -4504,8 +3604,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineHillsKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Brookline Hills - Kenmore",
-      "route_long_name": "Brookline Hills - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4514,8 +3612,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineHillsNewtonHighlands",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Brookline Hills",
-      "route_long_name": "Newton Highlands - Brookline Hills",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4524,8 +3620,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineHillsReservoir",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Reservoir - Brookline Hills",
-      "route_long_name": "Reservoir - Brookline Hills",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4534,8 +3628,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineHillsRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Brookline Hills",
-      "route_long_name": "Riverside - Brookline Hills",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4544,8 +3636,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BrooklineVillageRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Brookline Village",
-      "route_long_name": "Riverside - Brookline Village",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4554,8 +3644,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyRiversideExpress",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Copley (Express)",
-      "route_long_name": "Riverside - Copley (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4564,8 +3652,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyRiversideLimited",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Copley via Woodland (Express)",
-      "route_long_name": "Riverside - Copley via Woodland (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4574,8 +3660,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyWoodlandLimited",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Woodland - Copley via Riverside (Express)",
-      "route_long_name": "Woodland - Copley via Riverside (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4584,8 +3668,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FenwayKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Fenway - Kenmore",
-      "route_long_name": "Fenway - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4594,8 +3676,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FenwayNewtonHighlands",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Fenway",
-      "route_long_name": "Newton Highlands - Fenway",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4604,8 +3684,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FenwayReservoir",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Reservoir - Fenway",
-      "route_long_name": "Reservoir - Fenway",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4614,8 +3692,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-FenwayRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Fenway",
-      "route_long_name": "Riverside - Fenway",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4624,8 +3700,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreReservoir",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Reservoir - Kenmore",
-      "route_long_name": "Reservoir - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4634,8 +3708,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Kenmore",
-      "route_long_name": "Riverside - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4644,8 +3716,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KenmoreStMarysRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Kenmore via Saint Mary's Street",
-      "route_long_name": "Riverside - Kenmore via Saint Mary's Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4654,8 +3724,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewtonHighlandsKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Kenmore",
-      "route_long_name": "Newton Highlands - Kenmore",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4664,8 +3732,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewtonHighlandsReservoir",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Reservoir",
-      "route_long_name": "Newton Highlands - Reservoir",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4674,8 +3740,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewtonHighlandsRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Newton Highlands",
-      "route_long_name": "Riverside - Newton Highlands",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4684,8 +3748,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewtonHighlandsStMarysKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Newton Highlands - Kenmore via Saint Mary's Street",
-      "route_long_name": "Newton Highlands - Kenmore via Saint Mary's Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4694,8 +3756,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ReservoirRiverside",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Reservoir",
-      "route_long_name": "Riverside - Reservoir",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4704,8 +3764,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RiversideCopley",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Copley (Shuttle)",
-      "route_long_name": "Riverside - Copley (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4714,8 +3772,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RiversideKenmore",
       "route_number": "Green Line D Shuttle",
-      "route_name": "Riverside - Kenmore (Shuttle)",
-      "route_long_name": "Riverside - Kenmore (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line D Shuttle - Inbound",
@@ -4724,8 +3780,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-EastSomervilleMedford",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Medford/Tufts - East Somerville",
-      "route_long_name": "Medford/Tufts - East Somerville",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line E Shuttle - Outbound",
@@ -4734,8 +3788,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterMedfordTufts",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Government Center - Medford/Tufts (Shuttle)",
-      "route_long_name": "Government Center - Medford/Tufts (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line E Shuttle - Outbound",
@@ -4744,8 +3796,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HeathPark",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Heath Street - Park Street",
-      "route_long_name": "Heath Street - Park Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line E Shuttle - Outbound",
@@ -4754,8 +3804,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HeathPrudential",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Heath Street - Prudential",
-      "route_long_name": "Heath Street - Prudential",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line E Shuttle - Outbound",
@@ -4764,8 +3812,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-MedfordNorthStation",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Medford/Tufts - North Station",
-      "route_long_name": "Medford/Tufts - North Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line E Shuttle - Outbound",
@@ -4774,8 +3820,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationMedfordTufts",
       "route_number": "Green Line E Shuttle",
-      "route_name": "North Station - Medford/Tufts (Shuttle)",
-      "route_long_name": "North Station - Medford/Tufts (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line E Shuttle - Outbound",
@@ -4784,8 +3828,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-EastSomervilleMedford",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Medford/Tufts - East Somerville",
-      "route_long_name": "Medford/Tufts - East Somerville",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line E Shuttle - Inbound",
@@ -4794,8 +3836,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterMedfordTufts",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Government Center - Medford/Tufts (Shuttle)",
-      "route_long_name": "Government Center - Medford/Tufts (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line E Shuttle - Inbound",
@@ -4804,8 +3844,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HeathPark",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Heath Street - Park Street",
-      "route_long_name": "Heath Street - Park Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line E Shuttle - Inbound",
@@ -4814,8 +3852,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HeathPrudential",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Heath Street - Prudential",
-      "route_long_name": "Heath Street - Prudential",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line E Shuttle - Inbound",
@@ -4824,8 +3860,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-MedfordNorthStation",
       "route_number": "Green Line E Shuttle",
-      "route_name": "Medford/Tufts - North Station",
-      "route_long_name": "Medford/Tufts - North Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line E Shuttle - Inbound",
@@ -4834,8 +3868,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationMedfordTufts",
       "route_number": "Green Line E Shuttle",
-      "route_name": "North Station - Medford/Tufts (Shuttle)",
-      "route_long_name": "North Station - Medford/Tufts (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line E Shuttle - Inbound",
@@ -4844,8 +3876,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayKenmore",
       "route_number": "Green Line Shuttle",
-      "route_name": "Kenmore - Back Bay",
-      "route_long_name": "Kenmore - Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4854,8 +3884,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonUniversityEastPark",
       "route_number": "Green Line Shuttle",
-      "route_name": "Boston University East - Park Street",
-      "route_long_name": "Boston University East - Park Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4864,8 +3892,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyKenmore",
       "route_number": "Green Line Shuttle",
-      "route_name": "Kenmore - Copley",
-      "route_long_name": "Kenmore - Copley",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4874,8 +3900,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterMedfordViaUnionSq",
       "route_number": "Green Line Shuttle",
-      "route_name": "Medford/Tufts - Government Center via Union Square",
-      "route_long_name": "Medford/Tufts - Government Center via Union Square",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4884,8 +3908,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterNorthStation",
       "route_number": "Green Line Shuttle",
-      "route_name": "North Station - Government Center",
-      "route_long_name": "North Station - Government Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4894,8 +3916,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterUnionSquare",
       "route_number": "Green Line Shuttle",
-      "route_name": "Union Square - Government Center",
-      "route_long_name": "Union Square - Government Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4904,8 +3924,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LechmereNorthStation",
       "route_number": "Green Line Shuttle",
-      "route_name": "Lechmere - North Station",
-      "route_long_name": "Lechmere - North Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4914,8 +3932,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationSullivanSquare",
       "route_number": "Green Line Shuttle",
-      "route_name": "North Station - Sullivan Square via East Somerville",
-      "route_long_name": "North Station - Sullivan Square via East Somerville",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4924,8 +3940,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationUnionSquare",
       "route_number": "Green Line Shuttle",
-      "route_name": "Union Square - North Station",
-      "route_long_name": "Union Square - North Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Green Line Shuttle - Outbound",
@@ -4934,8 +3948,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayKenmore",
       "route_number": "Green Line Shuttle",
-      "route_name": "Kenmore - Back Bay",
-      "route_long_name": "Kenmore - Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -4944,8 +3956,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonUniversityEastPark",
       "route_number": "Green Line Shuttle",
-      "route_name": "Boston University East - Park Street",
-      "route_long_name": "Boston University East - Park Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -4954,8 +3964,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyKenmore",
       "route_number": "Green Line Shuttle",
-      "route_name": "Kenmore - Copley",
-      "route_long_name": "Kenmore - Copley",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -4964,8 +3972,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterMedfordViaUnionSq",
       "route_number": "Green Line Shuttle",
-      "route_name": "Medford/Tufts - Government Center via Union Square",
-      "route_long_name": "Medford/Tufts - Government Center via Union Square",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -4974,8 +3980,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterNorthStation",
       "route_number": "Green Line Shuttle",
-      "route_name": "North Station - Government Center",
-      "route_long_name": "North Station - Government Center",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -4984,8 +3988,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GovernmentCenterUnionSquare",
       "route_number": "Green Line Shuttle",
-      "route_name": "Union Square - Government Center",
-      "route_long_name": "Union Square - Government Center",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -4994,8 +3996,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LechmereNorthStation",
       "route_number": "Green Line Shuttle",
-      "route_name": "Lechmere - North Station",
-      "route_long_name": "Lechmere - North Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -5004,8 +4004,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationSullivanSquare",
       "route_number": "Green Line Shuttle",
-      "route_name": "North Station - Sullivan Square via East Somerville",
-      "route_long_name": "North Station - Sullivan Square via East Somerville",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -5014,8 +4012,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationUnionSquare",
       "route_number": "Green Line Shuttle",
-      "route_name": "Union Square - North Station",
-      "route_long_name": "Union Square - North Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Green Line Shuttle - Inbound",
@@ -5024,8 +4020,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GreenbushNorthScituate",
       "route_number": "Greenbush Line Shuttle",
-      "route_name": "Greenbush - North Scituate",
-      "route_long_name": "Greenbush - North Scituate",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Greenbush Line Shuttle - Outbound",
@@ -5034,8 +4028,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-GreenbushNorthScituate",
       "route_number": "Greenbush Line Shuttle",
-      "route_name": "Greenbush - North Scituate",
-      "route_long_name": "Greenbush - North Scituate",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Greenbush Line Shuttle - Inbound",
@@ -5044,8 +4036,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndersonWoburnReading",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Reading - Anderson/Woburn",
-      "route_long_name": "Reading - Anderson/Woburn",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5054,8 +4044,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndoverHaverhill",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Andover",
-      "route_long_name": "Haverhill - Andover",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5064,8 +4052,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BallardvaleMaldenCenter",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Ballardvale - Malden Center",
-      "route_long_name": "Ballardvale - Malden Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5074,8 +4060,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BradfordHaverhill",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Bradford",
-      "route_long_name": "Haverhill - Bradford",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5084,8 +4068,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaverhillMaldenCenter",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Malden Center",
-      "route_long_name": "Haverhill - Malden Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5094,8 +4076,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaverhillNorthStation",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - North Station",
-      "route_long_name": "Haverhill - North Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5104,8 +4084,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaverhillReadingExpress",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Reading (Express)",
-      "route_long_name": "Haverhill - Reading (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5114,8 +4092,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaverhillReadingLocal",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Reading (Local)",
-      "route_long_name": "Haverhill - Reading (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5124,8 +4100,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OakGroveReading",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Reading - Oak Grove",
-      "route_long_name": "Reading - Oak Grove",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Haverhill Line Shuttle - Outbound",
@@ -5134,8 +4108,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndersonWoburnReading",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Reading - Anderson/Woburn",
-      "route_long_name": "Reading - Anderson/Woburn",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Haverhill Line Shuttle - Inbound",
@@ -5144,8 +4116,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndoverHaverhill",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Andover",
-      "route_long_name": "Haverhill - Andover",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Haverhill Line Shuttle - Inbound",
@@ -5154,8 +4124,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BallardvaleMaldenCenter",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Ballardvale - Malden Center",
-      "route_long_name": "Ballardvale - Malden Center",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Haverhill Line Shuttle - Inbound",
@@ -5164,8 +4132,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BallardvaleNorthStation",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Ballardvale - North Station",
-      "route_long_name": "Ballardvale - North Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Haverhill Line Shuttle - Inbound",
@@ -5174,8 +4140,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BradfordHaverhill",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Bradford",
-      "route_long_name": "Haverhill - Bradford",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Haverhill Line Shuttle - Inbound",
@@ -5184,8 +4148,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaverhillReadingExpress",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Reading (Express)",
-      "route_long_name": "Haverhill - Reading (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Haverhill Line Shuttle - Inbound",
@@ -5194,8 +4156,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HaverhillReadingLocal",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Haverhill - Reading (Local)",
-      "route_long_name": "Haverhill - Reading (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Haverhill Line Shuttle - Inbound",
@@ -5204,8 +4164,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OakGroveReading",
       "route_number": "Haverhill Line Shuttle",
-      "route_name": "Reading - Oak Grove",
-      "route_long_name": "Reading - Oak Grove",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Haverhill Line Shuttle - Inbound",
@@ -5214,8 +4172,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeSouthWeymouth",
       "route_number": "Kingston Line Shuttle",
-      "route_name": "South Weymouth - Braintree",
-      "route_long_name": "South Weymouth - Braintree",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Kingston Line Shuttle - Outbound",
@@ -5224,8 +4180,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HalifaxKingston",
       "route_number": "Kingston Line Shuttle",
-      "route_name": "Kingston - Halifax",
-      "route_long_name": "Kingston - Halifax",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Kingston Line Shuttle - Outbound",
@@ -5234,8 +4188,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-SouthStationSouthWeymouth",
       "route_number": "Kingston Line Shuttle",
-      "route_name": "South Weymouth - South Station",
-      "route_long_name": "South Weymouth - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Kingston Line Shuttle - Outbound",
@@ -5244,8 +4196,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeSouthWeymouth",
       "route_number": "Kingston Line Shuttle",
-      "route_name": "South Weymouth - Braintree",
-      "route_long_name": "South Weymouth - Braintree",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Kingston Line Shuttle - Inbound",
@@ -5254,8 +4204,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HalifaxKingston",
       "route_number": "Kingston Line Shuttle",
-      "route_name": "Kingston - Halifax",
-      "route_long_name": "Kingston - Halifax",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Kingston Line Shuttle - Inbound",
@@ -5264,8 +4212,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-SouthStationSouthWeymouth",
       "route_number": "Kingston Line Shuttle",
-      "route_name": "South Weymouth - South Station",
-      "route_long_name": "South Weymouth - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Kingston Line Shuttle - Inbound",
@@ -5274,8 +4220,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndersonWoburnLowell",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Lowell - Anderson/Woburn",
-      "route_long_name": "Lowell - Anderson/Woburn",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Lowell Line Shuttle - Outbound",
@@ -5284,8 +4228,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndersonWoburnNorthStationExpress",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Anderson/Woburn - North Station (Express)",
-      "route_long_name": "Anderson/Woburn - North Station (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Lowell Line Shuttle - Outbound",
@@ -5294,8 +4236,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndersonWoburnNorthStationLocal",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Anderson/Woburn - North Station (Local)",
-      "route_long_name": "Anderson/Woburn - North Station (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Lowell Line Shuttle - Outbound",
@@ -5304,8 +4244,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LowellWilmington",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Lowell - Wilmington",
-      "route_long_name": "Lowell - Wilmington",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Lowell Line Shuttle - Outbound",
@@ -5314,8 +4252,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthBillericaLowell",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Lowell - North Billerica",
-      "route_long_name": "Lowell - North Billerica",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Lowell Line Shuttle - Outbound",
@@ -5324,8 +4260,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndersonWoburnLowell",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Lowell - Anderson/Woburn",
-      "route_long_name": "Lowell - Anderson/Woburn",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Lowell Line Shuttle - Inbound",
@@ -5334,8 +4268,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndersonWoburnNorthStationExpress",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Anderson/Woburn - North Station (Express)",
-      "route_long_name": "Anderson/Woburn - North Station (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Lowell Line Shuttle - Inbound",
@@ -5344,8 +4276,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AndersonWoburnNorthStationLocal",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Anderson/Woburn - North Station (Local)",
-      "route_long_name": "Anderson/Woburn - North Station (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Lowell Line Shuttle - Inbound",
@@ -5354,8 +4284,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LowellWilmington",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Lowell - Wilmington",
-      "route_long_name": "Lowell - Wilmington",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Lowell Line Shuttle - Inbound",
@@ -5364,8 +4292,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthBillericaLowell",
       "route_number": "Lowell Line Shuttle",
-      "route_name": "Lowell - North Billerica",
-      "route_long_name": "Lowell - North Billerica",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Lowell Line Shuttle - Inbound",
@@ -5374,8 +4300,6 @@ const routesIndex = {
     {
       "route_id": "Mattapan",
       "route_number": "Mattapan",
-      "route_name": "Trolley",
-      "route_long_name": "Mattapan Trolley",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Mattapan - Outbound",
@@ -5384,8 +4308,6 @@ const routesIndex = {
     {
       "route_id": "Mattapan",
       "route_number": "Mattapan",
-      "route_name": "Trolley",
-      "route_long_name": "Mattapan Trolley",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Mattapan - Inbound",
@@ -5394,8 +4316,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontMattapan",
       "route_number": "Mattapan Line Shuttle",
-      "route_name": "Mattapan - Ashmont",
-      "route_long_name": "Mattapan - Ashmont",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Mattapan Line Shuttle - Outbound",
@@ -5404,8 +4324,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontMattapan",
       "route_number": "Mattapan Line Shuttle",
-      "route_name": "Mattapan - Ashmont",
-      "route_long_name": "Mattapan - Ashmont",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Mattapan Line Shuttle - Inbound",
@@ -5414,8 +4332,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsNeedhamHeights",
       "route_number": "Needham Line Shuttle",
-      "route_name": "Needham Heights - Forest Hills",
-      "route_long_name": "Needham Heights - Forest Hills",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Needham Line Shuttle - Outbound",
@@ -5424,8 +4340,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsNewtonHighlands",
       "route_number": "Needham Line Shuttle",
-      "route_name": "Newton Highlands - Forest Hills",
-      "route_long_name": "Newton Highlands - Forest Hills",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Needham Line Shuttle - Outbound",
@@ -5434,8 +4348,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsNeedhamHeights",
       "route_number": "Needham Line Shuttle",
-      "route_name": "Needham Heights - Forest Hills",
-      "route_long_name": "Needham Heights - Forest Hills",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Needham Line Shuttle - Inbound",
@@ -5444,8 +4356,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsNewtonHighlands",
       "route_number": "Needham Line Shuttle",
-      "route_name": "Newton Highlands - Forest Hills",
-      "route_long_name": "Newton Highlands - Forest Hills",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Needham Line Shuttle - Inbound",
@@ -5454,8 +4364,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyNewburyportExpress",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Beverly (Express)",
-      "route_long_name": "Newburyport - Beverly (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5464,8 +4372,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyNewburyportLocal",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Beverly (Local)",
-      "route_long_name": "Newburyport - Beverly (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5474,8 +4380,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewburyportOakGroveExpress",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Oak Grove (Express)",
-      "route_long_name": "Newburyport - Oak Grove (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5484,8 +4388,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewburyportOakGroveLimited",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Oak Grove (Limited)",
-      "route_long_name": "Newburyport - Oak Grove (Limited)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5494,8 +4396,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewburyportSalemExpress",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Salem (Express)",
-      "route_long_name": "Newburyport - Salem (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5504,8 +4404,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewburyportSalemLocal",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Salem (Local)",
-      "route_long_name": "Newburyport - Salem (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5514,8 +4412,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OakGroveRockportExpress",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Rockport - Oak Grove (Express)",
-      "route_long_name": "Rockport - Oak Grove (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5524,8 +4420,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OakGroveRockportLimited",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Rockport - Oak Grove (Limited)",
-      "route_long_name": "Rockport - Oak Grove (Limited)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5534,8 +4428,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OakGroveSalemLocal",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Salem - Oak Grove (Local)",
-      "route_long_name": "Salem - Oak Grove (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport Line Shuttle - Outbound",
@@ -5544,8 +4436,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyNewburyportExpress",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Beverly (Express)",
-      "route_long_name": "Newburyport - Beverly (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5554,8 +4444,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyNewburyportLocal",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Beverly (Local)",
-      "route_long_name": "Newburyport - Beverly (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5564,8 +4452,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewburyportOakGroveExpress",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Oak Grove (Express)",
-      "route_long_name": "Newburyport - Oak Grove (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5574,8 +4460,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewburyportOakGroveLimited",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Oak Grove (Limited)",
-      "route_long_name": "Newburyport - Oak Grove (Limited)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5584,8 +4468,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewburyportSalemExpress",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Salem (Express)",
-      "route_long_name": "Newburyport - Salem (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5594,8 +4476,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NewburyportSalemLocal",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Newburyport - Salem (Local)",
-      "route_long_name": "Newburyport - Salem (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5604,8 +4484,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OakGroveRockportExpress",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Rockport - Oak Grove (Express)",
-      "route_long_name": "Rockport - Oak Grove (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5614,8 +4492,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OakGroveRockportLimited",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Rockport - Oak Grove (Limited)",
-      "route_long_name": "Rockport - Oak Grove (Limited)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5624,8 +4500,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-OakGroveSalemLocal",
       "route_number": "Newburyport Line Shuttle",
-      "route_name": "Salem - Oak Grove (Local)",
-      "route_long_name": "Salem - Oak Grove (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport Line Shuttle - Inbound",
@@ -5634,8 +4508,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyNorthStationLimited",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Beverly - North Station (Limited)",
-      "route_long_name": "Beverly - North Station (Limited)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Outbound",
@@ -5644,8 +4516,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ChelseaLynn",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Lynn - Chelsea",
-      "route_long_name": "Lynn - Chelsea",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Outbound",
@@ -5654,8 +4524,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LynnNorthStationExpress",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Lynn - North Station (Express)",
-      "route_long_name": "Lynn - North Station (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Outbound",
@@ -5664,8 +4532,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LynnSwampscott",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Lynn - Swampscott",
-      "route_long_name": "Lynn - Swampscott",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Outbound",
@@ -5674,8 +4540,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationSwampscottExpress",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Swampscott - North Station (Express)",
-      "route_long_name": "Swampscott - North Station (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Outbound",
@@ -5684,8 +4548,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationSwampscottLimited",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Swampscott - North Station (Limited)",
-      "route_long_name": "Swampscott - North Station (Limited)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Outbound",
@@ -5694,8 +4556,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationSwampscottLocal",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Swampscott - North Station (Local)",
-      "route_long_name": "Swampscott - North Station (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Outbound",
@@ -5704,8 +4564,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyNorthStationLimited",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Beverly - North Station (Limited)",
-      "route_long_name": "Beverly - North Station (Limited)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Inbound",
@@ -5714,8 +4572,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ChelseaLynn",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Lynn - Chelsea",
-      "route_long_name": "Lynn - Chelsea",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Inbound",
@@ -5724,8 +4580,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LynnNorthStationExpress",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Lynn - North Station (Express)",
-      "route_long_name": "Lynn - North Station (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Inbound",
@@ -5734,8 +4588,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-LynnSwampscott",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Lynn - Swampscott",
-      "route_long_name": "Lynn - Swampscott",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Inbound",
@@ -5744,8 +4596,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationSwampscottExpress",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Swampscott - North Station (Express)",
-      "route_long_name": "Swampscott - North Station (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Inbound",
@@ -5754,8 +4604,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationSwampscottLimited",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Swampscott - North Station (Limited)",
-      "route_long_name": "Swampscott - North Station (Limited)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Inbound",
@@ -5764,8 +4612,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationSwampscottLocal",
       "route_number": "Newburyport/Rockport Line Shuttle",
-      "route_name": "Swampscott - North Station (Local)",
-      "route_long_name": "Swampscott - North Station (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Newburyport/Rockport Line Shuttle - Inbound",
@@ -5774,8 +4620,6 @@ const routesIndex = {
     {
       "route_id": "Orange",
       "route_number": "Orange",
-      "route_name": "Line",
-      "route_long_name": "Orange Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange - Outbound",
@@ -5784,8 +4628,6 @@ const routesIndex = {
     {
       "route_id": "Orange",
       "route_number": "Orange",
-      "route_name": "Line",
-      "route_long_name": "Orange Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange - Inbound",
@@ -5794,8 +4636,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayForestHills",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Back Bay",
-      "route_long_name": "Forest Hills - Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5804,8 +4644,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayJackson",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Jackson Square - Back Bay",
-      "route_long_name": "Jackson Square - Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5814,8 +4652,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayRuggles",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Ruggles - Back Bay",
-      "route_long_name": "Ruggles - Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5824,8 +4660,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyForestHills",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Copley",
-      "route_long_name": "Forest Hills - Copley",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5834,8 +4668,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyForestHillsViaBackBay",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Copley via Back Bay",
-      "route_long_name": "Forest Hills - Copley via Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5844,8 +4676,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyJacksonSquare",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Jackson Square - Copley",
-      "route_long_name": "Jackson Square - Copley",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5854,8 +4684,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyRuggles",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Ruggles - Copley",
-      "route_long_name": "Ruggles - Copley",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5864,8 +4692,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsBackBay",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Back Bay (Shuttle)",
-      "route_long_name": "Forest Hills - Back Bay (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5874,8 +4700,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsBackBayViaCopley",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Back Bay via Copley (Shuttle)",
-      "route_long_name": "Forest Hills - Back Bay via Copley (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5884,8 +4708,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsBackBayViaRugglesBusway",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Back Bay via Ruggles Busway (Shuttle)",
-      "route_long_name": "Forest Hills - Back Bay via Ruggles Busway (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5894,8 +4716,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsJackson",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Jackson Square",
-      "route_long_name": "Forest Hills - Jackson Square",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5904,8 +4724,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsRuggles",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Ruggles",
-      "route_long_name": "Forest Hills - Ruggles",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5914,8 +4732,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationOakGroveExpress",
       "route_number": "Orange Line Shuttle",
-      "route_name": "North Station - Oak Grove (Express)",
-      "route_long_name": "North Station - Oak Grove (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5924,8 +4740,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationOakGroveLocal",
       "route_number": "Orange Line Shuttle",
-      "route_name": "North Station - Oak Grove (Local)",
-      "route_long_name": "North Station - Oak Grove (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5934,8 +4748,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationWellingtonExpress",
       "route_number": "Orange Line Shuttle",
-      "route_name": "North Station - Wellington (Express)",
-      "route_long_name": "North Station - Wellington (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5944,8 +4756,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationWellingtonLocal",
       "route_number": "Orange Line Shuttle",
-      "route_name": "North Station - Wellington (Local)",
-      "route_long_name": "North Station - Wellington (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5954,8 +4764,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-StateSullivan",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Sullivan Square - State",
-      "route_long_name": "Sullivan Square - State",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Orange Line Shuttle - Outbound",
@@ -5964,8 +4772,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayForestHills",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Back Bay",
-      "route_long_name": "Forest Hills - Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -5974,8 +4780,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayJackson",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Jackson Square - Back Bay",
-      "route_long_name": "Jackson Square - Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -5984,8 +4788,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayRuggles",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Ruggles - Back Bay",
-      "route_long_name": "Ruggles - Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -5994,8 +4796,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyForestHills",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Copley",
-      "route_long_name": "Forest Hills - Copley",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6004,8 +4804,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyForestHillsViaBackBay",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Copley via Back Bay",
-      "route_long_name": "Forest Hills - Copley via Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6014,8 +4812,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyJacksonSquare",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Jackson Square - Copley",
-      "route_long_name": "Jackson Square - Copley",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6024,8 +4820,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-CopleyRuggles",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Ruggles - Copley",
-      "route_long_name": "Ruggles - Copley",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6034,8 +4828,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsBackBay",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Back Bay (Shuttle)",
-      "route_long_name": "Forest Hills - Back Bay (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6044,8 +4836,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsBackBayViaCopley",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Back Bay via Copley (Shuttle)",
-      "route_long_name": "Forest Hills - Back Bay via Copley (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6054,8 +4844,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsBackBayViaRugglesBusway",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Back Bay via Ruggles Busway (Shuttle)",
-      "route_long_name": "Forest Hills - Back Bay via Ruggles Busway (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6064,8 +4852,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsJackson",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Jackson Square",
-      "route_long_name": "Forest Hills - Jackson Square",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6074,8 +4860,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ForestHillsRuggles",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Forest Hills - Ruggles",
-      "route_long_name": "Forest Hills - Ruggles",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6084,8 +4868,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationOakGroveExpress",
       "route_number": "Orange Line Shuttle",
-      "route_name": "North Station - Oak Grove (Express)",
-      "route_long_name": "North Station - Oak Grove (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6094,8 +4876,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationOakGroveLocal",
       "route_number": "Orange Line Shuttle",
-      "route_name": "North Station - Oak Grove (Local)",
-      "route_long_name": "North Station - Oak Grove (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6104,8 +4884,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationWellingtonExpress",
       "route_number": "Orange Line Shuttle",
-      "route_name": "North Station - Wellington (Express)",
-      "route_long_name": "North Station - Wellington (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6114,8 +4892,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-NorthStationWellingtonLocal",
       "route_number": "Orange Line Shuttle",
-      "route_name": "North Station - Wellington (Local)",
-      "route_long_name": "North Station - Wellington (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6124,8 +4900,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-StateSullivan",
       "route_number": "Orange Line Shuttle",
-      "route_name": "Sullivan Square - State",
-      "route_long_name": "Sullivan Square - State",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Orange Line Shuttle - Inbound",
@@ -6134,8 +4908,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AttleboroProvidenceExpress",
       "route_number": "Providence Line Shuttle",
-      "route_name": "Providence - Attleboro (Express)",
-      "route_long_name": "Providence - Attleboro (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Providence Line Shuttle - Outbound",
@@ -6144,8 +4916,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AttleboroProvidenceLocal",
       "route_number": "Providence Line Shuttle",
-      "route_name": "Providence - Attleboro (Local)",
-      "route_long_name": "Providence - Attleboro (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Providence Line Shuttle - Outbound",
@@ -6154,8 +4924,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-PawtucketProvidence",
       "route_number": "Providence Line Shuttle",
-      "route_name": "Providence - Pawtucket/Central Falls",
-      "route_long_name": "Providence - Pawtucket/Central Falls",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Providence Line Shuttle - Outbound",
@@ -6164,8 +4932,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-TFGreenWickfordJunction",
       "route_number": "Providence Line Shuttle",
-      "route_name": "Wickford Junction - TF Green Airport",
-      "route_long_name": "Wickford Junction - TF Green Airport",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Providence Line Shuttle - Outbound",
@@ -6174,8 +4940,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AttleboroProvidenceExpress",
       "route_number": "Providence Line Shuttle",
-      "route_name": "Providence - Attleboro (Express)",
-      "route_long_name": "Providence - Attleboro (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Providence Line Shuttle - Inbound",
@@ -6184,8 +4948,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AttleboroProvidenceLocal",
       "route_number": "Providence Line Shuttle",
-      "route_name": "Providence - Attleboro (Local)",
-      "route_long_name": "Providence - Attleboro (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Providence Line Shuttle - Inbound",
@@ -6194,8 +4956,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-PawtucketProvidence",
       "route_number": "Providence Line Shuttle",
-      "route_name": "Providence - Pawtucket/Central Falls",
-      "route_long_name": "Providence - Pawtucket/Central Falls",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Providence Line Shuttle - Inbound",
@@ -6204,8 +4964,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-TFGreenWickfordJunction",
       "route_number": "Providence Line Shuttle",
-      "route_name": "Wickford Junction - TF Green Airport",
-      "route_long_name": "Wickford Junction - TF Green Airport",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Providence Line Shuttle - Inbound",
@@ -6214,8 +4972,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HydeParkReadville",
       "route_number": "Providence/Stoughton Line Shuttle",
-      "route_name": "Readville - Hyde Park",
-      "route_long_name": "Readville - Hyde Park",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Providence/Stoughton Line Shuttle - Outbound",
@@ -6224,8 +4980,6 @@ const routesIndex = {
     {
       "route_id": "Red",
       "route_number": "Red",
-      "route_name": "Line",
-      "route_long_name": "Red Line",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red - Outbound",
@@ -6234,8 +4988,6 @@ const routesIndex = {
     {
       "route_id": "Red",
       "route_number": "Red",
-      "route_name": "Line",
-      "route_long_name": "Red Line",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red - Inbound",
@@ -6244,8 +4996,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeDavis",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Davis",
-      "route_long_name": "Alewife - Davis",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6254,8 +5004,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeHarvardViaBrattle",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Harvard via Brattle Street",
-      "route_long_name": "Alewife - Harvard via Brattle Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6264,8 +5012,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeHarvardViaHolyoke",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Harvard via Holyoke Street",
-      "route_long_name": "Alewife - Harvard via Holyoke Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6274,8 +5020,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeKendall",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Kendall/MIT",
-      "route_long_name": "Alewife - Kendall/MIT",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6284,8 +5028,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeKendallExpress",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Kendall/MIT via Porter (Express)",
-      "route_long_name": "Alewife - Kendall/MIT via Porter (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6294,8 +5036,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeParkSt",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Park Street",
-      "route_long_name": "Alewife - Park Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6304,8 +5044,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontBraintree",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - Braintree",
-      "route_long_name": "Ashmont - Braintree",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6314,8 +5052,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontBroadway",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - Broadway",
-      "route_long_name": "Ashmont - Broadway",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6324,8 +5060,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontJFK",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - JFK/UMass",
-      "route_long_name": "Ashmont - JFK/UMass",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6334,8 +5068,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontJFKUMass",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - JFK/UMass (Shuttle)",
-      "route_long_name": "Ashmont - JFK/UMass (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6344,8 +5076,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontParkStreetViaPostOffice",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - Park Street via Post Office",
-      "route_long_name": "Ashmont - Park Street via Post Office",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6354,8 +5084,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeBroadway",
       "route_number": "Red Line Shuttle",
-      "route_name": "Braintree - Broadway",
-      "route_long_name": "Braintree - Broadway",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6364,8 +5092,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeJFKUMass",
       "route_number": "Red Line Shuttle",
-      "route_name": "Braintree - JFK/UMass (Shuttle)",
-      "route_long_name": "Braintree - JFK/UMass (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6374,8 +5100,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeNorthQuincy",
       "route_number": "Red Line Shuttle",
-      "route_name": "Braintree - North Quincy (Shuttle)",
-      "route_long_name": "Braintree - North Quincy (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6384,8 +5108,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeQuincyCenter",
       "route_number": "Red Line Shuttle",
-      "route_name": "Braintree - Quincy Center",
-      "route_long_name": "Braintree - Quincy Center",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6394,8 +5116,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayHarvard",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - Broadway",
-      "route_long_name": "Harvard - Broadway",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6404,8 +5124,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayJFK",
       "route_number": "Red Line Shuttle",
-      "route_name": "JFK/UMass - Broadway",
-      "route_long_name": "JFK/UMass - Broadway",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6414,8 +5132,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayKendall",
       "route_number": "Red Line Shuttle",
-      "route_name": "Kendall/MIT - Broadway via Downtown Crossing",
-      "route_long_name": "Kendall/MIT - Broadway via Downtown Crossing",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6424,8 +5140,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayKendallOmitDTX",
       "route_number": "Red Line Shuttle",
-      "route_name": "Kendall/MIT - Broadway via Pearl Street",
-      "route_long_name": "Kendall/MIT - Broadway via Pearl Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6434,8 +5148,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayNorthQuincy",
       "route_number": "Red Line Shuttle",
-      "route_name": "North Quincy - Broadway",
-      "route_long_name": "North Quincy - Broadway",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6444,8 +5156,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayQuincyCenterExpress",
       "route_number": "Red Line Shuttle",
-      "route_name": "Quincy Center - Broadway (Express)",
-      "route_long_name": "Quincy Center - Broadway (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6454,8 +5164,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardJFK",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - JFK/UMass via Congress Street",
-      "route_long_name": "Harvard - JFK/UMass via Congress Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6464,8 +5172,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardJFKOmitCongress",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - JFK/UMass via State Street",
-      "route_long_name": "Harvard - JFK/UMass via State Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6474,8 +5180,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardKendall",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - Kendall/MIT (Loop)",
-      "route_long_name": "Harvard - Kendall/MIT (Loop)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6484,8 +5188,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardPark",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - Park Street",
-      "route_long_name": "Harvard - Park Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6494,8 +5196,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardSouthStation",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - South Station",
-      "route_long_name": "Harvard - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6504,8 +5204,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKKendall",
       "route_number": "Red Line Shuttle",
-      "route_name": "Kendall/MIT - JFK/UMass",
-      "route_long_name": "Kendall/MIT - JFK/UMass",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6514,8 +5212,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKNorthQuincy",
       "route_number": "Red Line Shuttle",
-      "route_name": "North Quincy - JFK/UMass",
-      "route_long_name": "North Quincy - JFK/UMass",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6524,8 +5220,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKPark",
       "route_number": "Red Line Shuttle",
-      "route_name": "JFK/UMass - Park Street",
-      "route_long_name": "JFK/UMass - Park Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6534,8 +5228,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKParkStreetViaPostOffice",
       "route_number": "Red Line Shuttle",
-      "route_name": "JFK/UMass - Park Street via Post Office",
-      "route_long_name": "JFK/UMass - Park Street via Post Office",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6544,8 +5236,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKUMassKendallMIT",
       "route_number": "Red Line Shuttle",
-      "route_name": "JFK/UMass - Kendall/MIT (Shuttle)",
-      "route_long_name": "JFK/UMass - Kendall/MIT (Shuttle)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6554,8 +5244,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KendallPark",
       "route_number": "Red Line Shuttle",
-      "route_name": "Kendall/MIT - Park Street",
-      "route_long_name": "Kendall/MIT - Park Street",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red Line Shuttle - Outbound",
@@ -6564,8 +5252,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeDavis",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Davis",
-      "route_long_name": "Alewife - Davis",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6574,8 +5260,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeHarvardViaBrattle",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Harvard via Brattle Street",
-      "route_long_name": "Alewife - Harvard via Brattle Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6584,8 +5268,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeHarvardViaHolyoke",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Harvard via Holyoke Street",
-      "route_long_name": "Alewife - Harvard via Holyoke Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6594,8 +5276,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeKendall",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Kendall/MIT",
-      "route_long_name": "Alewife - Kendall/MIT",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6604,8 +5284,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeKendallExpress",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Kendall/MIT via Porter (Express)",
-      "route_long_name": "Alewife - Kendall/MIT via Porter (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6614,8 +5292,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AlewifeParkSt",
       "route_number": "Red Line Shuttle",
-      "route_name": "Alewife - Park Street",
-      "route_long_name": "Alewife - Park Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6624,8 +5300,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontBraintree",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - Braintree",
-      "route_long_name": "Ashmont - Braintree",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6634,8 +5308,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontBroadway",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - Broadway",
-      "route_long_name": "Ashmont - Broadway",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6644,8 +5316,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontJFK",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - JFK/UMass",
-      "route_long_name": "Ashmont - JFK/UMass",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6654,8 +5324,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontJFKUMass",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - JFK/UMass (Shuttle)",
-      "route_long_name": "Ashmont - JFK/UMass (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6664,8 +5332,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshmontParkStreetViaPostOffice",
       "route_number": "Red Line Shuttle",
-      "route_name": "Ashmont - Park Street via Post Office",
-      "route_long_name": "Ashmont - Park Street via Post Office",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6674,8 +5340,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeBroadway",
       "route_number": "Red Line Shuttle",
-      "route_name": "Braintree - Broadway",
-      "route_long_name": "Braintree - Broadway",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6684,8 +5348,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeJFKUMass",
       "route_number": "Red Line Shuttle",
-      "route_name": "Braintree - JFK/UMass (Shuttle)",
-      "route_long_name": "Braintree - JFK/UMass (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6694,8 +5356,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeNorthQuincy",
       "route_number": "Red Line Shuttle",
-      "route_name": "Braintree - North Quincy (Shuttle)",
-      "route_long_name": "Braintree - North Quincy (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6704,8 +5364,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BraintreeQuincyCenter",
       "route_number": "Red Line Shuttle",
-      "route_name": "Braintree - Quincy Center",
-      "route_long_name": "Braintree - Quincy Center",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6714,8 +5372,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayHarvard",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - Broadway",
-      "route_long_name": "Harvard - Broadway",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6724,8 +5380,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayJFK",
       "route_number": "Red Line Shuttle",
-      "route_name": "JFK/UMass - Broadway",
-      "route_long_name": "JFK/UMass - Broadway",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6734,8 +5388,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayKendall",
       "route_number": "Red Line Shuttle",
-      "route_name": "Kendall/MIT - Broadway via Downtown Crossing",
-      "route_long_name": "Kendall/MIT - Broadway via Downtown Crossing",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6744,8 +5396,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayKendallOmitDTX",
       "route_number": "Red Line Shuttle",
-      "route_name": "Kendall/MIT - Broadway via Pearl Street",
-      "route_long_name": "Kendall/MIT - Broadway via Pearl Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6754,8 +5404,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayNorthQuincy",
       "route_number": "Red Line Shuttle",
-      "route_name": "North Quincy - Broadway",
-      "route_long_name": "North Quincy - Broadway",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6764,8 +5412,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BroadwayQuincyCenterExpress",
       "route_number": "Red Line Shuttle",
-      "route_name": "Quincy Center - Broadway (Express)",
-      "route_long_name": "Quincy Center - Broadway (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6774,8 +5420,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardJFK",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - JFK/UMass via Congress Street",
-      "route_long_name": "Harvard - JFK/UMass via Congress Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6784,8 +5428,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardJFKOmitCongress",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - JFK/UMass via State Street",
-      "route_long_name": "Harvard - JFK/UMass via State Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6794,8 +5436,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardKendall",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - Kendall/MIT (Loop)",
-      "route_long_name": "Harvard - Kendall/MIT (Loop)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6804,8 +5444,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardPark",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - Park Street",
-      "route_long_name": "Harvard - Park Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6814,8 +5452,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-HarvardSouthStation",
       "route_number": "Red Line Shuttle",
-      "route_name": "Harvard - South Station",
-      "route_long_name": "Harvard - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6824,8 +5460,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKKendall",
       "route_number": "Red Line Shuttle",
-      "route_name": "Kendall/MIT - JFK/UMass",
-      "route_long_name": "Kendall/MIT - JFK/UMass",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6834,8 +5468,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKNorthQuincy",
       "route_number": "Red Line Shuttle",
-      "route_name": "North Quincy - JFK/UMass",
-      "route_long_name": "North Quincy - JFK/UMass",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6844,8 +5476,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKPark",
       "route_number": "Red Line Shuttle",
-      "route_name": "JFK/UMass - Park Street",
-      "route_long_name": "JFK/UMass - Park Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6854,8 +5484,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKParkStreetViaPostOffice",
       "route_number": "Red Line Shuttle",
-      "route_name": "JFK/UMass - Park Street via Post Office",
-      "route_long_name": "JFK/UMass - Park Street via Post Office",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6864,8 +5492,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKUMassKendallMIT",
       "route_number": "Red Line Shuttle",
-      "route_name": "JFK/UMass - Kendall/MIT (Shuttle)",
-      "route_long_name": "JFK/UMass - Kendall/MIT (Shuttle)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6874,8 +5500,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-KendallPark",
       "route_number": "Red Line Shuttle",
-      "route_name": "Kendall/MIT - Park Street",
-      "route_long_name": "Kendall/MIT - Park Street",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red Line Shuttle - Inbound",
@@ -6884,8 +5508,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKMattapan",
       "route_number": "Red/Mattapan Line Shuttle",
-      "route_name": "Mattapan - JFK/UMass",
-      "route_long_name": "Mattapan - JFK/UMass",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Red/Mattapan Line Shuttle - Outbound",
@@ -6894,8 +5516,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-JFKMattapan",
       "route_number": "Red/Mattapan Line Shuttle",
-      "route_name": "Mattapan - JFK/UMass",
-      "route_long_name": "Mattapan - JFK/UMass",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Red/Mattapan Line Shuttle - Inbound",
@@ -6904,8 +5524,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyRockportExpress",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Beverly - Rockport (Express)",
-      "route_long_name": "Beverly - Rockport (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Rockport Line Shuttle - Outbound",
@@ -6914,8 +5532,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyRockportLocal",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Beverly - Rockport (Local)",
-      "route_long_name": "Beverly - Rockport (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Rockport Line Shuttle - Outbound",
@@ -6924,8 +5540,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ManchesterGloucester",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Manchester - Gloucester",
-      "route_long_name": "Manchester - Gloucester",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Rockport Line Shuttle - Outbound",
@@ -6934,8 +5548,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-ManchesterRockport",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Manchester - Rockport",
-      "route_long_name": "Manchester - Rockport",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Rockport Line Shuttle - Outbound",
@@ -6944,8 +5556,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RockportSalemExpress",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Rockport - Salem (Express)",
-      "route_long_name": "Rockport - Salem (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Rockport Line Shuttle - Outbound",
@@ -6954,8 +5564,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RockportSalemLocal",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Rockport - Salem (Local)",
-      "route_long_name": "Rockport - Salem (Local)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Rockport Line Shuttle - Outbound",
@@ -6964,8 +5572,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RockportWestGloucester",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Rockport - West Gloucester",
-      "route_long_name": "Rockport - West Gloucester",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Rockport Line Shuttle - Outbound",
@@ -6974,8 +5580,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyRockportExpress",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Beverly - Rockport (Express)",
-      "route_long_name": "Beverly - Rockport (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Rockport Line Shuttle - Inbound",
@@ -6984,8 +5588,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BeverlyRockportLocal",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Beverly - Rockport (Local)",
-      "route_long_name": "Beverly - Rockport (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Rockport Line Shuttle - Inbound",
@@ -6994,8 +5596,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RockportSalemExpress",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Rockport - Salem (Express)",
-      "route_long_name": "Rockport - Salem (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Rockport Line Shuttle - Inbound",
@@ -7004,8 +5604,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RockportSalemLocal",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Rockport - Salem (Local)",
-      "route_long_name": "Rockport - Salem (Local)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Rockport Line Shuttle - Inbound",
@@ -7014,8 +5612,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-RockportWestGloucester",
       "route_number": "Rockport Line Shuttle",
-      "route_name": "Rockport - West Gloucester",
-      "route_long_name": "Rockport - West Gloucester",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Rockport Line Shuttle - Inbound",
@@ -7024,8 +5620,6 @@ const routesIndex = {
     {
       "route_id": "741",
       "route_number": "SL1",
-      "route_name": "Logan Airport Terminals - South Station",
-      "route_long_name": "Logan Airport Terminals - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route SL1 - Outbound",
@@ -7034,8 +5628,6 @@ const routesIndex = {
     {
       "route_id": "741",
       "route_number": "SL1",
-      "route_name": "Logan Airport Terminals - South Station",
-      "route_long_name": "Logan Airport Terminals - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route SL1 - Inbound",
@@ -7044,8 +5636,6 @@ const routesIndex = {
     {
       "route_id": "742",
       "route_number": "SL2",
-      "route_name": "Design Center - South Station",
-      "route_long_name": "Design Center - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route SL2 - Outbound",
@@ -7054,8 +5644,6 @@ const routesIndex = {
     {
       "route_id": "742",
       "route_number": "SL2",
-      "route_name": "Design Center - South Station",
-      "route_long_name": "Design Center - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route SL2 - Inbound",
@@ -7064,8 +5652,6 @@ const routesIndex = {
     {
       "route_id": "743",
       "route_number": "SL3",
-      "route_name": "Chelsea Station - South Station",
-      "route_long_name": "Chelsea Station - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route SL3 - Outbound",
@@ -7074,8 +5660,6 @@ const routesIndex = {
     {
       "route_id": "743",
       "route_number": "SL3",
-      "route_name": "Chelsea Station - South Station",
-      "route_long_name": "Chelsea Station - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route SL3 - Inbound",
@@ -7084,8 +5668,6 @@ const routesIndex = {
     {
       "route_id": "751",
       "route_number": "SL4",
-      "route_name": "Nubian Station - South Station",
-      "route_long_name": "Nubian Station - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route SL4 - Outbound",
@@ -7094,8 +5676,6 @@ const routesIndex = {
     {
       "route_id": "751",
       "route_number": "SL4",
-      "route_name": "Nubian Station - South Station",
-      "route_long_name": "Nubian Station - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route SL4 - Inbound",
@@ -7104,8 +5684,6 @@ const routesIndex = {
     {
       "route_id": "749",
       "route_number": "SL5",
-      "route_name": "Nubian Station - Temple Place",
-      "route_long_name": "Nubian Station - Temple Place",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route SL5 - Outbound",
@@ -7114,8 +5692,6 @@ const routesIndex = {
     {
       "route_id": "749",
       "route_number": "SL5",
-      "route_name": "Nubian Station - Temple Place",
-      "route_long_name": "Nubian Station - Temple Place",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route SL5 - Inbound",
@@ -7124,8 +5700,6 @@ const routesIndex = {
     {
       "route_id": "746",
       "route_number": "SLW",
-      "route_name": "Silver Line Way - South Station",
-      "route_long_name": "Silver Line Way - South Station",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route SLW - Outbound",
@@ -7134,8 +5708,6 @@ const routesIndex = {
     {
       "route_id": "746",
       "route_number": "SLW",
-      "route_name": "Silver Line Way - South Station",
-      "route_long_name": "Silver Line Way - South Station",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route SLW - Inbound",
@@ -7144,8 +5716,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshlandFramingham",
       "route_number": "Worcester Line Shuttle",
-      "route_name": "Ashland - Framingham",
-      "route_long_name": "Ashland - Framingham",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Worcester Line Shuttle - Outbound",
@@ -7154,8 +5724,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayBostonLanding",
       "route_number": "Worcester Line Shuttle",
-      "route_name": "Boston Landing - Back Bay",
-      "route_long_name": "Boston Landing - Back Bay",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Worcester Line Shuttle - Outbound",
@@ -7164,8 +5732,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonLandingSouthStationExpress",
       "route_number": "Worcester Line Shuttle",
-      "route_name": "Boston Landing - South Station (Express)",
-      "route_long_name": "Boston Landing - South Station (Express)",
       "direction_id": 0,
       "direction_name": "Outbound",
       "route_title": "Route Worcester Line Shuttle - Outbound",
@@ -7174,8 +5740,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-AshlandFramingham",
       "route_number": "Worcester Line Shuttle",
-      "route_name": "Ashland - Framingham",
-      "route_long_name": "Ashland - Framingham",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Worcester Line Shuttle - Inbound",
@@ -7184,8 +5748,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BackBayBostonLanding",
       "route_number": "Worcester Line Shuttle",
-      "route_name": "Boston Landing - Back Bay",
-      "route_long_name": "Boston Landing - Back Bay",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Worcester Line Shuttle - Inbound",
@@ -7194,8 +5756,6 @@ const routesIndex = {
     {
       "route_id": "Shuttle-BostonLandingSouthStationExpress",
       "route_number": "Worcester Line Shuttle",
-      "route_name": "Boston Landing - South Station (Express)",
-      "route_long_name": "Boston Landing - South Station (Express)",
       "direction_id": 1,
       "direction_name": "Inbound",
       "route_title": "Route Worcester Line Shuttle - Inbound",
@@ -7203,5 +5763,3 @@ const routesIndex = {
     }
   ]
 };
-
-window.routesIndex = routesIndex;
