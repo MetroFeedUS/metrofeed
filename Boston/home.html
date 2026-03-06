@@ -6532,11 +6532,6 @@
    * Show bus routes for selected category
    */
   async function showBusCategory(category) {
-    // Initialize routes if not already done
-    if (BUS_ROUTES_REGULAR.length === 0 && BUS_ROUTES_SHUTTLE.length === 0) {
-      initializeBusRoutes();
-    }
-    
     const categoryScreen = document.getElementById('busCategorySelection');
     const listScreen = document.getElementById('busRouteListScreen');
     const routeList = document.getElementById('busRouteList');
@@ -6550,12 +6545,20 @@
     // Hide category screen, show list screen
     categoryScreen.style.display = 'none';
     listScreen.style.display = 'flex';
+    routeList.innerHTML = '<em style="color: #1E90FF;">Loading routes...</em>';
+    
+    // Ensure routes index is loaded before building list (Boston lazy-loading)
+    if (CITY_CONFIG.useLazyLoading && window.routeLoader && !window.routeLoader.isRoutesIndexLoaded()) {
+      try {
+        await window.routeLoader.loadRoutesIndex();
+      } catch (e) {
+        console.warn('[showBusCategory] Routes index load failed:', e);
+      }
+    }
+    initializeBusRoutes();
     
     // Get routes for selected category
     const routesToShow = category === 'bus' ? BUS_ROUTES_REGULAR : BUS_ROUTES_SHUTTLE;
-    
-    // Clear route list
-    routeList.innerHTML = '<em style="color: #1E90FF;">Loading routes...</em>';
     
     // Fetch alerts data once (cached) before processing routes
     let alertsData = [];
@@ -6964,11 +6967,6 @@
    * Show rail routes for selected category
    */
   async function showRailCategory(category) {
-    // Initialize routes if not already done
-    if (RAIL_ROUTES_SUBWAY.length === 0 && RAIL_ROUTES_COMMUTER.length === 0) {
-      initializeBusRoutes();
-    }
-    
     const categoryScreen = document.getElementById('railCategorySelection');
     const listScreen = document.getElementById('railRouteListScreen');
     const routeList = document.getElementById('railRouteList');
@@ -6982,12 +6980,20 @@
     // Hide category screen, show list screen
     categoryScreen.style.display = 'none';
     listScreen.style.display = 'flex';
+    routeList.innerHTML = '<div style="color: #1E90FF; padding: 1rem; text-align: center;">Loading routes...</div>';
+    
+    // Ensure routes index is loaded (Boston lazy-loading)
+    if (CITY_CONFIG.useLazyLoading && window.routeLoader && !window.routeLoader.isRoutesIndexLoaded()) {
+      try {
+        await window.routeLoader.loadRoutesIndex();
+      } catch (e) {
+        console.warn('[showRailCategory] Routes index load failed:', e);
+      }
+    }
+    initializeBusRoutes();
     
     // Get routes for selected category
     const routesToShow = category === 'subway' ? RAIL_ROUTES_SUBWAY : RAIL_ROUTES_COMMUTER;
-    
-    // Clear and populate route list
-    routeList.innerHTML = '<div style="color: #1E90FF; padding: 1rem; text-align: center;">Loading routes...</div>';
     
     // Separate route groups from regular routes
     const routeGroups = [];
@@ -7482,10 +7488,19 @@
       const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        console.warn('[fetchAlertsData] HTTP', response.status, response.statusText);
+        return [];
       }
 
-      const data = await response.json();
+      const text = await response.text();
+      // Server may return HTML (e.g. 404/error page) instead of JSON
+      const trimmed = text.trim();
+      if (!trimmed || trimmed.startsWith('<')) {
+        console.warn('[fetchAlertsData] Response is not JSON (got HTML or empty)');
+        return [];
+      }
+
+      const data = JSON.parse(text);
       let alerts = data.data || [];
       
       // Debug: Log first alert structure to see how route IDs are stored
