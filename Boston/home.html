@@ -2594,15 +2594,18 @@
       }
       
       // Restore traffic layers if active
-      if (trafficLayerActive && trafficData.links) {
+      if (trafficLayerActive && (trafficData.links || trafficData.signs || trafficData.routes)) {
         // Traffic layers will be automatically removed by style change
         // Restore them after style is loaded
         const restoreTraffic = () => {
           if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
-            if (trafficData.links) {
+            if (trafficData.links && trafficData.links.length > 0) {
               displayTrafficLinks(map, trafficData.links);
             }
-            if (trafficData.signs) {
+            if (trafficData.routes && trafficData.routes.length > 0) {
+              displayTrafficRoutes(map, trafficData.routes);
+            }
+            if (trafficData.signs && trafficData.signs.length > 0) {
               displayTrafficSigns(map, trafficData.signs);
             }
           } else {
@@ -5547,9 +5550,8 @@
   // Use window.showRoute instead
 
   // === SECTION: MASS DOT TRAFFIC OVERLAY ===
-  // MassDOT API integration for traffic data
-  // Using official MetroFeed Traffic API endpoint over HTTPS (handles authentication automatically)
-  const MASSDOT_API_PROXY = CITY_CONFIG.massdotApiProxy || "https://traffic-api.metrofeedus.com/traffic/v1/status";
+  // MassDOT Go Time: single endpoint returns link-status-list (travel-time, delay, link-name, etc.)
+  const MASSDOT_TRAFFIC_LINKS_URL = CITY_CONFIG.massdotTrafficLinksUrl || "https://traffic-api.metrofeedus.com/traffic/links.json";
   
   let trafficLayerActive = false;
   let trafficLayers = {
@@ -5564,47 +5566,40 @@
   };
   
   /**
-   * Fetch traffic data from MassDOT API via VPS proxy
-   * Proxy handles authentication automatically - no headers needed
+   * Normalize API response to link array. links.json returns { "link-status-list": [ ... ] }.
+   */
+  function toTrafficLinkArray(raw) {
+    if (raw == null) return null;
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw !== 'object') return null;
+    const arr = raw['link-status-list'] ?? raw.links ?? raw.data ?? raw.items ?? raw.results;
+    return Array.isArray(arr) ? arr : null;
+  }
+  
+  /**
+   * Fetch traffic link data from MetroFeed traffic API (single URL).
+   * Response: { "link-status-list": [ { "link-id", "link-name", "travel-time", "delay", "link-status", ... } ] }
+   * travel-time is in seconds; no geometry in response (links are drawn only if geometry is provided elsewhere).
    */
   async function fetchMassDOTTrafficData() {
-    if (!MASSDOT_API_PROXY) {
-      console.error('[fetchMassDOTTrafficData] MassDOT API proxy not configured');
-      alert('Traffic data is not available. Proxy endpoint not configured.');
+    if (!MASSDOT_TRAFFIC_LINKS_URL) {
+      console.error('[fetchMassDOTTrafficData] massdotTrafficLinksUrl not configured');
+      alert('Traffic data is not available. Endpoint not configured.');
       return null;
     }
     
     try {
-      console.log('[fetchMassDOTTrafficData] Fetching traffic data via proxy...');
-      
-      // Standard GET requests - no auth headers needed (proxy handles it)
-      const [linksRes, routesRes, signsRes] = await Promise.allSettled([
-        fetch(`${MASSDOT_API_PROXY}/links`),
-        fetch(`${MASSDOT_API_PROXY}/routes`),
-        fetch(`${MASSDOT_API_PROXY}/signs`)
-      ]);
-      
-      if (linksRes.status === 'fulfilled' && linksRes.value.ok) {
-        trafficData.links = await linksRes.value.json();
-        console.log('[fetchMassDOTTrafficData] Links data:', trafficData.links);
-      } else {
-        console.error('[fetchMassDOTTrafficData] Failed to fetch links:', linksRes.reason || linksRes.value?.statusText);
+      console.log('[fetchMassDOTTrafficData] Fetching', MASSDOT_TRAFFIC_LINKS_URL);
+      const res = await fetch(MASSDOT_TRAFFIC_LINKS_URL);
+      if (!res.ok) {
+        console.error('[fetchMassDOTTrafficData] Failed:', res.status, res.statusText);
+        return null;
       }
-      
-      if (routesRes.status === 'fulfilled' && routesRes.value.ok) {
-        trafficData.routes = await routesRes.value.json();
-        console.log('[fetchMassDOTTrafficData] Routes data:', trafficData.routes);
-      } else {
-        console.error('[fetchMassDOTTrafficData] Failed to fetch routes:', routesRes.reason || routesRes.value?.statusText);
-      }
-      
-      if (signsRes.status === 'fulfilled' && signsRes.value.ok) {
-        trafficData.signs = await signsRes.value.json();
-        console.log('[fetchMassDOTTrafficData] Signs data:', trafficData.signs);
-      } else {
-        console.error('[fetchMassDOTTrafficData] Failed to fetch signs:', signsRes.reason || signsRes.value?.statusText);
-      }
-      
+      const raw = await res.json();
+      trafficData.links = toTrafficLinkArray(raw);
+      trafficData.routes = null;
+      trafficData.signs = null;
+      console.log('[fetchMassDOTTrafficData] Links:', trafficData.links?.length ?? 0, 'items');
       return trafficData;
     } catch (error) {
       console.error('[fetchMassDOTTrafficData] Error:', error);
@@ -5613,27 +5608,64 @@
   }
   
   /**
-   * Get color for traffic status
+   * Get color for traffic status or travel time (Go Time uses travel times)
    */
-  function getTrafficColor(status) {
-    // Map traffic status to colors (adjust based on actual API response format)
-    const statusLower = (status || '').toLowerCase();
-    if (statusLower.includes('heavy') || statusLower.includes('congested') || statusLower.includes('slow')) {
-      return '#ff4444'; // Red
-    } else if (statusLower.includes('moderate') || statusLower.includes('medium')) {
-      return '#ffa500'; // Orange
-    } else if (statusLower.includes('light') || statusLower.includes('free') || statusLower.includes('normal')) {
-      return '#4CAF50'; // Green
+  function getTrafficColor(statusOrTravelTime) {
+    const s = String(statusOrTravelTime || '').toLowerCase();
+    // Explicit status words
+    if (s.includes('heavy') || s.includes('congested') || s.includes('slow')) return '#ff4444';
+    if (s.includes('moderate') || s.includes('medium')) return '#ffa500';
+    if (s.includes('light') || s.includes('free') || s.includes('normal')) return '#4CAF50';
+    // Go Time: travel time in minutes (number or "X min") — higher = worse
+    const mins = typeof statusOrTravelTime === 'number' ? statusOrTravelTime : parseFloat(s.replace(/[^0-9.]/g, ''));
+    if (!isNaN(mins)) {
+      if (mins >= 15) return '#ff4444';
+      if (mins >= 8) return '#ffa500';
+      return '#4CAF50';
     }
-    return '#888888'; // Gray (unknown/default)
+    return '#888888';
   }
   
   /**
-   * Display traffic links on map
+   * Extract line coordinates from a link (Go Time / proxy may use different shapes)
+   */
+  function getLinkCoordinates(link) {
+    const g = link.geometry;
+    if (g && Array.isArray(g.coordinates)) return g.coordinates;
+    if (Array.isArray(link.coordinates)) return link.coordinates;
+    if (Array.isArray(link.points)) return link.points;
+    if (link.start_lon != null && link.start_lat != null && link.end_lon != null && link.end_lat != null) {
+      return [[link.start_lon, link.start_lat], [link.end_lon, link.end_lat]];
+    }
+    if (link.from_lng != null && link.from_lat != null && link.to_lng != null && link.to_lat != null) {
+      return [[link.from_lng, link.from_lat], [link.to_lng, link.to_lat]];
+    }
+    return [];
+  }
+  
+  /**
+   * Derive display status string from link (for color mapping). Returns one of slow|moderate|free|unknown.
+   * API uses "link-status", "travel-time" (seconds). Values > 120 treated as seconds and converted to minutes.
+   */
+  function getLinkStatus(link) {
+    const s = link['link-status'] ?? link.status ?? link.traffic_status ?? link.condition;
+    if (s != null && s !== '') return String(s).toLowerCase();
+    const tt = link['travel-time'] ?? link.travel_time ?? link.travelTime ?? link.travel_time_minutes;
+    let mins = typeof tt === 'number' ? tt : (typeof tt === 'string' ? parseFloat(tt) : NaN);
+    if (!isNaN(mins)) {
+      if (mins > 120) mins = mins / 60; // API travel-time is in seconds
+      return mins >= 15 ? 'slow' : mins >= 8 ? 'moderate' : 'free';
+    }
+    return 'unknown';
+  }
+  
+  /**
+   * Display traffic links on map (MassDOT Go Time links = road segments with travel time)
    */
   function displayTrafficLinks(map, linksData) {
-    if (!map || !linksData || !Array.isArray(linksData)) {
-      console.warn('[displayTrafficLinks] Invalid data');
+    const arr = Array.isArray(linksData) ? linksData : (linksData?.links ?? linksData?.data);
+    if (!map || !arr || arr.length === 0) {
+      if (!map || !linksData) console.warn('[displayTrafficLinks] Invalid data');
       return;
     }
     
@@ -5643,21 +5675,18 @@
       map.removeSource('traffic-links');
     }
     
-    // Process links data and create GeoJSON
-    // Note: Adjust this based on actual API response structure
-    const features = linksData.map((link, index) => {
-      // Assuming link has geometry/coordinates - adjust based on actual API structure
-      const coordinates = link.geometry?.coordinates || link.coordinates || [];
-      
+    const features = arr.map((link, index) => {
+      const coordinates = getLinkCoordinates(link);
       if (!coordinates || coordinates.length < 2) return null;
-      
+      const status = getLinkStatus(link);
       return {
         type: 'Feature',
         properties: {
-          id: link.id || link.link_id || index,
-          status: link.status || link.traffic_status || 'unknown',
-          speed: link.speed || link.current_speed || null,
-          name: link.name || link.description || ''
+          id: link['link-id'] ?? link.id ?? link.link_id ?? index,
+          status: status,
+          speed: link.speed ?? link.current_speed ?? null,
+          travel_time: link['travel-time'] ?? link.travel_time ?? link.travelTime ?? null,
+          name: link['link-name'] ?? link.name ?? link.description ?? ''
         },
         geometry: {
           type: 'LineString',
@@ -5671,18 +5700,10 @@
       return;
     }
     
-    const geojson = {
-      type: 'FeatureCollection',
-      features: features
-    };
+    const geojson = { type: 'FeatureCollection', features };
     
-    // Add source
-    map.addSource('traffic-links', {
-      type: 'geojson',
-      data: geojson
-    });
+    map.addSource('traffic-links', { type: 'geojson', data: geojson });
     
-    // Add layer with color based on status
     map.addLayer({
       id: 'traffic-links',
       type: 'line',
@@ -5690,21 +5711,16 @@
       paint: {
         'line-color': [
           'case',
-          ['has', ['get', 'status'], ['literal', {}]],
+          ['has', 'status'],
           [
             'match',
             ['get', 'status'],
-            'heavy', '#ff4444',
-            'congested', '#ff4444',
-            'slow', '#ff4444',
-            'moderate', '#ffa500',
-            'medium', '#ffa500',
-            'light', '#4CAF50',
-            'free', '#4CAF50',
-            'normal', '#4CAF50',
-            '#888888' // default
+            'heavy', '#ff4444', 'congested', '#ff4444', 'slow', '#ff4444',
+            'moderate', '#ffa500', 'medium', '#ffa500',
+            'light', '#4CAF50', 'free', '#4CAF50', 'normal', '#4CAF50',
+            '#888888'
           ],
-          '#888888' // default if no status
+          '#888888'
         ],
         'line-width': 4,
         'line-opacity': 0.7
@@ -5716,11 +5732,12 @@
   }
   
   /**
-   * Display traffic signs on map
+   * Display traffic signs on map (Go Time variable message signs / VMS)
    */
   function displayTrafficSigns(map, signsData) {
-    if (!map || !signsData || !Array.isArray(signsData)) {
-      console.warn('[displayTrafficSigns] Invalid data');
+    const arr = Array.isArray(signsData) ? signsData : (signsData?.signs ?? signsData?.data);
+    if (!map || !arr || arr.length === 0) {
+      if (!map || !signsData) console.warn('[displayTrafficSigns] Invalid data');
       return;
     }
     
@@ -5730,23 +5747,17 @@
       map.removeSource('traffic-signs');
     }
     
-    // Process signs data and create GeoJSON
-    const features = signsData.map((sign, index) => {
-      const coordinates = sign.location?.coordinates || sign.coordinates || [sign.longitude, sign.latitude];
-      
-      if (!coordinates || coordinates.length < 2) return null;
-      
+    const features = arr.map((sign, index) => {
+      const coords = sign.location?.coordinates ?? sign.coordinates ?? (sign.longitude != null && sign.latitude != null ? [sign.longitude, sign.latitude] : null);
+      if (!coords || coords.length < 2) return null;
       return {
         type: 'Feature',
         properties: {
-          id: sign.id || sign.sign_id || index,
-          message: sign.message || sign.text || '',
-          name: sign.name || sign.description || ''
+          id: sign.id ?? sign.sign_id ?? index,
+          message: sign.message ?? sign.text ?? sign.content ?? '',
+          name: sign.name ?? sign.description ?? ''
         },
-        geometry: {
-          type: 'Point',
-          coordinates: coordinates
-        }
+        geometry: { type: 'Point', coordinates: coords }
       };
     }).filter(f => f !== null);
     
@@ -5755,18 +5766,10 @@
       return;
     }
     
-    const geojson = {
-      type: 'FeatureCollection',
-      features: features
-    };
+    const geojson = { type: 'FeatureCollection', features };
     
-    // Add source
-    map.addSource('traffic-signs', {
-      type: 'geojson',
-      data: geojson
-    });
+    map.addSource('traffic-signs', { type: 'geojson', data: geojson });
     
-    // Add layer with markers
     map.addLayer({
       id: 'traffic-signs',
       type: 'circle',
@@ -5780,7 +5783,6 @@
       }
     });
     
-    // Add click handler for signs
     map.on('click', 'traffic-signs', (e) => {
       const props = e.features[0].properties;
       const message = props.message || props.name || 'No message available';
@@ -5790,16 +5792,55 @@
         .addTo(map);
     });
     
-    // Change cursor on hover
-    map.on('mouseenter', 'traffic-signs', () => {
-      map.getCanvas().style.cursor = 'pointer';
-    });
-    map.on('mouseleave', 'traffic-signs', () => {
-      map.getCanvas().style.cursor = '';
-    });
+    map.on('mouseenter', 'traffic-signs', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'traffic-signs', () => { map.getCanvas().style.cursor = ''; });
     
     trafficLayers.signs = 'traffic-signs';
     console.log('[displayTrafficSigns] Displayed', features.length, 'traffic signs');
+  }
+  
+  /**
+   * Display traffic routes on map (Go Time routes = sequences of links with geometry)
+   */
+  function displayTrafficRoutes(map, routesData) {
+    const arr = Array.isArray(routesData) ? routesData : (routesData?.routes ?? routesData?.data);
+    if (!map || !arr || arr.length === 0) return;
+    
+    if (trafficLayers.routes && map.getLayer('traffic-routes')) {
+      map.removeLayer('traffic-routes');
+      map.removeSource('traffic-routes');
+    }
+    
+    const features = arr.map((route, index) => {
+      const coords = route.geometry?.coordinates ?? route.coordinates ?? route.points ?? getLinkCoordinates(route);
+      if (!coords || coords.length < 2) return null;
+      return {
+        type: 'Feature',
+        properties: {
+          id: route.id ?? route.route_id ?? index,
+          name: route.name ?? route.description ?? route.title ?? ''
+        },
+        geometry: { type: 'LineString', coordinates: coords }
+      };
+    }).filter(f => f !== null);
+    
+    if (features.length === 0) return;
+    
+    const geojson = { type: 'FeatureCollection', features };
+    map.addSource('traffic-routes', { type: 'geojson', data: geojson });
+    map.addLayer({
+      id: 'traffic-routes',
+      type: 'line',
+      source: 'traffic-routes',
+      paint: {
+        'line-color': '#1E90FF',
+        'line-width': 3,
+        'line-opacity': 0.6,
+        'line-dasharray': [2, 1]
+      }
+    });
+    trafficLayers.routes = 'traffic-routes';
+    console.log('[displayTrafficRoutes] Displayed', features.length, 'traffic routes');
   }
   
   /**
@@ -5812,6 +5853,12 @@
       map.removeLayer('traffic-links');
       map.removeSource('traffic-links');
       trafficLayers.links = null;
+    }
+    
+    if (trafficLayers.routes && map.getLayer('traffic-routes')) {
+      map.removeLayer('traffic-routes');
+      map.removeSource('traffic-routes');
+      trafficLayers.routes = null;
     }
     
     if (trafficLayers.signs && map.getLayer('traffic-signs')) {
@@ -5843,13 +5890,18 @@
       const data = await fetchMassDOTTrafficData();
       
       if (data) {
-        // Display links if available
-        if (data.links) {
+        // Display links if available (road segments with travel time)
+        if (data.links && data.links.length > 0) {
           displayTrafficLinks(window.map, data.links);
         }
         
-        // Display signs if available
-        if (data.signs) {
+        // Display routes if available (route geometry)
+        if (data.routes && data.routes.length > 0) {
+          displayTrafficRoutes(window.map, data.routes);
+        }
+        
+        // Display signs if available (VMS messages)
+        if (data.signs && data.signs.length > 0) {
           displayTrafficSigns(window.map, data.signs);
         }
         
