@@ -120,6 +120,18 @@ const ROUTES = {
             "label": "72 \u2013 Clarksville",
             "dir0": "Outbound",
             "dir1": "Inbound"
+      },
+      {
+            "id": "93",
+            "label": "93 \u2013 UPS U of L Shuttle",
+            "dir0": "Outbound",
+            "dir1": "Inbound"
+      },
+      {
+            "id": "99",
+            "label": "99 \u2013 UPS West Louisville",
+            "dir0": "Outbound",
+            "dir1": ""
       }
 ],
     railRoutes: []
