@@ -110,12 +110,6 @@ const ROUTES = {
             "dir1": "Inbound"
       },
       {
-            "id": "51",
-            "label": "51 \u2013 Old Louisville Shopper",
-            "dir0": "Outbound",
-            "dir1": "Inbound"
-      },
-      {
             "id": "71",
             "label": "71 \u2013 Jeffersonville-Louisville-IUS",
             "dir0": "Outbound",
@@ -131,6 +125,12 @@ const ROUTES = {
             "id": "93",
             "label": "93 \u2013 UPS U of L Shuttle",
             "dir0": "Outbound",
+            "dir1": "Inbound"
+      },
+      {
+            "id": "94",
+            "label": "94 \u2013 UofL Cardinal Shuttle",
+            "dir0": "",
             "dir1": "Inbound"
       },
       {
