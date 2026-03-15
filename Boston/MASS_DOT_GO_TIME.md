@@ -60,9 +60,36 @@ Example response:
   - `massdotTrafficLinksUrl` – full URL to links.json.  
   - `massdotApiKey` – kept for reference only; not sent from the client.
 
+## What we're missing: geometry
+
+The map can only draw **real** road segments if each link has **coordinates**. Right now the API gives status/travel time but no location.
+
+### What to get from the API (any one of these per link)
+
+The frontend already supports these shapes. Add **one** of them to each item in `link-status-list`:
+
+| Shape | Example | Notes |
+|-------|---------|--------|
+| **Start/end lat-lon** | `"start_lon": -71.05, "start_lat": 42.35, "end_lon": -71.04, "end_lat": 42.36` | Easiest: two points per segment. |
+| **GeoJSON-style** | `"geometry": { "type": "LineString", "coordinates": [[-71.05, 42.35], [-71.04, 42.36], ...] }` | Full centerline; multiple points per link. |
+| **Flat arrays** | `"coordinates": [[-71.05, 42.35], [-71.04, 42.36]]` or `"points": [...]` | Same idea as geometry.coordinates. |
+| **Alternate names** | `"from_lng", "from_lat", "to_lng", "to_lat"` | Same as start/end, different key names. |
+
+Coordinates are **[longitude, latitude]** (e.g. Boston ≈ -71.06, 42.36).
+
+### Where to get it
+
+- **MetroFeed traffic API** (`traffic-api.metrofeedus.com`): If you control this backend, add one of the fields above to each link (e.g. from your own link geometry DB or from MassDOT).
+- **MassDOT Go Time** ([data-api.massgotime.com](https://data-api.massgotime.com/)): Check their docs or support for a **link geometry** endpoint or a reference file that maps `link-id` to coordinates. Some RTTIS systems expose geometry in a separate feed or in extended fields.
+- **Static file**: A one-time export of `link-id` → geometry (e.g. `links-geometry.json`) that the frontend or your proxy merges with the live link-status list.
+
+Until geometry is available, the app uses **synthetic geometry** (a grid of short segments around Boston) so all links still show and are colored by status.
+
+---
+
 ## Resuming work
 
 1. To change the endpoint: set `massdotTrafficLinksUrl` in `city-config.js`.
 2. If the JSON shape changes, update `toTrafficLinkArray()` to read the new array key (e.g. `link-status-list`).
-3. If the API adds geometry per link, extend `getLinkCoordinates()` in `home.html` to read it so links can be drawn.
+3. If the API adds geometry per link, `getLinkCoordinates()` in `home.html` already reads the shapes above; no code change needed unless you use a new field name.
 4. Test: Menu → **Traffic Overlay** on the Boston map; console should show `[fetchMassDOTTrafficData] Fetching ...` and `Links: N items`.

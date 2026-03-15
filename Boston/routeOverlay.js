@@ -1897,21 +1897,24 @@ function attachRouteToMap(map, routeId, directionId, options) {
             console.log(`[attachRouteToMap] Sample buses:`, sampleBuses.map(v => ({ route: v.routeNumber, dir: v.direction, vehicle: v.vehicleID })));
           }
           
+          // Normalize route for comparison: "7" and "07" and 7 should match
+          const normalizeRouteId = (r) => {
+            const s = String(r || '').trim();
+            const digits = s.replace(/[^0-9]/g, '');
+            return digits ? { str: s, numeric: digits.replace(/^0+/, '') || digits } : { str: s, numeric: '' };
+          };
+          const routeNorm = normalizeRouteId(routeNum);
+          const routeDataNorm = routeDataRouteId ? normalizeRouteId(routeDataRouteId) : null;
+          
           const routeBuses = allBuses.filter(v => {
-            // Try multiple matching strategies:
-            // 1. Exact match with routeId parameter
+            const vNorm = normalizeRouteId(v.routeNumber);
+            // 1. Exact string match
             const exactMatch = String(v.routeNumber) === routeNum;
-            
-            // 2. Match with routeData.route_id if available
-            const routeIdMatch = routeDataRouteId && String(v.routeNumber) === String(routeDataRouteId);
-            
-            // 3. Extract numeric part from route IDs for comparison
-            // MBTA route IDs might be "7", "7-0", "Red", etc.
-            const routeNumClean = routeNum.replace(/[^0-9]/g, ''); // Extract digits only
-            const vRouteNumClean = String(v.routeNumber).replace(/[^0-9]/g, ''); // Extract digits only
-            const numericMatch = routeNumClean && vRouteNumClean && routeNumClean === vRouteNumClean;
-            
-            // 4. String match as fallback
+            // 2. Match with routeData.route_id
+            const routeIdMatch = routeDataNorm && vNorm.str === routeDataNorm.str;
+            // 3. Numeric match: "7", "07", 7 all match
+            const numericMatch = routeNorm.numeric && vNorm.numeric && routeNorm.numeric === vNorm.numeric;
+            // 4. Fallback string match
             const stringMatch = String(v.routeNumber) === String(routeId);
             
             const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
@@ -1996,7 +1999,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           // Create markers for buses (matching "All Buses Mode" style)
           // Note: Vehicles are deduped by vehicleId, so no duplicates even with multiple shapes
           v3VehiclesForMarkers.forEach(bus => {
-            if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+            if (!bus.latitude || !bus.longitude) return;
+            const blockId = bus.blockID || bus.vehicleID || '';
+            if (!blockId) return;
             
             // Get occupancy from vehicleInfo if available
             const occupancy = bus.occupancy || 
