@@ -1148,7 +1148,11 @@
     <div style="background: #2a2a2a; color: #ccc; padding: 10px 12px; border-radius: 4px; margin-bottom: 1rem; border-left: 2px solid #1E90FF; border-top: none; border-right: none; border-bottom: none;">
       <div style="font-weight: 500; margin-bottom: 4px; font-size: 12px; color: #aaa;">Trip Planning (Beta)</div>
       <div style="font-size: 11px; line-height: 1.4; color: #999;">Routes and timing are actively being refined.</div>
-      <div style="font-size: 11px; line-height: 1.4; color: #999; margin-top: 4px;">See something off? Tap <span style="color: #1E90FF; text-decoration: underline; cursor: pointer;" onclick="document.querySelector('footer a[href*=\"problem\"]')?.click()">Report a Problem</span> — it helps us improve faster.</div>
+    <div style="font-size: 11px; line-height: 1.4; color: #999; margin-top: 4px;">
+      See something off? Tap
+      <a href="report.html" style="color: #1E90FF; text-decoration: underline;">Report a Problem</a>
+      - it helps us improve faster.
+    </div>
     </div>
     <div id="itinList" style="text-align: left; margin-top: 1rem;">
       <!-- Trip itineraries will be rendered here -->
@@ -6672,11 +6676,11 @@
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
       routeHeader.innerHTML = `<span>${route.label || route.id || 'Route'}</span>`;
-      routeHeader.onclick = () => toggleRouteDirections(route.id);
       
       const directionsDiv = document.createElement('div');
       directionsDiv.id = `directions-${route.id}`;
-      directionsDiv.style.cssText = 'display: none; margin-top: 0.5rem;';
+      // Show directions expanded by default so routes render as a visible list
+      directionsDiv.style.cssText = 'display: block; margin-top: 0.5rem;';
       
       if (route.dir0) {
         const dir0BtnWrapper = document.createElement('div');
@@ -6712,6 +6716,8 @@
       routeDiv.appendChild(directionsDiv);
       routeList.appendChild(routeDiv);
     });
+    
+    console.log('[showBusCategory] category:', category, 'routesToShow:', routesToShow.length, 'rendered:', routeList.children.length);
     
     // Setup search
     if (searchInput) {
