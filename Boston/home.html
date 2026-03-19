@@ -5561,8 +5561,9 @@
   // Use window.showRoute instead
 
   // === SECTION: MASS DOT TRAFFIC OVERLAY ===
-  // MassDOT Go Time: single endpoint returns link-status-list (travel-time, delay, link-name, etc.)
-  const MASSDOT_TRAFFIC_LINKS_URL = CITY_CONFIG.massdotTrafficLinksUrl || "https://traffic-api.metrofeedus.com/traffic/links.json";
+  // Static JSON endpoints (no auth, no MassDOT direct calls)
+  const TRAFFIC_INVENTORY_LINKS_URL = 'https://traffic-api.metrofeedus.com/traffic/inventory_links.json';
+  const TRAFFIC_LINKS_STATUS_URL = 'https://traffic-api.metrofeedus.com/traffic/links_status.json';
   
   let trafficLayerActive = false;
   let trafficLayers = {
@@ -5577,40 +5578,120 @@
   };
   
   /**
-   * Normalize API response to link array. links.json returns { "link-status-list": [ ... ] }.
+   * Build a lookup map from links_status.json keyed by link-id.
+   * Accepts: { "link-status-list": [ {...} ] } or { "links": { "id": {...} } } or array.
    */
-  function toTrafficLinkArray(raw) {
-    if (raw == null) return null;
-    if (Array.isArray(raw)) return raw;
-    if (typeof raw !== 'object') return null;
-    const arr = raw['link-status-list'] ?? raw.links ?? raw.data ?? raw.items ?? raw.results;
-    return Array.isArray(arr) ? arr : null;
+  function buildStatusLookup(statusRaw) {
+    const map = new Map();
+    if (!statusRaw || typeof statusRaw !== 'object') return map;
+    let arr = statusRaw['link-status-list'] ?? statusRaw.links ?? statusRaw.data ?? statusRaw.items ?? statusRaw.results;
+    if (Array.isArray(arr)) {
+      arr.forEach(item => {
+        const id = item['link-id'] ?? item.link_id ?? item.id;
+        if (id != null) map.set(String(id), item);
+      });
+    } else if (arr && typeof arr === 'object' && !Array.isArray(arr)) {
+      Object.keys(arr).forEach(id => { map.set(String(id), arr[id]); });
+    }
+    return map;
   }
   
   /**
-   * Fetch traffic link data from MetroFeed traffic API (single URL).
-   * Response: { "link-status-list": [ { "link-id", "link-name", "travel-time", "delay", "link-status", ... } ] }
-   * travel-time is in seconds; no geometry in response (links are drawn only if geometry is provided elsewhere).
+   * Get link list from inventory_links.json. Supports "link-list", "links", "data", etc.
+   */
+  function getInventoryLinkList(inventoryRaw) {
+    if (!inventoryRaw || typeof inventoryRaw !== 'object') return [];
+    const list = inventoryRaw['link-list'] ?? inventoryRaw.links ?? inventoryRaw.data ?? inventoryRaw.items ?? inventoryRaw.results;
+    return Array.isArray(list) ? list : [];
+  }
+  
+  /**
+   * Extract LineString coordinates from an inventory link (geometry, coordinates, points, or start/end).
+   */
+  function getInventoryGeometry(link) {
+    const g = link.geometry;
+    if (g && Array.isArray(g.coordinates)) return g.coordinates;
+    if (Array.isArray(link.coordinates)) return link.coordinates;
+    if (Array.isArray(link.points)) return link.points;
+    if (link.start_lon != null && link.start_lat != null && link.end_lon != null && link.end_lat != null) {
+      return [[link.start_lon, link.start_lat], [link.end_lon, link.end_lat]];
+    }
+    if (link.from_lng != null && link.from_lat != null && link.to_lng != null && link.to_lat != null) {
+      return [[link.from_lng, link.from_lat], [link.to_lng, link.to_lat]];
+    }
+    return null;
+  }
+  
+  /**
+   * Derive status string for color from delay / travel-time-increase.
+   * Red: heavy delay, Orange: moderate, Green: minimal/no delay.
+   */
+  function statusFromDelayOrIncrease(delay, travelTimeIncrease) {
+    const d = typeof delay === 'number' ? delay : (typeof delay === 'string' ? parseFloat(delay) : NaN);
+    const t = typeof travelTimeIncrease === 'number' ? travelTimeIncrease : (typeof travelTimeIncrease === 'string' ? parseFloat(travelTimeIncrease) : NaN);
+    const value = (!isNaN(d) ? d : 0) || (!isNaN(t) ? t : 0);
+    // Treat as seconds if large (e.g. > 60); else as minutes
+    const minutes = value > 120 ? value / 60 : value;
+    if (minutes >= 5) return 'slow';      // red
+    if (minutes >= 2) return 'moderate';   // orange
+    return 'free';                          // green
+  }
+  
+  /**
+   * Fetch traffic data from the two static JSON endpoints, merge inventory (geometry) with status (delay/travel-time-increase), and return links as GeoJSON-ready features.
+   * No authentication; only fetches inventory_links.json and links_status.json.
    */
   async function fetchMassDOTTrafficData() {
-    if (!MASSDOT_TRAFFIC_LINKS_URL) {
-      console.error('[fetchMassDOTTrafficData] massdotTrafficLinksUrl not configured');
-      alert('Traffic data is not available. Endpoint not configured.');
-      return null;
-    }
-    
     try {
-      console.log('[fetchMassDOTTrafficData] Fetching', MASSDOT_TRAFFIC_LINKS_URL);
-      const res = await fetch(MASSDOT_TRAFFIC_LINKS_URL);
-      if (!res.ok) {
-        console.error('[fetchMassDOTTrafficData] Failed:', res.status, res.statusText);
+      console.log('[fetchMassDOTTrafficData] Fetching inventory and status...');
+      const [invRes, statusRes] = await Promise.all([
+        fetch(TRAFFIC_INVENTORY_LINKS_URL),
+        fetch(TRAFFIC_LINKS_STATUS_URL)
+      ]);
+      if (!invRes.ok) {
+        console.error('[fetchMassDOTTrafficData] Inventory failed:', invRes.status, invRes.statusText);
         return null;
       }
-      const raw = await res.json();
-      trafficData.links = toTrafficLinkArray(raw);
+      if (!statusRes.ok) {
+        console.error('[fetchMassDOTTrafficData] Status failed:', statusRes.status, statusRes.statusText);
+        return null;
+      }
+      const inventoryRaw = await invRes.json();
+      const statusRaw = await statusRes.json();
+      
+      const statusByLinkId = buildStatusLookup(statusRaw);
+      const linkList = getInventoryLinkList(inventoryRaw);
+      console.log('[fetchMassDOTTrafficData] Inventory links:', linkList.length, 'Status entries:', statusByLinkId.size);
+      
+      const mergedLinks = [];
+      for (let i = 0; i < linkList.length; i++) {
+        const inv = linkList[i];
+        const linkId = inv['link-id'] ?? inv.link_id ?? inv.id ?? i;
+        const statusObj = statusByLinkId.get(String(linkId));
+        const coordinates = getInventoryGeometry(inv);
+        if (!coordinates || coordinates.length < 2) continue;
+        
+        const delay = statusObj != null ? (statusObj.delay ?? statusObj['travel-time-increase']) : null;
+        const travelTimeIncrease = statusObj != null ? (statusObj['travel-time-increase'] ?? statusObj.delay) : null;
+        const speedAverage = statusObj != null ? (statusObj['speed-average'] ?? statusObj.speed_average ?? statusObj.speed) : null;
+        const statusStr = statusFromDelayOrIncrease(delay, travelTimeIncrease);
+        
+        mergedLinks.push({
+          'link-id': linkId,
+          'link-name': inv['link-name'] ?? inv.name ?? inv.description ?? statusObj?.['link-name'] ?? statusObj?.name ?? '',
+          geometry: { type: 'LineString', coordinates: coordinates },
+          status: statusStr,
+          delay: delay,
+          'travel-time-increase': travelTimeIncrease,
+          'speed-average': speedAverage,
+          'travel-time': statusObj?.['travel-time'] ?? statusObj?.travel_time ?? null
+        });
+      }
+      
+      trafficData.links = mergedLinks;
       trafficData.routes = null;
       trafficData.signs = null;
-      console.log('[fetchMassDOTTrafficData] Links:', trafficData.links?.length ?? 0, 'items');
+      console.log('[fetchMassDOTTrafficData] Merged links:', trafficData.links.length);
       return trafficData;
     } catch (error) {
       console.error('[fetchMassDOTTrafficData] Error:', error);
