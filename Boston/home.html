@@ -1761,57 +1761,18 @@
           // Priority: route_name field > route_long_name (cleaned) > route_title (cleaned) > route_id
           let routeLabel;
           
-          // Shuttles in routes_index.js often reuse the same route_number (e.g. "Blue Line Shuttle")
-          // while route_id uniquely differentiates the shuttle pattern. Include the route_id suffix
-          // so the bus/shuttle modal doesn't show repeated identical labels.
-          const routeIdStrForLabel = String(route.route_id);
-          const routeNumberStrForLabel = route.route_number != null ? String(route.route_number) : '';
-          if (routeIdStrForLabel.startsWith('Shuttle-') && routeNumberStrForLabel.toLowerCase().includes('shuttle')) {
-            let suffix = routeIdStrForLabel.replace(/^Shuttle-/, '');
-            // Add spaces between camel-cased tokens for readability (e.g., AirportGovernment -> Airport Government)
-            suffix = suffix.replace(/([a-z])([A-Z])/g, '$1 $2');
-            routeLabel = `${routeNumberStrForLabel} - ${suffix}`;
-          } else if (route.route_name) {
-            // If route_name exists (e.g., "Brightheart Parkway"), format as "19 - Brightheart Parkway"
-            // route_name should NOT contain destination info
+          // Build route label (match boston backup behavior)
+          // Priority: route_name field > route_long_name > route_title (cleaned) > route_id
+          if (route.route_name) {
             routeLabel = `${route.route_number || route.route_id} - ${route.route_name}`;
           } else if (route.route_long_name) {
-            // route_long_name often contains destination info like "Route 7 to Downtown" or "Route 7 - Downtown via Main St"
-            // Strip destination patterns: " to X", " - X", " via X", etc.
-            let cleanedName = route.route_long_name;
-            
-            // Remove common destination patterns
-            // "Route 7 to Downtown Crossing" -> "Route 7"
-            // "Route 7 - Downtown Crossing via Main St" -> "Route 7"
-            // "Route 7 via Main St" -> "Route 7"
-            cleanedName = cleanedName.replace(/\s+(to|via|through)\s+.*$/i, '');
-            cleanedName = cleanedName.replace(/\s*-\s*[^-]*$/, ''); // Remove everything after last " - "
-            
-            // If we still have a route number prefix, use it; otherwise use route_number/route_id
-            const routeNumber = route.route_number || route.route_id;
-            if (cleanedName.toLowerCase().includes('route')) {
-              // Extract route number from cleaned name if it contains "Route X"
-              const match = cleanedName.match(/route\s+(\d+)/i);
-              if (match) {
-                routeLabel = match[1]; // Just the number
+            routeLabel = `${route.route_number || route.route_id} - ${route.route_long_name}`;
           } else {
-                routeLabel = routeNumber;
-              }
-            } else {
-              // Use route number with cleaned name (if name is meaningful)
-              routeLabel = cleanedName.trim() ? `${routeNumber} - ${cleanedName.trim()}` : routeNumber;
-            }
-          } else {
-            // Fallback: Extract from route_title (remove direction/destination suffix)
-            // "Route 1 - Outbound" -> "Route 1" -> "1"
+            // Fallback: Extract from route_title (remove direction suffix like "Route 1 - Outbound")
             routeLabel = route.route_title || `${route.route_id}`;
             if (routeLabel.includes(' - ')) {
-              // Remove direction/destination suffix (everything after " - ")
               routeLabel = routeLabel.split(' - ')[0];
             }
-            // Remove "to X", "via X" patterns
-            routeLabel = routeLabel.replace(/\s+(to|via|through)\s+.*$/i, '');
-            // If it's still "Route X", simplify to just "X"
             routeLabel = routeLabel.replace(/^Route\s+/i, '');
           }
           // Ensure we never set a blank label
@@ -6686,7 +6647,6 @@
     // Hide category screen, show list screen
     categoryScreen.style.display = 'none';
     listScreen.style.display = 'flex';
-    routeList.innerHTML = '<em style="color: #1E90FF;">Loading routes...</em>';
     
     // Ensure routes index is loaded before building list (Boston lazy-loading)
     if (CITY_CONFIG.useLazyLoading && window.routeLoader && !window.routeLoader.isRoutesIndexLoaded()) {
@@ -6696,103 +6656,34 @@
         console.warn('[showBusCategory] Routes index load failed:', e);
       }
     }
+    
     initializeBusRoutes();
     
     // Get routes for selected category
     const routesToShow = category === 'bus' ? BUS_ROUTES_REGULAR : BUS_ROUTES_SHUTTLE;
     
-    // Fetch alerts data once (cached) before processing routes
-    let alertsData = [];
-    try {
-      alertsData = await fetchAlertsData();
-    } catch (err) {
-      console.warn('[showBusCategory] Failed to fetch alerts data, continuing without alert badges:', err);
-    }
-    
-    // Load route data for all routes to get terminal stations
-    const routePromises = routesToShow.map(async (route) => {
-      // Get terminal stations for both directions
-      // Silently handle missing directions (some routes only run one way)
-      const [routeData0, routeData1] = await Promise.all([
-        getRouteData(route.id, 0).catch((err) => {
-          // Silently return null for missing directions - this is expected for one-way routes
-          return null;
-        }),
-        getRouteData(route.id, 1).catch((err) => {
-          // Silently return null for missing directions - this is expected for one-way routes
-          return null;
-        })
-      ]);
-      
-      // Get terminal stations (last stop of each direction)
-      let terminal0 = null;
-      let terminal1 = null;
-      
-      if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
-        terminal0 = routeData0.stops[routeData0.stops.length - 1].name || null;
-      }
-      if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
-        terminal1 = routeData1.stops[routeData1.stops.length - 1].name || null;
-      }
-      
-      // Determine Inbound/Outbound labels
-      // Extract direction label from direction_name (e.g., "Inbound" or "Outbound")
-      // If direction_name contains "Inbound" or "Outbound", use that; otherwise default
-      let dir0Label = 'Outbound';
-      let dir1Label = 'Inbound';
-      
-      if (route.dir0) {
-        const dir0Lower = route.dir0.toLowerCase();
-        if (dir0Lower.includes('inbound')) {
-          dir0Label = 'Inbound';
-        } else if (dir0Lower.includes('outbound')) {
-          dir0Label = 'Outbound';
-        } else {
-          dir0Label = route.dir0; // Use as-is if it doesn't contain Inbound/Outbound
-        }
-      }
-      
-      if (route.dir1) {
-        const dir1Lower = route.dir1.toLowerCase();
-        if (dir1Lower.includes('inbound')) {
-          dir1Label = 'Inbound';
-        } else if (dir1Lower.includes('outbound')) {
-          dir1Label = 'Outbound';
-        } else {
-          dir1Label = route.dir1; // Use as-is if it doesn't contain Inbound/Outbound
-        }
-      }
-      
-      // Format direction buttons: "Inbound to [terminal]" or "Outbound to [terminal]"
-      const dir0Text = terminal0 ? `${dir0Label} to ${terminal0}` : dir0Label;
-      const dir1Text = terminal1 ? `${dir1Label} to ${terminal1}` : dir1Label;
-      
+    // Clear and populate route list (match boston backup: sync render)
+    routeList.innerHTML = '';
+    routesToShow.forEach(route => {
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
       
-      // Route header: Just the route number/name (no destination)
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
-      
-      // Alert badges removed - alerts now shown via indicator when route is selected
-      const primaryDirText = terminal0 ? dir0Text : (terminal1 ? dir1Text : (route.dir0 || route.dir1 || ''));
-      routeHeader.innerHTML = `
-        <span>${route.label || route.id || 'Route'}</span>
-        <span style="font-size: 0.85rem; opacity: 0.8; text-align: right; margin-left: 0.5rem; white-space: normal;">${primaryDirText}</span>
-      `;
+      routeHeader.innerHTML = `<span>${route.label || route.id || 'Route'}</span>`;
       routeHeader.onclick = () => toggleRouteDirections(route.id);
       
       const directionsDiv = document.createElement('div');
       directionsDiv.id = `directions-${route.id}`;
       directionsDiv.style.cssText = 'display: none; margin-top: 0.5rem;';
       
-      if (route.dir0 || terminal0) {
+      if (route.dir0) {
         const dir0BtnWrapper = document.createElement('div');
         dir0BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;';
         
         const dir0Btn = document.createElement('button');
-        dir0Btn.textContent = `➡ ${dir0Text}`;
+        dir0Btn.textContent = `➡ ${route.dir0}`;
         dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRoute(route.id, 0);
         
@@ -6802,12 +6693,12 @@
         directionsDiv.appendChild(dir0BtnWrapper);
       }
       
-      if (route.dir1 || terminal1) {
+      if (route.dir1) {
         const dir1BtnWrapper = document.createElement('div');
         dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;';
         
         const dir1Btn = document.createElement('button');
-        dir1Btn.textContent = `⬅ ${dir1Text}`;
+        dir1Btn.textContent = `⬅ ${route.dir1}`;
         dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir1Btn.onclick = () => selectRoute(route.id, 1);
         
@@ -6819,30 +6710,7 @@
       
       routeDiv.appendChild(routeHeader);
       routeDiv.appendChild(directionsDiv);
-      return routeDiv;
-    });
-    
-    // Wait for all routes to load, then populate the list
-    // Use Promise.allSettled to ensure all routes render even if some fail
-    const routeResults = await Promise.allSettled(routePromises);
-    routeList.innerHTML = '';
-    routeResults.forEach((result, index) => {
-      if (result.status === 'fulfilled' && result.value) {
-        routeList.appendChild(result.value);
-      } else {
-        // Log error but continue rendering other routes
-        const route = routesToShow[index];
-        console.warn(`[showBusCategory] Failed to load route ${route.id}:`, result.reason);
-        // Still create a basic route entry even if data loading failed
-        const routeDiv = document.createElement('div');
-        routeDiv.className = 'route-entry-modal';
-        routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
-        const routeHeader = document.createElement('div');
-        routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem;';
-        routeHeader.textContent = route.label || route.id || 'Route';
-        routeDiv.appendChild(routeHeader);
       routeList.appendChild(routeDiv);
-      }
     });
     
     // Setup search
