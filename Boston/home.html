@@ -5597,22 +5597,30 @@
   }
   
   /**
-   * Get link list from inventory_links.json. Supports "link-list", "links", "data", etc.
+   * Get link list from inventory_links.json. Supports "link-inventory-list", "link-list", "links", "data", etc.
    */
   function getInventoryLinkList(inventoryRaw) {
     if (!inventoryRaw || typeof inventoryRaw !== 'object') return [];
-    const list = inventoryRaw['link-list'] ?? inventoryRaw.links ?? inventoryRaw.data ?? inventoryRaw.items ?? inventoryRaw.results;
+    const list = inventoryRaw['link-inventory-list'] ?? inventoryRaw['link-list'] ?? inventoryRaw.links ?? inventoryRaw.data ?? inventoryRaw.items ?? inventoryRaw.results;
     return Array.isArray(list) ? list : [];
   }
   
   /**
-   * Extract LineString coordinates from an inventory link (geometry, coordinates, points, or start/end).
+   * Extract LineString coordinates from an inventory link.
+   * Supports: extended-properties.geometry (API format), geometry.coordinates, coordinates, points, or start/end.
    */
   function getInventoryGeometry(link) {
+    const ext = link['extended-properties'];
+    if (ext && Array.isArray(ext.geometry) && ext.geometry.length >= 2) return ext.geometry;
     const g = link.geometry;
     if (g && Array.isArray(g.coordinates)) return g.coordinates;
     if (Array.isArray(link.coordinates)) return link.coordinates;
     if (Array.isArray(link.points)) return link.points;
+    const begin = link['link-begin-node-location'];
+    const end = link['link-end-node-location'];
+    if (begin && end && typeof begin.latitude === 'number' && typeof begin.longitude === 'number' && typeof end.latitude === 'number' && typeof end.longitude === 'number') {
+      return [[begin.longitude / 1e6, begin.latitude / 1e6], [end.longitude / 1e6, end.latitude / 1e6]];
+    }
     if (link.start_lon != null && link.start_lat != null && link.end_lon != null && link.end_lat != null) {
       return [[link.start_lon, link.start_lat], [link.end_lon, link.end_lat]];
     }
