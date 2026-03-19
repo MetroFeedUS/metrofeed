@@ -1761,7 +1761,17 @@
           // Priority: route_name field > route_long_name (cleaned) > route_title (cleaned) > route_id
           let routeLabel;
           
-          if (route.route_name) {
+          // Shuttles in routes_index.js often reuse the same route_number (e.g. "Blue Line Shuttle")
+          // while route_id uniquely differentiates the shuttle pattern. Include the route_id suffix
+          // so the bus/shuttle modal doesn't show repeated identical labels.
+          const routeIdStrForLabel = String(route.route_id);
+          const routeNumberStrForLabel = route.route_number != null ? String(route.route_number) : '';
+          if (routeIdStrForLabel.startsWith('Shuttle-') && routeNumberStrForLabel.toLowerCase().includes('shuttle')) {
+            let suffix = routeIdStrForLabel.replace(/^Shuttle-/, '');
+            // Add spaces between camel-cased tokens for readability (e.g., AirportGovernment -> Airport Government)
+            suffix = suffix.replace(/([a-z])([A-Z])/g, '$1 $2');
+            routeLabel = `${routeNumberStrForLabel} - ${suffix}`;
+          } else if (route.route_name) {
             // If route_name exists (e.g., "Brightheart Parkway"), format as "19 - Brightheart Parkway"
             // route_name should NOT contain destination info
             routeLabel = `${route.route_number || route.route_id} - ${route.route_name}`;
@@ -6766,7 +6776,11 @@
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
       
       // Alert badges removed - alerts now shown via indicator when route is selected
-      routeHeader.innerHTML = `<span>${route.label || route.id || 'Route'}</span>`;
+      const primaryDirText = terminal0 ? dir0Text : (terminal1 ? dir1Text : (route.dir0 || route.dir1 || ''));
+      routeHeader.innerHTML = `
+        <span>${route.label || route.id || 'Route'}</span>
+        <span style="font-size: 0.85rem; opacity: 0.8; text-align: right; margin-left: 0.5rem; white-space: normal;">${primaryDirText}</span>
+      `;
       routeHeader.onclick = () => toggleRouteDirections(route.id);
       
       const directionsDiv = document.createElement('div');
