@@ -6666,46 +6666,65 @@
     // Get routes for selected category
     const routesToShow = category === 'bus' ? BUS_ROUTES_REGULAR : BUS_ROUTES_SHUTTLE;
     
-    // Clear and populate route list (match boston backup: sync render)
-    routeList.innerHTML = '';
-    routesToShow.forEach(route => {
+    routeList.innerHTML = '<div style="color: #1E90FF; padding: 1rem; text-align: center;">Loading routes...</div>';
+    const routePromises = routesToShow.map(async (route) => {
+      const [routeData0, routeData1] = await Promise.all([
+        getRouteData(route.id, 0).catch(() => null),
+        getRouteData(route.id, 1).catch(() => null)
+      ]);
+      
+      let terminal0 = 'Unknown';
+      let terminal1 = 'Unknown';
+      if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
+        terminal0 = routeData0.stops[0].name || 'Unknown';
+        terminal1 = routeData0.stops[routeData0.stops.length - 1].name || 'Unknown';
+      } else if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
+        terminal0 = routeData1.stops[routeData1.stops.length - 1].name || 'Unknown';
+        terminal1 = routeData1.stops[0].name || 'Unknown';
+      }
+      
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
       
+      const routeLabel = `${route.label || route.id || 'Route'} ${terminal0} to ${terminal1}`;
       const routeHeader = document.createElement('div');
-      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
-      routeHeader.innerHTML = `<span>${route.label || route.id || 'Route'}</span>`;
+      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;';
+      routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = 'rgba(30, 144, 255, 0.1)';
+      routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
       const directionsDiv = document.createElement('div');
       directionsDiv.id = `directions-${route.id}`;
-      // Show directions expanded by default so routes render as a visible list
-      directionsDiv.style.cssText = 'display: block; margin-top: 0.5rem;';
+      directionsDiv.style.cssText = 'display: none; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(30, 144, 255, 0.3);';
+      routeHeader.onclick = () => {
+        const isExpanded = directionsDiv.style.display !== 'none';
+        directionsDiv.style.display = isExpanded ? 'none' : 'flex';
+        routeHeader.querySelector('span:last-child').textContent = isExpanded ? '▼' : '▲';
+      };
       
-      if (route.dir0) {
+      if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
+        const dir0Terminal = routeData0.stops[routeData0.stops.length - 1].name;
         const dir0BtnWrapper = document.createElement('div');
-        dir0BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;';
-        
+        dir0BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
         const dir0Btn = document.createElement('button');
-        dir0Btn.textContent = `➡ ${route.dir0}`;
+        dir0Btn.textContent = `➡ ${dir0Terminal}`;
         dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRoute(route.id, 0);
-        
         const star0Btn = createFavoriteStar(route.id, 0, route.label);
         dir0BtnWrapper.appendChild(dir0Btn);
         dir0BtnWrapper.appendChild(star0Btn);
         directionsDiv.appendChild(dir0BtnWrapper);
       }
       
-      if (route.dir1) {
+      if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
+        const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
         const dir1BtnWrapper = document.createElement('div');
-        dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;';
-        
+        dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
         const dir1Btn = document.createElement('button');
-        dir1Btn.textContent = `⬅ ${route.dir1}`;
+        dir1Btn.textContent = `⬅ ${dir1Terminal}`;
         dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir1Btn.onclick = () => selectRoute(route.id, 1);
-        
         const star1Btn = createFavoriteStar(route.id, 1, route.label);
         dir1BtnWrapper.appendChild(dir1Btn);
         dir1BtnWrapper.appendChild(star1Btn);
@@ -6714,10 +6733,19 @@
       
       routeDiv.appendChild(routeHeader);
       routeDiv.appendChild(directionsDiv);
-      routeList.appendChild(routeDiv);
+      return routeDiv;
     });
     
-    console.log('[showBusCategory] category:', category, 'routesToShow:', routesToShow.length, 'rendered:', routeList.children.length);
+    const routeResults = await Promise.allSettled(routePromises);
+    routeList.innerHTML = '';
+    routeResults.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        routeList.appendChild(result.value);
+      } else {
+        const route = routesToShow[index];
+        console.warn(`[showBusCategory] Failed to load route ${route.id}:`, result.reason);
+      }
+    });
     
     // Setup search
     if (searchInput) {
