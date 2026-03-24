@@ -137,7 +137,7 @@ const ROUTES = {
             "id": "99",
             "label": "99 \u2013 UPS West Louisville",
             "dir0": "Outbound",
-            "dir1": ""
+            "dir1": "Inbound"
       }
 ],
     railRoutes: []
