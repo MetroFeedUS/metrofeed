@@ -1831,6 +1831,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
       const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
       const apiKey = options.apiKey || null;
+      const disableGtfsRt = options.disableGtfsRt ?? (window.CITY_CONFIG && window.CITY_CONFIG.disableGtfsRt) ?? false;
       
       async function fetchAndDisplayBuses() {
         try {
@@ -1839,7 +1840,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           console.log('[attachRouteToMap] fetchAndDisplayBuses called for route:', routeId, 'direction:', directionId);
           console.log('[attachRouteToMap] busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
           
-          if (busApiType === 'mbta-gtfs-rt' && gtfsRtUrl) {
+          if (busApiType === 'mbta-gtfs-rt' && gtfsRtUrl && !disableGtfsRt) {
             // MBTA GTFS-RT feed
             console.log('[attachRouteToMap] Fetching MBTA GTFS-RT feed:', gtfsRtUrl);
             const res = await fetch(gtfsRtUrl);
@@ -1874,8 +1875,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
               console.warn('[attachRouteToMap]   3. There was a parsing error');
             }
           } else {
-            console.warn('[attachRouteToMap] MBTA GTFS-RT not configured. busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
-            return;
+            if (busApiType === 'mbta-gtfs-rt' && disableGtfsRt) {
+              console.log('[attachRouteToMap] GTFS-RT disabled; using V3 vehicles only');
+            } else {
+              console.warn('[attachRouteToMap] MBTA GTFS-RT not configured. busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
+            }
           }
           
           // Filter buses for this route and direction
@@ -1929,7 +1933,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           
           // V3 Fallback: If GTFS-RT parsed vehicles but none matched route+direction
           const totalParsedVehicles = allBuses.length;
-          if (busApiType === 'mbta-gtfs-rt' && totalParsedVehicles > 0 && routeBuses.length === 0) {
+          if (!disableGtfsRt && busApiType === 'mbta-gtfs-rt' && totalParsedVehicles > 0 && routeBuses.length === 0) {
             console.warn(`[attachRouteToMap] GTFS-RT parsed ${totalParsedVehicles} vehicles but 0 matched route "${routeNum}" direction ${directionId}. Trying V3 fallback...`);
             try {
               // Use routeNum (already defined in this scope from line 1434)
@@ -1974,7 +1978,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           // This ensures no duplicate vehicle markers even when multiple shapes exist for the route
           // Vehicles are keyed by vehicleId, so duplicates are naturally prevented
           //
-          // For MBTA V3: Fetch V3 vehicles for bus markers (instead of GTFS-RT)
+          // For MBTA V3: Fetch V3 vehicles for bus markers (primary source)
           let v3VehiclesForMarkers = [];
           if (busApiType === 'mbta-gtfs-rt') {
             try {

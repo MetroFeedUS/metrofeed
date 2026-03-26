@@ -139,6 +139,8 @@ const CITIES = {
     
     // Bus API Type
     busApiType: "mbta-gtfs-rt",
+    // Disable GTFS-RT fetching/parsing (V3 is the primary source)
+    disableGtfsRt: true,
     
     // GTFS-RT endpoints (proxied through VPS to avoid CORS)
     gtfsRtUrl: "https://maps.metrofeedus.com/api/mbta/VehiclePositions.pb",
