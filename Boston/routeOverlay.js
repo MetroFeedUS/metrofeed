@@ -225,17 +225,33 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
 async function fetchMBTAV3Vehicles(routeId, directionId = null) {
   const routeParam = encodeURIComponent(String(routeId));
   const url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeParam}`;
+  const debugV3 = true;
+  const makeReqId = () => `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
 
   const attemptFetch = async (timeoutMs) => {
+    const reqId = makeReqId();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     const startedAt = Date.now();
     try {
-      console.log('[MBTA V3] Fetching vehicles...', { routeId, directionId, timeoutMs, url });
+      if (debugV3) {
+        console.log('[MBTA V3] Fetch start', { reqId, routeId, directionId, timeoutMs, url });
+      }
       const response = await fetch(url, { signal: controller.signal });
       const elapsedMs = Date.now() - startedAt;
-      console.log('[MBTA V3] Vehicles response received', { routeId, directionId, status: response.status, elapsedMs });
-      return { response, elapsedMs };
+      if (debugV3) {
+        let cache = null;
+        try { cache = response.headers.get('cache-control'); } catch (_) {}
+        console.log('[MBTA V3] Response headers', {
+          reqId,
+          status: response.status,
+          statusText: response.statusText,
+          elapsedMs,
+          contentType: response.headers.get('content-type'),
+          cacheControl: cache
+        });
+      }
+      return { response, elapsedMs, reqId };
     } finally {
       clearTimeout(timeout);
     }
@@ -256,12 +272,35 @@ async function fetchMBTAV3Vehicles(routeId, directionId = null) {
     }
 
     const response = responseInfo.response;
+    const reqId = responseInfo.reqId;
     
     if (!response.ok) {
       throw new Error(`V3 vehicles HTTP ${response.status}: ${response.statusText}`);
     }
     
-    const data = await response.json();
+    const jsonStart = Date.now();
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonErr) {
+      // Try to capture some body text to see what we got (HTML error page, gateway timeout, etc.)
+      let preview = '';
+      try {
+        const text = await response.text();
+        preview = String(text || '').slice(0, 400);
+      } catch (_) {}
+      console.warn('[MBTA V3] JSON parse failed', { reqId, routeId, directionId, preview }, jsonErr);
+      throw jsonErr;
+    }
+    if (debugV3) {
+      console.log('[MBTA V3] JSON parsed', { reqId, routeId, directionId, elapsedMs: Date.now() - jsonStart });
+      const keys = data && typeof data === 'object' ? Object.keys(data).slice(0, 20) : [];
+      console.log('[MBTA V3] JSON shape', {
+        reqId,
+        topKeys: keys,
+        dataCount: Array.isArray(data?.data) ? data.data.length : null
+      });
+    }
     const vehicles = [];
     
     if (data.data && Array.isArray(data.data)) {
@@ -290,7 +329,7 @@ async function fetchMBTAV3Vehicles(routeId, directionId = null) {
       });
     }
     
-    console.log('[MBTA V3] Vehicles parsed', { routeId, directionId, count: vehicles.length });
+    console.log('[MBTA V3] Vehicles parsed', { reqId, routeId, directionId, count: vehicles.length });
     return vehicles;
   } catch (error) {
     console.warn('[MBTA V3] Error fetching vehicles:', error);
@@ -1887,6 +1926,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     if (trackBuses && mode === "mainOverlay") {
       const busMarkers = {}; // Store bus markers separately
       let busesFetchInFlight = false;
+      let busesFetchSeq = 0;
       
       // Get API configuration from options or global CITY_CONFIG
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
@@ -1897,19 +1937,29 @@ function attachRouteToMap(map, routeId, directionId, options) {
       async function fetchAndDisplayBuses() {
         if (busesFetchInFlight) {
           // Avoid overlapping V3/GTFS requests (can pile up when upstream is slow)
+          console.log('[attachRouteToMap] Bus fetch skipped (in-flight)', { routeId, directionId, busesFetchSeq });
           return;
         }
+        busesFetchSeq += 1;
+        const seq = busesFetchSeq;
         busesFetchInFlight = true;
         try {
           let allBuses = [];
           
-          console.log('[attachRouteToMap] fetchAndDisplayBuses called for route:', routeId, 'direction:', directionId);
-          console.log('[attachRouteToMap] busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
+          console.log('[attachRouteToMap] fetchAndDisplayBuses start', {
+            seq,
+            routeId,
+            directionId,
+            busApiType,
+            disableGtfsRt,
+            gtfsRtUrl,
+            now: new Date().toISOString()
+          });
           
           // V3-only fast path (GTFS-RT disabled): skip protobuf fetch/parse and any GTFS-RT matching work
           if (busApiType === 'mbta-gtfs-rt' && disableGtfsRt) {
             const routeNum = String(routeId);
-            console.log('[attachRouteToMap] GTFS-RT disabled; fetching V3 vehicles for route:', routeNum, 'direction:', directionId);
+            console.log('[attachRouteToMap] V3-only mode', { seq, routeNum, directionId });
             
             // Remove old bus markers first (so stale markers don't linger if fetch fails)
             Object.keys(busMarkers).forEach(vehicleId => {
@@ -1924,7 +1974,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             let v3VehiclesForMarkers = [];
             try {
+              const t0 = performance.now();
               v3VehiclesForMarkers = await fetchMBTAV3Vehicles(routeNum, directionId);
+              const t1 = performance.now();
+              console.log('[attachRouteToMap] V3 vehicles fetch done', { seq, routeNum, directionId, ms: Math.round(t1 - t0), count: v3VehiclesForMarkers.length });
               console.log(`[attachRouteToMap] Fetched ${v3VehiclesForMarkers.length} V3 vehicles for bus markers`);
             } catch (v3Error) {
               console.warn('[attachRouteToMap] V3 vehicles unavailable:', v3Error);
@@ -2243,6 +2296,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           console.error('[attachRouteToMap] Error fetching buses:', error);
           console.error('[attachRouteToMap] Error stack:', error.stack);
         } finally {
+          console.log('[attachRouteToMap] fetchAndDisplayBuses end', { seq, routeId, directionId });
           busesFetchInFlight = false;
         }
       }
