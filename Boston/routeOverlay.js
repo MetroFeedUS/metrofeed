@@ -1886,6 +1886,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     // ---------- Bus tracking (for mainOverlay mode only) ----------
     if (trackBuses && mode === "mainOverlay") {
       const busMarkers = {}; // Store bus markers separately
+      let busesFetchInFlight = false;
       
       // Get API configuration from options or global CITY_CONFIG
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
@@ -1894,6 +1895,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const disableGtfsRt = options.disableGtfsRt ?? (window.CITY_CONFIG && window.CITY_CONFIG.disableGtfsRt) ?? false;
       
       async function fetchAndDisplayBuses() {
+        if (busesFetchInFlight) {
+          // Avoid overlapping V3/GTFS requests (can pile up when upstream is slow)
+          return;
+        }
+        busesFetchInFlight = true;
         try {
           let allBuses = [];
           
@@ -2236,14 +2242,16 @@ function attachRouteToMap(map, routeId, directionId, options) {
         } catch (error) {
           console.error('[attachRouteToMap] Error fetching buses:', error);
           console.error('[attachRouteToMap] Error stack:', error.stack);
+        } finally {
+          busesFetchInFlight = false;
         }
       }
       
       // Fetch buses immediately
       fetchAndDisplayBuses();
       
-      // Update buses every 15 seconds
-      const busInterval = setInterval(fetchAndDisplayBuses, 15000);
+      // Update buses every 30 seconds (V3 proxy can be slow; avoid stacking requests)
+      const busInterval = setInterval(fetchAndDisplayBuses, 30000);
       overlayElements.intervals.push(busInterval);
       
       // MBTA V3 ETAs: Fetch and display predictions, store in global lookup
