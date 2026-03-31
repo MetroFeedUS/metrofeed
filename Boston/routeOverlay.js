@@ -258,18 +258,9 @@ async function fetchMBTAV3Vehicles(routeId, directionId = null) {
   };
 
   try {
-    // Slow networks / cold proxy can take a while. Try a shorter timeout first, then retry once.
-    let responseInfo;
-    try {
-      responseInfo = await attemptFetch(20000);
-    } catch (e) {
-      if (e && (e.name === 'AbortError' || String(e).includes('AbortError'))) {
-        console.warn('[MBTA V3] Vehicles fetch timed out; retrying once...', { routeId, directionId, url });
-        responseInfo = await attemptFetch(45000);
-      } else {
-        throw e;
-      }
-    }
+    // Fail fast: if proxy hangs, don't block UI.
+    // No retries by design (GTFS-RT emergency fallback can handle outages).
+    const responseInfo = await attemptFetch(5000);
 
     const response = responseInfo.response;
     const reqId = responseInfo.reqId;
@@ -1927,12 +1918,22 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busMarkers = {}; // Store bus markers separately
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
+      let lastEmergencyGtfsRtFallbackAt = 0;
       
       // Get API configuration from options or global CITY_CONFIG
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
       const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
       const apiKey = options.apiKey || null;
       const disableGtfsRt = options.disableGtfsRt ?? (window.CITY_CONFIG && window.CITY_CONFIG.disableGtfsRt) ?? false;
+      const allowEmergencyGtfsRtFallback =
+        options.allowEmergencyGtfsRtFallback ??
+        (window.CITY_CONFIG && window.CITY_CONFIG.allowEmergencyGtfsRtFallback) ??
+        true; // keep map usable if V3 proxy is down
+
+      const isTimeoutAbort = (err) => {
+        if (!err) return false;
+        return err.name === 'AbortError' || String(err).includes('timed out') || String(err).includes('AbortError');
+      };
       
       async function fetchAndDisplayBuses() {
         if (busesFetchInFlight) {
@@ -1982,6 +1983,34 @@ function attachRouteToMap(map, routeId, directionId, options) {
             } catch (v3Error) {
               console.warn('[attachRouteToMap] V3 vehicles unavailable:', v3Error);
               v3VehiclesForMarkers = [];
+
+              // Emergency fallback: V3 proxy can hang for long periods. If allowed, do a single GTFS-RT pull
+              // (throttled) so users still see live vehicles.
+              const now = Date.now();
+              const canFallback =
+                allowEmergencyGtfsRtFallback &&
+                gtfsRtUrl &&
+                isTimeoutAbort(v3Error) &&
+                (now - lastEmergencyGtfsRtFallbackAt) > 120000; // max once per 2 minutes per overlay
+
+              if (canFallback) {
+                lastEmergencyGtfsRtFallbackAt = now;
+                console.warn('[attachRouteToMap] V3 timed out; trying emergency GTFS-RT fallback once', { seq, routeNum, directionId, gtfsRtUrl });
+                try {
+                  const controller = new AbortController();
+                  const timeout = setTimeout(() => controller.abort(), 12000);
+                  const res = await fetch(gtfsRtUrl, { signal: controller.signal });
+                  clearTimeout(timeout);
+                  if (!res.ok) throw new Error(`GTFS-RT HTTP ${res.status}: ${res.statusText}`);
+                  const buffer = await res.arrayBuffer();
+                  const allRt = await parseMBTAGTFSRT(buffer);
+                  const fallback = allRt.filter(v => String(v.routeNumber) === String(routeNum) && v.direction == directionId);
+                  v3VehiclesForMarkers = fallback;
+                  console.warn('[attachRouteToMap] Emergency GTFS-RT fallback vehicles', { seq, routeNum, directionId, count: fallback.length });
+                } catch (rtErr) {
+                  console.warn('[attachRouteToMap] Emergency GTFS-RT fallback failed', rtErr);
+                }
+              }
             }
             
             // Create markers for buses
@@ -2169,26 +2198,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
           // This ensures no duplicate vehicle markers even when multiple shapes exist for the route
           // Vehicles are keyed by vehicleId, so duplicates are naturally prevented
           //
-          // For MBTA V3: Fetch V3 vehicles for bus markers (primary source)
-          let v3VehiclesForMarkers = [];
+          // Live vehicles: GTFS-RT is primary for coordinates/positions.
+          // V3 vehicles is optional enrichment only (do NOT block markers on it).
+          let v3VehiclesForMarkers = routeBuses;
+          let v3ByVehicleId = null;
           if (busApiType === 'mbta-gtfs-rt') {
             try {
-              v3VehiclesForMarkers = await fetchMBTAV3Vehicles(routeNum, directionId);
-              console.log(`[attachRouteToMap] Fetched ${v3VehiclesForMarkers.length} V3 vehicles for bus markers`);
-              
-              // If V3 returns 0 vehicles but we have GTFS-RT vehicles, fall back to GTFS-RT
-              if (v3VehiclesForMarkers.length === 0 && routeBuses.length > 0) {
-                console.log(`[attachRouteToMap] V3 returned 0 vehicles, falling back to ${routeBuses.length} GTFS-RT vehicles`);
-                v3VehiclesForMarkers = routeBuses;
-              }
+              const v3Vehicles = await fetchMBTAV3Vehicles(routeNum, directionId);
+              console.log(`[attachRouteToMap] (Enrichment) Fetched ${v3Vehicles.length} V3 vehicles`);
+              v3ByVehicleId = Object.create(null);
+              v3Vehicles.forEach(v => { if (v && v.vehicleID) v3ByVehicleId[v.vehicleID] = v; });
             } catch (v3Error) {
-              console.warn('[attachRouteToMap] V3 vehicles unavailable, using GTFS-RT vehicles:', v3Error);
-              // Fall back to GTFS-RT vehicles
-              v3VehiclesForMarkers = routeBuses;
+              console.warn('[attachRouteToMap] (Enrichment) V3 vehicles unavailable:', v3Error);
             }
-          } else {
-            // Non-MBTA: use GTFS-RT vehicles
-            v3VehiclesForMarkers = routeBuses;
           }
           
           // Create markers for buses (matching "All Buses Mode" style)
@@ -2199,7 +2221,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
             if (!blockId) return;
             
             // Get occupancy from vehicleInfo if available
-            const occupancy = bus.occupancy || 
+            const v3Enriched = v3ByVehicleId && bus.vehicleID ? v3ByVehicleId[bus.vehicleID] : null;
+            const occupancy = (v3Enriched && v3Enriched.occupancy) || bus.occupancy || 
                             (window.currentRouteETAs && window.currentRouteETAs.vehicleInfo && 
                              window.currentRouteETAs.vehicleInfo[bus.vehicleID]?.occupancy_status) || 
                             null;
