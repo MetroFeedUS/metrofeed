@@ -223,13 +223,36 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
  * @returns {Promise<Array>} Array of vehicles in GTFS-RT format
  */
 async function fetchMBTAV3Vehicles(routeId, directionId = null) {
-  try {
-    const routeParam = encodeURIComponent(String(routeId));
-    const url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeParam}`;
+  const routeParam = encodeURIComponent(String(routeId));
+  const url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeParam}`;
+
+  const attemptFetch = async (timeoutMs) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const startedAt = Date.now();
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      return { response, elapsedMs: Date.now() - startedAt };
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  try {
+    // Slow networks / cold proxy can take a while. Try a shorter timeout first, then retry once.
+    let responseInfo;
+    try {
+      responseInfo = await attemptFetch(20000);
+    } catch (e) {
+      if (e && (e.name === 'AbortError' || String(e).includes('AbortError'))) {
+        console.warn('[MBTA V3] Vehicles fetch timed out; retrying once...', { routeId, directionId, url });
+        responseInfo = await attemptFetch(45000);
+      } else {
+        throw e;
+      }
+    }
+
+    const response = responseInfo.response;
     
     if (!response.ok) {
       throw new Error(`V3 vehicles HTTP ${response.status}: ${response.statusText}`);
