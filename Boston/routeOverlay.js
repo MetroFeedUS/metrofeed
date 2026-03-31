@@ -224,8 +224,12 @@ async function fetchMBTAV3Predictions(routeId, directionId) {
  */
 async function fetchMBTAV3Vehicles(routeId, directionId = null) {
   try {
-    let url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeId}`;
-    const response = await fetch(url);
+    const routeParam = encodeURIComponent(String(routeId));
+    const url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeParam}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
     
     if (!response.ok) {
       throw new Error(`V3 vehicles HTTP ${response.status}: ${response.statusText}`);
@@ -1751,6 +1755,35 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (window.activeRouteOverlayDescriptors) {
           delete window.activeRouteOverlayDescriptors[actualOverlayKey];
         }
+
+        // Keep active route tracking + alert indicator in sync (avoid ghost alerts)
+        try {
+          const baseRouteId = String(routeId).includes('-') ? String(routeId).split('-')[0] : String(routeId);
+          if (window.activeRouteIds && typeof window.activeRouteIds.delete === 'function') {
+            // Only remove if no other overlays still reference this base route
+            const hasOtherOverlays = window.activeRouteOverlays
+              ? Object.keys(window.activeRouteOverlays).some(k => {
+                  const other = String(k).split('-')[0];
+                  return other === baseRouteId;
+                })
+              : false;
+            if (!hasOtherOverlays) {
+              window.activeRouteIds.delete(baseRouteId);
+            }
+          }
+          if (typeof window.updateAlertIndicator === 'function') {
+            window.updateAlertIndicator();
+          }
+          if (window.MapBoundsManager && typeof window.MapBoundsManager.updateForRoutes === 'function') {
+            window.MapBoundsManager.updateForRoutes(
+              window.activeRouteOverlays || {},
+              window.activeRouteOverlayDescriptors || {},
+              { autoFit: false }
+            );
+          }
+        } catch (err) {
+          // Non-fatal: closing overlay should still succeed even if indicator update fails
+        }
       };
       
       // Content wrapper
@@ -1839,6 +1872,78 @@ function attachRouteToMap(map, routeId, directionId, options) {
           
           console.log('[attachRouteToMap] fetchAndDisplayBuses called for route:', routeId, 'direction:', directionId);
           console.log('[attachRouteToMap] busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
+          
+          // V3-only fast path (GTFS-RT disabled): skip protobuf fetch/parse and any GTFS-RT matching work
+          if (busApiType === 'mbta-gtfs-rt' && disableGtfsRt) {
+            const routeNum = String(routeId);
+            console.log('[attachRouteToMap] GTFS-RT disabled; fetching V3 vehicles for route:', routeNum, 'direction:', directionId);
+            
+            // Remove old bus markers first (so stale markers don't linger if fetch fails)
+            Object.keys(busMarkers).forEach(vehicleId => {
+              const marker = busMarkers[vehicleId];
+              if (marker && typeof marker.remove === "function") {
+                marker.remove();
+                const index = overlayElements.markers.indexOf(marker);
+                if (index > -1) overlayElements.markers.splice(index, 1);
+              }
+              delete busMarkers[vehicleId];
+            });
+            
+            let v3VehiclesForMarkers = [];
+            try {
+              v3VehiclesForMarkers = await fetchMBTAV3Vehicles(routeNum, directionId);
+              console.log(`[attachRouteToMap] Fetched ${v3VehiclesForMarkers.length} V3 vehicles for bus markers`);
+            } catch (v3Error) {
+              console.warn('[attachRouteToMap] V3 vehicles unavailable:', v3Error);
+              v3VehiclesForMarkers = [];
+            }
+            
+            // Create markers for buses
+            v3VehiclesForMarkers.forEach(bus => {
+              if (!bus.latitude || !bus.longitude) return;
+              const blockId = bus.blockID || bus.vehicleID || '';
+              if (!blockId) return;
+              
+              const occupancy = bus.occupancy ||
+                              (window.currentRouteETAs && window.currentRouteETAs.vehicleInfo &&
+                               window.currentRouteETAs.vehicleInfo[bus.vehicleID]?.occupancy_status) ||
+                              null;
+              const occupancyText = occupancy ? formatOccupancy(occupancy) : 'Unknown';
+              const displayVehicleID = (bus.vehicleID || '').replace(/\D/g, '') || bus.vehicleID;
+              
+              const busElement = document.createElement('div');
+              busElement.style.textAlign = 'center';
+              busElement.innerHTML = `
+                <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
+                  <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNum}</span>${displayVehicleID}
+                </div>
+                <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
+              `;
+              
+              const busMarker = new maplibregl.Marker({ element: busElement }).setLngLat([bus.longitude, bus.latitude]);
+              
+              const directionText = bus.direction === 1 ? 'Inbound' : bus.direction === 0 ? 'Outbound' : bus.direction;
+              const popupContent = document.createElement('div');
+              popupContent.innerHTML = `
+                <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
+                  <div style='text-align:center; margin-bottom:6px;'>
+                    <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
+                  </div>
+                  <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
+                  <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
+                  <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${occupancyText}</div>
+                </div>
+              `;
+              busMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent));
+              busMarker.addTo(map);
+              
+              busMarkers[bus.vehicleID] = busMarker;
+              overlayElements.markers.push(busMarker);
+            });
+            
+            console.log(`[attachRouteToMap] Displayed ${v3VehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
+            return;
+          }
           
           if (busApiType === 'mbta-gtfs-rt' && gtfsRtUrl && !disableGtfsRt) {
             // MBTA GTFS-RT feed
@@ -2129,6 +2234,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             // Store in global currentRouteETAs for stop popups and bus markers
             window.currentRouteETAs = {
+              overlayKey: options.overlayKey || `${routeId}-${directionId}`,
               routeId: routeNumForETAs,
               directionId: directionId,
               stopETAs: stopETAs,
@@ -2177,11 +2283,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
       
       // Clear global currentRouteETAs when this overlay is removed
-      if (window.currentRouteETAs && 
-          window.currentRouteETAs.routeId === String(routeId) && 
-          window.currentRouteETAs.directionId === directionId) {
+      const thisOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
+      if (window.currentRouteETAs && window.currentRouteETAs.overlayKey === thisOverlayKey) {
         window.currentRouteETAs = null;
       }
+
+      // Safety: ensure any bus markers created for this overlay are removed
+      try {
+        Object.keys(busMarkers || {}).forEach(vehicleId => {
+          const marker = busMarkers[vehicleId];
+          if (marker && typeof marker.remove === 'function') marker.remove();
+          delete busMarkers[vehicleId];
+        });
+      } catch (e) {}
       
       // Layers
       overlayElements.layers.forEach((layerId) => {
