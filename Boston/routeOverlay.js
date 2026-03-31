@@ -231,8 +231,11 @@ async function fetchMBTAV3Vehicles(routeId, directionId = null) {
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     const startedAt = Date.now();
     try {
+      console.log('[MBTA V3] Fetching vehicles...', { routeId, directionId, timeoutMs, url });
       const response = await fetch(url, { signal: controller.signal });
-      return { response, elapsedMs: Date.now() - startedAt };
+      const elapsedMs = Date.now() - startedAt;
+      console.log('[MBTA V3] Vehicles response received', { routeId, directionId, status: response.status, elapsedMs });
+      return { response, elapsedMs };
     } finally {
       clearTimeout(timeout);
     }
@@ -287,6 +290,7 @@ async function fetchMBTAV3Vehicles(routeId, directionId = null) {
       });
     }
     
+    console.log('[MBTA V3] Vehicles parsed', { routeId, directionId, count: vehicles.length });
     return vehicles;
   } catch (error) {
     console.warn('[MBTA V3] Error fetching vehicles:', error);
