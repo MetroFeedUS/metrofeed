@@ -66,6 +66,185 @@ function skipField(buf, pos, wireType) {
   return pos;
 }
 
+// Parse MBTA GTFS-RT TripUpdates feed (minimal decoder)
+// Returns { updatesByStopId, updatesByTripId }
+function parseMBTAGTFSTripUpdates(buffer) {
+  const uint8Buffer = new Uint8Array(buffer);
+  let pos = 0;
+  const updatesByStopId = Object.create(null);
+  const updatesByTripId = Object.create(null);
+
+  const parseTripDescriptor = (buf, start, end) => {
+    let p = start;
+    const out = { tripId: null, routeId: null, directionId: null, startDate: null, startTime: null };
+    while (p < end) {
+      const tag = buf[p++];
+      if (!tag) break;
+      const fieldNum = tag >> 3;
+      const wireType = tag & 0x07;
+      if (wireType === 2) {
+        const { value: len, pos: lenPos } = parseVarint(buf, p);
+        const s = lenPos;
+        const e = s + len;
+        if (fieldNum === 1) out.tripId = readString(buf, s, len);
+        else if (fieldNum === 2) out.startTime = readString(buf, s, len);
+        else if (fieldNum === 3) out.startDate = readString(buf, s, len);
+        else if (fieldNum === 5) out.routeId = readString(buf, s, len);
+        p = e;
+      } else if (wireType === 0) {
+        const { value, pos: newPos } = parseVarint(buf, p);
+        if (fieldNum === 6) out.directionId = value;
+        p = newPos;
+      } else {
+        p = skipField(buf, p, wireType);
+      }
+    }
+    return out;
+  };
+
+  const parseStopTimeEvent = (buf, start, end) => {
+    let p = start;
+    const out = { time: null, delay: null };
+    while (p < end) {
+      const tag = buf[p++];
+      if (!tag) break;
+      const fieldNum = tag >> 3;
+      const wireType = tag & 0x07;
+      if (wireType === 0) {
+        const { value, pos: newPos } = parseVarint(buf, p);
+        if (fieldNum === 1) out.delay = value;
+        if (fieldNum === 2) out.time = value;
+        p = newPos;
+      } else {
+        p = skipField(buf, p, wireType);
+      }
+    }
+    return out;
+  };
+
+  const parseStopTimeUpdate = (buf, start, end) => {
+    let p = start;
+    const out = { stopId: null, stopSequence: null, arrival: null, departure: null };
+    while (p < end) {
+      const tag = buf[p++];
+      if (!tag) break;
+      const fieldNum = tag >> 3;
+      const wireType = tag & 0x07;
+      if (wireType === 0) {
+        const { value, pos: newPos } = parseVarint(buf, p);
+        if (fieldNum === 1) out.stopSequence = value;
+        p = newPos;
+      } else if (wireType === 2) {
+        const { value: len, pos: lenPos } = parseVarint(buf, p);
+        const s = lenPos;
+        const e = s + len;
+        if (fieldNum === 4) out.stopId = readString(buf, s, len);
+        else if (fieldNum === 2) out.arrival = parseStopTimeEvent(buf, s, e);
+        else if (fieldNum === 3) out.departure = parseStopTimeEvent(buf, s, e);
+        p = e;
+      } else {
+        p = skipField(buf, p, wireType);
+      }
+    }
+    return out;
+  };
+
+  const parseTripUpdate = (buf, start, end) => {
+    let p = start;
+    const out = { trip: null, stopTimeUpdates: [] };
+    while (p < end) {
+      const tag = buf[p++];
+      if (!tag) break;
+      const fieldNum = tag >> 3;
+      const wireType = tag & 0x07;
+      if (wireType === 2) {
+        const { value: len, pos: lenPos } = parseVarint(buf, p);
+        const s = lenPos;
+        const e = s + len;
+        if (fieldNum === 1) out.trip = parseTripDescriptor(buf, s, e);
+        else if (fieldNum === 3) out.stopTimeUpdates.push(parseStopTimeUpdate(buf, s, e));
+        p = e;
+      } else {
+        p = skipField(buf, p, wireType);
+      }
+    }
+    return out;
+  };
+
+  const parseFeedEntity = (buf, start, end) => {
+    let p = start;
+    let tripUpdate = null;
+    while (p < end) {
+      const tag = buf[p++];
+      if (!tag) break;
+      const fieldNum = tag >> 3;
+      const wireType = tag & 0x07;
+      if (fieldNum === 3 && wireType === 2) {
+        const { value: len, pos: lenPos } = parseVarint(buf, p);
+        const s = lenPos;
+        const e = s + len;
+        tripUpdate = parseTripUpdate(buf, s, e);
+        p = e;
+      } else {
+        p = skipField(buf, p, wireType);
+      }
+    }
+    return tripUpdate;
+  };
+
+  // FeedMessage: field 1 header (skip), field 2 entity (repeated)
+  while (pos < uint8Buffer.length) {
+    const tag = uint8Buffer[pos++];
+    if (!tag) break;
+    const fieldNum = tag >> 3;
+    const wireType = tag & 0x07;
+    if (fieldNum === 1) {
+      pos = skipField(uint8Buffer, pos, wireType);
+      continue;
+    }
+    if (fieldNum !== 2 || wireType !== 2) {
+      pos = skipField(uint8Buffer, pos, wireType);
+      continue;
+    }
+    const { value: entityLen, pos: lenPos } = parseVarint(uint8Buffer, pos);
+    const entityStart = lenPos;
+    const entityEnd = entityStart + entityLen;
+    if (entityEnd > uint8Buffer.length) break;
+
+    const tu = parseFeedEntity(uint8Buffer, entityStart, entityEnd);
+    if (!tu || !tu.trip || !tu.trip.tripId) {
+      pos = entityEnd;
+      continue;
+    }
+
+    updatesByTripId[tu.trip.tripId] = tu;
+
+    tu.stopTimeUpdates.forEach(stu => {
+      if (!stu || !stu.stopId) return;
+      if (!updatesByStopId[stu.stopId]) updatesByStopId[stu.stopId] = [];
+      const time = (stu.arrival && stu.arrival.time) || (stu.departure && stu.departure.time) || null;
+      const delay = (stu.arrival && stu.arrival.delay) || (stu.departure && stu.departure.delay) || null;
+      if (!time && time !== 0) return;
+      updatesByStopId[stu.stopId].push({
+        tripId: tu.trip.tripId,
+        routeId: tu.trip.routeId || null,
+        directionId: tu.trip.directionId,
+        time: time,
+        delay: delay
+      });
+    });
+
+    pos = entityEnd;
+  }
+
+  // Sort stop updates by time ascending
+  Object.keys(updatesByStopId).forEach(stopId => {
+    updatesByStopId[stopId].sort((a, b) => (a.time || 0) - (b.time || 0));
+  });
+
+  return { updatesByStopId, updatesByTripId };
+}
+
 // === MBTA V3 API Functions ===
 
 /**
@@ -1525,9 +1704,49 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const stopMarker = new maplibregl.Marker({ element: stopElement })
         .setLngLat([lon, lat]);
 
-      // Simple ETA display - removed complex matching for now
+      // ETA display (V3 predictions primary; TripUpdates fallback)
       const getETADisplay = () => {
-        return ''; // No ETA in popup for now
+        try {
+          const overlayKey = `${routeId}-${directionId}`;
+          const etas = (window.currentRouteETAs && window.currentRouteETAs.overlayKey === overlayKey)
+            ? window.currentRouteETAs
+            : null;
+
+          const stopIdKey = String(stop.stop_id || stopId);
+          const v3List = etas && etas.stopETAs && etas.stopETAs[stopIdKey] ? etas.stopETAs[stopIdKey] : [];
+          const nextV3 = v3List.slice(0, 2).map(p => {
+            const t = p.etaDate ? formatETA(p.etaDate) : formatETA(new Date(p.eta));
+            const occ = p.occupancy ? formatOccupancy(p.occupancy) : 'Unknown';
+            return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:#bbb;">V3</span><span style="color:#1E90FF;font-weight:bold;">${t}</span><span style="color:#888;font-size:12px;">${occ}</span></div>`;
+          });
+
+          const tu = (window.currentRouteTripUpdates && window.currentRouteTripUpdates.overlayKey === overlayKey)
+            ? window.currentRouteTripUpdates
+            : null;
+          const tuListRaw = tu && tu.updatesByStopId && tu.updatesByStopId[stopIdKey] ? tu.updatesByStopId[stopIdKey] : [];
+          const tuList = tuListRaw
+            .filter(u => !u.routeId || String(u.routeId) === String(routeId))
+            .filter(u => u.directionId === null || u.directionId === undefined || u.directionId == directionId)
+            .slice(0, 2)
+            .map(u => {
+              const t = formatETA(new Date((u.time || 0) * 1000));
+              const delay = (u.delay || u.delay === 0) ? `${u.delay >= 0 ? '+' : ''}${u.delay}s` : '';
+              return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:#bbb;">TripUpdates</span><span style="color:#1E90FF;font-weight:bold;">${t}</span><span style="color:#888;font-size:12px;">${delay}</span></div>`;
+            });
+
+          if (nextV3.length === 0 && tuList.length === 0) return '';
+
+          return `
+            <hr style="border:none;border-top:1px solid #1E90FF;margin:6px 0;">
+            <div style="font-size:12px;color:#fff;margin-bottom:4px;"><strong>Next arrivals</strong></div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              ${nextV3.join('')}
+              ${tuList.join('')}
+            </div>
+          `;
+        } catch (_) {
+          return '';
+        }
       };
       
       // Popup content (reads latest ETA data when created/updated)
@@ -1923,6 +2142,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Get API configuration from options or global CITY_CONFIG
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
       const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
+      const gtfsRtTripUpdatesUrl = options.gtfsRtTripUpdatesUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrl) || null;
       const apiKey = options.apiKey || null;
       const disableGtfsRt = options.disableGtfsRt ?? (window.CITY_CONFIG && window.CITY_CONFIG.disableGtfsRt) ?? false;
       const allowEmergencyGtfsRtFallback =
@@ -2374,6 +2594,36 @@ function attachRouteToMap(map, routeId, directionId, options) {
         // Update ETAs every 25 seconds
         etaInterval = setInterval(fetchETAs, 25000);
         overlayElements.intervals.push(etaInterval);
+      }
+
+      // GTFS-RT TripUpdates enrichment (non-blocking)
+      let tripUpdatesInterval = null;
+      if (busApiType === 'mbta-gtfs-rt' && gtfsRtTripUpdatesUrl) {
+        const overlayKey = options.overlayKey || `${routeId}-${directionId}`;
+        const fetchTripUpdates = async () => {
+          try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            const res = await fetch(gtfsRtTripUpdatesUrl, { signal: controller.signal });
+            clearTimeout(timeout);
+            if (!res.ok) throw new Error(`TripUpdates HTTP ${res.status}: ${res.statusText}`);
+            const buffer = await res.arrayBuffer();
+            const parsed = parseMBTAGTFSTripUpdates(buffer);
+            window.currentRouteTripUpdates = {
+              overlayKey,
+              routeId: String(routeId),
+              directionId,
+              updatesByStopId: parsed.updatesByStopId,
+              fetchedAt: new Date()
+            };
+          } catch (e) {
+            // Don't nuke existing data on transient errors; just log.
+            console.warn('[TripUpdates] Unavailable:', e);
+          }
+        };
+        fetchTripUpdates();
+        tripUpdatesInterval = setInterval(fetchTripUpdates, 30000);
+        overlayElements.intervals.push(tripUpdatesInterval);
       }
     }
   };
