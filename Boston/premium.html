@@ -18,6 +18,10 @@
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
     html, body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
     #map { height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 0; }
+    /* Option A (beta, reversible): night uses day vector tiles + CSS darken on canvas. Off by default — Shift+click theme or ?nightFilter=1 */
+    #map.metrofeed-map-night-day-filter .maplibregl-canvas {
+      filter: brightness(var(--mf-night-filter-brightness, 0.52)) contrast(var(--mf-night-filter-contrast, 1.06)) saturate(var(--mf-night-filter-sat, 0.9));
+    }
     .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
     .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: #0d0d0d; border: 1px solid #1E90FF; border-radius: 8px; padding: 5px 10px; }
     .search-bar input { background: transparent; border: none; color: #cccccc; padding: 5px; width: 100%; }
@@ -2401,84 +2405,173 @@
     }
   }
 
+  const METROFEED_LS_NIGHT_DAY_FILTER = 'metrofeedNightDayFilter';
+
+  function metrofeedIsNightDayFilterEnabled() {
+    try {
+      return localStorage.getItem(METROFEED_LS_NIGHT_DAY_FILTER) === '1';
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function metrofeedSetNightDayFilterStorage(on) {
+    try {
+      localStorage.setItem(METROFEED_LS_NIGHT_DAY_FILTER, on ? '1' : '0');
+    } catch (err) { /* private mode / quota */ }
+  }
+
+  function metrofeedApplyMapNightDayFilterClass(enable) {
+    const el = document.getElementById('map');
+    if (el) {
+      el.classList.toggle('metrofeed-map-night-day-filter', !!enable);
+    }
+  }
+
+  function applyMapStyleForCurrentTheme() {
+    if (!map || typeof map.setStyle !== 'function' || !dayStyle || !nightStyle) return;
+    const useFilteredNight = isNightMode && metrofeedIsNightDayFilterEnabled();
+    metrofeedApplyMapNightDayFilterClass(!!useFilteredNight);
+    if (isNightMode) {
+      map.setStyle(useFilteredNight ? dayStyle : nightStyle);
+    } else {
+      map.setStyle(dayStyle);
+    }
+  }
+
+  function wireOnceStyleRestorationForThemeToggle() {
+    let restorationScheduled = false;
+    const scheduleRestoration = () => {
+      if (restorationScheduled) return;
+      restorationScheduled = true;
+      console.log('[Theme Toggle] Scheduling route overlay restoration...');
+      const restoreWhenReady = () => {
+        if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
+          console.log('[Theme Toggle] Map is ready, restoring route overlays...');
+          const descCount = Object.keys(window.activeRouteOverlayDescriptors || {}).length;
+          console.log('[Theme Toggle] Descriptors count before restoration:', descCount);
+          if (descCount > 0) {
+            restoreRouteOverlaysAfterStyleChange();
+          } else {
+            console.warn('[Theme Toggle] ⚠️ No descriptors found - they may have been cleared!');
+          }
+        } else {
+          setTimeout(restoreWhenReady, 100);
+        }
+      };
+      setTimeout(restoreWhenReady, 500);
+    };
+
+    if (map && typeof map.once === 'function') {
+      map.once('style.load', () => {
+        console.log('[Theme Toggle] style.load event fired');
+        scheduleRestoration();
+      });
+      map.once('styledata', () => {
+        console.log('[Theme Toggle] styledata event fired (fallback)');
+        scheduleRestoration();
+      });
+    } else {
+      console.warn('[Theme Toggle] Map or map.once not available, using timeout fallback');
+      setTimeout(scheduleRestoration, 1000);
+    }
+  }
+
+  function refreshOverlaysAfterThemeMapStyleChange() {
+    if (typeof TrafficCamerasOverlay !== 'undefined' && TrafficCamerasOverlay.isActive()) {
+      TrafficCamerasOverlay.toggle();
+      setTimeout(() => {
+        TrafficCamerasOverlay.toggle();
+      }, 100);
+    }
+    if (typeof trafficLayerActive !== 'undefined' && typeof trafficData !== 'undefined' &&
+        trafficLayerActive && (trafficData.links || trafficData.signs || trafficData.routes)) {
+      const restoreTraffic = () => {
+        if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
+          if (trafficData.links && trafficData.links.length > 0) {
+            displayTrafficLinks(map, trafficData.links);
+          }
+          if (trafficData.routes && trafficData.routes.length > 0) {
+            displayTrafficRoutes(map, trafficData.routes);
+          }
+          if (trafficData.signs && trafficData.signs.length > 0) {
+            displayTrafficSigns(map, trafficData.signs);
+          }
+        } else {
+          setTimeout(restoreTraffic, 100);
+        }
+      };
+      setTimeout(restoreTraffic, 600);
+    }
+  }
+
+  function updateThemeToggleButtonTitle(btn) {
+    if (!btn) return;
+    if (isNightMode) {
+      btn.title = 'Switch to day map — night: ' +
+        (metrofeedIsNightDayFilterEnabled() ? 'day tiles + filter (beta)' : 'classic night style') +
+        ' (Shift+click to swap)';
+    } else {
+      btn.title = 'Switch to night map (Shift+click: choose filtered vs classic for night)';
+    }
+  }
+
+  window.metrofeedNightDayFilter = {
+    isEnabled: metrofeedIsNightDayFilterEnabled,
+    set: function (on) {
+      metrofeedSetNightDayFilterStorage(!!on);
+      console.log('[MetroFeed] Night map mode:', on ? 'day tiles + dark filter (beta)' : 'classic night style');
+      if (isNightMode && map && typeof map.setStyle === 'function') {
+        console.log('[Theme Toggle] Setting up route overlay restoration before style change');
+        wireOnceStyleRestorationForThemeToggle();
+        applyMapStyleForCurrentTheme();
+        refreshOverlaysAfterThemeMapStyleChange();
+      } else {
+        metrofeedApplyMapNightDayFilterClass(isNightMode && !!on);
+      }
+      const b = document.getElementById('themeToggleBtn');
+      updateThemeToggleButtonTitle(b);
+    },
+    toggle: function () {
+      this.set(!metrofeedIsNightDayFilterEnabled());
+    }
+  };
+
   const themeToggleBtn = document.getElementById('themeToggleBtn');
-  
+
   if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', () => {
+    themeToggleBtn.addEventListener('click', (e) => {
+      if (e.shiftKey) {
+        const next = !metrofeedIsNightDayFilterEnabled();
+        metrofeedSetNightDayFilterStorage(next);
+        console.log('[MetroFeed] Night map:', next ? 'day vector tiles + CSS darkening (beta)' : 'classic night style');
+        if (isNightMode && map && typeof map.setStyle === 'function') {
+          console.log('[Theme Toggle] Setting up route overlay restoration before style change');
+          wireOnceStyleRestorationForThemeToggle();
+          applyMapStyleForCurrentTheme();
+          refreshOverlaysAfterThemeMapStyleChange();
+        } else {
+          metrofeedApplyMapNightDayFilterClass(isNightMode && next);
+        }
+        updateThemeToggleButtonTitle(themeToggleBtn);
+        return;
+      }
+
       isNightMode = !isNightMode;
-      // Make isNightMode globally accessible for camera markers
       window.isNightMode = isNightMode;
 
-      // IMPORTANT: Set up restoration listener BEFORE calling setStyle()
-      // The style.load event fires when setStyle() is called
       console.log('[Theme Toggle] Setting up route overlay restoration before style change');
-      let restorationScheduled = false;
-      
-      const scheduleRestoration = () => {
-        if (restorationScheduled) return;
-        restorationScheduled = true;
-        console.log('[Theme Toggle] Scheduling route overlay restoration...');
-        // Wait for map to be fully loaded and rendered
-        const restoreWhenReady = () => {
-          if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
-            console.log('[Theme Toggle] Map is ready, restoring route overlays...');
-            // Double-check descriptors still exist before restoring
-            const descCount = Object.keys(window.activeRouteOverlayDescriptors || {}).length;
-            console.log('[Theme Toggle] Descriptors count before restoration:', descCount);
-            if (descCount > 0) {
-              restoreRouteOverlaysAfterStyleChange();
-            } else {
-              console.warn('[Theme Toggle] ⚠️ No descriptors found - they may have been cleared!');
-            }
-          } else {
-            // Keep checking every 100ms, max 10 seconds
-            setTimeout(restoreWhenReady, 100);
-          }
-        };
-        // Start checking after a short delay to let style load
-        setTimeout(restoreWhenReady, 500);
-      };
-      
-      if (map && typeof map.once === 'function') {
-        // Listen for style.load (fires when style JSON is loaded)
-        map.once('style.load', () => {
-          console.log('[Theme Toggle] style.load event fired');
-          scheduleRestoration();
-        });
-        
-        // Also listen for styledata as a fallback
-        map.once('styledata', () => {
-          console.log('[Theme Toggle] styledata event fired (fallback)');
-          scheduleRestoration();
-        });
-      } else {
-        console.warn('[Theme Toggle] Map or map.once not available, using timeout fallback');
-        // Fallback: just wait and restore
-        setTimeout(scheduleRestoration, 1000);
-      }
-      
-      // Now change the style (this will trigger style.load event)
-      if (isNightMode) {
-        map.setStyle(nightStyle);
-        themeToggleBtn.querySelector('img').src = '008-night.svg'; // Keep moon icon
-        themeToggleBtn.title = 'Switch to Day Map';
-      } else {
-        map.setStyle(dayStyle);
-        themeToggleBtn.querySelector('img').src = '008-night.svg'; // Change to moon icon
-        themeToggleBtn.title = 'Switch to Night Map';
-      }
-      
-      // Update camera markers if overlay is active
-      if (typeof TrafficCamerasOverlay !== 'undefined' && TrafficCamerasOverlay.isActive()) {
-        // Remove and re-add markers to update their appearance
-        TrafficCamerasOverlay.toggle(); // Turn off
-        setTimeout(() => {
-          TrafficCamerasOverlay.toggle(); // Turn back on with new style
-        }, 100);
-      }
+      wireOnceStyleRestorationForThemeToggle();
+      applyMapStyleForCurrentTheme();
+
+      themeToggleBtn.querySelector('img').src = '008-night.svg';
+      updateThemeToggleButtonTitle(themeToggleBtn);
+
+      refreshOverlaysAfterThemeMapStyleChange();
     });
+    updateThemeToggleButtonTitle(themeToggleBtn);
   }
-  
+
   // Initialize window.isNightMode
   window.isNightMode = isNightMode;
 
@@ -7271,6 +7364,17 @@
       window.map = map; // Make map available to otp.js
       dayStyle = mapSetup.dayStyle;
       nightStyle = mapSetup.nightStyle;
+
+      try {
+        const nf = new URLSearchParams(location.search).get('nightFilter');
+        if (nf === '1') {
+          metrofeedSetNightDayFilterStorage(true);
+          console.log('[Map Init] nightFilter=1 — filtered night mode enabled (use night theme to apply)');
+        }
+        if (nf === '0') {
+          metrofeedSetNightDayFilterStorage(false);
+        }
+      } catch (err) { /* ignore */ }
       
       console.log('[Map Init] Day style URL:', dayStyle);
       console.log('[Map Init] Night style URL:', nightStyle);
