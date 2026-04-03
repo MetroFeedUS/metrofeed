@@ -1,13 +1,15 @@
 # City config: realtime / live buses (contract)
 
-This document describes how **`CITY_CONFIG`** (from `city-config.js` via `getCityConfig()`) tells the map **where** live data comes from. **`routeOverlay.js`** stays oriented on **drawing** (lines, markers, ETAs UI); **agency-specific fetch/parse** lives in adapter modules (e.g. **`mbtaRealtime.js`** for Boston).
+This document describes how **`CITY_CONFIG`** (from `city-config.js` via `getCityConfig()`) tells the map **where** live data comes from.
 
-## Script load order (Boston)
+**Boston:** MBTA GTFS-RT decode + V3 JSON fetch helpers live **inside** **`routeOverlay.js`** (single file so production always has one script to upload; avoids a missing second file leaving `window.attachRouteToMap` never set). The UI parts (ETA panel, `formatOccupancy`, etc.) are in the same file.
 
-1. `mbtaRealtime.js` — defines `window.mbtaAdapter` and `window.MBTARealtime`.
-2. `routeOverlay.js` — reads `window.mbtaAdapter` at load time for MBTA-only code paths.
+**Optional future pattern:** split agency code into **`mbtaRealtime.js`** (or `yourCityRealtime.js`) and load it before `routeOverlay.js` only if your deploy process always ships both files together.
 
-**Deploy both files** whenever you deploy Boston `home.html` / `premium.html`. If `mbtaRealtime.js` is missing, `window.attachRouteToMap` may still load, but MBTA vehicle/ETA features will not work.
+## Deploy (Boston)
+
+- Upload **`routeOverlay.js`** whenever you change bus/overlay behavior.
+- **`home.html` / `premium.html`** use `routeOverlay.js?v=20260403` — **bump the `?v=` value** when you deploy a new JS file so browsers and CDNs do not serve an old cached copy.
 
 ## Config fields used for realtime
 
@@ -19,28 +21,15 @@ This document describes how **`CITY_CONFIG`** (from `city-config.js` via `getCit
 | **`gtfsRtTripUpdatesUrl`** | GTFS-RT **TripUpdates** protobuf URL (MBTA trip/stop predictions). |
 | **`disableGtfsRt`** | When `true`, skips GTFS-RT vehicle fetch for that city (V3-only path where implemented). |
 
-Optional future field (not required today):
+Optional future field:
 
 | Field | Role |
 |--------|------|
-| **`realtimeProvider`** | Reserved name if you later want a string key (`"mbta"`, `"trimet"`, …) instead of inferring only from `busApiType`. Can alias the same logic as `busApiType`. |
+| **`realtimeProvider`** | Reserved name if you later want a string key (`"mbta"`, `"trimet"`, …) instead of inferring only from `busApiType`. |
 
-## `window.mbtaAdapter` (Boston)
-
-Implemented in **`mbtaRealtime.js`**. Shape:
-
-- **`fetchPredictions(routeId, directionId)`** — V3 predictions + stop/vehicle ETA maps.
-- **`fetchVehicles(routeId, directionId?)`** — V3 vehicles for markers.
-- **`fetchVehiclesFallback(routeId)`** — V3 vehicles without direction filter.
-- **`parseVehiclePositions(arrayBuffer)`** — GTFS-RT VehiclePositions → normalized vehicle list.
-- **`parseTripUpdates(arrayBuffer)`** — GTFS-RT TripUpdates → stop/trip update maps.
-
-`routeOverlay.js` binds these once at startup; it does not import modules (plain browser scripts).
-
-## Adding a second city (phase 4 / later)
+## Adding a second city (later)
 
 1. Add a city entry in **`city-config.js`** with the right **`busApiType`** and URLs.
-2. Add a small **`yourCityRealtime.js`** (or shared `transit/` module) that exposes **`window.yourCityAdapter`** with the **same method names** as `mbtaAdapter` if you want to reuse the same overlay wiring—or extend `routeOverlay.js` with a **`busApiType`** branch that calls your adapter.
-3. Load that script **before** `routeOverlay.js` on that city’s HTML pages.
+2. Either add branches in **`routeOverlay.js`** (same pattern as MBTA/TRIMET) or introduce a small adapter file that **`routeOverlay`** calls based on `busApiType`.
 
-Keep **one adapter per agency**; avoid embedding agency URLs inside `routeOverlay.js` when possible.
+Keep **one clear place** for agency-specific fetch/parse so the map code stays “draw + orchestrate.”
