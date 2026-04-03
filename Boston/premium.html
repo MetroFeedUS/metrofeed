@@ -1320,8 +1320,8 @@
 <!-- routes_index.js is loaded dynamically by routeLoader.js -->
 
 <!--
-  DEVELOPER NOTE — Script order matters for the map + live buses.
-  Full file map, run/deploy steps, and config contract: see DEVELOPER.md and REALTIME_CITY_CONFIG.md
+  DEVELOPER NOTE — Script order matters. Boston MBTA live data is bundled in routeOverlay.js (one deploy file).
+  See DEVELOPER.md and REALTIME_CITY_CONFIG.md
 -->
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -1333,10 +1333,8 @@
 <script src="mapBoundsManager.js"></script>
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
-<!-- -- MBTA live vehicles / GTFS-RT + V3 (must load before routeOverlay) -- -->
-<script src="mbtaRealtime.js?v=20260404"></script>
-<!-- -- ROUTE OVERLAY (map drawing; uses window.mbtaAdapter for MBTA). Bump ?v= when either file changes. -- -->
-<script src="routeOverlay.js?v=20260404"></script>
+<!-- -- ROUTE OVERLAY (map + MBTA live data bundled; deploy this one file). Bump ?v= after changes. -- -->
+<script src="routeOverlay.js?v=20260405"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <!-- -- CSL (Crowdsourced Live) MODULE -- -->
