@@ -71,8 +71,10 @@ Add your city to the dropdown in `Index.html`:
 ### API Configuration
 - `apiKey`: Your transit API key (if needed)
 - `busApi`: URL for bus/vehicle data
-- `busApiType`: Type of API ("trimet", "tarc-gtfs-rt", or "custom")
-- `gtfsRtUrl`: GTFS-RT endpoint (if using GTFS-RT)
+- `busApiType`: Type of API ("trimet", "tarc-gtfs-rt", "mbta-gtfs-rt", or "custom")
+- `gtfsRtUrl`: GTFS-RT VehiclePositions endpoint (if using GTFS-RT)
+- `gtfsRtTripUpdatesUrl`: GTFS-RT TripUpdates (Boston / MBTA)
+- See **`REALTIME_CITY_CONFIG.md`** for how config maps to `mbtaRealtime.js` / `routeOverlay.js`
 - `otpApi`: OpenTripPlanner API endpoint
 - `trafficApi`: Traffic data API
 - `tomtomKey`: TomTom API key
@@ -85,7 +87,8 @@ CityTemplate/
 ├── home.html               # Main template file (generic)
 ├── mastermap.js            # Route data (always named mastermap.js, city-specific data inside)
 ├── metroFeedMap.js         # Shared map initialization
-├── routeOverlay.js         # Shared route overlay
+├── mbtaRealtime.js         # MBTA GTFS-RT + V3 fetch/parse (load before routeOverlay on Boston)
+├── routeOverlay.js         # Shared route overlay (uses window.mbtaAdapter when present)
 ├── pythonbusroutes/        # Route detail pages
 └── ... (other shared files)
 ```
