@@ -1393,7 +1393,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + MBTA live data bundled; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260405"></script>
+<script src="routeOverlay.js?v=20260408"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <!-- -- CSL (Crowdsourced Live) MODULE -- -->
@@ -4276,17 +4276,24 @@
     const displayVehicleID = String(vehicleID || '').replace(/^[^0-9]+/, '') || vehicleID;
     
     const pulseClass = isOtpBus ? 'otp-bus-pulse' : '';
-    const markerElement = document.createElement('div');
-    markerElement.className = pulseClass;
-    markerElement.innerHTML = `<div style='text-align:center;'>
-      <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
-        <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNumber}</span>${displayVehicleID}
-      </div>
-      <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
-    </div>`;
-    
+    let markerElement;
+    if (typeof window.buildMbtaBusMarkerElement === 'function') {
+      markerElement = window.buildMbtaBusMarkerElement(routeColor, routeNumber, displayVehicleID);
+      if (pulseClass) markerElement.classList.add(pulseClass);
+    } else {
+      markerElement = document.createElement('div');
+      markerElement.className = pulseClass;
+      markerElement.innerHTML = `<div style='text-align:center;'>
+        <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
+          <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNumber}</span>${displayVehicleID}
+        </div>
+        <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
+      </div>`;
+    }
+    const mapOpts = typeof window.mbtaBusMarkerMapOptions === 'function' ? window.mbtaBusMarkerMapOptions() : {};
     return new maplibregl.Marker({
-      element: markerElement
+      element: markerElement,
+      ...mapOpts
     });
   }
   
@@ -6390,11 +6397,18 @@
     // For bus tracking, use base route number (e.g., "Red" instead of "Red-Ashmont")
     // This ensures subway routes match correctly in GTFS-RT feed
     const busTrackingRouteId = baseRouteNumber !== String(routeId) ? baseRouteNumber : routeId;
+    let routeColorSlot = 0;
+    let routeColorHex = "#1E90FF";
+    if (typeof window.pickNextRouteOverlayColorSlot === "function" && window.ROUTE_OVERLAY_COLOR_PALETTE && window.ROUTE_OVERLAY_COLOR_PALETTE.length) {
+      routeColorSlot = window.pickNextRouteOverlayColorSlot();
+      routeColorHex = window.ROUTE_OVERLAY_COLOR_PALETTE[routeColorSlot];
+    }
     const overlay = window.attachRouteToMap(map, busTrackingRouteId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)
       routePageUrl: routePageUrl,
       fitBounds: false, // Don't auto-fit on main map
+      routeColor: routeColorHex,
       apiKey: apiKey, // Pass API key for bus tracking (TriMet)
       busApiType: CITY_CONFIG.busApiType, // Pass bus API type (mbta-gtfs-rt or trimet)
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl, // Pass GTFS-RT URL for MBTA
@@ -6411,6 +6425,7 @@
       routeData: JSON.parse(JSON.stringify(routeData)), // Deep clone
       routePageUrl,
       fitBounds: false,
+      routeColor: routeColorHex,
       apiKey,
       busApiType: CITY_CONFIG.busApiType,
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
@@ -6421,6 +6436,7 @@
       attachRouteId: busTrackingRouteId, // For bus tracking (base route ID)
       originalRouteId: routeId, // Original route ID (e.g., "Red-Ashmont") for layer IDs
       directionId,
+      colorIndex: routeColorSlot,
       options: descriptorOptions
     };
     console.log('[showRouteOverlay] Route overlay added:', overlayKey, 'descriptor saved for restoration');

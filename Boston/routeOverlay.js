@@ -1106,6 +1106,42 @@ function formatETA(etaDate) {
   }
 }
 
+/** Half-width of GPS dot (px). Used with anchor "bottom" + offset so dot center sits on lat/lng. */
+const MBTA_BUS_MARKER_DOT_RADIUS_PX = 6;
+
+/**
+ * Live bus marker geometry: pill label (detached above) + circular dot on the coordinate.
+ * Colors stay driven by routeColor (unchanged); used by route overlay and home.html createBusMarker via window.
+ */
+function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID) {
+  const wrap = document.createElement("div");
+  wrap.style.display = "flex";
+  wrap.style.flexDirection = "column";
+  wrap.style.alignItems = "center";
+  wrap.style.pointerEvents = "auto";
+  const d = MBTA_BUS_MARKER_DOT_RADIUS_PX * 2;
+  wrap.innerHTML = `
+    <div style="margin-bottom:6px;background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;white-space:nowrap;">
+      <span style="background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}
+    </div>
+    <div style="width:${d}px;height:${d}px;border-radius:50%;background:${routeColor};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);flex-shrink:0;"></div>
+  `;
+  return wrap;
+}
+
+function mbtaBusMarkerMapOptions() {
+  return { anchor: "bottom", offset: [0, -MBTA_BUS_MARKER_DOT_RADIUS_PX] };
+}
+
+window.buildMbtaBusMarkerElement = buildMbtaBusMarkerElement;
+window.mbtaBusMarkerMapOptions = mbtaBusMarkerMapOptions;
+
+/**
+ * Bottom "Next Arrivals" panel (#etaPanel): set false to keep it a ghost — still updated in the DOM
+ * (stop popups / bus cards use window.currentRouteETAs, not this panel). Set true to show again.
+ */
+const ETA_BOTTOM_PANEL_VISIBLE = false;
+
 /**
  * Get or create the ETA panel dynamically
  * @returns {HTMLElement} The ETA panel element
@@ -1184,7 +1220,14 @@ function displayETAs(predictions) {
   
   html += '</div>';
   panel.innerHTML = html;
-  panel.style.display = 'block';
+  if (ETA_BOTTOM_PANEL_VISIBLE) {
+    panel.style.display = 'block';
+    panel.removeAttribute('aria-hidden');
+  } else {
+    // Ghost: no layout on screen, no pointer capture; content stays for devtools / optional future toggle
+    panel.style.display = 'none';
+    panel.setAttribute('aria-hidden', 'true');
+  }
 }
 
 
@@ -2297,16 +2340,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 return occ ? formatOccupancy(occ) : 'Unknown';
               };
               
-              const busElement = document.createElement('div');
-              busElement.style.textAlign = 'center';
-              busElement.innerHTML = `
-                <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
-                  <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNum}</span>${displayVehicleID}
-                </div>
-                <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
-              `;
-              
-              const busMarker = new maplibregl.Marker({ element: busElement }).setLngLat([bus.longitude, bus.latitude]);
+              const busElement = buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID);
+              const busMarker = new maplibregl.Marker({
+                element: busElement,
+                ...mbtaBusMarkerMapOptions()
+              }).setLngLat([bus.longitude, bus.latitude]);
               const directionText = bus.direction === 1 ? 'Inbound' : bus.direction === 0 ? 'Outbound' : bus.direction;
               const popupContent = document.createElement('div');
               const refreshBusPopup = () => {
@@ -2536,18 +2574,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
               return occ ? formatOccupancy(occ) : 'Unknown';
             };
             
-            // Create bus marker element matching createBusMarker style
-            const busElement = document.createElement('div');
-            busElement.style.textAlign = 'center';
-            busElement.innerHTML = `
-              <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
-                <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNum}</span>${displayVehicleID}
-              </div>
-              <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
-            `;
-            
+            const busElement = buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID);
             const busMarker = new maplibregl.Marker({
-              element: busElement
+              element: busElement,
+              ...mbtaBusMarkerMapOptions()
             });
             busMarker.setLngLat([bus.longitude, bus.latitude]);
             
@@ -2773,6 +2803,44 @@ function attachRouteToMap(map, routeId, directionId, options) {
     }
   };
 }
+
+/**
+ * Main map route overlays (home/premium): colors from this list in order as routes open.
+ * First open → [0], second → [1], … Reuses freed slots when you close a route.
+ * Mello Yello / late-80s NASCAR billboard vibe — replace hexes anytime.
+ */
+window.ROUTE_OVERLAY_COLOR_PALETTE = [
+  "#FFE135",
+  "#6B2C91",
+  "#FF3EB5",
+  "#00C853",
+  "#FF6D00",
+  "#00B8D4",
+  "#E53935",
+  "#FFEA00",
+  "#651FFF",
+  "#76FF03",
+  "#FF9100",
+  "#2979FF"
+];
+
+/**
+ * Smallest palette index not already used by an entry in window.activeRouteOverlayDescriptors.
+ */
+window.pickNextRouteOverlayColorSlot = function pickNextRouteOverlayColorSlot() {
+  const pal = window.ROUTE_OVERLAY_COLOR_PALETTE;
+  if (!pal || pal.length === 0) return 0;
+  const desc = window.activeRouteOverlayDescriptors || {};
+  const used = new Set();
+  Object.keys(desc).forEach((k) => {
+    const ci = desc[k] && desc[k].colorIndex;
+    if (Number.isInteger(ci)) used.add(((ci % pal.length) + pal.length) % pal.length);
+  });
+  for (let i = 0; i < pal.length; i++) {
+    if (!used.has(i)) return i;
+  }
+  return Object.keys(desc).length % pal.length;
+};
 
 // Expose globally for both route pages and main map
 window.attachRouteToMap = attachRouteToMap;
