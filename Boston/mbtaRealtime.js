@@ -1,6 +1,6 @@
 /**
- * MBTA realtime helpers: GTFS-RT protobuf decode + V3 JSON API.
- * Load before routeOverlay.js. Exposes window.MBTARealtime and window.mbtaAdapter.
+ * MBTA live data: GTFS-RT protobuf + V3 JSON API.
+ * Load before routeOverlay.js. Sets window.mbtaAdapter and window.MBTARealtime.
  */
 "use strict";
 

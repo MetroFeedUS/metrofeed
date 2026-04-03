@@ -87,7 +87,8 @@ CityTemplate/
 ├── home.html               # Main template file (generic)
 ├── mastermap.js            # Route data (always named mastermap.js, city-specific data inside)
 ├── metroFeedMap.js         # Shared map initialization
-├── routeOverlay.js         # Shared route overlay (Boston MBTA helpers bundled inside for one-file deploy)
+├── mbtaRealtime.js         # MBTA live buses: GTFS-RT + V3 (load before routeOverlay on Boston)
+├── routeOverlay.js         # Shared route overlay (uses window.mbtaAdapter for MBTA)
 ├── pythonbusroutes/        # Route detail pages
 └── ... (other shared files)
 ```
