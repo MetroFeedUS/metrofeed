@@ -1,6 +1,14 @@
 /**
  * MetroFeed Route Overlay Module (clean version)
  *
+ * FOR NEW DEVS (handoff)
+ * ----------------------
+ * - Draws route polylines/stops and (when enabled) live bus markers on a MapLibre map.
+ * - Boston MBTA: live fetch/parse lives in mbtaRealtime.js → window.mbtaAdapter. This file only
+ *   wires those functions into attachRouteToMap; load mbtaRealtime.js BEFORE this script in HTML.
+ * - City behavior comes from window.CITY_CONFIG (see city-config.js) — e.g. busApiType, gtfsRtUrl.
+ * - Instruction manual: DEVELOPER.md (same folder as this file)
+ *
  * Shared route drawing logic for:
  *  - Individual route HTML pages (route-XXX-dirY.html)
  *  - Main Portland map (bus overlay on portlandindex.html)
@@ -28,7 +36,9 @@
 "use strict";
 
 
-// MBTA live buses / GTFS-RT: load mbtaRealtime.js before this file.
+// --- MBTA bridge (see mbtaRealtime.js) --------------------------------------
+// mbtaRealtime.js registers window.mbtaAdapter with fetch + protobuf parsers.
+// If it is missing, MBTA-specific paths get undefined functions; TriMet/TARC branches unaffected.
 const mbtaAdapter = window.mbtaAdapter;
 if (typeof mbtaAdapter === "undefined") {
   console.warn("[routeOverlay] window.mbtaAdapter missing; load mbtaRealtime.js before routeOverlay.js");
@@ -1135,7 +1145,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
       overlayElements.controls.push(routeInfoPanel);
     }
 
-    // ---------- Bus tracking (for mainOverlay mode only) ----------
+    /*
+     * Bus tracking (mainOverlay only)
+     * -------------------------------
+     * Polls live vehicle data based on CITY_CONFIG.busApiType:
+     *   - mbta-gtfs-rt: GTFS-RT VehiclePositions (primary) + MBTA V3 for enrichment / fallback paths
+     *   - trimet / tarc / custom: other branches below in fetchAndDisplayBuses
+     * URLs and flags come from options or window.CITY_CONFIG (gtfsRtUrl, disableGtfsRt, etc.).
+     * Heavy parsing is in mbtaRealtime.js — this block mostly orchestrates fetch → filter → markers.
+     */
     if (trackBuses && mode === "mainOverlay") {
       const busMarkers = {}; // Store bus markers separately
       let busesFetchInFlight = false;

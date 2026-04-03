@@ -2,6 +2,8 @@
 
 This is a template version of MetroFeed that can be used to create new city instances. All city-specific data is stored in `city-config.js`, making it easy to scale to new cities.
 
+**Handoff / “how do I run and deploy this?” (Boston):** see **[DEVELOPER.md](DEVELOPER.md)** — that file is the developer instruction manual; this README stays high-level.
+
 ## How It Works
 
 1. **Configuration-Driven**: All city-specific data (APIs, coordinates, bounds, file paths) is stored in `city-config.js`

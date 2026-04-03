@@ -1,6 +1,12 @@
 /**
  * MBTA live data: GTFS-RT protobuf + V3 JSON API.
- * Load before routeOverlay.js. Sets window.mbtaAdapter and window.MBTARealtime.
+ *
+ * Load before routeOverlay.js. Exposes:
+ *   - window.mbtaAdapter — what routeOverlay.js uses (fetch + parse entry points)
+ *   - window.MBTARealtime — full export of helpers (debug / advanced use)
+ *
+ * Third-party note: this file is intentionally MBTA-only. Another city/agency would get a sibling
+ * module with the same adapter *shape* if you unify behind busApiType later. See DEVELOPER.md.
  */
 "use strict";
 
@@ -500,7 +506,12 @@ async function fetchMBTAV3Vehicles(routeId, directionId = null) {
 async function fetchMBTAV3VehiclesFallback(routeId) {
   return fetchMBTAV3Vehicles(routeId, null);
 }
-// Parse MBTA GTFS-RT VehiclePositions feed
+
+/*
+ * GTFS-RT VehiclePositions (protobuf) → plain vehicle objects for the map.
+ * This is a hand-written protobuf walk (varints, length-delimited fields), not generated code.
+ * If MBTA changes field numbers, logs here are the first place to look; spec: GTFS-RT VehiclePosition.
+ */
 async function parseMBTAGTFSRT(buffer) {
   console.log('[parseMBTAGTFSRT] ===== PARSER CALLED =====');
   console.log('[parseMBTAGTFSRT] Buffer size:', buffer.byteLength, 'bytes');
