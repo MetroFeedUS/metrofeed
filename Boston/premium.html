@@ -13,7 +13,7 @@
   <!-- Sponsors are Free tier only, not loaded on Premium -->
   
   <!-- Language System -->
-  	<script src="../translations.js?v=15"></script>
+  	<script src="../translations.js?v=16"></script>
   <style>
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
     html, body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
@@ -1326,8 +1326,11 @@
 <script id="mastermap-loader"></script>
 <!-- -- SHARED MAP INITIALIZATION -- -->
 <script src="metroFeedMap.js"></script>
+<script src="mapBoundsManager.js"></script>
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
+<!-- -- MBTA realtime (V3 + TripUpdates protobuf helpers) — before routeOverlay -- -->
+<script src="mbtaRealtime.js"></script>
 <!-- -- SHARED ROUTE OVERLAY MODULE -- -->
 <script src="routeOverlay.js"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
@@ -1681,24 +1684,50 @@
         
         // Note: Bus and Shuttle both go in busRouteMap, we'll filter later
         if (!routeMap.has(key)) {
-          // Build route label with name if available
-          // Priority: route_name field > route_long_name > route_title (cleaned) > route_id
+          // Build route label - MBTA structure: route number/name only (NO destination)
+          // Priority: route_name field > route_long_name (cleaned) > route_title (cleaned) > route_id
           let routeLabel;
           
           if (route.route_name) {
             // If route_name exists (e.g., "Brightheart Parkway"), format as "19 - Brightheart Parkway"
+            // route_name should NOT contain destination info
             routeLabel = `${route.route_number || route.route_id} - ${route.route_name}`;
           } else if (route.route_long_name) {
-            // If route_long_name exists, use it
-            routeLabel = `${route.route_number || route.route_id} - ${route.route_long_name}`;
+            // route_long_name often contains destination info like "Route 7 to Downtown" or "Route 7 - Downtown via Main St"
+            // Strip destination patterns: " to X", " - X", " via X", etc.
+            let cleanedName = route.route_long_name;
+            
+            // Remove common destination patterns
+            // "Route 7 to Downtown Crossing" -> "Route 7"
+            // "Route 7 - Downtown Crossing via Main St" -> "Route 7"
+            // "Route 7 via Main St" -> "Route 7"
+            cleanedName = cleanedName.replace(/\s+(to|via|through)\s+.*$/i, '');
+            cleanedName = cleanedName.replace(/\s*-\s*[^-]*$/, ''); // Remove everything after last " - "
+            
+            // If we still have a route number prefix, use it; otherwise use route_number/route_id
+            const routeNumber = route.route_number || route.route_id;
+            if (cleanedName.toLowerCase().includes('route')) {
+              // Extract route number from cleaned name if it contains "Route X"
+              const match = cleanedName.match(/route\s+(\d+)/i);
+              if (match) {
+                routeLabel = match[1]; // Just the number
+              } else {
+                routeLabel = routeNumber;
+              }
+            } else {
+              // Use route number with cleaned name (if name is meaningful)
+              routeLabel = cleanedName.trim() ? `${routeNumber} - ${cleanedName.trim()}` : routeNumber;
+            }
           } else {
-            // Fallback: Extract from route_title (remove direction suffix)
-            // "Route 1 - Outbound" -> "Route 1"
+            // Fallback: Extract from route_title (remove direction/destination suffix)
+            // "Route 1 - Outbound" -> "Route 1" -> "1"
             routeLabel = route.route_title || `${route.route_id}`;
             if (routeLabel.includes(' - ')) {
-              // Remove direction suffix (everything after " - ")
+              // Remove direction/destination suffix (everything after " - ")
               routeLabel = routeLabel.split(' - ')[0];
             }
+            // Remove "to X", "via X" patterns
+            routeLabel = routeLabel.replace(/\s+(to|via|through)\s+.*$/i, '');
             // If it's still "Route X", simplify to just "X"
             routeLabel = routeLabel.replace(/^Route\s+/i, '');
           }
@@ -1713,9 +1742,11 @@
         }
         const routeEntry = routeMap.get(key);
         if (route.direction_id === 0) {
-          routeEntry.dir0 = route.direction_name || 'Direction 0';
+          // direction_name should contain destination info (e.g., "Outbound to Downtown")
+          // If it doesn't, we'll add it later when loading route data
+          routeEntry.dir0 = route.direction_name || 'Outbound';
         } else if (route.direction_id === 1) {
-          routeEntry.dir1 = route.direction_name || 'Direction 1';
+          routeEntry.dir1 = route.direction_name || 'Inbound';
         }
       });
       
@@ -2267,6 +2298,107 @@
   }
   
   // === SECTION: MAP STYLE TOGGLE LOGIC ===
+  // MapLibre setStyle() clears ALL layers/sources. Our route overlays are layers, so we must restore them
+  // after a day/night map style swap. (Markers can survive because they are DOM elements.)
+  async function restoreRouteOverlaysAfterStyleChange() {
+    try {
+      if (!map || !window.attachRouteToMap) {
+        console.warn('[restoreRouteOverlaysAfterStyleChange] Map or attachRouteToMap not available');
+        return;
+      }
+      
+      // Wait for map to be fully loaded and ready
+      if (!map.loaded() || !map.isStyleLoaded()) {
+        console.log('[restoreRouteOverlaysAfterStyleChange] Map not ready, waiting...');
+        await new Promise((resolve) => {
+          const checkReady = () => {
+            if (map.loaded() && map.isStyleLoaded()) {
+              resolve();
+            } else {
+              setTimeout(checkReady, 100);
+            }
+          };
+          checkReady();
+        });
+      }
+      
+      const descriptors = window.activeRouteOverlayDescriptors || {};
+      const keys = Object.keys(descriptors);
+      console.log('[restoreRouteOverlaysAfterStyleChange] Found', keys.length, 'overlay descriptors to restore:', keys);
+      if (keys.length === 0) {
+        console.log('[restoreRouteOverlaysAfterStyleChange] No overlays to restore');
+        return;
+      }
+
+      // Clear existing overlay handles (they're invalid after style change anyway)
+      if (window.activeRouteOverlays) {
+        Object.keys(window.activeRouteOverlays).forEach(k => {
+          try { 
+            if (window.activeRouteOverlays[k] && typeof window.activeRouteOverlays[k].remove === 'function') {
+              window.activeRouteOverlays[k].remove(); 
+            }
+          } catch (e) {
+            console.warn('[restoreRouteOverlaysAfterStyleChange] Error removing old overlay:', k, e);
+          }
+        });
+      }
+      window.activeRouteOverlays = {};
+
+      // Restore all routes sequentially
+      for (const overlayKey of keys) {
+        const d = descriptors[overlayKey];
+        if (!d || !d.options) {
+          console.warn('[restoreRouteOverlaysAfterStyleChange] Invalid descriptor for:', overlayKey, d);
+          continue;
+        }
+        
+        // Use originalRouteId if available (for unique layer IDs), otherwise fall back to attachRouteId
+        const routeIdForLayers = d.originalRouteId || d.attachRouteId;
+        
+        if (!routeIdForLayers || d.directionId === undefined || d.directionId === null) {
+          console.warn('[restoreRouteOverlaysAfterStyleChange] Missing routeId or directionId for:', overlayKey, d);
+          continue;
+        }
+        
+        try {
+          console.log('[restoreRouteOverlaysAfterStyleChange] Restoring overlay:', overlayKey, 'route:', routeIdForLayers, 'direction:', d.directionId);
+          
+          // Check if routeData exists and has required fields
+          if (!d.options.routeData) {
+            console.error('[restoreRouteOverlaysAfterStyleChange] Missing routeData in descriptor for:', overlayKey);
+            continue;
+          }
+          
+          // Validate routeData structure
+          if (!d.options.routeData.shape && !d.options.routeData.shapes) {
+            console.error('[restoreRouteOverlaysAfterStyleChange] Invalid routeData (no shape/shapes) for:', overlayKey);
+            continue;
+          }
+          
+          // Restore the overlay - use originalRouteId for unique layer IDs
+          const overlay = window.attachRouteToMap(map, routeIdForLayers, d.directionId, d.options);
+          if (overlay) {
+            window.activeRouteOverlays[overlayKey] = overlay;
+            console.log('[restoreRouteOverlaysAfterStyleChange] ✅ Successfully restored:', overlayKey);
+          } else {
+            console.error('[restoreRouteOverlaysAfterStyleChange] ❌ attachRouteToMap returned null/undefined for:', overlayKey);
+          }
+          
+          // Small delay between restorations to avoid overwhelming the map
+          await new Promise(resolve => setTimeout(resolve, 150));
+        } catch (err) {
+          console.error('[restoreRouteOverlaysAfterStyleChange] ❌ Failed to restore overlay:', overlayKey, err);
+          console.error('[restoreRouteOverlaysAfterStyleChange] Error details:', err.stack);
+        }
+      }
+      
+      console.log('[restoreRouteOverlaysAfterStyleChange] ✅ Restoration complete. Total restored:', Object.keys(window.activeRouteOverlays).length, 'of', keys.length);
+    } catch (err) {
+      console.error('[restoreRouteOverlaysAfterStyleChange] ❌ Unexpected error:', err);
+      console.error('[restoreRouteOverlaysAfterStyleChange] Error stack:', err.stack);
+    }
+  }
+
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   
   if (themeToggleBtn) {
@@ -2274,7 +2406,56 @@
       isNightMode = !isNightMode;
       // Make isNightMode globally accessible for camera markers
       window.isNightMode = isNightMode;
+
+      // IMPORTANT: Set up restoration listener BEFORE calling setStyle()
+      // The style.load event fires when setStyle() is called
+      console.log('[Theme Toggle] Setting up route overlay restoration before style change');
+      let restorationScheduled = false;
       
+      const scheduleRestoration = () => {
+        if (restorationScheduled) return;
+        restorationScheduled = true;
+        console.log('[Theme Toggle] Scheduling route overlay restoration...');
+        // Wait for map to be fully loaded and rendered
+        const restoreWhenReady = () => {
+          if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
+            console.log('[Theme Toggle] Map is ready, restoring route overlays...');
+            // Double-check descriptors still exist before restoring
+            const descCount = Object.keys(window.activeRouteOverlayDescriptors || {}).length;
+            console.log('[Theme Toggle] Descriptors count before restoration:', descCount);
+            if (descCount > 0) {
+              restoreRouteOverlaysAfterStyleChange();
+            } else {
+              console.warn('[Theme Toggle] ⚠️ No descriptors found - they may have been cleared!');
+            }
+          } else {
+            // Keep checking every 100ms, max 10 seconds
+            setTimeout(restoreWhenReady, 100);
+          }
+        };
+        // Start checking after a short delay to let style load
+        setTimeout(restoreWhenReady, 500);
+      };
+      
+      if (map && typeof map.once === 'function') {
+        // Listen for style.load (fires when style JSON is loaded)
+        map.once('style.load', () => {
+          console.log('[Theme Toggle] style.load event fired');
+          scheduleRestoration();
+        });
+        
+        // Also listen for styledata as a fallback
+        map.once('styledata', () => {
+          console.log('[Theme Toggle] styledata event fired (fallback)');
+          scheduleRestoration();
+        });
+      } else {
+        console.warn('[Theme Toggle] Map or map.once not available, using timeout fallback');
+        // Fallback: just wait and restore
+        setTimeout(scheduleRestoration, 1000);
+      }
+      
+      // Now change the style (this will trigger style.load event)
       if (isNightMode) {
         map.setStyle(nightStyle);
         themeToggleBtn.querySelector('img').src = '008-night.svg'; // Keep moon icon
@@ -5002,7 +5183,7 @@
         if (hourlyData && hourlyData.properties && hourlyData.properties.periods) {
           const periods = hourlyData.properties.periods.slice(0, 18);
           
-          html += '<div style="font-weight: bold; color: #1E90FF; margin-bottom: 0.75rem; font-size: 1rem;">' + (typeof translateText !== 'undefined' ? translateText('nextHours') : 'Next 18 Hours') + '</div>';
+          html += '<div style="font-weight: bold; color: #1E90FF; margin-bottom: 0.75rem; font-size: 1rem;">' + (typeof translateText !== 'undefined' ? translateText('nextHours') : 'Next few hours') + '</div>';
           html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; max-height: 400px; overflow-y: auto;">';
           
           periods.forEach(period => {
@@ -5252,6 +5433,10 @@
   if (!window.activeRouteOverlays) {
     window.activeRouteOverlays = {};
   }
+  // Persist enough info to rebuild overlays after map.setStyle() day/night swaps
+  if (!window.activeRouteOverlayDescriptors) {
+    window.activeRouteOverlayDescriptors = {};
+  }
   
   /**
    * Show a route overlay on the main map
@@ -5285,6 +5470,9 @@
     if (window.activeRouteOverlays[overlayKey]) {
       window.activeRouteOverlays[overlayKey].remove();
       delete window.activeRouteOverlays[overlayKey];
+      if (window.activeRouteOverlayDescriptors) {
+        delete window.activeRouteOverlayDescriptors[overlayKey];
+      }
       console.log('[showRouteOverlay] Route overlay toggled off:', overlayKey);
       return;
     }
@@ -5361,11 +5549,39 @@
       apiKey: apiKey, // Pass API key for bus tracking (TriMet)
       busApiType: CITY_CONFIG.busApiType, // Pass bus API type (mbta-gtfs-rt or trimet)
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl, // Pass GTFS-RT URL for MBTA
-      trackBuses: true // Enable bus tracking for route overlay
+      trackBuses: true, // Enable bus tracking for route overlay
+      overlayKey: overlayKey // Pass the actual overlay key for close button to use
     });
     
     window.activeRouteOverlays[overlayKey] = overlay;
-    console.log('[showRouteOverlay] Route overlay added:', overlayKey);
+    // Save descriptor so we can restore after day/night style changes
+    // IMPORTANT: Deep clone routeData to avoid reference issues when map style changes
+    const descriptorOptions = {
+      mode: 'mainOverlay',
+      routeData: JSON.parse(JSON.stringify(routeData)), // Deep clone
+      routePageUrl,
+      fitBounds: false,
+      apiKey,
+      busApiType: CITY_CONFIG.busApiType,
+      gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
+      trackBuses: true
+    };
+    window.activeRouteOverlayDescriptors[overlayKey] = {
+      attachRouteId: routeId, // For bus tracking
+      originalRouteId: routeId, // Original route ID for layer IDs (same as routeId for non-branch routes)
+      directionId,
+      options: descriptorOptions
+    };
+    console.log('[showRouteOverlay] Route overlay added:', overlayKey, 'descriptor saved for restoration');
+    
+    // Update map bounds to accommodate routes that extend beyond default bounds
+    if (window.MapBoundsManager) {
+      window.MapBoundsManager.updateForRoutes(
+        window.activeRouteOverlays,
+        window.activeRouteOverlayDescriptors,
+        { autoFit: false } // Don't auto-fit, just expand bounds
+      );
+    }
   };
   
   /**
@@ -5378,7 +5594,19 @@
     if (window.activeRouteOverlays[overlayKey]) {
       window.activeRouteOverlays[overlayKey].remove();
       delete window.activeRouteOverlays[overlayKey];
+      if (window.activeRouteOverlayDescriptors) {
+        delete window.activeRouteOverlayDescriptors[overlayKey];
+      }
       console.log('[hideRouteOverlay] Route overlay removed:', overlayKey);
+      
+      // Update map bounds after route removal
+      if (window.MapBoundsManager) {
+        window.MapBoundsManager.updateForRoutes(
+          window.activeRouteOverlays,
+          window.activeRouteOverlayDescriptors,
+          { autoFit: false }
+        );
+      }
     }
   };
   
@@ -5390,7 +5618,15 @@
       window.activeRouteOverlays[key].remove();
     });
     window.activeRouteOverlays = {};
+    if (window.activeRouteOverlayDescriptors) {
+      window.activeRouteOverlayDescriptors = {};
+    }
     console.log('[clearAllRouteOverlays] All route overlays cleared');
+    
+    // Reset map bounds to default
+    if (window.MapBoundsManager) {
+      window.MapBoundsManager.reset();
+    }
   };
 
   // === SECTION: BUS ROUTES MODAL ===
@@ -7020,6 +7256,16 @@
       
       console.log('[Map Init] Day style URL:', dayStyle);
       console.log('[Map Init] Night style URL:', nightStyle);
+      
+      // Initialize bounds manager for dynamic bounds expansion
+      if (window.MapBoundsManager) {
+        const maxExtendedBounds = CITY_CONFIG.maxExtendedBounds || null;
+        window.MapBoundsManager.init(map, CITY_BOUNDS, maxExtendedBounds);
+        console.log('[Map Init] Bounds manager initialized');
+        if (maxExtendedBounds) {
+          console.log('[Map Init] Maximum extended bounds:', maxExtendedBounds);
+        }
+      }
       
       // Track active route overlays
       window.activeRouteOverlays = {};
