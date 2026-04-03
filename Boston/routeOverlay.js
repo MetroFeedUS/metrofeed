@@ -256,8 +256,16 @@ function parseMBTAGTFSTripUpdates(buffer) {
  */
 async function fetchMBTAV3Predictions(routeId, directionId) {
   try {
-    const url = `https://maps.metrofeedus.com/api/mbta/v3/predictions?filter[route]=${routeId}&filter[direction_id]=${directionId}&include=stop,vehicle`;
-    const response = await fetch(url);
+    const routeParam = encodeURIComponent(String(routeId));
+    const url = `https://maps.metrofeedus.com/api/mbta/v3/predictions?filter[route]=${routeParam}&filter[direction_id]=${directionId}&include=stop,vehicle`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    let response;
+    try {
+      response = await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
     
     if (!response.ok) {
       throw new Error(`V3 predictions HTTP ${response.status}: ${response.statusText}`);
@@ -606,17 +614,12 @@ function getOrCreateETAPanel() {
 function displayETAs(predictions) {
   const panel = getOrCreateETAPanel();
   
-  // Hide the panel (don't display it, but keep the logic intact)
-  panel.style.display = 'none';
-  
-  // Keep the logic below for potential future use, but don't render
   if (!predictions || predictions.length === 0) {
-    // panel.innerHTML = '<div style="text-align: center; padding: 10px; color: #888;">ETAs unavailable</div>';
-    // panel.style.display = 'block';
+    panel.style.display = 'none';
     return;
   }
   
-  // Show next 10 predictions
+  // Show next 10 predictions (V3: ETAs + occupancy when available)
   const displayPredictions = predictions.slice(0, 10);
   
   let html = '<div style="font-weight: bold; margin-bottom: 8px; color: #1E90FF; text-align: center;">⏰ Next Arrivals</div>';
@@ -640,7 +643,7 @@ function displayETAs(predictions) {
   
   html += '</div>';
   panel.innerHTML = html;
-  // panel.style.display = 'block'; // Don't show it
+  panel.style.display = 'block';
 }
 
 // Parse MBTA GTFS-RT VehiclePositions feed
@@ -1346,7 +1349,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
     markers:  [],
     controls: [],
     intervals: [], // For bus tracking intervals
-    stopMarkers: [] // Store stop markers with their data for pulsing
+    stopMarkers: [], // Store stop markers with their data for pulsing
+    stopPopupRefreshers: [], // { overlayKey, fn } refresh stop popup when V3/TripUpdates load
+    busPopupRefreshers: [] // functions to refresh bus popups when ETAs load
   };
 
   // ==== Internal: build & attach =================================================
@@ -1713,7 +1718,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
             : null;
 
           const stopIdKey = String(stop.stop_id || stopId);
-          const v3List = etas && etas.stopETAs && etas.stopETAs[stopIdKey] ? etas.stopETAs[stopIdKey] : [];
+          const stopETAsMap = etas && etas.stopETAs ? etas.stopETAs : null;
+          let v3List = stopETAsMap && stopETAsMap[stopIdKey] ? stopETAsMap[stopIdKey] : [];
+          if (v3List.length === 0 && stopETAsMap) {
+            const alt = stop.stop_id != null ? String(stop.stop_id) : null;
+            if (alt && alt !== stopIdKey && stopETAsMap[alt]) v3List = stopETAsMap[alt];
+          }
           const nextV3 = v3List.slice(0, 2).map(p => {
             const t = p.etaDate ? formatETA(p.etaDate) : formatETA(new Date(p.eta));
             const occ = p.occupancy ? formatOccupancy(p.occupancy) : 'Unknown';
@@ -1776,8 +1786,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       const popup = new maplibregl.Popup().setDOMContent(popupContent);
       
-      // Store reference to update function so we can refresh ETA when data updates
-      // (Popup will show latest data when opened since getETADisplay reads from global state)
+      const overlayKeyForStops = `${routeId}-${directionId}`;
+      overlayElements.stopPopupRefreshers.push({
+        overlayKey: overlayKeyForStops,
+        update: updatePopupContent
+      });
 
       stopMarker.setPopup(popup);
       stopMarker.addTo(map);
@@ -2233,18 +2246,33 @@ function attachRouteToMap(map, routeId, directionId, options) {
               }
             }
             
-            // Create markers for buses
+            overlayElements.busPopupRefreshers.length = 0;
+            // Create markers for buses (same ETA/occupancy refresh pattern as GTFS-RT path)
             v3VehiclesForMarkers.forEach(bus => {
               if (!bus.latitude || !bus.longitude) return;
               const blockId = bus.blockID || bus.vehicleID || '';
               if (!blockId) return;
               
-              const occupancy = bus.occupancy ||
-                              (window.currentRouteETAs && window.currentRouteETAs.vehicleInfo &&
-                               window.currentRouteETAs.vehicleInfo[bus.vehicleID]?.occupancy_status) ||
-                              null;
-              const occupancyText = occupancy ? formatOccupancy(occupancy) : 'Unknown';
               const displayVehicleID = (bus.vehicleID || '').replace(/\D/g, '') || bus.vehicleID;
+              const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
+              
+              const getNextStopFromETAs = () => {
+                const etas = window.currentRouteETAs;
+                if (!etas || !etas.vehicleETAs || !vidKey) return null;
+                const list = etas.vehicleETAs[bus.vehicleID] || etas.vehicleETAs[vidKey];
+                if (!list || !list.length) return null;
+                const nextPred = list[0];
+                return { stopName: nextPred.stopName, eta: formatETA(nextPred.etaDate || new Date(nextPred.eta)) };
+              };
+              const getOccupancyTextLive = () => {
+                const vi = window.currentRouteETAs?.vehicleInfo;
+                const occ =
+                  (vi && vidKey && vi[bus.vehicleID]?.occupancy_status) ||
+                  (vi && vidKey && vi[vidKey]?.occupancy_status) ||
+                  bus.occupancy ||
+                  null;
+                return occ ? formatOccupancy(occ) : 'Unknown';
+              };
               
               const busElement = document.createElement('div');
               busElement.style.textAlign = 'center';
@@ -2256,19 +2284,27 @@ function attachRouteToMap(map, routeId, directionId, options) {
               `;
               
               const busMarker = new maplibregl.Marker({ element: busElement }).setLngLat([bus.longitude, bus.latitude]);
-              
               const directionText = bus.direction === 1 ? 'Inbound' : bus.direction === 0 ? 'Outbound' : bus.direction;
               const popupContent = document.createElement('div');
-              popupContent.innerHTML = `
+              const refreshBusPopup = () => {
+                const nextStopETA = getNextStopFromETAs();
+                let nextStopHTML = nextStopETA
+                  ? `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopETA.stopName}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${nextStopETA.eta}</div>`
+                  : '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> Loading…</div>';
+                popupContent.innerHTML = `
                 <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                   <div style='text-align:center; margin-bottom:6px;'>
                     <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
                   </div>
                   <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                   <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
-                  <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${occupancyText}</div>
+                  ${nextStopHTML}
+                  <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${getOccupancyTextLive()}</div>
                 </div>
               `;
+              };
+              refreshBusPopup();
+              overlayElements.busPopupRefreshers.push(refreshBusPopup);
               busMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent));
               busMarker.addTo(map);
               
@@ -2400,6 +2436,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
           }
           
+          overlayElements.busPopupRefreshers.length = 0;
           // Remove old bus markers from map and overlayElements
           Object.keys(busMarkers).forEach(vehicleId => {
             const marker = busMarkers[vehicleId];
@@ -2451,36 +2488,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
             // Format vehicle ID for display (remove non-numeric characters, visual only)
             const displayVehicleID = (bus.vehicleID || '').replace(/\D/g, '') || bus.vehicleID;
             
-            // Get next stop ETA for this bus
-            let nextStopETA = null;
-            console.log('[Bus Marker] Looking up ETA for vehicleID:', bus.vehicleID);
-            console.log('[Bus Marker] currentRouteETAs exists:', !!window.currentRouteETAs);
-            console.log('[Bus Marker] vehicleETAs exists:', !!(window.currentRouteETAs && window.currentRouteETAs.vehicleETAs));
+            const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
             
-            if (window.currentRouteETAs && window.currentRouteETAs.vehicleETAs) {
-              console.log('[Bus Marker] Available vehicle IDs in vehicleETAs:', Object.keys(window.currentRouteETAs.vehicleETAs).slice(0, 10));
-              
-              if (window.currentRouteETAs.vehicleETAs[bus.vehicleID]) {
-                const vehiclePredictions = window.currentRouteETAs.vehicleETAs[bus.vehicleID];
-                console.log('[Bus Marker] Found predictions for vehicleID:', bus.vehicleID, 'count:', vehiclePredictions.length);
-                console.log('[Bus Marker] First prediction:', vehiclePredictions[0]);
-                
-                if (vehiclePredictions.length > 0) {
-                  const nextPred = vehiclePredictions[0];
-                  nextStopETA = {
-                    stopName: nextPred.stopName,
-                    eta: formatETA(nextPred.etaDate)
-                  };
-                  console.log('[Bus Marker] Next stop ETA set:', nextStopETA);
-                }
-              } else {
-                console.log('[Bus Marker] No predictions found for vehicleID:', bus.vehicleID);
-                console.log('[Bus Marker] Vehicle ID type:', typeof bus.vehicleID);
-                console.log('[Bus Marker] Sample vehicle IDs in data:', Object.keys(window.currentRouteETAs.vehicleETAs).slice(0, 5));
-              }
-            } else {
-              console.log('[Bus Marker] No vehicleETAs data available');
-            }
+            const getNextStopFromETAs = () => {
+              const etas = window.currentRouteETAs;
+              if (!etas || !etas.vehicleETAs || !vidKey) return null;
+              const list = etas.vehicleETAs[bus.vehicleID] || etas.vehicleETAs[vidKey];
+              if (!list || !list.length) return null;
+              const nextPred = list[0];
+              return {
+                stopName: nextPred.stopName,
+                eta: formatETA(nextPred.etaDate || new Date(nextPred.eta))
+              };
+            };
+            
+            const getOccupancyTextLive = () => {
+              const vi = window.currentRouteETAs?.vehicleInfo;
+              const occ =
+                (vi && vidKey && vi[bus.vehicleID]?.occupancy_status) ||
+                (vi && vidKey && vi[vidKey]?.occupancy_status) ||
+                (v3Enriched && v3Enriched.occupancy) ||
+                bus.occupancy ||
+                null;
+              return occ ? formatOccupancy(occ) : 'Unknown';
+            };
             
             // Create bus marker element matching createBusMarker style
             const busElement = document.createElement('div');
@@ -2497,19 +2528,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
             });
             busMarker.setLngLat([bus.longitude, bus.latitude]);
             
-            // Create popup for bus (matching "All Buses Mode" style)
             const popupContent = document.createElement('div');
-            let nextStopHTML = '';
-            if (nextStopETA) {
-              nextStopHTML = `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopETA.stopName}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${nextStopETA.eta}</div>`;
-            } else {
-              nextStopHTML = '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> Not available</div>';
-            }
-            
-            // Format direction for display: 1 = Inbound, 0 = Outbound
             const directionText = bus.direction === 1 ? 'Inbound' : bus.direction === 0 ? 'Outbound' : bus.direction;
             
-            popupContent.innerHTML = `
+            const refreshBusPopup = () => {
+              const nextStopETA = getNextStopFromETAs();
+              let nextStopHTML = '';
+              if (nextStopETA) {
+                nextStopHTML = `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopETA.stopName}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${nextStopETA.eta}</div>`;
+              } else {
+                nextStopHTML = '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> Loading…</div>';
+              }
+              popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                 <div style='text-align:center; margin-bottom:6px;'>
                   <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
@@ -2517,9 +2547,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                 <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
                 ${nextStopHTML}
-                <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${occupancyText}</div>
+                <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${getOccupancyTextLive()}</div>
               </div>
             `;
+            };
+            
+            refreshBusPopup();
+            overlayElements.busPopupRefreshers.push(refreshBusPopup);
             
             const popup = new maplibregl.Popup().setDOMContent(popupContent);
             busMarker.setPopup(popup);
@@ -2581,10 +2615,22 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             // Display ETAs in bottom panel (bulk list)
             displayETAs(predictions);
+            
+            const etaOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
+            overlayElements.stopPopupRefreshers.forEach(({ overlayKey, update }) => {
+              if (overlayKey === etaOverlayKey) {
+                try { update(); } catch (e) {}
+              }
+            });
+            overlayElements.busPopupRefreshers.forEach(fn => {
+              try { fn(); } catch (e) {}
+            });
           } catch (error) {
             console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
             // Clear global state on error
             window.currentRouteETAs = null;
+            const etaPanel = document.getElementById('etaPanel');
+            if (etaPanel) etaPanel.style.display = 'none';
           }
         };
         
@@ -2616,6 +2662,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
               updatesByStopId: parsed.updatesByStopId,
               fetchedAt: new Date()
             };
+            overlayElements.stopPopupRefreshers.forEach(({ overlayKey: ok, update }) => {
+              if (ok === overlayKey) {
+                try { update(); } catch (e) {}
+              }
+            });
           } catch (e) {
             // Don't nuke existing data on transient errors; just log.
             console.warn('[TripUpdates] Unavailable:', e);
@@ -2648,6 +2699,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const thisOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
       if (window.currentRouteETAs && window.currentRouteETAs.overlayKey === thisOverlayKey) {
         window.currentRouteETAs = null;
+      }
+      if (window.currentRouteTripUpdates && window.currentRouteTripUpdates.overlayKey === thisOverlayKey) {
+        window.currentRouteTripUpdates = null;
       }
 
       // Safety: ensure any bus markers created for this overlay are removed
