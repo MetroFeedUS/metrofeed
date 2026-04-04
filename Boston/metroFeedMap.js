@@ -10,7 +10,8 @@
  *   const mapSetup = initMetroFeedMap('map', {
  *     defaultCenter: [-122.6784, 45.5152],
  *     defaultZoom: 12,
- *     bounds: { west: -123.0, east: -122.4, south: 45.4, north: 45.65 }
+ *     bounds: { west: -123.0, east: -122.4, south: 45.4, north: 45.65 },
+ *     defaultToNight: false // optional: true = initial style is nightStyle instead of dayStyle
  *   });
  * 
  * Returns: { map, dayStyle, nightStyle }
@@ -46,6 +47,8 @@ function initMetroFeedMap(containerId, options) {
   // Map style URLs (from config if available, otherwise defaults)
   const dayStyle = options.dayStyle || 'https://maps.metrofeedus.com/styles/0/style.json';
   const nightStyle = options.nightStyle || 'https://maps.metrofeedus.com/styles/1/style.json';
+  const defaultToNight = options.defaultToNight === true;
+  const initialStyle = defaultToNight ? nightStyle : dayStyle;
 
   // Transform request to force HTTPS and remove city path prefixes for metrofeedus.com resources
   // This fixes mixed content errors and removes city path prefixes from tile URLs
@@ -74,7 +77,7 @@ function initMetroFeedMap(containerId, options) {
   // Create map instance
   const map = new maplibregl.Map({
     container: containerId,
-    style: dayStyle,
+    style: initialStyle,
     center: config.defaultCenter,
     zoom: config.defaultZoom,
     maxZoom: config.maxZoom,

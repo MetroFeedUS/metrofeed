@@ -104,15 +104,15 @@ const CITIES = {
     defaultCenter: [-71.0619, 42.3551], // [longitude, latitude] for MapLibre GL JS
     defaultZoom: 11,
     bounds: {
-      // Default bounds for 90% of use cases (core Boston metro area):
+      // Default bounds for 90% of use cases (core Boston metro area), then expanded +20% on lat/lon span (same center) for more pan room.
       // - North: Alewife (Red Line), Wonderland (Blue Line)
       // - South: Braintree (Red Line), Forest Hills (Orange Line)
       // - East: Wonderland/Logan Airport (Blue/Silver Lines)
       // - West: Riverside (Green Line D), Alewife (Red Line)
-      north: 42.55,
-      south: 42.10,
-      east: -70.74,
-      west: -71.30
+      north: 42.595,
+      south: 42.055,
+      east: -70.684,
+      west: -71.356
     },
     // Maximum extended bounds for full service area (commuter rail, extended routes)
     // Covers ALL MBTA commuter rail lines in ALL directions:

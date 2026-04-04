@@ -2239,9 +2239,9 @@ function drawJourney(journey) {
   window.otpRouteList = routeList;
   console.log('🎨 [drawJourney] ✅ Extracted', routeList.length, 'routes for selector');
   
-  // Show route selector modal
+  // Trip route overlays on map (no "Routes in Trip" box unless bare Red/Green needs branch pick)
   if (routeList.length > 0) {
-    showOtpRouteSelector(routeList);
+    applyOtpTripRouteOverlays(routeList);
   }
   
   // Log summary after drawing
@@ -2421,6 +2421,148 @@ function selectOtpBranchRoute(branchRouteId, directionId, originalRoute, routeGr
     console.error('🎨 [selectOtpBranchRoute] showRouteOverlay not available');
     alert('Route overlay system not ready. Please refresh the page.');
   }
+}
+
+/**
+ * Same initial direction logic as OTP route-selector buttons (sync only; BUS may refine async).
+ */
+function computeOtpFlippedDirectionSync(route) {
+  const needsFlip = !(route.mode === 'SUBWAY' || route.mode === 'METRO');
+  const mappedRouteId = route.routeId;
+  if (needsFlip && route.mode === 'BUS' && mappedRouteId && window.routeLoader) {
+    return needsFlip ? (route.directionId === 0 ? 1 : 0) : route.directionId;
+  }
+  if (needsFlip) {
+    if (route.directionCalculated) {
+      return route.directionId;
+    }
+    return route.directionId === 0 ? 1 : 0;
+  }
+  return route.directionId;
+}
+
+/**
+ * After overlay is shown, optionally refine BUS direction using route stop geometry (matches selector behavior).
+ */
+function verifyOtpBusOverlayDirection(route, mappedRouteId) {
+  const needsFlip = !(route.mode === 'SUBWAY' || route.mode === 'METRO');
+  if (!needsFlip || route.mode !== 'BUS' || !mappedRouteId || !window.routeLoader) return;
+  if (typeof window.showRouteOverlay !== 'function') return;
+
+  Promise.all([
+    window.routeLoader.loadRoute(mappedRouteId, 0).catch(() => null),
+    window.routeLoader.loadRoute(mappedRouteId, 1).catch(() => null)
+  ]).then(([dir0Data, dir1Data]) => {
+    if (!dir0Data || !dir1Data || !dir0Data.stops || !dir1Data.stops) return;
+
+    const otpFrom = (route.fromStop || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+    const otpTo = (route.toStop || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+
+    function normalizeStopName(name) {
+      return (name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+    }
+
+    function calculateDirectionScore(otpFromNorm, otpToNorm, routeStops) {
+      if (!routeStops || routeStops.length === 0) return 0;
+      let score = 0;
+      const firstStop = normalizeStopName(routeStops[0]?.name);
+      const lastStop = normalizeStopName(routeStops[routeStops.length - 1]?.name);
+      if (otpFromNorm && otpFromNorm === firstStop) score += 5;
+      if (otpToNorm && otpToNorm === lastStop) score += 5;
+      if (otpFromNorm && (otpFromNorm.includes(firstStop) || firstStop.includes(otpFromNorm)) && otpFromNorm !== firstStop) score += 3;
+      if (otpToNorm && (otpToNorm.includes(lastStop) || lastStop.includes(otpToNorm)) && otpToNorm !== lastStop) score += 3;
+      const otpFromN = normalizeStopName(otpFromNorm);
+      const otpToN = normalizeStopName(otpToNorm);
+      routeStops.forEach((stop, idx) => {
+        const stopName = normalizeStopName(stop.name);
+        if (stopName === otpFromN || stopName === otpToN) {
+          const isNearTerminal = idx < 3 || idx > routeStops.length - 4;
+          score += isNearTerminal ? 2 : 1;
+        }
+      });
+      return score;
+    }
+
+    const dir0Score = calculateDirectionScore(otpFrom, otpTo, dir0Data.stops);
+    const dir1Score = calculateDirectionScore(otpFrom, otpTo, dir1Data.stops);
+    const bestDirection = dir1Score > dir0Score ? 1 : (dir0Score > dir1Score ? 0 : route.directionId);
+    const shouldFlip = route.directionId !== bestDirection;
+    let flippedDirection;
+    if (shouldFlip) {
+      flippedDirection = route.directionId === 0 ? 1 : 0;
+    } else {
+      flippedDirection = route.directionId;
+    }
+
+    const overlayKey = `${mappedRouteId}-${flippedDirection}`;
+    if (window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]) {
+      return;
+    }
+    [0, 1].forEach(dir => {
+      if (dir === flippedDirection) return;
+      const k = `${mappedRouteId}-${dir}`;
+      if (window.activeRouteOverlays && window.activeRouteOverlays[k]) {
+        window.activeRouteOverlays[k].remove();
+        delete window.activeRouteOverlays[k];
+        if (window.activeRouteOverlayDescriptors) {
+          delete window.activeRouteOverlayDescriptors[k];
+        }
+      }
+    });
+    window.showRouteOverlay(mappedRouteId, flippedDirection);
+  }).catch(err => {
+    console.warn(`[verifyOtpBusOverlayDirection] ${mappedRouteId}:`, err);
+  });
+}
+
+/**
+ * Skip "Routes in Trip" modal: put trip lines on the map like normal route overlays (live buses, etc.).
+ * Bare Red/Green groups still open the selector so the user can pick a branch.
+ */
+function applyOtpTripRouteOverlays(routeList) {
+  const existingModal = document.getElementById('otpRouteSelectorModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  if (!routeList || routeList.length === 0) return;
+
+  const needsGroupModal =
+    typeof window.isRouteGroup === 'function' &&
+    routeList.some(r => window.isRouteGroup(r.routeId));
+  if (needsGroupModal) {
+    showOtpRouteSelector(routeList);
+    return;
+  }
+
+  window.activeTripSelected = true;
+
+  if (typeof window.showRouteOverlay !== 'function') {
+    console.error('[applyOtpTripRouteOverlays] showRouteOverlay not available');
+    return;
+  }
+
+  const seen = new Set();
+  const toApply = [];
+  routeList.forEach(route => {
+    const mappedRouteId = route.routeId;
+    const flippedDirection = computeOtpFlippedDirectionSync(route);
+    const overlayKey = `${mappedRouteId}-${flippedDirection}`;
+    if (seen.has(overlayKey)) return;
+    seen.add(overlayKey);
+    toApply.push({ route, mappedRouteId, flippedDirection });
+  });
+
+  (async () => {
+    for (const { route, mappedRouteId, flippedDirection } of toApply) {
+      try {
+        await window.showRouteOverlay(mappedRouteId, flippedDirection);
+      } catch (e) {
+        console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
+      }
+      verifyOtpBusOverlayDirection(route, mappedRouteId);
+    }
+  })();
 }
 
 /**
