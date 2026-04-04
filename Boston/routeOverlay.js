@@ -1868,7 +1868,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     });
 
     // ---------- Route info panel (mainOverlay only) ----------
-    if (mode === "mainOverlay" && options.routePageUrl) {
+    // OTP trip legs use .otp-trip-route-chip on the rail instead (see otp.js).
+    if (mode === "mainOverlay" && options.routePageUrl && !options.skipRouteInfoPanel) {
       const panelId = `route-info-${mapLayerKey}`;
       const existing = document.getElementById(panelId);
       if (existing && existing.parentNode) existing.parentNode.removeChild(existing);

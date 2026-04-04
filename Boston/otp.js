@@ -2483,8 +2483,8 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
 }
 
 /**
- * Put trip routes on the map as normal overlays (lines + stacked orange route-info circles + buses).
- * Legs that are bare Red/Green (branch unknown) also open the branch picker; other legs still auto-apply.
+ * Itinerary → route list from drawJourney → map overlays + one orange circle per transit leg on the rail.
+ * Bare Red/Green: overlay opens after branch pick; chip still lists the leg and opens the branch menu.
  */
 async function applyOtpTripRouteOverlays(routeList) {
   const existingModal = document.getElementById('otpRouteSelectorModal');
@@ -2497,16 +2497,13 @@ async function applyOtpTripRouteOverlays(routeList) {
   const needsBranchPicker = typeof window.isRouteGroup === 'function'
     ? (r) => window.isRouteGroup(r.routeId)
     : () => false;
-  const routesNeedingBranch = routeList.filter(needsBranchPicker);
   const routesAuto = routeList.filter(r => !needsBranchPicker(r));
 
   window.activeTripSelected = true;
 
   if (typeof window.showRouteOverlay !== 'function') {
     console.error('[applyOtpTripRouteOverlays] showRouteOverlay not available');
-    if (routesNeedingBranch.length > 0) {
-      showOtpRouteSelector(routesNeedingBranch);
-    }
+    showOtpRouteSelector(routeList);
     return;
   }
 
@@ -2527,9 +2524,8 @@ async function applyOtpTripRouteOverlays(routeList) {
     }
     verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey);
   }
-  if (routesNeedingBranch.length > 0) {
-    showOtpRouteSelector(routesNeedingBranch);
-  }
+
+  showOtpRouteSelector(routeList);
 }
 
 /**
@@ -2569,8 +2565,8 @@ function getOtpTripChipStackLayout(hostEl) {
 }
 
 /**
- * Bare Red/Green legs: stacked orange circles on the map (same pattern as route overlays), not a count box.
- * @param {Array} routeList - Array of route objects with {routeId, directionId, mode, color, name}
+ * One stacked orange circle per transit leg from the itinerary (right rail; branch legs open picker on click).
+ * @param {Array} routeList - from drawJourney: {routeId, directionId, mode, color, name, legIndex, ...}
  */
 function showOtpRouteSelector(routeList) {
   // Remove existing modal if present

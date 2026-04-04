@@ -1405,7 +1405,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + MBTA live data bundled; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260409"></script>
+<script src="routeOverlay.js?v=20260410"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <!-- -- CSL (Crowdsourced Live) MODULE -- -->
@@ -6289,6 +6289,7 @@
       overlayInstanceKey !== undefined && overlayInstanceKey !== null && String(overlayInstanceKey) !== ''
         ? String(overlayInstanceKey)
         : `${routeId}-${directionId}`;
+    const skipRouteInfoPanel = /-otpLeg\d+$/.test(overlayKey);
     
     // Remove existing overlay if present (toggle behavior)
     if (window.activeRouteOverlays[overlayKey]) {
@@ -6419,7 +6420,8 @@
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl, // Pass GTFS-RT URL for MBTA
       disableGtfsRt: CITY_CONFIG.disableGtfsRt, // Keep code but skip GTFS-RT fetch/parse when true
       trackBuses: true, // Enable bus tracking for route overlay
-      overlayKey: overlayKey // Pass the actual overlay key for close button to use
+      overlayKey: overlayKey, // Pass the actual overlay key for close button to use
+      skipRouteInfoPanel: skipRouteInfoPanel
     });
     
     window.activeRouteOverlays[overlayKey] = overlay;
@@ -6436,7 +6438,8 @@
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
       disableGtfsRt: CITY_CONFIG.disableGtfsRt,
       trackBuses: true,
-      overlayKey: overlayKey
+      overlayKey: overlayKey,
+      skipRouteInfoPanel: skipRouteInfoPanel
     };
     window.activeRouteOverlayDescriptors[overlayKey] = {
       attachRouteId: busTrackingRouteId, // For bus tracking (base route ID)
