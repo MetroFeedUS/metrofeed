@@ -2095,47 +2095,35 @@ function drawJourney(journey) {
       });
       window.routeLegLines.push(transitId);
       allCoords = allCoords.concat(leg.solidSegment);
-      
+
       // Store route info for selector modal (map subway and commuter rail codes)
       const routeName = leg.line?.name || `Route ${leg.routeNumber}`;
       let mappedRouteId;
-      
-      // Map commuter rail routes (RAIL/TRAIN mode)
-      // Check if it's already mapped to CR- prefix, or if it contains "Line" (commuter rail naming)
+
       if ((leg.mode === 'RAIL' || leg.mode === 'TRAIN') && leg.routeNumber) {
         if (leg.routeNumber.startsWith('CR-')) {
-          // Already mapped
           mappedRouteId = leg.routeNumber;
         } else if (leg.routeNumber.includes('Line') || routeName.includes('Line')) {
-          // Needs mapping: "Fitchburg Line" -> "CR-Fitchburg"
           mappedRouteId = mapCommuterRailRoute(leg.routeNumber, routeName);
         } else {
-          // Try mapping anyway (might be commuter rail without "Line" in name)
           mappedRouteId = mapCommuterRailRoute(leg.routeNumber, routeName);
-          // If mapping didn't change it and it doesn't start with CR-, try subway mapping
           if (mappedRouteId === leg.routeNumber && !mappedRouteId.startsWith('CR-')) {
             mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
           }
         }
       } else {
-        // Map subway routes
         mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
       }
-      
-      // If routeNumber already has a branch suffix (from extractRouteInfo), preserve it
-      // Otherwise, try to determine branch from stops if we have a base route
+
       const estimatedCalls = leg.estimatedCalls || leg.stops || null;
       if (estimatedCalls && Array.isArray(estimatedCalls) && estimatedCalls.length > 0) {
-        // If OTP returned "Green" (not a specific branch), try to determine which branch from stops
         if (mappedRouteId === 'Green') {
           const branch = determineGreenLineBranch(estimatedCalls);
           if (branch) {
             mappedRouteId = `Green-${branch}`;
             console.log(`🎨 [drawJourney] Mapped Green Line to branch ${branch} based on stops`);
           }
-        }
-        // If OTP returned "Red" (not a specific branch), try to determine which branch from stops
-        else if (mappedRouteId === 'Red') {
+        } else if (mappedRouteId === 'Red') {
           const branch = determineRedLineBranch(estimatedCalls);
           if (branch) {
             mappedRouteId = `Red-${branch}`;
@@ -2143,8 +2131,7 @@ function drawJourney(journey) {
           }
         }
       }
-      
-      // If leg.routeNumber already has a branch suffix, use it (extractRouteInfo may have determined it)
+
       if (leg.routeNumber && (leg.routeNumber.startsWith('Red-') || leg.routeNumber.startsWith('Green-'))) {
         mappedRouteId = leg.routeNumber;
         console.log(`🎨 [drawJourney] Using branch route from extractRouteInfo: ${mappedRouteId}`);
@@ -2158,24 +2145,17 @@ function drawJourney(journey) {
           `Using branch route ${mappedRouteId} from extractRouteInfo`
         );
       }
-      
-      // Get from/to stops from the leg for better direction matching
+
       const fromStop = leg.from?.name || '';
       const toStop = leg.to?.name || '';
-      
-      // Determine route color: Use MBTA subway colors if subway/tram, otherwise use leg color
-      let routeColor = color; // Default to leg color
+
+      let routeColor = color;
       if (leg.mode === 'SUBWAY' || leg.mode === 'METRO' || leg.mode === 'TRAM') {
         routeColor = getSubwayRouteColor(mappedRouteId);
       }
-      
-      // Add route to list if we have a routeNumber (even if verification failed)
-      // Verification is a safety check, but shouldn't block routes from showing
-      // User can see the route and decide if it's correct
-      // Only skip if routeNumber is null/undefined (can't identify route at all)
+
       const shouldAddRoute = mappedRouteId !== null && mappedRouteId !== undefined;
-      
-      // Debug: Log route verification status
+
       addDebugLog(
         `Leg ${legIdx}: Route List Check`,
         {
@@ -2187,22 +2167,22 @@ function drawJourney(journey) {
         },
         `Route ${mappedRouteId}: verified=${leg.routeVerified || false}, willAdd=${shouldAddRoute}${!shouldAddRoute ? ' (no route ID)' : leg.routeVerified === false ? ' (verification failed, but adding anyway)' : ''}`
       );
-      
+
       if (shouldAddRoute) {
         routeList.push({
-          routeId: mappedRouteId, // Use mapped ID (e.g., "Red" instead of "200", or "Green-B" instead of "Green")
-          originalRouteId: leg.routeNumber, // Keep original for reference
+          routeId: mappedRouteId,
+          originalRouteId: leg.routeNumber,
           directionId: leg.direction || 0,
           mode: leg.mode,
-          color: routeColor, // Use MBTA subway color if subway/tram, otherwise leg color
+          color: routeColor,
           name: routeName,
           legIndex: legIdx,
-          fromStop: fromStop, // Store for direction matching
-          toStop: toStop,      // Store for direction matching
-          directionCalculated: leg.directionCalculated || false, // Track if direction was calculated
-          routeVerified: leg.routeVerified || false // Track if route was verified
+          fromStop: fromStop,
+          toStop: toStop,
+          directionCalculated: leg.directionCalculated || false,
+          routeVerified: leg.routeVerified || false
         });
-        
+
         addDebugLog(
           `Leg ${legIdx}: Added to Route List`,
           {
@@ -2227,7 +2207,7 @@ function drawJourney(journey) {
       }
     }
   });
-  
+
   // Fit map to bounds
   if (allCoords.length > 0) {
     const bounds = new maplibregl.LngLatBounds();
@@ -2398,25 +2378,14 @@ function selectOtpBranchRoute(branchRouteId, directionId, originalRoute, routeGr
   const flippedDirection = needsFlip 
     ? (directionId === 0 ? 1 : 0)
     : directionId;
-  
-  // ⚠️ CRITICAL: Clear ALL bus markers and overlays first
-  if (typeof window.fetchAndDisplayBuses === 'function') {
-    window.fetchAndDisplayBuses([]);
-  }
-  
-  if (typeof window.clearAllRouteOverlays === 'function') {
-    window.clearAllRouteOverlays();
-  }
-  
-  if (window.activeRouteOverlays) {
-    window.activeRouteOverlays = {};
-  }
-  
+
   window.activeTripSelected = true;
-  
-  // Show route overlay using existing system
+
+  const legTag = originalRoute.legIndex !== undefined && originalRoute.legIndex !== null ? originalRoute.legIndex : 0;
+  const overlayInstanceKey = `${branchRouteId}-${flippedDirection}-otpLeg${legTag}`;
+
   if (typeof window.showRouteOverlay === 'function') {
-    window.showRouteOverlay(branchRouteId, flippedDirection);
+    window.showRouteOverlay(branchRouteId, flippedDirection, undefined, overlayInstanceKey);
   } else {
     console.error('🎨 [selectOtpBranchRoute] showRouteOverlay not available');
     alert('Route overlay system not ready. Please refresh the page.');
@@ -2566,7 +2535,42 @@ function applyOtpTripRouteOverlays(routeList) {
 }
 
 /**
- * Show route selector modal with color-coordinated buttons
+ * Collapsed label for OTP chips — mirrors route-info-panel logic in routeOverlay.js
+ */
+function getOtpTripChipCollapsedLabel(mappedRouteId) {
+  if (!mappedRouteId) return '?';
+  let routeNumber = String(mappedRouteId);
+  if (routeNumber.includes('-') && (routeNumber.startsWith('Red-') || routeNumber.startsWith('Green-'))) {
+    routeNumber = routeNumber.split('-')[0];
+  } else {
+    const numericMatch = routeNumber.match(/\d+/);
+    if (numericMatch) routeNumber = numericMatch[0];
+  }
+  return routeNumber;
+}
+
+/**
+ * Stack OTP chips after existing route-info circles (same right rail).
+ */
+function getOtpTripChipStackLayout(hostEl) {
+  const circleSize = 40;
+  const circleSpacing = 10;
+  const topOffset = 250;
+  let maxIndex = -1;
+  const roots = hostEl === document.body
+    ? [document.body, window.map && window.map.getContainer && window.map.getContainer()].filter(Boolean)
+    : [hostEl];
+  roots.forEach(root => {
+    root.querySelectorAll('.route-info-panel, .otp-trip-route-chip').forEach(panel => {
+      const ix = panel.getAttribute('data-collapse-index');
+      if (ix !== null && ix !== '') maxIndex = Math.max(maxIndex, parseInt(ix, 10));
+    });
+  });
+  return { circleSize, circleSpacing, topOffset, baseIndex: maxIndex + 1 };
+}
+
+/**
+ * Bare Red/Green legs: stacked orange circles on the map (same pattern as route overlays), not a count box.
  * @param {Array} routeList - Array of route objects with {routeId, directionId, mode, color, name}
  */
 function showOtpRouteSelector(routeList) {
@@ -2575,285 +2579,34 @@ function showOtpRouteSelector(routeList) {
   if (existingModal) {
     existingModal.remove();
   }
-  
-  // Track collapsed state - START MINIMIZED
-  let isCollapsed = true;
-  
-  // Create modal container - starts minimized (small square box)
-  const modal = document.createElement('div');
-  modal.id = 'otpRouteSelectorModal';
-  
-  // Find position for minimized box (top-right, similar to route info panels)
-  const allPanels = Array.from(document.querySelectorAll('.route-info-panel[data-collapsed="true"]'));
-  const maxIndex = allPanels.length > 0 
-    ? Math.max(...allPanels.map(p => parseInt(p.getAttribute('data-collapse-index') || '0', 10)))
-    : -1;
-  const panelIndex = maxIndex + 1;
-  const boxSize = 60; // Square size when minimized
-  const boxSpacing = 10;
-  const topOffset = 250; // Start from top to avoid overlapping with other UI elements
-  const verticalPosition = topOffset + (panelIndex * (boxSize + boxSpacing));
-  
-  // Initial minimized state
-  modal.style.cssText = `
-    position: fixed;
-    top: ${verticalPosition}px;
-    right: 20px;
-    transform: none;
-    background: rgba(20, 20, 20, 0.95);
-    border: 3px solid #555;
-    border-radius: 8px;
-    padding: 0;
-    z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    transition: all 0.3s ease;
-    width: ${boxSize}px;
-    height: ${boxSize}px;
-    min-width: ${boxSize}px;
-    max-width: ${boxSize}px;
-    min-height: ${boxSize}px;
-    max-height: ${boxSize}px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    overflow: hidden;
-  `;
-  modal.setAttribute('data-collapsed', 'true');
-  modal.setAttribute('data-collapse-index', panelIndex.toString());
-  
-  // Minimized view content (shown when collapsed)
-  const minimizedLabel = document.createElement('div');
-  minimizedLabel.textContent = routeList.length > 0 ? `${routeList.length}` : '0';
-  minimizedLabel.style.cssText = `
-    color: #fff;
-    font-size: 18px;
-    font-weight: bold;
-    text-align: center;
-    line-height: 1;
-  `;
-  modal.appendChild(minimizedLabel);
-  
-  // Title with collapse button (shown when expanded)
-  const titleBar = document.createElement('div');
-  titleBar.style.cssText = `
-    display: none;
-    position: relative;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #444;
-  `;
-  
-  const title = document.createElement('div');
-  title.textContent = 'Routes in Trip';
-  const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  title.style.cssText = `
-    color: #fff;
-    font-size: ${isMobile ? '12px' : '13px'};
-    font-weight: 600;
-    letter-spacing: 0.2px;
-  `;
-  titleBar.appendChild(title);
-  
-  // Close button (when expanded)
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '×';
-  const isMobileCheck = window.matchMedia('(max-width: 768px)').matches;
-  closeBtn.style.cssText = `
-    background: transparent;
-    border: 1px solid #666;
-    color: #fff;
-    font-size: ${isMobileCheck ? '18px' : '20px'};
-    width: ${isMobileCheck ? '24px' : '28px'};
-    height: ${isMobileCheck ? '24px' : '28px'};
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    margin-left: 6px;
-    padding: 0;
-  `;
-  closeBtn.onmouseenter = () => {
-    closeBtn.style.background = '#ff4444';
-    closeBtn.style.borderColor = '#ff6666';
-  };
-  closeBtn.onmouseleave = () => {
-    closeBtn.style.background = 'transparent';
-    closeBtn.style.borderColor = '#666';
-  };
-  closeBtn.onclick = (e) => {
-    e.stopPropagation();
-    modal.remove();
-  };
-  titleBar.appendChild(closeBtn);
-  
-  // Collapse button (when expanded)
-  const collapseBtn = document.createElement('button');
-  collapseBtn.textContent = '►';
-  collapseBtn.style.cssText = `
-    background: transparent;
-    border: 1px solid #666;
-    color: #fff;
-    font-size: ${isMobileCheck ? '12px' : '14px'};
-    width: ${isMobileCheck ? '24px' : '28px'};
-    height: ${isMobileCheck ? '24px' : '28px'};
-    border-radius: 4px;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    padding: 0;
-  `;
-  collapseBtn.onmouseenter = () => {
-    collapseBtn.style.background = '#333';
-    collapseBtn.style.borderColor = '#888';
-  };
-  collapseBtn.onmouseleave = () => {
-    collapseBtn.style.background = 'transparent';
-    collapseBtn.style.borderColor = '#666';
-  };
-  
-  // Expand/collapse functionality
-  const toggleExpand = (e) => {
-    if (e) e.stopPropagation();
-    isCollapsed = !isCollapsed;
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    
-    if (isCollapsed) {
-      // Collapse to small square box
-      const storedIndex = modal.getAttribute('data-collapse-index') || '0';
-      const storedTop = topOffset + (parseInt(storedIndex, 10) * (boxSize + boxSpacing));
-      
-      modal.style.cssText = `
-        position: fixed;
-        top: ${storedTop}px;
-        right: 20px;
-        transform: none;
-        background: rgba(20, 20, 20, 0.95);
-        border: 3px solid #555;
-        border-radius: 8px;
-        padding: 0;
-        z-index: 10000;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        transition: all 0.3s ease;
-        width: ${boxSize}px;
-        height: ${boxSize}px;
-        min-width: ${boxSize}px;
-        max-width: ${boxSize}px;
-        min-height: ${boxSize}px;
-        max-height: ${boxSize}px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        overflow: hidden;
-      `;
-      modal.setAttribute('data-collapsed', 'true');
-      titleBar.style.display = 'none';
-      buttonsContainer.style.display = 'none';
-      minimizedLabel.style.display = 'block';
-      collapseBtn.style.display = 'none';
-    } else {
-      // Expand to show routes
-      if (isMobile) {
-        modal.style.cssText = `
-          position: fixed;
-          top: auto;
-          bottom: 80px;
-          right: 10px;
-          left: auto;
-          transform: none;
-          background: rgba(20, 20, 20, 0.95);
-          border: 2px solid #555;
-          border-radius: 8px;
-          padding: 8px;
-          z-index: 10000;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          transition: all 0.3s ease;
-          max-width: calc(100vw - 20px);
-          max-height: calc(100vh - 160px);
-          width: auto;
-          min-width: 160px;
-          height: auto;
-          min-height: auto;
-          overflow-y: auto;
-          display: block;
-          cursor: default;
-        `;
-      } else {
-        modal.style.cssText = `
-          position: fixed;
-          top: 50%;
-          right: 20px;
-          transform: translateY(-50%);
-          background: rgba(20, 20, 20, 0.95);
-          border: 2px solid #555;
-          border-radius: 8px;
-          padding: 10px;
-          z-index: 10000;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          transition: all 0.3s ease;
-          max-width: 220px;
-          max-height: 70vh;
-          width: auto;
-          min-width: 180px;
-          height: auto;
-          min-height: auto;
-          overflow-y: auto;
-          display: block;
-          cursor: default;
-        `;
-      }
-      modal.removeAttribute('data-collapsed');
-      titleBar.style.display = 'flex';
-      buttonsContainer.style.display = 'flex';
-      minimizedLabel.style.display = 'none';
-      collapseBtn.style.display = 'flex';
-    }
-  };
-  
-  collapseBtn.onclick = toggleExpand;
-  
-  // Click modal when minimized to expand
-  modal.onclick = () => {
-    if (isCollapsed) {
-      toggleExpand();
-    }
-  };
-  
-  titleBar.appendChild(collapseBtn);
-  
-  modal.appendChild(titleBar);
-  
-  // Route buttons container (border box) - vertical layout
+
+  if (!routeList || routeList.length === 0) return;
+
+  const map = window.map;
+  const mapContainer = map && typeof map.getContainer === 'function' ? map.getContainer() : null;
+  const hostEl = mapContainer || document.body;
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'otpRouteSelectorModal';
+  wrapper.setAttribute('data-otp-route-chips', 'true');
+  if (mapContainer) {
+    wrapper.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:1001;overflow:visible;';
+  } else {
+    wrapper.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:10001;overflow:visible;';
+  }
+
+  const layout = getOtpTripChipStackLayout(hostEl);
+
+  const modal = wrapper;
+
   const buttonsContainer = document.createElement('div');
   buttonsContainer.id = 'otpRouteButtonsContainer';
-  const isMobileForGap = window.matchMedia('(max-width: 768px)').matches;
-  buttonsContainer.style.cssText = `
-    display: none;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    gap: ${isMobileForGap ? '6px' : '8px'};
-    justify-content: flex-start;
-    padding: 4px 0;
-    background: transparent;
-  `;
-  
-  // Function to update all button states (defined outside loop so all buttons can use it)
+  buttonsContainer.style.cssText = 'display:contents';
+
   const updateAllButtonStates = () => {
-    const allButtons = buttonsContainer.querySelectorAll('button');
-    allButtons.forEach(btn => {
-      if (btn._overlayKey && btn._updateButtonState) {
-        const isActive = window.activeRouteOverlays && window.activeRouteOverlays[btn._overlayKey];
+    buttonsContainer.querySelectorAll('button').forEach(btn => {
+      if (btn._isLegOverlayActive && btn._updateButtonState) {
+        const isActive = btn._isLegOverlayActive();
         const currentActive = btn.getAttribute('data-active') === 'true';
         if (isActive !== currentActive) {
           btn._updateButtonState(isActive);
@@ -2862,357 +2615,137 @@ function showOtpRouteSelector(routeList) {
     });
   };
   
-  // Create square button for each route (keep in order - descending = first to last leg)
-  console.log('🎨 [showOtpRouteSelector] Creating buttons for routes:', routeList.map(r => ({ id: r.routeId, name: r.name, mode: r.mode })));
+  // Orange circles on the map right rail (same stack index scheme as .route-info-panel)
+  console.log('🎨 [showOtpRouteSelector] Creating chips for routes:', routeList.map(r => ({ id: r.routeId, name: r.name, mode: r.mode })));
   routeList.forEach((route, idx) => {
-    // Route ID is already mapped in drawJourney()
     const mappedRouteId = route.routeId;
-    console.log(`🎨 [showOtpRouteSelector] Creating button ${idx + 1}/${routeList.length}: routeId="${mappedRouteId}", name="${route.name}", color="${route.color}"`);
-    
-    const button = document.createElement('button');
-    button.title = route.name || `Route ${mappedRouteId}`; // Tooltip for collapsed state
-    
-    // Square button styling - responsive size
-    const isMobileForButton = window.matchMedia('(max-width: 768px)').matches;
-    const buttonSize = isMobileForButton ? 45 : 55; // Smaller on mobile
-    button.style.cssText = `
-      background: ${route.color};
+    const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : idx;
+    const flippedDirection = computeOtpFlippedDirectionSync(route);
+    const overlayInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
+    const legSuffix = `-otpLeg${legTag}`;
+
+    const isLegOverlayActive = () => {
+      if (!window.activeRouteOverlays) return false;
+      return Object.keys(window.activeRouteOverlays).some(k => k.endsWith(legSuffix));
+    };
+
+    console.log(`🎨 [showOtpRouteSelector] Chip ${idx + 1}/${routeList.length}: "${mappedRouteId}", dir ${flippedDirection}`);
+
+    const stackIndex = layout.baseIndex + idx;
+    const { circleSize, circleSpacing, topOffset } = layout;
+    const verticalPosition = topOffset + stackIndex * (circleSize + circleSpacing);
+
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'otp-trip-route-chip';
+    chip.title = route.name || `Route ${mappedRouteId}`;
+    chip.setAttribute('data-collapse-index', String(stackIndex));
+    chip.setAttribute('data-collapsed', 'true');
+    const posMode = mapContainer ? 'absolute' : 'fixed';
+    const leftVal = mapContainer ? `calc(100% - ${circleSize + 10}px)` : 'auto';
+    const rightVal = mapContainer ? 'auto' : '20px';
+    chip.style.cssText = `
+      pointer-events: auto;
+      position: ${posMode};
+      left: ${leftVal};
+      right: ${rightVal};
+      top: ${verticalPosition}px;
+      width: ${circleSize}px;
+      height: ${circleSize}px;
+      min-width: ${circleSize}px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      background: #FF6B35;
       color: #fff;
-      border: 2px solid ${route.color};
-      border-radius: 6px;
-      width: ${buttonSize}px;
-      height: ${buttonSize}px;
-      font-size: ${isMobileForButton ? '9px' : '10px'};
-      font-weight: 700;
+      font-weight: bold;
+      font-size: 0.8rem;
+      line-height: 1.1;
       cursor: pointer;
-      text-align: center;
+      padding: 2px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
-      position: relative;
-      padding: 3px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      word-wrap: break-word;
-      overflow: hidden;
-      opacity: 0.9;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      z-index: 2;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     `;
-    
-    // Route number/label (centered in square)
-    // For branch routes like "Red-Ashmont", show "Red" on top and "Ashmont" below
-    const routeLabel = document.createElement('div');
-    let displayText = mappedRouteId || '?';
-    
-    // Handle branch routes: "Red-Ashmont" -> show "Red" on top, "Ashmont" below
-    if (mappedRouteId && mappedRouteId.includes('-') && (mappedRouteId.startsWith('Red-') || mappedRouteId.startsWith('Green-'))) {
-      const parts = mappedRouteId.split('-');
-      displayText = parts[0]; // "Red" or "Green"
-      
-      routeLabel.textContent = displayText;
-      const isMobileForLabel = window.matchMedia('(max-width: 768px)').matches;
-      routeLabel.style.cssText = `
-        font-size: ${isMobileForLabel ? '11px' : '13px'};
-        font-weight: bold;
-        line-height: 1.2;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-      `;
-      button.appendChild(routeLabel);
-      
-      // Show branch name below
-      const branchLabel = document.createElement('div');
-      branchLabel.textContent = parts[1]; // "Ashmont", "Braintree", "B", "C", "D", "E"
-      branchLabel.style.cssText = `
-        font-size: ${isMobileForLabel ? '8px' : '9px'};
-        margin-top: 2px;
-        opacity: 0.95;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-        line-height: 1.1;
-        font-weight: 600;
-      `;
-      button.appendChild(branchLabel);
-    } else {
-      // Regular routes: show route number
-      routeLabel.textContent = displayText;
-      const isMobileForRegularLabel = window.matchMedia('(max-width: 768px)').matches;
-      routeLabel.style.cssText = `
-        font-size: ${isMobileForRegularLabel ? '10px' : '12px'};
-        font-weight: bold;
-        line-height: 1.2;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-      `;
-      button.appendChild(routeLabel);
-      
-      // Route name (smaller, below number if space allows)
-      if (route.name && route.name.length < 15 && !mappedRouteId.match(/^\d+$/)) {
-        const routeName = document.createElement('div');
-        routeName.textContent = route.name;
-        routeName.style.cssText = `
-          font-size: 9px;
-          margin-top: 2px;
-          opacity: 0.9;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-          line-height: 1.1;
-          max-height: 20px;
-          overflow: hidden;
-        `;
-        button.appendChild(routeName);
-      }
-    }
-    
-    // ⚠️ FLIP DIRECTION: OTP directions are backward for BUS/TRAM/RAIL, but NOT for SUBWAY/METRO
-    // Buses/rail need flipping, but subways are already correct
-    const needsFlip = !(route.mode === 'SUBWAY' || route.mode === 'METRO');
-    
-    // For buses: Try to verify direction by loading route data and matching stops
-    // This provides a better filter than just blindly flipping
-    let flippedDirection = route.directionId;
-    
-    if (needsFlip && route.mode === 'BUS' && mappedRouteId && window.routeLoader) {
-      // Try to verify the direction by checking route data
-      // Load both directions and see which one matches better
-      Promise.all([
-        window.routeLoader.loadRoute(mappedRouteId, 0).catch(() => null),
-        window.routeLoader.loadRoute(mappedRouteId, 1).catch(() => null)
-      ]).then(([dir0Data, dir1Data]) => {
-        if (dir0Data && dir1Data && dir0Data.stops && dir1Data.stops) {
-          // Get OTP leg stops
-          const otpFrom = (route.fromStop || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-          const otpTo = (route.toStop || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-          
-          // Get route terminal stops
-          const dir0First = (dir0Data.stops[0]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-          const dir0Last = (dir0Data.stops[dir0Data.stops.length - 1]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-          const dir1First = (dir1Data.stops[0]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-          const dir1Last = (dir1Data.stops[dir1Data.stops.length - 1]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-          
-          // Improved scoring system for direction matching
-          function calculateDirectionScore(otpFrom, otpTo, routeStops) {
-            if (!routeStops || routeStops.length === 0) return 0;
-            
-            let score = 0;
-            const firstStop = normalizeStopName(routeStops[0]?.name);
-            const lastStop = normalizeStopName(routeStops[routeStops.length - 1]?.name);
-            
-            // Exact terminal matches get highest weight
-            if (otpFrom && otpFrom === firstStop) score += 5;
-            if (otpTo && otpTo === lastStop) score += 5;
-            
-            // Partial terminal matches (substring) get medium weight
-            if (otpFrom && (otpFrom.includes(firstStop) || firstStop.includes(otpFrom)) && otpFrom !== firstStop) score += 3;
-            if (otpTo && (otpTo.includes(lastStop) || lastStop.includes(otpTo)) && otpTo !== lastStop) score += 3;
-            
-            // Check if OTP stops appear in route sequence (with position weighting)
-            const otpFromNorm = normalizeStopName(otpFrom);
-            const otpToNorm = normalizeStopName(otpTo);
-            
-            routeStops.forEach((stop, idx) => {
-              const stopName = normalizeStopName(stop.name);
-              if (stopName === otpFromNorm || stopName === otpToNorm) {
-                // Give more weight to matches near terminals (first/last 3 stops)
-                const isNearTerminal = idx < 3 || idx > routeStops.length - 4;
-                score += isNearTerminal ? 2 : 1;
-              }
-            });
-            
-            return score;
-          }
-          
-          function normalizeStopName(name) {
-            return (name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-          }
-          
-          // Calculate scores for each direction
-          const dir0Score = calculateDirectionScore(route.fromStop, route.toStop, dir0Data.stops);
-          const dir1Score = calculateDirectionScore(route.fromStop, route.toStop, dir1Data.stops);
-          
-          // Determine best direction (higher score wins, tie goes to original direction)
-          const bestDirection = dir1Score > dir0Score ? 1 : (dir0Score > dir1Score ? 0 : route.directionId);
-          const shouldFlip = route.directionId !== bestDirection;
-          
-          if (shouldFlip) {
-            flippedDirection = route.directionId === 0 ? 1 : 0;
-            console.log(`🎨 [OtpRouteSelector] Route ${mappedRouteId}: OTP direction ${route.directionId} → Flipped to ${flippedDirection} (dir0: ${dir0Score}, dir1: ${dir1Score}, from: "${route.fromStop}", to: "${route.toStop}")`);
-          } else {
-            flippedDirection = route.directionId;
-            console.log(`🎨 [OtpRouteSelector] Route ${mappedRouteId}: OTP direction ${route.directionId} is correct (dir0: ${dir0Score}, dir1: ${dir1Score}, from: "${route.fromStop}", to: "${route.toStop}")`);
-          }
-          
-          // Update the overlay if it's already displayed
-          const overlayKey = `${mappedRouteId}-${flippedDirection}`;
-          if (window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]) {
-            // Direction was verified, overlay is already correct
-          } else {
-            // If overlay exists with wrong direction, update it
-            const oldKey = `${mappedRouteId}-${route.directionId === 0 ? 1 : 0}`;
-            if (window.activeRouteOverlays && window.activeRouteOverlays[oldKey]) {
-              window.activeRouteOverlays[oldKey].remove();
-              delete window.activeRouteOverlays[oldKey];
-              if (typeof window.showRouteOverlay === 'function') {
-                window.showRouteOverlay(mappedRouteId, flippedDirection);
-              }
-            }
-          }
-        }
-      }).catch(err => {
-        console.warn(`🎨 [OtpRouteSelector] Could not verify direction for route ${mappedRouteId}, using default flip logic:`, err);
-        // Fallback to default flip logic
-        flippedDirection = needsFlip ? (route.directionId === 0 ? 1 : 0) : route.directionId;
-      });
-      
-      // Use default flip logic initially (will be corrected by Promise above if route data loads)
-      // BUT: Only flip if we're confident the direction needs flipping
-      // If direction was calculated correctly in calculateDirection, don't flip
-      flippedDirection = needsFlip ? (route.directionId === 0 ? 1 : 0) : route.directionId;
-    } else if (needsFlip) {
-      // Default: Flip for buses/rail
-      // However, if the direction was calculated correctly in calculateDirection (not defaulted),
-      // we should trust it and NOT flip it
-      if (route.directionCalculated) {
-        // Direction was calculated, trust it
-        flippedDirection = route.directionId;
-        console.log(`🎨 [OtpRouteSelector] Route ${mappedRouteId}: Direction was calculated (${route.directionId}), not flipping`);
-      } else {
-        // Direction was defaulted, flip it
-        flippedDirection = route.directionId === 0 ? 1 : 0;
-        console.log(`🎨 [OtpRouteSelector] Route ${mappedRouteId}: Direction was defaulted (${route.directionId}), flipping to ${flippedDirection}`);
-      }
-    } else {
-      // Don't flip for subways/metro
-      flippedDirection = route.directionId;
-    }
-    
-    // Track active state (use flipped direction for key since we flip when showing)
-    const overlayKey = `${mappedRouteId}-${flippedDirection}`;
-    
-    // Function to update button active state (NO GLOW - just border change)
+    chip.textContent = getOtpTripChipCollapsedLabel(mappedRouteId);
+
     const updateButtonState = (active) => {
       if (active) {
-        button.style.border = '3px solid #fff';
-        button.style.opacity = '1';
-        button.setAttribute('data-active', 'true');
+        chip.style.opacity = '1';
+        chip.style.boxShadow = '0 0 0 3px rgba(255,255,255,0.95), 0 4px 12px rgba(0,0,0,0.5)';
+        chip.setAttribute('data-active', 'true');
       } else {
-        button.style.border = `3px solid ${route.color}`;
-        button.style.opacity = '0.9';
-        button.setAttribute('data-active', 'false');
+        chip.style.opacity = '0.88';
+        chip.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
+        chip.setAttribute('data-active', 'false');
       }
     };
-    
-    // Hover effects for square buttons (NO GLOW)
-    button.onmouseenter = () => {
-      if (button.getAttribute('data-active') !== 'true') {
-        button.style.transform = 'scale(1.05)';
-        button.style.opacity = '1';
-        button.style.zIndex = '10001';
+
+    chip.onmouseenter = () => {
+      if (chip.getAttribute('data-active') !== 'true') {
+        chip.style.transform = 'scale(1.06)';
+        chip.style.opacity = '1';
       }
     };
-    button.onmouseleave = () => {
-      button.style.transform = 'scale(1)';
-      const isActive = button.getAttribute('data-active') === 'true';
-      button.style.opacity = isActive ? '1' : '0.9';
-      button.style.zIndex = 'auto';
+    chip.onmouseleave = () => {
+      chip.style.transform = 'scale(1)';
+      updateButtonState(isLegOverlayActive());
     };
-    
-    // Check if route is already active on load
-    const checkActiveState = () => {
-      return window.activeRouteOverlays && window.activeRouteOverlays[overlayKey];
-    };
-    
-    // Initial state check
-    const initialActive = checkActiveState();
-    updateButtonState(initialActive);
-    
-    // Listen for overlay changes to update button state (polling for now)
-    // Store interval ID on button for cleanup
+
+    updateButtonState(isLegOverlayActive());
+
     const checkInterval = setInterval(() => {
-      const nowActive = checkActiveState();
-      const currentActive = button.getAttribute('data-active') === 'true';
-      if (nowActive !== currentActive) {
+      const nowActive = isLegOverlayActive();
+      if (nowActive !== (chip.getAttribute('data-active') === 'true')) {
         updateButtonState(nowActive);
       }
-    }, 300); // Check more frequently for better responsiveness
-    
-    // Store interval on button for cleanup
-    button._checkInterval = checkInterval;
-    
-    // Store update function and overlay key on button for cross-button updates
-    button._updateButtonState = updateButtonState;
-    button._overlayKey = overlayKey;
-    
-    // Clean up interval when modal is removed
+    }, 300);
+
+    chip._checkInterval = checkInterval;
+    chip._updateButtonState = updateButtonState;
+    chip._isLegOverlayActive = isLegOverlayActive;
+
     const cleanup = () => {
-      if (button._checkInterval) {
-        clearInterval(button._checkInterval);
-      }
+      if (chip._checkInterval) clearInterval(chip._checkInterval);
     };
-    if (!modal._cleanupFunctions) {
-      modal._cleanupFunctions = [];
-    }
+    if (!modal._cleanupFunctions) modal._cleanupFunctions = [];
     modal._cleanupFunctions.push(cleanup);
-    
-    // Click handler - toggle route overlay or show branch selection for route groups
-    button.onclick = () => {
-      console.log('🎨 [OtpRouteSelector] Clicked route:', mappedRouteId, '(original:', route.routeId, ')');
-      
-      // Check if this is a route group (Red, Green)
+
+    chip.onclick = (e) => {
+      e.stopPropagation();
       if (window.isRouteGroup && window.isRouteGroup(mappedRouteId)) {
-        // Show branch selection menu
-        showOtpBranchSelection(mappedRouteId, route, button, buttonsContainer);
+        showOtpBranchSelection(mappedRouteId, route, chip, buttonsContainer);
         return;
       }
-      
-      // Regular route - show overlay directly
-      console.log('🎨 [OtpRouteSelector] Mode:', route.mode, 'OTP direction:', route.directionId, needsFlip ? `→ Flipped to: ${flippedDirection}` : `(no flip needed: ${flippedDirection})`);
-      
-      // ⚠️ IMPORTANT: Keep OTP trip active (prevents "all buses" mode)
       window.activeTripSelected = true;
-      
-      // Show route overlay using existing system (use mapped route ID, flipped direction)
-      if (typeof window.showRouteOverlay === 'function') {
-        // Toggle overlay: if already active, hide it; otherwise show it
-        const wasActive = button.getAttribute('data-active') === 'true';
-        
-        if (wasActive) {
-          // Hide this specific overlay (don't clear all)
-          if (typeof window.hideRouteOverlay === 'function') {
-            window.hideRouteOverlay(mappedRouteId, flippedDirection);
-          }
-          // Update all button states after a short delay to ensure overlay is removed
-          setTimeout(() => {
-            updateAllButtonStates();
-          }, 150);
-        } else {
-          // Show overlay (this will add to existing overlays, not replace them)
-          window.showRouteOverlay(mappedRouteId, flippedDirection).then(() => {
-            // Update all button states after overlay is created
-            setTimeout(() => {
-              updateAllButtonStates();
-            }, 150);
-          }).catch(() => {
-            // Even on error, update states
-            setTimeout(() => {
-              updateAllButtonStates();
-            }, 150);
-          });
-        }
-      } else {
-        console.error('🎨 [OtpRouteSelector] showRouteOverlay not available');
+      if (typeof window.showRouteOverlay !== 'function') {
         alert('Route overlay system not ready. Please refresh the page.');
+        return;
       }
+      const activeKey = window.activeRouteOverlays
+        ? Object.keys(window.activeRouteOverlays).find(k => k.endsWith(legSuffix))
+        : null;
+      if (activeKey && window.activeRouteOverlayDescriptors && window.activeRouteOverlayDescriptors[activeKey]) {
+        const d = window.activeRouteOverlayDescriptors[activeKey];
+        window.showRouteOverlay(d.originalRouteId, d.directionId, undefined, activeKey).then(() => {
+          setTimeout(updateAllButtonStates, 120);
+        }).catch(() => setTimeout(updateAllButtonStates, 120));
+        return;
+      }
+      window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey).then(() => {
+        setTimeout(updateAllButtonStates, 120);
+      }).catch(() => setTimeout(updateAllButtonStates, 120));
     };
-    
-    buttonsContainer.appendChild(button);
-    console.log(`🎨 [showOtpRouteSelector] ✅ Button ${idx + 1} appended to container (routeId="${mappedRouteId}")`);
+
+    buttonsContainer.appendChild(chip);
+    console.log(`🎨 [showOtpRouteSelector] ✅ Chip ${idx + 1} appended (routeId="${mappedRouteId}")`);
   });
-  
-  console.log('🎨 [showOtpRouteSelector] Total buttons in container:', buttonsContainer.children.length);
+  console.log('🎨 [showOtpRouteSelector] Total chips:', buttonsContainer.children.length);
   modal.appendChild(buttonsContainer);
-  console.log('🎨 [showOtpRouteSelector] ✅ buttonsContainer appended to modal');
-  
-  // Mobile responsiveness - handled in toggleExpand function
-  // No separate handler needed since toggleExpand handles mobile positioning
-  
-  // Cleanup function when modal is removed
+
   const originalRemove = modal.remove.bind(modal);
   modal.remove = function() {
     if (this._cleanupFunctions) {
@@ -3220,11 +2753,10 @@ function showOtpRouteSelector(routeList) {
     }
     originalRemove();
   };
+
+  hostEl.appendChild(modal);
   
-  // Append to body
-  document.body.appendChild(modal);
-  
-  console.log('🎨 [showOtpRouteSelector] Modal created with', routeList.length, 'routes');
+  console.log('🎨 [showOtpRouteSelector] Mounted', routeList.length, 'trip chip(s) on map rail');
 }
 
 /**

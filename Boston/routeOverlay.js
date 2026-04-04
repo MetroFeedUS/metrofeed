@@ -1872,7 +1872,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       // Start collapsed as a circle in the corner
       // Find the next available position (highest existing index + 1)
-      const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel'));
+      const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
       const collapsedPanels = allPanels.filter(panel => 
         panel.getAttribute('data-collapsed') === 'true'
       );
@@ -1963,7 +1963,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (isCollapsed) {
           // Collapse to right side - circle with route number
           // Find the next available position (highest existing index + 1)
-          const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel'));
+          const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
           const collapsedPanels = allPanels.filter(panel => 
             panel.getAttribute('data-collapsed') === 'true' && panel !== routeInfoPanel
           );
