@@ -1911,7 +1911,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         border:3px solid #fff;
         background:#FF6B35;
         color:#fff;
-        z-index:1000;
+        z-index:1100;
         box-shadow:0 4px 12px rgba(0,0,0,0.5);
         transition:all 0.3s ease;
         display:flex;
@@ -1934,7 +1934,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         padding:2px 6px;
         cursor:pointer;
         font-size:16px;
-        z-index:1001;
+        z-index:1101;
         line-height:1;
       `;
       collapseBtn.onmouseover = () => collapseBtn.style.background = "rgba(255,255,255,0.2)";
@@ -2004,6 +2004,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeInfoPanel.style.alignItems = "center";
           routeInfoPanel.style.justifyContent = "center";
           routeInfoPanel.style.cursor = "pointer"; // Make it clear it's clickable
+          routeInfoPanel.style.zIndex = "1100";
           // Hide collapse button and close button
           collapseBtn.style.display = "none";
           closeBtn.style.display = "none";
@@ -2034,6 +2035,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeInfoPanel.style.border = "2px solid #1E90FF";
           routeInfoPanel.style.display = "block";
           routeInfoPanel.style.cursor = "default";
+          routeInfoPanel.style.zIndex = "1200";
           
           // Don't recalculate positions - keep other collapsed panels locked in place
           // Each panel maintains its own position when collapsed, so they don't move when others expand

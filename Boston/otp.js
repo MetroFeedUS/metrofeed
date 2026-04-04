@@ -2020,7 +2020,7 @@ function determineGreenLineBranch(estimatedCalls) {
   return null;
 }
 
-function drawJourney(journey) {
+async function drawJourney(journey) {
   const map = window.map;
   if (!map) {
     console.error('[drawJourney] Map not available');
@@ -2219,9 +2219,9 @@ function drawJourney(journey) {
   window.otpRouteList = routeList;
   console.log('🎨 [drawJourney] ✅ Extracted', routeList.length, 'routes for selector');
   
-  // Trip route overlays on map (no "Routes in Trip" box unless bare Red/Green needs branch pick)
+  // Trip route overlays on map (await so orange chips exist before minimizeItineraryModal, etc.)
   if (routeList.length > 0) {
-    applyOtpTripRouteOverlays(routeList);
+    await applyOtpTripRouteOverlays(routeList);
   }
   
   // Log summary after drawing
@@ -2486,7 +2486,7 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
  * Put trip routes on the map as normal overlays (lines + stacked orange route-info circles + buses).
  * Legs that are bare Red/Green (branch unknown) also open the branch picker; other legs still auto-apply.
  */
-function applyOtpTripRouteOverlays(routeList) {
+async function applyOtpTripRouteOverlays(routeList) {
   const existingModal = document.getElementById('otpRouteSelectorModal');
   if (existingModal) {
     existingModal.remove();
@@ -2519,19 +2519,17 @@ function applyOtpTripRouteOverlays(routeList) {
     toApply.push({ route, mappedRouteId, flippedDirection, overlayInstanceKey });
   });
 
-  (async () => {
-    for (const { route, mappedRouteId, flippedDirection, overlayInstanceKey } of toApply) {
-      try {
-        await window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey);
-      } catch (e) {
-        console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
-      }
-      verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey);
+  for (const { route, mappedRouteId, flippedDirection, overlayInstanceKey } of toApply) {
+    try {
+      await window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey);
+    } catch (e) {
+      console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
     }
-    if (routesNeedingBranch.length > 0) {
-      showOtpRouteSelector(routesNeedingBranch);
-    }
-  })();
+    verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey);
+  }
+  if (routesNeedingBranch.length > 0) {
+    showOtpRouteSelector(routesNeedingBranch);
+  }
 }
 
 /**
@@ -2589,8 +2587,9 @@ function showOtpRouteSelector(routeList) {
   const wrapper = document.createElement('div');
   wrapper.id = 'otpRouteSelectorModal';
   wrapper.setAttribute('data-otp-route-chips', 'true');
+  // display:contents — no full-map box (that layer sat above route-info chips at z-index 1000 and hid them)
   if (mapContainer) {
-    wrapper.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:1001;overflow:visible;';
+    wrapper.style.cssText = 'display:contents;pointer-events:none;';
   } else {
     wrapper.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:10001;overflow:visible;';
   }
@@ -2667,7 +2666,7 @@ function showOtpRouteSelector(routeList) {
       align-items: center;
       justify-content: center;
       transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
-      z-index: 2;
+      z-index: 1100;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     `;
     chip.textContent = getOtpTripChipCollapsedLabel(mappedRouteId);
@@ -2854,8 +2853,7 @@ async function showRoute(idx) {
     }
   }
   
-  // Just draw the journey - that's it!
-  drawJourney(journey);
+  await drawJourney(journey);
   
   // Minimize modal if available
   if (typeof window.minimizeItineraryModal === 'function') {
