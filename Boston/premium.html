@@ -5439,8 +5439,9 @@
    * @param {string|number} routeId - Route ID or route number
    * @param {number} directionId - Direction ID (0 or 1)
    * @param {string} routePageUrl - URL to full route page (optional)
+   * @param {string} [overlayInstanceKey] - Unique key when multiple overlays share same route+dir (e.g. each OTP leg)
    */
-  window.showRouteOverlay = async function(routeId, directionId, routePageUrl) {
+  window.showRouteOverlay = async function(routeId, directionId, routePageUrl, overlayInstanceKey) {
     console.log('[showRouteOverlay] ===== FUNCTION CALLED =====');
     console.log('[showRouteOverlay] routeId:', routeId, 'directionId:', directionId);
     console.log('[showRouteOverlay] map:', map, 'type:', typeof map);
@@ -5459,8 +5460,11 @@
     if (!window.activeRouteOverlays) {
       window.activeRouteOverlays = {};
     }
-    
-    const overlayKey = `${routeId}-${directionId}`;
+
+    const overlayKey =
+      overlayInstanceKey !== undefined && overlayInstanceKey !== null && String(overlayInstanceKey) !== ''
+        ? String(overlayInstanceKey)
+        : `${routeId}-${directionId}`;
     
     // Remove existing overlay if present (toggle behavior)
     if (window.activeRouteOverlays[overlayKey]) {
@@ -5565,7 +5569,8 @@
       apiKey,
       busApiType: CITY_CONFIG.busApiType,
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
-      trackBuses: true
+      trackBuses: true,
+      overlayKey: overlayKey
     };
     window.activeRouteOverlayDescriptors[overlayKey] = {
       attachRouteId: routeId, // For bus tracking

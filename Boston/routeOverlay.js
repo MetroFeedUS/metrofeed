@@ -1414,6 +1414,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
   // ==== Internal: build & attach =================================================
   const addRouteToMap = () => {
+    // Unique MapLibre source/layer + route-info DOM id (supports multiple OTP legs for same route+dir)
+    const mapLayerKey = String(options.overlayKey || `${routeId}-${directionId}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const etaOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
+
     // ⚠️ CRITICAL: shapes[] rendering is LINE-ONLY
     // 
     // When rendering multiple shapes for a route (trunk-and-branch):
@@ -1437,8 +1441,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     // All shapes in shapes[] are rendered; opacity/width depends on OTP state
     shapes.forEach((shape, shapeIndex) => {
       const isPrimaryShape = shapeIndex === 0;
-      const routeSourceId = `route-line-${routeId}-${directionId}-${shapeIndex}`;
-      const routeLayerId  = `route-layer-${routeId}-${directionId}-${shapeIndex}`;
+      const routeSourceId = `route-line-${mapLayerKey}-${shapeIndex}`;
+      const routeLayerId  = `route-layer-${mapLayerKey}-${shapeIndex}`;
 
       // Guard against duplicate IDs
       if (map.getLayer(routeLayerId)) {
@@ -1770,7 +1774,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // ETA display (V3 predictions primary; TripUpdates fallback)
       const getETADisplay = () => {
         try {
-          const overlayKey = `${routeId}-${directionId}`;
+          const overlayKey = etaOverlayKey;
           const etas = (window.currentRouteETAs && window.currentRouteETAs.overlayKey === overlayKey)
             ? window.currentRouteETAs
             : null;
@@ -1844,7 +1848,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       const popup = new maplibregl.Popup().setDOMContent(popupContent);
       
-      const overlayKeyForStops = `${routeId}-${directionId}`;
+      const overlayKeyForStops = etaOverlayKey;
       overlayElements.stopPopupRefreshers.push({
         overlayKey: overlayKeyForStops,
         update: updatePopupContent
@@ -1858,7 +1862,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
     // ---------- Route info panel (mainOverlay only) ----------
     if (mode === "mainOverlay" && options.routePageUrl) {
-      const panelId = `route-info-${routeId}-${directionId}`;
+      const panelId = `route-info-${mapLayerKey}`;
       const existing = document.getElementById(panelId);
       if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
 

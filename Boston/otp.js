@@ -2444,7 +2444,7 @@ function computeOtpFlippedDirectionSync(route) {
 /**
  * After overlay is shown, optionally refine BUS direction using route stop geometry (matches selector behavior).
  */
-function verifyOtpBusOverlayDirection(route, mappedRouteId) {
+function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) {
   const needsFlip = !(route.mode === 'SUBWAY' || route.mode === 'METRO');
   if (!needsFlip || route.mode !== 'BUS' || !mappedRouteId || !window.routeLoader) return;
   if (typeof window.showRouteOverlay !== 'function') return;
@@ -2494,30 +2494,28 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId) {
       flippedDirection = route.directionId;
     }
 
-    const overlayKey = `${mappedRouteId}-${flippedDirection}`;
-    if (window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]) {
+    const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : 0;
+    const newInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
+    if (window.activeRouteOverlays && window.activeRouteOverlays[newInstanceKey]) {
       return;
     }
-    [0, 1].forEach(dir => {
-      if (dir === flippedDirection) return;
-      const k = `${mappedRouteId}-${dir}`;
-      if (window.activeRouteOverlays && window.activeRouteOverlays[k]) {
-        window.activeRouteOverlays[k].remove();
-        delete window.activeRouteOverlays[k];
-        if (window.activeRouteOverlayDescriptors) {
-          delete window.activeRouteOverlayDescriptors[k];
-        }
+    if (overlayInstanceKey && overlayInstanceKey !== newInstanceKey &&
+        window.activeRouteOverlays && window.activeRouteOverlays[overlayInstanceKey]) {
+      window.activeRouteOverlays[overlayInstanceKey].remove();
+      delete window.activeRouteOverlays[overlayInstanceKey];
+      if (window.activeRouteOverlayDescriptors) {
+        delete window.activeRouteOverlayDescriptors[overlayInstanceKey];
       }
-    });
-    window.showRouteOverlay(mappedRouteId, flippedDirection);
+    }
+    window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, newInstanceKey);
   }).catch(err => {
     console.warn(`[verifyOtpBusOverlayDirection] ${mappedRouteId}:`, err);
   });
 }
 
 /**
- * Skip "Routes in Trip" modal: put trip lines on the map like normal route overlays (live buses, etc.).
- * Bare Red/Green groups still open the selector so the user can pick a branch.
+ * Put trip routes on the map as normal overlays (lines + stacked orange route-info circles + buses).
+ * Legs that are bare Red/Green (branch unknown) also open the branch picker; other legs still auto-apply.
  */
 function applyOtpTripRouteOverlays(routeList) {
   const existingModal = document.getElementById('otpRouteSelectorModal');
@@ -2527,40 +2525,42 @@ function applyOtpTripRouteOverlays(routeList) {
 
   if (!routeList || routeList.length === 0) return;
 
-  const needsGroupModal =
-    typeof window.isRouteGroup === 'function' &&
-    routeList.some(r => window.isRouteGroup(r.routeId));
-  if (needsGroupModal) {
-    showOtpRouteSelector(routeList);
-    return;
-  }
+  const needsBranchPicker = typeof window.isRouteGroup === 'function'
+    ? (r) => window.isRouteGroup(r.routeId)
+    : () => false;
+  const routesNeedingBranch = routeList.filter(needsBranchPicker);
+  const routesAuto = routeList.filter(r => !needsBranchPicker(r));
 
   window.activeTripSelected = true;
 
   if (typeof window.showRouteOverlay !== 'function') {
     console.error('[applyOtpTripRouteOverlays] showRouteOverlay not available');
+    if (routesNeedingBranch.length > 0) {
+      showOtpRouteSelector(routesNeedingBranch);
+    }
     return;
   }
 
-  const seen = new Set();
   const toApply = [];
-  routeList.forEach(route => {
+  routesAuto.forEach((route, idx) => {
     const mappedRouteId = route.routeId;
     const flippedDirection = computeOtpFlippedDirectionSync(route);
-    const overlayKey = `${mappedRouteId}-${flippedDirection}`;
-    if (seen.has(overlayKey)) return;
-    seen.add(overlayKey);
-    toApply.push({ route, mappedRouteId, flippedDirection });
+    const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : idx;
+    const overlayInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
+    toApply.push({ route, mappedRouteId, flippedDirection, overlayInstanceKey });
   });
 
   (async () => {
-    for (const { route, mappedRouteId, flippedDirection } of toApply) {
+    for (const { route, mappedRouteId, flippedDirection, overlayInstanceKey } of toApply) {
       try {
-        await window.showRouteOverlay(mappedRouteId, flippedDirection);
+        await window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey);
       } catch (e) {
         console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
       }
-      verifyOtpBusOverlayDirection(route, mappedRouteId);
+      verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey);
+    }
+    if (routesNeedingBranch.length > 0) {
+      showOtpRouteSelector(routesNeedingBranch);
     }
   })();
 }

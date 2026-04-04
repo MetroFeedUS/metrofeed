@@ -6234,8 +6234,9 @@
    * @param {string|number} routeId - Route ID or route number
    * @param {number} directionId - Direction ID (0 or 1)
    * @param {string} routePageUrl - URL to full route page (optional)
+   * @param {string} [overlayInstanceKey] - Unique key when multiple overlays share same route+dir (e.g. each OTP leg)
    */
-  window.showRouteOverlay = async function(routeId, directionId, routePageUrl) {
+  window.showRouteOverlay = async function(routeId, directionId, routePageUrl, overlayInstanceKey) {
     console.log('[showRouteOverlay] ===== FUNCTION CALLED =====');
     console.log('[showRouteOverlay] routeId:', routeId, 'directionId:', directionId);
     console.log('[showRouteOverlay] map:', map, 'type:', typeof map);
@@ -6254,8 +6255,20 @@
     if (!window.activeRouteOverlays) {
       window.activeRouteOverlays = {};
     }
-    
-    const overlayKey = `${routeId}-${directionId}`;
+
+    let routeNumber = String(routeId);
+    let baseRouteNumber = routeNumber;
+    if (routeNumber.includes('-')) {
+      const parts = routeNumber.split('-');
+      if (parts[0] === 'Red' || parts[0] === 'Green' || parts[0] === 'Blue' || parts[0] === 'Orange') {
+        baseRouteNumber = parts[0];
+      }
+    }
+
+    const overlayKey =
+      overlayInstanceKey !== undefined && overlayInstanceKey !== null && String(overlayInstanceKey) !== ''
+        ? String(overlayInstanceKey)
+        : `${routeId}-${directionId}`;
     
     // Remove existing overlay if present (toggle behavior)
     if (window.activeRouteOverlays[overlayKey]) {
@@ -6305,19 +6318,6 @@
       style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
       document.head.appendChild(style);
       document.body.appendChild(loadingSpinner);
-    }
-    
-    // Get route data (works for both Boston and other cities)
-    // For branch routes (e.g., "Red-Ashmont"), try the branch first, then fall back to base route
-    let routeNumber = String(routeId);
-    let baseRouteNumber = routeNumber;
-    
-    // Extract base route for subway branches (e.g., "Red-Ashmont" -> "Red")
-    if (routeNumber.includes('-')) {
-      const parts = routeNumber.split('-');
-      if (parts[0] === 'Red' || parts[0] === 'Green' || parts[0] === 'Blue' || parts[0] === 'Orange') {
-        baseRouteNumber = parts[0];
-      }
     }
     
     console.log('[showRouteOverlay] Looking for route:', routeNumber, '(base:', baseRouteNumber, ') direction:', directionId);
@@ -6415,7 +6415,8 @@
       busApiType: CITY_CONFIG.busApiType,
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
       disableGtfsRt: CITY_CONFIG.disableGtfsRt,
-      trackBuses: true
+      trackBuses: true,
+      overlayKey: overlayKey
     };
     window.activeRouteOverlayDescriptors[overlayKey] = {
       attachRouteId: busTrackingRouteId, // For bus tracking (base route ID)
