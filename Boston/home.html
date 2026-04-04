@@ -317,6 +317,11 @@
         1px 1px 0 #fff,
         0 0 2px #fff;
     }
+    .place-favorite-empty {
+      opacity: 0.65;
+      border-style: dashed;
+      color: #aaa;
+    }
     /* -- FOOTER -- */
     footer.site-footer {
       position: absolute;
@@ -1078,6 +1083,11 @@
     <div id="fav2" class="favorite-btn"></div>
     <div id="fav3" class="favorite-btn"></div>
   </div>
+  <div class="favorites-container" style="margin-top:4px;">
+    <div id="placeFavHome" class="favorite-btn place-favorite-btn place-favorite-empty" role="button" tabindex="0" title="Home">H</div>
+    <div id="placeFavWork" class="favorite-btn place-favorite-btn place-favorite-empty" role="button" tabindex="0" title="Work">W</div>
+    <div id="placeFavOther" class="favorite-btn place-favorite-btn place-favorite-empty" role="button" tabindex="0" title="Place">+</div>
+  </div>
 </div>
 
 <!-- -- MINIMIZED ITINERARY BAR -- -->
@@ -1408,6 +1418,7 @@
 <script src="routeOverlay.js?v=20260410"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
+<script src="savedPlaces.js"></script>
 <!-- -- CSL (Crowdsourced Live) MODULE -- -->
 <!-- CSL (Crowdsourced Live) MODULE - Premium only, not loaded on Free tier -->
 <!-- -- TRAFFIC CAMERAS OVERLAY MODULE -- -->
@@ -2646,7 +2657,19 @@
     map.getCanvas().style.cursor = 'crosshair';
   }
 
+  function exitMapSelectionMode() {
+    if (!mapSelectionMode) return;
+    const btn = document.getElementById(mapSelectionMode + 'MapBtn');
+    if (btn) btn.classList.remove('active');
+    mapSelectionMode = null;
+    if (map && map.getCanvas) map.getCanvas().style.cursor = 'grab';
+  }
+  window.exitMapSelectionMode = exitMapSelectionMode;
+
   function clearTripPlan() {
+    if (typeof window.metrofeedCancelSavedPlacePick === 'function') {
+      window.metrofeedCancelSavedPlacePick();
+    }
     // Turn off Find Me
     if (findMeActive) {
       findMeActive = false;
@@ -2881,6 +2904,9 @@
   // Map click handler for route selection (will be added after map initialization)
   function setupMapClickHandler() {
     map.on('click', async function(e) {
+      if (typeof window.metrofeedHandleSavedPlaceMapClick === 'function' && window.metrofeedHandleSavedPlaceMapClick(e)) {
+        return;
+      }
       if (!mapSelectionMode) return;
       
       const clickedLat = e.lngLat.lat;
@@ -8688,6 +8714,9 @@
         // Initialize favorites box
         if (typeof updateFavoritesBox === 'function') {
           updateFavoritesBox();
+        }
+        if (typeof window.initMetrofeedSavedPlaces === 'function') {
+          window.initMetrofeedSavedPlaces();
         }
       });
       
