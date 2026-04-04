@@ -18,6 +18,16 @@
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
     html, body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
     #map { height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 0; }
+    #mapRouteOverlayRoot {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1002;
+      overflow: visible;
+    }
     .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
     .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: #0d0d0d; border: 1px solid #1E90FF; border-radius: 8px; padding: 5px 10px; }
     .search-bar input { background: transparent; border: none; color: #cccccc; padding: 5px; width: 100%; }
@@ -926,6 +936,7 @@
 
 <!-- -- MAIN MAP DIV -- -->
 <div id="map"></div>
+<div id="mapRouteOverlayRoot" aria-hidden="true"></div>
 
 <!-- -- SIDE BUTTONS & DROPDOWN -- -->
 <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
@@ -1334,7 +1345,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + MBTA live data bundled; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260408"></script>
+<script src="routeOverlay.js?v=20260409"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <!-- -- CSL (Crowdsourced Live) MODULE -- -->
@@ -1349,6 +1360,13 @@
   // Load city config from external file (auto-detects city from path)
   const CITY_CONFIG = getCityConfig();
   window.CITY_CONFIG = CITY_CONFIG; // Expose globally for otp.js and other modules
+
+  window.getRouteOverlayMount = function (map) {
+    const root = document.getElementById('mapRouteOverlayRoot');
+    if (root) return root;
+    if (map && typeof map.getContainer === 'function') return map.getContainer();
+    return document.body;
+  };
   
   // Update dynamic city name placeholders in the page
   document.addEventListener('DOMContentLoaded', function() {

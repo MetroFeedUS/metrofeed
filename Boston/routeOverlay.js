@@ -1344,6 +1344,13 @@ function getRouteColorByName(routeName) {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+function routeOverlayPanelHost(map) {
+  if (typeof window.getRouteOverlayMount === "function" && map) {
+    return window.getRouteOverlayMount(map);
+  }
+  return map && map.getContainer ? map.getContainer() : document.body;
+}
+
 function attachRouteToMap(map, routeId, directionId, options) {
   options = options || {};
 
@@ -1872,7 +1879,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       // Start collapsed as a circle in the corner
       // Find the next available position (highest existing index + 1)
-      const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
+      const allPanels = Array.from(routeOverlayPanelHost(map).querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
       const collapsedPanels = allPanels.filter(panel => 
         panel.getAttribute('data-collapsed') === 'true'
       );
@@ -1963,7 +1970,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (isCollapsed) {
           // Collapse to right side - circle with route number
           // Find the next available position (highest existing index + 1)
-          const allPanels = Array.from(map.getContainer().querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
+          const allPanels = Array.from(routeOverlayPanelHost(map).querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
           const collapsedPanels = allPanels.filter(panel => 
             panel.getAttribute('data-collapsed') === 'true' && panel !== routeInfoPanel
           );
@@ -2205,7 +2212,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapsedName.style.fontSize = "1rem";
       collapsedName.style.pointerEvents = "none"; // Don't block clicks on the circle
 
-      map.getContainer().appendChild(routeInfoPanel);
+      routeOverlayPanelHost(map).appendChild(routeInfoPanel);
       overlayElements.controls.push(routeInfoPanel);
     }
 

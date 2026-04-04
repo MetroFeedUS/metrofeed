@@ -2555,8 +2555,9 @@ function getOtpTripChipStackLayout(hostEl) {
   const circleSpacing = 10;
   const topOffset = 250;
   let maxIndex = -1;
+  const overlayRoot = document.getElementById('mapRouteOverlayRoot');
   const roots = hostEl === document.body
-    ? [document.body, window.map && window.map.getContainer && window.map.getContainer()].filter(Boolean)
+    ? [document.body, overlayRoot, window.map && window.map.getContainer && window.map.getContainer()].filter(Boolean)
     : [hostEl];
   roots.forEach(root => {
     root.querySelectorAll('.route-info-panel, .otp-trip-route-chip').forEach(panel => {
@@ -2582,13 +2583,16 @@ function showOtpRouteSelector(routeList) {
 
   const map = window.map;
   const mapContainer = map && typeof map.getContainer === 'function' ? map.getContainer() : null;
-  const hostEl = mapContainer || document.body;
+  const hostEl =
+    map && typeof window.getRouteOverlayMount === 'function'
+      ? window.getRouteOverlayMount(map)
+      : mapContainer || document.body;
 
   const wrapper = document.createElement('div');
   wrapper.id = 'otpRouteSelectorModal';
   wrapper.setAttribute('data-otp-route-chips', 'true');
   // display:contents — no full-map box (that layer sat above route-info chips at z-index 1000 and hid them)
-  if (mapContainer) {
+  if (hostEl !== document.body) {
     wrapper.style.cssText = 'display:contents;pointer-events:none;';
   } else {
     wrapper.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:10001;overflow:visible;';
@@ -2640,9 +2644,10 @@ function showOtpRouteSelector(routeList) {
     chip.title = route.name || `Route ${mappedRouteId}`;
     chip.setAttribute('data-collapse-index', String(stackIndex));
     chip.setAttribute('data-collapsed', 'true');
-    const posMode = mapContainer ? 'absolute' : 'fixed';
-    const leftVal = mapContainer ? `calc(100% - ${circleSize + 10}px)` : 'auto';
-    const rightVal = mapContainer ? 'auto' : '20px';
+    const useViewportOverlay = hostEl !== document.body;
+    const posMode = useViewportOverlay ? 'absolute' : 'fixed';
+    const leftVal = useViewportOverlay ? `calc(100% - ${circleSize + 10}px)` : 'auto';
+    const rightVal = useViewportOverlay ? 'auto' : '20px';
     chip.style.cssText = `
       pointer-events: auto;
       position: ${posMode};
