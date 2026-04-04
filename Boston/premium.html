@@ -5529,7 +5529,11 @@
     
     console.log('[showRouteOverlay] Found route data:', routeData.route_title, 'shape points:', routeData.shape.length, 'stops:', routeData.stops.length);
     
-    // Create overlay with explicit routeData (no routePageUrl — skip floating route-info panel; map + vehicles only)
+    if (!routePageUrl) {
+      const routeType = routeData.route_type === '0' ? 'Rail routes' : 'pythonbusroutes';
+      routePageUrl = `${routeType}/route-${routeNumber}-dir${directionId}.html`;
+    }
+    
     let routeColorSlot = 0;
     let routeColorHex = "#1E90FF";
     if (typeof window.pickNextRouteOverlayColorSlot === "function" && window.ROUTE_OVERLAY_COLOR_PALETTE && window.ROUTE_OVERLAY_COLOR_PALETTE.length) {
@@ -5539,6 +5543,7 @@
     const overlay = window.attachRouteToMap(map, routeId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)
+      routePageUrl: routePageUrl,
       fitBounds: false, // Don't auto-fit on main map
       routeColor: routeColorHex,
       apiKey: apiKey, // Pass API key for bus tracking (TriMet)
@@ -5554,6 +5559,7 @@
     const descriptorOptions = {
       mode: 'mainOverlay',
       routeData: JSON.parse(JSON.stringify(routeData)), // Deep clone
+      routePageUrl,
       fitBounds: false,
       routeColor: routeColorHex,
       apiKey,

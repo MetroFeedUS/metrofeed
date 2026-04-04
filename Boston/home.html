@@ -6373,7 +6373,12 @@
     
     console.log('[showRouteOverlay] Found route data:', routeData.route_title, 'shape points:', routeData.shape.length, 'stops:', routeData.stops.length);
     
-    // Create overlay with explicit routeData (no routePageUrl — skip floating route-info panel; map + vehicles only)
+    // routePageUrl enables stacked orange route-info circles (one per leg; expand for details / close)
+    if (!routePageUrl) {
+      const routeType = routeData.route_type === '0' ? 'Rail routes' : 'pythonbusroutes';
+      routePageUrl = `${routeType}/route-${routeNumber}-dir${directionId}.html`;
+    }
+    
     // For bus tracking, use base route number (e.g., "Red" instead of "Red-Ashmont")
     // This ensures subway routes match correctly in GTFS-RT feed
     const busTrackingRouteId = baseRouteNumber !== String(routeId) ? baseRouteNumber : routeId;
@@ -6386,6 +6391,7 @@
     const overlay = window.attachRouteToMap(map, busTrackingRouteId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)
+      routePageUrl: routePageUrl,
       fitBounds: false, // Don't auto-fit on main map
       routeColor: routeColorHex,
       apiKey: apiKey, // Pass API key for bus tracking (TriMet)
@@ -6402,6 +6408,7 @@
     const descriptorOptions = {
       mode: 'mainOverlay',
       routeData: JSON.parse(JSON.stringify(routeData)), // Deep clone
+      routePageUrl,
       fitBounds: false,
       routeColor: routeColorHex,
       apiKey,
