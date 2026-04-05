@@ -151,6 +151,13 @@
       background-color: #CC0000;
       box-shadow: 0 0 6px #FF0000;
     }
+    .dropdown a#dropdownTwitterBtn {
+      background-color: #000;
+    }
+    .dropdown a#dropdownTwitterBtn:hover, .dropdown a#dropdownTwitterBtn:focus {
+      background-color: #1a1a1a;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    }
     /* CSL (Crowd-Sourced Location) button - Orange (Premium only) */
     .dropdown a#advertiseBtn {
       background-color: #FF8C00;
@@ -1091,7 +1098,8 @@
 </script>
 
 <div id="dropdownMenu" class="dropdown">
-  <a id="youtubeBtn" href="https://www.youtube.com/@MetroFeedLouisville" target="_blank"><img src="youtube.svg" alt="Youtube"></a>
+  <a id="youtubeBtn" href="https://www.youtube.com/@MetroFeedLouisville" target="_blank" rel="noopener noreferrer"><img src="youtube.svg" alt="Youtube"></a>
+  <a id="dropdownTwitterBtn" href="https://x.com/MetroFeedLouisville" target="_blank" rel="noopener noreferrer" aria-label="MetroFeed on X"><img src="twitter.svg" alt="X (Twitter)"></a>
   <div class="dropdown-divider"></div>
   <a href="#" id="dropdownBusesBtn" onclick="event.preventDefault(); showBusRoutesModal();"><img src="002-bus.svg" alt="Bus Routes"></a>
   <a href="#" id="dropdownRailBtn" onclick="event.preventDefault(); event.stopPropagation(); console.log('[RailBtn] Clicked'); showRailRoutesModal(); return false;"><img src="001-train-station.svg" alt="Rail Routes"></a>
@@ -1101,7 +1109,6 @@
   <!-- ADA and Official Resources button in dropdown -->
   <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA and Official Resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA and Official Resources"></a>
   <a href="#" id="dropdownAlertsBtn" onclick="event.preventDefault(); showMBTAAlertsModal();"><img src="008-danger.svg" alt="Alerts"></a>
-  <a href="https://metrofeedus.com/portland/freecitychanger"><img src="007-move.svg" alt="Change City"></a>
   <div class="dropdown-divider"></div>
   <!-- CSL (Crowd-Sourced Location) button in dropdown -->
   <!-- CSL is Premium-only, button hidden on Free tier -->
@@ -2399,6 +2406,7 @@
   function showDropdownTooltips() {
     const tooltipData = [
       { selector: '#youtubeBtn', text: 'Daily Brief' },
+      { selector: '#dropdownTwitterBtn', text: 'MetroFeed on X' },
       { selector: '#dropdownBusesBtn', text: 'Bus Routes' },
       { selector: '#dropdownRailBtn', text: 'Rail Routes' },
       { selector: '#dropdownTrafficBtn', text: 'Traffic Overlay' },
@@ -2406,7 +2414,6 @@
       { selector: '#dropdownWeatherBtn', text: 'Weather' },
       { selector: '#dropdownAiChatBtn', text: 'ADA and Official Resources' },
       { selector: '#dropdownAlertsBtn', text: 'Alerts' },
-      { selector: 'a[href*="freecitychanger"]', text: 'Change City' },
       { selector: '#advertiseBtn', text: 'Crowd-Sourced Location (CSL)' }
     ];
     
