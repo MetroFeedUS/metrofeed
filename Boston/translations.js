@@ -44,6 +44,11 @@ const translations = {
     "saved_place_remove": "Remove",
     "saved_place_remove_confirm": "Remove this saved place?",
     "saved_place_name_prompt": "Name this place (e.g. Gym)",
+    "fav_route_tutorial_title": "Save a favorite route",
+    "fav_route_tutorial_body": "Open a route, choose a direction, then tap the star next to that direction to save it here. You need both the route and the direction.",
+    "fav_route_tutorial_rail_note": "For subway or commuter rail, open Rail Routes from the menu and use the same star on a direction.",
+    "fav_route_tutorial_never": "Don't show this again",
+    "fav_route_tutorial_got_it": "Got it — pick a route",
     
     // Itinerary
     "itinerary": "Itinerary",
@@ -225,6 +230,11 @@ const translations = {
     "saved_place_remove": "Quitar",
     "saved_place_remove_confirm": "¿Quitar este lugar guardado?",
     "saved_place_name_prompt": "Nombre del lugar (ej. Gimnasio)",
+    "fav_route_tutorial_title": "Guardar una ruta favorita",
+    "fav_route_tutorial_body": "Abre una ruta, elige una dirección y toca la estrella junto a esa dirección para guardarla aquí. Necesitas la ruta y la dirección.",
+    "fav_route_tutorial_rail_note": "Para metro o cercanías, abre Rutas de tren en el menú y usa la misma estrella en una dirección.",
+    "fav_route_tutorial_never": "No volver a mostrar",
+    "fav_route_tutorial_got_it": "Entendido — elegir ruta",
     
     // Itinerary
     "itinerary": "Itinerario",

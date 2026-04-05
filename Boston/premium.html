@@ -308,6 +308,26 @@
       border-style: dashed;
       color: #aaa;
     }
+    .favorite-btn.favorite-btn--route-filled {
+      line-height: 1.1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 1px;
+      padding: 4px 2px;
+      font-size: 0.72rem;
+    }
+    .favorite-btn.favorite-btn--route-filled .fav-route-star-filled {
+      color: #ffd700;
+      font-size: 11px;
+      line-height: 1;
+    }
+    .favorite-btn.favorite-btn--route-empty {
+      color: #777;
+      font-size: 1.2rem;
+      line-height: 40px;
+    }
     /* -- FOOTER -- */
     footer.site-footer {
       position: absolute;
@@ -1018,7 +1038,7 @@
 <!-- -- FAVORITES -- -->
 <div class="favorites-wrapper" id="favoritesWrapper">
   <span class="favorites-title">
-    <span data-translate="favorites">Favorite Routes</span>
+    <span data-translate="favorites">Favorites</span>
     <span class="favorites-chevron">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M6 9L1 4H11L6 9Z" fill="#1E90FF"/>
@@ -1280,6 +1300,20 @@
     <div style="padding: 1rem; border-top: 1px solid #333; margin-top: auto;">
       <button class="mf-btn" onclick="hideBusRoutesModal()" style="width: 100%;" data-translate="close">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- -- FAVORITE ROUTE TUTORIAL (empty slots until first save) -- -->
+<div id="favoritesRouteTutorialModal" class="mf-overlay" style="display: none; z-index: 10050;">
+  <div class="mf-modal" style="max-width: 440px; padding: 1rem 1.25rem;">
+    <h2 style="margin-top: 0; font-size: 1.1rem;" data-translate="fav_route_tutorial_title">Save a favorite route</h2>
+    <p style="color: #ccc; line-height: 1.5; font-size: 0.9rem; margin: 0.75rem 0;" data-translate="fav_route_tutorial_body">Open a route, choose a direction, then tap the ☆ next to that direction to save it here. You need both the route and the direction.</p>
+    <p style="color: #888; font-size: 0.82rem; line-height: 1.45; margin: 0;" data-translate="fav_route_tutorial_rail_note">For subway or commuter rail, open Rail Routes from the menu and use the same star on a direction.</p>
+    <label style="display: flex; align-items: center; gap: 8px; color: #aaa; font-size: 0.85rem; margin: 14px 0 10px;">
+      <input type="checkbox" id="favRouteTutorialNeverAgain" />
+      <span data-translate="fav_route_tutorial_never">Don&apos;t show this again</span>
+    </label>
+    <button type="button" class="mf-btn" id="favRouteTutorialGotIt" style="width: 100%;" data-translate="fav_route_tutorial_got_it" onclick="favoritesRouteTutorialGotIt()">Got it — pick a route</button>
   </div>
 </div>
 
@@ -5913,6 +5947,59 @@
     }
   }
   
+  /** Pending callback after favorite-route tutorial (set before showing modal). */
+  window._favRouteTutorialPending = null;
+
+  function showFavoritesRouteTutorialModal(onContinue) {
+    const m = document.getElementById("favoritesRouteTutorialModal");
+    const never = document.getElementById("favRouteTutorialNeverAgain");
+    if (!m) {
+      if (onContinue) onContinue();
+      return;
+    }
+    if (never) never.checked = false;
+    window._favRouteTutorialPending = typeof onContinue === "function" ? onContinue : null;
+    m.style.display = "flex";
+  }
+
+  function favoritesRouteTutorialGotIt() {
+    const m = document.getElementById("favoritesRouteTutorialModal");
+    const never = document.getElementById("favRouteTutorialNeverAgain");
+    if (never && never.checked) {
+      try {
+        localStorage.setItem("metrofeedFavRouteTutorialNever", "1");
+      } catch (e) {}
+    }
+    if (m) m.style.display = "none";
+    const fn = window._favRouteTutorialPending;
+    window._favRouteTutorialPending = null;
+    if (fn) fn();
+  }
+  window.favoritesRouteTutorialGotIt = favoritesRouteTutorialGotIt;
+
+  /**
+   * Empty route favorite slot: show tutorial until user has ≥1 favorite (unless they opted out), then bus modal.
+   */
+  function openEmptyRouteFavoriteSlot() {
+    let favs = [];
+    try {
+      favs = typeof getFavorites === "function" ? getFavorites() : [];
+    } catch (e) {
+      favs = [];
+    }
+    const showTutorial =
+      favs.length === 0 && !localStorage.getItem("metrofeedFavRouteTutorialNever");
+    const openBus = () => {
+      if (typeof showBusRoutesModal === "function") showBusRoutesModal();
+    };
+    if (showTutorial) {
+      showFavoritesRouteTutorialModal(openBus);
+    } else {
+      openBus();
+    }
+  }
+  window.openEmptyRouteFavoriteSlot = openEmptyRouteFavoriteSlot;
+
   /**
    * Show the bus routes modal (starts with category selection)
    */
@@ -6034,31 +6121,58 @@
     const fav1 = document.getElementById('fav1');
     const fav2 = document.getElementById('fav2');
     const fav3 = document.getElementById('fav3');
-    
-    // Clear all
-    [fav1, fav2, fav3].forEach(btn => {
-      if (btn) {
-        btn.textContent = '';
-        btn.onclick = null;
-        btn.style.cursor = 'default';
-      }
+    const buttons = [fav1, fav2, fav3];
+
+    buttons.forEach((btn) => {
+      if (!btn) return;
+      btn.classList.remove('favorite-btn--route-filled', 'favorite-btn--route-empty');
+      btn.textContent = '';
+      btn.innerHTML = '';
+      btn.onclick = null;
+      btn.removeAttribute('title');
+      btn.style.cursor = 'default';
     });
-    
-    // Populate with favorites
-    favorites.forEach((fav, index) => {
-      const favBtn = index === 0 ? fav1 : index === 1 ? fav2 : fav3;
-      if (favBtn) {
-        // Extract route number from label (e.g., "15 – Belmont/NW 23rd" -> "15")
-        const routeNumber = fav.label.split('–')[0].trim();
-        favBtn.textContent = routeNumber;
+
+    for (let i = 0; i < 3; i++) {
+      const favBtn = buttons[i];
+      if (!favBtn) continue;
+      const fav = favorites[i];
+      if (fav) {
+        let displayText = fav.routeId;
+        if (fav.label && String(fav.label).includes('–')) {
+          displayText = String(fav.label).split('–')[0].trim();
+        } else if (displayText && String(displayText).includes('-')) {
+          displayText = String(displayText).split('-')[0];
+        }
+        favBtn.classList.add('favorite-btn--route-filled');
+        const spanLabel = document.createElement('span');
+        spanLabel.className = 'fav-route-label';
+        spanLabel.textContent = displayText;
+        const spanStar = document.createElement('span');
+        spanStar.className = 'fav-route-star-filled';
+        spanStar.textContent = '\u2605';
+        spanStar.setAttribute('aria-hidden', 'true');
+        favBtn.appendChild(spanLabel);
+        favBtn.appendChild(spanStar);
         favBtn.style.cursor = 'pointer';
-        favBtn.onclick = () => {
+        favBtn.title = 'Show route on map';
+        favBtn.onclick = (e) => {
+          e.stopPropagation();
           if (typeof showRouteOverlay === 'function') {
             showRouteOverlay(fav.routeId, fav.directionId);
           }
         };
+      } else {
+        favBtn.classList.add('favorite-btn--route-empty');
+        favBtn.textContent = '\u2606';
+        favBtn.style.cursor = 'pointer';
+        favBtn.title = 'Add a favorite route';
+        favBtn.onclick = (e) => {
+          e.stopPropagation();
+          openEmptyRouteFavoriteSlot();
+        };
       }
-    });
+    }
   }
   
   /**
