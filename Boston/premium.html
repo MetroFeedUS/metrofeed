@@ -308,25 +308,67 @@
       border-style: dashed;
       color: #aaa;
     }
-    .favorite-btn.favorite-btn--route-filled {
-      line-height: 1.1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 1px;
-      padding: 4px 2px;
-      font-size: 0.72rem;
-    }
-    .favorite-btn.favorite-btn--route-filled .fav-route-star-filled {
-      color: #ffd700;
-      font-size: 11px;
-      line-height: 1;
-    }
     .favorite-btn.favorite-btn--route-empty {
       color: #777;
       font-size: 1.2rem;
       line-height: 40px;
+    }
+    .bus-route-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+      margin-bottom: 0;
+    }
+    .bus-route-modal-header:hover {
+      background-color: rgba(30, 144, 255, 0.12);
+    }
+    .bus-route-modal-badge {
+      flex-shrink: 0;
+      min-width: 2rem;
+      max-width: 4.75rem;
+      padding: 0.35rem 0.5rem;
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #fff;
+      background: linear-gradient(165deg, #1a5588 0%, #0c2036 100%);
+      border: 1px solid #1E90FF;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(30, 144, 255, 0.22);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bus-route-modal-badge.bus-route-modal-badge--wrap {
+      font-size: 0.62rem;
+      max-width: 5.25rem;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.15;
+    }
+    .bus-route-modal-name {
+      flex: 1;
+      min-width: 0;
+      font-weight: 600;
+      color: #b8d4f0;
+      font-size: 0.82rem;
+      line-height: 1.35;
+      text-align: left;
+    }
+    .bus-route-modal-chevron {
+      flex-shrink: 0;
+      font-size: 0.85rem;
+      opacity: 0.8;
+      color: #1E90FF;
+      width: 1.25rem;
+      text-align: center;
     }
     /* -- FOOTER -- */
     footer.site-footer {
@@ -5856,6 +5898,46 @@
     if (listScreen) listScreen.style.display = 'none';
   }
   
+  function busModalBadgeText(route) {
+    const id = String(route && route.id != null ? route.id : "").trim() || "?";
+    return id.length > 12 ? id.slice(0, 11) + "\u2026" : id;
+  }
+
+  function buildBusRouteModalRowHeader(route, nameLine) {
+    const routeHeader = document.createElement("div");
+    routeHeader.className = "bus-route-modal-header";
+
+    const badge = document.createElement("span");
+    badge.className = "bus-route-modal-badge";
+    const bt = busModalBadgeText(route);
+    badge.textContent = bt;
+    if (bt.length > 7) badge.classList.add("bus-route-modal-badge--wrap");
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "bus-route-modal-name";
+    nameSpan.textContent = nameLine;
+
+    const chevron = document.createElement("span");
+    chevron.className = "bus-route-modal-chevron";
+    chevron.textContent = "\u25BC";
+
+    routeHeader.appendChild(badge);
+    routeHeader.appendChild(nameSpan);
+    routeHeader.appendChild(chevron);
+    return { routeHeader, chevron };
+  }
+
+  /** Strip leading "id – " from label so the name line is not redundant with the badge. */
+  function busRouteModalNameFromIndexRoute(route) {
+    let lab = route.label || "";
+    const id = String(route.id != null ? route.id : "").trim();
+    if (lab && id) {
+      const re = new RegExp("^" + id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*[\u2013\\-]\\s*", "i");
+      lab = lab.replace(re, "").trim();
+    }
+    return lab || route.label || id || "Route";
+  }
+
   /**
    * Show bus routes for selected category
    */
@@ -5889,10 +5971,14 @@
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
       
-      const routeHeader = document.createElement('div');
-      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;';
-      routeHeader.innerHTML = `<span>${route.label}</span>`;
-      routeHeader.onclick = () => toggleRouteDirections(route.id);
+      const nameLine = busRouteModalNameFromIndexRoute(route);
+      const { routeHeader, chevron } = buildBusRouteModalRowHeader(route, nameLine);
+      routeHeader.onclick = () => {
+        toggleRouteDirections(route.id);
+        const dirDiv = document.getElementById(`directions-${route.id}`);
+        const open = dirDiv && dirDiv.style.display === 'block';
+        chevron.textContent = open ? '\u25B2' : '\u25BC';
+      };
       
       const directionsDiv = document.createElement('div');
       directionsDiv.id = `directions-${route.id}`;
@@ -6125,7 +6211,7 @@
 
     buttons.forEach((btn) => {
       if (!btn) return;
-      btn.classList.remove('favorite-btn--route-filled', 'favorite-btn--route-empty');
+      btn.classList.remove('favorite-btn--route-empty');
       btn.textContent = '';
       btn.innerHTML = '';
       btn.onclick = null;
@@ -6144,16 +6230,7 @@
         } else if (displayText && String(displayText).includes('-')) {
           displayText = String(displayText).split('-')[0];
         }
-        favBtn.classList.add('favorite-btn--route-filled');
-        const spanLabel = document.createElement('span');
-        spanLabel.className = 'fav-route-label';
-        spanLabel.textContent = displayText;
-        const spanStar = document.createElement('span');
-        spanStar.className = 'fav-route-star-filled';
-        spanStar.textContent = '\u2605';
-        spanStar.setAttribute('aria-hidden', 'true');
-        favBtn.appendChild(spanLabel);
-        favBtn.appendChild(spanStar);
+        favBtn.textContent = displayText;
         favBtn.style.cursor = 'pointer';
         favBtn.title = 'Show route on map';
         favBtn.onclick = (e) => {

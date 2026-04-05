@@ -322,25 +322,68 @@
       border-style: dashed;
       color: #aaa;
     }
-    .favorite-btn.favorite-btn--route-filled {
-      line-height: 1.1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 1px;
-      padding: 4px 2px;
-      font-size: 0.72rem;
-    }
-    .favorite-btn.favorite-btn--route-filled .fav-route-star-filled {
-      color: #ffd700;
-      font-size: 11px;
-      line-height: 1;
-    }
     .favorite-btn.favorite-btn--route-empty {
       color: #777;
       font-size: 1.2rem;
       line-height: 40px;
+    }
+    /* Bus routes modal — route row header */
+    .bus-route-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+      margin-bottom: 0;
+    }
+    .bus-route-modal-header:hover {
+      background-color: rgba(30, 144, 255, 0.12);
+    }
+    .bus-route-modal-badge {
+      flex-shrink: 0;
+      min-width: 2rem;
+      max-width: 4.75rem;
+      padding: 0.35rem 0.5rem;
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #fff;
+      background: linear-gradient(165deg, #1a5588 0%, #0c2036 100%);
+      border: 1px solid #1E90FF;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(30, 144, 255, 0.22);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bus-route-modal-badge.bus-route-modal-badge--wrap {
+      font-size: 0.62rem;
+      max-width: 5.25rem;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.15;
+    }
+    .bus-route-modal-name {
+      flex: 1;
+      min-width: 0;
+      font-weight: 600;
+      color: #b8d4f0;
+      font-size: 0.82rem;
+      line-height: 1.35;
+      text-align: left;
+    }
+    .bus-route-modal-chevron {
+      flex-shrink: 0;
+      font-size: 0.85rem;
+      opacity: 0.8;
+      color: #1E90FF;
+      width: 1.25rem;
+      text-align: center;
     }
     /* -- FOOTER -- */
     footer.site-footer {
@@ -6725,6 +6768,39 @@
     if (listScreen) listScreen.style.display = 'none';
   }
   
+  /** Short text for the route-id badge in the bus modal (shuttles / long ids). */
+  function busModalBadgeText(route) {
+    const id = String(route && route.id != null ? route.id : "").trim() || "?";
+    return id.length > 12 ? id.slice(0, 11) + "\u2026" : id;
+  }
+
+  /**
+   * Header row: badge (route id) + line name + chevron. Returns { routeHeader, chevron }.
+   */
+  function buildBusRouteModalRowHeader(route, nameLine) {
+    const routeHeader = document.createElement("div");
+    routeHeader.className = "bus-route-modal-header";
+
+    const badge = document.createElement("span");
+    badge.className = "bus-route-modal-badge";
+    const bt = busModalBadgeText(route);
+    badge.textContent = bt;
+    if (bt.length > 7) badge.classList.add("bus-route-modal-badge--wrap");
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "bus-route-modal-name";
+    nameSpan.textContent = nameLine;
+
+    const chevron = document.createElement("span");
+    chevron.className = "bus-route-modal-chevron";
+    chevron.textContent = "\u25BC";
+
+    routeHeader.appendChild(badge);
+    routeHeader.appendChild(nameSpan);
+    routeHeader.appendChild(chevron);
+    return { routeHeader, chevron };
+  }
+
   /**
    * Show bus routes for selected category
    */
@@ -6778,12 +6854,8 @@
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
       
-      const routeLabel = `${route.label || route.id || 'Route'} ${terminal0} to ${terminal1}`;
-      const routeHeader = document.createElement('div');
-      routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;';
-      routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
-      routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = 'rgba(30, 144, 255, 0.1)';
-      routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
+      const nameLine = `${terminal0} to ${terminal1}`;
+      const { routeHeader, chevron } = buildBusRouteModalRowHeader(route, nameLine);
       
       const directionsDiv = document.createElement('div');
       directionsDiv.id = `directions-${route.id}`;
@@ -6791,7 +6863,7 @@
       routeHeader.onclick = () => {
         const isExpanded = directionsDiv.style.display !== 'none';
         directionsDiv.style.display = isExpanded ? 'none' : 'flex';
-        routeHeader.querySelector('span:last-child').textContent = isExpanded ? '▼' : '▲';
+        chevron.textContent = isExpanded ? '\u25BC' : '\u25B2';
       };
       
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
@@ -7030,7 +7102,7 @@
 
     buttons.forEach((btn) => {
       if (!btn) return;
-      btn.classList.remove('favorite-btn--route-filled', 'favorite-btn--route-empty');
+      btn.classList.remove('favorite-btn--route-empty');
       btn.textContent = '';
       btn.innerHTML = '';
       btn.onclick = null;
@@ -7047,16 +7119,7 @@
         if (displayText && String(displayText).includes('-')) {
           displayText = String(displayText).split('-')[0];
         }
-        favBtn.classList.add('favorite-btn--route-filled');
-        const spanLabel = document.createElement('span');
-        spanLabel.className = 'fav-route-label';
-        spanLabel.textContent = displayText;
-        const spanStar = document.createElement('span');
-        spanStar.className = 'fav-route-star-filled';
-        spanStar.textContent = '\u2605';
-        spanStar.setAttribute('aria-hidden', 'true');
-        favBtn.appendChild(spanLabel);
-        favBtn.appendChild(spanStar);
+        favBtn.textContent = displayText;
         favBtn.style.cursor = 'pointer';
         favBtn.title = 'Show route on map';
         favBtn.onclick = (e) => {
