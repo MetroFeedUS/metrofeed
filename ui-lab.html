@@ -423,6 +423,178 @@
       border-radius: 8px;
       color: var(--mf-text);
     }
+
+    /* === Working model: favorites bar (matches direction we liked) === */
+    .lab-favorites-shell {
+      max-width: 220px;
+      margin: 0 auto;
+      background: rgba(30,30,30,0.88);
+      border: 1px solid rgba(30,144,255,0.55);
+      border-radius: 10px;
+      padding: 8px 8px 10px;
+      box-shadow: var(--mf-shadow-sm);
+    }
+    .lab-favorites-title {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+    .lab-fav-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .lab-fav-row:last-child { margin-bottom: 0; }
+    .fav-slot {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-weight: 900;
+      font-size: 0.85rem;
+      line-height: 1;
+    }
+    .fav-slot.filled {
+      border: 2px solid #fff;
+      color: var(--mf-accent);
+      text-shadow:
+        -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
+        0 0 2px #fff;
+    }
+    .fav-slot.empty {
+      border: 2px dashed rgba(255,255,255,0.55);
+      color: rgba(200,210,230,0.95);
+      font-size: 1.35rem;
+      font-weight: 400;
+      line-height: 1;
+    }
+    .fav-slot.empty .star-glyph {
+      display: block;
+      transform: translateY(-1px);
+      filter: drop-shadow(0 0 6px rgba(30,144,255,0.35));
+    }
+
+    /* === OTP itinerary mock === */
+    .otp-itin-card {
+      border: 1px solid rgba(30,144,255,0.35);
+      border-radius: 14px;
+      background: rgba(18,18,18,0.92);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--mf-shadow-sm);
+    }
+    .otp-itin-card.selected {
+      border-color: rgba(30,144,255,0.85);
+      box-shadow: var(--mf-shadow-sm), var(--mf-glow);
+    }
+    .otp-itin-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .otp-itin-head .dur {
+      font-weight: 900;
+      font-size: 15px;
+      color: #fff;
+    }
+    .otp-itin-head .meta {
+      font-size: 12px;
+      color: var(--mf-text-muted);
+    }
+    .otp-leg-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 8px;
+      font-size: 12px;
+      color: var(--mf-text-muted);
+    }
+    .otp-leg-strip .seg {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .otp-leg-strip .walk {
+      opacity: 0.9;
+    }
+    .otp-leg-strip .badge.v1 {
+      font-size: 10.5px;
+      min-width: 30px;
+      padding: 4px 7px;
+    }
+
+    /* === Dropdown menu mock === */
+    .lab-dd-shell {
+      width: 52px;
+      background: rgba(18,18,18,0.95);
+      border: 1px solid rgba(30,144,255,0.45);
+      border-radius: 12px;
+      padding: 8px 6px;
+      box-shadow: var(--mf-shadow-md);
+    }
+    .lab-dd-tile {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      margin: 0 auto 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(34,34,34,0.95);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-size: 18px;
+      cursor: default;
+      transition: box-shadow 0.12s, border-color 0.12s, background 0.12s;
+    }
+    .lab-dd-tile:last-child { margin-bottom: 0; }
+    .lab-dd-tile:hover {
+      border-color: rgba(30,144,255,0.55);
+      box-shadow: var(--mf-glow);
+    }
+    .lab-dd-tile.on {
+      border-color: rgba(255,107,53,0.85);
+      box-shadow: 0 0 0 2px rgba(255,107,53,0.25);
+    }
+    .lab-dd-tile.yt { background: #c00; border-color: rgba(255,255,255,0.2); }
+    .lab-dd-tile.x { background: #000; border-color: rgba(255,255,255,0.2); }
+    .lab-dd-divider {
+      height: 1px;
+      background: #666;
+      margin: 6px 2px;
+      opacity: 0.85;
+    }
+    .lab-dd-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: var(--mf-text-dim);
+      text-transform: uppercase;
+      margin: 2px 0 4px 2px;
+    }
+    .lab-dd-wrap {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .lab-dd-notes {
+      flex: 1;
+      min-width: 220px;
+      color: var(--mf-text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
   </style>
 </head>
 <body>
@@ -431,7 +603,7 @@
       <div class="title">
         <h1>MetroFeed UI Lab (Boston)</h1>
         <div class="subtitle">
-          Edit tokens at the top of this file. This page is a palette / component sandbox so we can upgrade the UI safely.
+          Live working model — tune tokens at the top, then we mirror winners into <span class="kbd">home.html</span> / <span class="kbd">premium.html</span>.
         </div>
       </div>
       <div class="pill">
@@ -621,24 +793,60 @@
       </div>
 
       <div class="card col-6">
-        <div class="cardHeader"><div class="h">Favorites strip mock</div></div>
+        <div class="cardHeader"><div class="h">Favorites strip (working model)</div></div>
         <div class="cardBody">
-          <div class="row" style="justify-content:center;">
-            <div style="width:40px;height:40px;border-radius:6px;border:2px solid #fff;background:#000;color:var(--mf-accent);display:flex;align-items:center;justify-content:center;font-weight:900;">1</div>
-            <div style="width:40px;height:40px;border-radius:6px;border:2px solid #fff;background:#000;color:#777;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">☆</div>
-            <div style="width:40px;height:40px;border-radius:6px;border:2px solid #fff;background:#000;color:#777;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">☆</div>
+          <div class="lab-favorites-shell">
+            <div class="lab-favorites-title">Favorites</div>
+            <div class="lab-fav-row">
+              <div class="fav-slot filled" title="Saved route">1</div>
+              <div class="fav-slot empty" title="Empty slot"><span class="star-glyph" aria-hidden="true">☆</span></div>
+              <div class="fav-slot empty" title="Empty slot"><span class="star-glyph" aria-hidden="true">☆</span></div>
+            </div>
+            <div class="lab-fav-row">
+              <div class="fav-slot empty" title="Home not set"><span class="star-glyph" aria-hidden="true">☆</span></div>
+              <div class="fav-slot empty" title="Work not set"><span class="star-glyph" aria-hidden="true">☆</span></div>
+              <div class="fav-slot empty" title="Place not set"><span class="star-glyph" aria-hidden="true">☆</span></div>
+            </div>
           </div>
-          <div style="height:10px;"></div>
-          <div class="row" style="justify-content:center;">
-            <div style="width:40px;height:40px;border-radius:6px;border:2px dashed #fff;background:#000;color:#aaa;display:flex;align-items:center;justify-content:center;font-weight:900;">H</div>
-            <div style="width:40px;height:40px;border-radius:6px;border:2px dashed #fff;background:#000;color:#aaa;display:flex;align-items:center;justify-content:center;font-weight:900;">W</div>
-            <div style="width:40px;height:40px;border-radius:6px;border:2px dashed #fff;background:#000;color:#aaa;display:flex;align-items:center;justify-content:center;font-weight:900;">+</div>
+          <div class="divider"></div>
+          <div class="hint">Solid + white outline = saved route. Both rows use <strong>dashed</strong> borders + softer “empty” stars for unset slots (tune opacity / glow here).</div>
+        </div>
+      </div>
+
+      <div class="card col-6">
+        <div class="cardHeader"><div class="h">OTP — itinerary cards (idea)</div></div>
+        <div class="cardBody">
+          <div class="otp-itin-card selected">
+            <div class="otp-itin-head">
+              <span class="dur">42 min</span>
+              <span class="meta">Arrive 3:14 PM · 2 transfers</span>
+            </div>
+            <div class="otp-leg-strip">
+              <span class="seg walk">🚶 6m</span>
+              <span class="seg"><span class="badge v1">9</span> 12m</span>
+              <span class="seg walk">🚶 3m</span>
+              <span class="seg"><span class="badge v1" style="min-width:34px;">Red</span> 8m</span>
+              <span class="seg walk">🚶 2m</span>
+            </div>
           </div>
+          <div class="otp-itin-card">
+            <div class="otp-itin-head">
+              <span class="dur">51 min</span>
+              <span class="meta">Arrive 3:23 PM · fewer walks</span>
+            </div>
+            <div class="otp-leg-strip">
+              <span class="seg walk">🚶 2m</span>
+              <span class="seg"><span class="badge v1">66</span> 18m</span>
+              <span class="seg walk">🚶 4m</span>
+              <span class="seg"><span class="badge v1">Green</span> 14m</span>
+            </div>
+          </div>
+          <div class="hint">Leg strip = scan line; <strong>v1 badges</strong> mark transit legs. Selected card gets stronger border/glow.</div>
         </div>
       </div>
 
       <div class="card col-12">
-        <div class="cardHeader"><div class="h">Modal style mock</div></div>
+        <div class="cardHeader"><div class="h">Modal style mock — Bus Routes (v1 badges)</div></div>
         <div class="cardBody">
           <div class="card" style="border-radius: 18px; max-width: 680px; margin: 0 auto; background: rgba(15,15,15,0.96); border: 2px solid rgba(30,144,255,0.8); box-shadow: var(--mf-shadow-md), var(--mf-glow);">
             <div class="cardHeader" style="border-bottom: 1px solid rgba(255,255,255,0.10);">
@@ -651,13 +859,13 @@
                 <input value="Search routes..." />
               </div>
               <div class="routeRow">
-                <span class="badge">1</span>
+                <span class="badge v1">1</span>
                 <div class="name">Nubian → Massachusetts Ave opp Holyoke St</div>
                 <div class="chev">▼</div>
               </div>
               <div style="height:10px;"></div>
               <div class="routeRow">
-                <span class="badge">7</span>
+                <span class="badge v1">7</span>
                 <div class="name">Federal St @ Matthews St → City Point Terminal</div>
                 <div class="chev">▲</div>
               </div>
@@ -666,6 +874,30 @@
                 <button class="mf-btn ghost" type="button">Close</button>
                 <button class="mf-btn primary" type="button">Action</button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card col-12">
+        <div class="cardHeader"><div class="h">Dropdown menu (grouped tiles — idea)</div></div>
+        <div class="cardBody">
+          <div class="lab-dd-wrap">
+            <div class="lab-dd-shell" aria-hidden="true">
+              <div class="lab-dd-tile yt" title="YouTube">▶</div>
+              <div class="lab-dd-tile x" title="X">𝕏</div>
+              <div class="lab-dd-divider"></div>
+              <div class="lab-dd-label">Routes</div>
+              <div class="lab-dd-tile on" title="Example active">🚌</div>
+              <div class="lab-dd-tile">🚆</div>
+              <div class="lab-dd-divider"></div>
+              <div class="lab-dd-label">Map</div>
+              <div class="lab-dd-tile">⚠</div>
+              <div class="lab-dd-tile">📷</div>
+              <div class="lab-dd-tile">🌤</div>
+            </div>
+            <div class="lab-dd-notes">
+              <strong>Concept:</strong> External links (YT / X) on top, then a divider, then <strong>Routes</strong> (bus / rail), another divider, then <strong>overlays &amp; tools</strong> (traffic, cameras, weather). Active tile gets a warm “on” ring (example: bus). Hover = neon edge like the rest of the lab.
             </div>
           </div>
         </div>
