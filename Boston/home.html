@@ -237,19 +237,19 @@
       box-shadow: 0 0 6px #1976d2;
       border-color: #000;
     }
-    /* -- FAVORITES -- */
+    /* -- FAVORITES (premium shell — Step 1 / ui-lab) -- */
     .favorites-wrapper {
       position: absolute;
       bottom: 40px; /* 10px from footer (footer is at bottom: 0, but has height) */
       left: 50%;
       transform: translateX(-50%);
-      background-color: rgba(30,30,30,0.85);
-      padding: 6px 4px; /* Tight padding around content */
-      border-radius: 8px;
+      background: linear-gradient(165deg, rgba(42, 44, 52, 0.94) 0%, rgba(18, 19, 24, 0.96) 100%);
+      padding: 8px 6px;
+      border-radius: 12px;
       font-size: 0.75rem;
       color: #888;
       text-align: center;
-      border: 1px solid #1E90FF;
+      border: 1px solid rgba(30, 144, 255, 0.42);
       white-space: nowrap;
       width: fit-content; /* Tight fit to content */
       min-width: auto;
@@ -257,7 +257,19 @@
       box-sizing: border-box;
       margin: 0 auto;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: box-shadow 0.28s ease, border-color 0.28s ease;
+      box-shadow:
+        0 10px 36px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 1px 0 rgba(255, 255, 255, 0.07) inset;
+    }
+    .favorites-wrapper:hover {
+      border-color: rgba(30, 144, 255, 0.58);
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.5),
+        0 0 22px rgba(30, 144, 255, 0.12),
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        0 1px 0 rgba(255, 255, 255, 0.08) inset;
     }
     .favorites-wrapper.collapsed {
       width: fit-content;
@@ -269,18 +281,21 @@
       transform: rotate(180deg);
     }
     .favorites-title { 
-      color: #fff; 
+      color: rgba(255, 255, 255, 0.92); 
       display: flex; 
       align-items: center;
       justify-content: center;
-      margin-bottom: 4px; 
-      font-size: 0.75rem; 
-      padding: 0 2px; /* Minimal horizontal padding for text */
+      margin-bottom: 6px; 
+      font-size: 0.62rem; 
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0 2px;
       position: relative;
-      gap: 6px; /* Space between text and chevron */
+      gap: 6px;
     }
     .favorites-wrapper span[data-translate="favorites"] {
-      color: #fff;
+      color: rgba(255, 255, 255, 0.94);
     }
     .favorites-container { 
       display: flex; 
@@ -308,11 +323,11 @@
     .favorite-btn { 
       width: 40px; 
       height: 40px; 
-      background-color: #000000; 
+      background: linear-gradient(180deg, #121214 0%, #050506 100%);
       color: #1E90FF; 
-      border: 2px solid #fff; 
-      border-radius: 6px; 
-      font-size: 0.8625rem; /* 15% larger than 0.75rem */
+      border: 1.5px solid rgba(255, 255, 255, 0.88);
+      border-radius: 8px; 
+      font-size: 0.8625rem;
       font-weight: bold;
       line-height: 40px; 
       text-align: center; 
@@ -323,11 +338,27 @@
         -1px 1px 0 #fff,
         1px 1px 0 #fff,
         0 0 2px #fff;
+      box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .favorite-btn:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.5),
+        0 0 14px rgba(30, 144, 255, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      border-color: #fff;
+    }
+    .place-favorite-btn:not(.place-favorite-empty) {
+      color: #7ec8ff;
     }
     .place-favorite-empty {
-      opacity: 0.65;
+      opacity: 0.72;
       border-style: dashed;
-      color: #aaa;
+      border-color: rgba(255, 255, 255, 0.38);
+      color: #b8c0cc;
     }
     .favorite-btn.favorite-btn--route-empty {
       color: #777;
@@ -915,19 +946,19 @@
     }
     
 
-    /* -- MINIMIZED ITINERARY BAR -- */
+    /* -- MINIMIZED ITINERARY BAR (premium — Step 1 / ui-lab) -- */
     .minimized-itinerary {
       position: absolute;
       bottom: 140px; /* Positioned above the favorites bar (will be updated dynamically) */
       left: 50%;
       transform: translateX(-50%);
-      background-color: rgba(30,30,30,0.95);
+      background: linear-gradient(165deg, rgba(42, 44, 52, 0.96) 0%, rgba(18, 19, 24, 0.98) 100%);
       padding: 4px 6px; /* Reduced padding to fit text */
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 0.65rem; /* Reduced from 0.7rem to prevent text overflow */
-      color: #1E90FF;
+      color: #7ec8ff;
       text-align: center;
-      border: 1px solid #1E90FF;
+      border: 1px solid rgba(30, 144, 255, 0.45);
       white-space: nowrap;
       width: fit-content; /* Match favorites width */
       min-width: auto; /* Match favorites */
@@ -939,14 +970,18 @@
       cursor: pointer;
       display: none;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      transition: all 0.3s ease; /* Match favorites transition */
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      transition: border-color 0.28s ease, box-shadow 0.28s ease;
       overflow: hidden; /* Prevent text overflow */
       text-overflow: ellipsis; /* Show ellipsis if text is too long */
     }
     .minimized-itinerary:hover {
-      background-color: rgba(30,30,30,1);
-      border-color: #fff;
+      border-color: rgba(30, 144, 255, 0.75);
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.45),
+        0 0 18px rgba(30, 144, 255, 0.12);
     }
     .minimized-itinerary .itinerary-info {
       display: flex;
@@ -955,25 +990,28 @@
       gap: 10px;
     }
     .minimized-itinerary .itinerary-title {
-      font-weight: bold;
-      color: #1E90FF;
+      font-weight: 800;
+      color: #7ec8ff;
+      letter-spacing: 0.04em;
     }
     .minimized-itinerary .itinerary-details {
       color: #ccc;
       font-size: 0.6rem; /* Reduced from 0.65rem to prevent text overflow */
     }
     .minimized-itinerary .restore-btn {
-      background: #1E90FF;
-      color: #000;
-      border: none;
-      border-radius: 4px;
+      background: linear-gradient(180deg, #3aa7ff 0%, #1E90FF 100%);
+      color: #0a0a0c;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 6px;
       padding: 2px 6px;
       font-size: 0.65rem; /* Reduced from 0.7rem to prevent text overflow */
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(30, 144, 255, 0.3);
     }
     .minimized-itinerary .restore-btn:hover {
-      background: #fff;
+      background: linear-gradient(180deg, #5eb8ff 0%, #2a9fff 100%);
+      color: #0a0a0c;
     }
 
     .itin-item {
