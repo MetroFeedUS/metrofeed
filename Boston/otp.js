@@ -45,6 +45,19 @@ function addDebugLog(step, data, decision) {
 }
 
 /**
+ * Trip-planning console helper. In DevTools filter: OTP_DEBUG
+ * @param {string} stage - Short label
+ * @param {object} [payload] - Serializable context
+ */
+function logOtpDebug(stage, payload) {
+  if (payload !== undefined) {
+    console.log('[OTP_DEBUG]', stage, payload);
+  } else {
+    console.log('[OTP_DEBUG]', stage);
+  }
+}
+
+/**
  * Show debug modal with all collected logs
  */
 function showDebugModal() {
@@ -308,6 +321,15 @@ function addLine(map, id, lngLatCoords, paint) {
  * @param {string} modes - Transit modes
  */
 async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWalkDistance = 800, departureType = 'now', departureTime = '', modes = 'TRANSIT,WALK') {
+  logOtpDebug('START', {
+    endpoint: typeof OTP_API !== 'undefined' ? OTP_API : '(OTP_API undefined — check script order / CITY_CONFIG)',
+    fromLat,
+    fromLon,
+    toLat,
+    toLon,
+    departureType,
+    dateTimeArgWillUse: departureType === 'departure' && departureTime ? 'yes' : 'no'
+  });
   console.log('[fetchAndShowOtpItineraries] Function called with params:', { fromLat, fromLon, toLat, toLon, maxWalkDistance, departureType, departureTime, modes });
   
   // PHASE 2: Show messages for unsupported features
@@ -454,6 +476,11 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
 
   // Show loading state
   const itinList = document.getElementById('itinList');
+  if (!itinList) {
+    logOtpDebug('DOM_MISSING', { id: 'itinList', hint: 'OTP modal markup missing or wrong page' });
+    console.error('[OTP] #itinList not found — cannot show trip options');
+    return;
+  }
   itinList.innerHTML = "<em style='color: #1E90FF;'>Loading trip options...</em>";
   showOtpModal();
   
@@ -467,6 +494,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
 
   try {
     // POST GraphQL request
+    logOtpDebug('FETCH', { method: 'POST', url: typeof OTP_API !== 'undefined' ? OTP_API : null });
     const res = await fetch(OTP_API, {
       method: 'POST',
       headers: {
@@ -477,10 +505,21 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
         variables: variables
       })
     });
-    
+    logOtpDebug('HTTP', { ok: res.ok, status: res.status, statusText: res.statusText });
     if (!res.ok) throw new Error("OTP server error: " + res.status);
     const response = await res.json();
 
+    logOtpDebug('RESPONSE_SHAPE', {
+      hasErrors: Array.isArray(response.errors) && response.errors.length > 0,
+      errorMessages: response.errors?.map(e => e.message) || [],
+      hasData: !!response.data,
+      dataKeys: response.data ? Object.keys(response.data) : [],
+      tripIsNull: response.data && response.data.trip === null,
+      tripPatternsType: response.data?.trip?.tripPatterns != null
+        ? (Array.isArray(response.data.trip.tripPatterns) ? 'array' : typeof response.data.trip.tripPatterns)
+        : 'missing',
+      tripPatternsLength: Array.isArray(response.data?.trip?.tripPatterns) ? response.data.trip.tripPatterns.length : null
+    });
     console.log('Full OTP GraphQL response:', response); // Debug the full response
 
     // Check for GraphQL errors
@@ -499,12 +538,14 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
         });
         const retryResponse = await retryRes.json();
         if (retryResponse.errors) {
+          logOtpDebug('RETRY_FAILED', { messages: retryResponse.errors.map(e => e.message) });
           itinList.innerHTML = `<em style='color: #f55;'>Error: ${retryResponse.errors.map(e => e.message).join(', ')}</em>`;
           return;
         }
         // Use retry response
         response.data = retryResponse.data;
       } else {
+        logOtpDebug('GRAPHQL_ERRORS', { messages: response.errors.map(e => e.message) });
         itinList.innerHTML = `<em style='color: #f55;'>Error: ${response.errors.map(e => e.message).join(', ')}</em>`;
         return;
       }
@@ -512,6 +553,13 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
 
     // OTP 2.9 GraphQL returns { data: { trip: { tripPatterns: [...] } } }
     if (!response.data || !response.data.trip || !response.data.trip.tripPatterns || !response.data.trip.tripPatterns.length) {
+      const patterns = response.data?.trip?.tripPatterns;
+      logOtpDebug('NO_TRIP_PATTERNS', {
+        hasData: !!response.data,
+        hasTripField: !!response.data?.trip,
+        tripPatternsLength: Array.isArray(patterns) ? patterns.length : null,
+        note: 'Empty or missing tripPatterns from Transmodel (see RESPONSE_SHAPE if HTTP succeeded)'
+      });
       itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
       return;
     }
@@ -675,6 +723,14 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     // Use filtered if available, otherwise fall back to all (so user isn't stuck)
     currentItins = filtered.length ? filtered : convertedItineraries;
     window.currentItins = currentItins; // Also set on window for compatibility
+    logOtpDebug('TRANSFER_FILTER', {
+      rawPatterns: tripPatterns.length,
+      converted: convertedItineraries.length,
+      afterMaxTransfers: filtered.length,
+      usingFallbackAll: filtered.length === 0 && convertedItineraries.length > 0,
+      finalCount: currentItins.length,
+      maxTransfers: MAX_TRANSFERS
+    });
     console.log('Converted itineraries:', currentItins);
     console.log(`Filtered ${convertedItineraries.length} itineraries to ${currentItins.length} (max ${MAX_TRANSFERS} transfers)`);
     
@@ -712,11 +768,15 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     });
     console.log('=== END OTP ROUTE ANALYSIS ===');
     
+    logOtpDebug('RENDER_CALL', { itineraries: currentItins.length });
     renderItinListVisual(currentItins);
 
   } catch (e) {
+    logOtpDebug('FETCH_EXCEPTION', { name: e?.name, message: e?.message, stack: e?.stack?.split('\n')?.slice(0, 5)?.join(' | ') });
     console.error('OTP Error:', e);
-    itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server. Please check if the OTP server is running on https://otp.metrofeedus.com</em>`;
+    if (itinList) {
+      itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server. Please check if the OTP server is running on https://otp.metrofeedus.com</em>`;
+    }
   }
 }
 
@@ -725,8 +785,13 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
  * @param {Array} itins - Array of itinerary objects
  */
 function renderItinListVisual(itins) {
+  logOtpDebug('RENDER_LIST', { count: Array.isArray(itins) ? itins.length : -1, hasItinListEl: !!document.getElementById('itinList') });
   window.currentItins = itins; // Ensure global is always set!
   const itinList = document.getElementById('itinList');
+  if (!itinList) {
+    logOtpDebug('RENDER_SKIP', { reason: 'no #itinList' });
+    return;
+  }
   itinList.innerHTML = itins.map((itin, idx) => {
     const start = getPortlandTimeString(new Date(itin.startTime));
     const end = getPortlandTimeString(new Date(itin.endTime));
@@ -2943,6 +3008,7 @@ window.fetchAndShowOtpItineraries = fetchAndShowOtpItineraries;
 window.renderItinListVisual = renderItinListVisual;
 window.decodePolyline = decodePolyline;
 window.showRoute = showRoute;
+window.logOtpDebug = logOtpDebug;
 
 // Export state variables (for backward compatibility)
 // Note: currentItins is also set on window.currentItins in fetchAndShowOtpItineraries
