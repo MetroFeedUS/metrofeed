@@ -445,6 +445,8 @@
     .site-footer a:hover { text-decoration: underline; }
     /* -- MODAL/OVERLAY -- */
     .mf-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; pointer-events: auto !important; }
+    /* Rail modal: keep scroll list usable when flex layout would collapse height */
+    #railRoutesModal #railRouteList { min-height: 200px; }
     .mf-modal {
       background: #111;
       border: 2.5px solid #1E90FF;
@@ -1900,10 +1902,11 @@
       // Identify rail routes by route_id pattern (MBTA specific)
       // Note: Green branches (Green-B, Green-C, Green-D, Green-E) are identified by Green- prefix
       const railRouteIds = new Set(['Red', 'Orange', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E']);
-      // Also check for Commuter Rail (CR-*) and other rail patterns
+      // Commuter rail: MBTA uses "CR-LineName" (case-sensitive in GTFS; accept any case)
+      const isCommuterRailRouteId = (routeId) => /^CR-/i.test(String(routeId || ''));
       const isRailRoute = (routeId) => {
         const id = String(routeId);
-        return railRouteIds.has(id) || id.startsWith('CR-') || id.startsWith('Green-');
+        return railRouteIds.has(id) || isCommuterRailRouteId(id) || id.startsWith('Green-');
       };
       
       // Group routes by route_id and separate bus/shuttle/rail
@@ -6700,7 +6703,7 @@
       // Note: Green branches (Green-B, Green-C, Green-D, Green-E) are shown individually, not grouped
       const subwayIds = ['Red', 'Orange', 'Blue', 'Green-B', 'Green-C', 'Green-D', 'Green-E'];
       RAIL_ROUTES_SUBWAY = (cityRoutes.railRoutes || []).filter(route => subwayIds.includes(route.id));
-      RAIL_ROUTES_COMMUTER = (cityRoutes.railRoutes || []).filter(route => route.id.startsWith('CR-'));
+      RAIL_ROUTES_COMMUTER = (cityRoutes.railRoutes || []).filter(route => /^CR-/i.test(String(route.id || '')));
       
       // Legacy arrays for backward compatibility (combined)
       BUS_ROUTES = cityRoutes.busRoutes || [];
@@ -6713,6 +6716,11 @@
         RAIL_ROUTES_COMMUTER.length, 'commuter rail');
     } catch (error) {
       console.error('[initializeBusRoutes] Error loading routes:', error);
+      // Boston lazy-load: never apply Portland fallback or clear commuter rail — that made the rail modal look "broken"
+      if (CITY_CONFIG && CITY_CONFIG.useLazyLoading) {
+        console.warn('[initializeBusRoutes] Skipping Portland fallback (lazy-loading city); retry when routes index is ready.');
+        return;
+      }
       BUS_ROUTES_REGULAR = [
     { id: '1', label: '1 – Vermont', dir0: 'To Hayhurst and Maplewood via Vermont', dir1: 'To Portland City Center' },
     { id: 'fx2', label: 'FX2 – Division', dir0: 'To Gresham', dir1: 'To Portland City Center' },
@@ -7314,6 +7322,15 @@
     
     // Get routes for selected category
     const routesToShow = category === 'subway' ? RAIL_ROUTES_SUBWAY : RAIL_ROUTES_COMMUTER;
+
+    if (!routesToShow.length) {
+      routeList.innerHTML = '<div style="color: #aaa; padding: 1rem; text-align: center; line-height: 1.45;">No routes in this category. Try opening the menu again in a moment, or reload the page if the route index was still loading.</div>';
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.oninput = null;
+      }
+      return;
+    }
     
     // Separate route groups from regular routes
     const routeGroups = [];
@@ -7559,6 +7576,24 @@
         dir1Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
         dir1Btn.onclick = () => selectRailRoute(route.id, 1);
         directionsDiv.appendChild(dir1Btn);
+      }
+
+      // Commuter rail / edge cases: if JSON had no usable stops, still offer directions from the routes index
+      if (directionsDiv.children.length === 0 && (route.dir0 || route.dir1)) {
+        if (route.dir0) {
+          const dir0Btn = document.createElement('button');
+          dir0Btn.textContent = `➡ ${route.dir0}`;
+          dir0Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
+          dir0Btn.onclick = () => selectRailRoute(route.id, 0);
+          directionsDiv.appendChild(dir0Btn);
+        }
+        if (route.dir1) {
+          const dir1Btn = document.createElement('button');
+          dir1Btn.textContent = `⬅ ${route.dir1}`;
+          dir1Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
+          dir1Btn.onclick = () => selectRailRoute(route.id, 1);
+          directionsDiv.appendChild(dir1Btn);
+        }
       }
       
       routeDiv.appendChild(routeHeader);
