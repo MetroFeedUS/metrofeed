@@ -29,6 +29,14 @@ window.WALK_COLOR = WALK_COLOR;
 let debugLogs = [];
 let debugModalOpen = false;
 
+// TEMP WORKAROUND (can remove later):
+// If the OTP server's schedule data is stale, clamp "now" into the last available service window
+// so the UI still returns trip options while the site is under active development.
+// Set `window.OTP_ALLOW_STALE_CLAMP = false` in DevTools to disable.
+if (typeof window !== 'undefined' && typeof window.OTP_ALLOW_STALE_CLAMP === 'undefined') {
+  window.OTP_ALLOW_STALE_CLAMP = true;
+}
+
 /**
  * Add a debug log entry
  * @param {string} step - Step name (e.g., "Route Extraction", "Branch Determination")
@@ -55,6 +63,237 @@ function logOtpDebug(stage, payload) {
   } else {
     console.log('[OTP_DEBUG]', stage);
   }
+}
+
+function getOtpGtfsGraphqlEndpoint() {
+  const cfg = (typeof window !== 'undefined' && window.CITY_CONFIG) ? window.CITY_CONFIG
+    : (typeof CITY_CONFIG !== 'undefined' ? CITY_CONFIG : null);
+  return cfg?.otpGtfsGraphql || 'https://otp.metrofeedus.com/otp/gtfs/v1';
+}
+
+/** Cached GTFS service calendar (Unix seconds); OTP refuses trips outside this window. */
+let otpServiceRangeCache = null;
+let otpServiceRangePromise = null;
+
+async function getOtpServiceTimeRangeSec() {
+  if (otpServiceRangeCache) return otpServiceRangeCache;
+  if (otpServiceRangePromise) return otpServiceRangePromise;
+  const endpoint = getOtpGtfsGraphqlEndpoint();
+  otpServiceRangePromise = fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ serviceTimeRange { start end } }' })
+  })
+    .then((r) => r.json())
+    .then((j) => {
+      const t = j.data && j.data.serviceTimeRange;
+      if (!t || typeof t.start !== 'number' || typeof t.end !== 'number') {
+        otpServiceRangeCache = null;
+        return null;
+      }
+      otpServiceRangeCache = { start: t.start, end: t.end };
+      logOtpDebug('SERVICE_TIME_RANGE', otpServiceRangeCache);
+      return otpServiceRangeCache;
+    })
+    .catch((e) => {
+      console.warn('[OTP] serviceTimeRange fetch failed:', e);
+      return null;
+    })
+    .finally(() => {
+      otpServiceRangePromise = null;
+    });
+  return otpServiceRangePromise;
+}
+
+/**
+ * Pick a trip search time in ms, clamped to loaded GTFS service period.
+ * When "now" is after the feed end (common when GTFS is stale), we clamp so routing still returns options.
+ */
+async function resolveOtpTripDateTimeMs(departureType, departureTime) {
+  let ms = Date.now();
+  if (departureType === 'departure' && departureTime) {
+    const depDate = new Date(departureTime);
+    if (!isNaN(depDate.getTime())) {
+      ms = depDate.getTime();
+    }
+  }
+
+  // If user picked a specific departure time, do NOT clamp it.
+  // Clamping is only for "now" (and only when enabled) so dev builds can still show *something*
+  // when the server's GTFS is stale.
+  const allowClamp =
+    typeof window !== 'undefined'
+      ? window.OTP_ALLOW_STALE_CLAMP === true && departureType !== 'departure'
+      : departureType !== 'departure';
+
+  if (!allowClamp) {
+    return { ms, clampNote: null, range: null };
+  }
+
+  const range = await getOtpServiceTimeRangeSec();
+  let clampNote = null;
+  if (range) {
+    const startMs = range.start * 1000;
+    const endMs = range.end * 1000;
+    if (ms < startMs) {
+      ms = startMs + 5 * 60 * 1000;
+      clampNote = 'before_service_period';
+    } else if (ms > endMs) {
+      ms = Math.max(startMs + 5 * 60 * 1000, endMs - 60 * 60 * 1000);
+      clampNote = 'after_service_period';
+    }
+  }
+  return { ms, clampNote, range };
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function otpFmtCoord(n) {
+  const x = Number(n);
+  if (!isFinite(x)) return '0';
+  return x.toFixed(6);
+}
+
+/**
+ * GTFS GraphQL fallback: OTP 2.x uses planConnection(origin/destination, dateTime, modes) and returns edges { node { legs } }.
+ * Older from/to/itineraries queries are invalid on current servers.
+ */
+async function fetchGtfsPlanItineraries({ fromLat, fromLon, toLat, toLon, dateTimeIso }) {
+  const endpoint = getOtpGtfsGraphqlEndpoint();
+  const when = dateTimeIso || new Date().toISOString();
+
+  const query = `
+    query GtfsPlanFallback($when: OffsetDateTime!) {
+      planConnection(
+        origin: { location: { coordinate: { latitude: ${otpFmtCoord(fromLat)}, longitude: ${otpFmtCoord(fromLon)} } } }
+        destination: { location: { coordinate: { latitude: ${otpFmtCoord(toLat)}, longitude: ${otpFmtCoord(toLon)} } } }
+        dateTime: { earliestDeparture: $when }
+        modes: { direct: [WALK], transit: { transit: [{ mode: BUS }, { mode: RAIL }, { mode: SUBWAY }, { mode: TRAM }, { mode: FERRY }] } }
+        first: 8
+      ) {
+        routingErrors { code description }
+        edges {
+          node {
+            duration
+            start
+            end
+            legs {
+              mode
+              distance
+              duration
+              startTime
+              endTime
+              from { name lat lon }
+              to { name lat lon }
+              legGeometry { points }
+              route { shortName longName }
+              trip { gtfsId }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  logOtpDebug('GTFS_FETCH', { label: 'planConnection', endpoint, when });
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables: { when } })
+  });
+  logOtpDebug('GTFS_HTTP', { ok: res.ok, status: res.status, statusText: res.statusText });
+  const json = await res.json();
+  logOtpDebug('GTFS_SHAPE', {
+    hasErrors: Array.isArray(json.errors) && json.errors.length > 0,
+    errorMessages: json.errors?.map((e) => e.message) || [],
+    hasData: !!json.data
+  });
+
+  if (json.errors && json.errors.length) {
+    console.warn('[OTP] GTFS planConnection GraphQL errors:', json.errors);
+  }
+
+  const pcon = json.data && json.data.planConnection;
+  const routingErrors = (pcon && pcon.routingErrors) || [];
+  if (routingErrors.length) {
+    logOtpDebug('GTFS_ROUTING_ERRORS', routingErrors);
+  }
+
+  const edges = (pcon && pcon.edges) || [];
+  const nodes = edges.map((e) => e && e.node).filter(Boolean);
+  if (!nodes.length) {
+    return [];
+  }
+
+  const itins = nodes.map((node) => ({
+    startTime: node.start,
+    endTime: node.end,
+    duration: node.duration,
+    legs: node.legs || []
+  }));
+
+  // Convert GTFS GraphQL itinerary -> existing internal itinerary shape used by normalizeItineraries/renderItinListVisual
+  const converted = itins.map((itin) => {
+    const startTime = itin.startTime;
+    const endTime = itin.endTime;
+    const duration = itin.duration;
+
+    const legs = (itin.legs || []).map((leg) => {
+      const normalizedModeRaw = (leg.mode || '').toString();
+      const normalizedMode = normalizedModeRaw.toUpperCase();
+
+      const fromPlace = leg.from ? {
+        name: leg.from.name,
+        latitude: leg.from.lat,
+        longitude: leg.from.lon,
+        vertexType: null
+      } : null;
+      const toPlace = leg.to ? {
+        name: leg.to.name,
+        latitude: leg.to.lat,
+        longitude: leg.to.lon,
+        vertexType: null
+      } : null;
+
+      const routeShortName = leg.route?.shortName || null;
+      const routeLongName = leg.route?.longName || routeShortName || null;
+
+      const convertedLeg = {
+        mode: normalizedMode === 'CAR' ? 'WALK' : normalizedMode, // defensive: keep non-transit oddities from breaking UI
+        duration: leg.duration,
+        distance: leg.distance,
+        fromPlace,
+        toPlace,
+        from: fromPlace ? { name: fromPlace.name, lat: fromPlace.latitude, lon: fromPlace.longitude } : null,
+        to: toPlace ? { name: toPlace.name, lat: toPlace.latitude, lon: toPlace.longitude } : null,
+        pointsOnLink: leg.legGeometry?.points ? { points: leg.legGeometry.points } : null
+      };
+
+      if (routeShortName || routeLongName) {
+        convertedLeg.route = routeShortName || routeLongName;
+        convertedLeg.routeShortName = routeShortName || convertedLeg.route;
+        convertedLeg.routeLongName = routeLongName || convertedLeg.route;
+        convertedLeg.line = { publicCode: convertedLeg.routeShortName, name: convertedLeg.routeLongName };
+      }
+
+      if (leg.trip?.gtfsId) {
+        convertedLeg.tripId = leg.trip.gtfsId;
+        convertedLeg.serviceJourney = { id: leg.trip.gtfsId };
+      }
+
+      return convertedLeg;
+    });
+
+    return { startTime, endTime, duration, legs };
+  });
+
+  return converted;
 }
 
 /**
@@ -349,94 +588,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     setTimeout(() => msg.remove(), 3000);
   }
   
-  // PHASE 2: Handle departure time
-  let dateTimeArg = null;
-  if (departureType === 'departure' && departureTime) {
-    try {
-      const depDate = new Date(departureTime);
-      if (!isNaN(depDate.getTime())) {
-        // Convert to ISO string for OTP
-        dateTimeArg = depDate.toISOString();
-        console.log('[OTP] Using departure time:', dateTimeArg);
-      } else {
-        console.warn('[OTP] Invalid departure time, using "now"');
-      }
-    } catch (e) {
-      console.warn('[OTP] Error parsing departure time:', e);
-    }
-  }
-  
-  // PHASE 1: Schema-locked GraphQL query
-  // Removed numTripPatterns - will limit client-side if needed
-  // All fields verified against Transmodel v3 schema
-  // Note: If dateTime argument doesn't exist, try 'date' or 'time' - schema debug will show correct name
-  const graphqlQuery = `
-    query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!${dateTimeArg ? ', $dateTime: DateTime' : ''}) {
-      trip(
-        from: { coordinates: { latitude: $fromLat, longitude: $fromLon } }
-        to: { coordinates: { latitude: $toLat, longitude: $toLon } }
-        ${dateTimeArg ? 'dateTime: $dateTime' : ''}
-      ) {
-        tripPatterns {
-          startTime
-          endTime
-          duration
-          legs {
-            mode
-            distance
-            duration
-            fromPlace {
-              name
-              vertexType
-              latitude
-              longitude
-            }
-            toPlace {
-              name
-              vertexType
-              latitude
-              longitude
-            }
-            pointsOnLink {
-              points
-            }
-            line {
-              publicCode
-              name
-            }
-            serviceJourney {
-              id
-            }
-            serviceJourneyEstimatedCalls {
-              quay {
-                id
-                name
-                latitude
-                longitude
-              }
-              aimedArrivalTime
-              aimedDepartureTime
-              expectedArrivalTime
-              expectedDepartureTime
-            }
-          }
-        }
-      }
-    }
-  `;
-  
-  const variables = {
-    fromLat: fromLat,
-    fromLon: fromLon,
-    toLat: toLat,
-    toLon: toLon
-  };
-  
-  if (dateTimeArg) {
-    variables.dateTime = dateTimeArg;
-  }
-  
-  console.log('[fetchAndShowOtpItineraries] GraphQL query variables:', variables);
+  // Transmodel trip query + variables are built inside try {} after await resolveOtpTripDateTimeMs(...)
   
   // Clear previous state for multiple trips
   window.otpBusInfo = {};
@@ -493,6 +645,89 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
   }
 
   try {
+    const { ms: tripMs, clampNote: otpClampNote } = await resolveOtpTripDateTimeMs(departureType, departureTime);
+    const tripDateTimeIso = new Date(tripMs).toISOString();
+    logOtpDebug('TRIP_DATETIME', { tripDateTimeIso, otpClampNote, tripMs });
+
+    let clampBanner = '';
+    if (otpClampNote === 'after_service_period') {
+      clampBanner =
+        "<div style=\"color:#ffb74d;font-size:12px;margin-bottom:8px;line-height:1.35;\">The loaded MBTA schedule on the server ends before your current time. Showing options using the last available service window instead.</div>";
+    } else if (otpClampNote === 'before_service_period') {
+      clampBanner =
+        "<div style=\"color:#ffb74d;font-size:12px;margin-bottom:8px;line-height:1.35;\">Your departure time is before the loaded schedule range; search time was moved to the start of available data.</div>";
+    }
+    itinList.innerHTML = clampBanner + "<em style='color: #1E90FF;'>Loading trip options...</em>";
+
+    const graphqlQuery = `
+    query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $dateTime: DateTime!, $searchWindow: Int!) {
+      trip(
+        from: { coordinates: { latitude: $fromLat, longitude: $fromLon } }
+        to: { coordinates: { latitude: $toLat, longitude: $toLon } }
+        dateTime: $dateTime
+        searchWindow: $searchWindow
+        numTripPatterns: 8
+      ) {
+        routingErrors { code description }
+        tripPatterns {
+          startTime
+          endTime
+          duration
+          legs {
+            mode
+            distance
+            duration
+            fromPlace {
+              name
+              vertexType
+              latitude
+              longitude
+            }
+            toPlace {
+              name
+              vertexType
+              latitude
+              longitude
+            }
+            pointsOnLink {
+              points
+            }
+            line {
+              publicCode
+              name
+            }
+            serviceJourney {
+              id
+            }
+            serviceJourneyEstimatedCalls {
+              quay {
+                id
+                name
+                latitude
+                longitude
+              }
+              aimedArrivalTime
+              aimedDepartureTime
+              expectedArrivalTime
+              expectedDepartureTime
+            }
+          }
+        }
+      }
+    }
+  `;
+
+    const variables = {
+      fromLat: fromLat,
+      fromLon: fromLon,
+      toLat: toLat,
+      toLon: toLon,
+      dateTime: tripDateTimeIso,
+      searchWindow: 120
+    };
+
+    console.log('[fetchAndShowOtpItineraries] GraphQL query variables:', variables);
+
     // POST GraphQL request
     logOtpDebug('FETCH', { method: 'POST', url: typeof OTP_API !== 'undefined' ? OTP_API : null });
     const res = await fetch(OTP_API, {
@@ -525,43 +760,58 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     // Check for GraphQL errors
     if (response.errors) {
       console.error('GraphQL errors:', response.errors);
-      // PHASE 2: If dateTime argument doesn't exist, retry without it
-      if (dateTimeArg && response.errors.some(e => e.message.includes('dateTime') || e.message.includes('UnknownArgument'))) {
-        console.warn('[OTP] dateTime argument not supported, retrying without it');
-        // Retry without dateTime
-        const retryQuery = graphqlQuery.replace(/\$dateTime: DateTime/g, '').replace(/dateTime: \$dateTime/g, '');
-        const retryVariables = { fromLat, fromLon, toLat, toLon };
-        const retryRes = await fetch(OTP_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: retryQuery, variables: retryVariables })
-        });
-        const retryResponse = await retryRes.json();
-        if (retryResponse.errors) {
-          logOtpDebug('RETRY_FAILED', { messages: retryResponse.errors.map(e => e.message) });
-          itinList.innerHTML = `<em style='color: #f55;'>Error: ${retryResponse.errors.map(e => e.message).join(', ')}</em>`;
-          return;
-        }
-        // Use retry response
-        response.data = retryResponse.data;
-      } else {
-        logOtpDebug('GRAPHQL_ERRORS', { messages: response.errors.map(e => e.message) });
-        itinList.innerHTML = `<em style='color: #f55;'>Error: ${response.errors.map(e => e.message).join(', ')}</em>`;
-        return;
-      }
+      logOtpDebug('GRAPHQL_ERRORS', { messages: response.errors.map((e) => e.message) });
+      itinList.innerHTML = `<em style='color: #f55;'>Error: ${response.errors.map((e) => escapeHtml(e.message)).join(', ')}</em>`;
+      return;
+    }
+
+    const tripRoutingErrors = response.data?.trip?.routingErrors;
+    if (Array.isArray(tripRoutingErrors) && tripRoutingErrors.length) {
+      logOtpDebug('TRANSMODEL_ROUTING_ERRORS', tripRoutingErrors);
     }
 
     // OTP 2.9 GraphQL returns { data: { trip: { tripPatterns: [...] } } }
     if (!response.data || !response.data.trip || !response.data.trip.tripPatterns || !response.data.trip.tripPatterns.length) {
       const patterns = response.data?.trip?.tripPatterns;
+      const rErr = Array.isArray(tripRoutingErrors) && tripRoutingErrors.length ? tripRoutingErrors[0] : null;
       logOtpDebug('NO_TRIP_PATTERNS', {
         hasData: !!response.data,
         hasTripField: !!response.data?.trip,
         tripPatternsLength: Array.isArray(patterns) ? patterns.length : null,
-        note: 'Empty or missing tripPatterns from Transmodel (see RESPONSE_SHAPE if HTTP succeeded)'
+        routingError: rErr?.description || rErr?.code || null,
+        note: 'Transmodel returned no tripPatterns; trying GTFS plan fallback next'
       });
-      itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
-      return;
+
+      try {
+        const gtfsConverted = await fetchGtfsPlanItineraries({ fromLat, fromLon, toLat, toLon, dateTimeIso: tripDateTimeIso });
+        logOtpDebug('GTFS_CONVERTED', { count: gtfsConverted.length });
+        if (!gtfsConverted.length) {
+          const detail = rErr?.description ? escapeHtml(rErr.description) : '';
+          itinList.innerHTML = detail
+            ? `<em style='color: #f55;'>No trips found.</em><div style="color:#aaa;font-size:12px;margin-top:8px;line-height:1.35;">${detail}</div>`
+            : "<em style='color: #f55;'>No trips found for this route.</em>";
+          return;
+        }
+
+        // Mirror the existing downstream pipeline
+        currentItins = gtfsConverted;
+        window.currentItins = currentItins;
+
+        console.log('🔄 [fetchAndShowOtpItineraries] Normalizing GTFS fallback itineraries into Journey objects...');
+        const journeys = await normalizeItineraries(currentItins);
+        window.journeys = journeys;
+        logOtpDebug('GTFS_NORMALIZED', { journeys: journeys.length });
+
+        logOtpSummary('AFTER_NORMALIZE_GTFS');
+        logOtpDebug('RENDER_CALL', { itineraries: currentItins.length, source: 'gtfs-fallback' });
+        renderItinListVisual(currentItins);
+        return;
+      } catch (fallbackErr) {
+        logOtpDebug('GTFS_FALLBACK_ERROR', { message: fallbackErr?.message || String(fallbackErr) });
+        console.error('[OTP] GTFS fallback error:', fallbackErr);
+        itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
+        return;
+      }
     }
 
     // Work directly with GraphQL response structure
