@@ -31,6 +31,30 @@
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
     html, body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
     #map { height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 0; }
+
+    /* -- MAPLIBRE POPUPS (theme wrapper only; do NOT change content markup) -- */
+    .maplibregl-popup-content {
+      background: rgba(15, 15, 15, 0.96) !important;
+      color: #eaeaea !important;
+      border: 1px solid #1E90FF !important;
+      border-radius: 10px !important;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(30, 144, 255, 0.15) !important;
+      padding: 0 !important; /* inner content already has its own padding */
+      overflow: hidden !important; /* keep rounded corners clean */
+    }
+    .maplibregl-popup-tip {
+      border-top-color: rgba(15, 15, 15, 0.96) !important;
+      border-bottom-color: rgba(15, 15, 15, 0.96) !important;
+    }
+    .maplibregl-popup-close-button {
+      color: #eaeaea !important;
+      font-size: 18px !important;
+      padding: 6px 10px !important;
+      border-radius: 8px !important;
+    }
+    .maplibregl-popup-close-button:hover {
+      background: rgba(30, 144, 255, 0.18) !important;
+    }
     /* Route chips/panels must NOT live inside #map: map is z-index 0, so children cannot paint above .search-bar (1000) / .side-buttons (1001). */
     #mapRouteOverlayRoot {
       position: absolute;
