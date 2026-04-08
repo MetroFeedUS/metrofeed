@@ -885,35 +885,37 @@
       margin-top: 4px;
     }
 
-    /* OTP quick buttons: make Go/Clear/Find Me uniform */
-    .otp-btn-row > button#goBtn,
-    .otp-btn-row > button#clearBtn,
-    .otp-btn-row > button#findMeBtn {
-      width: 74px !important;
-      height: 26px !important;
-      padding: 0 8px !important;
-      border-radius: 6px !important;
-      font-size: 0.8rem !important;
-      font-weight: 700 !important;
-      line-height: 1 !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      box-sizing: border-box !important;
+    /* OTP quick buttons (desktop + mobile) */
+    .otp-quick-btn {
+      width: 74px;
+      height: 26px;
+      padding: 0 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      white-space: nowrap;
     }
-
-    /* Clear should read as destructive */
-    .otp-btn-row > button#clearBtn {
-      background-color: #e53935 !important;
-      box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35) !important;
-    }
-    .otp-btn-row > button#clearBtn:hover,
-    .otp-btn-row > button#clearBtn:focus {
+    .otp-quick-btn--clear:hover,
+    .otp-quick-btn--clear:focus {
       background-color: #d32f2f !important;
     }
-    .otp-btn-row > button#clearBtn:active {
+    .otp-quick-btn--clear:active {
       background-color: #c62828 !important;
       transform: translateY(1px);
+    }
+
+    /* Mobile: slightly taller for easier tapping */
+    @media (max-width: 480px) {
+      .otp-quick-btn {
+        width: 86px;
+        height: 32px;
+        font-size: 0.9rem;
+      }
     }
     
     /* Custom attribution positioning - just above footer */
@@ -1227,9 +1229,9 @@
     </button>
   </div>
   <div class="otp-btn-row">
-            <button id="goBtn" style="width: 40px; height: 20px; background-color: #4CAF50; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go">Go</button>
-        <button id="clearBtn" style="width: 45px; height: 20px; background-color: #ff6b6b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3); padding: 0 4px;" data-translate="clear">Clear</button>
-        <button id="findMeBtn" style="width: 80px; height: 20px; background-color: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s ease;" title="Find my location and closest route" data-translate="find_me">Find Me</button>
+    <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go">Go</button>
+    <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear">Clear</button>
+    <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" style="background-color: #666; color: #fff; border: none; cursor: pointer; transition: all 0.3s ease;" title="Find my location and closest route" data-translate="find_me">Find Me</button>
   </div>
 </div>
 
