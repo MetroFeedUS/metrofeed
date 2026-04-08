@@ -1917,6 +1917,145 @@
       return routeData;
     }
   }
+
+  /**
+   * Pick direction 0 vs 1 by whichever pattern's stops are closer to the user (Find Me).
+   */
+  async function pickBestDirectionForLocation(routeId, userLat, userLon) {
+    let bestDir = 0;
+    let bestDist = Infinity;
+    for (const dir of [0, 1]) {
+      try {
+        const d = await getRouteData(routeId, dir);
+        if (!d || !d.stops || !d.stops.length) continue;
+        for (let i = 0; i < d.stops.length; i++) {
+          const s = d.stops[i];
+          if (s.lat == null || s.lon == null) continue;
+          const dist = Math.hypot(userLat - Number(s.lat), userLon - Number(s.lon));
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestDir = dir;
+          }
+        }
+      } catch (_) {
+        /* direction may not exist */
+      }
+    }
+    return bestDir;
+  }
+
+  /** Single-flight guard so watchPosition and showUserLocationAndRoute do not double-fetch. */
+  let resolveBostonClosestRoutePromise = null;
+
+  /**
+   * Find Me (Boston lazy-load): OTP stopsByRadius (walking distance on MBTA graph), else sample-route stop index.
+   */
+  async function resolveBostonClosestRoute(userLat, userLon) {
+    if (!CITY_CONFIG.useLazyLoading) {
+      return;
+    }
+    if (resolveBostonClosestRoutePromise) {
+      return resolveBostonClosestRoutePromise;
+    }
+    resolveBostonClosestRoutePromise = (async () => {
+      if (typeof window.resolveFindMeRouteViaOtp === 'function') {
+        try {
+          const otpPick = await window.resolveFindMeRouteViaOtp(userLat, userLon);
+          if (otpPick && otpPick.route_id) {
+            const direction_id = await pickBestDirectionForLocation(otpPick.route_id, userLat, userLon);
+            try {
+              const routeData = await getRouteData(otpPick.route_id, direction_id);
+              closestRoute = routeData;
+              backgroundRouteData = { route: routeData, distance: otpPick.walkDistanceM, source: 'otp' };
+              closestRouteFound = true;
+              console.log(
+                '[Find Me] OTP stopsByRadius →',
+                otpPick.route_id,
+                'dir',
+                direction_id,
+                `~${otpPick.walkDistanceM}m walk to`,
+                otpPick.stopName || '(stop)'
+              );
+              return;
+            } catch (err) {
+              console.warn('[Find Me] No local JSON for OTP route; trying sample stop fallback:', err);
+            }
+          }
+        } catch (e) {
+          console.warn('[Find Me] OTP stopsByRadius failed; trying sample stop fallback:', e);
+        }
+      }
+
+      if (typeof window._metrofeedLoadBostonStops !== 'function') {
+        console.warn('[Find Me] Boston stop loader not ready.');
+        closestRouteFound = true;
+        return;
+      }
+      await window._metrofeedLoadBostonStops();
+      if (!bostonFindMeStops.length) {
+        console.warn('[Find Me] No geo stops in sample index yet — try again after routes load.');
+        closestRouteFound = true;
+        return;
+      }
+      let best = null;
+      let bestDist = Infinity;
+      for (let i = 0; i < bostonFindMeStops.length; i++) {
+        const s = bostonFindMeStops[i];
+        const d = Math.hypot(userLat - s.lat, userLon - s.lon);
+        if (d < bestDist) {
+          bestDist = d;
+          best = s;
+        }
+      }
+      if (!best) {
+        closestRouteFound = true;
+        return;
+      }
+      try {
+        const routeData = await getRouteData(best.route_id, best.direction_id);
+        closestRoute = routeData;
+        backgroundRouteData = { route: routeData, distance: bestDist, source: 'sample' };
+        closestRouteFound = true;
+        console.log('[Find Me] Sample index → route', best.route_id, 'dir', best.direction_id, 'dist~', bestDist.toFixed(5));
+      } catch (err) {
+        console.error('[Find Me] Failed to load route for nearest stop:', err);
+        closestRouteFound = true;
+      }
+    })();
+    try {
+      await resolveBostonClosestRoutePromise;
+    } finally {
+      resolveBostonClosestRoutePromise = null;
+    }
+  }
+
+  /** MapLibre line coordinates [lon,lat][] from route JSON (single shape or longest branch in shapes[]). */
+  function getFindMeRouteLonLatCoordinates(routeObj) {
+    if (!routeObj) {
+      return [];
+    }
+    const segments = [];
+    if (routeObj.shape && Array.isArray(routeObj.shape) && routeObj.shape.length >= 2) {
+      segments.push(routeObj.shape);
+    }
+    if (routeObj.shapes && Array.isArray(routeObj.shapes)) {
+      routeObj.shapes.forEach((sh) => {
+        if (sh && Array.isArray(sh) && sh.length >= 2) {
+          segments.push(sh);
+        }
+      });
+    }
+    if (!segments.length) {
+      return [];
+    }
+    let best = segments[0];
+    for (let i = 1; i < segments.length; i++) {
+      if (segments[i].length > best.length) {
+        best = segments[i];
+      }
+    }
+    return best.map((coord) => [coord[1], coord[0]]);
+  }
   
   // Helper to get routes index (for metadata-only operations)
   function getRoutesIndex() {
@@ -2129,6 +2268,9 @@
   // For Boston: allStops will be populated lazily when needed (deferred feature)
   // For other cities: use masterRoutes
   let allStops = [];
+  /** @type {{ lat: number, lon: number, route_id: string, direction_id: number }[]} Stops with coords from sample routes — Find Me v1 nearest-stop index */
+  let bostonFindMeStops = [];
+  let loadBostonStopsPromise = null;
   // Store stop data with coordinates for pinning: { name: { lat, lon, stop_id } }
   let stopDataMap = {};
   
@@ -2142,56 +2284,76 @@
   if (CITY_CONFIG.useLazyLoading) {
     // Boston: Load stops from routes index when available (lazy, on-demand)
     async function loadBostonStops() {
-      if (window.routeLoader && window.routeLoader.isRoutesIndexLoaded()) {
-        const routesIndex = window.routeLoader.getRoutesIndex();
-        if (routesIndex && routesIndex.routes && allStops.length === 0) {
-          console.log('[Boston] Loading stops for autocomplete...');
-          // Load stops from a sample of routes (first 50 to avoid loading all 720 routes)
-          const sampleRoutes = routesIndex.routes.slice(0, 50);
-          const stopPromises = sampleRoutes.map(async (route) => {
-            try {
-              const routeData = await window.routeLoader.loadRoute(route.route_id, route.direction_id);
-              if (routeData && routeData.stops) {
-                // Build both allStops list and stopDataMap in one pass
-                const stopNames = [];
-                routeData.stops.forEach(stop => {
-                  const stopName = decodeHTMLEntities(stop.name || `Stop ${stop.stop_id}`);
-                  stopNames.push(stopName);
-                  
-                  // Also add to stopDataMap if coordinates exist
-                  if (stop.lat && stop.lon) {
-                    const normalizedName = stopName.toLowerCase();
-                    if (!stopDataMap[normalizedName]) {
-                      stopDataMap[normalizedName] = {
-                        lat: stop.lat,
-                        lon: stop.lon,
-                        stop_id: stop.stop_id,
-                        name: stopName
-                      };
-                    }
-                  }
-                });
-                return stopNames;
-              }
-            } catch (err) {
-              return [];
-            }
-            return [];
-          });
-          
-          const allStopArrays = await Promise.allSettled(stopPromises);
-          const allStopsList = allStopArrays
-            .filter(result => result.status === 'fulfilled')
-            .flatMap(result => result.value);
-          
-          allStops = [...new Set(allStopsList)];
-          
-          console.log('[Boston] Loaded', allStops.length, 'unique stops for autocomplete (from sample routes)');
-          console.log('[Boston] Loaded', Object.keys(stopDataMap).length, 'stops with coordinates for pinning');
-        }
+      if (loadBostonStopsPromise) {
+        return loadBostonStopsPromise;
       }
+      loadBostonStopsPromise = (async () => {
+        if (!window.routeLoader) {
+          return;
+        }
+        if (!window.routeLoader.isRoutesIndexLoaded()) {
+          try {
+            await window.routeLoader.loadRoutesIndex();
+          } catch (e) {
+            console.warn('[Boston] loadRoutesIndex failed for stops:', e);
+            return;
+          }
+        }
+        const routesIndex = window.routeLoader.getRoutesIndex();
+        if (!routesIndex || !routesIndex.routes || allStops.length > 0) {
+          return;
+        }
+        console.log('[Boston] Loading stops for autocomplete + Find Me index...');
+        const sampleRoutes = routesIndex.routes.slice(0, 50);
+        const stopPromises = sampleRoutes.map(async (route) => {
+          try {
+            const routeData = await window.routeLoader.loadRoute(route.route_id, route.direction_id);
+            if (routeData && routeData.stops) {
+              const stopNames = [];
+              routeData.stops.forEach(stop => {
+                const stopName = decodeHTMLEntities(stop.name || `Stop ${stop.stop_id}`);
+                stopNames.push(stopName);
+                if (stop.lat != null && stop.lon != null) {
+                  bostonFindMeStops.push({
+                    lat: stop.lat,
+                    lon: stop.lon,
+                    route_id: String(route.route_id),
+                    direction_id: route.direction_id
+                  });
+                  const normalizedName = stopName.toLowerCase();
+                  if (!stopDataMap[normalizedName]) {
+                    stopDataMap[normalizedName] = {
+                      lat: stop.lat,
+                      lon: stop.lon,
+                      stop_id: stop.stop_id,
+                      name: stopName
+                    };
+                  }
+                }
+              });
+              return stopNames;
+            }
+          } catch (err) {
+            return [];
+          }
+          return [];
+        });
+
+        const allStopArrays = await Promise.allSettled(stopPromises);
+        const allStopsList = allStopArrays
+          .filter(result => result.status === 'fulfilled')
+          .flatMap(result => result.value);
+
+        allStops = [...new Set(allStopsList)];
+
+        console.log('[Boston] Loaded', allStops.length, 'unique stops for autocomplete (from sample routes)');
+        console.log('[Boston] Loaded', Object.keys(stopDataMap).length, 'stops with coordinates for pinning');
+        console.log('[Boston] Find Me stop index:', bostonFindMeStops.length, 'geo stops (sample routes only; v1)');
+      })();
+      return loadBostonStopsPromise;
     }
-    
+    window._metrofeedLoadBostonStops = loadBostonStops;
+
     // Try to load stops when routeLoader is ready (background, non-blocking)
     if (window.routeLoader) {
       window.routeLoader.loadRoutesIndex().then(() => {
@@ -3285,12 +3447,14 @@
       } else {
         // Final step - show the route
         console.log('[Find Me] Final step reached, calling showUserLocationAndRoute');
-        setTimeout(window.showUserLocationAndRoute, findMeLoadingSteps[findMeStep - 1].delay);
+        setTimeout(() => {
+          window.showUserLocationAndRoute();
+        }, findMeLoadingSteps[findMeStep - 1].delay);
       }
     }
   };
 
-  window.showUserLocationAndRoute = function() {
+  window.showUserLocationAndRoute = async function() {
     console.log('[Find Me] showUserLocationAndRoute called');
     // Remove loading overlay
     const loadingOverlay = document.getElementById('findMeLoading');
@@ -3302,17 +3466,33 @@
       style.remove();
     }
 
+    const findMeBtnEarly = document.getElementById('findMeBtn');
+    const resetFindMeBtnFail = () => {
+      if (findMeBtnEarly) {
+        findMeBtnEarly.disabled = false;
+        findMeBtnEarly.textContent = 'Find Me OFF';
+        findMeBtnEarly.style.backgroundColor = '#666';
+      }
+      findMeActive = false;
+    };
+
+    if (CITY_CONFIG.useLazyLoading && backgroundLocationData && !backgroundRouteData) {
+      try {
+        await resolveBostonClosestRoute(backgroundLocationData.lat, backgroundLocationData.lon);
+      } catch (e) {
+        console.error('[Find Me] resolveBostonClosestRoute:', e);
+      }
+    }
+
     // Check if we have background data
     console.log('[Find Me] Background location data:', backgroundLocationData);
     console.log('[Find Me] Background route data:', backgroundRouteData);
     if (!backgroundLocationData || !backgroundRouteData) {
-      const findMeBtn = document.getElementById('findMeBtn');
-      if (findMeBtn) {
-        findMeBtn.disabled = false;
-        findMeBtn.textContent = 'Find Me OFF';
-        findMeBtn.style.backgroundColor = '#666';
-      }
-      alert('Location data not ready yet. Please try again in a moment.');
+      resetFindMeBtnFail();
+      const msg = CITY_CONFIG.useLazyLoading
+        ? 'Could not match your location to a route (sample stops still loading, or you are far from routes in the demo index). Try again in a few seconds.'
+        : 'Location data not ready yet. Please try again in a moment.';
+      alert(msg);
       return;
     }
 
@@ -3362,131 +3542,22 @@
       popup.addTo(map);
     }
 
-    // Display closest route
     closestRoute = backgroundRouteData.route;
-    
-    // Debug: Log the route data to check for issues
     console.log('[Find Me] Drawing route:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
-    console.log('[Find Me] Shape points:', closestRoute.shape.length);
-    console.log('[Find Me] First 5 shape points:', closestRoute.shape.slice(0, 5));
-    
-    // Convert coordinates to [lon, lat] order for MapLibre GL JS
-    const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
-    
-    console.log('[Find Me] Cleaned coordinates:', routeCoordinates.length);
-    console.log('[Find Me] First 5 cleaned points:', routeCoordinates.slice(0, 5));
-    
-    // Only draw if we have valid coordinates
+    const routeCoordinates = getFindMeRouteLonLatCoordinates(closestRoute);
     if (routeCoordinates.length < 2) {
       console.error('[Find Me] Not enough valid coordinates to draw route');
+      resetFindMeBtnFail();
+      alert('Route shape data is missing or incomplete for this line.');
       return;
     }
-    
-    // Remove existing source and layer if they exist to prevent duplicates
-    if (map.getLayer('userLocationRoute')) {
-      map.removeLayer('userLocationRoute');
-    }
-    if (map.getSource('userLocationRoute')) {
-      map.removeSource('userLocationRoute');
-    }
-    
-    map.addSource('userLocationRoute', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: routeCoordinates
-        }
-      }
-    });
-    
-    map.addLayer({
-      id: 'userLocationRoute',
-      type: 'line',
-      source: 'userLocationRoute',
-      paint: {
-        'line-color': '#0071CE',
-        'line-width': 4,
-        'line-opacity': 0.7
-      }
-    });
-    
-    userLocationPolyline = 'userLocationRoute';
 
-    // Fit bounds to show the route
-    const bounds = new maplibregl.LngLatBounds();
-    routeCoordinates.forEach(coord => bounds.extend(coord));
-    map.fitBounds(bounds, { 
-      padding: [20, 20],
-      maxZoom: 14
-    });
+    syncFindMeRouteLayersFromBackground({ immediateFit: true });
 
-    // Show stops with times
-    const nowMins = getPortlandMinutes();
-    userLocationStopMarkers.forEach(marker => marker.remove());
-    userLocationStopMarkers = [];
-
-    closestRoute.stops.forEach(stop => {
-      const highlightedTimes = processStopTimes(stop.times);
-
-      // Create stop marker element
-      const stopElement = document.createElement('div');
-      stopElement.style.width = '12px';
-      stopElement.style.height = '12px';
-      stopElement.style.backgroundColor = '#1E90FF';
-      stopElement.style.borderRadius = '50%';
-      stopElement.style.border = '1px solid #1E90FF';
-      stopElement.style.opacity = '0.9';
-
-      const stopMarker = new maplibregl.Marker({
-        element: stopElement
-      });
-      stopMarker.setLngLat([stop.lon, stop.lat]);
-      
-      // Create popup content
-      const popupContent = document.createElement('div');
-      popupContent.innerHTML = `
-        <div style='border:1px solid #1E90FF; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-            <strong style='color:#1E90FF;'>${stop.name}</strong>
-            <hr style='border:none; border-top:1px solid #1E90FF; margin:6px 0;'>
-            ${
-              highlightedTimes.map(t =>
-                `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-              ).join('') || '<div>' + translateText('no_scheduled_times') + '</div>'
-            }
-          </div>
-      `;
-      
-      const popup = new maplibregl.Popup().setDOMContent(popupContent);
-      stopMarker.setPopup(popup);
-      stopMarker.addTo(map);
-      userLocationStopMarkers.push(stopMarker);
-    });
-
-    // Start bus tracking
-    console.log('[Find Me] Starting bus tracking...');
-    // Show buses for closest route
-    fetchAndDisplayBuses();
-    if (window.closestRouteInterval) {
-      clearInterval(window.closestRouteInterval);
-    }
-    window.closestRouteInterval = setInterval(() => {
-      // Track closest route and show buses
-      // Don't run if OTP trip is active OR if route overlays are managing buses
-      const hasActiveOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
-      if (!window.otpBusTrackingInterval && !window.activeTripSelected && !hasActiveOverlays) {
-        fetchAndDisplayBuses();
-      }
-    }, 15000);
-
-    // Update button state
+    // Update button state (single source: ON while active)
     const findMeBtn = document.getElementById('findMeBtn');
     if (findMeBtn) {
       findMeBtn.disabled = false;
-      findMeBtn.textContent = 'Hide Route';
-      findMeBtn.style.backgroundColor = '#1E90FF';
       updateFindMeButtonState();
     }
   };
@@ -3502,6 +3573,9 @@
         if (findMeActive) {
           // Turn off Find Me
           findMeActive = false;
+          closestRouteFound = false;
+          backgroundRouteData = null;
+          closestRoute = null;
           
           // Hide route and stops
           if (userLocationPolyline && map.getLayer(userLocationPolyline)) {
@@ -3625,6 +3699,125 @@
   let backgroundRouteData = null; // Store route data for later display
   let findMeActive = false; // Track if Find Me is active
 
+  /** Keep Find Me line, stop markers, and bus polling in sync with backgroundRouteData (live GPS updates). */
+  function syncFindMeRouteLayersFromBackground(options) {
+    const immediateFit = options && options.immediateFit;
+    if (!findMeActive || !backgroundRouteData || !backgroundRouteData.route || !map) {
+      return;
+    }
+    const routeData = backgroundRouteData.route;
+    closestRoute = routeData;
+    const routeCoordinates = getFindMeRouteLonLatCoordinates(routeData);
+    if (routeCoordinates.length < 2) {
+      return;
+    }
+
+    if (map.getLayer('userLocationRoute')) {
+      map.removeLayer('userLocationRoute');
+    }
+    if (map.getSource('userLocationRoute')) {
+      map.removeSource('userLocationRoute');
+    }
+
+    map.addSource('userLocationRoute', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: routeCoordinates
+        }
+      }
+    });
+
+    map.addLayer({
+      id: 'userLocationRoute',
+      type: 'line',
+      source: 'userLocationRoute',
+      paint: {
+        'line-color': '#0071CE',
+        'line-width': 4,
+        'line-opacity': 0.7
+      }
+    });
+
+    userLocationPolyline = 'userLocationRoute';
+
+    if (immediateFit) {
+      const bounds = new maplibregl.LngLatBounds();
+      routeCoordinates.forEach(coord => bounds.extend(coord));
+      map.fitBounds(bounds, {
+        padding: [20, 20],
+        maxZoom: 14
+      });
+      hasAutoSnapped = true;
+    } else if (!hasAutoSnapped && !map.hasBeenMovedByUser) {
+      setTimeout(() => {
+        if (!map.hasBeenMovedByUser) {
+          const bounds = new maplibregl.LngLatBounds();
+          routeCoordinates.forEach(coord => bounds.extend(coord));
+          map.fitBounds(bounds, {
+            padding: [20, 20],
+            maxZoom: 14
+          });
+          hasAutoSnapped = true;
+        }
+      }, 1000);
+    }
+
+    userLocationStopMarkers.forEach(marker => marker.remove());
+    userLocationStopMarkers = [];
+
+    (routeData.stops || []).forEach(stop => {
+      const highlightedTimes = processStopTimes(stop.times);
+      const stopElement = document.createElement('div');
+      stopElement.style.width = '12px';
+      stopElement.style.height = '12px';
+      stopElement.style.backgroundColor = '#1E90FF';
+      stopElement.style.borderRadius = '50%';
+      stopElement.style.border = '1px solid #1E90FF';
+      stopElement.style.opacity = '0.9';
+
+      const stopMarker = new maplibregl.Marker({
+        element: stopElement
+      });
+      stopMarker.setLngLat([stop.lon, stop.lat]);
+
+      const popupContent = document.createElement('div');
+      popupContent.innerHTML = `
+        <div style='border:1px solid #1E90FF; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+            <strong style='color:#1E90FF;'>${stop.name}</strong>
+            <hr style='border:none; border-top:1px solid #1E90FF; margin:6px 0;'>
+            ${
+              highlightedTimes.map(t =>
+                `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
+              ).join('') || '<div>' + translateText('no_scheduled_times') + '</div>'
+            }
+          </div>
+      `;
+
+      const popup = new maplibregl.Popup().setDOMContent(popupContent);
+      stopMarker.setPopup(popup);
+      stopMarker.addTo(map);
+      userLocationStopMarkers.push(stopMarker);
+    });
+
+    updateFindMeButtonState();
+
+    fetchAndDisplay();
+    if (window.closestRouteInterval) {
+      clearInterval(window.closestRouteInterval);
+    }
+    window.closestRouteInterval = setInterval(() => {
+      const hasActiveOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
+      if (!window.otpBusTrackingInterval && !window.activeTripSelected && !hasActiveOverlays &&
+          userLocationPolyline && map.getLayer(userLocationPolyline)) {
+        fetchAndDisplay();
+      }
+    }, 15000);
+  }
+
   if (navigator.geolocation) {
     // Track if we've already done the initial route setup
     let hasInitializedRoute = false;
@@ -3643,37 +3836,31 @@
       };
       userLocationFound = true;
 
-      // Only display location marker if user has clicked "Find Me"
-      if (userLocationPolyline && map.getLayer(userLocationPolyline)) {
-        // Remove old markers if present
+      // Show GPS marker whenever Find Me is on (v1: do not wait for route polyline)
+      if (findMeActive) {
         if (userLocationMarker) { userLocationMarker.remove(); userLocationMarker = null; }
         if (userArrow) { userArrow.remove(); userArrow = null; }
 
         if (isInPortland(userLat, userLon)) {
-          // IN BOUNDS: show pulsing dot
           const pulseElement = document.createElement('div');
           pulseElement.className = 'pulse-marker';
           pulseElement.style.width = '20px';
           pulseElement.style.height = '20px';
-          
+
           userLocationMarker = new maplibregl.Marker({
             element: pulseElement
           });
           userLocationMarker.setLngLat([userLon, userLat]);
-          
+
           const popup = new maplibregl.Popup().setText("You are here (location never leaves your device)");
           userLocationMarker.setPopup(popup);
           userLocationMarker.addTo(map);
           popup.addTo(map);
         } else {
-          // OUT OF BOUNDS: show arrow at nearest edge
-          // Clamp user's lat/lon to the edge of Portland bounds
-          const edgeLat = clamp(userLat, PORTLAND_BOUNDS.south, PORTLAND_BOUNDS.north);
-          const edgeLon = clamp(userLon, PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.east);
+          const edgeLat = clamp(userLat, CITY_BOUNDS.south, CITY_BOUNDS.north);
+          const edgeLon = clamp(userLon, CITY_BOUNDS.west, CITY_BOUNDS.east);
           const edgeLatLng = [edgeLon, edgeLat];
-          // Angle from edge to user (flipped direction)
           const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
-          // Arrow icon with rotation
           const arrowElement = document.createElement('div');
           arrowElement.className = 'arrow-marker';
           arrowElement.style.width = '30px';
@@ -3681,12 +3868,12 @@
           arrowElement.innerHTML = `<svg style="transform: rotate(${angle}deg);" viewBox="0 0 30 30">
             <polygon points="15,4 24,26 15,21 6,26" fill="#2196f3"/>
           </svg>`;
-          
+
           userArrow = new maplibregl.Marker({
             element: arrowElement
           });
           userArrow.setLngLat(edgeLatLng);
-          
+
           const popup = new maplibregl.Popup().setText(`You are outside the ${CITY_CONFIG.cityName} map area.`);
           userArrow.setPopup(popup);
           userArrow.addTo(map);
@@ -3694,37 +3881,33 @@
         }
       }
 
-      // Store route data in background (don't display yet)
       if (!closestRouteFound) {
-        // Find closest route logic
         let closestDist = Infinity;
-        // OPTIMIZED: Only check stops, not every shape point
+        closestRoute = null;
+
         if (CITY_CONFIG.useLazyLoading) {
-          // Boston: Deferred - would require loading all routes
-          console.warn('[Geolocation] Closest route search not available in Boston lazy-loading mode.');
-          closestRoute = null;
-        } else {
-          // Other cities: Use masterRoutes
-          if (typeof masterRoutes !== 'undefined' && masterRoutes) {
-            masterRoutes.forEach(route => {
-              if (route.stops) {
-                route.stops.forEach(stop => {
-                  const dist = Math.hypot(userLat - stop.lat, userLon - stop.lon);
-                  if (dist < closestDist) {
-                    closestDist = dist;
-                    closestRoute = route;
-                  }
-                });
+          if (findMeActive && typeof window._metrofeedLoadBostonStops === 'function') {
+            resolveBostonClosestRoute(userLat, userLon).then(() => {
+              if (findMeActive && backgroundRouteData) {
+                syncFindMeRouteLayersFromBackground();
               }
             });
           }
+        } else if (typeof masterRoutes !== 'undefined' && masterRoutes) {
+          masterRoutes.forEach(route => {
+            if (route.stops) {
+              route.stops.forEach(stop => {
+                const dist = Math.hypot(userLat - stop.lat, userLon - stop.lon);
+                if (dist < closestDist) {
+                  closestDist = dist;
+                  closestRoute = route;
+                }
+              });
+            }
+          });
         }
 
         if (closestRoute) {
-          console.log('[Geolocation] Closest route found in background:', closestRoute);
-          console.log('[Geolocation] Route ID:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
-          
-          // Store route data for later display
           backgroundRouteData = {
             route: closestRoute,
             distance: closestDist
@@ -3733,141 +3916,9 @@
         }
       }
 
-      // Only display route if user has clicked "Find Me"
-      if (userLocationPolyline && map.getLayer(userLocationPolyline)) {
-        // --- Draw closest route ---
-        // Debug: Log the route data to check for issues
-        console.log('[Geolocation] Drawing route:', closestRoute.route_id, 'Direction:', closestRoute.direction_id);
-        console.log('[Geolocation] Shape points:', closestRoute.shape.length);
-        console.log('[Geolocation] First 5 shape points:', closestRoute.shape.slice(0, 5));
-        
-        // Convert coordinates to [lon, lat] order for MapLibre GL JS
-        const routeCoordinates = closestRoute.shape.map(coord => [coord[1], coord[0]]);
-        
-        console.log('[Geolocation] Cleaned coordinates:', routeCoordinates.length);
-        console.log('[Geolocation] First 5 cleaned points:', routeCoordinates.slice(0, 5));
-        
-        // Only draw if we have valid coordinates
-        if (routeCoordinates.length < 2) {
-          console.error('[Geolocation] Not enough valid coordinates to draw route');
-          return;
-        }
-        
-        // Remove existing source and layer if they exist to prevent duplicates
-        if (map.getLayer('userLocationRoute')) {
-          map.removeLayer('userLocationRoute');
-        }
-        if (map.getSource('userLocationRoute')) {
-          map.removeSource('userLocationRoute');
-        }
-        
-        map.addSource('userLocationRoute', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: routeCoordinates
-            }
-          }
-        });
-        
-        map.addLayer({
-          id: 'userLocationRoute',
-          type: 'line',
-          source: 'userLocationRoute',
-          paint: {
-            'line-color': '#0071CE',
-            'line-width': 4,
-            'line-opacity': 0.7
-          }
-        });
-        
-        userLocationPolyline = 'userLocationRoute'; // Store layer ID for removal
-        
-        // Only fitBounds once on initial load - but let user control the map
-        if (!hasAutoSnapped && !map.hasBeenMovedByUser) {
-          // Add a small delay to make the snapping less jarring
-          setTimeout(() => {
-            if (!map.hasBeenMovedByUser) {
-              const bounds = new maplibregl.LngLatBounds();
-              routeCoordinates.forEach(coord => bounds.extend(coord));
-              map.fitBounds(bounds, { 
-                padding: [20, 20],
-                maxZoom: 14 // Don't zoom in too much
-              });
-              hasAutoSnapped = true;
-            }
-          }, 1000); // 1 second delay
-        }
-
-        // --- Show stops + next time highlight ---
-        const nowMins = getPortlandMinutes();
-
-        // Clear any existing stop markers
-        userLocationStopMarkers.forEach(marker => marker.remove());
-        userLocationStopMarkers = [];
-
-        closestRoute.stops.forEach(stop => {
-          const highlightedTimes = processStopTimes(stop.times);
-
-          // Create stop marker element
-          const stopElement = document.createElement('div');
-          stopElement.style.width = '12px';
-          stopElement.style.height = '12px';
-          stopElement.style.backgroundColor = '#1E90FF';
-          stopElement.style.borderRadius = '50%';
-          stopElement.style.border = '1px solid #1E90FF';
-          stopElement.style.opacity = '0.9';
-
-          const stopMarker = new maplibregl.Marker({
-            element: stopElement
-          });
-          stopMarker.setLngLat([stop.lon, stop.lat]);
-          
-          // Create popup content
-          const popupContent = document.createElement('div');
-          popupContent.innerHTML = `
-            <div style='border:1px solid #1E90FF; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                <strong style='color:#1E90FF;'>${stop.name}</strong>
-                <hr style='border:none; border-top:1px solid #1E90FF; margin:6px 0;'>
-                ${
-                  highlightedTimes.map(t =>
-                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                  ).join('') || '<div>' + translateText('no_scheduled_times') + '</div>'
-                }
-              </div>
-          `;
-          
-          const popup = new maplibregl.Popup().setDOMContent(popupContent);
-          stopMarker.setPopup(popup);
-          stopMarker.addTo(map);
-
-          userLocationStopMarkers.push(stopMarker);
-        }); // closes stops.forEach
-
-        // Update button state to show route is visible
-        updateFindMeButtonState();
-
-        // --- Only fetch/display bus locations AFTER closestRoute is known ---
-        fetchAndDisplay(); // <-- run initial fetch
-        // Set up continuous tracking for closest route
-        if (window.closestRouteInterval) {
-          clearInterval(window.closestRouteInterval);
-        }
-        window.closestRouteInterval = setInterval(() => {
-          // Only track closest route if we're not doing OTP and route is visible
-          if (!window.otpBusTrackingInterval && userLocationPolyline && map.getLayer(userLocationPolyline)) {
-            fetchAndDisplay();
-          } else {
-            console.log('[closestRouteInterval] Skipping closest route update - OTP tracking active or route not visible');
-          }
-        }, 15000);
+      if (findMeActive && backgroundRouteData && backgroundRouteData.route) {
+        syncFindMeRouteLayersFromBackground();
       }
-      
-      // Mark that we've initialized the route
-      closestRouteFound = true;
     }, function(error) {
       if (error.code === 1) {
         console.log('Location access denied by user.');

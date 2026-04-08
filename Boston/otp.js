@@ -3351,3 +3351,159 @@ if (typeof window !== 'undefined') {
   console.log('🔧 Dev helper available: window.debugOtpSchema()');
 }
 
+// --- Find Me: OTP GTFS GraphQL stopsByRadius (walking distance on the street network) ---
+
+/**
+ * @param {string} gtfsId e.g. "mbta-ma-us:Green-D"
+ * @returns {string|null} MetroFeed route_id e.g. "Green-D"
+ */
+function otpGtfsRouteIdFromGtfsId(gtfsId) {
+  if (!gtfsId || typeof gtfsId !== 'string') return null;
+  const idx = gtfsId.indexOf(':');
+  return idx >= 0 ? gtfsId.slice(idx + 1) : gtfsId;
+}
+
+/**
+ * Lower is better. Deprioritizes shuttles so street stops with many shuttle routes still prefer rapid transit nearby.
+ * @param {{ gtfsId?: string, longName?: string, shortName?: string, mode?: string }} route
+ */
+function findMeOtpRouteTier(route) {
+  const gid = route.gtfsId || '';
+  const longName = (route.longName || '').toLowerCase();
+  const shortName = (route.shortName || '').toLowerCase();
+  if (/shuttle/i.test(gid) || longName.includes('shuttle') || shortName.includes('shuttle')) {
+    return 120;
+  }
+  const mode = (route.mode || '').toUpperCase();
+  if (mode === 'SUBWAY' || mode === 'RAIL') return 0;
+  if (mode === 'TRAM') return 2;
+  if (mode === 'FERRY') return 15;
+  if (mode === 'BUS') return 45;
+  return 35;
+}
+
+/**
+ * Pick a route near the user using OTP's stopsByRadius (walk distance in meters along OSM paths).
+ * @param {number} userLat
+ * @param {number} userLon
+ * @returns {Promise<{ route_id: string, walkDistanceM: number, stopName: string, stopGtfsId: string, otpRouteGtfsId: string }|null>}
+ */
+async function resolveFindMeRouteViaOtp(userLat, userLon) {
+  if (typeof window !== 'undefined' && window.OTP_FINDME_USE_STOPS_RADIUS === false) {
+    return null;
+  }
+  const lat = Number(userLat);
+  const lon = Number(userLon);
+  if (!isFinite(lat) || !isFinite(lon)) {
+    return null;
+  }
+
+  const endpoint = getOtpGtfsGraphqlEndpoint();
+  const radius =
+    typeof window !== 'undefined' && window.OTP_FINDME_RADIUS_M != null
+      ? Math.max(50, Math.round(Number(window.OTP_FINDME_RADIUS_M)))
+      : 700;
+  const firstN =
+    typeof window !== 'undefined' && window.OTP_FINDME_STOPS_FIRST != null
+      ? Math.min(80, Math.max(5, Math.round(Number(window.OTP_FINDME_STOPS_FIRST))))
+      : 40;
+
+  const query = `
+    query FindMeStops($lat: Float!, $lon: Float!, $r: Int!, $n: Int!) {
+      stopsByRadius(lat: $lat, lon: $lon, radius: $r, first: $n) {
+        edges {
+          node {
+            distance
+            stop {
+              name
+              gtfsId
+              routes { gtfsId shortName longName mode }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  logOtpDebug('FINDME_STOPS_RADIUS', { endpoint, radius, firstN, lat, lon });
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query,
+      variables: { lat, lon, r: radius, n: firstN }
+    })
+  });
+
+  const json = await res.json();
+  if (json.errors && json.errors.length) {
+    console.warn('[Find Me] stopsByRadius GraphQL errors:', json.errors);
+    return null;
+  }
+
+  const edges = json.data && json.data.stopsByRadius && json.data.stopsByRadius.edges;
+  if (!edges || !edges.length) {
+    logOtpDebug('FINDME_EMPTY', { edges: 0 });
+    return null;
+  }
+
+  let bestScore = Infinity;
+  /** @type {{ walkM: number, stopName: string, stopGtfsId: string, route: object, route_id: string }|null} */
+  let best = null;
+
+  for (let i = 0; i < edges.length; i++) {
+    const node = edges[i] && edges[i].node;
+    if (!node || node.distance == null || !node.stop) continue;
+    const walkM = Number(node.distance);
+    if (!isFinite(walkM)) continue;
+    const routes = node.stop.routes;
+    if (!routes || !routes.length) continue;
+
+    for (let j = 0; j < routes.length; j++) {
+      const r = routes[j];
+      const route_id = otpGtfsRouteIdFromGtfsId(r.gtfsId);
+      if (!route_id) continue;
+      const tier = findMeOtpRouteTier(r);
+      const score = walkM + tier;
+      if (score < bestScore) {
+        bestScore = score;
+        best = {
+          walkM,
+          stopName: node.stop.name || '',
+          stopGtfsId: node.stop.gtfsId || '',
+          route: r,
+          route_id
+        };
+      }
+    }
+  }
+
+  if (!best) {
+    logOtpDebug('FINDME_NO_ROUTES', { edges: edges.length });
+    return null;
+  }
+
+  logOtpDebug('FINDME_PICK', {
+    route_id: best.route_id,
+    walkM: best.walkM,
+    stop: best.stopName,
+    mode: best.route.mode
+  });
+
+  return {
+    route_id: best.route_id,
+    walkDistanceM: best.walkM,
+    stopName: best.stopName,
+    stopGtfsId: best.stopGtfsId,
+    otpRouteGtfsId: best.route.gtfsId || ''
+  };
+}
+
+if (typeof window !== 'undefined') {
+  window.resolveFindMeRouteViaOtp = resolveFindMeRouteViaOtp;
+  if (typeof window.OTP_FINDME_USE_STOPS_RADIUS === 'undefined') {
+    window.OTP_FINDME_USE_STOPS_RADIUS = true;
+  }
+}
+
