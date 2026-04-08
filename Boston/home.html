@@ -7455,19 +7455,29 @@
         branchDirections.style.cssText = 'display: flex; flex-direction: column; gap: 0.25rem;';
         
         if (branch.dir0 || branchEndpoint0) {
+          const dir0BtnWrapper = document.createElement('div');
+          dir0BtnWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
           const dir0Btn = document.createElement('button');
           dir0Btn.textContent = `➡ ${branchEndpoint0 || branch.dir0}`;
-          dir0Btn.style.cssText = `width: 100%; padding: 0.4rem; background: ${branchColor}; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;`;
+          dir0Btn.style.cssText = `flex: 1; padding: 0.4rem; background: ${branchColor}; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;`;
           dir0Btn.onclick = () => selectRailRoute(branch.routeId, 0);
-          branchDirections.appendChild(dir0Btn);
+          const star0Btn = createFavoriteStar(branch.routeId, 0, branchLabelText);
+          dir0BtnWrapper.appendChild(dir0Btn);
+          dir0BtnWrapper.appendChild(star0Btn);
+          branchDirections.appendChild(dir0BtnWrapper);
         }
         
         if (branch.dir1 || branchEndpoint1) {
+          const dir1BtnWrapper = document.createElement('div');
+          dir1BtnWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
           const dir1Btn = document.createElement('button');
           dir1Btn.textContent = `⬅ ${branchEndpoint1 || branch.dir1}`;
-          dir1Btn.style.cssText = `width: 100%; padding: 0.4rem; background: ${branchColor}; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;`;
+          dir1Btn.style.cssText = `flex: 1; padding: 0.4rem; background: ${branchColor}; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; text-align: left;`;
           dir1Btn.onclick = () => selectRailRoute(branch.routeId, 1);
-          branchDirections.appendChild(dir1Btn);
+          const star1Btn = createFavoriteStar(branch.routeId, 1, branchLabelText);
+          dir1BtnWrapper.appendChild(dir1Btn);
+          dir1BtnWrapper.appendChild(star1Btn);
+          branchDirections.appendChild(dir1BtnWrapper);
         }
         
         branchDiv.appendChild(branchDirections);
@@ -7484,19 +7494,29 @@
         
         const routeColor = getSubwayRouteColor(route.id);
         if (route.dir0 || endpoint0) {
+          const dir0BtnWrapper = document.createElement('div');
+          dir0BtnWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
           const dir0Btn = document.createElement('button');
           dir0Btn.textContent = `➡ ${endpoint0 || route.dir0}`;
-          dir0Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
+          dir0Btn.style.cssText = `flex: 1; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
           dir0Btn.onclick = () => selectRailRoute(route.id, 0);
-          mainDirectionsDiv.appendChild(dir0Btn);
+          const star0Btn = createFavoriteStar(route.id, 0, routeLabel);
+          dir0BtnWrapper.appendChild(dir0Btn);
+          dir0BtnWrapper.appendChild(star0Btn);
+          mainDirectionsDiv.appendChild(dir0BtnWrapper);
         }
         
         if (route.dir1 || endpoint1) {
+          const dir1BtnWrapper = document.createElement('div');
+          dir1BtnWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
           const dir1Btn = document.createElement('button');
           dir1Btn.textContent = `⬅ ${endpoint1 || route.dir1}`;
-          dir1Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
+          dir1Btn.style.cssText = `flex: 1; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
           dir1Btn.onclick = () => selectRailRoute(route.id, 1);
-          mainDirectionsDiv.appendChild(dir1Btn);
+          const star1Btn = createFavoriteStar(route.id, 1, routeLabel);
+          dir1BtnWrapper.appendChild(dir1Btn);
+          dir1BtnWrapper.appendChild(star1Btn);
+          mainDirectionsDiv.appendChild(dir1BtnWrapper);
         }
         
         branchesDiv.appendChild(mainDirectionsDiv);
@@ -7586,37 +7606,57 @@
       // routeColor already declared above at line 6272
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
         const dir0Terminal = routeData0.stops[routeData0.stops.length - 1].name;
+        const dir0BtnWrapper = document.createElement('div');
+        dir0BtnWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
         const dir0Btn = document.createElement('button');
         dir0Btn.textContent = `➡ ${dir0Terminal}`;
-        dir0Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
+        dir0Btn.style.cssText = `flex: 1; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
         dir0Btn.onclick = () => selectRailRoute(route.id, 0);
-        directionsDiv.appendChild(dir0Btn);
+        const star0Btn = createFavoriteStar(route.id, 0, routeLabel);
+        dir0BtnWrapper.appendChild(dir0Btn);
+        dir0BtnWrapper.appendChild(star0Btn);
+        directionsDiv.appendChild(dir0BtnWrapper);
       }
       
       if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
         const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
+        const dir1BtnWrapper = document.createElement('div');
+        dir1BtnWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
         const dir1Btn = document.createElement('button');
         dir1Btn.textContent = `⬅ ${dir1Terminal}`;
-        dir1Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
+        dir1Btn.style.cssText = `flex: 1; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
         dir1Btn.onclick = () => selectRailRoute(route.id, 1);
-        directionsDiv.appendChild(dir1Btn);
+        const star1Btn = createFavoriteStar(route.id, 1, routeLabel);
+        dir1BtnWrapper.appendChild(dir1Btn);
+        dir1BtnWrapper.appendChild(star1Btn);
+        directionsDiv.appendChild(dir1BtnWrapper);
       }
 
       // Commuter rail / edge cases: if JSON had no usable stops, still offer directions from the routes index
       if (directionsDiv.children.length === 0 && (route.dir0 || route.dir1)) {
         if (route.dir0) {
+          const dir0BtnWrapper = document.createElement('div');
+          dir0BtnWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
           const dir0Btn = document.createElement('button');
           dir0Btn.textContent = `➡ ${route.dir0}`;
-          dir0Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
+          dir0Btn.style.cssText = `flex: 1; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
           dir0Btn.onclick = () => selectRailRoute(route.id, 0);
-          directionsDiv.appendChild(dir0Btn);
+          const star0Btn = createFavoriteStar(route.id, 0, routeLabel);
+          dir0BtnWrapper.appendChild(dir0Btn);
+          dir0BtnWrapper.appendChild(star0Btn);
+          directionsDiv.appendChild(dir0BtnWrapper);
         }
         if (route.dir1) {
+          const dir1BtnWrapper = document.createElement('div');
+          dir1BtnWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;';
           const dir1Btn = document.createElement('button');
           dir1Btn.textContent = `⬅ ${route.dir1}`;
-          dir1Btn.style.cssText = `width: 100%; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
+          dir1Btn.style.cssText = `flex: 1; padding: 0.5rem; background: ${routeColor}; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;`;
           dir1Btn.onclick = () => selectRailRoute(route.id, 1);
-          directionsDiv.appendChild(dir1Btn);
+          const star1Btn = createFavoriteStar(route.id, 1, routeLabel);
+          dir1BtnWrapper.appendChild(dir1Btn);
+          dir1BtnWrapper.appendChild(star1Btn);
+          directionsDiv.appendChild(dir1BtnWrapper);
         }
       }
       
