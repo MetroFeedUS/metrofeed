@@ -1105,9 +1105,33 @@
       font-weight: bold;
     }
 
-    /* Fix Find Me button text to stay on one line */
-    #findMeBtn {
+    /* Find Me: default off (gray); active on = orange + pulse */
+    #findMeBtn.otp-quick-btn--findme {
       white-space: nowrap !important;
+      background-color: #b3e5fc !important;
+      color: #01579b !important;
+      border: 1px solid #81d4fa !important;
+      cursor: pointer;
+      transition: color 0.25s ease, transform 0.25s ease, background-color 0.25s ease;
+    }
+    #findMeBtn.otp-quick-btn--findme.find-me-active {
+      background-color: #ff8c00 !important;
+      color: #1a1a1a !important;
+      border: 2px solid #e65100 !important;
+      font-weight: 600;
+      animation: findMeBtnPulse 1.5s ease-in-out infinite;
+    }
+    #findMeBtn.otp-quick-btn--findme.find-me-active:disabled {
+      cursor: wait;
+      opacity: 0.95;
+    }
+    @keyframes findMeBtnPulse {
+      0%, 100% {
+        box-shadow: 0 0 6px rgba(255, 140, 0, 0.45);
+      }
+      50% {
+        box-shadow: 0 0 14px rgba(255, 140, 0, 0.9), 0 0 24px rgba(255, 152, 0, 0.45);
+      }
     }
 
   </style>
@@ -1231,7 +1255,7 @@
   <div class="otp-btn-row">
     <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go">Go</button>
     <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear">Clear</button>
-    <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" style="background-color: #666; color: #fff; border: none; cursor: pointer; transition: all 0.3s ease;" title="Find my location and closest route" data-translate="find_me">Find Me</button>
+    <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" title="Find my location and closest route" data-translate="find_me">Find Me</button>
   </div>
 </div>
 
@@ -3027,7 +3051,11 @@
         userLocationMarker.remove();
         userLocationMarker = null;
       }
-      
+      if (userArrow) {
+        userArrow.remove();
+        userArrow = null;
+      }
+
       // Remove closest route polyline
       if (userLocationPolyline) {
         if (map.getLayer('userLocationRoute')) {
@@ -3468,12 +3496,8 @@
 
     const findMeBtnEarly = document.getElementById('findMeBtn');
     const resetFindMeBtnFail = () => {
-      if (findMeBtnEarly) {
-        findMeBtnEarly.disabled = false;
-        findMeBtnEarly.textContent = 'Find Me OFF';
-        findMeBtnEarly.style.backgroundColor = '#666';
-      }
       findMeActive = false;
+      updateFindMeButtonState();
     };
 
     if (CITY_CONFIG.useLazyLoading && backgroundLocationData && !backgroundRouteData) {
@@ -3576,7 +3600,11 @@
           closestRouteFound = false;
           backgroundRouteData = null;
           closestRoute = null;
-          
+          if (window.closestRouteInterval) {
+            clearInterval(window.closestRouteInterval);
+            window.closestRouteInterval = null;
+          }
+
           // Hide route and stops
           if (userLocationPolyline && map.getLayer(userLocationPolyline)) {
             map.removeLayer(userLocationPolyline);
@@ -3586,31 +3614,22 @@
           }
           userLocationStopMarkers.forEach(marker => marker.remove());
           userLocationStopMarkers = [];
-          
+
           // Remove location markers
           if (userLocationMarker) { userLocationMarker.remove(); userLocationMarker = null; }
           if (userArrow) { userArrow.remove(); userArrow = null; }
-          
-                  // Update button to OFF state
-        findMeBtn.textContent = 'Find Me OFF';
-        findMeBtn.style.backgroundColor = '#666';
-        findMeBtn.style.color = '#fff';
-        findMeBtn.style.boxShadow = 'none';
-        findMeBtn.style.border = 'none';
-        findMeBtn.style.whiteSpace = 'nowrap';
-          
+
+          userLocationPolyline = null;
+          updateFindMeButtonState();
+
           console.log('[Find Me] Deactivated');
           return;
         }
-        
+
         // Turn on Find Me
         findMeActive = true;
-
-        // Show loading state
         console.log('[Find Me] Setting loading state...');
-        findMeBtn.disabled = true;
-        findMeBtn.textContent = 'Looking...';
-        findMeBtn.style.backgroundColor = '#888';
+        updateFindMeButtonState({ loading: true });
         
         // Create loading overlay
         const loadingOverlay = document.createElement('div');
@@ -4500,27 +4519,36 @@
     return vehicles;
   }
   
-  // Function to update the find me button state
-  function updateFindMeButtonState() {
+  /**
+   * Find Me button: default gray "Find Me"; active = orange + pulse (same label).
+   * @param {{ loading?: boolean }} [opts] — loading: locating / resolving route
+   */
+  function updateFindMeButtonState(opts) {
     const findMeBtn = document.getElementById('findMeBtn');
-    if (findMeBtn) {
-      // Keep button blue at all times
-      findMeBtn.style.backgroundColor = '#1E90FF';
-      findMeBtn.style.color = '#000';
-      findMeBtn.style.boxShadow = '0 0 10px rgba(77, 208, 225, 0.6)';
-      findMeBtn.style.border = '2px solid #1E90FF';
-      
-      if (findMeActive) {
-        // Find Me is active - show ON state
-        findMeBtn.textContent = 'Find Me ON';
-        findMeBtn.title = 'Click to turn off location tracking';
-        findMeBtn.style.whiteSpace = 'nowrap';
-      } else {
-        // Find Me is inactive - show OFF state
-        findMeBtn.textContent = 'Find Me OFF';
-        findMeBtn.title = 'Find my location and closest route';
-        findMeBtn.style.whiteSpace = 'nowrap';
-      }
+    if (!findMeBtn) return;
+
+    const loading = !!(opts && opts.loading);
+    findMeBtn.classList.toggle('find-me-active', findMeActive || loading);
+
+    // Let CSS classes control colors; clear legacy inline overrides
+    findMeBtn.style.backgroundColor = '';
+    findMeBtn.style.color = '';
+    findMeBtn.style.boxShadow = '';
+    findMeBtn.style.border = '';
+    findMeBtn.style.whiteSpace = 'nowrap';
+
+    if (loading) {
+      findMeBtn.textContent = 'Looking...';
+      findMeBtn.disabled = true;
+      findMeBtn.title = 'Locating you…';
+    } else if (findMeActive) {
+      findMeBtn.textContent = 'Find Me';
+      findMeBtn.disabled = false;
+      findMeBtn.title = 'Click to stop showing your location and nearby route';
+    } else {
+      findMeBtn.textContent = 'Find Me';
+      findMeBtn.disabled = false;
+      findMeBtn.title = 'Find my location and closest route';
     }
   }
   
