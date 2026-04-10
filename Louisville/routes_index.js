@@ -110,12 +110,6 @@ const ROUTES = {
             "dir1": "Inbound"
       },
       {
-            "id": "51",
-            "label": "51 \u2013 Old Louisville Shopper",
-            "dir0": "Outbound",
-            "dir1": "Inbound"
-      },
-      {
             "id": "71",
             "label": "71 \u2013 Jeffersonville-Louisville-IUS",
             "dir0": "Outbound",
