@@ -6995,6 +6995,21 @@
   }
 
   /**
+   * Bus modal title: prefer first/last stop names from lazy-loaded JSON; if missing, use routes_index metadata (SORTA labels).
+   */
+  function busRouteModalSummaryLine(route, terminal0, terminal1) {
+    if (terminal0 !== 'Unknown' || terminal1 !== 'Unknown') {
+      return `${terminal0} to ${terminal1}`;
+    }
+    const label = route && route.label != null ? String(route.label).trim() : '';
+    if (label) return label;
+    const d0 = route && route.dir0 != null ? String(route.dir0).trim() : '';
+    const d1 = route && route.dir1 != null ? String(route.dir1).trim() : '';
+    if (d0 || d1) return `${d0 || '—'} → ${d1 || '—'}`;
+    return route && route.id != null ? String(route.id) : '?';
+  }
+
+  /**
    * Show bus routes for selected category
    */
   async function showBusCategory(category) {
@@ -7047,7 +7062,7 @@
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
       
-      const nameLine = `${terminal0} to ${terminal1}`;
+      const nameLine = busRouteModalSummaryLine(route, terminal0, terminal1);
       const { routeHeader, chevron } = buildBusRouteModalRowHeader(route, nameLine);
       
       const directionsDiv = document.createElement('div');
@@ -7692,8 +7707,15 @@
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = `background: #1e1e1e; border: 2px solid ${routeColor}; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;`;
       
-      // Format: "Route Name terminal0 to terminal1" (showing the two terminal stations)
-      const routeLabel = `${routeName} ${terminal0} to ${terminal1}`;
+      // Format: "Route Name terminal0 to terminal1", or index label when no lazy JSON stops (Cincy streetcar / rail list)
+      let routeLabel;
+      if (terminal0 !== 'Unknown' || terminal1 !== 'Unknown') {
+        routeLabel = `${routeName} ${terminal0} to ${terminal1}`;
+      } else if (route.label && String(route.label).trim()) {
+        routeLabel = String(route.label).trim();
+      } else {
+        routeLabel = routeName;
+      }
       
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = `font-weight: bold; color: ${routeColor}; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;`;
