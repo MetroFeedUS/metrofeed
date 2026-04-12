@@ -174,6 +174,7 @@ MetroFeed uses your location and third-party services for login and payment. We 
   <div class="city-select" style="display:none;" id="manualSelect">
     <label for="city">Choose your city:</label>
     <select id="city">
+      <option value="Cincinnati/home.html">Cincinnati, OH / NKY</option>
       <option value="Boston/home.html">Boston, MA</option>
     </select>
     <button onclick="manualRedirect()">Go</button>
@@ -252,6 +253,11 @@ MetroFeed uses your location and third-party services for login and payment. We 
       return lat >= 42.2 && lat <= 42.5 && lon >= -71.3 && lon <= -70.8;
     }
 
+    /** Rough Greater Cincinnati + NKY box (manual picker still lists all cities). */
+    function inGreaterCincinnatiBounds(lat, lon) {
+      return lat >= 38.85 && lat <= 39.45 && lon >= -85.1 && lon <= -84.2;
+    }
+
     function showMainContent(message, showDropdown) {
       document.getElementById("loader").style.display = "none";
       document.getElementById("status").innerText = message;
@@ -278,7 +284,9 @@ MetroFeed uses your location and third-party services for login and payment. We 
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
 
-            if (inBostonBounds(lat, lon)) {
+            if (inGreaterCincinnatiBounds(lat, lon)) {
+              window.location.href = "Cincinnati/home.html";
+            } else if (inBostonBounds(lat, lon)) {
               window.location.href = "Boston/home.html";
             } else {
               showMainContent(" 😭 We don't serve your location... yet 😎.", true);
