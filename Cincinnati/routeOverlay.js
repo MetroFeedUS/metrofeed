@@ -1250,6 +1250,47 @@ function displayETAs(predictions) {
  * @returns {{ remove: function }} overlay handle
  */
 /**
+ * Readable text on top of a route line / chip color (hex #rrggbb or #rgb).
+ */
+function pickContrastingTextColor(hex) {
+  if (!hex || typeof hex !== "string") return "#ffffff";
+  let h = hex.trim();
+  if (h.startsWith("#")) h = h.slice(1);
+  if (h.length === 3) {
+    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  if (h.length !== 6) return "#ffffff";
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  if ([r, g, b].some((x) => Number.isNaN(x))) return "#ffffff";
+  const L = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return L > 0.55 ? "#0d0d0d" : "#ffffff";
+}
+
+/**
+ * Collapsed floating chip: Metro/TANK + number for Cincinnati ids; else route number / rail short name.
+ * @returns {{ label: string, isAgencyStyle: boolean }}
+ */
+function buildRouteFloatingChipLabel(routeId) {
+  const rid = String(routeId);
+  if (rid.startsWith("sorta_")) {
+    return { label: "Metro " + rid.slice(6), isAgencyStyle: true };
+  }
+  if (rid.startsWith("tank_")) {
+    return { label: "TANK " + rid.slice(5), isAgencyStyle: true };
+  }
+  let routeNumber = rid;
+  if (routeNumber.includes("-") && (routeNumber.startsWith("Red-") || routeNumber.startsWith("Green-"))) {
+    routeNumber = routeNumber.split("-")[0];
+  } else {
+    const numericMatch = routeNumber.match(/\d+/);
+    if (numericMatch) routeNumber = numericMatch[0];
+  }
+  return { label: routeNumber, isAgencyStyle: false };
+}
+
+/**
  * Get route color based on route name
  * Returns a consistent color for routes with the same name
  * @param {string} routeName - Route name (route_title, route_label, route_name, etc.)
@@ -1877,8 +1918,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const routeInfoPanel = document.createElement("div");
       routeInfoPanel.id = panelId;
       routeInfoPanel.className = "route-info-panel";
+
+      const chipSpec = buildRouteFloatingChipLabel(routeId);
+      const chipFg = pickContrastingTextColor(routeColor);
+      const isPill = chipSpec.isAgencyStyle;
+      const circleSize = 40; // fixed diameter for non-agency collapsed chip
       
-      // Start collapsed as a circle in the corner
+      // Start collapsed as a circle (or Metro/TANK pill) in the corner
       // Find the next available position (highest existing index + 1)
       const allPanels = Array.from(routeOverlayPanelHost(map).querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
       const collapsedPanels = allPanels.filter(panel => 
@@ -1895,16 +1941,42 @@ function attachRouteToMap(map, routeId, directionId, options) {
       });
       
       const panelIndex = maxIndex + 1; // Next available position
-      const circleSize = 40; // Circle size
-      const circleSpacing = 10; // Space between circles
+      const stackGap = 50; // vertical slot per chip (40px circle + margin)
       const topOffset = 250; // Start from top to avoid overlapping with other UI elements
-      const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
+      const verticalPosition = topOffset + (panelIndex * stackGap);
       
       // Set initial collapsed state (circle in corner)
       routeInfoPanel.setAttribute('data-collapsed', 'true');
       routeInfoPanel.setAttribute('data-collapse-index', panelIndex.toString());
       
-      routeInfoPanel.style.cssText = `
+      routeInfoPanel.style.cssText = isPill
+        ? `
+        position:absolute;
+        right:10px;
+        left:auto;
+        top:${verticalPosition}px;
+        width:max-content;
+        max-width:132px;
+        min-width:52px;
+        height:auto;
+        min-height:38px;
+        max-height:none;
+        padding:6px 10px;
+        box-sizing:border-box;
+        border-radius:14px;
+        border:3px solid #fff;
+        background:${routeColor};
+        color:${chipFg};
+        z-index:1100;
+        box-shadow:0 4px 12px rgba(0,0,0,0.5);
+        transition:all 0.3s ease;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      `
+        : `
         position:absolute;
         left:calc(100% - ${circleSize + 10}px);
         top:${verticalPosition}px;
@@ -1917,8 +1989,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
         padding:0;
         border-radius:50%;
         border:3px solid #fff;
-        background:#FF6B35;
-        color:#fff;
+        background:${routeColor};
+        color:${chipFg};
         z-index:1100;
         box-shadow:0 4px 12px rgba(0,0,0,0.5);
         transition:all 0.3s ease;
@@ -1969,14 +2041,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
         e.stopPropagation();
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
-          // Collapse to right side - circle with route number
-          // Find the next available position (highest existing index + 1)
+          // Collapse to right side — chip matches route line color (see routeColor)
           const allPanels = Array.from(routeOverlayPanelHost(map).querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
           const collapsedPanels = allPanels.filter(panel => 
             panel.getAttribute('data-collapsed') === 'true' && panel !== routeInfoPanel
           );
           
-          // Find the highest index from stored collapse-index attributes
           let maxIndex = -1;
           collapsedPanels.forEach(panel => {
             const storedIndex = panel.getAttribute('data-collapse-index');
@@ -1985,45 +2055,62 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
           });
           
-          const panelIndex = maxIndex + 1; // Next available position
-          const circleSize = 40; // 20% smaller than 50px
-          const circleSpacing = 10; // Space between circles
-          const topOffset = 250; // Start from top to avoid overlapping with other UI elements
-          const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
+          const panelIndex = maxIndex + 1;
+          const stackGap = 50;
+          const topOffset = 250;
+          const verticalPosition = topOffset + (panelIndex * stackGap);
           
-          // Mark this panel as collapsed and store its position index
           routeInfoPanel.setAttribute('data-collapsed', 'true');
           routeInfoPanel.setAttribute('data-collapse-index', panelIndex.toString());
           
-          routeInfoPanel.style.left = `calc(100% - ${circleSize + 10}px)`; // Position from right edge with margin
-          routeInfoPanel.style.top = `${verticalPosition}px`;
-          routeInfoPanel.style.transform = "none"; // Remove centering transform
-          routeInfoPanel.style.width = `${circleSize}px`;
-          routeInfoPanel.style.height = `${circleSize}px`;
-          routeInfoPanel.style.minWidth = `${circleSize}px`;
-          routeInfoPanel.style.maxWidth = `${circleSize}px`;
-          routeInfoPanel.style.minHeight = `${circleSize}px`;
-          routeInfoPanel.style.maxHeight = `${circleSize}px`;
-          routeInfoPanel.style.padding = "0";
-          routeInfoPanel.style.borderRadius = "50%"; // Perfect circle
-          routeInfoPanel.style.border = "3px solid #fff"; // White border
-          routeInfoPanel.style.background = "#FF6B35"; // Orange background
+          if (isPill) {
+            routeInfoPanel.style.right = "10px";
+            routeInfoPanel.style.left = "auto";
+            routeInfoPanel.style.top = `${verticalPosition}px`;
+            routeInfoPanel.style.transform = "none";
+            routeInfoPanel.style.width = "max-content";
+            routeInfoPanel.style.maxWidth = "132px";
+            routeInfoPanel.style.minWidth = "52px";
+            routeInfoPanel.style.height = "auto";
+            routeInfoPanel.style.minHeight = "38px";
+            routeInfoPanel.style.maxHeight = "none";
+            routeInfoPanel.style.padding = "6px 10px";
+            routeInfoPanel.style.borderRadius = "14px";
+          } else {
+            routeInfoPanel.style.left = `calc(100% - ${circleSize + 10}px)`;
+            routeInfoPanel.style.right = "auto";
+            routeInfoPanel.style.top = `${verticalPosition}px`;
+            routeInfoPanel.style.transform = "none";
+            routeInfoPanel.style.width = `${circleSize}px`;
+            routeInfoPanel.style.height = `${circleSize}px`;
+            routeInfoPanel.style.minWidth = `${circleSize}px`;
+            routeInfoPanel.style.maxWidth = `${circleSize}px`;
+            routeInfoPanel.style.minHeight = `${circleSize}px`;
+            routeInfoPanel.style.maxHeight = `${circleSize}px`;
+            routeInfoPanel.style.padding = "0";
+            routeInfoPanel.style.borderRadius = "50%";
+          }
+          routeInfoPanel.style.border = "3px solid #fff";
+          routeInfoPanel.style.background = routeColor;
+          routeInfoPanel.style.color = chipFg;
           routeInfoPanel.style.display = "flex";
           routeInfoPanel.style.alignItems = "center";
           routeInfoPanel.style.justifyContent = "center";
-          routeInfoPanel.style.cursor = "pointer"; // Make it clear it's clickable
+          routeInfoPanel.style.cursor = "pointer";
           routeInfoPanel.style.zIndex = "1100";
-          // Hide collapse button and close button
           collapseBtn.style.display = "none";
           closeBtn.style.display = "none";
           routeInfoPanel.querySelector(".route-info-content").style.display = "none";
-          // Show collapsed route number (circle)
           const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
           if (collapsedName) {
             collapsedName.style.display = "block";
-            collapsedName.style.color = "#fff"; // White text
+            collapsedName.style.color = chipFg;
             collapsedName.style.fontWeight = "bold";
-            collapsedName.style.fontSize = "1rem"; // Slightly smaller for 40px circle
+            collapsedName.style.fontSize = isPill ? "0.68rem" : "1rem";
+            collapsedName.style.lineHeight = isPill ? "1.15" : "1";
+            collapsedName.style.whiteSpace = isPill ? "normal" : "nowrap";
+            collapsedName.style.wordBreak = isPill ? "break-word" : "normal";
+            collapsedName.style.textAlign = "center";
           }
         } else {
           // Expand back to center - restore original panel styles
@@ -2166,34 +2253,21 @@ function attachRouteToMap(map, routeId, directionId, options) {
         };
       }
       
-      // Collapsed route number (circle display)
+      // Collapsed chip label (Metro 29 / TANK 8 / route number) — chipSpec built above
       const collapsedName = document.createElement("div");
       collapsedName.className = "route-name-collapsed";
-      // Use the parent route ID (routeId parameter) - this is the actual route number
-      // For bus routes: routeId is like "15", "4", "12", etc.
-      // For rail routes: routeId is like "Red", "Orange", "Red-Ashmont", etc.
-      let routeNumber = String(routeId);
-      
-      // Handle branch routes: "Red-Ashmont" -> "Red", "Green-D" -> "Green"
-      if (routeNumber.includes('-') && (routeNumber.startsWith('Red-') || routeNumber.startsWith('Green-'))) {
-        routeNumber = routeNumber.split('-')[0]; // "Red" or "Green"
-      } else {
-        // Extract just the numeric part if routeId has non-numeric characters
-        const numericMatch = routeNumber.match(/\d+/);
-        if (numericMatch) {
-          routeNumber = numericMatch[0];
-        }
-      }
-      collapsedName.innerHTML = routeNumber;
+      collapsedName.textContent = chipSpec.label;
       collapsedName.style.cssText = `
         display:none;
         position:relative;
-        color:#fff;
+        color:${chipFg};
         font-weight:bold;
-        font-size:1rem;
+        font-size:${isPill ? "0.68rem" : "1rem"};
+        line-height:${isPill ? "1.15" : "1"};
+        white-space:${isPill ? "normal" : "nowrap"};
+        word-break:${isPill ? "break-word" : "normal"};
         pointer-events:none;
         text-align:center;
-        line-height:1;
         margin:0;
         padding:0;
       `;
@@ -2208,10 +2282,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
       contentDiv.style.display = "none";
       collapseBtn.style.display = "none";
       collapsedName.style.display = "block";
-      collapsedName.style.color = "#fff";
+      collapsedName.style.color = chipFg;
       collapsedName.style.fontWeight = "bold";
-      collapsedName.style.fontSize = "1rem";
-      collapsedName.style.pointerEvents = "none"; // Don't block clicks on the circle
+      collapsedName.style.fontSize = isPill ? "0.68rem" : "1rem";
+      collapsedName.style.lineHeight = isPill ? "1.15" : "1";
+      collapsedName.style.pointerEvents = "none"; // Don't block clicks on the chip
 
       routeOverlayPanelHost(map).appendChild(routeInfoPanel);
       overlayElements.controls.push(routeInfoPanel);
