@@ -7057,6 +7057,14 @@
   
   /** Short text for the route-id badge in the bus modal (shuttles / long ids). */
   function busModalBadgeText(route) {
+    if (cityHasBusModalSystems() && route && route.id != null) {
+      const full = String(route.id).trim();
+      const u = full.lastIndexOf('_');
+      if (u >= 0) {
+        const tail = full.slice(u + 1);
+        if (tail) return tail.length > 12 ? tail.slice(0, 11) + '\u2026' : tail;
+      }
+    }
     const id = String(route && route.id != null ? route.id : "").trim() || "?";
     return id.length > 12 ? id.slice(0, 11) + "\u2026" : id;
   }
@@ -7088,18 +7096,49 @@
     return { routeHeader, chevron };
   }
 
+  /** Decode common HTML entities in GTFS strings (e.g. &amp; → &). */
+  function metrofeedDecodeHtmlEntities(str) {
+    if (str == null || str === '') return str;
+    const s = String(str);
+    if (s.indexOf('&') < 0) return s;
+    try {
+      const t = document.createElement('textarea');
+      t.innerHTML = s;
+      return t.value;
+    } catch (e) {
+      return s;
+    }
+  }
+
   /**
-   * Bus modal title: prefer first/last stop names from lazy-loaded JSON; if missing, use routes_index metadata (SORTA labels).
+   * routes_index `label` without leading [SORTA] / [TANK] tag — aligns with go-metro style names in the index.
+   */
+  function metrofeedPublicRouteListLabel(route) {
+    const label = route && route.label != null ? String(route.label).trim() : '';
+    if (!label) return '';
+    return label.replace(/^\[(?:SORTA|TANK)\]\s*/i, '').trim() || label;
+  }
+
+  /**
+   * Bus modal primary line: multi-agency cities use routes_index public names first; elsewhere prefer live JSON terminals.
    */
   function busRouteModalSummaryLine(route, terminal0, terminal1) {
-    if (terminal0 !== 'Unknown' || terminal1 !== 'Unknown') {
-      return `${terminal0} to ${terminal1}`;
+    const t0 = terminal0 !== 'Unknown' ? metrofeedDecodeHtmlEntities(terminal0) : 'Unknown';
+    const t1 = terminal1 !== 'Unknown' ? metrofeedDecodeHtmlEntities(terminal1) : 'Unknown';
+
+    if (cityHasBusModalSystems()) {
+      const pub = metrofeedPublicRouteListLabel(route);
+      if (pub) return pub;
+    }
+
+    if (t0 !== 'Unknown' || t1 !== 'Unknown') {
+      return t0 + ' to ' + t1;
     }
     const label = route && route.label != null ? String(route.label).trim() : '';
-    if (label) return label;
+    if (label) return metrofeedDecodeHtmlEntities(label);
     const d0 = route && route.dir0 != null ? String(route.dir0).trim() : '';
     const d1 = route && route.dir1 != null ? String(route.dir1).trim() : '';
-    if (d0 || d1) return `${d0 || '—'} → ${d1 || '—'}`;
+    if (d0 || d1) return (d0 || '—') + ' → ' + (d1 || '—');
     return route && route.id != null ? String(route.id) : '?';
   }
 
