@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetroFeed <span id="city-name-placeholder">City</span> Map</title>
+  <title>MetroFeed Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <!-- Tier Configuration -->
@@ -14,8 +14,10 @@
     // Easy placement code for sponsor image
     // Change this filename to update the sponsor image
     // Only loaded on Free tier
+    /** 1×1 transparent GIF: hide sponsor UI until a real asset URL is set here. */
+    var METROFEED_SPONSOR_PIXEL_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
     if (window.TIER_CONFIG && window.TIER_CONFIG.hasFeature('sponsors')) {
-      var SPONSOR_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+      var SPONSOR_IMAGE = METROFEED_SPONSOR_PIXEL_GIF;
     }
   </script>
   
@@ -438,6 +440,33 @@
       font-size: 0.82rem;
       line-height: 1.35;
       text-align: left;
+    }
+    .bus-route-modal-tabs {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 1rem 12px;
+      border-bottom: 1px solid #333;
+    }
+    .bus-route-modal-tabs.bus-route-modal-tabs--visible {
+      display: flex;
+    }
+    .bus-route-modal-tab {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #1E90FF;
+      background: #1a1a1a;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    .bus-route-modal-tab.bus-route-modal-tab--active {
+      background: #1E90FF;
+      color: #000;
+      font-weight: 600;
     }
     .bus-route-modal-chevron {
       flex-shrink: 0;
@@ -1519,8 +1548,9 @@
     
     <!-- Route List Screen -->
     <div id="busRouteListScreen" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
+      <div id="busRouteModalTabs" class="bus-route-modal-tabs" role="tablist" aria-label="Transit system"></div>
       <div style="margin-bottom: 1rem; padding: 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
-        <button onclick="showBusCategorySelection()" style="background: #1E90FF; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">← Back</button>
+        <button type="button" id="busRouteModalBackBtn" onclick="showBusCategorySelection()" style="background: #1E90FF; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">← Back</button>
         <input type="text" id="busRouteSearch" placeholder="Search routes..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
       </div>
       <div id="busRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
@@ -1674,6 +1704,10 @@
     if (pwaPlaceholder) pwaPlaceholder.textContent = cityName;
     const titlePlaceholder = document.getElementById('city-name-placeholder');
     if (titlePlaceholder) titlePlaceholder.textContent = cityName;
+    if (CITY_CONFIG.showRailRoutes === false) {
+      const railBtn = document.getElementById('dropdownRailBtn');
+      if (railBtn) railBtn.style.display = 'none';
+    }
   });
   
   // Lazy-loading: routeLoader + dynamic routes_index (MBTA-style window.routesIndex). Otherwise mastermap.js or static window.ROUTES above.
@@ -6845,6 +6879,32 @@
   let BUS_ROUTES_SHUTTLE = [];
   let RAIL_ROUTES_SUBWAY = [];
   let RAIL_ROUTES_COMMUTER = [];
+
+  /** Active tab id for cities with `CITY_CONFIG.busModalSystems` (Metro / TANK, etc.). */
+  let _busModalActiveSystemId = null;
+
+  function cityHasBusModalSystems() {
+    return Array.isArray(CITY_CONFIG.busModalSystems) && CITY_CONFIG.busModalSystems.length > 0;
+  }
+
+  function busModalTabStorageKey() {
+    try {
+      const fn = typeof getCityIdFromPath === 'function' ? getCityIdFromPath : window.getCityIdFromPath;
+      const cid = typeof fn === 'function' ? fn() : 'default';
+      return 'metrofeed_busModalTab_' + String(cid || 'default');
+    } catch (e) {
+      return 'metrofeed_busModalTab_default';
+    }
+  }
+
+  /** Numeric segment after last `_` in route id (e.g. sorta_2 → 2, tank_2501 → 2501). */
+  function busRouteNumericSortKey(routeId) {
+    const s = String(routeId);
+    const idx = s.lastIndexOf('_');
+    const tail = idx >= 0 ? s.slice(idx + 1) : s;
+    const m = tail.match(/^(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
   
   // Function to initialize all route categories from routes data
   function initializeBusRoutes() {
@@ -6864,6 +6924,23 @@
       // Legacy arrays for backward compatibility (combined)
       BUS_ROUTES = cityRoutes.busRoutes || [];
       RAIL_ROUTES = cityRoutes.railRoutes || [];
+
+      window._BUS_ROUTES_BY_SYSTEM_ID = null;
+      if (cityHasBusModalSystems()) {
+        window._BUS_ROUTES_BY_SYSTEM_ID = {};
+        CITY_CONFIG.busModalSystems.forEach(function (sys) {
+          const list = (cityRoutes.busRoutes || []).filter(function (r) {
+            return String(r.id).startsWith(sys.idPrefix);
+          });
+          list.sort(function (a, b) {
+            const na = busRouteNumericSortKey(a.id);
+            const nb = busRouteNumericSortKey(b.id);
+            if (na !== nb) return na - nb;
+            return String(a.id).localeCompare(String(b.id));
+          });
+          window._BUS_ROUTES_BY_SYSTEM_ID[sys.id] = list;
+        });
+      }
       
       console.log('[initializeBusRoutes] Loaded:', 
         BUS_ROUTES_REGULAR.length, 'bus,', 
@@ -6872,6 +6949,7 @@
         RAIL_ROUTES_COMMUTER.length, 'commuter rail');
     } catch (error) {
       console.error('[initializeBusRoutes] Error loading routes:', error);
+      window._BUS_ROUTES_BY_SYSTEM_ID = null;
       // Boston lazy-load: never apply Portland fallback or clear commuter rail — that made the rail modal look "broken"
       if (CITY_CONFIG && CITY_CONFIG.useLazyLoading) {
         console.warn('[initializeBusRoutes] Skipping Portland fallback (lazy-loading city); retry when routes index is ready.');
@@ -7026,44 +7104,23 @@
   }
 
   /**
-   * Show bus routes for selected category
+   * Fill #busRouteList from a route array (shared by Bus/Shuttle categories and multi-system tabs).
    */
-  async function showBusCategory(category) {
-    const categoryScreen = document.getElementById('busCategorySelection');
-    const listScreen = document.getElementById('busRouteListScreen');
+  async function populateBusRouteListAsync(routesToShow) {
     const routeList = document.getElementById('busRouteList');
     const searchInput = document.getElementById('busRouteSearch');
-    
-    if (!categoryScreen || !listScreen || !routeList) {
-      console.error('[showBusCategory] Modal elements not found');
+    if (!routeList) {
+      console.error('[populateBusRouteListAsync] #busRouteList not found');
       return;
     }
-    
-    // Hide category screen, show list screen
-    categoryScreen.style.display = 'none';
-    listScreen.style.display = 'flex';
-    
-    // Ensure routes index is loaded before building list (Boston lazy-loading)
-    if (CITY_CONFIG.useLazyLoading && window.routeLoader && !window.routeLoader.isRoutesIndexLoaded()) {
-      try {
-        await window.routeLoader.loadRoutesIndex();
-      } catch (e) {
-        console.warn('[showBusCategory] Routes index load failed:', e);
-      }
-    }
-    
-    initializeBusRoutes();
-    
-    // Get routes for selected category
-    const routesToShow = category === 'bus' ? BUS_ROUTES_REGULAR : BUS_ROUTES_SHUTTLE;
-    
+
     routeList.innerHTML = '<div style="color: #1E90FF; padding: 1rem; text-align: center;">Loading routes...</div>';
     const routePromises = routesToShow.map(async (route) => {
       const [routeData0, routeData1] = await Promise.all([
         getRouteData(route.id, 0).catch(() => null),
         getRouteData(route.id, 1).catch(() => null)
       ]);
-      
+
       let terminal0 = 'Unknown';
       let terminal1 = 'Unknown';
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
@@ -7073,29 +7130,29 @@
         terminal0 = routeData1.stops[routeData1.stops.length - 1].name || 'Unknown';
         terminal1 = routeData1.stops[0].name || 'Unknown';
       }
-      
+
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
       routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
-      
+
       const nameLine = busRouteModalSummaryLine(route, terminal0, terminal1);
       const { routeHeader, chevron } = buildBusRouteModalRowHeader(route, nameLine);
-      
+
       const directionsDiv = document.createElement('div');
-      directionsDiv.id = `directions-${route.id}`;
+      directionsDiv.id = 'directions-' + route.id;
       directionsDiv.style.cssText = 'display: none; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(30, 144, 255, 0.3);';
       routeHeader.onclick = () => {
         const isExpanded = directionsDiv.style.display !== 'none';
         directionsDiv.style.display = isExpanded ? 'none' : 'flex';
         chevron.textContent = isExpanded ? '\u25BC' : '\u25B2';
       };
-      
+
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
         const dir0Terminal = routeData0.stops[routeData0.stops.length - 1].name;
         const dir0BtnWrapper = document.createElement('div');
         dir0BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
         const dir0Btn = document.createElement('button');
-        dir0Btn.textContent = `➡ ${dir0Terminal}`;
+        dir0Btn.textContent = '➡ ' + dir0Terminal;
         dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRoute(route.id, 0);
         const star0Btn = createFavoriteStar(route.id, 0, route.label);
@@ -7103,13 +7160,13 @@
         dir0BtnWrapper.appendChild(star0Btn);
         directionsDiv.appendChild(dir0BtnWrapper);
       }
-      
+
       if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
         const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
         const dir1BtnWrapper = document.createElement('div');
         dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
         const dir1Btn = document.createElement('button');
-        dir1Btn.textContent = `⬅ ${dir1Terminal}`;
+        dir1Btn.textContent = '⬅ ' + dir1Terminal;
         dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir1Btn.onclick = () => selectRoute(route.id, 1);
         const star1Btn = createFavoriteStar(route.id, 1, route.label);
@@ -7117,12 +7174,12 @@
         dir1BtnWrapper.appendChild(star1Btn);
         directionsDiv.appendChild(dir1BtnWrapper);
       }
-      
+
       routeDiv.appendChild(routeHeader);
       routeDiv.appendChild(directionsDiv);
       return routeDiv;
     });
-    
+
     const routeResults = await Promise.allSettled(routePromises);
     routeList.innerHTML = '';
     routeResults.forEach((result, index) => {
@@ -7130,22 +7187,139 @@
         routeList.appendChild(result.value);
       } else {
         const route = routesToShow[index];
-        console.warn(`[showBusCategory] Failed to load route ${route.id}:`, result.reason);
+        console.warn('[populateBusRouteListAsync] Failed to load route ' + route.id + ':', result.reason);
       }
     });
-    
-    // Setup search
+
     if (searchInput) {
       searchInput.value = '';
-      searchInput.oninput = function() {
+      searchInput.oninput = function () {
         const filter = this.value.toLowerCase();
         const entries = routeList.querySelectorAll('.route-entry-modal');
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           const text = entry.textContent.toLowerCase();
           entry.style.display = text.includes(filter) ? '' : 'none';
         });
       };
     }
+  }
+
+  /**
+   * Cincinnati-style modal: skip Bus/Shuttle categories; Metro / TANK tabs + numeric-sorted lists.
+   */
+  async function showBusMultiSystemModalView(preferredSystemId) {
+    const systems = CITY_CONFIG.busModalSystems;
+    const categoryScreen = document.getElementById('busCategorySelection');
+    const listScreen = document.getElementById('busRouteListScreen');
+    const tabsEl = document.getElementById('busRouteModalTabs');
+    const backBtn = document.getElementById('busRouteModalBackBtn');
+    if (!systems || !listScreen || !tabsEl) return;
+
+    if (categoryScreen) categoryScreen.style.display = 'none';
+    listScreen.style.display = 'flex';
+    tabsEl.classList.add('bus-route-modal-tabs--visible');
+    tabsEl.innerHTML = '';
+    if (backBtn) backBtn.style.display = 'none';
+
+    if (CITY_CONFIG.useLazyLoading && window.routeLoader && !window.routeLoader.isRoutesIndexLoaded()) {
+      try {
+        await window.routeLoader.loadRoutesIndex();
+      } catch (e) {
+        console.warn('[showBusMultiSystemModalView] Routes index load failed:', e);
+      }
+    }
+
+    initializeBusRoutes();
+
+    let tabId = preferredSystemId;
+    if (!tabId) {
+      try {
+        tabId = sessionStorage.getItem(busModalTabStorageKey());
+      } catch (e) {}
+    }
+    if (!tabId || !systems.some((s) => s.id === tabId)) {
+      tabId = systems[0].id;
+    }
+    _busModalActiveSystemId = tabId;
+    try {
+      sessionStorage.setItem(busModalTabStorageKey(), tabId);
+    } catch (e) {}
+
+    systems.forEach((sys) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'bus-route-modal-tab' + (sys.id === tabId ? ' bus-route-modal-tab--active' : '');
+      btn.setAttribute('data-system-id', sys.id);
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', sys.id === tabId ? 'true' : 'false');
+      btn.textContent = sys.label;
+      btn.onclick = () => {
+        _busModalActiveSystemId = sys.id;
+        try {
+          sessionStorage.setItem(busModalTabStorageKey(), sys.id);
+        } catch (e) {}
+        tabsEl.querySelectorAll('.bus-route-modal-tab').forEach((b) => {
+          const sid = b.getAttribute('data-system-id');
+          const active = sid === sys.id;
+          b.classList.toggle('bus-route-modal-tab--active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        const routes = (window._BUS_ROUTES_BY_SYSTEM_ID && window._BUS_ROUTES_BY_SYSTEM_ID[sys.id]) || [];
+        populateBusRouteListAsync(routes);
+      };
+      tabsEl.appendChild(btn);
+    });
+
+    const routes = (window._BUS_ROUTES_BY_SYSTEM_ID && window._BUS_ROUTES_BY_SYSTEM_ID[tabId]) || [];
+    await populateBusRouteListAsync(routes);
+  }
+
+  function refreshBusRoutesModalAfterFavoriteChange() {
+    const modal = document.getElementById('busRoutesModal');
+    if (!modal || modal.style.display !== 'flex') return;
+    if (cityHasBusModalSystems()) {
+      showBusMultiSystemModalView(_busModalActiveSystemId);
+    } else {
+      showBusRoutesModal();
+    }
+  }
+
+  /**
+   * Show bus routes for selected category
+   */
+  async function showBusCategory(category) {
+    const categoryScreen = document.getElementById('busCategorySelection');
+    const listScreen = document.getElementById('busRouteListScreen');
+    const routeList = document.getElementById('busRouteList');
+    const tabsEl = document.getElementById('busRouteModalTabs');
+    const backBtn = document.getElementById('busRouteModalBackBtn');
+
+    if (!categoryScreen || !listScreen || !routeList) {
+      console.error('[showBusCategory] Modal elements not found');
+      return;
+    }
+
+    // Hide category screen, show list screen
+    categoryScreen.style.display = 'none';
+    listScreen.style.display = 'flex';
+    if (tabsEl) tabsEl.classList.remove('bus-route-modal-tabs--visible');
+    if (backBtn) backBtn.style.display = '';
+
+    // Ensure routes index is loaded before building list (Boston lazy-loading)
+    if (CITY_CONFIG.useLazyLoading && window.routeLoader && !window.routeLoader.isRoutesIndexLoaded()) {
+      try {
+        await window.routeLoader.loadRoutesIndex();
+      } catch (e) {
+        console.warn('[showBusCategory] Routes index load failed:', e);
+      }
+    }
+
+    initializeBusRoutes();
+
+    // Get routes for selected category
+    const routesToShow = category === 'bus' ? BUS_ROUTES_REGULAR : BUS_ROUTES_SHUTTLE;
+
+    await populateBusRouteListAsync(routesToShow);
   }
   
   /** Pending callback after favorite-route tutorial (set before showing modal). */
@@ -7216,8 +7390,11 @@
       return;
     }
     
-    // Reset to category selection screen
-    showBusCategorySelection();
+    if (cityHasBusModalSystems()) {
+      showBusMultiSystemModalView(_busModalActiveSystemId);
+    } else {
+      showBusCategorySelection();
+    }
     modal.style.display = 'flex';
   }
   
@@ -7256,7 +7433,7 @@
         ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
         : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
       // Refresh the modal to update all stars
-      showBusRoutesModal();
+      refreshBusRoutesModalAfterFavoriteChange();
     };
     
     return starBtn;

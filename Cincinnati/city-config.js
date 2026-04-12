@@ -204,7 +204,19 @@ const CITIES = {
      * Base URL for per-route JSON (see routes_index lazy `file` basenames).
      * Subdomain serves JSON from VPS; allow CORS for https://metrofeedus.com on that host.
      */
-    routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/"
+    routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/",
+
+    /** Cincinnati: buses only in UI; rail modal stays in codebase, hidden from menu. */
+    showRailRoutes: false,
+
+    /**
+     * Multi-agency bus modal: tabs at top of route list; route ids in routes_index use these prefixes.
+     * Omit this property in other cities to keep the default Bus / Shuttle category flow.
+     */
+    busModalSystems: [
+      { id: "metro", label: "Metro", idPrefix: "sorta_" },
+      { id: "tank", label: "TANK", idPrefix: "tank_" }
+    ]
   }
 };
 
