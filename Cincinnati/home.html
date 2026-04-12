@@ -68,66 +68,79 @@
       z-index: 1002;
       overflow: visible;
     }
-    /* Trip planner: search + buttons, then a thin footer (line + arrow) to collapse upward */
-    .mf-top-chrome {
-      position: absolute;
-      top: max(10px, env(safe-area-inset-top, 0px));
-      left: 60px;
-      right: 60px;
-      z-index: 1000;
+    /* Trip planner: collapse only the address rows; Go/Clear/Find Me + edge toggle stay */
+    .mf-trip-planner-fields {
+      max-height: 280px;
+      opacity: 1;
+      overflow: hidden;
+      transition: max-height 0.28s ease, opacity 0.2s ease, margin 0.2s ease;
       display: flex;
       flex-direction: column;
-      gap: 0;
-      pointer-events: auto;
+      gap: 10px;
     }
-    /* Footer strip under inputs — not a second “card” on top */
-    .mf-top-chrome-handle {
+    .search-bar.mf-trip-planner--collapsed .mf-trip-planner-fields {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+      margin: 0;
+      gap: 0;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mf-trip-planner-fields {
+        transition: none;
+      }
+    }
+    /* Full-bleed row so the toggle can sit on the viewport right edge, same line as Go/Clear */
+    .mf-trip-planner-otp-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+      margin-left: -60px;
+      margin-right: -60px;
+      width: calc(100% + 120px);
+      padding-left: 60px;
+      padding-right: max(8px, env(safe-area-inset-right, 0px));
+      box-sizing: border-box;
+    }
+    .mf-trip-planner-otp-group {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      min-width: 0;
+    }
+    .mf-trip-planner-toggle {
+      position: relative;
+      flex-shrink: 0;
+      width: 40px;
+      height: 32px;
+      padding: 0;
+      border: 2px solid #1E90FF;
+      border-radius: 8px;
+      background: rgba(13, 13, 13, 0.95);
+      color: #1E90FF;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      width: 100%;
-      min-height: 44px;
-      padding: 6px 8px 10px;
-      margin: 4px 0 0 0;
-      border: none;
-      border-top: 1px solid rgba(30, 144, 255, 0.42);
-      border-radius: 0;
-      background: rgba(8, 8, 8, 0.45);
-      color: #888;
-      cursor: pointer;
       box-sizing: border-box;
       font-family: inherit;
-      -webkit-backdrop-filter: blur(6px);
-      backdrop-filter: blur(6px);
-      transition: background 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 0 8px rgba(30, 144, 255, 0.25);
+      transition: background 0.15s ease, color 0.15s ease;
     }
-    .mf-top-chrome-handle:hover,
-    .mf-top-chrome-handle:focus-visible {
-      background: rgba(18, 18, 18, 0.72);
-      border-top-color: rgba(77, 163, 255, 0.75);
+    .mf-trip-planner-toggle:hover,
+    .mf-trip-planner-toggle:focus-visible {
+      background: rgba(30, 144, 255, 0.2);
+      color: #fff;
       outline: none;
     }
-    .mf-top-chrome.mf-top-chrome--collapsed .mf-top-chrome-handle {
-      margin-top: 0;
-      border-top-color: rgba(30, 144, 255, 0.35);
-    }
-    .mf-top-chrome-grip {
-      width: 32px;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
-    .mf-top-chrome-chevron {
-      font-size: 13px;
-      line-height: 1;
-      color: #1E90FF;
-      opacity: 0.95;
-      flex-shrink: 0;
-    }
-    .mf-top-chrome-label {
+    .mf-trip-planner-toggle-sr {
       position: absolute;
       width: 1px;
       height: 1px;
@@ -138,31 +151,14 @@
       white-space: nowrap;
       border: 0;
     }
-    .mf-top-chrome-body {
-      max-height: 560px;
-      opacity: 1;
-      overflow: hidden;
-      transition: max-height 0.3s ease, opacity 0.22s ease;
-    }
-    .mf-top-chrome.mf-top-chrome--collapsed .mf-top-chrome-body {
-      max-height: 0;
-      opacity: 0;
-      pointer-events: none;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .mf-top-chrome-body {
-        transition: none;
+    @media (max-width: 480px) {
+      .mf-trip-planner-toggle {
+        width: 44px;
+        height: 36px;
+        font-size: 15px;
       }
     }
     .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
-    .mf-top-chrome .search-bar {
-      position: relative;
-      top: auto;
-      left: auto;
-      right: auto;
-      width: 100%;
-      z-index: auto;
-    }
     .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: #0d0d0d; border: 1px solid #1E90FF; border-radius: 8px; padding: 5px 10px; }
     .search-bar input { background: transparent; border: none; color: #cccccc; padding: 5px; width: 100%; }
     .icon-placeholder { width: 20px; height: 20px; margin-right: 6px; }
@@ -1007,6 +1003,9 @@
       justify-content: center;
       margin-top: 4px;
     }
+    .mf-trip-planner-otp-row .otp-btn-row {
+      margin-top: 0;
+    }
 
     /* OTP quick buttons (desktop + mobile) */
     .otp-quick-btn {
@@ -1346,7 +1345,7 @@
   <a id="dropdownTwitterBtn" href="https://x.com/MetroFeedLouisville" target="_blank" rel="noopener noreferrer" aria-label="MetroFeed on X"><img src="twitter.svg" alt="X (Twitter)"></a>
   <div class="dropdown-divider"></div>
   <a href="#" id="dropdownBusesBtn" onclick="event.preventDefault(); showBusRoutesModal();"><img src="002-bus.svg" alt="Bus Routes"></a>
-  <a href="#" id="dropdownRailBtn" onclick="event.preventDefault(); event.stopPropagation(); console.log('[RailBtn] Clicked'); showRailRoutesModal(); return false;"><img src="001-train-station.svg" alt="Rail Routes"></a>
+  <a href="#" id="dropdownRailBtn" onclick="event.preventDefault(); event.stopPropagation(); showRailRoutesModal(); return false;"><img src="001-train-station.svg" alt="Rail Routes"></a>
   <a href="#" id="dropdownTrafficBtn" onclick="toggleTrafficFromDropdown()"><img src="003-warning.svg" alt="Traffic Overlay"></a>
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
   <a href="#" id="dropdownWeatherBtn" onclick="event.preventDefault(); showWeatherForecastModal();"><img src="005-weather-radar.svg" alt="Weather"></a>
@@ -1359,36 +1358,37 @@
   <a id="advertiseBtn" href="#" onclick="event.preventDefault(); alert('CSL is available in Premium. Visit premium.html');" style="display: none;"><img src="megaphone.svg" alt="Crowd-Sourced Location"></a>
 </div>
 
-<!-- -- TRIP PLANNER (collapsible: content first, thin footer + arrow under) -- -->
-<div id="mfTopChrome" class="mf-top-chrome" role="presentation">
-  <div id="mfTopChromeBody" class="mf-top-chrome-body" role="region" aria-label="Trip planner">
-    <div class="search-bar">
-      <div class="input-wrapper">
-        <img class="icon-placeholder" src="009-pin-1.svg" alt="Start" />
-        <input id="startInput" type="text" placeholder="Start or Current Location" data-translate-placeholder="start_location" />
-        <button id="startMapBtn" class="map-select-btn" data-tooltip="Click on map to select start location">
-          <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
-        </button>
-      </div>
-      <div class="input-wrapper">
-        <img class="icon-placeholder" src="008-pin.svg" alt="Destination" />
-        <input id="endInput" type="text" placeholder="Destination" data-translate-placeholder="destination" />
-        <button id="endMapBtn" class="map-select-btn" data-tooltip="Click on map to select destination">
-          <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
-        </button>
-      </div>
+<!-- -- SEARCH / TRIP PLANNER -- -->
+<div class="search-bar" id="mfTripPlannerSearchBar">
+  <div id="mfTripPlannerFields" class="mf-trip-planner-fields">
+    <div class="input-wrapper">
+      <img class="icon-placeholder" src="009-pin-1.svg" alt="Start" />
+      <input id="startInput" type="text" placeholder="Start or Current Location" data-translate-placeholder="start_location" />
+      <button id="startMapBtn" class="map-select-btn" data-tooltip="Click on map to select start location">
+        <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
+      </button>
+    </div>
+    <div class="input-wrapper">
+      <img class="icon-placeholder" src="008-pin.svg" alt="Destination" />
+      <input id="endInput" type="text" placeholder="Destination" data-translate-placeholder="destination" />
+      <button id="endMapBtn" class="map-select-btn" data-tooltip="Click on map to select destination">
+        <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
+      </button>
+    </div>
+  </div>
+  <div class="mf-trip-planner-otp-row" role="group" aria-label="Trip actions">
+    <div class="mf-trip-planner-otp-group">
       <div class="otp-btn-row">
         <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go">Go</button>
         <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear">Clear</button>
         <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" title="Find my location and closest route" data-translate="find_me">Find Me</button>
       </div>
     </div>
+    <button type="button" id="mfTripPlannerToggle" class="mf-trip-planner-toggle" aria-expanded="true" aria-controls="mfTripPlannerFields" title="Hide address fields">
+      <span class="mf-trip-planner-toggle-che" aria-hidden="true">▲</span>
+      <span class="mf-trip-planner-toggle-sr" id="mfTripPlannerToggleLabel">Hide address fields</span>
+    </button>
   </div>
-  <button type="button" id="mfTopChromeToggle" class="mf-top-chrome-handle" aria-expanded="true" aria-controls="mfTopChromeBody" title="Hide trip planner">
-    <span class="mf-top-chrome-grip" aria-hidden="true"></span>
-    <span class="mf-top-chrome-chevron" aria-hidden="true">▲</span>
-    <span class="mf-top-chrome-label" id="mfTopChromeToggleLabel">Hide trip planner</span>
-  </button>
 </div>
 
 <!-- -- FAVORITES -- -->
@@ -1812,26 +1812,26 @@
       if (railBtn) railBtn.style.display = 'none';
     }
 
-    (function initTopChromeCollapse() {
-      const wrap = document.getElementById('mfTopChrome');
-      const toggleBtn = document.getElementById('mfTopChromeToggle');
-      const chev = wrap && wrap.querySelector('.mf-top-chrome-chevron');
-      const lbl = document.getElementById('mfTopChromeToggleLabel');
-      if (!wrap || !toggleBtn || !chev || !lbl) return;
+    (function initTripPlannerCollapseToggle() {
+      const bar = document.getElementById('mfTripPlannerSearchBar');
+      const toggleBtn = document.getElementById('mfTripPlannerToggle');
+      const chev = toggleBtn && toggleBtn.querySelector('.mf-trip-planner-toggle-che');
+      const lbl = document.getElementById('mfTripPlannerToggleLabel');
+      if (!bar || !toggleBtn || !chev || !lbl) return;
       const storageKey = function () {
         try {
           const cid = typeof window.getCityIdFromPath === 'function' ? window.getCityIdFromPath() : 'default';
-          return 'metrofeed_topChromeCollapsed_' + String(cid || 'default');
+          return 'metrofeed_tripPlannerFieldsCollapsed_' + String(cid || 'default');
         } catch (e) {
-          return 'metrofeed_topChromeCollapsed_default';
+          return 'metrofeed_tripPlannerFieldsCollapsed_default';
         }
       };
       function applyCollapsed(collapsed) {
-        wrap.classList.toggle('mf-top-chrome--collapsed', collapsed);
+        bar.classList.toggle('mf-trip-planner--collapsed', collapsed);
         toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
         chev.textContent = collapsed ? '▼' : '▲';
-        lbl.textContent = collapsed ? 'Show trip planner' : 'Hide trip planner';
-        toggleBtn.setAttribute('title', collapsed ? 'Show trip planner' : 'Hide trip planner');
+        lbl.textContent = collapsed ? 'Show address fields' : 'Hide address fields';
+        toggleBtn.setAttribute('title', collapsed ? 'Show address fields' : 'Hide address fields');
       }
       var startCollapsed = false;
       try {
@@ -1839,7 +1839,7 @@
       } catch (e) {}
       applyCollapsed(startCollapsed);
       toggleBtn.addEventListener('click', function () {
-        var collapsed = !wrap.classList.contains('mf-top-chrome--collapsed');
+        var collapsed = !bar.classList.contains('mf-trip-planner--collapsed');
         applyCollapsed(collapsed);
         try {
           localStorage.setItem(storageKey(), collapsed ? '1' : '0');
