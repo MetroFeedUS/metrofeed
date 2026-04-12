@@ -1,4 +1,4 @@
-const ROUTES = {
+window.ROUTES = {
   "cincinnati": {
     busRoutes: [
       {
@@ -470,7 +470,6 @@ const ROUTES = {
 };
 function getCityRoutes(cityId) {
   cityId = cityId || getCityIdFromPath();
-  return ROUTES[cityId] || { busRoutes: [], railRoutes: [] };
+  return window.ROUTES[cityId] || { busRoutes: [], railRoutes: [] };
 }
-window.ROUTES = ROUTES;
 window.getCityRoutes = getCityRoutes;

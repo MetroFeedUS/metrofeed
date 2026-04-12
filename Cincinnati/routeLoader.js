@@ -17,6 +17,9 @@
   let routesIndex = null;
   let routesIndexLoaded = false;
   let routesIndexLoadPromise = null; // Single promise for parallel callers
+  /** Set after a script tag for routes_index.js has been injected (success or wrong format). Prevents a second inject. */
+  let routesIndexScriptInjected = false;
+  const ROUTES_INDEX_SCRIPT_ID = 'metrofeed-routes-index-loader';
   
   /**
    * Load routes_index.js
@@ -29,12 +32,22 @@
     if (routesIndexLoadPromise) {
       return routesIndexLoadPromise;
     }
+    if (routesIndexScriptInjected || document.getElementById(ROUTES_INDEX_SCRIPT_ID)) {
+      const msg =
+        '[routeLoader] routes_index.js was already loaded but did not set window.routesIndex. ' +
+        'Lazy-loading requires: window.routesIndex = { version, routes: [...] }. ' +
+        'If your file uses const ROUTES = {...} (expansion build), use the correct index or fix the deploy. Hard-refresh after fixing.';
+      console.error(msg);
+      return Promise.reject(new Error('routes_index.js invalid or already failed; hard-refresh after fixing the file'));
+    }
     
     routesIndexLoadPromise = new Promise((resolve, reject) => {
       // Load routes_index.js via script tag (expects global window.routesIndex)
       const script = document.createElement('script');
+      script.id = ROUTES_INDEX_SCRIPT_ID;
       script.src = 'routes_index.js?v=' + Date.now(); // Cache bust
       script.onload = () => {
+        routesIndexScriptInjected = true;
         if (typeof window.routesIndex !== 'undefined') {
           routesIndex = window.routesIndex;
           routesIndexLoaded = true;
@@ -50,10 +63,18 @@
           resolve(routesIndex);
         } else {
           routesIndexLoadPromise = null;
+          const hint =
+            typeof window.ROUTES !== 'undefined'
+              ? ' Loaded script defined window.ROUTES but not window.routesIndex (wrong file for lazy JSON routes).'
+              : '';
+          console.error(
+            '[routeLoader] routes_index.js must assign window.routesIndex = { version, routes: [...] } for lazy loading.' + hint
+          );
           reject(new Error('routesIndex not found after loading routes_index.js'));
         }
       };
       script.onerror = () => {
+        script.remove();
         routesIndexLoadPromise = null;
         reject(new Error('Failed to load routes_index.js'));
       };
