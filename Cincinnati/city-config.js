@@ -197,7 +197,8 @@ const CITIES = {
     gtfsRtTripUpdatesUrl: null,
     gtfsRtAlertsUrl: null,
 
-    useLazyLoading: true
+    // Cincinnati ships window.ROUTES from routes_index.js (expansion format), not window.routesIndex + route_data lazy MBTA index.
+    useLazyLoading: false
   }
 };
 

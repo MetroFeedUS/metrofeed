@@ -5,6 +5,26 @@
 
 (function() {
   'use strict';
+
+  /** Cincinnati route JSON on origin (proxy to VPS). `routes_index.js` `file` is basename or relative path; only the filename is appended. */
+  const ROUTE_DATA_BASE = '/route_data/cincinnati/';
+
+  /**
+   * @param {string} filePath - Value from routes_index route entry (`file`)
+   * @returns {string} Absolute path on site origin or unchanged http(s) URL
+   */
+  function resolveRouteDataUrl(filePath) {
+    if (filePath == null || filePath === '') {
+      return filePath;
+    }
+    const s = String(filePath).trim();
+    if (/^https?:\/\//i.test(s)) {
+      return s;
+    }
+    const routeFile = s.replace(/^.*\//, '');
+    const base = ROUTE_DATA_BASE.endsWith('/') ? ROUTE_DATA_BASE : ROUTE_DATA_BASE + '/';
+    return base + routeFile;
+  }
   
   // In-memory cache for loaded routes
   const routeCache = {};
@@ -234,10 +254,11 @@
     activeRequests[cacheKey] = requestId;
     
     try {
-      // Build URL with cache busting
+      // Build URL with cache busting (routes_index `file` basename + Cincinnati route data root)
       const version = getVersion();
       const filePath = routeEntry.file;
-      const url = `${filePath}?v=${version}`;
+      const resolvedPath = resolveRouteDataUrl(filePath);
+      const url = `${resolvedPath}?v=${encodeURIComponent(version)}`;
       
       console.log('[routeLoader] Fetching route:', url);
       
@@ -339,6 +360,8 @@
   
   // Export to window for global access
   window.routeLoader = {
+    ROUTE_DATA_BASE,
+    resolveRouteDataUrl,
     loadRoute,
     loadRoutesIndex,
     getRoutesIndex,
