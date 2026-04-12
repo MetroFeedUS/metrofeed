@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-EL337T4JX4');
+  </script>
+
+  <meta charset="UTF-8" />
+  <title>Portland, OR Traffic - MetroFeed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      padding: 1rem;
+      text-align: center;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 4px solid #4dd0e1;
+    }
+
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    #map {
+      height: calc(100vh - 64px - 250px);
+      width: 100%;
+    }
+
+    .attribution {
+      position: absolute;
+      bottom: 6px;
+      right: 10px;
+      color: #888;
+      font-size: 10px;
+      z-index: 1000;
+    }
+
+    .disclaimer {
+      margin: 1rem auto;
+      max-width: 600px;
+      font-size: 0.75rem;
+      color: #aaa;
+      text-align: center;
+      padding: 0.5rem 1rem;
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      color: #f0f0f0;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* BACK BUTTON */
+    .back-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
+      background-color: #4dd0e1;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
+      border: 2px solid #000;
+    }
+    .back-button:active, .back-button:focus {
+      background-color: #1976d2;
+    }
+    .back-button svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button:active svg,
+    .back-button:focus svg {
+      fill: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+  </header>
+
+  <!-- BACK BUTTON -->
+  <button class="back-button" onclick="history.back()" aria-label="Go back">
+    <!-- Left Arrow SVG -->
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
+
+  <h1 class="page-title">Portland, OR Traffic</h1>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    ⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    Traffic data is provided by third-party sources (e.g., TomTom) and may not reflect real-time or official road conditions. Use caution and verify with local authorities when needed.
+  </div>
+
+  <!-- Map Container -->
+  <div id="map"></div>
+  <div class="attribution">Map & Traffic &copy; TomTom</div>
+
+  <script>
+    const map = L.map('map', {
+      center: [45.5152, -122.6784],
+      zoom: 13,
+      minZoom: 11,
+      maxZoom: 15,
+      scrollWheelZoom: true,
+      zoomControl: true,
+      dragging: true,
+      attributionControl: false,
+      maxBounds: [
+        [45.35, -122.90],
+        [45.65, -122.45]
+      ],
+      maxBoundsViscosity: 0.1
+    });
+
+    L.tileLayer('https://api.tomtom.com/map/1/tile/basic/main/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU', {
+      tileSize: 256,
+      maxZoom: 20
+    }).addTo(map);
+
+    let trafficLayer;
+
+    function addTrafficLayer() {
+      if (trafficLayer) {
+        map.removeLayer(trafficLayer);
+      }
+
+      trafficLayer = L.tileLayer('https://api.tomtom.com/traffic/map/4/tile/flow/relative0-dark/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU', {
+        tileSize: 256,
+        opacity: 0.7,
+        maxZoom: 20
+      }).addTo(map);
+    }
+
+    addTrafficLayer();
+    setInterval(addTrafficLayer, 300000); // refresh every 5 min
+  </script>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html">Privacy Policy</a>
+  </footer>
+
+  <div id="cookie-banner" style="display:none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+    📢 We use cookies to improve functionality and analyze traffic.
+    By using MetroFeed, you agree to our 
+    <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;">Privacy Policy</a>.<br>
+    <button onclick="acceptCookies()" style="margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;">OK</button>
+  </div>
+
+  <script>
+    function acceptCookies() {
+      localStorage.setItem("cookieConsent", "true");
+      document.getElementById("cookie-banner").style.display = "none";
+    }
+
+    window.onload = function () {
+      if (!localStorage.getItem("cookieConsent")) {
+        const banner = document.getElementById("cookie-banner");
+        if (banner) banner.style.display = "block";
+      }
+    };
+  </script>
+</body>
+</html>
