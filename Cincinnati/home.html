@@ -2203,10 +2203,8 @@
       console.log('[getCityRoutes] Separated routes:', busRoutes.length, 'bus/shuttle,', railRoutes.length, 'rail');
       return { busRoutes, railRoutes };
     } else {
-      // Old system: Use window.ROUTES if available
-      if (typeof window.getCityRoutes === 'function') {
-        return window.getCityRoutes();
-      }
+      // window.ROUTES from routes_index.js — do NOT call window.getCityRoutes() here: this file's
+      // global function getCityRoutes overwrites that name and would recurse infinitely.
       if (typeof window.ROUTES !== 'undefined') {
         const cityId = getCityIdFromPath();
         return window.ROUTES[cityId] || { busRoutes: [], railRoutes: [] };
@@ -9158,9 +9156,12 @@
         console.log('[Map] Testing route overlay availability:');
         console.log('[Map]   - attachRouteToMap:', typeof window.attachRouteToMap);
         console.log('[Map]   - showRouteOverlay:', typeof window.showRouteOverlay);
-        // masterRoutes removed - using lazy loading for Boston
         if (!CITY_CONFIG.useLazyLoading) {
-        console.log('[Map]   - masterRoutes:', typeof masterRoutes, 'length:', masterRoutes?.length);
+          if (typeof masterRoutes !== 'undefined') {
+            console.log('[Map]   - masterRoutes length:', masterRoutes.length);
+          } else {
+            console.log('[Map]   - masterRoutes: not defined (using window.ROUTES / route JSON)');
+          }
         } else {
           console.log('[Map]   - Using lazy loading (routeLoader)');
         }
