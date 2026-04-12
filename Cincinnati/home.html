@@ -68,7 +68,7 @@
       z-index: 1002;
       overflow: visible;
     }
-    /* Trip planner strip: collapsible handle + search / Go / Clear / Find Me */
+    /* Trip planner: search + buttons, then a thin footer (line + arrow) to collapse upward */
     .mf-top-chrome {
       position: absolute;
       top: max(10px, env(safe-area-inset-top, 0px));
@@ -77,50 +77,54 @@
       z-index: 1000;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 0;
       pointer-events: auto;
     }
+    /* Footer strip under inputs — not a second “card” on top */
     .mf-top-chrome-handle {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 5px;
       width: 100%;
       min-height: 44px;
-      padding: 8px 14px;
-      margin: 0;
-      border: 1px solid #1E90FF;
-      border-radius: 10px;
-      background: rgba(13, 13, 13, 0.96);
-      color: #bbb;
+      padding: 6px 8px 10px;
+      margin: 4px 0 0 0;
+      border: none;
+      border-top: 1px solid rgba(30, 144, 255, 0.42);
+      border-radius: 0;
+      background: rgba(8, 8, 8, 0.45);
+      color: #888;
       cursor: pointer;
       box-sizing: border-box;
       font-family: inherit;
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
       transition: background 0.2s ease, border-color 0.2s ease;
     }
     .mf-top-chrome-handle:hover,
     .mf-top-chrome-handle:focus-visible {
-      background: rgba(26, 26, 26, 0.98);
-      border-color: #4da3ff;
-      color: #e8e8e8;
+      background: rgba(18, 18, 18, 0.72);
+      border-top-color: rgba(77, 163, 255, 0.75);
       outline: none;
     }
+    .mf-top-chrome.mf-top-chrome--collapsed .mf-top-chrome-handle {
+      margin-top: 0;
+      border-top-color: rgba(30, 144, 255, 0.35);
+    }
     .mf-top-chrome-grip {
-      width: 40px;
-      height: 5px;
-      background: #555;
-      border-radius: 3px;
+      width: 32px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
       flex-shrink: 0;
     }
     .mf-top-chrome-chevron {
-      font-size: 11px;
+      font-size: 13px;
       line-height: 1;
       color: #1E90FF;
+      opacity: 0.95;
       flex-shrink: 0;
     }
     .mf-top-chrome-label {
@@ -1355,13 +1359,8 @@
   <a id="advertiseBtn" href="#" onclick="event.preventDefault(); alert('CSL is available in Premium. Visit premium.html');" style="display: none;"><img src="megaphone.svg" alt="Crowd-Sourced Location"></a>
 </div>
 
-<!-- -- TRIP PLANNER (collapsible top chrome) -- -->
+<!-- -- TRIP PLANNER (collapsible: content first, thin footer + arrow under) -- -->
 <div id="mfTopChrome" class="mf-top-chrome" role="presentation">
-  <button type="button" id="mfTopChromeToggle" class="mf-top-chrome-handle" aria-expanded="true" aria-controls="mfTopChromeBody">
-    <span class="mf-top-chrome-grip" aria-hidden="true"></span>
-    <span class="mf-top-chrome-chevron" aria-hidden="true">▲</span>
-    <span class="mf-top-chrome-label" id="mfTopChromeToggleLabel">Hide trip planner</span>
-  </button>
   <div id="mfTopChromeBody" class="mf-top-chrome-body" role="region" aria-label="Trip planner">
     <div class="search-bar">
       <div class="input-wrapper">
@@ -1385,6 +1384,11 @@
       </div>
     </div>
   </div>
+  <button type="button" id="mfTopChromeToggle" class="mf-top-chrome-handle" aria-expanded="true" aria-controls="mfTopChromeBody" title="Hide trip planner">
+    <span class="mf-top-chrome-grip" aria-hidden="true"></span>
+    <span class="mf-top-chrome-chevron" aria-hidden="true">▲</span>
+    <span class="mf-top-chrome-label" id="mfTopChromeToggleLabel">Hide trip planner</span>
+  </button>
 </div>
 
 <!-- -- FAVORITES -- -->
@@ -1827,6 +1831,7 @@
         toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
         chev.textContent = collapsed ? '▼' : '▲';
         lbl.textContent = collapsed ? 'Show trip planner' : 'Hide trip planner';
+        toggleBtn.setAttribute('title', collapsed ? 'Show trip planner' : 'Hide trip planner');
       }
       var startCollapsed = false;
       try {
