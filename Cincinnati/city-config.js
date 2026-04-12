@@ -198,7 +198,13 @@ const CITIES = {
     gtfsRtAlertsUrl: null,
 
     // Cincinnati ships window.ROUTES from routes_index.js (expansion format), not window.routesIndex + route_data lazy MBTA index.
-    useLazyLoading: false
+    useLazyLoading: false,
+
+    /**
+     * Base URL for per-route JSON (see routes_index lazy `file` basenames).
+     * Subdomain serves JSON from VPS; allow CORS for https://metrofeedus.com on that host.
+     */
+    routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/"
   }
 };
 

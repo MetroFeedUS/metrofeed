@@ -1647,8 +1647,14 @@
   const CITY_CONFIG = getCityConfig();
   window.CITY_CONFIG = CITY_CONFIG; // Expose globally for otp.js and other modules
 
-  /** Cincinnati route JSON (same root as routeLoader when lazy); basename comes from routes_index or convention below. */
-  const ROUTE_DATA_BASE = '/route_data/cincinnati/';
+  /** Cincinnati route JSON base — from city-config `routeDataBase` (path on main site or full URL to VPS). */
+  const ROUTE_DATA_BASE = (function () {
+    const raw = CITY_CONFIG.routeDataBase != null ? String(CITY_CONFIG.routeDataBase).trim() : '';
+    if (raw) {
+      return raw.endsWith('/') ? raw : raw + '/';
+    }
+    return '/route_data/cincinnati/';
+  })();
 
   /** Route UI lives here so it can stack above #map (z-index:0) without being trapped under .search-bar / .side-buttons */
   window.getRouteOverlayMount = function (map) {

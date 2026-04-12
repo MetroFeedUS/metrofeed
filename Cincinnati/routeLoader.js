@@ -6,8 +6,16 @@
 (function() {
   'use strict';
 
-  /** Cincinnati route JSON on origin (proxy to VPS). `routes_index.js` `file` is basename or relative path; only the filename is appended. */
-  const ROUTE_DATA_BASE = '/route_data/cincinnati/';
+  function getRouteDataBase() {
+    try {
+      const cfg = typeof window !== 'undefined' && window.CITY_CONFIG;
+      const raw = cfg && cfg.routeDataBase != null ? String(cfg.routeDataBase).trim() : '';
+      if (raw) {
+        return raw.endsWith('/') ? raw : raw + '/';
+      }
+    } catch (e) { /* ignore */ }
+    return '/route_data/cincinnati/';
+  }
 
   /**
    * @param {string} filePath - Value from routes_index route entry (`file`)
@@ -22,7 +30,7 @@
       return s;
     }
     const routeFile = s.replace(/^.*\//, '');
-    const base = ROUTE_DATA_BASE.endsWith('/') ? ROUTE_DATA_BASE : ROUTE_DATA_BASE + '/';
+    const base = getRouteDataBase();
     return base + routeFile;
   }
   
@@ -360,7 +368,7 @@
   
   // Export to window for global access
   window.routeLoader = {
-    ROUTE_DATA_BASE,
+    getRouteDataBase,
     resolveRouteDataUrl,
     loadRoute,
     loadRoutesIndex,
