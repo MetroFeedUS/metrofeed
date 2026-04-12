@@ -1290,6 +1290,112 @@ function buildRouteFloatingChipLabel(routeId) {
   return { label: routeNumber, isAgencyStyle: false };
 }
 
+function dismissRouteChipActionMenu() {
+  document.querySelectorAll(".mf-route-chip-menu-backdrop").forEach((n) => {
+    if (n._mfEsc) {
+      document.removeEventListener("keydown", n._mfEsc);
+      n._mfEsc = null;
+    }
+    n.remove();
+  });
+  document.querySelectorAll(".mf-route-chip-action-menu").forEach((n) => n.remove());
+}
+
+/**
+ * Menu for collapsed .route-info-panel chips: center map, details, remove overlay.
+ */
+function openRouteChipActionMenu(anchorPanel, callbacks) {
+  if (!anchorPanel || anchorPanel.getAttribute("data-collapsed") !== "true") return;
+  dismissRouteChipActionMenu();
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "mf-route-chip-menu-backdrop";
+  backdrop.style.cssText = "position:fixed;inset:0;z-index:1150;background:rgba(0,0,0,0.2);";
+
+  const menu = document.createElement("div");
+  menu.className = "mf-route-chip-action-menu";
+  menu.setAttribute("role", "menu");
+  menu.style.cssText = [
+    "position:fixed",
+    "z-index:1160",
+    "min-width:210px",
+    "max-width:min(280px,calc(100vw - 24px))",
+    "background:rgba(22,22,22,0.98)",
+    "border:2px solid #1E90FF",
+    "border-radius:10px",
+    "box-shadow:0 8px 24px rgba(0,0,0,0.45)",
+    "padding:8px",
+    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+  ].join(";");
+
+  const rect = anchorPanel.getBoundingClientRect();
+  const gap = 8;
+  const estW = 220;
+  let left = rect.left - estW - gap;
+  if (left < 12) left = Math.min(rect.right + gap, window.innerWidth - estW - 12);
+  if (left < 12) left = 12;
+  let top = rect.top;
+  if (top + 168 > window.innerHeight) top = Math.max(12, window.innerHeight - 176);
+  if (top < 12) top = 12;
+  menu.style.left = Math.round(left) + "px";
+  menu.style.top = Math.round(top) + "px";
+
+  const mkBtn = (label, isPrimary, fn) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.setAttribute("role", "menuitem");
+    btn.textContent = label;
+    const bg = isPrimary ? "#153a55" : "#2a2a2a";
+    const bgHover = isPrimary ? "#1E90FF" : "#333";
+    btn.style.cssText = [
+      "display:block",
+      "width:100%",
+      "text-align:left",
+      "padding:10px 12px",
+      "margin:3px 0",
+      "border:none",
+      "border-radius:6px",
+      "background:" + bg,
+      "color:#eee",
+      "font-size:0.92rem",
+      "cursor:pointer",
+      "font-weight:600"
+    ].join(";");
+    btn.onmouseenter = () => {
+      btn.style.background = bgHover;
+    };
+    btn.onmouseleave = () => {
+      btn.style.background = bg;
+    };
+    btn.onclick = (ev) => {
+      ev.stopPropagation();
+      dismissRouteChipActionMenu();
+      try {
+        fn();
+      } catch (err) {
+        console.warn("[routeOverlay] Chip menu action failed:", err);
+      }
+    };
+    return btn;
+  };
+
+  menu.appendChild(mkBtn("Center on route", true, callbacks.onCenter));
+  menu.appendChild(mkBtn("Route details", false, callbacks.onDetails));
+  menu.appendChild(mkBtn("Remove from map", false, callbacks.onRemove));
+
+  menu.onclick = (e) => e.stopPropagation();
+  backdrop.onclick = () => dismissRouteChipActionMenu();
+
+  const onEsc = (ev) => {
+    if (ev.key === "Escape") dismissRouteChipActionMenu();
+  };
+  backdrop._mfEsc = onEsc;
+  document.addEventListener("keydown", onEsc);
+
+  document.body.appendChild(backdrop);
+  document.body.appendChild(menu);
+}
+
 /**
  * Get route color based on route name
  * Returns a consistent color for routes with the same name
@@ -1908,6 +2014,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
       overlayElements.markers.push(stopMarker);
     });
 
+    const fitMapToThisRoute = () => {
+      if (!map || typeof map.fitBounds !== "function") return;
+      if (!primaryShape || primaryShape.length === 0) return;
+      try {
+        const bounds = new maplibregl.LngLatBounds();
+        shapes.forEach((shape) => {
+          if (!Array.isArray(shape)) return;
+          shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
+        });
+        const currentBounds = bounds.toArray();
+        if (!currentBounds || currentBounds.length < 2) return;
+        const [[west, south], [east, north]] = currentBounds;
+        const latRange = Math.max(north - south, 1e-8);
+        const lonRange = Math.max(east - west, 1e-8);
+        const expansion = 0.2;
+        const expandedBounds = new maplibregl.LngLatBounds();
+        expandedBounds.extend([west - lonRange * expansion, south - latRange * expansion]);
+        expandedBounds.extend([east + lonRange * expansion, north + latRange * expansion]);
+        map.fitBounds(expandedBounds, { padding: 48, maxZoom: 14 });
+      } catch (err) {
+        console.warn("[routeOverlay] fitMapToThisRoute:", err);
+      }
+    };
+
     // ---------- Route info panel (mainOverlay only) ----------
     // OTP trip legs use .otp-trip-route-chip on the rail instead (see otp.js).
     if (mode === "mainOverlay" && options.routePageUrl && !options.skipRouteInfoPanel) {
@@ -2021,21 +2151,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapseBtn.onmouseout = () => collapseBtn.style.background = "transparent";
       
       let isCollapsed = true; // Start collapsed
-      
-      // Make the panel clickable when collapsed to expand it
-      routeInfoPanel.addEventListener('click', function(e) {
-        // Check if panel is collapsed by checking the data attribute
-        if (this.getAttribute('data-collapsed') === 'true') {
-          // Expand when clicking anywhere on the collapsed circle
-          e.stopPropagation();
-          // Manually trigger the expand logic by calling collapseBtn.onclick
-          // This will toggle isCollapsed and update the panel
-          if (collapseBtn && typeof collapseBtn.onclick === 'function') {
-            const fakeEvent = { stopPropagation: () => {}, preventDefault: () => {} };
-            collapseBtn.onclick(fakeEvent);
-          }
-        }
-      });
       
       collapseBtn.onclick = (e) => {
         e.stopPropagation();
@@ -2233,6 +2348,20 @@ function attachRouteToMap(map, routeId, directionId, options) {
           // Non-fatal: closing overlay should still succeed even if indicator update fails
         }
       };
+
+      routeInfoPanel.addEventListener("click", function (e) {
+        if (this.getAttribute("data-collapsed") !== "true") return;
+        e.stopPropagation();
+        e.preventDefault();
+        openRouteChipActionMenu(this, {
+          onCenter: fitMapToThisRoute,
+          onDetails: () => {
+            const fake = { stopPropagation: () => {}, preventDefault: () => {} };
+            if (isCollapsed) collapseBtn.onclick(fake);
+          },
+          onRemove: () => closeBtn.onclick({ stopPropagation: () => {}, preventDefault: () => {} })
+        });
+      });
       
       // Content wrapper
       const contentDiv = document.createElement("div");
