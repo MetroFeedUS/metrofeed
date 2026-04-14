@@ -1498,6 +1498,45 @@ function routeOverlayPanelHost(map) {
   return map && map.getContainer ? map.getContainer() : document.body;
 }
 
+function getCollapsedRouteChipTopOffset(map) {
+  try {
+    const host = routeOverlayPanelHost(map);
+    if (!host || typeof host.getBoundingClientRect !== "function") return 250;
+    const hostRect = host.getBoundingClientRect();
+    const bar = document.getElementById("mfTripPlannerSearchBar");
+    const toggle = document.getElementById("mfTripPlannerToggle");
+    const anchorEl = toggle || bar;
+    if (!anchorEl || typeof anchorEl.getBoundingClientRect !== "function") return 250;
+    const anchorRect = anchorEl.getBoundingClientRect();
+    // Convert viewport coords → host-local coords (route chips are absolutely positioned in host).
+    const raw = anchorRect.bottom - hostRect.top + 10;
+    // Keep within a sensible range.
+    return Math.max(60, Math.min(420, Math.round(raw)));
+  } catch (e) {
+    return 250;
+  }
+}
+
+function repositionCollapsedRouteChips(map) {
+  try {
+    const m = map || window.map;
+    const host = routeOverlayPanelHost(m);
+    if (!host) return;
+    const stackGap = 50;
+    const topOffset = getCollapsedRouteChipTopOffset(m);
+    const panels = Array.from(host.querySelectorAll(".route-info-panel[data-collapsed='true']"));
+    panels.forEach((panel) => {
+      const idxRaw = panel.getAttribute("data-collapse-index");
+      const idx = idxRaw != null ? parseInt(idxRaw, 10) : 0;
+      if (Number.isNaN(idx)) return;
+      panel.style.top = `${topOffset + idx * stackGap}px`;
+    });
+  } catch (e) {}
+}
+window.metrofeedRepositionRouteChips = function () {
+  repositionCollapsedRouteChips(window.map);
+};
+
 function attachRouteToMap(map, routeId, directionId, options) {
   options = options || {};
 
@@ -2072,7 +2111,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       const panelIndex = maxIndex + 1; // Next available position
       const stackGap = 50; // vertical slot per chip (40px circle + margin)
-      const topOffset = 250; // Start from top to avoid overlapping with other UI elements
+      const topOffset = getCollapsedRouteChipTopOffset(map);
       const verticalPosition = topOffset + (panelIndex * stackGap);
       
       // Set initial collapsed state (circle in corner)
@@ -2172,7 +2211,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           
           const panelIndex = maxIndex + 1;
           const stackGap = 50;
-          const topOffset = 250;
+          const topOffset = getCollapsedRouteChipTopOffset(map);
           const verticalPosition = topOffset + (panelIndex * stackGap);
           
           routeInfoPanel.setAttribute('data-collapsed', 'true');

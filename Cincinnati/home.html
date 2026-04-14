@@ -1888,12 +1888,15 @@
           const ld = document.getElementById('languageDropdown');
           if (ld) ld.style.display = 'none';
         }
+        // Re-anchor collapsed route chips under the dashboard row.
+        try {
+          if (typeof window.metrofeedRepositionRouteChips === 'function') {
+            window.metrofeedRepositionRouteChips();
+          }
+        } catch (e) {}
       }
-      var startCollapsed = false;
-      try {
-        startCollapsed = localStorage.getItem(storageKey()) === '1';
-      } catch (e) {}
-      applyCollapsed(startCollapsed);
+      // Option A: always open on load (ignore persisted collapse state).
+      applyCollapsed(false);
       toggleBtn.addEventListener('click', function () {
         var collapsed = !bar.classList.contains('mf-trip-planner--collapsed');
         applyCollapsed(collapsed);
