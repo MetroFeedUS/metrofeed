@@ -113,6 +113,37 @@
       align-items: center;
       min-width: 0;
     }
+    .mf-trip-planner-right-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .mf-trip-planner-collapsed-pill {
+      display: none;
+      height: 32px;
+      padding: 0 10px;
+      border: 2px solid rgba(30, 144, 255, 0.75);
+      border-radius: 10px;
+      background: rgba(13, 13, 13, 0.92);
+      color: #cfe8ff;
+      font-weight: 800;
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      white-space: nowrap;
+      user-select: none;
+      pointer-events: none;
+    }
+    .search-bar.mf-trip-planner--collapsed .mf-trip-planner-otp-group {
+      display: none;
+    }
+    .search-bar.mf-trip-planner--collapsed .mf-trip-planner-collapsed-pill {
+      display: inline-flex;
+    }
     .mf-trip-planner-toggle {
       position: relative;
       flex-shrink: 0;
@@ -157,6 +188,20 @@
         height: 36px;
         font-size: 15px;
       }
+      .mf-trip-planner-collapsed-pill {
+        height: 36px;
+        font-size: 0.82rem;
+      }
+    }
+
+    /* Collapsing should hide ALL top buttons for more map space. */
+    body.mf-ui-collapsed #menuBtn,
+    body.mf-ui-collapsed #themeToggleBtn,
+    body.mf-ui-collapsed #aiChatBtn,
+    body.mf-ui-collapsed #languageControlsWrap,
+    body.mf-ui-collapsed #dropdownMenu,
+    body.mf-ui-collapsed #routeAlertIndicator {
+      display: none !important;
     }
     .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
     .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: #0d0d0d; border: 1px solid #1E90FF; border-radius: 8px; padding: 5px 10px; }
@@ -1281,7 +1326,7 @@
   <a href="tickets.html"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
 </button>
 <!-- Language button (positioned directly below Theme button) -->
-<div style="position: absolute; top: 60px; right: 10px; z-index: 1001;">
+<div id="languageControlsWrap" style="position: absolute; top: 60px; right: 10px; z-index: 1001;">
   <button id="languageBtn" class="side-buttons" onclick="document.getElementById('languageDropdown').style.display = document.getElementById('languageDropdown').style.display === 'flex' ? 'none' : 'flex'" title="Select Language / Seleccionar Idioma">
     <img src="global.svg" alt="Language" />
   </button>
@@ -1384,10 +1429,13 @@
         <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" title="Find my location and closest route" data-translate="find_me">Find Me</button>
       </div>
     </div>
-    <button type="button" id="mfTripPlannerToggle" class="mf-trip-planner-toggle" aria-expanded="true" aria-controls="mfTripPlannerFields" title="Hide address fields">
-      <span class="mf-trip-planner-toggle-che" aria-hidden="true">▲</span>
-      <span class="mf-trip-planner-toggle-sr" id="mfTripPlannerToggleLabel">Hide address fields</span>
-    </button>
+    <div class="mf-trip-planner-right-controls">
+      <div class="mf-trip-planner-collapsed-pill" aria-hidden="true">Open dashboard</div>
+      <button type="button" id="mfTripPlannerToggle" class="mf-trip-planner-toggle" aria-expanded="true" aria-controls="mfTripPlannerFields" title="Hide dashboard">
+        <span class="mf-trip-planner-toggle-che" aria-hidden="true">▲</span>
+        <span class="mf-trip-planner-toggle-sr" id="mfTripPlannerToggleLabel">Hide dashboard</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1828,10 +1876,18 @@
       };
       function applyCollapsed(collapsed) {
         bar.classList.toggle('mf-trip-planner--collapsed', collapsed);
+        document.body.classList.toggle('mf-ui-collapsed', collapsed);
         toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
         chev.textContent = collapsed ? '▼' : '▲';
-        lbl.textContent = collapsed ? 'Show address fields' : 'Hide address fields';
-        toggleBtn.setAttribute('title', collapsed ? 'Show address fields' : 'Hide address fields');
+        lbl.textContent = collapsed ? 'Open dashboard' : 'Hide dashboard';
+        toggleBtn.setAttribute('title', collapsed ? 'Open dashboard' : 'Hide dashboard');
+        // Force-close any open menus when collapsing for clean map view.
+        if (collapsed) {
+          const dd = document.getElementById('dropdownMenu');
+          if (dd) dd.style.display = 'none';
+          const ld = document.getElementById('languageDropdown');
+          if (ld) ld.style.display = 'none';
+        }
       }
       var startCollapsed = false;
       try {
