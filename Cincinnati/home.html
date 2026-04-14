@@ -1889,11 +1889,20 @@
           if (ld) ld.style.display = 'none';
         }
         // Re-anchor collapsed route chips under the dashboard row.
-        try {
-          if (typeof window.metrofeedRepositionRouteChips === 'function') {
-            window.metrofeedRepositionRouteChips();
-          }
-        } catch (e) {}
+        // IMPORTANT: do this after layout/transition settles; otherwise we can measure the wrong anchor height.
+        const scheduleChips = () => {
+          try {
+            if (typeof window.metrofeedRepositionRouteChips !== 'function') return;
+            // Next frame(s): after DOM class toggles are applied
+            requestAnimationFrame(() => {
+              window.metrofeedRepositionRouteChips();
+              requestAnimationFrame(() => window.metrofeedRepositionRouteChips());
+            });
+            // After the collapse/expand transition (matches CSS ~280ms)
+            setTimeout(() => window.metrofeedRepositionRouteChips(), 320);
+          } catch (e) {}
+        };
+        scheduleChips();
       }
       // Option A: always open on load (ignore persisted collapse state).
       applyCollapsed(false);
