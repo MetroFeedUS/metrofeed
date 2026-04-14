@@ -1380,8 +1380,7 @@ function openRouteChipActionMenu(anchorPanel, callbacks) {
   };
 
   menu.appendChild(mkBtn("Center on route", true, callbacks.onCenter));
-  menu.appendChild(mkBtn("Route details", false, callbacks.onDetails));
-  menu.appendChild(mkBtn("Remove from map", false, callbacks.onRemove));
+  menu.appendChild(mkBtn("Close route", false, callbacks.onRemove));
 
   menu.onclick = (e) => e.stopPropagation();
   backdrop.onclick = () => dismissRouteChipActionMenu();
@@ -2394,10 +2393,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         e.preventDefault();
         openRouteChipActionMenu(this, {
           onCenter: fitMapToThisRoute,
-          onDetails: () => {
-            const fake = { stopPropagation: () => {}, preventDefault: () => {} };
-            if (isCollapsed) collapseBtn.onclick(fake);
-          },
           onRemove: () => closeBtn.onclick({ stopPropagation: () => {}, preventDefault: () => {} })
         });
       });

@@ -1838,11 +1838,12 @@
     return '/route_data/cincinnati/';
   })();
 
-  /** Route UI lives here so it can stack above #map (z-index:0) without being trapped under .search-bar / .side-buttons */
-  window.getRouteOverlayMount = function (map) {
-    const root = document.getElementById('mapRouteOverlayRoot');
-    if (root) return root;
-    if (map && typeof map.getContainer === 'function') return map.getContainer();
+  /**
+   * Route overlay UI mount point.
+   * NOTE: `#mapRouteOverlayRoot` is `pointer-events:none`, so mounting interactive chips/panels there
+   * makes them unclickable. Mount to `document.body` instead so chips are clickable without blocking the map.
+   */
+  window.getRouteOverlayMount = function (_map) {
     return document.body;
   };
   
