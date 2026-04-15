@@ -1361,6 +1361,36 @@ function metrofeedCoordToLonLat(coord) {
   return [b, a];
 }
 
+function metrofeedBboxLonLat(coords) {
+  if (!Array.isArray(coords) || coords.length === 0) return null;
+  let minLon = Infinity, minLat = Infinity, maxLon = -Infinity, maxLat = -Infinity;
+  for (let i = 0; i < coords.length; i++) {
+    const c = coords[i];
+    if (!Array.isArray(c) || c.length < 2) continue;
+    const lon = Number(c[0]);
+    const lat = Number(c[1]);
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+    if (lon < minLon) minLon = lon;
+    if (lon > maxLon) maxLon = lon;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+  }
+  if (!Number.isFinite(minLon) || !Number.isFinite(minLat)) return null;
+  return { minLon, minLat, maxLon, maxLat };
+}
+
+function metrofeedBboxCoverageRatio(inner, outer) {
+  if (!inner || !outer) return 0;
+  const innerLon = Math.max(0, inner.maxLon - inner.minLon);
+  const innerLat = Math.max(0, inner.maxLat - inner.minLat);
+  const outerLon = Math.max(0, outer.maxLon - outer.minLon);
+  const outerLat = Math.max(0, outer.maxLat - outer.minLat);
+  const innerArea = innerLon * innerLat;
+  const outerArea = outerLon * outerLat;
+  if (!outerArea) return 0;
+  return innerArea / outerArea;
+}
+
 function metrofeedFormatVehicleLabel(vehicleIDRaw, routeId) {
   const rid = routeId != null ? String(routeId) : '';
   const raw = vehicleIDRaw != null ? String(vehicleIDRaw) : '';
@@ -1748,6 +1778,81 @@ function attachRouteToMap(map, routeId, directionId, options) {
     // - Basic route display: Normal opacity (0.8), normal width (4px) - shows all branches clearly
     // - OTP context mode: Faint opacity (0.25), thinner width (3px) - provides context for OTP highlight
     //
+    // ---------- Optional failsafe: connect stops if shape looks partial ----------
+    // If the GTFS shape bbox covers a much smaller area than the stops bbox, we likely have a partial/mismatched shape.
+    // In that case, draw a lightweight fallback polyline connecting stops in order.
+    const stopLineCoords = Array.isArray(stops)
+      ? stops
+          .map((s) => {
+            const lat = s && s.lat != null ? Number(s.lat) : null;
+            const lon = s && s.lon != null ? Number(s.lon) : null;
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+            return [lon, lat];
+          })
+          .filter((c) => Array.isArray(c) && c.length === 2)
+      : [];
+
+    const shapeAllLonLat = [];
+    shapes.forEach((shape) => {
+      if (!Array.isArray(shape)) return;
+      for (let i = 0; i < shape.length; i++) {
+        const ll = metrofeedCoordToLonLat(shape[i]);
+        if (ll) shapeAllLonLat.push(ll);
+      }
+    });
+    const shapeBox = metrofeedBboxLonLat(shapeAllLonLat);
+    const stopsBox = metrofeedBboxLonLat(stopLineCoords);
+    const coverage = metrofeedBboxCoverageRatio(shapeBox, stopsBox);
+    const shouldDrawStopsFallback = stopLineCoords.length >= 2 && coverage > 0 && coverage < 0.45;
+    if (shouldDrawStopsFallback) {
+      const fallbackSourceId = `route-line-stops-${mapLayerKey}`;
+      const fallbackLayerCasingId = `route-layer-stops-casing-${mapLayerKey}`;
+      const fallbackLayerId = `route-layer-stops-${mapLayerKey}`;
+      try {
+        if (map.getLayer(fallbackLayerId)) map.removeLayer(fallbackLayerId);
+        if (map.getLayer(fallbackLayerCasingId)) map.removeLayer(fallbackLayerCasingId);
+        if (map.getSource(fallbackSourceId)) map.removeSource(fallbackSourceId);
+      } catch (e) {}
+      map.addSource(fallbackSourceId, {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: { mfFallback: true },
+          geometry: { type: "LineString", coordinates: stopLineCoords }
+        }
+      });
+      overlayElements.sources.push(fallbackSourceId);
+      // Draw casing + dashed core so it's visually distinct from real shape
+      map.addLayer({
+        id: fallbackLayerCasingId,
+        type: "line",
+        source: fallbackSourceId,
+        paint: {
+          "line-color": "#0b0b0b",
+          "line-width": 6,
+          "line-opacity": 0.45
+        },
+        layout: { "line-join": "round", "line-cap": "round" },
+        beforeId: beforeId
+      });
+      overlayElements.layers.push(fallbackLayerCasingId);
+      map.addLayer({
+        id: fallbackLayerId,
+        type: "line",
+        source: fallbackSourceId,
+        paint: {
+          "line-color": routeColor,
+          "line-width": 4,
+          "line-opacity": 0.75,
+          "line-dasharray": [1.2, 1.0]
+        },
+        layout: { "line-join": "round", "line-cap": "round" },
+        beforeId: beforeId
+      });
+      overlayElements.layers.push(fallbackLayerId);
+      console.warn('[attachRouteToMap] Shape bbox looks partial vs stops; drew stop-connector fallback', { routeId, directionId, coverage });
+    }
+
     // ---------- Render all shapes (for trunk-and-branch routes) ----------
     // All shapes in shapes[] are rendered; opacity/width depends on OTP state
     shapes.forEach((shape, shapeIndex) => {

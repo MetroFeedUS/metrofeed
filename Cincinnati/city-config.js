@@ -187,7 +187,9 @@ const CITIES = {
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
 
-    mastermapFile: null,
+    // Debug toggle: load full in-page masterRoutes instead of per-route JSON fetches.
+    // This helps validate whether shape issues come from the JSON hosting/naming vs rendering.
+    mastermapFile: "mastermap.js",
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
 
