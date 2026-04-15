@@ -1799,6 +1799,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
           "line-width": lineWidth,
           "line-opacity": lineOpacity
         },
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
         // Place route overlay layers before OTP segments (only if OTP active)
         beforeId: beforeId
       });
@@ -1812,7 +1816,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       // Include all shapes in bounds calculation
       shapes.forEach(shape => {
-        shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
+        shape
+          .map(metrofeedCoordToLonLat)
+          .filter((c) => Array.isArray(c) && c.length === 2)
+          .forEach((ll) => bounds.extend(ll));
       });
       
       // Auto-expand bounds by 20% to ensure route fits (especially for long commuter rail routes)
