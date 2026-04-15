@@ -2473,7 +2473,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Get API configuration from options or global CITY_CONFIG
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
       const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
+      const gtfsRtUrls = options.gtfsRtUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrls) || null;
       const gtfsRtTripUpdatesUrl = options.gtfsRtTripUpdatesUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrl) || null;
+      const gtfsRtTripUpdatesUrls = options.gtfsRtTripUpdatesUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrls) || null;
       const apiKey = options.apiKey || null;
       const disableGtfsRt = options.disableGtfsRt ?? (window.CITY_CONFIG && window.CITY_CONFIG.disableGtfsRt) ?? false;
       const allowEmergencyGtfsRtFallback =
@@ -2629,45 +2631,36 @@ function attachRouteToMap(map, routeId, directionId, options) {
             return;
           }
           
-          if (busApiType === 'mbta-gtfs-rt' && gtfsRtUrl && !disableGtfsRt) {
-            // MBTA GTFS-RT feed
-            console.log('[attachRouteToMap] Fetching MBTA GTFS-RT feed:', gtfsRtUrl);
-            const res = await fetch(gtfsRtUrl);
-            console.log('[attachRouteToMap] Fetch response status:', res.status, res.statusText);
-            if (!res.ok) {
-              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            }
-            const buffer = await res.arrayBuffer();
-            console.log('[attachRouteToMap] Received buffer size:', buffer.byteLength, 'bytes');
-            
-            // Check content type
-            const contentType = res.headers.get('content-type');
-            console.log('[attachRouteToMap] Response Content-Type:', contentType);
-            
-            // Log first few bytes to verify it's protobuf
-            const uint8Preview = new Uint8Array(buffer.slice(0, 50));
-            console.log('[attachRouteToMap] First 50 bytes (hex):', Array.from(uint8Preview).map(b => b.toString(16).padStart(2, '0')).join(' '));
-            
-            try {
-              allBuses = await parseMBTAGTFSRT(buffer);
-              console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
-            } catch (parseError) {
-              console.error('[attachRouteToMap] Error parsing GTFS-RT:', parseError);
-              console.error('[attachRouteToMap] Parse error stack:', parseError.stack);
-              throw parseError;
-            }
-            
-            if (allBuses.length === 0) {
-              console.warn('[attachRouteToMap] ⚠️ No buses found in GTFS-RT feed. This could mean:');
-              console.warn('[attachRouteToMap]   1. No buses are currently running');
-              console.warn('[attachRouteToMap]   2. The feed is empty or malformed');
-              console.warn('[attachRouteToMap]   3. There was a parsing error');
-            }
+          const wantsGtfsRt = (busApiType === 'mbta-gtfs-rt' || busApiType === 'gtfs-rt');
+          const resolvedUrls = Array.isArray(gtfsRtUrls) && gtfsRtUrls.length
+            ? gtfsRtUrls.filter(Boolean)
+            : (gtfsRtUrl ? [gtfsRtUrl] : []);
+
+          if (wantsGtfsRt && resolvedUrls.length && !disableGtfsRt) {
+            // Standard GTFS-RT VehiclePositions feed(s). For mbta-gtfs-rt we may enrich later; for gtfs-rt we stop here.
+            console.log('[attachRouteToMap] Fetching GTFS-RT feed(s):', resolvedUrls);
+
+            const feedResults = await Promise.all(resolvedUrls.map(async (url) => {
+              const res = await fetch(url);
+              if (!res.ok) throw new Error(`GTFS-RT HTTP ${res.status}: ${res.statusText} (${url})`);
+              const buffer = await res.arrayBuffer();
+              try {
+                return await parseMBTAGTFSRT(buffer);
+              } catch (e) {
+                console.error('[attachRouteToMap] Error parsing GTFS-RT:', { url, error: e });
+                throw e;
+              }
+            }));
+
+            allBuses = feedResults.flat();
+            console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from GTFS-RT');
+          } else if (wantsGtfsRt && disableGtfsRt) {
+            console.log('[attachRouteToMap] GTFS-RT disabled by config.');
           } else {
-            if (busApiType === 'mbta-gtfs-rt' && disableGtfsRt) {
-              console.log('[attachRouteToMap] GTFS-RT disabled; using V3 vehicles only');
-            } else {
-              console.warn('[attachRouteToMap] MBTA GTFS-RT not configured. busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
+            if (busApiType === 'mbta-gtfs-rt') {
+              console.warn('[attachRouteToMap] MBTA mode but no GTFS-RT URL configured.', { busApiType, gtfsRtUrl, gtfsRtUrls });
+            } else if (busApiType === 'gtfs-rt') {
+              console.warn('[attachRouteToMap] gtfs-rt mode but no GTFS-RT URLs configured.', { busApiType, gtfsRtUrl, gtfsRtUrls });
             }
           }
           

@@ -191,8 +191,30 @@ const CITIES = {
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
 
-    busApiType: "none",
-    disableGtfsRt: true,
+    /**
+     * Realtime vehicles:
+     * - Use `gtfs-rt` for standard GTFS-Realtime protobuf feeds (no MBTA V3 enrichment).
+     * - Keep the raw agency URLs out of client code long-term; prefer your own cached proxy endpoints.
+     */
+    busApiType: "gtfs-rt",
+    disableGtfsRt: false,
+    // One or more VehiclePositions feed URLs (protobuf FeedMessage).
+    gtfsRtUrls: [
+      // SORTA / Metro (Cincinnati) VehiclePositions.pb
+      "https://tmgtfsprd.sorttrpcloud.com/TMGTFSRealTimeWebService/vehicle/vehiclepositions.pb",
+      // TANK (NKY) VehiclePosition
+      "https://tank.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition"
+    ],
+    // Optional enrichments (not wired into UI yet for gtfs-rt):
+    gtfsRtTripUpdatesUrls: [
+      "https://tmgtfsprd.sorttrpcloud.com/TMGTFSRealTimeWebService/tripupdate/tripupdates.pb",
+      "https://tank.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=TripUpdate"
+    ],
+    gtfsRtAlertsUrls: [
+      "https://tmgtfsprd.sorttrpcloud.com/TMGTFSRealTimeWebService/alert/alerts.pb",
+      "https://tank.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=Alert"
+    ],
+    // Legacy single-url fields (kept for other cities / older code paths)
     gtfsRtUrl: null,
     gtfsRtTripUpdatesUrl: null,
     gtfsRtAlertsUrl: null,

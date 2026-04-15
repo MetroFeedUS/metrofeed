@@ -1152,10 +1152,11 @@
       border-bottom: 4px solid transparent;
     }
     
-    /* Mobile-specific attribution positioning */
+    /* Mobile: attribution lives inside #map; footer sits above the map — lift OSM control clear of footer + home indicator */
     @media (max-width: 768px) {
       .maplibregl-ctrl-attrib {
-        bottom: 50px !important; /* Same position on mobile */
+        /* ~1–2 lines of compact footer + small gap; safe-area avoids home indicator */
+        bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
       }
     }
     
@@ -5077,16 +5078,25 @@
       let allBuses = [];
       
       // Check which API type to use
-      if (CITY_CONFIG.busApiType === 'mbta-gtfs-rt') {
-        // MBTA GTFS-RT feed
-        console.log('[fetchAndDisplayBuses] Using MBTA GTFS-RT feed:', CITY_CONFIG.gtfsRtUrl);
-        const res = await fetch(CITY_CONFIG.gtfsRtUrl);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      if (CITY_CONFIG.busApiType === 'mbta-gtfs-rt' || CITY_CONFIG.busApiType === 'gtfs-rt') {
+        const urls = Array.isArray(CITY_CONFIG.gtfsRtUrls) && CITY_CONFIG.gtfsRtUrls.length
+          ? CITY_CONFIG.gtfsRtUrls.filter(Boolean)
+          : (CITY_CONFIG.gtfsRtUrl ? [CITY_CONFIG.gtfsRtUrl] : []);
+
+        if (!urls.length) {
+          console.warn('[fetchAndDisplayBuses] GTFS-RT enabled but no URLs configured.');
+          return;
         }
-        const buffer = await res.arrayBuffer();
-        allBuses = await parseMBTAGTFSRT(buffer);
-        console.log('[fetchAndDisplayBuses] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
+
+        console.log('[fetchAndDisplayBuses] Using GTFS-RT feed(s):', urls);
+        const batches = await Promise.all(urls.map(async (u) => {
+          const res = await fetch(u);
+          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          const buffer = await res.arrayBuffer();
+          return await parseMBTAGTFSRT(buffer);
+        }));
+        allBuses = batches.flat();
+        console.log('[fetchAndDisplayBuses] Parsed', allBuses.length, 'vehicles from GTFS-RT');
         // Store for debugging
         window.lastBusData = allBuses;
       } else if (CITY_CONFIG.busApiType === 'none') {
