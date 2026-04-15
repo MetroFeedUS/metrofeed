@@ -1336,6 +1336,31 @@ function pickContrastingTextColor(hex) {
   return L > 0.55 ? "#0d0d0d" : "#ffffff";
 }
 
+function metrofeedCoordToLonLat(coord) {
+  if (!Array.isArray(coord) || coord.length < 2) return null;
+  const a = Number(coord[0]);
+  const b = Number(coord[1]);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+
+  // Most of our pipeline emits [lat, lon]. Some feeds/exports may already be [lon, lat].
+  // Heuristic: Cincinnati longitudes are negative, latitudes positive.
+  // - If first is negative and second is positive, assume [lon, lat]
+  // - If first is positive and second is negative, assume [lat, lon]
+  // Otherwise fall back to range checks.
+  if (a < 0 && b > 0) return [a, b];
+  if (a > 0 && b < 0) return [b, a];
+
+  const aLooksLat = Math.abs(a) <= 90;
+  const bLooksLat = Math.abs(b) <= 90;
+  const aLooksLon = Math.abs(a) <= 180;
+  const bLooksLon = Math.abs(b) <= 180;
+  if (aLooksLon && bLooksLat && !aLooksLat) return [a, b]; // lon,lat
+  if (bLooksLon && aLooksLat && !bLooksLat) return [b, a]; // lat,lon
+
+  // Default: treat as [lat,lon]
+  return [b, a];
+}
+
 function metrofeedFormatVehicleLabel(vehicleIDRaw, routeId) {
   const rid = routeId != null ? String(routeId) : '';
   const raw = vehicleIDRaw != null ? String(vehicleIDRaw) : '';
@@ -1736,7 +1761,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           properties: {},
           geometry: {
             type: "LineString",
-            coordinates: shape.map((coord) => [coord[1], coord[0]]) // [lat,lon] -> [lon,lat]
+            coordinates: shape
+              .map(metrofeedCoordToLonLat)
+              .filter((c) => Array.isArray(c) && c.length === 2)
           }
         }
       });
@@ -1872,7 +1899,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     } else if (weeklyTimes[scheduleBucket]) {
       console.log(`[attachRouteToMap] ✅ Using "${scheduleBucket}" schedule (${Object.keys(weeklyTimes[scheduleBucket]).length} stops have times)`);
     } else {
-      console.warn(`[attachRouteToMap] ⚠️ No weeklyTimes data found - using legacy stop.times format`);
+      // Cincinnati route JSON currently ships legacy stop.times; this is expected.
+      console.log(`[attachRouteToMap] Using legacy stop.times (no weeklyTimes bucket)`);
     }
 
     stops.forEach((stop) => {

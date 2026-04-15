@@ -8782,6 +8782,84 @@
 
     try {
       let alerts = await fetchAlertsData();
+
+      // Cincinnati VPS schema: [{ agency, text }, ...]
+      if (Array.isArray(alerts) && alerts.length > 0 && alerts[0] && typeof alerts[0] === 'object' && 'text' in alerts[0] && 'agency' in alerts[0]) {
+        const normalizeRouteFilter = (rf) => (Array.isArray(rf) ? rf.map(String) : []);
+        const rf = normalizeRouteFilter(routeFilter);
+
+        const matchesRouteFilter = (a) => {
+          if (!rf.length) return true;
+          const t = String(a && a.text ? a.text : '');
+          const nums = t.match(/\d+/g) || [];
+          // If the alert references a route number, require a match to any selected route number.
+          if (nums.length) {
+            const selectedNums = rf.map((rid) => rid.startsWith('sorta_') ? rid.slice(6) : rid.startsWith('tank_') ? rid.slice(5) : rid);
+            return nums.some((n) => selectedNums.includes(String(n)));
+          }
+          // Otherwise treat as an agency-wide notice (show it in modal even when filtered).
+          return true;
+        };
+
+        // Apply route filter (if any)
+        alerts = alerts.filter(matchesRouteFilter);
+
+        if (!alerts.length) {
+          const message = rf.length
+            ? `✅ No active alerts for the selected route${rf.length > 1 ? 's' : ''}.`
+            : '✅ No active transit alerts at this time.';
+          alertsContent.innerHTML = `<div style="color: #4CAF50; padding: 1rem; text-align: center;">${message}</div>`;
+          return;
+        }
+
+        const byAgency = { sorta: [], tank: [], other: [] };
+        alerts.forEach((a) => {
+          const ag = String(a.agency || '').toLowerCase();
+          if (ag === 'sorta') byAgency.sorta.push(a);
+          else if (ag === 'tank') byAgency.tank.push(a);
+          else byAgency.other.push(a);
+        });
+
+        const renderGroup = (title, list) => {
+          if (!list.length) return '';
+          const items = list.map((a, idx) => {
+            const text = String(a.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `
+              <div style="background:#23272a;border-left:4px solid #ffa500;border-radius:6px;margin-bottom:0.5rem;overflow:hidden;">
+                <div style="padding:0.75rem 1rem;color:#fff;line-height:1.35;font-size:0.95rem;">
+                  ${text}
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          const groupId = `category-cincy-${title.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}`;
+          return `
+            <div style="margin-bottom: 1rem;">
+              <button
+                onclick="toggleAlertCategory('${groupId}')"
+                style="width:100%;background:#1a1a1a;border:2px solid #333;border-radius:6px;padding:0.75rem 1rem;color:#fff;font-size:1rem;font-weight:bold;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;"
+                onmouseover="this.style.background='#23272a'; this.style.borderColor='#1E90FF';"
+                onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#333';"
+              >
+                <span>${title} <span style="color:#888;font-weight:normal;">(${list.length})</span></span>
+                <span id="${groupId}-arrow" style="font-size:1.2rem;transition:transform 0.2s;">▼</span>
+              </button>
+              <div id="${groupId}" style="display:none;margin-top:0.5rem;">
+                ${items}
+              </div>
+            </div>
+          `;
+        };
+
+        const html =
+          renderGroup('Metro', byAgency.sorta) +
+          renderGroup('TANK', byAgency.tank) +
+          renderGroup('Other', byAgency.other);
+
+        alertsContent.innerHTML = html || '<div style="color:#4CAF50; padding: 1rem; text-align:center;">✅ No active transit alerts at this time.</div>';
+        return;
+      }
       
       // Filter alerts by route if routeFilter is provided
       if (routeFilter && Array.isArray(routeFilter) && routeFilter.length > 0) {
