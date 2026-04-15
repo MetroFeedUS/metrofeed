@@ -1654,6 +1654,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
   // Get route color: use provided color, or determine from route name, or default to steel grey
   let routeColor = options.routeColor;
   if (!routeColor && options.routeData) {
+    // Cincinnati: stabilize bus colors by agency (high contrast on dark basemap)
+    const rid = String(routeId);
+    if (rid.startsWith('sorta_')) {
+      routeColor = '#1E90FF'; // Metro blue
+    } else if (rid.startsWith('tank_')) {
+      routeColor = '#8B5CF6'; // TANK purple
+    }
+  }
+  if (!routeColor && options.routeData) {
     // Try to get route name from routeData
     const routeName = options.routeData.route_label || 
                       options.routeData.route_title || 
@@ -1745,10 +1754,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const isPrimaryShape = shapeIndex === 0;
       const routeSourceId = `route-line-${mapLayerKey}-${shapeIndex}`;
       const routeLayerId  = `route-layer-${mapLayerKey}-${shapeIndex}`;
+      const routeCasingLayerId = `route-layer-casing-${mapLayerKey}-${shapeIndex}`;
 
       // Guard against duplicate IDs
       if (map.getLayer(routeLayerId)) {
         map.removeLayer(routeLayerId);
+      }
+      if (map.getLayer(routeCasingLayerId)) {
+        map.removeLayer(routeCasingLayerId);
       }
       if (map.getSource(routeSourceId)) {
         map.removeSource(routeSourceId);
@@ -1790,13 +1803,31 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const lineOpacity = isOtpActive ? 0.25 : 0.9;  // Slightly higher opacity for better visibility
       const lineWidth = isOtpActive ? 3 : 4;          // Normal width
       
+      // Add a casing/outline first so routes read on any basemap.
+      map.addLayer({
+        id: routeCasingLayerId,
+        type: "line",
+        source: routeSourceId,
+        paint: {
+          "line-color": "#0b0b0b",
+          "line-width": lineWidth + 3,
+          "line-opacity": isOtpActive ? 0.18 : 0.55
+        },
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        beforeId: beforeId
+      });
+      overlayElements.layers.push(routeCasingLayerId);
+
       map.addLayer({
         id: routeLayerId,
         type: "line",
         source: routeSourceId,
         paint: {
           "line-color": routeColor,
-          "line-width": lineWidth,
+          "line-width": lineWidth + 1,
           "line-opacity": lineOpacity
         },
         layout: {
