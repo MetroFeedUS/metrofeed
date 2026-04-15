@@ -4873,11 +4873,16 @@
       String(routeNumber || '').startsWith('tank_') ? 'TANK ' :
       '';
     const displayVehicleID = agencyPrefix ? (agencyPrefix + idPart) : idPart;
+    const badgeRoute = String(routeNumber || '');
+    const badgeText =
+      badgeRoute.startsWith('sorta_') ? badgeRoute.slice(6) :
+      badgeRoute.startsWith('tank_') ? badgeRoute.slice(5) :
+      badgeRoute;
     
     const pulseClass = isOtpBus ? 'otp-bus-pulse' : '';
     let markerElement;
     if (typeof window.buildMbtaBusMarkerElement === 'function') {
-      markerElement = window.buildMbtaBusMarkerElement(routeColor, routeNumber, displayVehicleID);
+      markerElement = window.buildMbtaBusMarkerElement(routeColor, badgeText, displayVehicleID);
       if (pulseClass) markerElement.classList.add(pulseClass);
     } else {
       markerElement = document.createElement('div');
@@ -4887,7 +4892,7 @@
         : '#fff';
       markerElement.innerHTML = `<div style='text-align:center;'>
         <div style='background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
-          <span style='background:${fg};color:${fg === "#ffffff" ? "#0d0d0d" : "#ffffff"};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNumber}</span>${displayVehicleID}
+          <span style='background:${fg};color:${fg === "#ffffff" ? "#0d0d0d" : "#ffffff"};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${badgeText}</span>${displayVehicleID}
         </div>
         <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
       </div>`;

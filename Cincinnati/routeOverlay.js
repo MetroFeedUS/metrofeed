@@ -1340,6 +1340,13 @@ function metrofeedFormatVehicleLabel(vehicleIDRaw, routeId) {
   return idPart;
 }
 
+function metrofeedFormatRouteBadge(routeId) {
+  const rid = routeId != null ? String(routeId) : '';
+  if (rid.startsWith('sorta_')) return rid.slice(6);
+  if (rid.startsWith('tank_')) return rid.slice(5);
+  return rid;
+}
+
 /**
  * Collapsed floating chip: Metro/TANK + number for Cincinnati ids; else route number / rail short name.
  * @returns {{ label: string, isAgencyStyle: boolean }}
@@ -2667,7 +2674,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 return occ ? formatOccupancy(occ) : 'Unknown';
               };
               
-              const busElement = buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID);
+              const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
               const busMarker = new maplibregl.Marker({
                 element: busElement,
                 ...mbtaBusMarkerMapOptions()
@@ -2907,7 +2914,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               return occ ? formatOccupancy(occ) : 'Unknown';
             };
             
-            const busElement = buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID);
+            const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
             const busMarker = new maplibregl.Marker({
               element: busElement,
               ...mbtaBusMarkerMapOptions()
