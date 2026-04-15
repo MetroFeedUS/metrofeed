@@ -1179,9 +1179,12 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID) {
   wrap.style.alignItems = "center";
   wrap.style.pointerEvents = "auto";
   const d = MBTA_BUS_MARKER_DOT_RADIUS_PX * 2;
+  const fg = pickContrastingTextColor(routeColor);
+  const badgeBg = fg;
+  const badgeFg = fg === "#ffffff" ? "#0d0d0d" : "#ffffff";
   wrap.innerHTML = `
-    <div style="margin-bottom:6px;background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;white-space:nowrap;">
-      <span style="background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}
+    <div style="margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;">
+      <span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}
     </div>
     <div style="width:${d}px;height:${d}px;border-radius:50%;background:${routeColor};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);flex-shrink:0;"></div>
   `;
@@ -1325,6 +1328,16 @@ function pickContrastingTextColor(hex) {
   if ([r, g, b].some((x) => Number.isNaN(x))) return "#ffffff";
   const L = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return L > 0.55 ? "#0d0d0d" : "#ffffff";
+}
+
+function metrofeedFormatVehicleLabel(vehicleIDRaw, routeId) {
+  const rid = routeId != null ? String(routeId) : '';
+  const raw = vehicleIDRaw != null ? String(vehicleIDRaw) : '';
+  const numeric = raw.replace(/\D+/g, '');
+  const idPart = numeric || raw || '?';
+  if (rid.startsWith('sorta_')) return 'Metro ' + idPart;
+  if (rid.startsWith('tank_')) return 'TANK ' + idPart;
+  return idPart;
 }
 
 /**
@@ -2633,7 +2646,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               const blockId = bus.blockID || bus.vehicleID || '';
               if (!blockId) return;
               
-              const displayVehicleID = (bus.vehicleID || '').replace(/\D/g, '') || bus.vehicleID;
+              const displayVehicleID = metrofeedFormatVehicleLabel(bus.vehicleID, routeId);
               const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
               
               const getNextStopFromETAs = () => {
@@ -2669,7 +2682,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 popupContent.innerHTML = `
                 <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                   <div style='text-align:center; margin-bottom:6px;'>
-                    <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
+                    <div style='background:${routeColor};color:${pickContrastingTextColor(routeColor)};padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 ${displayVehicleID}</div>
                   </div>
                   <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                   <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
@@ -2867,7 +2880,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const occupancyText = occupancy ? formatOccupancy(occupancy) : 'Unknown';
             
             // Format vehicle ID for display (remove non-numeric characters, visual only)
-            const displayVehicleID = (bus.vehicleID || '').replace(/\D/g, '') || bus.vehicleID;
+            const displayVehicleID = metrofeedFormatVehicleLabel(bus.vehicleID, routeId);
             
             const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
             
@@ -2915,7 +2928,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                 <div style='text-align:center; margin-bottom:6px;'>
-                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
+                  <div style='background:${routeColor};color:${pickContrastingTextColor(routeColor)};padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 ${displayVehicleID}</div>
                 </div>
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                 <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>

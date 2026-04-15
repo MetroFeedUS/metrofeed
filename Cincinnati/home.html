@@ -4865,8 +4865,14 @@
   
   // Enhanced bus marker with better styling for MapLibre GL JS
   function createBusMarker(vehicleID, routeColor, routeNumber, isOtpBus = false) {
-    // Clean vehicle ID (remove non-numeric characters, visual only)
-    const displayVehicleID = String(vehicleID || '').replace(/^[^0-9]+/, '') || vehicleID;
+    const rawId = String(vehicleID || '');
+    const numeric = rawId.replace(/\D+/g, '');
+    const idPart = numeric || rawId || '?';
+    const agencyPrefix =
+      String(routeNumber || '').startsWith('sorta_') ? 'Metro ' :
+      String(routeNumber || '').startsWith('tank_') ? 'TANK ' :
+      '';
+    const displayVehicleID = agencyPrefix ? (agencyPrefix + idPart) : idPart;
     
     const pulseClass = isOtpBus ? 'otp-bus-pulse' : '';
     let markerElement;
@@ -4876,9 +4882,12 @@
     } else {
       markerElement = document.createElement('div');
       markerElement.className = pulseClass;
+      const fg = (typeof window.pickContrastingTextColor === 'function')
+        ? window.pickContrastingTextColor(routeColor)
+        : '#fff';
       markerElement.innerHTML = `<div style='text-align:center;'>
-        <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
-          <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNumber}</span>${displayVehicleID}
+        <div style='background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
+          <span style='background:${fg};color:${fg === "#ffffff" ? "#0d0d0d" : "#ffffff"};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNumber}</span>${displayVehicleID}
         </div>
         <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
       </div>`;
