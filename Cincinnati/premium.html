@@ -6603,12 +6603,10 @@
         routeName = `Green Line ${branch}`;
       }
       
-      // Get terminal stations for both directions
-      // For display: show first stop of dir0 to last stop of dir0 (the two terminals)
-      const [routeData0, routeData1] = await Promise.all([
-        getRouteData(route.id, 0).catch(() => null),
-        getRouteData(route.id, 1).catch(() => null)
-      ]);
+      // Load direction 0 only for list rendering. Some routes are one-way; calling dir1 for every
+      // route creates noisy 404s on providers with partial direction coverage.
+      const routeData0 = await getRouteData(route.id, 0).catch(() => null);
+      let routeData1 = null;
       
       let terminal0 = 'Unknown';
       let terminal1 = 'Unknown';
@@ -6617,10 +6615,6 @@
         // Direction 0: first stop is one terminal, last stop is the other
         terminal0 = routeData0.stops[0].name || 'Unknown';
         terminal1 = routeData0.stops[routeData0.stops.length - 1].name || 'Unknown';
-      } else if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
-        // Fallback: use direction 1 data (reversed)
-        terminal0 = routeData1.stops[routeData1.stops.length - 1].name || 'Unknown';
-        terminal1 = routeData1.stops[0].name || 'Unknown';
       }
       
       const routeDiv = document.createElement('div');
@@ -6640,11 +6634,23 @@
       directionsDiv.id = `rail-directions-${route.id}`;
       directionsDiv.style.cssText = 'display: none; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(30, 144, 255, 0.3);';
       
-      // Toggle function for expanding/collapsing directions
-      routeHeader.onclick = () => {
+      // Toggle function for expanding/collapsing directions (lazy-load dir1)
+      routeHeader.onclick = async () => {
         const isExpanded = directionsDiv.style.display !== 'none';
         directionsDiv.style.display = isExpanded ? 'none' : 'flex';
         routeHeader.querySelector('span:last-child').textContent = isExpanded ? '▼' : '▲';
+
+        if (!isExpanded && routeData1 == null) {
+          routeData1 = await getRouteData(route.id, 1).catch(() => null);
+          if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
+            const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
+            const dir1Btn = document.createElement('button');
+            dir1Btn.textContent = `⬅ ${dir1Terminal}`;
+            dir1Btn.style.cssText = 'width: 100%; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+            dir1Btn.onclick = () => selectRailRoute(route.id, 1);
+            directionsDiv.appendChild(dir1Btn);
+          }
+        }
       };
       
       // Show buttons with the terminal stations for each direction
@@ -6657,14 +6663,7 @@
         directionsDiv.appendChild(dir0Btn);
       }
       
-      if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
-        const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
-        const dir1Btn = document.createElement('button');
-        dir1Btn.textContent = `⬅ ${dir1Terminal}`;
-        dir1Btn.style.cssText = 'width: 100%; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
-        dir1Btn.onclick = () => selectRailRoute(route.id, 1);
-        directionsDiv.appendChild(dir1Btn);
-      }
+      // Direction 1 button is lazy-loaded on expand (see routeHeader.onclick)
 
       if (directionsDiv.children.length === 0 && (route.dir0 || route.dir1)) {
         if (route.dir0) {

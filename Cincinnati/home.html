@@ -2182,11 +2182,15 @@
           return routeData;
         }
       }
-      // Cincinnati: JSON under site root ROUTE_DATA_BASE (proxy); filenames match MBTA-style build
+      // Cincinnati: JSON under ROUTE_DATA_BASE (proxy/CDN).
+      // Some routes have two direction files, others are one-way or ship a single non-direction JSON.
       const safeId = String(routeId).replace(/[/?#]+/g, '_');
       const tryFiles = [
         `route-${safeId}-dir${directionId}.json`,
-        `route-${encodeURIComponent(String(routeId))}-dir${directionId}.json`
+        `route-${encodeURIComponent(String(routeId))}-dir${directionId}.json`,
+        // Fallback: no-direction filename (common for one-way / special service routes)
+        `route-${safeId}.json`,
+        `route-${encodeURIComponent(String(routeId))}.json`
       ];
       const base = ROUTE_DATA_BASE.endsWith('/') ? ROUTE_DATA_BASE : ROUTE_DATA_BASE + '/';
       for (let pi = 0; pi < tryFiles.length; pi++) {
@@ -4777,6 +4781,42 @@
     
     return vehicles;
   }
+
+  // Convert a JSON vehicles payload (from our VPS proxy) into the same "vehicle objects" we use elsewhere.
+  function parseVehiclesJsonToGtfsLike(json) {
+    const items =
+      (Array.isArray(json) && json) ||
+      (Array.isArray(json?.vehicles) && json.vehicles) ||
+      (Array.isArray(json?.data) && json.data) ||
+      [];
+    if (!Array.isArray(items)) return [];
+
+    const out = [];
+    for (let i = 0; i < items.length; i++) {
+      const v = items[i];
+      if (!v) continue;
+
+      const vehId = v.vehicleID ?? v.vehicleId ?? v.vehicle_id ?? v.id ?? null;
+      const route = v.routeNumber ?? v.route_number ?? v.routeId ?? v.route_id ?? v?.trip?.route_id ?? null;
+      const dir = v.direction ?? v.direction_id ?? v.directionId ?? v?.trip?.direction_id ?? null;
+      const lat = v.latitude ?? v.lat ?? v?.position?.latitude ?? null;
+      const lon = v.longitude ?? v.lon ?? v.lng ?? v?.position?.longitude ?? null;
+      if (lat == null || lon == null) continue;
+
+      out.push({
+        vehicleID: vehId != null ? String(vehId) : '',
+        routeNumber: route != null ? String(route) : '',
+        direction: dir != null ? Number(dir) : null,
+        latitude: Number(lat),
+        longitude: Number(lon),
+        bearing: v.bearing ?? v?.position?.bearing ?? null,
+        speed: v.speed ?? v?.position?.speed ?? null,
+        blockID: v.blockID ?? v.blockId ?? v.block_id ?? v.label ?? (vehId != null ? String(vehId) : ''),
+        occupancy: v.occupancy ?? v.occupancy_status ?? null
+      });
+    }
+    return out;
+  }
   
   /**
    * Find Me button: default gray "Find Me"; active = orange + pulse (same label).
@@ -5079,9 +5119,13 @@
       
       // Check which API type to use
       if (CITY_CONFIG.busApiType === 'mbta-gtfs-rt' || CITY_CONFIG.busApiType === 'gtfs-rt') {
-        const urls = Array.isArray(CITY_CONFIG.gtfsRtUrls) && CITY_CONFIG.gtfsRtUrls.length
+        const proxyUrls = Array.isArray(CITY_CONFIG.gtfsRtProxyUrls) && CITY_CONFIG.gtfsRtProxyUrls.length
+          ? CITY_CONFIG.gtfsRtProxyUrls.filter(Boolean)
+          : [];
+        const rawUrls = Array.isArray(CITY_CONFIG.gtfsRtUrls) && CITY_CONFIG.gtfsRtUrls.length
           ? CITY_CONFIG.gtfsRtUrls.filter(Boolean)
           : (CITY_CONFIG.gtfsRtUrl ? [CITY_CONFIG.gtfsRtUrl] : []);
+        const urls = proxyUrls.length ? proxyUrls : rawUrls;
 
         if (!urls.length) {
           console.warn('[fetchAndDisplayBuses] GTFS-RT enabled but no URLs configured.');
@@ -5092,6 +5136,12 @@
         const batches = await Promise.all(urls.map(async (u) => {
           const res = await fetch(u);
           if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          const contentType = (res.headers.get('content-type') || '').toLowerCase();
+          const looksJson = String(u).toLowerCase().includes('.json') || contentType.includes('application/json') || contentType.includes('+json');
+          if (looksJson) {
+            const j = await res.json();
+            return parseVehiclesJsonToGtfsLike(j);
+          }
           const buffer = await res.arrayBuffer();
           return await parseMBTAGTFSRT(buffer);
         }));
@@ -7373,19 +7423,16 @@
 
     routeList.innerHTML = '<div style="color: #1E90FF; padding: 1rem; text-align: center;">Loading routes...</div>';
     const routePromises = routesToShow.map(async (route) => {
-      const [routeData0, routeData1] = await Promise.all([
-        getRouteData(route.id, 0).catch(() => null),
-        getRouteData(route.id, 1).catch(() => null)
-      ]);
+      // Load direction 0 only for list rendering. Some routes (e.g., school specials) are one-way
+      // and calling dir1 for every route creates noisy 404s.
+      const routeData0 = await getRouteData(route.id, 0).catch(() => null);
+      let routeData1 = null;
 
       let terminal0 = 'Unknown';
       let terminal1 = 'Unknown';
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
         terminal0 = routeData0.stops[0].name || 'Unknown';
         terminal1 = routeData0.stops[routeData0.stops.length - 1].name || 'Unknown';
-      } else if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
-        terminal0 = routeData1.stops[routeData1.stops.length - 1].name || 'Unknown';
-        terminal1 = routeData1.stops[0].name || 'Unknown';
       }
 
       const routeDiv = document.createElement('div');
@@ -7398,10 +7445,29 @@
       const directionsDiv = document.createElement('div');
       directionsDiv.id = 'directions-' + route.id;
       directionsDiv.style.cssText = 'display: none; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(30, 144, 255, 0.3);';
-      routeHeader.onclick = () => {
+      routeHeader.onclick = async () => {
         const isExpanded = directionsDiv.style.display !== 'none';
         directionsDiv.style.display = isExpanded ? 'none' : 'flex';
         chevron.textContent = isExpanded ? '\u25BC' : '\u25B2';
+
+        // Lazy-load direction 1 only when the row is expanded.
+        // This avoids background fetch noise for one-way routes.
+        if (!isExpanded && routeData1 == null) {
+          routeData1 = await getRouteData(route.id, 1).catch(() => null);
+          if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
+            const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
+            const dir1BtnWrapper = document.createElement('div');
+            dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
+            const dir1Btn = document.createElement('button');
+            dir1Btn.textContent = '⬅ ' + dir1Terminal;
+            dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+            dir1Btn.onclick = () => selectRoute(route.id, 1);
+            const star1Btn = createFavoriteStar(route.id, 1, route.label);
+            dir1BtnWrapper.appendChild(dir1Btn);
+            dir1BtnWrapper.appendChild(star1Btn);
+            directionsDiv.appendChild(dir1BtnWrapper);
+          }
+        }
       };
 
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
@@ -7418,19 +7484,7 @@
         directionsDiv.appendChild(dir0BtnWrapper);
       }
 
-      if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
-        const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
-        const dir1BtnWrapper = document.createElement('div');
-        dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
-        const dir1Btn = document.createElement('button');
-        dir1Btn.textContent = '⬅ ' + dir1Terminal;
-        dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
-        dir1Btn.onclick = () => selectRoute(route.id, 1);
-        const star1Btn = createFavoriteStar(route.id, 1, route.label);
-        dir1BtnWrapper.appendChild(dir1Btn);
-        dir1BtnWrapper.appendChild(star1Btn);
-        directionsDiv.appendChild(dir1BtnWrapper);
-      }
+      // Direction 1 button is lazy-loaded on expand (see routeHeader.onclick)
 
       routeDiv.appendChild(routeHeader);
       routeDiv.appendChild(directionsDiv);

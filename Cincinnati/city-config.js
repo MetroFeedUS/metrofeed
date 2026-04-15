@@ -198,11 +198,20 @@ const CITIES = {
      */
     busApiType: "gtfs-rt",
     disableGtfsRt: false,
-    // One or more VehiclePositions feed URLs (protobuf FeedMessage).
+    /**
+     * IMPORTANT:
+     * - Browsers cannot fetch most agency GTFS-RT endpoints directly due to CORS.
+     * - Use your own cached proxy endpoints here (same pattern as Boston's maps.metrofeedus.com/api/mbta/*).
+     * - Keep the raw agency URLs as reference only; they should live server-side.
+     */
+    gtfsRtProxyUrls: [
+      // VPS merged vehicles endpoint (decoded to JSON). Prefer this over raw agency feeds (CORS/rate limiting).
+      // Note: this is a path on your VPS; adjust host if needed.
+      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
+    ],
+    // Reference-only (do not rely on these directly from the browser)
     gtfsRtUrls: [
-      // SORTA / Metro (Cincinnati) VehiclePositions.pb
       "https://tmgtfsprd.sorttrpcloud.com/TMGTFSRealTimeWebService/vehicle/vehiclepositions.pb",
-      // TANK (NKY) VehiclePosition
       "https://tank.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition"
     ],
     // Optional enrichments (not wired into UI yet for gtfs-rt):

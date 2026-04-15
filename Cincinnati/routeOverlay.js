@@ -1066,6 +1066,65 @@ async function parseMBTAGTFSRT(buffer) {
 }
 
 /**
+ * Parse a JSON "vehicles" payload from a proxy into the same shape we use internally.
+ * Supports a few common server schemas; unknown shapes return [].
+ */
+function parseVehiclesJsonToGtfsLike(json) {
+  const items =
+    (Array.isArray(json) && json) ||
+    (Array.isArray(json?.vehicles) && json.vehicles) ||
+    (Array.isArray(json?.data) && json.data) ||
+    [];
+
+  if (!Array.isArray(items)) return [];
+
+  const out = [];
+  for (let i = 0; i < items.length; i++) {
+    const v = items[i];
+    if (!v) continue;
+
+    const vehId =
+      v.vehicleID ?? v.vehicleId ?? v.vehicle_id ??
+      v.id ?? v?.vehicle?.id ?? v?.vehicle?.vehicle_id ??
+      v?.vehicle?.vehicleID ??
+      null;
+
+    const route =
+      v.routeNumber ?? v.route_number ?? v.routeId ?? v.route_id ??
+      v?.trip?.route_id ?? v?.trip?.routeId ?? v?.trip?.routeID ??
+      v?.trip?.route_short_name ??
+      null;
+
+    const dir =
+      v.direction ?? v.direction_id ?? v.directionId ??
+      v?.trip?.direction_id ?? v?.trip?.directionId ??
+      null;
+
+    const lat =
+      v.latitude ?? v.lat ?? v?.position?.latitude ?? v?.position?.lat ??
+      null;
+    const lon =
+      v.longitude ?? v.lon ?? v.lng ?? v?.position?.longitude ?? v?.position?.lon ?? v?.position?.lng ??
+      null;
+
+    if (lat == null || lon == null) continue;
+
+    out.push({
+      vehicleID: vehId != null ? String(vehId) : '',
+      routeNumber: route != null ? String(route) : '',
+      direction: dir != null ? Number(dir) : null,
+      latitude: Number(lat),
+      longitude: Number(lon),
+      bearing: v.bearing ?? v?.position?.bearing ?? null,
+      speed: v.speed ?? v?.position?.speed ?? null,
+      blockID: v.blockID ?? v.blockId ?? v.block_id ?? v.label ?? (vehId != null ? String(vehId) : ''),
+      occupancy: v.occupancy ?? v.occupancy_status ?? null
+    });
+  }
+  return out;
+}
+
+/**
  * Format occupancy status to friendly text
  * @param {string} occupancy - Raw occupancy status from V3 API
  * @returns {string} Friendly occupancy text
@@ -2474,6 +2533,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
       const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
       const gtfsRtUrls = options.gtfsRtUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrls) || null;
+      const gtfsRtProxyUrls = options.gtfsRtProxyUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtProxyUrls) || null;
       const gtfsRtTripUpdatesUrl = options.gtfsRtTripUpdatesUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrl) || null;
       const gtfsRtTripUpdatesUrls = options.gtfsRtTripUpdatesUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrls) || null;
       const apiKey = options.apiKey || null;
@@ -2632,17 +2692,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
           }
           
           const wantsGtfsRt = (busApiType === 'mbta-gtfs-rt' || busApiType === 'gtfs-rt');
+          const resolvedProxyUrls = Array.isArray(gtfsRtProxyUrls) && gtfsRtProxyUrls.length
+            ? gtfsRtProxyUrls.filter(Boolean)
+            : [];
           const resolvedUrls = Array.isArray(gtfsRtUrls) && gtfsRtUrls.length
             ? gtfsRtUrls.filter(Boolean)
             : (gtfsRtUrl ? [gtfsRtUrl] : []);
 
-          if (wantsGtfsRt && resolvedUrls.length && !disableGtfsRt) {
-            // Standard GTFS-RT VehiclePositions feed(s). For mbta-gtfs-rt we may enrich later; for gtfs-rt we stop here.
-            console.log('[attachRouteToMap] Fetching GTFS-RT feed(s):', resolvedUrls);
+          const urlsToFetch = resolvedProxyUrls.length ? resolvedProxyUrls : resolvedUrls;
 
-            const feedResults = await Promise.all(resolvedUrls.map(async (url) => {
+          if (wantsGtfsRt && urlsToFetch.length && !disableGtfsRt) {
+            // Standard GTFS-RT VehiclePositions feed(s). For mbta-gtfs-rt we may enrich later; for gtfs-rt we stop here.
+            console.log('[attachRouteToMap] Fetching GTFS-RT feed(s):', urlsToFetch);
+
+            const feedResults = await Promise.all(urlsToFetch.map(async (url) => {
               const res = await fetch(url);
               if (!res.ok) throw new Error(`GTFS-RT HTTP ${res.status}: ${res.statusText} (${url})`);
+              const contentType = (res.headers.get('content-type') || '').toLowerCase();
+              const looksJson = url.toLowerCase().includes('.json') || contentType.includes('application/json') || contentType.includes('+json');
+
+              if (looksJson) {
+                const j = await res.json();
+                return parseVehiclesJsonToGtfsLike(j);
+              }
+
               const buffer = await res.arrayBuffer();
               try {
                 return await parseMBTAGTFSRT(buffer);
@@ -2660,7 +2733,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             if (busApiType === 'mbta-gtfs-rt') {
               console.warn('[attachRouteToMap] MBTA mode but no GTFS-RT URL configured.', { busApiType, gtfsRtUrl, gtfsRtUrls });
             } else if (busApiType === 'gtfs-rt') {
-              console.warn('[attachRouteToMap] gtfs-rt mode but no GTFS-RT URLs configured.', { busApiType, gtfsRtUrl, gtfsRtUrls });
+              console.warn('[attachRouteToMap] gtfs-rt mode but no GTFS-RT URLs configured.', { busApiType, gtfsRtUrl, gtfsRtUrls, gtfsRtProxyUrls });
             }
           }
           
