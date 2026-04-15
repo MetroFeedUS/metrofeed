@@ -1100,6 +1100,11 @@ function parseVehiclesJsonToGtfsLike(json) {
       v?.trip?.direction_id ?? v?.trip?.directionId ??
       null;
 
+    const tripId =
+      v.trip_id ?? v.tripId ?? v.trip_id ??
+      v?.trip?.trip_id ?? v?.trip?.tripId ?? v?.trip?.id ??
+      null;
+
     const lat =
       v.latitude ?? v.lat ?? v?.position?.latitude ?? v?.position?.lat ??
       null;
@@ -1112,6 +1117,7 @@ function parseVehiclesJsonToGtfsLike(json) {
     out.push({
       vehicleID: vehId != null ? String(vehId) : '',
       routeNumber: route != null ? String(route) : '',
+      tripId: tripId != null ? String(tripId) : null,
       direction: dir != null ? Number(dir) : null,
       latitude: Number(lat),
       longitude: Number(lon),
@@ -3033,6 +3039,130 @@ function attachRouteToMap(map, routeId, directionId, options) {
         // Update ETAs every 25 seconds
         etaInterval = setInterval(fetchETAs, 25000);
         overlayElements.intervals.push(etaInterval);
+      }
+
+      // Cincinnati-style TripUpdates (decoded JSON from VPS): build stopETAs + vehicleETAs for popups.
+      if (busApiType === 'gtfs-rt') {
+        const overlayKey = options.overlayKey || `${routeId}-${directionId}`;
+        const tripsUrl = (window.CITY_CONFIG && window.CITY_CONFIG.realtimeTripsUrl) || null;
+        const routeStops = Array.isArray(routeData?.stops) ? routeData.stops : [];
+        const stopNameById = Object.create(null);
+        routeStops.forEach((s) => {
+          const sid = s && (s.stop_id || s.id || s.stopId);
+          const nm = s && (s.name || s.stop_name);
+          if (sid) stopNameById[String(sid)] = nm || String(sid);
+        });
+
+        const normalizeAgencyAndRouteNum = () => {
+          const rid = String(routeId);
+          const agency = rid.startsWith('sorta_') ? 'sorta' : rid.startsWith('tank_') ? 'tank' : null;
+          const num = rid.startsWith('sorta_') ? rid.slice(6) : rid.startsWith('tank_') ? rid.slice(5) : rid;
+          return { agency, routeNum: String(num) };
+        };
+
+        const buildLookupsFromTrips = (tripsPayload, vehiclesForRoute) => {
+          const nowSec = Math.floor(Date.now() / 1000);
+          const { agency, routeNum } = normalizeAgencyAndRouteNum();
+
+          const tripIdToVehicleId = Object.create(null);
+          (vehiclesForRoute || []).forEach((v) => {
+            if (v && v.tripId && v.vehicleID) {
+              tripIdToVehicleId[String(v.tripId)] = String(v.vehicleID);
+            }
+          });
+
+          const stopETAs = Object.create(null);
+          const vehicleETAs = Object.create(null);
+
+          const trips = tripsPayload && Array.isArray(tripsPayload.trips) ? tripsPayload.trips : [];
+          trips.forEach((t) => {
+            if (!t) return;
+            if (agency && String(t.agency || '').toLowerCase() !== agency) return;
+            if (t.route_id == null || String(t.route_id) !== routeNum) return;
+            const stopUpdates = Array.isArray(t.stop_updates) ? t.stop_updates : [];
+            const tripId = t.trip_id != null ? String(t.trip_id) : null;
+            const vehicleId = tripId && tripIdToVehicleId[tripId] ? tripIdToVehicleId[tripId] : null;
+
+            let firstUpcomingForVehicle = null;
+
+            for (let i = 0; i < stopUpdates.length; i++) {
+              const su = stopUpdates[i];
+              if (!su || !su.stop_id) continue;
+              const ts = su.arrival != null ? Number(su.arrival) : (su.departure != null ? Number(su.departure) : null);
+              if (!ts || Number.isNaN(ts)) continue;
+
+              // Only consider upcoming-ish times (allow small skew)
+              if (ts < (nowSec - 30)) continue;
+
+              const stopId = String(su.stop_id);
+              const etaDate = new Date(ts * 1000);
+              const pred = {
+                stopId,
+                stopName: stopNameById[stopId] || stopId,
+                eta: ts * 1000,
+                etaDate,
+                tripId,
+                vehicleId
+              };
+
+              if (!stopETAs[stopId]) stopETAs[stopId] = [];
+              stopETAs[stopId].push(pred);
+
+              if (vehicleId && !firstUpcomingForVehicle) {
+                firstUpcomingForVehicle = pred;
+              }
+            }
+
+            if (vehicleId && firstUpcomingForVehicle) {
+              vehicleETAs[vehicleId] = [firstUpcomingForVehicle];
+            }
+          });
+
+          Object.keys(stopETAs).forEach((sid) => stopETAs[sid].sort((a, b) => a.etaDate - b.etaDate));
+          return { stopETAs, vehicleETAs };
+        };
+
+        const fetchTripsAndUpdateEtas = async () => {
+          if (!tripsUrl) return;
+          try {
+            const res = await fetch(tripsUrl, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`Trips HTTP ${res.status}: ${res.statusText}`);
+            const payload = await res.json();
+
+            // Build list of vehicles already fetched for this route (helps map trip_id → vehicle_id)
+            const routeNum = String(routeId);
+            const vehiclesForRoute = (window.lastBusData && Array.isArray(window.lastBusData))
+              ? window.lastBusData.filter((v) => v && (String(v.routeNumber) === routeNum || String(v.routeNumber) === routeNum.replace(/^.*_/, '')))
+              : [];
+
+            const { stopETAs, vehicleETAs } = buildLookupsFromTrips(payload, vehiclesForRoute);
+            window.currentRouteETAs = {
+              overlayKey,
+              routeId: String(routeId),
+              directionId,
+              stopETAs,
+              vehicleETAs,
+              vehicleInfo: null,
+              stopIdByName: null,
+              fetchedAt: new Date()
+            };
+
+            overlayElements.stopPopupRefreshers.forEach(({ overlayKey: ok, update }) => {
+              if (ok === overlayKey) {
+                try { update(); } catch (e) {}
+              }
+            });
+            overlayElements.busPopupRefreshers.forEach((fn) => {
+              try { fn(); } catch (e) {}
+            });
+          } catch (e) {
+            console.warn('[Trips] Unavailable:', e);
+          }
+        };
+
+        fetchTripsAndUpdateEtas();
+        const tripsInterval = setInterval(fetchTripsAndUpdateEtas, 30000);
+        overlayElements.intervals.push(tripsInterval);
       }
 
       // GTFS-RT TripUpdates enrichment (non-blocking)
