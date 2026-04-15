@@ -8559,7 +8559,10 @@
     }
 
     try {
-      const url = 'https://maps.metrofeedus.com/api/mbta/v3/alerts?sort=-created_at&page[limit]=50';
+      const url =
+        (window.CITY_CONFIG && window.CITY_CONFIG.realtimeAlertsUrl)
+          ? window.CITY_CONFIG.realtimeAlertsUrl
+          : 'https://maps.metrofeedus.com/api/mbta/v3/alerts?sort=-created_at&page[limit]=50';
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -8576,6 +8579,15 @@
       }
 
       const data = JSON.parse(text);
+
+      // Cincinnati VPS schema: { updated_at, alerts: [{ agency, text }, ...] }
+      if (data && Array.isArray(data.alerts)) {
+        cachedAlerts = data.alerts;
+        alertsCacheTime = cacheNow;
+        return cachedAlerts;
+      }
+
+      // MBTA schema: { data: [...] }
       let alerts = data.data || [];
       
       // Debug: Log first alert structure to see how route IDs are stored
@@ -8636,6 +8648,29 @@
     
     // Normalize routeId to string for comparison
     const normalizedRouteId = String(routeId);
+
+    // Cincinnati VPS alerts: array of { agency, text }
+    if (alerts.length > 0 && alerts[0] && typeof alerts[0] === 'object' && 'text' in alerts[0] && 'agency' in alerts[0]) {
+      const agency = normalizedRouteId.startsWith('sorta_') ? 'sorta' : normalizedRouteId.startsWith('tank_') ? 'tank' : null;
+      const routeNum = normalizedRouteId.startsWith('sorta_') ? normalizedRouteId.slice(6)
+        : normalizedRouteId.startsWith('tank_') ? normalizedRouteId.slice(5)
+        : normalizedRouteId;
+
+      const routeAlerts = alerts.filter((a) => {
+        if (!a || !a.text) return false;
+        if (agency && String(a.agency || '').toLowerCase() !== agency) return false;
+        const t = String(a.text);
+        const nums = t.match(/\d+/g) || [];
+        // If the alert text references route numbers, match those.
+        if (nums.length) return nums.some((n) => String(n) === String(routeNum));
+        // Otherwise treat as an agency-wide notice (still show badge).
+        return true;
+      });
+
+      console.log(`[getRouteAlerts] Found ${routeAlerts.length} alerts for route "${normalizedRouteId}"`);
+      if (!routeAlerts.length) return null;
+      return { count: routeAlerts.length, severity: 'moderate', alerts: routeAlerts };
+    }
     
     // MBTA V3 API stores route IDs in informed_entity array, not relationships.route.data
     // Each informed_entity can have a route field with the route ID

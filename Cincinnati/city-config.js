@@ -209,6 +209,9 @@ const CITIES = {
       // Note: this is a path on your VPS; adjust host if needed.
       "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
     ],
+    // VPS realtime add-ons (decoded to JSON)
+    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
+    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
     // Reference-only (do not rely on these directly from the browser)
     gtfsRtUrls: [
       "https://tmgtfsprd.sorttrpcloud.com/TMGTFSRealTimeWebService/vehicle/vehiclepositions.pb",
