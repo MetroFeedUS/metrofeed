@@ -2777,7 +2777,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const stringMatch = String(v.routeNumber) === String(routeId);
             
             const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
-            const directionMatch = v.direction == directionId;
+            // Some proxy JSON feeds omit direction_id. In that case, treat vehicles as matching either direction
+            // so users still see buses on the route overlay.
+            const directionMatch = (v.direction == null || v.direction === '') ? true : (v.direction == directionId);
             
             if (routeMatch && directionMatch) {
               console.log(`[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ''}, direction ${v.direction} == ${directionId}`);
