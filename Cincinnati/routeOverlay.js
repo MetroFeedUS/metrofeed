@@ -1,13 +1,8 @@
 /**
- * MetroFeed Route Overlay Module (clean version)
+ * MetroFeed Route Overlay — Cincinnati build
  *
- * FOR NEW DEVS (handoff)
- * ----------------------
- * - Draws route polylines/stops and (when enabled) live bus markers on a MapLibre map.
- * - Boston MBTA: GTFS-RT + V3 fetch/parse lives IN THIS FILE (bundled on purpose). One script upload
- *   avoids production missing a second file, which previously left window.attachRouteToMap undefined.
- * - City behavior comes from window.CITY_CONFIG (see city-config.js) — e.g. busApiType, gtfsRtUrl.
- * - Instruction manual: DEVELOPER.md (same folder as this file)
+ * - Draws route polylines/stops and live bus markers (JSON vehicle proxy + trips.json ETAs).
+ * - City behavior: window.CITY_CONFIG (city-config.js) — gtfsRtProxyUrls, realtimeTripsUrl, etc.
  *
  * Shared route drawing logic for:
  *  - Individual route HTML pages (route-XXX-dirY.html)
@@ -33,6 +28,16 @@
  * routeOverlay.remove(); // cleans up layers, markers, panel
  */
 
+(function () {
+  // Allow safe devtools hot-injection / double-load without "already declared" SyntaxErrors.
+  // If this script is already loaded on the page, skip re-executing it.
+  try {
+    if (typeof window !== 'undefined' && window.__METROFEED_ROUTE_OVERLAY_LOADED__) {
+      return;
+    }
+    if (typeof window !== 'undefined') window.__METROFEED_ROUTE_OVERLAY_LOADED__ = true;
+  } catch (_) {}
+
 "use strict";
 
 // ===============================
@@ -50,6 +55,58 @@ function pickContrastingTextColor(hex) {
   if ([r, g, b].some((x) => Number.isNaN(x))) return "#ffffff";
   const L = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return L > 0.55 ? "#0d0d0d" : "#ffffff";
+}
+
+function metrofeedAngleDeltaDeg(a, b) {
+  // Smallest signed diff between headings a and b (degrees)
+  let d = ((Number(a) - Number(b)) % 360 + 540) % 360 - 180;
+  if (!Number.isFinite(d)) d = 0;
+  return d;
+}
+
+function inferDirectionFromBearing(routeShape, bearingDeg) {
+  // Infer directionId (0 or 1) by comparing vehicle bearing to the route's overall heading.
+  // Direction 0 ~ from first point → last point. Direction 1 is opposite.
+  if (!Array.isArray(routeShape) || routeShape.length < 2) return null;
+  const b = Number(bearingDeg);
+  if (!Number.isFinite(b)) return null;
+
+  // Find a robust coarse heading using endpoints with some separation.
+  const p0 = routeShape[0];
+  const p1 = routeShape[Math.max(1, Math.floor(routeShape.length * 0.15))];
+  const pn = routeShape[routeShape.length - 1];
+  const pn1 = routeShape[Math.max(0, routeShape.length - 1 - Math.max(1, Math.floor(routeShape.length * 0.15)))];
+
+  // shape points are [lat, lon] in your JSON
+  const latA = Number(p0 && p0[0]);
+  const lonA = Number(p0 && p0[1]);
+  const latB = Number(p1 && p1[0]);
+  const lonB = Number(p1 && p1[1]);
+  const latC = Number(pn1 && pn1[0]);
+  const lonC = Number(pn1 && pn1[1]);
+  const latD = Number(pn && pn[0]);
+  const lonD = Number(pn && pn[1]);
+  if (![latA, lonA, latB, lonB, latC, lonC, latD, lonD].every(Number.isFinite)) return null;
+
+  const headingDeg = (lat1, lon1, lat2, lon2) => {
+    const toRad = (x) => (x * Math.PI) / 180;
+    const y = Math.sin(toRad(lon2 - lon1)) * Math.cos(toRad(lat2));
+    const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+              Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lon2 - lon1));
+    let brng = (Math.atan2(y, x) * 180) / Math.PI;
+    brng = (brng + 360) % 360;
+    return brng;
+  };
+
+  // Average a "start heading" and "end heading" for stability
+  const hStart = headingDeg(latA, lonA, latB, lonB);
+  const hEnd = headingDeg(latC, lonC, latD, lonD);
+  const h0 = ((hStart + hEnd) / 2) % 360;
+  const h1 = (h0 + 180) % 360;
+
+  const d0 = Math.abs(metrofeedAngleDeltaDeg(b, h0));
+  const d1 = Math.abs(metrofeedAngleDeltaDeg(b, h1));
+  return d0 <= d1 ? 0 : 1;
 }
 
 function metrofeedFormatVehicleLabel(vehicleIDRaw, routeId) {
@@ -117,1045 +174,92 @@ function parseVehiclesJsonToGtfsLike(json) {
       bearing: v.bearing ?? v?.position?.bearing ?? null,
       speed: v.speed ?? v?.position?.speed ?? null,
       blockID: v.blockID ?? v.blockId ?? v.block_id ?? v.label ?? (vehId != null ? String(vehId) : ""),
-      occupancy: v.occupancy ?? v.occupancy_status ?? null
+      occupancy: v.occupancy ?? v.occupancy_status ?? null,
+      tripId: v.trip_id ?? v.tripId ?? v?.trip?.trip_id ?? null
     });
   }
   return out;
 }
 
-
-
-// === GTFS-RT Parser Functions (for MBTA) ===
-function parseVarint(buf, pos) {
-  let result = 0;
-  let shift = 0;
-  let byte;
-  do {
-    if (pos >= buf.length) throw new Error('Buffer overflow');
-    byte = buf[pos++];
-    result |= (byte & 0x7F) << shift;
-    shift += 7;
-  } while (byte & 0x80);
-  return { value: result, pos };
-}
-
-function readString(buf, pos, length) {
-  const bytes = buf.slice(pos, pos + length);
-  return new TextDecoder('utf-8').decode(bytes);
-}
-
-function readFloat(buf, pos) {
-  const view = new DataView(buf.buffer, buf.byteOffset + pos, 4);
-  return view.getFloat32(0, true);
-}
-
-function skipField(buf, pos, wireType) {
-  if (wireType === 0) {
-    const { pos: newPos } = parseVarint(buf, pos);
-    return newPos;
-  } else if (wireType === 1) {
-    return pos + 8;
-  } else if (wireType === 2) {
-    const { value: length, pos: lengthPos } = parseVarint(buf, pos);
-    return lengthPos + length;
-  } else if (wireType === 5) {
-    return pos + 4;
-  }
-  return pos;
-}
-
-// Parse MBTA GTFS-RT TripUpdates feed (minimal decoder)
-// Returns { updatesByStopId, updatesByTripId }
-function parseMBTAGTFSTripUpdates(buffer) {
-  const uint8Buffer = new Uint8Array(buffer);
-  let pos = 0;
+/**
+ * VPS realtime trips.json (e.g. Cincinnati): { trips: [{ agency, trip_id, route_id, stop_updates: [{ stop_id, arrival, departure }] }] }
+ * Builds the same shape as protobuf TripUpdates for stop popups + trip_id → trip lookup for bus next-stop.
+ */
+function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
   const updatesByStopId = Object.create(null);
-  const updatesByTripId = Object.create(null);
+  const tripUpdatesByTripId = Object.create(null);
+  const trips = Array.isArray(json && json.trips) ? json.trips : [];
+  const nowSec = Math.floor(Date.now() / 1000);
 
-  const parseTripDescriptor = (buf, start, end) => {
-    let p = start;
-    const out = { tripId: null, routeId: null, directionId: null, startDate: null, startTime: null };
-    while (p < end) {
-      const tag = buf[p++];
-      if (!tag) break;
-      const fieldNum = tag >> 3;
-      const wireType = tag & 0x07;
-      if (wireType === 2) {
-        const { value: len, pos: lenPos } = parseVarint(buf, p);
-        const s = lenPos;
-        const e = s + len;
-        if (fieldNum === 1) out.tripId = readString(buf, s, len);
-        else if (fieldNum === 2) out.startTime = readString(buf, s, len);
-        else if (fieldNum === 3) out.startDate = readString(buf, s, len);
-        else if (fieldNum === 5) out.routeId = readString(buf, s, len);
-        p = e;
-      } else if (wireType === 0) {
-        const { value, pos: newPos } = parseVarint(buf, p);
-        if (fieldNum === 6) out.directionId = value;
-        p = newPos;
-      } else {
-        p = skipField(buf, p, wireType);
-      }
-    }
-    return out;
+  const feed = String(feedRouteId || "");
+  const agencyWant = feed.startsWith("sorta_") ? "sorta" : feed.startsWith("tank_") ? "tank" : null;
+  const feedRouteNum =
+    feed.startsWith("sorta_") ? feed.slice(6) : feed.startsWith("tank_") ? feed.slice(5) : feed;
+  const dataRouteNum =
+    routeData && routeData.route_number != null ? String(routeData.route_number) : null;
+  const normNum = (s) => {
+    const d = String(s || "").replace(/[^0-9A-Za-z]/g, "");
+    return d.replace(/^0+(?=\d)/, "") || d;
   };
 
-  const parseStopTimeEvent = (buf, start, end) => {
-    let p = start;
-    const out = { time: null, delay: null };
-    while (p < end) {
-      const tag = buf[p++];
-      if (!tag) break;
-      const fieldNum = tag >> 3;
-      const wireType = tag & 0x07;
-      if (wireType === 0) {
-        const { value, pos: newPos } = parseVarint(buf, p);
-        if (fieldNum === 1) out.delay = value;
-        if (fieldNum === 2) out.time = value;
-        p = newPos;
-      } else {
-        p = skipField(buf, p, wireType);
-      }
-    }
-    return out;
+  const tripMatches = (trip) => {
+    if (agencyWant && trip.agency && String(trip.agency).toLowerCase() !== agencyWant) return false;
+    const tr = trip.route_id != null ? String(trip.route_id) : "";
+    if (!tr) return false;
+    if (tr === feedRouteNum) return true;
+    if (dataRouteNum && tr === dataRouteNum) return true;
+    const a = normNum(tr);
+    const b = normNum(feedRouteNum);
+    if (a && b && a === b) return true;
+    return false;
   };
 
-  const parseStopTimeUpdate = (buf, start, end) => {
-    let p = start;
-    const out = { stopId: null, stopSequence: null, arrival: null, departure: null };
-    while (p < end) {
-      const tag = buf[p++];
-      if (!tag) break;
-      const fieldNum = tag >> 3;
-      const wireType = tag & 0x07;
-      if (wireType === 0) {
-        const { value, pos: newPos } = parseVarint(buf, p);
-        if (fieldNum === 1) out.stopSequence = value;
-        p = newPos;
-      } else if (wireType === 2) {
-        const { value: len, pos: lenPos } = parseVarint(buf, p);
-        const s = lenPos;
-        const e = s + len;
-        if (fieldNum === 4) out.stopId = readString(buf, s, len);
-        else if (fieldNum === 2) out.arrival = parseStopTimeEvent(buf, s, e);
-        else if (fieldNum === 3) out.departure = parseStopTimeEvent(buf, s, e);
-        p = e;
-      } else {
-        p = skipField(buf, p, wireType);
-      }
-    }
-    return out;
-  };
-
-  const parseTripUpdate = (buf, start, end) => {
-    let p = start;
-    const out = { trip: null, stopTimeUpdates: [] };
-    while (p < end) {
-      const tag = buf[p++];
-      if (!tag) break;
-      const fieldNum = tag >> 3;
-      const wireType = tag & 0x07;
-      if (wireType === 2) {
-        const { value: len, pos: lenPos } = parseVarint(buf, p);
-        const s = lenPos;
-        const e = s + len;
-        if (fieldNum === 1) out.trip = parseTripDescriptor(buf, s, e);
-        else if (fieldNum === 3) out.stopTimeUpdates.push(parseStopTimeUpdate(buf, s, e));
-        p = e;
-      } else {
-        p = skipField(buf, p, wireType);
-      }
-    }
-    return out;
-  };
-
-  const parseFeedEntity = (buf, start, end) => {
-    let p = start;
-    let tripUpdate = null;
-    while (p < end) {
-      const tag = buf[p++];
-      if (!tag) break;
-      const fieldNum = tag >> 3;
-      const wireType = tag & 0x07;
-      if (fieldNum === 3 && wireType === 2) {
-        const { value: len, pos: lenPos } = parseVarint(buf, p);
-        const s = lenPos;
-        const e = s + len;
-        tripUpdate = parseTripUpdate(buf, s, e);
-        p = e;
-      } else {
-        p = skipField(buf, p, wireType);
-      }
-    }
-    return tripUpdate;
-  };
-
-  // FeedMessage: field 1 header (skip), field 2 entity (repeated)
-  while (pos < uint8Buffer.length) {
-    const tag = uint8Buffer[pos++];
-    if (!tag) break;
-    const fieldNum = tag >> 3;
-    const wireType = tag & 0x07;
-    if (fieldNum === 1) {
-      pos = skipField(uint8Buffer, pos, wireType);
-      continue;
-    }
-    if (fieldNum !== 2 || wireType !== 2) {
-      pos = skipField(uint8Buffer, pos, wireType);
-      continue;
-    }
-    const { value: entityLen, pos: lenPos } = parseVarint(uint8Buffer, pos);
-    const entityStart = lenPos;
-    const entityEnd = entityStart + entityLen;
-    if (entityEnd > uint8Buffer.length) break;
-
-    const tu = parseFeedEntity(uint8Buffer, entityStart, entityEnd);
-    if (!tu || !tu.trip || !tu.trip.tripId) {
-      pos = entityEnd;
-      continue;
-    }
-
-    updatesByTripId[tu.trip.tripId] = tu;
-
-    tu.stopTimeUpdates.forEach(stu => {
-      if (!stu || !stu.stopId) return;
-      if (!updatesByStopId[stu.stopId]) updatesByStopId[stu.stopId] = [];
-      const time = (stu.arrival && stu.arrival.time) || (stu.departure && stu.departure.time) || null;
-      const delay = (stu.arrival && stu.arrival.delay) || (stu.departure && stu.departure.delay) || null;
-      if (!time && time !== 0) return;
-      updatesByStopId[stu.stopId].push({
-        tripId: tu.trip.tripId,
-        routeId: tu.trip.routeId || null,
-        directionId: tu.trip.directionId,
-        time: time,
-        delay: delay
+  for (let i = 0; i < trips.length; i++) {
+    const trip = trips[i];
+    if (!tripMatches(trip)) continue;
+    const tid = trip.trip_id != null ? String(trip.trip_id) : "";
+    if (tid) tripUpdatesByTripId[tid] = trip;
+    const stops = Array.isArray(trip.stop_updates) ? trip.stop_updates : [];
+    for (let j = 0; j < stops.length; j++) {
+      const su = stops[j];
+      const sid = su.stop_id != null ? String(su.stop_id) : "";
+      if (!sid) continue;
+      const tSec =
+        su.arrival != null ? Number(su.arrival) : su.departure != null ? Number(su.departure) : null;
+      if (!Number.isFinite(tSec)) continue;
+      if (tSec < nowSec - 120) continue;
+      if (!updatesByStopId[sid]) updatesByStopId[sid] = [];
+      updatesByStopId[sid].push({
+        time: tSec,
+        routeId: feedRouteId,
+        directionId: null,
+        delay: null
       });
-    });
-
-    pos = entityEnd;
+    }
   }
 
-  // Sort stop updates by time ascending
-  Object.keys(updatesByStopId).forEach(stopId => {
-    updatesByStopId[stopId].sort((a, b) => (a.time || 0) - (b.time || 0));
-  });
-
-  return { updatesByStopId, updatesByTripId };
-}
-
-// === MBTA V3 API Functions ===
-
-/**
- * Fetch MBTA V3 predictions (ETAs) for a route and direction
- * Builds stopETAs and vehicleInfo lookups for per-stop ETAs and occupancy
- * @param {string} routeId - Route ID (e.g., "7", "15")
- * @param {number} directionId - Direction ID (0 or 1)
- * @returns {Promise<{predictions: Array, stopETAs: Object, vehicleInfo: Object}>}
- */
-async function fetchMBTAV3Predictions(routeId, directionId) {
-  try {
-    const routeParam = encodeURIComponent(String(routeId));
-    const url = `https://maps.metrofeedus.com/api/mbta/v3/predictions?filter[route]=${routeParam}&filter[direction_id]=${directionId}&include=stop,vehicle`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
-    let response;
-    try {
-      response = await fetch(url, { signal: controller.signal });
-    } finally {
-      clearTimeout(timeout);
-    }
-    
-    if (!response.ok) {
-      throw new Error(`V3 predictions HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    // Parse JSON:API format
-    const stopsMap = {};
-    const vehicleInfo = {}; // { vehicleId: { occupancy_status, label, updated_at } }
-    
-    // Build stop lookup and vehicle info from included items
-    const stopIdByName = {}; // Reverse lookup: stopName -> stopId (for fallback matching)
-    if (data.included) {
-      data.included.forEach(item => {
-        if (item.type === 'stop' && item.attributes) {
-          stopsMap[item.id] = item.attributes.name || item.id;
-          // Build reverse lookup by normalized name
-          // Normalize: lowercase, trim, collapse multiple spaces
-          let normalizedName = (item.attributes.name || '').toLowerCase().trim().replace(/\s+/g, ' ');
-          if (normalizedName) {
-            stopIdByName[normalizedName] = item.id;
-          }
-        }
-        if (item.type === 'vehicle' && item.attributes) {
-          vehicleInfo[item.id] = {
-            occupancy_status: item.attributes.occupancy_status || 'Unknown',
-            label: item.attributes.label || item.id,
-            updated_at: item.attributes.updated_at || null
-          };
-        }
-      });
-    }
-    
-    // Build stopETAs lookup: stopETAs[stopId] = [predictions...] (sorted soonest-first)
-    const stopETAs = {};
-    const now = new Date();
-    const graceSeconds = 15; // Allow predictions up to 15 seconds in the past
-    
-    if (data.data && Array.isArray(data.data)) {
-      data.data.forEach(pred => {
-        if (!pred.attributes) return;
-        
-        // Get ETA: arrival_time if present, else departure_time
-        const eta = pred.attributes.arrival_time || pred.attributes.departure_time;
-        if (!eta) return; // Skip predictions with no ETA
-        
-        const etaDate = new Date(eta);
-        // Only keep future predictions (with grace period)
-        if (etaDate < (now - graceSeconds * 1000)) return;
-        
-        const stopId = pred.relationships?.stop?.data?.id;
-        const vehicleId = pred.relationships?.vehicle?.data?.id;
-        
-        if (!stopId) return;
-        
-        // Initialize array for this stop if needed
-        if (!stopETAs[stopId]) {
-          stopETAs[stopId] = [];
-        }
-        
-        stopETAs[stopId].push({
-          eta: eta,
-          etaDate: etaDate,
-          vehicleId: vehicleId || null,
-          occupancy: vehicleId ? (vehicleInfo[vehicleId]?.occupancy_status || 'Unknown') : 'Unknown'
-        });
-      });
-    }
-    
-    // Sort each stop's predictions by ETA (soonest first)
-    Object.keys(stopETAs).forEach(stopId => {
-      stopETAs[stopId].sort((a, b) => a.etaDate - b.etaDate);
-    });
-    
-    // Legacy predictions array for bulk display (keep for compatibility)
-    const predictions = [];
-    Object.keys(stopETAs).forEach(stopId => {
-      stopETAs[stopId].forEach(pred => {
-        predictions.push({
-          stopId: stopId,
-          stopName: stopsMap[stopId] || stopId || 'Unknown Stop',
-          eta: pred.eta,
-          occupancy: pred.occupancy,
-          vehicleId: pred.vehicleId
-        });
-      });
-    });
-    predictions.sort((a, b) => new Date(a.eta) - new Date(b.eta));
-    
-    // Build vehicleETAs lookup: vehicleETAs[vehicleId] = [predictions...] (sorted soonest-first)
-    const vehicleETAs = {};
-    if (data.data && Array.isArray(data.data)) {
-      console.log('[fetchMBTAV3Predictions] Building vehicleETAs lookup from', data.data.length, 'predictions');
-      
-      data.data.forEach(pred => {
-        if (!pred.attributes) return;
-        
-        const eta = pred.attributes.arrival_time || pred.attributes.departure_time;
-        if (!eta) return;
-        
-        const etaDate = new Date(eta);
-        if (etaDate < (now - graceSeconds * 1000)) return;
-        
-        const stopId = pred.relationships?.stop?.data?.id;
-        const vehicleId = pred.relationships?.vehicle?.data?.id;
-        
-        if (!stopId || !vehicleId) return;
-        
-        if (!vehicleETAs[vehicleId]) {
-          vehicleETAs[vehicleId] = [];
-        }
-        
-        vehicleETAs[vehicleId].push({
-          stopId: stopId,
-          stopName: stopsMap[stopId] || stopId || 'Unknown Stop',
-          eta: eta,
-          etaDate: etaDate
-        });
-      });
-      
-      console.log('[fetchMBTAV3Predictions] Built vehicleETAs with', Object.keys(vehicleETAs).length, 'vehicles');
-      console.log('[fetchMBTAV3Predictions] Sample vehicle IDs:', Object.keys(vehicleETAs).slice(0, 10));
-    }
-    
-    // Sort each vehicle's predictions by ETA (soonest first)
-    Object.keys(vehicleETAs).forEach(vehicleId => {
-      vehicleETAs[vehicleId].sort((a, b) => a.etaDate - b.etaDate);
-    });
-    
-    return { predictions, stopETAs, vehicleInfo, stopIdByName, vehicleETAs };
-  } catch (error) {
-    console.warn('[MBTA V3] Error fetching predictions:', error);
-    throw error;
+  const keys = Object.keys(updatesByStopId);
+  for (let k = 0; k < keys.length; k++) {
+    const sid = keys[k];
+    const arr = updatesByStopId[sid];
+    arr.sort((a, b) => a.time - b.time);
+    const seen = new Set();
+    updatesByStopId[sid] = arr
+      .filter((u) => {
+        if (seen.has(u.time)) return false;
+        seen.add(u.time);
+        return true;
+      })
+      .slice(0, 4);
   }
+
+  return { updatesByStopId, tripUpdatesByTripId };
 }
 
-/**
- * Fetch MBTA V3 vehicles for bus markers (primary source for V3-only mode)
- * @param {string} routeId - Route ID
- * @param {number} directionId - Direction ID (optional, for filtering)
- * @returns {Promise<Array>} Array of vehicles in GTFS-RT format
- */
-async function fetchMBTAV3Vehicles(routeId, directionId = null) {
-  const routeParam = encodeURIComponent(String(routeId));
-  const url = `https://maps.metrofeedus.com/api/mbta/v3/vehicles?filter[route]=${routeParam}`;
-  const debugV3 = true;
-  const makeReqId = () => `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
-
-  const attemptFetch = async (timeoutMs) => {
-    const reqId = makeReqId();
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    const startedAt = Date.now();
-    try {
-      if (debugV3) {
-        console.log('[MBTA V3] Fetch start', { reqId, routeId, directionId, timeoutMs, url });
-      }
-      const response = await fetch(url, { signal: controller.signal });
-      const elapsedMs = Date.now() - startedAt;
-      if (debugV3) {
-        let cache = null;
-        try { cache = response.headers.get('cache-control'); } catch (_) {}
-        console.log('[MBTA V3] Response headers', {
-          reqId,
-          status: response.status,
-          statusText: response.statusText,
-          elapsedMs,
-          contentType: response.headers.get('content-type'),
-          cacheControl: cache
-        });
-      }
-      return { response, elapsedMs, reqId };
-    } finally {
-      clearTimeout(timeout);
-    }
-  };
-
-  try {
-    // Fail fast: if proxy hangs, don't block UI.
-    // No retries by design (GTFS-RT emergency fallback can handle outages).
-    const responseInfo = await attemptFetch(5000);
-
-    const response = responseInfo.response;
-    const reqId = responseInfo.reqId;
-    
-    if (!response.ok) {
-      throw new Error(`V3 vehicles HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const jsonStart = Date.now();
-    let data;
-    try {
-      data = await response.json();
-    } catch (jsonErr) {
-      // Try to capture some body text to see what we got (HTML error page, gateway timeout, etc.)
-      let preview = '';
-      try {
-        const text = await response.text();
-        preview = String(text || '').slice(0, 400);
-      } catch (_) {}
-      console.warn('[MBTA V3] JSON parse failed', { reqId, routeId, directionId, preview }, jsonErr);
-      throw jsonErr;
-    }
-    if (debugV3) {
-      console.log('[MBTA V3] JSON parsed', { reqId, routeId, directionId, elapsedMs: Date.now() - jsonStart });
-      const keys = data && typeof data === 'object' ? Object.keys(data).slice(0, 20) : [];
-      console.log('[MBTA V3] JSON shape', {
-        reqId,
-        topKeys: keys,
-        dataCount: Array.isArray(data?.data) ? data.data.length : null
-      });
-    }
-    const vehicles = [];
-    
-    if (data.data && Array.isArray(data.data)) {
-      data.data.forEach(vehicle => {
-        if (!vehicle.attributes) return;
-        
-        // Filter by direction if specified
-        if (directionId !== null && vehicle.attributes.direction_id != directionId) {
-          return;
-        }
-        
-        // Use route relationship if available, otherwise fallback to routeId
-        const routeNumber = vehicle.relationships?.route?.data?.id || routeId;
-        
-        vehicles.push({
-          vehicleID: vehicle.id,
-          routeNumber: routeNumber,
-          direction: vehicle.attributes.direction_id,
-          latitude: vehicle.attributes.latitude,
-          longitude: vehicle.attributes.longitude,
-          speed: vehicle.attributes.speed || null,
-          bearing: vehicle.attributes.bearing || null,
-          blockID: vehicle.attributes.label || vehicle.id,
-          occupancy: vehicle.attributes.occupancy_status || null
-        });
-      });
-    }
-    
-    console.log('[MBTA V3] Vehicles parsed', { reqId, routeId, directionId, count: vehicles.length });
-    return vehicles;
-  } catch (error) {
-    console.warn('[MBTA V3] Error fetching vehicles:', error);
-    throw error;
-  }
-}
-
-/**
- * Fetch MBTA V3 vehicles as fallback when GTFS-RT has vehicles but none match route+direction
- * @param {string} routeId - Route ID
- * @returns {Promise<Array>} Array of vehicles in GTFS-RT format
- */
-async function fetchMBTAV3VehiclesFallback(routeId) {
-  return fetchMBTAV3Vehicles(routeId, null);
-}
-
-/*
- * GTFS-RT VehiclePositions (protobuf) → plain vehicle objects for the map.
- * This is a hand-written protobuf walk (varints, length-delimited fields), not generated code.
- * If MBTA changes field numbers, logs here are the first place to look; spec: GTFS-RT VehiclePosition.
- */
-async function parseMBTAGTFSRT(buffer) {
-  console.log('[parseMBTAGTFSRT] ===== PARSER CALLED =====');
-  console.log('[parseMBTAGTFSRT] Buffer size:', buffer.byteLength, 'bytes');
-  
-  const uint8Buffer = new Uint8Array(buffer);
-  const vehicles = [];
-  let pos = 0;
-  
-  console.log('[parseMBTAGTFSRT] First 20 bytes:', Array.from(uint8Buffer.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-  
-  // Parse FeedMessage
-  let entityCount = 0;
-  let headerFound = false;
-  let entitiesFound = 0;
-  let vehiclesSkipped = 0;
-  let schemaSanityChecked = false;
-  
-  while (pos < uint8Buffer.length) {
-    if (pos >= uint8Buffer.length) break;
-    
-    const tag = uint8Buffer[pos++];
-    if (!tag) break;
-    
-    const fieldNum = tag >> 3;
-    const wireType = tag & 0x07;
-    
-    // ===== 5. SCHEMA SANITY CHECK (ONE-TIME) =====
-    if (!schemaSanityChecked) {
-      schemaSanityChecked = true;
-      console.log(`[parseMBTAGTFSRT] ===== FeedMessage Schema Sanity Check =====`);
-      console.log(`[parseMBTAGTFSRT] First field: fieldNumber=${fieldNum}, wireType=${wireType}`);
-      if (fieldNum === 1 && wireType === 2) {
-        console.log(`[parseMBTAGTFSRT] ✅ Header is field 1, wireType 2 (CORRECT)`);
-      } else {
-        console.error(`[parseMBTAGTFSRT] ❌ FeedMessage schema mismatch: Expected field 1 wireType 2, got field ${fieldNum} wireType ${wireType}`);
-      }
-      // Reset pos to check first field again
-      pos = 0;
-      continue;
-    }
-    
-    if (fieldNum === 1) {
-      // Skip header
-      headerFound = true;
-      pos = skipField(uint8Buffer, pos, wireType);
-    } else if (fieldNum === 2) {
-      // Entity
-      entitiesFound++;
-      if (wireType === 2) {
-        // ===== 5. SCHEMA SANITY CHECK FOR ENTITIES =====
-        if (entitiesFound === 1) {
-          console.log(`[parseMBTAGTFSRT] ✅ Entity list is field 2, wireType 2 (CORRECT)`);
-        }
-        const { value: entityLength, pos: lengthPos } = parseVarint(uint8Buffer, pos);
-        const entityStart = lengthPos;
-        const entityEnd = entityStart + entityLength;
-        
-        if (entityEnd > uint8Buffer.length) {
-          console.warn('[parseMBTAGTFSRT] Entity extends beyond buffer, stopping');
-          break;
-        }
-        
-        let entityPos = entityStart;
-        let entityId = null;
-        
-        while (entityPos < entityEnd) {
-          const entityTag = uint8Buffer[entityPos++];
-          if (!entityTag) break;
-          
-          const entityFieldNum = entityTag >> 3;
-          const entityWireType = entityTag & 0x07;
-          
-          if (entityFieldNum === 1) {
-            // entity.id
-            if (entityWireType === 2) {
-              const { value: strLen, pos: strLenPos } = parseVarint(uint8Buffer, entityPos);
-              entityId = readString(uint8Buffer, strLenPos, strLen);
-              entityPos = strLenPos + strLen;
-            }
-          } else if (entityFieldNum === 4) {
-            // entity.vehicle
-            if (entityWireType === 2) {
-              const { value: vehicleLength, pos: vehicleLenPos } = parseVarint(uint8Buffer, entityPos);
-              const vehicleStart = vehicleLenPos;
-              const vehicleEnd = vehicleStart + vehicleLength;
-              
-              // ===== 1. VEHICLE MESSAGE BOUNDARY LOGGING =====
-              if (entitiesFound <= 3) {
-                const first16Bytes = Array.from(uint8Buffer.slice(vehicleStart, Math.min(vehicleStart + 16, vehicleEnd)))
-                  .map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
-                console.log(`[parseMBTAGTFSRT] ===== VehiclePosition Message #${entitiesFound} =====`);
-                console.log(`[parseMBTAGTFSRT] vehicleMsgStartOffset: ${vehicleStart}`);
-                console.log(`[parseMBTAGTFSRT] vehicleMsgEndOffset: ${vehicleEnd}`);
-                console.log(`[parseMBTAGTFSRT] Message length: ${vehicleLength} bytes`);
-                console.log(`[parseMBTAGTFSRT] First 16 bytes (hex): ${first16Bytes}`);
-              }
-              
-              let vehiclePos = vehicleStart;
-              let vehicleId = null;
-              let routeId = null;
-              let directionId = null;
-              let lat = null;
-              let lon = null;
-              let bearing = null;
-              let speed = null;
-              
-              // Debug: track what fields we find
-              let foundFields = [];
-              
-              // Track if we've seen the first field
-              let firstFieldSeen = false;
-              
-              while (vehiclePos < vehicleEnd) {
-                // ===== 4. CURSOR BOUNDARY ASSERTION =====
-                if (vehiclePos > vehicleEnd) {
-                  console.error(`[parseMBTAGTFSRT] ❌ Cursor exceeded vehicle message boundary — parser is desynced.`);
-                  console.error(`[parseMBTAGTFSRT] startOffset=${vehicleStart}, endOffset=${vehicleEnd}, cursor=${vehiclePos}`);
-                  break;
-                }
-                
-                const vehicleTag = uint8Buffer[vehiclePos];
-                const vehicleTagOffset = vehiclePos;
-                vehiclePos++;
-                
-                if (!vehicleTag) break;
-                
-                const vehicleFieldNum = vehicleTag >> 3;
-                const vehicleWireType = vehicleTag & 0x07;
-                
-                // ===== 1. FIRST FIELD LOGGING =====
-                if (!firstFieldSeen && entitiesFound <= 3) {
-                  firstFieldSeen = true;
-                  console.log(`[parseMBTAGTFSRT] First field key read:`);
-                  console.log(`[parseMBTAGTFSRT]   raw key byte: 0x${vehicleTag.toString(16).padStart(2, '0')}`);
-                  console.log(`[parseMBTAGTFSRT]   decoded fieldNumber: ${vehicleFieldNum}`);
-                  console.log(`[parseMBTAGTFSRT]   decoded wireType: ${vehicleWireType}`);
-                  console.log(`[parseMBTAGTFSRT]   cursor offset after reading key: ${vehiclePos}`);
-                }
-                
-                // ===== 3. UNKNOWN FIELD SKIPPING WITH LOGGING =====
-                const skipStartPos = vehiclePos;
-                
-                if (vehicleFieldNum === 1) {
-                  // vehicle.trip
-                  foundFields.push('vehicle.trip(f1) found');
-                  if (vehicleWireType === 2) {
-                    // ===== LENGTH-DELIMITED FIELD INSTRUMENTATION: TRIP =====
-                    const cursorBeforeVarint = vehiclePos;
-                    const { value: tripLength, pos: tripLenPos } = parseVarint(uint8Buffer, vehiclePos);
-                    const tripStart = tripLenPos;
-                    const tripEnd = tripStart + tripLength;
-                    
-                    // BEFORE consuming bytes, log everything
-                    if (entitiesFound <= 3) {
-                      const first12Bytes = Array.from(uint8Buffer.slice(tripStart, Math.min(tripStart + 12, tripEnd)))
-                        .map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
-                      console.log(`[parseMBTAGTFSRT] ===== TRIP FIELD (f1, wt2) =====`);
-                      console.log(`[parseMBTAGTFSRT] tripLength (varint value): ${tripLength}`);
-                      console.log(`[parseMBTAGTFSRT] cursorBeforeVarint: ${cursorBeforeVarint}`);
-                      console.log(`[parseMBTAGTFSRT] tripLenPos (after varint): ${tripLenPos}`);
-                      console.log(`[parseMBTAGTFSRT] tripStart: ${tripStart}`);
-                      console.log(`[parseMBTAGTFSRT] tripEnd: ${tripEnd}`);
-                      console.log(`[parseMBTAGTFSRT] vehicleMsgEndOffset: ${vehicleEnd}`);
-                      console.log(`[parseMBTAGTFSRT] First 12 bytes of trip payload (hex): ${first12Bytes}`);
-                    }
-                    
-                    foundFields.push(`trip.length=${tripLength}`);
-                    
-                    let tripPos = tripStart;
-                    while (tripPos < tripEnd) {
-                      const tripTag = uint8Buffer[tripPos++];
-                      if (!tripTag) break;
-                      
-                      const tripFieldNum = tripTag >> 3;
-                      const tripWireType = tripTag & 0x07;
-                      
-                      if (tripFieldNum === 1 && tripWireType === 2) {
-                        // trip.trip_id (skip it, we don't need it)
-                        const { value: tripIdLen, pos: tripIdLenPos } = parseVarint(uint8Buffer, tripPos);
-                        tripPos = tripIdLenPos + tripIdLen;
-                      } else if (tripFieldNum === 2 && tripWireType === 2) {
-                        // Skip field 2 - it's not route_id (it appears to be a time field)
-                        // MBTA uses field 5 for route_id
-                        const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
-                        tripPos = routeIdLenPos + routeIdLen;
-                      } else if (tripFieldNum === 3 && tripWireType === 2) {
-                        // Skip field 3 - MBTA doesn't use this for route_id (it's often a date like '20260122')
-                        // MBTA uses field 5 for route_id
-                        const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
-                        tripPos = routeIdLenPos + routeIdLen;
-                      } else if (tripFieldNum === 5 && tripWireType === 2) {
-                        // trip.route_id (field 5 - MBTA uses this, hex shows "Green-D" here)
-                        // This is the ONLY field we use for route_id
-                        const { value: routeIdLen, pos: routeIdLenPos } = parseVarint(uint8Buffer, tripPos);
-                        routeId = readString(uint8Buffer, routeIdLenPos, routeIdLen);
-                        foundFields.push(`trip.route_id(f5)=${routeId}`);
-                        tripPos = routeIdLenPos + routeIdLen;
-                      } else if (tripFieldNum === 6 && tripWireType === 0) {
-                        // trip.direction_id (field 6 in GTFS-RT)
-                        const { value: dirValue, pos: dirPos } = parseVarint(uint8Buffer, tripPos);
-                        directionId = dirValue;
-                        foundFields.push(`trip.direction_id(f6)=${directionId}`);
-                        tripPos = dirPos;
-                      } else {
-                        tripPos = skipField(uint8Buffer, tripPos, tripWireType);
-                      }
-                    }
-                    
-                    // AFTER consuming trip payload, verify cursor position
-                    const cursorAfterTrip = tripPos;
-                    vehiclePos = tripEnd;
-                    
-                    if (entitiesFound <= 3) {
-                      console.log(`[parseMBTAGTFSRT] cursorAfterTrip (tripPos): ${cursorAfterTrip}`);
-                      console.log(`[parseMBTAGTFSRT] tripEnd (expected): ${tripEnd}`);
-                      if (cursorAfterTrip !== tripEnd) {
-                        console.error(`[parseMBTAGTFSRT] ❌ ERROR: cursorAfterTrip (${cursorAfterTrip}) !== tripEnd (${tripEnd}) - CURSOR MISALIGNMENT!`);
-                        console.error(`[parseMBTAGTFSRT] Difference: ${cursorAfterTrip - tripEnd} bytes`);
-                        // Stop parsing this vehicle
-                        break;
-                      } else {
-                        console.log(`[parseMBTAGTFSRT] ✅ cursorAfterTrip === tripEnd (${tripEnd})`);
-                      }
-                      console.log(`[parseMBTAGTFSRT] vehiclePos set to: ${vehiclePos}`);
-                      console.log(`[parseMBTAGTFSRT] Next 8 bytes after trip: ${Array.from(uint8Buffer.slice(vehiclePos, Math.min(vehiclePos + 8, vehicleEnd))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
-                    }
-                  } else {
-                    // ===== 3. UNKNOWN FIELD SKIPPING =====
-                    const skipBefore = vehiclePos;
-                    if (vehicleWireType === 2) {
-                      // For wt2 (length-delimited), log the length varint value and start/end offsets
-                      const { value: skipLength, pos: skipLenPos } = parseVarint(uint8Buffer, vehiclePos);
-                      const skipStart = skipLenPos;
-                      const skipEnd = skipStart + skipLength;
-                      vehiclePos = skipEnd;
-                      if (entitiesFound <= 3) {
-                        console.log(`[parseMBTAGTFSRT] Skipped unknown wt2 field: f${vehicleFieldNum}, lengthVarint=${skipLength}, start=${skipStart}, end=${skipEnd}, newCursor=${vehiclePos}`);
-                      }
-                    } else {
-                      vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
-                      const bytesSkipped = vehiclePos - skipBefore;
-                      if (entitiesFound <= 3) {
-                        console.log(`[parseMBTAGTFSRT] Skipped field: f${vehicleFieldNum}, wt${vehicleWireType}, bytes=${bytesSkipped}, newCursor=${vehiclePos}`);
-                      }
-                    }
-                  }
-                } else if (vehicleFieldNum === 2) {
-                  // vehicle.position (CORRECT: field 2 is Position, not VehicleDescriptor)
-                  foundFields.push('vehicle.position(f2) found');
-                  if (vehicleWireType === 2) {
-                    // ===== LENGTH-DELIMITED FIELD INSTRUMENTATION: POSITION =====
-                    const cursorBeforeVarint = vehiclePos;
-                    const { value: posLength, pos: posLenPos } = parseVarint(uint8Buffer, vehiclePos);
-                    const posStart = posLenPos;
-                    const posEnd = posStart + posLength;
-                    
-                    // BEFORE consuming bytes, log everything
-                    if (entitiesFound <= 3) {
-                      const first12Bytes = Array.from(uint8Buffer.slice(posStart, Math.min(posStart + 12, posEnd)))
-                        .map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
-                      console.log(`[parseMBTAGTFSRT] ===== POSITION FIELD (f2, wt2) =====`);
-                      console.log(`[parseMBTAGTFSRT] posLength (varint value): ${posLength}`);
-                      console.log(`[parseMBTAGTFSRT] cursorBeforeVarint: ${cursorBeforeVarint}`);
-                      console.log(`[parseMBTAGTFSRT] posLenPos (after varint): ${posLenPos}`);
-                      console.log(`[parseMBTAGTFSRT] posStart: ${posStart}`);
-                      console.log(`[parseMBTAGTFSRT] posEnd: ${posEnd}`);
-                      console.log(`[parseMBTAGTFSRT] vehicleMsgEndOffset: ${vehicleEnd}`);
-                      console.log(`[parseMBTAGTFSRT] First 12 bytes of position payload (hex): ${first12Bytes}`);
-                    }
-                    
-                    foundFields.push(`position.length=${posLength}`);
-                    
-                    let posPos = posStart;
-                    let positionFieldsFound = [];
-                    while (posPos < posEnd) {
-                      const posTag = uint8Buffer[posPos++];
-                      if (!posTag) break;
-                      
-                      const posFieldNum = posTag >> 3;
-                      const posWireType = posTag & 0x07;
-                      positionFieldsFound.push(`f${posFieldNum}:wt${posWireType}`);
-                      
-                      if (posFieldNum === 1 && posWireType === 5) {
-                        // position.latitude (float)
-                        lat = readFloat(uint8Buffer, posPos);
-                        foundFields.push(`position.lat(f1)=${lat}`);
-                        posPos += 4;
-                      } else if (posFieldNum === 2 && posWireType === 5) {
-                        // position.longitude (float)
-                        lon = readFloat(uint8Buffer, posPos);
-                        foundFields.push(`position.lon(f2)=${lon}`);
-                        posPos += 4;
-                      } else if (posFieldNum === 3 && posWireType === 5) {
-                        // position.bearing (float)
-                        bearing = readFloat(uint8Buffer, posPos);
-                        foundFields.push(`position.bearing(f3)=${bearing}`);
-                        posPos += 4;
-                      } else if (posFieldNum === 4 && posWireType === 5) {
-                        // position.speed (float)
-                        speed = readFloat(uint8Buffer, posPos);
-                        foundFields.push(`position.speed(f4)=${speed}`);
-                        posPos += 4;
-                      } else {
-                        posPos = skipField(uint8Buffer, posPos, posWireType);
-                      }
-                    }
-                    
-                    // AFTER consuming position payload, verify cursor position
-                    const cursorAfterPosition = posPos;
-                    vehiclePos = posEnd;
-                    
-                    if (entitiesFound <= 3) {
-                      console.log(`[parseMBTAGTFSRT] cursorAfterPosition (posPos): ${cursorAfterPosition}`);
-                      console.log(`[parseMBTAGTFSRT] posEnd (expected): ${posEnd}`);
-                      if (cursorAfterPosition !== posEnd) {
-                        console.error(`[parseMBTAGTFSRT] ❌ ERROR: cursorAfterPosition (${cursorAfterPosition}) !== posEnd (${posEnd}) - CURSOR MISALIGNMENT!`);
-                        console.error(`[parseMBTAGTFSRT] Difference: ${cursorAfterPosition - posEnd} bytes`);
-                        break;
-                      } else {
-                        console.log(`[parseMBTAGTFSRT] ✅ cursorAfterPosition === posEnd (${posEnd})`);
-                      }
-                      console.log(`[parseMBTAGTFSRT] vehiclePos set to: ${vehiclePos}`);
-                      console.log(`[parseMBTAGTFSRT] position.fields:[${positionFieldsFound.join(',')}]`);
-                      console.log(`[parseMBTAGTFSRT] Next 8 bytes after position: ${Array.from(uint8Buffer.slice(vehiclePos, Math.min(vehiclePos + 8, vehicleEnd))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
-                    }
-                  } else {
-                    // Skip non-wt2 position field
-                    const skipBefore = vehiclePos;
-                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
-                    if (entitiesFound <= 3) {
-                      console.log(`[parseMBTAGTFSRT] Skipped field: f${vehicleFieldNum}, wt${vehicleWireType}, bytes=${vehiclePos - skipBefore}`);
-                    }
-                  }
-                } else if (vehicleFieldNum === 3) {
-                  // vehicle.current_stop_sequence (varint)
-                  if (vehicleWireType === 0) {
-                    const { value: stopSeq, pos: stopSeqPos } = parseVarint(uint8Buffer, vehiclePos);
-                    foundFields.push(`current_stop_sequence(f3)=${stopSeq}`);
-                    vehiclePos = stopSeqPos;
-                  } else {
-                    // Skip non-varint field 3
-                    const skipBefore = vehiclePos;
-                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
-                    if (entitiesFound <= 3) {
-                      console.log(`[parseMBTAGTFSRT] Skipped field: f${vehicleFieldNum}, wt${vehicleWireType}, bytes=${vehiclePos - skipBefore}`);
-                    }
-                  }
-                } else if (vehicleFieldNum === 8) {
-                  // vehicle.vehicle (VehicleDescriptor) - CORRECT: field 8 is VehicleDescriptor
-                  foundFields.push('vehicle.vehicle(f8) found');
-                  if (vehicleWireType === 2) {
-                    // ===== LENGTH-DELIMITED FIELD INSTRUMENTATION: VEHICLE DESCRIPTOR =====
-                    const cursorBeforeVarint = vehiclePos;
-                    const { value: vehDescLength, pos: vehDescLenPos } = parseVarint(uint8Buffer, vehiclePos);
-                    const vehDescStart = vehDescLenPos;
-                    const vehDescEnd = vehDescStart + vehDescLength;
-                    
-                    // BEFORE consuming bytes, log everything
-                    if (entitiesFound <= 3) {
-                      const first12Bytes = Array.from(uint8Buffer.slice(vehDescStart, Math.min(vehDescStart + 12, vehDescEnd)))
-                        .map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
-                      console.log(`[parseMBTAGTFSRT] ===== VEHICLE DESCRIPTOR FIELD (f8, wt2) =====`);
-                      console.log(`[parseMBTAGTFSRT] vehDescLength (varint value): ${vehDescLength}`);
-                      console.log(`[parseMBTAGTFSRT] cursorBeforeVarint: ${cursorBeforeVarint}`);
-                      console.log(`[parseMBTAGTFSRT] vehDescLenPos (after varint): ${vehDescLenPos}`);
-                      console.log(`[parseMBTAGTFSRT] vehDescStart: ${vehDescStart}`);
-                      console.log(`[parseMBTAGTFSRT] vehDescEnd: ${vehDescEnd}`);
-                      console.log(`[parseMBTAGTFSRT] vehicleMsgEndOffset: ${vehicleEnd}`);
-                      console.log(`[parseMBTAGTFSRT] First 12 bytes of vehicle descriptor payload (hex): ${first12Bytes}`);
-                    }
-                    
-                    foundFields.push(`vehicle.length=${vehDescLength}`);
-                    
-                    let vehDescPos = vehDescStart;
-                    let vehDescFieldsSeen = [];
-                    while (vehDescPos < vehDescEnd) {
-                      const vehDescTag = uint8Buffer[vehDescPos];
-                      const vehDescTagOffset = vehDescPos;
-                      vehDescPos++;
-                      if (!vehDescTag) break;
-                      
-                      const vehDescFieldNum = vehDescTag >> 3;
-                      const vehDescWireType = vehDescTag & 0x07;
-                      vehDescFieldsSeen.push(`f${vehDescFieldNum}:wt${vehDescWireType}`);
-                      
-                      if (entitiesFound <= 3) {
-                        console.log(`[parseMBTAGTFSRT] vehicle.vehicle field: f${vehDescFieldNum}, wt${vehDescWireType}, at offset=${vehDescTagOffset}`);
-                      }
-                      
-                      if (vehDescFieldNum === 1 && vehDescWireType === 2) {
-                        // vehicle.vehicle.id (string)
-                        const { value: vehIdLen, pos: vehIdLenPos } = parseVarint(uint8Buffer, vehDescPos);
-                        vehicleId = readString(uint8Buffer, vehIdLenPos, vehIdLen);
-                        foundFields.push(`vehicle.id(f1)=${vehicleId}`);
-                        vehDescPos = vehIdLenPos + vehIdLen;
-                      } else if (vehDescFieldNum === 2 && vehDescWireType === 2) {
-                        // vehicle.vehicle.label (string) - skip it
-                        const { value: labelLen, pos: labelLenPos } = parseVarint(uint8Buffer, vehDescPos);
-                        vehDescPos = labelLenPos + labelLen;
-                      } else if (vehDescFieldNum === 3 && vehDescWireType === 2) {
-                        // vehicle.vehicle.license_plate (string) - skip it
-                        const { value: plateLen, pos: plateLenPos } = parseVarint(uint8Buffer, vehDescPos);
-                        vehDescPos = plateLenPos + plateLen;
-                      } else {
-                        const skipBefore = vehDescPos;
-                        vehDescPos = skipField(uint8Buffer, vehDescPos, vehDescWireType);
-                        if (entitiesFound <= 3) {
-                          console.log(`[parseMBTAGTFSRT] Skipped vehicle.vehicle field: f${vehDescFieldNum}, wt${vehDescWireType}, bytes=${vehDescPos - skipBefore}`);
-                        }
-                      }
-                    }
-                    
-                    // AFTER consuming vehicle descriptor payload, verify cursor position
-                    const cursorAfterVehDesc = vehDescPos;
-                    vehiclePos = vehDescEnd;
-                    
-                    if (entitiesFound <= 3) {
-                      console.log(`[parseMBTAGTFSRT] cursorAfterVehDesc (vehDescPos): ${cursorAfterVehDesc}`);
-                      console.log(`[parseMBTAGTFSRT] vehDescEnd (expected): ${vehDescEnd}`);
-                      if (cursorAfterVehDesc !== vehDescEnd) {
-                        console.error(`[parseMBTAGTFSRT] ❌ ERROR: cursorAfterVehDesc (${cursorAfterVehDesc}) !== vehDescEnd (${vehDescEnd}) - CURSOR MISALIGNMENT!`);
-                        console.error(`[parseMBTAGTFSRT] Difference: ${cursorAfterVehDesc - vehDescEnd} bytes`);
-                        break;
-                      } else {
-                        console.log(`[parseMBTAGTFSRT] ✅ cursorAfterVehDesc === vehDescEnd (${vehDescEnd})`);
-                      }
-                      console.log(`[parseMBTAGTFSRT] vehiclePos set to: ${vehiclePos}`);
-                      console.log(`[parseMBTAGTFSRT] fieldsSeen=[${vehDescFieldsSeen.join(', ')}]`);
-                      console.log(`[parseMBTAGTFSRT] Next 8 bytes after vehicle.vehicle: ${Array.from(uint8Buffer.slice(vehiclePos, Math.min(vehiclePos + 8, vehicleEnd))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
-                    }
-                  } else {
-                    // Skip non-wt2 vehicle descriptor
-                    const skipBefore = vehiclePos;
-                    vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
-                    if (entitiesFound <= 3) {
-                      console.log(`[parseMBTAGTFSRT] Skipped field: f${vehicleFieldNum}, wt${vehicleWireType}, bytes=${vehiclePos - skipBefore}`);
-                    }
-                  }
-                } else {
-                  // ===== 3. UNKNOWN FIELD SKIPPING =====
-                  const skipBefore = vehiclePos;
-                  vehiclePos = skipField(uint8Buffer, vehiclePos, vehicleWireType);
-                  const bytesSkipped = vehiclePos - skipBefore;
-                  if (entitiesFound <= 3) {
-                    console.log(`[parseMBTAGTFSRT] Skipped field: f${vehicleFieldNum}, wt${vehicleWireType}, bytes=${bytesSkipped}, newCursor=${vehiclePos}`);
-                  }
-                }
-              }
-              
-              // Only add vehicle if we have required fields
-              if (vehicleId && routeId !== null && lat !== null && lon !== null) {
-                vehicles.push({
-                  vehicleID: vehicleId,
-                  routeNumber: routeId,
-                  direction: directionId !== null ? directionId : 0,
-                  latitude: lat,
-                  longitude: lon,
-                  bearing: bearing,
-                  speed: speed ? (speed * 2.237) : null, // Convert m/s to mph
-                  blockID: entityId || vehicleId // Use entity ID as block ID if available
-                });
-                
-                // Log first few vehicles for debugging
-                if (vehicles.length <= 3) {
-                  console.log(`[parseMBTAGTFSRT] Vehicle ${vehicles.length}:`, {
-                    vehicleID: vehicleId,
-                    routeNumber: routeId,
-                    direction: directionId,
-                    lat: lat,
-                    lon: lon
-                  });
-                }
-              } else {
-                vehiclesSkipped++;
-                // Log why vehicle was skipped (only first few to avoid spam)
-                if (vehiclesSkipped <= 5) {
-                  console.warn('[parseMBTAGTFSRT] ⚠️ Skipped vehicle (missing data):', {
-                    entityId: entityId || 'MISSING',
-                    vehicleId: vehicleId || 'MISSING',
-                    routeId: routeId !== null ? routeId : 'MISSING',
-                    lat: lat !== null ? lat : 'MISSING',
-                    lon: lon !== null ? lon : 'MISSING',
-                    directionId: directionId !== null ? directionId : 'MISSING'
-                  });
-                  if (foundFields.length > 0) {
-                    console.warn('[parseMBTAGTFSRT] Found fields:', foundFields.join(', '));
-                  } else {
-                    console.warn('[parseMBTAGTFSRT] ⚠️ NO FIELDS FOUND - parser may not be entering vehicle blocks');
-                  }
-                }
-              }
-            }
-          } else {
-            entityPos = skipField(uint8Buffer, entityPos, entityWireType);
-          }
-        }
-        // After parsing entity, advance pos to entityEnd to continue to next entity
-        pos = entityEnd;
-      } else {
-        pos = skipField(uint8Buffer, pos, wireType);
-      }
-    } else {
-      pos = skipField(uint8Buffer, pos, wireType);
-    }
-  }
-  
-  console.log(`[parseMBTAGTFSRT] ===== PARSE COMPLETE =====`);
-  console.log(`[parseMBTAGTFSRT] Header found: ${headerFound}`);
-  console.log(`[parseMBTAGTFSRT] Entities found: ${entitiesFound}`);
-  console.log(`[parseMBTAGTFSRT] Vehicles parsed: ${vehicles.length}`);
-  console.log(`[parseMBTAGTFSRT] Vehicles skipped: ${vehiclesSkipped}`);
-  
-  if (vehicles.length === 0 && buffer.byteLength > 100) {
-    console.error('[parseMBTAGTFSRT] ❌ Large buffer but no vehicles parsed!');
-    console.error('[parseMBTAGTFSRT] Header found:', headerFound);
-    console.error('[parseMBTAGTFSRT] Entities found:', entitiesFound);
-    console.error('[parseMBTAGTFSRT] Vehicles skipped:', vehiclesSkipped);
-    if (entitiesFound > 0 && vehicles.length === 0) {
-      console.error('[parseMBTAGTFSRT] ⚠️ Entities were found but no vehicles extracted!');
-      console.error('[parseMBTAGTFSRT] This suggests vehicle field parsing is failing.');
-    }
-  }
-  
-  return vehicles;
-}
 
 /**
  * Format occupancy status to friendly text
- * @param {string} occupancy - Raw occupancy status from V3 API
+ * @param {string} occupancy - Raw occupancy status from feed (if present)
  * @returns {string} Friendly occupancy text
  */
 function formatOccupancy(occupancy) {
@@ -1192,6 +296,24 @@ function formatETA(etaDate) {
   } else {
     return `${minutes}m ${seconds > 0 ? seconds + 's' : ''}`.trim();
   }
+}
+
+/** Next scheduled realtime stop from trips.json stop_updates (first time at/after now − 90s). */
+function metrofeedNextStopFromRealtimeTrip(trip, stopIdToName) {
+  if (!trip || !Array.isArray(trip.stop_updates)) return null;
+  const nowSec = Math.floor(Date.now() / 1000);
+  for (let i = 0; i < trip.stop_updates.length; i++) {
+    const su = trip.stop_updates[i];
+    const tSec =
+      su.arrival != null ? Number(su.arrival) : su.departure != null ? Number(su.departure) : null;
+    if (!Number.isFinite(tSec)) continue;
+    if (tSec < nowSec - 90) continue;
+    const sid = su.stop_id != null ? String(su.stop_id) : "";
+    const name =
+      sid && stopIdToName && stopIdToName[sid] ? stopIdToName[sid] : sid || "Next stop";
+    return { stopName: name, eta: formatETA(new Date(tSec * 1000)) };
+  }
+  return null;
 }
 
 /** Half-width of GPS dot (px). Used with anchor "bottom" + offset so dot center sits on lat/lng. */
@@ -1233,101 +355,6 @@ function mbtaBusMarkerMapOptions() {
 
 window.buildMbtaBusMarkerElement = buildMbtaBusMarkerElement;
 window.mbtaBusMarkerMapOptions = mbtaBusMarkerMapOptions;
-
-/**
- * Bottom "Next Arrivals" panel (#etaPanel): set false to keep it a ghost — still updated in the DOM
- * (stop popups / bus cards use window.currentRouteETAs, not this panel). Set true to show again.
- */
-const ETA_BOTTOM_PANEL_VISIBLE = false;
-
-/**
- * Get or create the ETA panel dynamically
- * @returns {HTMLElement} The ETA panel element
- */
-function getOrCreateETAPanel() {
-  let panel = document.getElementById('etaPanel');
-  if (!panel) {
-    panel = document.createElement('div');
-    panel.id = 'etaPanel';
-    panel.className = 'eta-panel';
-    panel.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90%;
-      max-width: 600px;
-      max-height: 300px;
-      background: rgba(30, 30, 30, 0.95);
-      border: 2px solid #1E90FF;
-      border-radius: 8px;
-      padding: 12px;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      z-index: 1000;
-      overflow-y: auto;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      display: none;
-    `;
-    
-    // Insert after map container or at end of body
-    const mapContainer = document.getElementById('map');
-    if (mapContainer && mapContainer.parentNode) {
-      mapContainer.parentNode.insertBefore(panel, mapContainer.nextSibling);
-    } else {
-      document.body.appendChild(panel);
-    }
-  }
-  return panel;
-}
-
-/**
- * Display ETAs in the panel
- * @param {Array} predictions - Array of prediction objects
- */
-function displayETAs(predictions) {
-  const panel = getOrCreateETAPanel();
-  
-  if (!predictions || predictions.length === 0) {
-    panel.style.display = 'none';
-    return;
-  }
-  
-  // Show next 10 predictions (V3: ETAs + occupancy when available)
-  const displayPredictions = predictions.slice(0, 10);
-  
-  let html = '<div style="font-weight: bold; margin-bottom: 8px; color: #1E90FF; text-align: center;">⏰ Next Arrivals</div>';
-  html += '<div style="max-height: 250px; overflow-y: auto;">';
-  
-  displayPredictions.forEach(pred => {
-    const etaDate = new Date(pred.eta);
-    const timeStr = formatETA(etaDate);
-    const occupancyStr = formatOccupancy(pred.occupancy);
-    
-    html += `
-      <div style="padding: 6px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
-        <div style="flex: 1;">
-          <div style="font-weight: bold; color: #fff;">${pred.stopName}</div>
-          <div style="font-size: 12px; color: #888;">${occupancyStr}</div>
-        </div>
-        <div style="color: #1E90FF; font-weight: bold; margin-left: 12px;">${timeStr}</div>
-      </div>
-    `;
-  });
-  
-  html += '</div>';
-  panel.innerHTML = html;
-  if (ETA_BOTTOM_PANEL_VISIBLE) {
-    panel.style.display = 'block';
-    panel.removeAttribute('aria-hidden');
-  } else {
-    // Ghost: no layout on screen, no pointer capture; content stays for devtools / optional future toggle
-    panel.style.display = 'none';
-    panel.setAttribute('aria-hidden', 'true');
-  }
-}
-
 
 /**
  * Attach a route overlay to a MapLibre map
@@ -1513,7 +540,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     controls: [],
     intervals: [], // For bus tracking intervals
     stopMarkers: [], // Store stop markers with their data for pulsing
-    stopPopupRefreshers: [], // { overlayKey, fn } refresh stop popup when V3/TripUpdates load
+    stopPopupRefreshers: [], // { overlayKey, fn } refresh stop popup when realtime trips load
     busPopupRefreshers: [] // functions to refresh bus popups when ETAs load
   };
 
@@ -1912,30 +939,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const stopMarker = new maplibregl.Marker({ element: stopElement })
         .setLngLat([lon, lat]);
 
-      // ETA display (V3 predictions primary; TripUpdates fallback)
+      // ETA display (realtime trips.json → TripUpdates-shaped data)
       const getETADisplay = () => {
         try {
           const overlayKey = etaOverlayKey;
-          const etas = (window.currentRouteETAs && window.currentRouteETAs.overlayKey === overlayKey)
-            ? window.currentRouteETAs
-            : null;
-
-          const stopIdKey = String(stop.stop_id || stopId);
-          const stopETAsMap = etas && etas.stopETAs ? etas.stopETAs : null;
-          let v3List = stopETAsMap && stopETAsMap[stopIdKey] ? stopETAsMap[stopIdKey] : [];
-          if (v3List.length === 0 && stopETAsMap) {
-            const alt = stop.stop_id != null ? String(stop.stop_id) : null;
-            if (alt && alt !== stopIdKey && stopETAsMap[alt]) v3List = stopETAsMap[alt];
-          }
-          const nextV3 = v3List.slice(0, 2).map(p => {
-            const t = p.etaDate ? formatETA(p.etaDate) : formatETA(new Date(p.eta));
-            const occ = p.occupancy ? formatOccupancy(p.occupancy) : 'Unknown';
-            return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:#bbb;">V3</span><span style="color:#1E90FF;font-weight:bold;">${t}</span><span style="color:#888;font-size:12px;">${occ}</span></div>`;
-          });
-
           const tu = (window.currentRouteTripUpdates && window.currentRouteTripUpdates.overlayKey === overlayKey)
             ? window.currentRouteTripUpdates
             : null;
+          const stopIdKey = String(stop.stop_id || stopId);
+          const tuLabel = (tu && tu.etaLabel) ? tu.etaLabel : "Live";
           const tuListRaw = tu && tu.updatesByStopId && tu.updatesByStopId[stopIdKey] ? tu.updatesByStopId[stopIdKey] : [];
           const tuList = tuListRaw
             .filter(u => !u.routeId || String(u.routeId) === String(routeId))
@@ -1944,16 +956,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
             .map(u => {
               const t = formatETA(new Date((u.time || 0) * 1000));
               const delay = (u.delay || u.delay === 0) ? `${u.delay >= 0 ? '+' : ''}${u.delay}s` : '';
-              return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:#bbb;">TripUpdates</span><span style="color:#1E90FF;font-weight:bold;">${t}</span><span style="color:#888;font-size:12px;">${delay}</span></div>`;
+              return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:#bbb;">${tuLabel}</span><span style="color:#1E90FF;font-weight:bold;">${t}</span><span style="color:#888;font-size:12px;">${delay}</span></div>`;
             });
 
-          if (nextV3.length === 0 && tuList.length === 0) return '';
+          if (tuList.length === 0) return '';
 
           return `
             <hr style="border:none;border-top:1px solid #1E90FF;margin:6px 0;">
             <div style="font-size:12px;color:#fff;margin-bottom:4px;"><strong>Next arrivals</strong></div>
             <div style="display:flex;flex-direction:column;gap:4px;">
-              ${nextV3.join('')}
               ${tuList.join('')}
             </div>
           `;
@@ -2373,40 +1384,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
     /*
      * Bus tracking (mainOverlay only)
-     * -------------------------------
-     * Polls live vehicle data based on CITY_CONFIG.busApiType:
-     *   - mbta-gtfs-rt: GTFS-RT VehiclePositions (primary) + MBTA V3 for enrichment / fallback paths
-     *   - trimet / tarc / custom: other branches below in fetchAndDisplayBuses
-     * URLs and flags come from options or window.CITY_CONFIG (gtfsRtUrl, disableGtfsRt, etc.).
-     * MBTA protobuf decode + V3 HTTP live in the top of this same file — this block orchestrates fetch → filter → markers.
+     * Cincinnati: JSON vehicle proxy (gtfsRtProxyUrls) + optional trips.json for ETAs.
      */
     if (trackBuses && mode === "mainOverlay") {
       const busMarkers = {}; // Store bus markers separately
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
-      let lastEmergencyGtfsRtFallbackAt = 0;
-      
-      // Get API configuration from options or global CITY_CONFIG
-      const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
+
+      const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || "gtfs-rt";
       const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
       const gtfsRtUrls = options.gtfsRtUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrls) || null;
       const gtfsRtProxyUrls = options.gtfsRtProxyUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtProxyUrls) || null;
-      const gtfsRtTripUpdatesUrl = options.gtfsRtTripUpdatesUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrl) || null;
-      const apiKey = options.apiKey || null;
+      const realtimeTripsUrl =
+        options.realtimeTripsUrl || (window.CITY_CONFIG && window.CITY_CONFIG.realtimeTripsUrl) || null;
       const disableGtfsRt = options.disableGtfsRt ?? (window.CITY_CONFIG && window.CITY_CONFIG.disableGtfsRt) ?? false;
-      const allowEmergencyGtfsRtFallback =
-        options.allowEmergencyGtfsRtFallback ??
-        (window.CITY_CONFIG && window.CITY_CONFIG.allowEmergencyGtfsRtFallback) ??
-        true; // keep map usable if V3 proxy is down
 
-      const isTimeoutAbort = (err) => {
-        if (!err) return false;
-        return err.name === 'AbortError' || String(err).includes('timed out') || String(err).includes('AbortError');
-      };
+      const stopIdToName = Object.create(null);
+      (routeData.stops || []).forEach((s) => {
+        const id = s.stop_id != null ? String(s.stop_id) : "";
+        if (id && s.name) stopIdToName[id] = s.name;
+      });
       
       async function fetchAndDisplayBuses() {
         if (busesFetchInFlight) {
-          // Avoid overlapping V3/GTFS requests (can pile up when upstream is slow)
+          // Avoid overlapping vehicle fetches when upstream is slow
           console.log('[attachRouteToMap] Bus fetch skipped (in-flight)', { routeId, directionId, busesFetchSeq });
           return;
         }
@@ -2425,128 +1426,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             gtfsRtUrl,
             now: new Date().toISOString()
           });
-          
-          // V3-only fast path (GTFS-RT disabled): skip protobuf fetch/parse and any GTFS-RT matching work
-          if (busApiType === 'mbta-gtfs-rt' && disableGtfsRt) {
-            const routeNum = String(routeId);
-            console.log('[attachRouteToMap] V3-only mode', { seq, routeNum, directionId });
-            
-            // Remove old bus markers first (so stale markers don't linger if fetch fails)
-            Object.keys(busMarkers).forEach(vehicleId => {
-              const marker = busMarkers[vehicleId];
-              if (marker && typeof marker.remove === "function") {
-                marker.remove();
-                const index = overlayElements.markers.indexOf(marker);
-                if (index > -1) overlayElements.markers.splice(index, 1);
-              }
-              delete busMarkers[vehicleId];
-            });
-            
-            let v3VehiclesForMarkers = [];
-            try {
-              const t0 = performance.now();
-              v3VehiclesForMarkers = await fetchMBTAV3Vehicles(routeNum, directionId);
-              const t1 = performance.now();
-              console.log('[attachRouteToMap] V3 vehicles fetch done', { seq, routeNum, directionId, ms: Math.round(t1 - t0), count: v3VehiclesForMarkers.length });
-              console.log(`[attachRouteToMap] Fetched ${v3VehiclesForMarkers.length} V3 vehicles for bus markers`);
-            } catch (v3Error) {
-              console.warn('[attachRouteToMap] V3 vehicles unavailable:', v3Error);
-              v3VehiclesForMarkers = [];
 
-              // Emergency fallback: V3 proxy can hang for long periods. If allowed, do a single GTFS-RT pull
-              // (throttled) so users still see live vehicles.
-              const now = Date.now();
-              const canFallback =
-                allowEmergencyGtfsRtFallback &&
-                gtfsRtUrl &&
-                isTimeoutAbort(v3Error) &&
-                (now - lastEmergencyGtfsRtFallbackAt) > 120000; // max once per 2 minutes per overlay
-
-              if (canFallback) {
-                lastEmergencyGtfsRtFallbackAt = now;
-                console.warn('[attachRouteToMap] V3 timed out; trying emergency GTFS-RT fallback once', { seq, routeNum, directionId, gtfsRtUrl });
-                try {
-                  const controller = new AbortController();
-                  const timeout = setTimeout(() => controller.abort(), 12000);
-                  const res = await fetch(gtfsRtUrl, { signal: controller.signal });
-                  clearTimeout(timeout);
-                  if (!res.ok) throw new Error(`GTFS-RT HTTP ${res.status}: ${res.statusText}`);
-                  const buffer = await res.arrayBuffer();
-                  const allRt = await parseMBTAGTFSRT(buffer);
-                  const fallback = allRt.filter(v => String(v.routeNumber) === String(routeNum) && v.direction == directionId);
-                  v3VehiclesForMarkers = fallback;
-                  console.warn('[attachRouteToMap] Emergency GTFS-RT fallback vehicles', { seq, routeNum, directionId, count: fallback.length });
-                } catch (rtErr) {
-                  console.warn('[attachRouteToMap] Emergency GTFS-RT fallback failed', rtErr);
-                }
-              }
-            }
-            
-            overlayElements.busPopupRefreshers.length = 0;
-            // Create markers for buses (same ETA/occupancy refresh pattern as GTFS-RT path)
-            v3VehiclesForMarkers.forEach(bus => {
-              if (!bus.latitude || !bus.longitude) return;
-              const blockId = bus.blockID || bus.vehicleID || '';
-              if (!blockId) return;
-              
-              const displayVehicleID = (bus.vehicleID || '').replace(/\D/g, '') || bus.vehicleID;
-              const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
-              
-              const getNextStopFromETAs = () => {
-                const etas = window.currentRouteETAs;
-                if (!etas || !etas.vehicleETAs || !vidKey) return null;
-                const list = etas.vehicleETAs[bus.vehicleID] || etas.vehicleETAs[vidKey];
-                if (!list || !list.length) return null;
-                const nextPred = list[0];
-                return { stopName: nextPred.stopName, eta: formatETA(nextPred.etaDate || new Date(nextPred.eta)) };
-              };
-              const getOccupancyTextLive = () => {
-                const vi = window.currentRouteETAs?.vehicleInfo;
-                const occ =
-                  (vi && vidKey && vi[bus.vehicleID]?.occupancy_status) ||
-                  (vi && vidKey && vi[vidKey]?.occupancy_status) ||
-                  bus.occupancy ||
-                  null;
-                return occ ? formatOccupancy(occ) : 'Unknown';
-              };
-              
-              const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
-              const busMarker = new maplibregl.Marker({
-                element: busElement,
-                ...mbtaBusMarkerMapOptions()
-              }).setLngLat([bus.longitude, bus.latitude]);
-              const directionText = bus.direction === 1 ? 'Inbound' : bus.direction === 0 ? 'Outbound' : bus.direction;
-              const popupContent = document.createElement('div');
-              const refreshBusPopup = () => {
-                const nextStopETA = getNextStopFromETAs();
-                let nextStopHTML = nextStopETA
-                  ? `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopETA.stopName}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${nextStopETA.eta}</div>`
-                  : '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> Loading…</div>';
-                popupContent.innerHTML = `
-                <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
-                  <div style='text-align:center; margin-bottom:6px;'>
-                    <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
-                  </div>
-                  <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
-                  <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
-                  ${nextStopHTML}
-                  <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${getOccupancyTextLive()}</div>
-                </div>
-              `;
-              };
-              refreshBusPopup();
-              overlayElements.busPopupRefreshers.push(refreshBusPopup);
-              busMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent));
-              busMarker.addTo(map);
-              
-              busMarkers[bus.vehicleID] = busMarker;
-              overlayElements.markers.push(busMarker);
-            });
-            
-            console.log(`[attachRouteToMap] Displayed ${v3VehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
-            return;
-          }
-          
           if (busApiType === 'gtfs-rt' && !disableGtfsRt) {
             const resolvedProxyUrls = Array.isArray(gtfsRtProxyUrls) && gtfsRtProxyUrls.length ? gtfsRtProxyUrls.filter(Boolean) : [];
             const resolvedUrls = Array.isArray(gtfsRtUrls) && gtfsRtUrls.length ? gtfsRtUrls.filter(Boolean) : (gtfsRtUrl ? [gtfsRtUrl] : []);
@@ -2564,58 +1444,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
                   const j = await res.json();
                   return parseVehiclesJsonToGtfsLike(j);
                 }
-                const buffer = await res.arrayBuffer();
-                return await parseMBTAGTFSRT(buffer);
+                console.warn(
+                  "[attachRouteToMap] Non-JSON vehicle feed is not supported in Cincinnati routeOverlay; use a .json proxy URL.",
+                  url
+                );
+                return [];
               }));
               allBuses = feedResults.flat();
               console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from GTFS-RT');
             }
           }
 
-          if (busApiType === 'mbta-gtfs-rt' && gtfsRtUrl && !disableGtfsRt) {
-            // MBTA GTFS-RT feed
-            console.log('[attachRouteToMap] Fetching MBTA GTFS-RT feed:', gtfsRtUrl);
-            const res = await fetch(gtfsRtUrl);
-            console.log('[attachRouteToMap] Fetch response status:', res.status, res.statusText);
-            if (!res.ok) {
-              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            }
-            const buffer = await res.arrayBuffer();
-            console.log('[attachRouteToMap] Received buffer size:', buffer.byteLength, 'bytes');
-            
-            // Check content type
-            const contentType = res.headers.get('content-type');
-            console.log('[attachRouteToMap] Response Content-Type:', contentType);
-            
-            // Log first few bytes to verify it's protobuf
-            const uint8Preview = new Uint8Array(buffer.slice(0, 50));
-            console.log('[attachRouteToMap] First 50 bytes (hex):', Array.from(uint8Preview).map(b => b.toString(16).padStart(2, '0')).join(' '));
-            
-            try {
-              allBuses = await parseMBTAGTFSRT(buffer);
-              console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from MBTA GTFS-RT');
-            } catch (parseError) {
-              console.error('[attachRouteToMap] Error parsing GTFS-RT:', parseError);
-              console.error('[attachRouteToMap] Parse error stack:', parseError.stack);
-              throw parseError;
-            }
-            
-            if (allBuses.length === 0) {
-              console.warn('[attachRouteToMap] ⚠️ No buses found in GTFS-RT feed. This could mean:');
-              console.warn('[attachRouteToMap]   1. No buses are currently running');
-              console.warn('[attachRouteToMap]   2. The feed is empty or malformed');
-              console.warn('[attachRouteToMap]   3. There was a parsing error');
-            }
-          } else {
-            if (busApiType === 'mbta-gtfs-rt' && disableGtfsRt) {
-              console.log('[attachRouteToMap] GTFS-RT disabled; using V3 vehicles only');
-            } else {
-              console.warn('[attachRouteToMap] MBTA GTFS-RT not configured. busApiType:', busApiType, 'gtfsRtUrl:', gtfsRtUrl);
-            }
-          }
-          
           // Filter buses for this route and direction
-          // For MBTA, routeId might be a string like "1", "Red", "Green-B", etc.
           // Also check routeData.route_id if available (from routes_index.js)
           const routeNum = String(routeId);
           const routeDataRouteId = routeData?.route_id || routeData?.meta?.route_id || null;
@@ -2654,8 +1494,20 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const stringMatch = String(v.routeNumber) === String(routeId);
             
             const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
-            // Cincinnati proxy feeds may omit direction_id; treat unknown direction as "matches" so buses show up.
-            const directionMatch = (v.direction == null || v.direction === '') ? true : (Number(v.direction) === Number(directionId));
+            // Cincinnati proxy feeds may omit direction_id.
+            // If strict direction is enabled, infer direction from bearing vs route shape.
+            const strictDir = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
+            let directionMatch = true;
+            if (v.direction == null || v.direction === '') {
+              if (strictDir) {
+                const inferred = inferDirectionFromBearing(routeData && routeData.shape ? routeData.shape : null, v.bearing);
+                directionMatch = inferred == null ? true : (Number(inferred) === Number(directionId));
+              } else {
+                directionMatch = true;
+              }
+            } else {
+              directionMatch = Number(v.direction) === Number(directionId);
+            }
             
             if (routeMatch && directionMatch) {
               console.log(`[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ''}, direction ${v.direction} == ${directionId}`);
@@ -2663,36 +1515,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             return routeMatch && directionMatch;
           });
-          
-          // V3 Fallback: If GTFS-RT parsed vehicles but none matched route+direction
-          const totalParsedVehicles = allBuses.length;
-          if (!disableGtfsRt && busApiType === 'mbta-gtfs-rt' && totalParsedVehicles > 0 && routeBuses.length === 0) {
-            console.warn(`[attachRouteToMap] GTFS-RT parsed ${totalParsedVehicles} vehicles but 0 matched route "${routeNum}" direction ${directionId}. Trying V3 fallback...`);
-            try {
-              // Use routeNum (already defined in this scope from line 1434)
-              const v3Vehicles = await fetchMBTAV3VehiclesFallback(routeNum);
-              
-              // Client-filter by direction
-              let filteredV3Vehicles = v3Vehicles.filter(v => v.direction == directionId);
-              
-              if (filteredV3Vehicles.length === 0 && v3Vehicles.length > 0) {
-                console.warn(`[attachRouteToMap] MBTA direction mismatch — showing route vehicles only`);
-                filteredV3Vehicles = v3Vehicles; // Show all route vehicles if direction doesn't match
-              }
-              
-              if (filteredV3Vehicles.length > 0) {
-                // Convert V3 vehicles to same format and add to routeBuses
-                filteredV3Vehicles.forEach(v => {
-                  routeBuses.push(v);
-                });
-                console.log(`[attachRouteToMap] V3 fallback added ${filteredV3Vehicles.length} vehicles`);
-              }
-            } catch (v3Error) {
-              console.warn('[attachRouteToMap] V3 fallback failed:', v3Error);
-              // Continue with empty routeBuses - don't break anything
-            }
-          }
-          
+
           overlayElements.busPopupRefreshers.length = 0;
           // Remove old bus markers from map and overlayElements
           Object.keys(busMarkers).forEach(vehicleId => {
@@ -2708,65 +1531,34 @@ function attachRouteToMap(map, routeId, directionId, options) {
             delete busMarkers[vehicleId];
           });
           
-          // ⚠️ SANITY CHECK: Vehicles are fetched ONCE by (routeId, directionId), not per shape
-          // This ensures no duplicate vehicle markers even when multiple shapes exist for the route
-          // Vehicles are keyed by vehicleId, so duplicates are naturally prevented
-          //
-          // Live vehicles: GTFS-RT is primary for coordinates/positions.
-          // V3 vehicles is optional enrichment only (do NOT block markers on it).
-          let v3VehiclesForMarkers = routeBuses;
-          let v3ByVehicleId = null;
-          if (busApiType === 'mbta-gtfs-rt') {
-            try {
-              const v3Vehicles = await fetchMBTAV3Vehicles(routeNum, directionId);
-              console.log(`[attachRouteToMap] (Enrichment) Fetched ${v3Vehicles.length} V3 vehicles`);
-              v3ByVehicleId = Object.create(null);
-              v3Vehicles.forEach(v => { if (v && v.vehicleID) v3ByVehicleId[v.vehicleID] = v; });
-            } catch (v3Error) {
-              console.warn('[attachRouteToMap] (Enrichment) V3 vehicles unavailable:', v3Error);
-            }
-          }
-          
-          // Create markers for buses (matching "All Buses Mode" style)
-          // Note: Vehicles are deduped by vehicleId, so no duplicates even with multiple shapes
-          v3VehiclesForMarkers.forEach(bus => {
+          const vehiclesForMarkers = routeBuses;
+
+          vehiclesForMarkers.forEach((bus) => {
             if (!bus.latitude || !bus.longitude) return;
             const blockId = bus.blockID || bus.vehicleID || '';
             if (!blockId) return;
-            
-            // Get occupancy from vehicleInfo if available
-            const v3Enriched = v3ByVehicleId && bus.vehicleID ? v3ByVehicleId[bus.vehicleID] : null;
-            const occupancy = (v3Enriched && v3Enriched.occupancy) || bus.occupancy || 
-                            (window.currentRouteETAs && window.currentRouteETAs.vehicleInfo && 
-                             window.currentRouteETAs.vehicleInfo[bus.vehicleID]?.occupancy_status) || 
-                            null;
-            const occupancyText = occupancy ? formatOccupancy(occupancy) : 'Unknown';
-            
+
             const displayVehicleID = metrofeedFormatVehicleLabel(bus.vehicleID, routeId);
-            
-            const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
-            
+
             const getNextStopFromETAs = () => {
-              const etas = window.currentRouteETAs;
-              if (!etas || !etas.vehicleETAs || !vidKey) return null;
-              const list = etas.vehicleETAs[bus.vehicleID] || etas.vehicleETAs[vidKey];
-              if (!list || !list.length) return null;
-              const nextPred = list[0];
-              return {
-                stopName: nextPred.stopName,
-                eta: formatETA(nextPred.etaDate || new Date(nextPred.eta))
-              };
+              const tu = window.currentRouteTripUpdates;
+              if (
+                tu &&
+                tu.overlayKey === etaOverlayKey &&
+                bus.tripId &&
+                tu.tripUpdatesByTripId &&
+                tu.stopIdToName
+              ) {
+                const trip = tu.tripUpdatesByTripId[String(bus.tripId)];
+                const next = metrofeedNextStopFromRealtimeTrip(trip, tu.stopIdToName);
+                if (next) return next;
+              }
+              return null;
             };
-            
+
             const getOccupancyTextLive = () => {
-              const vi = window.currentRouteETAs?.vehicleInfo;
-              const occ =
-                (vi && vidKey && vi[bus.vehicleID]?.occupancy_status) ||
-                (vi && vidKey && vi[vidKey]?.occupancy_status) ||
-                (v3Enriched && v3Enriched.occupancy) ||
-                bus.occupancy ||
-                null;
-              return occ ? formatOccupancy(occ) : 'Unknown';
+              const occ = bus.occupancy || null;
+              return occ ? formatOccupancy(occ) : "Unknown";
             };
             
             const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
@@ -2777,15 +1569,32 @@ function attachRouteToMap(map, routeId, directionId, options) {
             busMarker.setLngLat([bus.longitude, bus.latitude]);
             
             const popupContent = document.createElement('div');
-            const directionText = bus.direction === 1 ? 'Inbound' : bus.direction === 0 ? 'Outbound' : bus.direction;
             
             const refreshBusPopup = () => {
+              let dirLabel = "";
+              if (bus.direction === 1) dirLabel = "Inbound";
+              else if (bus.direction === 0) dirLabel = "Outbound";
+              else {
+                const inferred = inferDirectionFromBearing(primaryShape, bus.bearing);
+                if (inferred === 0) dirLabel = "Outbound (GPS)";
+                else if (inferred === 1) dirLabel = "Inbound (GPS)";
+                else dirLabel = "Unknown";
+              }
               const nextStopETA = getNextStopFromETAs();
-              let nextStopHTML = '';
+              const tuLive = window.currentRouteTripUpdates;
+              const hasRealtimeTrips =
+                tuLive &&
+                tuLive.overlayKey === etaOverlayKey &&
+                tuLive.etaSource === "realtime-trips";
+              let nextStopHTML = "";
               if (nextStopETA) {
                 nextStopHTML = `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopETA.stopName}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${nextStopETA.eta}</div>`;
+              } else if (hasRealtimeTrips) {
+                nextStopHTML =
+                  '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> —</div><div style="margin-bottom:4px; color:#888;"><strong>ETA:</strong> —</div>';
               } else {
-                nextStopHTML = '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> Loading…</div>';
+                nextStopHTML =
+                  '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> Loading…</div>';
               }
               popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
@@ -2793,7 +1602,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                   <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
                 </div>
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
-                <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
+                <div style='margin-bottom:4px;'><strong>Direction:</strong> ${dirLabel}</div>
                 ${nextStopHTML}
                 <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${getOccupancyTextLive()}</div>
               </div>
@@ -2811,7 +1620,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             overlayElements.markers.push(busMarker);
           });
           
-          console.log(`[attachRouteToMap] Displayed ${v3VehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
+          console.log(`[attachRouteToMap] Displayed ${vehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
           
           if (routeBuses.length === 0 && allBuses.length > 0) {
             console.warn(`[attachRouteToMap] ⚠️ No buses matched for route "${routeNum}" direction ${directionId}, but ${allBuses.length} total buses found in feed`);
@@ -2829,100 +1638,52 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Fetch buses immediately
       fetchAndDisplayBuses();
       
-      // Update buses every 30 seconds (V3 proxy can be slow; avoid stacking requests)
       const busInterval = setInterval(fetchAndDisplayBuses, 30000);
       overlayElements.intervals.push(busInterval);
-      
-      // MBTA V3 ETAs: Fetch and display predictions, store in global lookup
-      let etaInterval = null;
-      if (busApiType === 'mbta-gtfs-rt') {
-        // Get route number for ETA calls (same logic as in fetchAndDisplayBuses)
-        const routeNumForETAs = String(routeId);
-        
-        const fetchETAs = async () => {
-          try {
-            const { predictions, stopETAs, vehicleInfo, stopIdByName, vehicleETAs } = await fetchMBTAV3Predictions(routeNumForETAs, directionId);
-            
-            console.log('[fetchETAs] Received vehicleETAs from fetchMBTAV3Predictions:', !!vehicleETAs);
-            console.log('[fetchETAs] vehicleETAs count:', vehicleETAs ? Object.keys(vehicleETAs).length : 0);
-            
-            // Store in global currentRouteETAs for stop popups and bus markers
-            window.currentRouteETAs = {
-              overlayKey: options.overlayKey || `${routeId}-${directionId}`,
-              routeId: routeNumForETAs,
-              directionId: directionId,
-              stopETAs: stopETAs,
-              vehicleInfo: vehicleInfo,
-              stopIdByName: stopIdByName,
-              vehicleETAs: vehicleETAs, // Lookup by vehicleId
-              fetchedAt: new Date()
-            };
-            
-            console.log('[fetchETAs] Stored vehicleETAs with', Object.keys(vehicleETAs).length, 'vehicles');
-            console.log('[fetchETAs] Sample vehicle IDs in stored data:', Object.keys(vehicleETAs).slice(0, 10));
-            
-            // Display ETAs in bottom panel (bulk list)
-            displayETAs(predictions);
-            
-            const etaOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
-            overlayElements.stopPopupRefreshers.forEach(({ overlayKey, update }) => {
-              if (overlayKey === etaOverlayKey) {
-                try { update(); } catch (e) {}
-              }
-            });
-            overlayElements.busPopupRefreshers.forEach(fn => {
-              try { fn(); } catch (e) {}
-            });
-          } catch (error) {
-            console.warn('[attachRouteToMap] V3 ETAs unavailable:', error);
-            // Clear global state on error
-            window.currentRouteETAs = null;
-            const etaPanel = document.getElementById('etaPanel');
-            if (etaPanel) etaPanel.style.display = 'none';
-          }
-        };
-        
-        // Fetch ETAs immediately
-        fetchETAs();
-        
-        // Update ETAs every 25 seconds
-        etaInterval = setInterval(fetchETAs, 25000);
-        overlayElements.intervals.push(etaInterval);
-      }
 
-      // GTFS-RT TripUpdates enrichment (non-blocking)
-      let tripUpdatesInterval = null;
-      if (busApiType === 'mbta-gtfs-rt' && gtfsRtTripUpdatesUrl) {
+      // gtfs-rt + VPS trips.json → TripUpdates-shaped data for stop + bus ETAs
+      let realtimeTripsInterval = null;
+      if (busApiType === "gtfs-rt" && realtimeTripsUrl) {
         const overlayKey = options.overlayKey || `${routeId}-${directionId}`;
-        const fetchTripUpdates = async () => {
+        const fetchRealtimeTripsJson = async () => {
           try {
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 8000);
-            const res = await fetch(gtfsRtTripUpdatesUrl, { signal: controller.signal });
+            const timeout = setTimeout(() => controller.abort(), 20000);
+            const res = await fetch(realtimeTripsUrl, { signal: controller.signal });
             clearTimeout(timeout);
-            if (!res.ok) throw new Error(`TripUpdates HTTP ${res.status}: ${res.statusText}`);
-            const buffer = await res.arrayBuffer();
-            const parsed = parseMBTAGTFSTripUpdates(buffer);
+            if (!res.ok) throw new Error(`realtime trips HTTP ${res.status}: ${res.statusText}`);
+            const json = await res.json();
+            const parsed = parseRealtimeTripsJsonToTripUpdates(json, routeId, routeData);
             window.currentRouteTripUpdates = {
               overlayKey,
               routeId: String(routeId),
               directionId,
               updatesByStopId: parsed.updatesByStopId,
+              tripUpdatesByTripId: parsed.tripUpdatesByTripId,
+              stopIdToName,
+              etaLabel: "Live",
+              etaSource: "realtime-trips",
               fetchedAt: new Date()
             };
             overlayElements.stopPopupRefreshers.forEach(({ overlayKey: ok, update }) => {
               if (ok === overlayKey) {
-                try { update(); } catch (e) {}
+                try {
+                  update();
+                } catch (e) {}
               }
             });
+            overlayElements.busPopupRefreshers.forEach((fn) => {
+              try {
+                fn();
+              } catch (e) {}
+            });
           } catch (e) {
-            // Don't nuke existing data on transient errors; just log.
-            console.warn('[TripUpdates] Unavailable:', e);
+            console.warn("[realtimeTrips] Unavailable:", e);
           }
         };
-        fetchTripUpdates();
-        tripUpdatesInterval = setInterval(fetchTripUpdates, 30000);
-        overlayElements.intervals.push(tripUpdatesInterval);
+        fetchRealtimeTripsJson();
+        realtimeTripsInterval = setInterval(fetchRealtimeTripsJson, 30000);
+        overlayElements.intervals.push(realtimeTripsInterval);
       }
     }
   };
@@ -2937,29 +1698,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
   // ==== Cleanup handle =======================================================
   return {
     remove: function () {
-      // Hide ETA panel when route overlay is removed
-      const etaPanel = document.getElementById('etaPanel');
-      if (etaPanel) {
-        etaPanel.style.display = 'none';
-      }
-      
-      // Clear global currentRouteETAs when this overlay is removed
       const thisOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
-      if (window.currentRouteETAs && window.currentRouteETAs.overlayKey === thisOverlayKey) {
-        window.currentRouteETAs = null;
-      }
       if (window.currentRouteTripUpdates && window.currentRouteTripUpdates.overlayKey === thisOverlayKey) {
         window.currentRouteTripUpdates = null;
       }
-
-      // Safety: ensure any bus markers created for this overlay are removed
-      try {
-        Object.keys(busMarkers || {}).forEach(vehicleId => {
-          const marker = busMarkers[vehicleId];
-          if (marker && typeof marker.remove === 'function') marker.remove();
-          delete busMarkers[vehicleId];
-        });
-      } catch (e) {}
       
       // Layers
       overlayElements.layers.forEach((layerId) => {
@@ -3040,3 +1782,4 @@ window.pickNextRouteOverlayColorSlot = function pickNextRouteOverlayColorSlot() 
 // Expose globally for both route pages and main map
 window.attachRouteToMap = attachRouteToMap;
 
+})();

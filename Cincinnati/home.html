@@ -1788,7 +1788,7 @@
 <script src="routes_index.js"></script>
 
 <!--
-  DEVELOPER NOTE — Script order matters. Boston MBTA live data is bundled in routeOverlay.js (one deploy file).
+  DEVELOPER NOTE — Script order matters. Route map + live vehicles are in routeOverlay.js (one deploy file; Cincinnati JSON feeds).
   See DEVELOPER.md and REALTIME_CITY_CONFIG.md
 -->
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
@@ -1801,8 +1801,8 @@
 <script src="mapBoundsManager.js"></script>
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
-<!-- -- ROUTE OVERLAY (map + MBTA live data bundled; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260416h"></script>
+<!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
+<script src="routeOverlay.js?v=20260416m"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -1831,6 +1831,15 @@
 
   /** Cincinnati route JSON base — from city-config `routeDataBase` (path on main site or full URL to VPS). */
   const ROUTE_DATA_BASE = (function () {
+    // Dev override: force local built JSON instead of VPS.
+    // Usage: add `?localRouteData=1` to the URL.
+    try {
+      const qs = new URLSearchParams(window.location.search || '');
+      if (qs.get('localRouteData') === '1') {
+        // Served from /Cincinnati/home.html → local route_data lives at /Cincinnati/route_data/
+        return './route_data/';
+      }
+    } catch (e) {}
     const raw = CITY_CONFIG.routeDataBase != null ? String(CITY_CONFIG.routeDataBase).trim() : '';
     if (raw) {
       return raw.endsWith('/') ? raw : raw + '/';
@@ -7002,6 +7011,25 @@
         ? String(overlayInstanceKey)
         : `${routeId}-${directionId}`;
     const skipRouteInfoPanel = /-otpLeg\d+$/.test(overlayKey);
+
+    // Direction toggle behavior: when user opens the same route in the other direction,
+    // replace the previous direction overlay (avoid showing both stop sets at once).
+    // (Skip OTP leg overlays; those are intentionally multi-instance.)
+    try {
+      if (!skipRouteInfoPanel && window.activeRouteOverlays) {
+        const base = String(routeId);
+        Object.keys(window.activeRouteOverlays).forEach((k) => {
+          if (!k) return;
+          if (k === overlayKey) return;
+          // Match `${routeId}-0` / `${routeId}-1` exactly (not branch keys / OTP leg keys)
+          if (k === `${base}-0` || k === `${base}-1`) {
+            window.activeRouteOverlays[k].remove();
+            delete window.activeRouteOverlays[k];
+            if (window.activeRouteOverlayDescriptors) delete window.activeRouteOverlayDescriptors[k];
+          }
+        });
+      }
+    } catch (_) {}
     
     // Remove existing overlay if present (toggle behavior)
     if (window.activeRouteOverlays[overlayKey]) {
