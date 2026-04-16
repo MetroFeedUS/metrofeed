@@ -1795,6 +1795,8 @@
 <!-- -- MAPLIBRE GL JS & MASTERMAP -- -->
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<!-- Service-day mastermap helpers (nested weekday/sat/sun); safe no-op until masterRoutes exists -->
+<script src="mastermap-helpers.js?v=20260415"></script>
 <!-- Mastermap file will be loaded dynamically based on city config -->
 <script id="mastermap-loader"></script>
 <!-- -- SHARED MAP INITIALIZATION -- -->
@@ -1929,8 +1931,20 @@
   } else if (CITY_CONFIG.mastermapFile) {
     const mastermapScript = document.createElement('script');
     mastermapScript.src = CITY_CONFIG.mastermapFile;
+    mastermapScript.onload = function () {
+      if (typeof window.metrofeedAfterMastermapLoaded === 'function') {
+        try {
+          window.metrofeedAfterMastermapLoaded();
+        } catch (e) {
+          console.warn('[MetroFeed] metrofeedAfterMastermapLoaded:', e);
+        }
+      }
+    };
+    mastermapScript.onerror = function () {
+      console.warn('[MetroFeed] mastermap failed to load:', CITY_CONFIG.mastermapFile);
+    };
     mastermapLoaderEl.parentNode.replaceChild(mastermapScript, mastermapLoaderEl);
-    console.log('[' + (CITY_CONFIG.cityName || 'MetroFeed') + '] Mastermap routes loaded');
+    console.log('[' + (CITY_CONFIG.cityName || 'MetroFeed') + '] Loading mastermap…');
   } else {
     mastermapLoaderEl.parentNode.removeChild(mastermapLoaderEl);
     console.log('[' + (CITY_CONFIG.cityName || 'MetroFeed') + '] Using window.ROUTES from routes_index.js (no routeLoader)');
@@ -2163,20 +2177,25 @@
     } else {
       // Louisville/Portland: in-memory masterRoutes from mastermap.js
       if (typeof masterRoutes !== 'undefined') {
-        let routeData = masterRoutes.find(r =>
-          String(r.route_number) === String(routeId) &&
-          r.direction_id === directionId
-        );
-        if (!routeData) {
+        let routeData = null;
+        if (typeof metrofeedFindRouteInMastermap === 'function') {
+          routeData = metrofeedFindRouteInMastermap(routeId, directionId, { timezone: CITY_CONFIG.timezone });
+        } else {
           routeData = masterRoutes.find(r =>
-            (String(r.route_number) === String(routeId) || String(r.route_id) === String(routeId)) &&
+            String(r.route_number) === String(routeId) &&
             r.direction_id === directionId
           );
-        }
-        if (!routeData) {
-          routeData = masterRoutes.find(r =>
-            String(r.route_number) === String(routeId) || String(r.route_id) === String(routeId)
-          );
+          if (!routeData) {
+            routeData = masterRoutes.find(r =>
+              (String(r.route_number) === String(routeId) || String(r.route_id) === String(routeId)) &&
+              r.direction_id === directionId
+            );
+          }
+          if (!routeData) {
+            routeData = masterRoutes.find(r =>
+              String(r.route_number) === String(routeId) || String(r.route_id) === String(routeId)
+            );
+          }
         }
         if (routeData) {
           return routeData;
@@ -2358,8 +2377,11 @@
       if (typeof masterRoutes === 'undefined') {
         return null;
       }
+      const flat = typeof metrofeedMastermapUnionRoutes === 'function'
+        ? metrofeedMastermapUnionRoutes(masterRoutes)
+        : (Array.isArray(masterRoutes) ? masterRoutes : []);
       return {
-        routes: masterRoutes.map(r => ({
+        routes: flat.map(r => ({
           route_id: r.route_id,
           route_number: r.route_number,
           direction_id: r.direction_id,
@@ -2674,14 +2696,24 @@
       }
     });
   } else {
-    // Other cities: Use masterRoutes
-    if (typeof masterRoutes !== 'undefined' && masterRoutes && masterRoutes.length > 0) {
-      allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
-      // Also build stopDataMap for other cities
-      masterRoutes.forEach(route => {
+    // Other cities: mastermap.js (flat array or { weekday, sat, sun } → union for search / stop index).
+    window.metrofeedAfterMastermapLoaded = function () {
+      if (CITY_CONFIG.useLazyLoading) return;
+      if (typeof masterRoutes === 'undefined' || !masterRoutes) return;
+      let flat;
+      if (typeof metrofeedMastermapUnionRoutes === 'function') {
+        flat = metrofeedMastermapUnionRoutes(masterRoutes);
+      } else if (Array.isArray(masterRoutes)) {
+        flat = masterRoutes;
+      } else {
+        flat = [];
+      }
+      if (!flat.length) return;
+      allStops = [...new Set(flat.flatMap(route => (route.stops || []).map(stop => decodeHTMLEntities(stop.name || `Stop ${stop.stop_id}`))))];
+      flat.forEach(route => {
         if (route.stops) {
           route.stops.forEach(stop => {
-            const stopName = decodeHTMLEntities(stop.name);
+            const stopName = decodeHTMLEntities(stop.name || `Stop ${stop.stop_id}`);
             if (stop.lat && stop.lon) {
               if (!stopDataMap[stopName.toLowerCase()]) {
                 stopDataMap[stopName.toLowerCase()] = {
@@ -2695,6 +2727,31 @@
           });
         }
       });
+      console.log('[' + (CITY_CONFIG.cityName || 'MetroFeed') + '] Mastermap stops cached:', allStops.length, '(union of service days)');
+    };
+    if (typeof masterRoutes !== 'undefined' && masterRoutes) {
+      if (typeof metrofeedMastermapUnionRoutes === 'function') {
+        window.metrofeedAfterMastermapLoaded();
+      } else if (Array.isArray(masterRoutes) && masterRoutes.length > 0) {
+        allStops = [...new Set(masterRoutes.flatMap(route => (route.stops || []).map(stop => decodeHTMLEntities(stop.name || `Stop ${stop.stop_id}`))))];
+        masterRoutes.forEach(route => {
+          if (route.stops) {
+            route.stops.forEach(stop => {
+              const stopName = decodeHTMLEntities(stop.name || `Stop ${stop.stop_id}`);
+              if (stop.lat && stop.lon) {
+                if (!stopDataMap[stopName.toLowerCase()]) {
+                  stopDataMap[stopName.toLowerCase()] = {
+                    lat: stop.lat,
+                    lon: stop.lon,
+                    stop_id: stop.stop_id,
+                    name: stopName
+                  };
+                }
+              }
+            });
+          }
+        });
+      }
     }
   }
   
@@ -3483,8 +3540,14 @@
       let closestRoute = null;
       let closestDist = Infinity;
       
-      if (typeof masterRoutes !== 'undefined' && masterRoutes) {
-        masterRoutes.forEach(route => {
+      const mrSearch =
+        typeof masterRoutes !== 'undefined' && masterRoutes
+          ? (typeof metrofeedMastermapUnionRoutes === 'function'
+              ? metrofeedMastermapUnionRoutes(masterRoutes)
+              : (Array.isArray(masterRoutes) ? masterRoutes : []))
+          : [];
+      if (mrSearch.length) {
+        mrSearch.forEach(route => {
           if (route.shape) {
             route.shape.forEach(([routeLat, routeLon]) => {
               const dist = Math.hypot(lat - routeLat, lon - routeLon);
@@ -3513,8 +3576,14 @@
       
       console.log('[findClosestStopToPoint] Looking for stop near:', lat, lon);
       
-      if (typeof masterRoutes !== 'undefined' && masterRoutes) {
-        masterRoutes.forEach(route => {
+      const mrSearch2 =
+        typeof masterRoutes !== 'undefined' && masterRoutes
+          ? (typeof metrofeedMastermapUnionRoutes === 'function'
+              ? metrofeedMastermapUnionRoutes(masterRoutes)
+              : (Array.isArray(masterRoutes) ? masterRoutes : []))
+          : [];
+      if (mrSearch2.length) {
+        mrSearch2.forEach(route => {
           if (route.stops) {
             route.stops.forEach(stop => {
               const dist = Math.hypot(lat - stop.lat, lon - stop.lon);
@@ -4176,7 +4245,11 @@
             });
           }
         } else if (typeof masterRoutes !== 'undefined' && masterRoutes) {
-          masterRoutes.forEach(route => {
+          const mrFindMe =
+            typeof metrofeedMastermapUnionRoutes === 'function'
+              ? metrofeedMastermapUnionRoutes(masterRoutes)
+              : (Array.isArray(masterRoutes) ? masterRoutes : []);
+          mrFindMe.forEach(route => {
             if (route.stops) {
               route.stops.forEach(stop => {
                 const dist = Math.hypot(userLat - stop.lat, userLon - stop.lon);
@@ -4949,9 +5022,13 @@
         console.log('[mapOtpRouteToTrimet] WARNING: routesIndex is not available!');
       }
     } else {
-      // Other cities: Use masterRoutes
-      if (masterRoutes && masterRoutes.length > 0) {
-        masterRoutes.forEach(route => {
+      // Other cities: Use masterRoutes (union of weekday/sat/sun when nested)
+      const mrOtp =
+        masterRoutes && typeof metrofeedMastermapUnionRoutes === 'function'
+          ? metrofeedMastermapUnionRoutes(masterRoutes)
+          : (Array.isArray(masterRoutes) ? masterRoutes : []);
+      if (mrOtp.length > 0) {
+        mrOtp.forEach(route => {
           // Extract route number from route_title (e.g., "Route 15 - To City Ctr..." -> "15")
           const routeNumberMatch = route.route_title.match(/Route (\d+)/);
           if (routeNumberMatch) {
@@ -6133,6 +6210,11 @@
   // Function to find route in mastermap.js by route name/description
   function findRouteByDescription(description) {
     if (typeof masterRoutes === 'undefined' || !masterRoutes) return null;
+    const mrFlat =
+      typeof metrofeedMastermapUnionRoutes === 'function'
+        ? metrofeedMastermapUnionRoutes(masterRoutes)
+        : (Array.isArray(masterRoutes) ? masterRoutes : []);
+    if (!mrFlat.length) return null;
     
     // Clean the description (remove common prefixes/suffixes)
     const cleanDesc = description.toLowerCase()
@@ -6144,7 +6226,7 @@
     console.log('[findRouteByDescription] Looking for:', cleanDesc);
     
     // Try exact match first
-    for (const route of masterRoutes) {
+    for (const route of mrFlat) {
       const routeDesc = route.route_title.toLowerCase()
         .replace(/^route\s+\d+\s*-\s*/i, '')
         .replace(/\s*-\s*portland$/i, '')
@@ -6157,7 +6239,7 @@
     }
     
     // Try partial match
-    for (const route of masterRoutes) {
+    for (const route of mrFlat) {
       const routeDesc = route.route_title.toLowerCase()
         .replace(/^route\s+\d+\s*-\s*/i, '')
         .replace(/\s*-\s*portland$/i, '')
@@ -9154,15 +9236,19 @@
             continue;
           }
         } else {
-          // Other cities: Use masterRoutes
+          // Other cities: Use masterRoutes (service day first when nested + helpers loaded)
           if (typeof masterRoutes === 'undefined' || !masterRoutes) {
             console.log('[drawExtendedRoutes] masterRoutes not available');
             continue;
           }
-          routeData = masterRoutes.find(r => 
-            r.route_number === legInfo.route && 
-            r.direction_id === legInfo.direction
-          );
+          if (typeof metrofeedFindRouteInMastermap === 'function') {
+            routeData = metrofeedFindRouteInMastermap(legInfo.route, legInfo.direction, { timezone: CITY_CONFIG.timezone });
+          } else {
+            routeData = masterRoutes.find(r => 
+              r.route_number === legInfo.route && 
+              r.direction_id === legInfo.direction
+            );
+          }
         }
         
         if (!routeData || !routeData.shape) {
@@ -9778,8 +9864,16 @@
         console.log('[Map]   - attachRouteToMap:', typeof window.attachRouteToMap);
         console.log('[Map]   - showRouteOverlay:', typeof window.showRouteOverlay);
         if (!CITY_CONFIG.useLazyLoading) {
-          if (typeof masterRoutes !== 'undefined') {
-            console.log('[Map]   - masterRoutes length:', masterRoutes.length);
+          if (typeof masterRoutes !== 'undefined' && masterRoutes) {
+            const n =
+              typeof metrofeedMastermapUnionRoutes === 'function'
+                ? metrofeedMastermapUnionRoutes(masterRoutes).length
+                : (Array.isArray(masterRoutes) ? masterRoutes.length : '(nested object)');
+            const day =
+              typeof metrofeedMastermapServiceDay === 'function'
+                ? metrofeedMastermapServiceDay(new Date(), CITY_CONFIG.timezone)
+                : '';
+            console.log('[Map]   - masterRoutes union length:', n, day ? `(service day: ${day})` : '');
           } else {
             console.log('[Map]   - masterRoutes: not defined (using window.ROUTES / route JSON)');
           }

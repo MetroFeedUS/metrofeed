@@ -2315,7 +2315,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const bounds = new maplibregl.LngLatBounds();
         shapes.forEach((shape) => {
           if (!Array.isArray(shape)) return;
-          shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
+          shape.forEach((coord) => {
+            const ll = metrofeedCoordToLonLat(coord);
+            if (ll) bounds.extend(ll);
+          });
         });
         const currentBounds = bounds.toArray();
         if (!currentBounds || currentBounds.length < 2) return;

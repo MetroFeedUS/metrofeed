@@ -187,9 +187,10 @@ const CITIES = {
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
 
-    // Debug toggle: load full in-page masterRoutes instead of per-route JSON fetches.
-    // This helps validate whether shape issues come from the JSON hosting/naming vs rendering.
-    mastermapFile: "mastermap.js",
+    // When set to "mastermap.js": supports a flat `masterRoutes` array, or service-day buckets:
+    //   `const masterRoutes = { weekday: [...], sat: [...], sun: [...] };`
+    // home.html loads mastermap-helpers.js after mastermap; route lookup uses agency timezone for the active day.
+    mastermapFile: null,
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
 
