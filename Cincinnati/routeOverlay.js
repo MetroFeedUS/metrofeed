@@ -35,6 +35,94 @@
 
 "use strict";
 
+// ===============================
+// Cincinnati helpers (UI + GTFS-RT)
+// ===============================
+function pickContrastingTextColor(hex) {
+  if (!hex) return "#ffffff";
+  let h = String(hex).trim();
+  if (h.startsWith("#")) h = h.slice(1);
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (h.length !== 6) return "#ffffff";
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  if ([r, g, b].some((x) => Number.isNaN(x))) return "#ffffff";
+  const L = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return L > 0.55 ? "#0d0d0d" : "#ffffff";
+}
+
+function metrofeedFormatVehicleLabel(vehicleIDRaw, routeId) {
+  const rid = routeId != null ? String(routeId) : "";
+  const raw = vehicleIDRaw != null ? String(vehicleIDRaw) : "";
+  const numeric = raw.replace(/\D+/g, "");
+  const idPart = numeric || raw || "?";
+  if (rid.startsWith("sorta_")) return "Metro " + idPart;
+  if (rid.startsWith("tank_")) return "TANK " + idPart;
+  return idPart;
+}
+
+function metrofeedFormatRouteBadge(routeId) {
+  const rid = routeId != null ? String(routeId) : "";
+  if (rid.startsWith("sorta_")) return rid.slice(6);
+  if (rid.startsWith("tank_")) return rid.slice(5);
+  return rid;
+}
+
+function buildRouteFloatingChipLabel(routeId) {
+  const rid = String(routeId || "");
+  if (rid.startsWith("sorta_")) return { label: "Metro " + rid.slice(6), isAgencyStyle: true };
+  if (rid.startsWith("tank_")) return { label: "TANK " + rid.slice(5), isAgencyStyle: true };
+  const m = rid.match(/\d+/);
+  return { label: m ? m[0] : rid, isAgencyStyle: false };
+}
+
+function parseVehiclesJsonToGtfsLike(json) {
+  const items =
+    (Array.isArray(json) && json) ||
+    (Array.isArray(json?.vehicles) && json.vehicles) ||
+    (Array.isArray(json?.data) && json.data) ||
+    [];
+  if (!Array.isArray(items)) return [];
+  const out = [];
+  for (let i = 0; i < items.length; i++) {
+    const v = items[i];
+    if (!v) continue;
+    const vehId =
+      v.vehicleID ?? v.vehicleId ?? v.vehicle_id ??
+      v.id ?? v?.vehicle?.id ?? v?.vehicle?.vehicle_id ?? v?.vehicle?.vehicleID ??
+      null;
+    const route =
+      v.routeNumber ?? v.route_number ?? v.routeId ?? v.route_id ??
+      v?.trip?.route_id ?? v?.trip?.routeId ?? v?.trip?.routeID ??
+      v?.trip?.route_short_name ??
+      null;
+    const dir =
+      v.direction ?? v.direction_id ?? v.directionId ??
+      v?.trip?.direction_id ?? v?.trip?.directionId ??
+      null;
+    const lat =
+      v.latitude ?? v.lat ?? v?.position?.latitude ?? v?.position?.lat ??
+      null;
+    const lon =
+      v.longitude ?? v.lon ?? v.lng ?? v?.position?.longitude ?? v?.position?.lon ?? v?.position?.lng ??
+      null;
+    if (lat == null || lon == null) continue;
+    out.push({
+      vehicleID: vehId != null ? String(vehId) : "",
+      routeNumber: route != null ? String(route) : "",
+      direction: dir != null && dir !== "" ? Number(dir) : null,
+      latitude: Number(lat),
+      longitude: Number(lon),
+      bearing: v.bearing ?? v?.position?.bearing ?? null,
+      speed: v.speed ?? v?.position?.speed ?? null,
+      blockID: v.blockID ?? v.blockId ?? v.block_id ?? v.label ?? (vehId != null ? String(vehId) : ""),
+      occupancy: v.occupancy ?? v.occupancy_status ?? null
+    });
+  }
+  return out;
+}
+
 
 
 // === GTFS-RT Parser Functions (for MBTA) ===
@@ -1878,7 +1966,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       routeInfoPanel.id = panelId;
       routeInfoPanel.className = "route-info-panel";
       
-      // Start collapsed as a circle in the corner
+      // Start collapsed as a circle (default) or Metro/TANK pill (Cincinnati)
       // Find the next available position (highest existing index + 1)
       const allPanels = Array.from(routeOverlayPanelHost(map).querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
       const collapsedPanels = allPanels.filter(panel => 
@@ -1895,7 +1983,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
       });
       
       const panelIndex = maxIndex + 1; // Next available position
-      const circleSize = 40; // Circle size
+      const chipSpec = buildRouteFloatingChipLabel(routeId);
+      const isPill = !!chipSpec.isAgencyStyle;
+      const circleSize = isPill ? 32 : 40;
+      const collapsedWidth = isPill ? 94 : circleSize;
       const circleSpacing = 10; // Space between circles
       const topOffset = 250; // Start from top to avoid overlapping with other UI elements
       const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
@@ -1906,19 +1997,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       routeInfoPanel.style.cssText = `
         position:absolute;
-        left:calc(100% - ${circleSize + 10}px);
+        left:calc(100% - ${collapsedWidth + 10}px);
         top:${verticalPosition}px;
-        width:${circleSize}px;
+        width:${collapsedWidth}px;
         height:${circleSize}px;
-        min-width:${circleSize}px;
-        max-width:${circleSize}px;
+        min-width:${collapsedWidth}px;
+        max-width:${collapsedWidth}px;
         min-height:${circleSize}px;
         max-height:${circleSize}px;
         padding:0;
-        border-radius:50%;
+        border-radius:${isPill ? "999px" : "50%"};
         border:3px solid #fff;
-        background:#FF6B35;
-        color:#fff;
+        background:${String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35")};
+        color:${pickContrastingTextColor(String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35"))};
         z-index:1100;
         box-shadow:0 4px 12px rgba(0,0,0,0.5);
         transition:all 0.3s ease;
@@ -1986,7 +2077,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
           });
           
           const panelIndex = maxIndex + 1; // Next available position
-          const circleSize = 40; // 20% smaller than 50px
+          const chipSpec = buildRouteFloatingChipLabel(routeId);
+          const isPill = !!chipSpec.isAgencyStyle;
+          const circleSize = isPill ? 32 : 40;
+          const collapsedWidth = isPill ? 94 : circleSize;
           const circleSpacing = 10; // Space between circles
           const topOffset = 250; // Start from top to avoid overlapping with other UI elements
           const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
@@ -1995,19 +2089,20 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeInfoPanel.setAttribute('data-collapsed', 'true');
           routeInfoPanel.setAttribute('data-collapse-index', panelIndex.toString());
           
-          routeInfoPanel.style.left = `calc(100% - ${circleSize + 10}px)`; // Position from right edge with margin
+          routeInfoPanel.style.left = `calc(100% - ${collapsedWidth + 10}px)`; // Position from right edge with margin
           routeInfoPanel.style.top = `${verticalPosition}px`;
           routeInfoPanel.style.transform = "none"; // Remove centering transform
-          routeInfoPanel.style.width = `${circleSize}px`;
+          routeInfoPanel.style.width = `${collapsedWidth}px`;
           routeInfoPanel.style.height = `${circleSize}px`;
-          routeInfoPanel.style.minWidth = `${circleSize}px`;
-          routeInfoPanel.style.maxWidth = `${circleSize}px`;
+          routeInfoPanel.style.minWidth = `${collapsedWidth}px`;
+          routeInfoPanel.style.maxWidth = `${collapsedWidth}px`;
           routeInfoPanel.style.minHeight = `${circleSize}px`;
           routeInfoPanel.style.maxHeight = `${circleSize}px`;
           routeInfoPanel.style.padding = "0";
-          routeInfoPanel.style.borderRadius = "50%"; // Perfect circle
+          routeInfoPanel.style.borderRadius = isPill ? "999px" : "50%";
           routeInfoPanel.style.border = "3px solid #fff"; // White border
-          routeInfoPanel.style.background = "#FF6B35"; // Orange background
+          const chipBg = String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35");
+          routeInfoPanel.style.background = chipBg;
           routeInfoPanel.style.display = "flex";
           routeInfoPanel.style.alignItems = "center";
           routeInfoPanel.style.justifyContent = "center";
@@ -2021,9 +2116,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
           if (collapsedName) {
             collapsedName.style.display = "block";
-            collapsedName.style.color = "#fff"; // White text
+            collapsedName.style.color = pickContrastingTextColor(chipBg);
             collapsedName.style.fontWeight = "bold";
-            collapsedName.style.fontSize = "1rem"; // Slightly smaller for 40px circle
+            collapsedName.style.fontSize = isPill ? "0.68rem" : "1rem";
+            collapsedName.style.lineHeight = isPill ? "1.15" : "1";
           }
         } else {
           // Expand back to center - restore original panel styles
@@ -2166,7 +2262,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         };
       }
       
-      // Collapsed route number (circle display)
+      // Collapsed route number (circle/pill display)
       const collapsedName = document.createElement("div");
       collapsedName.className = "route-name-collapsed";
       // Use the parent route ID (routeId parameter) - this is the actual route number
@@ -2184,16 +2280,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeNumber = numericMatch[0];
         }
       }
-      collapsedName.innerHTML = routeNumber;
+      const chipSpec = buildRouteFloatingChipLabel(routeId);
+      const isPill = !!chipSpec.isAgencyStyle;
+      collapsedName.textContent = chipSpec.label;
       collapsedName.style.cssText = `
         display:none;
         position:relative;
-        color:#fff;
+        color:${pickContrastingTextColor(routeInfoPanel.style.background || "#FF6B35")};
         font-weight:bold;
-        font-size:1rem;
+        font-size:${isPill ? "0.68rem" : "1rem"};
         pointer-events:none;
         text-align:center;
-        line-height:1;
+        line-height:${isPill ? "1.15" : "1"};
         margin:0;
         padding:0;
       `;
@@ -2208,9 +2306,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
       contentDiv.style.display = "none";
       collapseBtn.style.display = "none";
       collapsedName.style.display = "block";
-      collapsedName.style.color = "#fff";
+      collapsedName.style.color = pickContrastingTextColor(routeInfoPanel.style.background || "#FF6B35");
       collapsedName.style.fontWeight = "bold";
-      collapsedName.style.fontSize = "1rem";
+      collapsedName.style.fontSize = isPill ? "0.68rem" : "1rem";
+      collapsedName.style.lineHeight = isPill ? "1.15" : "1";
       collapsedName.style.pointerEvents = "none"; // Don't block clicks on the circle
 
       routeOverlayPanelHost(map).appendChild(routeInfoPanel);
@@ -2235,6 +2334,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Get API configuration from options or global CITY_CONFIG
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || 'trimet';
       const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
+      const gtfsRtUrls = options.gtfsRtUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrls) || null;
+      const gtfsRtProxyUrls = options.gtfsRtProxyUrls || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtProxyUrls) || null;
       const gtfsRtTripUpdatesUrl = options.gtfsRtTripUpdatesUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrl) || null;
       const apiKey = options.apiKey || null;
       const disableGtfsRt = options.disableGtfsRt ?? (window.CITY_CONFIG && window.CITY_CONFIG.disableGtfsRt) ?? false;
@@ -2354,7 +2455,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 return occ ? formatOccupancy(occ) : 'Unknown';
               };
               
-              const busElement = buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID);
+              const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
               const busMarker = new maplibregl.Marker({
                 element: busElement,
                 ...mbtaBusMarkerMapOptions()
@@ -2391,6 +2492,31 @@ function attachRouteToMap(map, routeId, directionId, options) {
             return;
           }
           
+          if (busApiType === 'gtfs-rt' && !disableGtfsRt) {
+            const resolvedProxyUrls = Array.isArray(gtfsRtProxyUrls) && gtfsRtProxyUrls.length ? gtfsRtProxyUrls.filter(Boolean) : [];
+            const resolvedUrls = Array.isArray(gtfsRtUrls) && gtfsRtUrls.length ? gtfsRtUrls.filter(Boolean) : (gtfsRtUrl ? [gtfsRtUrl] : []);
+            const urlsToFetch = resolvedProxyUrls.length ? resolvedProxyUrls : resolvedUrls;
+            if (!urlsToFetch.length) {
+              console.warn('[attachRouteToMap] gtfs-rt mode but no URLs configured.', { gtfsRtProxyUrls, gtfsRtUrls, gtfsRtUrl });
+            } else {
+              console.log('[attachRouteToMap] Fetching GTFS-RT feed(s):', urlsToFetch);
+              const feedResults = await Promise.all(urlsToFetch.map(async (url) => {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`GTFS-RT HTTP ${res.status}: ${res.statusText} (${url})`);
+                const contentType = (res.headers.get('content-type') || '').toLowerCase();
+                const looksJson = url.toLowerCase().includes('.json') || contentType.includes('application/json') || contentType.includes('+json');
+                if (looksJson) {
+                  const j = await res.json();
+                  return parseVehiclesJsonToGtfsLike(j);
+                }
+                const buffer = await res.arrayBuffer();
+                return await parseMBTAGTFSRT(buffer);
+              }));
+              allBuses = feedResults.flat();
+              console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from GTFS-RT');
+            }
+          }
+
           if (busApiType === 'mbta-gtfs-rt' && gtfsRtUrl && !disableGtfsRt) {
             // MBTA GTFS-RT feed
             console.log('[attachRouteToMap] Fetching MBTA GTFS-RT feed:', gtfsRtUrl);
@@ -2473,7 +2599,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const stringMatch = String(v.routeNumber) === String(routeId);
             
             const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
-            const directionMatch = v.direction == directionId;
+            // Cincinnati proxy feeds may omit direction_id; treat unknown direction as "matches" so buses show up.
+            const directionMatch = (v.direction == null || v.direction === '') ? true : (Number(v.direction) === Number(directionId));
             
             if (routeMatch && directionMatch) {
               console.log(`[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ''}, direction ${v.direction} == ${directionId}`);
@@ -2560,8 +2687,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                             null;
             const occupancyText = occupancy ? formatOccupancy(occupancy) : 'Unknown';
             
-            // Format vehicle ID for display (remove non-numeric characters, visual only)
-            const displayVehicleID = (bus.vehicleID || '').replace(/\D/g, '') || bus.vehicleID;
+            const displayVehicleID = metrofeedFormatVehicleLabel(bus.vehicleID, routeId);
             
             const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
             
@@ -2588,7 +2714,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               return occ ? formatOccupancy(occ) : 'Unknown';
             };
             
-            const busElement = buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID);
+            const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
             const busMarker = new maplibregl.Marker({
               element: busElement,
               ...mbtaBusMarkerMapOptions()
