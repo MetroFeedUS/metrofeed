@@ -2280,8 +2280,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeNumber = numericMatch[0];
         }
       }
-      const chipSpec = buildRouteFloatingChipLabel(routeId);
-      const isPill = !!chipSpec.isAgencyStyle;
+      // Reuse chipSpec/isPill from the collapsed panel styling above (same scope).
       collapsedName.textContent = chipSpec.label;
       collapsedName.style.cssText = `
         display:none;
