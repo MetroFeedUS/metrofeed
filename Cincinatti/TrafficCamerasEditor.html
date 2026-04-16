@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-EL337T4JX4');
+</script>
+
+<meta charset="UTF-8" />
+<title>Traffic Cameras Editor – MetroFeed Portland</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #cccccc;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  header {
+    background-color: #0d0d0d;
+    border-top: 4px solid #1E90FF;
+    border-bottom: 4px solid #1E90FF;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #f0f0f0;
+  }
+
+  .editor-container {
+    display: flex;
+    height: calc(100vh - 60px);
+  }
+
+  .sidebar {
+    width: 300px;
+    background-color: #1e1e1e;
+    border-right: 2px solid #1E90FF;
+    padding: 1rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .map-container {
+    flex: 1;
+    position: relative;
+    min-width: 0; /* Allow flexbox to shrink */
+  }
+
+  #cameraEditorMap {
+    width: 100%;
+    height: 100%;
+    min-height: 400px; /* Ensure minimum height */
+  }
+
+  .control-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .control-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #1E90FF;
+    font-weight: bold;
+    font-size: 0.9rem;
+  }
+
+  .control-group select,
+  .control-group input {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #1E90FF;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+  }
+
+  .control-group button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #1E90FF;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  .control-group button:hover {
+    background-color: #0066cc;
+  }
+
+  .control-group button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+  }
+
+  .camera-list {
+    margin-top: 1rem;
+  }
+
+  .camera-item {
+    background-color: #222;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #333;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .camera-item:hover {
+    border-color: #1E90FF;
+  }
+
+  .camera-item.has-location {
+    border-color: #4CAF50;
+  }
+
+  .camera-item.selected {
+    border-color: #1E90FF;
+    border-width: 2px;
+  }
+
+  .camera-item .camera-name {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 0.25rem;
+  }
+
+  .camera-item .camera-location {
+    font-size: 0.8rem;
+    color: #888;
+  }
+
+  .camera-item .camera-location.has-coords {
+    color: #4CAF50;
+  }
+
+  .export-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #333;
+  }
+
+  .export-section textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 0.5rem;
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #1E90FF;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+
+  .instructions {
+    background-color: #1a1a1a;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #1E90FF;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .instructions h3 {
+    margin-top: 0;
+    color: #1E90FF;
+    font-size: 1rem;
+  }
+
+  .instructions ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .instructions li {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Prevent camera marker lag/float during zoom */
+  .metrofeed-camera-icon,
+  .metrofeed-camera-icon * {
+    transition: none !important;
+    animation: none !important;
+  }
+  .metrofeed-camera-icon img {
+    pointer-events: none;
+  }
+
+  .theme-toggle {
+    position: absolute;
+    top: 70px;
+    right: 10px;
+    width: 45px;
+    height: 45px;
+    background-color: #1E90FF;
+    border: 2px solid #000;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
+  }
+
+  .theme-toggle img {
+    width: 24px;
+    height: 24px;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>📹 Traffic Cameras Editor</h1>
+  <button class="back-button" onclick="history.back()" style="background: #1E90FF; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">← Back</button>
+</header>
+
+<div class="editor-container">
+  <div class="sidebar">
+    <div class="instructions">
+      <h3>How to Update Cameras:</h3>
+      <ol>
+        <li>Select a camera from the dropdown</li>
+        <li>Click "Place Pin" button</li>
+        <li>Click on the map to place/move the pin</li>
+        <li>Repeat for all cameras</li>
+        <li>Click "Export cameras.json"</li>
+        <li>Copy the JSON and paste into <code>data/cameras.json</code></li>
+        <li>Deploy the updated file</li>
+      </ol>
+    </div>
+
+    <div class="control-group">
+      <label for="cameraSelect">Select Camera:</label>
+      <select id="cameraSelect">
+        <option value="">-- Select a camera --</option>
+      </select>
+      <button id="placePinBtn" onclick="enablePlacement()" disabled>Place Pin</button>
+    </div>
+
+    <div class="camera-list" id="cameraList">
+      <!-- Camera items will be populated here -->
+    </div>
+
+    <div class="export-section">
+      <label for="exportJson">Export cameras.json:</label>
+      <button onclick="exportJson()" style="margin-bottom: 0.5rem;">Export cameras.json</button>
+      <textarea id="exportJson" readonly placeholder="Click 'Export cameras.json' to generate JSON..."></textarea>
+    </div>
+  </div>
+
+  <div class="map-container">
+    <div id="cameraEditorMap"></div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Day/Night Map">
+      <img src="008-night.svg" alt="Theme Toggle" />
+    </button>
+  </div>
+</div>
+
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script src="metroFeedMap.js"></script>
+<script src="cameraIcon.js"></script>
+
+<script>
+  // Camera database (extracted from the camera grid in TrafficCameras.html)
+  const cameraDatabase = [
+    { id: 'I205_92nd', name: 'I-205 at 92nd', description: 'I-205 at 92nd', url: 'http://www.TripCheck.com/roadcams/cams/i20592nd_pid532.jpg' },
+    { id: 'I84_LloydBlvd', name: 'I-84 at Lloyd Blvd', description: 'I-84 at Lloyd Blvd', url: 'http://www.TripCheck.com/roadcams/cams/i84lloyd_pid587.jpg' },
+    { id: 'I5_Terwilliger', name: 'I-5 at Terwilliger', description: 'I-5 at Terwilliger', url: 'http://www.TripCheck.com/roadcams/cams/i5terwil_pid573.jpg' },
+    { id: 'US26_ZooBridge', name: 'US 26 at Zoo Bridge', description: 'US 26 at Zoo Bridge', url: 'http://www.TripCheck.com/roadcams/cams/26Zoo_pid498.jpg' },
+    { id: 'I84_122nd_WB', name: 'I-84 at 122nd WB', description: 'I-84 at 122nd WB', url: 'http://www.TripCheck.com/roadcams/cams/I-84%20at%20122nd%20WB_pid4578.jpg' },
+    { id: 'I205_Glisan_SB', name: 'I-205 at Glisan SB', description: 'I-205 at Glisan SB', url: 'http://www.TripCheck.com/roadcams/cams/I-205%20at%20Glisan%20SB_pid4405.jpg' },
+    { id: 'I5_Fremont', name: 'I-5 at Fremont', description: 'I-5 at Fremont', url: 'http://www.TripCheck.com/roadcams/cams/i5fremont_pid560.jpg' },
+    { id: 'I84_181st', name: 'I-84 at 181st', description: 'I-84 at 181st', url: 'http://www.TripCheck.com/roadcams/cams/i84@181st_pid1580.jpg' },
+    { id: 'I5_MarineDrive', name: 'I-5 at Marine Drive', description: 'I-5 at Marine Drive', url: 'http://www.TripCheck.com/roadcams/cams/i5marine_pid567.jpg' },
+    { id: 'I5_Broadway_N', name: 'I-5 at Broadway N', description: 'I-5 at Broadway N', url: 'http://www.TripCheck.com/roadcams/cams/I-5%20at%20Broadway%20N_pid4737.jpg' }
+  ];
+
+  // Camera data with locations
+  let cameras = [];
+  let map, dayStyle, nightStyle;
+  let isNightMode = false;
+  let placementMode = false;
+  let selectedCameraId = null;
+  let markers = {}; // cameraId -> marker
+  let currentMarker = null;
+
+  // Initialize map
+  function initMap() {
+    try {
+      console.log('[Editor] Initializing map...');
+      
+      const mapSetup = initMetroFeedMap('cameraEditorMap', {
+        defaultCenter: [-122.6784, 45.5152],
+        defaultZoom: 12,
+        bounds: {
+          west: -123.0,
+          east: -122.4,
+          south: 45.4,
+          north: 45.65
+        }
+      });
+
+      map = mapSetup.map;
+      dayStyle = mapSetup.dayStyle;
+      nightStyle = mapSetup.nightStyle;
+
+      console.log('[Editor] Map instance created');
+
+      // Wait for map to load before doing anything else
+      map.on('load', async () => {
+        console.log('[Editor] Map loaded successfully');
+        
+        // Load existing cameras.json if available, then populate UI
+        await loadExistingCameras();
+        
+        // Place markers for any cameras that have coordinates
+        cameras.forEach(camera => {
+          if (camera.lat && camera.lon) {
+            placeMarker(camera);
+          }
+        });
+        
+        // Populate camera dropdown and list
+        populateCameraUI();
+
+        // Map click handler for placement
+        map.on('click', handleMapClick);
+        
+        console.log('[Editor] Initialization complete. Cameras:', cameras.length);
+      });
+      
+      // Handle map errors
+      map.on('error', (e) => {
+        console.error('[Editor] Map error:', e);
+      });
+    } catch (error) {
+      console.error('[Editor] Error initializing map:', error);
+      alert('Error loading map. Please check the console for details. Error: ' + error.message);
+    }
+  }
+
+  // Load existing cameras.json
+  async function loadExistingCameras() {
+    try {
+      const response = await fetch('data/cameras.json');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[Editor] Loaded', data.length, 'cameras from cameras.json');
+        
+        // Merge with camera database (preserve any new cameras in database)
+        const existingIds = new Set(data.map(c => c.id));
+        cameras = [...data];
+        
+        // Add any cameras from database that aren't in the JSON
+        cameraDatabase.forEach(cam => {
+          if (!existingIds.has(cam.id)) {
+            cameras.push({ ...cam, lat: null, lon: null });
+          }
+        });
+        
+        // Place markers for cameras with coordinates (only if map is ready)
+        if (map && map.loaded()) {
+          cameras.forEach(camera => {
+            if (camera.lat && camera.lon) {
+              placeMarker(camera);
+            }
+          });
+        }
+      } else {
+        // Initialize with camera database (no coordinates)
+        console.log('[Editor] No cameras.json found, initializing with camera database');
+        cameras = cameraDatabase.map(cam => ({ ...cam, lat: null, lon: null }));
+      }
+    } catch (error) {
+      console.log('[Editor] No existing cameras.json found, starting fresh:', error);
+      cameras = cameraDatabase.map(cam => ({ ...cam, lat: null, lon: null }));
+    }
+  }
+
+  // Populate camera dropdown and list
+  function populateCameraUI() {
+    const select = document.getElementById('cameraSelect');
+    const list = document.getElementById('cameraList');
+
+    select.innerHTML = '<option value="">-- Select a camera --</option>';
+    list.innerHTML = '';
+
+    cameras.forEach(camera => {
+      // Add to dropdown
+      const option = document.createElement('option');
+      option.value = camera.id;
+      option.textContent = camera.name;
+      select.appendChild(option);
+
+      // Add to list
+      const item = document.createElement('div');
+      item.className = 'camera-item' + (camera.lat && camera.lon ? ' has-location' : '');
+      item.dataset.cameraId = camera.id;
+      item.innerHTML = `
+        <div class="camera-name">${camera.name}</div>
+        <div class="camera-location ${camera.lat && camera.lon ? 'has-coords' : ''}">
+          ${camera.lat && camera.lon ? `📍 ${camera.lat.toFixed(4)}, ${camera.lon.toFixed(4)}` : 'No location set'}
+        </div>
+      `;
+      item.onclick = () => selectCamera(camera.id);
+      list.appendChild(item);
+    });
+  }
+
+  // Update camera UI after changes
+  function updateCameraUI() {
+    populateCameraUI();
+    if (selectedCameraId) {
+      selectCamera(selectedCameraId);
+    }
+  }
+
+  // Select a camera
+  function selectCamera(cameraId) {
+    selectedCameraId = cameraId;
+    document.getElementById('cameraSelect').value = cameraId;
+    document.getElementById('placePinBtn').disabled = false;
+
+    // Update list highlighting
+    document.querySelectorAll('.camera-item').forEach(item => {
+      item.classList.remove('selected');
+      if (item.dataset.cameraId === cameraId) {
+        item.classList.add('selected');
+      }
+    });
+
+    // Center map on camera if it has location
+    const camera = cameras.find(c => c.id === cameraId);
+    if (camera && camera.lat && camera.lon) {
+      map.flyTo({ center: [camera.lon, camera.lat], zoom: 14 });
+    }
+  }
+
+  // Enable placement mode
+  function enablePlacement() {
+    const cameraId = document.getElementById('cameraSelect').value;
+    if (!cameraId) return;
+
+    placementMode = true;
+    selectedCameraId = cameraId;
+    document.getElementById('placePinBtn').textContent = 'Click on map to place pin...';
+    document.getElementById('placePinBtn').disabled = true;
+  }
+
+  // Handle map click
+  function handleMapClick(e) {
+    if (!placementMode || !selectedCameraId) return;
+
+    const camera = cameras.find(c => c.id === selectedCameraId);
+    if (!camera) return;
+
+    // Update camera coordinates
+    camera.lat = e.lngLat.lat;
+    camera.lon = e.lngLat.lng;
+
+    // Place or move marker
+    placeMarker(camera);
+
+    // Exit placement mode
+    placementMode = false;
+    document.getElementById('placePinBtn').textContent = 'Place Pin';
+    document.getElementById('placePinBtn').disabled = false;
+
+    // Update UI
+    updateCameraUI();
+  }
+
+  // Place marker on map
+  function placeMarker(camera) {
+    // Remove existing marker if any
+    if (markers[camera.id]) {
+      markers[camera.id].remove();
+    }
+
+    // Create marker element using shared camera icon
+    const markerElement = typeof createCameraMarkerElement === 'function' 
+      ? createCameraMarkerElement(32)
+      : (() => {
+          const el = document.createElement('div');
+          el.className = 'metrofeed-camera-icon';
+          el.style.width = '32px';
+          el.style.height = '32px';
+          el.style.cursor = 'pointer';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.pointerEvents = 'auto';
+          el.innerHTML = '<img src="004-cctv-camera.svg" alt="Camera" style="width: 32px; height: 32px; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />';
+          return el;
+        })();
+
+    // Create marker (no transitions - markers should move exactly with map)
+    const marker = new maplibregl.Marker({ 
+      element: markerElement,
+      anchor: 'center' // Center anchor for proper positioning
+    })
+      .setLngLat([camera.lon, camera.lat])
+      .addTo(map);
+
+    // Create popup
+    const popup = new maplibregl.Popup().setText(camera.name);
+    marker.setPopup(popup);
+
+    markers[camera.id] = marker;
+  }
+
+  // Export JSON
+  function exportJson() {
+    // Filter cameras that have coordinates
+    const camerasWithCoords = cameras
+      .filter(c => c.lat && c.lon)
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        description: c.description || c.name,
+        city: 'Portland',
+        state: 'OR',
+        country: 'USA',
+        url: c.url,
+        lat: c.lat,
+        lon: c.lon
+      }));
+
+    const json = JSON.stringify(camerasWithCoords, null, 2);
+    document.getElementById('exportJson').value = json;
+  }
+
+  // Toggle theme
+  function toggleTheme() {
+    isNightMode = !isNightMode;
+    map.setStyle(isNightMode ? nightStyle : dayStyle);
+  }
+
+  // Camera select change handler
+  document.getElementById('cameraSelect').addEventListener('change', function() {
+    if (this.value) {
+      selectCamera(this.value);
+    } else {
+      selectedCameraId = null;
+      document.getElementById('placePinBtn').disabled = true;
+      document.querySelectorAll('.camera-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+    }
+  });
+
+  // Initialize on page load
+  window.addEventListener('DOMContentLoaded', function() {
+    console.log('[Editor] DOM loaded, initializing...');
+    
+    // Initialize cameras array immediately (even if map fails)
+    cameras = cameraDatabase.map(cam => ({ ...cam, lat: null, lon: null }));
+    populateCameraUI();
+    
+    // Then initialize map
+    initMap();
+  });
+</script>
+
+</body>
+</html>
+
