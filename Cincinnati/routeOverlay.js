@@ -1727,6 +1727,26 @@ function attachRouteToMap(map, routeId, directionId, options) {
         timesArray = stop.times;
         timesSource = 'legacy stop.times';
       }
+
+      // Debug helper: confirm stop_id → times mapping (enable by setting window.DEBUG_STOP_TIMES = true)
+      try {
+        if (window.DEBUG_STOP_TIMES) {
+          const nm = String(stop && stop.name ? stop.name : '');
+          if (!window.__mfStopTimesDebugSeen) window.__mfStopTimesDebugSeen = {};
+          const key = `${String(routeId)}|${String(directionId)}|${String(stopId)}|${nm}`;
+          if (!window.__mfStopTimesDebugSeen[key]) {
+            window.__mfStopTimesDebugSeen[key] = true;
+            console.log('[StopTimesDebug] stop popup source', {
+              routeId,
+              directionId,
+              stopName: nm,
+              stopId,
+              timesSource,
+              sampleTimes: Array.isArray(timesArray) ? timesArray.slice(0, 12) : []
+            });
+          }
+        }
+      } catch (_) {}
       
       // Log first stop to show what's being used
       if (stops.indexOf(stop) === 0 && timesArray.length > 0) {
@@ -2302,7 +2322,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapsedName.style.cssText = `
         display:none;
         position:relative;
-        color:${pickContrastingTextColor(routeInfoPanel.style.background || "#FF6B35")};
+        color:${chipFg};
         font-weight:bold;
         font-size:${isPill ? "0.62rem" : "0.95rem"};
         pointer-events:none;
@@ -2322,7 +2342,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       contentDiv.style.display = "none";
       collapseBtn.style.display = "none";
       collapsedName.style.display = "block";
-      collapsedName.style.color = pickContrastingTextColor(routeInfoPanel.style.background || "#FF6B35");
+      collapsedName.style.color = chipFg;
       collapsedName.style.fontWeight = "bold";
       collapsedName.style.fontSize = isPill ? "0.62rem" : "0.95rem";
       collapsedName.style.lineHeight = "1";
