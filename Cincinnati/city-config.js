@@ -187,17 +187,36 @@ const CITIES = {
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
 
+    // Cincinnati: uses per-route JSON + window.ROUTES (NOT Boston lazy loader)
     mastermapFile: null,
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
 
-    busApiType: "none",
-    disableGtfsRt: true,
-    gtfsRtUrl: null,
+    // Realtime: Cincinnati merged GTFS-RT (decoded JSON via VPS proxy)
+    busApiType: "gtfs-rt",
+    disableGtfsRt: false,
+    gtfsRtUrl: null, // legacy single field (unused)
     gtfsRtTripUpdatesUrl: null,
     gtfsRtAlertsUrl: null,
+    gtfsRtProxyUrls: [
+      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
+    ],
+    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
+    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    gtfsRtStrictVehicleDirection: true,
 
-    useLazyLoading: true
+    // Static per-route JSON hosting
+    routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/",
+
+    // Multi-agency bus modal tabs (Metro / TANK)
+    busModalSystems: [
+      { id: "metro", label: "Metro", idPrefix: "sorta_" },
+      { id: "tank", label: "TANK", idPrefix: "tank_" }
+    ],
+
+    showRailRoutes: false,
+
+    useLazyLoading: false
   }
 };
 
