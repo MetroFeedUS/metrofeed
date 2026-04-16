@@ -187,9 +187,7 @@ const CITIES = {
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
 
-    // When set to "mastermap.js": supports a flat `masterRoutes` array, or service-day buckets:
-    //   `const masterRoutes = { weekday: [...], sat: [...], sun: [...] };`
-    // home.html loads mastermap-helpers.js after mastermap; route lookup uses agency timezone for the active day.
+    // Cincinnati: per-route JSON from `routeDataBase` + `routes_index.js` (no mastermap.js).
     mastermapFile: null,
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
@@ -215,6 +213,8 @@ const CITIES = {
     // VPS realtime add-ons (decoded to JSON)
     realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
     realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    /** When true (default), overlay hides vehicles whose direction_id is unknown once trips.json supplies directions. */
+    gtfsRtStrictVehicleDirection: true,
     // Reference-only (do not rely on these directly from the browser)
     gtfsRtUrls: [
       "https://tmgtfsprd.sorttrpcloud.com/TMGTFSRealTimeWebService/vehicle/vehiclepositions.pb",

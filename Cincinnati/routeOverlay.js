@@ -1105,6 +1105,11 @@ function parseVehiclesJsonToGtfsLike(json) {
       v?.trip?.trip_id ?? v?.trip?.tripId ?? v?.trip?.id ??
       null;
 
+    const tripHeadsign =
+      (v.trip_headsign ?? v.tripHeadsign ?? v.headsign ?? v?.trip?.trip_headsign ?? v?.trip?.tripHeadsign ?? '')
+        .toString()
+        .trim();
+
     const lat =
       v.latitude ?? v.lat ?? v?.position?.latitude ?? v?.position?.lat ??
       null;
@@ -1119,6 +1124,7 @@ function parseVehiclesJsonToGtfsLike(json) {
       routeNumber: route != null ? String(route) : '',
       tripId: tripId != null ? String(tripId) : null,
       direction: dir != null ? Number(dir) : null,
+      tripHeadsign: tripHeadsign || null,
       latitude: Number(lat),
       longitude: Number(lon),
       bearing: v.bearing ?? v?.position?.bearing ?? null,
@@ -1178,7 +1184,19 @@ const MBTA_BUS_MARKER_DOT_RADIUS_PX = 6;
  * Live bus marker geometry: pill label (detached above) + circular dot on the coordinate.
  * Colors stay driven by routeColor (unchanged); used by route overlay and home.html createBusMarker via window.
  */
-function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID) {
+function metrofeedPlainMarkerText(s) {
+  return String(s == null ? "" : s)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F<>]/g, " ")
+    .trim();
+}
+
+/**
+ * @param {string} routeColor
+ * @param {string|number} routeNum - small badge (route number)
+ * @param {string} mainLabel - headsign / direction / fleet (plain text)
+ * @param {number|null|undefined} bearingDeg - optional compass bearing (0 = north) for direction chevron
+ */
+function buildMbtaBusMarkerElement(routeColor, routeNum, mainLabel, bearingDeg) {
   const wrap = document.createElement("div");
   wrap.style.display = "flex";
   wrap.style.flexDirection = "column";
@@ -1188,10 +1206,16 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID) {
   const fg = pickContrastingTextColor(routeColor);
   const badgeBg = fg;
   const badgeFg = fg === "#ffffff" ? "#0d0d0d" : "#ffffff";
+  const safeMain = metrofeedPlainMarkerText(mainLabel);
+  const showArrow = bearingDeg != null && Number.isFinite(Number(bearingDeg));
+  const arrowHtml = showArrow
+    ? `<div aria-hidden="true" style="width:0;height:0;margin-bottom:2px;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid ${routeColor};filter:drop-shadow(0 1px 1px rgba(0,0,0,0.35));transform:rotate(${Number(bearingDeg)}deg);transform-origin:50% 65%;"></div>`
+    : "";
   wrap.innerHTML = `
-    <div style="margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;">
-      <span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}
+    <div style="margin-bottom:4px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;">
+      <span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${safeMain}
     </div>
+    ${arrowHtml}
     <div style="width:${d}px;height:${d}px;border-radius:50%;background:${routeColor};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);flex-shrink:0;"></div>
   `;
   return wrap;
@@ -1203,6 +1227,9 @@ function mbtaBusMarkerMapOptions() {
 
 window.buildMbtaBusMarkerElement = buildMbtaBusMarkerElement;
 window.mbtaBusMarkerMapOptions = mbtaBusMarkerMapOptions;
+window.metrofeedPlainMarkerText = metrofeedPlainMarkerText;
+window.metrofeedFormatVehicleMainLabel = metrofeedFormatVehicleMainLabel;
+window.metrofeedFormatVehicleFleetSubtitle = metrofeedFormatVehicleFleetSubtitle;
 
 /**
  * Bottom "Next Arrivals" panel (#etaPanel): set false to keep it a ghost — still updated in the DOM
@@ -1399,6 +1426,95 @@ function metrofeedFormatVehicleLabel(vehicleIDRaw, routeId) {
   if (rid.startsWith('sorta_')) return 'Metro ' + idPart;
   if (rid.startsWith('tank_')) return 'TANK ' + idPart;
   return idPart;
+}
+
+/** Fleet / internal id for popups and secondary lines (not the main map pill for Metro/TANK). */
+function metrofeedFormatVehicleFleetSubtitle(bus) {
+  if (!bus) return '';
+  const raw = bus.vehicleID != null ? String(bus.vehicleID) : '';
+  const numeric = raw.replace(/\D+/g, '');
+  const idPart = numeric || raw || '';
+  return idPart ? 'Vehicle ' + idPart : '';
+}
+
+/**
+ * Main text beside the small route badge on live markers.
+ * Metro/TANK: prefer trip headsign from GTFS-RT / trips.json; else Inbound/Outbound; else short fleet id.
+ */
+function metrofeedFormatVehicleMainLabel(bus, routeId) {
+  const rid = routeId != null ? String(routeId) : '';
+  const isCincyAgency = rid.startsWith('sorta_') || rid.startsWith('tank_');
+  if (isCincyAgency) {
+    const head = bus && bus.tripHeadsign ? String(bus.tripHeadsign).trim() : '';
+    if (head) {
+      return head.length > 28 ? head.slice(0, 27) + '\u2026' : head;
+    }
+    if (bus && bus.direction === 0) return 'Outbound';
+    if (bus && bus.direction === 1) return 'Inbound';
+    const sub = metrofeedFormatVehicleFleetSubtitle(bus);
+    return sub || (rid.startsWith('sorta_') ? 'Metro' : 'TANK');
+  }
+  return metrofeedFormatVehicleLabel(bus && bus.vehicleID, routeId);
+}
+
+function metrofeedNormalizeCincyRouteKey(routeId) {
+  const rid = String(routeId || '');
+  const agency = rid.startsWith('sorta_') ? 'sorta' : rid.startsWith('tank_') ? 'tank' : null;
+  const num = rid.startsWith('sorta_') ? rid.slice(6) : rid.startsWith('tank_') ? rid.slice(5) : rid;
+  return { agency, routeNum: String(num) };
+}
+
+/** Build trip_id → { direction_id, trip_headsign } for the active route (Cincy VPS trips.json shape). */
+function metrofeedBuildTripMetaLookup(tripsPayload, routeId) {
+  const byTripId = Object.create(null);
+  const { agency, routeNum } = metrofeedNormalizeCincyRouteKey(routeId);
+  const trips = tripsPayload && Array.isArray(tripsPayload.trips) ? tripsPayload.trips : [];
+  for (let i = 0; i < trips.length; i++) {
+    const t = trips[i];
+    if (!t) continue;
+    if (agency && String(t.agency || '').toLowerCase() !== agency) continue;
+    if (t.route_id == null || String(t.route_id) !== routeNum) continue;
+    const tid = t.trip_id != null ? String(t.trip_id) : null;
+    if (!tid) continue;
+    const dirRaw = t.direction_id != null ? t.direction_id : t.directionId != null ? t.directionId : t.direction;
+    let direction_id = null;
+    if (dirRaw != null && dirRaw !== '') {
+      const n = Number(dirRaw);
+      direction_id = Number.isFinite(n) ? n : null;
+    }
+    const head = (t.trip_headsign || t.tripHeadsign || t.headsign || '').toString().trim();
+    byTripId[tid] = { direction_id, trip_headsign: head };
+  }
+  return { byTripId };
+}
+
+function metrofeedTripMetaHasDirections(tripMeta) {
+  if (!tripMeta || !tripMeta.byTripId) return false;
+  const keys = Object.keys(tripMeta.byTripId);
+  for (let i = 0; i < keys.length; i++) {
+    const m = tripMeta.byTripId[keys[i]];
+    if (m && m.direction_id != null) return true;
+  }
+  return false;
+}
+
+function metrofeedEnrichVehiclesWithTrips(vehicles, tripMeta) {
+  if (!vehicles || !tripMeta || !tripMeta.byTripId) return 0;
+  let n = 0;
+  for (let i = 0; i < vehicles.length; i++) {
+    const b = vehicles[i];
+    if (!b || !b.tripId) continue;
+    const m = tripMeta.byTripId[String(b.tripId)];
+    if (!m) continue;
+    if ((b.direction == null || b.direction === '') && m.direction_id != null) {
+      b.direction = m.direction_id;
+    }
+    if (!b.tripHeadsign && m.trip_headsign) {
+      b.tripHeadsign = m.trip_headsign;
+    }
+    n++;
+  }
+  return n;
 }
 
 function metrofeedFormatRouteBadge(routeId) {
@@ -1803,7 +1919,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
     const shapeBox = metrofeedBboxLonLat(shapeAllLonLat);
     const stopsBox = metrofeedBboxLonLat(stopLineCoords);
     const coverage = metrofeedBboxCoverageRatio(shapeBox, stopsBox);
-    const shouldDrawStopsFallback = stopLineCoords.length >= 2 && coverage > 0 && coverage < 0.45;
+    // If the polyline bbox covers much less area than stops, the GTFS shape is often incomplete
+    // (common on branched routes). Draw an ordered stop connector as a visible backup.
+    const shouldDrawStopsFallback = stopLineCoords.length >= 2 && coverage > 0 && coverage < 0.72;
     if (shouldDrawStopsFallback) {
       const fallbackSourceId = `route-line-stops-${mapLayerKey}`;
       const fallbackLayerCasingId = `route-layer-stops-casing-${mapLayerKey}`;
@@ -2759,6 +2877,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
         busesFetchInFlight = true;
         try {
           let allBuses = [];
+          /** Trip meta for current route (from realtimeTripsUrl); used for direction filter + headsign. */
+          let tripMetaForFilter = null;
           
           console.log('[attachRouteToMap] fetchAndDisplayBuses start', {
             seq,
@@ -2833,7 +2953,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
               const blockId = bus.blockID || bus.vehicleID || '';
               if (!blockId) return;
               
-              const displayVehicleID = metrofeedFormatVehicleLabel(bus.vehicleID, routeId);
+              const displayMain = metrofeedFormatVehicleMainLabel(bus, routeId);
+              const fleetLine = metrofeedFormatVehicleFleetSubtitle(bus);
               const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
               
               const getNextStopFromETAs = () => {
@@ -2854,7 +2975,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 return occ ? formatOccupancy(occ) : 'Unknown';
               };
               
-              const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
+              const busElement = buildMbtaBusMarkerElement(
+                routeColor,
+                metrofeedFormatRouteBadge(routeId),
+                displayMain,
+                bus.bearing != null ? Number(bus.bearing) : null
+              );
               const busMarker = new maplibregl.Marker({
                 element: busElement,
                 ...mbtaBusMarkerMapOptions()
@@ -2869,8 +2995,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 popupContent.innerHTML = `
                 <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                   <div style='text-align:center; margin-bottom:6px;'>
-                    <div style='background:${routeColor};color:${pickContrastingTextColor(routeColor)};padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 ${displayVehicleID}</div>
+                    <div style='background:${routeColor};color:${pickContrastingTextColor(routeColor)};padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 ${metrofeedPlainMarkerText(displayMain)}</div>
                   </div>
+                  ${fleetLine ? `<div style='margin-bottom:4px;font-size:12px;color:#ccc;'><strong>${metrofeedPlainMarkerText(fleetLine)}</strong></div>` : ''}
                   <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                   <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
                   ${nextStopHTML}
@@ -2927,6 +3054,22 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
             allBuses = feedResults.flat();
             console.log('[attachRouteToMap] Parsed', allBuses.length, 'vehicles from GTFS-RT');
+            window.lastBusData = allBuses;
+
+            const tripsUrlEnrich = (window.CITY_CONFIG && window.CITY_CONFIG.realtimeTripsUrl) || null;
+            if (tripsUrlEnrich) {
+              try {
+                const tr = await fetch(tripsUrlEnrich, { cache: 'no-store' });
+                if (tr.ok) {
+                  const tripPayload = await tr.json();
+                  const tripMeta = metrofeedBuildTripMetaLookup(tripPayload, routeId);
+                  metrofeedEnrichVehiclesWithTrips(allBuses, tripMeta);
+                  tripMetaForFilter = tripMeta;
+                }
+              } catch (te) {
+                console.warn('[attachRouteToMap] Trip meta fetch skipped:', te);
+              }
+            }
           } else if (wantsGtfsRt && disableGtfsRt) {
             console.log('[attachRouteToMap] GTFS-RT disabled by config.');
           } else {
@@ -2977,9 +3120,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const stringMatch = String(v.routeNumber) === String(routeId);
             
             const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
-            // Some proxy JSON feeds omit direction_id. In that case, treat vehicles as matching either direction
-            // so users still see buses on the route overlay.
-            const directionMatch = (v.direction == null || v.direction === '') ? true : (v.direction == directionId);
+            // Prefer direction_id from VehiclePositions or from trips.json enrichment.
+            // When trips metadata includes directions and the city requests strict filtering, hide unknown-direction vehicles
+            // so opposite-direction buses do not clutter a one-way overlay.
+            const tripsUrlCfg = (window.CITY_CONFIG && window.CITY_CONFIG.realtimeTripsUrl) || null;
+            const strictDir =
+              !!tripsUrlCfg &&
+              tripMetaForFilter &&
+              metrofeedTripMetaHasDirections(tripMetaForFilter) &&
+              (window.CITY_CONFIG.gtfsRtStrictVehicleDirection !== false);
+            const dirKnown = v.direction != null && v.direction !== '' && !Number.isNaN(Number(v.direction));
+            const directionMatch = dirKnown
+              ? Number(v.direction) === Number(directionId)
+              : !strictDir;
             
             if (routeMatch && directionMatch) {
               console.log(`[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ''}, direction ${v.direction} == ${directionId}`);
@@ -3066,8 +3219,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                             null;
             const occupancyText = occupancy ? formatOccupancy(occupancy) : 'Unknown';
             
-            // Format vehicle ID for display (remove non-numeric characters, visual only)
-            const displayVehicleID = metrofeedFormatVehicleLabel(bus.vehicleID, routeId);
+            const displayMain = metrofeedFormatVehicleMainLabel(bus, routeId);
+            const fleetLine = metrofeedFormatVehicleFleetSubtitle(bus);
             
             const vidKey = bus.vehicleID != null ? String(bus.vehicleID) : '';
             
@@ -3094,7 +3247,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
               return occ ? formatOccupancy(occ) : 'Unknown';
             };
             
-            const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
+            const busElement = buildMbtaBusMarkerElement(
+              routeColor,
+              metrofeedFormatRouteBadge(routeId),
+              displayMain,
+              bus.bearing != null ? Number(bus.bearing) : null
+            );
             const busMarker = new maplibregl.Marker({
               element: busElement,
               ...mbtaBusMarkerMapOptions()
@@ -3115,8 +3273,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
               popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                 <div style='text-align:center; margin-bottom:6px;'>
-                  <div style='background:${routeColor};color:${pickContrastingTextColor(routeColor)};padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 ${displayVehicleID}</div>
+                  <div style='background:${routeColor};color:${pickContrastingTextColor(routeColor)};padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 ${metrofeedPlainMarkerText(displayMain)}</div>
                 </div>
+                ${fleetLine ? `<div style='margin-bottom:4px;font-size:12px;color:#ccc;'><strong>${metrofeedPlainMarkerText(fleetLine)}</strong></div>` : ''}
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
                 <div style='margin-bottom:4px;'><strong>Direction:</strong> ${directionText}</div>
                 ${nextStopHTML}
