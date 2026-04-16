@@ -1195,7 +1195,13 @@ function formatETA(etaDate) {
 }
 
 /** Half-width of GPS dot (px). Used with anchor "bottom" + offset so dot center sits on lat/lng. */
-const MBTA_BUS_MARKER_DOT_RADIUS_PX = 6;
+// Use var + window backing so routeOverlay.js can be hot-loaded safely in devtools.
+// (Top-level const would throw "already been declared" if the script is injected twice.)
+var MBTA_BUS_MARKER_DOT_RADIUS_PX =
+  (typeof window !== 'undefined' && window.MBTA_BUS_MARKER_DOT_RADIUS_PX)
+    ? window.MBTA_BUS_MARKER_DOT_RADIUS_PX
+    : 6;
+try { if (typeof window !== 'undefined') window.MBTA_BUS_MARKER_DOT_RADIUS_PX = MBTA_BUS_MARKER_DOT_RADIUS_PX; } catch (_) {}
 
 /**
  * Live bus marker geometry: pill label (detached above) + circular dot on the coordinate.
@@ -1889,6 +1895,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       stopElement.style.border         = "2px solid #fff";
       stopElement.style.opacity        = "0.9";
       stopElement.style.cursor         = "pointer";
+      stopElement.addEventListener('click', () => {
+        try {
+          if (!window.DEBUG_STOP_TIMES) return;
+          console.log('[StopTimesDebug] click', {
+            routeId,
+            directionId,
+            stopName: stop && stop.name ? String(stop.name) : '',
+            stopId,
+            timesSource,
+            sampleTimes: Array.isArray(timesArray) ? timesArray.slice(0, 12) : []
+          });
+        } catch (_) {}
+      });
 
       const stopMarker = new maplibregl.Marker({ element: stopElement })
         .setLngLat([lon, lat]);
