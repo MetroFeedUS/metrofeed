@@ -200,8 +200,7 @@
     body.mf-ui-collapsed #themeToggleBtn,
     body.mf-ui-collapsed #aiChatBtn,
     body.mf-ui-collapsed #languageControlsWrap,
-    body.mf-ui-collapsed #dropdownMenu,
-    body.mf-ui-collapsed #routeAlertIndicator {
+    body.mf-ui-collapsed #dropdownMenu {
       display: none !important;
     }
     .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
@@ -1346,7 +1345,7 @@
   </div>
   
   <!-- Route Alert Indicator (pulsing text box) -->
-  <div id="routeAlertIndicator" onclick="openAlertsForActiveRoutes()" style="display: none; position: absolute; top: 110px; right: 10px; background: #ff4444; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; z-index: 1000; animation: pulseText 2s infinite; box-shadow: 0 2px 8px rgba(255, 68, 68, 0.6); font-size: 11px; font-weight: bold; white-space: nowrap; max-width: 200px; text-align: center;" title="View alerts for selected routes">
+  <div id="routeAlertIndicator" onclick="openAlertsForActiveRoutes()" style="display: block; visibility: hidden; position: fixed; top: var(--mf-right-rail-alert-top, 110px); right: 10px; background: #ff4444; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; z-index: 1102; animation: pulseText 2s infinite; box-shadow: 0 2px 8px rgba(255, 68, 68, 0.6); font-size: 11px; font-weight: bold; white-space: nowrap; max-width: 220px; text-align: center; min-height: 26px; box-sizing: border-box;" title="View alerts for selected routes">
     <span class="alert-text">Alert found for route</span>
     <span class="alert-count" style="margin-left: 4px;"></span>
   </div>
@@ -1803,7 +1802,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + MBTA live data bundled; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260416c"></script>
+<script src="routeOverlay.js?v=20260416d"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -1847,6 +1846,79 @@
   window.getRouteOverlayMount = function (_map) {
     return document.body;
   };
+
+  /**
+   * Right-rail layout helpers:
+   * - Reserve space for the route alert indicator directly under the dashboard collapse toggle.
+   * - Stack floating route chips (and OTP chips) directly beneath that reserved slot.
+   */
+  (function initRightRailLayout() {
+    function pxInt(v) {
+      const n = parseInt(String(v || '').trim(), 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function computeRightRailMetrics() {
+      const indicator = document.getElementById('routeAlertIndicator');
+      const toggleBtn = document.getElementById('mfTripPlannerToggle');
+
+      let alertTop = 110; // fallback if button not found
+      try {
+        if (toggleBtn && typeof toggleBtn.getBoundingClientRect === 'function') {
+          const r = toggleBtn.getBoundingClientRect();
+          // Put the alert slot right under the collapse toggle button.
+          alertTop = Math.max(10, Math.round(r.bottom + 8));
+        }
+      } catch (e) {}
+
+      // Reserve slot height even when the indicator is hidden.
+      let alertH = 26;
+      try {
+        if (indicator) {
+          // Temporarily ensure it has layout so offsetHeight is stable.
+          const prevDisplay = indicator.style.display;
+          indicator.style.display = 'block';
+          alertH = Math.max(26, indicator.offsetHeight || 0);
+          indicator.style.display = prevDisplay;
+        }
+      } catch (e) {}
+
+      const chipsTop = alertTop + alertH + 10;
+      document.documentElement.style.setProperty('--mf-right-rail-alert-top', `${alertTop}px`);
+      document.documentElement.style.setProperty('--mf-right-rail-chips-top', `${chipsTop}px`);
+      return { alertTop, alertH, chipsTop };
+    }
+
+    window.metrofeedGetRightRailTopOffset = function () {
+      const val = getComputedStyle(document.documentElement).getPropertyValue('--mf-right-rail-chips-top');
+      const n = pxInt(val);
+      if (n > 0) return n;
+      return computeRightRailMetrics().chipsTop;
+    };
+
+    window.metrofeedRepositionRouteChips = function () {
+      const { chipsTop } = computeRightRailMetrics();
+      const spacing = 10;
+      const root = document.body;
+      if (!root) return;
+      root.querySelectorAll('.route-info-panel[data-collapsed="true"], .otp-trip-route-chip[data-collapsed="true"]').forEach(el => {
+        const ix = pxInt(el.getAttribute('data-collapse-index'));
+        const h = Math.max(24, el.offsetHeight || 34);
+        el.style.left = 'auto';
+        if (!el.style.right) el.style.right = '10px';
+        el.style.top = `${chipsTop + ix * (h + spacing)}px`;
+      });
+    };
+
+    // Initial + reactive reflow
+    try {
+      computeRightRailMetrics();
+      // Run a couple frames later (fonts/layout settle)
+      requestAnimationFrame(() => window.metrofeedRepositionRouteChips && window.metrofeedRepositionRouteChips());
+      setTimeout(() => window.metrofeedRepositionRouteChips && window.metrofeedRepositionRouteChips(), 350);
+      window.addEventListener('resize', () => window.metrofeedRepositionRouteChips && window.metrofeedRepositionRouteChips(), { passive: true });
+    } catch (e) {}
+  })();
   
   // Update dynamic city name placeholders in the page
   document.addEventListener('DOMContentLoaded', function() {
@@ -6800,7 +6872,8 @@
     console.log('[updateAlertIndicator] Active route IDs:', activeRouteIds);
     
     if (activeRouteIds.length === 0) {
-      indicator.style.display = 'none';
+      // Keep the reserved slot, but hide the content when inactive.
+      indicator.style.visibility = 'hidden';
       return;
     }
     
@@ -6822,12 +6895,12 @@
       console.log('[updateAlertIndicator] Routes with alerts:', routesWithAlerts);
       
       if (routesWithAlerts.length === 0) {
-        indicator.style.display = 'none';
+        indicator.style.visibility = 'hidden';
         return;
       }
       
       // Show indicator with count
-      indicator.style.display = 'block';
+      indicator.style.visibility = 'visible';
       const countBadge = indicator.querySelector('.alert-count');
       const alertText = indicator.querySelector('.alert-text');
       if (countBadge) {
@@ -6850,7 +6923,7 @@
       
     } catch (err) {
       console.warn('[updateAlertIndicator] Error checking alerts:', err);
-      indicator.style.display = 'none';
+      indicator.style.visibility = 'hidden';
     }
   }
   

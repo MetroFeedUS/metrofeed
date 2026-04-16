@@ -1208,9 +1208,13 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID) {
   wrap.style.alignItems = "center";
   wrap.style.pointerEvents = "auto";
   const d = MBTA_BUS_MARKER_DOT_RADIUS_PX * 2;
+  const fg = pickContrastingTextColor(routeColor);
+  // Route badge: invert background so the route number is readable even on bright/yellow routeColor.
+  const badgeBg = fg;
+  const badgeFg = routeColor;
   wrap.innerHTML = `
-    <div style="margin-bottom:6px;background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;white-space:nowrap;">
-      <span style="background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}
+    <div style="margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;">
+      <span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}
     </div>
     <div style="width:${d}px;height:${d}px;border-radius:50%;background:${routeColor};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);flex-shrink:0;"></div>
   `;
@@ -1992,7 +1996,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const chipFg = pickContrastingTextColor(chipBg);
       const circleSize = isPill ? 28 : 34;
       const circleSpacing = 10; // Space between circles
-      const topOffset = 250; // Start from top to avoid overlapping with other UI elements
+      const topOffset = typeof window.metrofeedGetRightRailTopOffset === 'function'
+        ? window.metrofeedGetRightRailTopOffset()
+        : 250; // Fallback
       const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
       
       // Set initial collapsed state (circle in corner)
@@ -2040,6 +2046,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
         z-index:1101;
         line-height:1;
       `;
+      // Keep collapse/close button readable on bright route colors (e.g. yellow)
+      collapseBtn.style.color = chipFg;
       collapseBtn.onmouseover = () => collapseBtn.style.background = "rgba(255,255,255,0.2)";
       collapseBtn.onmouseout = () => collapseBtn.style.background = "transparent";
       
@@ -2087,7 +2095,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const chipFg = pickContrastingTextColor(chipBg);
           const circleSize = isPill ? 28 : 34;
           const circleSpacing = 10; // Space between circles
-          const topOffset = 250; // Start from top to avoid overlapping with other UI elements
+          const topOffset = typeof window.metrofeedGetRightRailTopOffset === 'function'
+            ? window.metrofeedGetRightRailTopOffset()
+            : 250; // Fallback
           const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
           
           // Mark this panel as collapsed and store its position index
@@ -2185,6 +2195,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
         border-radius:4px;
         line-height:1;
       `;
+      // Keep close button readable on bright route colors (e.g. yellow)
+      closeBtn.style.color = chipFg;
       closeBtn.onmouseover = () => closeBtn.style.background = "rgba(255,255,255,0.2)";
       closeBtn.onmouseout = () => closeBtn.style.background = "transparent";
       // Get the actual overlay key from options (for branch routes like "Red-Ashmont-0")

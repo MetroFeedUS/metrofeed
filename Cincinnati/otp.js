@@ -2864,7 +2864,9 @@ function getOtpTripChipCollapsedLabel(mappedRouteId) {
 function getOtpTripChipStackLayout(hostEl) {
   const circleSize = 40;
   const circleSpacing = 10;
-  const topOffset = 250;
+  const topOffset = typeof window.metrofeedGetRightRailTopOffset === 'function'
+    ? window.metrofeedGetRightRailTopOffset()
+    : 250;
   let maxIndex = -1;
   const overlayRoot = document.getElementById('mapRouteOverlayRoot');
   const roots = hostEl === document.body
