@@ -1643,25 +1643,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
     const minute = parseInt(parts.find(p => p.type === "minute").value, 10);
     const nowMins = hour * 60 + minute;
     
-    // Get current day in the timezone
-    const dayFormatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: agencyTimezone,
-      weekday: "long"
-    });
-    const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+    // Get current weekday in the route's timezone (NOT the browser timezone)
+    const dayFormatter = new Intl.DateTimeFormat("en-US", { timeZone: agencyTimezone, weekday: "long" });
+    const tzWeekdayName = dayFormatter.format(now); // e.g. "Thursday"
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDayTz = Math.max(0, dayNames.indexOf(tzWeekdayName)); // 0..6 (fallback to 0 if unknown)
     
     // Determine which schedule bucket to use
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     let scheduleBucket = "weekday";
-    if (currentDay === 0) {
-      scheduleBucket = "sunday";
-    } else if (currentDay === 6) {
-      scheduleBucket = "saturday";
-    } else {
-      scheduleBucket = "weekday";
-    }
+    if (currentDayTz === 0) scheduleBucket = "sunday";
+    else if (currentDayTz === 6) scheduleBucket = "saturday";
     
-    console.log(`[attachRouteToMap] 📅 Today is ${dayNames[currentDay]} (day ${currentDay}) - Using schedule bucket: "${scheduleBucket}"`);
+    console.log(`[attachRouteToMap] 📅 Today is ${tzWeekdayName} (tz day ${currentDayTz}) - Using schedule bucket: "${scheduleBucket}"`);
     
     // Check service day for holiday adjustments
     if (window.routeLoader) {
@@ -1676,21 +1669,25 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
     }
     
-    // Get weeklyTimes from routeData (new format) or fallback to legacy stop.times
+    // Cincinnati unified builder emits `routeData.schedule.{weekday|saturday|sunday}.stops[stop_id]`.
+    // Boston-era `weeklyTimes` is still supported for compatibility.
+    const schedule = routeData.schedule || null;
     const weeklyTimes = routeData.weeklyTimes || {};
     
-    // Log available schedule buckets
-    const availableBuckets = Object.keys(weeklyTimes);
+    const availableBuckets = [
+      ...new Set([
+        ...Object.keys(schedule || {}),
+        ...Object.keys(weeklyTimes || {})
+      ])
+    ];
     console.log(`[attachRouteToMap] 📋 Available schedule buckets in route data: ${availableBuckets.length > 0 ? availableBuckets.join(', ') : 'none (using legacy format)'}`);
     
-    // Warn if schedule bucket doesn't exist
-    if (!weeklyTimes[scheduleBucket] && Object.keys(weeklyTimes).length > 0) {
+    const hasBucket =
+      (schedule && schedule[scheduleBucket] && schedule[scheduleBucket].stops) ||
+      (weeklyTimes && weeklyTimes[scheduleBucket]);
+    if (!hasBucket && availableBuckets.length > 0) {
       console.warn(`[attachRouteToMap] ⚠️ Schedule bucket "${scheduleBucket}" not found in route data. Available: ${availableBuckets.join(', ')}. Falling back to weekday.`);
       scheduleBucket = "weekday";
-    } else if (weeklyTimes[scheduleBucket]) {
-      console.log(`[attachRouteToMap] ✅ Using "${scheduleBucket}" schedule (${Object.keys(weeklyTimes[scheduleBucket]).length} stops have times)`);
-    } else {
-      console.warn(`[attachRouteToMap] ⚠️ No weeklyTimes data found - using legacy stop.times format`);
     }
 
     stops.forEach((stop) => {
@@ -1704,18 +1701,24 @@ function attachRouteToMap(map, routeId, directionId, options) {
       let timesArray = [];
       let timesSource = 'none';
       
-      // Try to get from weeklyTimes first (new format)
-      if (weeklyTimes[scheduleBucket] && weeklyTimes[scheduleBucket][stopId]) {
+      // 1) New unified builder schedule block
+      if (schedule && schedule[scheduleBucket] && schedule[scheduleBucket].stops && schedule[scheduleBucket].stops[stopId]) {
+        timesArray = schedule[scheduleBucket].stops[stopId];
+        timesSource = `schedule.${scheduleBucket}`;
+      } else if (schedule && schedule.weekday && schedule.weekday.stops && schedule.weekday.stops[stopId]) {
+        timesArray = schedule.weekday.stops[stopId];
+        timesSource = 'schedule.weekday (fallback)';
+      }
+      // 2) Legacy `weeklyTimes` block
+      else if (weeklyTimes[scheduleBucket] && weeklyTimes[scheduleBucket][stopId]) {
         timesArray = weeklyTimes[scheduleBucket][stopId];
-        timesSource = scheduleBucket;
+        timesSource = `weeklyTimes.${scheduleBucket}`;
       } else if (weeklyTimes.weekday && weeklyTimes.weekday[stopId]) {
-        // Fallback to weekday if current day bucket doesn't exist
         timesArray = weeklyTimes.weekday[stopId];
-        timesSource = 'weekday (fallback)';
-        if (scheduleBucket !== 'weekday') {
-          console.warn(`[attachRouteToMap] ⚠️ Stop ${stopId} (${stop.name}) has no "${scheduleBucket}" times - using weekday schedule`);
-        }
-      } else if (Array.isArray(stop.times)) {
+        timesSource = 'weeklyTimes.weekday (fallback)';
+      }
+      // 3) Legacy per-stop times array (compat)
+      else if (Array.isArray(stop.times)) {
         // Legacy fallback to stop.times
         timesArray = stop.times;
         timesSource = 'legacy stop.times';
@@ -1985,8 +1988,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const panelIndex = maxIndex + 1; // Next available position
       const chipSpec = buildRouteFloatingChipLabel(routeId);
       const isPill = !!chipSpec.isAgencyStyle;
-      const circleSize = isPill ? 32 : 40;
-      const collapsedWidth = isPill ? 94 : circleSize;
+      const chipBg = routeColor || (String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35"));
+      const chipFg = pickContrastingTextColor(chipBg);
+      const circleSize = isPill ? 28 : 34;
       const circleSpacing = 10; // Space between circles
       const topOffset = 250; // Start from top to avoid overlapping with other UI elements
       const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
@@ -1997,19 +2001,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       routeInfoPanel.style.cssText = `
         position:absolute;
-        left:calc(100% - ${collapsedWidth + 10}px);
+        right:10px;
         top:${verticalPosition}px;
-        width:${collapsedWidth}px;
+        width:${isPill ? "auto" : (circleSize + "px")};
         height:${circleSize}px;
-        min-width:${collapsedWidth}px;
-        max-width:${collapsedWidth}px;
+        min-width:${isPill ? "0" : (circleSize + "px")};
+        max-width:unset;
         min-height:${circleSize}px;
         max-height:${circleSize}px;
-        padding:0;
+        padding:${isPill ? "0 8px" : "0"};
         border-radius:${isPill ? "999px" : "50%"};
-        border:3px solid #fff;
-        background:${String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35")};
-        color:${pickContrastingTextColor(String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35"))};
+        border:2px solid rgba(255,255,255,0.95);
+        background:${chipBg};
+        color:${chipFg};
         z-index:1100;
         box-shadow:0 4px 12px rgba(0,0,0,0.5);
         transition:all 0.3s ease;
@@ -2079,8 +2083,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const panelIndex = maxIndex + 1; // Next available position
           const chipSpec = buildRouteFloatingChipLabel(routeId);
           const isPill = !!chipSpec.isAgencyStyle;
-          const circleSize = isPill ? 32 : 40;
-          const collapsedWidth = isPill ? 94 : circleSize;
+          const chipBg = routeColor || (String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35"));
+          const chipFg = pickContrastingTextColor(chipBg);
+          const circleSize = isPill ? 28 : 34;
           const circleSpacing = 10; // Space between circles
           const topOffset = 250; // Start from top to avoid overlapping with other UI elements
           const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
@@ -2089,19 +2094,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
           routeInfoPanel.setAttribute('data-collapsed', 'true');
           routeInfoPanel.setAttribute('data-collapse-index', panelIndex.toString());
           
-          routeInfoPanel.style.left = `calc(100% - ${collapsedWidth + 10}px)`; // Position from right edge with margin
+          routeInfoPanel.style.left = "auto";
+          routeInfoPanel.style.right = "10px";
           routeInfoPanel.style.top = `${verticalPosition}px`;
           routeInfoPanel.style.transform = "none"; // Remove centering transform
-          routeInfoPanel.style.width = `${collapsedWidth}px`;
+          routeInfoPanel.style.width = isPill ? "auto" : `${circleSize}px`;
           routeInfoPanel.style.height = `${circleSize}px`;
-          routeInfoPanel.style.minWidth = `${collapsedWidth}px`;
-          routeInfoPanel.style.maxWidth = `${collapsedWidth}px`;
+          routeInfoPanel.style.minWidth = isPill ? "0" : `${circleSize}px`;
+          routeInfoPanel.style.maxWidth = "unset";
           routeInfoPanel.style.minHeight = `${circleSize}px`;
           routeInfoPanel.style.maxHeight = `${circleSize}px`;
-          routeInfoPanel.style.padding = "0";
+          routeInfoPanel.style.padding = isPill ? "0 8px" : "0";
           routeInfoPanel.style.borderRadius = isPill ? "999px" : "50%";
-          routeInfoPanel.style.border = "3px solid #fff"; // White border
-          const chipBg = String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35");
+          routeInfoPanel.style.border = "2px solid rgba(255,255,255,0.95)";
           routeInfoPanel.style.background = chipBg;
           routeInfoPanel.style.display = "flex";
           routeInfoPanel.style.alignItems = "center";
@@ -2116,10 +2121,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
           if (collapsedName) {
             collapsedName.style.display = "block";
-            collapsedName.style.color = pickContrastingTextColor(chipBg);
+            collapsedName.style.color = chipFg;
             collapsedName.style.fontWeight = "bold";
-            collapsedName.style.fontSize = isPill ? "0.68rem" : "1rem";
-            collapsedName.style.lineHeight = isPill ? "1.15" : "1";
+            collapsedName.style.fontSize = isPill ? "0.62rem" : "0.95rem";
+            collapsedName.style.lineHeight = "1";
           }
         } else {
           // Expand back to center - restore original panel styles
@@ -2287,10 +2292,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
         position:relative;
         color:${pickContrastingTextColor(routeInfoPanel.style.background || "#FF6B35")};
         font-weight:bold;
-        font-size:${isPill ? "0.68rem" : "1rem"};
+        font-size:${isPill ? "0.62rem" : "0.95rem"};
         pointer-events:none;
         text-align:center;
-        line-height:${isPill ? "1.15" : "1"};
+        line-height:1;
         margin:0;
         padding:0;
       `;
@@ -2307,8 +2312,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapsedName.style.display = "block";
       collapsedName.style.color = pickContrastingTextColor(routeInfoPanel.style.background || "#FF6B35");
       collapsedName.style.fontWeight = "bold";
-      collapsedName.style.fontSize = isPill ? "0.68rem" : "1rem";
-      collapsedName.style.lineHeight = isPill ? "1.15" : "1";
+      collapsedName.style.fontSize = isPill ? "0.62rem" : "0.95rem";
+      collapsedName.style.lineHeight = "1";
       collapsedName.style.pointerEvents = "none"; // Don't block clicks on the circle
 
       routeOverlayPanelHost(map).appendChild(routeInfoPanel);
