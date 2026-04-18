@@ -109,9 +109,26 @@ function inferDirectionFromBearing(routeShape, bearingDeg) {
   return d0 <= d1 ? 0 : 1;
 }
 
-function metrofeedFormatVehicleLabel(vehicleIDRaw, routeId) {
+/**
+ * Rider-facing bus label for map + popups.
+ * Prefer GTFS-RT-style public label (vehicle.label) when the proxy sends it; else fall back to vehicle id.
+ * @param {string|{vehicleID?:string,displayNumber?:string}} vehicleIDRawOrBus - legacy string id, or bus object from parseVehiclesJsonToGtfsLike
+ * @param {string} routeId
+ */
+function metrofeedFormatVehicleLabel(vehicleIDRawOrBus, routeId) {
   const rid = routeId != null ? String(routeId) : "";
-  const raw = vehicleIDRaw != null ? String(vehicleIDRaw) : "";
+  let raw = "";
+  if (vehicleIDRawOrBus && typeof vehicleIDRawOrBus === "object") {
+    const d = vehicleIDRawOrBus.displayNumber;
+    raw =
+      d != null && String(d).trim() !== ""
+        ? String(d).trim()
+        : vehicleIDRawOrBus.vehicleID != null
+          ? String(vehicleIDRawOrBus.vehicleID)
+          : "";
+  } else {
+    raw = vehicleIDRawOrBus != null ? String(vehicleIDRawOrBus) : "";
+  }
   const numeric = raw.replace(/\D+/g, "");
   const idPart = numeric || raw || "?";
   if (rid.startsWith("sorta_")) return "Metro " + idPart;
@@ -165,15 +182,37 @@ function parseVehiclesJsonToGtfsLike(json) {
       v.longitude ?? v.lon ?? v.lng ?? v?.position?.longitude ?? v?.position?.lon ?? v?.position?.lng ??
       null;
     if (lat == null || lon == null) continue;
+    // Public bus number (go-metro site / apps) is usually GTFS vehicle.label, not vehicle.descriptor.id.
+    const displayNumberRaw =
+      v.label ??
+      v.vehicle_label ??
+      v.vehicleLabel ??
+      v.display_id ??
+      v.displayId ??
+      v.display_number ??
+      v.displayNumber ??
+      v.fleet_number ??
+      v.fleetNumber ??
+      v.license_plate ??
+      v.licensePlate ??
+      v?.vehicle?.label ??
+      v?.vehicle?.license_plate ??
+      null;
+    const displayNumber =
+      displayNumberRaw != null && String(displayNumberRaw).trim() !== ""
+        ? String(displayNumberRaw).trim()
+        : null;
+
     out.push({
       vehicleID: vehId != null ? String(vehId) : "",
+      displayNumber,
       routeNumber: route != null ? String(route) : "",
       direction: dir != null && dir !== "" ? Number(dir) : null,
       latitude: Number(lat),
       longitude: Number(lon),
       bearing: v.bearing ?? v?.position?.bearing ?? null,
       speed: v.speed ?? v?.position?.speed ?? null,
-      blockID: v.blockID ?? v.blockId ?? v.block_id ?? v.label ?? (vehId != null ? String(vehId) : ""),
+      blockID: v.blockID ?? v.blockId ?? v.block_id ?? displayNumber ?? v.label ?? (vehId != null ? String(vehId) : ""),
       occupancy: v.occupancy ?? v.occupancy_status ?? null,
       tripId: v.trip_id ?? v.tripId ?? v?.trip?.trip_id ?? null
     });
@@ -256,6 +295,16 @@ function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
   return { updatesByStopId, tripUpdatesByTripId };
 }
 
+/** How many stops on a live trip appear on the static route sheet (branch / direction alignment). */
+function metrofeedTripStopOverlapCount(trip, stopIdSet) {
+  if (!trip || !Array.isArray(trip.stop_updates) || !stopIdSet || !stopIdSet.size) return 0;
+  let hits = 0;
+  for (let i = 0; i < trip.stop_updates.length; i++) {
+    const sid = trip.stop_updates[i].stop_id != null ? String(trip.stop_updates[i].stop_id) : "";
+    if (sid && stopIdSet.has(sid)) hits++;
+  }
+  return hits;
+}
 
 /**
  * Format occupancy status to friendly text
@@ -355,6 +404,12 @@ function mbtaBusMarkerMapOptions() {
 
 window.buildMbtaBusMarkerElement = buildMbtaBusMarkerElement;
 window.mbtaBusMarkerMapOptions = mbtaBusMarkerMapOptions;
+/** Used by home.html createBusMarker when present; same rules as metrofeedFormatVehicleLabel(bus, routeNumber). */
+try {
+  window.metrofeedFormatVehicleMainLabel = function (bus, routeNumber) {
+    return metrofeedFormatVehicleLabel(bus, routeNumber);
+  };
+} catch (_) {}
 
 /**
  * Attach a route overlay to a MapLibre map
@@ -1390,6 +1445,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busMarkers = {}; // Store bus markers separately
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
+      /** Latest trips.json trip_id → trip (same route); used to drop vehicles on other Route N branches. */
+      let tripIndexForPatternFilter = null;
 
       const busApiType = options.busApiType || (window.CITY_CONFIG && window.CITY_CONFIG.busApiType) || "gtfs-rt";
       const gtfsRtUrl = options.gtfsRtUrl || (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtUrl) || null;
@@ -1482,7 +1539,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const routeNorm = normalizeRouteId(routeNum);
           const routeDataNorm = routeDataRouteId ? normalizeRouteId(routeDataRouteId) : null;
           
-          const routeBuses = allBuses.filter(v => {
+          let routeBuses = allBuses.filter((v) => {
             const vNorm = normalizeRouteId(v.routeNumber);
             // 1. Exact string match
             const exactMatch = String(v.routeNumber) === routeNum;
@@ -1492,29 +1549,65 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const numericMatch = routeNorm.numeric && vNorm.numeric && routeNorm.numeric === vNorm.numeric;
             // 4. Fallback string match
             const stringMatch = String(v.routeNumber) === String(routeId);
-            
+
             const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
-            // Cincinnati proxy feeds may omit direction_id.
-            // If strict direction is enabled, infer direction from bearing vs route shape.
+            // Cincinnati proxy feeds may omit direction_id — infer from bearing when strict.
             const strictDir = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
+            const excludeUnknownBearing = !!(
+              window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtExcludeVehicleIfBearingUnknown
+            );
             let directionMatch = true;
-            if (v.direction == null || v.direction === '') {
+            if (v.direction == null || v.direction === "") {
               if (strictDir) {
-                const inferred = inferDirectionFromBearing(routeData && routeData.shape ? routeData.shape : null, v.bearing);
-                directionMatch = inferred == null ? true : (Number(inferred) === Number(directionId));
+                const inferred = inferDirectionFromBearing(
+                  routeData && routeData.shape ? routeData.shape : null,
+                  v.bearing
+                );
+                if (inferred == null) {
+                  directionMatch = !excludeUnknownBearing;
+                } else {
+                  directionMatch = Number(inferred) === Number(directionId);
+                }
               } else {
                 directionMatch = true;
               }
             } else {
               directionMatch = Number(v.direction) === Number(directionId);
             }
-            
+
             if (routeMatch && directionMatch) {
-              console.log(`[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ''}, direction ${v.direction} == ${directionId}`);
+              console.log(
+                `[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ""}, direction ${v.direction} == ${directionId}`
+              );
             }
-            
+
             return routeMatch && directionMatch;
           });
+
+          const filterOverlap = !!(
+            window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtFilterVehiclesByTripStopOverlap
+          );
+          const overlapMin = Math.max(
+            1,
+            Number(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripStopOverlapMin) || 2
+          );
+          if (filterOverlap && tripIndexForPatternFilter && (routeData.stops || []).length) {
+            const stopIdSet = new Set();
+            (routeData.stops || []).forEach((s) => {
+              const id = s.stop_id != null ? String(s.stop_id) : "";
+              if (id) stopIdSet.add(id);
+            });
+            const beforeCt = routeBuses.length;
+            routeBuses = routeBuses.filter((v) => {
+              if (!v.tripId) return true;
+              const trip = tripIndexForPatternFilter[String(v.tripId)];
+              if (!trip) return true;
+              return metrofeedTripStopOverlapCount(trip, stopIdSet) >= overlapMin;
+            });
+            if (beforeCt !== routeBuses.length) {
+              console.log("[attachRouteToMap] Trip/stop overlap filter:", beforeCt, "->", routeBuses.length);
+            }
+          }
 
           overlayElements.busPopupRefreshers.length = 0;
           // Remove old bus markers from map and overlayElements
@@ -1538,7 +1631,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const blockId = bus.blockID || bus.vehicleID || '';
             if (!blockId) return;
 
-            const displayVehicleID = metrofeedFormatVehicleLabel(bus.vehicleID, routeId);
+            const displayVehicleID = metrofeedFormatVehicleLabel(bus, routeId);
 
             const getNextStopFromETAs = () => {
               const tu = window.currentRouteTripUpdates;
@@ -1654,6 +1747,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             if (!res.ok) throw new Error(`realtime trips HTTP ${res.status}: ${res.statusText}`);
             const json = await res.json();
             const parsed = parseRealtimeTripsJsonToTripUpdates(json, routeId, routeData);
+            tripIndexForPatternFilter = parsed.tripUpdatesByTripId;
             window.currentRouteTripUpdates = {
               overlayKey,
               routeId: String(routeId),
@@ -1677,6 +1771,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 fn();
               } catch (e) {}
             });
+            // Re-run vehicle pass so trip/stop overlap filter can drop other Route N branches.
+            setTimeout(() => {
+              try {
+                fetchAndDisplayBuses();
+              } catch (e2) {}
+            }, 150);
           } catch (e) {
             console.warn("[realtimeTrips] Unavailable:", e);
           }

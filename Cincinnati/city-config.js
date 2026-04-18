@@ -204,6 +204,11 @@ const CITIES = {
     realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
     realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
     gtfsRtStrictVehicleDirection: true,
+    // When direction is missing from the feed, do not show the bus unless GPS bearing can infer 0/1 (avoids "every dir" matches).
+    gtfsRtExcludeVehicleIfBearingUnknown: true,
+    // Only show vehicles whose live trip serves at least N stops on this route+direction sheet (Metro branch pages are narrower than "all route 4").
+    gtfsRtFilterVehiclesByTripStopOverlap: true,
+    gtfsRtTripStopOverlapMin: 2,
 
     // Static per-route JSON hosting
     routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/",

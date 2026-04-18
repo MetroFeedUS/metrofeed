@@ -1802,7 +1802,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260416m"></script>
+<script src="routeOverlay.js?v=20260416p"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -4888,8 +4888,18 @@
       const lon = v.longitude ?? v.lon ?? v.lng ?? v?.position?.longitude ?? null;
       if (lat == null || lon == null) continue;
 
+      const displayNumberRaw =
+        v.label ?? v.vehicle_label ?? v.vehicleLabel ?? v.display_id ?? v.displayId ??
+        v.display_number ?? v.displayNumber ?? v.fleet_number ?? v.fleetNumber ??
+        v.license_plate ?? v.licensePlate ?? v?.vehicle?.label ?? v?.vehicle?.license_plate ?? null;
+      const displayNumber =
+        displayNumberRaw != null && String(displayNumberRaw).trim() !== ''
+          ? String(displayNumberRaw).trim()
+          : null;
+
       out.push({
         vehicleID: vehId != null ? String(vehId) : '',
+        displayNumber,
         routeNumber: route != null ? String(route) : '',
         direction: dir != null ? Number(dir) : null,
         tripId: tripId != null ? String(tripId) : null,
@@ -4898,7 +4908,7 @@
         longitude: Number(lon),
         bearing: v.bearing ?? v?.position?.bearing ?? null,
         speed: v.speed ?? v?.position?.speed ?? null,
-        blockID: v.blockID ?? v.blockId ?? v.block_id ?? v.label ?? (vehId != null ? String(vehId) : ''),
+        blockID: v.blockID ?? v.blockId ?? v.block_id ?? displayNumber ?? v.label ?? (vehId != null ? String(vehId) : ''),
         occupancy: v.occupancy ?? v.occupancy_status ?? null
       });
     }
@@ -4965,7 +4975,7 @@
       typeof window.metrofeedFormatVehicleMainLabel === 'function'
         ? window.metrofeedFormatVehicleMainLabel(bus, routeNumber)
         : (() => {
-            const rawId = String(bus.vehicleID || '');
+            const rawId = String(bus.displayNumber || bus.label || bus.vehicleID || '');
             const numeric = rawId.replace(/\D+/g, '');
             const idPart = numeric || rawId || '?';
             const agencyPrefix =
