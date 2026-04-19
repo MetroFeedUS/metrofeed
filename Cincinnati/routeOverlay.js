@@ -1293,13 +1293,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
         ? metrofeedBuildDirectionalStopElement(directionId, primaryShape, lat, lon)
         : document.createElement("div");
       if (!useDirectionalStops) {
-        stopElement.style.width          = "12px";
-        stopElement.style.height         = "12px";
-        stopElement.style.backgroundColor= "#1E90FF";
-        stopElement.style.borderRadius   = "50%";
-        stopElement.style.border         = "2px solid #fff";
-        stopElement.style.opacity        = "0.9";
-        stopElement.style.cursor         = "pointer";
+        const stopFill = routeColor || "#1E90FF";
+        const stopRing = pickContrastingTextColor(stopFill);
+        stopElement.style.width           = "12px";
+        stopElement.style.height          = "12px";
+        stopElement.style.backgroundColor = stopFill;
+        stopElement.style.borderRadius    = "50%";
+        stopElement.style.border          = `2px solid ${stopRing}`;
+        stopElement.style.opacity         = "0.9";
+        stopElement.style.cursor          = "pointer";
       }
       stopElement.addEventListener('click', () => {
         try {
