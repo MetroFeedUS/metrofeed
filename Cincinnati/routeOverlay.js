@@ -167,8 +167,8 @@ function metrofeedLocalShapeBearingAtLatLon(shape, lat, lon) {
 
 function metrofeedBuildDirectionalStopElement(directionId, shape, stopLat, stopLon) {
   const wrap = document.createElement('div');
-  wrap.style.width = '26px';
-  wrap.style.height = '26px';
+  wrap.style.width = '30px';
+  wrap.style.height = '30px';
   wrap.style.position = 'relative';
   wrap.style.pointerEvents = 'auto';
   wrap.style.cursor = 'pointer';
@@ -176,10 +176,10 @@ function metrofeedBuildDirectionalStopElement(directionId, shape, stopLat, stopL
   const pin = document.createElement('div');
   pin.style.cssText = [
     'position:absolute',
-    'left:3px',
-    'top:3px',
-    'width:20px',
-    'height:20px',
+    'left:4px',
+    'top:4px',
+    'width:22px',
+    'height:22px',
     'border-radius:999px',
     'background:#1E90FF',
     'border:2px solid #ffffff',
@@ -199,6 +199,19 @@ function metrofeedBuildDirectionalStopElement(directionId, shape, stopLat, stopL
   ].join(';');
   pin.appendChild(inner);
 
+  // Fin with white outline so it stays visible on dark maps.
+  const finOutline = document.createElement('div');
+  finOutline.style.position = 'absolute';
+  finOutline.style.left = '50%';
+  finOutline.style.top = '50%';
+  finOutline.style.width = '0';
+  finOutline.style.height = '0';
+  finOutline.style.borderTop = '9px solid transparent';
+  finOutline.style.borderBottom = '9px solid transparent';
+  finOutline.style.borderLeft = '16px solid #ffffff';
+  finOutline.style.opacity = '0.95';
+  finOutline.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.45))';
+
   const fin = document.createElement('div');
   fin.style.position = 'absolute';
   fin.style.left = '50%';
@@ -207,19 +220,26 @@ function metrofeedBuildDirectionalStopElement(directionId, shape, stopLat, stopL
   fin.style.height = '0';
   fin.style.borderTop = '7px solid transparent';
   fin.style.borderBottom = '7px solid transparent';
-  fin.style.borderLeft = '12px solid #1E90FF';
-  fin.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))';
+  fin.style.borderLeft = '13px solid #1E90FF';
+  fin.style.opacity = '0.98';
 
   const base = metrofeedLocalShapeBearingAtLatLon(shape, stopLat, stopLon);
   // Default points east if we can't compute.
   let deg = Number.isFinite(base) ? base : 90;
   // The fin triangle points "east" (90°) by default, so rotate relative.
-  // And for dir1, flip 180°.
-  const dirFlip = Number(directionId) === 1 ? 180 : 0;
+  // And for dir1, flip 180°. If Cincinnati flip is enabled, swap dir0/dir1 sense for stop arrows too.
+  const flipSense = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtFlipInferredDirection);
+  const dirIsOne = Number(directionId) === 1;
+  const shouldFlip = flipSense ? !dirIsOne : dirIsOne;
+  const dirFlip = shouldFlip ? 180 : 0;
   const rotate = (deg - 90 + dirFlip + 360) % 360;
-  fin.style.transform = `translate(2px, -50%) rotate(${rotate}deg)`;
+  const t = `translate(4px, -50%) rotate(${rotate}deg)`;
+  finOutline.style.transform = t;
+  fin.style.transform = t;
+  finOutline.style.transformOrigin = '0 50%';
   fin.style.transformOrigin = '0 50%';
 
+  wrap.appendChild(finOutline);
   wrap.appendChild(fin);
   wrap.appendChild(pin);
   return wrap;
