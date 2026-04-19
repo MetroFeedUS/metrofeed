@@ -115,6 +115,116 @@ function metrofeedMaybeFlipInferredDirection(dir) {
   return flip ? (dir === 0 ? 1 : 0) : dir;
 }
 
+function metrofeedBearingDeg(lat1, lon1, lat2, lon2) {
+  const toRad = (x) => (x * Math.PI) / 180;
+  const y = Math.sin(toRad(lon2 - lon1)) * Math.cos(toRad(lat2));
+  const x =
+    Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lon2 - lon1));
+  let brng = (Math.atan2(y, x) * 180) / Math.PI;
+  brng = (brng + 360) % 360;
+  return brng;
+}
+
+/**
+ * Bearing of the route polyline at/near a stop. Uses the closest shape point and its neighbor.
+ * shape coordinates are [lat, lon].
+ */
+function metrofeedLocalShapeBearingAtLatLon(shape, lat, lon) {
+  if (!Array.isArray(shape) || shape.length < 2) return null;
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+
+  let bestIdx = -1;
+  let bestD = Infinity;
+  for (let i = 0; i < shape.length; i++) {
+    const p = shape[i];
+    const pla = Number(p && p[0]);
+    const plo = Number(p && p[1]);
+    if (!Number.isFinite(pla) || !Number.isFinite(plo)) continue;
+    const dLat = pla - la;
+    const dLon = plo - lo;
+    const d = dLat * dLat + dLon * dLon;
+    if (d < bestD) {
+      bestD = d;
+      bestIdx = i;
+    }
+  }
+  if (bestIdx < 0) return null;
+  const i0 = Math.max(0, Math.min(shape.length - 1, bestIdx));
+  const i1 = i0 === shape.length - 1 ? i0 - 1 : i0 + 1;
+  if (i1 < 0 || i1 >= shape.length) return null;
+  const p0 = shape[i0];
+  const p1 = shape[i1];
+  const lat1 = Number(p0 && p0[0]);
+  const lon1 = Number(p0 && p0[1]);
+  const lat2 = Number(p1 && p1[0]);
+  const lon2 = Number(p1 && p1[1]);
+  if (![lat1, lon1, lat2, lon2].every(Number.isFinite)) return null;
+  return metrofeedBearingDeg(lat1, lon1, lat2, lon2);
+}
+
+function metrofeedBuildDirectionalStopElement(directionId, shape, stopLat, stopLon) {
+  const wrap = document.createElement('div');
+  wrap.style.width = '26px';
+  wrap.style.height = '26px';
+  wrap.style.position = 'relative';
+  wrap.style.pointerEvents = 'auto';
+  wrap.style.cursor = 'pointer';
+
+  const pin = document.createElement('div');
+  pin.style.cssText = [
+    'position:absolute',
+    'left:3px',
+    'top:3px',
+    'width:20px',
+    'height:20px',
+    'border-radius:999px',
+    'background:#1E90FF',
+    'border:2px solid #ffffff',
+    'box-shadow:0 2px 6px rgba(0,0,0,0.45)'
+  ].join(';');
+
+  const inner = document.createElement('div');
+  inner.style.cssText = [
+    'position:absolute',
+    'left:50%',
+    'top:50%',
+    'width:9px',
+    'height:9px',
+    'transform:translate(-50%,-50%)',
+    'border-radius:999px',
+    'background:#ffffff'
+  ].join(';');
+  pin.appendChild(inner);
+
+  const fin = document.createElement('div');
+  fin.style.position = 'absolute';
+  fin.style.left = '50%';
+  fin.style.top = '50%';
+  fin.style.width = '0';
+  fin.style.height = '0';
+  fin.style.borderTop = '7px solid transparent';
+  fin.style.borderBottom = '7px solid transparent';
+  fin.style.borderLeft = '12px solid #1E90FF';
+  fin.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))';
+
+  const base = metrofeedLocalShapeBearingAtLatLon(shape, stopLat, stopLon);
+  // Default points east if we can't compute.
+  let deg = Number.isFinite(base) ? base : 90;
+  // The fin triangle points "east" (90°) by default, so rotate relative.
+  // And for dir1, flip 180°.
+  const dirFlip = Number(directionId) === 1 ? 180 : 0;
+  const rotate = (deg - 90 + dirFlip + 360) % 360;
+  fin.style.transform = `translate(2px, -50%) rotate(${rotate}deg)`;
+  fin.style.transformOrigin = '0 50%';
+
+  wrap.appendChild(fin);
+  wrap.appendChild(pin);
+  return wrap;
+}
+
 /**
  * Rider-facing bus label for map + popups.
  * Prefer GTFS-RT-style public label (vehicle.label) when the proxy sends it; else fall back to vehicle id.
@@ -1053,14 +1163,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
 
       // Stop marker element
-      const stopElement = document.createElement("div");
-      stopElement.style.width          = "12px";
-      stopElement.style.height         = "12px";
-      stopElement.style.backgroundColor= "#1E90FF";
-      stopElement.style.borderRadius   = "50%";
-      stopElement.style.border         = "2px solid #fff";
-      stopElement.style.opacity        = "0.9";
-      stopElement.style.cursor         = "pointer";
+      const useDirectionalStops = !!(window.CITY_CONFIG && window.CITY_CONFIG.directionalStopMarkers);
+      const stopElement = useDirectionalStops
+        ? metrofeedBuildDirectionalStopElement(directionId, primaryShape, lat, lon)
+        : document.createElement("div");
+      if (!useDirectionalStops) {
+        stopElement.style.width          = "12px";
+        stopElement.style.height         = "12px";
+        stopElement.style.backgroundColor= "#1E90FF";
+        stopElement.style.borderRadius   = "50%";
+        stopElement.style.border         = "2px solid #fff";
+        stopElement.style.opacity        = "0.9";
+        stopElement.style.cursor         = "pointer";
+      }
       stopElement.addEventListener('click', () => {
         try {
           if (!window.DEBUG_STOP_TIMES) return;
