@@ -1712,7 +1712,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             } else {
               console.log('[attachRouteToMap] Fetching GTFS-RT feed(s):', urlsToFetch);
               const feedResults = await Promise.all(urlsToFetch.map(async (url) => {
-                const res = await fetch(url);
+                const res = await fetch(url, { cache: 'no-store' });
                 if (!res.ok) throw new Error(`GTFS-RT HTTP ${res.status}: ${res.statusText} (${url})`);
                 const contentType = (res.headers.get('content-type') || '').toLowerCase();
                 const looksJson = url.toLowerCase().includes('.json') || contentType.includes('application/json') || contentType.includes('+json');
@@ -1991,7 +1991,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               const u = realtimeTripUrls[ui];
               const controller = new AbortController();
               const timeout = setTimeout(() => controller.abort(), 20000);
-              const res = await fetch(u, { signal: controller.signal });
+              const res = await fetch(u, { signal: controller.signal, cache: 'no-store' });
               clearTimeout(timeout);
               if (!res.ok) throw new Error(`realtime trips HTTP ${res.status}: ${res.statusText} (${u})`);
               jsonParts.push(await res.json());
