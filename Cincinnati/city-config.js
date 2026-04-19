@@ -209,7 +209,8 @@ const CITIES = {
     // When direction is missing and we infer from GPS bearing, flip 0↔1 so buses land on correct inbound/outbound overlays.
     gtfsRtFlipInferredDirection: true,
     // Stop marker styling: directional "pin + fin" (rotates along route direction at each stop).
-    directionalStopMarkers: true,
+    // Disabled for now (stop placement/shape alignment needs deeper work).
+    directionalStopMarkers: false,
     // When direction is missing from the feed, do not show the bus unless GPS bearing can infer 0/1 (avoids "every dir" matches).
     gtfsRtExcludeVehicleIfBearingUnknown: true,
     // Only show vehicles whose live trip serves at least N stops on this route+direction sheet (Metro branch pages are narrower than "all route 4").
