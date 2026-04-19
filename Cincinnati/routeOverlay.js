@@ -64,49 +64,100 @@ function metrofeedAngleDeltaDeg(a, b) {
   return d;
 }
 
-function inferDirectionFromBearing(routeShape, bearingDeg) {
-  // Infer directionId (0 or 1) by comparing vehicle bearing to the route's overall heading.
-  // Direction 0 ~ from first point → last point. Direction 1 is opposite.
+/**
+ * Infer GTFS direction_id (0 vs 1) for this overlay when the vehicle feed omits direction.
+ * Uses the nearest segment of the route polyline (primaryShape) + GPS bearing vs segment tangent.
+ * direction 0 aligns with shape order (vertex i → i+1); direction 1 is reversed.
+ */
+function inferDirectionFromPolylineAndBearing(routeShape, lat, lon, bearingDeg) {
   if (!Array.isArray(routeShape) || routeShape.length < 2) return null;
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+
+  let bestSeg = -1;
+  let bestD2 = Infinity;
+  let bestT = 0;
+  let bestAx = 0;
+  let bestAy = 0;
+  let bestBx = 0;
+  let bestBy = 0;
+
+  for (let i = 0; i < routeShape.length - 1; i++) {
+    const p0 = routeShape[i];
+    const p1 = routeShape[i + 1];
+    const y0 = Number(p0 && p0[0]);
+    const x0 = Number(p0 && p0[1]);
+    const y1 = Number(p1 && p1[0]);
+    const x1 = Number(p1 && p1[1]);
+    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
+
+    const vx = x1 - x0;
+    const vy = y1 - y0;
+    const wx = lo - x0;
+    const wy = la - y0;
+    const vv = vx * vx + vy * vy;
+    if (vv < 1e-12) continue;
+    let t = (wx * vx + wy * vy) / vv;
+    if (t < 0) t = 0;
+    else if (t > 1) t = 1;
+    const px = x0 + t * vx;
+    const py = y0 + t * vy;
+    const dx = lo - px;
+    const dy = la - py;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestD2) {
+      bestD2 = d2;
+      bestSeg = i;
+      bestT = t;
+      bestAx = x0;
+      bestAy = y0;
+      bestBx = x1;
+      bestBy = y1;
+    }
+  }
+  if (bestSeg < 0) return null;
+
+  const hSeg = metrofeedBearingDeg(bestAy, bestAx, bestBy, bestBx);
   const b = Number(bearingDeg);
-  if (!Number.isFinite(b)) return null;
+  if (Number.isFinite(b)) {
+    const dFwd = Math.abs(metrofeedAngleDeltaDeg(b, hSeg));
+    const dRev = Math.abs(metrofeedAngleDeltaDeg(b, (hSeg + 180) % 360));
+    return dFwd <= dRev ? 0 : 1;
+  }
 
-  // Find a robust coarse heading using endpoints with some separation.
-  const p0 = routeShape[0];
-  const p1 = routeShape[Math.max(1, Math.floor(routeShape.length * 0.15))];
-  const pn = routeShape[routeShape.length - 1];
-  const pn1 = routeShape[Math.max(0, routeShape.length - 1 - Math.max(1, Math.floor(routeShape.length * 0.15)))];
-
-  // shape points are [lat, lon] in your JSON
-  const latA = Number(p0 && p0[0]);
-  const lonA = Number(p0 && p0[1]);
-  const latB = Number(p1 && p1[0]);
-  const lonB = Number(p1 && p1[1]);
-  const latC = Number(pn1 && pn1[0]);
-  const lonC = Number(pn1 && pn1[1]);
-  const latD = Number(pn && pn[0]);
-  const lonD = Number(pn && pn[1]);
-  if (![latA, lonA, latB, lonB, latC, lonC, latD, lonD].every(Number.isFinite)) return null;
-
-  const headingDeg = (lat1, lon1, lat2, lon2) => {
-    const toRad = (x) => (x * Math.PI) / 180;
-    const y = Math.sin(toRad(lon2 - lon1)) * Math.cos(toRad(lat2));
-    const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
-              Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lon2 - lon1));
-    let brng = (Math.atan2(y, x) * 180) / Math.PI;
-    brng = (brng + 360) % 360;
-    return brng;
-  };
-
-  // Average a "start heading" and "end heading" for stability
-  const hStart = headingDeg(latA, lonA, latB, lonB);
-  const hEnd = headingDeg(latC, lonC, latD, lonD);
-  const h0 = ((hStart + hEnd) / 2) % 360;
-  const h1 = (h0 + 180) % 360;
-
-  const d0 = Math.abs(metrofeedAngleDeltaDeg(b, h0));
-  const d1 = Math.abs(metrofeedAngleDeltaDeg(b, h1));
-  return d0 <= d1 ? 0 : 1;
+  // No bearing: use position along polyline (weak, but better than nothing).
+  let cum = 0;
+  for (let i = 0; i < bestSeg; i++) {
+    const p0 = routeShape[i];
+    const p1 = routeShape[i + 1];
+    const y0 = Number(p0 && p0[0]);
+    const x0 = Number(p0 && p0[1]);
+    const y1 = Number(p1 && p1[0]);
+    const x1 = Number(p1 && p1[1]);
+    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
+    cum += Math.hypot(x1 - x0, y1 - y0);
+  }
+  {
+    const vx = bestBx - bestAx;
+    const vy = bestBy - bestAy;
+    cum += Math.hypot(vx, vy) * bestT;
+  }
+  let total = 0;
+  for (let i = 0; i < routeShape.length - 1; i++) {
+    const p0 = routeShape[i];
+    const p1 = routeShape[i + 1];
+    const y0 = Number(p0 && p0[0]);
+    const x0 = Number(p0 && p0[1]);
+    const y1 = Number(p1 && p1[0]);
+    const x1 = Number(p1 && p1[1]);
+    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
+    total += Math.hypot(x1 - x0, y1 - y0);
+  }
+  if (!Number.isFinite(total) || total < 1e-6) return null;
+  const p = cum / total;
+  if (Math.abs(p - 0.5) < 0.08) return null;
+  return p < 0.5 ? 0 : 1;
 }
 
 function metrofeedMaybeFlipInferredDirection(dir) {
@@ -1778,8 +1829,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
             let directionMatch = true;
             if (v.direction == null || v.direction === "") {
               if (strictDir) {
-                const inferredRaw = inferDirectionFromBearing(
+                const inferredRaw = inferDirectionFromPolylineAndBearing(
                   routeData && routeData.shape ? routeData.shape : null,
+                  v.latitude,
+                  v.longitude,
                   v.bearing
                 );
                 const inferred = metrofeedMaybeFlipInferredDirection(inferredRaw);
@@ -1908,10 +1961,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
               else if (bus.direction === 0) dirLabel = "Outbound";
               else {
                 const inferred = metrofeedMaybeFlipInferredDirection(
-                  inferDirectionFromBearing(primaryShape, bus.bearing)
+                  inferDirectionFromPolylineAndBearing(
+                    primaryShape,
+                    bus.latitude,
+                    bus.longitude,
+                    bus.bearing
+                  )
                 );
-                if (inferred === 0) dirLabel = "Outbound (GPS)";
-                else if (inferred === 1) dirLabel = "Inbound (GPS)";
+                if (inferred === 0) dirLabel = "Outbound (GPS + route shape)";
+                else if (inferred === 1) dirLabel = "Inbound (GPS + route shape)";
                 else dirLabel = "Unknown";
               }
               const nextStopETA = getNextStopFromETAs();
@@ -1969,12 +2027,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         }
       }
       
-      // Fetch buses immediately
-      fetchAndDisplayBuses();
-      
-      const busInterval = setInterval(fetchAndDisplayBuses, 30000);
-      overlayElements.intervals.push(busInterval);
-
       // gtfs-rt + VPS trips.json (+ optional gtfsRtTripUpdatesUrl) → TripUpdates-shaped data for stop + bus ETAs
       let realtimeTripsInterval = null;
       const gtfsRtTripUpdatesUrl =
@@ -1982,60 +2034,68 @@ function attachRouteToMap(map, routeId, directionId, options) {
         (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrl) ||
         null;
       const realtimeTripUrls = [...new Set([realtimeTripsUrl, gtfsRtTripUpdatesUrl].filter(Boolean))];
-      if (busApiType === "gtfs-rt" && realtimeTripUrls.length) {
-        const overlayKey = options.overlayKey || `${routeId}-${directionId}`;
-        const fetchRealtimeTripsJson = async () => {
-          try {
-            const jsonParts = [];
-            for (let ui = 0; ui < realtimeTripUrls.length; ui++) {
-              const u = realtimeTripUrls[ui];
-              const controller = new AbortController();
-              const timeout = setTimeout(() => controller.abort(), 20000);
-              const res = await fetch(u, { signal: controller.signal, cache: 'no-store' });
-              clearTimeout(timeout);
-              if (!res.ok) throw new Error(`realtime trips HTTP ${res.status}: ${res.statusText} (${u})`);
-              jsonParts.push(await res.json());
-            }
-            const mergedTrips = metrofeedMergeRealtimeTripJsonParts(jsonParts);
-            const parsed = parseRealtimeTripsJsonToTripUpdates({ trips: mergedTrips }, routeId, routeData);
-            tripIndexForPatternFilter = parsed.tripUpdatesByTripId;
-            window.currentRouteTripUpdates = {
-              overlayKey,
-              routeId: String(routeId),
-              directionId,
-              updatesByStopId: parsed.updatesByStopId,
-              tripUpdatesByTripId: parsed.tripUpdatesByTripId,
-              stopIdToName,
-              etaLabel: "Live",
-              etaSource: "realtime-trips",
-              fetchedAt: new Date()
-            };
-            overlayElements.stopPopupRefreshers.forEach(({ overlayKey: ok, update }) => {
-              if (ok === overlayKey) {
-                try {
-                  update();
-                } catch (e) {}
-              }
-            });
-            overlayElements.busPopupRefreshers.forEach((fn) => {
-              try {
-                fn();
-              } catch (e) {}
-            });
-            // Re-run vehicle pass so trip/stop overlap filter can drop other Route N branches.
-            setTimeout(() => {
-              try {
-                fetchAndDisplayBuses();
-              } catch (e2) {}
-            }, 150);
-          } catch (e) {
-            console.warn("[realtimeTrips] Unavailable:", e);
+      const overlayKeyForTrips = options.overlayKey || `${routeId}-${directionId}`;
+      const fetchRealtimeTripsJson = async () => {
+        try {
+          const jsonParts = [];
+          for (let ui = 0; ui < realtimeTripUrls.length; ui++) {
+            const u = realtimeTripUrls[ui];
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 20000);
+            const res = await fetch(u, { signal: controller.signal, cache: 'no-store' });
+            clearTimeout(timeout);
+            if (!res.ok) throw new Error(`realtime trips HTTP ${res.status}: ${res.statusText} (${u})`);
+            jsonParts.push(await res.json());
           }
-        };
-        fetchRealtimeTripsJson();
-        realtimeTripsInterval = setInterval(fetchRealtimeTripsJson, 30000);
-        overlayElements.intervals.push(realtimeTripsInterval);
-      }
+          const mergedTrips = metrofeedMergeRealtimeTripJsonParts(jsonParts);
+          const parsed = parseRealtimeTripsJsonToTripUpdates({ trips: mergedTrips }, routeId, routeData);
+          tripIndexForPatternFilter = parsed.tripUpdatesByTripId;
+          window.currentRouteTripUpdates = {
+            overlayKey: overlayKeyForTrips,
+            routeId: String(routeId),
+            directionId,
+            updatesByStopId: parsed.updatesByStopId,
+            tripUpdatesByTripId: parsed.tripUpdatesByTripId,
+            stopIdToName,
+            etaLabel: "Live",
+            etaSource: "realtime-trips",
+            fetchedAt: new Date()
+          };
+          overlayElements.stopPopupRefreshers.forEach(({ overlayKey: ok, update }) => {
+            if (ok === overlayKeyForTrips) {
+              try {
+                update();
+              } catch (e) {}
+            }
+          });
+          overlayElements.busPopupRefreshers.forEach((fn) => {
+            try {
+              fn();
+            } catch (e) {}
+          });
+          // Re-run vehicle pass so trip/stop overlap filter can drop other Route N branches.
+          setTimeout(() => {
+            try {
+              fetchAndDisplayBuses();
+            } catch (e2) {}
+          }, 150);
+        } catch (e) {
+          console.warn("[realtimeTrips] Unavailable:", e);
+        }
+      };
+
+      (async function startLiveBusUpdates() {
+        if (busApiType === "gtfs-rt" && realtimeTripUrls.length) {
+          await fetchRealtimeTripsJson();
+        }
+        fetchAndDisplayBuses();
+        const busInterval = setInterval(fetchAndDisplayBuses, 30000);
+        overlayElements.intervals.push(busInterval);
+        if (busApiType === "gtfs-rt" && realtimeTripUrls.length) {
+          realtimeTripsInterval = setInterval(fetchRealtimeTripsJson, 30000);
+          overlayElements.intervals.push(realtimeTripsInterval);
+        }
+      })();
     }
   };
 

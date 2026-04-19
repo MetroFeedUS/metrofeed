@@ -205,9 +205,8 @@ const CITIES = {
     realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
     realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
     gtfsRtStrictVehicleDirection: true,
-    // Cincinnati: route JSON shape point order may be opposite of rider-facing dir0/dir1.
-    // When direction is missing and we infer from GPS bearing, flip 0↔1 so buses land on correct inbound/outbound overlays.
-    gtfsRtFlipInferredDirection: true,
+    // Legacy: used to flip bearing-only inference. Prefer polyline+tangent matching in routeOverlay instead.
+    gtfsRtFlipInferredDirection: false,
     // Stop marker styling: directional "pin + fin" (rotates along route direction at each stop).
     // Disabled for now (stop placement/shape alignment needs deeper work).
     directionalStopMarkers: false,
