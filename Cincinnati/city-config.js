@@ -196,6 +196,7 @@ const CITIES = {
     busApiType: "gtfs-rt",
     disableGtfsRt: false,
     gtfsRtUrl: null, // legacy single field (unused)
+    // Optional second JSON feed (merged with realtimeTripsUrl by trip_id; later URL wins). Use for a **full** trip-updates export so every vehicle trip_id resolves to real stop_updates.
     gtfsRtTripUpdatesUrl: null,
     gtfsRtAlertsUrl: null,
     gtfsRtProxyUrls: [

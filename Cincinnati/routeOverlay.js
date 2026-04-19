@@ -214,15 +214,43 @@ function parseVehiclesJsonToGtfsLike(json) {
       speed: v.speed ?? v?.position?.speed ?? null,
       blockID: v.blockID ?? v.blockId ?? v.block_id ?? displayNumber ?? v.label ?? (vehId != null ? String(vehId) : ""),
       occupancy: v.occupancy ?? v.occupancy_status ?? null,
-      tripId: v.trip_id ?? v.tripId ?? v?.trip?.trip_id ?? null
+      tripId:
+        v.trip_id != null && String(v.trip_id) !== ""
+          ? String(v.trip_id)
+          : v.tripId != null && String(v.tripId) !== ""
+            ? String(v.tripId)
+            : v?.trip?.trip_id != null && String(v.trip.trip_id) !== ""
+              ? String(v.trip.trip_id)
+              : null,
+      /** When the vehicle proxy embeds GTFS-style stop times (same as TripUpdate.stop_time_update), use these first. */
+      stop_updates:
+        Array.isArray(v.stop_updates) ? v.stop_updates
+        : Array.isArray(v.stopUpdates) ? v.stopUpdates
+        : null
     });
   }
   return out;
 }
 
+/** Merge multiple { trips: [...] } payloads; later URLs overwrite same trip_id (e.g. full trip_updates over partial trips). */
+function metrofeedMergeRealtimeTripJsonParts(jsonParts) {
+  const byId = new Map();
+  for (let p = 0; p < jsonParts.length; p++) {
+    const part = jsonParts[p];
+    const trips = Array.isArray(part && part.trips) ? part.trips : [];
+    for (let i = 0; i < trips.length; i++) {
+      const t = trips[i];
+      const id = t.trip_id != null ? String(t.trip_id) : "";
+      if (id) byId.set(id, t);
+    }
+  }
+  return Array.from(byId.values());
+}
+
 /**
  * VPS realtime trips.json (e.g. Cincinnati): { trips: [{ agency, trip_id, route_id, stop_updates: [{ stop_id, arrival, departure }] }] }
- * Builds the same shape as protobuf TripUpdates for stop popups + trip_id → trip lookup for bus next-stop.
+ * - tripUpdatesByTripId: **all** trips for the overlay agency (not only the open route), keyed by trip_id, so vehicle trip_ids resolve to real stop_updates.
+ * - updatesByStopId: only trips matching this route (for stop-marker ETAs on the sheet).
  */
 function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
   const updatesByStopId = Object.create(null);
@@ -241,7 +269,7 @@ function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
     return d.replace(/^0+(?=\d)/, "") || d;
   };
 
-  const tripMatches = (trip) => {
+  const tripMatchesRoute = (trip) => {
     if (agencyWant && trip.agency && String(trip.agency).toLowerCase() !== agencyWant) return false;
     const tr = trip.route_id != null ? String(trip.route_id) : "";
     if (!tr) return false;
@@ -253,11 +281,20 @@ function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
     return false;
   };
 
+  const tripMatchesAgencyOnly = (trip) => {
+    if (!agencyWant) return true;
+    const a = trip.agency != null ? String(trip.agency).toLowerCase() : "";
+    if (!a) return true;
+    return a === agencyWant;
+  };
+
   for (let i = 0; i < trips.length; i++) {
     const trip = trips[i];
-    if (!tripMatches(trip)) continue;
+    if (!tripMatchesAgencyOnly(trip)) continue;
     const tid = trip.trip_id != null ? String(trip.trip_id) : "";
     if (tid) tripUpdatesByTripId[tid] = trip;
+
+    if (!tripMatchesRoute(trip)) continue;
     const stops = Array.isArray(trip.stop_updates) ? trip.stop_updates : [];
     for (let j = 0; j < stops.length; j++) {
       const su = stops[j];
@@ -315,15 +352,41 @@ function formatOccupancy(occupancy) {
   if (!occupancy || occupancy === 'Unknown') return 'Unknown';
   
   const occupancyMap = {
-    'MANY_SEATS_AVAILABLE': 'Many Seats Available',
-    'FEW_SEATS_AVAILABLE': 'Few Seats Available',
-    'STANDING_ROOM_ONLY': 'Standing Room Only',
-    'CRUSHED_STANDING_ROOM_ONLY': 'Crushed Standing Room Only',
-    'FULL': 'Full',
-    'NOT_ACCEPTING_PASSENGERS': 'Not Accepting Passengers'
+    EMPTY: 'Empty',
+    MANY_SEATS_AVAILABLE: 'Many Seats Available',
+    FEW_SEATS_AVAILABLE: 'Few Seats Available',
+    STANDING_ROOM_ONLY: 'Standing Room Only',
+    CRUSHED_STANDING_ROOM_ONLY: 'Crushed Standing Room Only',
+    FULL: 'Full',
+    NOT_ACCEPTING_PASSENGERS: 'Not Accepting Passengers'
   };
   
   return occupancyMap[occupancy] || occupancy;
+}
+
+/** GTFS-RT OccupancyStatus enum when the proxy sends a number. */
+function metrofeedNormalizeOccupancyRaw(raw) {
+  if (raw == null || raw === '') return null;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    const byNum = {
+      0: 'EMPTY',
+      1: 'MANY_SEATS_AVAILABLE',
+      2: 'FEW_SEATS_AVAILABLE',
+      3: 'STANDING_ROOM_ONLY',
+      4: 'CRUSHED_STANDING_ROOM_ONLY',
+      5: 'FULL',
+      6: 'NOT_ACCEPTING_PASSENGERS'
+    };
+    const k = byNum[raw];
+    if (k) return k;
+  }
+  const s = String(raw).trim();
+  if (!s) return null;
+  if (/^\d+$/.test(s)) {
+    const n = parseInt(s, 10);
+    return metrofeedNormalizeOccupancyRaw(n);
+  }
+  return s.toUpperCase().replace(/\s+/g, '_');
 }
 
 /**
@@ -347,20 +410,35 @@ function formatETA(etaDate) {
   }
 }
 
-/** Next scheduled realtime stop from trips.json stop_updates (first time at/after now − 90s). */
+function metrofeedStopUpdateTimeSec(su) {
+  if (!su) return null;
+  if (su.arrival != null && Number.isFinite(Number(su.arrival))) return Number(su.arrival);
+  if (su.departure != null && Number.isFinite(Number(su.departure))) return Number(su.departure);
+  return null;
+}
+
+/**
+ * Next stop + ETA strictly from TripUpdate-style stop_updates (Unix arrival/departure).
+ * Uses the first stop with a predicted time at/after now − 90s — no guessing when data is missing.
+ */
 function metrofeedNextStopFromRealtimeTrip(trip, stopIdToName) {
-  if (!trip || !Array.isArray(trip.stop_updates)) return null;
+  if (!trip || !Array.isArray(trip.stop_updates) || !trip.stop_updates.length) return null;
   const nowSec = Math.floor(Date.now() / 1000);
-  for (let i = 0; i < trip.stop_updates.length; i++) {
-    const su = trip.stop_updates[i];
-    const tSec =
-      su.arrival != null ? Number(su.arrival) : su.departure != null ? Number(su.departure) : null;
+  const stops = trip.stop_updates;
+
+  for (let i = 0; i < stops.length; i++) {
+    const tSec = metrofeedStopUpdateTimeSec(stops[i]);
     if (!Number.isFinite(tSec)) continue;
     if (tSec < nowSec - 90) continue;
-    const sid = su.stop_id != null ? String(su.stop_id) : "";
+    const sid = stops[i].stop_id != null ? String(stops[i].stop_id) : "";
     const name =
       sid && stopIdToName && stopIdToName[sid] ? stopIdToName[sid] : sid || "Next stop";
-    return { stopName: name, eta: formatETA(new Date(tSec * 1000)) };
+    return {
+      stopName: name,
+      eta: formatETA(new Date(tSec * 1000)),
+      stopId: sid,
+      timeSec: tSec
+    };
   }
   return null;
 }
@@ -1635,23 +1713,42 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
             const getNextStopFromETAs = () => {
               const tu = window.currentRouteTripUpdates;
-              if (
-                tu &&
-                tu.overlayKey === etaOverlayKey &&
-                bus.tripId &&
-                tu.tripUpdatesByTripId &&
-                tu.stopIdToName
-              ) {
-                const trip = tu.tripUpdatesByTripId[String(bus.tripId)];
-                const next = metrofeedNextStopFromRealtimeTrip(trip, tu.stopIdToName);
-                if (next) return next;
+              if (!tu || tu.overlayKey !== etaOverlayKey || !tu.stopIdToName) return null;
+              if (Array.isArray(bus.stop_updates) && bus.stop_updates.length) {
+                return metrofeedNextStopFromRealtimeTrip(
+                  { stop_updates: bus.stop_updates },
+                  tu.stopIdToName
+                );
               }
-              return null;
+              if (!bus.tripId || !tu.tripUpdatesByTripId) return null;
+              const trip = tu.tripUpdatesByTripId[String(bus.tripId)];
+              if (!trip) return null;
+              return metrofeedNextStopFromRealtimeTrip(trip, tu.stopIdToName);
             };
 
             const getOccupancyTextLive = () => {
-              const occ = bus.occupancy || null;
-              return occ ? formatOccupancy(occ) : "Unknown";
+              const tu = window.currentRouteTripUpdates;
+              let occRaw = bus.occupancy ?? bus.occupancy_status;
+              if (
+                (!occRaw || occRaw === "") &&
+                tu &&
+                tu.overlayKey === etaOverlayKey &&
+                bus.tripId &&
+                tu.tripUpdatesByTripId
+              ) {
+                const tr = tu.tripUpdatesByTripId[String(bus.tripId)];
+                if (tr) {
+                  occRaw =
+                    tr.occupancy ??
+                    tr.occupancy_status ??
+                    tr?.vehicle?.occupancy ??
+                    tr?.vehicle?.occupancy_status ??
+                    null;
+                }
+              }
+              const occ = metrofeedNormalizeOccupancyRaw(occRaw);
+              if (!occ) return "Not reported";
+              return formatOccupancy(occ);
             };
             
             const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
@@ -1734,19 +1831,29 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busInterval = setInterval(fetchAndDisplayBuses, 30000);
       overlayElements.intervals.push(busInterval);
 
-      // gtfs-rt + VPS trips.json → TripUpdates-shaped data for stop + bus ETAs
+      // gtfs-rt + VPS trips.json (+ optional gtfsRtTripUpdatesUrl) → TripUpdates-shaped data for stop + bus ETAs
       let realtimeTripsInterval = null;
-      if (busApiType === "gtfs-rt" && realtimeTripsUrl) {
+      const gtfsRtTripUpdatesUrl =
+        options.gtfsRtTripUpdatesUrl ||
+        (window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtTripUpdatesUrl) ||
+        null;
+      const realtimeTripUrls = [...new Set([realtimeTripsUrl, gtfsRtTripUpdatesUrl].filter(Boolean))];
+      if (busApiType === "gtfs-rt" && realtimeTripUrls.length) {
         const overlayKey = options.overlayKey || `${routeId}-${directionId}`;
         const fetchRealtimeTripsJson = async () => {
           try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 20000);
-            const res = await fetch(realtimeTripsUrl, { signal: controller.signal });
-            clearTimeout(timeout);
-            if (!res.ok) throw new Error(`realtime trips HTTP ${res.status}: ${res.statusText}`);
-            const json = await res.json();
-            const parsed = parseRealtimeTripsJsonToTripUpdates(json, routeId, routeData);
+            const jsonParts = [];
+            for (let ui = 0; ui < realtimeTripUrls.length; ui++) {
+              const u = realtimeTripUrls[ui];
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 20000);
+              const res = await fetch(u, { signal: controller.signal });
+              clearTimeout(timeout);
+              if (!res.ok) throw new Error(`realtime trips HTTP ${res.status}: ${res.statusText} (${u})`);
+              jsonParts.push(await res.json());
+            }
+            const mergedTrips = metrofeedMergeRealtimeTripJsonParts(jsonParts);
+            const parsed = parseRealtimeTripsJsonToTripUpdates({ trips: mergedTrips }, routeId, routeData);
             tripIndexForPatternFilter = parsed.tripUpdatesByTripId;
             window.currentRouteTripUpdates = {
               overlayKey,
