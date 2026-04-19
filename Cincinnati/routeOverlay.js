@@ -852,6 +852,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
   const stops      = routeData.stops; // [{lat,lon,times,name,stop_id}, ...]
   const routeTitle = routeData.route_title || `Route ${routeId}`;
 
+  const oppositeRouteData = options.oppositeRouteData || null;
+  const hasOppositeShapes =
+    oppositeRouteData &&
+    ((Array.isArray(oppositeRouteData.shapes) && oppositeRouteData.shapes.length > 0) ||
+      (Array.isArray(oppositeRouteData.shape) && oppositeRouteData.shape.length > 0));
+  const oppositeShapes = hasOppositeShapes
+    ? Array.isArray(oppositeRouteData.shapes) && oppositeRouteData.shapes.length > 0
+      ? oppositeRouteData.shapes
+      : [oppositeRouteData.shape]
+    : [];
+
   // ==== Tracking created objects for cleanup =================================
   const overlayElements = {
     sources:  [],
@@ -889,10 +900,67 @@ function attachRouteToMap(map, routeId, directionId, options) {
     // - Basic route display: Normal opacity (0.8), normal width (4px) - shows all branches clearly
     // - OTP context mode: Faint opacity (0.25), thinner width (3px) - provides context for OTP highlight
     //
+    // Determine if OTP is active (for context layer styling)
+    const isOtpActive = window.routeLegLines && window.routeLegLines.length > 0;
+
+    // Place route overlay layers before OTP segments (only if OTP active)
+    let beforeId = undefined;
+    if (isOtpActive) {
+      for (const otpLayerId of window.routeLegLines) {
+        if (map.getLayer(otpLayerId)) {
+          beforeId = otpLayerId;
+          break;
+        }
+      }
+    }
+
+    const lineOpacity = isOtpActive ? 0.25 : 0.9;
+    const lineWidth = isOtpActive ? 3 : 4;
+
+    // Opposite-direction context: dashed underlay (drawn BEFORE selected solid lines)
+    if (hasOppositeShapes && oppositeShapes.length) {
+      oppositeShapes.forEach((shape, shapeIndex) => {
+        if (!Array.isArray(shape) || shape.length < 2) return;
+        const routeSourceId = `route-line-opp-${mapLayerKey}-${shapeIndex}`;
+        const routeLayerId = `route-layer-opp-${mapLayerKey}-${shapeIndex}`;
+
+        if (map.getLayer(routeLayerId)) map.removeLayer(routeLayerId);
+        if (map.getSource(routeSourceId)) map.removeSource(routeSourceId);
+
+        map.addSource(routeSourceId, {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "LineString",
+              coordinates: shape.map((coord) => [coord[1], coord[0]])
+            }
+          }
+        });
+        overlayElements.sources.push(routeSourceId);
+
+        map.addLayer(
+          {
+            id: routeLayerId,
+            type: "line",
+            source: routeSourceId,
+            paint: {
+              "line-color": routeColor,
+              "line-width": Math.max(2, lineWidth - 1),
+              "line-opacity": isOtpActive ? 0.12 : 0.35,
+              "line-dasharray": [2, 2]
+            }
+          },
+          beforeId
+        );
+        overlayElements.layers.push(routeLayerId);
+      });
+    }
+
     // ---------- Render all shapes (for trunk-and-branch routes) ----------
     // All shapes in shapes[] are rendered; opacity/width depends on OTP state
     shapes.forEach((shape, shapeIndex) => {
-      const isPrimaryShape = shapeIndex === 0;
       const routeSourceId = `route-line-${mapLayerKey}-${shapeIndex}`;
       const routeLayerId  = `route-layer-${mapLayerKey}-${shapeIndex}`;
 
@@ -917,39 +985,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       });
       overlayElements.sources.push(routeSourceId);
 
-      // Determine if OTP is active (for context layer styling)
-      // OTP is active if routeLegLines exist (OTP journey is drawn)
-      const isOtpActive = window.routeLegLines && window.routeLegLines.length > 0;
-      
-      // Find the first OTP layer to place route overlay layers before it (if OTP active)
-      let beforeId = undefined;
-      if (isOtpActive) {
-        for (const otpLayerId of window.routeLegLines) {
-          if (map.getLayer(otpLayerId)) {
-            beforeId = otpLayerId;
-            break;
+      map.addLayer(
+        {
+          id: routeLayerId,
+          type: "line",
+          source: routeSourceId,
+          paint: {
+            "line-color": routeColor,
+            "line-width": lineWidth,
+            "line-opacity": lineOpacity
           }
-        }
-      }
-      
-      // ⚠️ SEPARATION: Basic route display vs OTP context
-      // - Basic route display (no OTP): Normal opacity (0.9), normal width (4px)
-      // - OTP context (OTP active): Faint opacity (0.25), thinner width (3px) for context
-      const lineOpacity = isOtpActive ? 0.25 : 0.9;  // Slightly higher opacity for better visibility
-      const lineWidth = isOtpActive ? 3 : 4;          // Normal width
-      
-      map.addLayer({
-        id: routeLayerId,
-        type: "line",
-        source: routeSourceId,
-        paint: {
-          "line-color": routeColor,
-          "line-width": lineWidth,
-          "line-opacity": lineOpacity
         },
-        // Place route overlay layers before OTP segments (only if OTP active)
-        beforeId: beforeId
-      });
+        beforeId
+      );
       overlayElements.layers.push(routeLayerId);
     });
 
@@ -962,6 +1010,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
       shapes.forEach(shape => {
         shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
       });
+      if (hasOppositeShapes) {
+        oppositeShapes.forEach((shape) => {
+          if (!Array.isArray(shape)) return;
+          shape.forEach((coord) => bounds.extend([coord[1], coord[0]]));
+        });
+      }
       
       // Auto-expand bounds by 20% to ensure route fits (especially for long commuter rail routes)
       const currentBounds = bounds.toArray();
@@ -1336,6 +1390,43 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
       overlayElements.markers.push(stopMarker);
     });
+
+    // Opposite-direction-only stops: hollow + faded (no schedule UI; other-direction context)
+    if (hasOppositeShapes && oppositeRouteData && Array.isArray(oppositeRouteData.stops) && oppositeRouteData.stops.length) {
+      const selectedStopIds = new Set(
+        stops
+          .map((s) => (s && s.stop_id !== undefined && s.stop_id !== null ? String(s.stop_id) : ""))
+          .filter((id) => id)
+      );
+      oppositeRouteData.stops.forEach((stop) => {
+        const lat = stop.lat;
+        const lon = stop.lon;
+        if (typeof lat !== "number" || typeof lon !== "number") return;
+        const stopId = String(stop.stop_id || "");
+        if (!stopId || selectedStopIds.has(stopId)) return;
+
+        const el = document.createElement("div");
+        el.style.width = "12px";
+        el.style.height = "12px";
+        el.style.borderRadius = "50%";
+        el.style.backgroundColor = "transparent";
+        el.style.border = `2px solid ${routeColor || "#888"}`;
+        el.style.opacity = "0.45";
+        el.style.cursor = "pointer";
+
+        const marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]);
+        const name = stop.name || `Stop ${stop.stop_id}`;
+        const popupHtml = `
+          <div style="border:1px solid #888;border-radius:8px;padding:10px;background:#222;color:#ccc;min-width:180px;">
+            <strong style="color:#aaa;">${name}</strong>
+            <div style="margin-top:8px;font-size:12px;color:#888;">Other direction — switch direction in Bus Routes to see times for this stop.</div>
+          </div>
+        `;
+        marker.setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml));
+        marker.addTo(map);
+        overlayElements.markers.push(marker);
+      });
+    }
 
     // ---------- Route info panel (mainOverlay only) ----------
     // OTP trip legs use .otp-trip-route-chip on the rail instead (see otp.js).

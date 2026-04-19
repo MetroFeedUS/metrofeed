@@ -1802,7 +1802,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260419f"></script>
+<script src="routeOverlay.js?v=20260419g"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -7143,6 +7143,32 @@
     }
     
     console.log('[showRouteOverlay] Found route data:', routeData.route_title, 'shape points:', routeData.shape.length, 'stops:', routeData.stops.length);
+
+    let oppositeRouteData = null;
+    if (!skipRouteInfoPanel) {
+      const dirNum = Number(directionId);
+      const oppositeDir = dirNum === 0 ? 1 : 0;
+      const tryLoadOpposite = async (rid) => {
+        const d = await getRouteData(rid, oppositeDir);
+        const hasShape =
+          (Array.isArray(d.shape) && d.shape.length > 1) ||
+          (Array.isArray(d.shapes) && d.shapes.some((s) => Array.isArray(s) && s.length > 1));
+        if (!hasShape) return null;
+        return d;
+      };
+      try {
+        oppositeRouteData = await tryLoadOpposite(routeNumber);
+      } catch (_) {
+        oppositeRouteData = null;
+      }
+      if (!oppositeRouteData && baseRouteNumber !== routeNumber) {
+        try {
+          oppositeRouteData = await tryLoadOpposite(baseRouteNumber);
+        } catch (_) {
+          oppositeRouteData = null;
+        }
+      }
+    }
     
     // routePageUrl enables stacked orange route-info circles (one per leg; expand for details / close)
     if (!routePageUrl) {
@@ -7162,6 +7188,7 @@
     const overlay = window.attachRouteToMap(map, busTrackingRouteId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)
+      oppositeRouteData: oppositeRouteData || undefined,
       routePageUrl: routePageUrl,
       fitBounds: false, // Don't auto-fit on main map
       routeColor: routeColorHex,
@@ -7180,6 +7207,7 @@
     const descriptorOptions = {
       mode: 'mainOverlay',
       routeData: JSON.parse(JSON.stringify(routeData)), // Deep clone
+      oppositeRouteData: oppositeRouteData ? JSON.parse(JSON.stringify(oppositeRouteData)) : undefined,
       routePageUrl,
       fitBounds: false,
       routeColor: routeColorHex,
