@@ -109,6 +109,12 @@ function inferDirectionFromBearing(routeShape, bearingDeg) {
   return d0 <= d1 ? 0 : 1;
 }
 
+function metrofeedMaybeFlipInferredDirection(dir) {
+  if (dir !== 0 && dir !== 1) return dir;
+  const flip = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtFlipInferredDirection);
+  return flip ? (dir === 0 ? 1 : 0) : dir;
+}
+
 /**
  * Rider-facing bus label for map + popups.
  * Prefer GTFS-RT-style public label (vehicle.label) when the proxy sends it; else fall back to vehicle id.
@@ -1637,10 +1643,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
             let directionMatch = true;
             if (v.direction == null || v.direction === "") {
               if (strictDir) {
-                const inferred = inferDirectionFromBearing(
+                const inferredRaw = inferDirectionFromBearing(
                   routeData && routeData.shape ? routeData.shape : null,
                   v.bearing
                 );
+                const inferred = metrofeedMaybeFlipInferredDirection(inferredRaw);
                 if (inferred == null) {
                   directionMatch = !excludeUnknownBearing;
                 } else {
@@ -1765,7 +1772,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
               if (bus.direction === 1) dirLabel = "Inbound";
               else if (bus.direction === 0) dirLabel = "Outbound";
               else {
-                const inferred = inferDirectionFromBearing(primaryShape, bus.bearing);
+                const inferred = metrofeedMaybeFlipInferredDirection(
+                  inferDirectionFromBearing(primaryShape, bus.bearing)
+                );
                 if (inferred === 0) dirLabel = "Outbound (GPS)";
                 else if (inferred === 1) dirLabel = "Inbound (GPS)";
                 else dirLabel = "Unknown";

@@ -7575,6 +7575,14 @@
         terminal0 = routeData0.stops[0].name || 'Unknown';
         terminal1 = routeData0.stops[routeData0.stops.length - 1].name || 'Unknown';
       }
+      
+      const directionLabelFromRouteTitle = (routeTitle, fallback) => {
+        const t = routeTitle != null ? String(routeTitle) : '';
+        const m = t.match(/\b(Inbound|Outbound)\b/i);
+        if (m && m[1]) return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+        const fb = fallback != null ? String(fallback).trim() : '';
+        return fb || 'Direction';
+      };
 
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
@@ -7596,11 +7604,16 @@
         if (!isExpanded && routeData1 == null) {
           routeData1 = await getRouteData(route.id, 1).catch(() => null);
           if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
+            const dir1Start = metrofeedDecodeHtmlEntities(routeData1.stops[0].name || 'Unknown');
             const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
             const dir1BtnWrapper = document.createElement('div');
             dir1BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
             const dir1Btn = document.createElement('button');
-            dir1Btn.textContent = '⬅ ' + dir1Terminal;
+            const dir1To = metrofeedDecodeHtmlEntities(dir1Terminal || 'Unknown');
+            const dir1Label = directionLabelFromRouteTitle(routeData1.route_title, (route && route.dir1) ? route.dir1 : 'Direction 1');
+            dir1Btn.innerHTML =
+              `<div style="font-weight:800; font-size:0.95rem;">To ${dir1To}</div>` +
+              `<div style="margin-top:2px; font-size:0.78rem; color:#cfe8ff;">${dir1Label} · From ${dir1Start}</div>`;
             dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
             dir1Btn.onclick = () => selectRoute(route.id, 1);
             const star1Btn = createFavoriteStar(route.id, 1, route.label);
@@ -7612,11 +7625,16 @@
       };
 
       if (routeData0 && routeData0.stops && routeData0.stops.length > 0) {
+        const dir0Start = metrofeedDecodeHtmlEntities(routeData0.stops[0].name || 'Unknown');
         const dir0Terminal = routeData0.stops[routeData0.stops.length - 1].name;
         const dir0BtnWrapper = document.createElement('div');
         dir0BtnWrapper.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
         const dir0Btn = document.createElement('button');
-        dir0Btn.textContent = '➡ ' + dir0Terminal;
+        const dir0To = metrofeedDecodeHtmlEntities(dir0Terminal || 'Unknown');
+        const dir0Label = directionLabelFromRouteTitle(routeData0.route_title, (route && route.dir0) ? route.dir0 : 'Direction 0');
+        dir0Btn.innerHTML =
+          `<div style="font-weight:800; font-size:0.95rem;">To ${dir0To}</div>` +
+          `<div style="margin-top:2px; font-size:0.78rem; color:#cfe8ff;">${dir0Label} · From ${dir0Start}</div>`;
         dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRoute(route.id, 0);
         const star0Btn = createFavoriteStar(route.id, 0, route.label);
