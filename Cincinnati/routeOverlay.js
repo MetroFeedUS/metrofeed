@@ -773,8 +773,9 @@ function metrofeedBusMarkerDiamPx() {
 }
 
 /**
- * Live bus marker: pill label + route-color dot; one contrast arrow inside = direction of travel when known.
- * No compass ticks / hub / gradients — arrow omitted when heading is unknown.
+ * Live bus marker: pill label + route-color dot.
+ * If heading is known: replace dot with a single "paper plane" arrow (clean + obvious).
+ * If heading is unknown: show the dot (no implied direction).
  */
 function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg) {
   const wrap = document.createElement("div");
@@ -795,54 +796,61 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   const dialWrap = document.createElement("div");
   dialWrap.style.cssText = `position:relative;width:${dc}px;height:${dc}px;flex-shrink:0;`;
 
-  const dot = document.createElement("div");
-  dot.style.cssText = [
-    "box-sizing:border-box",
-    `width:${dc}px`,
-    `height:${dc}px`,
-    "border-radius:50%",
-    `background:${routeColor}`,
-    "border:2px solid #fff",
-    "box-shadow:0 1px 3px rgba(0,0,0,0.4)",
-    "position:relative",
-    "overflow:visible"
-  ].join(";");
-
   const normH = metrofeedNormalizeHeadingDeg(headingDeg);
-  const showArrow = normH != null;
-  const cx = dc / 2;
+  const showPlane = normH != null;
 
-  if (showArrow) {
-    const triW = Math.max(4, Math.round(dc * 0.34));
-    const triH = Math.max(5, Math.round(dc * 0.38));
-    const h = normH;
-    const arrowLayer = document.createElement("div");
-    arrowLayer.setAttribute("aria-hidden", "true");
-    arrowLayer.style.cssText = [
-      "position:absolute",
-      "inset:0",
-      "pointer-events:none",
-      "transform:rotate(" + h + "deg)",
-      "transform-origin:" + cx + "px " + cx + "px"
-    ].join(";");
-    const arrow = document.createElement("div");
-    arrow.style.cssText = [
+  if (showPlane) {
+    // A single, obvious directional icon (paper plane) — no dot, no extra decorations.
+    const planeWrap = document.createElement("div");
+    planeWrap.setAttribute("aria-hidden", "true");
+    planeWrap.style.cssText = [
       "position:absolute",
       "left:50%",
       "top:50%",
-      "width:0",
-      "height:0",
-      "margin-left:-" + triW + "px",
-      "margin-top:-" + Math.round(triH * 0.55) + "px",
-      "border-left:" + triW + "px solid transparent",
-      "border-right:" + triW + "px solid transparent",
-      "border-bottom:" + triH + "px solid " + arrowColor,
-      "filter:drop-shadow(0 0 1px rgba(0,0,0,0.85))"
+      "transform:translate(-50%,-50%) rotate(" + normH + "deg)",
+      "transform-origin:50% 50%",
+      "width:" + dc + "px",
+      "height:" + dc + "px",
+      "pointer-events:none"
     ].join(";");
-    arrowLayer.appendChild(arrow);
-    dot.appendChild(arrowLayer);
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", String(dc));
+    svg.setAttribute("height", String(dc));
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.style.display = "block";
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    // Simple paper-plane silhouette, oriented upward in viewBox.
+    // (We rotate the wrapper by heading degrees.)
+    path.setAttribute("d", "M2.2 11.1 22 2 12.9 21.8 10.9 13.1 2.2 11.1Z");
+    path.setAttribute("fill", routeColor);
+    path.setAttribute("stroke", arrowColor);
+    path.setAttribute("stroke-width", "1.35");
+    path.setAttribute("stroke-linejoin", "round");
+    path.setAttribute("stroke-linecap", "round");
+
+    svg.appendChild(path);
+    // Keep it crisp on dark maps without making it feel 'glowy'
+    svg.style.filter = "drop-shadow(0 1px 2px rgba(0,0,0,0.55))";
+
+    planeWrap.appendChild(svg);
+    dialWrap.appendChild(planeWrap);
+  } else {
+    const dot = document.createElement("div");
+    dot.style.cssText = [
+      "box-sizing:border-box",
+      `width:${dc}px`,
+      `height:${dc}px`,
+      "border-radius:50%",
+      `background:${routeColor}`,
+      "border:2px solid #fff",
+      "box-shadow:0 1px 3px rgba(0,0,0,0.4)",
+      "position:relative"
+    ].join(";");
+    dialWrap.appendChild(dot);
   }
-  dialWrap.appendChild(dot);
+
   wrap.appendChild(label);
   wrap.appendChild(dialWrap);
   return wrap;
