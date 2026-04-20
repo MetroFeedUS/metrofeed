@@ -761,16 +761,20 @@ var MBTA_BUS_MARKER_DOT_RADIUS_PX =
     : 6;
 try { if (typeof window !== 'undefined') window.MBTA_BUS_MARKER_DOT_RADIUS_PX = MBTA_BUS_MARKER_DOT_RADIUS_PX; } catch (_) {}
 
-/** Outer diameter of the on-map compass (px). Anchor offset uses half of this. */
+/** Base diameter before the on-map +10% size bump (see metrofeedBusMarkerDiamPx). */
 var MF_BUS_COMPASS_DIAM_PX =
   (typeof window !== 'undefined' && window.MF_BUS_COMPASS_DIAM_PX)
     ? window.MF_BUS_COMPASS_DIAM_PX
     : 16;
 try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_COMPASS_DIAM_PX; } catch (_) {}
 
+function metrofeedBusMarkerDiamPx() {
+  return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.1));
+}
+
 /**
- * Live bus marker: pill label + compass dial on the coordinate (fixed N tick, rotating needle).
- * headingDeg = clockwise from north when known; needle hidden when unknown/stopped upstream.
+ * Live bus marker: pill label + route-color dot; one contrast arrow inside = direction of travel when known.
+ * No compass ticks / hub / gradients — arrow omitted when heading is unknown.
  */
 function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg) {
   const wrap = document.createElement("div");
@@ -778,9 +782,9 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   wrap.style.flexDirection = "column";
   wrap.style.alignItems = "center";
   wrap.style.pointerEvents = "auto";
-  const dc = MF_BUS_COMPASS_DIAM_PX;
+  const dc = metrofeedBusMarkerDiamPx();
   const fg = pickContrastingTextColor(routeColor);
-  const needleColor = pickContrastingTextColor(routeColor);
+  const arrowColor = pickContrastingTextColor(routeColor);
   const badgeBg = fg;
   const badgeFg = routeColor;
 
@@ -791,85 +795,62 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   const dialWrap = document.createElement("div");
   dialWrap.style.cssText = `position:relative;width:${dc}px;height:${dc}px;flex-shrink:0;`;
 
-  const compass = document.createElement("div");
-  compass.style.cssText = [
+  const dot = document.createElement("div");
+  dot.style.cssText = [
     "box-sizing:border-box",
     `width:${dc}px`,
     `height:${dc}px`,
     "border-radius:50%",
     `background:${routeColor}`,
-    "background-image:linear-gradient(180deg,rgba(255,255,255,0.2) 0%,rgba(0,0,0,0.12) 100%)",
     "border:2px solid #fff",
-    "box-shadow:0 1px 4px rgba(0,0,0,0.45)",
+    "box-shadow:0 1px 3px rgba(0,0,0,0.4)",
     "position:relative",
     "overflow:visible"
   ].join(";");
 
-  const northTick = document.createElement("div");
-  northTick.setAttribute("aria-hidden", "true");
-  northTick.style.cssText =
-    "position:absolute;left:50%;top:3px;transform:translateX(-50%);width:2px;height:4px;background:rgba(255,255,255,0.92);border-radius:1px;pointer-events:none;z-index:1;";
-
   const normH = metrofeedNormalizeHeadingDeg(headingDeg);
-  const showNeedle = normH != null;
-  const h = showNeedle ? normH : 0;
+  const showArrow = normH != null;
   const cx = dc / 2;
-  const nh = Math.max(5, Math.round(dc * 0.36));
 
-  const needleLayer = document.createElement("div");
-  needleLayer.setAttribute("aria-hidden", "true");
-  needleLayer.style.cssText = [
-    "position:absolute",
-    "inset:0",
-    "pointer-events:none",
-    "transform:rotate(" + h + "deg)",
-    "transform-origin:" + cx + "px " + cx + "px",
-    "z-index:1"
-  ].join(";");
-
-  const needle = document.createElement("div");
-  needle.style.cssText = [
-    "position:absolute",
-    `left:${cx - 1.5}px`,
-    `top:${cx - nh}px`,
-    "width:3px",
-    `height:${nh}px`,
-    "background:" + needleColor,
-    "border-radius:2px",
-    "box-shadow:0 0 2px rgba(0,0,0,0.55)",
-    "opacity:" + (showNeedle ? "0.98" : "0"),
-    "pointer-events:none"
-  ].join(";");
-
-  const hub = document.createElement("div");
-  const hubR = Math.max(4, Math.round(dc * 0.22));
-  hub.style.cssText = [
-    "position:absolute",
-    "left:50%",
-    "top:50%",
-    `width:${hubR}px`,
-    `height:${hubR}px`,
-    `margin:${-hubR / 2}px 0 0 ${-hubR / 2}px`,
-    "border-radius:50%",
-    "background:#fff",
-    "border:1px solid rgba(0,0,0,0.28)",
-    "box-shadow:0 1px 2px rgba(0,0,0,0.35)",
-    "z-index:2",
-    "pointer-events:none"
-  ].join(";");
-
-  needleLayer.appendChild(needle);
-  compass.appendChild(northTick);
-  compass.appendChild(needleLayer);
-  compass.appendChild(hub);
-  dialWrap.appendChild(compass);
+  if (showArrow) {
+    const triW = Math.max(4, Math.round(dc * 0.34));
+    const triH = Math.max(5, Math.round(dc * 0.38));
+    const h = normH;
+    const arrowLayer = document.createElement("div");
+    arrowLayer.setAttribute("aria-hidden", "true");
+    arrowLayer.style.cssText = [
+      "position:absolute",
+      "inset:0",
+      "pointer-events:none",
+      "transform:rotate(" + h + "deg)",
+      "transform-origin:" + cx + "px " + cx + "px"
+    ].join(";");
+    const arrow = document.createElement("div");
+    arrow.style.cssText = [
+      "position:absolute",
+      "left:50%",
+      "top:50%",
+      "width:0",
+      "height:0",
+      "margin-left:-" + triW + "px",
+      "margin-top:-" + Math.round(triH * 0.55) + "px",
+      "border-left:" + triW + "px solid transparent",
+      "border-right:" + triW + "px solid transparent",
+      "border-bottom:" + triH + "px solid " + arrowColor,
+      "filter:drop-shadow(0 0 1px rgba(0,0,0,0.85))"
+    ].join(";");
+    arrowLayer.appendChild(arrow);
+    dot.appendChild(arrowLayer);
+  }
+  dialWrap.appendChild(dot);
   wrap.appendChild(label);
   wrap.appendChild(dialWrap);
   return wrap;
 }
 
 function mbtaBusMarkerMapOptions() {
-  return { anchor: "bottom", offset: [0, -MF_BUS_COMPASS_DIAM_PX / 2] };
+  const dc = metrofeedBusMarkerDiamPx();
+  return { anchor: "bottom", offset: [0, -dc / 2] };
 }
 
 window.buildMbtaBusMarkerElement = buildMbtaBusMarkerElement;
