@@ -754,19 +754,23 @@ function metrofeedNextStopFromRealtimeTrip(trip, stopIdToName) {
   return null;
 }
 
-/** Half-width of GPS dot (px). Used with anchor "bottom" + offset so dot center sits on lat/lng. */
-// Use var + window backing so routeOverlay.js can be hot-loaded safely in devtools.
-// (Top-level const would throw "already been declared" if the script is injected twice.)
+/** @deprecated Legacy dot half-width; compass uses MF_BUS_COMPASS_DIAM_PX. Kept for hot-load / overrides. */
 var MBTA_BUS_MARKER_DOT_RADIUS_PX =
   (typeof window !== 'undefined' && window.MBTA_BUS_MARKER_DOT_RADIUS_PX)
     ? window.MBTA_BUS_MARKER_DOT_RADIUS_PX
     : 6;
 try { if (typeof window !== 'undefined') window.MBTA_BUS_MARKER_DOT_RADIUS_PX = MBTA_BUS_MARKER_DOT_RADIUS_PX; } catch (_) {}
 
+/** Outer diameter of the on-map compass (px). Anchor offset uses half of this. */
+var MF_BUS_COMPASS_DIAM_PX =
+  (typeof window !== 'undefined' && window.MF_BUS_COMPASS_DIAM_PX)
+    ? window.MF_BUS_COMPASS_DIAM_PX
+    : 16;
+try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_COMPASS_DIAM_PX; } catch (_) {}
+
 /**
- * Live bus marker geometry: pill label (detached above) + circular dot on the coordinate.
- * Optional headingDeg (clockwise from north, 0..360) draws a wedge toward direction of travel.
- * Colors stay driven by routeColor (unchanged); used by route overlay and home.html createBusMarker via window.
+ * Live bus marker: pill label + compass dial on the coordinate (fixed N tick, rotating needle).
+ * headingDeg = clockwise from north when known; needle hidden when unknown/stopped upstream.
  */
 function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg) {
   const wrap = document.createElement("div");
@@ -774,9 +778,9 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   wrap.style.flexDirection = "column";
   wrap.style.alignItems = "center";
   wrap.style.pointerEvents = "auto";
-  const d = MBTA_BUS_MARKER_DOT_RADIUS_PX * 2;
+  const dc = MF_BUS_COMPASS_DIAM_PX;
   const fg = pickContrastingTextColor(routeColor);
-  const ring = pickContrastingTextColor(routeColor);
+  const needleColor = pickContrastingTextColor(routeColor);
   const badgeBg = fg;
   const badgeFg = routeColor;
 
@@ -784,46 +788,88 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   label.style.cssText = `margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;`;
   label.innerHTML = `<span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}`;
 
-  const dotWrap = document.createElement("div");
-  dotWrap.style.cssText = `position:relative;width:${d}px;height:${d}px;flex-shrink:0;`;
+  const dialWrap = document.createElement("div");
+  dialWrap.style.cssText = `position:relative;width:${dc}px;height:${dc}px;flex-shrink:0;`;
 
-  const dot = document.createElement("div");
-  dot.style.cssText = `position:absolute;left:0;top:0;width:${d}px;height:${d}px;border-radius:50%;background:${routeColor};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);z-index:2;`;
+  const compass = document.createElement("div");
+  compass.style.cssText = [
+    "box-sizing:border-box",
+    `width:${dc}px`,
+    `height:${dc}px`,
+    "border-radius:50%",
+    `background:${routeColor}`,
+    "background-image:linear-gradient(180deg,rgba(255,255,255,0.2) 0%,rgba(0,0,0,0.12) 100%)",
+    "border:2px solid #fff",
+    "box-shadow:0 1px 4px rgba(0,0,0,0.45)",
+    "position:relative",
+    "overflow:visible"
+  ].join(";");
+
+  const northTick = document.createElement("div");
+  northTick.setAttribute("aria-hidden", "true");
+  northTick.style.cssText =
+    "position:absolute;left:50%;top:3px;transform:translateX(-50%);width:2px;height:4px;background:rgba(255,255,255,0.92);border-radius:1px;pointer-events:none;z-index:1;";
 
   const normH = metrofeedNormalizeHeadingDeg(headingDeg);
-  const showWedge = normH != null;
-  const h = showWedge ? normH : 0;
-  // CSS triangle (no SVG): avoids root-SVG clipping/stacking quirks inside MapLibre marker DOM.
-  const wedge = document.createElement("div");
-  wedge.setAttribute("aria-hidden", "true");
-  const tri = Math.max(6, Math.round(d * 0.42));
-  wedge.style.cssText = [
+  const showNeedle = normH != null;
+  const h = showNeedle ? normH : 0;
+  const cx = dc / 2;
+  const nh = Math.max(5, Math.round(dc * 0.36));
+
+  const needleLayer = document.createElement("div");
+  needleLayer.setAttribute("aria-hidden", "true");
+  needleLayer.style.cssText = [
     "position:absolute",
-    "left:50%",
-    "bottom:100%",
-    "margin-bottom:1px",
-    "width:0",
-    "height:0",
-    "border-left:" + tri + "px solid transparent",
-    "border-right:" + tri + "px solid transparent",
-    "border-bottom:" + Math.round(tri * 1.15) + "px solid " + ring,
-    "filter:drop-shadow(0 1px 1px rgba(0,0,0,0.45))",
-    "transform:translateX(-50%) rotate(" + h + "deg)",
-    "transform-origin:50% 100%",
-    "opacity:" + (showWedge ? "0.98" : "0"),
+    "inset:0",
     "pointer-events:none",
+    "transform:rotate(" + h + "deg)",
+    "transform-origin:" + cx + "px " + cx + "px",
     "z-index:1"
   ].join(";");
 
-  dotWrap.appendChild(wedge);
-  dotWrap.appendChild(dot);
+  const needle = document.createElement("div");
+  needle.style.cssText = [
+    "position:absolute",
+    `left:${cx - 1.5}px`,
+    `top:${cx - nh}px`,
+    "width:3px",
+    `height:${nh}px`,
+    "background:" + needleColor,
+    "border-radius:2px",
+    "box-shadow:0 0 2px rgba(0,0,0,0.55)",
+    "opacity:" + (showNeedle ? "0.98" : "0"),
+    "pointer-events:none"
+  ].join(";");
+
+  const hub = document.createElement("div");
+  const hubR = Math.max(4, Math.round(dc * 0.22));
+  hub.style.cssText = [
+    "position:absolute",
+    "left:50%",
+    "top:50%",
+    `width:${hubR}px`,
+    `height:${hubR}px`,
+    `margin:${-hubR / 2}px 0 0 ${-hubR / 2}px`,
+    "border-radius:50%",
+    "background:#fff",
+    "border:1px solid rgba(0,0,0,0.28)",
+    "box-shadow:0 1px 2px rgba(0,0,0,0.35)",
+    "z-index:2",
+    "pointer-events:none"
+  ].join(";");
+
+  needleLayer.appendChild(needle);
+  compass.appendChild(northTick);
+  compass.appendChild(needleLayer);
+  compass.appendChild(hub);
+  dialWrap.appendChild(compass);
   wrap.appendChild(label);
-  wrap.appendChild(dotWrap);
+  wrap.appendChild(dialWrap);
   return wrap;
 }
 
 function mbtaBusMarkerMapOptions() {
-  return { anchor: "bottom", offset: [0, -MBTA_BUS_MARKER_DOT_RADIUS_PX] };
+  return { anchor: "bottom", offset: [0, -MF_BUS_COMPASS_DIAM_PX / 2] };
 }
 
 window.buildMbtaBusMarkerElement = buildMbtaBusMarkerElement;
