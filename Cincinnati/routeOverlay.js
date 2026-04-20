@@ -1436,6 +1436,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
       : [oppositeRouteData.shape]
     : [];
 
+  // Canonical shape for direction inference:
+  // We want `busDir` to be stable so toggling overlay direction swaps dimming reliably.
+  // Use dir0 shape order as canonical whenever the opposite direction data is available.
+  const canonicalDirShape =
+    Number(directionId) === 1 && hasOppositeShapes && oppositeShapes[0] && Array.isArray(oppositeShapes[0])
+      ? oppositeShapes[0]
+      : primaryShape;
+
   // ==== Tracking created objects for cleanup =================================
   const overlayElements = {
     sources:  [],
@@ -2642,7 +2650,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               busDir = Number(bus.direction);
             } else {
               const inferred = metrofeedMaybeFlipInferredDirection(
-                inferDirectionFromPolylineAndBearing(primaryShape, latN, lonN, bus.bearing)
+                inferDirectionFromPolylineAndBearing(canonicalDirShape, latN, lonN, bus.bearing)
               );
               if (inferred === 0 || inferred === 1) busDir = inferred;
             }
