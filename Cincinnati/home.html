@@ -490,9 +490,17 @@
       border-radius: 8px; 
       font-size: 0.8625rem;
       font-weight: bold;
-      line-height: 40px; 
+      line-height: 1.05;
       text-align: center; 
       cursor: pointer; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 2px;
+      box-sizing: border-box;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       text-shadow: 
         -1px -1px 0 #fff,
         1px -1px 0 #fff,
@@ -524,7 +532,7 @@
     .favorite-btn.favorite-btn--route-empty {
       color: #777;
       font-size: 1.2rem;
-      line-height: 40px;
+      line-height: 1;
     }
     /* Bus routes modal — route row header */
     .bus-route-modal-header {
@@ -1802,7 +1810,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260419s"></script>
+<script src="routeOverlay.js?v=20260419u"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -7999,6 +8007,32 @@
     const fav3 = document.getElementById('fav3');
     const buttons = [fav1, fav2, fav3];
 
+    const formatFavoriteRouteLabel = (routeIdRaw) => {
+      const rid = routeIdRaw != null ? String(routeIdRaw) : '';
+      if (!rid) return '';
+      const base = rid.includes('-') ? rid.split('-')[0] : rid;
+      if (base.startsWith('sorta_')) return `Metro ${base.slice(6)}`;
+      if (base.startsWith('tank_')) return `TANK ${base.slice(5)}`;
+      return base;
+    };
+
+    const shrinkTextToFit = (el, maxW, startPx, minPx) => {
+      try {
+        if (!el) return;
+        const maxWidth = Number(maxW);
+        let fs = Math.max(1, Number(startPx) || 13);
+        const min = Math.max(1, Number(minPx) || 9);
+        el.style.maxWidth = `${maxWidth}px`;
+        el.style.fontSize = `${fs}px`;
+        for (let i = 0; i < 12; i++) {
+          if (el.scrollWidth <= maxWidth + 1) break;
+          fs -= 1;
+          if (fs < min) break;
+          el.style.fontSize = `${fs}px`;
+        }
+      } catch (_) {}
+    };
+
     buttons.forEach((btn) => {
       if (!btn) return;
       btn.classList.remove('favorite-btn--route-empty');
@@ -8014,13 +8048,12 @@
       if (!favBtn) continue;
       const fav = favorites[i];
       if (fav) {
-        let displayText = fav.routeId;
-        if (displayText && String(displayText).includes('-')) {
-          displayText = String(displayText).split('-')[0];
-        }
+        const displayText = formatFavoriteRouteLabel(fav.routeId);
         favBtn.textContent = displayText;
         favBtn.style.cursor = 'pointer';
-        favBtn.title = 'Show route on map';
+        favBtn.title = `Show ${displayText} on map`;
+        // Fit: keep all favorites same size, shrink text if needed
+        requestAnimationFrame(() => shrinkTextToFit(favBtn, 36, 13, 9));
         favBtn.onclick = (e) => {
           e.stopPropagation();
           if (typeof showRouteOverlay === 'function') {

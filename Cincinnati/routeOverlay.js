@@ -2253,8 +2253,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
         };
 
         sheet.appendChild(title);
-        sheet.appendChild(mkBtn('Center', chipBg, chipFg, centerRoute));
-        sheet.appendChild(mkBtn('Switch', '#2563EB', '#fff', switchDir));
+        sheet.appendChild(mkBtn('Center on map', chipBg, chipFg, centerRoute));
+        sheet.appendChild(mkBtn('Switch directions', '#2563EB', '#fff', switchDir));
         sheet.appendChild(mkBtn('Close', '#B91C1C', '#fff', closeRoute));
 
         backdrop.onclick = (e) => {
