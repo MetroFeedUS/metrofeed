@@ -2467,7 +2467,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
           }
 
-          // Filter buses for this route and direction
+          // Filter buses for this route (all directions).
           // Also check routeData.route_id if available (from routes_index.js)
           const routeNum = String(routeId);
           const routeDataRouteId = routeData?.route_id || routeData?.meta?.route_id || null;
@@ -2506,40 +2506,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const stringMatch = String(v.routeNumber) === String(routeId);
 
             const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
-            // Cincinnati proxy feeds may omit direction_id — infer from bearing when strict.
-            const strictDir = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
-            const excludeUnknownBearing = !!(
-              window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtExcludeVehicleIfBearingUnknown
-            );
-            let directionMatch = true;
-            if (v.direction == null || v.direction === "") {
-              if (strictDir) {
-                const inferredRaw = inferDirectionFromPolylineAndBearing(
-                  routeData && routeData.shape ? routeData.shape : null,
-                  v.latitude,
-                  v.longitude,
-                  v.bearing
-                );
-                const inferred = metrofeedMaybeFlipInferredDirection(inferredRaw);
-                if (inferred == null) {
-                  directionMatch = !excludeUnknownBearing;
-                } else {
-                  directionMatch = Number(inferred) === Number(directionId);
-                }
-              } else {
-                directionMatch = true;
-              }
-            } else {
-              directionMatch = Number(v.direction) === Number(directionId);
-            }
-
-            if (routeMatch && directionMatch) {
+            if (routeMatch) {
               console.log(
-                `[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ""}, direction ${v.direction} == ${directionId}`
+                `[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ""}`
               );
             }
 
-            return routeMatch && directionMatch;
+            return routeMatch;
           });
 
           const filterOverlap = !!(
@@ -2662,6 +2635,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const movedStep = hasLast && distLast > 3;
             const stoppedNow = hasLast && (hasSpd ? slow && !movedStep : distLast < 2.5);
 
+            // Determine this vehicle's direction relative to the currently-selected overlay direction.
+            // We show all buses for the route, but dim the opposite-direction ones.
+            let busDir = null;
+            if (bus.direction === 0 || bus.direction === 1) {
+              busDir = Number(bus.direction);
+            } else {
+              const inferred = metrofeedMaybeFlipInferredDirection(
+                inferDirectionFromPolylineAndBearing(primaryShape, latN, lonN, bus.bearing)
+              );
+              if (inferred === 0 || inferred === 1) busDir = inferred;
+            }
+            const isOppositeDir = busDir != null && Number(busDir) !== Number(directionId);
+
             let rawHeading = headingEnabled
               ? metrofeedBusMarkerHeadingDeg(bus, hState, primaryShape)
               : null;
@@ -2715,6 +2701,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
               displayVehicleID,
               displayHeading
             );
+            if (isOppositeDir) {
+              // Visual language: opposite direction = faded (like dashed line / hollow stops).
+              busElement.style.opacity = "0.45";
+            } else {
+              busElement.style.opacity = "1";
+            }
             const busMarker = new maplibregl.Marker({
               element: busElement,
               ...mbtaBusMarkerMapOptions()
@@ -2725,21 +2717,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             const refreshBusPopup = () => {
               let dirLabel = "";
-              if (bus.direction === 1) dirLabel = "Inbound";
-              else if (bus.direction === 0) dirLabel = "Outbound";
-              else {
-                const inferred = metrofeedMaybeFlipInferredDirection(
-                  inferDirectionFromPolylineAndBearing(
-                    primaryShape,
-                    bus.latitude,
-                    bus.longitude,
-                    bus.bearing
-                  )
-                );
-                if (inferred === 0) dirLabel = "Outbound (GPS + route shape)";
-                else if (inferred === 1) dirLabel = "Inbound (GPS + route shape)";
-                else dirLabel = "Unknown";
-              }
+              if (busDir === 1) dirLabel = isOppositeDir ? "Inbound (opposite)" : "Inbound";
+              else if (busDir === 0) dirLabel = isOppositeDir ? "Outbound (opposite)" : "Outbound";
+              else dirLabel = "Unknown";
               const nextStopETA = getNextStopFromETAs();
               const tuLive = window.currentRouteTripUpdates;
               const hasRealtimeTrips =
