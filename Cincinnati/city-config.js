@@ -218,7 +218,7 @@ const CITIES = {
     gtfsRtExcludeVehicleIfBearingUnknown: true,
     // Only show vehicles whose live trip serves at least N stops on this route+direction sheet (Metro branch pages are narrower than "all route 4").
     gtfsRtFilterVehiclesByTripStopOverlap: true,
-    gtfsRtTripStopOverlapMin: 2,
+    gtfsRtTripStopOverlapMin: 1,
 
     // Static per-route JSON hosting
     routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/",
