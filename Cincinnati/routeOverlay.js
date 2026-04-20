@@ -1034,7 +1034,8 @@ var MF_BUS_COMPASS_DIAM_PX =
 try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_COMPASS_DIAM_PX; } catch (_) {}
 
 function metrofeedBusMarkerDiamPx() {
-  return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.1));
+  // Scale live vehicle marker size up by ~30% vs prior baseline.
+  return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.43));
 }
 
 /**
@@ -1934,6 +1935,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const chipBg = routeColor || (String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35"));
       const chipFg = pickContrastingTextColor(chipBg);
       const circleSize = isPill ? 28 : 34;
+      const pillWidth = 66; // Standardized collapsed pill width (text shrinks to fit)
       const circleSpacing = 10; // Space between circles
       const topOffset = typeof window.metrofeedGetRightRailTopOffset === 'function'
         ? window.metrofeedGetRightRailTopOffset()
@@ -1948,13 +1950,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
         position:absolute;
         right:10px;
         top:${verticalPosition}px;
-        width:${isPill ? "auto" : (circleSize + "px")};
+        width:${isPill ? (pillWidth + "px") : (circleSize + "px")};
         height:${circleSize}px;
-        min-width:${isPill ? "0" : (circleSize + "px")};
+        min-width:${isPill ? (pillWidth + "px") : (circleSize + "px")};
         max-width:unset;
         min-height:${circleSize}px;
         max-height:${circleSize}px;
-        padding:${isPill ? "0 8px" : "0"};
+        padding:${isPill ? "0" : "0"};
         border-radius:${isPill ? "999px" : "50%"};
         border:2px solid rgba(255,255,255,0.95);
         background:${chipBg};
@@ -1968,151 +1970,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         cursor:pointer;
         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       `;
-      
-      // Create collapse button (starts pointing right ▶ to collapse)
-      const collapseBtn = document.createElement("button");
-      collapseBtn.innerHTML = "▶";
-      collapseBtn.style.cssText = `
-        position:absolute;
-        right:32px;
-        top:4px;
-        background:transparent;
-        color:#fff;
-        border:none;
-        padding:2px 6px;
-        cursor:pointer;
-        font-size:16px;
-        z-index:1101;
-        line-height:1;
-      `;
-      // Keep collapse/close button readable on bright route colors (e.g. yellow)
-      collapseBtn.style.color = chipFg;
-      collapseBtn.onmouseover = () => collapseBtn.style.background = "rgba(255,255,255,0.2)";
-      collapseBtn.onmouseout = () => collapseBtn.style.background = "transparent";
-      
-      let isCollapsed = true; // Start collapsed
-      
-      // Make the panel clickable when collapsed to expand it
-      routeInfoPanel.addEventListener('click', function(e) {
-        // Check if panel is collapsed by checking the data attribute
-        if (this.getAttribute('data-collapsed') === 'true') {
-          // Expand when clicking anywhere on the collapsed circle
-          e.stopPropagation();
-          // Manually trigger the expand logic by calling collapseBtn.onclick
-          // This will toggle isCollapsed and update the panel
-          if (collapseBtn && typeof collapseBtn.onclick === 'function') {
-            const fakeEvent = { stopPropagation: () => {}, preventDefault: () => {} };
-            collapseBtn.onclick(fakeEvent);
-          }
-        }
-      });
-      
-      collapseBtn.onclick = (e) => {
-        e.stopPropagation();
-        isCollapsed = !isCollapsed;
-        if (isCollapsed) {
-          // Collapse to right side - circle with route number
-          // Find the next available position (highest existing index + 1)
-          const allPanels = Array.from(routeOverlayPanelHost(map).querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
-          const collapsedPanels = allPanels.filter(panel => 
-            panel.getAttribute('data-collapsed') === 'true' && panel !== routeInfoPanel
-          );
-          
-          // Find the highest index from stored collapse-index attributes
-          let maxIndex = -1;
-          collapsedPanels.forEach(panel => {
-            const storedIndex = panel.getAttribute('data-collapse-index');
-            if (storedIndex !== null) {
-              maxIndex = Math.max(maxIndex, parseInt(storedIndex, 10));
-            }
-          });
-          
-          const panelIndex = maxIndex + 1; // Next available position
-          const chipSpec = buildRouteFloatingChipLabel(routeId);
-          const isPill = !!chipSpec.isAgencyStyle;
-          const chipBg = routeColor || (String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35"));
-          const chipFg = pickContrastingTextColor(chipBg);
-          const circleSize = isPill ? 28 : 34;
-          const circleSpacing = 10; // Space between circles
-          const topOffset = typeof window.metrofeedGetRightRailTopOffset === 'function'
-            ? window.metrofeedGetRightRailTopOffset()
-            : 250; // Fallback
-          const verticalPosition = topOffset + (panelIndex * (circleSize + circleSpacing));
-          
-          // Mark this panel as collapsed and store its position index
-          routeInfoPanel.setAttribute('data-collapsed', 'true');
-          routeInfoPanel.setAttribute('data-collapse-index', panelIndex.toString());
-          
-          routeInfoPanel.style.left = "auto";
-          routeInfoPanel.style.right = "10px";
-          routeInfoPanel.style.top = `${verticalPosition}px`;
-          routeInfoPanel.style.transform = "none"; // Remove centering transform
-          routeInfoPanel.style.width = isPill ? "auto" : `${circleSize}px`;
-          routeInfoPanel.style.height = `${circleSize}px`;
-          routeInfoPanel.style.minWidth = isPill ? "0" : `${circleSize}px`;
-          routeInfoPanel.style.maxWidth = "unset";
-          routeInfoPanel.style.minHeight = `${circleSize}px`;
-          routeInfoPanel.style.maxHeight = `${circleSize}px`;
-          routeInfoPanel.style.padding = isPill ? "0 8px" : "0";
-          routeInfoPanel.style.borderRadius = isPill ? "999px" : "50%";
-          routeInfoPanel.style.border = "2px solid rgba(255,255,255,0.95)";
-          routeInfoPanel.style.background = chipBg;
-          routeInfoPanel.style.display = "flex";
-          routeInfoPanel.style.alignItems = "center";
-          routeInfoPanel.style.justifyContent = "center";
-          routeInfoPanel.style.cursor = "pointer"; // Make it clear it's clickable
-          routeInfoPanel.style.zIndex = "1100";
-          // Hide collapse button and close button
-          collapseBtn.style.display = "none";
-          closeBtn.style.display = "none";
-          routeInfoPanel.querySelector(".route-info-content").style.display = "none";
-          // Show collapsed route number (circle)
-          const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
-          if (collapsedName) {
-            collapsedName.style.display = "block";
-            collapsedName.style.color = chipFg;
-            collapsedName.style.fontWeight = "bold";
-            collapsedName.style.fontSize = isPill ? "0.62rem" : "0.95rem";
-            collapsedName.style.lineHeight = "1";
-          }
-        } else {
-          // Expand back to center - restore original panel styles
-          routeInfoPanel.removeAttribute('data-collapsed');
-          routeInfoPanel.style.left = "50%";
-          routeInfoPanel.style.top = "50%";
-          routeInfoPanel.style.transform = "translate(-50%, -50%)";
-          routeInfoPanel.style.width = "auto";
-          routeInfoPanel.style.minWidth = "200px";
-          routeInfoPanel.style.maxWidth = "none";
-          routeInfoPanel.style.height = "auto";
-          routeInfoPanel.style.minHeight = "auto";
-          routeInfoPanel.style.maxHeight = "none";
-          routeInfoPanel.style.padding = "12px";
-          routeInfoPanel.style.borderRadius = "8px";
-          routeInfoPanel.style.background = "rgba(30,30,30,0.95)";
-          routeInfoPanel.style.border = "2px solid #1E90FF";
-          routeInfoPanel.style.display = "block";
-          routeInfoPanel.style.cursor = "default";
-          routeInfoPanel.style.zIndex = "1200";
-          
-          // Don't recalculate positions - keep other collapsed panels locked in place
-          // Each panel maintains its own position when collapsed, so they don't move when others expand
-          // Move collapse button back to top-right (left of close button)
-          collapseBtn.style.right = "32px";
-          collapseBtn.style.left = "auto";
-          collapseBtn.style.top = "4px";
-          collapseBtn.style.transform = "none";
-          collapseBtn.style.display = "flex";
-          collapseBtn.innerHTML = "▶"; // Point right to collapse
-          closeBtn.style.display = "flex";
-          routeInfoPanel.querySelector(".route-info-content").style.display = "block";
-          // Hide collapsed route name
-          const collapsedName = routeInfoPanel.querySelector(".route-name-collapsed");
-          if (collapsedName) {
-            collapsedName.style.display = "none";
-          }
-        }
-      };
       
       // Create close button
       const closeBtn = document.createElement("button");
@@ -2243,29 +2100,177 @@ function attachRouteToMap(map, routeId, directionId, options) {
         position:relative;
         color:${chipFg};
         font-weight:bold;
-        font-size:${isPill ? "0.62rem" : "0.95rem"};
-        pointer-events:none;
+        font-size:${isPill ? "12px" : "0.95rem"};
+        pointer-events:none; /* panel handles clicks */
         text-align:center;
         line-height:1;
         margin:0;
         padding:0;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        max-width:${isPill ? (pillWidth - 10) + "px" : "unset"};
       `;
       
       routeInfoPanel.appendChild(closeBtn);
       routeInfoPanel.appendChild(contentDiv);
       routeInfoPanel.appendChild(collapsedName);
-      routeInfoPanel.appendChild(collapseBtn);
       
       // Initially hide content and collapse button, show collapsed name (circle state)
       closeBtn.style.display = "none";
       contentDiv.style.display = "none";
-      collapseBtn.style.display = "none";
       collapsedName.style.display = "block";
       collapsedName.style.color = chipFg;
       collapsedName.style.fontWeight = "bold";
-      collapsedName.style.fontSize = isPill ? "0.62rem" : "0.95rem";
+      collapsedName.style.fontSize = isPill ? "12px" : "0.95rem";
       collapsedName.style.lineHeight = "1";
       collapsedName.style.pointerEvents = "none"; // Don't block clicks on the circle
+
+      // Standardize pill size: auto-shrink label text to fit fixed pillWidth.
+      const metrofeedShrinkTextToFit = (el, maxW, startPx, minPx) => {
+        try {
+          if (!el) return;
+          const maxWidth = Number(maxW);
+          let fs = Math.max(1, Number(startPx) || 12);
+          const min = Math.max(1, Number(minPx) || 9);
+          el.style.maxWidth = `${maxWidth}px`;
+          el.style.fontSize = `${fs}px`;
+          for (let i = 0; i < 12; i++) {
+            if (el.scrollWidth <= maxWidth + 1) break;
+            fs -= 1;
+            if (fs < min) break;
+            el.style.fontSize = `${fs}px`;
+          }
+        } catch (_) {}
+      };
+      if (isPill) {
+        requestAnimationFrame(() => metrofeedShrinkTextToFit(collapsedName, pillWidth - 10, 12, 9));
+      }
+
+      // Chip action sheet (Center / Switch / Close). Dismiss on outside click or ESC.
+      const openChipActionSheet = () => {
+        // Remove any existing sheet
+        const existing = document.getElementById('mf-chip-sheet');
+        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+        const backdrop = document.createElement('div');
+        backdrop.id = 'mf-chip-sheet';
+        backdrop.style.cssText = [
+          'position:absolute',
+          'left:0',
+          'top:0',
+          'right:0',
+          'bottom:0',
+          'background:rgba(0,0,0,0.25)',
+          'z-index:5000'
+        ].join(';');
+
+        const sheet = document.createElement('div');
+        sheet.style.cssText = [
+          'position:absolute',
+          'right:10px',
+          `top:${verticalPosition}px`,
+          'transform:translateY(-10px)',
+          'min-width:180px',
+          'max-width:220px',
+          'background:rgba(20,20,20,0.97)',
+          `border:1px solid ${chipBg}`,
+          'border-radius:10px',
+          'box-shadow:0 10px 26px rgba(0,0,0,0.55)',
+          'padding:10px',
+          'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'
+        ].join(';');
+
+        const title = document.createElement('div');
+        title.textContent = chipSpec.label;
+        title.style.cssText = `color:${chipFg};font-weight:800;margin:0 0 8px 0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`;
+
+        const mkBtn = (label, bg, fg, onClick) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = label;
+          b.style.cssText = [
+            'width:100%',
+            'margin:6px 0 0 0',
+            'padding:10px 12px',
+            'border-radius:8px',
+            'border:none',
+            'cursor:pointer',
+            'font-weight:800',
+            'font-size:13px',
+            `background:${bg}`,
+            `color:${fg}`
+          ].join(';');
+          b.onclick = (e) => {
+            e.stopPropagation();
+            try { onClick && onClick(); } catch (_) {}
+          };
+          return b;
+        };
+
+        const dismiss = () => {
+          try { document.removeEventListener('keydown', onKeyDown, true); } catch (_) {}
+          if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+        };
+        const onKeyDown = (ev) => {
+          if (ev && (ev.key === 'Escape' || ev.key === 'Esc')) {
+            ev.preventDefault();
+            dismiss();
+          }
+        };
+
+        const centerRoute = () => {
+          try {
+            const b = new maplibregl.LngLatBounds();
+            // Include all shapes for this overlay
+            (shapes || []).forEach((shape) => {
+              if (!Array.isArray(shape)) return;
+              shape.forEach((coord) => {
+                if (!coord || coord.length < 2) return;
+                b.extend([coord[1], coord[0]]);
+              });
+            });
+            if (b.isEmpty && typeof b.isEmpty === 'function' && b.isEmpty()) return;
+            map.fitBounds(b, { padding: 80, maxZoom: 14, duration: 600 });
+          } catch (_) {}
+          dismiss();
+        };
+
+        const switchDir = () => {
+          dismiss();
+          // Replace-direction behavior (no clutter): delegate to home.html showRouteOverlay if present.
+          if (typeof window.showRouteOverlay === 'function') {
+            window.showRouteOverlay(String(routeId), Number(directionId) === 0 ? 1 : 0);
+            return;
+          }
+          // Fallback: just close if no switch handler exists.
+          try { closeBtn.onclick({ stopPropagation() {} }); } catch (_) {}
+        };
+
+        const closeRoute = () => {
+          dismiss();
+          try { closeBtn.onclick({ stopPropagation() {} }); } catch (_) {}
+        };
+
+        sheet.appendChild(title);
+        sheet.appendChild(mkBtn('Center', chipBg, chipFg, centerRoute));
+        sheet.appendChild(mkBtn('Switch', '#2563EB', '#fff', switchDir));
+        sheet.appendChild(mkBtn('Close', '#B91C1C', '#fff', closeRoute));
+
+        backdrop.onclick = (e) => {
+          if (e && e.target === backdrop) dismiss();
+        };
+        document.addEventListener('keydown', onKeyDown, true);
+
+        backdrop.appendChild(sheet);
+        routeOverlayPanelHost(map).appendChild(backdrop);
+      };
+
+      routeInfoPanel.addEventListener('click', function (e) {
+        // Always open action sheet (collapsed chips).
+        e.stopPropagation();
+        openChipActionSheet();
+      });
 
       routeOverlayPanelHost(map).appendChild(routeInfoPanel);
       overlayElements.controls.push(routeInfoPanel);
