@@ -1268,6 +1268,96 @@ function routeOverlayPanelHost(map) {
   return map && map.getContainer ? map.getContainer() : document.body;
 }
 
+// -----------------------------------------------------------------------------
+// Shared vehicle feed manager (optional).
+// Fetch/parse vehicles.json once and fan-out to all overlays.
+// Reversible: set CITY_CONFIG.useSharedVehicleCache = false to use legacy per-overlay polling.
+// -----------------------------------------------------------------------------
+function metrofeedGetSharedVehicleFeedManager() {
+  try {
+    if (window.__mfVehicleFeedManager) return window.__mfVehicleFeedManager;
+  } catch (_) {}
+
+  const mgr = {
+    feeds: Object.create(null),
+    /** Ensure a feed is started for this URL set. */
+    ensureFeed(urls, pollMs) {
+      const key = JSON.stringify((urls || []).filter(Boolean).sort());
+      if (!key || key === "[]") return null;
+      if (this.feeds[key]) return this.feeds[key];
+      const feed = {
+        key,
+        urls: JSON.parse(key),
+        pollMs: Math.max(5000, Number(pollMs) || 12000),
+        inFlight: false,
+        lastFetchedAt: 0,
+        lastVehicles: [],
+        lastError: null,
+        subscribers: new Set(),
+        intervalId: null
+      };
+      const fetchOnce = async () => {
+        if (feed.inFlight) return;
+        feed.inFlight = true;
+        try {
+          const parts = await Promise.all(
+            feed.urls.map(async (url) => {
+              const res = await fetch(url, { cache: "no-store" });
+              if (!res.ok) throw new Error(`vehicles HTTP ${res.status}: ${res.statusText} (${url})`);
+              const j = await res.json();
+              return parseVehiclesJsonToGtfsLike(j);
+            })
+          );
+          feed.lastVehicles = parts.flat();
+          feed.lastFetchedAt = Date.now();
+          feed.lastError = null;
+          feed.subscribers.forEach((fn) => {
+            try {
+              fn(feed.lastVehicles, { fetchedAt: feed.lastFetchedAt, key: feed.key });
+            } catch (_) {}
+          });
+        } catch (e) {
+          feed.lastError = e;
+        } finally {
+          feed.inFlight = false;
+        }
+      };
+      feed.fetchOnce = fetchOnce;
+      // Start immediately, then interval.
+      fetchOnce();
+      feed.intervalId = setInterval(fetchOnce, feed.pollMs);
+      this.feeds[key] = feed;
+      return feed;
+    },
+    subscribe(urls, pollMs, cb) {
+      const feed = this.ensureFeed(urls, pollMs);
+      if (!feed) return () => {};
+      feed.subscribers.add(cb);
+      // Immediate replay from cache (if any) so overlays render instantly on switch/open.
+      if (Array.isArray(feed.lastVehicles) && feed.lastVehicles.length) {
+        try {
+          cb(feed.lastVehicles, { fetchedAt: feed.lastFetchedAt, key: feed.key, fromCache: true });
+        } catch (_) {}
+      }
+      return () => {
+        try {
+          feed.subscribers.delete(cb);
+        } catch (_) {}
+      };
+    },
+    getLatest(urls) {
+      const key = JSON.stringify((urls || []).filter(Boolean).sort());
+      const feed = key && this.feeds[key] ? this.feeds[key] : null;
+      return feed ? feed.lastVehicles : [];
+    }
+  };
+
+  try {
+    window.__mfVehicleFeedManager = mgr;
+  } catch (_) {}
+  return mgr;
+}
+
 function attachRouteToMap(map, routeId, directionId, options) {
   options = options || {};
 
@@ -1342,6 +1432,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     markers:  [],
     controls: [],
     intervals: [], // For bus tracking intervals
+    unsubscribers: [], // cleanup hooks (shared vehicle feed subscriptions, observers, etc.)
     stopMarkers: [], // Store stop markers with their data for pulsing
     stopPopupRefreshers: [], // { overlayKey, fn } refresh stop popup when realtime trips load
     busPopupRefreshers: [] // functions to refresh bus popups when ETAs load
@@ -2296,15 +2387,29 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const realtimeTripsUrl =
         options.realtimeTripsUrl || (window.CITY_CONFIG && window.CITY_CONFIG.realtimeTripsUrl) || null;
       const disableGtfsRt = options.disableGtfsRt ?? (window.CITY_CONFIG && window.CITY_CONFIG.disableGtfsRt) ?? false;
+      const useSharedVehicleCache = !(
+        window.CITY_CONFIG && window.CITY_CONFIG.useSharedVehicleCache === false
+      );
+      const sharedPollMs =
+        window.CITY_CONFIG && Number.isFinite(Number(window.CITY_CONFIG.sharedVehiclePollMs))
+          ? Number(window.CITY_CONFIG.sharedVehiclePollMs)
+          : 12000;
 
       const stopIdToName = Object.create(null);
       (routeData.stops || []).forEach((s) => {
         const id = s.stop_id != null ? String(s.stop_id) : "";
         if (id && s.name) stopIdToName[id] = s.name;
       });
+
+      const resolvedProxyUrls =
+        Array.isArray(gtfsRtProxyUrls) && gtfsRtProxyUrls.length ? gtfsRtProxyUrls.filter(Boolean) : [];
+      const resolvedUrls =
+        Array.isArray(gtfsRtUrls) && gtfsRtUrls.length ? gtfsRtUrls.filter(Boolean) : (gtfsRtUrl ? [gtfsRtUrl] : []);
+      const urlsToFetchShared = resolvedProxyUrls.length ? resolvedProxyUrls : resolvedUrls;
       
-      async function fetchAndDisplayBuses() {
-        if (busesFetchInFlight) {
+      async function fetchAndDisplayBuses(allBusesOverride) {
+        const hasOverride = Array.isArray(allBusesOverride);
+        if (busesFetchInFlight && !hasOverride) {
           // Avoid overlapping vehicle fetches when upstream is slow
           console.log('[attachRouteToMap] Bus fetch skipped (in-flight)', { routeId, directionId, busesFetchSeq });
           return;
@@ -2313,7 +2418,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const seq = busesFetchSeq;
         busesFetchInFlight = true;
         try {
-          let allBuses = [];
+          let allBuses = hasOverride ? allBusesOverride : [];
           
           console.log('[attachRouteToMap] fetchAndDisplayBuses start', {
             seq,
@@ -2325,10 +2430,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
             now: new Date().toISOString()
           });
 
-          if (busApiType === 'gtfs-rt' && !disableGtfsRt) {
-            const resolvedProxyUrls = Array.isArray(gtfsRtProxyUrls) && gtfsRtProxyUrls.length ? gtfsRtProxyUrls.filter(Boolean) : [];
-            const resolvedUrls = Array.isArray(gtfsRtUrls) && gtfsRtUrls.length ? gtfsRtUrls.filter(Boolean) : (gtfsRtUrl ? [gtfsRtUrl] : []);
-            const urlsToFetch = resolvedProxyUrls.length ? resolvedProxyUrls : resolvedUrls;
+          if (!hasOverride && busApiType === 'gtfs-rt' && !disableGtfsRt) {
+            const urlsToFetch = urlsToFetchShared;
             if (!urlsToFetch.length) {
               console.warn('[attachRouteToMap] gtfs-rt mode but no URLs configured.', { gtfsRtProxyUrls, gtfsRtUrls, gtfsRtUrl });
             } else {
@@ -2737,7 +2840,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
           // Re-run vehicle pass so trip/stop overlap filter can drop other Route N branches.
           setTimeout(() => {
             try {
-              fetchAndDisplayBuses();
+              if (useSharedVehicleCache && busApiType === "gtfs-rt" && !disableGtfsRt && urlsToFetchShared.length) {
+                const mgr = metrofeedGetSharedVehicleFeedManager();
+                fetchAndDisplayBuses(mgr.getLatest(urlsToFetchShared));
+              } else {
+                fetchAndDisplayBuses();
+              }
             } catch (e2) {}
           }, 150);
         } catch (e) {
@@ -2749,9 +2857,23 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (busApiType === "gtfs-rt" && realtimeTripUrls.length) {
           await fetchRealtimeTripsJson();
         }
-        fetchAndDisplayBuses();
-        const busInterval = setInterval(fetchAndDisplayBuses, 30000);
-        overlayElements.intervals.push(busInterval);
+        if (useSharedVehicleCache && busApiType === "gtfs-rt" && !disableGtfsRt && urlsToFetchShared.length) {
+          const mgr = metrofeedGetSharedVehicleFeedManager();
+          const unsub = mgr.subscribe(urlsToFetchShared, sharedPollMs, (vehicles) => {
+            try {
+              fetchAndDisplayBuses(vehicles);
+            } catch (_) {}
+          });
+          overlayElements.unsubscribers.push(unsub);
+          // Also do one immediate render from whatever cache exists.
+          try {
+            fetchAndDisplayBuses(mgr.getLatest(urlsToFetchShared));
+          } catch (_) {}
+        } else {
+          fetchAndDisplayBuses();
+          const busInterval = setInterval(fetchAndDisplayBuses, 30000);
+          overlayElements.intervals.push(busInterval);
+        }
         if (busApiType === "gtfs-rt" && realtimeTripUrls.length) {
           realtimeTripsInterval = setInterval(fetchRealtimeTripsJson, 30000);
           overlayElements.intervals.push(realtimeTripsInterval);
@@ -2794,6 +2916,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (marker && typeof marker.remove === "function") marker.remove();
       });
 
+      // Shared subscriptions / cleanup hooks
+      (overlayElements.unsubscribers || []).forEach((fn) => {
+        try { if (typeof fn === "function") fn(); } catch (_) {}
+      });
+
       // Controls / panels
       overlayElements.controls.forEach((el) => {
         if (el && el.parentNode) el.parentNode.removeChild(el);
@@ -2809,6 +2936,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       overlayElements.markers  = [];
       overlayElements.controls = [];
       overlayElements.intervals = [];
+      overlayElements.unsubscribers = [];
     }
   };
 }

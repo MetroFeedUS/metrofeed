@@ -1832,7 +1832,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260419v"></script>
+<script src="routeOverlay.js?v=20260419x"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -3138,11 +3138,19 @@
   window.updateItineraryBarPosition = updateItineraryBarPosition;
   
   if (favoritesWrapper) {
+    const favoritesChevron = favoritesWrapper.querySelector('.favorites-chevron');
+    const setFavoritesTooltip = () => {
+      const collapsed = favoritesWrapper.classList.contains('collapsed');
+      const txt = collapsed ? 'Expand favorites' : 'Collapse favorites';
+      favoritesWrapper.title = txt;
+      if (favoritesChevron) favoritesChevron.title = txt;
+    };
     // Check localStorage for saved state (default to expanded)
     const isCollapsed = localStorage.getItem('favoritesCollapsed') === 'true';
     if (isCollapsed) {
       favoritesWrapper.classList.add('collapsed');
     }
+    setFavoritesTooltip();
     
     // Initial position update
     setTimeout(updateItineraryBarPosition, 100);
@@ -3157,6 +3165,7 @@
       favoritesWrapper.classList.toggle('collapsed');
       // Save state to localStorage
       localStorage.setItem('favoritesCollapsed', favoritesWrapper.classList.contains('collapsed'));
+      setFavoritesTooltip();
       
       // Update itinerary bar position after transition
       setTimeout(updateItineraryBarPosition, 350); // Slightly after transition completes

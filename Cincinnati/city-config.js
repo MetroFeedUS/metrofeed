@@ -202,6 +202,10 @@ const CITIES = {
     gtfsRtProxyUrls: [
       "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
     ],
+    // Performance: fetch/parse vehicles once and fan-out to all open overlays.
+    // Reversible: set to false to return to per-overlay polling.
+    useSharedVehicleCache: true,
+    sharedVehiclePollMs: 12000,
     realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
     realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
     gtfsRtStrictVehicleDirection: true,
