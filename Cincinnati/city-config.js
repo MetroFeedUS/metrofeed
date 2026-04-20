@@ -172,17 +172,19 @@ const CITIES = {
 
     defaultCenter: [-84.512, 39.103],
     defaultZoom: 11,
+    // maxBounds for the basemap (~25 statute miles beyond prior edges; lon scale uses center lat).
     bounds: {
-      north: 39.35,
-      south: 38.95,
-      east: -84.35,
-      west: -84.75
+      north: 39.7114,
+      south: 38.5886,
+      east: -83.8828,
+      west: -85.2172
     },
+    // Cap for MapBoundsManager when routes extend (expanded by the same buffer).
     maxExtendedBounds: {
-      north: 39.55,
-      south: 38.75,
-      east: -84.15,
-      west: -85.05
+      north: 39.9114,
+      south: 38.3886,
+      east: -83.6828,
+      west: -85.5172
     },
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
