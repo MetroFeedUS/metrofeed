@@ -181,13 +181,13 @@ function metrofeedBearingDeg(lat1, lon1, lat2, lon2) {
 function metrofeedHaversineM(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const toR = (x) => (x * Math.PI) / 180;
-  const φ1 = toR(lat1);
-  const φ2 = toR(lat2);
-  const dφ = toR(lat2 - lat1);
-  const dλ = toR(lon2 - lon1);
+  const phi1 = toR(lat1);
+  const phi2 = toR(lat2);
+  const dphi = toR(lat2 - lat1);
+  const dlambda = toR(lon2 - lon1);
   const s =
-    Math.sin(dφ / 2) * Math.sin(dφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(dλ / 2) * Math.sin(dλ / 2);
+    Math.sin(dphi / 2) * Math.sin(dphi / 2) +
+    Math.cos(phi1) * Math.cos(phi2) * Math.sin(dlambda / 2) * Math.sin(dlambda / 2);
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
@@ -270,9 +270,12 @@ function metrofeedBusMarkerHeadingDeg(bus, state, routeShape) {
   const lon = Number(bus && bus.longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
 
-  const bRaw = Number(bus && bus.bearing);
-  if (Number.isFinite(bRaw)) {
-    return metrofeedNormalizeHeadingDeg(bRaw);
+  const br = bus && bus.bearing;
+  if (br !== null && br !== undefined && String(br).trim() !== "") {
+    const bRaw = Number(br);
+    if (Number.isFinite(bRaw)) {
+      return metrofeedNormalizeHeadingDeg(bRaw);
+    }
   }
 
   const now = Date.now();
@@ -789,26 +792,30 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
 
   const normH = metrofeedNormalizeHeadingDeg(headingDeg);
   const showWedge = normH != null;
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", String(d));
-  svg.setAttribute("height", String(d));
-  svg.style.cssText = "position:absolute;left:0;top:0;overflow:visible;pointer-events:none;z-index:1;";
-  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
   const h = showWedge ? normH : 0;
-  g.setAttribute("transform", `translate(${d / 2},${d / 2}) rotate(${h})`);
-  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-  const tip = -(d * 0.55);
-  const half = d * 0.28;
-  const baseY = Math.max(2, d * 0.22);
-  poly.setAttribute("points", `0,${tip} ${-half},${baseY} ${half},${baseY}`);
-  poly.setAttribute("fill", ring);
-  poly.setAttribute("stroke", "rgba(0,0,0,0.35)");
-  poly.setAttribute("stroke-width", "0.55");
-  poly.setAttribute("opacity", showWedge ? "0.95" : "0");
-  g.appendChild(poly);
-  svg.appendChild(g);
+  // CSS triangle (no SVG): avoids root-SVG clipping/stacking quirks inside MapLibre marker DOM.
+  const wedge = document.createElement("div");
+  wedge.setAttribute("aria-hidden", "true");
+  const tri = Math.max(6, Math.round(d * 0.42));
+  wedge.style.cssText = [
+    "position:absolute",
+    "left:50%",
+    "bottom:100%",
+    "margin-bottom:1px",
+    "width:0",
+    "height:0",
+    "border-left:" + tri + "px solid transparent",
+    "border-right:" + tri + "px solid transparent",
+    "border-bottom:" + Math.round(tri * 1.15) + "px solid " + ring,
+    "filter:drop-shadow(0 1px 1px rgba(0,0,0,0.45))",
+    "transform:translateX(-50%) rotate(" + h + "deg)",
+    "transform-origin:50% 100%",
+    "opacity:" + (showWedge ? "0.98" : "0"),
+    "pointer-events:none",
+    "z-index:1"
+  ].join(";");
 
-  dotWrap.appendChild(svg);
+  dotWrap.appendChild(wedge);
   dotWrap.appendChild(dot);
   wrap.appendChild(label);
   wrap.appendChild(dotWrap);
@@ -2150,7 +2157,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           );
 
           vehiclesForMarkers.forEach((bus) => {
-            if (!bus.latitude || !bus.longitude) return;
+            const latN = Number(bus.latitude);
+            const lonN = Number(bus.longitude);
+            if (!Number.isFinite(latN) || !Number.isFinite(lonN)) return;
             const blockId = bus.blockID || bus.vehicleID || '';
             if (!blockId) return;
 
@@ -2196,9 +2205,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
               return formatOccupancy(occ);
             };
 
-            const vid = String(bus.vehicleID || "");
-            if (!vehicleHeadingState[vid]) vehicleHeadingState[vid] = {};
-            const hState = vehicleHeadingState[vid];
+            const markerKey = String(
+              bus.vehicleID != null && String(bus.vehicleID).trim() !== ""
+                ? bus.vehicleID
+                : blockId
+            );
+            if (!vehicleHeadingState[markerKey]) vehicleHeadingState[markerKey] = {};
+            const hState = vehicleHeadingState[markerKey];
             const spd = Number(bus.speed);
             const hasSpd = Number.isFinite(spd);
             const slow = hasSpd ? spd < 0.45 : false;
@@ -2208,12 +2221,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               Number.isFinite(hState.lastTime);
             let distLast = 0;
             if (hasLast) {
-              distLast = metrofeedHaversineM(
-                hState.lastLat,
-                hState.lastLon,
-                bus.latitude,
-                bus.longitude
-              );
+              distLast = metrofeedHaversineM(hState.lastLat, hState.lastLon, latN, lonN);
             }
             const movedStep = hasLast && distLast > 3;
             const stoppedNow = hasLast && (hasSpd ? slow && !movedStep : distLast < 2.5);
@@ -2231,8 +2239,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
               if (stoppedNow) hState.smoothedHeading = null;
             }
 
-            hState.lastLat = bus.latitude;
-            hState.lastLon = bus.longitude;
+            hState.lastLat = latN;
+            hState.lastLon = lonN;
             hState.lastTime = Date.now();
 
             const busElement = buildMbtaBusMarkerElement(
@@ -2245,7 +2253,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               element: busElement,
               ...mbtaBusMarkerMapOptions()
             });
-            busMarker.setLngLat([bus.longitude, bus.latitude]);
+            busMarker.setLngLat([lonN, latN]);
             
             const popupContent = document.createElement('div');
             
@@ -2302,12 +2310,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
             busMarker.setPopup(popup);
             busMarker.addTo(map);
             
-            busMarkers[bus.vehicleID] = busMarker;
+            busMarkers[markerKey] = busMarker;
             overlayElements.markers.push(busMarker);
           });
 
           const aliveHeadingIds = new Set(
-            vehiclesForMarkers.map((v) => String(v.vehicleID || "")).filter(Boolean)
+            vehiclesForMarkers.map((v) => {
+              const bid = v.blockID || v.vehicleID || "";
+              return String(
+                v.vehicleID != null && String(v.vehicleID).trim() !== "" ? v.vehicleID : bid
+              );
+            }).filter(Boolean)
           );
           Object.keys(vehicleHeadingState).forEach((k) => {
             if (!aliveHeadingIds.has(k)) delete vehicleHeadingState[k];
