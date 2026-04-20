@@ -299,6 +299,170 @@ function metrofeedNearestSegmentInfo(routeShape, lat, lon) {
   return { bearingFwd, distanceM };
 }
 
+function metrofeedSegmentProjectionInfo(routeShape, segIdx, lat, lon) {
+  if (!Array.isArray(routeShape) || routeShape.length < 2) return null;
+  const i = Number(segIdx);
+  if (!Number.isFinite(i) || i < 0 || i >= routeShape.length - 1) return null;
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+  const p0 = routeShape[i];
+  const p1 = routeShape[i + 1];
+  const y0 = Number(p0 && p0[0]);
+  const x0 = Number(p0 && p0[1]);
+  const y1 = Number(p1 && p1[0]);
+  const x1 = Number(p1 && p1[1]);
+  if (![y0, x0, y1, x1].every(Number.isFinite)) return null;
+
+  const vx = x1 - x0;
+  const vy = y1 - y0;
+  const wx = lo - x0;
+  const wy = la - y0;
+  const vv = vx * vx + vy * vy;
+  if (vv < 1e-12) return null;
+  let t = (wx * vx + wy * vy) / vv;
+  if (t < 0) t = 0;
+  else if (t > 1) t = 1;
+  const px = x0 + t * vx;
+  const py = y0 + t * vy;
+  const distanceM = metrofeedHaversineM(la, lo, py, px);
+  const bearingFwd = metrofeedBearingDeg(y0, x0, y1, x1);
+  return { segIdx: i, t, px, py, distanceM, bearingFwd };
+}
+
+function metrofeedNearestSegmentCandidate(routeShape, lat, lon) {
+  if (!Array.isArray(routeShape) || routeShape.length < 2) return null;
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+
+  let best = null;
+  for (let i = 0; i < routeShape.length - 1; i++) {
+    const info = metrofeedSegmentProjectionInfo(routeShape, i, la, lo);
+    if (!info) continue;
+    if (!best || info.distanceM < best.distanceM) best = info;
+  }
+  return best;
+}
+
+function metrofeedShapeBearingLookahead(shape, segIdx, forward, lookaheadSegs) {
+  if (!Array.isArray(shape) || shape.length < 2) return null;
+  const i = Number(segIdx);
+  if (!Number.isFinite(i)) return null;
+  const k = Math.max(0, Number(lookaheadSegs) || 0);
+  const last = shape.length - 1;
+
+  if (forward) {
+    const s = Math.max(0, Math.min(last - 1, i));
+    const e = Math.max(1, Math.min(last, s + 1 + k));
+    const p0 = shape[s];
+    const p1 = shape[e];
+    const lat1 = Number(p0 && p0[0]);
+    const lon1 = Number(p0 && p0[1]);
+    const lat2 = Number(p1 && p1[0]);
+    const lon2 = Number(p1 && p1[1]);
+    if (![lat1, lon1, lat2, lon2].every(Number.isFinite)) return null;
+    return metrofeedBearingDeg(lat1, lon1, lat2, lon2);
+  }
+
+  // Reverse: start from the segment end, look backward
+  const s = Math.max(1, Math.min(last, i + 1));
+  const e = Math.max(0, Math.min(last - 1, s - 1 - k));
+  const p0 = shape[s];
+  const p1 = shape[e];
+  const lat1 = Number(p0 && p0[0]);
+  const lon1 = Number(p0 && p0[1]);
+  const lat2 = Number(p1 && p1[0]);
+  const lon2 = Number(p1 && p1[1]);
+  if (![lat1, lon1, lat2, lon2].every(Number.isFinite)) return null;
+  return metrofeedBearingDeg(lat1, lon1, lat2, lon2);
+}
+
+/**
+ * Lock a vehicle to a route segment (hysteresis) and return a heading that is parallel to that segment.
+ * This keeps the marker aligned on loops/curves and prevents nearest-segment ping-pong.
+ */
+function metrofeedSnapHeadingParallelLocked({
+  shapes,
+  lat,
+  lon,
+  rawHeading,
+  directionId,
+  maxSnapMeters,
+  lookaheadSegs,
+  hysteresisRatio,
+  state
+}) {
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+  const maxM = Math.max(10, Number(maxSnapMeters) || 60);
+  const lookK = Math.max(0, Number(lookaheadSegs) || 3);
+  const hyst = Math.max(0, Number(hysteresisRatio) || 0.25);
+  const forward = Number(directionId) !== 1;
+
+  if (!Array.isArray(shapes) || shapes.length === 0) return null;
+
+  // Best current nearest segment across all shapes
+  let best = null;
+  for (let si = 0; si < shapes.length; si++) {
+    const cand = metrofeedNearestSegmentCandidate(shapes[si], la, lo);
+    if (!cand) continue;
+    const withIdx = { ...cand, shapeIdx: si };
+    if (!best || withIdx.distanceM < best.distanceM) best = withIdx;
+  }
+  if (!best) return null;
+
+  // Distance-gate
+  if (!(best.distanceM <= maxM)) {
+    if (state) state.lockedSeg = null;
+    return null;
+  }
+
+  // Consider staying on locked segment if it is "close enough" (hysteresis)
+  let chosen = best;
+  try {
+    const locked = state && state.lockedSeg ? state.lockedSeg : null;
+    if (
+      locked &&
+      Number.isFinite(locked.shapeIdx) &&
+      Number.isFinite(locked.segIdx) &&
+      shapes[locked.shapeIdx]
+    ) {
+      const lockedInfo = metrofeedSegmentProjectionInfo(
+        shapes[locked.shapeIdx],
+        locked.segIdx,
+        la,
+        lo
+      );
+      if (lockedInfo && lockedInfo.distanceM <= maxM) {
+        if (lockedInfo.distanceM <= best.distanceM * (1 + hyst)) {
+          chosen = { ...lockedInfo, shapeIdx: locked.shapeIdx };
+        }
+      }
+    }
+  } catch (_) {}
+
+  // Update lock
+  if (state) state.lockedSeg = { shapeIdx: chosen.shapeIdx, segIdx: chosen.segIdx };
+
+  // Compute the tangent bearing using a short lookahead window so curves feel smooth.
+  const shape = shapes[chosen.shapeIdx];
+  let tangent = metrofeedShapeBearingLookahead(shape, chosen.segIdx, forward, lookK);
+  tangent = metrofeedNormalizeHeadingDeg(tangent);
+  if (tangent == null) return null;
+
+  // If rawHeading exists, choose the closer of forward/reverse tangents (safety if directionId mismatched)
+  const rh = metrofeedNormalizeHeadingDeg(rawHeading);
+  if (rh != null) {
+    const rev = (tangent + 180) % 360;
+    const dF = Math.abs(metrofeedAngleDeltaDeg(rh, tangent));
+    const dR = Math.abs(metrofeedAngleDeltaDeg(rh, rev));
+    return dF <= dR ? tangent : rev;
+  }
+  return tangent;
+}
+
 /**
  * Choose a snapped heading along the route tangent near this bus.
  * - Finds the nearest segment among all shapes, gets its forward bearing and distance.
@@ -902,6 +1066,7 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
 
   if (showPlane) {
     // A single, obvious directional icon (paper plane) — no dot, no extra decorations.
+    const planeSize = Math.max(12, Math.round(dc * 1.2)); // +20% for legibility
     const planeWrap = document.createElement("div");
     planeWrap.setAttribute("aria-hidden", "true");
     planeWrap.style.cssText = [
@@ -910,14 +1075,14 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
       "top:50%",
       "transform:translate(-50%,-50%) rotate(" + normH + "deg)",
       "transform-origin:50% 50%",
-      "width:" + dc + "px",
-      "height:" + dc + "px",
+      "width:" + planeSize + "px",
+      "height:" + planeSize + "px",
       "pointer-events:none"
     ].join(";");
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("width", String(dc));
-    svg.setAttribute("height", String(dc));
+    svg.setAttribute("width", String(planeSize));
+    svg.setAttribute("height", String(planeSize));
     svg.setAttribute("viewBox", "0 0 24 24");
     svg.style.display = "block";
 
@@ -2366,20 +2531,32 @@ function attachRouteToMap(map, routeId, directionId, options) {
               ? metrofeedBusMarkerHeadingDeg(bus, hState, primaryShape)
               : null;
 
-            // Snap marker heading to the nearest route tangent so the arrow points along the line.
-            // Distance-gated to avoid forcing detours onto the wrong segment.
+            // Snap marker heading to the route tangent and LOCK to a segment (hysteresis),
+            // so the plane stays parallel to the line even on loops/curves.
             const snapMaxM =
               (window.CITY_CONFIG && window.CITY_CONFIG.busMarkerSnapMaxMeters) != null
                 ? Number(window.CITY_CONFIG.busMarkerSnapMaxMeters)
                 : 60;
+            const lookaheadSegs =
+              (window.CITY_CONFIG && window.CITY_CONFIG.busMarkerSnapLookaheadSegs) != null
+                ? Number(window.CITY_CONFIG.busMarkerSnapLookaheadSegs)
+                : 3;
+            const hystRatio =
+              (window.CITY_CONFIG && window.CITY_CONFIG.busMarkerSnapHysteresisRatio) != null
+                ? Number(window.CITY_CONFIG.busMarkerSnapHysteresisRatio)
+                : 0.25;
+
             const snappedHeading = headingEnabled
-              ? metrofeedSnapHeadingToRoute({
+              ? metrofeedSnapHeadingParallelLocked({
                   shapes,
                   lat: latN,
                   lon: lonN,
                   rawHeading,
                   directionId,
-                  maxSnapMeters: snapMaxM
+                  maxSnapMeters: snapMaxM,
+                  lookaheadSegs,
+                  hysteresisRatio: hystRatio,
+                  state: hState
                 })
               : null;
             if (snappedHeading != null) rawHeading = snappedHeading;
