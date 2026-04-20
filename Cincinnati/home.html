@@ -488,7 +488,6 @@
       color: #1E90FF; 
       border: 1.5px solid rgba(255, 255, 255, 0.88);
       border-radius: 8px; 
-      font-size: 0.8625rem;
       font-weight: bold;
       line-height: 1.05;
       text-align: center; 
@@ -498,7 +497,6 @@
       justify-content: center;
       padding: 0 2px;
       box-sizing: border-box;
-      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       text-shadow: 
@@ -533,6 +531,30 @@
       color: #777;
       font-size: 1.2rem;
       line-height: 1;
+    }
+
+    .favorite-route-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      line-height: 1;
+      text-align: center;
+      gap: 1px;
+      user-select: none;
+    }
+    .favorite-route-label__agency {
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.95;
+    }
+    .favorite-route-label__route {
+      font-size: 14px;
+      font-weight: 900;
     }
     /* Bus routes modal — route row header */
     .bus-route-modal-header {
@@ -1810,7 +1832,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260419u"></script>
+<script src="routeOverlay.js?v=20260419v"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -8007,30 +8029,14 @@
     const fav3 = document.getElementById('fav3');
     const buttons = [fav1, fav2, fav3];
 
-    const formatFavoriteRouteLabel = (routeIdRaw) => {
+    const parseFavoriteRouteLabelParts = (routeIdRaw) => {
       const rid = routeIdRaw != null ? String(routeIdRaw) : '';
-      if (!rid) return '';
+      if (!rid) return { agency: '', route: '' };
       const base = rid.includes('-') ? rid.split('-')[0] : rid;
-      if (base.startsWith('sorta_')) return `Metro ${base.slice(6)}`;
-      if (base.startsWith('tank_')) return `TANK ${base.slice(5)}`;
-      return base;
-    };
-
-    const shrinkTextToFit = (el, maxW, startPx, minPx) => {
-      try {
-        if (!el) return;
-        const maxWidth = Number(maxW);
-        let fs = Math.max(1, Number(startPx) || 13);
-        const min = Math.max(1, Number(minPx) || 9);
-        el.style.maxWidth = `${maxWidth}px`;
-        el.style.fontSize = `${fs}px`;
-        for (let i = 0; i < 12; i++) {
-          if (el.scrollWidth <= maxWidth + 1) break;
-          fs -= 1;
-          if (fs < min) break;
-          el.style.fontSize = `${fs}px`;
-        }
-      } catch (_) {}
+      if (base.startsWith('sorta_')) return { agency: 'Metro', route: base.slice(6) };
+      if (base.startsWith('tank_')) return { agency: 'TANK', route: base.slice(5) };
+      const m = base.match(/\d+/);
+      return { agency: '', route: m ? m[0] : base };
     };
 
     buttons.forEach((btn) => {
@@ -8048,12 +8054,11 @@
       if (!favBtn) continue;
       const fav = favorites[i];
       if (fav) {
-        const displayText = formatFavoriteRouteLabel(fav.routeId);
-        favBtn.textContent = displayText;
+        const parts = parseFavoriteRouteLabelParts(fav.routeId);
+        favBtn.innerHTML = `<div class="favorite-route-label"><div class="favorite-route-label__agency">${parts.agency || '&nbsp;'}</div><div class="favorite-route-label__route">${parts.route}</div></div>`;
         favBtn.style.cursor = 'pointer';
-        favBtn.title = `Show ${displayText} on map`;
-        // Fit: keep all favorites same size, shrink text if needed
-        requestAnimationFrame(() => shrinkTextToFit(favBtn, 36, 13, 9));
+        const titleRoute = parts.agency ? `${parts.agency} ${parts.route}` : parts.route;
+        favBtn.title = `Show ${titleRoute} on map`;
         favBtn.onclick = (e) => {
           e.stopPropagation();
           if (typeof showRouteOverlay === 'function') {
