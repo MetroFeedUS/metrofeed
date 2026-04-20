@@ -914,7 +914,18 @@ function metrofeedTripStopOverlapCount(trip, stopIdSet) {
   let hits = 0;
   for (let i = 0; i < trip.stop_updates.length; i++) {
     const sid = trip.stop_updates[i].stop_id != null ? String(trip.stop_updates[i].stop_id) : "";
-    if (sid && stopIdSet.has(sid)) hits++;
+    if (!sid) continue;
+    if (stopIdSet.has(sid)) {
+      hits++;
+      continue;
+    }
+    // Normalize common prefixes so `sorta_XXXX` matches `XXXX` (and same for TANK).
+    const stripped =
+      sid.startsWith("sorta_") ? sid.slice(6)
+      : sid.startsWith("tank_") ? sid.slice(5)
+      : sid.includes("_") ? sid.slice(sid.indexOf("_") + 1)
+      : "";
+    if (stripped && stopIdSet.has(stripped)) hits++;
   }
   return hits;
 }
@@ -2542,7 +2553,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const stopIdSet = new Set();
             (routeData.stops || []).forEach((s) => {
               const id = s.stop_id != null ? String(s.stop_id) : "";
-              if (id) stopIdSet.add(id);
+              if (!id) return;
+              stopIdSet.add(id);
+              // Add common normalized variant so `sorta_XXXX` matches `XXXX`.
+              if (id.startsWith("sorta_")) stopIdSet.add(id.slice(6));
+              else if (id.startsWith("tank_")) stopIdSet.add(id.slice(5));
+              else if (id.includes("_")) stopIdSet.add(id.slice(id.indexOf("_") + 1));
             });
             const beforeCt = routeBuses.length;
             routeBuses = routeBuses.filter((v) => {
