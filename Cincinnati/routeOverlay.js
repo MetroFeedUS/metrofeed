@@ -242,6 +242,107 @@ function metrofeedNearestSegmentBearingDeg(routeShape, lat, lon) {
   return metrofeedBearingDeg(bestAy, bestAx, bestBy, bestBx);
 }
 
+/**
+ * Nearest polyline segment: forward bearing + distance (m) to the closest point on that segment.
+ * shape coords are [lat, lon]. Returns null if no usable segment.
+ */
+function metrofeedNearestSegmentInfo(routeShape, lat, lon) {
+  if (!Array.isArray(routeShape) || routeShape.length < 2) return null;
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+
+  let bestD2 = Infinity;
+  let bestAx = 0;
+  let bestAy = 0;
+  let bestBx = 0;
+  let bestBy = 0;
+  let bestPx = 0;
+  let bestPy = 0;
+
+  for (let i = 0; i < routeShape.length - 1; i++) {
+    const p0 = routeShape[i];
+    const p1 = routeShape[i + 1];
+    const y0 = Number(p0 && p0[0]);
+    const x0 = Number(p0 && p0[1]);
+    const y1 = Number(p1 && p1[0]);
+    const x1 = Number(p1 && p1[1]);
+    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
+
+    const vx = x1 - x0;
+    const vy = y1 - y0;
+    const wx = lo - x0;
+    const wy = la - y0;
+    const vv = vx * vx + vy * vy;
+    if (vv < 1e-12) continue;
+    let t = (wx * vx + wy * vy) / vv;
+    if (t < 0) t = 0;
+    else if (t > 1) t = 1;
+    const px = x0 + t * vx;
+    const py = y0 + t * vy;
+    const dx = lo - px;
+    const dy = la - py;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestD2) {
+      bestD2 = d2;
+      bestAx = x0;
+      bestAy = y0;
+      bestBx = x1;
+      bestBy = y1;
+      bestPx = px;
+      bestPy = py;
+    }
+  }
+  if (!Number.isFinite(bestD2) || bestD2 === Infinity) return null;
+  const bearingFwd = metrofeedBearingDeg(bestAy, bestAx, bestBy, bestBx);
+  const distanceM = metrofeedHaversineM(la, lo, bestPy, bestPx);
+  return { bearingFwd, distanceM };
+}
+
+/**
+ * Choose a snapped heading along the route tangent near this bus.
+ * - Finds the nearest segment among all shapes, gets its forward bearing and distance.
+ * - If too far from the route, returns null (caller can fall back to raw).
+ * - If rawHeading is present, choose forward vs reverse tangent that best matches rawHeading.
+ * - Else, use directionId (0 = forward, 1 = reverse).
+ */
+function metrofeedSnapHeadingToRoute({
+  shapes,
+  lat,
+  lon,
+  rawHeading,
+  directionId,
+  maxSnapMeters
+}) {
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+  const maxM = Math.max(10, Number(maxSnapMeters) || 60);
+
+  let best = null;
+  if (Array.isArray(shapes)) {
+    for (let i = 0; i < shapes.length; i++) {
+      const info = metrofeedNearestSegmentInfo(shapes[i], la, lo);
+      if (!info) continue;
+      if (!best || info.distanceM < best.distanceM) best = info;
+    }
+  }
+  if (!best) return null;
+  if (!(best.distanceM <= maxM)) return null;
+
+  const fwd = metrofeedNormalizeHeadingDeg(best.bearingFwd);
+  if (fwd == null) return null;
+  const rev = (fwd + 180) % 360;
+
+  const rh = metrofeedNormalizeHeadingDeg(rawHeading);
+  if (rh != null) {
+    const dF = Math.abs(metrofeedAngleDeltaDeg(rh, fwd));
+    const dR = Math.abs(metrofeedAngleDeltaDeg(rh, rev));
+    return dF <= dR ? fwd : rev;
+  }
+  return Number(directionId) === 1 ? rev : fwd;
+}
+
 function metrofeedNormalizeHeadingDeg(x) {
   if (x === null || x === undefined) return null;
   const n = Number(x);
@@ -2264,6 +2365,24 @@ function attachRouteToMap(map, routeId, directionId, options) {
             let rawHeading = headingEnabled
               ? metrofeedBusMarkerHeadingDeg(bus, hState, primaryShape)
               : null;
+
+            // Snap marker heading to the nearest route tangent so the arrow points along the line.
+            // Distance-gated to avoid forcing detours onto the wrong segment.
+            const snapMaxM =
+              (window.CITY_CONFIG && window.CITY_CONFIG.busMarkerSnapMaxMeters) != null
+                ? Number(window.CITY_CONFIG.busMarkerSnapMaxMeters)
+                : 60;
+            const snappedHeading = headingEnabled
+              ? metrofeedSnapHeadingToRoute({
+                  shapes,
+                  lat: latN,
+                  lon: lonN,
+                  rawHeading,
+                  directionId,
+                  maxSnapMeters: snapMaxM
+                })
+              : null;
+            if (snappedHeading != null) rawHeading = snappedHeading;
             let displayHeading = null;
             if (!stoppedNow && rawHeading != null) {
               displayHeading = metrofeedEmaAngleDeg(hState.smoothedHeading, rawHeading, 0.38);
