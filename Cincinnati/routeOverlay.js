@@ -177,6 +177,122 @@ function metrofeedBearingDeg(lat1, lon1, lat2, lon2) {
   return brng;
 }
 
+/** Great-circle distance in meters (WGS84 sphere). */
+function metrofeedHaversineM(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toR = (x) => (x * Math.PI) / 180;
+  const φ1 = toR(lat1);
+  const φ2 = toR(lat2);
+  const dφ = toR(lat2 - lat1);
+  const dλ = toR(lon2 - lon1);
+  const s =
+    Math.sin(dφ / 2) * Math.sin(dφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(dλ / 2) * Math.sin(dλ / 2);
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+/**
+ * Geographic bearing (deg clockwise from north, 0..360) of the nearest polyline segment
+ * in vertex order. shape coords are [lat, lon].
+ */
+function metrofeedNearestSegmentBearingDeg(routeShape, lat, lon) {
+  if (!Array.isArray(routeShape) || routeShape.length < 2) return null;
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+
+  let bestD2 = Infinity;
+  let bestAx = 0;
+  let bestAy = 0;
+  let bestBx = 0;
+  let bestBy = 0;
+
+  for (let i = 0; i < routeShape.length - 1; i++) {
+    const p0 = routeShape[i];
+    const p1 = routeShape[i + 1];
+    const y0 = Number(p0 && p0[0]);
+    const x0 = Number(p0 && p0[1]);
+    const y1 = Number(p1 && p1[0]);
+    const x1 = Number(p1 && p1[1]);
+    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
+
+    const vx = x1 - x0;
+    const vy = y1 - y0;
+    const wx = lo - x0;
+    const wy = la - y0;
+    const vv = vx * vx + vy * vy;
+    if (vv < 1e-12) continue;
+    let t = (wx * vx + wy * vy) / vv;
+    if (t < 0) t = 0;
+    else if (t > 1) t = 1;
+    const px = x0 + t * vx;
+    const py = y0 + t * vy;
+    const dx = lo - px;
+    const dy = la - py;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestD2) {
+      bestD2 = d2;
+      bestAx = x0;
+      bestAy = y0;
+      bestBx = x1;
+      bestBy = y1;
+    }
+  }
+  if (!Number.isFinite(bestD2) || bestD2 === Infinity) return null;
+  return metrofeedBearingDeg(bestAy, bestAx, bestBy, bestBx);
+}
+
+function metrofeedNormalizeHeadingDeg(x) {
+  if (x === null || x === undefined) return null;
+  const n = Number(x);
+  if (!Number.isFinite(n)) return null;
+  return ((n % 360) + 360) % 360;
+}
+
+/** Circular exponential smoothing: prev + alpha * shortest delta toward next. */
+function metrofeedEmaAngleDeg(prev, next, alpha) {
+  const n = metrofeedNormalizeHeadingDeg(next);
+  if (n == null) return prev != null ? metrofeedNormalizeHeadingDeg(prev) : null;
+  const p = metrofeedNormalizeHeadingDeg(prev);
+  if (p == null) return n;
+  const d = metrofeedAngleDeltaDeg(p, n);
+  return metrofeedNormalizeHeadingDeg(p + alpha * d);
+}
+
+/**
+ * Heading for bus marker: feed bearing → short movement vector → route tangent.
+ * @param {{ latitude:number, longitude:number, bearing?:number|null, speed?:number|null }} bus
+ * @param {{ lastLat?:number, lastLon?:number, lastTime?:number }} state
+ * @param {number[][]|null} routeShape [lat,lon][]
+ */
+function metrofeedBusMarkerHeadingDeg(bus, state, routeShape) {
+  const lat = Number(bus && bus.latitude);
+  const lon = Number(bus && bus.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+  const bRaw = Number(bus && bus.bearing);
+  if (Number.isFinite(bRaw)) {
+    return metrofeedNormalizeHeadingDeg(bRaw);
+  }
+
+  const now = Date.now();
+  const la0 = state && Number.isFinite(state.lastLat) ? state.lastLat : null;
+  const lo0 = state && Number.isFinite(state.lastLon) ? state.lastLon : null;
+  const t0 = state && Number.isFinite(state.lastTime) ? state.lastTime : null;
+  if (la0 != null && lo0 != null && t0 != null) {
+    const dt = (now - t0) / 1000;
+    const dist = metrofeedHaversineM(la0, lo0, lat, lon);
+    if (dt > 0.5 && dt < 120 && dist > 4) {
+      return metrofeedNormalizeHeadingDeg(metrofeedBearingDeg(la0, lo0, lat, lon));
+    }
+  }
+
+  if (Array.isArray(routeShape) && routeShape.length >= 2) {
+    return metrofeedNearestSegmentBearingDeg(routeShape, lat, lon);
+  }
+  return null;
+}
+
 /**
  * Bearing of the route polyline at/near a stop. Uses the closest shape point and its neighbor.
  * shape coordinates are [lat, lon].
@@ -397,7 +513,12 @@ function parseVehiclesJsonToGtfsLike(json) {
       direction: dir != null && dir !== "" ? Number(dir) : null,
       latitude: Number(lat),
       longitude: Number(lon),
-      bearing: v.bearing ?? v?.position?.bearing ?? null,
+      bearing:
+        v.bearing ??
+        v.heading ??
+        v?.position?.bearing ??
+        v?.position?.heading ??
+        null,
       speed: v.speed ?? v?.position?.speed ?? null,
       blockID: v.blockID ?? v.blockId ?? v.block_id ?? displayNumber ?? v.label ?? (vehId != null ? String(vehId) : ""),
       occupancy: v.occupancy ?? v.occupancy_status ?? null,
@@ -641,9 +762,10 @@ try { if (typeof window !== 'undefined') window.MBTA_BUS_MARKER_DOT_RADIUS_PX = 
 
 /**
  * Live bus marker geometry: pill label (detached above) + circular dot on the coordinate.
+ * Optional headingDeg (clockwise from north, 0..360) draws a wedge toward direction of travel.
  * Colors stay driven by routeColor (unchanged); used by route overlay and home.html createBusMarker via window.
  */
-function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID) {
+function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg) {
   const wrap = document.createElement("div");
   wrap.style.display = "flex";
   wrap.style.flexDirection = "column";
@@ -651,15 +773,45 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID) {
   wrap.style.pointerEvents = "auto";
   const d = MBTA_BUS_MARKER_DOT_RADIUS_PX * 2;
   const fg = pickContrastingTextColor(routeColor);
-  // Route badge: invert background so the route number is readable even on bright/yellow routeColor.
+  const ring = pickContrastingTextColor(routeColor);
   const badgeBg = fg;
   const badgeFg = routeColor;
-  wrap.innerHTML = `
-    <div style="margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;">
-      <span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}
-    </div>
-    <div style="width:${d}px;height:${d}px;border-radius:50%;background:${routeColor};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);flex-shrink:0;"></div>
-  `;
+
+  const label = document.createElement("div");
+  label.style.cssText = `margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;`;
+  label.innerHTML = `<span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}`;
+
+  const dotWrap = document.createElement("div");
+  dotWrap.style.cssText = `position:relative;width:${d}px;height:${d}px;flex-shrink:0;`;
+
+  const dot = document.createElement("div");
+  dot.style.cssText = `position:absolute;left:0;top:0;width:${d}px;height:${d}px;border-radius:50%;background:${routeColor};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);z-index:2;`;
+
+  const normH = metrofeedNormalizeHeadingDeg(headingDeg);
+  const showWedge = normH != null;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", String(d));
+  svg.setAttribute("height", String(d));
+  svg.style.cssText = "position:absolute;left:0;top:0;overflow:visible;pointer-events:none;z-index:1;";
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  const h = showWedge ? normH : 0;
+  g.setAttribute("transform", `translate(${d / 2},${d / 2}) rotate(${h})`);
+  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+  const tip = -(d * 0.55);
+  const half = d * 0.28;
+  const baseY = Math.max(2, d * 0.22);
+  poly.setAttribute("points", `0,${tip} ${-half},${baseY} ${half},${baseY}`);
+  poly.setAttribute("fill", ring);
+  poly.setAttribute("stroke", "rgba(0,0,0,0.35)");
+  poly.setAttribute("stroke-width", "0.55");
+  poly.setAttribute("opacity", showWedge ? "0.95" : "0");
+  g.appendChild(poly);
+  svg.appendChild(g);
+
+  dotWrap.appendChild(svg);
+  dotWrap.appendChild(dot);
+  wrap.appendChild(label);
+  wrap.appendChild(dotWrap);
   return wrap;
 }
 
@@ -1806,6 +1958,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
      */
     if (trackBuses && mode === "mainOverlay") {
       const busMarkers = {}; // Store bus markers separately
+      /** @type {Record<string, { lastLat?: number, lastLon?: number, lastTime?: number, smoothedHeading?: number|null }>} */
+      const vehicleHeadingState = Object.create(null);
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
       /** Latest trips.json trip_id → trip (same route); used to drop vehicles on other Route N branches. */
@@ -1991,6 +2145,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           });
           
           const vehiclesForMarkers = routeBuses;
+          const headingEnabled = !(
+            window.CITY_CONFIG && window.CITY_CONFIG.busMarkerHeading === false
+          );
 
           vehiclesForMarkers.forEach((bus) => {
             if (!bus.latitude || !bus.longitude) return;
@@ -2038,8 +2195,52 @@ function attachRouteToMap(map, routeId, directionId, options) {
               if (!occ) return "Not reported";
               return formatOccupancy(occ);
             };
-            
-            const busElement = buildMbtaBusMarkerElement(routeColor, metrofeedFormatRouteBadge(routeId), displayVehicleID);
+
+            const vid = String(bus.vehicleID || "");
+            if (!vehicleHeadingState[vid]) vehicleHeadingState[vid] = {};
+            const hState = vehicleHeadingState[vid];
+            const spd = Number(bus.speed);
+            const hasSpd = Number.isFinite(spd);
+            const slow = hasSpd ? spd < 0.45 : false;
+            const hasLast =
+              Number.isFinite(hState.lastLat) &&
+              Number.isFinite(hState.lastLon) &&
+              Number.isFinite(hState.lastTime);
+            let distLast = 0;
+            if (hasLast) {
+              distLast = metrofeedHaversineM(
+                hState.lastLat,
+                hState.lastLon,
+                bus.latitude,
+                bus.longitude
+              );
+            }
+            const movedStep = hasLast && distLast > 3;
+            const stoppedNow = hasLast && (hasSpd ? slow && !movedStep : distLast < 2.5);
+
+            let rawHeading = headingEnabled
+              ? metrofeedBusMarkerHeadingDeg(bus, hState, primaryShape)
+              : null;
+            let displayHeading = null;
+            if (!stoppedNow && rawHeading != null) {
+              displayHeading = metrofeedEmaAngleDeg(hState.smoothedHeading, rawHeading, 0.38);
+              hState.smoothedHeading = displayHeading;
+            } else if (!stoppedNow && rawHeading == null && hState.smoothedHeading != null) {
+              displayHeading = metrofeedNormalizeHeadingDeg(hState.smoothedHeading);
+            } else {
+              if (stoppedNow) hState.smoothedHeading = null;
+            }
+
+            hState.lastLat = bus.latitude;
+            hState.lastLon = bus.longitude;
+            hState.lastTime = Date.now();
+
+            const busElement = buildMbtaBusMarkerElement(
+              routeColor,
+              metrofeedFormatRouteBadge(routeId),
+              displayVehicleID,
+              displayHeading
+            );
             const busMarker = new maplibregl.Marker({
               element: busElement,
               ...mbtaBusMarkerMapOptions()
@@ -2103,6 +2304,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             busMarkers[bus.vehicleID] = busMarker;
             overlayElements.markers.push(busMarker);
+          });
+
+          const aliveHeadingIds = new Set(
+            vehiclesForMarkers.map((v) => String(v.vehicleID || "")).filter(Boolean)
+          );
+          Object.keys(vehicleHeadingState).forEach((k) => {
+            if (!aliveHeadingIds.has(k)) delete vehicleHeadingState[k];
           });
           
           console.log(`[attachRouteToMap] Displayed ${vehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
