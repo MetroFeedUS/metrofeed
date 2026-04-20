@@ -1070,8 +1070,14 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
     const planeSize = Math.max(14, Math.round(dc * 1.2)); // +20% for legibility
     const planeWrap = document.createElement("div");
     planeWrap.setAttribute("aria-hidden", "true");
-    // bus.svg is drawn facing "right" (east). Heading is 0°=north, so subtract 90° to align.
-    const busRot = (normH - 90 + 360) % 360;
+    // bus.svg heading alignment:
+    // - Heading is 0°=north. SVG artwork has its own "forward" direction.
+    // - We apply a baseline -90° (east-facing art) plus an optional per-city offset knob.
+    const svgOffsetDeg =
+      window.CITY_CONFIG && Number.isFinite(Number(window.CITY_CONFIG.busSvgHeadingOffsetDeg))
+        ? Number(window.CITY_CONFIG.busSvgHeadingOffsetDeg)
+        : 0;
+    const busRot = (normH - 90 + svgOffsetDeg + 3600) % 360;
     planeWrap.style.cssText = [
       "position:absolute",
       "left:50%",

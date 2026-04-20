@@ -225,6 +225,9 @@ const CITIES = {
       { id: "tank", label: "TANK", idPrefix: "tank_" }
     ],
 
+    // Live vehicle marker SVG alignment. bus.svg faces WEST; flip 180° so it faces direction-of-travel.
+    busSvgHeadingOffsetDeg: 180,
+
     showRailRoutes: false,
 
     useLazyLoading: false
