@@ -150,6 +150,39 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.45);
       flex: 0 0 auto;
     }
+
+    .mf-traffic-loading {
+      width: 100%;
+      margin-top: 6px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(15, 15, 15, 0.92);
+      border: 1px solid rgba(30, 144, 255, 0.25);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      box-sizing: border-box;
+    }
+    .mf-traffic-loading__track {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      overflow: hidden;
+      position: relative;
+    }
+    .mf-traffic-loading__bar {
+      position: absolute;
+      top: 0;
+      left: -40%;
+      width: 40%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(30,144,255,0.0), rgba(30,144,255,0.85), rgba(30,144,255,0.0));
+      animation: mfTrafficLoading 1.05s ease-in-out infinite;
+    }
+    @keyframes mfTrafficLoading {
+      0%   { left: -40%; }
+      100% { left: 100%; }
+    }
     .mf-trip-planner-right-controls {
       display: inline-flex;
       align-items: center;
@@ -1494,6 +1527,11 @@
         <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go">Go</button>
         <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear">Clear</button>
         <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" title="Find my location and closest route" data-translate="find_me">Find Me</button>
+      </div>
+      <div id="trafficLoadingBar" class="mf-traffic-loading" style="display:none;" aria-hidden="true">
+        <div class="mf-traffic-loading__track">
+          <div class="mf-traffic-loading__bar"></div>
+        </div>
       </div>
       <div id="trafficLegendBar" class="mf-traffic-legend" style="display:none;" aria-live="polite"></div>
     </div>
@@ -6386,6 +6424,40 @@
   const TRAFFIC_LINKS_STATUS_URL = 'https://traffic-api.metrofeedus.com/traffic/links_status.json';
   
   let trafficLayerActive = false;
+  let metrofeedTrafficLoadingTimer = null;
+
+  function metrofeedSetTrafficLoadingVisible(visible) {
+    const el = document.getElementById('trafficLoadingBar');
+    if (!el) return;
+    el.style.display = visible ? 'block' : 'none';
+  }
+
+  async function metrofeedRunFakeTrafficLoader(minMs) {
+    const ms = typeof minMs === 'number' ? minMs : 3500;
+    // Cancel any previous loader timer.
+    if (metrofeedTrafficLoadingTimer) {
+      clearTimeout(metrofeedTrafficLoadingTimer);
+      metrofeedTrafficLoadingTimer = null;
+    }
+
+    metrofeedSetTrafficLoadingVisible(true);
+    // Keep it visible for at least ms; caller may await.
+    await new Promise((resolve) => {
+      metrofeedTrafficLoadingTimer = setTimeout(() => {
+        metrofeedTrafficLoadingTimer = null;
+        resolve();
+      }, ms);
+    });
+  }
+
+  function metrofeedStopFakeTrafficLoader() {
+    if (metrofeedTrafficLoadingTimer) {
+      clearTimeout(metrofeedTrafficLoadingTimer);
+      metrofeedTrafficLoadingTimer = null;
+    }
+    metrofeedSetTrafficLoadingVisible(false);
+  }
+
   function metrofeedSetTrafficLegendVisible(visible) {
     const el = document.getElementById('trafficLegendBar');
     if (!el) return;
@@ -7375,10 +7447,16 @@
       removeTrafficLayers(window.map);
       trafficLayerActive = false;
       console.log('[toggleTrafficOverlay] Traffic overlay turned off');
+      metrofeedStopFakeTrafficLoader();
       metrofeedUpdateTrafficLegend();
     } else if (useCincyTraffic) {
       console.log('[toggleTrafficOverlay] Fetching Ohio traffic (VPS)...');
       try {
+        // Fake loader: keep it up for ~3.5s to mask network delay.
+        metrofeedSetTrafficLegendVisible(false);
+        const start = Date.now();
+        const loaderPromise = metrofeedRunFakeTrafficLoader(3500);
+
         const incUrl = CITY_CONFIG.incidentsFeedUrl ? String(CITY_CONFIG.incidentsFeedUrl).trim() : null;
         const flowUrl = CITY_CONFIG.flowFeedUrl ? String(CITY_CONFIG.flowFeedUrl).trim() : null;
         const slowUrl = CITY_CONFIG.slowdownsFeedUrl ? String(CITY_CONFIG.slowdownsFeedUrl).trim() : null;
@@ -7406,22 +7484,30 @@
         window.allSlowdowns = Array.isArray(slowData?.slowdowns) ? slowData.slowdowns : (Array.isArray(slowData?.items) ? slowData.items : []);
         window.allConstruction = Array.isArray(conData?.construction) ? conData.construction : (Array.isArray(conData?.items) ? conData.items : []);
 
+        // Ensure loader stays visible at least 3.5s.
+        await loaderPromise;
+
         metrofeedDisplayTrafficIncidents(window.map);
         metrofeedDisplayTrafficFlow(window.map);
         metrofeedDisplayTrafficSlowdowns(window.map);
         metrofeedDisplayTrafficConstruction(window.map);
         metrofeedBindIncidentsMoveEnd(window.map);
         trafficLayerActive = true;
+        metrofeedStopFakeTrafficLoader();
         console.log('[toggleTrafficOverlay] Ohio traffic on; cached:', { incidents: window.allIncidents.length, flow: window.allFlow.length, slowdowns: window.allSlowdowns.length, construction: window.allConstruction.length });
         metrofeedUpdateTrafficLegend();
       } catch (err) {
         console.error('[toggleTrafficOverlay] Ohio traffic fetch failed:', err);
+        metrofeedStopFakeTrafficLoader();
         alert('Failed to load Ohio traffic data (incidents/flow).');
       }
     } else {
       // Turn on (MassDOT / Boston-style traffic links)
       console.log('[toggleTrafficOverlay] Fetching traffic data...');
+      metrofeedSetTrafficLegendVisible(false);
+      const loaderPromise = metrofeedRunFakeTrafficLoader(3500);
       const data = await fetchMassDOTTrafficData();
+      await loaderPromise;
       
       if (data) {
         // Display links if available (road segments with travel time)
@@ -7440,9 +7526,11 @@
         }
         
         trafficLayerActive = true;
+        metrofeedStopFakeTrafficLoader();
         console.log('[toggleTrafficOverlay] Traffic overlay turned on');
         metrofeedUpdateTrafficLegend();
       } else {
+        metrofeedStopFakeTrafficLoader();
         alert('Failed to load traffic data. Please try again.');
       }
     }
