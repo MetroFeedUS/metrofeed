@@ -3355,9 +3355,16 @@
         }, 100);
       }
 
-      if (trafficLayerActive && (trafficData.links || trafficData.signs || trafficData.routes)) {
+      if (trafficLayerActive && (trafficData.links || trafficData.signs || trafficData.routes || window.allIncidents)) {
         const restoreTraffic = () => {
           if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
+            const isCincyIncidents = typeof getCityIdFromPath === 'function' && getCityIdFromPath() === 'cincinnati' && window.allIncidents;
+            if (isCincyIncidents && typeof metrofeedDisplayTrafficIncidents === 'function') {
+              metrofeedDisplayTrafficIncidents(map);
+              if (typeof metrofeedBindIncidentsMoveEnd === 'function') {
+                metrofeedBindIncidentsMoveEnd(map);
+              }
+            }
             if (trafficData.links && trafficData.links.length > 0) {
               displayTrafficLinks(map, trafficData.links);
             }
@@ -6331,13 +6338,17 @@
   let trafficLayers = {
     links: null,
     routes: null,
-    signs: null
+    signs: null,
+    incidents: null
   };
   let trafficData = {
     links: null,
     routes: null,
     signs: null
   };
+  /** Cached Ohio incidents for Cincinnati (`data.incidents`); filtered to map on pan, not refetched. */
+  window.allIncidents = window.allIncidents || null;
+  let metrofeedIncidentsMoveTimer = null;
   
   /**
    * Build a lookup map from links_status.json keyed by link-id.
@@ -6735,13 +6746,208 @@
     trafficLayers.routes = 'traffic-routes';
     console.log('[displayTrafficRoutes] Displayed', features.length, 'traffic routes');
   }
+
+  function metrofeedEscapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function metrofeedIncidentLngLat(inc) {
+    if (!inc || typeof inc !== 'object') return null;
+    const pair = (lon, lat) => {
+      const lo = Number(lon);
+      const la = Number(lat);
+      return Number.isFinite(lo) && Number.isFinite(la) ? [lo, la] : null;
+    };
+    let r = pair(inc.longitude, inc.latitude);
+    if (r) return r;
+    r = pair(inc.lng, inc.lat);
+    if (r) return r;
+    r = pair(inc.lon, inc.lat);
+    if (r) return r;
+    const g = inc.geometry;
+    if (g && g.type === 'Point' && Array.isArray(g.coordinates) && g.coordinates.length >= 2) {
+      r = pair(g.coordinates[0], g.coordinates[1]);
+      if (r) return r;
+    }
+    const loc = inc.location;
+    if (loc) {
+      r = pair(loc.longitude ?? loc.lng ?? loc.lon, loc.latitude ?? loc.lat);
+      if (r) return r;
+    }
+    if (Array.isArray(inc.coordinates) && inc.coordinates.length >= 2) {
+      r = pair(inc.coordinates[0], inc.coordinates[1]);
+      if (r) return r;
+    }
+    const props = inc.properties;
+    if (props) {
+      r = pair(props.longitude ?? props.lng, props.latitude ?? props.lat);
+      if (r) return r;
+    }
+    const begin = inc.begin || inc.start || inc.from;
+    if (begin) {
+      r = pair(begin.longitude ?? begin.lng, begin.latitude ?? begin.lat);
+      if (r) return r;
+    }
+    return null;
+  }
+
+  function metrofeedIncidentSeverityColor(inc) {
+    const t = String(inc.severity || inc.impact || inc.priority || inc.level || inc.type || '').toLowerCase();
+    if (t.includes('critical') || t.includes('severe') || t.includes('major') || t.includes('high')) return '#ff3333';
+    if (t.includes('moderate') || t.includes('medium')) return '#ff9800';
+    if (t.includes('minor') || t.includes('low')) return '#ffcc00';
+    return '#ff6b35';
+  }
+
+  function metrofeedPaddedMapBounds(map) {
+    const ratio = typeof CITY_CONFIG.incidentsViewportPaddingRatio === 'number'
+      ? CITY_CONFIG.incidentsViewportPaddingRatio
+      : 0.12;
+    const b = map.getBounds();
+    const w = b.getWest();
+    const e = b.getEast();
+    const s = b.getSouth();
+    const n = b.getNorth();
+    const dx = (e - w) * ratio;
+    const dy = (n - s) * ratio;
+    return { west: w - dx, east: e + dx, south: s - dy, north: n + dy };
+  }
+
+  function metrofeedIncidentsInBounds(incidents, box) {
+    if (!Array.isArray(incidents) || !box) return [];
+    return incidents.filter(function (inc) {
+      const ll = metrofeedIncidentLngLat(inc);
+      if (!ll) return false;
+      return ll[0] >= box.west && ll[0] <= box.east && ll[1] >= box.south && ll[1] <= box.north;
+    });
+  }
+
+  function metrofeedBuildIncidentsGeoJSON(incidents) {
+    const features = [];
+    for (let i = 0; i < incidents.length; i++) {
+      const inc = incidents[i];
+      const ll = metrofeedIncidentLngLat(inc);
+      if (!ll) continue;
+      const title = inc.headline || inc.title || inc.name || inc.summary || inc.road || inc.route || inc.roadway || 'Traffic incident';
+      const desc = inc.description || inc.details || inc.comment || inc.message || inc.text || '';
+      features.push({
+        type: 'Feature',
+        properties: {
+          id: inc.id != null ? String(inc.id) : String(i),
+          title: String(title),
+          description: String(desc),
+          color: metrofeedIncidentSeverityColor(inc)
+        },
+        geometry: { type: 'Point', coordinates: ll }
+      });
+    }
+    return { type: 'FeatureCollection', features: features };
+  }
+
+  function metrofeedUpdateTrafficIncidentsData(map) {
+    if (!map || !window.allIncidents || !Array.isArray(window.allIncidents)) return;
+    if (!map.getSource('traffic-incidents')) return;
+    const box = metrofeedPaddedMapBounds(map);
+    const filtered = metrofeedIncidentsInBounds(window.allIncidents, box);
+    map.getSource('traffic-incidents').setData(metrofeedBuildIncidentsGeoJSON(filtered));
+  }
+
+  function metrofeedScheduleIncidentsRefresh(map) {
+    if (!trafficLayerActive || !trafficLayers.incidents || !map || !map.getSource('traffic-incidents')) return;
+    clearTimeout(metrofeedIncidentsMoveTimer);
+    metrofeedIncidentsMoveTimer = setTimeout(function () {
+      metrofeedIncidentsMoveTimer = null;
+      if (!trafficLayerActive || !map.getSource('traffic-incidents')) return;
+      metrofeedUpdateTrafficIncidentsData(map);
+    }, 150);
+  }
+
+  function metrofeedUnbindIncidentsMoveEnd(map) {
+    if (!map) return;
+    if (window._metrofeedIncidentsMoveEndFn) {
+      map.off('moveend', window._metrofeedIncidentsMoveEndFn);
+      window._metrofeedIncidentsMoveEndFn = null;
+    }
+    if (metrofeedIncidentsMoveTimer) {
+      clearTimeout(metrofeedIncidentsMoveTimer);
+      metrofeedIncidentsMoveTimer = null;
+    }
+  }
+
+  function metrofeedBindIncidentsMoveEnd(map) {
+    metrofeedUnbindIncidentsMoveEnd(map);
+    window._metrofeedIncidentsMoveEndFn = function () {
+      metrofeedScheduleIncidentsRefresh(map);
+    };
+    map.on('moveend', window._metrofeedIncidentsMoveEndFn);
+  }
+
+  function metrofeedTrafficIncidentsClick(e) {
+    const f = e.features && e.features[0];
+    if (!f) return;
+    const p = f.properties || {};
+    const title = metrofeedEscapeHtml(p.title || 'Incident');
+    const desc = metrofeedEscapeHtml(p.description || '');
+    new maplibregl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML('<div style="color:#111;padding:6px;max-width:280px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span></div>')
+      .addTo(e.target);
+  }
+
+  function metrofeedTrafficIncidentsMouseEnter(e) {
+    e.target.getCanvas().style.cursor = 'pointer';
+  }
+
+  function metrofeedTrafficIncidentsMouseLeave(e) {
+    e.target.getCanvas().style.cursor = '';
+  }
+
+  function metrofeedRemoveTrafficIncidents(map) {
+    if (!map) return;
+    metrofeedUnbindIncidentsMoveEnd(map);
+    if (trafficLayers.incidents) {
+      map.off('click', 'traffic-incidents', metrofeedTrafficIncidentsClick);
+      map.off('mouseenter', 'traffic-incidents', metrofeedTrafficIncidentsMouseEnter);
+      map.off('mouseleave', 'traffic-incidents', metrofeedTrafficIncidentsMouseLeave);
+      if (map.getLayer('traffic-incidents')) map.removeLayer('traffic-incidents');
+      if (map.getSource('traffic-incidents')) map.removeSource('traffic-incidents');
+      trafficLayers.incidents = null;
+    }
+  }
+
+  function metrofeedDisplayTrafficIncidents(map) {
+    if (!map || !window.allIncidents || !Array.isArray(window.allIncidents)) return;
+    metrofeedRemoveTrafficIncidents(map);
+    const box = metrofeedPaddedMapBounds(map);
+    const filtered = metrofeedIncidentsInBounds(window.allIncidents, box);
+    const geojson = metrofeedBuildIncidentsGeoJSON(filtered);
+    map.addSource('traffic-incidents', { type: 'geojson', data: geojson });
+    map.addLayer({
+      id: 'traffic-incidents',
+      type: 'circle',
+      source: 'traffic-incidents',
+      paint: {
+        'circle-radius': 7,
+        'circle-color': ['get', 'color'],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+        'circle-opacity': 0.92
+      }
+    });
+    trafficLayers.incidents = 'traffic-incidents';
+    map.on('click', 'traffic-incidents', metrofeedTrafficIncidentsClick);
+    map.on('mouseenter', 'traffic-incidents', metrofeedTrafficIncidentsMouseEnter);
+    map.on('mouseleave', 'traffic-incidents', metrofeedTrafficIncidentsMouseLeave);
+    console.log('[metrofeedDisplayTrafficIncidents] Showing', geojson.features.length, 'incidents in padded view (of', window.allIncidents.length, 'cached)');
+  }
   
   /**
    * Remove all traffic layers from map
    */
   function removeTrafficLayers(map) {
     if (!map) return;
-    
+    metrofeedRemoveTrafficIncidents(map);
+
     if (trafficLayers.links && map.getLayer('traffic-links')) {
       map.removeLayer('traffic-links');
       map.removeSource('traffic-links');
@@ -6771,14 +6977,36 @@
       console.error('[toggleTrafficOverlay] Map not available');
       return;
     }
+
+    const useCincyIncidents = typeof getCityIdFromPath === 'function'
+      && getCityIdFromPath() === 'cincinnati'
+      && CITY_CONFIG && CITY_CONFIG.incidentsFeedUrl;
     
     if (trafficLayerActive) {
       // Turn off
       removeTrafficLayers(window.map);
       trafficLayerActive = false;
       console.log('[toggleTrafficOverlay] Traffic overlay turned off');
+    } else if (useCincyIncidents) {
+      console.log('[toggleTrafficOverlay] Fetching Ohio incidents (VPS)...');
+      try {
+        const url = String(CITY_CONFIG.incidentsFeedUrl).trim();
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error(res.status + ' ' + res.statusText);
+        }
+        const data = await res.json();
+        window.allIncidents = Array.isArray(data.incidents) ? data.incidents : [];
+        metrofeedDisplayTrafficIncidents(window.map);
+        metrofeedBindIncidentsMoveEnd(window.map);
+        trafficLayerActive = true;
+        console.log('[toggleTrafficOverlay] Ohio incidents on; cached count:', window.allIncidents.length);
+      } catch (err) {
+        console.error('[toggleTrafficOverlay] Ohio incidents fetch failed:', err);
+        alert('Failed to load traffic incidents. If the site uses HTTPS, the feed may need an https:// proxy (mixed content).');
+      }
     } else {
-      // Turn on
+      // Turn on (MassDOT / Boston-style traffic links)
       console.log('[toggleTrafficOverlay] Fetching traffic data...');
       const data = await fetchMassDOTTrafficData();
       

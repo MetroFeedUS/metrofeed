@@ -186,6 +186,10 @@ const CITIES = {
       east: -83.6828,
       west: -85.5172
     },
+    // Ohio road incidents (VPS JSON).
+    incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
+    // Pad the visible map bounds by this fraction of width/height when filtering cached incidents (no refetch on pan).
+    incidentsViewportPaddingRatio: 0.12,
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
 
