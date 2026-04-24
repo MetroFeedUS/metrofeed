@@ -3360,11 +3360,17 @@
           if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
             const isCincyTraffic = typeof getCityIdFromPath === 'function'
               && getCityIdFromPath() === 'cincinnati'
-              && (window.allIncidents || window.allFlow);
+              && (window.allIncidents || window.allFlow || window.allSlowdowns || window.allConstruction);
             if (isCincyTraffic && typeof metrofeedDisplayTrafficIncidents === 'function') {
               metrofeedDisplayTrafficIncidents(map);
               if (typeof metrofeedDisplayTrafficFlow === 'function') {
                 metrofeedDisplayTrafficFlow(map);
+              }
+              if (typeof metrofeedDisplayTrafficSlowdowns === 'function') {
+                metrofeedDisplayTrafficSlowdowns(map);
+              }
+              if (typeof metrofeedDisplayTrafficConstruction === 'function') {
+                metrofeedDisplayTrafficConstruction(map);
               }
               if (typeof metrofeedBindIncidentsMoveEnd === 'function') {
                 metrofeedBindIncidentsMoveEnd(map);
@@ -6345,7 +6351,9 @@
     routes: null,
     signs: null,
     incidents: null,
-    flow: null
+    flow: null,
+    slowdowns: null,
+    construction: null
   };
   let trafficData = {
     links: null,
@@ -6356,6 +6364,10 @@
   window.allIncidents = window.allIncidents || null;
   /** Cached Ohio flow entries for Cincinnati (`data.flow`); filtered to map on pan, not refetched. */
   window.allFlow = window.allFlow || null;
+  /** Cached Ohio slowdowns (`data.slowdowns`); filtered to map on pan, not refetched. */
+  window.allSlowdowns = window.allSlowdowns || null;
+  /** Cached Ohio construction (`data.construction`); filtered to map on pan, not refetched. */
+  window.allConstruction = window.allConstruction || null;
   let metrofeedIncidentsMoveTimer = null;
   
   /**
@@ -6824,6 +6836,22 @@
     return '#4CAF50';
   }
 
+  function metrofeedGenericLngLat(item) {
+    if (!item || typeof item !== 'object') return null;
+    const lo = Number(item.lon ?? item.lng ?? item.longitude);
+    const la = Number(item.lat ?? item.latitude);
+    return Number.isFinite(lo) && Number.isFinite(la) ? [lo, la] : null;
+  }
+
+  function metrofeedGenericColor(item, fallback) {
+    const t = String(item.category || item.type || item.kind || item.severity || '').toLowerCase();
+    if (t.includes('crash') || t.includes('accident') || t.includes('collision')) return '#ff3333';
+    if (t.includes('construction') || t.includes('work zone') || t.includes('maintenance')) return '#ffcc00';
+    if (t.includes('disabled') || t.includes('stalled')) return '#ff9800';
+    if (t.includes('closure') || t.includes('closed')) return '#9c27b0';
+    return fallback || '#00bcd4';
+  }
+
   function metrofeedIncidentSeverityColor(inc) {
     const t = String(inc.severity || inc.impact || inc.priority || inc.level || inc.type || '').toLowerCase();
     if (t.includes('critical') || t.includes('severe') || t.includes('major') || t.includes('high')) return '#ff3333';
@@ -6859,6 +6887,15 @@
     if (!Array.isArray(flowArr) || !box) return [];
     return flowArr.filter(function (f) {
       const ll = metrofeedFlowLngLat(f);
+      if (!ll) return false;
+      return ll[0] >= box.west && ll[0] <= box.east && ll[1] >= box.south && ll[1] <= box.north;
+    });
+  }
+
+  function metrofeedGenericInBounds(arr, box) {
+    if (!Array.isArray(arr) || !box) return [];
+    return arr.filter(function (it) {
+      const ll = metrofeedGenericLngLat(it);
       if (!ll) return false;
       return ll[0] >= box.west && ll[0] <= box.east && ll[1] >= box.south && ll[1] <= box.north;
     });
@@ -6909,6 +6946,29 @@
     return { type: 'FeatureCollection', features: features };
   }
 
+  function metrofeedBuildGenericGeoJSON(arr, kind) {
+    const features = [];
+    for (let i = 0; i < arr.length; i++) {
+      const it = arr[i];
+      const ll = metrofeedGenericLngLat(it);
+      if (!ll) continue;
+      const title = it.location || it.routeName || it.road || it.name || (kind || 'Traffic');
+      const desc = it.description || it.details || it.text || '';
+      features.push({
+        type: 'Feature',
+        properties: {
+          id: it.id != null ? String(it.id) : String(i),
+          title: String(title),
+          description: String(desc),
+          color: metrofeedGenericColor(it, kind === 'construction' ? '#ffcc00' : '#00bcd4'),
+          kind: kind || ''
+        },
+        geometry: { type: 'Point', coordinates: ll }
+      });
+    }
+    return { type: 'FeatureCollection', features: features };
+  }
+
   function metrofeedUpdateTrafficIncidentsData(map) {
     if (!map || !window.allIncidents || !Array.isArray(window.allIncidents)) return;
     if (!map.getSource('traffic-incidents')) return;
@@ -6925,6 +6985,22 @@
     map.getSource('traffic-flow').setData(metrofeedBuildFlowGeoJSON(filtered));
   }
 
+  function metrofeedUpdateTrafficSlowdownsData(map) {
+    if (!map || !window.allSlowdowns || !Array.isArray(window.allSlowdowns)) return;
+    if (!map.getSource('traffic-slowdowns')) return;
+    const box = metrofeedPaddedMapBounds(map);
+    const filtered = metrofeedGenericInBounds(window.allSlowdowns, box);
+    map.getSource('traffic-slowdowns').setData(metrofeedBuildGenericGeoJSON(filtered, 'slowdown'));
+  }
+
+  function metrofeedUpdateTrafficConstructionData(map) {
+    if (!map || !window.allConstruction || !Array.isArray(window.allConstruction)) return;
+    if (!map.getSource('traffic-construction')) return;
+    const box = metrofeedPaddedMapBounds(map);
+    const filtered = metrofeedGenericInBounds(window.allConstruction, box);
+    map.getSource('traffic-construction').setData(metrofeedBuildGenericGeoJSON(filtered, 'construction'));
+  }
+
   function metrofeedScheduleIncidentsRefresh(map) {
     if (!trafficLayerActive || !map) return;
     clearTimeout(metrofeedIncidentsMoveTimer);
@@ -6936,6 +7012,12 @@
       }
       if (trafficLayers.flow && map.getSource('traffic-flow')) {
         metrofeedUpdateTrafficFlowData(map);
+      }
+      if (trafficLayers.slowdowns && map.getSource('traffic-slowdowns')) {
+        metrofeedUpdateTrafficSlowdownsData(map);
+      }
+      if (trafficLayers.construction && map.getSource('traffic-construction')) {
+        metrofeedUpdateTrafficConstructionData(map);
       }
     }, 150);
   }
@@ -7007,10 +7089,51 @@
     }
   }
 
+  function metrofeedTrafficGenericClick(e) {
+    const f = e.features && e.features[0];
+    if (!f) return;
+    const p = f.properties || {};
+    const title = metrofeedEscapeHtml(p.title || 'Traffic');
+    const desc = metrofeedEscapeHtml(p.description || '');
+    new maplibregl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML('<div style="color:#111;padding:6px;max-width:280px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span></div>')
+      .addTo(e.target);
+  }
+
+  function metrofeedTrafficGenericMouseEnter(e) { e.target.getCanvas().style.cursor = 'pointer'; }
+  function metrofeedTrafficGenericMouseLeave(e) { e.target.getCanvas().style.cursor = ''; }
+
+  function metrofeedRemoveTrafficSlowdowns(map) {
+    if (!map) return;
+    if (trafficLayers.slowdowns) {
+      map.off('click', 'traffic-slowdowns', metrofeedTrafficGenericClick);
+      map.off('mouseenter', 'traffic-slowdowns', metrofeedTrafficGenericMouseEnter);
+      map.off('mouseleave', 'traffic-slowdowns', metrofeedTrafficGenericMouseLeave);
+      if (map.getLayer('traffic-slowdowns')) map.removeLayer('traffic-slowdowns');
+      if (map.getSource('traffic-slowdowns')) map.removeSource('traffic-slowdowns');
+      trafficLayers.slowdowns = null;
+    }
+  }
+
+  function metrofeedRemoveTrafficConstruction(map) {
+    if (!map) return;
+    if (trafficLayers.construction) {
+      map.off('click', 'traffic-construction', metrofeedTrafficGenericClick);
+      map.off('mouseenter', 'traffic-construction', metrofeedTrafficGenericMouseEnter);
+      map.off('mouseleave', 'traffic-construction', metrofeedTrafficGenericMouseLeave);
+      if (map.getLayer('traffic-construction')) map.removeLayer('traffic-construction');
+      if (map.getSource('traffic-construction')) map.removeSource('traffic-construction');
+      trafficLayers.construction = null;
+    }
+  }
+
   function metrofeedRemoveTrafficIncidents(map) {
     if (!map) return;
     metrofeedUnbindIncidentsMoveEnd(map);
     metrofeedRemoveTrafficFlow(map);
+    metrofeedRemoveTrafficSlowdowns(map);
+    metrofeedRemoveTrafficConstruction(map);
     if (trafficLayers.incidents) {
       map.off('click', 'traffic-incidents', metrofeedTrafficIncidentsClick);
       map.off('mouseenter', 'traffic-incidents', metrofeedTrafficIncidentsMouseEnter);
@@ -7019,6 +7142,58 @@
       if (map.getSource('traffic-incidents')) map.removeSource('traffic-incidents');
       trafficLayers.incidents = null;
     }
+  }
+
+  function metrofeedDisplayTrafficSlowdowns(map) {
+    if (!map || !window.allSlowdowns || !Array.isArray(window.allSlowdowns)) return;
+    metrofeedRemoveTrafficSlowdowns(map);
+    const box = metrofeedPaddedMapBounds(map);
+    const filtered = metrofeedGenericInBounds(window.allSlowdowns, box);
+    const geojson = metrofeedBuildGenericGeoJSON(filtered, 'slowdown');
+    map.addSource('traffic-slowdowns', { type: 'geojson', data: geojson });
+    map.addLayer({
+      id: 'traffic-slowdowns',
+      type: 'circle',
+      source: 'traffic-slowdowns',
+      paint: {
+        'circle-radius': 5,
+        'circle-color': ['get', 'color'],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#111',
+        'circle-opacity': 0.6
+      }
+    });
+    trafficLayers.slowdowns = 'traffic-slowdowns';
+    map.on('click', 'traffic-slowdowns', metrofeedTrafficGenericClick);
+    map.on('mouseenter', 'traffic-slowdowns', metrofeedTrafficGenericMouseEnter);
+    map.on('mouseleave', 'traffic-slowdowns', metrofeedTrafficGenericMouseLeave);
+    console.log('[metrofeedDisplayTrafficSlowdowns] Showing', geojson.features.length, 'slowdowns in padded view (of', window.allSlowdowns.length, 'cached)');
+  }
+
+  function metrofeedDisplayTrafficConstruction(map) {
+    if (!map || !window.allConstruction || !Array.isArray(window.allConstruction)) return;
+    metrofeedRemoveTrafficConstruction(map);
+    const box = metrofeedPaddedMapBounds(map);
+    const filtered = metrofeedGenericInBounds(window.allConstruction, box);
+    const geojson = metrofeedBuildGenericGeoJSON(filtered, 'construction');
+    map.addSource('traffic-construction', { type: 'geojson', data: geojson });
+    map.addLayer({
+      id: 'traffic-construction',
+      type: 'circle',
+      source: 'traffic-construction',
+      paint: {
+        'circle-radius': 6,
+        'circle-color': ['get', 'color'],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+        'circle-opacity': 0.78
+      }
+    });
+    trafficLayers.construction = 'traffic-construction';
+    map.on('click', 'traffic-construction', metrofeedTrafficGenericClick);
+    map.on('mouseenter', 'traffic-construction', metrofeedTrafficGenericMouseEnter);
+    map.on('mouseleave', 'traffic-construction', metrofeedTrafficGenericMouseLeave);
+    console.log('[metrofeedDisplayTrafficConstruction] Showing', geojson.features.length, 'construction in padded view (of', window.allConstruction.length, 'cached)');
   }
 
   function metrofeedDisplayTrafficFlow(map) {
@@ -7112,7 +7287,7 @@
 
     const useCincyTraffic = typeof getCityIdFromPath === 'function'
       && getCityIdFromPath() === 'cincinnati'
-      && CITY_CONFIG && (CITY_CONFIG.incidentsFeedUrl || CITY_CONFIG.flowFeedUrl);
+      && CITY_CONFIG && (CITY_CONFIG.incidentsFeedUrl || CITY_CONFIG.flowFeedUrl || CITY_CONFIG.slowdownsFeedUrl || CITY_CONFIG.constructionFeedUrl);
     
     if (trafficLayerActive) {
       // Turn off
@@ -7124,26 +7299,38 @@
       try {
         const incUrl = CITY_CONFIG.incidentsFeedUrl ? String(CITY_CONFIG.incidentsFeedUrl).trim() : null;
         const flowUrl = CITY_CONFIG.flowFeedUrl ? String(CITY_CONFIG.flowFeedUrl).trim() : null;
+        const slowUrl = CITY_CONFIG.slowdownsFeedUrl ? String(CITY_CONFIG.slowdownsFeedUrl).trim() : null;
+        const conUrl = CITY_CONFIG.constructionFeedUrl ? String(CITY_CONFIG.constructionFeedUrl).trim() : null;
 
-        const [incRes, flowRes] = await Promise.all([
+        const [incRes, flowRes, slowRes, conRes] = await Promise.all([
           incUrl ? fetch(incUrl, { cache: 'no-store' }) : Promise.resolve(null),
-          flowUrl ? fetch(flowUrl, { cache: 'no-store' }) : Promise.resolve(null)
+          flowUrl ? fetch(flowUrl, { cache: 'no-store' }) : Promise.resolve(null),
+          slowUrl ? fetch(slowUrl, { cache: 'no-store' }) : Promise.resolve(null),
+          conUrl ? fetch(conUrl, { cache: 'no-store' }) : Promise.resolve(null)
         ]);
 
         if (incRes && !incRes.ok) throw new Error('incidents: ' + incRes.status + ' ' + incRes.statusText);
         if (flowRes && !flowRes.ok) throw new Error('flow: ' + flowRes.status + ' ' + flowRes.statusText);
+        if (slowRes && !slowRes.ok) throw new Error('slowdowns: ' + slowRes.status + ' ' + slowRes.statusText);
+        if (conRes && !conRes.ok) throw new Error('construction: ' + conRes.status + ' ' + conRes.statusText);
 
         const incData = incRes ? await incRes.json() : null;
         const flowData = flowRes ? await flowRes.json() : null;
+        const slowData = slowRes ? await slowRes.json() : null;
+        const conData = conRes ? await conRes.json() : null;
 
         window.allIncidents = Array.isArray(incData?.incidents) ? incData.incidents : [];
         window.allFlow = Array.isArray(flowData?.flow) ? flowData.flow : [];
+        window.allSlowdowns = Array.isArray(slowData?.slowdowns) ? slowData.slowdowns : (Array.isArray(slowData?.items) ? slowData.items : []);
+        window.allConstruction = Array.isArray(conData?.construction) ? conData.construction : (Array.isArray(conData?.items) ? conData.items : []);
 
         metrofeedDisplayTrafficIncidents(window.map);
         metrofeedDisplayTrafficFlow(window.map);
+        metrofeedDisplayTrafficSlowdowns(window.map);
+        metrofeedDisplayTrafficConstruction(window.map);
         metrofeedBindIncidentsMoveEnd(window.map);
         trafficLayerActive = true;
-        console.log('[toggleTrafficOverlay] Ohio traffic on; cached:', { incidents: window.allIncidents.length, flow: window.allFlow.length });
+        console.log('[toggleTrafficOverlay] Ohio traffic on; cached:', { incidents: window.allIncidents.length, flow: window.allFlow.length, slowdowns: window.allSlowdowns.length, construction: window.allConstruction.length });
       } catch (err) {
         console.error('[toggleTrafficOverlay] Ohio traffic fetch failed:', err);
         alert('Failed to load Ohio traffic data (incidents/flow).');

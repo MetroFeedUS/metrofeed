@@ -92,14 +92,31 @@ const TrafficCamerasOverlay = (function() {
     }
 
     isLoading = true;
-    console.log('[TrafficCamerasOverlay] Loading cameras data from:', CAMERAS_JSON_URL);
+    const remoteUrl = (typeof window !== 'undefined' && window.CITY_CONFIG && window.CITY_CONFIG.camerasFeedUrl)
+      ? String(window.CITY_CONFIG.camerasFeedUrl).trim()
+      : null;
+    const sourceUrl = remoteUrl || CAMERAS_JSON_URL;
+    console.log('[TrafficCamerasOverlay] Loading cameras data from:', sourceUrl);
 
     try {
-      const response = await fetch(CAMERAS_JSON_URL);
+      const response = await fetch(sourceUrl, { cache: 'no-store' });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      camerasData = await response.json();
+      const raw = await response.json();
+      const list = Array.isArray(raw) ? raw : (raw.cameras || raw.items || raw.data || []);
+      camerasData = Array.isArray(list) ? list.map((c, idx) => {
+        // Ohio cameras feed may only provide {id, lat, lon}. Keep url optional.
+        const id = c.id != null ? String(c.id) : String(idx);
+        return {
+          id,
+          name: c.name || c.title || `Camera ${id}`,
+          description: c.description || c.location || c.name || '',
+          lat: Number(c.lat ?? c.latitude),
+          lon: Number(c.lon ?? c.lng ?? c.longitude),
+          url: c.url || c.imageUrl || c.image_url || c.streamUrl || c.stream_url || ''
+        };
+      }).filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lon)) : [];
       console.log('[TrafficCamerasOverlay] Loaded', camerasData.length, 'cameras');
       isLoading = false;
       return camerasData;
@@ -167,15 +184,18 @@ const TrafficCamerasOverlay = (function() {
    */
   function createPopupContent(camera) {
     const popupContent = document.createElement('div');
+    const hasUrl = !!(camera && camera.url);
     popupContent.innerHTML = `
       <div style='border:2px solid ${MARKER_COLOR}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:200px;'>
         <strong style='color:${MARKER_COLOR};'>📹 ${camera.name}</strong>
         ${camera.description && camera.description !== camera.name ? `<div style='font-size:0.85rem; color:#aaa; margin-top:4px;'>${camera.description}</div>` : ''}
         <hr style='border:none; border-top:1px solid ${MARKER_COLOR}; margin:6px 0;'>
-        <button onclick='TrafficCamerasOverlay.showCameraFeed("${camera.id}", "${camera.name}", "${camera.url.replace(/'/g, "\\'")}"); event.stopPropagation();' 
+        ${hasUrl ? `
+        <button onclick='TrafficCamerasOverlay.showCameraFeed("${camera.id}", "${camera.name}", "${String(camera.url).replace(/'/g, "\\'")}"); event.stopPropagation();' 
                 style='background:${MARKER_COLOR}; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; width:100%; margin-top:6px;'>
           View Camera
         </button>
+        ` : `<div style="font-size:0.85rem;color:#bbb;margin-top:6px;">Camera feed not available yet.</div>`}
       </div>
     `;
     return popupContent;
@@ -196,7 +216,7 @@ const TrafficCamerasOverlay = (function() {
 
     cameras.forEach(camera => {
       // Validate camera data
-      if (!camera.lat || !camera.lon || !camera.id || !camera.url) {
+      if (!camera.lat || !camera.lon || !camera.id) {
         console.warn('[TrafficCamerasOverlay] Skipping invalid camera:', camera);
         return;
       }
@@ -216,9 +236,9 @@ const TrafficCamerasOverlay = (function() {
       const popup = new maplibregl.Popup().setDOMContent(popupContent);
       marker.setPopup(popup);
       
-      // Add click handler to marker
+      // Add click handler to marker (only if feed URL exists)
       markerElement.addEventListener('click', () => {
-        showCameraFeed(camera.id, camera.name, camera.url);
+        if (camera.url) showCameraFeed(camera.id, camera.name, camera.url);
       });
       
       // Add to map
