@@ -188,6 +188,8 @@ const CITIES = {
     },
     // Ohio road incidents (VPS JSON).
     incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
+    // Ohio traffic flow / density (VPS JSON).
+    flowFeedUrl: "https://traffic-api.metrofeedus.com/flow/ohio",
     // Pad the visible map bounds by this fraction of width/height when filtering cached incidents (no refetch on pan).
     incidentsViewportPaddingRatio: 0.12,
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",

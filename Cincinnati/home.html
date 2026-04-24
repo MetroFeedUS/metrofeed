@@ -3358,9 +3358,14 @@
       if (trafficLayerActive && (trafficData.links || trafficData.signs || trafficData.routes || window.allIncidents)) {
         const restoreTraffic = () => {
           if (map && map.loaded && map.isStyleLoaded && map.loaded() && map.isStyleLoaded()) {
-            const isCincyIncidents = typeof getCityIdFromPath === 'function' && getCityIdFromPath() === 'cincinnati' && window.allIncidents;
-            if (isCincyIncidents && typeof metrofeedDisplayTrafficIncidents === 'function') {
+            const isCincyTraffic = typeof getCityIdFromPath === 'function'
+              && getCityIdFromPath() === 'cincinnati'
+              && (window.allIncidents || window.allFlow);
+            if (isCincyTraffic && typeof metrofeedDisplayTrafficIncidents === 'function') {
               metrofeedDisplayTrafficIncidents(map);
+              if (typeof metrofeedDisplayTrafficFlow === 'function') {
+                metrofeedDisplayTrafficFlow(map);
+              }
               if (typeof metrofeedBindIncidentsMoveEnd === 'function') {
                 metrofeedBindIncidentsMoveEnd(map);
               }
@@ -6339,7 +6344,8 @@
     links: null,
     routes: null,
     signs: null,
-    incidents: null
+    incidents: null,
+    flow: null
   };
   let trafficData = {
     links: null,
@@ -6348,6 +6354,8 @@
   };
   /** Cached Ohio incidents for Cincinnati (`data.incidents`); filtered to map on pan, not refetched. */
   window.allIncidents = window.allIncidents || null;
+  /** Cached Ohio flow entries for Cincinnati (`data.flow`); filtered to map on pan, not refetched. */
+  window.allFlow = window.allFlow || null;
   let metrofeedIncidentsMoveTimer = null;
   
   /**
@@ -6791,6 +6799,31 @@
     return null;
   }
 
+  function metrofeedFlowLngLat(flow) {
+    if (!flow || typeof flow !== 'object') return null;
+    const lo = Number(flow.lon ?? flow.lng ?? flow.longitude);
+    const la = Number(flow.lat ?? flow.latitude);
+    return Number.isFinite(lo) && Number.isFinite(la) ? [lo, la] : null;
+  }
+
+  function metrofeedFlowDelayMinutes(flow) {
+    const txt = String(flow.description || '').toLowerCase();
+    const m = txt.match(/(\d+(?:\.\d+)?)\s*minute/);
+    if (m) return parseFloat(m[1]);
+    const d = flow.delay ?? flow.delayMinutes ?? flow.delay_minutes;
+    const n = typeof d === 'number' ? d : (typeof d === 'string' ? parseFloat(d) : NaN);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function metrofeedFlowColor(flow) {
+    const mins = metrofeedFlowDelayMinutes(flow);
+    if (mins == null) return '#00bcd4';
+    if (mins >= 10) return '#ff3333';
+    if (mins >= 5) return '#ff9800';
+    if (mins >= 2) return '#ffcc00';
+    return '#4CAF50';
+  }
+
   function metrofeedIncidentSeverityColor(inc) {
     const t = String(inc.severity || inc.impact || inc.priority || inc.level || inc.type || '').toLowerCase();
     if (t.includes('critical') || t.includes('severe') || t.includes('major') || t.includes('high')) return '#ff3333';
@@ -6822,6 +6855,15 @@
     });
   }
 
+  function metrofeedFlowInBounds(flowArr, box) {
+    if (!Array.isArray(flowArr) || !box) return [];
+    return flowArr.filter(function (f) {
+      const ll = metrofeedFlowLngLat(f);
+      if (!ll) return false;
+      return ll[0] >= box.west && ll[0] <= box.east && ll[1] >= box.south && ll[1] <= box.north;
+    });
+  }
+
   function metrofeedBuildIncidentsGeoJSON(incidents) {
     const features = [];
     for (let i = 0; i < incidents.length; i++) {
@@ -6844,6 +6886,29 @@
     return { type: 'FeatureCollection', features: features };
   }
 
+  function metrofeedBuildFlowGeoJSON(flowArr) {
+    const features = [];
+    for (let i = 0; i < flowArr.length; i++) {
+      const f = flowArr[i];
+      const ll = metrofeedFlowLngLat(f);
+      if (!ll) continue;
+      const title = f.location || f.routeName || f.route || 'Traffic flow';
+      const desc = f.description || '';
+      features.push({
+        type: 'Feature',
+        properties: {
+          id: f.id != null ? String(f.id) : String(i),
+          title: String(title),
+          description: String(desc),
+          color: metrofeedFlowColor(f),
+          delay_min: metrofeedFlowDelayMinutes(f)
+        },
+        geometry: { type: 'Point', coordinates: ll }
+      });
+    }
+    return { type: 'FeatureCollection', features: features };
+  }
+
   function metrofeedUpdateTrafficIncidentsData(map) {
     if (!map || !window.allIncidents || !Array.isArray(window.allIncidents)) return;
     if (!map.getSource('traffic-incidents')) return;
@@ -6852,13 +6917,26 @@
     map.getSource('traffic-incidents').setData(metrofeedBuildIncidentsGeoJSON(filtered));
   }
 
+  function metrofeedUpdateTrafficFlowData(map) {
+    if (!map || !window.allFlow || !Array.isArray(window.allFlow)) return;
+    if (!map.getSource('traffic-flow')) return;
+    const box = metrofeedPaddedMapBounds(map);
+    const filtered = metrofeedFlowInBounds(window.allFlow, box);
+    map.getSource('traffic-flow').setData(metrofeedBuildFlowGeoJSON(filtered));
+  }
+
   function metrofeedScheduleIncidentsRefresh(map) {
-    if (!trafficLayerActive || !trafficLayers.incidents || !map || !map.getSource('traffic-incidents')) return;
+    if (!trafficLayerActive || !map) return;
     clearTimeout(metrofeedIncidentsMoveTimer);
     metrofeedIncidentsMoveTimer = setTimeout(function () {
       metrofeedIncidentsMoveTimer = null;
-      if (!trafficLayerActive || !map.getSource('traffic-incidents')) return;
-      metrofeedUpdateTrafficIncidentsData(map);
+      if (!trafficLayerActive) return;
+      if (trafficLayers.incidents && map.getSource('traffic-incidents')) {
+        metrofeedUpdateTrafficIncidentsData(map);
+      }
+      if (trafficLayers.flow && map.getSource('traffic-flow')) {
+        metrofeedUpdateTrafficFlowData(map);
+      }
     }, 150);
   }
 
@@ -6902,9 +6980,37 @@
     e.target.getCanvas().style.cursor = '';
   }
 
+  function metrofeedTrafficFlowClick(e) {
+    const f = e.features && e.features[0];
+    if (!f) return;
+    const p = f.properties || {};
+    const title = metrofeedEscapeHtml(p.title || 'Flow');
+    const desc = metrofeedEscapeHtml(p.description || '');
+    new maplibregl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML('<div style="color:#111;padding:6px;max-width:280px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span></div>')
+      .addTo(e.target);
+  }
+
+  function metrofeedTrafficFlowMouseEnter(e) { e.target.getCanvas().style.cursor = 'pointer'; }
+  function metrofeedTrafficFlowMouseLeave(e) { e.target.getCanvas().style.cursor = ''; }
+
+  function metrofeedRemoveTrafficFlow(map) {
+    if (!map) return;
+    if (trafficLayers.flow) {
+      map.off('click', 'traffic-flow', metrofeedTrafficFlowClick);
+      map.off('mouseenter', 'traffic-flow', metrofeedTrafficFlowMouseEnter);
+      map.off('mouseleave', 'traffic-flow', metrofeedTrafficFlowMouseLeave);
+      if (map.getLayer('traffic-flow')) map.removeLayer('traffic-flow');
+      if (map.getSource('traffic-flow')) map.removeSource('traffic-flow');
+      trafficLayers.flow = null;
+    }
+  }
+
   function metrofeedRemoveTrafficIncidents(map) {
     if (!map) return;
     metrofeedUnbindIncidentsMoveEnd(map);
+    metrofeedRemoveTrafficFlow(map);
     if (trafficLayers.incidents) {
       map.off('click', 'traffic-incidents', metrofeedTrafficIncidentsClick);
       map.off('mouseenter', 'traffic-incidents', metrofeedTrafficIncidentsMouseEnter);
@@ -6913,6 +7019,32 @@
       if (map.getSource('traffic-incidents')) map.removeSource('traffic-incidents');
       trafficLayers.incidents = null;
     }
+  }
+
+  function metrofeedDisplayTrafficFlow(map) {
+    if (!map || !window.allFlow || !Array.isArray(window.allFlow)) return;
+    metrofeedRemoveTrafficFlow(map);
+    const box = metrofeedPaddedMapBounds(map);
+    const filtered = metrofeedFlowInBounds(window.allFlow, box);
+    const geojson = metrofeedBuildFlowGeoJSON(filtered);
+    map.addSource('traffic-flow', { type: 'geojson', data: geojson });
+    map.addLayer({
+      id: 'traffic-flow',
+      type: 'circle',
+      source: 'traffic-flow',
+      paint: {
+        'circle-radius': 6,
+        'circle-color': ['get', 'color'],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#0b0b0b',
+        'circle-opacity': 0.75
+      }
+    });
+    trafficLayers.flow = 'traffic-flow';
+    map.on('click', 'traffic-flow', metrofeedTrafficFlowClick);
+    map.on('mouseenter', 'traffic-flow', metrofeedTrafficFlowMouseEnter);
+    map.on('mouseleave', 'traffic-flow', metrofeedTrafficFlowMouseLeave);
+    console.log('[metrofeedDisplayTrafficFlow] Showing', geojson.features.length, 'flow points in padded view (of', window.allFlow.length, 'cached)');
   }
 
   function metrofeedDisplayTrafficIncidents(map) {
@@ -6978,32 +7110,43 @@
       return;
     }
 
-    const useCincyIncidents = typeof getCityIdFromPath === 'function'
+    const useCincyTraffic = typeof getCityIdFromPath === 'function'
       && getCityIdFromPath() === 'cincinnati'
-      && CITY_CONFIG && CITY_CONFIG.incidentsFeedUrl;
+      && CITY_CONFIG && (CITY_CONFIG.incidentsFeedUrl || CITY_CONFIG.flowFeedUrl);
     
     if (trafficLayerActive) {
       // Turn off
       removeTrafficLayers(window.map);
       trafficLayerActive = false;
       console.log('[toggleTrafficOverlay] Traffic overlay turned off');
-    } else if (useCincyIncidents) {
-      console.log('[toggleTrafficOverlay] Fetching Ohio incidents (VPS)...');
+    } else if (useCincyTraffic) {
+      console.log('[toggleTrafficOverlay] Fetching Ohio traffic (VPS)...');
       try {
-        const url = String(CITY_CONFIG.incidentsFeedUrl).trim();
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error(res.status + ' ' + res.statusText);
-        }
-        const data = await res.json();
-        window.allIncidents = Array.isArray(data.incidents) ? data.incidents : [];
+        const incUrl = CITY_CONFIG.incidentsFeedUrl ? String(CITY_CONFIG.incidentsFeedUrl).trim() : null;
+        const flowUrl = CITY_CONFIG.flowFeedUrl ? String(CITY_CONFIG.flowFeedUrl).trim() : null;
+
+        const [incRes, flowRes] = await Promise.all([
+          incUrl ? fetch(incUrl, { cache: 'no-store' }) : Promise.resolve(null),
+          flowUrl ? fetch(flowUrl, { cache: 'no-store' }) : Promise.resolve(null)
+        ]);
+
+        if (incRes && !incRes.ok) throw new Error('incidents: ' + incRes.status + ' ' + incRes.statusText);
+        if (flowRes && !flowRes.ok) throw new Error('flow: ' + flowRes.status + ' ' + flowRes.statusText);
+
+        const incData = incRes ? await incRes.json() : null;
+        const flowData = flowRes ? await flowRes.json() : null;
+
+        window.allIncidents = Array.isArray(incData?.incidents) ? incData.incidents : [];
+        window.allFlow = Array.isArray(flowData?.flow) ? flowData.flow : [];
+
         metrofeedDisplayTrafficIncidents(window.map);
+        metrofeedDisplayTrafficFlow(window.map);
         metrofeedBindIncidentsMoveEnd(window.map);
         trafficLayerActive = true;
-        console.log('[toggleTrafficOverlay] Ohio incidents on; cached count:', window.allIncidents.length);
+        console.log('[toggleTrafficOverlay] Ohio traffic on; cached:', { incidents: window.allIncidents.length, flow: window.allFlow.length });
       } catch (err) {
-        console.error('[toggleTrafficOverlay] Ohio incidents fetch failed:', err);
-        alert('Failed to load traffic incidents. If the site uses HTTPS, the feed may need an https:// proxy (mixed content).');
+        console.error('[toggleTrafficOverlay] Ohio traffic fetch failed:', err);
+        alert('Failed to load Ohio traffic data (incidents/flow).');
       }
     } else {
       // Turn on (MassDOT / Boston-style traffic links)
