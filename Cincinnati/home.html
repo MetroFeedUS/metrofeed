@@ -7046,12 +7046,14 @@
     const f = e.features && e.features[0];
     if (!f) return;
     const p = f.properties || {};
-    const title = metrofeedEscapeHtml(p.title || 'Incident');
-    const desc = metrofeedEscapeHtml(p.description || '');
+    const titleRaw = p.title || 'Incident';
+    const descRaw = p.description || '';
+    const title = metrofeedEscapeHtml(titleRaw);
+    const desc = metrofeedEscapeHtml(descRaw);
     new maplibregl.Popup()
       .setLngLat(e.lngLat)
-      .setHTML('<div style="color:#111;padding:6px;max-width:280px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span></div>')
-      .addTo(e.target);
+      .setHTML('<div style="color:#111;padding:6px;max-width:320px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span></div>')
+      .addTo(window.map || e.target);
   }
 
   function metrofeedTrafficIncidentsMouseEnter(e) {
@@ -7070,8 +7072,8 @@
     const desc = metrofeedEscapeHtml(p.description || '');
     new maplibregl.Popup()
       .setLngLat(e.lngLat)
-      .setHTML('<div style="color:#111;padding:6px;max-width:280px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span></div>')
-      .addTo(e.target);
+      .setHTML('<div style="color:#111;padding:6px;max-width:320px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span></div>')
+      .addTo(window.map || e.target);
   }
 
   function metrofeedTrafficFlowMouseEnter(e) { e.target.getCanvas().style.cursor = 'pointer'; }
@@ -7093,12 +7095,14 @@
     const f = e.features && e.features[0];
     if (!f) return;
     const p = f.properties || {};
-    const title = metrofeedEscapeHtml(p.title || 'Traffic');
-    const desc = metrofeedEscapeHtml(p.description || '');
+    const title = metrofeedEscapeHtml(p.title || p.kind || 'Traffic');
+    const descText = p.description || '';
+    const desc = metrofeedEscapeHtml(descText);
+    const extra = !descText ? `<pre style="margin:6px 0 0;white-space:pre-wrap;word-break:break-word;font-size:11px;">${metrofeedEscapeHtml(JSON.stringify(p, null, 2))}</pre>` : '';
     new maplibregl.Popup()
       .setLngLat(e.lngLat)
-      .setHTML('<div style="color:#111;padding:6px;max-width:280px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span></div>')
-      .addTo(e.target);
+      .setHTML('<div style="color:#111;padding:6px;max-width:340px;"><strong>' + title + '</strong><br><span style="font-size:12px;">' + desc + '</span>' + extra + '</div>')
+      .addTo(window.map || e.target);
   }
 
   function metrofeedTrafficGenericMouseEnter(e) { e.target.getCanvas().style.cursor = 'pointer'; }
