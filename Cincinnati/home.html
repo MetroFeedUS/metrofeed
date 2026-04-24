@@ -114,6 +114,42 @@
       align-items: center;
       min-width: 0;
     }
+
+    .mf-traffic-legend {
+      width: 100%;
+      margin-top: 6px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(15, 15, 15, 0.92);
+      border: 1px solid rgba(30, 144, 255, 0.35);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+      color: #eaeaea;
+      font-size: 12px;
+      line-height: 1.2;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      user-select: none;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .mf-traffic-legend::-webkit-scrollbar { display: none; }
+    .mf-traffic-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      opacity: 0.95;
+      flex: 0 0 auto;
+    }
+    .mf-traffic-legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.45);
+      flex: 0 0 auto;
+    }
     .mf-trip-planner-right-controls {
       display: inline-flex;
       align-items: center;
@@ -1459,6 +1495,7 @@
         <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear">Clear</button>
         <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" title="Find my location and closest route" data-translate="find_me">Find Me</button>
       </div>
+      <div id="trafficLegendBar" class="mf-traffic-legend" style="display:none;" aria-live="polite"></div>
     </div>
     <div class="mf-trip-planner-right-controls">
       <div class="mf-trip-planner-collapsed-pill" aria-hidden="true">Open dashboard</div>
@@ -3384,6 +3421,9 @@
             }
             if (trafficData.signs && trafficData.signs.length > 0) {
               displayTrafficSigns(map, trafficData.signs);
+            }
+            if (typeof metrofeedUpdateTrafficLegend === 'function') {
+              metrofeedUpdateTrafficLegend();
             }
           } else {
             setTimeout(restoreTraffic, 100);
@@ -6346,6 +6386,42 @@
   const TRAFFIC_LINKS_STATUS_URL = 'https://traffic-api.metrofeedus.com/traffic/links_status.json';
   
   let trafficLayerActive = false;
+  function metrofeedSetTrafficLegendVisible(visible) {
+    const el = document.getElementById('trafficLegendBar');
+    if (!el) return;
+    el.style.display = visible ? 'flex' : 'none';
+  }
+
+  function metrofeedLegendItem(color, label) {
+    return `
+      <span class="mf-traffic-legend-item">
+        <span class="mf-traffic-legend-swatch" style="background:${color};"></span>
+        <span>${label}</span>
+      </span>
+    `;
+  }
+
+  function metrofeedUpdateTrafficLegend() {
+    const el = document.getElementById('trafficLegendBar');
+    if (!el) return;
+    if (!trafficLayerActive) {
+      el.innerHTML = '';
+      metrofeedSetTrafficLegendVisible(false);
+      return;
+    }
+
+    const parts = [];
+    // Keep it one-line + simple. (We can evolve later when you add icons/lines.)
+    if (trafficLayers.incidents) parts.push(metrofeedLegendItem('#ff6b35', 'Incidents'));
+    if (trafficLayers.flow) parts.push(metrofeedLegendItem('#00bcd4', 'Flow'));
+    if (trafficLayers.slowdowns) parts.push(metrofeedLegendItem('#00bcd4', 'Slowdowns'));
+    if (trafficLayers.construction) parts.push(metrofeedLegendItem('#ffcc00', 'Construction'));
+    if (trafficLayers.links) parts.push(metrofeedLegendItem('#4CAF50', 'Traffic links'));
+
+    el.innerHTML = parts.join('');
+    metrofeedSetTrafficLegendVisible(parts.length > 0);
+  }
+
   let trafficLayers = {
     links: null,
     routes: null,
@@ -7278,6 +7354,7 @@
     }
     
     console.log('[removeTrafficLayers] Removed all traffic layers');
+    metrofeedUpdateTrafficLegend();
   }
   
   /**
@@ -7298,6 +7375,7 @@
       removeTrafficLayers(window.map);
       trafficLayerActive = false;
       console.log('[toggleTrafficOverlay] Traffic overlay turned off');
+      metrofeedUpdateTrafficLegend();
     } else if (useCincyTraffic) {
       console.log('[toggleTrafficOverlay] Fetching Ohio traffic (VPS)...');
       try {
@@ -7335,6 +7413,7 @@
         metrofeedBindIncidentsMoveEnd(window.map);
         trafficLayerActive = true;
         console.log('[toggleTrafficOverlay] Ohio traffic on; cached:', { incidents: window.allIncidents.length, flow: window.allFlow.length, slowdowns: window.allSlowdowns.length, construction: window.allConstruction.length });
+        metrofeedUpdateTrafficLegend();
       } catch (err) {
         console.error('[toggleTrafficOverlay] Ohio traffic fetch failed:', err);
         alert('Failed to load Ohio traffic data (incidents/flow).');
@@ -7362,6 +7441,7 @@
         
         trafficLayerActive = true;
         console.log('[toggleTrafficOverlay] Traffic overlay turned on');
+        metrofeedUpdateTrafficLegend();
       } else {
         alert('Failed to load traffic data. Please try again.');
       }
