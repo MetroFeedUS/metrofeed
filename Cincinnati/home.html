@@ -4268,9 +4268,42 @@
   let findMeActive = false; // Track if Find Me is active
 
   // --- Startup auto-load (closest route) ---
+  let metrofeedStartupRouteQueued = null; // { routeId, directionId }
+  let metrofeedStartupRouteFired = false;
+
   window.metrofeedShowTutorial = window.metrofeedShowTutorial || function () {
     // Placeholder: user will provide tutorial content later.
   };
+
+  function metrofeedQueueStartupRoute(routeId, directionId) {
+    const rid = routeId != null ? String(routeId) : null;
+    if (!rid) return;
+    const did = Number.isFinite(Number(directionId)) ? Number(directionId) : 0;
+    metrofeedStartupRouteQueued = { routeId: rid, directionId: did };
+  }
+
+  async function metrofeedFireQueuedStartupRouteIfReady() {
+    if (metrofeedStartupRouteFired) return;
+    if (!metrofeedStartupRouteQueued) return;
+    if (!window.map || typeof window.showRouteOverlay !== 'function') return;
+    metrofeedStartupRouteFired = true;
+    try {
+      await window.showRouteOverlay(metrofeedStartupRouteQueued.routeId, metrofeedStartupRouteQueued.directionId);
+    } catch (e) {
+      console.warn('[startupAutoLoad] queued showRouteOverlay failed:', e);
+    }
+    setTimeout(() => {
+      try { window.metrofeedShowTutorial && window.metrofeedShowTutorial(); } catch (_) {}
+    }, 2000);
+  }
+
+  // If the entry page (Index.html) detected location denial/timeout, queue the default route immediately.
+  try {
+    if (sessionStorage.getItem('metrofeedLocationDenied') === '1' && CITY_CONFIG && CITY_CONFIG.startupDefaultRouteId) {
+      metrofeedQueueStartupRoute(String(CITY_CONFIG.startupDefaultRouteId), Number(CITY_CONFIG.startupDefaultDirectionId) || 0);
+      sessionStorage.removeItem('metrofeedLocationDenied');
+    }
+  } catch (_) {}
 
   function metrofeedIsInCityBounds(lat, lon) {
     try {
@@ -4333,8 +4366,20 @@
     return bestRouteId ? String(bestRouteId) : null;
   }
 
+  async function metrofeedResolveClosestRouteIdViaOtp(userLat, userLon) {
+    if (typeof window.resolveFindMeRouteViaOtp !== 'function') return null;
+    try {
+      const pick = await window.resolveFindMeRouteViaOtp(userLat, userLon);
+      if (pick && pick.route_id) return String(pick.route_id);
+    } catch (e) {
+      console.warn('[startupAutoLoad] resolveFindMeRouteViaOtp failed:', e);
+    }
+    return null;
+  }
+
   async function metrofeedStartupAutoLoadClosestRouteOnce(userLat, userLon) {
-    if (!map || !window.showRouteOverlay) return;
+    // If map isn't ready yet, bail; watchPosition will call again, and map.on('load') will fire queued fallback.
+    if (!window.map || typeof window.showRouteOverlay !== 'function') return;
     // Wait for routes list (masterRoutes) to exist if needed.
     const waitUntil = async (pred, ms, label) => {
       const start = Date.now();
@@ -4352,13 +4397,33 @@
     const inBounds = metrofeedIsInCityBounds(userLat, userLon);
     metrofeedShowStartupUserMarker(userLat, userLon, inBounds);
 
-    // Pick route id: in-bounds => closest to user; out-of-bounds => closest to city center.
-    const routeId = metrofeedPickClosestRouteIdFromStops(userLat, userLon, !inBounds);
+    // If OTP is available, use it to pick a nearby route (closest stop by walk distance).
+    const otpRouteId = await metrofeedResolveClosestRouteIdViaOtp(userLat, userLon);
+
+    // If masterRoutes isn't available in this city build, fall back to configured startup route.
+    const fallbackRouteId = CITY_CONFIG.startupDefaultRouteId ? String(CITY_CONFIG.startupDefaultRouteId) : null;
+    const fallbackDir = Number.isFinite(Number(CITY_CONFIG.startupDefaultDirectionId)) ? Number(CITY_CONFIG.startupDefaultDirectionId) : 0;
+
+    let routeId = null;
+    let dir = null;
+    if (otpRouteId) {
+      routeId = otpRouteId;
+    } else {
+      try {
+        routeId = metrofeedPickClosestRouteIdFromStops(userLat, userLon, !inBounds);
+      } catch (_) {}
+    }
+    if (!routeId && fallbackRouteId) {
+      routeId = fallbackRouteId;
+      dir = fallbackDir;
+    }
     if (!routeId) {
-      console.warn('[startupAutoLoad] No routeId found');
+      console.warn('[startupAutoLoad] No routeId found and no fallback configured');
       return;
     }
-    const dir = await pickBestDirectionForLocation(routeId, inBounds ? userLat : CITY_CONFIG.defaultCenter[1], inBounds ? userLon : CITY_CONFIG.defaultCenter[0]);
+    if (dir == null) {
+      dir = await pickBestDirectionForLocation(routeId, inBounds ? userLat : CITY_CONFIG.defaultCenter[1], inBounds ? userLon : CITY_CONFIG.defaultCenter[0]);
+    }
 
     try {
       await window.showRouteOverlay(routeId, dir);
@@ -4604,6 +4669,12 @@
     }, function(error) {
       if (error.code === 1) {
         console.log('Location access denied by user.');
+        // Even if GPS is denied, still load a useful default route centered on the city.
+        if (!hasInitializedRoute && CITY_CONFIG && CITY_CONFIG.startupDefaultRouteId) {
+          hasInitializedRoute = true;
+          metrofeedQueueStartupRoute(String(CITY_CONFIG.startupDefaultRouteId), Number(CITY_CONFIG.startupDefaultDirectionId) || 0);
+          metrofeedFireQueuedStartupRouteIfReady();
+        }
       } else {
         console.log('Unable to get your location:', error.message);
       }
@@ -11089,6 +11160,21 @@
         if (typeof window.initMetrofeedSavedPlaces === 'function') {
           window.initMetrofeedSavedPlaces();
         }
+
+        // Startup failsafe: if geolocation denied or delayed, fire queued default route once map+overlay are ready.
+        try {
+          metrofeedFireQueuedStartupRouteIfReady && metrofeedFireQueuedStartupRouteIfReady();
+          // If nothing queued and no overlays yet, load the configured default route after a short delay.
+          setTimeout(() => {
+            try {
+              const hasAnyOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
+              if (!metrofeedStartupRouteFired && !hasAnyOverlays && CITY_CONFIG && CITY_CONFIG.startupDefaultRouteId) {
+                metrofeedQueueStartupRoute(String(CITY_CONFIG.startupDefaultRouteId), Number(CITY_CONFIG.startupDefaultDirectionId) || 0);
+                metrofeedFireQueuedStartupRouteIfReady && metrofeedFireQueuedStartupRouteIfReady();
+              }
+            } catch (_) {}
+          }, 1400);
+        } catch (_) {}
       });
       
       map.on('error', (e) => {

@@ -172,6 +172,10 @@ const CITIES = {
 
     defaultCenter: [-84.512, 39.103],
     defaultZoom: 11,
+    // Startup fallback route when GPS is denied/out-of-bounds or when we can't cheaply compute nearest-stop routes.
+    // Pick a central, always-available route (same behavior as selecting from route list).
+    startupDefaultRouteId: "sorta_4",
+    startupDefaultDirectionId: 0,
     // maxBounds for the basemap (~25 statute miles beyond prior edges; lon scale uses center lat).
     bounds: {
       north: 39.7114,
