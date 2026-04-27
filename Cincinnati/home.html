@@ -7155,27 +7155,69 @@
     if (!map) return;
     if (map.hasImage && map.hasImage('mf-traffic-tri')) return;
 
-    const makeSvgUrl = (svg) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-    const add = (name, svg) => {
+    const addFromCanvas = (name, sizePx, drawFn) => {
       try {
-        map.loadImage(makeSvgUrl(svg), (err, image) => {
-          if (err || !image) {
-            console.warn('[metrofeedEnsureTrafficSdfIcons] Failed to load icon', name, err);
-            return;
-          }
-          if (!map.hasImage(name)) {
-            map.addImage(name, image, { sdf: true });
-          }
-        });
+        const canvas = document.createElement('canvas');
+        canvas.width = sizePx;
+        canvas.height = sizePx;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Clear transparent then draw solid white shape.
+        ctx.clearRect(0, 0, sizePx, sizePx);
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        drawFn(ctx, sizePx);
+
+        const img = ctx.getImageData(0, 0, sizePx, sizePx);
+        if (!map.hasImage || !map.addImage) return;
+        if (!map.hasImage(name)) {
+          map.addImage(name, { width: sizePx, height: sizePx, data: img.data }, { sdf: true });
+        }
       } catch (e) {
         console.warn('[metrofeedEnsureTrafficSdfIcons] Icon add failed', name, e);
       }
     };
 
     // Monochrome shapes; we color them via icon-color using SDF.
-    add('mf-traffic-tri', `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M12 2 22 20H2L12 2Z"/></svg>`);
-    add('mf-traffic-square', `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="3" width="16" height="16" rx="2" ry="2" fill="#fff"/></svg>`);
-    add('mf-traffic-diamond', `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22"><path fill="#fff" d="M11 2 20 11 11 20 2 11 11 2Z"/></svg>`);
+    addFromCanvas('mf-traffic-tri', 24, (ctx, s) => {
+      ctx.beginPath();
+      ctx.moveTo(s / 2, s * 0.12);
+      ctx.lineTo(s * 0.88, s * 0.88);
+      ctx.lineTo(s * 0.12, s * 0.88);
+      ctx.closePath();
+      ctx.fill();
+    });
+    addFromCanvas('mf-traffic-square', 22, (ctx, s) => {
+      const r = s * 0.12;
+      const x = s * 0.16;
+      const y = s * 0.16;
+      const w = s * 0.68;
+      const h = s * 0.68;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+    });
+    addFromCanvas('mf-traffic-diamond', 22, (ctx, s) => {
+      ctx.beginPath();
+      ctx.moveTo(s / 2, s * 0.10);
+      ctx.lineTo(s * 0.90, s / 2);
+      ctx.lineTo(s / 2, s * 0.90);
+      ctx.lineTo(s * 0.10, s / 2);
+      ctx.closePath();
+      ctx.fill();
+    });
   }
 
   function metrofeedBuildFlowGeoJSON(flowArr) {
