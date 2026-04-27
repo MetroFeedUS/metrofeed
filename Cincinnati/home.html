@@ -234,6 +234,8 @@
       line-height: 1;
       align-items: center;
       justify-content: center;
+      display: inline-flex;
+      gap: 8px;
       box-sizing: border-box;
       white-space: nowrap;
       user-select: none;
@@ -314,7 +316,8 @@
     body.mf-ui-collapsed #themeToggleBtn,
     body.mf-ui-collapsed #aiChatBtn,
     body.mf-ui-collapsed #languageControlsWrap,
-    body.mf-ui-collapsed #dropdownMenu {
+    /* Keep #dropdownMenu available so Menu button still works. */
+    body.mf-ui-collapsed #dropdownMenuDisabledHack {
       display: none !important;
     }
     .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
@@ -1587,7 +1590,10 @@
         <span class="mf-trip-planner-toggle-sr" id="mfTripPlannerToggleLabel">Hide dashboard</span>
       </button>
     </div>
-    <button type="button" id="mfTripPlannerOpenBar" class="mf-trip-planner-collapsed-pill" style="display:none;" aria-hidden="true">Open dashboard</button>
+    <button type="button" id="mfTripPlannerOpenBar" class="mf-trip-planner-collapsed-pill" style="display:none;" aria-hidden="true">
+      <span style="flex:1; text-align:center;">Open dashboard</span>
+      <span aria-hidden="true" style="margin-left:auto; font-size:14px; opacity:0.9;">▼</span>
+    </button>
   </div>
 </div>
 
