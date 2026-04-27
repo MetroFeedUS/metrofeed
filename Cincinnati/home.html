@@ -8323,9 +8323,16 @@
   window.showRouteOverlay = async function(routeId, directionId, routePageUrl, overlayInstanceKey) {
     console.log('[showRouteOverlay] ===== FUNCTION CALLED =====');
     console.log('[showRouteOverlay] routeId:', routeId, 'directionId:', directionId);
-    const mapRef = map || window.map;
+    let mapRef = window.map || map;
+    // Defensive: if a non-MapLibre object ever ends up in `map`, prefer `window.map`.
+    try {
+      if (mapRef && typeof mapRef.addSource !== 'function' && window.map && typeof window.map.addSource === 'function') {
+        mapRef = window.map;
+      }
+    } catch (_) {}
     console.log('[showRouteOverlay] map:', mapRef, 'type:', typeof mapRef);
     console.log('[showRouteOverlay] attachRouteToMap:', window.attachRouteToMap, 'type:', typeof window.attachRouteToMap);
+    try { console.log('[showRouteOverlay] map.addSource:', typeof (mapRef && mapRef.addSource)); } catch (_) {}
     
     if (!mapRef || !window.attachRouteToMap) {
       // If map isn't ready yet, retry shortly (startup races: geolocation / queued default route).

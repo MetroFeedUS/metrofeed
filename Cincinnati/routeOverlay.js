@@ -1397,8 +1397,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
   const routeData = options.routeData;
 
   // ==== Basic validation =====================================================
-  if (!map || typeof map.addSource !== "function") {
-    console.error("[attachRouteToMap] Invalid MapLibre map instance.");
+  if (!map || (typeof map.addSource !== "function" && typeof map.addLayer !== "function" && typeof map.on !== "function")) {
+    console.error("[attachRouteToMap] Invalid MapLibre map instance.", {
+      hasMap: !!map,
+      addSource: map && typeof map.addSource,
+      addLayer: map && typeof map.addLayer,
+      on: map && typeof map.on
+    });
     return { remove: function () {} };
   }
 
