@@ -295,8 +295,7 @@
       }
     }
 
-    /* Collapsing should hide ALL top buttons for more map space. */
-    body.mf-ui-collapsed #menuBtn,
+    /* Collapsing should hide top buttons for more map space (except Menu, which shifts up). */
     body.mf-ui-collapsed #themeToggleBtn,
     body.mf-ui-collapsed #aiChatBtn,
     body.mf-ui-collapsed #languageControlsWrap,
@@ -309,6 +308,7 @@
     .icon-placeholder { width: 20px; height: 20px; margin-right: 6px; }
     .side-buttons { position: absolute; width: 45px; height: 45px; z-index: 1001; background-color: #1E90FF; border: 2px solid #000; border-radius: 10px; box-shadow: 0 0 10px #1E90FF; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
     #menuBtn { top: 60px; left: 10px; }
+    body.mf-ui-collapsed #menuBtn { top: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
     #aiChatBtn { top: 10px; left: 10px; }
     #languageBtn { position: relative; }
@@ -6499,7 +6499,8 @@
 
   function metrofeedLegendBtn(kind, color, label, pressed) {
     const count = window._mfTrafficCounts && typeof window._mfTrafficCounts[kind] === 'number' ? window._mfTrafficCounts[kind] : 0;
-    const txt = `${label}${Number.isFinite(count) ? ` (${count})` : ''}`;
+    const suffix = pressed ? ` (${count})` : ' (off)';
+    const txt = `${label}${suffix}`;
     return `
       <span class="mf-traffic-legend-item">
         <button type="button" class="mf-traffic-legend-btn" data-traffic-kind="${kind}" aria-pressed="${pressed ? 'true' : 'false'}">
