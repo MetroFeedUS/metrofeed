@@ -135,13 +135,33 @@
       scrollbar-width: none;
     }
     .mf-traffic-legend::-webkit-scrollbar { display: none; }
-    .mf-traffic-legend-item {
+    .mf-traffic-legend-item { flex: 0 0 auto; }
+    .mf-traffic-legend-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       white-space: nowrap;
-      opacity: 0.95;
       flex: 0 0 auto;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: #eaeaea;
+      cursor: pointer;
+      font: inherit;
+      opacity: 0.95;
+      transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+    }
+    .mf-traffic-legend-btn:hover { background: rgba(255,255,255,0.10); }
+    .mf-traffic-legend-btn:active { transform: scale(0.98); }
+    .mf-traffic-legend-btn[aria-pressed="false"] {
+      opacity: 0.55;
+      border-color: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.035);
+    }
+    .mf-traffic-legend-btn[aria-pressed="true"] {
+      border-color: rgba(30,144,255,0.55);
+      box-shadow: 0 0 0 1px rgba(30,144,255,0.10) inset;
     }
     .mf-traffic-legend-swatch {
       width: 10px;
@@ -149,6 +169,17 @@
       border-radius: 50%;
       box-shadow: 0 1px 2px rgba(0,0,0,0.45);
       flex: 0 0 auto;
+    }
+    .mf-traffic-legend-hint {
+      margin-left: auto;
+      position: sticky;
+      right: 0;
+      padding-left: 10px;
+      color: rgba(234,234,234,0.65);
+      font-size: 11px;
+      background: linear-gradient(90deg, rgba(15,15,15,0.0), rgba(15,15,15,0.92) 30%);
+      white-space: nowrap;
+      pointer-events: none;
     }
 
     .mf-traffic-loading {
@@ -6464,11 +6495,17 @@
     el.style.display = visible ? 'flex' : 'none';
   }
 
-  function metrofeedLegendItem(color, label) {
+  window._mfTrafficCounts = window._mfTrafficCounts || { incidents: 0, flow: 0, slowdowns: 0, construction: 0 };
+
+  function metrofeedLegendBtn(kind, color, label, pressed) {
+    const count = window._mfTrafficCounts && typeof window._mfTrafficCounts[kind] === 'number' ? window._mfTrafficCounts[kind] : 0;
+    const txt = `${label}${Number.isFinite(count) ? ` (${count})` : ''}`;
     return `
       <span class="mf-traffic-legend-item">
-        <span class="mf-traffic-legend-swatch" style="background:${color};"></span>
-        <span>${label}</span>
+        <button type="button" class="mf-traffic-legend-btn" data-traffic-kind="${kind}" aria-pressed="${pressed ? 'true' : 'false'}">
+          <span class="mf-traffic-legend-swatch" style="background:${color};"></span>
+          <span>${txt}</span>
+        </button>
       </span>
     `;
   }
@@ -6483,15 +6520,58 @@
     }
 
     const parts = [];
-    // Keep it one-line + simple. (We can evolve later when you add icons/lines.)
-    if (trafficLayers.incidents) parts.push(metrofeedLegendItem('#ff6b35', 'Incidents'));
-    if (trafficLayers.flow) parts.push(metrofeedLegendItem('#00bcd4', 'Flow'));
-    if (trafficLayers.slowdowns) parts.push(metrofeedLegendItem('#00bcd4', 'Slowdowns'));
-    if (trafficLayers.construction) parts.push(metrofeedLegendItem('#ffcc00', 'Construction'));
-    if (trafficLayers.links) parts.push(metrofeedLegendItem('#4CAF50', 'Traffic links'));
+    // Always show these toggles while Traffic is on (so user can enable construction later).
+    parts.push(metrofeedLegendBtn('incidents', '#ff6b35', 'Incidents', !!trafficLayers.incidents));
+    parts.push(metrofeedLegendBtn('flow', '#00bcd4', 'Flow', !!trafficLayers.flow));
+    parts.push(metrofeedLegendBtn('slowdowns', '#00bcd4', 'Slowdowns', !!trafficLayers.slowdowns));
+    parts.push(metrofeedLegendBtn('construction', '#ffcc00', 'Construction', !!trafficLayers.construction));
+    parts.push(`<span class="mf-traffic-legend-hint">← scroll →</span>`);
 
     el.innerHTML = parts.join('');
     metrofeedSetTrafficLegendVisible(parts.length > 0);
+
+    // Bind toggle handlers (rebind each render; small DOM).
+    const btns = el.querySelectorAll('button[data-traffic-kind]');
+    btns.forEach((btn) => {
+      btn.onclick = (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const kind = btn.getAttribute('data-traffic-kind');
+        if (!kind) return;
+        if (typeof metrofeedToggleTrafficKind === 'function') {
+          metrofeedToggleTrafficKind(kind);
+        }
+      };
+    });
+  }
+
+  function metrofeedToggleTrafficKind(kind) {
+    const map = window.map;
+    if (!trafficLayerActive || !map) return;
+    const k = String(kind || '').toLowerCase();
+
+    if (k === 'incidents') {
+      if (trafficLayers.incidents) metrofeedRemoveTrafficIncidents(map);
+      else metrofeedDisplayTrafficIncidents(map);
+    } else if (k === 'flow') {
+      if (trafficLayers.flow) metrofeedRemoveTrafficFlow(map);
+      else metrofeedDisplayTrafficFlow(map);
+    } else if (k === 'slowdowns') {
+      if (trafficLayers.slowdowns) metrofeedRemoveTrafficSlowdowns(map);
+      else metrofeedDisplayTrafficSlowdowns(map);
+    } else if (k === 'construction') {
+      if (trafficLayers.construction) metrofeedRemoveTrafficConstruction(map);
+      else metrofeedDisplayTrafficConstruction(map);
+    } else {
+      return;
+    }
+
+    // Update counts for newly-added layers (and refresh legend text).
+    if (typeof metrofeedScheduleIncidentsRefresh === 'function') {
+      metrofeedScheduleIncidentsRefresh(map);
+    } else if (typeof metrofeedUpdateTrafficLegend === 'function') {
+      metrofeedUpdateTrafficLegend();
+    }
   }
 
   let trafficLayers = {
@@ -7071,6 +7151,33 @@
     return { type: 'FeatureCollection', features: features };
   }
 
+  function metrofeedEnsureTrafficSdfIcons(map) {
+    if (!map) return;
+    if (map.hasImage && map.hasImage('mf-traffic-tri')) return;
+
+    const makeSvgUrl = (svg) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    const add = (name, svg) => {
+      try {
+        map.loadImage(makeSvgUrl(svg), (err, image) => {
+          if (err || !image) {
+            console.warn('[metrofeedEnsureTrafficSdfIcons] Failed to load icon', name, err);
+            return;
+          }
+          if (!map.hasImage(name)) {
+            map.addImage(name, image, { sdf: true });
+          }
+        });
+      } catch (e) {
+        console.warn('[metrofeedEnsureTrafficSdfIcons] Icon add failed', name, e);
+      }
+    };
+
+    // Monochrome shapes; we color them via icon-color using SDF.
+    add('mf-traffic-tri', `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M12 2 22 20H2L12 2Z"/></svg>`);
+    add('mf-traffic-square', `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="3" width="16" height="16" rx="2" ry="2" fill="#fff"/></svg>`);
+    add('mf-traffic-diamond', `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22"><path fill="#fff" d="M11 2 20 11 11 20 2 11 11 2Z"/></svg>`);
+  }
+
   function metrofeedBuildFlowGeoJSON(flowArr) {
     const features = [];
     for (let i = 0; i < flowArr.length; i++) {
@@ -7122,7 +7229,9 @@
     if (!map.getSource('traffic-incidents')) return;
     const box = metrofeedPaddedMapBounds(map);
     const filtered = metrofeedIncidentsInBounds(window.allIncidents, box);
-    map.getSource('traffic-incidents').setData(metrofeedBuildIncidentsGeoJSON(filtered));
+    const geojson = metrofeedBuildIncidentsGeoJSON(filtered);
+    map.getSource('traffic-incidents').setData(geojson);
+    window._mfTrafficCounts.incidents = geojson.features.length;
   }
 
   function metrofeedUpdateTrafficFlowData(map) {
@@ -7130,7 +7239,9 @@
     if (!map.getSource('traffic-flow')) return;
     const box = metrofeedPaddedMapBounds(map);
     const filtered = metrofeedFlowInBounds(window.allFlow, box);
-    map.getSource('traffic-flow').setData(metrofeedBuildFlowGeoJSON(filtered));
+    const geojson = metrofeedBuildFlowGeoJSON(filtered);
+    map.getSource('traffic-flow').setData(geojson);
+    window._mfTrafficCounts.flow = geojson.features.length;
   }
 
   function metrofeedUpdateTrafficSlowdownsData(map) {
@@ -7138,7 +7249,9 @@
     if (!map.getSource('traffic-slowdowns')) return;
     const box = metrofeedPaddedMapBounds(map);
     const filtered = metrofeedGenericInBounds(window.allSlowdowns, box);
-    map.getSource('traffic-slowdowns').setData(metrofeedBuildGenericGeoJSON(filtered, 'slowdown'));
+    const geojson = metrofeedBuildGenericGeoJSON(filtered, 'slowdown');
+    map.getSource('traffic-slowdowns').setData(geojson);
+    window._mfTrafficCounts.slowdowns = geojson.features.length;
   }
 
   function metrofeedUpdateTrafficConstructionData(map) {
@@ -7146,7 +7259,9 @@
     if (!map.getSource('traffic-construction')) return;
     const box = metrofeedPaddedMapBounds(map);
     const filtered = metrofeedGenericInBounds(window.allConstruction, box);
-    map.getSource('traffic-construction').setData(metrofeedBuildGenericGeoJSON(filtered, 'construction'));
+    const geojson = metrofeedBuildGenericGeoJSON(filtered, 'construction');
+    map.getSource('traffic-construction').setData(geojson);
+    window._mfTrafficCounts.construction = geojson.features.length;
   }
 
   function metrofeedScheduleIncidentsRefresh(map) {
@@ -7166,6 +7281,9 @@
       }
       if (trafficLayers.construction && map.getSource('traffic-construction')) {
         metrofeedUpdateTrafficConstructionData(map);
+      }
+      if (typeof metrofeedUpdateTrafficLegend === 'function') {
+        metrofeedUpdateTrafficLegend();
       }
     }, 150);
   }
@@ -7236,6 +7354,7 @@
       if (map.getLayer('traffic-flow')) map.removeLayer('traffic-flow');
       if (map.getSource('traffic-flow')) map.removeSource('traffic-flow');
       trafficLayers.flow = null;
+      if (window._mfTrafficCounts) window._mfTrafficCounts.flow = 0;
     }
   }
 
@@ -7265,6 +7384,7 @@
       if (map.getLayer('traffic-slowdowns')) map.removeLayer('traffic-slowdowns');
       if (map.getSource('traffic-slowdowns')) map.removeSource('traffic-slowdowns');
       trafficLayers.slowdowns = null;
+      if (window._mfTrafficCounts) window._mfTrafficCounts.slowdowns = 0;
     }
   }
 
@@ -7277,6 +7397,7 @@
       if (map.getLayer('traffic-construction')) map.removeLayer('traffic-construction');
       if (map.getSource('traffic-construction')) map.removeSource('traffic-construction');
       trafficLayers.construction = null;
+      if (window._mfTrafficCounts) window._mfTrafficCounts.construction = 0;
     }
   }
 
@@ -7293,58 +7414,69 @@
       if (map.getLayer('traffic-incidents')) map.removeLayer('traffic-incidents');
       if (map.getSource('traffic-incidents')) map.removeSource('traffic-incidents');
       trafficLayers.incidents = null;
+      if (window._mfTrafficCounts) window._mfTrafficCounts.incidents = 0;
     }
   }
 
   function metrofeedDisplayTrafficSlowdowns(map) {
     if (!map || !window.allSlowdowns || !Array.isArray(window.allSlowdowns)) return;
     metrofeedRemoveTrafficSlowdowns(map);
+    metrofeedEnsureTrafficSdfIcons(map);
     const box = metrofeedPaddedMapBounds(map);
     const filtered = metrofeedGenericInBounds(window.allSlowdowns, box);
     const geojson = metrofeedBuildGenericGeoJSON(filtered, 'slowdown');
     map.addSource('traffic-slowdowns', { type: 'geojson', data: geojson });
     map.addLayer({
       id: 'traffic-slowdowns',
-      type: 'circle',
+      type: 'symbol',
       source: 'traffic-slowdowns',
+      layout: {
+        'icon-image': 'mf-traffic-diamond',
+        'icon-size': 0.55,
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true
+      },
       paint: {
-        'circle-radius': 5,
-        'circle-color': ['get', 'color'],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#111',
-        'circle-opacity': 0.6
+        'icon-color': ['get', 'color'],
+        'icon-opacity': 0.55
       }
     });
     trafficLayers.slowdowns = 'traffic-slowdowns';
     map.on('click', 'traffic-slowdowns', metrofeedTrafficGenericClick);
     map.on('mouseenter', 'traffic-slowdowns', metrofeedTrafficGenericMouseEnter);
     map.on('mouseleave', 'traffic-slowdowns', metrofeedTrafficGenericMouseLeave);
+    window._mfTrafficCounts.slowdowns = geojson.features.length;
     console.log('[metrofeedDisplayTrafficSlowdowns] Showing', geojson.features.length, 'slowdowns in padded view (of', window.allSlowdowns.length, 'cached)');
   }
 
   function metrofeedDisplayTrafficConstruction(map) {
     if (!map || !window.allConstruction || !Array.isArray(window.allConstruction)) return;
     metrofeedRemoveTrafficConstruction(map);
+    metrofeedEnsureTrafficSdfIcons(map);
     const box = metrofeedPaddedMapBounds(map);
     const filtered = metrofeedGenericInBounds(window.allConstruction, box);
     const geojson = metrofeedBuildGenericGeoJSON(filtered, 'construction');
     map.addSource('traffic-construction', { type: 'geojson', data: geojson });
     map.addLayer({
       id: 'traffic-construction',
-      type: 'circle',
+      type: 'symbol',
       source: 'traffic-construction',
+      layout: {
+        'icon-image': 'mf-traffic-square',
+        'icon-size': 0.6,
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true
+      },
       paint: {
-        'circle-radius': 6,
-        'circle-color': ['get', 'color'],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
-        'circle-opacity': 0.78
+        'icon-color': ['get', 'color'],
+        'icon-opacity': 0.78
       }
     });
     trafficLayers.construction = 'traffic-construction';
     map.on('click', 'traffic-construction', metrofeedTrafficGenericClick);
     map.on('mouseenter', 'traffic-construction', metrofeedTrafficGenericMouseEnter);
     map.on('mouseleave', 'traffic-construction', metrofeedTrafficGenericMouseLeave);
+    window._mfTrafficCounts.construction = geojson.features.length;
     console.log('[metrofeedDisplayTrafficConstruction] Showing', geojson.features.length, 'construction in padded view (of', window.allConstruction.length, 'cached)');
   }
 
@@ -7360,43 +7492,49 @@
       type: 'circle',
       source: 'traffic-flow',
       paint: {
-        'circle-radius': 6,
+        'circle-radius': 4,
         'circle-color': ['get', 'color'],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#0b0b0b',
-        'circle-opacity': 0.75
+        'circle-stroke-width': 1,
+        'circle-stroke-color': 'rgba(0,0,0,0.65)',
+        'circle-opacity': 0.7
       }
     });
     trafficLayers.flow = 'traffic-flow';
     map.on('click', 'traffic-flow', metrofeedTrafficFlowClick);
     map.on('mouseenter', 'traffic-flow', metrofeedTrafficFlowMouseEnter);
     map.on('mouseleave', 'traffic-flow', metrofeedTrafficFlowMouseLeave);
+    window._mfTrafficCounts.flow = geojson.features.length;
     console.log('[metrofeedDisplayTrafficFlow] Showing', geojson.features.length, 'flow points in padded view (of', window.allFlow.length, 'cached)');
   }
 
   function metrofeedDisplayTrafficIncidents(map) {
     if (!map || !window.allIncidents || !Array.isArray(window.allIncidents)) return;
     metrofeedRemoveTrafficIncidents(map);
+    metrofeedEnsureTrafficSdfIcons(map);
     const box = metrofeedPaddedMapBounds(map);
     const filtered = metrofeedIncidentsInBounds(window.allIncidents, box);
     const geojson = metrofeedBuildIncidentsGeoJSON(filtered);
     map.addSource('traffic-incidents', { type: 'geojson', data: geojson });
     map.addLayer({
       id: 'traffic-incidents',
-      type: 'circle',
+      type: 'symbol',
       source: 'traffic-incidents',
+      layout: {
+        'icon-image': 'mf-traffic-tri',
+        'icon-size': 0.78,
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true
+      },
       paint: {
-        'circle-radius': 7,
-        'circle-color': ['get', 'color'],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
-        'circle-opacity': 0.92
+        'icon-color': ['get', 'color'],
+        'icon-opacity': 0.95
       }
     });
     trafficLayers.incidents = 'traffic-incidents';
     map.on('click', 'traffic-incidents', metrofeedTrafficIncidentsClick);
     map.on('mouseenter', 'traffic-incidents', metrofeedTrafficIncidentsMouseEnter);
     map.on('mouseleave', 'traffic-incidents', metrofeedTrafficIncidentsMouseLeave);
+    window._mfTrafficCounts.incidents = geojson.features.length;
     console.log('[metrofeedDisplayTrafficIncidents] Showing', geojson.features.length, 'incidents in padded view (of', window.allIncidents.length, 'cached)');
   }
   
@@ -7490,7 +7628,7 @@
         metrofeedDisplayTrafficIncidents(window.map);
         metrofeedDisplayTrafficFlow(window.map);
         metrofeedDisplayTrafficSlowdowns(window.map);
-        metrofeedDisplayTrafficConstruction(window.map);
+        // Construction OFF by default (heavy); user can enable from legend.
         metrofeedBindIncidentsMoveEnd(window.map);
         trafficLayerActive = true;
         metrofeedStopFakeTrafficLoader();
