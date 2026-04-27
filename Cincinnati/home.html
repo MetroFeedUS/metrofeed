@@ -4447,7 +4447,13 @@
     if (!window.map || typeof window.showRouteOverlay !== 'function') return;
     metrofeedStartupRouteFired = true;
     try {
-      await window.showRouteOverlay(metrofeedStartupRouteQueued.routeId, metrofeedStartupRouteQueued.directionId);
+      await window.showRouteOverlay(
+        metrofeedStartupRouteQueued.routeId,
+        metrofeedStartupRouteQueued.directionId,
+        undefined,
+        undefined,
+        { ensureOn: true }
+      );
     } catch (e) {
       console.warn('[startupAutoLoad] queued showRouteOverlay failed:', e);
     }
@@ -4585,7 +4591,7 @@
     }
 
     try {
-      await window.showRouteOverlay(routeId, dir);
+      await window.showRouteOverlay(routeId, dir, undefined, undefined, { ensureOn: true });
     } catch (e) {
       console.warn('[startupAutoLoad] showRouteOverlay failed:', e);
       return;
@@ -8320,7 +8326,7 @@
    * @param {string} routePageUrl - URL to full route page (optional)
    * @param {string} [overlayInstanceKey] - Unique key when multiple overlays share same route+dir (e.g. each OTP leg)
    */
-  window.showRouteOverlay = async function(routeId, directionId, routePageUrl, overlayInstanceKey) {
+  window.showRouteOverlay = async function(routeId, directionId, routePageUrl, overlayInstanceKey, opts) {
     console.log('[showRouteOverlay] ===== FUNCTION CALLED =====');
     console.log('[showRouteOverlay] routeId:', routeId, 'directionId:', directionId);
     let mapRef = null;
@@ -8377,6 +8383,9 @@
         : `${routeId}-${directionId}`;
     const skipRouteInfoPanel = /-otpLeg\d+$/.test(overlayKey);
 
+    // Startup/auto-load should be idempotent: repeated calls should not toggle the overlay off.
+    const ensureOn = !!(opts && (opts.ensureOn === true || opts.noToggleOff === true));
+
     // Direction toggle behavior: when user opens the same route in the other direction,
     // replace the previous direction overlay (avoid showing both stop sets at once).
     // (Skip OTP leg overlays; those are intentionally multi-instance.)
@@ -8396,8 +8405,12 @@
       }
     } catch (_) {}
     
-    // Remove existing overlay if present (toggle behavior)
+    // Remove existing overlay if present (toggle behavior), unless caller asked to keep it on.
     if (window.activeRouteOverlays[overlayKey]) {
+      if (ensureOn) {
+        console.log('[showRouteOverlay] Overlay already present; ensureOn=true so leaving it on:', overlayKey);
+        return;
+      }
       window.activeRouteOverlays[overlayKey].remove();
       delete window.activeRouteOverlays[overlayKey];
       if (window.activeRouteOverlayDescriptors) {
