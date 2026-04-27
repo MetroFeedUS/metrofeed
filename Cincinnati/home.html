@@ -4267,6 +4267,112 @@
   let backgroundRouteData = null; // Store route data for later display
   let findMeActive = false; // Track if Find Me is active
 
+  // --- Startup auto-load (closest route) ---
+  window.metrofeedShowTutorial = window.metrofeedShowTutorial || function () {
+    // Placeholder: user will provide tutorial content later.
+  };
+
+  function metrofeedIsInCityBounds(lat, lon) {
+    try {
+      return lat >= CITY_BOUNDS.south && lat <= CITY_BOUNDS.north && lon >= CITY_BOUNDS.west && lon <= CITY_BOUNDS.east;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function metrofeedShowStartupUserMarker(userLat, userLon, inBounds) {
+    if (userLocationMarker) { userLocationMarker.remove(); userLocationMarker = null; }
+    if (userArrow) { userArrow.remove(); userArrow = null; }
+
+    if (inBounds) {
+      const pulseElement = document.createElement('div');
+      pulseElement.className = 'pulse-marker';
+      pulseElement.style.width = '20px';
+      pulseElement.style.height = '20px';
+      userLocationMarker = new maplibregl.Marker({ element: pulseElement }).setLngLat([userLon, userLat]).addTo(map);
+    } else {
+      // Arrow at nearest edge pointing toward user (keep map centered on city).
+      const edgeLat = clamp(userLat, CITY_BOUNDS.south, CITY_BOUNDS.north);
+      const edgeLon = clamp(userLon, CITY_BOUNDS.west, CITY_BOUNDS.east);
+      const edgeLatLng = [edgeLon, edgeLat];
+      const angle = getAngle([userLat, userLon], [edgeLat, edgeLon]);
+      const arrowElement = document.createElement('div');
+      arrowElement.className = 'arrow-marker';
+      arrowElement.style.width = '30px';
+      arrowElement.style.height = '30px';
+      arrowElement.innerHTML = `<svg style="transform: rotate(${angle}deg);" viewBox="0 0 30 30">
+        <polygon points="15,4 24,26 15,21 6,26" fill="#2196f3"/>
+      </svg>`;
+      userArrow = new maplibregl.Marker({ element: arrowElement }).setLngLat(edgeLatLng).addTo(map);
+    }
+  }
+
+  function metrofeedPickClosestRouteIdFromStops(lat, lon, fallbackToCenter) {
+    // masterRoutes contains full route objects w/ stops for Cincinnati (routes_index.js path).
+    if (typeof masterRoutes === 'undefined' || !masterRoutes || !Array.isArray(masterRoutes) || masterRoutes.length === 0) {
+      return null;
+    }
+    const anchorLat = fallbackToCenter ? CITY_CONFIG.defaultCenter[1] : lat;
+    const anchorLon = fallbackToCenter ? CITY_CONFIG.defaultCenter[0] : lon;
+    let bestRouteId = null;
+    let bestDist = Infinity;
+    for (let ri = 0; ri < masterRoutes.length; ri++) {
+      const r = masterRoutes[ri];
+      const stops = r && r.stops;
+      if (!stops || !stops.length) continue;
+      for (let si = 0; si < stops.length; si++) {
+        const s = stops[si];
+        if (!s || s.lat == null || s.lon == null) continue;
+        const d = Math.hypot(anchorLat - Number(s.lat), anchorLon - Number(s.lon));
+        if (d < bestDist) {
+          bestDist = d;
+          bestRouteId = r.route_id;
+        }
+      }
+    }
+    return bestRouteId ? String(bestRouteId) : null;
+  }
+
+  async function metrofeedStartupAutoLoadClosestRouteOnce(userLat, userLon) {
+    if (!map || !window.showRouteOverlay) return;
+    // Wait for routes list (masterRoutes) to exist if needed.
+    const waitUntil = async (pred, ms, label) => {
+      const start = Date.now();
+      while (!pred()) {
+        if (Date.now() - start > ms) {
+          console.warn('[startupAutoLoad] Timed out waiting for', label);
+          return false;
+        }
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return true;
+    };
+    await waitUntil(() => (typeof masterRoutes !== 'undefined' && Array.isArray(masterRoutes) && masterRoutes.length > 0) || CITY_CONFIG.useLazyLoading, 6000, 'routes');
+
+    const inBounds = metrofeedIsInCityBounds(userLat, userLon);
+    metrofeedShowStartupUserMarker(userLat, userLon, inBounds);
+
+    // Pick route id: in-bounds => closest to user; out-of-bounds => closest to city center.
+    const routeId = metrofeedPickClosestRouteIdFromStops(userLat, userLon, !inBounds);
+    if (!routeId) {
+      console.warn('[startupAutoLoad] No routeId found');
+      return;
+    }
+    const dir = await pickBestDirectionForLocation(routeId, inBounds ? userLat : CITY_CONFIG.defaultCenter[1], inBounds ? userLon : CITY_CONFIG.defaultCenter[0]);
+
+    try {
+      await window.showRouteOverlay(routeId, dir);
+    } catch (e) {
+      console.warn('[startupAutoLoad] showRouteOverlay failed:', e);
+      return;
+    }
+
+    // Tutorial hook: 2s after route is pulled up.
+    setTimeout(() => {
+      try { window.metrofeedShowTutorial && window.metrofeedShowTutorial(); } catch (_) {}
+    }, 2000);
+  }
+
   /** Keep Find Me line, stop markers, and bus polling in sync with backgroundRouteData (live GPS updates). */
   function syncFindMeRouteLayersFromBackground(options) {
     const immediateFit = options && options.immediateFit;
@@ -4403,6 +4509,14 @@
         inBounds: isInPortland(userLat, userLon)
       };
       userLocationFound = true;
+
+      // Auto-load a route once on startup:
+      // - If user is in bounds, load closest route to their nearest stop
+      // - If out of bounds, keep map centered on city, show edge arrow, and load "center-most" route
+      if (!hasInitializedRoute && map) {
+        hasInitializedRoute = true;
+        metrofeedStartupAutoLoadClosestRouteOnce(userLat, userLon);
+      }
 
       // Show GPS marker whenever Find Me is on (v1: do not wait for route polyline)
       if (findMeActive) {
