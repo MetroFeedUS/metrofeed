@@ -3177,6 +3177,8 @@
   // Check if this is the first time opening the dropdown in this session
   // Using sessionStorage so tooltips show once per app reload/opening
   let hasShownTooltips = sessionStorage.getItem('dropdownTooltipsShown') === 'true';
+  // When the dashboard is collapsed, show tooltips once as extra guidance (separate from normal session gating).
+  let hasShownCollapsedTooltips = sessionStorage.getItem('dropdownTooltipsShownCollapsed') === 'true';
   
   menuBtn.addEventListener('click', () => {
     const isOpening = dropdownMenu.style.display !== 'flex';
@@ -3187,11 +3189,20 @@
       updateDropdownButtonStates();
     }
     
-    // Show tooltips only on first open of this session
+    const isDashboardCollapsed = document.body.classList.contains('mf-ui-collapsed');
+
+    // Show tooltips only on first open of this session (normal behavior)
     if (isOpening && !hasShownTooltips) {
       showDropdownTooltips();
       sessionStorage.setItem('dropdownTooltipsShown', 'true');
       hasShownTooltips = true;
+    }
+
+    // Also show tooltips once when opening while collapsed (extra first-impression guidance).
+    if (isOpening && isDashboardCollapsed && !hasShownCollapsedTooltips) {
+      showDropdownTooltips();
+      sessionStorage.setItem('dropdownTooltipsShownCollapsed', 'true');
+      hasShownCollapsedTooltips = true;
     }
   });
   
