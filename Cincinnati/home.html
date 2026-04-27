@@ -262,6 +262,15 @@
       z-index: 1000;
       box-shadow: 0 0 10px rgba(30, 144, 255, 0.22);
     }
+    /* Collapsed: dock traffic legend under "Open dashboard" bar. */
+    body.mf-ui-collapsed #trafficLegendBar.mf-traffic-legend {
+      position: fixed;
+      top: 62px; /* 10px top + 45px open bar + ~7px gap */
+      left: 60px;
+      right: 10px;
+      z-index: 999;
+      margin-top: 0;
+    }
     .mf-trip-planner-toggle {
       position: relative;
       flex-shrink: 0;
@@ -1583,6 +1592,7 @@
         </div>
       </div>
       <div id="trafficLegendBar" class="mf-traffic-legend" style="display:none;" aria-live="polite"></div>
+      <span id="mfTrafficLegendPlaceholder" style="display:none;"></span>
     </div>
     <div class="mf-trip-planner-right-controls">
       <button type="button" id="mfTripPlannerToggle" class="mf-trip-planner-toggle" aria-expanded="true" aria-controls="mfTripPlannerFields" title="Hide dashboard">
@@ -1939,6 +1949,22 @@
   </div>
 </div>
 
+<!-- -- APP TUTORIAL MODAL (content to be provided) -- -->
+<div id="mfTutorialModal" class="mf-overlay" style="display: none; z-index: 10060;">
+  <div class="mf-modal" style="max-width: 560px; max-height: 85vh; overflow-y: auto;">
+    <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px;">
+      <h2 style="margin: 0; font-size: 1.15rem;">Welcome to MetroFeed</h2>
+      <button type="button" id="mfTutorialCloseX" style="background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;" title="Close">×</button>
+    </div>
+    <div id="mfTutorialBody" style="margin-top: 0.85rem; color: #ccc; line-height: 1.5; font-size: 0.95rem;">
+      <!-- Placeholder: user will provide tutorial content -->
+    </div>
+    <div style="margin-top: 1.1rem;">
+      <button type="button" class="mf-btn" id="mfTutorialGotItBtn" style="width:100%;">Got it</button>
+    </div>
+  </div>
+</div>
+
 <!-- -- CITY CONFIGURATION (MUST LOAD FIRST) -- -->
 <script src="city-config.js"></script>
 <!-- Cincinnati: static routes_index.js defines window.ROUTES (not lazy window.routesIndex). -->
@@ -2131,6 +2157,28 @@
           const ld = document.getElementById('languageDropdown');
           if (ld) ld.style.display = 'none';
         }
+
+        // Dock traffic legend:
+        // - Expanded: under Go/Clear/Find Me (inside OTP group)
+        // - Collapsed: directly under "Open dashboard" bar (still visible even when OTP group is hidden)
+        try {
+          const legend = document.getElementById('trafficLegendBar');
+          const ph = document.getElementById('mfTrafficLegendPlaceholder');
+          if (legend && ph && openBar) {
+            if (collapsed) {
+              // Insert right after the open bar.
+              if (legend.parentNode !== openBar.parentNode || legend.previousSibling !== openBar) {
+                openBar.insertAdjacentElement('afterend', legend);
+              }
+            } else {
+              // Put it back where it originally lived (right before placeholder).
+              if (legend.parentNode !== ph.parentNode || legend.nextSibling !== ph) {
+                ph.parentNode.insertBefore(legend, ph);
+              }
+            }
+          }
+        } catch (e) {}
+
         // Re-anchor collapsed route chips under the dashboard row.
         // IMPORTANT: do this after layout/transition settles; otherwise we can measure the wrong anchor height.
         const scheduleChips = () => {
@@ -3253,6 +3301,80 @@
     });
   }
   
+  // === SECTION: POST-TUTORIAL TOOLTIP NUDGES ===
+  function mfTooltipEl(text) {
+    const t = document.createElement('div');
+    t.className = 'dropdown-tooltip show';
+    t.textContent = text;
+    t.style.maxWidth = '240px';
+    t.style.whiteSpace = 'normal';
+    t.style.zIndex = '10070';
+    return t;
+  }
+
+  function mfShowAnchoredTooltip(targetEl, text, opts) {
+    if (!targetEl) return null;
+    const rect = targetEl.getBoundingClientRect();
+    const tooltip = mfTooltipEl(text);
+    const pad = (opts && opts.padPx) ? opts.padPx : 10;
+    const top = (opts && opts.top != null) ? opts.top : (rect.top + rect.height / 2 - 15);
+    const left = rect.right + pad;
+    tooltip.style.top = `${Math.max(8, Math.round(top))}px`;
+    tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
+    document.body.appendChild(tooltip);
+    setTimeout(() => {
+      tooltip.classList.remove('show');
+      setTimeout(() => tooltip.parentNode && tooltip.parentNode.removeChild(tooltip), 600);
+    }, (opts && opts.ms) ? opts.ms : 3600);
+    return tooltip;
+  }
+
+  function mfShowTooltipNearMap(text, opts) {
+    const canvas = window.map && window.map.getCanvas ? window.map.getCanvas() : null;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const tooltip = mfTooltipEl(text);
+    const top = rect.top + 16;
+    const left = rect.left + 16;
+    tooltip.style.top = `${Math.max(8, Math.round(top))}px`;
+    tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
+    document.body.appendChild(tooltip);
+    setTimeout(() => {
+      tooltip.classList.remove('show');
+      setTimeout(() => tooltip.parentNode && tooltip.parentNode.removeChild(tooltip), 600);
+    }, (opts && opts.ms) ? opts.ms : 3600);
+    return tooltip;
+  }
+
+  window.metrofeedAfterTutorial = function () {
+    try {
+      if (sessionStorage.getItem('mfPostTutorialHintsShown') === '1') return;
+      sessionStorage.setItem('mfPostTutorialHintsShown', '1');
+    } catch (_) {}
+
+    // Staggered nudges. Keep it light; these are hints, not mandatory steps.
+    setTimeout(() => {
+      // Floating chip hint (if present)
+      const chip = document.querySelector('.route-info-panel, .otp-trip-route-chip');
+      if (chip) {
+        mfShowAnchoredTooltip(chip, 'Tap a route chip for options.', { ms: 4200 });
+      }
+    }, 250);
+
+    setTimeout(() => {
+      // Stops + buses are on-map; anchor near map instead of chasing dynamic markers.
+      mfShowTooltipNearMap('Tap stops and buses for more info.', { ms: 4200 });
+    }, 900);
+
+    setTimeout(() => {
+      // Traffic legend hint if traffic is on
+      const leg = document.getElementById('trafficLegendBar');
+      if (leg && leg.style.display !== 'none') {
+        mfShowAnchoredTooltip(leg, 'These buttons toggle traffic layers.', { ms: 4200, padPx: 12 });
+      }
+    }, 1550);
+  };
+
   // === SECTION: FAVORITES COLLAPSE TOGGLE ===
   const favoritesWrapper = document.getElementById('favoritesWrapper');
   const minimizedItinerary = document.getElementById('minimizedItinerary');
@@ -4272,7 +4394,44 @@
   let metrofeedStartupRouteFired = false;
 
   window.metrofeedShowTutorial = window.metrofeedShowTutorial || function () {
-    // Placeholder: user will provide tutorial content later.
+    const modal = document.getElementById('mfTutorialModal');
+    const body = document.getElementById('mfTutorialBody');
+    const closeX = document.getElementById('mfTutorialCloseX');
+    const gotIt = document.getElementById('mfTutorialGotItBtn');
+    if (!modal || !body || !closeX || !gotIt) return;
+
+    // One-time per session by default.
+    try {
+      if (sessionStorage.getItem('mfTutorialShown') === '1') return;
+      sessionStorage.setItem('mfTutorialShown', '1');
+    } catch (_) {}
+
+    // Placeholder content for now (you'll provide final copy later).
+    body.innerHTML = `
+      <div style="font-weight:700; color:#eaeaea; margin-bottom: 0.35rem;">Quick tips</div>
+      <div style="color:#bdbdbd; font-size:0.92rem;">
+        Tutorial content coming next — we’ll plug in your exact wording.
+      </div>
+    `;
+
+    const finish = () => {
+      modal.style.display = 'none';
+      try {
+        if (typeof window.metrofeedAfterTutorial === 'function') window.metrofeedAfterTutorial();
+      } catch (_) {}
+    };
+
+    closeX.onclick = finish;
+    gotIt.onclick = finish;
+    modal.addEventListener('click', (e) => { if (e.target === modal) finish(); }, { once: true });
+    window.addEventListener('keydown', function onKey(e) {
+      if (e.key === 'Escape') {
+        window.removeEventListener('keydown', onKey);
+        finish();
+      }
+    });
+
+    modal.style.display = 'flex';
   };
 
   function metrofeedQueueStartupRoute(routeId, directionId) {
@@ -8164,13 +8323,25 @@
   window.showRouteOverlay = async function(routeId, directionId, routePageUrl, overlayInstanceKey) {
     console.log('[showRouteOverlay] ===== FUNCTION CALLED =====');
     console.log('[showRouteOverlay] routeId:', routeId, 'directionId:', directionId);
-    console.log('[showRouteOverlay] map:', map, 'type:', typeof map);
+    const mapRef = map || window.map;
+    console.log('[showRouteOverlay] map:', mapRef, 'type:', typeof mapRef);
     console.log('[showRouteOverlay] attachRouteToMap:', window.attachRouteToMap, 'type:', typeof window.attachRouteToMap);
     
-    if (!map || !window.attachRouteToMap) {
+    if (!mapRef || !window.attachRouteToMap) {
+      // If map isn't ready yet, retry shortly (startup races: geolocation / queued default route).
+      try {
+        window._mfShowRouteOverlayRetry = window._mfShowRouteOverlayRetry || {};
+        const key = String(routeId) + '|' + String(directionId) + '|' + String(overlayInstanceKey || '');
+        const n = window._mfShowRouteOverlayRetry[key] || 0;
+        if (n < 30) {
+          window._mfShowRouteOverlayRetry[key] = n + 1;
+          setTimeout(() => {
+            try { window.showRouteOverlay(routeId, directionId, routePageUrl, overlayInstanceKey); } catch (_) {}
+          }, 200);
+        }
+      } catch (_) {}
       console.error('[showRouteOverlay] ❌ Map or attachRouteToMap not available');
-      console.error('[showRouteOverlay] map:', map, 'attachRouteToMap:', window.attachRouteToMap);
-      alert('Route overlay not ready. Map: ' + (map ? 'OK' : 'MISSING') + ', attachRouteToMap: ' + (window.attachRouteToMap ? 'OK' : 'MISSING'));
+      console.error('[showRouteOverlay] map:', mapRef, 'attachRouteToMap:', window.attachRouteToMap);
       return;
     }
     
@@ -8359,7 +8530,7 @@
       routeColorSlot = window.pickNextRouteOverlayColorSlot();
       routeColorHex = window.ROUTE_OVERLAY_COLOR_PALETTE[routeColorSlot];
     }
-    const overlay = window.attachRouteToMap(map, busTrackingRouteId, directionId, {
+    const overlay = window.attachRouteToMap(mapRef, busTrackingRouteId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)
       oppositeRouteData: oppositeRouteData || undefined,
@@ -10916,7 +11087,15 @@
    * Initialize sponsor modal (check and show after 3 seconds if needed)
    */
   function initSponsorModal() {
-    if (shouldShowSponsorModal()) {
+    // Only show on 2nd+ session (keep first session focused on onboarding/tutorial).
+    let sessionCount = 0;
+    try {
+      sessionCount = parseInt(localStorage.getItem('metrofeedSessionCount') || '0', 10) || 0;
+      sessionCount += 1;
+      localStorage.setItem('metrofeedSessionCount', String(sessionCount));
+    } catch (e) {}
+
+    if (sessionCount >= 2 && shouldShowSponsorModal()) {
       // Show modal 3 seconds after page load
       setTimeout(() => {
         showSponsorModal();
