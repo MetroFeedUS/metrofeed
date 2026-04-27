@@ -3346,33 +3346,57 @@
     return tooltip;
   }
 
+  function mfWaitForElement(getEl, opts) {
+    const timeoutMs = (opts && opts.timeoutMs) ? opts.timeoutMs : 2200;
+    const intervalMs = (opts && opts.intervalMs) ? opts.intervalMs : 120;
+    const started = Date.now();
+    return new Promise((resolve) => {
+      const tick = () => {
+        let el = null;
+        try { el = typeof getEl === 'function' ? getEl() : null; } catch (_) { el = null; }
+        if (el) return resolve(el);
+        if (Date.now() - started > timeoutMs) return resolve(null);
+        setTimeout(tick, intervalMs);
+      };
+      tick();
+    });
+  }
+
   window.metrofeedAfterTutorial = function () {
     try {
       if (sessionStorage.getItem('mfPostTutorialHintsShown') === '1') return;
       sessionStorage.setItem('mfPostTutorialHintsShown', '1');
     } catch (_) {}
 
-    // Staggered nudges. Keep it light; these are hints, not mandatory steps.
-    setTimeout(() => {
-      // Floating chip hint (if present)
-      const chip = document.querySelector('.route-info-panel, .otp-trip-route-chip');
-      if (chip) {
-        mfShowAnchoredTooltip(chip, 'Tap a route chip for options.', { ms: 4200 });
-      }
-    }, 250);
+    // Smart 3-step tour (bus -> stop -> chip). If a target isn't available, skip that step.
+    (async () => {
+      const steps = [
+        {
+          key: 'bus',
+          text: 'Tap a bus for details.',
+          getEl: () => document.querySelector('.mf-bus-marker')
+        },
+        {
+          key: 'stop',
+          text: 'Tap a stop for times.',
+          getEl: () => document.querySelector('.mf-stop-marker')
+        },
+        {
+          key: 'chip',
+          text: 'Tap this route tab for options.',
+          getEl: () => document.querySelector('.route-info-panel, .otp-trip-route-chip')
+        }
+      ];
 
-    setTimeout(() => {
-      // Stops + buses are on-map; anchor near map instead of chasing dynamic markers.
-      mfShowTooltipNearMap('Tap stops and buses for more info.', { ms: 4200 });
-    }, 900);
-
-    setTimeout(() => {
-      // Traffic legend hint if traffic is on
-      const leg = document.getElementById('trafficLegendBar');
-      if (leg && leg.style.display !== 'none') {
-        mfShowAnchoredTooltip(leg, 'These buttons toggle traffic layers.', { ms: 4200, padPx: 12 });
+      for (let i = 0; i < steps.length; i++) {
+        const s = steps[i];
+        const el = await mfWaitForElement(s.getEl, { timeoutMs: 2600, intervalMs: 120 });
+        if (!el) continue;
+        mfShowAnchoredTooltip(el, s.text, { ms: 3600, padPx: 12 });
+        // Give user time to see it; short gap before next.
+        await new Promise(r => setTimeout(r, 4000));
       }
-    }, 1550);
+    })();
   };
 
   // === SECTION: FAVORITES COLLAPSE TOGGLE ===

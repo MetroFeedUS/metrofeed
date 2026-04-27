@@ -1879,6 +1879,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const stopElement = useDirectionalStops
         ? metrofeedBuildDirectionalStopElement(directionId, primaryShape, lat, lon)
         : document.createElement("div");
+      try { stopElement.classList.add('mf-stop-marker'); } catch (_) {}
       if (!useDirectionalStops) {
         const stopFill = routeColor || "#1E90FF";
         const stopRing = pickContrastingTextColor(stopFill);
@@ -2714,6 +2715,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               displayVehicleID,
               displayHeading
             );
+            try { busElement.classList.add('mf-bus-marker'); } catch (_) {}
             if (isOppositeDir) {
               // Visual language: opposite direction = faded (like dashed line / hollow stops).
               busElement.style.opacity = "0.45";
