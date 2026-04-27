@@ -237,13 +237,28 @@
       box-sizing: border-box;
       white-space: nowrap;
       user-select: none;
-      pointer-events: none;
+      cursor: pointer;
+      pointer-events: auto;
     }
     .search-bar.mf-trip-planner--collapsed .mf-trip-planner-otp-group {
       display: none;
     }
+    .search-bar.mf-trip-planner--collapsed #mfTripPlannerOpenBar.mf-trip-planner-collapsed-pill {
+      display: inline-flex !important;
+    }
+    .search-bar.mf-trip-planner--collapsed .mf-trip-planner-right-controls {
+      display: none;
+    }
+    /* Collapsed: make the "Open dashboard" pill span top row (menu → right edge). */
     .search-bar.mf-trip-planner--collapsed .mf-trip-planner-collapsed-pill {
-      display: inline-flex;
+      position: fixed;
+      top: 10px;
+      left: 60px; /* to the right of the menu button */
+      right: 10px;
+      height: 45px; /* match side button height */
+      border-radius: 12px;
+      z-index: 1000;
+      box-shadow: 0 0 10px rgba(30, 144, 255, 0.22);
     }
     .mf-trip-planner-toggle {
       position: relative;
@@ -1567,12 +1582,12 @@
       <div id="trafficLegendBar" class="mf-traffic-legend" style="display:none;" aria-live="polite"></div>
     </div>
     <div class="mf-trip-planner-right-controls">
-      <div class="mf-trip-planner-collapsed-pill" aria-hidden="true">Open dashboard</div>
       <button type="button" id="mfTripPlannerToggle" class="mf-trip-planner-toggle" aria-expanded="true" aria-controls="mfTripPlannerFields" title="Hide dashboard">
         <span class="mf-trip-planner-toggle-che" aria-hidden="true">▲</span>
         <span class="mf-trip-planner-toggle-sr" id="mfTripPlannerToggleLabel">Hide dashboard</span>
       </button>
     </div>
+    <button type="button" id="mfTripPlannerOpenBar" class="mf-trip-planner-collapsed-pill" style="display:none;" aria-hidden="true">Open dashboard</button>
   </div>
 </div>
 
@@ -2083,9 +2098,10 @@
     (function initTripPlannerCollapseToggle() {
       const bar = document.getElementById('mfTripPlannerSearchBar');
       const toggleBtn = document.getElementById('mfTripPlannerToggle');
+      const openBar = document.getElementById('mfTripPlannerOpenBar');
       const chev = toggleBtn && toggleBtn.querySelector('.mf-trip-planner-toggle-che');
       const lbl = document.getElementById('mfTripPlannerToggleLabel');
-      if (!bar || !toggleBtn || !chev || !lbl) return;
+      if (!bar || !toggleBtn || !chev || !lbl || !openBar) return;
       const storageKey = function () {
         try {
           const cid = typeof window.getCityIdFromPath === 'function' ? window.getCityIdFromPath() : 'default';
@@ -2101,6 +2117,7 @@
         chev.textContent = collapsed ? '▼' : '▲';
         lbl.textContent = collapsed ? 'Open dashboard' : 'Hide dashboard';
         toggleBtn.setAttribute('title', collapsed ? 'Open dashboard' : 'Hide dashboard');
+        openBar.setAttribute('aria-hidden', collapsed ? 'false' : 'true');
         // Force-close any open menus when collapsing for clean map view.
         if (collapsed) {
           const dd = document.getElementById('dropdownMenu');
@@ -2124,13 +2141,19 @@
         };
         scheduleChips();
       }
-      // Option A: always open on load (ignore persisted collapse state).
-      applyCollapsed(false);
+      // Default to collapsed on load.
+      applyCollapsed(true);
       toggleBtn.addEventListener('click', function () {
         var collapsed = !bar.classList.contains('mf-trip-planner--collapsed');
         applyCollapsed(collapsed);
         try {
           localStorage.setItem(storageKey(), collapsed ? '1' : '0');
+        } catch (e) {}
+      });
+      openBar.addEventListener('click', function () {
+        applyCollapsed(false);
+        try {
+          localStorage.setItem(storageKey(), '0');
         } catch (e) {}
       });
     })();
@@ -3251,11 +3274,10 @@
       favoritesWrapper.title = txt;
       if (favoritesChevron) favoritesChevron.title = txt;
     };
-    // Check localStorage for saved state (default to expanded)
-    const isCollapsed = localStorage.getItem('favoritesCollapsed') === 'true';
-    if (isCollapsed) {
-      favoritesWrapper.classList.add('collapsed');
-    }
+    // Default to collapsed on load (user toggle persists).
+    const saved = localStorage.getItem('favoritesCollapsed');
+    const isCollapsed = saved == null ? true : saved === 'true';
+    if (isCollapsed) favoritesWrapper.classList.add('collapsed');
     setFavoritesTooltip();
     
     // Initial position update
