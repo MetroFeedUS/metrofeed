@@ -2053,10 +2053,24 @@
     function computeRightRailMetrics() {
       const indicator = document.getElementById('routeAlertIndicator');
       const toggleBtn = document.getElementById('mfTripPlannerToggle');
+      const openBar = document.getElementById('mfTripPlannerOpenBar');
+      const legend = document.getElementById('trafficLegendBar');
 
       let alertTop = 110; // fallback if button not found
       try {
-        if (toggleBtn && typeof toggleBtn.getBoundingClientRect === 'function') {
+        const isCollapsed = document.body && document.body.classList.contains('mf-ui-collapsed');
+        if (isCollapsed) {
+          // Collapsed layout: anchor under the fixed "Open dashboard" bar, and under the legend if it is visible.
+          if (openBar && typeof openBar.getBoundingClientRect === 'function') {
+            const r = openBar.getBoundingClientRect();
+            alertTop = Math.max(10, Math.round(r.bottom + 8));
+          }
+          if (legend && legend.style.display !== 'none' && typeof legend.getBoundingClientRect === 'function') {
+            const lr = legend.getBoundingClientRect();
+            // If legend is docked, stack below it.
+            alertTop = Math.max(alertTop, Math.round(lr.bottom + 8));
+          }
+        } else if (toggleBtn && typeof toggleBtn.getBoundingClientRect === 'function') {
           const r = toggleBtn.getBoundingClientRect();
           // Put the alert slot right under the collapse toggle button.
           alertTop = Math.max(10, Math.round(r.bottom + 8));
@@ -3318,10 +3332,28 @@
     const tooltip = mfTooltipEl(text);
     const pad = (opts && opts.padPx) ? opts.padPx : 10;
     const top = (opts && opts.top != null) ? opts.top : (rect.top + rect.height / 2 - 15);
-    const left = rect.right + pad;
+    // Position: prefer to the right of target; flip to left if we'd overflow viewport.
     tooltip.style.top = `${Math.max(8, Math.round(top))}px`;
-    tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
+    tooltip.style.left = `-9999px`; // temp offscreen for measurement
     document.body.appendChild(tooltip);
+    try {
+      const w = tooltip.offsetWidth || 180;
+      const h = tooltip.offsetHeight || 40;
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      let left = rect.right + pad;
+      if (vw && left + w > vw - 8) {
+        left = rect.left - w - pad;
+      }
+      let t = top;
+      if (vh && t + h > vh - 8) t = vh - h - 8;
+      if (t < 8) t = 8;
+      tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
+      tooltip.style.top = `${Math.max(8, Math.round(t))}px`;
+    } catch (_) {
+      const left = rect.right + pad;
+      tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
+    }
     setTimeout(() => {
       tooltip.classList.remove('show');
       setTimeout(() => tooltip.parentNode && tooltip.parentNode.removeChild(tooltip), 600);
