@@ -284,10 +284,24 @@
     body.mf-ui-collapsed #trafficLegendBar.mf-traffic-legend {
       position: fixed;
       top: 62px; /* 10px top + 45px open bar + ~7px gap */
-      left: 60px;
-      right: 10px;
+      /* Mobile-first: equal inset from edges + notch safe-area; clears ~60px menu rail */
+      left: max(60px, calc(12px + env(safe-area-inset-left, 0px)));
+      right: max(60px, calc(12px + env(safe-area-inset-right, 0px)));
+      width: auto;
+      max-width: none;
+      box-sizing: border-box;
       z-index: 999;
       margin-top: 0;
+    }
+    @media (max-width: 640px) {
+      body.mf-ui-collapsed #trafficLegendBar.mf-traffic-legend {
+        /* Narrow phones: slightly tighter but still symmetric + safe-area */
+        left: max(56px, calc(10px + env(safe-area-inset-left, 0px)));
+        right: max(56px, calc(10px + env(safe-area-inset-right, 0px)));
+        padding: 5px 8px;
+        gap: 8px;
+        font-size: 11px;
+      }
     }
     .mf-trip-planner-toggle {
       position: relative;
@@ -1527,10 +1541,10 @@
     <a href="#" onclick="document.getElementById('languageDropdown').style.display='none'"><img src="construction.svg" alt="Coming Soon"></a>
   </div>
   
-  <!-- Route Alert Indicator (pulsing text box) -->
-  <div id="routeAlertIndicator" onclick="openAlertsForActiveRoutes()" style="display: block; visibility: hidden; position: fixed; top: var(--mf-right-rail-alert-top, 110px); right: 10px; background: #ff4444; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; z-index: 1102; animation: pulseText 2s infinite; box-shadow: 0 2px 8px rgba(255, 68, 68, 0.6); font-size: 11px; font-weight: bold; white-space: nowrap; max-width: 220px; text-align: center; min-height: 26px; box-sizing: border-box;" title="View alerts for selected routes">
-    <span class="alert-text">Alert found for route</span>
-    <span class="alert-count" style="margin-left: 4px;"></span>
+  <!-- Route Alert Indicator: same danger icon as menu; compact pulsing chip -->
+  <div id="routeAlertIndicator" class="mf-route-alert-indicator" onclick="openAlertsForActiveRoutes()" style="display: block; visibility: hidden; position: fixed; cursor: pointer; z-index: 1102; box-sizing: border-box;" title="View alerts for selected routes" role="button" tabindex="0" aria-label="Route alerts">
+    <img class="mf-route-alert-indicator__icon" src="008-danger.svg" width="26" height="26" alt="" aria-hidden="true" />
+    <span class="mf-route-alert-indicator__count" aria-hidden="true"></span>
   </div>
 </div>
 
@@ -1540,10 +1554,90 @@
     50% { opacity: 0.85; transform: scale(1.05); }
   }
   
+  .mf-route-alert-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 12px;
+    background: rgba(255, 68, 68, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 10px rgba(255, 68, 68, 0.55);
+    animation: pulseText 2s infinite;
+    position: relative;
+    /* Mobile-first: respect notch + home indicator */
+    top: calc(var(--mf-right-rail-alert-top, 110px) + max(0px, env(safe-area-inset-top, 0px)));
+    right: max(10px, calc(8px + env(safe-area-inset-right, 0px)));
+  }
+  @media (max-width: 640px) {
+    .mf-route-alert-indicator {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+    }
+    .mf-route-alert-indicator__icon {
+      width: 28px;
+      height: 28px;
+    }
+  }
+  .mf-route-alert-indicator__icon {
+    display: block;
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    filter: brightness(0) invert(1) drop-shadow(0 0 1px rgba(0,0,0,0.35));
+    pointer-events: none;
+  }
+  .mf-route-alert-indicator__count {
+    display: none;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #fff;
+    color: #c62828;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    pointer-events: none;
+  }
   #routeAlertIndicator:hover {
-    background: #ff6666;
-    box-shadow: 0 2px 12px rgba(255, 68, 68, 0.8);
-    transform: scale(1.02);
+    background: #ff5555;
+    box-shadow: 0 2px 14px rgba(255, 68, 68, 0.85);
+    transform: scale(1.04);
+  }
+
+  /* Tutorial modal: mobile-first width + safe-area (primary = phones) */
+  #mfTutorialModal .mf-modal {
+    width: min(calc(100vw - max(24px, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))), 560px);
+    max-width: calc(100vw - 20px);
+    margin-left: max(10px, env(safe-area-inset-left, 0px));
+    margin-right: max(10px, env(safe-area-inset-right, 0px));
+    margin-top: max(10px, env(safe-area-inset-top, 0px));
+    margin-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+  @media (max-width: 640px) {
+    #mfTutorialModal .mf-tutorial-header h2 {
+      font-size: 1.05rem;
+      line-height: 1.25;
+      padding: 0 4px;
+    }
+  }
+
+  /* Post-tutorial tooltips: readable width on small viewports */
+  @media (max-width: 640px) {
+    .dropdown-tooltip {
+      max-width: min(92vw, 300px);
+      font-size: 0.85rem;
+    }
   }
 </style>
 
@@ -1978,9 +2072,9 @@
 <!-- -- APP TUTORIAL MODAL (welcome + overlays / dashboard) -- -->
 <div id="mfTutorialModal" class="mf-overlay" style="display: none; z-index: 10060;">
   <div class="mf-modal" style="max-width: 560px; max-height: 85vh; overflow-y: auto;">
-    <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px;">
-      <h2 style="margin: 0; font-size: 1.15rem;">Welcome to MetroFeed</h2>
-      <button type="button" id="mfTutorialCloseX" style="background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;" title="Close">×</button>
+    <div class="mf-tutorial-header" style="position: relative; display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 40px;">
+      <h2 style="margin: 0; font-size: 1.15rem; text-align: center; width: 100%;">Welcome to MetroFeed</h2>
+      <button type="button" id="mfTutorialCloseX" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;" title="Close">×</button>
     </div>
     <div id="mfTutorialBody" style="margin-top: 0.85rem; color: #ccc; line-height: 1.5; font-size: 0.95rem;">
       <!-- Filled by metrofeedShowTutorial() -->
@@ -3346,7 +3440,9 @@
     const t = document.createElement('div');
     t.className = 'dropdown-tooltip show';
     t.textContent = text;
-    t.style.maxWidth = '240px';
+    const narrow =
+      typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+    t.style.maxWidth = narrow ? 'min(92vw, 300px)' : '240px';
     t.style.whiteSpace = 'normal';
     t.style.zIndex = '10070';
     return t;
@@ -3357,10 +3453,10 @@
     const rect = targetEl.getBoundingClientRect();
     const tooltip = mfTooltipEl(text);
     const pad = (opts && opts.padPx) ? opts.padPx : 10;
-    const top = (opts && opts.top != null) ? opts.top : (rect.top + rect.height / 2 - 15);
+    const edge = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches ? 12 : 8;
     // Position: prefer to the right of target; flip to left if we'd overflow viewport.
-    tooltip.style.top = `${Math.max(8, Math.round(top))}px`;
-    tooltip.style.left = `-9999px`; // temp offscreen for measurement
+    tooltip.style.top = '0px';
+    tooltip.style.left = '-9999px'; // temp offscreen for measurement
     document.body.appendChild(tooltip);
     try {
       const w = tooltip.offsetWidth || 180;
@@ -3369,15 +3465,19 @@
       const vh = window.innerHeight || document.documentElement.clientHeight || 0;
       let left = rect.right + pad;
       let placedLeftOfTarget = false;
-      if (vw && left + w > vw - 8) {
+      if (vw && left + w > vw - edge) {
         left = rect.left - w - pad;
         placedLeftOfTarget = true;
       }
-      let t = top;
-      if (vh && t + h > vh - 8) t = vh - h - 8;
-      if (t < 8) t = 8;
-      tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
-      tooltip.style.top = `${Math.max(8, Math.round(t))}px`;
+      // Vertically center tooltip on target (bus / stop / chip), then clamp to viewport + safe margin
+      let t =
+        opts && opts.top != null
+          ? opts.top
+          : rect.top + rect.height / 2 - h / 2;
+      if (vh && t + h > vh - edge) t = vh - h - edge;
+      if (t < edge) t = edge;
+      tooltip.style.left = `${Math.max(edge, Math.round(left))}px`;
+      tooltip.style.top = `${Math.max(edge, Math.round(t))}px`;
       if (placedLeftOfTarget) {
         tooltip.classList.add('dropdown-tooltip--arrow-right');
       }
@@ -8500,23 +8600,32 @@
         return;
       }
       
-      // Show indicator with count
+      // Show indicator (icon + optional numeric badge)
       indicator.style.visibility = 'visible';
-      const countBadge = indicator.querySelector('.alert-count');
-      const alertText = indicator.querySelector('.alert-text');
+      const countBadge = indicator.querySelector('.mf-route-alert-indicator__count');
       if (countBadge) {
         if (routesWithAlerts.length > 1) {
-          countBadge.textContent = `(${routesWithAlerts.length})`;
+          countBadge.textContent = String(routesWithAlerts.length);
+          countBadge.style.display = 'block';
         } else {
           countBadge.textContent = '';
+          countBadge.style.display = 'none';
         }
       }
-      // Update text if multiple routes
-      if (alertText && routesWithAlerts.length > 1) {
-        alertText.textContent = 'Alerts found for routes';
-      } else if (alertText) {
-        alertText.textContent = 'Alert found for route';
-      }
+      try {
+        indicator.setAttribute(
+          'title',
+          routesWithAlerts.length > 1
+            ? 'View alerts for ' + routesWithAlerts.length + ' routes'
+            : 'View alert for this route'
+        );
+        indicator.setAttribute(
+          'aria-label',
+          routesWithAlerts.length > 1
+            ? 'Alerts on ' + routesWithAlerts.length + ' routes. Open details.'
+            : 'Alert on route. Open details.'
+        );
+      } catch (_) {}
       
       // Store routes with alerts for click handler
       indicator.dataset.routesWithAlerts = JSON.stringify(routesWithAlerts);
