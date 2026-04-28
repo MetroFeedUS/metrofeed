@@ -170,6 +170,24 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.45);
       flex: 0 0 auto;
     }
+    .mf-traffic-legend-swatch.mf-traffic-legend-swatch--icons {
+      width: auto;
+      min-width: 0;
+      height: auto;
+      padding: 0;
+      border-radius: 6px;
+      background: transparent !important;
+      box-shadow: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .mf-traffic-legend-icon {
+      display: block;
+      object-fit: contain;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+    }
     .mf-traffic-legend-hint {
       margin-left: auto;
       position: sticky;
@@ -1307,6 +1325,14 @@
       border-top: 4px solid transparent;
       border-bottom: 4px solid transparent;
     }
+
+    /* Tooltip sits to the LEFT of target (e.g. right-rail chip): arrow points right toward the chip */
+    .dropdown-tooltip.dropdown-tooltip--arrow-right::after {
+      left: auto;
+      right: -6px;
+      border-right: none;
+      border-left: 6px solid #1E90FF;
+    }
     
     /* Mobile: attribution lives inside #map; footer sits above the map — lift OSM control clear of footer + home indicator */
     @media (max-width: 768px) {
@@ -1949,7 +1975,7 @@
   </div>
 </div>
 
-<!-- -- APP TUTORIAL MODAL (content to be provided) -- -->
+<!-- -- APP TUTORIAL MODAL (welcome + overlays / dashboard) -- -->
 <div id="mfTutorialModal" class="mf-overlay" style="display: none; z-index: 10060;">
   <div class="mf-modal" style="max-width: 560px; max-height: 85vh; overflow-y: auto;">
     <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px;">
@@ -1957,7 +1983,7 @@
       <button type="button" id="mfTutorialCloseX" style="background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;" title="Close">×</button>
     </div>
     <div id="mfTutorialBody" style="margin-top: 0.85rem; color: #ccc; line-height: 1.5; font-size: 0.95rem;">
-      <!-- Placeholder: user will provide tutorial content -->
+      <!-- Filled by metrofeedShowTutorial() -->
     </div>
     <div style="margin-top: 1.1rem;">
       <button type="button" class="mf-btn" id="mfTutorialGotItBtn" style="width:100%;">Got it</button>
@@ -3342,14 +3368,19 @@
       const vw = window.innerWidth || document.documentElement.clientWidth || 0;
       const vh = window.innerHeight || document.documentElement.clientHeight || 0;
       let left = rect.right + pad;
+      let placedLeftOfTarget = false;
       if (vw && left + w > vw - 8) {
         left = rect.left - w - pad;
+        placedLeftOfTarget = true;
       }
       let t = top;
       if (vh && t + h > vh - 8) t = vh - h - 8;
       if (t < 8) t = 8;
       tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
       tooltip.style.top = `${Math.max(8, Math.round(t))}px`;
+      if (placedLeftOfTarget) {
+        tooltip.classList.add('dropdown-tooltip--arrow-right');
+      }
     } catch (_) {
       const left = rect.right + pad;
       tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
@@ -4462,12 +4493,10 @@
       sessionStorage.setItem('mfTutorialShown', '1');
     } catch (_) {}
 
-    // Placeholder content for now (you'll provide final copy later).
     body.innerHTML = `
-      <div style="font-weight:700; color:#eaeaea; margin-bottom: 0.35rem;">Quick tips</div>
-      <div style="color:#bdbdbd; font-size:0.92rem;">
-        Tutorial content coming next — we’ll plug in your exact wording.
-      </div>
+      <p style="margin:0; color:#e6e6e6;">
+        Welcome to MetroFeed! Use multiple overlays from the menu to truly understand your route, and use the dashboard for trip planning and more options.
+      </p>
     `;
 
     const finish = () => {
@@ -6942,14 +6971,36 @@
 
   window._mfTrafficCounts = window._mfTrafficCounts || { incidents: 0, flow: 0, slowdowns: 0, construction: 0 };
 
-  function metrofeedLegendBtn(kind, color, label, pressed) {
+  function metrofeedTrafficLegendIconsHtml(kind) {
+    const img = function (src, w, h) {
+      return '<img class="mf-traffic-legend-icon" src="' + src + '" width="' + w + '" height="' + h + '" alt="" loading="lazy" />';
+    };
+    if (kind === 'incidents') return img('accident.svg', 15, 15);
+    if (kind === 'slowdowns') return img('slow.svg', 15, 15);
+    if (kind === 'construction') return img('cone.svg', 15, 15);
+    if (kind === 'flow') {
+      return (
+        img('stop-watchgreen.svg', 12, 12) +
+        img('stop-watchyellow.svg', 12, 12) +
+        img('stop-watchorange.svg', 12, 12) +
+        img('stop-watchred.svg', 12, 12)
+      );
+    }
+    return '';
+  }
+
+  function metrofeedLegendBtn(kind, color, label, pressed, iconHtml) {
     const count = window._mfTrafficCounts && typeof window._mfTrafficCounts[kind] === 'number' ? window._mfTrafficCounts[kind] : 0;
     const suffix = pressed ? ` (${count})` : ' (off)';
     const txt = `${label}${suffix}`;
+    const title = pressed ? `Hide ${label} on the map` : `Show ${label} on the map`;
+    const swatch = iconHtml
+      ? '<span class="mf-traffic-legend-swatch mf-traffic-legend-swatch--icons" aria-hidden="true">' + iconHtml + '</span>'
+      : '<span class="mf-traffic-legend-swatch" style="background:' + color + ';"></span>';
     return `
       <span class="mf-traffic-legend-item">
-        <button type="button" class="mf-traffic-legend-btn" data-traffic-kind="${kind}" aria-pressed="${pressed ? 'true' : 'false'}">
-          <span class="mf-traffic-legend-swatch" style="background:${color};"></span>
+        <button type="button" class="mf-traffic-legend-btn" data-traffic-kind="${kind}" aria-pressed="${pressed ? 'true' : 'false'}" title="${title.replace(/"/g, '&quot;')}">
+          ${swatch}
           <span>${txt}</span>
         </button>
       </span>
@@ -6967,11 +7018,11 @@
 
     const parts = [];
     // Always show these toggles while Traffic is on (so user can enable construction later).
-    parts.push(metrofeedLegendBtn('incidents', '#ff6b35', 'Incidents', !!trafficLayers.incidents));
-    parts.push(metrofeedLegendBtn('flow', '#00bcd4', 'Flow', !!trafficLayers.flow));
-    parts.push(metrofeedLegendBtn('slowdowns', '#00bcd4', 'Slowdowns', !!trafficLayers.slowdowns));
-    parts.push(metrofeedLegendBtn('construction', '#ffcc00', 'Construction', !!trafficLayers.construction));
-    parts.push(`<span class="mf-traffic-legend-hint">← scroll →</span>`);
+    parts.push(metrofeedLegendBtn('incidents', '#ff6b35', 'Incidents', !!trafficLayers.incidents, metrofeedTrafficLegendIconsHtml('incidents')));
+    parts.push(metrofeedLegendBtn('flow', '#00bcd4', 'Flow', !!trafficLayers.flow, metrofeedTrafficLegendIconsHtml('flow')));
+    parts.push(metrofeedLegendBtn('slowdowns', '#00bcd4', 'Slowdowns', !!trafficLayers.slowdowns, metrofeedTrafficLegendIconsHtml('slowdowns')));
+    parts.push(metrofeedLegendBtn('construction', '#ffcc00', 'Construction', !!trafficLayers.construction, metrofeedTrafficLegendIconsHtml('construction')));
+    parts.push(`<span class="mf-traffic-legend-hint" title="Swipe or scroll horizontally to see all layer toggles">← scroll →</span>`);
 
     el.innerHTML = parts.join('');
     metrofeedSetTrafficLegendVisible(parts.length > 0);
@@ -7510,6 +7561,16 @@
     return '#4CAF50';
   }
 
+  /** Delay bucket for flow stopwatch icons (matches metrofeedFlowColor thresholds). */
+  function metrofeedFlowTier(flow) {
+    const mins = metrofeedFlowDelayMinutes(flow);
+    if (mins == null) return 'green';
+    if (mins >= 10) return 'red';
+    if (mins >= 5) return 'orange';
+    if (mins >= 2) return 'yellow';
+    return 'green';
+  }
+
   function metrofeedGenericLngLat(item) {
     if (!item || typeof item !== 'object') return null;
     const lo = Number(item.lon ?? item.lng ?? item.longitude);
@@ -7597,6 +7658,119 @@
     return { type: 'FeatureCollection', features: features };
   }
 
+  /**
+   * Rasterize local SVGs into MapLibre RGBA images (SVG URLs are not reliable as map icons).
+   * Assets live next to home.html: accident.svg, cone.svg, slow.svg, stop-watch{red,orange,yellow,green}.svg
+   */
+  function metrofeedRasterizeSvgFileToMapImage(map, id, fileName, sizePx, onDone) {
+    const done = typeof onDone === 'function' ? onDone : function () {};
+    if (!map || !map.addImage) return done();
+    try {
+      if (map.hasImage && map.hasImage(id)) return done();
+    } catch (_) {}
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () {
+      try {
+        if (map.hasImage && map.hasImage(id)) return done();
+        const canvas = document.createElement('canvas');
+        canvas.width = sizePx;
+        canvas.height = sizePx;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return done();
+        ctx.clearRect(0, 0, sizePx, sizePx);
+        ctx.drawImage(img, 0, 0, sizePx, sizePx);
+        const rgba = ctx.getImageData(0, 0, sizePx, sizePx).data;
+        map.addImage(id, { width: sizePx, height: sizePx, data: rgba }, { pixelRatio: 1 });
+      } catch (e) {
+        console.warn('[traffic icons] raster failed', id, fileName, e);
+      }
+      done();
+    };
+    img.onerror = function () {
+      console.warn('[traffic icons] SVG load failed', id, fileName);
+      done();
+    };
+    img.src = fileName;
+  }
+
+  function metrofeedTrafficRasterIconIds() {
+    return [
+      'mf-traffic-accident',
+      'mf-traffic-cone',
+      'mf-traffic-slow',
+      'mf-traffic-flow-red',
+      'mf-traffic-flow-orange',
+      'mf-traffic-flow-yellow',
+      'mf-traffic-flow-green'
+    ];
+  }
+
+  function metrofeedTrafficRasterIconsReady(map) {
+    if (!map || !map.hasImage) return false;
+    try {
+      return metrofeedTrafficRasterIconIds().every(function (id) { return map.hasImage(id); });
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /** Load all Cincinnati traffic SVG icons once; invokes queued callbacks when finished. */
+  function metrofeedEnsureTrafficRasterMapIcons(map, done) {
+    if (!map || !map.addImage) {
+      if (typeof done === 'function') done();
+      return;
+    }
+    if (metrofeedTrafficRasterIconsReady(map)) {
+      if (typeof done === 'function') done();
+      return;
+    }
+    window._mfTrafficRasterWaiters = window._mfTrafficRasterWaiters || [];
+    if (typeof done === 'function') window._mfTrafficRasterWaiters.push(done);
+    if (window._mfTrafficRasterLoading) return;
+    window._mfTrafficRasterLoading = true;
+
+    const FILES = [
+      ['mf-traffic-accident', 'accident.svg'],
+      ['mf-traffic-cone', 'cone.svg'],
+      ['mf-traffic-slow', 'slow.svg'],
+      ['mf-traffic-flow-red', 'stop-watchred.svg'],
+      ['mf-traffic-flow-orange', 'stop-watchorange.svg'],
+      ['mf-traffic-flow-yellow', 'stop-watchyellow.svg'],
+      ['mf-traffic-flow-green', 'stop-watchgreen.svg']
+    ];
+
+    var remaining = 0;
+    FILES.forEach(function (pair) {
+      var id = pair[0];
+      var file = pair[1];
+      try {
+        if (map.hasImage(id)) return;
+      } catch (_) {}
+      remaining++;
+      metrofeedRasterizeSvgFileToMapImage(map, id, file, 64, function () {
+        remaining--;
+        if (remaining <= 0) {
+          window._mfTrafficRasterLoading = false;
+          var waiters = window._mfTrafficRasterWaiters || [];
+          window._mfTrafficRasterWaiters = [];
+          waiters.forEach(function (fn) {
+            try { if (typeof fn === 'function') fn(); } catch (e) {}
+          });
+        }
+      });
+    });
+
+    if (remaining === 0) {
+      window._mfTrafficRasterLoading = false;
+      var w = window._mfTrafficRasterWaiters || [];
+      window._mfTrafficRasterWaiters = [];
+      w.forEach(function (fn) {
+        try { if (typeof fn === 'function') fn(); } catch (e) {}
+      });
+    }
+  }
+
   function metrofeedEnsureTrafficSdfIcons(map) {
     if (!map) return;
     if (map.hasImage && map.hasImage('mf-traffic-tri')) return;
@@ -7681,7 +7855,8 @@
           title: String(title),
           description: String(desc),
           color: metrofeedFlowColor(f),
-          delay_min: metrofeedFlowDelayMinutes(f)
+          delay_min: metrofeedFlowDelayMinutes(f),
+          flow_tier: metrofeedFlowTier(f)
         },
         geometry: { type: 'Point', coordinates: ll }
       });
@@ -7909,121 +8084,133 @@
   function metrofeedDisplayTrafficSlowdowns(map) {
     if (!map || !window.allSlowdowns || !Array.isArray(window.allSlowdowns)) return;
     metrofeedRemoveTrafficSlowdowns(map);
-    metrofeedEnsureTrafficSdfIcons(map);
-    const box = metrofeedPaddedMapBounds(map);
-    const filtered = metrofeedGenericInBounds(window.allSlowdowns, box);
-    const geojson = metrofeedBuildGenericGeoJSON(filtered, 'slowdown');
-    map.addSource('traffic-slowdowns', { type: 'geojson', data: geojson });
-    map.addLayer({
-      id: 'traffic-slowdowns',
-      type: 'symbol',
-      source: 'traffic-slowdowns',
-      layout: {
-        'icon-image': 'mf-traffic-diamond',
-        'icon-size': 0.55,
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true
-      },
-      paint: {
-        'icon-color': ['get', 'color'],
-        'icon-opacity': 0.55
-      }
+    metrofeedEnsureTrafficRasterMapIcons(map, function () {
+      const box = metrofeedPaddedMapBounds(map);
+      const filtered = metrofeedGenericInBounds(window.allSlowdowns, box);
+      const geojson = metrofeedBuildGenericGeoJSON(filtered, 'slowdown');
+      map.addSource('traffic-slowdowns', { type: 'geojson', data: geojson });
+      map.addLayer({
+        id: 'traffic-slowdowns',
+        type: 'symbol',
+        source: 'traffic-slowdowns',
+        layout: {
+          'icon-image': 'mf-traffic-slow',
+          'icon-size': 0.42,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true
+        },
+        paint: {
+          'icon-opacity': 0.72
+        }
+      });
+      trafficLayers.slowdowns = 'traffic-slowdowns';
+      map.on('click', 'traffic-slowdowns', metrofeedTrafficGenericClick);
+      map.on('mouseenter', 'traffic-slowdowns', metrofeedTrafficGenericMouseEnter);
+      map.on('mouseleave', 'traffic-slowdowns', metrofeedTrafficGenericMouseLeave);
+      window._mfTrafficCounts.slowdowns = geojson.features.length;
+      console.log('[metrofeedDisplayTrafficSlowdowns] Showing', geojson.features.length, 'slowdowns in padded view (of', window.allSlowdowns.length, 'cached)');
     });
-    trafficLayers.slowdowns = 'traffic-slowdowns';
-    map.on('click', 'traffic-slowdowns', metrofeedTrafficGenericClick);
-    map.on('mouseenter', 'traffic-slowdowns', metrofeedTrafficGenericMouseEnter);
-    map.on('mouseleave', 'traffic-slowdowns', metrofeedTrafficGenericMouseLeave);
-    window._mfTrafficCounts.slowdowns = geojson.features.length;
-    console.log('[metrofeedDisplayTrafficSlowdowns] Showing', geojson.features.length, 'slowdowns in padded view (of', window.allSlowdowns.length, 'cached)');
   }
 
   function metrofeedDisplayTrafficConstruction(map) {
     if (!map || !window.allConstruction || !Array.isArray(window.allConstruction)) return;
     metrofeedRemoveTrafficConstruction(map);
-    metrofeedEnsureTrafficSdfIcons(map);
-    const box = metrofeedPaddedMapBounds(map);
-    const filtered = metrofeedGenericInBounds(window.allConstruction, box);
-    const geojson = metrofeedBuildGenericGeoJSON(filtered, 'construction');
-    map.addSource('traffic-construction', { type: 'geojson', data: geojson });
-    map.addLayer({
-      id: 'traffic-construction',
-      type: 'symbol',
-      source: 'traffic-construction',
-      layout: {
-        'icon-image': 'mf-traffic-square',
-        'icon-size': 0.6,
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true
-      },
-      paint: {
-        'icon-color': ['get', 'color'],
-        'icon-opacity': 0.78
-      }
+    metrofeedEnsureTrafficRasterMapIcons(map, function () {
+      const box = metrofeedPaddedMapBounds(map);
+      const filtered = metrofeedGenericInBounds(window.allConstruction, box);
+      const geojson = metrofeedBuildGenericGeoJSON(filtered, 'construction');
+      map.addSource('traffic-construction', { type: 'geojson', data: geojson });
+      map.addLayer({
+        id: 'traffic-construction',
+        type: 'symbol',
+        source: 'traffic-construction',
+        layout: {
+          'icon-image': 'mf-traffic-cone',
+          'icon-size': 0.44,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true
+        },
+        paint: {
+          'icon-opacity': 0.85
+        }
+      });
+      trafficLayers.construction = 'traffic-construction';
+      map.on('click', 'traffic-construction', metrofeedTrafficGenericClick);
+      map.on('mouseenter', 'traffic-construction', metrofeedTrafficGenericMouseEnter);
+      map.on('mouseleave', 'traffic-construction', metrofeedTrafficGenericMouseLeave);
+      window._mfTrafficCounts.construction = geojson.features.length;
+      console.log('[metrofeedDisplayTrafficConstruction] Showing', geojson.features.length, 'construction in padded view (of', window.allConstruction.length, 'cached)');
     });
-    trafficLayers.construction = 'traffic-construction';
-    map.on('click', 'traffic-construction', metrofeedTrafficGenericClick);
-    map.on('mouseenter', 'traffic-construction', metrofeedTrafficGenericMouseEnter);
-    map.on('mouseleave', 'traffic-construction', metrofeedTrafficGenericMouseLeave);
-    window._mfTrafficCounts.construction = geojson.features.length;
-    console.log('[metrofeedDisplayTrafficConstruction] Showing', geojson.features.length, 'construction in padded view (of', window.allConstruction.length, 'cached)');
   }
 
   function metrofeedDisplayTrafficFlow(map) {
     if (!map || !window.allFlow || !Array.isArray(window.allFlow)) return;
     metrofeedRemoveTrafficFlow(map);
-    const box = metrofeedPaddedMapBounds(map);
-    const filtered = metrofeedFlowInBounds(window.allFlow, box);
-    const geojson = metrofeedBuildFlowGeoJSON(filtered);
-    map.addSource('traffic-flow', { type: 'geojson', data: geojson });
-    map.addLayer({
-      id: 'traffic-flow',
-      type: 'circle',
-      source: 'traffic-flow',
-      paint: {
-        'circle-radius': 4,
-        'circle-color': ['get', 'color'],
-        'circle-stroke-width': 1,
-        'circle-stroke-color': 'rgba(0,0,0,0.65)',
-        'circle-opacity': 0.7
-      }
+    metrofeedEnsureTrafficRasterMapIcons(map, function () {
+      const box = metrofeedPaddedMapBounds(map);
+      const filtered = metrofeedFlowInBounds(window.allFlow, box);
+      const geojson = metrofeedBuildFlowGeoJSON(filtered);
+      map.addSource('traffic-flow', { type: 'geojson', data: geojson });
+      map.addLayer({
+        id: 'traffic-flow',
+        type: 'symbol',
+        source: 'traffic-flow',
+        layout: {
+          'icon-image': [
+            'match',
+            ['get', 'flow_tier'],
+            'red', 'mf-traffic-flow-red',
+            'orange', 'mf-traffic-flow-orange',
+            'yellow', 'mf-traffic-flow-yellow',
+            'green', 'mf-traffic-flow-green',
+            'mf-traffic-flow-green'
+          ],
+          'icon-size': 0.38,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true
+        },
+        paint: {
+          'icon-opacity': 0.88
+        }
+      });
+      trafficLayers.flow = 'traffic-flow';
+      map.on('click', 'traffic-flow', metrofeedTrafficFlowClick);
+      map.on('mouseenter', 'traffic-flow', metrofeedTrafficFlowMouseEnter);
+      map.on('mouseleave', 'traffic-flow', metrofeedTrafficFlowMouseLeave);
+      window._mfTrafficCounts.flow = geojson.features.length;
+      console.log('[metrofeedDisplayTrafficFlow] Showing', geojson.features.length, 'flow points in padded view (of', window.allFlow.length, 'cached)');
     });
-    trafficLayers.flow = 'traffic-flow';
-    map.on('click', 'traffic-flow', metrofeedTrafficFlowClick);
-    map.on('mouseenter', 'traffic-flow', metrofeedTrafficFlowMouseEnter);
-    map.on('mouseleave', 'traffic-flow', metrofeedTrafficFlowMouseLeave);
-    window._mfTrafficCounts.flow = geojson.features.length;
-    console.log('[metrofeedDisplayTrafficFlow] Showing', geojson.features.length, 'flow points in padded view (of', window.allFlow.length, 'cached)');
   }
 
   function metrofeedDisplayTrafficIncidents(map) {
     if (!map || !window.allIncidents || !Array.isArray(window.allIncidents)) return;
     metrofeedRemoveTrafficIncidents(map);
-    metrofeedEnsureTrafficSdfIcons(map);
-    const box = metrofeedPaddedMapBounds(map);
-    const filtered = metrofeedIncidentsInBounds(window.allIncidents, box);
-    const geojson = metrofeedBuildIncidentsGeoJSON(filtered);
-    map.addSource('traffic-incidents', { type: 'geojson', data: geojson });
-    map.addLayer({
-      id: 'traffic-incidents',
-      type: 'symbol',
-      source: 'traffic-incidents',
-      layout: {
-        'icon-image': 'mf-traffic-tri',
-        'icon-size': 0.78,
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true
-      },
-      paint: {
-        'icon-color': ['get', 'color'],
-        'icon-opacity': 0.95
-      }
+    metrofeedEnsureTrafficRasterMapIcons(map, function () {
+      const box = metrofeedPaddedMapBounds(map);
+      const filtered = metrofeedIncidentsInBounds(window.allIncidents, box);
+      const geojson = metrofeedBuildIncidentsGeoJSON(filtered);
+      map.addSource('traffic-incidents', { type: 'geojson', data: geojson });
+      map.addLayer({
+        id: 'traffic-incidents',
+        type: 'symbol',
+        source: 'traffic-incidents',
+        layout: {
+          'icon-image': 'mf-traffic-accident',
+          'icon-size': 0.44,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true
+        },
+        paint: {
+          'icon-opacity': 0.95
+        }
+      });
+      trafficLayers.incidents = 'traffic-incidents';
+      map.on('click', 'traffic-incidents', metrofeedTrafficIncidentsClick);
+      map.on('mouseenter', 'traffic-incidents', metrofeedTrafficIncidentsMouseEnter);
+      map.on('mouseleave', 'traffic-incidents', metrofeedTrafficIncidentsMouseLeave);
+      window._mfTrafficCounts.incidents = geojson.features.length;
+      console.log('[metrofeedDisplayTrafficIncidents] Showing', geojson.features.length, 'incidents in padded view (of', window.allIncidents.length, 'cached)');
     });
-    trafficLayers.incidents = 'traffic-incidents';
-    map.on('click', 'traffic-incidents', metrofeedTrafficIncidentsClick);
-    map.on('mouseenter', 'traffic-incidents', metrofeedTrafficIncidentsMouseEnter);
-    map.on('mouseleave', 'traffic-incidents', metrofeedTrafficIncidentsMouseLeave);
-    window._mfTrafficCounts.incidents = geojson.features.length;
-    console.log('[metrofeedDisplayTrafficIncidents] Showing', geojson.features.length, 'incidents in padded view (of', window.allIncidents.length, 'cached)');
   }
   
   /**
@@ -11166,12 +11353,15 @@
    * Initialize sponsor modal (check and show after 3 seconds if needed)
    */
   function initSponsorModal() {
-    // Only show on 2nd+ session (keep first session focused on onboarding/tutorial).
+    // Only show on 2nd+ browser session (first visit = tutorial focus). Bump at most once per tab session so reloads do not skip ahead.
     let sessionCount = 0;
     try {
       sessionCount = parseInt(localStorage.getItem('metrofeedSessionCount') || '0', 10) || 0;
-      sessionCount += 1;
-      localStorage.setItem('metrofeedSessionCount', String(sessionCount));
+      if (sessionStorage.getItem('mfSponsorSessionCounted') !== '1') {
+        sessionStorage.setItem('mfSponsorSessionCounted', '1');
+        sessionCount += 1;
+        localStorage.setItem('metrofeedSessionCount', String(sessionCount));
+      }
     } catch (e) {}
 
     if (sessionCount >= 2 && shouldShowSponsorModal()) {
