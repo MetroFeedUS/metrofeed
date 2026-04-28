@@ -3555,6 +3555,10 @@
 
   window.metrofeedAfterTutorial = function () {
     try {
+      if (localStorage.getItem('mfOnboardingDone') === '1' && sessionStorage.getItem('mfTutorialShown') !== '1') {
+        // If onboarding already completed in a previous visit, never show tooltips again.
+        return;
+      }
       if (sessionStorage.getItem('mfPostTutorialHintsShown') === '1') return;
       sessionStorage.setItem('mfPostTutorialHintsShown', '1');
     } catch (_) {}
@@ -4617,8 +4621,9 @@
     const gotIt = document.getElementById('mfTutorialGotItBtn');
     if (!modal || !body || !closeX || !gotIt) return;
 
-    // One-time per session by default.
+    // One-time onboarding (device/browser): show only on first-ever successful startup.
     try {
+      if (localStorage.getItem('mfOnboardingDone') === '1') return;
       if (sessionStorage.getItem('mfTutorialShown') === '1') return;
       sessionStorage.setItem('mfTutorialShown', '1');
     } catch (_) {}
@@ -4634,6 +4639,7 @@
       try {
         if (typeof window.metrofeedAfterTutorial === 'function') window.metrofeedAfterTutorial();
       } catch (_) {}
+      try { localStorage.setItem('mfOnboardingDone', '1'); } catch (_) {}
     };
 
     closeX.onclick = finish;
@@ -8716,7 +8722,7 @@
           : new Set();
       document.querySelectorAll('.route-info-panel').forEach((panel) => {
         const rid = panel && panel.getAttribute ? panel.getAttribute('data-route-id') : null;
-        const badge = panel && panel.querySelector ? panel.querySelector('.mf-chip-alert') : null;
+        const badge = panel && panel.querySelector ? panel.querySelector('.mf-chip-alert-badge') : null;
         if (!badge) return;
         const on = rid && set.has(String(rid));
         badge.style.display = on ? 'block' : 'none';
