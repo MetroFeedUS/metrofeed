@@ -1542,7 +1542,7 @@
   </div>
   
   <!-- Route Alert Indicator: same danger icon as menu; compact pulsing chip -->
-  <div id="routeAlertIndicator" class="mf-route-alert-indicator" onclick="openAlertsForActiveRoutes()" style="display: block; visibility: hidden; position: fixed; cursor: pointer; z-index: 1102; box-sizing: border-box;" title="View alerts for selected routes" role="button" tabindex="0" aria-label="Route alerts">
+  <div id="routeAlertIndicator" class="mf-route-alert-indicator" onclick="openAlertsForActiveRoutes()" style="display: none; visibility: hidden; position: fixed; cursor: pointer; z-index: 1102; box-sizing: border-box;" title="View alerts for selected routes" role="button" tabindex="0" aria-label="Route alerts">
     <img class="mf-route-alert-indicator__icon" src="008-danger.svg" width="26" height="26" alt="" aria-hidden="true" />
     <span class="mf-route-alert-indicator__count" aria-hidden="true"></span>
   </div>
@@ -3509,6 +3509,34 @@
     return tooltip;
   }
 
+  function mfShowCenteredTooltip(text, opts) {
+    const tooltip = mfTooltipEl(text);
+    tooltip.style.top = '0px';
+    tooltip.style.left = '-9999px';
+    document.body.appendChild(tooltip);
+    try {
+      const w = tooltip.offsetWidth || 240;
+      const h = tooltip.offsetHeight || 52;
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      const edge = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches ? 12 : 8;
+      let left = vw ? Math.round((vw - w) / 2) : edge;
+      let top = vh ? Math.round(vh * 0.44 - h / 2) : edge;
+      if (left < edge) left = edge;
+      if (vw && left + w > vw - edge) left = Math.max(edge, vw - w - edge);
+      if (top < edge) top = edge;
+      if (vh && top + h > vh - edge) top = Math.max(edge, vh - h - edge);
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+      tooltip.style.transform = 'translateX(0)'; // avoid sideways drift for centered hints
+    } catch (_) {}
+    setTimeout(() => {
+      tooltip.classList.remove('show');
+      setTimeout(() => tooltip.parentNode && tooltip.parentNode.removeChild(tooltip), 600);
+    }, (opts && opts.ms) ? opts.ms : 3600);
+    return tooltip;
+  }
+
   function mfWaitForElement(getEl, opts) {
     const timeoutMs = (opts && opts.timeoutMs) ? opts.timeoutMs : 2200;
     const intervalMs = (opts && opts.intervalMs) ? opts.intervalMs : 120;
@@ -3555,7 +3583,9 @@
         const s = steps[i];
         const el = await mfWaitForElement(s.getEl, { timeoutMs: 2600, intervalMs: 120 });
         if (!el) continue;
-        mfShowAnchoredTooltip(el, s.text, { ms: 3600, padPx: 12 });
+        // Mobile-first: bus/stop hints are centered (readable). Chip remains anchored to the chip.
+        if (s.key === 'chip') mfShowAnchoredTooltip(el, s.text, { ms: 3600, padPx: 12 });
+        else mfShowCenteredTooltip(s.text, { ms: 3200 });
         // Give user time to see it; short gap before next.
         await new Promise(r => setTimeout(r, 4000));
       }
@@ -8630,6 +8660,12 @@
       // Store routes with alerts for click handler
       indicator.dataset.routesWithAlerts = JSON.stringify(routesWithAlerts);
       console.log('[updateAlertIndicator] Indicator shown with', routesWithAlerts.length, 'routes with alerts');
+
+      // Expose for floating chip badges (we'll hide the standalone indicator).
+      try {
+        window._mfRoutesWithAlerts = new Set((routesWithAlerts || []).map(String));
+        if (typeof window.metrofeedUpdateChipAlerts === 'function') window.metrofeedUpdateChipAlerts();
+      } catch (_) {}
       
     } catch (err) {
       console.warn('[updateAlertIndicator] Error checking alerts:', err);
@@ -8670,6 +8706,23 @@
       }
     }, 200);
   }
+
+  // Show/hide alert badges on floating route chips.
+  window.metrofeedUpdateChipAlerts = function () {
+    try {
+      const set =
+        window._mfRoutesWithAlerts && window._mfRoutesWithAlerts.has
+          ? window._mfRoutesWithAlerts
+          : new Set();
+      document.querySelectorAll('.route-info-panel').forEach((panel) => {
+        const rid = panel && panel.getAttribute ? panel.getAttribute('data-route-id') : null;
+        const badge = panel && panel.querySelector ? panel.querySelector('.mf-chip-alert') : null;
+        if (!badge) return;
+        const on = rid && set.has(String(rid));
+        badge.style.display = on ? 'block' : 'none';
+      });
+    } catch (_) {}
+  };
   
   /**
    * Show a route overlay on the main map
@@ -10655,6 +10708,9 @@
   async function openAlertsForRoute(routeId) {
     // Open alerts modal
     showMBTAAlertsModal();
+    try {
+      await loadMBTAAlerts([String(routeId)]);
+    } catch (_) {}
     
     // Wait a bit for modal to render, then expand categories
     setTimeout(() => {

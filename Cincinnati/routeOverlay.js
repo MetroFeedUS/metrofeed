@@ -2028,6 +2028,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const routeInfoPanel = document.createElement("div");
       routeInfoPanel.id = panelId;
       routeInfoPanel.className = "route-info-panel";
+      try { routeInfoPanel.setAttribute('data-route-id', String(routeId)); } catch (_) {}
       
       // Start collapsed as a circle (default) or Metro/TANK pill (Cincinnati)
       // Find the next available position (highest existing index + 1)
@@ -2231,6 +2232,29 @@ function attachRouteToMap(map, routeId, directionId, options) {
       routeInfoPanel.appendChild(closeBtn);
       routeInfoPanel.appendChild(contentDiv);
       routeInfoPanel.appendChild(collapsedName);
+
+      // Alert badge (shown/hidden by home.html when alerts exist for this route)
+      const alertBadge = document.createElement('img');
+      alertBadge.className = 'mf-chip-alert';
+      alertBadge.src = '008-danger.svg';
+      alertBadge.alt = '';
+      alertBadge.setAttribute('aria-hidden', 'true');
+      alertBadge.style.cssText = [
+        'display:none',
+        'position:absolute',
+        'left:-8px',
+        'top:-8px',
+        'width:18px',
+        'height:18px',
+        'background:rgba(255,68,68,0.95)',
+        'border:2px solid rgba(255,255,255,0.95)',
+        'border-radius:999px',
+        'padding:2px',
+        'box-shadow:0 2px 8px rgba(0,0,0,0.35)',
+        'filter:brightness(0) invert(1) drop-shadow(0 0 1px rgba(0,0,0,0.35))',
+        'pointer-events:none'
+      ].join(';');
+      routeInfoPanel.appendChild(alertBadge);
       
       // Initially hide content and collapse button, show collapsed name (circle state)
       closeBtn.style.display = "none";
@@ -2368,8 +2392,29 @@ function attachRouteToMap(map, routeId, directionId, options) {
           try { closeBtn.onclick({ stopPropagation() {} }); } catch (_) {}
         };
 
+        const viewAlerts = () => {
+          dismiss();
+          try {
+            if (typeof window.openAlertsForRoute === 'function') {
+              window.openAlertsForRoute(String(routeId));
+            } else if (typeof window.showMBTAAlertsModal === 'function') {
+              window.showMBTAAlertsModal();
+            }
+          } catch (_) {}
+        };
+
         sheet.appendChild(title);
         sheet.appendChild(mkBtn('Center on map', chipBg, chipFg, centerRoute));
+        try {
+          const hasAlerts =
+            window._mfRoutesWithAlerts &&
+            (window._mfRoutesWithAlerts.has
+              ? window._mfRoutesWithAlerts.has(String(routeId))
+              : false);
+          if (hasAlerts) {
+            sheet.appendChild(mkBtn('View alerts', '#ef4444', '#fff', viewAlerts));
+          }
+        } catch (_) {}
         sheet.appendChild(mkBtn('Switch directions', '#2563EB', '#fff', switchDir));
         sheet.appendChild(mkBtn('Close', '#B91C1C', '#fff', closeRoute));
 
