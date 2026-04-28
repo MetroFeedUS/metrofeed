@@ -10610,21 +10610,52 @@
     const normalizedRouteId = String(routeId);
 
     // Cincinnati VPS alerts: array of { agency, text }
-    if (alerts.length > 0 && alerts[0] && typeof alerts[0] === 'object' && 'text' in alerts[0] && 'agency' in alerts[0]) {
-      const agency = normalizedRouteId.startsWith('sorta_') ? 'sorta' : normalizedRouteId.startsWith('tank_') ? 'tank' : null;
-      const routeNum = normalizedRouteId.startsWith('sorta_') ? normalizedRouteId.slice(6)
-        : normalizedRouteId.startsWith('tank_') ? normalizedRouteId.slice(5)
-        : normalizedRouteId;
+    const isCincySchema =
+      alerts.length > 0 &&
+      alerts[0] &&
+      typeof alerts[0] === 'object' &&
+      'text' in alerts[0] &&
+      'agency' in alerts[0];
 
+    function mfRouteIdAgencyAndNumber(rid) {
+      const s = String(rid || '');
+      const agency = s.startsWith('sorta_') ? 'sorta' : s.startsWith('tank_') ? 'tank' : null;
+      const rawNum = s.startsWith('sorta_') ? s.slice(6) : s.startsWith('tank_') ? s.slice(5) : s;
+      const m = String(rawNum).match(/\d+/);
+      const num = m ? String(m[0]) : String(rawNum);
+      return { agency, num };
+    }
+
+    // Extract only explicit "Route N" references. Avoid matching dates/addresses/random numbers.
+    function mfExtractExplicitRouteNums(text) {
+      const t = String(text || '');
+      const nums = new Set();
+
+      // Normalize some common variants: Route(s)
+      // Matches:
+      // - "Route 4"
+      // - "Route(s) 36"
+      // - "on Route 22"
+      // - "Inbound Route 3"
+      const re = /\broute(?:\s*\(s\))?\s*([0-9]{1,3}(?:\s*(?:,|&|and|\/)\s*[0-9]{1,3})*)\b/gi;
+      let m;
+      while ((m = re.exec(t)) !== null) {
+        const chunk = m[1] || '';
+        (chunk.match(/[0-9]{1,3}/g) || []).forEach((n) => nums.add(String(n)));
+      }
+
+      return nums;
+    }
+
+    if (isCincySchema) {
+      const { agency, num } = mfRouteIdAgencyAndNumber(normalizedRouteId);
       const routeAlerts = alerts.filter((a) => {
         if (!a || !a.text) return false;
         if (agency && String(a.agency || '').toLowerCase() !== agency) return false;
-        const t = String(a.text);
-        const nums = t.match(/\d+/g) || [];
-        // If the alert text references route numbers, match those.
-        if (nums.length) return nums.some((n) => String(n) === String(routeNum));
-        // Otherwise treat as an agency-wide notice (still show badge).
-        return true;
+        const explicit = mfExtractExplicitRouteNums(a.text);
+        // For per-route badges: ONLY show when alert explicitly references Route N.
+        if (!explicit.size) return false;
+        return explicit.has(String(num));
       });
 
       console.log(`[getRouteAlerts] Found ${routeAlerts.length} alerts for route "${normalizedRouteId}"`);
@@ -10751,17 +10782,36 @@
         const normalizeRouteFilter = (rf) => (Array.isArray(rf) ? rf.map(String) : []);
         const rf = normalizeRouteFilter(routeFilter);
 
+        const routeIdAgencyAndNumber = (rid) => {
+          const s = String(rid || '');
+          const agency = s.startsWith('sorta_') ? 'sorta' : s.startsWith('tank_') ? 'tank' : null;
+          const rawNum = s.startsWith('sorta_') ? s.slice(6) : s.startsWith('tank_') ? s.slice(5) : s;
+          const m = String(rawNum).match(/\d+/);
+          const num = m ? String(m[0]) : String(rawNum);
+          return { agency, num };
+        };
+
+        const extractExplicitRouteNums = (text) => {
+          const t = String(text || '');
+          const nums = new Set();
+          const re = /\broute(?:\s*\(s\))?\s*([0-9]{1,3}(?:\s*(?:,|&|and|\/)\s*[0-9]{1,3})*)\b/gi;
+          let m;
+          while ((m = re.exec(t)) !== null) {
+            const chunk = m[1] || '';
+            (chunk.match(/[0-9]{1,3}/g) || []).forEach((n) => nums.add(String(n)));
+          }
+          return nums;
+        };
+
+        const selected = rf.map(routeIdAgencyAndNumber);
+
         const matchesRouteFilter = (a) => {
           if (!rf.length) return true;
-          const t = String(a && a.text ? a.text : '');
-          const nums = t.match(/\d+/g) || [];
-          // If the alert references a route number, require a match to any selected route number.
-          if (nums.length) {
-            const selectedNums = rf.map((rid) => rid.startsWith('sorta_') ? rid.slice(6) : rid.startsWith('tank_') ? rid.slice(5) : rid);
-            return nums.some((n) => selectedNums.includes(String(n)));
-          }
-          // Otherwise treat as an agency-wide notice (show it in modal even when filtered).
-          return true;
+          const ag = String(a && a.agency ? a.agency : '').toLowerCase();
+          // When filtered, require explicit Route N match; do NOT include agency-wide/no-route alerts.
+          const explicit = extractExplicitRouteNums(a && a.text ? a.text : '');
+          if (!explicit.size) return false;
+          return selected.some((s) => (!s.agency || s.agency === ag) && explicit.has(String(s.num)));
         };
 
         // Apply route filter (if any)

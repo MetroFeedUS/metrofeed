@@ -237,6 +237,8 @@ const CITIES = {
     // Only show vehicles whose live trip serves at least N stops on this route+direction sheet (Metro branch pages are narrower than "all route 4").
     gtfsRtFilterVehiclesByTripStopOverlap: true,
     gtfsRtTripStopOverlapMin: 1,
+    // Hard safety: only render vehicles within this distance of the route polyline (prevents out-of-area vehicles on same route number).
+    busMaxDistanceFromRouteMeters: 1500,
 
     // Static per-route JSON hosting
     routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/",

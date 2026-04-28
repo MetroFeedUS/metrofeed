@@ -2542,6 +2542,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
           // Also check routeData.route_id if available (from routes_index.js)
           const routeNum = String(routeId);
           const routeDataRouteId = routeData?.route_id || routeData?.meta?.route_id || null;
+
+          // Cincinnati multi-agency safety: match agency + exact route_id number.
+          // Also drop vehicles far away from the route polyline (prevents "deep Ohio" outliers).
+          const mfOverlayAgency = routeNum.startsWith('sorta_') ? 'sorta' : routeNum.startsWith('tank_') ? 'tank' : null;
+          const mfOverlayRouteDigits = (function () {
+            const raw = routeNum.startsWith('sorta_') ? routeNum.slice(6) : routeNum.startsWith('tank_') ? routeNum.slice(5) : routeNum;
+            const m = String(raw).match(/\d+/);
+            return m ? String(m[0]).replace(/^0+/, '') || String(m[0]) : '';
+          })();
+          const mfMaxDistM =
+            window.CITY_CONFIG && Number.isFinite(Number(window.CITY_CONFIG.busMaxDistanceFromRouteMeters))
+              ? Number(window.CITY_CONFIG.busMaxDistanceFromRouteMeters)
+              : 1500;
           
           // Debug: Log what we're looking for and what we have
           console.log(`[attachRouteToMap] Looking for route: "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ''}, direction: ${directionId}`);
@@ -2566,6 +2579,24 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const routeDataNorm = routeDataRouteId ? normalizeRouteId(routeDataRouteId) : null;
           
           let routeBuses = allBuses.filter((v) => {
+            // Agency gate (Cincinnati): don't let TANK bleed into SORTA routes (or vice versa).
+            try {
+              if (mfOverlayAgency) {
+                const vag = String(v.agency || v.operator || v.system || '').toLowerCase();
+                if (vag && vag !== mfOverlayAgency) return false;
+              }
+            } catch (_) {}
+
+            // Exact route_id gate when available (Cincinnati vehicles.json uses route_id digits).
+            try {
+              if (mfOverlayAgency && mfOverlayRouteDigits) {
+                const vr = v.routeId != null ? String(v.routeId) : (v.route_id != null ? String(v.route_id) : String(v.routeNumber || ''));
+                const m = vr.match(/\d+/);
+                const vDigits = m ? (String(m[0]).replace(/^0+/, '') || String(m[0])) : '';
+                if (vDigits && vDigits !== mfOverlayRouteDigits) return false;
+              }
+            } catch (_) {}
+
             const vNorm = normalizeRouteId(v.routeNumber);
             // 1. Exact string match
             const exactMatch = String(v.routeNumber) === routeNum;
@@ -2583,7 +2614,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
               );
             }
 
-            return routeMatch;
+            if (!routeMatch) return false;
+
+            // Geo sanity check: only keep vehicles near this route's primary polyline.
+            try {
+              const la = Number(v.latitude);
+              const lo = Number(v.longitude);
+              if (Number.isFinite(la) && Number.isFinite(lo) && Array.isArray(primaryShape) && primaryShape.length > 1) {
+                const info = metrofeedNearestSegmentInfo(primaryShape, la, lo);
+                if (info && Number.isFinite(info.distanceM) && info.distanceM > mfMaxDistM) return false;
+              }
+            } catch (_) {}
+
+            return true;
           });
 
           const filterOverlap = !!(
