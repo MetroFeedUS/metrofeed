@@ -2233,39 +2233,25 @@ function attachRouteToMap(map, routeId, directionId, options) {
       routeInfoPanel.appendChild(contentDiv);
       routeInfoPanel.appendChild(collapsedName);
 
-      // Alert badge (shown/hidden by home.html when alerts exist for this route)
-      // Wrap icon in a red pill so it never ends up white-on-white.
-      const alertBadge = document.createElement('div');
-      alertBadge.className = 'mf-chip-alert-badge';
+      // Alert icon (shown/hidden by home.html when alerts exist for this route)
+      // Use the existing SVG, but tint it red via CSS filter (no background bubble).
+      const alertBadge = document.createElement('img');
+      alertBadge.className = 'mf-chip-alert-icon';
+      alertBadge.src = '008-danger.svg';
+      alertBadge.alt = '';
       alertBadge.setAttribute('aria-hidden', 'true');
       alertBadge.style.cssText = [
         'display:none',
         'position:absolute',
-        'left:-8px',
-        'top:-8px',
-        'width:20px',
-        'height:20px',
-        'background:#ef4444',
-        'border:2px solid rgba(255,255,255,0.95)',
-        'border-radius:999px',
-        'box-shadow:0 2px 8px rgba(0,0,0,0.35)',
-        'pointer-events:none',
-        'display:flex',
-        'align-items:center',
-        'justify-content:center'
-      ].join(';');
-      const alertIcon = document.createElement('img');
-      alertIcon.src = '008-danger.svg';
-      alertIcon.alt = '';
-      alertIcon.setAttribute('aria-hidden', 'true');
-      alertIcon.style.cssText = [
-        'width:14px',
-        'height:14px',
-        'display:block',
+        'left:-6px',
+        'top:-6px',
+        'width:18px',
+        'height:18px',
         'object-fit:contain',
-        'filter:brightness(0) invert(1) drop-shadow(0 0 1px rgba(0,0,0,0.35))'
+        // Approximate #ef4444 (red-500). Keeps the icon readable on any chip color.
+        'filter:invert(23%) sepia(93%) saturate(5900%) hue-rotate(353deg) brightness(104%) contrast(116%) drop-shadow(0 0 1px rgba(0,0,0,0.35))',
+        'pointer-events:none'
       ].join(';');
-      alertBadge.appendChild(alertIcon);
       routeInfoPanel.appendChild(alertBadge);
       
       // Initially hide content and collapse button, show collapsed name (circle state)

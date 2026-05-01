@@ -3537,6 +3537,78 @@
     return tooltip;
   }
 
+  function mfPickMostCenteredEl(selector, withinEl) {
+    try {
+      const scope = withinEl && withinEl.querySelectorAll ? withinEl : document;
+      const nodes = Array.from(scope.querySelectorAll(selector)).filter(Boolean);
+      if (!nodes.length) return null;
+
+      const rectScope = withinEl && withinEl.getBoundingClientRect ? withinEl.getBoundingClientRect() : null;
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+
+      const cx = rectScope ? (rectScope.left + rectScope.width / 2) : (vw / 2);
+      const cy = rectScope ? (rectScope.top + rectScope.height / 2) : (vh / 2);
+
+      let best = null;
+      let bestD2 = Infinity;
+      for (let i = 0; i < nodes.length; i++) {
+        const el = nodes[i];
+        if (!el || !el.getBoundingClientRect) continue;
+        const r = el.getBoundingClientRect();
+        if (!r || r.width <= 0 || r.height <= 0) continue;
+        // Skip offscreen markers (common when lots of stops exist)
+        const ex = r.left + r.width / 2;
+        const ey = r.top + r.height / 2;
+        if (ex < -10 || ey < -10 || ex > vw + 10 || ey > vh + 10) continue;
+        const dx = ex - cx;
+        const dy = ey - cy;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < bestD2) {
+          bestD2 = d2;
+          best = el;
+        }
+      }
+      return best || nodes[0] || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function mfShowTooltipAboveEl(targetEl, text, opts) {
+    if (!targetEl) return null;
+    const rect = targetEl.getBoundingClientRect();
+    const tooltip = mfTooltipEl(text);
+    tooltip.style.top = '0px';
+    tooltip.style.left = '-9999px';
+    document.body.appendChild(tooltip);
+    try {
+      const w = tooltip.offsetWidth || 220;
+      const h = tooltip.offsetHeight || 52;
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      const edge = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches ? 12 : 8;
+
+      // Center horizontally over marker, sit above it.
+      let left = rect.left + rect.width / 2 - w / 2;
+      let top = rect.top - h - 10;
+
+      // Clamp.
+      if (left < edge) left = edge;
+      if (vw && left + w > vw - edge) left = Math.max(edge, vw - w - edge);
+      if (top < edge) top = rect.bottom + 10; // if no room above, place below
+      if (vh && top + h > vh - edge) top = Math.max(edge, vh - h - edge);
+
+      tooltip.style.left = `${Math.round(left)}px`;
+      tooltip.style.top = `${Math.round(top)}px`;
+    } catch (_) {}
+    setTimeout(() => {
+      tooltip.classList.remove('show');
+      setTimeout(() => tooltip.parentNode && tooltip.parentNode.removeChild(tooltip), 600);
+    }, (opts && opts.ms) ? opts.ms : 3600);
+    return tooltip;
+  }
+
   function mfWaitForElement(getEl, opts) {
     const timeoutMs = (opts && opts.timeoutMs) ? opts.timeoutMs : 2200;
     const intervalMs = (opts && opts.intervalMs) ? opts.intervalMs : 120;
@@ -3563,23 +3635,29 @@
       sessionStorage.setItem('mfPostTutorialHintsShown', '1');
     } catch (_) {}
 
-    // Smart 3-step tour (bus -> stop -> chip). If a target isn't available, skip that step.
+    // Smart 4-step onboarding tour (bus -> stop -> chip -> favorites). If a target isn't available, skip that step.
     (async () => {
+      const mapCanvas = window.map && window.map.getCanvas ? window.map.getCanvas() : null;
       const steps = [
         {
           key: 'bus',
           text: 'Tap a bus for details.',
-          getEl: () => document.querySelector('.mf-bus-marker')
+          getEl: () => mfPickMostCenteredEl('.mf-bus-marker', mapCanvas)
         },
         {
           key: 'stop',
           text: 'Tap a stop for times.',
-          getEl: () => document.querySelector('.mf-stop-marker')
+          getEl: () => mfPickMostCenteredEl('.mf-stop-marker', mapCanvas)
         },
         {
           key: 'chip',
           text: 'Tap this route tab for options.',
           getEl: () => document.querySelector('.route-info-panel, .otp-trip-route-chip')
+        },
+        {
+          key: 'favorites',
+          text: 'Your favorites live down here.',
+          getEl: () => document.getElementById('favoritesWrapper')
         }
       ];
 
@@ -3587,9 +3665,10 @@
         const s = steps[i];
         const el = await mfWaitForElement(s.getEl, { timeoutMs: 2600, intervalMs: 120 });
         if (!el) continue;
-        // Mobile-first: bus/stop hints are centered (readable). Chip remains anchored to the chip.
-        if (s.key === 'chip') mfShowAnchoredTooltip(el, s.text, { ms: 3600, padPx: 12 });
-        else mfShowCenteredTooltip(s.text, { ms: 3200 });
+        // Bus + stop: pick the most centered marker and show tooltip centered above it.
+        // Chip + favorites: anchor to their respective UI elements.
+        if (s.key === 'bus' || s.key === 'stop') mfShowTooltipAboveEl(el, s.text, { ms: 3200 });
+        else mfShowAnchoredTooltip(el, s.text, { ms: 3600, padPx: 12 });
         // Give user time to see it; short gap before next.
         await new Promise(r => setTimeout(r, 4000));
       }
@@ -4680,7 +4759,7 @@
     }
     setTimeout(() => {
       try { window.metrofeedShowTutorial && window.metrofeedShowTutorial(); } catch (_) {}
-    }, 2000);
+    }, 2500);
   }
 
   // If the entry page (Index.html) detected location denial/timeout, queue the default route immediately.
@@ -4818,10 +4897,10 @@
       return;
     }
 
-    // Tutorial hook: 2s after route is pulled up.
+    // Tutorial hook: within ~3s after route is pulled up (first-ever onboarding only).
     setTimeout(() => {
       try { window.metrofeedShowTutorial && window.metrofeedShowTutorial(); } catch (_) {}
-    }, 2000);
+    }, 2500);
   }
 
   /** Keep Find Me line, stop markers, and bus polling in sync with backgroundRouteData (live GPS updates). */
@@ -8722,7 +8801,7 @@
           : new Set();
       document.querySelectorAll('.route-info-panel').forEach((panel) => {
         const rid = panel && panel.getAttribute ? panel.getAttribute('data-route-id') : null;
-        const badge = panel && panel.querySelector ? panel.querySelector('.mf-chip-alert-badge') : null;
+        const badge = panel && panel.querySelector ? panel.querySelector('.mf-chip-alert-icon') : null;
         if (!badge) return;
         const on = rid && set.has(String(rid));
         badge.style.display = on ? 'block' : 'none';
@@ -11574,18 +11653,12 @@
    * Initialize sponsor modal (check and show after 3 seconds if needed)
    */
   function initSponsorModal() {
-    // Only show on 2nd+ browser session (first visit = tutorial focus). Bump at most once per tab session so reloads do not skip ahead.
-    let sessionCount = 0;
     try {
-      sessionCount = parseInt(localStorage.getItem('metrofeedSessionCount') || '0', 10) || 0;
-      if (sessionStorage.getItem('mfSponsorSessionCounted') !== '1') {
-        sessionStorage.setItem('mfSponsorSessionCounted', '1');
-        sessionCount += 1;
-        localStorage.setItem('metrofeedSessionCount', String(sessionCount));
-      }
+      // Sponsor shows once per day, but NEVER on the very first onboarding visit.
+      if (localStorage.getItem('mfOnboardingDone') !== '1') return;
     } catch (e) {}
 
-    if (sessionCount >= 2 && shouldShowSponsorModal()) {
+    if (shouldShowSponsorModal()) {
       // Show modal 3 seconds after page load
       setTimeout(() => {
         showSponsorModal();
