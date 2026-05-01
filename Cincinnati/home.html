@@ -1814,7 +1814,7 @@
     
     <!-- Disclaimer -->
     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #333; font-size: 0.75rem; color: #888; line-height: 1.4;">
-      <strong style="color: #aaa;">Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href="https://www.weather.gov" target="_blank" style="color: #1DA1F2; text-decoration: none;">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.
+      <strong style="color: #aaa;">Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href="https://forecast.weather.gov/MapClick.php?lat=39.1271&amp;lon=-84.5144" target="_blank" style="color: #1DA1F2; text-decoration: none;">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts from the NWS or your local authorities.
     </div>
   </div>
 </div>
@@ -3664,11 +3664,15 @@
       for (let i = 0; i < steps.length; i++) {
         const s = steps[i];
         const el = await mfWaitForElement(s.getEl, { timeoutMs: 2600, intervalMs: 120 });
-        if (!el) continue;
-        // Bus + stop: pick the most centered marker and show tooltip centered above it.
-        // Chip + favorites: anchor to their respective UI elements.
-        if (s.key === 'bus' || s.key === 'stop') mfShowTooltipAboveEl(el, s.text, { ms: 3200 });
-        else mfShowAnchoredTooltip(el, s.text, { ms: 3600, padPx: 12 });
+        // Bus + stop: prefer most-centered marker; if markers aren't in DOM yet, fall back to a centered tooltip.
+        if (s.key === 'bus' || s.key === 'stop') {
+          if (el) mfShowTooltipAboveEl(el, s.text, { ms: 3200 });
+          else mfShowCenteredTooltip(s.text, { ms: 3200 });
+        } else {
+          if (!el) continue;
+          // Chip + favorites: anchor to their respective UI elements.
+          mfShowAnchoredTooltip(el, s.text, { ms: 3600, padPx: 12 });
+        }
         // Give user time to see it; short gap before next.
         await new Promise(r => setTimeout(r, 4000));
       }
@@ -6626,6 +6630,11 @@
     }
   }
 
+  // Cincinnati/NKY NWS "all links out" destination (user-provided).
+  const MF_NWS_CINCY_MAPCLICK_URL = 'https://forecast.weather.gov/MapClick.php?lat=39.1271&lon=-84.5144';
+  // NWS API point for Cincinnati (used to fetch hourly + 7-day forecast).
+  const MF_NWS_CINCY_POINTS_API = 'https://api.weather.gov/points/39.1271,-84.5144';
+
   function loadWeatherAlerts() {
     const alertsContent = document.getElementById('weatherAlertsContent');
     const alertsSummary = document.getElementById('weatherAlertsSummary');
@@ -6635,8 +6644,8 @@
     // Show loading state
     alertsContent.innerHTML = '<div data-translate="checkingAlerts">Checking for alerts...</div>';
     
-    // Massachusetts statewide alerts
-    const alertUrl = 'https://api.weather.gov/alerts/active/area/MA';
+    // Cincinnati/NKY area alerts (NWS supports point queries).
+    const alertUrl = 'https://api.weather.gov/alerts/active?point=39.1271,-84.5144';
     
     // Set proper User-Agent header as required by NWS API
     const headers = {
@@ -6669,25 +6678,8 @@
           const alert = feature.properties;
           const alertId = feature.id || '';
           
-          // Build NWS URL - check for direct link in properties first
-          // NWS alerts often have a 'same' field with the canonical URL, or we can use the @id
-          let nwsUrl = 'https://www.weather.gov/alerts';
-          
-          // Try to get URL from alert properties
-          if (alert.same && Array.isArray(alert.same) && alert.same.length > 0) {
-            // 'same' is an array of related URLs, first one is usually the canonical
-            nwsUrl = alert.same[0];
-          } else if (alert.uri) {
-            nwsUrl = alert.uri;
-          } else if (alertId) {
-            // Construct from alert ID - NWS alert IDs are like: https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1234567890
-            // The weather.gov equivalent might be different, but we can try using the OID
-            const alertIdParts = alertId.split('/');
-            const alertOid = alertIdParts[alertIdParts.length - 1];
-            // Try constructing a weather.gov URL - this might need adjustment based on actual format
-            // For now, use the API URL as fallback (it should redirect or work)
-            nwsUrl = alertId.replace('api.weather.gov', 'www.weather.gov');
-          }
+          // All outbound links must go to Cincinnati MapClick.
+          const nwsUrl = MF_NWS_CINCY_MAPCLICK_URL;
           
           // Escape alert data for use in onclick
           const alertEvent = (alert.event || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
@@ -6708,7 +6700,7 @@
               <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${alert.headline || (alert.description ? alert.description.substring(0, 200) + '...' : 'No description available')}</div>
               ${alert.instruction ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${alert.instruction.substring(0, 150)}${alert.instruction.length > 150 ? '...' : ''}</div>` : ''}
               <div style="margin-top:0.5rem;">
-                <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">View on weather.gov →</a>
+                <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">View on NWS →</a>
               </div>
             </div>
           `;
@@ -6727,7 +6719,7 @@
         alertsSummary.style.background = '#ff9800';
         alertsSummary.style.borderColor = '#ff9800';
         alertsText.textContent = 'Unable to Load Alerts';
-        alertsContent.innerHTML = '<div style="color:#ff9800; padding:1rem;">Unable to load weather alerts. Please check weather.gov for official alerts.</div>';
+        alertsContent.innerHTML = '<div style="color:#ff9800; padding:1rem;">Unable to load weather alerts. Please check the NWS page for official alerts.</div>';
       });
   }
 
@@ -6760,7 +6752,7 @@
         ${instruction ? `<div style="color:#aaa; font-size:0.9rem; font-style:italic; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333; line-height:1.4;">${instruction}</div>` : ''}
         ${areaDesc ? `<div style="color:#888; font-size:0.85rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333;">Areas affected: ${areaDesc}</div>` : ''}
         <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #333; text-align:center;">
-          <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">View full alert on weather.gov →</a>
+          <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">View on NWS →</a>
         </div>
       </div>
     `;
@@ -6853,8 +6845,7 @@
     // Show loading state
     forecastContent.innerHTML = '<div data-translate="loadingForecast">Loading 7-day forecast...</div>';
     
-    // Boston coordinates: 42.3551, -71.0619 (latitude, longitude)
-    const apiUrl = 'https://api.weather.gov/points/42.3551,-71.0619';
+    const apiUrl = MF_NWS_CINCY_POINTS_API;
     
     fetch(apiUrl)
       .then(res => {
@@ -6903,8 +6894,7 @@
     // Show loading state
     hourlyContent.innerHTML = '<div>Loading hourly forecast...</div>';
     
-    // Boston coordinates: 42.3551, -71.0619 (latitude, longitude)
-    const apiUrl = 'https://api.weather.gov/points/42.3551,-71.0619';
+    const apiUrl = MF_NWS_CINCY_POINTS_API;
     
     fetch(apiUrl)
       .then(res => {
