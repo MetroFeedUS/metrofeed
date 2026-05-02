@@ -2105,7 +2105,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260502otp2route"></script>
+<script src="routeOverlay.js?v=20260502otpstylefix"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -9003,14 +9003,19 @@
       loadingSpinner.remove();
     }
     
-    // Validate route data structure
-    if (!routeData.shape || !Array.isArray(routeData.shape) || !routeData.stops || !Array.isArray(routeData.stops)) {
-      console.error('[showRouteOverlay] Route data missing shape or stops:', routeData);
-      alert(`Route ${routeId} data is incomplete. Missing shape or stops data.`);
+    // Validate route data structure (mirror attachRouteToMap: shape XOR shapes[])
+    const hasShapesArr =
+      Array.isArray(routeData.shapes) && routeData.shapes.some((s) => Array.isArray(s) && s.length > 1);
+    const hasSingleShape =
+      Array.isArray(routeData.shape) && routeData.shape.length > 1;
+    if ((!hasShapesArr && !hasSingleShape) || !routeData.stops || !Array.isArray(routeData.stops)) {
+      console.error('[showRouteOverlay] Route data missing shape/shapes or stops:', routeData);
+      alert(`Route ${routeId} data is incomplete. Missing shape/shapes or stops data.`);
       return;
     }
-    
-    console.log('[showRouteOverlay] Found route data:', routeData.route_title, 'shape points:', routeData.shape.length, 'stops:', routeData.stops.length);
+    const dbgPts = hasSingleShape ? routeData.shape.length : routeData.shapes.reduce((n, s) => n + (Array.isArray(s) ? s.length : 0), 0);
+
+    console.log('[showRouteOverlay] Found route data:', routeData.route_title, '| polyline pts:', dbgPts, '| stops:', routeData.stops.length);
 
     let oppositeRouteData = null;
     if (!skipRouteInfoPanel) {

@@ -1597,7 +1597,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     // Determine if OTP is active (for context layer styling)
     const isOtpActive = window.routeLegLines && window.routeLegLines.length > 0;
 
-    // Place route overlay layers before OTP segments (only if OTP active)
+    // Place MetroFeed route lines under OTP leg geometry, but stack multiple trip legs above each other
+    // (mfPickInsertBeforeForRouteOverlay finds the insertion point below the first OTP layer).
     let beforeId = undefined;
     if (isOtpActive) {
       for (const otpLayerId of window.routeLegLines) {
@@ -3104,12 +3105,47 @@ function attachRouteToMap(map, routeId, directionId, options) {
     }
   };
 
-  // ==== Wait for map load if needed ==========================================
-  if (map.loaded && map.loaded()) {
-    addRouteToMap();
-  } else {
-    map.once("load", addRouteToMap);
-  }
+  // ==== Wait until the map style is ready ====================================
+  // BUGFIX: Between style transitions `map.loaded()` / one-time `load` may not line up — the second
+  // OTP-leg overlay must listen for `styledata` until `isStyleLoaded()` is true or we never draw it.
+  (function scheduleAddRouteWhenStyleReady() {
+    let ran = false;
+    function styleReadyNow() {
+      try {
+        if (typeof map.isStyleLoaded === "function") return !!map.isStyleLoaded();
+      } catch (_) {}
+      try {
+        if (typeof map.loaded === "function") return !!map.loaded();
+      } catch (_) {}
+      return true;
+    }
+    const runOnce = () => {
+      if (ran) return;
+      if (!styleReadyNow()) return;
+      try {
+        ran = true;
+        try {
+          map.off("load", runOnce);
+        } catch (_) {}
+        try {
+          map.off("styledata", runOnce);
+        } catch (_) {}
+        addRouteToMap();
+      } catch (err) {
+        console.error("[attachRouteToMap] addRouteToMap failed:", err);
+        ran = true;
+        try {
+          map.off("load", runOnce);
+          map.off("styledata", runOnce);
+        } catch (_) {}
+      }
+    };
+    runOnce();
+    if (!ran) {
+      map.on("load", runOnce);
+      map.on("styledata", runOnce);
+    }
+  })();
 
   // ==== Cleanup handle =======================================================
   return {
