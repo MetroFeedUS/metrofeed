@@ -1384,6 +1384,94 @@ function mfSanitizedOverlayDomKey(raw) {
   return `${safe}_${tag}`;
 }
 
+/** MetroFeed route line layers from attachRouteToMap (solid + dashed opposite-direction underlay). */
+const MF_ROUTE_OVERLAY_LAYER_RE = /^route-layer(-opp)?-/;
+
+/**
+ * Insert new route overlay layers *above* existing MetroFeed route overlays but still below the OTP
+ * leg layers. MapLibre `addLayer(layer, beforeId)` places the layer immediately below `beforeId`.
+ */
+function mfPickInsertBeforeForRouteOverlay(map, otpTopLayerId) {
+  try {
+    if (!map || !otpTopLayerId || typeof map.getStyle !== "function") return otpTopLayerId;
+    const style = map.getStyle();
+    const layers = style && Array.isArray(style.layers) ? style.layers : [];
+    const ids = layers.map((L) => L && L.id);
+    const otpIdx = ids.indexOf(otpTopLayerId);
+    if (otpIdx < 0) return otpTopLayerId;
+    let bottom = otpIdx + 1;
+    while (bottom < ids.length && MF_ROUTE_OVERLAY_LAYER_RE.test(String(ids[bottom] || ""))) {
+      bottom += 1;
+    }
+    return bottom < ids.length ? ids[bottom] : undefined;
+  } catch (_) {
+    return otpTopLayerId;
+  }
+}
+
+function metrofeedEnsureTripUpdatesByOverlayStore() {
+  try {
+    if (!window.mfRouteTripUpdatesByOverlayKey || typeof window.mfRouteTripUpdatesByOverlayKey !== "object") {
+      window.mfRouteTripUpdatesByOverlayKey = Object.create(null);
+    }
+  } catch (_) {}
+}
+
+function metrofeedSetRouteTripUpdatesForOverlay(payload) {
+  metrofeedEnsureTripUpdatesByOverlayStore();
+  try {
+    const key = payload && payload.overlayKey != null ? String(payload.overlayKey) : "";
+    if (!key) return;
+    window.mfRouteTripUpdatesByOverlayKey[key] = payload;
+    // Back-compat: last writer wins for code that still reads window.currentRouteTripUpdates only.
+    window.currentRouteTripUpdates = payload;
+  } catch (_) {}
+}
+
+function metrofeedGetRouteTripUpdatesForOverlay(overlayKey) {
+  metrofeedEnsureTripUpdatesByOverlayStore();
+  try {
+    const key = overlayKey != null ? String(overlayKey) : "";
+    if (
+      window.mfRouteTripUpdatesByOverlayKey &&
+      key &&
+      window.mfRouteTripUpdatesByOverlayKey[key]
+    ) {
+      return window.mfRouteTripUpdatesByOverlayKey[key];
+    }
+  } catch (_) {}
+  try {
+    if (
+      window.currentRouteTripUpdates &&
+      String(window.currentRouteTripUpdates.overlayKey || "") === String(overlayKey || "")
+    ) {
+      return window.currentRouteTripUpdates;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function metrofeedRemoveRouteTripUpdatesForOverlay(overlayKey) {
+  metrofeedEnsureTripUpdatesByOverlayStore();
+  try {
+    const key = overlayKey != null ? String(overlayKey) : "";
+    if (!key || !window.mfRouteTripUpdatesByOverlayKey) return;
+    delete window.mfRouteTripUpdatesByOverlayKey[key];
+    if (
+      window.currentRouteTripUpdates &&
+      String(window.currentRouteTripUpdates.overlayKey || "") === key
+    ) {
+      const remaining = window.mfRouteTripUpdatesByOverlayKey
+        ? Object.keys(window.mfRouteTripUpdatesByOverlayKey).filter((k) => k && k !== key)
+        : [];
+      window.currentRouteTripUpdates =
+        remaining.length && window.mfRouteTripUpdatesByOverlayKey[remaining[0]]
+          ? window.mfRouteTripUpdatesByOverlayKey[remaining[0]]
+          : null;
+    }
+  } catch (_) {}
+}
+
 function attachRouteToMap(map, routeId, directionId, options) {
   options = options || {};
 
@@ -1514,7 +1602,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     if (isOtpActive) {
       for (const otpLayerId of window.routeLegLines) {
         if (map.getLayer(otpLayerId)) {
-          beforeId = otpLayerId;
+          beforeId = mfPickInsertBeforeForRouteOverlay(map, otpLayerId);
           break;
         }
       }
@@ -1931,9 +2019,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const getETADisplay = () => {
         try {
           const overlayKey = etaOverlayKey;
-          const tu = (window.currentRouteTripUpdates && window.currentRouteTripUpdates.overlayKey === overlayKey)
-            ? window.currentRouteTripUpdates
-            : null;
+          const tu = metrofeedGetRouteTripUpdatesForOverlay(overlayKey);
           const stopIdKey = String(stop.stop_id || stopId);
           const tuLabel = (tu && tu.etaLabel) ? tu.etaLabel : "Live";
           const tuListRaw = tu && tu.updatesByStopId && tu.updatesByStopId[stopIdKey] ? tu.updatesByStopId[stopIdKey] : [];
@@ -2723,8 +2809,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const displayVehicleID = metrofeedFormatVehicleLabel(bus, routeId);
 
             const getNextStopFromETAs = () => {
-              const tu = window.currentRouteTripUpdates;
-              if (!tu || tu.overlayKey !== etaOverlayKey || !tu.stopIdToName) return null;
+              const tu = metrofeedGetRouteTripUpdatesForOverlay(etaOverlayKey);
+              if (!tu || !tu.stopIdToName) return null;
               if (Array.isArray(bus.stop_updates) && bus.stop_updates.length) {
                 return metrofeedNextStopFromRealtimeTrip(
                   { stop_updates: bus.stop_updates },
@@ -2738,15 +2824,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             };
 
             const getOccupancyTextLive = () => {
-              const tu = window.currentRouteTripUpdates;
+              const tu = metrofeedGetRouteTripUpdatesForOverlay(etaOverlayKey);
               let occRaw = bus.occupancy ?? bus.occupancy_status;
-              if (
-                (!occRaw || occRaw === "") &&
-                tu &&
-                tu.overlayKey === etaOverlayKey &&
-                bus.tripId &&
-                tu.tripUpdatesByTripId
-              ) {
+              if ((!occRaw || occRaw === "") && tu && bus.tripId && tu.tripUpdatesByTripId) {
                 const tr = tu.tripUpdatesByTripId[String(bus.tripId)];
                 if (tr) {
                   occRaw =
@@ -2870,11 +2950,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
               else if (busDir === 0) dirLabel = isOppositeDir ? "Outbound (opposite)" : "Outbound";
               else dirLabel = "Unknown";
               const nextStopETA = getNextStopFromETAs();
-              const tuLive = window.currentRouteTripUpdates;
-              const hasRealtimeTrips =
-                tuLive &&
-                tuLive.overlayKey === etaOverlayKey &&
-                tuLive.etaSource === "realtime-trips";
+              const tuLive = metrofeedGetRouteTripUpdatesForOverlay(etaOverlayKey);
+              const hasRealtimeTrips = tuLive && tuLive.etaSource === "realtime-trips";
               let nextStopHTML = "";
               if (nextStopETA) {
                 nextStopHTML = `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopETA.stopName}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${nextStopETA.eta}</div>`;
@@ -2959,7 +3036,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const mergedTrips = metrofeedMergeRealtimeTripJsonParts(jsonParts);
           const parsed = parseRealtimeTripsJsonToTripUpdates({ trips: mergedTrips }, routeId, routeData);
           tripIndexForPatternFilter = parsed.tripUpdatesByTripId;
-          window.currentRouteTripUpdates = {
+          metrofeedSetRouteTripUpdatesForOverlay({
             overlayKey: overlayKeyForTrips,
             routeId: String(routeId),
             directionId,
@@ -2969,7 +3046,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             etaLabel: "Live",
             etaSource: "realtime-trips",
             fetchedAt: new Date()
-          };
+          });
           overlayElements.stopPopupRefreshers.forEach(({ overlayKey: ok, update }) => {
             if (ok === overlayKeyForTrips) {
               try {
@@ -3038,9 +3115,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
   return {
     remove: function () {
       const thisOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
-      if (window.currentRouteTripUpdates && window.currentRouteTripUpdates.overlayKey === thisOverlayKey) {
-        window.currentRouteTripUpdates = null;
-      }
+      metrofeedRemoveRouteTripUpdatesForOverlay(thisOverlayKey);
       
       // Layers
       overlayElements.layers.forEach((layerId) => {

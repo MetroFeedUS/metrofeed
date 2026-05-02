@@ -2870,41 +2870,51 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
  * Bare Red/Green: overlay opens after branch pick; chip still lists the leg and opens the branch menu.
  */
 async function applyOtpTripRouteOverlays(routeList) {
-  const existingModal = document.getElementById('otpRouteSelectorModal');
-  if (existingModal) {
-    existingModal.remove();
-  }
+  try {
+    window.__mfOtpApplyingRouteOverlays = true;
+  } catch (_) {}
 
-  if (!routeList || routeList.length === 0) return;
-
-  const needsBranchPicker = typeof window.isRouteGroup === 'function'
-    ? (r) => window.isRouteGroup(r.routeId)
-    : () => false;
-  const routesAuto = routeList.filter(r => !needsBranchPicker(r));
-
-  window.activeTripSelected = true;
-
-  if (typeof window.showRouteOverlay !== 'function') {
-    console.error('[applyOtpTripRouteOverlays] showRouteOverlay not available');
-    return;
-  }
-
-  const toApply = [];
-  routesAuto.forEach((route, idx) => {
-    const mappedRouteId = route.routeId;
-    const flippedDirection = computeOtpFlippedDirectionSync(route);
-    const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : idx;
-    const overlayInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
-    toApply.push({ route, mappedRouteId, flippedDirection, overlayInstanceKey });
-  });
-
-  for (const { route, mappedRouteId, flippedDirection, overlayInstanceKey } of toApply) {
-    try {
-      await window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey, { forceRouteInfoPanel: true });
-    } catch (e) {
-      console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
+  try {
+    const existingModal = document.getElementById('otpRouteSelectorModal');
+    if (existingModal) {
+      existingModal.remove();
     }
-    verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey);
+
+    if (!routeList || routeList.length === 0) return;
+
+    const needsBranchPicker = typeof window.isRouteGroup === 'function'
+      ? (r) => window.isRouteGroup(r.routeId)
+      : () => false;
+    const routesAuto = routeList.filter(r => !needsBranchPicker(r));
+
+    window.activeTripSelected = true;
+
+    if (typeof window.showRouteOverlay !== 'function') {
+      console.error('[applyOtpTripRouteOverlays] showRouteOverlay not available');
+      return;
+    }
+
+    const toApply = [];
+    routesAuto.forEach((route, idx) => {
+      const mappedRouteId = route.routeId;
+      const flippedDirection = computeOtpFlippedDirectionSync(route);
+      const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : idx;
+      const overlayInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
+      toApply.push({ route, mappedRouteId, flippedDirection, overlayInstanceKey });
+    });
+
+    for (const { route, mappedRouteId, flippedDirection, overlayInstanceKey } of toApply) {
+      try {
+        await window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey, { forceRouteInfoPanel: true });
+      } catch (e) {
+        console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
+      }
+      verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey);
+    }
+  } finally {
+    try {
+      window.__mfOtpApplyingRouteOverlays = false;
+    } catch (_) {}
   }
 }
 
