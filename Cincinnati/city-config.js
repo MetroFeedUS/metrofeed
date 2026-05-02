@@ -165,9 +165,9 @@ const CITIES = {
 
     // Public-style map identifier (MetroFeed-hosted tiles); restrict in tile provider dashboard by domain.
     apiKey: "2C4447D4A42083BCD84DE3B8E",
-    // TODO: point to your Cincinnati OTP router when deployed (same pattern as Boston).
-    otpApi: "https://otp.metrofeedus.com/otp/transmodel/v3",
-    otpGtfsGraphql: "https://otp.metrofeedus.com/otp/gtfs/v1",
+    // OTP endpoints (Cincinnati deployment).
+    otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
+    otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
     busApi: null,
 
     defaultCenter: [-84.512, 39.103],

@@ -1025,7 +1025,9 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     logOtpDebug('FETCH_EXCEPTION', { name: e?.name, message: e?.message, stack: e?.stack?.split('\n')?.slice(0, 5)?.join(' | ') });
     console.error('OTP Error:', e);
     if (itinList) {
-      itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server. Please check if the OTP server is running on https://otp.metrofeedus.com</em>`;
+      const cfgUrl = (window.CITY_CONFIG && (window.CITY_CONFIG.otpApi || window.CITY_CONFIG.otpGtfsGraphql)) || '';
+      const hint = cfgUrl ? ` Please check connectivity/CORS for <code>${cfgUrl}</code>.` : '';
+      itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server.${hint}</em>`;
     }
   }
 }
