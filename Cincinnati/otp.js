@@ -2432,6 +2432,87 @@ async function drawJourney(journey) {
         mappedRouteId = mapSubwayRouteCode(leg.routeNumber, routeName);
       }
 
+      /**
+       * OTP gives Cincinnati bus lines as bare publicCode (e.g. "33").
+       * Our route files / overlays use agency-prefixed IDs (e.g. "sorta_33", "tank_12").
+       * So: map OTP → routes_index ID before calling showRouteOverlay().
+       */
+      function mfOtpGuessCityKey() {
+        try {
+          const seg = String(window.location?.pathname || '').split('/').filter(Boolean)[0];
+          return seg ? seg.toLowerCase() : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function mfOtpNorm(s) {
+        return String(s || '')
+          .toLowerCase()
+          .replace(/&amp;/g, '&')
+          .replace(/[^a-z0-9]+/g, ' ')
+          .trim();
+      }
+
+      function mfResolveBusRouteIdFromRoutesIndex(otpCode, otpLineName) {
+        const codeRaw = String(otpCode || '').trim();
+        if (!codeRaw) return null;
+        const cityKey = mfOtpGuessCityKey();
+        const routes = cityKey && window.ROUTES && window.ROUTES[cityKey] && Array.isArray(window.ROUTES[cityKey].busRoutes)
+          ? window.ROUTES[cityKey].busRoutes
+          : null;
+        if (!routes) return null;
+
+        const code = codeRaw;
+        const normName = mfOtpNorm(otpLineName);
+
+        const candidates = routes.filter(r => {
+          const id = String(r?.id || '');
+          const label = String(r?.label || '');
+          const idMatch = id === code || id.endsWith(`_${code}`) || id.includes(`_${code}`);
+          // label examples: "[SORTA] 33 - Harrison", "[TANK] 12 - Bellevue/Dayton", "[TANK] 2X - Airporter"
+          const labelMatch =
+            new RegExp(String.raw`(?:\]|\b)\s*${code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\b`, 'i').test(label) ||
+            label.includes(` ${code} `) ||
+            label.includes(` ${code}-`) ||
+            label.includes(` ${code}X`);
+          return idMatch || labelMatch;
+        });
+
+        if (candidates.length === 0) return null;
+        if (candidates.length === 1) return candidates[0].id;
+
+        if (normName) {
+          const scored = candidates
+            .map(r => {
+              const label = String(r?.label || '');
+              const afterDash = label.includes(' - ') ? label.split(' - ').slice(1).join(' - ') : label;
+              const labelNorm = mfOtpNorm(afterDash);
+              let score = 0;
+              if (labelNorm === normName) score += 10;
+              if (labelNorm && normName && (labelNorm.includes(normName) || normName.includes(labelNorm))) score += 6;
+              // Small boost if any significant token overlaps
+              const nameToks = normName.split(' ').filter(t => t.length >= 4);
+              const labelToks = new Set(labelNorm.split(' ').filter(t => t.length >= 4));
+              for (const t of nameToks) if (labelToks.has(t)) score += 1;
+              return { id: r.id, score };
+            })
+            .sort((a, b) => b.score - a.score);
+          if (scored[0] && scored[0].score > 0) return scored[0].id;
+        }
+
+        return candidates[0].id;
+      }
+
+      if (leg.mode === 'BUS') {
+        const otpCode = leg.line?.publicCode || leg.routeNumber || mappedRouteId;
+        const otpName = leg.line?.name || routeName;
+        const resolved = mfResolveBusRouteIdFromRoutesIndex(otpCode, otpName);
+        if (resolved) {
+          mappedRouteId = resolved;
+        }
+      }
+
       const estimatedCalls = leg.estimatedCalls || leg.stops || null;
       if (estimatedCalls && Array.isArray(estimatedCalls) && estimatedCalls.length > 0) {
         if (mappedRouteId === 'Green') {
@@ -2689,20 +2770,14 @@ function showOtpBranchSelection(routeGroupId, route, button, buttonsContainer) {
  */
 function selectOtpBranchRoute(branchRouteId, directionId, originalRoute, routeGroupId) {
   console.log('🎨 [selectOtpBranchRoute] Selected branch:', branchRouteId, 'direction:', directionId);
-  
-  // Determine if direction needs flipping (same logic as regular routes)
-  const needsFlip = !(originalRoute.mode === 'SUBWAY' || originalRoute.mode === 'METRO');
-  const flippedDirection = needsFlip 
-    ? (directionId === 0 ? 1 : 0)
-    : directionId;
 
   window.activeTripSelected = true;
 
   const legTag = originalRoute.legIndex !== undefined && originalRoute.legIndex !== null ? originalRoute.legIndex : 0;
-  const overlayInstanceKey = `${branchRouteId}-${flippedDirection}-otpLeg${legTag}`;
+  const overlayInstanceKey = `${branchRouteId}-${directionId}-otpLeg${legTag}`;
 
   if (typeof window.showRouteOverlay === 'function') {
-    window.showRouteOverlay(branchRouteId, flippedDirection, undefined, overlayInstanceKey);
+    window.showRouteOverlay(branchRouteId, directionId, undefined, overlayInstanceKey);
   } else {
     console.error('🎨 [selectOtpBranchRoute] showRouteOverlay not available');
     alert('Route overlay system not ready. Please refresh the page.');
@@ -2713,18 +2788,9 @@ function selectOtpBranchRoute(branchRouteId, directionId, originalRoute, routeGr
  * Same initial direction logic as OTP route-selector buttons (sync only; BUS may refine async).
  */
 function computeOtpFlippedDirectionSync(route) {
-  const needsFlip = !(route.mode === 'SUBWAY' || route.mode === 'METRO');
-  const mappedRouteId = route.routeId;
-  if (needsFlip && route.mode === 'BUS' && mappedRouteId && window.routeLoader) {
-    return needsFlip ? (route.directionId === 0 ? 1 : 0) : route.directionId;
-  }
-  if (needsFlip) {
-    if (route.directionCalculated) {
-      return route.directionId;
-    }
-    return route.directionId === 0 ? 1 : 0;
-  }
-  return route.directionId;
+  // OTP already provides a consistent direction context for legs.
+  // Flipping here causes wrong direction file fetches (dir0 vs dir1) in cities like Cincinnati.
+  return route && (route.directionId === 1 || route.directionId === 0) ? route.directionId : 0;
 }
 
 /**
