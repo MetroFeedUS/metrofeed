@@ -1369,6 +1369,21 @@ function metrofeedGetSharedVehicleFeedManager() {
   return mgr;
 }
 
+/**
+ * DOM / MapLibre layer id slug from full overlay key.
+ * Sanitize alone can collide (e.g. different legs shortening to same string); append a stable hash suffix.
+ */
+function mfSanitizedOverlayDomKey(raw) {
+  const s = String(raw == null || raw === "" ? "overlay" : raw);
+  const safe = s.replace(/[^a-zA-Z0-9_-]/g, "_");
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) {
+    h = (h * 33) ^ s.charCodeAt(i);
+  }
+  const tag = (h >>> 0).toString(36);
+  return `${safe}_${tag}`;
+}
+
 function attachRouteToMap(map, routeId, directionId, options) {
   options = options || {};
 
@@ -1465,7 +1480,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
   // ==== Internal: build & attach =================================================
   const addRouteToMap = () => {
     // Unique MapLibre source/layer + route-info DOM id (supports multiple OTP legs for same route+dir)
-    const mapLayerKey = String(options.overlayKey || `${routeId}-${directionId}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const rawOverlayKeyForDom =
+      options.overlayKey != null && String(options.overlayKey).trim() !== ""
+        ? String(options.overlayKey)
+        : `${routeId}-${directionId}`;
+    const mapLayerKey = mfSanitizedOverlayDomKey(rawOverlayKeyForDom);
     const etaOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
 
     // ⚠️ CRITICAL: shapes[] rendering is LINE-ONLY
@@ -2108,6 +2127,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
         justify-content:center;
         cursor:pointer;
         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+        pointer-events:auto;
+        touch-action:manipulation;
       `;
       
       // Create close button
@@ -2129,6 +2150,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         justify-content:center;
         border-radius:4px;
         line-height:1;
+        pointer-events:auto;
       `;
       // Keep close button readable on bright route colors (e.g. yellow)
       closeBtn.style.color = chipFg;
@@ -2322,7 +2344,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           'right:0',
           'bottom:0',
           'background:rgba(0,0,0,0.25)',
-          'z-index:5000'
+          'z-index:5000',
+          'pointer-events:auto',
+          'touch-action:manipulation'
         ].join(';');
 
         const sheet = document.createElement('div');
@@ -2338,7 +2362,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           'border-radius:10px',
           'box-shadow:0 10px 26px rgba(0,0,0,0.55)',
           'padding:10px',
-          'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif'
+          'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
+          'pointer-events:auto',
+          'z-index:5001'
         ].join(';');
 
         const title = document.createElement('div');
