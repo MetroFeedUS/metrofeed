@@ -2951,6 +2951,10 @@ function getOtpTripChipStackLayout(hostEl) {
  * @param {Array} routeList - from drawJourney: {routeId, directionId, mode, color, name, legIndex, ...}
  */
 function showOtpRouteSelector(routeList) {
+  // Deprecated: OTP trip chips are now the standard floating route chips created by showRouteOverlay().
+  // Keep this function as a no-op to avoid accidental calls from stale code paths.
+  return;
+
   // Remove existing modal if present
   const existingModal = document.getElementById('otpRouteSelectorModal');
   if (existingModal) {
@@ -3117,7 +3121,7 @@ function showOtpRouteSelector(routeList) {
         }).catch(() => setTimeout(updateAllButtonStates, 120));
         return;
       }
-      window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey).then(() => {
+      window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey, { forceRouteInfoPanel: true }).then(() => {
         setTimeout(updateAllButtonStates, 120);
       }).catch(() => setTimeout(updateAllButtonStates, 120));
     };
