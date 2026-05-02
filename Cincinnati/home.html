@@ -8861,7 +8861,11 @@
       overlayInstanceKey !== undefined && overlayInstanceKey !== null && String(overlayInstanceKey) !== ''
         ? String(overlayInstanceKey)
         : `${routeId}-${directionId}`;
-    const skipRouteInfoPanel = /-otpLeg\d+$/.test(overlayKey);
+    const isOtpLegOverlay = /-otpLeg\d+$/.test(overlayKey);
+    // OTP leg overlays are multi-instance; keep the "skip toggle/off + opposite-direction replace" behavior,
+    // but allow showing the standard floating route chip when caller requests it.
+    const skipRouteInfoPanel = isOtpLegOverlay;
+    const skipRouteInfoPanelUi = isOtpLegOverlay && !(opts && (opts.forceRouteInfoPanel === true || opts.useRouteInfoPanel === true));
 
     // Startup/auto-load should be idempotent: repeated calls should not toggle the overlay off.
     const ensureOn = !!(opts && (opts.ensureOn === true || opts.noToggleOff === true));
@@ -9046,7 +9050,7 @@
       disableGtfsRt: CITY_CONFIG.disableGtfsRt, // Keep code but skip GTFS-RT fetch/parse when true
       trackBuses: true, // Enable bus tracking for route overlay
       overlayKey: overlayKey, // Pass the actual overlay key for close button to use
-      skipRouteInfoPanel: skipRouteInfoPanel
+      skipRouteInfoPanel: skipRouteInfoPanelUi
     });
     
     window.activeRouteOverlays[overlayKey] = overlay;
@@ -9065,7 +9069,7 @@
       disableGtfsRt: CITY_CONFIG.disableGtfsRt,
       trackBuses: true,
       overlayKey: overlayKey,
-      skipRouteInfoPanel: skipRouteInfoPanel
+      skipRouteInfoPanel: skipRouteInfoPanelUi
     };
     window.activeRouteOverlayDescriptors[overlayKey] = {
       attachRouteId: busTrackingRouteId, // For bus tracking (base route ID)

@@ -2777,7 +2777,7 @@ function selectOtpBranchRoute(branchRouteId, directionId, originalRoute, routeGr
   const overlayInstanceKey = `${branchRouteId}-${directionId}-otpLeg${legTag}`;
 
   if (typeof window.showRouteOverlay === 'function') {
-    window.showRouteOverlay(branchRouteId, directionId, undefined, overlayInstanceKey);
+    window.showRouteOverlay(branchRouteId, directionId, undefined, overlayInstanceKey, { forceRouteInfoPanel: true });
   } else {
     console.error('🎨 [selectOtpBranchRoute] showRouteOverlay not available');
     alert('Route overlay system not ready. Please refresh the page.');
@@ -2859,7 +2859,7 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
         delete window.activeRouteOverlayDescriptors[overlayInstanceKey];
       }
     }
-    window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, newInstanceKey);
+    window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, newInstanceKey, { forceRouteInfoPanel: true });
   }).catch(err => {
     console.warn(`[verifyOtpBusOverlayDirection] ${mappedRouteId}:`, err);
   });
@@ -2886,7 +2886,6 @@ async function applyOtpTripRouteOverlays(routeList) {
 
   if (typeof window.showRouteOverlay !== 'function') {
     console.error('[applyOtpTripRouteOverlays] showRouteOverlay not available');
-    showOtpRouteSelector(routeList);
     return;
   }
 
@@ -2901,14 +2900,12 @@ async function applyOtpTripRouteOverlays(routeList) {
 
   for (const { route, mappedRouteId, flippedDirection, overlayInstanceKey } of toApply) {
     try {
-      await window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey);
+      await window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey, { forceRouteInfoPanel: true });
     } catch (e) {
       console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
     }
     verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey);
   }
-
-  showOtpRouteSelector(routeList);
 }
 
 /**
