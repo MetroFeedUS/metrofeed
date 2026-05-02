@@ -2156,7 +2156,22 @@
    * makes them unclickable. Mount to `document.body` instead so chips are clickable without blocking the map.
    */
   window.getRouteOverlayMount = function (_map) {
-    return document.body;
+    // Dedicated fixed HUD layer for route chips/panels + action sheets.
+    // Prevents stacking/collision issues and avoids absolute-positioning surprises on <body>.
+    let hud = document.getElementById('mfRouteHud');
+    if (!hud) {
+      hud = document.createElement('div');
+      hud.id = 'mfRouteHud';
+      hud.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'z-index:12000',
+        'pointer-events:none',
+        'overflow:visible'
+      ].join(';');
+      document.body.appendChild(hud);
+    }
+    return hud;
   };
 
   /**

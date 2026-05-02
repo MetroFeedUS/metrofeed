@@ -2020,7 +2020,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
     // ---------- Route info panel (mainOverlay only) ----------
     // OTP trip legs use .otp-trip-route-chip on the rail instead (see otp.js).
-    if (mode === "mainOverlay" && options.routePageUrl && !options.skipRouteInfoPanel) {
+    // Route chip UI (floating chips). Historically gated by routePageUrl; that caused OTP legs
+    // (and any overlay without a route page URL) to silently miss chips even though overlays loaded.
+    if (mode === "mainOverlay" && !options.skipRouteInfoPanel) {
       const panelId = `route-info-${mapLayerKey}`;
       const existing = document.getElementById(panelId);
       if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
