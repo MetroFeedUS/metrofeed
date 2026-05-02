@@ -2032,7 +2032,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
       
       // Start collapsed as a circle (default) or Metro/TANK pill (Cincinnati)
       // Find the next available position (highest existing index + 1)
-      const allPanels = Array.from(routeOverlayPanelHost(map).querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
+      const panelHost = routeOverlayPanelHost(map);
+      const allPanels = Array.from(panelHost.querySelectorAll('.route-info-panel, .otp-trip-route-chip'));
       const collapsedPanels = allPanels.filter(panel => 
         panel.getAttribute('data-collapsed') === 'true'
       );
@@ -2066,9 +2067,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
       routeInfoPanel.setAttribute('data-collapsed', 'true');
       routeInfoPanel.setAttribute('data-collapse-index', panelIndex.toString());
       
+      const hostIsBody = panelHost === document.body;
+      const posMode = hostIsBody ? "fixed" : "absolute";
+      const rightInset = hostIsBody ? "20px" : "10px";
       routeInfoPanel.style.cssText = `
-        position:absolute;
-        right:10px;
+        position:${posMode};
+        right:${rightInset};
         top:${verticalPosition}px;
         width:${isPill ? (pillWidth + "px") : (circleSize + "px")};
         height:${circleSize}px;
