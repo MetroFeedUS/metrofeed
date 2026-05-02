@@ -2042,7 +2042,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
       collapsedPanels.forEach(panel => {
         const storedIndex = panel.getAttribute('data-collapse-index');
         if (storedIndex !== null) {
-          maxIndex = Math.max(maxIndex, parseInt(storedIndex, 10));
+          const n = parseInt(storedIndex, 10);
+          if (Number.isFinite(n)) {
+            maxIndex = Math.max(maxIndex, n);
+          }
         }
       });
       
