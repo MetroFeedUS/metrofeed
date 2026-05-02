@@ -2050,7 +2050,20 @@ function attachRouteToMap(map, routeId, directionId, options) {
         }
       });
       
-      const panelIndex = maxIndex + 1; // Next available position
+      // OTP trip legs already carry a stable leg index in the overlayKey (e.g. "...-otpLeg2").
+      // Use it for stacking so multiple OTP legs never collide or depend on DOM scan timing.
+      let panelIndex = maxIndex + 1; // default: next available position
+      try {
+        const ok = String(options.overlayKey || "");
+        const m = ok.match(/-otpLeg(\d+)/);
+        if (m && m[1]) {
+          const legIx = parseInt(m[1], 10);
+          if (Number.isFinite(legIx)) {
+            // Keep 0-based-ish stacking; ensure non-negative.
+            panelIndex = Math.max(0, legIx);
+          }
+        }
+      } catch (_) {}
       const chipSpec = buildRouteFloatingChipLabel(routeId);
       const isPill = !!chipSpec.isAgencyStyle;
       const chipBg = routeColor || (String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35"));
