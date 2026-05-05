@@ -3123,21 +3123,28 @@ function attachRouteToMap(map, routeId, directionId, options) {
       if (ran) return;
       if (!styleReadyNow()) return;
       try {
-        ran = true;
-        try {
-          map.off("load", runOnce);
-        } catch (_) {}
-        try {
-          map.off("styledata", runOnce);
-        } catch (_) {}
         addRouteToMap();
-      } catch (err) {
-        console.error("[attachRouteToMap] addRouteToMap failed:", err);
+        // Only mark as done after addRouteToMap succeeds.
         ran = true;
-        try {
-          map.off("load", runOnce);
-          map.off("styledata", runOnce);
-        } catch (_) {}
+        try { map.off("load", runOnce); } catch (_) {}
+        try { map.off("styledata", runOnce); } catch (_) {}
+      } catch (err) {
+        // If the style is still mid-load, keep listening and retry on the next styledata tick.
+        // (MapLibre can throw "Style is not done loading" even when isStyleLoaded() just flipped.)
+        const msg = String(err && (err.message || err) || "");
+        const retryable =
+          /style.*not.*done.*loading/i.test(msg) ||
+          /Style is not done loading/i.test(msg) ||
+          /Cannot add layer before style is loaded/i.test(msg);
+        if (!retryable) {
+          console.error("[attachRouteToMap] addRouteToMap failed (non-retryable):", err);
+          ran = true;
+          try { map.off("load", runOnce); } catch (_) {}
+          try { map.off("styledata", runOnce); } catch (_) {}
+        } else {
+          // Leave listeners attached; a later styledata should succeed.
+          try { console.warn("[attachRouteToMap] addRouteToMap deferred; style not ready yet"); } catch (_) {}
+        }
       }
     };
     runOnce();
