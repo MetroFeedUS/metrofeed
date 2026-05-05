@@ -2105,7 +2105,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260505otpdimA3stops"></script>
+<script src="routeOverlay.js?v=20260505otpdimA4stops"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js"></script>
 <script src="savedPlaces.js"></script>
@@ -9075,7 +9075,11 @@
       disableGtfsRt: CITY_CONFIG.disableGtfsRt, // Keep code but skip GTFS-RT fetch/parse when true
       trackBuses: true, // Enable bus tracking for route overlay
       overlayKey: overlayKey, // Pass the actual overlay key for close button to use
-      skipRouteInfoPanel: skipRouteInfoPanelUi
+      skipRouteInfoPanel: skipRouteInfoPanelUi,
+      // OTP leg overlay helpers (used to dim/brighten only the ridden segment + stops)
+      otpFromStop: opts && opts.otpFromStop ? String(opts.otpFromStop) : undefined,
+      otpToStop: opts && opts.otpToStop ? String(opts.otpToStop) : undefined,
+      otpSegment: opts && Array.isArray(opts.otpSegment) ? opts.otpSegment : undefined
     });
     
     window.activeRouteOverlays[overlayKey] = overlay;
@@ -9094,7 +9098,10 @@
       disableGtfsRt: CITY_CONFIG.disableGtfsRt,
       trackBuses: true,
       overlayKey: overlayKey,
-      skipRouteInfoPanel: skipRouteInfoPanelUi
+      skipRouteInfoPanel: skipRouteInfoPanelUi,
+      otpFromStop: opts && opts.otpFromStop ? String(opts.otpFromStop) : undefined,
+      otpToStop: opts && opts.otpToStop ? String(opts.otpToStop) : undefined,
+      otpSegment: opts && Array.isArray(opts.otpSegment) ? opts.otpSegment : undefined
     };
     window.activeRouteOverlayDescriptors[overlayKey] = {
       attachRouteId: busTrackingRouteId, // For bus tracking (base route ID)

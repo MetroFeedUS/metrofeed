@@ -2052,7 +2052,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const canGeomFilter =
             otpSegment && otpSegment.length > 2 && typeof metrofeedNearestSegmentInfo === "function";
           if (!hasBounds && !canGeomFilter) {
-            stopOpacity = 0.9;
+            // Still keep OTP context dimming even if we can't precisely locate the segment.
+            stopOpacity = isOtpActive ? 0.25 : 0.9;
           } else {
             const i = stops.indexOf(stop);
             let inTripRange = true;
