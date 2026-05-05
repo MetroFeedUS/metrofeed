@@ -2801,6 +2801,13 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
   if (!needsFlip || route.mode !== 'BUS' || !mappedRouteId) return;
   if (typeof window.showRouteOverlay !== 'function') return;
 
+  // Prevent thrash: only validate once per otp leg overlay key.
+  try {
+    window.__mfOtpDirValidationDone = window.__mfOtpDirValidationDone || Object.create(null);
+    if (overlayInstanceKey && window.__mfOtpDirValidationDone[String(overlayInstanceKey)]) return;
+    if (overlayInstanceKey) window.__mfOtpDirValidationDone[String(overlayInstanceKey)] = true;
+  } catch (_) {}
+
   const loadRouteStops = (rid, dir) => {
     // Boston lazy loader path
     if (window.routeLoader && typeof window.routeLoader.loadRoute === 'function') {
@@ -2834,46 +2841,58 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
     return fetchFirstOk();
   };
 
+  function normStop(s) {
+    return String(s || '')
+      .toLowerCase()
+      .replace(/&amp;/g, '&')
+      .replace(/[^a-z0-9]+/g, '')
+      .trim();
+  }
+
+  function findStopIndex(otpStopName, routeStops) {
+    if (!otpStopName || !routeStops || !routeStops.length) return -1;
+    const target = normStop(otpStopName);
+    if (!target) return -1;
+    // Exact-ish match first
+    for (let i = 0; i < routeStops.length; i++) {
+      const n = normStop(routeStops[i] && routeStops[i].name);
+      if (n && (n === target || n.includes(target) || target.includes(n))) return i;
+    }
+    return -1;
+  }
+
+  function validateDirByStopOrder(dirData) {
+    try {
+      if (!dirData || !Array.isArray(dirData.stops) || !dirData.stops.length) return { ok: false };
+      const fromIx = findStopIndex(route.fromStop, dirData.stops);
+      const toIx = findStopIndex(route.toStop, dirData.stops);
+      if (fromIx < 0 || toIx < 0) return { ok: false, fromIx, toIx };
+      return { ok: fromIx <= toIx, fromIx, toIx };
+    } catch (_) {
+      return { ok: false };
+    }
+  }
+
   Promise.all([
     loadRouteStops(mappedRouteId, 0),
     loadRouteStops(mappedRouteId, 1)
   ]).then(([dir0Data, dir1Data]) => {
     if (!dir0Data || !dir1Data || !dir0Data.stops || !dir1Data.stops) return;
 
-    const otpFrom = (route.fromStop || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-    const otpTo = (route.toStop || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
+    const intendedDir = (route.directionId === 0 || route.directionId === 1) ? route.directionId : 0;
+    const otherDir = intendedDir === 0 ? 1 : 0;
 
-    function normalizeStopName(name) {
-      return (name || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
-    }
+    const intendedData = intendedDir === 0 ? dir0Data : dir1Data;
+    const otherData = otherDir === 0 ? dir0Data : dir1Data;
 
-    function calculateDirectionScore(otpFromNorm, otpToNorm, routeStops) {
-      if (!routeStops || routeStops.length === 0) return 0;
-      let score = 0;
-      const firstStop = normalizeStopName(routeStops[0]?.name);
-      const lastStop = normalizeStopName(routeStops[routeStops.length - 1]?.name);
-      if (otpFromNorm && otpFromNorm === firstStop) score += 5;
-      if (otpToNorm && otpToNorm === lastStop) score += 5;
-      if (otpFromNorm && (otpFromNorm.includes(firstStop) || firstStop.includes(otpFromNorm)) && otpFromNorm !== firstStop) score += 3;
-      if (otpToNorm && (otpToNorm.includes(lastStop) || lastStop.includes(otpToNorm)) && otpToNorm !== lastStop) score += 3;
-      const otpFromN = normalizeStopName(otpFromNorm);
-      const otpToN = normalizeStopName(otpToNorm);
-      routeStops.forEach((stop, idx) => {
-        const stopName = normalizeStopName(stop.name);
-        if (stopName === otpFromN || stopName === otpToN) {
-          const isNearTerminal = idx < 3 || idx > routeStops.length - 4;
-          score += isNearTerminal ? 2 : 1;
-        }
-      });
-      return score;
-    }
+    const vInt = validateDirByStopOrder(intendedData);
+    const vOther = validateDirByStopOrder(otherData);
 
-    const dir0Score = calculateDirectionScore(otpFrom, otpTo, dir0Data.stops);
-    const dir1Score = calculateDirectionScore(otpFrom, otpTo, dir1Data.stops);
-    const bestDirection = dir1Score > dir0Score ? 1 : (dir0Score > dir1Score ? 0 : route.directionId);
-    if (!(bestDirection === 0 || bestDirection === 1)) return;
-    if (route.directionId === bestDirection) return;
-    const flippedDirection = bestDirection;
+    // If intended direction validates, keep it. If not, but the other validates, flip.
+    // If neither validates (stop names don't match well), do nothing rather than flipping randomly.
+    if (vInt.ok) return;
+    if (!vOther.ok) return;
+    const flippedDirection = otherDir;
 
     const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : 0;
     const newInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
