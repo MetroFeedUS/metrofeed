@@ -3366,7 +3366,7 @@ window.pickNextRouteOverlayColorSlot = function pickNextRouteOverlayColorSlot() 
 
 /**
  * OTP helper: decorate an existing stop marker in-place (no duplicate dot).
- * Finds a stop marker for the given overlayKey and stopName, then injects a small B/A label.
+ * Finds a stop marker for the given overlayKey and stop/coords; `role` is the trip milestone label ("1","2","3",…).
  */
 window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
   try {
@@ -3429,7 +3429,7 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
         }
       }
     }
-    // Name mismatch is common (OTP vs static GTFS wording); fall back to board/alight coordinates.
+    // Name mismatch is common (OTP vs static GTFS wording); fall back to OTP coordinates.
     if (!best && hasCoord) {
       const maxM = 220;
       let bestD = Infinity;
@@ -3466,19 +3466,30 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
       return false;
     }
 
-    // Inject / update role label
-    const tagId = `mf-otp-role-${role}`;
-    let badge = best.querySelector(`span[data-otp-role="${tagId}"]`);
+    // Inject / update milestone label (one badge per labeled stop).
+    const tagId = `mf-otp-step-${role}`;
+    try {
+      best.querySelectorAll("span[data-otp-trip-milestone]").forEach((n) => {
+        try {
+          n.remove();
+        } catch (_) {}
+      });
+    } catch (_) {}
+    let badge = best.querySelector(`span[data-otp-trip-milestone="${tagId}"]`);
     if (!badge) {
       badge = document.createElement("span");
-      badge.setAttribute("data-otp-role", tagId);
+      badge.setAttribute("data-otp-trip-milestone", tagId);
+      badge.setAttribute("data-otp-trip-step", role);
       best.appendChild(badge);
     }
 
     // Make dot slightly larger + readable, but keep original click handler intact.
+    const digits = role.length;
     best.style.position = "relative";
-    best.style.width = "18px";
-    best.style.height = "18px";
+    best.style.boxSizing = "border-box";
+    best.style.width = digits >= 2 ? "20px" : "18px";
+    best.style.height = digits >= 2 ? "20px" : "18px";
+    best.style.minWidth = digits >= 2 ? "20px" : "18px";
     // Preserve existing ring color if present; otherwise fallback to white.
     const existingBorder = best.style.border && String(best.style.border).trim() ? best.style.border : null;
     if (!existingBorder) best.style.border = "3px solid #fff";
@@ -3494,7 +3505,7 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
     badge.style.display = "flex";
     badge.style.alignItems = "center";
     badge.style.justifyContent = "center";
-    badge.style.fontSize = "11px";
+    badge.style.fontSize = digits >= 2 ? "9px" : "11px";
     badge.style.fontWeight = "800";
     badge.style.color = "#fff";
     badge.style.textShadow = "0 0 2px #000, 0 0 4px #000";

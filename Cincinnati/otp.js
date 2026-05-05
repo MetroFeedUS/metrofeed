@@ -2408,7 +2408,7 @@ async function drawJourney(journey) {
   };
 
   // We no longer place separate S/T/D markers; origins/dest pins already exist.
-  // Bus milestones (B/A) are applied by decorating existing stop markers in route overlays.
+  // Trip stop milestones (1,2,3…) are applied by decorating existing stop markers in route overlays.
 
   // Render each leg
   journey.legs.forEach((leg, legIdx) => {
@@ -2693,7 +2693,7 @@ async function drawJourney(journey) {
     }
   });
 
-  // (B/A markers are applied after showRouteOverlay in applyOtpTripRouteOverlays.)
+  // (Numbered stop milestones are applied after showRouteOverlay in applyOtpTripRouteOverlays.)
 
   // Fit map to bounds
   if (allCoords.length > 0) {
@@ -3046,6 +3046,8 @@ async function applyOtpTripRouteOverlays(routeList) {
       toApply.push({ route, mappedRouteId, flippedDirection, overlayInstanceKey });
     });
 
+    // Sequential trip milestones on the map: 1 board, 2 off, 3 board next leg…
+    let tripStepNum = 1;
     for (const { route, mappedRouteId, flippedDirection, overlayInstanceKey } of toApply) {
       try {
         await window.showRouteOverlay(
@@ -3058,13 +3060,13 @@ async function applyOtpTripRouteOverlays(routeList) {
       } catch (e) {
         console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
       }
-      // Decorate existing stop dots (no duplicate markers): Board/Alight
+      // Decorate existing stop dots in trip order (no duplicate markers).
       try {
         if (window.metrofeedMarkOtpStopRole) {
           if (route.fromStop || (Number.isFinite(route.fromStopLat) && Number.isFinite(route.fromStopLon))) {
             window.metrofeedMarkOtpStopRole({
               overlayKey: overlayInstanceKey,
-              role: "B",
+              role: String(tripStepNum++),
               stopName: route.fromStop || "",
               stopLat: route.fromStopLat,
               stopLon: route.fromStopLon,
@@ -3074,7 +3076,7 @@ async function applyOtpTripRouteOverlays(routeList) {
           if (route.toStop || (Number.isFinite(route.toStopLat) && Number.isFinite(route.toStopLon))) {
             window.metrofeedMarkOtpStopRole({
               overlayKey: overlayInstanceKey,
-              role: "A",
+              role: String(tripStepNum++),
               stopName: route.toStop || "",
               stopLat: route.toStopLat,
               stopLon: route.toStopLon,
