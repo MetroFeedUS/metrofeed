@@ -2606,6 +2606,7 @@ async function drawJourney(journey) {
           legIndex: legIdx,
           fromStop: fromStop,
           toStop: toStop,
+          otpSegment: Array.isArray(leg.solidSegment) ? leg.solidSegment : null,
           directionCalculated: leg.directionCalculated || false,
           routeVerified: leg.routeVerified || false
         });
@@ -2941,7 +2942,7 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
       flippedDirection,
       undefined,
       newInstanceKey,
-      { forceRouteInfoPanel: true, routeColor: route.color, otpFromStop: route.fromStop, otpToStop: route.toStop }
+      { forceRouteInfoPanel: true, routeColor: route.color, otpFromStop: route.fromStop, otpToStop: route.toStop, otpSegment: route.otpSegment }
     );
   }).catch(err => {
     console.warn(`[verifyOtpBusOverlayDirection] ${mappedRouteId}:`, err);
@@ -2993,7 +2994,7 @@ async function applyOtpTripRouteOverlays(routeList) {
           flippedDirection,
           undefined,
           overlayInstanceKey,
-          { forceRouteInfoPanel: true, routeColor: route.color, otpFromStop: route.fromStop, otpToStop: route.toStop }
+          { forceRouteInfoPanel: true, routeColor: route.color, otpFromStop: route.fromStop, otpToStop: route.toStop, otpSegment: route.otpSegment }
         );
       } catch (e) {
         console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);

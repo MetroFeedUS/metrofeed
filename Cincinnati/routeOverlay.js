@@ -1993,6 +1993,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       })();
       const otpFromStop = options && options.otpFromStop ? String(options.otpFromStop) : "";
       const otpToStop = options && options.otpToStop ? String(options.otpToStop) : "";
+      const otpSegment = options && Array.isArray(options.otpSegment) ? options.otpSegment : null;
       const otpStopNorm = (s) =>
         String(s || "")
           .toLowerCase()
@@ -2047,11 +2048,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (isOtpLegOverlay) {
           // If we cannot confidently locate the boarding/alighting stops, do NOT dim all stops.
           // (Stop-name matching can fail due to abbreviations; better to stay readable than hide data.)
-          if (otpFromIx < 0 || otpToIx < 0) {
+          const hasBounds = otpFromIx >= 0 && otpToIx >= 0;
+          const canGeomFilter =
+            otpSegment && otpSegment.length > 2 && typeof metrofeedNearestSegmentInfo === "function";
+          if (!hasBounds && !canGeomFilter) {
             stopOpacity = 0.9;
           } else {
             const i = stops.indexOf(stop);
-            const inTripRange = i >= otpFromIx && i <= otpToIx;
+            let inTripRange = true;
+            if (hasBounds) {
+              inTripRange = i >= otpFromIx && i <= otpToIx;
+            }
+            // Geometry filter: only highlight stops close to the actual OTP ridden polyline.
+            if (inTripRange && canGeomFilter) {
+              try {
+                const info = metrofeedNearestSegmentInfo(otpSegment, lat, lon);
+                const maxM =
+                  window.CITY_CONFIG && Number.isFinite(Number(window.CITY_CONFIG.otpStopHighlightMaxDistanceMeters))
+                    ? Number(window.CITY_CONFIG.otpStopHighlightMaxDistanceMeters)
+                    : 120;
+                if (!info || !Number.isFinite(info.distanceM) || info.distanceM > maxM) {
+                  inTripRange = false;
+                }
+              } catch (_) {}
+            }
             if (inTripRange) {
               stopOpacity = 0.92;
               // Subtle emphasis: a tiny glow and slightly thicker ring.
