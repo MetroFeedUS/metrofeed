@@ -1245,6 +1245,19 @@ class Journey {
   }
 }
 
+/** OTP legs may use fromPlace/toPlace (GraphQL) or from/to (GTFS plan / compat); lat may be latitude. */
+function mfOtpLegEndpoint(place, compact) {
+  const src = place || compact;
+  if (!src || typeof src !== "object") return null;
+  const name = src.name != null ? String(src.name).trim() : "";
+  const latRaw = src.latitude != null ? src.latitude : src.lat;
+  const lonRaw = src.longitude != null ? src.longitude : src.lon;
+  const lat = latRaw != null && latRaw !== "" ? Number(latRaw) : null;
+  const lng = lonRaw != null && lonRaw !== "" ? Number(lonRaw) : null;
+  if (!name && (lat == null || lng == null || !Number.isFinite(lat) || !Number.isFinite(lng))) return null;
+  return { name, lat, lng };
+}
+
 class JourneyLeg {
   constructor(leg, index) {
     this.index = index;
@@ -1266,17 +1279,9 @@ class JourneyLeg {
     this.serviceJourneyId = leg.tripId || null;
     this.routeVerified = false; // Whether route was verified by stop sequence match
     
-    // Places
-    this.boardingPoint = leg.fromPlace ? {
-      name: leg.fromPlace.name,
-      lat: leg.fromPlace.latitude,
-      lng: leg.fromPlace.longitude
-    } : null;
-    this.alightingPoint = leg.toPlace ? {
-      name: leg.toPlace.name,
-      lat: leg.toPlace.latitude,
-      lng: leg.toPlace.longitude
-    } : null;
+    // Places (JourneyLeg does not expose raw leg.from — use boarding/alighting only)
+    this.boardingPoint = mfOtpLegEndpoint(leg.fromPlace, leg.from);
+    this.alightingPoint = mfOtpLegEndpoint(leg.toPlace, leg.to);
     
     // Stops (if available)
     this.stops = leg.estimatedCalls || null;
@@ -2613,8 +2618,16 @@ async function drawJourney(journey) {
         );
       }
 
-      const fromStop = leg.from?.name || '';
-      const toStop = leg.to?.name || '';
+      const fromStop = (leg.boardingPoint && leg.boardingPoint.name) || '';
+      const toStop = (leg.alightingPoint && leg.alightingPoint.name) || '';
+      const fromStopLat =
+        leg.boardingPoint && Number.isFinite(Number(leg.boardingPoint.lat)) ? Number(leg.boardingPoint.lat) : null;
+      const fromStopLon =
+        leg.boardingPoint && Number.isFinite(Number(leg.boardingPoint.lng)) ? Number(leg.boardingPoint.lng) : null;
+      const toStopLat =
+        leg.alightingPoint && Number.isFinite(Number(leg.alightingPoint.lat)) ? Number(leg.alightingPoint.lat) : null;
+      const toStopLon =
+        leg.alightingPoint && Number.isFinite(Number(leg.alightingPoint.lng)) ? Number(leg.alightingPoint.lng) : null;
 
       let routeColor = color;
       if (leg.mode === 'SUBWAY' || leg.mode === 'METRO' || leg.mode === 'TRAM') {
@@ -2646,6 +2659,10 @@ async function drawJourney(journey) {
           legIndex: legIdx,
           fromStop: fromStop,
           toStop: toStop,
+          fromStopLat,
+          fromStopLon,
+          toStopLat,
+          toStopLon,
           otpSegment: Array.isArray(leg.solidSegment) ? leg.solidSegment : null,
           directionCalculated: leg.directionCalculated || false,
           routeVerified: leg.routeVerified || false
@@ -3044,19 +3061,23 @@ async function applyOtpTripRouteOverlays(routeList) {
       // Decorate existing stop dots (no duplicate markers): Board/Alight
       try {
         if (window.metrofeedMarkOtpStopRole) {
-          if (route.fromStop) {
+          if (route.fromStop || (Number.isFinite(route.fromStopLat) && Number.isFinite(route.fromStopLon))) {
             window.metrofeedMarkOtpStopRole({
               overlayKey: overlayInstanceKey,
               role: "B",
-              stopName: route.fromStop,
+              stopName: route.fromStop || "",
+              stopLat: route.fromStopLat,
+              stopLon: route.fromStopLon,
               color: route.color
             });
           }
-          if (route.toStop) {
+          if (route.toStop || (Number.isFinite(route.toStopLat) && Number.isFinite(route.toStopLon))) {
             window.metrofeedMarkOtpStopRole({
               overlayKey: overlayInstanceKey,
               role: "A",
-              stopName: route.toStop,
+              stopName: route.toStop || "",
+              stopLat: route.toStopLat,
+              stopLon: route.toStopLon,
               color: route.color
             });
           }

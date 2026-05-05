@@ -3373,9 +3373,14 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
     const overlayKey = args && args.overlayKey != null ? String(args.overlayKey) : "";
     const role = args && args.role != null ? String(args.role) : "";
     const stopNameRaw = args && args.stopName != null ? String(args.stopName) : "";
+    const stopLat = args && args.stopLat != null ? Number(args.stopLat) : NaN;
+    const stopLon = args && args.stopLon != null ? Number(args.stopLon) : NaN;
+    const hasCoord = Number.isFinite(stopLat) && Number.isFinite(stopLon);
     const color = args && typeof args.color === "string" && args.color.trim() ? args.color.trim() : "#fff";
     const attempt = args && Number.isFinite(Number(args.attempt)) ? Number(args.attempt) : 0;
-    if (!overlayKey || !role || !stopNameRaw) return false;
+    const maxAttempts = 30;
+    const retryMs = 200;
+    if (!overlayKey || !role) return false;
 
     const norm = (s) =>
       String(s || "")
@@ -3384,33 +3389,82 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
         .replace(/[^a-z0-9]+/g, "")
         .trim();
     const target = norm(stopNameRaw);
-    if (!target) return false;
+    const hasName = !!target;
+    if (!hasName && !hasCoord) return false;
+
+    const haversineM = (lat1, lon1, lat2, lon2) => {
+      const R = 6371000;
+      const toRad = (d) => (d * Math.PI) / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+    };
 
     // showRouteOverlay resolves before stop markers are attached (attachRouteToMap draws async).
-    // Retry briefly so we decorate the real dot instead of failing silently.
+    // Retry so we decorate the real dot instead of failing silently.
     const all = Array.from(document.querySelectorAll('.mf-stop-marker'));
     const els = all.filter((el) => String(el.getAttribute('data-overlay-key') || '') === overlayKey);
     if (!els.length) {
-      if (attempt < 12) {
+      if (attempt < maxAttempts) {
         setTimeout(() => {
           try {
             window.metrofeedMarkOtpStopRole({ ...args, attempt: attempt + 1 });
           } catch (_) {}
-        }, 160);
+        }, retryMs);
       }
       return false;
     }
 
     let best = null;
-    for (const el of els) {
-      const nm = norm(el.getAttribute("data-stop-name") || "");
-      if (!nm) continue;
-      if (nm === target || nm.includes(target) || target.includes(nm)) {
-        best = el;
-        break;
+    if (hasName) {
+      for (const el of els) {
+        const nm = norm(el.getAttribute("data-stop-name") || "");
+        if (!nm) continue;
+        if (nm === target || nm.includes(target) || target.includes(nm)) {
+          best = el;
+          break;
+        }
       }
     }
-    if (!best) return false;
+    // Name mismatch is common (OTP vs static GTFS wording); fall back to board/alight coordinates.
+    if (!best && hasCoord) {
+      const maxM = 220;
+      let bestD = Infinity;
+      for (const el of els) {
+        const la = parseFloat(el.getAttribute("data-stop-lat") || "");
+        const lo = parseFloat(el.getAttribute("data-stop-lon") || "");
+        if (!Number.isFinite(la) || !Number.isFinite(lo)) continue;
+        const d = haversineM(stopLat, stopLon, la, lo);
+        if (d < bestD && d <= maxM) {
+          bestD = d;
+          best = el;
+        }
+      }
+    }
+    if (!best) {
+      let nearestM = Infinity;
+      if (hasCoord && els.length) {
+        for (const el of els) {
+          const la = parseFloat(el.getAttribute("data-stop-lat") || "");
+          const lo = parseFloat(el.getAttribute("data-stop-lon") || "");
+          if (!Number.isFinite(la) || !Number.isFinite(lo)) continue;
+          nearestM = Math.min(nearestM, haversineM(stopLat, stopLon, la, lo));
+        }
+      }
+      const retryFutile =
+        hasCoord && els.length && Number.isFinite(nearestM) && nearestM > 400;
+      if (!retryFutile && attempt < maxAttempts) {
+        setTimeout(() => {
+          try {
+            window.metrofeedMarkOtpStopRole({ ...args, attempt: attempt + 1 });
+          } catch (_) {}
+        }, retryMs);
+      }
+      return false;
+    }
 
     // Inject / update role label
     const tagId = `mf-otp-role-${role}`;
@@ -3443,6 +3497,7 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
     badge.style.fontSize = "11px";
     badge.style.fontWeight = "800";
     badge.style.color = "#fff";
+    badge.style.textShadow = "0 0 2px #000, 0 0 4px #000";
     badge.style.userSelect = "none";
     badge.style.pointerEvents = "none";
     return true;
