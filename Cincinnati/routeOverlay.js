@@ -1609,7 +1609,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
     }
 
-    const lineOpacity = isOtpActive ? 0.25 : 0.9;
+    // OTP context: fade the full route so the OTP-highlight line pops.
+    const lineOpacity = isOtpActive ? 0.10 : 0.9;
     const lineWidth = isOtpActive ? 3 : 4;
 
     // Opposite-direction context: dashed underlay (drawn BEFORE selected solid lines)
@@ -1643,7 +1644,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             paint: {
               "line-color": routeColor,
               "line-width": Math.max(2, lineWidth - 1),
-              "line-opacity": isOtpActive ? 0.12 : 0.35,
+              "line-opacity": isOtpActive ? 0.06 : 0.35,
               "line-dasharray": [2, 2]
             }
           },
@@ -2042,11 +2043,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
         stopElement.style.border          = `2px solid ${stopRing}`;
         // OTP: deemphasize non-trip stops, keep trip stops brighter.
         let stopOpacity = 0.9;
-        if (isOtpActive) stopOpacity = 0.45;
+        if (isOtpActive) stopOpacity = 0.25;
         if (isOtpLegOverlay && otpFromIx >= 0 && otpToIx >= 0) {
           const i = stops.indexOf(stop);
           if (i >= otpFromIx && i <= otpToIx) stopOpacity = 0.92;
-          else stopOpacity = 0.22;
+          else stopOpacity = 0.08;
         }
         stopElement.style.opacity         = String(stopOpacity);
         stopElement.style.cursor          = "pointer";
