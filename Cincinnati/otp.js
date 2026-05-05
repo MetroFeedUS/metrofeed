@@ -2798,12 +2798,45 @@ function computeOtpFlippedDirectionSync(route) {
  */
 function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) {
   const needsFlip = !(route.mode === 'SUBWAY' || route.mode === 'METRO');
-  if (!needsFlip || route.mode !== 'BUS' || !mappedRouteId || !window.routeLoader) return;
+  if (!needsFlip || route.mode !== 'BUS' || !mappedRouteId) return;
   if (typeof window.showRouteOverlay !== 'function') return;
 
+  const loadRouteStops = (rid, dir) => {
+    // Boston lazy loader path
+    if (window.routeLoader && typeof window.routeLoader.loadRoute === 'function') {
+      return window.routeLoader.loadRoute(rid, dir).catch(() => null);
+    }
+    // Cincinnati/static JSON path
+    const base = (window.CITY_CONFIG && window.CITY_CONFIG.routeDataBase)
+      ? String(window.CITY_CONFIG.routeDataBase)
+      : null;
+    if (!base) return Promise.resolve(null);
+    const safeId = String(rid).replace(/[/?#]+/g, '_');
+    const baseUrl = base.endsWith('/') ? base : base + '/';
+    const tries = [
+      `route-${safeId}-dir${dir}.json`,
+      `route-${encodeURIComponent(String(rid))}-dir${dir}.json`,
+      // Some routes only ship one file; accept it if it claims this direction.
+      `route-${safeId}.json`,
+      `route-${encodeURIComponent(String(rid))}.json`
+    ];
+    const fetchFirstOk = async () => {
+      for (let i = 0; i < tries.length; i++) {
+        try {
+          const res = await fetch(baseUrl + tries[i], { cache: 'no-store' });
+          if (!res.ok) continue;
+          const j = await res.json();
+          return j;
+        } catch (_) {}
+      }
+      return null;
+    };
+    return fetchFirstOk();
+  };
+
   Promise.all([
-    window.routeLoader.loadRoute(mappedRouteId, 0).catch(() => null),
-    window.routeLoader.loadRoute(mappedRouteId, 1).catch(() => null)
+    loadRouteStops(mappedRouteId, 0),
+    loadRouteStops(mappedRouteId, 1)
   ]).then(([dir0Data, dir1Data]) => {
     if (!dir0Data || !dir1Data || !dir0Data.stops || !dir1Data.stops) return;
 
@@ -2838,13 +2871,9 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
     const dir0Score = calculateDirectionScore(otpFrom, otpTo, dir0Data.stops);
     const dir1Score = calculateDirectionScore(otpFrom, otpTo, dir1Data.stops);
     const bestDirection = dir1Score > dir0Score ? 1 : (dir0Score > dir1Score ? 0 : route.directionId);
-    const shouldFlip = route.directionId !== bestDirection;
-    let flippedDirection;
-    if (shouldFlip) {
-      flippedDirection = route.directionId === 0 ? 1 : 0;
-    } else {
-      flippedDirection = route.directionId;
-    }
+    if (!(bestDirection === 0 || bestDirection === 1)) return;
+    if (route.directionId === bestDirection) return;
+    const flippedDirection = bestDirection;
 
     const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : 0;
     const newInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
