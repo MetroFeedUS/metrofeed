@@ -2354,6 +2354,16 @@ async function drawJourney(journey) {
     });
     window.routeLegLines = [];
   }
+
+  // Clear previous OTP role markers (S/T/D)
+  try {
+    if (window.__mfOtpRoleMarkers && Array.isArray(window.__mfOtpRoleMarkers)) {
+      window.__mfOtpRoleMarkers.forEach((m) => {
+        try { if (m && typeof m.remove === 'function') m.remove(); } catch (_) {}
+      });
+    }
+    window.__mfOtpRoleMarkers = [];
+  } catch (_) {}
   
   let allCoords = [];
   const routeList = []; // Store routes for selector modal
@@ -2377,6 +2387,48 @@ async function drawJourney(journey) {
     return c;
   };
 
+  // Walking: show intent-only connector (start→end), not turn-by-turn geometry.
+  const WALK_CONNECTOR_COLOR = "#9aa0a6";
+  const WALK_DASH = [1.2, 1.6];
+  const walkEndpoints = (seg) => {
+    try {
+      if (!Array.isArray(seg) || seg.length < 2) return null;
+      const a = seg[0];
+      const b = seg[seg.length - 1];
+      if (!Array.isArray(a) || !Array.isArray(b)) return null;
+      return [a, b];
+    } catch (_) {
+      return null;
+    }
+  };
+
+  // S/T/D markers (embedded in slightly larger dots)
+  const addOtpRoleMarker = (key, letter, lat, lon, borderColor) => {
+    try {
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+      window.__mfOtpRoleMarkers = window.__mfOtpRoleMarkers || [];
+      const el = document.createElement('div');
+      el.setAttribute('data-otp-role', key);
+      el.style.width = '18px';
+      el.style.height = '18px';
+      el.style.borderRadius = '50%';
+      el.style.background = '#111';
+      el.style.border = `3px solid ${borderColor || '#fff'}`;
+      el.style.boxShadow = `0 0 10px ${(borderColor || '#fff')}66`;
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.fontSize = '11px';
+      el.style.fontWeight = '800';
+      el.style.color = '#fff';
+      el.style.letterSpacing = '0.5px';
+      el.style.userSelect = 'none';
+      el.textContent = letter;
+      const marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]).addTo(map);
+      window.__mfOtpRoleMarkers.push(marker);
+    } catch (_) {}
+  };
+
   // Render each leg
   journey.legs.forEach((leg, legIdx) => {
     addDebugLog(
@@ -2398,17 +2450,29 @@ async function drawJourney(journey) {
       leg.line.color = color;
     }
     
-    // Draw walking leg (solid gray)
+    // Draw walking leg (intent-only dotted connector w/ faint glow)
     if (leg.type === 'WALK' && leg.solidSegment) {
-      const walkId = `routeLeg-${leg.index}-walk`;
-      addLine(map, walkId, toMapLibreCoords(leg.solidSegment), {
-        "line-color": "#777",
-        "line-width": 4,
-        "line-opacity": 0.85
-      });
-      window.routeLegLines = window.routeLegLines || [];
-      window.routeLegLines.push(walkId);
-      allCoords = allCoords.concat(leg.solidSegment);
+      const ends = walkEndpoints(leg.solidSegment);
+      if (ends) {
+        const walkId = `routeLeg-${leg.index}-walk`;
+        const walkGlowId = `${walkId}-glow`;
+        addLine(map, walkGlowId, toMapLibreCoords(ends), {
+          "line-color": WALK_CONNECTOR_COLOR,
+          "line-width": 10,
+          "line-opacity": 0.18,
+          "line-blur": 1.8
+        });
+        addLine(map, walkId, toMapLibreCoords(ends), {
+          "line-color": WALK_CONNECTOR_COLOR,
+          "line-width": 4,
+          "line-opacity": 0.75,
+          "line-dasharray": WALK_DASH
+        });
+        window.routeLegLines = window.routeLegLines || [];
+        window.routeLegLines.push(walkGlowId);
+        window.routeLegLines.push(walkId);
+        allCoords = allCoords.concat(ends);
+      }
     }
     
     // Draw transit leg (simple solid line - no dashed segments)
@@ -2635,6 +2699,33 @@ async function drawJourney(journey) {
       }
     }
   });
+
+  // Add S/T/D markers based on the journey legs.
+  try {
+    const legs = Array.isArray(journey.legs) ? journey.legs : [];
+    const transitLegIdxs = legs.map((l, i) => (l && l.type === 'TRANSIT') ? i : -1).filter(i => i >= 0);
+    const firstLeg = legs[0];
+    const lastLeg = legs.length ? legs[legs.length - 1] : null;
+    const startPt = firstLeg && Array.isArray(firstLeg.solidSegment) && firstLeg.solidSegment.length
+      ? firstLeg.solidSegment[0]
+      : null;
+    const endPt = lastLeg && Array.isArray(lastLeg.solidSegment) && lastLeg.solidSegment.length
+      ? lastLeg.solidSegment[lastLeg.solidSegment.length - 1]
+      : null;
+    if (startPt) addOtpRoleMarker('S', 'S', Number(startPt[0]), Number(startPt[1]), '#2ECC71');
+    if (endPt) addOtpRoleMarker('D', 'D', Number(endPt[0]), Number(endPt[1]), '#E74C3C');
+
+    // Transfers: end of each TRANSIT leg except the last TRANSIT leg.
+    for (let ti = 0; ti < transitLegIdxs.length - 1; ti++) {
+      const li = transitLegIdxs[ti];
+      const l = legs[li];
+      const seg = l && Array.isArray(l.solidSegment) ? l.solidSegment : null;
+      if (!seg || seg.length < 2) continue;
+      const p = seg[seg.length - 1];
+      if (!p) continue;
+      addOtpRoleMarker(`T${ti + 1}`, 'T', Number(p[0]), Number(p[1]), '#F1C40F');
+    }
+  } catch (_) {}
 
   // Fit map to bounds
   if (allCoords.length > 0) {
