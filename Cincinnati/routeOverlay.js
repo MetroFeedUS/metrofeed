@@ -2044,10 +2044,23 @@ function attachRouteToMap(map, routeId, directionId, options) {
         // OTP: deemphasize non-trip stops, keep trip stops brighter.
         let stopOpacity = 0.9;
         if (isOtpActive) stopOpacity = 0.25;
-        if (isOtpLegOverlay && otpFromIx >= 0 && otpToIx >= 0) {
-          const i = stops.indexOf(stop);
-          if (i >= otpFromIx && i <= otpToIx) stopOpacity = 0.92;
-          else stopOpacity = 0.08;
+        if (isOtpLegOverlay) {
+          // If we cannot confidently locate the boarding/alighting stops, do NOT dim all stops.
+          // (Stop-name matching can fail due to abbreviations; better to stay readable than hide data.)
+          if (otpFromIx < 0 || otpToIx < 0) {
+            stopOpacity = 0.9;
+          } else {
+            const i = stops.indexOf(stop);
+            const inTripRange = i >= otpFromIx && i <= otpToIx;
+            if (inTripRange) {
+              stopOpacity = 0.92;
+              // Subtle emphasis: a tiny glow and slightly thicker ring.
+              stopElement.style.boxShadow = `0 0 10px ${stopFill}66`;
+              stopElement.style.border = `3px solid ${stopRing}`;
+            } else {
+              stopOpacity = 0.08;
+            }
+          }
         }
         stopElement.style.opacity         = String(stopOpacity);
         stopElement.style.cursor          = "pointer";
