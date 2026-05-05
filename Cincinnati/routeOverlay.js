@@ -2795,10 +2795,42 @@ function attachRouteToMap(map, routeId, directionId, options) {
             delete busMarkers[vehicleId];
           });
           
-          const vehiclesForMarkers = routeBuses;
+          // OTP mode: only show buses traveling in the selected direction.
+          // Normal mode: show both directions, dim opposite.
+          const isOtpLegOverlay = (() => {
+            try {
+              return /-otpLeg\d+/.test(String(options.overlayKey || ""));
+            } catch (_) {
+              return false;
+            }
+          })();
+
+          let vehiclesForMarkers = routeBuses;
           const headingEnabled = !(
             window.CITY_CONFIG && window.CITY_CONFIG.busMarkerHeading === false
           );
+
+          if (isOtpLegOverlay) {
+            // We need busDir to filter, so precompute using the same inference logic.
+            const strictDir = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
+            const want = Number(directionId);
+            vehiclesForMarkers = vehiclesForMarkers.filter((bus) => {
+              const latN = Number(bus.latitude);
+              const lonN = Number(bus.longitude);
+              if (!Number.isFinite(latN) || !Number.isFinite(lonN)) return false;
+              let busDir = null;
+              if (bus.direction === 0 || bus.direction === 1) {
+                busDir = Number(bus.direction);
+              } else {
+                const inferred = metrofeedMaybeFlipInferredDirection(
+                  inferDirectionFromPolylineAndBearing(canonicalDirShape, latN, lonN, bus.bearing)
+                );
+                if (inferred === 0 || inferred === 1) busDir = inferred;
+              }
+              if (busDir === 0 || busDir === 1) return Number(busDir) === want;
+              return !strictDir; // if strict, drop unknown-dir vehicles in OTP mode
+            });
+          }
 
           vehiclesForMarkers.forEach((bus) => {
             const latN = Number(bus.latitude);
@@ -2931,6 +2963,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
               displayHeading
             );
             try { busElement.classList.add('mf-bus-marker'); } catch (_) {}
+            if (isOtpLegOverlay && isOppositeDir) {
+              // OTP overlays shouldn't render opposite-direction buses at all (filtered above),
+              // but keep a guard here for safety.
+              return;
+            }
             if (isOppositeDir) {
               // Visual language: opposite direction = faded (like dashed line / hollow stops).
               busElement.style.opacity = "0.45";
