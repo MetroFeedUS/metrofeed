@@ -3374,6 +3374,7 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
     const role = args && args.role != null ? String(args.role) : "";
     const stopNameRaw = args && args.stopName != null ? String(args.stopName) : "";
     const color = args && typeof args.color === "string" && args.color.trim() ? args.color.trim() : "#fff";
+    const attempt = args && Number.isFinite(Number(args.attempt)) ? Number(args.attempt) : 0;
     if (!overlayKey || !role || !stopNameRaw) return false;
 
     const norm = (s) =>
@@ -3385,8 +3386,20 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
     const target = norm(stopNameRaw);
     if (!target) return false;
 
-    const els = Array.from(document.querySelectorAll(`.mf-stop-marker[data-overlay-key="${CSS.escape(overlayKey)}"]`));
-    if (!els.length) return false;
+    // showRouteOverlay resolves before stop markers are attached (attachRouteToMap draws async).
+    // Retry briefly so we decorate the real dot instead of failing silently.
+    const all = Array.from(document.querySelectorAll('.mf-stop-marker'));
+    const els = all.filter((el) => String(el.getAttribute('data-overlay-key') || '') === overlayKey);
+    if (!els.length) {
+      if (attempt < 12) {
+        setTimeout(() => {
+          try {
+            window.metrofeedMarkOtpStopRole({ ...args, attempt: attempt + 1 });
+          } catch (_) {}
+        }, 160);
+      }
+      return false;
+    }
 
     let best = null;
     for (const el of els) {
@@ -3409,15 +3422,24 @@ window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
     }
 
     // Make dot slightly larger + readable, but keep original click handler intact.
+    best.style.position = "relative";
     best.style.width = "18px";
     best.style.height = "18px";
-    best.style.border = `3px solid ${best.style.borderColor || "#fff"}`;
+    // Preserve existing ring color if present; otherwise fallback to white.
+    const existingBorder = best.style.border && String(best.style.border).trim() ? best.style.border : null;
+    if (!existingBorder) best.style.border = "3px solid #fff";
     best.style.display = "flex";
     best.style.alignItems = "center";
     best.style.justifyContent = "center";
     best.style.boxShadow = `0 0 10px ${color}66`;
+    best.style.zIndex = "5";
 
     badge.textContent = role;
+    badge.style.position = "absolute";
+    badge.style.inset = "0";
+    badge.style.display = "flex";
+    badge.style.alignItems = "center";
+    badge.style.justifyContent = "center";
     badge.style.fontSize = "11px";
     badge.style.fontWeight = "800";
     badge.style.color = "#fff";
