@@ -3110,18 +3110,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
   // OTP-leg overlay must listen for `styledata` until `isStyleLoaded()` is true or we never draw it.
   (function scheduleAddRouteWhenStyleReady() {
     let ran = false;
-    function styleReadyNow() {
-      try {
-        if (typeof map.isStyleLoaded === "function") return !!map.isStyleLoaded();
-      } catch (_) {}
-      try {
-        if (typeof map.loaded === "function") return !!map.loaded();
-      } catch (_) {}
-      return true;
-    }
     const runOnce = () => {
       if (ran) return;
-      if (!styleReadyNow()) return;
       try {
         addRouteToMap();
         // Only mark as done after addRouteToMap succeeds.
