@@ -2355,7 +2355,7 @@ async function drawJourney(journey) {
     window.routeLegLines = [];
   }
 
-  // Clear previous OTP role markers (S/T/D)
+  // Clear previous OTP role markers (legacy S/T/D) if any
   try {
     if (window.__mfOtpRoleMarkers && Array.isArray(window.__mfOtpRoleMarkers)) {
       window.__mfOtpRoleMarkers.forEach((m) => {
@@ -2402,32 +2402,8 @@ async function drawJourney(journey) {
     }
   };
 
-  // S/T/D markers (embedded in slightly larger dots)
-  const addOtpRoleMarker = (key, letter, lat, lon, borderColor) => {
-    try {
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-      window.__mfOtpRoleMarkers = window.__mfOtpRoleMarkers || [];
-      const el = document.createElement('div');
-      el.setAttribute('data-otp-role', key);
-      el.style.width = '18px';
-      el.style.height = '18px';
-      el.style.borderRadius = '50%';
-      el.style.background = '#111';
-      el.style.border = `3px solid ${borderColor || '#fff'}`;
-      el.style.boxShadow = `0 0 10px ${(borderColor || '#fff')}66`;
-      el.style.display = 'flex';
-      el.style.alignItems = 'center';
-      el.style.justifyContent = 'center';
-      el.style.fontSize = '11px';
-      el.style.fontWeight = '800';
-      el.style.color = '#fff';
-      el.style.letterSpacing = '0.5px';
-      el.style.userSelect = 'none';
-      el.textContent = letter;
-      const marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]).addTo(map);
-      window.__mfOtpRoleMarkers.push(marker);
-    } catch (_) {}
-  };
+  // We no longer place separate S/T/D markers; origins/dest pins already exist.
+  // Bus milestones (B/A) are applied by decorating existing stop markers in route overlays.
 
   // Render each leg
   journey.legs.forEach((leg, legIdx) => {
@@ -2700,32 +2676,7 @@ async function drawJourney(journey) {
     }
   });
 
-  // Add S/T/D markers based on the journey legs.
-  try {
-    const legs = Array.isArray(journey.legs) ? journey.legs : [];
-    const transitLegIdxs = legs.map((l, i) => (l && l.type === 'TRANSIT') ? i : -1).filter(i => i >= 0);
-    const firstLeg = legs[0];
-    const lastLeg = legs.length ? legs[legs.length - 1] : null;
-    const startPt = firstLeg && Array.isArray(firstLeg.solidSegment) && firstLeg.solidSegment.length
-      ? firstLeg.solidSegment[0]
-      : null;
-    const endPt = lastLeg && Array.isArray(lastLeg.solidSegment) && lastLeg.solidSegment.length
-      ? lastLeg.solidSegment[lastLeg.solidSegment.length - 1]
-      : null;
-    if (startPt) addOtpRoleMarker('S', 'S', Number(startPt[0]), Number(startPt[1]), '#2ECC71');
-    if (endPt) addOtpRoleMarker('D', 'D', Number(endPt[0]), Number(endPt[1]), '#E74C3C');
-
-    // Transfers: end of each TRANSIT leg except the last TRANSIT leg.
-    for (let ti = 0; ti < transitLegIdxs.length - 1; ti++) {
-      const li = transitLegIdxs[ti];
-      const l = legs[li];
-      const seg = l && Array.isArray(l.solidSegment) ? l.solidSegment : null;
-      if (!seg || seg.length < 2) continue;
-      const p = seg[seg.length - 1];
-      if (!p) continue;
-      addOtpRoleMarker(`T${ti + 1}`, 'T', Number(p[0]), Number(p[1]), '#F1C40F');
-    }
-  } catch (_) {}
+  // (B/A markers are applied after showRouteOverlay in applyOtpTripRouteOverlays.)
 
   // Fit map to bounds
   if (allCoords.length > 0) {
@@ -3090,6 +3041,27 @@ async function applyOtpTripRouteOverlays(routeList) {
       } catch (e) {
         console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
       }
+      // Decorate existing stop dots (no duplicate markers): Board/Alight
+      try {
+        if (window.metrofeedMarkOtpStopRole) {
+          if (route.fromStop) {
+            window.metrofeedMarkOtpStopRole({
+              overlayKey: overlayInstanceKey,
+              role: "B",
+              stopName: route.fromStop,
+              color: route.color
+            });
+          }
+          if (route.toStop) {
+            window.metrofeedMarkOtpStopRole({
+              overlayKey: overlayInstanceKey,
+              role: "A",
+              stopName: route.toStop,
+              color: route.color
+            });
+          }
+        }
+      } catch (_) {}
       verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey);
     }
   } finally {

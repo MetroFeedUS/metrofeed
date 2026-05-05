@@ -2034,6 +2034,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
         ? metrofeedBuildDirectionalStopElement(directionId, primaryShape, lat, lon)
         : document.createElement("div");
       try { stopElement.classList.add('mf-stop-marker'); } catch (_) {}
+      // Metadata so OTP can decorate (B/A) without adding duplicate dots.
+      try {
+        stopElement.setAttribute('data-overlay-key', String(etaOverlayKey));
+        stopElement.setAttribute('data-stop-id', String(stopId));
+        stopElement.setAttribute('data-stop-name', String(stop && stop.name ? stop.name : ''));
+        stopElement.setAttribute('data-stop-lat', String(lat));
+        stopElement.setAttribute('data-stop-lon', String(lon));
+      } catch (_) {}
       if (!useDirectionalStops) {
         const stopFill = routeColor || "#1E90FF";
         const stopRing = pickContrastingTextColor(stopFill);
@@ -3354,6 +3362,71 @@ window.pickNextRouteOverlayColorSlot = function pickNextRouteOverlayColorSlot() 
     if (!used.has(i)) return i;
   }
   return Object.keys(desc).length % pal.length;
+};
+
+/**
+ * OTP helper: decorate an existing stop marker in-place (no duplicate dot).
+ * Finds a stop marker for the given overlayKey and stopName, then injects a small B/A label.
+ */
+window.metrofeedMarkOtpStopRole = function metrofeedMarkOtpStopRole(args) {
+  try {
+    const overlayKey = args && args.overlayKey != null ? String(args.overlayKey) : "";
+    const role = args && args.role != null ? String(args.role) : "";
+    const stopNameRaw = args && args.stopName != null ? String(args.stopName) : "";
+    const color = args && typeof args.color === "string" && args.color.trim() ? args.color.trim() : "#fff";
+    if (!overlayKey || !role || !stopNameRaw) return false;
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/&amp;/g, "&")
+        .replace(/[^a-z0-9]+/g, "")
+        .trim();
+    const target = norm(stopNameRaw);
+    if (!target) return false;
+
+    const els = Array.from(document.querySelectorAll(`.mf-stop-marker[data-overlay-key="${CSS.escape(overlayKey)}"]`));
+    if (!els.length) return false;
+
+    let best = null;
+    for (const el of els) {
+      const nm = norm(el.getAttribute("data-stop-name") || "");
+      if (!nm) continue;
+      if (nm === target || nm.includes(target) || target.includes(nm)) {
+        best = el;
+        break;
+      }
+    }
+    if (!best) return false;
+
+    // Inject / update role label
+    const tagId = `mf-otp-role-${role}`;
+    let badge = best.querySelector(`span[data-otp-role="${tagId}"]`);
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.setAttribute("data-otp-role", tagId);
+      best.appendChild(badge);
+    }
+
+    // Make dot slightly larger + readable, but keep original click handler intact.
+    best.style.width = "18px";
+    best.style.height = "18px";
+    best.style.border = `3px solid ${best.style.borderColor || "#fff"}`;
+    best.style.display = "flex";
+    best.style.alignItems = "center";
+    best.style.justifyContent = "center";
+    best.style.boxShadow = `0 0 10px ${color}66`;
+
+    badge.textContent = role;
+    badge.style.fontSize = "11px";
+    badge.style.fontWeight = "800";
+    badge.style.color = "#fff";
+    badge.style.userSelect = "none";
+    badge.style.pointerEvents = "none";
+    return true;
+  } catch (_) {
+    return false;
+  }
 };
 
 // Expose globally for both route pages and main map
