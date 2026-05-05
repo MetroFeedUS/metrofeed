@@ -2424,11 +2424,21 @@ async function drawJourney(journey) {
         `Drawing TRANSIT leg ${legIdx}: ${leg.routeNumber || 'N/A'} (verified: ${leg.routeVerified})`
       );
       const transitId = `routeLeg-${leg.index}-transit`;
+      const transitGlowId = `${transitId}-glow`;
+      // Glow underlay
+      addLine(map, transitGlowId, toMapLibreCoords(leg.solidSegment), {
+        "line-color": color,
+        "line-width": 14,
+        "line-opacity": 0.35,
+        "line-blur": 2.2
+      });
+      // Core line
       addLine(map, transitId, toMapLibreCoords(leg.solidSegment), {
         "line-color": color,
         "line-width": 6,
         "line-opacity": 0.95
       });
+      window.routeLegLines.push(transitGlowId);
       window.routeLegLines.push(transitId);
       allCoords = allCoords.concat(leg.solidSegment);
 
@@ -2931,7 +2941,7 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
       flippedDirection,
       undefined,
       newInstanceKey,
-      { forceRouteInfoPanel: true, routeColor: route.color }
+      { forceRouteInfoPanel: true, routeColor: route.color, otpFromStop: route.fromStop, otpToStop: route.toStop }
     );
   }).catch(err => {
     console.warn(`[verifyOtpBusOverlayDirection] ${mappedRouteId}:`, err);
@@ -2983,7 +2993,7 @@ async function applyOtpTripRouteOverlays(routeList) {
           flippedDirection,
           undefined,
           overlayInstanceKey,
-          { forceRouteInfoPanel: true, routeColor: route.color }
+          { forceRouteInfoPanel: true, routeColor: route.color, otpFromStop: route.fromStop, otpToStop: route.toStop }
         );
       } catch (e) {
         console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);

@@ -1983,6 +1983,50 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
 
       // Stop marker element
+      const isOtpLegOverlay = (() => {
+        try {
+          return /-otpLeg\d+/.test(String(options.overlayKey || ""));
+        } catch (_) {
+          return false;
+        }
+      })();
+      const otpFromStop = options && options.otpFromStop ? String(options.otpFromStop) : "";
+      const otpToStop = options && options.otpToStop ? String(options.otpToStop) : "";
+      const otpStopNorm = (s) =>
+        String(s || "")
+          .toLowerCase()
+          .replace(/&amp;/g, "&")
+          .replace(/[^a-z0-9]+/g, "")
+          .trim();
+      let otpFromIx = -1;
+      let otpToIx = -1;
+      if (isOtpLegOverlay && otpFromStop && otpToStop && Array.isArray(stops) && stops.length) {
+        const f = otpStopNorm(otpFromStop);
+        const t = otpStopNorm(otpToStop);
+        if (f) {
+          for (let i = 0; i < stops.length; i++) {
+            const n = otpStopNorm(stops[i] && stops[i].name);
+            if (n && (n === f || n.includes(f) || f.includes(n))) {
+              otpFromIx = i;
+              break;
+            }
+          }
+        }
+        if (t) {
+          for (let i = 0; i < stops.length; i++) {
+            const n = otpStopNorm(stops[i] && stops[i].name);
+            if (n && (n === t || n.includes(t) || t.includes(n))) {
+              otpToIx = i;
+              break;
+            }
+          }
+        }
+        if (otpFromIx >= 0 && otpToIx >= 0 && otpFromIx > otpToIx) {
+          const tmp = otpFromIx;
+          otpFromIx = otpToIx;
+          otpToIx = tmp;
+        }
+      }
       const useDirectionalStops = !!(window.CITY_CONFIG && window.CITY_CONFIG.directionalStopMarkers);
       const stopElement = useDirectionalStops
         ? metrofeedBuildDirectionalStopElement(directionId, primaryShape, lat, lon)
@@ -1996,7 +2040,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
         stopElement.style.backgroundColor = stopFill;
         stopElement.style.borderRadius    = "50%";
         stopElement.style.border          = `2px solid ${stopRing}`;
-        stopElement.style.opacity         = "0.9";
+        // OTP: deemphasize non-trip stops, keep trip stops brighter.
+        let stopOpacity = 0.9;
+        if (isOtpActive) stopOpacity = 0.45;
+        if (isOtpLegOverlay && otpFromIx >= 0 && otpToIx >= 0) {
+          const i = stops.indexOf(stop);
+          if (i >= otpFromIx && i <= otpToIx) stopOpacity = 0.92;
+          else stopOpacity = 0.22;
+        }
+        stopElement.style.opacity         = String(stopOpacity);
         stopElement.style.cursor          = "pointer";
       }
       stopElement.addEventListener('click', () => {
