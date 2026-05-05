@@ -9054,7 +9054,11 @@
     const busTrackingRouteId = baseRouteNumber !== String(routeId) ? baseRouteNumber : routeId;
     let routeColorSlot = 0;
     let routeColorHex = "#1E90FF";
-    if (typeof window.pickNextRouteOverlayColorSlot === "function" && window.ROUTE_OVERLAY_COLOR_PALETTE && window.ROUTE_OVERLAY_COLOR_PALETTE.length) {
+    // OTP / caller override: allow the OTP leg polyline to match the overlay color exactly.
+    if (opts && typeof opts.routeColor === 'string' && opts.routeColor.trim() !== '') {
+      routeColorSlot = -1;
+      routeColorHex = opts.routeColor.trim();
+    } else if (typeof window.pickNextRouteOverlayColorSlot === "function" && window.ROUTE_OVERLAY_COLOR_PALETTE && window.ROUTE_OVERLAY_COLOR_PALETTE.length) {
       routeColorSlot = window.pickNextRouteOverlayColorSlot();
       routeColorHex = window.ROUTE_OVERLAY_COLOR_PALETTE[routeColorSlot];
     }

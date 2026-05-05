@@ -2358,6 +2358,25 @@ async function drawJourney(journey) {
   let allCoords = [];
   const routeList = []; // Store routes for selector modal
   
+  // OTP: stable color per trip leg so OTP lines match overlays.
+  // Keyed by leg index (otpLeg#) so repeated route numbers still get distinct colors.
+  window.__mfOtpLegColors = window.__mfOtpLegColors || Object.create(null);
+  const otpPickLegColor = (legIndex) => {
+    const k = String(legIndex);
+    if (window.__mfOtpLegColors[k]) return window.__mfOtpLegColors[k];
+    const pal = window.ROUTE_OVERLAY_COLOR_PALETTE;
+    let c = null;
+    if (Array.isArray(pal) && pal.length) {
+      c = pal[legIndex % pal.length];
+    }
+    if (!c) {
+      // Fallback to the old behavior if palette missing.
+      c = legColors[legIndex % legColors.length];
+    }
+    window.__mfOtpLegColors[k] = c;
+    return c;
+  };
+
   // Render each leg
   journey.legs.forEach((leg, legIdx) => {
     addDebugLog(
@@ -2372,7 +2391,7 @@ async function drawJourney(journey) {
       `Processing leg ${legIdx}: ${leg.type} ${leg.mode || ''} ${leg.routeNumber || ''}`
     );
     
-    const color = leg.type === 'WALK' ? WALK_COLOR : legColors[legIdx % legColors.length];
+    const color = leg.type === 'WALK' ? WALK_COLOR : otpPickLegColor(legIdx);
     
     // Assign color to leg
     if (leg.line) {
@@ -2572,7 +2591,7 @@ async function drawJourney(journey) {
           originalRouteId: leg.routeNumber,
           directionId: leg.direction || 0,
           mode: leg.mode,
-          color: routeColor,
+          color: routeColor || color,
           name: routeName,
           legIndex: legIdx,
           fromStop: fromStop,
@@ -2907,7 +2926,13 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
         delete window.activeRouteOverlayDescriptors[overlayInstanceKey];
       }
     }
-    window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, newInstanceKey, { forceRouteInfoPanel: true });
+    window.showRouteOverlay(
+      mappedRouteId,
+      flippedDirection,
+      undefined,
+      newInstanceKey,
+      { forceRouteInfoPanel: true, routeColor: route.color }
+    );
   }).catch(err => {
     console.warn(`[verifyOtpBusOverlayDirection] ${mappedRouteId}:`, err);
   });
@@ -2953,7 +2978,13 @@ async function applyOtpTripRouteOverlays(routeList) {
 
     for (const { route, mappedRouteId, flippedDirection, overlayInstanceKey } of toApply) {
       try {
-        await window.showRouteOverlay(mappedRouteId, flippedDirection, undefined, overlayInstanceKey, { forceRouteInfoPanel: true });
+        await window.showRouteOverlay(
+          mappedRouteId,
+          flippedDirection,
+          undefined,
+          overlayInstanceKey,
+          { forceRouteInfoPanel: true, routeColor: route.color }
+        );
       } catch (e) {
         console.warn('[applyOtpTripRouteOverlays] showRouteOverlay failed', mappedRouteId, flippedDirection, e);
       }
