@@ -4220,6 +4220,42 @@
         return;
       }
 
+      // Start field: offer "Use my location" as a quick option.
+      if (input.id === 'startInput') {
+        const locOpt = document.createElement("div");
+        locOpt.textContent = "Use my location";
+        locOpt.style.padding = "6px 10px";
+        locOpt.style.cursor = "pointer";
+        locOpt.style.fontWeight = "700";
+        locOpt.style.color = "#e8eaed";
+        locOpt.style.borderBottom = "1px solid rgba(255,255,255,0.08)";
+        locOpt.addEventListener("click", async () => {
+          dropdown.style.display = "none";
+          try {
+            if (!navigator.geolocation) {
+              alert("Geolocation is not available in this browser.");
+              return;
+            }
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                try {
+                  const lat = Number(pos && pos.coords && pos.coords.latitude);
+                  const lon = Number(pos && pos.coords && pos.coords.longitude);
+                  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+                  input.value = "Current Location";
+                  pinStopOnMap({ name: "Current Location", lat: lat, lon: lon, stop_id: null }, true);
+                } catch (_) {}
+              },
+              () => {
+                alert("Unable to get your location.");
+              },
+              { enableHighAccuracy: false, maximumAge: 10000, timeout: 12000 }
+            );
+          } catch (_) {}
+        });
+        dropdown.appendChild(locOpt);
+      }
+
       // First-time build UX: show a placeholder while the stop index is being built/cached.
       try {
         const st = window.__mfStopIndexStatus || null;
@@ -4235,7 +4271,7 @@
         }
       } catch (_) {}
 
-      const matches = allStops.filter(name => name.toLowerCase().includes(query)).slice(0, 5);
+      const matches = allStops.filter(name => name.toLowerCase().includes(query)).slice(0, 10);
       matches.forEach(name => {
         const option = document.createElement("div");
         option.textContent = name;
