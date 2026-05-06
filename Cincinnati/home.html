@@ -2105,7 +2105,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260506otpTripSteps"></script>
+<script src="routeOverlay.js?v=20260506alertBtnRed"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js?v=20260506otpDirVerify"></script>
 <script src="savedPlaces.js"></script>
@@ -2176,8 +2176,8 @@
 
   /**
    * Right-rail layout helpers:
-   * - Reserve space for the route alert indicator directly under the dashboard collapse toggle.
-   * - Stack floating route chips (and OTP chips) directly beneath that reserved slot.
+   * - Anchor floating route chips under the trip planner (collapse toggle or collapsed "open" bar).
+   * - Optional: when the legacy route-alert bubble is visible, stack chips below it (alerts also surface on chips).
    */
   (function initRightRailLayout() {
     function pxInt(v) {
@@ -2191,43 +2191,42 @@
       const openBar = document.getElementById('mfTripPlannerOpenBar');
       const legend = document.getElementById('trafficLegendBar');
 
-      let alertTop = 110; // fallback if button not found
+      let railAnchorTop = 110; // fallback if button not found
       try {
         const isCollapsed = document.body && document.body.classList.contains('mf-ui-collapsed');
         if (isCollapsed) {
-          // Collapsed layout: anchor under the fixed "Open dashboard" bar, and under the legend if it is visible.
           if (openBar && typeof openBar.getBoundingClientRect === 'function') {
             const r = openBar.getBoundingClientRect();
-            alertTop = Math.max(10, Math.round(r.bottom + 8));
+            railAnchorTop = Math.max(10, Math.round(r.bottom + 6));
           }
           if (legend && legend.style.display !== 'none' && typeof legend.getBoundingClientRect === 'function') {
             const lr = legend.getBoundingClientRect();
-            // If legend is docked, stack below it.
-            alertTop = Math.max(alertTop, Math.round(lr.bottom + 8));
+            railAnchorTop = Math.max(railAnchorTop, Math.round(lr.bottom + 6));
           }
         } else if (toggleBtn && typeof toggleBtn.getBoundingClientRect === 'function') {
           const r = toggleBtn.getBoundingClientRect();
-          // Put the alert slot right under the collapse toggle button.
-          alertTop = Math.max(10, Math.round(r.bottom + 8));
+          railAnchorTop = Math.max(10, Math.round(r.bottom + 6));
         }
       } catch (e) {}
 
-      // Reserve slot height even when the indicator is hidden.
-      let alertH = 26;
+      // No fixed "alert strip" when hidden — chips sit just under the anchor. If the alert bubble is visible, offset below it.
+      let alertBubbleSpace = 0;
       try {
         if (indicator) {
-          // Temporarily ensure it has layout so offsetHeight is stable.
-          const prevDisplay = indicator.style.display;
-          indicator.style.display = 'block';
-          alertH = Math.max(26, indicator.offsetHeight || 0);
-          indicator.style.display = prevDisplay;
+          const vis =
+            window.getComputedStyle(indicator).visibility !== 'hidden' &&
+            window.getComputedStyle(indicator).display !== 'none';
+          if (vis) {
+            alertBubbleSpace = Math.max(34, indicator.offsetHeight || 44) + 6;
+          }
         }
       } catch (e) {}
 
-      const chipsTop = alertTop + alertH + 10;
-      document.documentElement.style.setProperty('--mf-right-rail-alert-top', `${alertTop}px`);
+      const chipsGap = 4;
+      const chipsTop = railAnchorTop + alertBubbleSpace + chipsGap;
+      document.documentElement.style.setProperty('--mf-right-rail-alert-top', `${railAnchorTop}px`);
       document.documentElement.style.setProperty('--mf-right-rail-chips-top', `${chipsTop}px`);
-      return { alertTop, alertH, chipsTop };
+      return { alertTop: railAnchorTop, alertH: alertBubbleSpace, chipsTop };
     }
 
     window.metrofeedGetRightRailTopOffset = function () {
@@ -8694,8 +8693,10 @@
     console.log('[updateAlertIndicator] Active route IDs:', activeRouteIds);
     
     if (activeRouteIds.length === 0) {
-      // Keep the reserved slot, but hide the content when inactive.
       indicator.style.visibility = 'hidden';
+      try {
+        if (typeof window.metrofeedRepositionRouteChips === 'function') window.metrofeedRepositionRouteChips();
+      } catch (_) {}
       return;
     }
     
@@ -8718,6 +8719,9 @@
       
       if (routesWithAlerts.length === 0) {
         indicator.style.visibility = 'hidden';
+        try {
+          if (typeof window.metrofeedRepositionRouteChips === 'function') window.metrofeedRepositionRouteChips();
+        } catch (_) {}
         return;
       }
       
@@ -8757,10 +8761,17 @@
         window._mfRoutesWithAlerts = new Set((routesWithAlerts || []).map(String));
         if (typeof window.metrofeedUpdateChipAlerts === 'function') window.metrofeedUpdateChipAlerts();
       } catch (_) {}
+
+      try {
+        if (typeof window.metrofeedRepositionRouteChips === 'function') window.metrofeedRepositionRouteChips();
+      } catch (_) {}
       
     } catch (err) {
       console.warn('[updateAlertIndicator] Error checking alerts:', err);
       indicator.style.visibility = 'hidden';
+      try {
+        if (typeof window.metrofeedRepositionRouteChips === 'function') window.metrofeedRepositionRouteChips();
+      } catch (_) {}
     }
   }
   

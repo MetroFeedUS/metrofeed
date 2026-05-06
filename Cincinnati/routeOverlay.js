@@ -2459,6 +2459,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       routeInfoPanel.appendChild(contentDiv);
       routeInfoPanel.appendChild(collapsedName);
 
+      // Alert accent (chip badge + “View alerts” in action sheet): keep one MetroFeed danger red.
+      const MF_ALERT_BRAND_RED = '#ff4444';
+
       // Alert icon (shown/hidden by home.html when alerts exist for this route)
       // Use the existing SVG, but tint it red via CSS filter (no background bubble).
       const alertBadge = document.createElement('img');
@@ -2474,8 +2477,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
         'width:18px',
         'height:18px',
         'object-fit:contain',
-        // Approximate #ef4444 (red-500). Keeps the icon readable on any chip color.
-        'filter:invert(23%) sepia(93%) saturate(5900%) hue-rotate(353deg) brightness(104%) contrast(116%) drop-shadow(0 0 1px rgba(0,0,0,0.35))',
+        // Tint to ~MF_ALERT_BRAND_RED (#ff4444), same family as .mf-route-alert-indicator.
+        'filter:invert(56%) sepia(72%) saturate(5965%) hue-rotate(323deg) brightness(101%) contrast(96%) drop-shadow(0 0 1px rgba(0,0,0,0.35))',
         'pointer-events:none'
       ].join(';');
       routeInfoPanel.appendChild(alertBadge);
@@ -2640,7 +2643,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               ? window._mfRoutesWithAlerts.has(String(routeId))
               : false);
           if (hasAlerts) {
-            sheet.appendChild(mkBtn('View alerts', '#ef4444', '#fff', viewAlerts));
+            sheet.appendChild(mkBtn('View alerts', MF_ALERT_BRAND_RED, '#fff', viewAlerts));
           }
         } catch (_) {}
         sheet.appendChild(mkBtn('Switch directions', '#2563EB', '#fff', switchDir));
