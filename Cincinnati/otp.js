@@ -595,6 +595,11 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
   currentItins = null;
   activeTripSelected = false;
   window.activeTripSelected = false; // Also clear on window
+  try {
+    if (typeof window.metrofeedSyncTripGuideDockVisibility === 'function') {
+      window.metrofeedSyncTripGuideDockVisibility();
+    }
+  } catch (_) {}
   window.currentLegColorMapping = null;
   window.routesToTrack = []; // Clear routes to track
   
@@ -3682,6 +3687,12 @@ async function showRoute(idx) {
   }
   
   await drawJourney(journey);
+
+  try {
+    if (typeof window.metrofeedSyncTripGuideDockVisibility === 'function') {
+      window.metrofeedSyncTripGuideDockVisibility();
+    }
+  } catch (_) {}
   
   // Minimize modal if available
   if (typeof window.minimizeItineraryModal === 'function') {
