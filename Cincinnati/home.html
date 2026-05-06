@@ -2580,6 +2580,35 @@
           </div>
         </div>
       </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.25rem; color: #1E90FF; font-weight: bold;">
+          Prefer fewer transfers:
+          <span id="mfOtpPrefTransfersVal" style="color:#fff; font-weight:800; margin-left:6px;">Medium</span>
+        </label>
+        <input id="mfOtpPrefTransfers" type="range" min="0" max="2" step="1" value="1" style="width:100%;" />
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:#aaa; margin-top:4px;">
+          <span>Fastest</span><span>Balanced</span><span>Fewest transfers</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.25rem; color: #1E90FF; font-weight: bold;">
+          Walk sensitivity:
+          <span id="mfOtpWalkReluctanceVal" style="color:#fff; font-weight:800; margin-left:6px;">7</span>
+        </label>
+        <input id="mfOtpWalkReluctance" type="range" min="2" max="14" step="1" value="7" style="width:100%;" />
+        <div style="font-size:11px; color:#aaa; margin-top:4px;">Higher means OTP will avoid long walks.</div>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; margin-bottom: 0.25rem; color: #1E90FF; font-weight: bold;">
+          Wait sensitivity:
+          <span id="mfOtpWaitReluctanceVal" style="color:#fff; font-weight:800; margin-left:6px;">1.7</span>
+        </label>
+        <input id="mfOtpWaitReluctance" type="range" min="1.0" max="4.0" step="0.1" value="1.7" style="width:100%;" />
+        <div style="font-size:11px; color:#aaa; margin-top:4px;">Higher avoids itineraries with extra waiting.</div>
+      </div>
     </div>
     <div class="mf-actions" style="margin-top: 1.5rem;">
       <button class="mf-btn" onclick="hideOtpOptionsModal()" data-translate="cancel">Cancel</button>
@@ -2795,7 +2824,7 @@
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
 <script src="routeOverlay.js?v=20260506alertBtnRed"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
-<script src="otp.js?v=20260506tripGuideDock"></script>
+<script src="otp.js?v=20260506otpPrefs"></script>
 <script src="savedPlaces.js"></script>
 <!-- -- CSL (Crowdsourced Live) MODULE -- -->
 <!-- CSL (Crowdsourced Live) MODULE - Premium only, not loaded on Free tier -->
@@ -12042,11 +12071,133 @@
 
   function showOtpOptionsModal() {
     document.getElementById('otpOptionsModal').style.display = 'block';
+    try {
+      if (typeof window.metrofeedOtpPrefsLoadToUi === 'function') {
+        window.metrofeedOtpPrefsLoadToUi();
+      }
+    } catch (_) {}
   }
 
   function hideOtpOptionsModal() {
     document.getElementById('otpOptionsModal').style.display = 'none';
   }
+
+// OTP preference helpers (Trip Options modal)
+(function initOtpPreferenceControls() {
+  const storageKey = () => {
+    try {
+      const cid = typeof window.getCityIdFromPath === 'function' ? window.getCityIdFromPath() : 'default';
+      return 'mf_otp_user_prefs_' + String(cid || 'default');
+    } catch (_) {
+      return 'mf_otp_user_prefs_default';
+    }
+  };
+
+  const defaults = {
+    walkReluctance: 7,
+    waitReluctance: 1.7,
+    transferPenalty: 350,
+    // 0=fastest, 1=balanced, 2=fewest transfers
+    preferTransfers: 1
+  };
+
+  const presetToPenalty = (preferTransfers) => {
+    const p = Number(preferTransfers);
+    if (p === 2) return 650;
+    if (p === 0) return 200;
+    return 350;
+  };
+
+  function clampNum(v, min, max, fallback) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function loadPrefs() {
+    try {
+      const raw = localStorage.getItem(storageKey());
+      if (!raw) return { ...defaults };
+      const j = JSON.parse(raw);
+      return {
+        walkReluctance: clampNum(j.walkReluctance, 2, 14, defaults.walkReluctance),
+        waitReluctance: clampNum(j.waitReluctance, 1.0, 4.0, defaults.waitReluctance),
+        preferTransfers: clampNum(j.preferTransfers, 0, 2, defaults.preferTransfers),
+        transferPenalty: clampNum(j.transferPenalty, 0, 2000, defaults.transferPenalty)
+      };
+    } catch (_) {
+      return { ...defaults };
+    }
+  }
+
+  function savePrefs(p) {
+    try {
+      localStorage.setItem(storageKey(), JSON.stringify(p));
+    } catch (_) {}
+  }
+
+  function setLabel(el, text) {
+    try {
+      if (el) el.textContent = String(text);
+    } catch (_) {}
+  }
+
+  window.metrofeedOtpPrefsLoadToUi = function () {
+    const p = loadPrefs();
+    const prefTransfers = document.getElementById('mfOtpPrefTransfers');
+    const prefTransfersVal = document.getElementById('mfOtpPrefTransfersVal');
+    const walk = document.getElementById('mfOtpWalkReluctance');
+    const walkVal = document.getElementById('mfOtpWalkReluctanceVal');
+    const wait = document.getElementById('mfOtpWaitReluctance');
+    const waitVal = document.getElementById('mfOtpWaitReluctanceVal');
+    if (prefTransfers) prefTransfers.value = String(p.preferTransfers);
+    if (walk) walk.value = String(p.walkReluctance);
+    if (wait) wait.value = String(p.waitReluctance);
+    const label = p.preferTransfers === 2 ? 'Fewest' : p.preferTransfers === 0 ? 'Fastest' : 'Medium';
+    setLabel(prefTransfersVal, label);
+    setLabel(walkVal, String(p.walkReluctance));
+    setLabel(waitVal, String(p.waitReluctance.toFixed(1)));
+  };
+
+  window.metrofeedOtpPrefsReadFromUi = function () {
+    const prefTransfers = document.getElementById('mfOtpPrefTransfers');
+    const walk = document.getElementById('mfOtpWalkReluctance');
+    const wait = document.getElementById('mfOtpWaitReluctance');
+    const p = loadPrefs();
+    const preferTransfers = prefTransfers ? clampNum(prefTransfers.value, 0, 2, p.preferTransfers) : p.preferTransfers;
+    const walkReluctance = walk ? clampNum(walk.value, 2, 14, p.walkReluctance) : p.walkReluctance;
+    const waitReluctance = wait ? clampNum(wait.value, 1.0, 4.0, p.waitReluctance) : p.waitReluctance;
+    const transferPenalty = presetToPenalty(preferTransfers);
+    const out = { preferTransfers, walkReluctance, waitReluctance, transferPenalty };
+    savePrefs(out);
+    try {
+      window.OTP_USER_PREFS = out;
+    } catch (_) {}
+    return out;
+  };
+
+  function hookLive() {
+    const prefTransfers = document.getElementById('mfOtpPrefTransfers');
+    const prefTransfersVal = document.getElementById('mfOtpPrefTransfersVal');
+    const walk = document.getElementById('mfOtpWalkReluctance');
+    const walkVal = document.getElementById('mfOtpWalkReluctanceVal');
+    const wait = document.getElementById('mfOtpWaitReluctance');
+    const waitVal = document.getElementById('mfOtpWaitReluctanceVal');
+    if (prefTransfers) {
+      prefTransfers.addEventListener('input', () => {
+        const v = clampNum(prefTransfers.value, 0, 2, 1);
+        setLabel(prefTransfersVal, v === 2 ? 'Fewest' : v === 0 ? 'Fastest' : 'Medium');
+      });
+    }
+    if (walk) walk.addEventListener('input', () => setLabel(walkVal, String(walk.value)));
+    if (wait) wait.addEventListener('input', () => setLabel(waitVal, Number(wait.value).toFixed(1)));
+  }
+
+  try {
+    hookLive();
+    window.metrofeedOtpPrefsLoadToUi();
+  } catch (_) {}
+})();
 
   // ==== STOP TIMES MODAL FUNCTIONS ====
   // Store selected route/stop data
@@ -12288,6 +12439,13 @@
     if (modeBike) modes.push('BICYCLE');
     
     const modesString = modes.join(',');
+
+    // Preferences (persisted)
+    try {
+      if (typeof window.metrofeedOtpPrefsReadFromUi === 'function') {
+        window.OTP_USER_PREFS = window.metrofeedOtpPrefsReadFromUi();
+      }
+    } catch (_) {}
     
     console.log('[planTripWithOptions] Parameters:', {
       maxWalkDistance,

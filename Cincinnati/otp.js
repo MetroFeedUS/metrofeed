@@ -654,6 +654,24 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     const tripDateTimeIso = new Date(tripMs).toISOString();
     logOtpDebug('TRIP_DATETIME', { tripDateTimeIso, otpClampNote, tripMs });
 
+    // User preferences (from Trip Options modal). Used for both server request (if supported) and client rerank (always).
+    const otpPrefs = (() => {
+      try {
+        const p = window.OTP_USER_PREFS || null;
+        if (!p) return null;
+        const walkReluctance = Number(p.walkReluctance);
+        const waitReluctance = Number(p.waitReluctance);
+        const transferPenalty = Number(p.transferPenalty);
+        return {
+          walkReluctance: Number.isFinite(walkReluctance) ? walkReluctance : null,
+          waitReluctance: Number.isFinite(waitReluctance) ? waitReluctance : null,
+          transferPenalty: Number.isFinite(transferPenalty) ? transferPenalty : null
+        };
+      } catch (_) {
+        return null;
+      }
+    })();
+
     let clampBanner = '';
     if (otpClampNote === 'after_service_period') {
       clampBanner =
@@ -664,14 +682,26 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     }
     itinList.innerHTML = clampBanner + "<em style='color: #1E90FF;'>Loading trip options...</em>";
 
-    const graphqlQuery = `
-    query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $dateTime: DateTime!, $searchWindow: Int!) {
+    const buildTripPlanQuery = (withTuning) => {
+      const tuningArgs = withTuning
+        ? `
+        walkReluctance: $walkReluctance
+        waitReluctance: $waitReluctance
+        transferPenalty: $transferPenalty
+        `
+        : '';
+      const tuningVars = withTuning
+        ? `, $walkReluctance: Float!, $waitReluctance: Float!, $transferPenalty: Int!`
+        : '';
+      return `
+    query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $dateTime: DateTime!, $searchWindow: Int!${tuningVars}) {
       trip(
         from: { coordinates: { latitude: $fromLat, longitude: $fromLon } }
         to: { coordinates: { latitude: $toLat, longitude: $toLon } }
         dateTime: $dateTime
         searchWindow: $searchWindow
         numTripPatterns: 8
+        ${tuningArgs}
       ) {
         routingErrors { code description }
         tripPatterns {
@@ -721,8 +751,9 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       }
     }
   `;
+    };
 
-    const variables = {
+    const variablesBase = {
       fromLat: fromLat,
       fromLon: fromLon,
       toLat: toLat,
@@ -730,24 +761,49 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       dateTime: tripDateTimeIso,
       searchWindow: 120
     };
+    const variablesTuning =
+      otpPrefs && otpPrefs.walkReluctance != null && otpPrefs.waitReluctance != null && otpPrefs.transferPenalty != null
+        ? {
+            ...variablesBase,
+            walkReluctance: Number(otpPrefs.walkReluctance),
+            waitReluctance: Number(otpPrefs.waitReluctance),
+            transferPenalty: Math.round(Number(otpPrefs.transferPenalty))
+          }
+        : null;
 
-    console.log('[fetchAndShowOtpItineraries] GraphQL query variables:', variables);
+    console.log('[fetchAndShowOtpItineraries] GraphQL query variables:', variablesTuning || variablesBase);
 
-    // POST GraphQL request
-    logOtpDebug('FETCH', { method: 'POST', url: typeof OTP_API !== 'undefined' ? OTP_API : null });
-    const res = await fetch(OTP_API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: graphqlQuery,
-        variables: variables
-      })
-    });
-    logOtpDebug('HTTP', { ok: res.ok, status: res.status, statusText: res.statusText });
-    if (!res.ok) throw new Error("OTP server error: " + res.status);
-    const response = await res.json();
+    // POST GraphQL request (try tuned args first; if server rejects unknown args, fallback cleanly).
+    const postGraphql = async (query, vars) => {
+      logOtpDebug('FETCH', { method: 'POST', url: typeof OTP_API !== 'undefined' ? OTP_API : null });
+      const res = await fetch(OTP_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables: vars })
+      });
+      logOtpDebug('HTTP', { ok: res.ok, status: res.status, statusText: res.statusText });
+      if (!res.ok) throw new Error("OTP server error: " + res.status);
+      return await res.json();
+    };
+
+    let response = null;
+    if (variablesTuning) {
+      try {
+        response = await postGraphql(buildTripPlanQuery(true), variablesTuning);
+        const errs = Array.isArray(response && response.errors) ? response.errors : [];
+        const msg = errs.map((e) => String(e && (e.message || e)).toLowerCase()).join(' | ');
+        const unknownArg = msg.includes('unknown argument') || msg.includes('unknown field') || msg.includes('cannot query field');
+        if (unknownArg) {
+          console.warn('[OTP] Tuned args not supported by server; falling back to base query.');
+          response = await postGraphql(buildTripPlanQuery(false), variablesBase);
+        }
+      } catch (e) {
+        console.warn('[OTP] Tuned query failed; falling back to base query.', e);
+        response = await postGraphql(buildTripPlanQuery(false), variablesBase);
+      }
+    } else {
+      response = await postGraphql(buildTripPlanQuery(false), variablesBase);
+    }
 
     logOtpDebug('RESPONSE_SHAPE', {
       hasErrors: Array.isArray(response.errors) && response.errors.length > 0,
@@ -968,9 +1024,47 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       const transitLegs = (itin.legs || []).filter(l => l.mode !== 'WALK');
       return Math.max(0, transitLegs.length - 1);
     }
+
+    function sumWalkSeconds(itin) {
+      try {
+        return (itin.legs || [])
+          .filter((l) => String(l.mode || '').toUpperCase() === 'WALK')
+          .reduce((acc, l) => acc + (Number(l.duration) || 0), 0);
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    function clientScore(itin) {
+      const dur = Number(itin && itin.duration) || 0; // seconds
+      const transfers = countTransfers(itin);
+      const walkS = sumWalkSeconds(itin);
+      let walkRel = 7;
+      let transferPen = 350;
+      let waitRel = 1.7;
+      try {
+        const p = window.OTP_USER_PREFS || null;
+        if (p) {
+          if (Number.isFinite(Number(p.walkReluctance))) walkRel = Number(p.walkReluctance);
+          if (Number.isFinite(Number(p.transferPenalty))) transferPen = Number(p.transferPenalty);
+          if (Number.isFinite(Number(p.waitReluctance))) waitRel = Number(p.waitReluctance);
+        }
+      } catch (_) {}
+      // Wait reluctance: we don't have explicit wait segments; keep it as a mild global multiplier for now.
+      const waitFactor = Math.max(1, Number(waitRel) || 1.7);
+      return dur * waitFactor + walkS * (Number(walkRel) || 7) + transfers * (Number(transferPen) || 350);
+    }
     
-    // Sort by duration (shortest first)
-    convertedItineraries.sort((a, b) => a.duration - b.duration);
+    // Sort by OTP user prefs (if present), otherwise duration (shortest first)
+    try {
+      if (window.OTP_USER_PREFS) {
+        convertedItineraries.sort((a, b) => clientScore(a) - clientScore(b));
+      } else {
+        convertedItineraries.sort((a, b) => a.duration - b.duration);
+      }
+    } catch (_) {
+      convertedItineraries.sort((a, b) => a.duration - b.duration);
+    }
     
     // Filter to max transfers
     const filtered = convertedItineraries.filter(it => countTransfers(it) <= MAX_TRANSFERS);
