@@ -2132,6 +2132,17 @@
           : '');
     }
 
+    // Context CTA for each step (still manual; no auto-advance).
+    let primaryLabel = 'Next';
+    if (step.kind === 'walk_to_board') primaryLabel = "I'm at the stop";
+    else if (step.kind === 'board') primaryLabel = "I'm on the bus";
+    else if (step.kind === 'alight') primaryLabel = "I'm off the bus";
+    if (st.stepIndex >= (st.steps.length || 1) - 1) primaryLabel = 'Done';
+
+    const primaryGlow = isNear
+      ? 'box-shadow:0 0 0 2px rgba(76,175,80,0.35), 0 0 18px rgba(76,175,80,0.65);'
+      : '';
+
     body.innerHTML =
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">' +
       '<div style="font-weight:800;color:#e8eaed;">Step ' +
@@ -2143,7 +2154,9 @@
       '<button type="button" id="mfTripGuidePrevBtn" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:#e8eaed;font-weight:800;cursor:pointer;"' +
       (st.stepIndex === 0 ? ' disabled aria-disabled="true" style="opacity:0.55;cursor:not-allowed;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:#e8eaed;font-weight:800;"' : '') +
       '>Back</button>' +
-      '<button type="button" id="mfTripGuideNextBtn" style="padding:8px 10px;border-radius:8px;border:none;background:#1E90FF;color:#fff;font-weight:900;cursor:pointer;">Next</button>' +
+      '<button type="button" id="mfTripGuidePrimaryBtn" style="padding:8px 12px;border-radius:8px;border:none;background:#1E90FF;color:#fff;font-weight:900;cursor:pointer;' + primaryGlow + '">' +
+      primaryLabel +
+      '</button>' +
       '</div>' +
       '</div>' +
       '<div style="font-size:15px;font-weight:900;color:#fff;">' +
@@ -2155,9 +2168,17 @@
     // Wire buttons
     try {
       const prev = document.getElementById('mfTripGuidePrevBtn');
-      const next = document.getElementById('mfTripGuideNextBtn');
+      const primary = document.getElementById('mfTripGuidePrimaryBtn');
       if (prev) prev.onclick = function (e) { e.stopPropagation(); mfTripGuideGo(-1); };
-      if (next) next.onclick = function (e) { e.stopPropagation(); mfTripGuideGo(1); };
+      if (primary) primary.onclick = function (e) {
+        e.stopPropagation();
+        if (st.stepIndex >= (st.steps.length || 1) - 1) {
+          // Finished: keep the trip drawn; just minimize the guide.
+          minimizeDock();
+          return;
+        }
+        mfTripGuideGo(1);
+      };
     } catch (_) {}
   }
 
