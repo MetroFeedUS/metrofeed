@@ -404,6 +404,126 @@
       display: block;
       object-fit: contain;
     }
+
+    /* Trip guide dock: full-width bar above sponsor; expands upward, map stays visible */
+    .mf-trip-guide-dock {
+      position: fixed;
+      left: max(12px, env(safe-area-inset-left, 0px));
+      right: max(12px, env(safe-area-inset-right, 0px));
+      z-index: 1005;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      pointer-events: none;
+      transition: none;
+    }
+    .mf-trip-guide-dock > * {
+      pointer-events: auto;
+    }
+    .mf-trip-guide-bar {
+      background: rgba(22, 22, 26, 0.94);
+      border: 1px solid rgba(30, 144, 255, 0.88);
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+      box-sizing: border-box;
+    }
+    .mf-trip-guide-start-btn {
+      width: 100%;
+      margin: 0;
+      padding: 11px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(180deg, #2ea6ff 0%, #1E90FF 55%, #1873cc 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(30, 144, 255, 0.35);
+      transition: filter 0.15s ease, transform 0.1s ease;
+    }
+    .mf-trip-guide-start-btn:hover {
+      filter: brightness(1.06);
+    }
+    .mf-trip-guide-start-btn:active {
+      transform: scale(0.99);
+    }
+    .mf-trip-guide-panel {
+      margin-top: 8px;
+      max-height: min(38vh, 360px);
+      display: none;
+      flex-direction: column;
+      background: rgba(18, 18, 22, 0.96);
+      border: 1px solid rgba(30, 144, 255, 0.75);
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .mf-trip-guide-dock.mf-trip-guide-dock--expanded .mf-trip-guide-panel {
+      display: flex;
+    }
+    .mf-trip-guide-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .mf-trip-guide-panel-title {
+      font-weight: 800;
+      font-size: 14px;
+      color: #e8eaed;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .mf-trip-guide-header-btns {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mf-trip-guide-icon-btn {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      color: #e8eaed;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .mf-trip-guide-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+    .mf-trip-guide-icon-btn:focus-visible {
+      outline: 2px solid #1E90FF;
+      outline-offset: 2px;
+    }
+    .mf-trip-guide-panel-body {
+      padding: 12px 14px 16px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      color: #bdc1c6;
+      font-size: 14px;
+      line-height: 1.45;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .mf-trip-guide-panel-body p {
+      margin: 0 0 10px;
+    }
+    .mf-trip-guide-panel-body p:last-child {
+      margin-bottom: 0;
+    }
     .side-buttons img { width: 20px; height: 20px; }
     /* -- DROPDOWN -- */
     .dropdown {
@@ -1661,6 +1781,128 @@
       sponsorImg.src = SPONSOR_IMAGE;
     }
   })();
+</script>
+
+<!-- Trip guide: bar above sponsor; expands to taller panel (map stays visible); min / close -->
+<div id="mfTripGuideDock" class="mf-trip-guide-dock mf-trip-guide-dock--collapsed" aria-label="Trip guide">
+  <div class="mf-trip-guide-bar">
+    <button type="button" class="mf-trip-guide-start-btn" id="mfTripGuideStartBtn" data-trip-started="false" aria-expanded="false">
+      Start my trip
+    </button>
+  </div>
+  <div class="mf-trip-guide-panel" id="mfTripGuidePanel" role="region" aria-labelledby="mfTripGuidePanelHeading" hidden>
+    <div class="mf-trip-guide-panel-header">
+      <span id="mfTripGuidePanelHeading" class="mf-trip-guide-panel-title">Trip guide</span>
+      <div class="mf-trip-guide-header-btns">
+        <button type="button" class="mf-trip-guide-icon-btn" id="mfTripGuideMinBtn" title="Minimize" aria-label="Minimize trip guide">&#8722;</button>
+        <button type="button" class="mf-trip-guide-icon-btn" id="mfTripGuideCloseBtn" title="Cancel trip" aria-label="Cancel trip">&times;</button>
+      </div>
+    </div>
+    <div class="mf-trip-guide-panel-body" id="mfTripGuidePanelBody">
+      <p>This is where we’ll walk you through your trip step by step (coming next).</p>
+      <p>Tip: Use <strong>Minimize</strong> to tuck the panel away while you use the map. Use <strong>close</strong> only when you want to cancel the guided trip.</p>
+    </div>
+  </div>
+</div>
+<script>
+(function initTripGuideDock() {
+  /** Bar bottom edge sits this many px above the top of #sponsorBox (fallback if sponsor hidden). */
+  const GAP_ABOVE_SPONSOR = 20;
+  const SPONSOR_FALLBACK_HEIGHT = 90;
+  const SPONSOR_FALLBACK_BOTTOM = 40;
+
+  function updateTripGuideDockBottom() {
+    const dock = document.getElementById('mfTripGuideDock');
+    if (!dock) return;
+    let bottomPx = SPONSOR_FALLBACK_BOTTOM + SPONSOR_FALLBACK_HEIGHT + GAP_ABOVE_SPONSOR;
+    try {
+      const sponsor = document.getElementById('sponsorBox');
+      if (sponsor) {
+        const cs = window.getComputedStyle(sponsor);
+        if (cs.display !== 'none' && cs.visibility !== 'hidden') {
+          const r = sponsor.getBoundingClientRect();
+          if (r.height > 4 && r.width > 4) {
+            bottomPx = window.innerHeight - r.top + GAP_ABOVE_SPONSOR;
+          }
+        }
+      }
+    } catch (_) {}
+    bottomPx = Math.max(24, bottomPx);
+    dock.style.bottom = 'calc(' + Math.round(bottomPx) + 'px + env(safe-area-inset-bottom, 0px))';
+  }
+
+  function expandDock() {
+    const dock = document.getElementById('mfTripGuideDock');
+    const panel = document.getElementById('mfTripGuidePanel');
+    const startBtn = document.getElementById('mfTripGuideStartBtn');
+    if (!dock || !panel) return;
+    dock.classList.remove('mf-trip-guide-dock--collapsed');
+    dock.classList.add('mf-trip-guide-dock--expanded');
+    panel.removeAttribute('hidden');
+    if (startBtn) startBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  function minimizeDock() {
+    const dock = document.getElementById('mfTripGuideDock');
+    const panel = document.getElementById('mfTripGuidePanel');
+    const startBtn = document.getElementById('mfTripGuideStartBtn');
+    if (!dock || !panel) return;
+    dock.classList.remove('mf-trip-guide-dock--expanded');
+    dock.classList.add('mf-trip-guide-dock--collapsed');
+    panel.setAttribute('hidden', '');
+    if (startBtn) startBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  function setTripStarted(started) {
+    const btn = document.getElementById('mfTripGuideStartBtn');
+    if (!btn) return;
+    btn.setAttribute('data-trip-started', started ? 'true' : 'false');
+    btn.textContent = started ? 'Resume trip guide' : 'Start my trip';
+  }
+
+  function onStartClick() {
+    setTripStarted(true);
+    expandDock();
+  }
+
+  function onCloseClick() {
+    if (!window.confirm('Are you sure you want to cancel your trip?')) return;
+    setTripStarted(false);
+    minimizeDock();
+  }
+
+  function bind() {
+    const startBtn = document.getElementById('mfTripGuideStartBtn');
+    const minBtn = document.getElementById('mfTripGuideMinBtn');
+    const closeBtn = document.getElementById('mfTripGuideCloseBtn');
+    if (startBtn) startBtn.addEventListener('click', onStartClick);
+    if (minBtn) minBtn.addEventListener('click', minimizeDock);
+    if (closeBtn) closeBtn.addEventListener('click', onCloseClick);
+    window.addEventListener('resize', updateTripGuideDockBottom, { passive: true });
+    window.addEventListener('orientationchange', updateTripGuideDockBottom, { passive: true });
+    try {
+      const sponsor = document.getElementById('sponsorBox');
+      if (sponsor && typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => updateTripGuideDockBottom());
+        ro.observe(sponsor);
+      }
+    } catch (_) {}
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updateTripGuideDockBottom);
+    } else {
+      updateTripGuideDockBottom();
+    }
+    requestAnimationFrame(updateTripGuideDockBottom);
+    setTimeout(updateTripGuideDockBottom, 400);
+  }
+
+  try {
+    window.mfUpdateTripGuideDockPosition = updateTripGuideDockBottom;
+    bind();
+  } catch (e) {
+    console.warn('[initTripGuideDock]', e);
+  }
+})();
 </script>
 
 <div id="dropdownMenu" class="dropdown">
