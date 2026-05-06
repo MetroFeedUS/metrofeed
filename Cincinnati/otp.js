@@ -1258,6 +1258,192 @@ function mfOtpLegEndpoint(place, compact) {
   return { name, lat, lng };
 }
 
+// ----- Static route JSON (e.g. Cincinnati routeDataBase) — direction + overlay verification -----
+
+function mfOtpGuessCityKey() {
+  try {
+    const seg = String(window.location?.pathname || "").split("/").filter(Boolean)[0];
+    return seg ? seg.toLowerCase() : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function mfOtpNormLabel(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/&amp;/g, "&")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/** Map OTP publicCode → MetroFeed route id (e.g. sorta_33) using window.ROUTES. */
+function mfResolveBusRouteIdFromRoutesIndex(otpCode, otpLineName) {
+  const codeRaw = String(otpCode || "").trim();
+  if (!codeRaw) return null;
+  const cityKey = mfOtpGuessCityKey();
+  const routes =
+    cityKey && window.ROUTES && window.ROUTES[cityKey] && Array.isArray(window.ROUTES[cityKey].busRoutes)
+      ? window.ROUTES[cityKey].busRoutes
+      : null;
+  if (!routes) return null;
+
+  const code = codeRaw;
+  const normName = mfOtpNormLabel(otpLineName);
+
+  const candidates = routes.filter((r) => {
+    const id = String(r?.id || "");
+    const label = String(r?.label || "");
+    const idMatch = id === code || id.endsWith(`_${code}`) || id.includes(`_${code}`);
+    const labelMatch =
+      new RegExp(String.raw`(?:\]|\b)\s*${code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\b`, "i").test(label) ||
+      label.includes(` ${code} `) ||
+      label.includes(` ${code}-`) ||
+      label.includes(` ${code}X`);
+    return idMatch || labelMatch;
+  });
+
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0].id;
+
+  if (normName) {
+    const scored = candidates
+      .map((r) => {
+        const label = String(r?.label || "");
+        const afterDash = label.includes(" - ") ? label.split(" - ").slice(1).join(" - ") : label;
+        const labelNorm = mfOtpNormLabel(afterDash);
+        let score = 0;
+        if (labelNorm === normName) score += 10;
+        if (labelNorm && normName && (labelNorm.includes(normName) || normName.includes(labelNorm))) score += 6;
+        const nameToks = normName.split(" ").filter((t) => t.length >= 4);
+        const labelToks = new Set(labelNorm.split(" ").filter((t) => t.length >= 4));
+        for (const t of nameToks) if (labelToks.has(t)) score += 1;
+        return { id: r.id, score };
+      })
+      .sort((a, b) => b.score - a.score);
+    if (scored[0] && scored[0].score > 0) return scored[0].id;
+  }
+
+  return candidates[0].id;
+}
+
+async function mfFetchStaticRouteJson(routeId, dir) {
+  const base = window.CITY_CONFIG && window.CITY_CONFIG.routeDataBase ? String(window.CITY_CONFIG.routeDataBase) : null;
+  if (!base) return null;
+  const safeId = String(routeId).replace(/[/?#]+/g, "_");
+  const baseUrl = base.endsWith("/") ? base : base + "/";
+  const tries = [
+    `route-${safeId}-dir${dir}.json`,
+    `route-${encodeURIComponent(String(routeId))}-dir${dir}.json`,
+    `route-${safeId}.json`,
+    `route-${encodeURIComponent(String(routeId))}.json`
+  ];
+  for (let i = 0; i < tries.length; i++) {
+    try {
+      const res = await fetch(baseUrl + tries[i], { cache: "no-store" });
+      if (!res.ok) continue;
+      const j = await res.json();
+      if (j && Array.isArray(j.stops)) return j;
+    } catch (_) {}
+  }
+  return null;
+}
+
+function mfPrimaryShapeFromRouteData(rd) {
+  if (!rd) return null;
+  if (Array.isArray(rd.shapes) && rd.shapes[0] && rd.shapes[0].length > 1) return rd.shapes[0];
+  if (Array.isArray(rd.shape) && rd.shape.length > 1) return rd.shape;
+  return null;
+}
+
+function mfHaversineM(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/** routeShape / otpSegment coordinates are [lat, lon] (matches routeOverlay). */
+function mfNearestDistPointToShapeM(routeShape, lat, lon) {
+  if (!Array.isArray(routeShape) || routeShape.length < 2) return Infinity;
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return Infinity;
+  let bestD2 = Infinity;
+  let projLat = la;
+  let projLon = lo;
+  for (let i = 0; i < routeShape.length - 1; i++) {
+    const p0 = routeShape[i];
+    const p1 = routeShape[i + 1];
+    const y0 = Number(p0 && p0[0]);
+    const x0 = Number(p0 && p0[1]);
+    const y1 = Number(p1 && p1[0]);
+    const x1 = Number(p1 && p1[1]);
+    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
+    const vx = x1 - x0;
+    const vy = y1 - y0;
+    const wx = lo - x0;
+    const wy = la - y0;
+    const vv = vx * vx + vy * vy;
+    if (vv < 1e-12) continue;
+    let t = (wx * vx + wy * vy) / vv;
+    if (t < 0) t = 0;
+    else if (t > 1) t = 1;
+    const px = x0 + t * vx;
+    const py = y0 + t * vy;
+    const dx = lo - px;
+    const dy = la - py;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestD2) {
+      bestD2 = d2;
+      projLat = py;
+      projLon = px;
+    }
+  }
+  if (!Number.isFinite(bestD2) || bestD2 === Infinity) return Infinity;
+  return mfHaversineM(la, lo, projLat, projLon);
+}
+
+function mfMeanDistOtpSegmentToShape(routeShape, otpSegment) {
+  if (!Array.isArray(otpSegment) || otpSegment.length < 2 || !routeShape) return Infinity;
+  let sum = 0;
+  let n = 0;
+  const stride = Math.max(1, Math.floor(otpSegment.length / 12));
+  for (let i = 0; i < otpSegment.length; i += stride) {
+    const p = otpSegment[i];
+    const lat = Number(p && p[0]);
+    const lon = Number(p && p[1]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    const d = mfNearestDistPointToShapeM(routeShape, lat, lon);
+    if (Number.isFinite(d)) {
+      sum += d;
+      n++;
+    }
+  }
+  return n ? sum / n : Infinity;
+}
+
+/**
+ * Pick dir 0 vs 1 by mean distance from OTP ridden segment to each direction's primary polyline.
+ * Returns null if inconclusive.
+ */
+function mfPickDirectionByOtpSegment(dir0Data, dir1Data, otpSegment) {
+  if (!otpSegment || otpSegment.length < 2) return null;
+  const s0 = mfPrimaryShapeFromRouteData(dir0Data);
+  const s1 = mfPrimaryShapeFromRouteData(dir1Data);
+  const d0 = s0 ? mfMeanDistOtpSegmentToShape(s0, otpSegment) : Infinity;
+  const d1 = s1 ? mfMeanDistOtpSegmentToShape(s1, otpSegment) : Infinity;
+  if (!Number.isFinite(d0) && !Number.isFinite(d1)) return null;
+  const marginM = 35;
+  if (d0 + marginM < d1) return 0;
+  if (d1 + marginM < d0) return 1;
+  return null;
+}
+
 class JourneyLeg {
   constructor(leg, index) {
     this.index = index;
@@ -1764,8 +1950,145 @@ async function calculateDirection(leg, routeNumber, routeDescription) {
         calculated = false;
         console.warn(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: error:`, error);
       }
+    } else if (
+      !isBoston &&
+      typeof window.CITY_CONFIG !== "undefined" &&
+      window.CITY_CONFIG.routeDataBase &&
+      routeNumber &&
+      leg.fromPlace &&
+      leg.toPlace
+    ) {
+      // Cincinnati / static JSON: resolve BUS → sorta_XX and compare OTP stops to dir0/dir1 route files.
+      try {
+        let rid = String(routeNumber);
+        if (leg.mode === "BUS") {
+          const resolved = mfResolveBusRouteIdFromRoutesIndex(
+            leg.line?.publicCode || routeNumber,
+            leg.line?.name || routeDescription || ""
+          );
+          if (resolved) rid = resolved;
+        }
+
+        let dir0Data = await mfFetchStaticRouteJson(rid, 0);
+        let dir1Data = await mfFetchStaticRouteJson(rid, 1);
+        if ((!dir0Data || !dir1Data) && rid.includes("-")) {
+          const baseRoute = rid.split("-")[0];
+          if (!dir0Data) dir0Data = await mfFetchStaticRouteJson(baseRoute, 0);
+          if (!dir1Data) dir1Data = await mfFetchStaticRouteJson(baseRoute, 1);
+        }
+
+        if (dir0Data && dir1Data && dir0Data.stops && dir1Data.stops) {
+          function matchStopSequenceFuzzy(otpStops, routeStops) {
+            if (!routeStops || routeStops.length === 0) return 0;
+            let matches = 0;
+            let consecutiveMatches = 0;
+            let maxConsecutive = 0;
+            let lastMatchIndex = -1;
+            for (let i = 0; i < otpStops.length; i++) {
+              const otpStop = otpStops[i];
+              if (!otpStop) continue;
+              const routeIndex = routeStops.findIndex((s) => {
+                const rn = normalizeString(s.name);
+                return rn === otpStop || (rn && otpStop && (rn.includes(otpStop) || otpStop.includes(rn)));
+              });
+              if (routeIndex >= 0) {
+                matches++;
+                if (lastMatchIndex < 0 || routeIndex > lastMatchIndex) {
+                  consecutiveMatches++;
+                  maxConsecutive = Math.max(maxConsecutive, consecutiveMatches);
+                  lastMatchIndex = routeIndex;
+                } else {
+                  consecutiveMatches = 1;
+                  lastMatchIndex = routeIndex;
+                }
+              }
+            }
+            return matches * 2 + maxConsecutive * 10;
+          }
+
+          function validateFromBeforeToDir(dirData) {
+            const fromNm = String(leg.fromPlace.name || "");
+            const toNm = String(leg.toPlace.name || "");
+            const fn = (s) =>
+              String(s || "")
+                .toLowerCase()
+                .replace(/&amp;/g, "&")
+                .replace(/[^a-z0-9]+/g, "")
+                .trim();
+            const targetF = fn(fromNm);
+            const targetT = fn(toNm);
+            if (!targetF || !targetT) return false;
+            let fromIx = -1;
+            let toIx = -1;
+            for (let i = 0; i < dirData.stops.length; i++) {
+              const n = fn(dirData.stops[i] && dirData.stops[i].name);
+              if (
+                fromIx < 0 &&
+                n &&
+                (n === targetF || n.includes(targetF) || targetF.includes(n))
+              ) {
+                fromIx = i;
+                break;
+              }
+            }
+            for (let i = dirData.stops.length - 1; i >= 0; i--) {
+              const n = fn(dirData.stops[i] && dirData.stops[i].name);
+              if (n && (n === targetT || n.includes(targetT) || targetT.includes(n))) {
+                toIx = i;
+                break;
+              }
+            }
+            if (fromIx < 0 || toIx < 0) return false;
+            if (fromIx > toIx) return false;
+            return true;
+          }
+
+          if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
+            const otpStopNames = leg.estimatedCalls.map((call) =>
+              normalizeString(call.quay?.name || call.name || "")
+            );
+            const dir0Score = matchStopSequenceFuzzy(otpStopNames, dir0Data.stops);
+            const dir1Score = matchStopSequenceFuzzy(otpStopNames, dir1Data.stops);
+            if (dir1Score > dir0Score) {
+              direction = 1;
+              calculated = true;
+              console.log(
+                `[calculateDirection] static JSON: direction 1 (sequence dir0=${dir0Score} dir1=${dir1Score})`
+              );
+            } else if (dir0Score > dir1Score) {
+              direction = 0;
+              calculated = true;
+              console.log(
+                `[calculateDirection] static JSON: direction 0 (sequence dir0=${dir0Score} dir1=${dir1Score})`
+              );
+            }
+          }
+
+          if (!calculated) {
+            const ok0 = validateFromBeforeToDir(dir0Data);
+            const ok1 = validateFromBeforeToDir(dir1Data);
+            if (ok0 && !ok1) {
+              direction = 0;
+              calculated = true;
+              console.log(`[calculateDirection] static JSON: direction 0 (from/to stop order)`);
+            } else if (!ok0 && ok1) {
+              direction = 1;
+              calculated = true;
+              console.log(`[calculateDirection] static JSON: direction 1 (from/to stop order)`);
+            }
+          }
+        }
+        if (!calculated) {
+          console.log(
+            `[calculateDirection] ${leg.mode} ${routeNumber}: static routeDataBase — could not lock direction, default 0`
+          );
+        }
+      } catch (error) {
+        direction = 0;
+        calculated = false;
+        console.warn(`[calculateDirection] static JSON error:`, error);
+      }
     } else {
-      // Not Boston or routeLoader not available - default to 0
       direction = 0;
       calculated = false;
       console.log(`🔍 [calculateDirection] ${leg.mode} ${routeNumber}: not Boston or routeLoader not available, defaulting to 0`);
@@ -2511,73 +2834,6 @@ async function drawJourney(journey) {
        * Our route files / overlays use agency-prefixed IDs (e.g. "sorta_33", "tank_12").
        * So: map OTP → routes_index ID before calling showRouteOverlay().
        */
-      function mfOtpGuessCityKey() {
-        try {
-          const seg = String(window.location?.pathname || '').split('/').filter(Boolean)[0];
-          return seg ? seg.toLowerCase() : null;
-        } catch (_) {
-          return null;
-        }
-      }
-
-      function mfOtpNorm(s) {
-        return String(s || '')
-          .toLowerCase()
-          .replace(/&amp;/g, '&')
-          .replace(/[^a-z0-9]+/g, ' ')
-          .trim();
-      }
-
-      function mfResolveBusRouteIdFromRoutesIndex(otpCode, otpLineName) {
-        const codeRaw = String(otpCode || '').trim();
-        if (!codeRaw) return null;
-        const cityKey = mfOtpGuessCityKey();
-        const routes = cityKey && window.ROUTES && window.ROUTES[cityKey] && Array.isArray(window.ROUTES[cityKey].busRoutes)
-          ? window.ROUTES[cityKey].busRoutes
-          : null;
-        if (!routes) return null;
-
-        const code = codeRaw;
-        const normName = mfOtpNorm(otpLineName);
-
-        const candidates = routes.filter(r => {
-          const id = String(r?.id || '');
-          const label = String(r?.label || '');
-          const idMatch = id === code || id.endsWith(`_${code}`) || id.includes(`_${code}`);
-          // label examples: "[SORTA] 33 - Harrison", "[TANK] 12 - Bellevue/Dayton", "[TANK] 2X - Airporter"
-          const labelMatch =
-            new RegExp(String.raw`(?:\]|\b)\s*${code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\b`, 'i').test(label) ||
-            label.includes(` ${code} `) ||
-            label.includes(` ${code}-`) ||
-            label.includes(` ${code}X`);
-          return idMatch || labelMatch;
-        });
-
-        if (candidates.length === 0) return null;
-        if (candidates.length === 1) return candidates[0].id;
-
-        if (normName) {
-          const scored = candidates
-            .map(r => {
-              const label = String(r?.label || '');
-              const afterDash = label.includes(' - ') ? label.split(' - ').slice(1).join(' - ') : label;
-              const labelNorm = mfOtpNorm(afterDash);
-              let score = 0;
-              if (labelNorm === normName) score += 10;
-              if (labelNorm && normName && (labelNorm.includes(normName) || normName.includes(labelNorm))) score += 6;
-              // Small boost if any significant token overlaps
-              const nameToks = normName.split(' ').filter(t => t.length >= 4);
-              const labelToks = new Set(labelNorm.split(' ').filter(t => t.length >= 4));
-              for (const t of nameToks) if (labelToks.has(t)) score += 1;
-              return { id: r.id, score };
-            })
-            .sort((a, b) => b.score - a.score);
-          if (scored[0] && scored[0].score > 0) return scored[0].id;
-        }
-
-        return candidates[0].id;
-      }
-
       if (leg.mode === 'BUS') {
         const otpCode = leg.line?.publicCode || leg.routeNumber || mappedRouteId;
         const otpName = leg.line?.name || routeName;
@@ -2898,36 +3154,10 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
   } catch (_) {}
 
   const loadRouteStops = (rid, dir) => {
-    // Boston lazy loader path
-    if (window.routeLoader && typeof window.routeLoader.loadRoute === 'function') {
+    if (window.routeLoader && typeof window.routeLoader.loadRoute === "function") {
       return window.routeLoader.loadRoute(rid, dir).catch(() => null);
     }
-    // Cincinnati/static JSON path
-    const base = (window.CITY_CONFIG && window.CITY_CONFIG.routeDataBase)
-      ? String(window.CITY_CONFIG.routeDataBase)
-      : null;
-    if (!base) return Promise.resolve(null);
-    const safeId = String(rid).replace(/[/?#]+/g, '_');
-    const baseUrl = base.endsWith('/') ? base : base + '/';
-    const tries = [
-      `route-${safeId}-dir${dir}.json`,
-      `route-${encodeURIComponent(String(rid))}-dir${dir}.json`,
-      // Some routes only ship one file; accept it if it claims this direction.
-      `route-${safeId}.json`,
-      `route-${encodeURIComponent(String(rid))}.json`
-    ];
-    const fetchFirstOk = async () => {
-      for (let i = 0; i < tries.length; i++) {
-        try {
-          const res = await fetch(baseUrl + tries[i], { cache: 'no-store' });
-          if (!res.ok) continue;
-          const j = await res.json();
-          return j;
-        } catch (_) {}
-      }
-      return null;
-    };
-    return fetchFirstOk();
+    return mfFetchStaticRouteJson(rid, dir);
   };
 
   function normStop(s) {
@@ -2962,50 +3192,75 @@ function verifyOtpBusOverlayDirection(route, mappedRouteId, overlayInstanceKey) 
     }
   }
 
-  Promise.all([
-    loadRouteStops(mappedRouteId, 0),
-    loadRouteStops(mappedRouteId, 1)
-  ]).then(([dir0Data, dir1Data]) => {
-    if (!dir0Data || !dir1Data || !dir0Data.stops || !dir1Data.stops) return;
-
-    const intendedDir = (route.directionId === 0 || route.directionId === 1) ? route.directionId : 0;
-    const otherDir = intendedDir === 0 ? 1 : 0;
-
-    const intendedData = intendedDir === 0 ? dir0Data : dir1Data;
-    const otherData = otherDir === 0 ? dir0Data : dir1Data;
-
-    const vInt = validateDirByStopOrder(intendedData);
-    const vOther = validateDirByStopOrder(otherData);
-
-    // If intended direction validates, keep it. If not, but the other validates, flip.
-    // If neither validates (stop names don't match well), do nothing rather than flipping randomly.
-    if (vInt.ok) return;
-    if (!vOther.ok) return;
-    const flippedDirection = otherDir;
-
-    const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : 0;
-    const newInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
-    if (window.activeRouteOverlays && window.activeRouteOverlays[newInstanceKey]) {
-      return;
-    }
-    if (overlayInstanceKey && overlayInstanceKey !== newInstanceKey &&
-        window.activeRouteOverlays && window.activeRouteOverlays[overlayInstanceKey]) {
-      window.activeRouteOverlays[overlayInstanceKey].remove();
-      delete window.activeRouteOverlays[overlayInstanceKey];
-      if (window.activeRouteOverlayDescriptors) {
-        delete window.activeRouteOverlayDescriptors[overlayInstanceKey];
+  Promise.all([loadRouteStops(mappedRouteId, 0), loadRouteStops(mappedRouteId, 1)])
+    .then(async ([dir0Data, dir1Data]) => {
+      let d0 = dir0Data;
+      let d1 = dir1Data;
+      if ((!d0?.stops?.length || !d1?.stops?.length) && String(mappedRouteId).includes("-")) {
+        const base = String(mappedRouteId).split("-")[0];
+        if (!d0?.stops?.length) d0 = await mfFetchStaticRouteJson(base, 0);
+        if (!d1?.stops?.length) d1 = await mfFetchStaticRouteJson(base, 1);
       }
-    }
-    window.showRouteOverlay(
-      mappedRouteId,
-      flippedDirection,
-      undefined,
-      newInstanceKey,
-      { forceRouteInfoPanel: true, routeColor: route.color, otpFromStop: route.fromStop, otpToStop: route.toStop, otpSegment: route.otpSegment }
-    );
-  }).catch(err => {
-    console.warn(`[verifyOtpBusOverlayDirection] ${mappedRouteId}:`, err);
-  });
+
+      if (!d0?.stops?.length || !d1?.stops?.length) return;
+
+      const intendedDir = route.directionId === 0 || route.directionId === 1 ? route.directionId : 0;
+      const otherDir = intendedDir === 0 ? 1 : 0;
+
+      const intendedData = intendedDir === 0 ? d0 : d1;
+      const otherData = otherDir === 0 ? d0 : d1;
+
+      const vInt = validateDirByStopOrder(intendedData);
+      const vOther = validateDirByStopOrder(otherData);
+
+      let flippedDirection = null;
+      if (vInt.ok) {
+        return;
+      }
+      if (vOther.ok) {
+        flippedDirection = otherDir;
+      } else {
+        const bySeg = mfPickDirectionByOtpSegment(d0, d1, route.otpSegment);
+        if (bySeg !== null && bySeg !== intendedDir) flippedDirection = bySeg;
+        else return;
+      }
+
+      if (flippedDirection === null || flippedDirection === intendedDir) return;
+
+      const legTag = route.legIndex !== undefined && route.legIndex !== null ? route.legIndex : 0;
+      const newInstanceKey = `${mappedRouteId}-${flippedDirection}-otpLeg${legTag}`;
+      if (window.activeRouteOverlays && window.activeRouteOverlays[newInstanceKey]) {
+        return;
+      }
+      if (
+        overlayInstanceKey &&
+        overlayInstanceKey !== newInstanceKey &&
+        window.activeRouteOverlays &&
+        window.activeRouteOverlays[overlayInstanceKey]
+      ) {
+        window.activeRouteOverlays[overlayInstanceKey].remove();
+        delete window.activeRouteOverlays[overlayInstanceKey];
+        if (window.activeRouteOverlayDescriptors) {
+          delete window.activeRouteOverlayDescriptors[overlayInstanceKey];
+        }
+      }
+      window.showRouteOverlay(
+        mappedRouteId,
+        flippedDirection,
+        undefined,
+        newInstanceKey,
+        {
+          forceRouteInfoPanel: true,
+          routeColor: route.color,
+          otpFromStop: route.fromStop,
+          otpToStop: route.toStop,
+          otpSegment: route.otpSegment
+        }
+      );
+    })
+    .catch((err) => {
+      console.warn(`[verifyOtpBusOverlayDirection] ${mappedRouteId}:`, err);
+    });
 }
 
 /**
