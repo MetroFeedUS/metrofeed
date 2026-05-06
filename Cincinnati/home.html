@@ -1851,55 +1851,426 @@
     if (startBtn) startBtn.setAttribute('aria-expanded', 'false');
   }
 
-  function setTripStarted(started) {
+  // Trip guide V1: manual steps + light GPS (distance + near-stop banner)
+  const MF_TRIP_GUIDE_NEAR_RADIUS_FT = 500;
+  const MF_TRIP_GUIDE_NEAR_DWELL_MS = 12000;
+  const MF_TRIP_GUIDE_ARRIVE_BUFFER_MIN = 2;
+
+  window.__mfTripGuide = window.__mfTripGuide || {
+    started: false,
+    steps: [],
+    stepIndex: 0,
+    gps: {
+      watchId: null,
+      lastPos: null,
+      nearSinceMsByStep: Object.create(null)
+    }
+  };
+
+  function mfFeet(meters) {
+    const m = Number(meters);
+    if (!Number.isFinite(m)) return null;
+    return m * 3.28084;
+  }
+
+  function mfFmtFeet(feet) {
+    const f = Number(feet);
+    if (!Number.isFinite(f)) return '';
+    if (f < 1000) return Math.round(f) + ' ft';
+    const mi = f / 5280;
+    return mi.toFixed(mi < 10 ? 1 : 0) + ' mi';
+  }
+
+  function mfHaversineM(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const toRad = (d) => (d * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+  }
+
+  function mfFmtTime(msOrIso) {
+    try {
+      const d = typeof msOrIso === 'number' ? new Date(msOrIso) : new Date(String(msOrIso));
+      if (!d || isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function mfNormStop(s) {
+    return String(s || '')
+      .toLowerCase()
+      .replace(/&amp;/g, '&')
+      .replace(/[^a-z0-9]+/g, '')
+      .trim();
+  }
+
+  function mfPickCallTimeMs(call) {
+    const t =
+      (call && (call.expectedDepartureTime || call.aimedDepartureTime || call.expectedArrivalTime || call.aimedArrivalTime)) ||
+      null;
+    if (!t) return null;
+    const ms = new Date(String(t)).getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  function mfEstimateLegTimeline(journey) {
+    const startMs = journey && journey.startTime ? new Date(journey.startTime).getTime() : null;
+    let cur = Number.isFinite(startMs) ? startMs : null;
+    const byLegIndex = Object.create(null);
+    if (!journey || !Array.isArray(journey.legs) || !Number.isFinite(cur)) return byLegIndex;
+    journey.legs.forEach((leg, i) => {
+      const durMs = Number(leg && leg.duration) ? Number(leg.duration) * 1000 : 0;
+      byLegIndex[i] = { startMs: cur, endMs: cur + durMs };
+      cur += durMs;
+    });
+    return byLegIndex;
+  }
+
+  function mfTransitLegBoardTimeMs(leg, fallbackMs) {
+    try {
+      const stops = leg && Array.isArray(leg.stops) ? leg.stops : null;
+      const target = mfNormStop(leg && leg.boardingPoint && leg.boardingPoint.name);
+      if (stops && stops.length) {
+        // Try to find the call that matches the boarding quay name; otherwise use first call time.
+        let best = null;
+        if (target) {
+          for (const c of stops) {
+            const nm = mfNormStop((c && c.quay && c.quay.name) || c.name);
+            if (nm && (nm === target || nm.includes(target) || target.includes(nm))) {
+              best = c;
+              break;
+            }
+          }
+        }
+        const ms = mfPickCallTimeMs(best || stops[0]);
+        if (Number.isFinite(ms)) return ms;
+      }
+    } catch (_) {}
+    return Number.isFinite(fallbackMs) ? fallbackMs : null;
+  }
+
+  function mfTransitLegAlightTimeMs(leg, fallbackMs) {
+    try {
+      const stops = leg && Array.isArray(leg.stops) ? leg.stops : null;
+      const target = mfNormStop(leg && leg.alightingPoint && leg.alightingPoint.name);
+      if (stops && stops.length) {
+        let best = null;
+        if (target) {
+          for (let i = stops.length - 1; i >= 0; i--) {
+            const c = stops[i];
+            const nm = mfNormStop((c && c.quay && c.quay.name) || c.name);
+            if (nm && (nm === target || nm.includes(target) || target.includes(nm))) {
+              best = c;
+              break;
+            }
+          }
+        }
+        const ms = mfPickCallTimeMs(best || stops[stops.length - 1]);
+        if (Number.isFinite(ms)) return ms;
+      }
+    } catch (_) {}
+    return Number.isFinite(fallbackMs) ? fallbackMs : null;
+  }
+
+  function mfBuildTripGuideSteps(journey) {
+    const steps = [];
+    if (!journey || !Array.isArray(journey.legs)) return steps;
+    const timeline = mfEstimateLegTimeline(journey);
+
+    for (let i = 0; i < journey.legs.length; i++) {
+      const leg = journey.legs[i];
+      const isWalk = leg && (leg.type === 'WALK' || leg.mode === 'WALK');
+      const isTransit = leg && !isWalk;
+
+      if (isWalk) {
+        // Walk steps: only show if followed by a transit leg.
+        const next = journey.legs[i + 1];
+        const hasNextTransit = next && !(next.type === 'WALK' || next.mode === 'WALK');
+        if (hasNextTransit && next.boardingPoint && Number.isFinite(Number(next.boardingPoint.lat)) && Number.isFinite(Number(next.boardingPoint.lng))) {
+          const fallbackBoard = timeline[i + 1] ? timeline[i + 1].startMs : null;
+          const boardMs = mfTransitLegBoardTimeMs(next, fallbackBoard);
+          const arriveBeforeMs = Number.isFinite(boardMs)
+            ? boardMs - MF_TRIP_GUIDE_ARRIVE_BUFFER_MIN * 60 * 1000
+            : null;
+          steps.push({
+            kind: 'walk_to_board',
+            title: 'Walk to stop',
+            stopName: String(next.boardingPoint.name || 'Boarding stop'),
+            target: { lat: Number(next.boardingPoint.lat), lon: Number(next.boardingPoint.lng) },
+            arriveBeforeMs
+          });
+        }
+        continue;
+      }
+
+      if (isTransit) {
+        const routeNum = leg && leg.routeNumber != null ? String(leg.routeNumber) : '';
+        const toward = leg && leg.alightingPoint && leg.alightingPoint.name ? String(leg.alightingPoint.name) : '';
+        const boardStop = leg && leg.boardingPoint && leg.boardingPoint.name ? String(leg.boardingPoint.name) : 'Boarding stop';
+        const alightStop = toward || 'your stop';
+
+        const fb = timeline[i] ? timeline[i].startMs : null;
+        const fa = timeline[i] ? timeline[i].endMs : null;
+        const boardMs = mfTransitLegBoardTimeMs(leg, fb);
+        const alightMs = mfTransitLegAlightTimeMs(leg, fa);
+
+        if (leg.boardingPoint && Number.isFinite(Number(leg.boardingPoint.lat)) && Number.isFinite(Number(leg.boardingPoint.lng))) {
+          steps.push({
+            kind: 'board',
+            title: 'Board',
+            route: routeNum,
+            toward: toward,
+            boardStop,
+            boardMs,
+            target: { lat: Number(leg.boardingPoint.lat), lon: Number(leg.boardingPoint.lng) }
+          });
+        }
+
+        if (leg.alightingPoint && Number.isFinite(Number(leg.alightingPoint.lat)) && Number.isFinite(Number(leg.alightingPoint.lng))) {
+          steps.push({
+            kind: 'alight',
+            title: 'Get off',
+            route: routeNum,
+            alightStop,
+            alightMs,
+            target: { lat: Number(leg.alightingPoint.lat), lon: Number(leg.alightingPoint.lng) }
+          });
+        }
+      }
+    }
+
+    return steps;
+  }
+
+  function mfSetTripStarted(started) {
     const btn = document.getElementById('mfTripGuideStartBtn');
     if (!btn) return;
     btn.setAttribute('data-trip-started', started ? 'true' : 'false');
     btn.textContent = started ? 'Resume trip guide' : 'Start my trip';
   }
 
+  function mfTripGuideCurrentJourney() {
+    const idx = window.selectedTripIndex;
+    return window.journeys && idx != null ? window.journeys[idx] : null;
+  }
+
+  function mfTripGuideRender() {
+    const body = document.getElementById('mfTripGuidePanelBody');
+    const st = window.__mfTripGuide;
+    if (!body || !st) return;
+
+    if (!st.started) {
+      // Summary view after itinerary selection but before starting.
+      const j = mfTripGuideCurrentJourney();
+      if (!j) {
+        body.innerHTML = '<p>Your trip is on the map. Tap <strong>Start my trip</strong> when you want step-by-step guidance.</p>';
+        return;
+      }
+      const mins = Math.round((j.duration || 0) / 60);
+      const transit = (j.legs || []).filter((leg) => leg && !(leg.type === 'WALK' || leg.mode === 'WALK'));
+      body.innerHTML =
+        '<p><strong>Trip ready</strong> — about ' +
+        mins +
+        ' min total</p>' +
+        '<p>' +
+        transit.length +
+        ' transit segment(s). Tap <strong>Start my trip</strong> to begin.</p>';
+      return;
+    }
+
+    const step = st.steps && st.steps[st.stepIndex] ? st.steps[st.stepIndex] : null;
+    if (!step) {
+      body.innerHTML = '<p><strong>Trip guide</strong></p><p>No steps available.</p>';
+      return;
+    }
+
+    const stepNum = st.stepIndex + 1;
+    const total = st.steps.length || 0;
+
+    const nearKey = String(st.stepIndex);
+    const isNear = !!(st.gps && st.gps.nearSinceMsByStep && st.gps.nearSinceMsByStep[nearKey + ':dwell']);
+    const nearMsg = isNear
+      ? '<div style="margin:10px 0 0 0;padding:9px 10px;border-radius:10px;background:rgba(76,175,80,0.18);border:1px solid rgba(76,175,80,0.35);color:#d8ffe0;font-weight:800;">You’re close.</div>'
+      : '';
+
+    let title = '';
+    let sub = '';
+    if (step.kind === 'walk_to_board') {
+      title = 'Walk to ' + String(step.stopName || 'your stop');
+      sub =
+        '<div style="margin-top:6px;color:#9aa0a6;">Distance: <span id="mfTripGuideDistance">—</span></div>' +
+        (Number.isFinite(step.arriveBeforeMs)
+          ? '<div style="margin-top:4px;color:#9aa0a6;">Arrive before <strong style="color:#e8eaed;">' +
+              mfFmtTime(step.arriveBeforeMs) +
+              '</strong></div>'
+          : '');
+    } else if (step.kind === 'board') {
+      const towardTxt = step.toward ? (' toward <strong style=\"color:#e8eaed;\">' + String(step.toward).replace(/</g, '&lt;') + '</strong>') : '';
+      title = 'Board Route ' + String(step.route || '').replace(/</g, '&lt;') + towardTxt;
+      sub =
+        '<div style="margin-top:6px;color:#9aa0a6;">At <strong style=\"color:#e8eaed;\">' + String(step.boardStop || 'your stop').replace(/</g, '&lt;') + '</strong></div>' +
+        '<div style="margin-top:4px;color:#9aa0a6;">Distance: <span id="mfTripGuideDistance">—</span></div>' +
+        (Number.isFinite(step.boardMs)
+          ? '<div style="margin-top:4px;color:#9aa0a6;">Board around <strong style="color:#e8eaed;">' +
+              mfFmtTime(step.boardMs) +
+              '</strong></div>'
+          : '');
+    } else if (step.kind === 'alight') {
+      title = 'Get off at ' + String(step.alightStop || 'your stop').replace(/</g, '&lt;');
+      sub =
+        '<div style="margin-top:6px;color:#9aa0a6;">Distance: <span id="mfTripGuideDistance">—</span></div>' +
+        (Number.isFinite(step.alightMs)
+          ? '<div style="margin-top:4px;color:#9aa0a6;">Arrive around <strong style="color:#e8eaed;">' +
+              mfFmtTime(step.alightMs) +
+              '</strong></div>'
+          : '');
+    }
+
+    body.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">' +
+      '<div style="font-weight:800;color:#e8eaed;">Step ' +
+      stepNum +
+      ' of ' +
+      total +
+      '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+      '<button type="button" id="mfTripGuidePrevBtn" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:#e8eaed;font-weight:800;cursor:pointer;"' +
+      (st.stepIndex === 0 ? ' disabled aria-disabled="true" style="opacity:0.55;cursor:not-allowed;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:#e8eaed;font-weight:800;"' : '') +
+      '>Back</button>' +
+      '<button type="button" id="mfTripGuideNextBtn" style="padding:8px 10px;border-radius:8px;border:none;background:#1E90FF;color:#fff;font-weight:900;cursor:pointer;">Next</button>' +
+      '</div>' +
+      '</div>' +
+      '<div style="font-size:15px;font-weight:900;color:#fff;">' +
+      title +
+      '</div>' +
+      sub +
+      nearMsg;
+
+    // Wire buttons
+    try {
+      const prev = document.getElementById('mfTripGuidePrevBtn');
+      const next = document.getElementById('mfTripGuideNextBtn');
+      if (prev) prev.onclick = function (e) { e.stopPropagation(); mfTripGuideGo(-1); };
+      if (next) next.onclick = function (e) { e.stopPropagation(); mfTripGuideGo(1); };
+    } catch (_) {}
+  }
+
+  function mfTripGuideGo(delta) {
+    const st = window.__mfTripGuide;
+    if (!st || !st.steps || !st.steps.length) return;
+    const ni = Math.min(st.steps.length - 1, Math.max(0, st.stepIndex + Number(delta || 0)));
+    if (ni === st.stepIndex) return;
+    st.stepIndex = ni;
+    mfTripGuideRender();
+    mfTripGuideTickDistance();
+  }
+
+  function mfTripGuideTickDistance() {
+    const st = window.__mfTripGuide;
+    if (!st || !st.started) return;
+    const step = st.steps && st.steps[st.stepIndex] ? st.steps[st.stepIndex] : null;
+    const el = document.getElementById('mfTripGuideDistance');
+    if (!el || !step || !step.target) return;
+    const pos = st.gps && st.gps.lastPos ? st.gps.lastPos : null;
+    if (!pos || !Number.isFinite(pos.lat) || !Number.isFinite(pos.lon)) return;
+    const dM = mfHaversineM(pos.lat, pos.lon, step.target.lat, step.target.lon);
+    const dFt = mfFeet(dM);
+    el.textContent = Number.isFinite(dFt) ? mfFmtFeet(dFt) : '—';
+
+    const within = Number.isFinite(dFt) && dFt <= MF_TRIP_GUIDE_NEAR_RADIUS_FT;
+    const k = String(st.stepIndex);
+    const now = Date.now();
+    if (within) {
+      if (!st.gps.nearSinceMsByStep[k]) st.gps.nearSinceMsByStep[k] = now;
+      const since = st.gps.nearSinceMsByStep[k];
+      if (since && now - since >= MF_TRIP_GUIDE_NEAR_DWELL_MS) {
+        // mark as near (we use presence of key as indicator; dwell satisfied triggers re-render once)
+        if (!st.gps.nearSinceMsByStep[k + ':dwell']) {
+          st.gps.nearSinceMsByStep[k + ':dwell'] = now;
+          mfTripGuideRender();
+        }
+      }
+    } else {
+      delete st.gps.nearSinceMsByStep[k];
+      delete st.gps.nearSinceMsByStep[k + ':dwell'];
+    }
+  }
+
+  function mfTripGuideStartGps() {
+    const st = window.__mfTripGuide;
+    if (!st || !navigator.geolocation) return;
+    if (st.gps.watchId != null) return;
+    try {
+      st.gps.watchId = navigator.geolocation.watchPosition(
+        function (p) {
+          try {
+            const c = p && p.coords ? p.coords : null;
+            if (!c) return;
+            st.gps.lastPos = { lat: Number(c.latitude), lon: Number(c.longitude), acc: Number(c.accuracy) };
+            mfTripGuideTickDistance();
+          } catch (_) {}
+        },
+        function () {},
+        { enableHighAccuracy: false, maximumAge: 6000, timeout: 12000 }
+      );
+    } catch (_) {}
+  }
+
+  function mfTripGuideStopGps() {
+    const st = window.__mfTripGuide;
+    if (!st || !navigator.geolocation) return;
+    try {
+      if (st.gps.watchId != null) navigator.geolocation.clearWatch(st.gps.watchId);
+    } catch (_) {}
+    st.gps.watchId = null;
+  }
+
+  function mfTripGuideStart() {
+    const st = window.__mfTripGuide;
+    const j = mfTripGuideCurrentJourney();
+    if (!st || !j) return;
+    if (!st.steps || !st.steps.length) st.steps = mfBuildTripGuideSteps(j);
+    st.started = true;
+    st.stepIndex = Math.min(st.stepIndex || 0, Math.max(0, (st.steps.length || 1) - 1));
+    mfTripGuideStartGps();
+    mfTripGuideRender();
+    mfTripGuideTickDistance();
+  }
+
+  function mfTripGuideReset() {
+    const st = window.__mfTripGuide;
+    if (!st) return;
+    mfTripGuideStopGps();
+    st.started = false;
+    st.steps = [];
+    st.stepIndex = 0;
+    st.gps.lastPos = null;
+    st.gps.nearSinceMsByStep = Object.create(null);
+    mfTripGuideRender();
+  }
+
   function onStartClick() {
-    setTripStarted(true);
-    expandDock();
+    mfTripGuideStart();
+    mfTripGuideCurrentJourney() && expandDock();
+    mfSetTripStarted(true);
   }
 
   function onCloseClick() {
     if (!window.confirm('Are you sure you want to cancel your trip?')) return;
-    setTripStarted(false);
+    mfTripGuideReset();
+    mfSetTripStarted(false);
     minimizeDock();
   }
 
-  /** Fills the guide body from the selected normalized journey (after itinerary pick). */
+  /** Called after itinerary pick. Shows summary until guide starts. */
   function populateTripGuidePanel() {
-    const body = document.getElementById('mfTripGuidePanelBody');
-    if (!body) return;
-    try {
-      const idx = window.selectedTripIndex;
-      const j = window.journeys && idx != null && window.journeys[idx] ? window.journeys[idx] : null;
-      if (!j) {
-        body.innerHTML = '<p>Your trip is on the map. Guided steps will appear here next.</p>';
-        return;
-      }
-      const mins = Math.round((j.duration || 0) / 60);
-      const transit = (j.legs || []).filter(function (leg) {
-        return leg.type !== 'WALK' && leg.mode !== 'WALK';
-      });
-      var opt = (window.currentItins && idx != null && window.currentItins[idx]) ? window.currentItins[idx] : null;
-      var label = '';
-      try {
-        if (opt && typeof window.formatItinLabel === 'function') label = window.formatItinLabel(opt);
-      } catch (_) {}
-      var head = label
-        ? '<p><strong>' + String(label).replace(/</g, '&lt;') + '</strong></p>'
-        : '<p><strong>Option ' + (Number(idx) + 1) + '</strong> — about ' + mins + ' min total</p>';
-      body.innerHTML =
-        head +
-        '<p>' +
-        transit.length +
-        ' transit segment(s). Tap <strong>Start my trip</strong> when you want the step-by-step guide (coming next).</p>';
-    } catch (_) {
-      body.innerHTML = '<p>Trip guide</p>';
-    }
+    mfTripGuideRender();
   }
 
   function syncTripGuideDockVisibility() {
@@ -1918,7 +2289,8 @@
       dock.setAttribute('hidden', '');
       dock.setAttribute('aria-hidden', 'true');
       minimizeDock();
-      setTripStarted(false);
+      mfTripGuideReset();
+      mfSetTripStarted(false);
       try {
         var bod = document.getElementById('mfTripGuidePanelBody');
         if (bod) bod.innerHTML = '';
