@@ -3833,10 +3833,201 @@
       }
     });
   } else {
-    // Other cities: Use masterRoutes
-    if (typeof masterRoutes !== 'undefined' && masterRoutes && masterRoutes.length > 0) {
+    // Other cities:
+    // - Prefer building a real stop index from static per-route JSON when routeDataBase + routes_index are available (Cincinnati).
+    // - Fallback: use masterRoutes (legacy).
+
+    const canBuildFromStaticJson = !!(
+      window.CITY_CONFIG &&
+      window.CITY_CONFIG.routeDataBase &&
+      window.ROUTES &&
+      typeof window.getCityIdFromPath === 'function'
+    );
+
+    const staticStopIndexState = { started: false, promise: null };
+    // Expose lightweight status for UI ("Building stop list…")
+    window.__mfStopIndexStatus = window.__mfStopIndexStatus || { building: false, ready: false };
+
+    function mfStopIndexStorageKey() {
+      try {
+        const cid = typeof window.getCityIdFromPath === 'function' ? window.getCityIdFromPath() : 'default';
+        return 'mf_stop_index_v1_' + String(cid || 'default');
+      } catch (_) {
+        return 'mf_stop_index_v1_default';
+      }
+    }
+
+    function mfStopIndexVersion() {
+      try {
+        const base = window.CITY_CONFIG && window.CITY_CONFIG.routeDataBase ? String(window.CITY_CONFIG.routeDataBase) : '';
+        const cityKey = typeof window.getCityIdFromPath === 'function' ? window.getCityIdFromPath() : '';
+        const routeCount =
+          cityKey && window.ROUTES && window.ROUTES[cityKey] && Array.isArray(window.ROUTES[cityKey].busRoutes)
+            ? window.ROUTES[cityKey].busRoutes.length
+            : 0;
+        return 'v1|' + base + '|' + String(routeCount);
+      } catch (_) {
+        return 'v1';
+      }
+    }
+
+    function mfNormalizeStopKey(name, lat, lon, stopId) {
+      const sid = stopId != null && String(stopId).trim() !== '' ? String(stopId).trim() : '';
+      if (sid) return 'id:' + sid;
+      const n = String(name || '')
+        .toLowerCase()
+        .replace(/&amp;/g, '&')
+        .replace(/[^a-z0-9]+/g, '')
+        .trim();
+      const la = Number(lat);
+      const lo = Number(lon);
+      const ll =
+        Number.isFinite(la) && Number.isFinite(lo)
+          ? '|' + la.toFixed(6) + ',' + lo.toFixed(6)
+          : '';
+      return 'n:' + n + ll;
+    }
+
+    function mfTryLoadStopIndexFromCache() {
+      try {
+        const raw = localStorage.getItem(mfStopIndexStorageKey());
+        if (!raw) return false;
+        const j = JSON.parse(raw);
+        if (!j || j.version !== mfStopIndexVersion() || !Array.isArray(j.stops)) return false;
+        const names = [];
+        const map = {};
+        j.stops.forEach((s) => {
+          if (!s || !s.name) return;
+          names.push(String(s.name));
+          const k = String(s.name).toLowerCase();
+          if (!map[k] && Number.isFinite(Number(s.lat)) && Number.isFinite(Number(s.lon))) {
+            map[k] = { name: String(s.name), lat: Number(s.lat), lon: Number(s.lon), stop_id: s.stop_id || null };
+          }
+        });
+        allStops = names;
+        stopDataMap = map;
+        return allStops.length > 0;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function mfFetchRouteJson(routeId, dir) {
+      const base = window.CITY_CONFIG && window.CITY_CONFIG.routeDataBase ? String(window.CITY_CONFIG.routeDataBase) : null;
+      if (!base) return null;
+      const baseUrl = base.endsWith('/') ? base : base + '/';
+      const safeId = String(routeId).replace(/[/?#]+/g, '_');
+      const tries = [
+        `route-${safeId}-dir${dir}.json`,
+        `route-${encodeURIComponent(String(routeId))}-dir${dir}.json`
+      ];
+      for (let i = 0; i < tries.length; i++) {
+        try {
+          const res = await fetch(baseUrl + tries[i], { cache: 'no-store' });
+          if (!res.ok) continue;
+          const j = await res.json();
+          if (j && Array.isArray(j.stops)) return j;
+        } catch (_) {}
+      }
+      return null;
+    }
+
+    async function mfBuildStopIndexFromStaticJson() {
+      if (staticStopIndexState.promise) return staticStopIndexState.promise;
+      staticStopIndexState.started = true;
+      staticStopIndexState.promise = (async () => {
+        try {
+          window.__mfStopIndexStatus.building = true;
+          window.__mfStopIndexStatus.ready = false;
+        } catch (_) {}
+        if (mfTryLoadStopIndexFromCache()) {
+          console.log('[StopsIndex] Loaded stop index from cache:', allStops.length);
+          try {
+            window.__mfStopIndexStatus.building = false;
+            window.__mfStopIndexStatus.ready = allStops.length > 0;
+          } catch (_) {}
+          return;
+        }
+
+        const cityKey = typeof window.getCityIdFromPath === 'function' ? window.getCityIdFromPath() : null;
+        const routes =
+          cityKey && window.ROUTES && window.ROUTES[cityKey] && Array.isArray(window.ROUTES[cityKey].busRoutes)
+            ? window.ROUTES[cityKey].busRoutes
+            : [];
+        if (!routes.length) return;
+
+        console.log('[StopsIndex] Building stop index from route JSONs...', { routes: routes.length });
+        const seen = new Set();
+        const stopsOut = [];
+        const coordMap = {};
+
+        // Concurrency limit to avoid spamming the host
+        const concurrency = 10;
+        let idx = 0;
+        async function worker() {
+          while (idx < routes.length) {
+            const i = idx++;
+            const rid = routes[i] && routes[i].id ? String(routes[i].id) : null;
+            if (!rid) continue;
+            const rd = await mfFetchRouteJson(rid, 0);
+            if (!rd || !Array.isArray(rd.stops)) continue;
+            rd.stops.forEach((st) => {
+              const name = decodeHTMLEntities(st && st.name ? st.name : '');
+              const lat = st && st.lat != null ? Number(st.lat) : NaN;
+              const lon = st && st.lon != null ? Number(st.lon) : NaN;
+              const stopId = st && (st.stop_id != null ? st.stop_id : st.id);
+              const key = mfNormalizeStopKey(name, lat, lon, stopId);
+              if (seen.has(key)) return;
+              seen.add(key);
+              if (name) stopsOut.push({ name, lat: Number.isFinite(lat) ? lat : null, lon: Number.isFinite(lon) ? lon : null, stop_id: stopId || null });
+              const nm = name.toLowerCase();
+              if (!coordMap[nm] && Number.isFinite(lat) && Number.isFinite(lon)) {
+                coordMap[nm] = { lat, lon, stop_id: stopId || null, name };
+              }
+            });
+          }
+        }
+        const workers = Array.from({ length: Math.min(concurrency, routes.length) }, () => worker());
+        await Promise.all(workers);
+
+        stopsOut.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+        allStops = stopsOut.map((s) => s.name);
+        stopDataMap = coordMap;
+
+        try {
+          localStorage.setItem(
+            mfStopIndexStorageKey(),
+            JSON.stringify({ version: mfStopIndexVersion(), stops: stopsOut })
+          );
+        } catch (_) {}
+
+        console.log('[StopsIndex] Built:', allStops.length, 'unique stops;', Object.keys(stopDataMap).length, 'with coords');
+        try {
+          window.__mfStopIndexStatus.building = false;
+          window.__mfStopIndexStatus.ready = allStops.length > 0;
+        } catch (_) {}
+      })();
+      return staticStopIndexState.promise;
+    }
+
+    if (canBuildFromStaticJson) {
+      // Kick off lazily on focus (so we don't block map load)
+      const startInput = document.getElementById("startInput");
+      const endInput = document.getElementById("endInput");
+      [startInput, endInput].forEach(input => {
+        if (!input) return;
+        input.addEventListener('focus', () => {
+          if (!allStops.length) mfBuildStopIndexFromStaticJson();
+        });
+      });
+      // Background warmup a moment after load
+      setTimeout(() => {
+        try {
+          if (!allStops.length) mfBuildStopIndexFromStaticJson();
+        } catch (_) {}
+      }, 900);
+    } else if (typeof masterRoutes !== 'undefined' && masterRoutes && masterRoutes.length > 0) {
       allStops = [...new Set(masterRoutes.flatMap(route => route.stops.map(stop => decodeHTMLEntities(stop.name))))];
-      // Also build stopDataMap for other cities
       masterRoutes.forEach(route => {
         if (route.stops) {
           route.stops.forEach(stop => {
@@ -4028,6 +4219,22 @@
         }
         return;
       }
+
+      // First-time build UX: show a placeholder while the stop index is being built/cached.
+      try {
+        const st = window.__mfStopIndexStatus || null;
+        const building = st && st.building === true && (!allStops || allStops.length === 0);
+        if (building) {
+          const msg = document.createElement("div");
+          msg.textContent = "Building stop list…";
+          msg.style.padding = "8px 10px";
+          msg.style.color = "#9aa0a6";
+          dropdown.appendChild(msg);
+          dropdown.style.display = "block";
+          return;
+        }
+      } catch (_) {}
+
       const matches = allStops.filter(name => name.toLowerCase().includes(query)).slice(0, 5);
       matches.forEach(name => {
         const option = document.createElement("div");
