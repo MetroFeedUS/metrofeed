@@ -1472,7 +1472,7 @@
     @media (max-width: 768px) {
       .maplibregl-ctrl-attrib {
         /* ~1–2 lines of compact footer + small gap; safe-area avoids home indicator */
-        bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
       }
     }
     
@@ -3082,13 +3082,21 @@
       const spacing = 10;
       const root = document.body;
       if (!root) return;
-      root.querySelectorAll('.route-info-panel[data-collapsed="true"], .otp-trip-route-chip[data-collapsed="true"]').forEach(el => {
-        const ix = pxInt(el.getAttribute('data-collapse-index'));
+      const els = Array.from(root.querySelectorAll('.route-info-panel[data-collapsed="true"], .otp-trip-route-chip[data-collapsed="true"]'));
+      // Pack chips tightly from the top every time (no gaps if one closes).
+      // Preserve relative order using the original data-collapse-index when present.
+      els.sort((a, b) => pxInt(a.getAttribute('data-collapse-index')) - pxInt(b.getAttribute('data-collapse-index')));
+      let y = chipsTop;
+      for (let i = 0; i < els.length; i++) {
+        const el = els[i];
         const h = Math.max(24, el.offsetHeight || 34);
         el.style.left = 'auto';
         if (!el.style.right) el.style.right = '10px';
-        el.style.top = `${chipsTop + ix * (h + spacing)}px`;
-      });
+        el.style.top = `${y}px`;
+        // Re-assign index so future reflows (and any code using the index) stays consistent.
+        try { el.setAttribute('data-collapse-index', String(i)); } catch (e) {}
+        y += h + spacing;
+      }
     };
 
     // Initial + reactive reflow
@@ -3146,6 +3154,14 @@
           const ld = document.getElementById('languageDropdown');
           if (ld) ld.style.display = 'none';
         }
+
+        // If the menu is open while expanding, re-anchor it under the Menu button.
+        try {
+          const dd = document.getElementById('dropdownMenu');
+          if (dd && dd.style.display === 'flex' && typeof window.positionDropdownMenu === 'function') {
+            window.positionDropdownMenu();
+          }
+        } catch (e) {}
 
         // Dock traffic legend:
         // - Expanded: under Go/Clear/Find Me (inside OTP group)
@@ -4489,6 +4505,21 @@
   // === SECTION: DROPDOWN MENU LOGIC ===
   const menuBtn = document.getElementById('menuBtn');
   const dropdownMenu = document.getElementById('dropdownMenu');
+
+  function positionDropdownMenu() {
+    try {
+      if (!menuBtn || !dropdownMenu) return;
+      // Anchor directly under the Menu button so collapsed/expanded layouts match.
+      const r = menuBtn.getBoundingClientRect();
+      const gap = 5; // small visual gap under the button
+      const topPx = Math.round(r.bottom + gap + (window.scrollY || 0));
+      const leftPx = Math.round(r.left + (window.scrollX || 0));
+      dropdownMenu.style.top = topPx + 'px';
+      dropdownMenu.style.left = leftPx + 'px';
+    } catch (_) {}
+  }
+  // Expose for other layout code (collapse/expand re-anchoring).
+  window.positionDropdownMenu = positionDropdownMenu;
   
   // Check if this is the first time opening the dropdown in this session
   // Using sessionStorage so tooltips show once per app reload/opening
@@ -4499,6 +4530,12 @@
   menuBtn.addEventListener('click', () => {
     const isOpening = dropdownMenu.style.display !== 'flex';
     dropdownMenu.style.display = isOpening ? 'flex' : 'none';
+
+    if (isOpening) {
+      positionDropdownMenu();
+      // One extra frame to catch layout transitions (collapsed bar animations, etc.)
+      requestAnimationFrame(positionDropdownMenu);
+    }
     
     // Update button states when opening dropdown
     if (isOpening && typeof updateDropdownButtonStates === 'function') {
@@ -4521,6 +4558,18 @@
       hasShownCollapsedTooltips = true;
     }
   });
+
+  // Keep dropdown anchored correctly across resizes/orientation changes.
+  window.addEventListener('resize', () => {
+    try {
+      if (dropdownMenu && dropdownMenu.style.display === 'flex') positionDropdownMenu();
+    } catch (_) {}
+  }, { passive: true });
+  window.addEventListener('orientationchange', () => {
+    try {
+      if (dropdownMenu && dropdownMenu.style.display === 'flex') positionDropdownMenu();
+    } catch (_) {}
+  }, { passive: true });
   
   // Function to show tooltips for dropdown buttons
   function showDropdownTooltips() {
