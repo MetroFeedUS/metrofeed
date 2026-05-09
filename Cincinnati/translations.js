@@ -83,6 +83,20 @@ const translations = {
     "trip_options": "Trip Options",
     "depart_now": "Depart Now",
     "finding_route": "Finding closest route...",
+
+    // Screen reader announcements (OTP)
+    "sr_searching_trip_options": "Searching for trip options.",
+    "sr_trip_options_loaded": "{count} trip options loaded.",
+    "sr_no_trips_found": "No trips found.",
+    "sr_otp_error_connecting": "Error connecting to trip planner server.",
+    "sr_trip_options_opened": "Trip options opened.",
+    "sr_trip_options_closed": "Trip options closed.",
+    "sr_trip_settings_opened": "Trip options settings opened.",
+    "sr_trip_settings_closed": "Trip options settings closed.",
+    "sr_transfer_singular": "1 transfer",
+    "sr_transfer_plural": "{count} transfers",
+    "sr_route_selected": "Route selected: {mins} minute trip, {transfers}, starts at {start}, arrives at {end}.",
+    "sr_route_selected_simple": "Route selected.",
     
     // Modal buttons
     "close": "Close",
@@ -269,6 +283,20 @@ const translations = {
     "trip_options": "Opciones de Viaje",
     "depart_now": "Salir Ahora",
     "finding_route": "Buscando ruta más cercana...",
+
+    // Screen reader announcements (OTP)
+    "sr_searching_trip_options": "Buscando opciones de viaje.",
+    "sr_trip_options_loaded": "{count} opciones de viaje cargadas.",
+    "sr_no_trips_found": "No se encontraron viajes.",
+    "sr_otp_error_connecting": "Error al conectar con el servidor del planificador de viajes.",
+    "sr_trip_options_opened": "Opciones de viaje abiertas.",
+    "sr_trip_options_closed": "Opciones de viaje cerradas.",
+    "sr_trip_settings_opened": "Configuración de opciones de viaje abierta.",
+    "sr_trip_settings_closed": "Configuración de opciones de viaje cerrada.",
+    "sr_transfer_singular": "1 transbordo",
+    "sr_transfer_plural": "{count} transbordos",
+    "sr_route_selected": "Ruta seleccionada: viaje de {mins} minutos, {transfers}, sale a las {start}, llega a las {end}.",
+    "sr_route_selected_simple": "Ruta seleccionada.",
     
     // Modal buttons
     "close": "Cerrar",

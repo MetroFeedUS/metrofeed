@@ -1623,6 +1623,130 @@
 </head>
 <body>
 
+<!-- Screen reader live region for OTP + trip guide announcements -->
+<div id="mfSrLive" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"></div>
+<script>
+  // Simple SR announce helper: call window.metrofeedAnnounce("text")
+  window.metrofeedAnnounce = function (msg) {
+    try {
+      const el = document.getElementById('mfSrLive');
+      if (!el) return;
+      el.textContent = '';
+      // Slight delay helps some screen readers treat it as a new utterance
+      setTimeout(() => {
+        el.textContent = String(msg || '').trim();
+      }, 20);
+    } catch (_) {}
+  };
+</script>
+<script>
+  // Translation helper for runtime strings (announcements, etc.)
+  // Usage: window.mfT('key', {var:'value'}) -> translated string with {var} interpolation.
+  window.mfT = function (key, vars) {
+    try {
+      const base = (typeof window.translateText === 'function') ? window.translateText(key) : key;
+      const s = String(base == null ? '' : base);
+      if (!vars) return s;
+      return s.replace(/\{([a-zA-Z0-9_]+)\}/g, function (m, k) {
+        if (!Object.prototype.hasOwnProperty.call(vars, k)) return m;
+        return String(vars[k]);
+      });
+    } catch (_) {
+      return String(key || '');
+    }
+  };
+
+  // Announcement by translation key.
+  window.metrofeedAnnounceKey = function (key, vars) {
+    try {
+      const msg = window.mfT ? window.mfT(key, vars) : String(key || '');
+      window.metrofeedAnnounce(msg);
+    } catch (_) {}
+  };
+</script>
+<script>
+  // Basic dialog a11y helpers: focus trap + Escape-to-close.
+  (function () {
+    function getFocusable(container) {
+      if (!container) return [];
+      const els = Array.from(container.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ));
+      // Only visible (rough heuristic)
+      return els.filter(el => {
+        try {
+          const style = window.getComputedStyle(el);
+          return style && style.visibility !== 'hidden' && style.display !== 'none';
+        } catch (_) {
+          return true;
+        }
+      });
+    }
+
+    window.__mfDialogA11y = window.__mfDialogA11y || {};
+
+    window.mfActivateDialogA11y = function (modalId, onClose) {
+      try {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        const content = modal.querySelector('.mf-modal') || modal;
+
+        // Remove any prior handler to avoid duplicates
+        window.mfDeactivateDialogA11y(modalId);
+
+        const handler = function (event) {
+          if (!event) return;
+
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            try { typeof onClose === 'function' && onClose(); } catch (_) {}
+            return;
+          }
+
+          if (event.key !== 'Tab') return;
+
+          const focusables = getFocusable(content);
+          if (!focusables.length) {
+            event.preventDefault();
+            try { content && content.focus && content.focus(); } catch (_) {}
+            return;
+          }
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          const active = document.activeElement;
+
+          if (event.shiftKey) {
+            if (active === first || active === content) {
+              event.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (active === last) {
+              event.preventDefault();
+              first.focus();
+            }
+          }
+        };
+
+        content.addEventListener('keydown', handler);
+        window.__mfDialogA11y[modalId] = { el: content, handler };
+      } catch (_) {}
+    };
+
+    window.mfDeactivateDialogA11y = function (modalId) {
+      try {
+        const rec = window.__mfDialogA11y && window.__mfDialogA11y[modalId];
+        if (!rec || !rec.el || !rec.handler) return;
+        rec.el.removeEventListener('keydown', rec.handler);
+      } catch (_) {}
+      try {
+        if (window.__mfDialogA11y) delete window.__mfDialogA11y[modalId];
+      } catch (_) {}
+    };
+  })();
+</script>
+
 <!-- -- INSTALL PROMPT -- -->
 <div id="installPrompt" style="display:none;">
   <strong>📲 Add MetroFeed <span id="city-name-pwa">City</span> to your home screen</strong><br>
@@ -2374,14 +2498,14 @@
   <div id="mfTripPlannerFields" class="mf-trip-planner-fields">
     <div class="input-wrapper">
       <img class="icon-placeholder" src="009-pin-1.svg" alt="Start" />
-      <input id="startInput" type="text" placeholder="Start or Current Location" data-translate-placeholder="start_location" />
+      <input id="startInput" type="text" placeholder="Start or Current Location" data-translate-placeholder="start_location" aria-label="Start location" autocomplete="off" />
       <button id="startMapBtn" class="map-select-btn" data-tooltip="Click on map to select start location">
         <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
       </button>
     </div>
     <div class="input-wrapper">
       <img class="icon-placeholder" src="008-pin.svg" alt="Destination" />
-      <input id="endInput" type="text" placeholder="Destination" data-translate-placeholder="destination" />
+      <input id="endInput" type="text" placeholder="Destination" data-translate-placeholder="destination" aria-label="Destination" autocomplete="off" />
       <button id="endMapBtn" class="map-select-btn" data-tooltip="Click on map to select destination">
         <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
       </button>
@@ -2390,8 +2514,8 @@
   <div class="mf-trip-planner-otp-row" role="group" aria-label="Trip actions">
     <div class="mf-trip-planner-otp-group">
       <div class="otp-btn-row">
-        <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go">Go</button>
-        <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear">Clear</button>
+        <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go" aria-label="Plan trip">Go</button>
+        <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear" aria-label="Clear trip planner inputs">Clear</button>
         <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" title="Find my location and closest route" data-translate="find_me">Find Me</button>
       </div>
       <div id="trafficLoadingBar" class="mf-traffic-loading" style="display:none;" aria-hidden="true">
@@ -2508,11 +2632,11 @@
 </div>
 
 <!-- -- OTP TRIP PLANNING MODAL -- -->
-<div id="otpModal" class="mf-overlay" style="display: none;">
-  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+<div id="otpModal" class="mf-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="otpModalTitle">
+  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;" tabindex="-1">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h2 style="margin: 0;">🚌 <span data-translate="trip_options">Trip Options</span></h2>
-      <button onclick="minimizeItineraryModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Minimize">−</button>
+      <h2 id="otpModalTitle" style="margin: 0;">🚌 <span data-translate="trip_options">Trip Options</span></h2>
+      <button onclick="minimizeItineraryModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Minimize" aria-label="Minimize trip options">−</button>
     </div>
     <div style="background: #2a2a2a; color: #ccc; padding: 10px 12px; border-radius: 4px; margin-bottom: 1rem; border-left: 2px solid #1E90FF; border-top: none; border-right: none; border-bottom: none;">
       <div style="font-weight: 500; margin-bottom: 4px; font-size: 12px; color: #aaa;">Trip Planning (Beta)</div>
@@ -2523,17 +2647,17 @@
       - it helps us improve faster.
     </div>
     </div>
-    <div id="itinList" style="text-align: left; margin-top: 1rem;">
+    <div id="itinList" style="text-align: left; margin-top: 1rem;" role="list" aria-label="Trip options list">
       <!-- Trip itineraries will be rendered here -->
     </div>
-    <button class="mf-btn" onclick="hideOtpModal()" style="margin-top: 1rem;" data-translate="close">Close</button>
+    <button class="mf-btn" onclick="hideOtpModal()" style="margin-top: 1rem;" data-translate="close" aria-label="Close trip options">Close</button>
   </div>
 </div>
 
 <!-- -- OTP OPTIONS MODAL -- -->
-<div id="otpOptionsModal" class="mf-overlay" style="display: none;">
-  <div class="mf-modal" style="max-width: 400px;">
-    <h2>🚌 <span data-translate="trip_options">Trip Options</span></h2>
+<div id="otpOptionsModal" class="mf-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="otpOptionsTitle">
+  <div class="mf-modal" style="max-width: 400px;" tabindex="-1">
+    <h2 id="otpOptionsTitle">🚌 <span data-translate="trip_options">Trip Options</span></h2>
     <div style="text-align: left; margin-top: 1rem;">
       <div style="margin-bottom: 1rem;">
         <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Max Walk Distance:</label>
@@ -4194,7 +4318,8 @@
     dropdown.style.border = "1px solid #1E90FF";
     dropdown.style.color = "#cccccc";
     dropdown.style.zIndex = 1002;
-    dropdown.style.maxHeight = "150px";
+    // Tall enough to show ~10 results + the location option without scrolling.
+    dropdown.style.maxHeight = "340px";
     dropdown.style.overflowY = "auto";
     dropdown.style.fontSize = "0.8rem";
     dropdown.style.borderRadius = "6px";
@@ -4271,12 +4396,47 @@
         }
       } catch (_) {}
 
-      const matches = allStops.filter(name => name.toLowerCase().includes(query)).slice(0, 10);
+      // "Forward" matching: prefix + token-start matches first (so users don't need to scroll).
+      const q = query;
+      const starts = [];
+      const tokenStarts = [];
+      const contains = [];
+      for (let i = 0; i < allStops.length; i++) {
+        const name = allStops[i];
+        const n = name.toLowerCase();
+        const ix = n.indexOf(q);
+        if (ix < 0) continue;
+        if (ix === 0) starts.push(name);
+        else if (n[ix - 1] === ' ' || n[ix - 1] === '-' || n[ix - 1] === '/') tokenStarts.push(name);
+        else contains.push(name);
+        if (starts.length + tokenStarts.length + contains.length >= 70) break;
+      }
+      const matches = starts.concat(tokenStarts, contains).slice(0, 10);
       matches.forEach(name => {
         const option = document.createElement("div");
-        option.textContent = name;
-        option.style.padding = "4px 10px";
+        // Highlight match for quicker scanning
+        try {
+          const lower = name.toLowerCase();
+          const at = lower.indexOf(q);
+          if (at >= 0) {
+            const a = name.slice(0, at);
+            const b = name.slice(at, at + q.length);
+            const c = name.slice(at + q.length);
+            option.innerHTML =
+              a.replace(/</g, '&lt;') +
+              '<span style="color:#fff;font-weight:800;">' +
+              b.replace(/</g, '&lt;') +
+              '</span>' +
+              c.replace(/</g, '&lt;');
+          } else {
+            option.textContent = name;
+          }
+        } catch (_) {
+          option.textContent = name;
+        }
+        option.style.padding = "6px 10px";
         option.style.cursor = "pointer";
+        option.style.borderBottom = "1px solid rgba(255,255,255,0.06)";
         option.addEventListener("click", async () => {
           input.value = name;
           dropdown.style.display = "none";
@@ -7972,6 +8132,7 @@
   function showOtpModal() {
     const modal = document.getElementById('otpModal');
     const modalContent = modal.querySelector('.mf-modal');
+    try { window.__mfLastFocusEl = document.activeElement; } catch (_) {}
     modal.style.display = 'flex';
     // Remove minimized class if it exists
     modal.classList.remove('minimized-overlay');
@@ -7984,10 +8145,26 @@
       modalContent.style.bottom = '';
       modalContent.style.transform = '';
     }
+    try {
+      if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_trip_options_opened');
+      else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('Trip options opened.');
+      // Focus the dialog for screen readers / keyboard users
+      setTimeout(() => {
+        try { modalContent && modalContent.focus && modalContent.focus(); } catch (_) {}
+      }, 0);
+    } catch (_) {}
+    try { if (typeof window.mfActivateDialogA11y === 'function') window.mfActivateDialogA11y('otpModal', window.hideOtpModal); } catch (_) {}
   }
   
   function hideOtpModal() {
     document.getElementById('otpModal').style.display = 'none';
+    try { if (typeof window.mfDeactivateDialogA11y === 'function') window.mfDeactivateDialogA11y('otpModal'); } catch (_) {}
+    try {
+      if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_trip_options_closed');
+      else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('Trip options closed.');
+      const prev = window.__mfLastFocusEl;
+      if (prev && prev.focus) prev.focus();
+    } catch (_) {}
     // Clear any active trip data
     if (window.activeTrip) {
       console.log('[hideOtpModal] Clearing active trip data');
@@ -12313,16 +12490,34 @@
   }
 
   function showOtpOptionsModal() {
-    document.getElementById('otpOptionsModal').style.display = 'block';
+    const modal = document.getElementById('otpOptionsModal');
+    const modalContent = modal ? modal.querySelector('.mf-modal') : null;
+    try { window.__mfLastFocusEl = document.activeElement; } catch (_) {}
+    modal.style.display = 'block';
     try {
       if (typeof window.metrofeedOtpPrefsLoadToUi === 'function') {
         window.metrofeedOtpPrefsLoadToUi();
       }
     } catch (_) {}
+    try {
+      if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_trip_settings_opened');
+      else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('Trip options settings opened.');
+      setTimeout(() => {
+        try { modalContent && modalContent.focus && modalContent.focus(); } catch (_) {}
+      }, 0);
+    } catch (_) {}
+    try { if (typeof window.mfActivateDialogA11y === 'function') window.mfActivateDialogA11y('otpOptionsModal', window.hideOtpOptionsModal); } catch (_) {}
   }
 
   function hideOtpOptionsModal() {
     document.getElementById('otpOptionsModal').style.display = 'none';
+    try { if (typeof window.mfDeactivateDialogA11y === 'function') window.mfDeactivateDialogA11y('otpOptionsModal'); } catch (_) {}
+    try {
+      if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_trip_settings_closed');
+      else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('Trip options settings closed.');
+      const prev = window.__mfLastFocusEl;
+      if (prev && prev.focus) prev.focus();
+    } catch (_) {}
   }
 
 // OTP preference helpers (Trip Options modal)

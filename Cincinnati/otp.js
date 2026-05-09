@@ -639,6 +639,10 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     return;
   }
   itinList.innerHTML = "<em style='color: #1E90FF;'>Loading trip options...</em>";
+  try {
+    if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_searching_trip_options');
+    else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('Searching for trip options.');
+  } catch (_) {}
   showOtpModal();
   
   // Check for holiday schedule adjustments
@@ -871,6 +875,10 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
         logOtpDebug('GTFS_FALLBACK_ERROR', { message: fallbackErr?.message || String(fallbackErr) });
         console.error('[OTP] GTFS fallback error:', fallbackErr);
         itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
+        try {
+          if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_no_trips_found');
+          else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('No trips found.');
+        } catch (_) {}
         return;
       }
     }
@@ -1119,6 +1127,10 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     
     logOtpDebug('RENDER_CALL', { itineraries: currentItins.length });
     renderItinListVisual(currentItins);
+    try {
+      if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_trip_options_loaded', { count: String(currentItins.length) });
+      else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce(String(currentItins.length) + ' trip options loaded.');
+    } catch (_) {}
 
   } catch (e) {
     logOtpDebug('FETCH_EXCEPTION', { name: e?.name, message: e?.message, stack: e?.stack?.split('\n')?.slice(0, 5)?.join(' | ') });
@@ -1127,6 +1139,10 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       const cfgUrl = (window.CITY_CONFIG && (window.CITY_CONFIG.otpApi || window.CITY_CONFIG.otpGtfsGraphql)) || '';
       const hint = cfgUrl ? ` Please check connectivity/CORS for <code>${cfgUrl}</code>.` : '';
       itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server.${hint}</em>`;
+      try {
+        if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_otp_error_connecting');
+        else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('Error connecting to trip planner server.');
+      } catch (_) {}
     }
   }
 }
@@ -1146,6 +1162,14 @@ function renderItinListVisual(itins) {
   itinList.innerHTML = itins.map((itin, idx) => {
     const start = getPortlandTimeString(new Date(itin.startTime));
     const end = getPortlandTimeString(new Date(itin.endTime));
+    const transfers = (() => {
+      try {
+        const transitLegs = (itin.legs || []).filter(l => l.mode !== 'WALK');
+        return Math.max(0, transitLegs.length - 1);
+      } catch (_) {
+        return 0;
+      }
+    })();
     const segs = itin.legs.map(leg => {
       let icon = '';
       let segClass = '';
@@ -1301,13 +1325,16 @@ function renderItinListVisual(itins) {
         ${stopList}
       </div>`;
     }).join('<hr style="border:0; border-top:1px solid #222; margin:8px 0">');
-    return `<div class="itinListOption ${window.selectedTripIndex === idx ? 'selected' : ''}" data-idx="${idx}">
+    const minsTotal = Math.round((itin.duration || 0) / 60);
+    const transferPhrase = transfers === 1 ? '1 transfer' : `${transfers} transfers`;
+    const srLabel = `${minsTotal} minute trip, ${transferPhrase}, starts at ${start}, arrives at ${end}.`;
+    return `<div class="itinListOption ${window.selectedTripIndex === idx ? 'selected' : ''}" data-idx="${idx}" role="listitem">
       <button class="itin-dropdown-btn" onclick="event.stopPropagation();toggleDropdown(${idx})">&#9660;</button>
-      <div onclick="showRoute(${idx})">
+      <button type="button" style="display:block;width:100%;text-align:left;background:transparent;border:0;padding:0;margin:0;cursor:pointer;" aria-label="${escapeHtml(srLabel)}" onclick="showRoute(${idx})">
         <div class="itin-toptimes">Option ${idx+1}: ${start}–${end}</div>
         <div class="itin-segments">${segs}</div>
         <div class="itin-total">Total: ${Math.round(itin.duration/60)} min</div>
-      </div>
+      </button>
       <div class="itin-details-overlay" data-idx="${idx}">
         ${details}
       </div>
@@ -3740,6 +3767,44 @@ async function showRoute(idx) {
   
   // Store selected index
   window.selectedTripIndex = idx;
+
+  // Screen reader: announce selection change (duration, transfers, timing)
+  try {
+    const itin = window.currentItins && window.currentItins[idx] ? window.currentItins[idx] : null;
+    if (itin) {
+      const minsTotal = Math.round((itin.duration || 0) / 60);
+      const transitLegs = (itin.legs || []).filter(l => l.mode !== 'WALK' && l.mode !== 'FOOT');
+      const transfers = Math.max(0, transitLegs.length - 1);
+      const start = getPortlandTimeString(new Date(itin.startTime));
+      const end = getPortlandTimeString(new Date(itin.endTime));
+      let transferPhrase = '';
+      try {
+        if (typeof window.mfT === 'function') {
+          transferPhrase = (transfers === 1)
+            ? window.mfT('sr_transfer_singular')
+            : window.mfT('sr_transfer_plural', { count: String(transfers) });
+        } else {
+          transferPhrase = transfers === 1 ? '1 transfer' : `${transfers} transfers`;
+        }
+      } catch (_) {
+        transferPhrase = transfers === 1 ? '1 transfer' : `${transfers} transfers`;
+      }
+
+      if (typeof window.metrofeedAnnounceKey === 'function') {
+        window.metrofeedAnnounceKey('sr_route_selected', {
+          mins: String(minsTotal),
+          transfers: transferPhrase,
+          start: String(start),
+          end: String(end)
+        });
+      } else if (typeof window.metrofeedAnnounce === 'function') {
+        window.metrofeedAnnounce(`Route selected: ${minsTotal} minute trip, ${transferPhrase}, starts at ${start}, arrives at ${end}.`);
+      }
+    } else {
+      if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_route_selected_simple');
+      else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('Route selected.');
+    }
+  } catch (_) {}
   
   // Clear previous bus tracking
   if (window.otpBusTrackingInterval) {
