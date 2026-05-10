@@ -65,53 +65,53 @@
         0 0 18px var(--rr-accent-soft);
     }
 
-    .mf-brand {
+    .mf-brand-mark {
       display: flex;
       align-items: center;
-      gap: 10px;
-      min-width: 0;
-      flex: 1 1 180px;
-    }
-    .mf-brand img {
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
       flex-shrink: 0;
     }
-    .mf-brand-text { min-width: 0; text-align: left; }
-    .mf-brand-text strong {
+    .mf-brand-mark img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
       display: block;
-      color: var(--rr-silver);
-      font-size: 0.92rem;
-      letter-spacing: 0.02em;
-    }
-    .mf-brand-text span {
-      display: block;
-      font-size: 0.7rem;
-      color: var(--rr-silver-muted);
-      line-height: 1.25;
-      max-width: 56vw;
     }
 
     .mf-toolbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       flex: 1 1 auto;
+      min-width: 0;
     }
 
-    .mf-select-inline {
-      padding: 8px 10px;
-      border-radius: 10px;
+    .mf-city-search-wrap {
+      flex: 1 1 140px;
+      min-width: 0;
+      max-width: 100%;
+      display: flex;
+      align-items: center;
+    }
+    #mfCitySearch {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
       border: 1px solid var(--rr-silver-edge);
       background: #121214;
       color: var(--rr-silver);
-      font-size: 0.8rem;
-      font-weight: 700;
-      min-width: 0;
-      max-width: 200px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    #mfCitySearch::placeholder {
+      color: var(--rr-silver-muted);
+      font-weight: 600;
+    }
+    #mfCitySearch:focus {
+      outline: none;
+      border-color: rgba(147, 51, 234, 0.55);
+      box-shadow: 0 0 12px var(--rr-accent-soft);
     }
 
     .mf-btn {
@@ -239,9 +239,8 @@
       font-weight: 700;
     }
     @media (max-width: 480px) {
-      .mf-select-inline { max-width: none; width: 100%; }
-      .mf-toolbar { width: 100%; justify-content: stretch; }
-      .mf-toolbar .mf-btn--primary { flex: 1; }
+      .mf-toolbar { width: 100%; flex-direction: column; align-items: stretch; }
+      .mf-city-search-wrap { max-width: none; flex: 1 1 auto; }
     }
   </style>
 </head>
@@ -250,30 +249,34 @@
 
   <div class="mf-topbar">
     <div class="mf-topbar-inner">
-      <div class="mf-brand">
-        <img src="MetroFeedMainLogo.png" alt="" width="32" height="32" />
-        <div class="mf-brand-text">
-          <strong>MetroFeed</strong>
-          <span id="mfTopbarSubtitle">Pan the map. Choose a city or tap “Use this area”.</span>
-        </div>
+      <div class="mf-brand-mark" aria-hidden="true">
+        <img src="MetroFeedMainLogo.png" alt="" width="34" height="34" />
       </div>
       <div class="mf-toolbar">
-        <label class="mf-sr-only" for="mfCityJump">Jump to supported city</label>
-        <select id="mfCityJump" class="mf-select-inline" aria-label="Jump to supported city">
-          <option value="">Jump to city…</option>
-          <option value="cincinnati">Cincinnati, OH / NKY</option>
-        </select>
-        <button id="mfUseAreaBtn" class="mf-btn mf-btn--primary" type="button">Use this area</button>
+        <div class="mf-city-search-wrap">
+          <label class="mf-sr-only" for="mfCitySearch">Search for a city</label>
+          <input
+            id="mfCitySearch"
+            type="search"
+            list="mfCityDatalist"
+            autocomplete="off"
+            enterkeyhint="go"
+            placeholder="Search city…"
+            aria-label="Search for a supported city"
+          />
+          <datalist id="mfCityDatalist"></datalist>
+        </div>
+        <button id="mfUseMapLocationBtn" class="mf-btn mf-btn--primary" type="button">Use map location</button>
       </div>
     </div>
   </div>
 
-  <div id="mfCookieBar" class="" role="dialog" aria-label="Cookies and location">
-    <strong style="color: var(--rr-silver);">Cookies & location</strong>
-    MetroFeed may use cookies and your device location to center the map. Terms and privacy links are below.
+  <div id="mfCookieBar" class="" role="dialog" aria-label="Cookie and location permission">
+    <strong style="color: var(--rr-silver);">Cookies &amp; location</strong>
+    We use a small cookie to remember this choice, and optional GPS (with your browser’s permission) to center the map. You can always search for a city or use the map without sharing location.
     <div class="mf-cookie-actions">
-      <button type="button" id="mfCookieDecline">Not now</button>
-      <button type="button" class="accept" id="mfCookieAccept">Accept & enable location</button>
+      <button type="button" id="mfCookieDecline">Decline</button>
+      <button type="button" class="accept" id="mfCookieAccept">Allow cookies &amp; try GPS</button>
     </div>
   </div>
 
@@ -286,17 +289,6 @@
   </footer>
 
   <style>.mf-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }</style>
-
-  <div id="mfConfirmOverlay" class="mf-overlay" role="dialog" aria-modal="true" aria-labelledby="mfConfirmTitle">
-    <div class="mf-modal">
-      <h2 id="mfConfirmTitle">Use this area?</h2>
-      <p>Open the MetroFeed experience for the map location you chose.</p>
-      <div class="mf-row">
-        <button type="button" class="mf-btn" id="mfConfirmNo">Keep browsing</button>
-        <button type="button" class="mf-btn mf-btn--primary" id="mfConfirmYes">Yes, continue</button>
-      </div>
-    </div>
-  </div>
 
   <div id="mfNotAvailableOverlay" class="mf-overlay" role="dialog" aria-modal="true" aria-labelledby="mfNA_Title">
     <div class="mf-modal">
@@ -331,11 +323,6 @@
 
     function mfInBbox(lat, lon, bbox) {
       return lat >= bbox.south && lat <= bbox.north && lon >= bbox.west && lon <= bbox.east;
-    }
-
-    function mfSubtitle(t) {
-      const el = document.getElementById('mfTopbarSubtitle');
-      if (el) el.textContent = t;
     }
 
     function mfOverlay(id, open) {
@@ -420,24 +407,45 @@
       try {
         map.easeTo({ center: city.defaultView.center, zoom: city.defaultView.zoom, duration: 650 });
       } catch (_) {}
-      setTimeout(function () {
-        mfSubtitle('Tap “Use this area” to open ' + city.name + '.');
-        mfOverlay('mfConfirmOverlay', true);
-      }, 400);
     }
 
-    function mfShowConfirm(reason) {
-      mfSubtitle(reason || 'Tap “Yes, continue” to open a city if this area is supported.');
-      mfOverlay('mfConfirmOverlay', true);
+    function mfCityKeyFromInput(raw) {
+      var s = (raw || '').trim().toLowerCase();
+      if (!s) return null;
+      for (var key in MF_SUPPORTED_CITIES) {
+        if (!MF_SUPPORTED_CITIES.hasOwnProperty(key)) continue;
+        var c = MF_SUPPORTED_CITIES[key];
+        if (key.toLowerCase() === s) return key;
+        var n = (c.name || '').toLowerCase();
+        if (n === s || n.indexOf(s) !== -1 || s.indexOf(key) !== -1) return key;
+      }
+      return null;
+    }
+
+    function mfFillCityDatalist() {
+      var dl = document.getElementById('mfCityDatalist');
+      if (!dl) return;
+      dl.innerHTML = '';
+      for (var key in MF_SUPPORTED_CITIES) {
+        if (!MF_SUPPORTED_CITIES.hasOwnProperty(key)) continue;
+        var opt = document.createElement('option');
+        opt.value = MF_SUPPORTED_CITIES[key].name;
+        dl.appendChild(opt);
+      }
+    }
+
+    function mfTryApplyCitySearch() {
+      var inp = document.getElementById('mfCitySearch');
+      var key = inp ? mfCityKeyFromInput(inp.value) : null;
+      if (!key || !inp) return;
+      mfPanToCity(key);
+      inp.value = MF_SUPPORTED_CITIES[key].name;
     }
 
     function mfTryGeolocationOnce() {
       if (geoTriedAfterConsent || !map) return;
       geoTriedAfterConsent = true;
-      if (!navigator.geolocation) {
-        mfSubtitle('Location not available. Pan the map or use Jump to city.');
-        return;
-      }
+      if (!navigator.geolocation) return;
       navigator.geolocation.getCurrentPosition(
         function (pos) {
           var lat = pos.coords.latitude;
@@ -445,12 +453,8 @@
           try {
             map.easeTo({ center: [lon, lat], zoom: 11.2, duration: 700 });
           } catch (_) {}
-          mfSubtitle('Confirm if you want to use this GPS area.');
-          mfShowConfirm('Use where you are on the map? You can pan first, then “Use this area”.');
         },
-        function () {
-          mfSubtitle('Location blocked or denied. Pan the map or use Jump to city.');
-        },
+        function () {},
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
       );
     }
@@ -465,7 +469,6 @@
     function mfConsentDeclined() {
       var bar = document.getElementById('mfCookieBar');
       if (bar) { bar.classList.remove('is-visible'); }
-      mfSubtitle('Jump to city or tap “Use this area” anytime.');
       try { sessionStorage.setItem('metrofeedLocationSkipped', '1'); } catch (_) {}
     }
 
@@ -483,29 +486,25 @@
     }
 
     /* ---- Init ---- */
+    mfFillCityDatalist();
     mfInitMap();
     mfBootCookieUi();
 
     document.getElementById('mfCookieAccept').addEventListener('click', mfConsentAccepted);
     document.getElementById('mfCookieDecline').addEventListener('click', mfConsentDeclined);
 
-    document.getElementById('mfUseAreaBtn').addEventListener('click', function () {
-      mfShowConfirm('Use this area?');
-    });
-    document.getElementById('mfConfirmNo').addEventListener('click', function () {
-      mfOverlay('mfConfirmOverlay', false);
-      mfSubtitle('Pan the map. Choose a city or tap “Use this area”.');
-    });
-    document.getElementById('mfConfirmYes').addEventListener('click', function () {
-      mfOverlay('mfConfirmOverlay', false);
+    document.getElementById('mfUseMapLocationBtn').addEventListener('click', function () {
       mfEvalCenterRedirect();
     });
 
-    document.getElementById('mfCityJump').addEventListener('change', function (e) {
-      var key = e.target.value;
-      if (!key) return;
-      mfPanToCity(key);
-      e.target.selectedIndex = 0;
+    document.getElementById('mfCitySearch').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        mfTryApplyCitySearch();
+      }
+    });
+    document.getElementById('mfCitySearch').addEventListener('change', function () {
+      mfTryApplyCitySearch();
     });
 
     document.getElementById('mfNA_Keep').addEventListener('click', function () {
