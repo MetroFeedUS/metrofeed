@@ -37,6 +37,78 @@
       z-index: 0;
     }
 
+    /* Map hotspots: clickable center pins over supported metros */
+    .mf-hotspot-marker {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: none;
+      font: inherit;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transform: translateY(6px);
+      filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+      pointer-events: auto;
+    }
+    .mf-hotspot-marker:focus-visible {
+      outline: 2px solid var(--rr-accent);
+      outline-offset: 6px;
+      border-radius: 999px;
+    }
+    .mf-hotspot-marker__pulse {
+      width: 34px;
+      height: 34px;
+      margin: 0 0 -15px 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--rr-accent-soft) 0%, transparent 70%);
+      animation: mf-hotspot-ring 2.4s ease-out infinite;
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+    .mf-hotspot-marker__dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #f5f3ff, #ddd6fe 45%, var(--rr-accent) 100%);
+      border: 2px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 0 14px var(--rr-accent-soft);
+      flex-shrink: 0;
+    }
+    .mf-hotspot-marker__label {
+      max-width: min(220px, 42vw);
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--rr-silver-edge);
+      background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.98) 100%);
+      color: var(--rr-silver);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: none;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mf-hotspot-marker:hover .mf-hotspot-marker__label,
+    .mf-hotspot-marker:focus-visible .mf-hotspot-marker__label {
+      border-color: rgba(147, 51, 234, 0.55);
+      box-shadow: 0 0 12px var(--rr-accent-soft);
+    }
+    @keyframes mf-hotspot-ring {
+      0% { transform: scale(0.65); opacity: 0.9; }
+      70% { transform: scale(1.35); opacity: 0; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mf-hotspot-marker__pulse { animation: none; opacity: 0.42; transform: none; margin-bottom: -13px; }
+    }
+
     .mf-topbar {
       position: fixed;
       top: max(10px, env(safe-area-inset-top, 0px));
@@ -138,33 +210,40 @@
       color: #fff;
     }
 
-    /* Cookie: thin bar — map stays visible */
+    /* Cookie prompt: fullscreen dim + centered card */
     #mfCookieBar {
       display: none;
       position: fixed;
-      bottom: max(52px, calc(48px + env(safe-area-inset-bottom, 0px)));
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(560px, calc(100vw - 20px));
-      z-index: 1050;
+      inset: 0;
+      z-index: 1500;
+      align-items: center;
+      justify-content: center;
+      padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+        max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    #mfCookieBar.is-visible { display: flex; }
+    .mf-cookie-card {
+      width: min(520px, 100%);
       background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.97) 100%);
       border: 1px solid var(--rr-silver-edge);
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 0.78rem;
+      border-radius: 16px;
+      padding: 16px 18px;
+      font-size: 0.82rem;
       color: var(--rr-silver-muted);
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 20px 56px rgba(0, 0, 0, 0.72), inset 0 1px 0 var(--rr-silver-dim);
       text-align: left;
     }
-    #mfCookieBar.is-visible { display: block; }
-    #mfCookieBar .mf-cookie-actions {
-      margin-top: 10px;
+    .mf-cookie-card .mf-cookie-actions {
+      margin-top: 12px;
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
-    #mfCookieBar button {
+    .mf-cookie-card button {
       appearance: none;
       border-radius: 10px;
       padding: 8px 12px;
@@ -174,7 +253,7 @@
       background: var(--rr-charcoal-raised);
       color: var(--rr-silver);
     }
-    #mfCookieBar button.accept {
+    .mf-cookie-card button.accept {
       background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
       border-color: rgba(147, 51, 234, 0.55);
       color: #fff;
@@ -271,12 +350,14 @@
     </div>
   </div>
 
-  <div id="mfCookieBar" class="" role="dialog" aria-label="Cookie and location permission">
-    <strong style="color: var(--rr-silver);">Cookies &amp; location</strong>
-    We use a small cookie to remember this choice, and optional GPS (with your browser’s permission) to center the map. You can always search for a city or use the map without sharing location.
-    <div class="mf-cookie-actions">
-      <button type="button" id="mfCookieDecline">Decline</button>
-      <button type="button" class="accept" id="mfCookieAccept">Allow cookies &amp; try GPS</button>
+  <div id="mfCookieBar" class="" role="presentation">
+    <div class="mf-cookie-card" role="dialog" aria-modal="true" aria-labelledby="mfCookieTitle">
+      <strong id="mfCookieTitle" style="color: var(--rr-silver); display: block; margin-bottom: 8px; font-size: 0.95rem;">Cookies &amp; location</strong>
+      We use a small cookie to remember this choice, and optional GPS (with your browser’s permission) to center the map. You can always search for a city or use the map without sharing location.
+      <div class="mf-cookie-actions">
+        <button type="button" id="mfCookieDecline">Decline</button>
+        <button type="button" class="accept" id="mfCookieAccept">Allow cookies &amp; try GPS</button>
+      </div>
     </div>
   </div>
 
@@ -296,7 +377,6 @@
       <p>Pick a supported city from the bar, or keep exploring the map.</p>
       <select id="mfCitySelect" class="mf-select" aria-label="Choose a city">
         <option value="" selected disabled>Choose a city…</option>
-        <option value="cincinnati">Cincinnati, OH / NKY</option>
       </select>
       <div style="height: 12px;"></div>
       <div class="mf-row">
@@ -311,6 +391,7 @@
 
     const MF_SUPPORTED_CITIES = {
       cincinnati: {
+        shortLabel: 'Cincinnati',
         name: 'Cincinnati, OH / NKY',
         bbox: { west: -85.10, south: 38.85, east: -84.20, north: 39.45 },
         defaultView: { center: [-84.512, 39.103], zoom: 10.5 },
@@ -320,6 +401,15 @@
 
     let map = null;
     let geoTriedAfterConsent = false;
+    var mfHotspotsInstalled = false;
+
+    function mfEscapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
 
     function mfInBbox(lat, lon, bbox) {
       return lat >= bbox.south && lat <= bbox.north && lon >= bbox.west && lon <= bbox.east;
@@ -376,6 +466,125 @@
           }
         }
       } catch (_) {}
+
+      map.once('load', function () {
+        try {
+          mfInstallHotspots();
+        } catch (_) {}
+      });
+    }
+
+    function mfHotspotPolygonGeoJSON() {
+      var features = [];
+      for (var key in MF_SUPPORTED_CITIES) {
+        if (!MF_SUPPORTED_CITIES.hasOwnProperty(key)) continue;
+        var b = MF_SUPPORTED_CITIES[key].bbox;
+        features.push({
+          type: 'Feature',
+          properties: { key: key },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[
+              [b.west, b.south],
+              [b.east, b.south],
+              [b.east, b.north],
+              [b.west, b.north],
+              [b.west, b.south]
+            ]]
+          }
+        });
+      }
+      return { type: 'FeatureCollection', features: features };
+    }
+
+    function mfInstallHotspots() {
+      if (!map || mfHotspotsInstalled) return;
+      mfHotspotsInstalled = true;
+      if (!map.getSource('mf-hotspots')) {
+        map.addSource('mf-hotspots', { type: 'geojson', data: mfHotspotPolygonGeoJSON() });
+      }
+      if (!map.getLayer('mf-hotspot-fill')) {
+        map.addLayer({
+          id: 'mf-hotspot-fill',
+          type: 'fill',
+          source: 'mf-hotspots',
+          paint: {
+            'fill-color': '#9333ea',
+            'fill-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              5,
+              0.09,
+              8,
+              0.06,
+              11,
+              0.038
+            ]
+          }
+        });
+      }
+      if (!map.getLayer('mf-hotspot-line')) {
+        map.addLayer({
+          id: 'mf-hotspot-line',
+          type: 'line',
+          source: 'mf-hotspots',
+          paint: {
+            'line-color': '#ddd6fe',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 5, 1, 9, 1.75, 12, 2.25],
+            'line-opacity': 0.52,
+            'line-dasharray': [1.4, 2.2]
+          }
+        });
+      }
+
+      ['mf-hotspot-fill', 'mf-hotspot-line'].forEach(function (lid) {
+        map.on('click', lid, function (e) {
+          var f = e.features && e.features[0];
+          if (!f || !f.properties || !f.properties.key) return;
+          if (MF_SUPPORTED_CITIES[f.properties.key]) mfPanToCity(f.properties.key);
+        });
+        map.on('mouseenter', lid, function () {
+          map.getCanvas().style.cursor = 'pointer';
+        });
+        map.on('mouseleave', lid, function () {
+          map.getCanvas().style.cursor = '';
+        });
+      });
+
+      for (var cityKey in MF_SUPPORTED_CITIES) {
+        if (!MF_SUPPORTED_CITIES.hasOwnProperty(cityKey)) continue;
+        (function (key) {
+          var city = MF_SUPPORTED_CITIES[key];
+          if (!city.defaultView || !city.defaultView.center) return;
+          var label =
+            city.shortLabel ||
+            (city.name ? String(city.name).split(',')[0].trim() : key);
+          var el = document.createElement('button');
+          el.type = 'button';
+          el.className = 'mf-hotspot-marker';
+          el.setAttribute('aria-label', 'Focus map on ' + (city.name || label));
+          el.innerHTML =
+            '<span class="mf-hotspot-marker__pulse" aria-hidden="true"></span>' +
+            '<span class="mf-hotspot-marker__dot" aria-hidden="true"></span>' +
+            '<span class="mf-hotspot-marker__label">' + mfEscapeHtml(label) + '</span>';
+          el.addEventListener('click', function (e) {
+            e.stopPropagation();
+            mfPanToCity(key);
+          });
+          try {
+            new maplibregl.Marker({
+              element: el,
+              anchor: 'bottom',
+              offset: [0, -2],
+              pitchAlignment: 'viewport',
+              rotationAlignment: 'viewport'
+            })
+              .setLngLat(city.defaultView.center)
+              .addTo(map);
+          } catch (_) {}
+        })(cityKey);
+      }
     }
 
     function mfRedirectToCity(cityKey) {
@@ -389,16 +598,21 @@
       window.location.href = city.href + '?from=national';
     }
 
+    function mfCityKeyAtMapCenter() {
+      if (!map) return null;
+      var c = map.getCenter();
+      for (var key in MF_SUPPORTED_CITIES) {
+        if (!MF_SUPPORTED_CITIES.hasOwnProperty(key)) continue;
+        if (mfInBbox(c.lat, c.lng, MF_SUPPORTED_CITIES[key].bbox)) return key;
+      }
+      return null;
+    }
+
     function mfEvalCenterRedirect() {
       if (!map) return;
-      var c = map.getCenter();
-      var lat = c.lat;
-      var lon = c.lng;
-      if (mfInBbox(lat, lon, MF_SUPPORTED_CITIES.cincinnati.bbox)) {
-        mfRedirectToCity('cincinnati');
-        return;
-      }
-      mfOverlay('mfNotAvailableOverlay', true);
+      var k = mfCityKeyAtMapCenter();
+      if (k) mfRedirectToCity(k);
+      else mfOverlay('mfNotAvailableOverlay', true);
     }
 
     function mfPanToCity(key) {
@@ -487,6 +701,7 @@
 
     /* ---- Init ---- */
     mfFillCityDatalist();
+    mfFillCitySelectModal();
     mfInitMap();
     mfBootCookieUi();
 
