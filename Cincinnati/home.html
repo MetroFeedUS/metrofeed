@@ -30,13 +30,21 @@
   		}
   	</script>
   <style>
-    /* Roam Raven UI tokens — accent purple + silver chrome (modals / panels only; map route colors unchanged) */
+    /* Roam Raven UI — purple primary + silver/charcoal chrome (map route colors unchanged) */
     :root {
       --rr-accent: #9333ea;
       --rr-accent-hover: #7c3aed;
       --rr-accent-text: #e9d5ff;
       --rr-accent-glow: rgba(147, 51, 234, 0.55);
       --rr-accent-soft: rgba(147, 51, 234, 0.35);
+      --rr-silver: #e2e8f0;
+      --rr-silver-muted: #94a3b8;
+      --rr-silver-edge: rgba(226, 232, 240, 0.42);
+      --rr-silver-dim: rgba(226, 232, 240, 0.14);
+      --rr-silver-glow: rgba(226, 232, 240, 0.18);
+      --rr-charcoal: #121214;
+      --rr-charcoal-raised: #1a1b20;
+      --rr-charcoal-panel: rgba(22, 23, 28, 0.96);
     }
 
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
@@ -45,17 +53,20 @@
 
     /* -- MAPLIBRE POPUPS (theme wrapper only; do NOT change content markup) -- */
     .maplibregl-popup-content {
-      background: rgba(15, 15, 15, 0.96) !important;
-      color: #eaeaea !important;
-      border: 1px solid #1E90FF !important;
+      background: var(--rr-charcoal-panel) !important;
+      color: var(--rr-silver) !important;
+      border: 1px solid var(--rr-silver-edge) !important;
       border-radius: 10px !important;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(30, 144, 255, 0.15) !important;
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 var(--rr-silver-dim) !important;
       padding: 0 !important; /* inner content already has its own padding */
       overflow: hidden !important; /* keep rounded corners clean */
     }
     .maplibregl-popup-tip {
-      border-top-color: rgba(15, 15, 15, 0.96) !important;
-      border-bottom-color: rgba(15, 15, 15, 0.96) !important;
+      border-top-color: var(--rr-charcoal-panel) !important;
+      border-bottom-color: var(--rr-charcoal-panel) !important;
     }
     .maplibregl-popup-close-button {
       color: #eaeaea !important;
@@ -64,7 +75,7 @@
       border-radius: 8px !important;
     }
     .maplibregl-popup-close-button:hover {
-      background: rgba(30, 144, 255, 0.18) !important;
+      background: var(--rr-silver-dim) !important;
     }
     /* Route chips/panels must NOT live inside #map: map is z-index 0, so children cannot paint above .search-bar (1000) / .side-buttons (1001). */
     #mapRouteOverlayRoot {
@@ -251,10 +262,10 @@
       display: none;
       height: 32px;
       padding: 0 10px;
-      border: 2px solid rgba(30, 144, 255, 0.75);
+      border: 1px solid var(--rr-silver-edge);
       border-radius: 10px;
-      background: rgba(13, 13, 13, 0.92);
-      color: #cfe8ff;
+      background: linear-gradient(180deg, var(--rr-charcoal-raised) 0%, var(--rr-charcoal) 100%);
+      color: var(--rr-silver);
       font-weight: 800;
       font-size: 0.78rem;
       letter-spacing: 0.02em;
@@ -287,7 +298,11 @@
       height: 45px; /* match side button height */
       border-radius: 12px;
       z-index: 1000;
-      box-shadow: 0 0 10px rgba(30, 144, 255, 0.22);
+      box-shadow:
+        0 2px 14px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 var(--rr-silver-dim),
+        0 0 18px var(--rr-accent-soft);
     }
     /* Collapsed: dock traffic legend under "Open dashboard" bar. */
     body.mf-ui-collapsed #trafficLegendBar.mf-traffic-legend {
@@ -318,10 +333,10 @@
       width: 40px;
       height: 32px;
       padding: 0;
-      border: 2px solid #1E90FF;
+      border: 1px solid var(--rr-silver-edge);
       border-radius: 8px;
-      background: rgba(13, 13, 13, 0.95);
-      color: #1E90FF;
+      background: linear-gradient(180deg, var(--rr-charcoal-raised) 0%, var(--rr-charcoal) 100%);
+      color: var(--rr-silver-muted);
       font-size: 14px;
       line-height: 1;
       cursor: pointer;
@@ -330,13 +345,15 @@
       justify-content: center;
       box-sizing: border-box;
       font-family: inherit;
-      box-shadow: 0 0 8px rgba(30, 144, 255, 0.25);
-      transition: background 0.15s ease, color 0.15s ease;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--rr-silver-dim);
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     }
     .mf-trip-planner-toggle:hover,
     .mf-trip-planner-toggle:focus-visible {
-      background: rgba(30, 144, 255, 0.2);
-      color: #fff;
+      background: var(--rr-charcoal-raised);
+      border-color: var(--rr-accent);
+      color: var(--rr-silver);
+      box-shadow: 0 0 10px var(--rr-accent-soft);
       outline: none;
     }
     .mf-trip-planner-toggle-sr {
@@ -371,10 +388,41 @@
       display: none !important;
     }
     .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
-    .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: #0d0d0d; border: 1px solid #1E90FF; border-radius: 8px; padding: 5px 10px; }
+    .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: var(--rr-charcoal); border: 1px solid var(--rr-silver-edge); border-radius: 8px; padding: 5px 10px; }
+    .search-bar .input-wrapper:focus-within {
+      border-color: var(--rr-accent);
+      box-shadow: 0 0 0 1px var(--rr-accent-soft);
+    }
     .search-bar input { background: transparent; border: none; color: #cccccc; padding: 5px; width: 100%; }
     .icon-placeholder { width: 20px; height: 20px; margin-right: 6px; }
-    .side-buttons { position: absolute; width: 45px; height: 45px; z-index: 1001; background-color: #1E90FF; border: 2px solid #000; border-radius: 10px; box-shadow: 0 0 10px #1E90FF; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .side-buttons {
+      position: absolute;
+      width: 45px;
+      height: 45px;
+      z-index: 1001;
+      background: linear-gradient(165deg, var(--rr-charcoal-raised) 0%, #101014 55%, var(--rr-charcoal) 100%);
+      border: 1px solid var(--rr-silver-edge);
+      border-radius: 10px;
+      box-shadow:
+        0 2px 0 #000,
+        0 6px 18px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 var(--rr-silver-dim);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, filter 0.15s ease;
+    }
+    .side-buttons:hover,
+    .side-buttons:focus-visible {
+      border-color: var(--rr-accent);
+      box-shadow:
+        0 2px 0 #000,
+        0 0 16px var(--rr-accent-soft),
+        inset 0 1px 0 var(--rr-silver-glow);
+      outline: none;
+    }
     #menuBtn { top: 60px; left: 10px; }
     body.mf-ui-collapsed #menuBtn { top: 10px; }
     #themeToggleBtn { top: 10px; right: 10px; }
@@ -383,7 +431,7 @@
     #languageBtn span { 
       font-size: 0.8rem; 
       font-weight: bold; 
-      color: #000; 
+      color: var(--rr-silver); 
       min-width: 20px; 
       text-align: center; 
     }
@@ -395,7 +443,7 @@
       background-color: rgba(30,30,30,0.85);
       padding: 10px; /* Consistent 10px padding all around */
       border-radius: 8px;
-      border: 1px solid #1E90FF;
+      border: 1px solid var(--rr-silver-edge);
       z-index: 1001;
       display: flex;
       align-items: center;
@@ -430,8 +478,8 @@
       pointer-events: auto;
     }
     .mf-trip-guide-box {
-      background: rgba(22, 22, 26, 0.96);
-      border: 1px solid var(--rr-accent-soft);
+      background: var(--rr-charcoal-panel);
+      border: 1px solid var(--rr-silver-edge);
       border-radius: 12px;
       box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
       box-sizing: border-box;
@@ -540,10 +588,12 @@
       top: 110px;
       left: 10px;
       width: 45px;
-      background-color: #f3f3f3; /* light gray */
-      border: 2px solid #000; /* black border */
+      background: linear-gradient(180deg, var(--rr-charcoal-raised) 0%, var(--rr-charcoal) 100%);
+      border: 1px solid var(--rr-silver-edge);
       border-radius: 10px;
-      box-shadow: 0 0 10px #1976d2;
+      box-shadow:
+        0 8px 22px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 var(--rr-silver-dim);
       display: none;
       flex-direction: column;
       align-items: center;
@@ -557,10 +607,10 @@
       align-items: center;
       justify-content: center;
       border-radius: 10px;
-      border: 1.5px solid #000; /* black button border */
-      background-color: #1E90FF; /* blue button background */
-      transition: background 0.2s, box-shadow 0.2s;
-      box-shadow: 0 1px 3px #1976d277;
+      border: 1px solid var(--rr-silver-edge);
+      background: linear-gradient(180deg, #2c2d34 0%, var(--rr-charcoal-raised) 100%);
+      transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 var(--rr-silver-dim);
       cursor: pointer;
     }
     .dropdown a img {
@@ -579,17 +629,18 @@
       margin-bottom: 0;
     }
     .dropdown a:hover, .dropdown a:focus {
-      background-color: #1976d2;
-      box-shadow: 0 0 6px #1976d2;
-      border-color: #000;
+      background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
+      box-shadow: 0 0 12px var(--rr-accent-soft);
+      border-color: var(--rr-accent);
     }
     /* Active state - Orange glow for selected buttons */
     .dropdown a.active {
       box-shadow: 0 0 12px #FF6B35, 0 0 20px #FF6B35, inset 0 0 10px rgba(255, 107, 53, 0.3);
-      background-color: #1E90FF;
+      background: linear-gradient(180deg, #2c2d34 0%, var(--rr-charcoal-raised) 100%);
+      border-color: rgba(255, 107, 53, 0.75);
     }
     .dropdown a.active:hover {
-      background-color: #1976d2;
+      background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
       box-shadow: 0 0 12px #FF6B35, 0 0 20px #FF6B35, inset 0 0 10px rgba(255, 107, 53, 0.3);
     }
     /* Youtube button - Red */
@@ -636,7 +687,7 @@
     .dropdown-divider {
       width: 35px;
       height: 1px;
-      background-color: #666;
+      background-color: var(--rr-silver-dim);
       margin: 4px auto;
       border: none;
     }
@@ -647,10 +698,12 @@
       top: 100%;
       right: 0;
       width: 45px;
-      background-color: #f3f3f3; /* light gray */
-      border: 2px solid #000; /* black border */
+      background: linear-gradient(180deg, var(--rr-charcoal-raised) 0%, var(--rr-charcoal) 100%);
+      border: 1px solid var(--rr-silver-edge);
       border-radius: 10px;
-      box-shadow: 0 0 10px #1976d2;
+      box-shadow:
+        0 8px 22px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 var(--rr-silver-dim);
       display: none;
       flex-direction: column;
       align-items: center;
@@ -664,14 +717,14 @@
       align-items: center;
       justify-content: center;
       border-radius: 10px;
-      border: 1.5px solid #000; /* black button border */
-      background-color: #1E90FF; /* blue button background */
-      transition: background 0.2s, box-shadow 0.2s;
-      box-shadow: 0 1px 3px #1976d277;
+      border: 1px solid var(--rr-silver-edge);
+      background: linear-gradient(180deg, #2c2d34 0%, var(--rr-charcoal-raised) 100%);
+      transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 var(--rr-silver-dim);
       cursor: pointer;
       font-size: 0.7rem;
       font-weight: bold;
-      color: #000;
+      color: var(--rr-silver);
       text-decoration: none;
     }
     .language-dropdown a img {
@@ -682,9 +735,10 @@
       margin-bottom: 0;
     }
     .language-dropdown a:hover, .language-dropdown a:focus {
-      background-color: #1976d2;
-      box-shadow: 0 0 6px #1976d2;
-      border-color: #000;
+      background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
+      box-shadow: 0 0 12px var(--rr-accent-soft);
+      border-color: var(--rr-accent);
+      color: #fff;
     }
     /* -- FAVORITES (premium shell — Step 1 / ui-lab) -- */
     .favorites-wrapper {
@@ -692,13 +746,13 @@
       bottom: 40px; /* 10px from footer (footer is at bottom: 0, but has height) */
       left: 50%;
       transform: translateX(-50%);
-      background: linear-gradient(165deg, rgba(42, 44, 52, 0.94) 0%, rgba(18, 19, 24, 0.96) 100%);
+      background: linear-gradient(165deg, var(--rr-charcoal-raised) 0%, var(--rr-charcoal) 100%);
       padding: 8px 6px;
       border-radius: 12px;
       font-size: 0.75rem;
-      color: #888;
+      color: var(--rr-silver-muted);
       text-align: center;
-      border: 1px solid rgba(30, 144, 255, 0.42);
+      border: 1px solid var(--rr-silver-edge);
       white-space: nowrap;
       width: fit-content; /* Tight fit to content */
       min-width: auto;
@@ -713,11 +767,12 @@
         0 1px 0 rgba(255, 255, 255, 0.07) inset;
     }
     .favorites-wrapper:hover {
-      border-color: rgba(30, 144, 255, 0.58);
+      border-color: var(--rr-silver-muted);
       box-shadow:
         0 12px 40px rgba(0, 0, 0, 0.5),
-        0 0 22px rgba(30, 144, 255, 0.12),
-        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        0 0 20px var(--rr-silver-glow),
+        0 0 14px var(--rr-accent-soft),
+        0 0 0 1px var(--rr-silver-dim) inset,
         0 1px 0 rgba(255, 255, 255, 0.08) inset;
     }
     .favorites-wrapper.collapsed {
@@ -730,7 +785,7 @@
       transform: rotate(180deg);
     }
     .favorites-title { 
-      color: rgba(255, 255, 255, 0.92); 
+      color: var(--rr-silver); 
       display: flex; 
       align-items: center;
       justify-content: center;
@@ -744,7 +799,7 @@
       gap: 6px;
     }
     .favorites-wrapper span[data-translate="favorites"] {
-      color: rgba(255, 255, 255, 0.94);
+      color: var(--rr-silver);
     }
     .favorites-container { 
       display: flex; 
@@ -772,9 +827,9 @@
     .favorite-btn { 
       width: 40px; 
       height: 40px; 
-      background: linear-gradient(180deg, #121214 0%, #050506 100%);
-      color: #1E90FF; 
-      border: 1.5px solid rgba(255, 255, 255, 0.88);
+      background: linear-gradient(180deg, var(--rr-charcoal-raised) 0%, var(--rr-charcoal) 100%);
+      color: var(--rr-silver); 
+      border: 1px solid var(--rr-silver-edge);
       border-radius: 8px; 
       font-weight: bold;
       line-height: 1.05;
@@ -787,12 +842,9 @@
       box-sizing: border-box;
       overflow: hidden;
       text-overflow: ellipsis;
-      text-shadow: 
-        -1px -1px 0 #fff,
-        1px -1px 0 #fff,
-        -1px 1px 0 #fff,
-        1px 1px 0 #fff,
-        0 0 2px #fff;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.85),
+        0 0 1px rgba(0, 0, 0, 0.9);
       box-shadow:
         0 3px 10px rgba(0, 0, 0, 0.45),
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -802,12 +854,13 @@
       transform: translateY(-1px);
       box-shadow:
         0 6px 16px rgba(0, 0, 0, 0.5),
-        0 0 14px rgba(30, 144, 255, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      border-color: #fff;
+        0 0 12px var(--rr-silver-glow),
+        0 0 10px var(--rr-accent-soft),
+        inset 0 1px 0 var(--rr-silver-dim);
+      border-color: var(--rr-silver-muted);
     }
     .place-favorite-btn:not(.place-favorite-empty) {
-      color: #7ec8ff;
+      color: var(--rr-silver);
     }
     .place-favorite-empty {
       opacity: 0.72;
@@ -1118,21 +1171,25 @@
     .map-select-btn { 
       background: transparent; 
       border: none; 
-      color: #1E90FF; 
+      color: var(--rr-silver-muted); 
       cursor: pointer; 
       padding: 4px; 
       margin-left: 4px;
       border-radius: 4px;
-      transition: background-color 0.2s;
+      transition: background-color 0.2s, color 0.2s;
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .map-select-btn:hover { background-color: rgba(77, 208, 225, 0.1); }
+    .map-select-btn:hover {
+      background-color: var(--rr-silver-dim);
+      color: var(--rr-silver);
+    }
     .map-select-btn.active { 
-      background-color: rgba(77, 208, 225, 0.2); 
-      box-shadow: 0 0 4px #1E90FF;
+      background-color: var(--rr-charcoal-raised); 
+      color: var(--rr-silver);
+      box-shadow: 0 0 0 1px var(--rr-silver-edge), 0 0 8px var(--rr-accent-soft);
     }
     /* Tooltip for map select buttons */
     .map-select-tooltip {
@@ -1152,7 +1209,7 @@
       right: 100%;
       margin-right: 8px;
       transform: translateY(-50%) translateX(-10px);
-      border: 1px solid #1E90FF;
+      border: 1px solid var(--rr-silver-edge);
     }
     .map-select-tooltip.show {
       opacity: 1;
@@ -1171,7 +1228,7 @@
     /* OTP Trip Planning Styles */
     .itinListOption {
       background: #1a1a1a;
-      border: 1px solid var(--rr-accent-soft);
+      border: 1px solid var(--rr-silver-edge);
       border-radius: 8px;
       margin: 8px 0;
       padding: 12px;
@@ -1181,7 +1238,7 @@
     }
     .itinListOption:hover {
       background: #222;
-      box-shadow: 0 0 8px var(--rr-accent-soft);
+      box-shadow: 0 0 10px var(--rr-silver-glow), 0 0 12px var(--rr-accent-soft);
     }
     .itin-toptimes {
       color: var(--rr-accent-text);
@@ -1435,14 +1492,14 @@
     /* Tooltip styles for dropdown buttons */
     .dropdown-tooltip {
       position: fixed;
-      background: #0d0d0d;
-      color: #fff;
+      background: var(--rr-charcoal);
+      color: var(--rr-silver);
       padding: 8px 12px;
       border-radius: 6px;
       font-size: 0.8rem;
       font-weight: bold;
-      border: 1px solid #1E90FF;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border: 1px solid var(--rr-silver-edge);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 var(--rr-silver-dim);
       z-index: 1003;
       white-space: nowrap;
       opacity: 0;
@@ -1464,7 +1521,7 @@
       transform: translateY(-50%);
       width: 0;
       height: 0;
-      border-right: 6px solid #1E90FF;
+      border-right: 6px solid rgba(226, 232, 240, 0.42);
       border-top: 4px solid transparent;
       border-bottom: 4px solid transparent;
     }
@@ -1474,7 +1531,7 @@
       left: auto;
       right: -6px;
       border-right: none;
-      border-left: 6px solid #1E90FF;
+      border-left: 6px solid rgba(226, 232, 240, 0.42);
     }
     
     /* Mobile: attribution lives inside #map; footer sits above the map — lift OSM control clear of footer + home indicator */
@@ -2571,7 +2628,7 @@
     <span data-translate="favorites">Favorites</span>
     <span class="favorites-chevron">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 9L1 4H11L6 9Z" fill="#1E90FF"/>
+        <path d="M6 9L1 4H11L6 9Z" fill="var(--rr-silver-muted)"/>
       </svg>
     </span>
   </span>
@@ -4357,7 +4414,7 @@
     dropdown.style.left = "0";
     dropdown.style.right = "0";
     dropdown.style.background = "#0d0d0d";
-    dropdown.style.border = "1px solid #1E90FF";
+    dropdown.style.border = "1px solid rgba(226, 232, 240, 0.42)";
     dropdown.style.color = "#cccccc";
     dropdown.style.zIndex = 1002;
     // Tall enough to show ~10 results + the location option without scrolling.

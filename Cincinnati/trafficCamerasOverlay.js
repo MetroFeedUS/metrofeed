@@ -53,7 +53,7 @@ const TrafficCamerasOverlay = (function() {
   // Configuration
   const CAMERAS_JSON_URL = 'data/cameras.json';
   const MARKER_SIZE = 32; // Size for camera icon
-  const MARKER_COLOR = '#007BFF'; // MetroFeed standard blue color for camera popups
+  /* Popup chrome uses page :root tokens (--rr-accent); marker SVG stays neutral. */
 
   /**
    * Initialize the overlay with a map instance
@@ -186,16 +186,16 @@ const TrafficCamerasOverlay = (function() {
     const popupContent = document.createElement('div');
     const hasUrl = !!(camera && camera.url);
     popupContent.innerHTML = `
-      <div style='border:2px solid ${MARKER_COLOR}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:200px;'>
-        <strong style='color:${MARKER_COLOR};'>📹 ${camera.name}</strong>
-        ${camera.description && camera.description !== camera.name ? `<div style='font-size:0.85rem; color:#aaa; margin-top:4px;'>${camera.description}</div>` : ''}
-        <hr style='border:none; border-top:1px solid ${MARKER_COLOR}; margin:6px 0;'>
+      <div style='border:1px solid var(--rr-silver-edge, rgba(226,232,240,0.42)); border-radius:8px; padding:10px; background:linear-gradient(180deg, var(--rr-charcoal-raised, #1a1b20) 0%, var(--rr-charcoal, #121214) 100%); color:var(--rr-silver, #e2e8f0); min-width:200px;'>
+        <strong style='color:var(--rr-silver, #e2e8f0);'>📹 ${camera.name}</strong>
+        ${camera.description && camera.description !== camera.name ? `<div style='font-size:0.85rem; color:var(--rr-silver-muted, #94a3b8); margin-top:4px;'>${camera.description}</div>` : ''}
+        <hr style='border:none; border-top:1px solid var(--rr-silver-dim, rgba(226,232,240,0.14)); margin:6px 0;'>
         ${hasUrl ? `
         <button onclick='TrafficCamerasOverlay.showCameraFeed("${camera.id}", "${camera.name}", "${String(camera.url).replace(/'/g, "\\'")}"); event.stopPropagation();' 
-                style='background:${MARKER_COLOR}; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; width:100%; margin-top:6px;'>
+                style='background:var(--rr-accent, #9333ea); color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; width:100%; margin-top:6px;'>
           View Camera
         </button>
-        ` : `<div style="font-size:0.85rem;color:#bbb;margin-top:6px;">Camera feed not available yet.</div>`}
+        ` : `<div style="font-size:0.85rem;color:var(--rr-silver-muted, #94a3b8);margin-top:6px;">Camera feed not available yet.</div>`}
       </div>
     `;
     return popupContent;
