@@ -2613,9 +2613,23 @@
   <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA and Official Resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA and Official Resources"></a>
   <a href="#" id="dropdownAlertsBtn" onclick="event.preventDefault(); showMBTAAlertsModal();"><img src="008-danger.svg" alt="Alerts"></a>
   <div class="dropdown-divider"></div>
+  <a href="#" id="dropdownBackToNationalBtn" onclick="event.preventDefault(); window.metrofeedBackToNational && window.metrofeedBackToNational();"><img src="global.svg" alt="Back to National Map"></a>
+  <div class="dropdown-divider"></div>
   <!-- CSL (Crowd-Sourced Location) button in dropdown -->
   <!-- CSL is Premium-only, button hidden on Free tier -->
   <a id="advertiseBtn" href="#" onclick="event.preventDefault(); alert('CSL is available in Premium. Visit premium.html');" style="display: none;"><img src="megaphone.svg" alt="Crowd-Sourced Location"></a>
+</div>
+
+<!-- Leave-city confirmation (shown only on clear escape attempt) -->
+<div id="mfLeaveCityOverlay" class="mf-overlay" style="display:none; z-index: 20050;" aria-hidden="true">
+  <div class="mf-modal" role="dialog" aria-modal="true" aria-labelledby="mfLeaveCityTitle">
+    <h2 id="mfLeaveCityTitle">Leave <span id="mfLeaveCityName">this city</span>?</h2>
+    <p>You zoomed out and moved outside the city area. Return to the national map?</p>
+    <div class="mf-actions" style="margin: 0; justify-content: flex-end;">
+      <button class="mf-btn" type="button" id="mfLeaveCityNo">Stay</button>
+      <button class="mf-btn" type="button" id="mfLeaveCityYes" style="background: var(--rr-accent); border-color: var(--rr-accent); color: #fff;">Yes, leave</button>
+    </div>
+  </div>
 </div>
 
 <!-- -- SEARCH / TRIP PLANNER -- -->
@@ -13351,6 +13365,92 @@
       window.map = map; // Make map available to otp.js (legacy global)
       dayStyle = mapSetup.dayStyle;
       nightStyle = mapSetup.nightStyle;
+
+      // --- National map exit flow (MVP) ---
+      (function initLeaveCityFlow() {
+        const cityName = (CITY_CONFIG && CITY_CONFIG.cityName) ? CITY_CONFIG.cityName : 'this city';
+        const cityBounds = (CITY_CONFIG && CITY_CONFIG.bounds) ? CITY_CONFIG.bounds : null;
+        const ZOOM_EXIT_THRESHOLD = 8.4; // "zoomed way out" (escape attempt)
+        const overlay = document.getElementById('mfLeaveCityOverlay');
+        const nameEl = document.getElementById('mfLeaveCityName');
+        const btnNo = document.getElementById('mfLeaveCityNo');
+        const btnYes = document.getElementById('mfLeaveCityYes');
+        if (nameEl) nameEl.textContent = cityName;
+
+        const anyOverlayOpen = () => {
+          try {
+            const els = Array.from(document.querySelectorAll('.mf-overlay'));
+            return els.some(el => el && el.id !== 'mfLeaveCityOverlay' && el.style && el.style.display && el.style.display !== 'none');
+          } catch (_) {
+            return false;
+          }
+        };
+        const inCityBounds = (lat, lon) => {
+          if (!cityBounds) return true;
+          return lat >= cityBounds.south && lat <= cityBounds.north && lon >= cityBounds.west && lon <= cityBounds.east;
+        };
+        const open = () => {
+          if (!overlay) return;
+          overlay.style.display = 'flex';
+          overlay.setAttribute('aria-hidden', 'false');
+        };
+        const close = () => {
+          if (!overlay) return;
+          overlay.style.display = 'none';
+          overlay.setAttribute('aria-hidden', 'true');
+        };
+        const goNational = () => {
+          try {
+            const saved = sessionStorage.getItem('mfNationalView');
+            if (saved) {
+              const v = JSON.parse(saved);
+              if (v && Array.isArray(v.center) && v.center.length === 2 && typeof v.zoom === 'number') {
+                const lat = v.center[1];
+                const lon = v.center[0];
+                const z = v.zoom;
+                window.location.href = `../Index.html?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&z=${encodeURIComponent(z)}`;
+                return;
+              }
+            }
+          } catch (_) {}
+          window.location.href = '../Index.html';
+        };
+
+        // Backup menu item callback
+        window.metrofeedBackToNational = () => {
+          // Deliberate action; no prompt required.
+          goNational();
+        };
+
+        if (btnNo) btnNo.addEventListener('click', () => close());
+        if (btnYes) btnYes.addEventListener('click', () => {
+          close();
+          goNational();
+        });
+
+        let cooldownUntil = 0;
+        const checkEscapeAttempt = () => {
+          try {
+            if (!map || !cityBounds) return;
+            if (Date.now() < cooldownUntil) return;
+            if (overlay && overlay.style.display !== 'none') return;
+            if (anyOverlayOpen()) return;
+            const z = typeof map.getZoom === 'function' ? map.getZoom() : 99;
+            const c = typeof map.getCenter === 'function' ? map.getCenter() : null;
+            if (!c) return;
+            const lat = c.lat, lon = c.lng;
+            const escaped = z <= ZOOM_EXIT_THRESHOLD && !inCityBounds(lat, lon);
+            if (escaped) {
+              open();
+              cooldownUntil = Date.now() + 6000; // don’t spam
+            }
+          } catch (_) {}
+        };
+        try {
+          map.on('moveend', checkEscapeAttempt);
+          map.on('zoomend', checkEscapeAttempt);
+        } catch (_) {}
+      })();
       
       console.log('[Map Init] Day style URL:', dayStyle);
       console.log('[Map Init] Night style URL:', nightStyle);

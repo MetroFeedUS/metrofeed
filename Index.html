@@ -4,7 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetroFeed | Find Your City</title>
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <style>
+    :root {
+      --rr-accent: #9333ea;
+      --rr-accent-hover: #7c3aed;
+      --rr-accent-text: #e9d5ff;
+      --rr-accent-soft: rgba(147, 51, 234, 0.35);
+      --rr-silver: #e2e8f0;
+      --rr-silver-muted: #94a3b8;
+      --rr-silver-edge: rgba(226, 232, 240, 0.42);
+      --rr-silver-dim: rgba(226, 232, 240, 0.14);
+      --rr-charcoal: #121214;
+      --rr-charcoal-raised: #1a1b20;
+      --rr-charcoal-panel: rgba(22, 23, 28, 0.96);
+    }
+
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -13,6 +29,166 @@
       text-align: center;
       height: 100vh;
       overflow: hidden;
+    }
+
+    #map {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+    }
+
+    .mf-topbar {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      z-index: 1100;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .mf-topbar-inner {
+      pointer-events: auto;
+      width: 100%;
+      max-width: 820px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.96) 100%);
+      border: 1px solid var(--rr-silver-edge);
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), inset 0 1px 0 var(--rr-silver-dim), 0 0 18px var(--rr-accent-soft);
+    }
+    .mf-topbar-left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+      flex: 1;
+    }
+    .mf-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .mf-brand img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+    .mf-brand-title {
+      text-align: left;
+      min-width: 0;
+    }
+    .mf-brand-title strong {
+      display: block;
+      color: var(--rr-silver);
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+    }
+    .mf-brand-title span {
+      display: block;
+      color: var(--rr-silver-muted);
+      font-size: 0.72rem;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 34vw;
+    }
+    .mf-topbar-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 0 0 auto;
+    }
+    .mf-btn {
+      appearance: none;
+      border: 1px solid var(--rr-silver-edge);
+      background: linear-gradient(180deg, #2c2d34 0%, var(--rr-charcoal-raised) 100%);
+      color: var(--rr-silver);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 var(--rr-silver-dim);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+    .mf-btn:hover,
+    .mf-btn:focus-visible {
+      border-color: var(--rr-accent);
+      box-shadow: 0 0 14px var(--rr-accent-soft), inset 0 1px 0 var(--rr-silver-dim);
+      outline: none;
+      filter: brightness(1.03);
+    }
+    .mf-btn--primary {
+      border-color: rgba(147, 51, 234, 0.55);
+      background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
+      color: #fff;
+      box-shadow: 0 0 14px var(--rr-accent-soft), inset 0 1px 0 rgba(255,255,255,0.18);
+    }
+
+    .mf-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.66);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+    .mf-overlay.is-open { display: flex; }
+    .mf-modal {
+      width: 100%;
+      max-width: 560px;
+      background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.97) 100%);
+      border: 1px solid var(--rr-silver-edge);
+      border-radius: 18px;
+      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.7), inset 0 1px 0 var(--rr-silver-dim), 0 0 24px var(--rr-accent-soft);
+      padding: 16px 14px 14px;
+      text-align: left;
+      color: var(--rr-silver);
+    }
+    .mf-modal h2 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+      color: var(--rr-silver);
+    }
+    .mf-modal p {
+      margin: 0 0 12px;
+      color: var(--rr-silver-muted);
+      line-height: 1.35;
+      font-size: 0.92rem;
+    }
+    .mf-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .mf-select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--rr-silver-edge);
+      background: var(--rr-charcoal);
+      color: var(--rr-silver);
+      font-weight: 700;
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
     #cookieBanner {
@@ -148,6 +324,25 @@
   </style>
 </head>
 <body>
+  <div id="map" aria-label="National map"></div>
+
+  <div class="mf-topbar" aria-hidden="false">
+    <div class="mf-topbar-inner">
+      <div class="mf-topbar-left">
+        <div class="mf-brand">
+          <img src="MetroFeedMainLogo.png" alt="MetroFeed" />
+          <div class="mf-brand-title">
+            <strong>National map</strong>
+            <span id="mfTopbarSubtitle">Pan to a supported city, then choose “Use this area”.</span>
+          </div>
+        </div>
+      </div>
+      <div class="mf-topbar-actions">
+        <button id="mfUseAreaBtn" class="mf-btn mf-btn--primary" type="button">Use this area</button>
+      </div>
+    </div>
+  </div>
+
   <div id="cookieBanner">
   <div style="font-weight: bold; font-size: 1.05rem; margin-bottom: 0.5rem;">Lawyer Stuff 🙄</div>  
 MetroFeed uses your location and third-party services for login and payment. We do not store your personal data. By continuing, you agree to our use of cookies and geolocation. Term and Conditions, Privacy and more avialable at the bottom of this page to view right now without having to accept this cookie.              
@@ -171,15 +366,6 @@ MetroFeed uses your location and third-party services for login and payment. We 
 
   <div id="status">Detecting your location...</div>
 
-  <div class="city-select" style="display:none;" id="manualSelect">
-    <label for="city">Choose your city:</label>
-    <select id="city">
-      <option value="Cincinnati/home.html">Cincinnati, OH / NKY</option>
-      <option value="Boston/home.html">Boston, MA</option>
-    </select>
-    <button onclick="manualRedirect()">Go</button>
-  </div>
-
   <div class="message">Don’t see your city? We're expanding fast. Stay tuned!</div>
 
   <footer class="site-footer">
@@ -190,6 +376,34 @@ MetroFeed uses your location and third-party services for login and payment. We 
     <a href="privacy.html">Privacy</a>
     <a href="Boston/hq.html">HQ</a>
   </footer>
+
+  <!-- Confirm overlays (redirect only after confirmation) -->
+  <div id="mfConfirmOverlay" class="mf-overlay" role="dialog" aria-modal="true" aria-labelledby="mfConfirmTitle">
+    <div class="mf-modal">
+      <h2 id="mfConfirmTitle">Use this area?</h2>
+      <p id="mfConfirmBody">We’ll load the city experience for the area you’re looking at.</p>
+      <div class="mf-row">
+        <button id="mfConfirmNo" type="button" class="mf-btn">Keep browsing</button>
+        <button id="mfConfirmYes" type="button" class="mf-btn mf-btn--primary">Yes, use this area</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mfNotAvailableOverlay" class="mf-overlay" role="dialog" aria-modal="true" aria-labelledby="mfNA_Title">
+    <div class="mf-modal">
+      <h2 id="mfNA_Title">Not available here yet</h2>
+      <p>Pick a supported city, or keep scrolling the map.</p>
+      <select id="mfCitySelect" class="mf-select" aria-label="Choose a city">
+        <option value="" selected disabled>Choose a city…</option>
+        <option value="cincinnati">Cincinnati, OH / NKY</option>
+      </select>
+      <div style="height:10px;"></div>
+      <div class="mf-row">
+        <button id="mfNA_Keep" type="button" class="mf-btn">Keep exploring</button>
+        <button id="mfNA_GoCity" type="button" class="mf-btn mf-btn--primary">Go to city</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const loadingSteps = [
@@ -203,6 +417,116 @@ MetroFeed uses your location and third-party services for login and payment. We 
 
     let currentStep = 0;
     let geoTimeout;
+    let map = null;
+
+    const MF_SUPPORTED_CITIES = {
+      cincinnati: {
+        name: "Cincinnati, OH / NKY",
+        // Generous bbox to start; tighten later as more cities are added.
+        bbox: { west: -85.10, south: 38.85, east: -84.20, north: 39.45 },
+        defaultView: { center: [-84.512, 39.103], zoom: 10.5 },
+        href: "Cincinnati/home.html"
+      }
+    };
+
+    function mfInBbox(lat, lon, bbox) {
+      return lat >= bbox.south && lat <= bbox.north && lon >= bbox.west && lon <= bbox.east;
+    }
+
+    function mfGetMapCenterLatLon() {
+      try {
+        const c = map.getCenter();
+        return { lat: c.lat, lon: c.lng };
+      } catch (_) {
+        return { lat: null, lon: null };
+      }
+    }
+
+    function mfOpenOverlay(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('is-open');
+    }
+    function mfCloseOverlay(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('is-open');
+    }
+
+    function mfShowConfirmUseArea(reason) {
+      const sub = document.getElementById('mfTopbarSubtitle');
+      if (sub) sub.textContent = reason || 'Use this area to load a supported city.';
+      mfOpenOverlay('mfConfirmOverlay');
+    }
+
+    function mfShowNotAvailable() {
+      mfOpenOverlay('mfNotAvailableOverlay');
+    }
+
+    function mfRedirectToCity(cityKey) {
+      const city = MF_SUPPORTED_CITIES[cityKey];
+      if (!city) return;
+      // Save the national view so "Back to national map" can return smoothly.
+      try {
+        const c = map.getCenter();
+        const z = map.getZoom();
+        sessionStorage.setItem('mfNationalView', JSON.stringify({ center: [c.lng, c.lat], zoom: z }));
+      } catch (_) {}
+      window.location.href = city.href + '?from=national';
+    }
+
+    function mfEvaluateAreaAndMaybeRedirect() {
+      const { lat, lon } = mfGetMapCenterLatLon();
+      if (typeof lat !== 'number' || typeof lon !== 'number') return;
+      // Cincy-only MVP
+      if (mfInBbox(lat, lon, MF_SUPPORTED_CITIES.cincinnati.bbox)) {
+        mfRedirectToCity('cincinnati');
+        return;
+      }
+      mfShowNotAvailable();
+    }
+
+    function mfPanToCity(cityKey) {
+      const city = MF_SUPPORTED_CITIES[cityKey];
+      if (!city || !map) return;
+      try {
+        map.easeTo({ center: city.defaultView.center, zoom: city.defaultView.zoom, duration: 700 });
+      } catch (_) {}
+      setTimeout(() => mfShowConfirmUseArea(`Use this area to load ${city.name}.`), 450);
+    }
+
+    function mfInitNationalMap() {
+      // Default tri-state-ish view (OH/KY/IN). Adjust later when you add regions.
+      const defaultCenter = [-84.65, 39.10];
+      const defaultZoom = 7.8;
+      const styleUrl = "https://tiles.metrofeedus.com/styles/1/style.json";
+
+      map = new maplibregl.Map({
+        container: 'map',
+        style: styleUrl,
+        center: defaultCenter,
+        zoom: defaultZoom,
+        attributionControl: true
+      });
+      map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
+
+      // Restore view when coming back from a city.
+      try {
+        const params = new URLSearchParams(window.location.search || '');
+        const qLat = parseFloat(params.get('lat'));
+        const qLon = parseFloat(params.get('lon'));
+        const qZ = parseFloat(params.get('z'));
+        if (Number.isFinite(qLat) && Number.isFinite(qLon) && Number.isFinite(qZ)) {
+          map.jumpTo({ center: [qLon, qLat], zoom: qZ });
+        } else {
+          const saved = sessionStorage.getItem('mfNationalView');
+          if (saved) {
+            const v = JSON.parse(saved);
+            if (v && Array.isArray(v.center) && v.center.length === 2 && typeof v.zoom === 'number') {
+              map.jumpTo({ center: v.center, zoom: v.zoom });
+            }
+          }
+        }
+      } catch (_) {}
+    }
 
     function updateLoadingProgress(stepIndex) {
       const loadingBar = document.querySelector('.loading-bar-fill');
@@ -244,33 +568,21 @@ MetroFeed uses your location and third-party services for login and payment. We 
       initGeo();
     }
 
-    function manualRedirect() {
-      const selected = document.getElementById("city").value;
-      window.location.href = selected;
-    }
-
-    function inBostonBounds(lat, lon) {
-      return lat >= 42.2 && lat <= 42.5 && lon >= -71.3 && lon <= -70.8;
-    }
-
-    /** Rough Greater Cincinnati + NKY box (manual picker still lists all cities). */
-    function inGreaterCincinnatiBounds(lat, lon) {
-      return lat >= 38.85 && lat <= 39.45 && lon >= -85.1 && lon <= -84.2;
-    }
-
     function showMainContent(message, showDropdown) {
       document.getElementById("loader").style.display = "none";
       document.getElementById("status").innerText = message;
-      if (showDropdown) document.getElementById("manualSelect").style.display = "block";
     }
 
     function initGeo() {
+      // Ensure map exists immediately; geolocation just pans it.
+      if (!map) mfInitNationalMap();
       if (navigator.geolocation) {
         // Set a longer timeout since we have a loading sequence
         geoTimeout = setTimeout(() => {
           updateLoadingProgress(loadingSteps.length - 1); // Show final step
           setTimeout(() => {
-            showMainContent("Location detection taking too long. Please choose a city manually.", true);
+            try { sessionStorage.setItem('metrofeedLocationDenied', '1'); } catch (e) {}
+            showMainContent("Location detection taking too long. Pan the map and choose “Use this area”.", false);
           }, 500);
         }, 8000); // 8 second timeout
 
@@ -283,24 +595,23 @@ MetroFeed uses your location and third-party services for login and payment. We 
           setTimeout(() => {
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
-
-            if (inGreaterCincinnatiBounds(lat, lon)) {
-              window.location.href = "Cincinnati/home.html";
-            } else if (inBostonBounds(lat, lon)) {
-              window.location.href = "Boston/home.html";
-            } else {
-              showMainContent(" 😭 We don't serve your location... yet 😎.", true);
-            }
+            // Pan map to GPS, then ask user to confirm.
+            try {
+              if (map) map.easeTo({ center: [lon, lat], zoom: 11.2, duration: 700 });
+            } catch (_) {}
+            mfShowConfirmUseArea("Use your current area? You can also pan somewhere else and tap “Use this area”.");
           }, 400);
           
         }, err => {
           clearTimeout(geoTimeout);
+          try { sessionStorage.setItem('metrofeedLocationDenied', '1'); } catch (e) {}
           
           // Complete the loading sequence
           updateLoadingProgress(loadingSteps.length - 1);
           
           setTimeout(() => {
-            showMainContent("Location blocked. Please choose a city manually.", true);
+            // Map stays at default center; user can pan and press "Use this area".
+            showMainContent("Location blocked. Pan the map and choose “Use this area”.", false);
           }, 400);
           
         }, {
@@ -311,10 +622,53 @@ MetroFeed uses your location and third-party services for login and payment. We 
       } else {
         updateLoadingProgress(loadingSteps.length - 1);
         setTimeout(() => {
-          showMainContent("Geolocation not supported.", true);
+          showMainContent("Geolocation not supported. Pan the map and choose “Use this area”.", false);
         }, 400);
       }
     }
+
+    // Wire UI events
+    (function initIndexUi() {
+      const useBtn = document.getElementById('mfUseAreaBtn');
+      const confirmNo = document.getElementById('mfConfirmNo');
+      const confirmYes = document.getElementById('mfConfirmYes');
+      const naKeep = document.getElementById('mfNA_Keep');
+      const naGo = document.getElementById('mfNA_GoCity');
+      const citySel = document.getElementById('mfCitySelect');
+
+      if (useBtn) {
+        useBtn.addEventListener('click', () => mfShowConfirmUseArea("Use this area?"));
+      }
+      if (confirmNo) confirmNo.addEventListener('click', () => mfCloseOverlay('mfConfirmOverlay'));
+      if (confirmYes) confirmYes.addEventListener('click', () => {
+        mfCloseOverlay('mfConfirmOverlay');
+        mfEvaluateAreaAndMaybeRedirect();
+      });
+      if (naKeep) naKeep.addEventListener('click', () => mfCloseOverlay('mfNotAvailableOverlay'));
+      if (naGo) naGo.addEventListener('click', () => {
+        const key = citySel ? citySel.value : '';
+        mfCloseOverlay('mfNotAvailableOverlay');
+        if (key) mfPanToCity(key);
+      });
+
+      // If cookies already accepted, skip banner and init map immediately.
+      try {
+        const has = localStorage.getItem("cookieConsent") === "true";
+        if (has) {
+          const banner = document.getElementById("cookieBanner");
+          if (banner) banner.style.display = "none";
+          const loader = document.getElementById("loader");
+          if (loader) loader.style.display = "flex";
+          startLoadingSequence();
+          initGeo();
+        } else {
+          // No cookies yet: still show map (non-personalized) behind banner.
+          mfInitNationalMap();
+        }
+      } catch (_) {
+        mfInitNationalMap();
+      }
+    })();
   </script>
 </body>
 </html>
