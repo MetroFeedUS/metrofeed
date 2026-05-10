@@ -329,10 +329,10 @@ function showDebugModal() {
   `;
   
   const header = document.createElement('div');
-  header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #1E90FF; padding-bottom: 10px;';
+  header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--rr-accent, #9333ea); padding-bottom: 10px;';
   header.innerHTML = `
-    <h2 style="margin: 0; color: #1E90FF;">🔍 OTP Debug Log</h2>
-    <button id="close-debug-modal" style="background: #1E90FF; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Close</button>
+    <h2 style="margin: 0; color: var(--rr-accent, #9333ea);">🔍 OTP Debug Log</h2>
+    <button id="close-debug-modal" style="background: var(--rr-accent, #9333ea); color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Close</button>
   `;
   
   const clearBtn = document.createElement('button');
@@ -359,14 +359,14 @@ function showDebugModal() {
       const logEntry = document.createElement('div');
       logEntry.style.cssText = `
         background: #2a2a2a;
-        border-left: 4px solid #1E90FF;
+        border-left: 4px solid var(--rr-accent, #9333ea);
         padding: 15px;
         margin-bottom: 15px;
         border-radius: 4px;
       `;
       
       const stepHeader = document.createElement('div');
-      stepHeader.style.cssText = 'font-weight: bold; color: #1E90FF; font-size: 16px; margin-bottom: 10px;';
+      stepHeader.style.cssText = 'font-weight: bold; color: var(--rr-accent, #9333ea); font-size: 16px; margin-bottom: 10px;';
       stepHeader.textContent = `${idx + 1}. ${log.step}`;
       
       const decisionDiv = document.createElement('div');
@@ -427,7 +427,7 @@ window.addDebugLog = addDebugLog;
 window.clearDebugLogs = () => { debugLogs = []; console.log('🔍 Debug logs cleared'); };
 
 // Console command to show debug modal
-console.log('%c🔍 OTP Debug Tools Available:', 'color: #1E90FF; font-weight: bold;');
+console.log('%c🔍 OTP Debug Tools Available:', 'color: #9333ea; font-weight: bold;');
 console.log('%c  - showDebugModal() - Show debug log modal', 'color: #888;');
 console.log('%c  - clearDebugLogs() - Clear all debug logs', 'color: #888;');
 
@@ -638,7 +638,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     console.error('[OTP] #itinList not found — cannot show trip options');
     return;
   }
-  itinList.innerHTML = "<em style='color: #1E90FF;'>Loading trip options...</em>";
+  itinList.innerHTML = "<em style='color: var(--rr-accent, #9333ea);'>Loading trip options...</em>";
   try {
     if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_searching_trip_options');
     else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('Searching for trip options.');
@@ -684,7 +684,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       clampBanner =
         "<div style=\"color:#ffb74d;font-size:12px;margin-bottom:8px;line-height:1.35;\">Your departure time is before the loaded schedule range; search time was moved to the start of available data.</div>";
     }
-    itinList.innerHTML = clampBanner + "<em style='color: #1E90FF;'>Loading trip options...</em>";
+    itinList.innerHTML = clampBanner + "<em style='color: var(--rr-accent, #9333ea);'>Loading trip options...</em>";
 
     const buildTripPlanQuery = (withTuning) => {
       const tuningArgs = withTuning

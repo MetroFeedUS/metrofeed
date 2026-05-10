@@ -40,6 +40,17 @@
 
 "use strict";
 
+/** Modal / panel accent (reads --rr-accent from home.html; fallback if missing). */
+function metrofeedUiAccent() {
+  try {
+    if (typeof getComputedStyle !== 'undefined' && document.documentElement) {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--rr-accent').trim();
+      if (v) return v;
+    }
+  } catch (_) {}
+  return '#9333ea';
+}
+
 // ===============================
 // Cincinnati helpers (UI + GTFS-RT)
 // ===============================
@@ -1798,6 +1809,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     }
 
     stops.forEach((stop) => {
+      const stopPopupAccent = metrofeedUiAccent();
       const lat = stop.lat;
       const lon = stop.lon;
 
@@ -1958,7 +1970,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         
         // Add next time (highlighted)
         highlightedTimes.push(
-          `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${allTimes[nextTimeIndex].displayTime}</span>`
+          `<span style="background:${stopPopupAccent};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${allTimes[nextTimeIndex].displayTime}</span>`
         );
         
         // Add after times (up to 3, no wrap-around)
@@ -1975,7 +1987,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         allTimes.slice(0, timesToShow).forEach((timeData, index) => {
           if (index === 0) {
             highlightedTimes.push(
-              `<span style="background:#1E90FF;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${timeData.displayTime}</span>`
+              `<span style="background:${stopPopupAccent};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${timeData.displayTime}</span>`
             );
           } else {
             highlightedTimes.push(timeData.displayTime);
@@ -2114,6 +2126,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // ETA display (realtime trips.json → TripUpdates-shaped data)
       const getETADisplay = () => {
         try {
+          const uiA = metrofeedUiAccent();
           const overlayKey = etaOverlayKey;
           const tu = metrofeedGetRouteTripUpdatesForOverlay(overlayKey);
           const stopIdKey = String(stop.stop_id || stopId);
@@ -2126,13 +2139,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
             .map(u => {
               const t = formatETA(new Date((u.time || 0) * 1000));
               const delay = (u.delay || u.delay === 0) ? `${u.delay >= 0 ? '+' : ''}${u.delay}s` : '';
-              return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:#bbb;">${tuLabel}</span><span style="color:#1E90FF;font-weight:bold;">${t}</span><span style="color:#888;font-size:12px;">${delay}</span></div>`;
+              return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:#bbb;">${tuLabel}</span><span style="color:${uiA};font-weight:bold;">${t}</span><span style="color:#888;font-size:12px;">${delay}</span></div>`;
             });
 
           if (tuList.length === 0) return '';
 
           return `
-            <hr style="border:none;border-top:1px solid #1E90FF;margin:6px 0;">
+            <hr style="border:none;border-top:1px solid ${uiA};margin:6px 0;">
             <div style="font-size:12px;color:#fff;margin-bottom:4px;"><strong>Next arrivals</strong></div>
             <div style="display:flex;flex-direction:column;gap:4px;">
               ${tuList.join('')}
@@ -2146,18 +2159,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Popup content (reads latest ETA data when created/updated)
       const popupContent = document.createElement("div");
       const updatePopupContent = () => {
+        const uiAccent = metrofeedUiAccent();
         const etaDisplay = getETADisplay();
         popupContent.innerHTML = `
-          <div style="border:1px solid #1E90FF;border-radius:8px;padding:10px;background:#222;color:#fff;min-width:200px;">
-            <strong style="color:#1E90FF;">${stop.name || `Stop ${stop.stop_id}`}</strong>
+          <div style="border:1px solid ${uiAccent};border-radius:8px;padding:10px;background:#222;color:#fff;min-width:200px;">
+            <strong style="color:${uiAccent};">${stop.name || `Stop ${stop.stop_id}`}</strong>
             ${etaDisplay}
             ${
               highlightedTimes.length
                 ? `
-              <hr style="border:none;border-top:1px solid #1E90FF;margin:6px 0;">
+              <hr style="border:none;border-top:1px solid ${uiAccent};margin:6px 0;">
               ${highlightedTimes.join("<br>")}
-              <hr style="border:none;border-top:1px solid #1E90FF;margin:8px 0;">
-              <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${(stop.name || `Stop ${stop.stop_id}`).replace(/'/g, "\\'")}')" style="width:100%;background:#1E90FF;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
+              <hr style="border:none;border-top:1px solid ${uiAccent};margin:8px 0;">
+              <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${(stop.name || `Stop ${stop.stop_id}`).replace(/'/g, "\\'")}')" style="width:100%;background:${uiAccent};color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
             `
                 : ""
             }
@@ -2402,11 +2416,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Content wrapper
       const contentDiv = document.createElement("div");
       contentDiv.className = "route-info-content";
+      const routePanelAccent = metrofeedUiAccent();
       contentDiv.innerHTML = `
         <div style="margin-bottom:12px; padding-right:20px;">
-          <strong style="color:#1E90FF;font-size:1em;">${routeTitle}</strong>
+          <strong style="color:#e2e8f0;font-size:1em;">${routeTitle}</strong>
         </div>
-        <button id="close-route-btn" style="background:#1E90FF;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:0.9em;width:100%;">Close</button>
+        <button id="close-route-btn" style="background:${routePanelAccent};color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:0.9em;width:100%;">Close</button>
       `;
       
       // Add close button functionality

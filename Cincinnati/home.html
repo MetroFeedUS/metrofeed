@@ -30,6 +30,15 @@
   		}
   	</script>
   <style>
+    /* Roam Raven UI tokens — accent purple + silver chrome (modals / panels only; map route colors unchanged) */
+    :root {
+      --rr-accent: #9333ea;
+      --rr-accent-hover: #7c3aed;
+      --rr-accent-text: #e9d5ff;
+      --rr-accent-glow: rgba(147, 51, 234, 0.55);
+      --rr-accent-soft: rgba(147, 51, 234, 0.35);
+    }
+
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
     html, body { width: 100vw; overflow-x: hidden; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #0d0d0d; color: #cccccc; }
     #map { height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 0; }
@@ -422,7 +431,7 @@
     }
     .mf-trip-guide-box {
       background: rgba(22, 22, 26, 0.96);
-      border: 1px solid rgba(30, 144, 255, 0.88);
+      border: 1px solid var(--rr-accent-soft);
       border-radius: 12px;
       box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
       box-sizing: border-box;
@@ -480,7 +489,7 @@
       background: rgba(255, 255, 255, 0.14);
     }
     .mf-trip-guide-icon-btn:focus-visible {
-      outline: 2px solid #1E90FF;
+      outline: 2px solid var(--rr-accent);
       outline-offset: 2px;
     }
     .mf-trip-guide-panel-body {
@@ -513,9 +522,9 @@
       font-size: 15px;
       letter-spacing: 0.02em;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(180deg, #2ea6ff 0%, #1E90FF 55%, #1873cc 100%);
+      background: linear-gradient(180deg, #a855f7 0%, var(--rr-accent) 55%, var(--rr-accent-hover) 100%);
       color: #fff;
-      box-shadow: 0 2px 8px rgba(30, 144, 255, 0.35);
+      box-shadow: 0 2px 8px var(--rr-accent-soft);
       transition: filter 0.15s ease, transform 0.1s ease;
     }
     .mf-trip-guide-start-btn:hover {
@@ -862,9 +871,9 @@
       line-height: 1.2;
       color: #fff;
       background: linear-gradient(165deg, #1a5588 0%, #0c2036 100%);
-      border: 1px solid #1E90FF;
+      border: 1px solid var(--rr-accent-soft);
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(30, 144, 255, 0.22);
+      box-shadow: 0 0 10px var(--rr-accent-soft);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -900,7 +909,7 @@
       min-width: 0;
       padding: 10px 12px;
       border-radius: 8px;
-      border: 1px solid #1E90FF;
+      border: 1px solid var(--rr-accent-soft);
       background: #1a1a1a;
       color: #ccc;
       cursor: pointer;
@@ -908,15 +917,15 @@
       font-family: inherit;
     }
     .bus-route-modal-tab.bus-route-modal-tab--active {
-      background: #1E90FF;
-      color: #000;
+      background: var(--rr-accent);
+      color: #fff;
       font-weight: 600;
     }
     .bus-route-modal-chevron {
       flex-shrink: 0;
       font-size: 0.85rem;
       opacity: 0.8;
-      color: #1E90FF;
+      color: var(--rr-accent-text);
       width: 1.25rem;
       text-align: center;
     }
@@ -946,9 +955,9 @@
     #railRoutesModal #railRouteList { min-height: 200px; }
     .mf-modal {
       background: #111;
-      border: 2.5px solid #1E90FF;
+      border: 2.5px solid var(--rr-accent);
       border-radius: 18px;
-      box-shadow: 0 0 24px #222, 0 0 6px #1E90FF;
+      box-shadow: 0 0 24px #222, 0 0 10px var(--rr-accent-glow);
       padding: 1.1rem 0.7rem 1.2rem 0.7rem;
       min-width: 0;
       max-width: 410px;
@@ -983,14 +992,14 @@
     .mf-overlay { pointer-events: auto !important; }
     .mf-modal { pointer-events: auto !important; }
     @keyframes popin { from { transform: translate(-50%, -50%) scale(0.94); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-    .mf-modal h2 { color: #1E90FF; font-size: 1.25rem; margin: 0 0 0.5rem 0; letter-spacing: 0.01em; text-shadow: 0 1px 0 #222, 0 0 6px #1E90FF; }
+    .mf-modal h2 { color: var(--rr-accent-text); font-size: 1.25rem; margin: 0 0 0.5rem 0; letter-spacing: 0.01em; text-shadow: 0 1px 0 #222, 0 0 10px var(--rr-accent-glow); }
     .mf-modal p { color: #e4f9fb; font-size: 1.02rem; margin: 0 0 1.5rem 0; line-height: 1.4; font-weight: 400; text-shadow: 0 1px 0 #222; }
     .mf-actions { display: flex; gap: 0.65rem; margin-bottom: 1.1rem; justify-content: center; flex-wrap: wrap; }
-    .mf-btn { flex: 1; background: #0d0d0d; color: #1E90FF; border: 2px solid #fff; font-size: 1.01rem; border-radius: 8px; padding: 0.68rem 0.5rem; font-weight: bold; cursor: pointer; transition: background .15s, color .12s, border .18s; margin-bottom: 2px; min-width: 105px; outline: none; box-shadow: 0 0 6px #1E90FFaa;}
-    .mf-btn:hover, .mf-btn:focus { background: #1E90FF; color: #0d0d0d; border-color: #fff; }
-    .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid #1E90FF; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
-    #installPrompt { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 1.5rem; text-align: center; border: 2px solid #1E90FF; border-radius: 12px; max-width: 390px; width: 95vw; min-width: 0; z-index: 10000; box-shadow: 0 0 10px #1E90FF; margin: 0; box-sizing: border-box; }
-    #installPrompt button { display: block; margin: 0.5rem auto; padding: 0.6rem 1.2rem; background-color: #1E90FF; color: #0d0d0d; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 90%; max-width: 240px; }
+    .mf-btn { flex: 1; background: #0d0d0d; color: var(--rr-accent-text); border: 2px solid #fff; font-size: 1.01rem; border-radius: 8px; padding: 0.68rem 0.5rem; font-weight: bold; cursor: pointer; transition: background .15s, color .12s, border .18s; margin-bottom: 2px; min-width: 105px; outline: none; box-shadow: 0 0 6px var(--rr-accent-soft);}
+    .mf-btn:hover, .mf-btn:focus { background: var(--rr-accent-hover); color: #0d0d0d; border-color: #fff; }
+    .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid var(--rr-accent); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+    #installPrompt { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 1.5rem; text-align: center; border: 2px solid var(--rr-accent); border-radius: 12px; max-width: 390px; width: 95vw; min-width: 0; z-index: 10000; box-shadow: 0 0 12px var(--rr-accent-glow); margin: 0; box-sizing: border-box; }
+    #installPrompt button { display: block; margin: 0.5rem auto; padding: 0.6rem 1.2rem; background-color: var(--rr-accent); color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 90%; max-width: 240px; }
     
     /* Pulsing user location dot */
     .pulse-marker {
@@ -1162,7 +1171,7 @@
     /* OTP Trip Planning Styles */
     .itinListOption {
       background: #1a1a1a;
-      border: 1px solid #1E90FF;
+      border: 1px solid var(--rr-accent-soft);
       border-radius: 8px;
       margin: 8px 0;
       padding: 12px;
@@ -1172,10 +1181,10 @@
     }
     .itinListOption:hover {
       background: #222;
-      box-shadow: 0 0 8px #1E90FF;
+      box-shadow: 0 0 8px var(--rr-accent-soft);
     }
     .itin-toptimes {
-      color: #1E90FF;
+      color: var(--rr-accent-text);
       font-weight: bold;
       font-size: 1.1rem;
       margin-bottom: 8px;
@@ -1238,8 +1247,8 @@
       position: absolute;
       top: 12px;
       right: 12px;
-      background: #1E90FF;
-      color: #000;
+      background: var(--rr-accent);
+      color: #fff;
       border: none;
       border-radius: 4px;
       width: 24px;
@@ -1250,7 +1259,7 @@
     .itin-details-overlay {
       display: none;
       background: #0d0d0d;
-      border-top: 1px solid #1E90FF;
+      border-top: 1px solid var(--rr-accent-soft);
       margin-top: 12px;
       padding: 12px;
       border-radius: 0 0 8px 8px;
@@ -1296,8 +1305,8 @@
       max-height: 150px !important;
       overflow: hidden !important;
       min-width: 200px !important;
-      border: 2px solid #1E90FF !important;
-      box-shadow: 0 0 15px #1E90FF !important;
+      border: 2px solid var(--rr-accent) !important;
+      box-shadow: 0 0 15px var(--rr-accent-glow) !important;
       transition: all 0.3s ease !important;
       pointer-events: auto !important;
       z-index: 10004 !important;
@@ -1325,8 +1334,8 @@
       bottom: -25px;
       left: 50%;
       transform: translateX(-50%);
-      background: #1E90FF;
-      color: #000;
+      background: var(--rr-accent);
+      color: #fff;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 0.7rem;
@@ -1340,8 +1349,8 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      background: #1E90FF;
-      color: #000;
+      background: var(--rr-accent);
+      color: #fff;
       border: none;
       border-radius: 4px;
       width: 24px;
@@ -1500,9 +1509,9 @@
       padding: 4px 6px; /* Reduced padding to fit text */
       border-radius: 10px;
       font-size: 0.65rem; /* Reduced from 0.7rem to prevent text overflow */
-      color: #7ec8ff;
+      color: var(--rr-accent-text);
       text-align: center;
-      border: 1px solid rgba(30, 144, 255, 0.45);
+      border: 1px solid var(--rr-accent-soft);
       white-space: nowrap;
       width: fit-content; /* Match favorites width */
       min-width: auto; /* Match favorites */
@@ -1522,10 +1531,10 @@
       text-overflow: ellipsis; /* Show ellipsis if text is too long */
     }
     .minimized-itinerary:hover {
-      border-color: rgba(30, 144, 255, 0.75);
+      border-color: var(--rr-accent);
       box-shadow:
         0 10px 28px rgba(0, 0, 0, 0.45),
-        0 0 18px rgba(30, 144, 255, 0.12);
+        0 0 18px var(--rr-accent-soft);
     }
     .minimized-itinerary .itinerary-info {
       display: flex;
@@ -1535,7 +1544,7 @@
     }
     .minimized-itinerary .itinerary-title {
       font-weight: 800;
-      color: #7ec8ff;
+      color: var(--rr-accent-text);
       letter-spacing: 0.04em;
     }
     .minimized-itinerary .itinerary-details {
@@ -1543,19 +1552,19 @@
       font-size: 0.6rem; /* Reduced from 0.65rem to prevent text overflow */
     }
     .minimized-itinerary .restore-btn {
-      background: linear-gradient(180deg, #3aa7ff 0%, #1E90FF 100%);
-      color: #0a0a0c;
+      background: linear-gradient(180deg, #a855f7 0%, var(--rr-accent) 55%, var(--rr-accent-hover) 100%);
+      color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.35);
       border-radius: 6px;
       padding: 2px 6px;
       font-size: 0.65rem; /* Reduced from 0.7rem to prevent text overflow */
       cursor: pointer;
       font-weight: 800;
-      box-shadow: 0 2px 8px rgba(30, 144, 255, 0.3);
+      box-shadow: 0 2px 8px var(--rr-accent-soft);
     }
     .minimized-itinerary .restore-btn:hover {
-      background: linear-gradient(180deg, #5eb8ff 0%, #2a9fff 100%);
-      color: #0a0a0c;
+      background: linear-gradient(180deg, #c084fc 0%, #a855f7 55%, var(--rr-accent) 100%);
+      color: #fff;
     }
 
     .itin-item {
@@ -1569,12 +1578,12 @@
     }
     .itin-item:hover {
       background: #2a2a2a;
-      border-color: #1E90FF;
+      border-color: var(--rr-accent-soft);
     }
     .itin-item.selected {
       background: #1a1a1a;
-      border: 2px solid #1E90FF;
-      box-shadow: 0 0 15px rgba(77, 208, 225, 0.5);
+      border: 2px solid var(--rr-accent);
+      box-shadow: 0 0 15px var(--rr-accent-glow);
       position: relative;
     }
     .itin-item.selected::before {
@@ -1582,12 +1591,29 @@
       position: absolute;
       top: -8px;
       right: 10px;
-      background: #1E90FF;
-      color: #000;
+      background: var(--rr-accent);
+      color: #fff;
       padding: 2px 8px;
       border-radius: 4px;
       font-size: 0.7rem;
       font-weight: bold;
+    }
+
+    /* Weather modal tabs — accent from tokens (JS only toggles .active) */
+    #weatherForecastModal .weather-tab {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.95rem;
+      background: #222;
+      color: #ccc;
+    }
+    #weatherForecastModal .weather-tab.active {
+      background: var(--rr-accent);
+      color: #fff;
     }
 
     /* Find Me: default off (gray); active on = orange + pulse */
@@ -2278,7 +2304,7 @@
       '<button type="button" id="mfTripGuidePrevBtn" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:#e8eaed;font-weight:800;cursor:pointer;"' +
       (st.stepIndex === 0 ? ' disabled aria-disabled="true" style="opacity:0.55;cursor:not-allowed;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:#e8eaed;font-weight:800;"' : '') +
       '>Back</button>' +
-      '<button type="button" id="mfTripGuidePrimaryBtn" style="padding:8px 12px;border-radius:8px;border:none;background:#1E90FF;color:#fff;font-weight:900;cursor:pointer;' + primaryGlow + '">' +
+      '<button type="button" id="mfTripGuidePrimaryBtn" style="padding:8px 12px;border-radius:8px;border:none;background:var(--rr-accent);color:#fff;font-weight:900;cursor:pointer;' + primaryGlow + '">' +
       primaryLabel +
       '</button>' +
       '</div>' +
@@ -2608,8 +2634,8 @@
     
     <!-- Tabs -->
     <div style="display: flex; gap: 0.5rem; margin-top: 1rem; border-bottom: 2px solid #333;">
-      <button id="weatherTabHourly" class="weather-tab active" onclick="switchWeatherTab('hourly')" style="flex: 1; padding: 0.75rem; background: #1E90FF; color: #fff; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 0.95rem;">Hourly</button>
-      <button id="weatherTab7Day" class="weather-tab" onclick="switchWeatherTab('7day')" style="flex: 1; padding: 0.75rem; background: #222; color: #ccc; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 0.95rem;">7-Day Forecast</button>
+      <button id="weatherTabHourly" class="weather-tab active" onclick="switchWeatherTab('hourly')" type="button">Hourly</button>
+      <button id="weatherTab7Day" class="weather-tab" onclick="switchWeatherTab('7day')" type="button">7-Day Forecast</button>
     </div>
     
     <!-- Tab Content -->
@@ -2638,12 +2664,12 @@
       <h2 id="otpModalTitle" style="margin: 0;">🚌 <span data-translate="trip_options">Trip Options</span></h2>
       <button onclick="minimizeItineraryModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Minimize" aria-label="Minimize trip options">−</button>
     </div>
-    <div style="background: #2a2a2a; color: #ccc; padding: 10px 12px; border-radius: 4px; margin-bottom: 1rem; border-left: 2px solid #1E90FF; border-top: none; border-right: none; border-bottom: none;">
+    <div style="background: #2a2a2a; color: #ccc; padding: 10px 12px; border-radius: 4px; margin-bottom: 1rem; border-left: 2px solid var(--rr-accent); border-top: none; border-right: none; border-bottom: none;">
       <div style="font-weight: 500; margin-bottom: 4px; font-size: 12px; color: #aaa;">Trip Planning (Beta)</div>
       <div style="font-size: 11px; line-height: 1.4; color: #999;">Routes and timing are actively being refined.</div>
     <div style="font-size: 11px; line-height: 1.4; color: #999; margin-top: 4px;">
       See something off? Tap
-      <a href="report.html" style="color: #1E90FF; text-decoration: underline;">Report a Problem</a>
+      <a href="report.html" style="color: var(--rr-accent-text); text-decoration: underline;">Report a Problem</a>
       - it helps us improve faster.
     </div>
     </div>
@@ -2660,8 +2686,8 @@
     <h2 id="otpOptionsTitle">🚌 <span data-translate="trip_options">Trip Options</span></h2>
     <div style="text-align: left; margin-top: 1rem;">
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Max Walk Distance:</label>
-        <select id="maxWalkDistance" style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #1E90FF; border-radius: 6px;">
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--rr-accent-text); font-weight: bold;">Max Walk Distance:</label>
+        <select id="maxWalkDistance" style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid var(--rr-accent); border-radius: 6px;">
           <option value="400">400m (0.25 miles)</option>
           <option value="800" selected>800m (0.5 miles)</option>
           <option value="1200">1200m (0.75 miles)</option>
@@ -2671,7 +2697,7 @@
       </div>
       
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Departure Time:</label>
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--rr-accent-text); font-weight: bold;">Departure Time:</label>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
           <input type="radio" id="departNow" name="departureType" value="now" checked style="margin: 0;">
           <label for="departNow" style="margin: 0; color: #fff;" data-translate="depart_now">Depart Now</label>
@@ -2679,12 +2705,12 @@
         <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
           <input type="radio" id="departTime" name="departureType" value="time" style="margin: 0;">
           <label for="departTime" style="margin: 0; color: #fff;">Depart At:</label>
-          <input type="time" id="departureTime" style="padding: 0.3rem; background: #fff; color: #000; border: 1px solid #1E90FF; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 1rem; -webkit-appearance: none; -moz-appearance: none; appearance: none;" disabled>
+          <input type="time" id="departureTime" style="padding: 0.3rem; background: #fff; color: #000; border: 1px solid var(--rr-accent); border-radius: 4px; font-family: 'Courier New', monospace; font-size: 1rem; -webkit-appearance: none; -moz-appearance: none; appearance: none;" disabled>
         </div>
       </div>
       
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Transport Modes:</label>
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--rr-accent-text); font-weight: bold;">Transport Modes:</label>
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
           <div style="display: flex; align-items: center; gap: 0.3rem;">
             <input type="checkbox" id="modeBus" checked style="margin: 0;">
@@ -2706,7 +2732,7 @@
       </div>
 
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.25rem; color: #1E90FF; font-weight: bold;">
+        <label style="display: block; margin-bottom: 0.25rem; color: var(--rr-accent-text); font-weight: bold;">
           Prefer fewer transfers:
           <span id="mfOtpPrefTransfersVal" style="color:#fff; font-weight:800; margin-left:6px;">Medium</span>
         </label>
@@ -2717,7 +2743,7 @@
       </div>
 
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.25rem; color: #1E90FF; font-weight: bold;">
+        <label style="display: block; margin-bottom: 0.25rem; color: var(--rr-accent-text); font-weight: bold;">
           Walk sensitivity:
           <span id="mfOtpWalkReluctanceVal" style="color:#fff; font-weight:800; margin-left:6px;">7</span>
         </label>
@@ -2726,7 +2752,7 @@
       </div>
 
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.25rem; color: #1E90FF; font-weight: bold;">
+        <label style="display: block; margin-bottom: 0.25rem; color: var(--rr-accent-text); font-weight: bold;">
           Wait sensitivity:
           <span id="mfOtpWaitReluctanceVal" style="color:#fff; font-weight:800; margin-left:6px;">1.7</span>
         </label>
@@ -2747,20 +2773,20 @@
     <h2>🕐 <span data-translate="stop_times">Stop Times</span></h2>
     <div style="text-align: left; margin-top: 1rem;">
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Route:</label>
-        <input type="text" id="stopTimesRouteInput" placeholder="Search or select route..." style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #1E90FF; border-radius: 6px; box-sizing: border-box;">
-        <div id="stopTimesRouteDropdown" style="display: none; max-height: 200px; overflow-y: auto; background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 6px; margin-top: 4px; position: absolute; z-index: 1000; width: calc(100% - 2rem); max-width: 468px;"></div>
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--rr-accent-text); font-weight: bold;">Route:</label>
+        <input type="text" id="stopTimesRouteInput" placeholder="Search or select route..." style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid var(--rr-accent); border-radius: 6px; box-sizing: border-box;">
+        <div id="stopTimesRouteDropdown" style="display: none; max-height: 200px; overflow-y: auto; background: #1e1e1e; border: 1px solid var(--rr-accent); border-radius: 6px; margin-top: 4px; position: absolute; z-index: 1000; width: calc(100% - 2rem); max-width: 468px;"></div>
       </div>
       
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Stop:</label>
-        <input type="text" id="stopTimesStopInput" placeholder="Search or select stop..." style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #1E90FF; border-radius: 6px; box-sizing: border-box;">
-        <div id="stopTimesStopDropdown" style="display: none; max-height: 200px; overflow-y: auto; background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 6px; margin-top: 4px; position: absolute; z-index: 1000; width: calc(100% - 2rem); max-width: 468px;"></div>
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--rr-accent-text); font-weight: bold;">Stop:</label>
+        <input type="text" id="stopTimesStopInput" placeholder="Search or select stop..." style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid var(--rr-accent); border-radius: 6px; box-sizing: border-box;">
+        <div id="stopTimesStopDropdown" style="display: none; max-height: 200px; overflow-y: auto; background: #1e1e1e; border: 1px solid var(--rr-accent); border-radius: 6px; margin-top: 4px; position: absolute; z-index: 1000; width: calc(100% - 2rem); max-width: 468px;"></div>
       </div>
       
       <div style="margin-bottom: 1rem;">
-        <label style="display: block; margin-bottom: 0.5rem; color: #1E90FF; font-weight: bold;">Day Type:</label>
-        <select id="stopTimesDayType" style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid #1E90FF; border-radius: 6px;">
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--rr-accent-text); font-weight: bold;">Day Type:</label>
+        <select id="stopTimesDayType" style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid var(--rr-accent); border-radius: 6px;">
           <option value="weekday">Weekday</option>
           <option value="saturday">Saturday</option>
           <option value="sunday">Sunday</option>
@@ -2768,7 +2794,7 @@
       </div>
       
       <div style="margin-top: 1.5rem;">
-        <button class="mf-btn" onclick="loadStopTimes()" style="width: 100%; background: #1E90FF; border-color: #1E90FF; color: #fff; font-weight: bold;">Show Times</button>
+        <button class="mf-btn" onclick="loadStopTimes()" style="width: 100%; background: var(--rr-accent); border-color: var(--rr-accent); color: #fff; font-weight: bold;">Show Times</button>
       </div>
       
       <div id="stopTimesList" style="margin-top: 1.5rem; min-height: 100px;">
@@ -2787,7 +2813,7 @@
   <div class="mf-modal" style="max-width: 800px; max-height: 90vh;">
     <h2>📹 <span id="cameraModalTitle">Traffic Camera</span></h2>
     <div style="text-align: center; margin-top: 1rem;">
-      <img id="cameraModalImage" src="" alt="Traffic Camera" style="max-width: 100%; max-height: 70vh; border-radius: 8px; border: 2px solid #1E90FF;">
+      <img id="cameraModalImage" src="" alt="Traffic Camera" style="max-width: 100%; max-height: 70vh; border-radius: 8px; border: 2px solid var(--rr-accent);">
     </div>
     <div style="margin-top: 1rem; text-align: center; color: #888; font-size: 0.85rem;" id="cameraModalAttribution">
       Camera courtesy of ODOT
@@ -2800,7 +2826,7 @@
 <div id="mbtaAlertsModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h2 style="margin: 0; color: #1E90FF;">🚨 Transit alerts</h2>
+      <h2 style="margin: 0; color: var(--rr-accent-text);">🚨 Transit alerts</h2>
       <button onclick="hideMBTAAlertsModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Close</button>
     </div>
     <div id="mbtaAlertsContent" style="color: #ccc;">
@@ -2830,8 +2856,8 @@
     <div id="busRouteListScreen" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
       <div id="busRouteModalTabs" class="bus-route-modal-tabs" role="tablist" aria-label="Transit system"></div>
       <div style="margin-bottom: 1rem; padding: 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
-        <button type="button" id="busRouteModalBackBtn" onclick="showBusCategorySelection()" style="background: #1E90FF; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">← Back</button>
-        <input type="text" id="busRouteSearch" placeholder="Search routes..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+        <button type="button" id="busRouteModalBackBtn" onclick="showBusCategorySelection()" style="background: var(--rr-accent); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">← Back</button>
+        <input type="text" id="busRouteSearch" placeholder="Search routes..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--rr-accent); background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
       </div>
       <div id="busRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
         <!-- Route list will be populated here -->
@@ -2878,8 +2904,8 @@
     <!-- Route List Screen -->
     <div id="railRouteListScreen" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
       <div style="margin-bottom: 1rem; padding: 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
-        <button onclick="showRailCategorySelection()" style="background: #1E90FF; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">← Back</button>
-        <input type="text" id="railRouteSearch" placeholder="Search routes..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid #1E90FF; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+        <button onclick="showRailCategorySelection()" style="background: var(--rr-accent); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">← Back</button>
+        <input type="text" id="railRouteSearch" placeholder="Search routes..." style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--rr-accent); background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
       </div>
       <div id="railRouteList" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 1rem; overflow-y: auto; flex: 1; min-height: 0;">
         <!-- Route list will be populated here -->
@@ -2899,7 +2925,7 @@
       ×
     </button>
     <div style="padding: 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box;">
-      <h2 style="color: #1E90FF; margin-bottom: 1rem; font-size: 1.5rem; width: 100%;">Thank You to Our Sponsor</h2>
+      <h2 style="color: var(--rr-accent-text); margin-bottom: 1rem; font-size: 1.5rem; width: 100%;">Thank You to Our Sponsor</h2>
       <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.5; width: 100%; max-width: 100%;">
         Your support helps keep MetroFeed free for all users. We appreciate your partnership!
       </p>
@@ -3826,7 +3852,7 @@
     // Convert to HTML
     return selectedTimes.map(time => {
       if (time.isNext) {
-        return `<span style='background:#1E90FF;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${time.original}</span>`;
+        return `<span style='background:var(--rr-accent);color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${time.original}</span>`;
       } else if (time.isPast) {
         return `<span style='color:#888;'>${time.original}</span>`;
       } else {
@@ -7975,11 +8001,7 @@
     
     if (tab === 'hourly') {
       hourlyTab.classList.add('active');
-      hourlyTab.style.background = '#1E90FF';
-      hourlyTab.style.color = '#fff';
       dayTab.classList.remove('active');
-      dayTab.style.background = '#222';
-      dayTab.style.color = '#ccc';
       
       hourlyContent.style.display = 'block';
       dayContent.style.display = 'none';
@@ -7987,11 +8009,7 @@
       loadWeatherHourly();
     } else {
       dayTab.classList.add('active');
-      dayTab.style.background = '#1E90FF';
-      dayTab.style.color = '#fff';
       hourlyTab.classList.remove('active');
-      hourlyTab.style.background = '#222';
-      hourlyTab.style.color = '#ccc';
       
       hourlyContent.style.display = 'none';
       dayContent.style.display = 'block';
@@ -8133,7 +8151,7 @@
           const emoji = getWeatherEmoji(textDesc);
           
           html += `
-            <div style="background: linear-gradient(135deg, #1E90FF 0%, #1C7AE6 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: #fff;">
+            <div style="background: linear-gradient(135deg, #a855f7 0%, var(--rr-accent) 55%, var(--rr-accent-hover) 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: #fff;">
               <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">Current Conditions ${emoji}</div>
               <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem;">${temp}°F</div>
               <div style="font-size: 0.9rem; opacity: 0.9;">${textDesc}</div>
@@ -8145,7 +8163,7 @@
         if (hourlyData && hourlyData.properties && hourlyData.properties.periods) {
           const periods = hourlyData.properties.periods.slice(0, 18);
           
-          html += '<div style="font-weight: bold; color: #1E90FF; margin-bottom: 0.75rem; font-size: 1rem;">Next few hours</div>';
+          html += '<div style="font-weight: bold; color: var(--rr-accent-text); margin-bottom: 0.75rem; font-size: 1rem;">Next few hours</div>';
           html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; max-height: 400px; overflow-y: auto;">';
           
           periods.forEach(period => {
@@ -10156,8 +10174,8 @@
     if (CITY_CONFIG.useLazyLoading) {
       loadingSpinner = document.createElement('div');
       loadingSpinner.id = 'route-loading-spinner';
-      loadingSpinner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#1E90FF;padding:20px;border-radius:8px;z-index:10000;text-align:center;';
-      loadingSpinner.innerHTML = '<div style="margin-bottom:10px;">Loading route data...</div><div style="border:3px solid #1E90FF;border-top:3px solid transparent;border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;margin:0 auto;"></div>';
+      loadingSpinner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:var(--rr-accent-text);padding:20px;border-radius:8px;z-index:10000;text-align:center;';
+      loadingSpinner.innerHTML = '<div style="margin-bottom:10px;">Loading route data...</div><div style="border:3px solid var(--rr-accent);border-top:3px solid transparent;border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;margin:0 auto;"></div>';
       const style = document.createElement('style');
       style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
       document.head.appendChild(style);
@@ -10196,7 +10214,7 @@
       errorDiv.innerHTML = `
         <div style="margin-bottom:15px;font-weight:bold;">Error Loading Route</div>
         <div style="margin-bottom:15px;font-size:14px;">${error.message}</div>
-        <button onclick="this.parentElement.remove(); window.showRouteOverlay('${routeId}', ${directionId});" style="background:#1E90FF;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;margin-right:10px;">Retry</button>
+        <button onclick="this.parentElement.remove(); window.showRouteOverlay('${routeId}', ${directionId});" style="background:var(--rr-accent);color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;margin-right:10px;">Retry</button>
         <button onclick="this.parentElement.remove();" style="background:#666;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Close</button>
       `;
       document.body.appendChild(errorDiv);
@@ -10679,7 +10697,7 @@
       return;
     }
 
-    routeList.innerHTML = '<div style="color: #1E90FF; padding: 1rem; text-align: center;">Loading routes...</div>';
+    routeList.innerHTML = '<div style="color: var(--rr-accent-text); padding: 1rem; text-align: center;">Loading routes...</div>';
     const routePromises = routesToShow.map(async (route) => {
       // Load direction 0 only for list rendering. Some routes (e.g., school specials) are one-way
       // and calling dir1 for every route creates noisy 404s.
@@ -10703,7 +10721,7 @@
 
       const routeDiv = document.createElement('div');
       routeDiv.className = 'route-entry-modal';
-      routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid #1E90FF; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
+      routeDiv.style.cssText = 'background: #1e1e1e; border: 1px solid var(--rr-accent-soft); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;';
 
       const nameLine = busRouteModalSummaryLine(route, terminal0, terminal1);
       const { routeHeader, chevron } = buildBusRouteModalRowHeader(route, nameLine);
@@ -10731,7 +10749,7 @@
             dir1Btn.innerHTML =
               `<div style="font-weight:800; font-size:0.95rem;">To ${dir1To}</div>` +
               `<div style="margin-top:2px; font-size:0.78rem; color:#cfe8ff;">${dir1Label} · From ${dir1Start}</div>`;
-            dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+            dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: var(--rr-accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
             dir1Btn.onclick = () => selectRoute(route.id, 1);
             const star1Btn = createFavoriteStar(route.id, 1, route.label);
             dir1BtnWrapper.appendChild(dir1Btn);
@@ -10752,7 +10770,7 @@
         dir0Btn.innerHTML =
           `<div style="font-weight:800; font-size:0.95rem;">To ${dir0To}</div>` +
           `<div style="margin-top:2px; font-size:0.78rem; color:#cfe8ff;">${dir0Label} · From ${dir0Start}</div>`;
-        dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: #1E90FF; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
+        dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: var(--rr-accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRoute(route.id, 0);
         const star0Btn = createFavoriteStar(route.id, 0, route.label);
         dir0BtnWrapper.appendChild(dir0Btn);
@@ -11251,7 +11269,7 @@
     // Hide category screen, show list screen
     categoryScreen.style.display = 'none';
     listScreen.style.display = 'flex';
-    routeList.innerHTML = '<div style="color: #1E90FF; padding: 1rem; text-align: center;">Loading routes...</div>';
+    routeList.innerHTML = '<div style="color: var(--rr-accent-text); padding: 1rem; text-align: center;">Loading routes...</div>';
     
     // Ensure routes index is loaded (Boston lazy-loading)
     if (CITY_CONFIG.useLazyLoading && window.routeLoader && !window.routeLoader.isRoutesIndexLoaded()) {
@@ -12162,7 +12180,7 @@
               <button
                 onclick="toggleAlertCategory('${groupId}')"
                 style="width:100%;background:#1a1a1a;border:2px solid #333;border-radius:6px;padding:0.75rem 1rem;color:#fff;font-size:1rem;font-weight:bold;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;"
-                onmouseover="this.style.background='#23272a'; this.style.borderColor='#1E90FF';"
+                onmouseover="this.style.background='#23272a'; this.style.borderColor='#9333ea';"
                 onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#333';"
               >
                 <span>${title} <span style="color:#888;font-weight:normal;">(${list.length})</span></span>
@@ -12277,7 +12295,7 @@
                 align-items: center;
                 transition: all 0.2s;
               "
-              onmouseover="this.style.background='#23272a'; this.style.borderColor='#1E90FF';"
+              onmouseover="this.style.background='#23272a'; this.style.borderColor='#9333ea';"
               onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#333';"
             >
               <span>${category.icon} ${category.name} <span style="color: #888; font-weight: normal;">(${category.alerts.length})</span></span>
@@ -12820,7 +12838,7 @@
       return;
     }
     
-    timesList.innerHTML = '<div style="color: #1E90FF; padding: 1rem;">Loading times...</div>';
+    timesList.innerHTML = '<div style="color: var(--rr-accent-text); padding: 1rem;">Loading times...</div>';
     
     try {
       // Load route data if not already loaded
@@ -12886,13 +12904,13 @@
       }).filter(t => t !== null).sort((a, b) => a.schedMins - b.schedMins);
       
       // Build HTML
-      let html = `<div style="margin-bottom: 1rem; color: #1E90FF; font-weight: bold;">${formattedTimes.length} scheduled times for ${dayType}:</div>`;
+      let html = `<div style="margin-bottom: 1rem; color: var(--rr-accent-text); font-weight: bold;">${formattedTimes.length} scheduled times for ${dayType}:</div>`;
       html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; max-height: 400px; overflow-y: auto;">';
       
       formattedTimes.forEach((time, index) => {
         const isNext = !time.isPast && (index === 0 || formattedTimes[index - 1].isPast);
         const style = isNext 
-          ? 'background: #1E90FF; color: #fff; padding: 0.5rem; border-radius: 6px; text-align: center; font-weight: bold;'
+          ? 'background: var(--rr-accent); color: #fff; padding: 0.5rem; border-radius: 6px; text-align: center; font-weight: bold;'
           : 'background: #333; color: #fff; padding: 0.5rem; border-radius: 6px; text-align: center;';
         html += `<div style="${style}">${time.display}</div>`;
       });
