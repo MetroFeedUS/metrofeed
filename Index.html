@@ -508,6 +508,27 @@ MetroFeed uses your location and third-party services for login and payment. We 
       });
       map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
 
+      // Some styles reference sprite images that may not exist (or may be blocked in file://).
+      // Provide a transparent 1×1 fallback so the map can still render without console spam.
+      try {
+        const seen = new Set();
+        map.on('styleimagemissing', (e) => {
+          try {
+            const id = e && e.id ? String(e.id) : '';
+            if (!id) return;
+            if (seen.has(id)) return;
+            seen.add(id);
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 1;
+            // Transparent pixel
+            const ctx = canvas.getContext('2d');
+            if (ctx) ctx.clearRect(0, 0, 1, 1);
+            if (!map.hasImage(id)) map.addImage(id, canvas, { pixelRatio: 1 });
+          } catch (_) {}
+        });
+      } catch (_) {}
+
       // Restore view when coming back from a city.
       try {
         const params = new URLSearchParams(window.location.search || '');
