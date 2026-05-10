@@ -100,6 +100,25 @@
       border-color: rgba(147, 51, 234, 0.55);
       box-shadow: 0 0 12px var(--rr-accent-soft);
     }
+    .mf-hotspot-marker--armed .mf-hotspot-marker__label {
+      border-color: rgba(147, 51, 234, 0.75);
+      background: linear-gradient(180deg, rgba(147, 51, 234, 0.22) 0%, rgba(12, 12, 14, 0.98) 100%);
+      box-shadow: 0 0 16px var(--rr-accent-soft);
+    }
+    .mf-hotspot-marker__hint {
+      display: none;
+      max-width: min(260px, 48vw);
+      margin-top: -2px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #e9d5ff;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+    }
+    .mf-hotspot-marker--armed .mf-hotspot-marker__hint {
+      display: block;
+    }
     @keyframes mf-hotspot-ring {
       0% { transform: scale(0.65); opacity: 0.9; }
       70% { transform: scale(1.35); opacity: 0; }
@@ -283,6 +302,32 @@
     }
     .mf-national-footer a:hover { color: #e9d5ff; text-decoration: underline; text-underline-offset: 3px; }
 
+    #mfGpsRegionBar {
+      display: none;
+      position: fixed;
+      bottom: calc(44px + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(560px, calc(100vw - 24px));
+      z-index: 1020;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--rr-silver-edge);
+      background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.98) 100%);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+      font-size: 0.76rem;
+      line-height: 1.35;
+      color: var(--rr-silver-muted);
+      text-align: center;
+    }
+    #mfGpsRegionBar.is-visible { display: block; }
+    #mfGpsRegionBar strong {
+      display: block;
+      color: var(--rr-silver);
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+
     .mf-overlay {
       position: fixed;
       inset: 0;
@@ -353,12 +398,22 @@
   <div id="mfCookieBar" class="" role="presentation">
     <div class="mf-cookie-card" role="dialog" aria-modal="true" aria-labelledby="mfCookieTitle">
       <strong id="mfCookieTitle" style="color: var(--rr-silver); display: block; margin-bottom: 8px; font-size: 0.95rem;">Cookies &amp; location</strong>
-      We use a small cookie to remember this choice, and optional GPS (with your browser’s permission) to center the map. You can always search for a city or use the map without sharing location.
+      <p style="margin: 0 0 10px; line-height: 1.45;">
+        We use cookies <strong style="color: var(--rr-silver);">to save your personal settings</strong> (not only for GPS). With your browser’s permission, we can also use <strong style="color: var(--rr-silver);">location</strong> to show where you are on the map. You can search for a city or explore without sharing location.
+      </p>
+      <p style="margin: 0 0 12px; line-height: 1.45; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(147, 51, 234, 0.45); background: rgba(147, 51, 234, 0.12); color: #f1f5f9; font-weight: 700; font-size: 0.84rem;">
+        We do not collect or sell any personal data.
+      </p>
       <div class="mf-cookie-actions">
         <button type="button" id="mfCookieDecline">Decline</button>
         <button type="button" class="accept" id="mfCookieAccept">Allow cookies &amp; try GPS</button>
       </div>
     </div>
+  </div>
+
+  <div id="mfGpsRegionBar" role="status" aria-live="polite">
+    <strong>Your location isn’t in a MetroFeed city yet</strong>
+    Zoom out and pick a purple region, or use search to jump to a supported city.
   </div>
 
   <footer class="mf-national-footer">
@@ -400,8 +455,144 @@
     };
 
     let map = null;
-    let geoTriedAfterConsent = false;
     var mfHotspotsInstalled = false;
+    var mfGeolocationStarted = false;
+    var mfGeoWatchId = null;
+    var mfUserLoc = null;
+    var mfDidGpsRecenter = false;
+    var mfHotspotArmedKey = null;
+    var mfHotspotMarkerControls = [];
+
+    function mfSetGpsUnsupportedBar(show) {
+      var el = document.getElementById('mfGpsRegionBar');
+      if (!el) return;
+      el.classList.toggle('is-visible', !!show);
+    }
+
+    function mfUserInAnySupportedBbox(lat, lon) {
+      for (var key in MF_SUPPORTED_CITIES) {
+        if (!MF_SUPPORTED_CITIES.hasOwnProperty(key)) continue;
+        if (mfInBbox(lat, lon, MF_SUPPORTED_CITIES[key].bbox)) return true;
+      }
+      return false;
+    }
+
+    function mfUpdateGpsRegionNotice() {
+      if (!mfUserLoc) {
+        mfSetGpsUnsupportedBar(false);
+        return;
+      }
+      mfSetGpsUnsupportedBar(!mfUserInAnySupportedBbox(mfUserLoc.lat, mfUserLoc.lng));
+    }
+
+    function mfEnsureUserLocationLayers() {
+      if (!map || map.getSource('mf-user-gps')) return;
+      map.addSource('mf-user-gps', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+      map.addLayer({
+        id: 'mf-user-gps-halo',
+        type: 'circle',
+        source: 'mf-user-gps',
+        paint: {
+          'circle-radius': 22,
+          'circle-color': '#9333ea',
+          'circle-opacity': 0.18,
+          'circle-blur': 0.5
+        }
+      });
+      map.addLayer({
+        id: 'mf-user-gps-core',
+        type: 'circle',
+        source: 'mf-user-gps',
+        paint: {
+          'circle-radius': 7.5,
+          'circle-color': '#f1f5f9',
+          'circle-opacity': 1,
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': '#9333ea'
+        }
+      });
+    }
+
+    function mfUpdateUserLocationMarker(lon, lat) {
+      if (!map || !map.getSource('mf-user-gps')) return;
+      try {
+        map.getSource('mf-user-gps').setData({
+          type: 'FeatureCollection',
+          features: [
+            { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [lon, lat] } }
+          ]
+        });
+      } catch (_) {}
+    }
+
+    function mfClearUserLocationMarker() {
+      if (!map || !map.getSource('mf-user-gps')) return;
+      try {
+        map.getSource('mf-user-gps').setData({ type: 'FeatureCollection', features: [] });
+      } catch (_) {}
+    }
+
+    function mfStopGeolocationWatch() {
+      if (navigator.geolocation && mfGeoWatchId != null) {
+        try {
+          navigator.geolocation.clearWatch(mfGeoWatchId);
+        } catch (_) {}
+      }
+      mfGeoWatchId = null;
+      mfGeolocationStarted = false;
+      mfUserLoc = null;
+      mfDidGpsRecenter = false;
+      mfClearUserLocationMarker();
+      mfSetGpsUnsupportedBar(false);
+    }
+
+    function mfStartGeolocationWatch() {
+      if (!map || !navigator.geolocation || mfGeolocationStarted) return;
+      mfEnsureUserLocationLayers();
+      mfGeolocationStarted = true;
+      mfGeoWatchId = navigator.geolocation.watchPosition(
+        function (pos) {
+          var lat = pos.coords.latitude;
+          var lon = pos.coords.longitude;
+          mfUserLoc = { lat: lat, lng: lon };
+          mfUpdateUserLocationMarker(lon, lat);
+          if (!mfDidGpsRecenter) {
+            mfDidGpsRecenter = true;
+            try {
+              map.easeTo({ center: [lon, lat], zoom: 11.2, duration: 700 });
+            } catch (_) {}
+          }
+          mfUpdateGpsRegionNotice();
+        },
+        function () {
+          try {
+            if (mfGeoWatchId != null) navigator.geolocation.clearWatch(mfGeoWatchId);
+          } catch (_) {}
+          mfGeoWatchId = null;
+          mfGeolocationStarted = false;
+          mfUserLoc = null;
+          mfClearUserLocationMarker();
+          mfSetGpsUnsupportedBar(false);
+        },
+        { enableHighAccuracy: false, timeout: 20000, maximumAge: 15000 }
+      );
+    }
+
+    function mfStartGeolocationWatchWhenReady() {
+      try {
+        if (localStorage.getItem(MF_COOKIE_KEY) !== 'true') return;
+        if (!navigator.geolocation || !map) return;
+        function tryStart() {
+          mfEnsureUserLocationLayers();
+          mfStartGeolocationWatch();
+        }
+        if (typeof map.loaded === 'function' && map.loaded()) tryStart();
+        else map.once('load', tryStart);
+      } catch (_) {}
+    }
 
     function mfEscapeHtml(str) {
       return String(str)
@@ -471,6 +662,12 @@
         try {
           mfInstallHotspots();
         } catch (_) {}
+        try {
+          mfEnsureUserLocationLayers();
+        } catch (_) {}
+        try {
+          if (localStorage.getItem(MF_COOKIE_KEY) === 'true') mfStartGeolocationWatch();
+        } catch (_) {}
       });
     }
 
@@ -495,6 +692,31 @@
         });
       }
       return { type: 'FeatureCollection', features: features };
+    }
+
+    function mfSyncHotspotMarkerArmState() {
+      mfHotspotMarkerControls.forEach(function (o) {
+        if (!o.el) return;
+        var armed = mfHotspotArmedKey === o.key;
+        o.el.classList.toggle('mf-hotspot-marker--armed', armed);
+        var nm = MF_SUPPORTED_CITIES[o.key] && MF_SUPPORTED_CITIES[o.key].name ? MF_SUPPORTED_CITIES[o.key].name : o.key;
+        o.el.setAttribute(
+          'aria-label',
+          armed ? nm + ': tap again to open MetroFeed' : nm + ': zoom to city (tap twice to open)'
+        );
+      });
+    }
+
+    function mfOnHotspotCityInteraction(cityKey) {
+      if (!MF_SUPPORTED_CITIES[cityKey] || !map) return;
+      if (mfHotspotArmedKey === cityKey) {
+        mfRedirectToCity(cityKey);
+        mfHotspotArmedKey = null;
+      } else {
+        mfHotspotArmedKey = cityKey;
+        mfPanToCity(cityKey);
+      }
+      mfSyncHotspotMarkerArmState();
     }
 
     function mfInstallHotspots() {
@@ -542,7 +764,7 @@
         map.on('click', lid, function (e) {
           var f = e.features && e.features[0];
           if (!f || !f.properties || !f.properties.key) return;
-          if (MF_SUPPORTED_CITIES[f.properties.key]) mfPanToCity(f.properties.key);
+          if (MF_SUPPORTED_CITIES[f.properties.key]) mfOnHotspotCityInteraction(f.properties.key);
         });
         map.on('mouseenter', lid, function () {
           map.getCanvas().style.cursor = 'pointer';
@@ -567,11 +789,13 @@
           el.innerHTML =
             '<span class="mf-hotspot-marker__pulse" aria-hidden="true"></span>' +
             '<span class="mf-hotspot-marker__dot" aria-hidden="true"></span>' +
-            '<span class="mf-hotspot-marker__label">' + mfEscapeHtml(label) + '</span>';
+            '<span class="mf-hotspot-marker__label">' + mfEscapeHtml(label) + '</span>' +
+            '<span class="mf-hotspot-marker__hint" aria-hidden="true">Tap again to open</span>';
           el.addEventListener('click', function (e) {
             e.stopPropagation();
-            mfPanToCity(key);
+            mfOnHotspotCityInteraction(key);
           });
+          mfHotspotMarkerControls.push({ key: key, el: el });
           try {
             new maplibregl.Marker({
               element: el,
@@ -585,6 +809,7 @@
           } catch (_) {}
         })(cityKey);
       }
+      mfSyncHotspotMarkerArmState();
     }
 
     function mfRedirectToCity(cityKey) {
@@ -671,51 +896,40 @@
       var inp = document.getElementById('mfCitySearch');
       var key = inp ? mfCityKeyFromInput(inp.value) : null;
       if (!key || !inp) return;
+      mfHotspotArmedKey = null;
       mfPanToCity(key);
+      mfSyncHotspotMarkerArmState();
       inp.value = MF_SUPPORTED_CITIES[key].name;
-    }
-
-    function mfTryGeolocationOnce() {
-      if (geoTriedAfterConsent || !map) return;
-      geoTriedAfterConsent = true;
-      if (!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(
-        function (pos) {
-          var lat = pos.coords.latitude;
-          var lon = pos.coords.longitude;
-          try {
-            map.easeTo({ center: [lon, lat], zoom: 11.2, duration: 700 });
-          } catch (_) {}
-        },
-        function () {},
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
-      );
     }
 
     function mfConsentAccepted() {
       localStorage.setItem(MF_COOKIE_KEY, 'true');
       var bar = document.getElementById('mfCookieBar');
-      if (bar) { bar.classList.remove('is-visible'); }
-      mfTryGeolocationOnce();
+      if (bar) {
+        bar.classList.remove('is-visible');
+      }
+      mfStartGeolocationWatchWhenReady();
     }
 
     function mfConsentDeclined() {
       var bar = document.getElementById('mfCookieBar');
-      if (bar) { bar.classList.remove('is-visible'); }
-      try { sessionStorage.setItem('metrofeedLocationSkipped', '1'); } catch (_) {}
+      if (bar) {
+        bar.classList.remove('is-visible');
+      }
+      mfStopGeolocationWatch();
+      try {
+        sessionStorage.setItem('metrofeedLocationSkipped', '1');
+      } catch (_) {}
     }
 
     function mfBootCookieUi() {
       try {
         if (localStorage.getItem(MF_COOKIE_KEY) === 'true') {
-          mfTryGeolocationOnce();
           return;
         }
-        var bar = document.getElementById('mfCookieBar');
-        if (bar) bar.classList.add('is-visible');
-      } catch (_) {
-        mfTryGeolocationOnce();
-      }
+      } catch (_) {}
+      var bar = document.getElementById('mfCookieBar');
+      if (bar) bar.classList.add('is-visible');
     }
 
     /* ---- Init ---- */
@@ -728,6 +942,8 @@
     document.getElementById('mfCookieDecline').addEventListener('click', mfConsentDeclined);
 
     document.getElementById('mfUseMapLocationBtn').addEventListener('click', function () {
+      mfHotspotArmedKey = null;
+      mfSyncHotspotMarkerArmState();
       mfEvalCenterRedirect();
     });
 
@@ -748,11 +964,15 @@
       var sel = document.getElementById('mfCitySelect');
       var key = sel ? sel.value : '';
       mfOverlay('mfNotAvailableOverlay', false);
-      if (key) mfPanToCity(key);
+      if (key) {
+        mfHotspotArmedKey = null;
+        mfPanToCity(key);
+        mfSyncHotspotMarkerArmState();
+      }
     });
 
     window.addEventListener('storage', function (ev) {
-      if (ev.key === MF_COOKIE_KEY && ev.newValue === 'true') mfTryGeolocationOnce();
+      if (ev.key === MF_COOKIE_KEY && ev.newValue === 'true') mfStartGeolocationWatchWhenReady();
     });
   </script>
 </body>
