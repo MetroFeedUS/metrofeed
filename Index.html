@@ -648,6 +648,25 @@
       }
     }
 
+    function mfFillCitySelectModal() {
+      var sel = document.getElementById('mfCitySelect');
+      if (!sel) return;
+      sel.innerHTML = '';
+      var ph = document.createElement('option');
+      ph.value = '';
+      ph.disabled = true;
+      ph.selected = true;
+      ph.textContent = 'Choose a city…';
+      sel.appendChild(ph);
+      for (var key in MF_SUPPORTED_CITIES) {
+        if (!MF_SUPPORTED_CITIES.hasOwnProperty(key)) continue;
+        var opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = MF_SUPPORTED_CITIES[key].name;
+        sel.appendChild(opt);
+      }
+    }
+
     function mfTryApplyCitySearch() {
       var inp = document.getElementById('mfCitySearch');
       var key = inp ? mfCityKeyFromInput(inp.value) : null;
