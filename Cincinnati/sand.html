@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>sand — region sketch</title>
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; font-family: system-ui, sans-serif; background: #0c0c0e; color: #cbd5e1; }
+    #layout { display: flex; height: 100%; }
+    #panel {
+      width: 300px;
+      max-width: 42vw;
+      flex-shrink: 0;
+      background: #16161a;
+      border-right: 1px solid #334155;
+      padding: 12px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    #panel h1 { margin: 0 0 4px; font-size: 15px; color: #f1f5f9; letter-spacing: 0.02em; }
+    #panel .sub { margin: 0 0 12px; font-size: 11px; color: #64748b; line-height: 1.35; }
+    label { display: block; margin: 8px 0 4px; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f0f12;
+      color: #e2e8f0;
+      font-size: 13px;
+    }
+    textarea { min-height: 56px; resize: vertical; font-family: inherit; }
+    .row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    button {
+      appearance: none;
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #334155; }
+    button.primary { background: #7c3aed; border-color: #6d28d9; color: #fff; }
+    button.primary:hover { background: #6d28d9; }
+    button.danger { border-color: #991b1b; color: #fecaca; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.toggle-on { background: #422006; border-color: #ea580c; color: #fed7aa; }
+    #map { flex: 1; min-width: 0; position: relative; }
+    #hint {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      background: rgba(15, 15, 18, 0.92);
+      border: 1px solid #334155;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #94a3b8;
+      pointer-events: none;
+      max-width: min(520px, 90vw);
+      text-align: center;
+    }
+    #regionList { margin-top: 14px; border-top: 1px solid #334155; padding-top: 10px; }
+    .region-item {
+      padding: 8px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f0f12;
+      cursor: pointer;
+    }
+    .region-item:hover { border-color: #64748b; }
+    .region-item.active { border-color: #a78bfa; box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.35); }
+    .region-item strong { display: block; color: #f1f5f9; font-size: 12px; margin-bottom: 2px; }
+    .region-item span { font-size: 11px; color: #64748b; }
+    #fileRow { margin-top: 10px; }
+    input[type="file"] { font-size: 11px; color: #94a3b8; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="layout">
+    <aside id="panel">
+      <h1>sand</h1>
+      <p class="sub">Private scratch map. Draw polygons = rough service regions. Name them + jot which agencies live there. Export GeoJSON for later.</p>
+
+      <label for="nextName">Next region name</label>
+      <input type="text" id="nextName" placeholder="e.g. Cincy core" />
+
+      <label for="nextNotes">Services / notes (optional)</label>
+      <textarea id="nextNotes" placeholder="Metro, TANK, …"></textarea>
+
+      <div class="row">
+        <button type="button" id="btnDraw" class="primary">Draw</button>
+        <button type="button" id="btnUndo" disabled>Undo point</button>
+        <button type="button" id="btnClose" disabled>Close polygon</button>
+      </div>
+      <div class="row">
+        <button type="button" id="btnClearSketch">Clear sketch</button>
+      </div>
+
+      <label>Regions</label>
+      <div id="regionList"></div>
+
+      <div class="row" style="margin-top: 12px;">
+        <button type="button" id="btnExport">Export GeoJSON</button>
+      </div>
+      <div id="fileRow">
+        <label for="fileImport" style="margin-top: 0;">Import GeoJSON</label>
+        <input type="file" id="fileImport" accept=".json,.geojson,application/json" />
+      </div>
+    </aside>
+    <div id="map" aria-label="sand map"></div>
+    <div id="hint"></div>
+  </div>
+
+  <script>
+(function () {
+  const COLORS = ['#7c3aed', '#0891b2', '#ca8a04', '#16a34a', '#db2777', '#ea580c', '#6366f1'];
+  let colorIdx = 0;
+
+  const regions = []; // { id, name, notes, ring: [[lng,lat],...] closed }
+  let drawMode = false;
+  let sketch = []; // open ring, not duplicated close
+  let activeId = null;
+  let map = null;
+
+  function nextColor() {
+    const c = COLORS[colorIdx % COLORS.length];
+    colorIdx++;
+    return c;
+  }
+
+  function setHint(t) {
+    var el = document.getElementById('hint');
+    if (el) el.textContent = t || '';
+  }
+
+  function regionsToGeoJSON() {
+    return {
+      type: 'FeatureCollection',
+      features: regions.map(function (r) {
+        return {
+          type: 'Feature',
+          properties: { id: r.id, name: r.name, notes: r.notes || '', color: r.color },
+          geometry: { type: 'Polygon', coordinates: [r.ring] }
+        };
+      })
+    };
+  }
+
+  function sketchLineGeoJSON() {
+    if (sketch.length < 1) return { type: 'FeatureCollection', features: [] };
+    var coords = sketch.slice();
+    if (coords.length >= 2) {
+      return {
+        type: 'FeatureCollection',
+        features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } }]
+      };
+    }
+    return {
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', properties: {}, geometry: { type: 'MultiPoint', coordinates: coords } }]
+    };
+  }
+
+  function sketchPointsGeoJSON() {
+    return {
+      type: 'FeatureCollection',
+      features: sketch.map(function (c) {
+        return { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c } };
+      })
+    };
+  }
+
+  function syncSources() {
+    if (!map) return;
+    map.getSource('regions').setData(regionsToGeoJSON());
+    map.getSource('sketch-line').setData(sketchLineGeoJSON());
+    map.getSource('sketch-points').setData(sketchPointsGeoJSON());
+  }
+
+  function fitToRegion(r) {
+    if (!map || !r || !r.ring || r.ring.length < 3) return;
+    var b = new maplibregl.LngLatBounds(r.ring[0], r.ring[0]);
+    r.ring.forEach(function (c) { b.extend(c); });
+    map.fitBounds(b, { padding: 48, maxZoom: 11, duration: 500 });
+  }
+
+  function renderList() {
+    var list = document.getElementById('regionList');
+    list.innerHTML = '';
+    regions.forEach(function (r) {
+      var div = document.createElement('div');
+      div.className = 'region-item' + (activeId === r.id ? ' active' : '');
+      div.innerHTML = '<strong>' + escapeHtml(r.name || 'Untitled') + '</strong><span>' + escapeHtml((r.notes || '').slice(0, 80)) + (r.notes && r.notes.length > 80 ? '…' : '') + '</span>';
+      div.addEventListener('click', function () {
+        activeId = r.id;
+        renderList();
+        fitToRegion(r);
+      });
+      list.appendChild(div);
+    });
+    if (regions.length === 0) {
+      var empty = document.createElement('div');
+      empty.style.color = '#64748b';
+      empty.style.fontSize = '12px';
+      empty.textContent = 'None yet — turn Draw on, click corners, Close polygon.';
+      list.appendChild(empty);
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function closePolygon() {
+    if (sketch.length < 3) return;
+    var name = (document.getElementById('nextName').value || '').trim() || 'Region ' + (regions.length + 1);
+    var notes = (document.getElementById('nextNotes').value || '').trim();
+    var ring = sketch.slice();
+    var first = ring[0];
+    var last = ring[ring.length - 1];
+    if (first[0] !== last[0] || first[1] !== last[1]) ring.push(first.slice());
+
+    var id = 'r_' + Date.now();
+    regions.push({ id: id, name: name, notes: notes, color: nextColor(), ring: ring });
+    sketch = [];
+    activeId = id;
+    document.getElementById('nextName').value = '';
+    document.getElementById('nextNotes').value = '';
+    syncSources();
+    renderList();
+    updateDrawUI();
+    setHint('Saved “' + name + '”. Draw again for another region.');
+  }
+
+  function deleteActive() {
+    if (!activeId) return;
+    regions = regions.filter(function (r) { return r.id !== activeId; });
+    activeId = regions.length ? regions[regions.length - 1].id : null;
+    syncSources();
+    renderList();
+    setHint('Region removed.');
+  }
+
+  function updateDrawUI() {
+    var btn = document.getElementById('btnDraw');
+    btn.classList.toggle('toggle-on', drawMode);
+    btn.textContent = drawMode ? 'Drawing…' : 'Draw';
+    document.getElementById('btnUndo').disabled = !drawMode || sketch.length === 0;
+    document.getElementById('btnClose').disabled = !drawMode || sketch.length < 3;
+    if (drawMode) {
+      setHint('Click map to add corners. Close polygon when ready (≥3 points).');
+    } else if (!regions.length) {
+      setHint('Turn Draw on to start.');
+    } else {
+      setHint('');
+    }
+  }
+
+  function initMap() {
+    map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.metrofeedus.com/styles/1/style.json',
+      center: [-82.5, 40.2],
+      zoom: 6.4,
+      attributionControl: true
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
+
+    var seen = new Set();
+    map.on('styleimagemissing', function (e) {
+      try {
+        var id = e && e.id ? String(e.id) : '';
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        var c = document.createElement('canvas');
+        c.width = 1; c.height = 1;
+        var ctx = c.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, 1, 1);
+        if (!map.hasImage(id)) map.addImage(id, c, { pixelRatio: 1 });
+      } catch (_) {}
+    });
+
+    map.on('load', function () {
+      map.addSource('regions', { type: 'geojson', data: regionsToGeoJSON() });
+      map.addLayer({
+        id: 'regions-fill',
+        type: 'fill',
+        source: 'regions',
+        paint: {
+          'fill-color': ['coalesce', ['get', 'color'], '#7c3aed'],
+          'fill-opacity': 0.28
+        }
+      });
+      map.addLayer({
+        id: 'regions-outline',
+        type: 'line',
+        source: 'regions',
+        paint: {
+          'line-color': ['coalesce', ['get', 'color'], '#a78bfa'],
+          'line-width': 2,
+          'line-opacity': 0.85
+        }
+      });
+
+      map.addSource('sketch-line', { type: 'geojson', data: sketchLineGeoJSON() });
+      map.addLayer({
+        id: 'sketch-line',
+        type: 'line',
+        source: 'sketch-line',
+        paint: { 'line-color': '#fbbf24', 'line-width': 2, 'line-dasharray': [2, 2] }
+      });
+      map.addSource('sketch-points', { type: 'geojson', data: sketchPointsGeoJSON() });
+      map.addLayer({
+        id: 'sketch-pts',
+        type: 'circle',
+        source: 'sketch-points',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#fbbf24',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#0f0f12'
+        }
+      });
+
+      map.on('click', function (e) {
+        if (!drawMode) return;
+        sketch.push([e.lngLat.lng, e.lngLat.lat]);
+        syncSources();
+        updateDrawUI();
+      });
+
+      updateDrawUI();
+      setHint('Turn Draw on, then click the map to place corners.');
+    });
+  }
+
+  document.getElementById('btnDraw').addEventListener('click', function () {
+    drawMode = !drawMode;
+    if (!drawMode) sketch = [];
+    syncSources();
+    updateDrawUI();
+  });
+
+  document.getElementById('btnUndo').addEventListener('click', function () {
+    sketch.pop();
+    syncSources();
+    updateDrawUI();
+  });
+
+  document.getElementById('btnClose').addEventListener('click', closePolygon);
+
+  document.getElementById('btnClearSketch').addEventListener('click', function () {
+    sketch = [];
+    syncSources();
+    updateDrawUI();
+  });
+
+  document.getElementById('btnExport').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(regionsToGeoJSON(), null, 2)], { type: 'application/geo+json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'sand-regions.geojson';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('fileImport').addEventListener('change', function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    ev.target.value = '';
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var gj = JSON.parse(reader.result);
+        if (!gj || gj.type !== 'FeatureCollection' || !Array.isArray(gj.features)) throw new Error('Need a FeatureCollection');
+        regions.length = 0;
+        gj.features.forEach(function (feat, i) {
+          if (!feat.geometry || feat.geometry.type !== 'Polygon') return;
+          var coords = feat.geometry.coordinates[0];
+          if (!coords || coords.length < 4) return;
+          var p = feat.properties || {};
+          regions.push({
+            id: p.id || 'import_' + i + '_' + Date.now(),
+            name: (p.name || 'Imported ' + (i + 1)).trim(),
+            notes: (p.notes || '').trim(),
+            color: p.color || nextColor(),
+            ring: coords.map(function (c) { return [c[0], c[1]]; })
+          });
+        });
+        syncSources();
+        renderList();
+        if (regions.length) {
+          activeId = regions[0].id;
+          fitToRegion(regions[0]);
+        }
+        setHint('Imported ' + regions.length + ' region(s).');
+      } catch (err) {
+        alert('Import failed: ' + (err && err.message ? err.message : String(err)));
+      }
+    };
+    reader.readAsText(f);
+  });
+
+  var delRow = document.createElement('div');
+  delRow.className = 'row';
+  delRow.innerHTML = '<button type="button" class="danger" id="btnDelete">Delete selected region</button>';
+  document.getElementById('regionList').parentNode.insertBefore(delRow, document.getElementById('regionList'));
+  document.getElementById('btnDelete').addEventListener('click', deleteActive);
+
+  initMap();
+})();
+  </script>
+</body>
+</html>
