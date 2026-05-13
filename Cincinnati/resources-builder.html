@@ -27,7 +27,13 @@
     .card-editor > .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
     .item { border: 1px dashed #444; border-radius: 8px; padding: 8px; margin-top: 8px; background: #0c0c0c; }
     .item .item-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 11px; color: #94a3b8; }
-    .tab-editor { margin-left: 8px; border-left: 2px solid #6d28d9; padding-left: 8px; margin-top: 6px; }
+    .tab-editor { margin-left: 8px; border-left: 2px solid #6d28d9; padding-left: 8px; margin-top: 6px; background: rgba(109, 40, 217, 0.06); border-radius: 0 8px 8px 0; padding-top: 8px; padding-bottom: 8px; }
+    .card-badge { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .howto { font-size: 12px; color: #94a3b8; line-height: 1.5; background: #1a1a1c; border: 1px solid #334155; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+    .howto strong { color: #e2e8f0; }
+    .item-tabs-outer { border: 1px solid #4c1d95; border-radius: 10px; padding: 10px; margin-top: 8px; background: rgba(76, 29, 149, 0.12); }
+    .item-tabs-outer > .item-head { margin-bottom: 8px; }
+    .empty-cards { text-align: center; padding: 20px; color: #94a3b8; font-size: 13px; border: 1px dashed #475569; border-radius: 10px; margin-bottom: 10px; }
     pre#exportOut { margin: 0; max-height: 42vh; overflow: auto; font-size: 11px; line-height: 1.35; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; padding: 10px; white-space: pre-wrap; word-break: break-all; color: #a5b4fc; }
     #previewFrame { width: 100%; min-height: 480px; border: 1px solid #333; border-radius: 8px; background: #fff; }
     .muted { color: #64748b; font-size: 11px; }
@@ -66,6 +72,13 @@
       </div>
 
       <h2 style="margin-top:16px;">Cards & content</h2>
+      <div class="howto">
+        <strong>How this works</strong><br />
+        1) Each <strong>card</strong> = one big box on the public page (title + intro + stuff inside).<br />
+        2) Inside a card, add pieces in order: <strong>Subheading</strong>, plain <strong>Link</strong>, or one <strong>Tabbed links</strong> block.<br />
+        3) A <strong>Tabbed links</strong> block = row of tabs; under each tab you add <strong>label + URL</strong> rows (like mini link list).<br />
+        Tip: use <strong>+ Tab</strong> for more agencies; <strong>+ link in tab</strong> for more URLs under that tab.
+      </div>
       <div id="cards"></div>
     </div>
 
@@ -98,6 +111,23 @@
 
   function uid() { return 'x' + Math.random().toString(36).slice(2, 10); }
 
+  function sanitize() {
+    state.cards.forEach(function (card) {
+      if (!card.items) card.items = [];
+      card.items.forEach(function (it) {
+        if (it.type !== 'tabs') return;
+        if (!it.tabs || !Array.isArray(it.tabs) || it.tabs.length === 0) {
+          it.tabs = [{ id: uid(), name: 'Tab A', links: [{ id: uid(), label: 'Link label', url: 'https://' }] }];
+        }
+        it.tabs.forEach(function (tab) {
+          if (!tab.links || !Array.isArray(tab.links) || tab.links.length === 0) {
+            tab.links = [{ id: uid(), label: 'Link label', url: 'https://' }];
+          }
+        });
+      });
+    });
+  }
+
   function defaultCard() {
     return {
       id: uid(),
@@ -123,6 +153,12 @@
     } catch (_) {}
   }
 
+  /** Rebuild editor DOM from state, then refresh preview + export + localStorage */
+  function refresh() {
+    renderEditors();
+    sync();
+  }
+
   function escapeAttr(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
@@ -142,10 +178,17 @@
 
     var root = document.getElementById('cards');
     root.innerHTML = '';
+    if (state.cards.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty-cards';
+      empty.innerHTML = 'No cards yet. Click <strong>+ Card</strong> above to start (or <strong>Load draft</strong>).';
+      root.appendChild(empty);
+    }
     state.cards.forEach(function (card, ci) {
       var wrap = document.createElement('div');
       wrap.className = 'card-editor';
       wrap.innerHTML =
+        '<div class="card-badge">Card ' + (ci + 1) + ' of ' + state.cards.length + '</div>' +
         '<div class="head">' +
           '<div style="flex:1;min-width:180px">' +
             '<label>Card title (h2)</label>' +
@@ -161,9 +204,9 @@
           '</div>' +
         '</div>' +
         '<div class="row" style="margin-top:10px">' +
-          '<button type="button" class="primary small" data-act="add-h3" data-ci="' + ci + '">+ Subheading</button>' +
-          '<button type="button" class="primary small" data-act="add-link" data-ci="' + ci + '">+ Link</button>' +
-          '<button type="button" class="primary small" data-act="add-tabs" data-ci="' + ci + '">+ Tab group</button>' +
+          '<button type="button" class="primary small" data-act="add-h3" data-ci="' + ci + '" title="Section line inside this card">+ Subheading</button>' +
+          '<button type="button" class="primary small" data-act="add-link" data-ci="' + ci + '" title="One big link button">+ Single link</button>' +
+          '<button type="button" class="primary small" data-act="add-tabs" data-ci="' + ci + '" title="Tabs like agency switcher">+ Tabbed links</button>' +
         '</div>' +
         '<div class="items" data-items="' + ci + '"></div>';
       root.appendChild(wrap);
@@ -173,12 +216,19 @@
       });
     });
 
-    root.querySelectorAll('input[data-k], textarea[data-k]').forEach(function (el) {
+    root.querySelectorAll('input[data-k]:not([type=checkbox]), textarea[data-k]').forEach(function (el) {
       el.addEventListener('input', function () {
         var ci = +el.getAttribute('data-ci');
         var k = el.getAttribute('data-k');
+        state.cards[ci][k] = el.value;
+        sync();
+      });
+    });
+    root.querySelectorAll('input[type=checkbox][data-k]').forEach(function (el) {
+      el.addEventListener('change', function () {
+        var ci = +el.getAttribute('data-ci');
+        var k = el.getAttribute('data-k');
         if (k === 'disclaimer') state.cards[ci].showDisclaimer = el.checked;
-        else state.cards[ci][k] = el.value;
         sync();
       });
     });
@@ -186,14 +236,14 @@
       btn.addEventListener('click', function () {
         var act = btn.getAttribute('data-act');
         var ci = +btn.getAttribute('data-ci');
-        if (act === 'del-card') { state.cards.splice(ci, 1); sync(); return; }
-        if (act === 'up-card' && ci > 0) { var t = state.cards[ci-1]; state.cards[ci-1] = state.cards[ci]; state.cards[ci] = t; sync(); return; }
-        if (act === 'down-card' && ci < state.cards.length - 1) { t = state.cards[ci+1]; state.cards[ci+1] = state.cards[ci]; state.cards[ci] = t; sync(); return; }
-        if (act === 'add-h3') { state.cards[ci].items.push({ type: 'h3', id: uid(), text: 'New section' }); sync(); return; }
-        if (act === 'add-link') { state.cards[ci].items.push({ type: 'link', id: uid(), label: 'Link title', url: 'https://' }); sync(); return; }
+        if (act === 'del-card') { state.cards.splice(ci, 1); refresh(); return; }
+        if (act === 'up-card' && ci > 0) { var t = state.cards[ci-1]; state.cards[ci-1] = state.cards[ci]; state.cards[ci] = t; refresh(); return; }
+        if (act === 'down-card' && ci < state.cards.length - 1) { var t2 = state.cards[ci+1]; state.cards[ci+1] = state.cards[ci]; state.cards[ci] = t2; refresh(); return; }
+        if (act === 'add-h3') { state.cards[ci].items.push({ type: 'h3', id: uid(), text: 'New section' }); refresh(); return; }
+        if (act === 'add-link') { state.cards[ci].items.push({ type: 'link', id: uid(), label: 'Link title', url: 'https://' }); refresh(); return; }
         if (act === 'add-tabs') {
-          state.cards[ci].items.push({ type: 'tabs', id: uid(), tabs: [{ id: uid(), name: 'Tab A', links: [{ id: uid(), label: 'Example', url: 'https://example.com' }] }] });
-          sync(); return;
+          state.cards[ci].items.push({ type: 'tabs', id: uid(), tabs: [{ id: uid(), name: 'Tab A', links: [{ id: uid(), label: 'Link label', url: 'https://' }] }] });
+          refresh(); return;
         }
       });
     });
@@ -212,25 +262,40 @@
         '<label>Label</label><input type="text" data-item="' + ci + ',' + ii + '" data-f="label" value="' + escapeAttr(it.label) + '" />' +
         '<label>URL</label><input type="text" data-item="' + ci + ',' + ii + '" data-f="url" value="' + escapeAttr(it.url) + '" />';
     } else if (it.type === 'tabs') {
+      var nTabs = it.tabs.length;
       var tabsHtml = it.tabs.map(function (tab, ti) {
+        var nLinks = tab.links.length;
         var linksHtml = tab.links.map(function (ln, li) {
           return '<div class="item" style="margin-top:6px">' +
-            '<div class="item-head"><span>Link</span><span><button type="button" class="small danger" data-del-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '">×</button></span></div>' +
-            '<input type="text" placeholder="Label" data-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '" data-lf="label" value="' + escapeAttr(ln.label) + '" />' +
-            '<input type="text" placeholder="URL" data-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '" data-lf="url" value="' + escapeAttr(ln.url) + '" />' +
+            '<div class="item-head"><span>Hyperlink (' + (li + 1) + ')</span><span>' +
+            (nLinks > 1
+              ? '<button type="button" class="small danger" data-del-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '">Remove link</button>'
+              : '<span class="muted" style="font-size:10px;">min 1 link</span>') +
+            '</span></div>' +
+            '<label>Button text</label><input type="text" placeholder="Label" data-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '" data-lf="label" value="' + escapeAttr(ln.label) + '" />' +
+            '<label>URL</label><input type="text" placeholder="https://…" data-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '" data-lf="url" value="' + escapeAttr(ln.url) + '" />' +
             '</div>';
         }).join('');
         return '<div class="tab-editor">' +
-          '<div class="item-head"><span>Tab</span><span>' +
-            '<button type="button" class="small danger" data-del-tab="' + ci + ',' + ii + ',' + ti + '">Delete tab</button>' +
-            '<button type="button" class="small" data-add-tlink="' + ci + ',' + ii + ',' + ti + '">+ link in tab</button>' +
+          '<div class="item-head"><span>Tab ' + (ti + 1) + '</span><span>' +
+            (nTabs > 1
+              ? '<button type="button" class="small danger" data-del-tab="' + ci + ',' + ii + ',' + ti + '">Delete tab</button>'
+              : '<span class="muted" style="font-size:10px;">min 1 tab</span>') +
+            ' <button type="button" class="small primary" data-add-tlink="' + ci + ',' + ii + ',' + ti + '">+ Link in this tab</button>' +
           '</span></div>' +
-          '<label>Tab label</label><input type="text" data-tabname="' + ci + ',' + ii + ',' + ti + '" value="' + escapeAttr(tab.name) + '" />' +
+          '<label>Tab name (shown on public page)</label><input type="text" data-tabname="' + ci + ',' + ii + ',' + ti + '" value="' + escapeAttr(tab.name) + '" />' +
           linksHtml +
           '</div>';
       }).join('');
+      div.className = 'item item-tabs-outer';
       div.innerHTML =
-        '<div class="item-head"><span>Tab group</span><span><button type="button" class="small danger" data-del-item="' + ci + ',' + ii + '">Remove group</button> <button type="button" class="small" data-up-item="' + ci + ',' + ii + '">↑</button> <button type="button" class="small" data-down-item="' + ci + ',' + ii + '">↓</button> <button type="button" class="small primary" data-add-tab="' + ci + ',' + ii + '">+ Tab</button></span></div>' +
+        '<div class="item-head"><span>Tabbed links block</span><span>' +
+          '<button type="button" class="small danger" data-del-item="' + ci + ',' + ii + '">Remove whole block</button> ' +
+          '<button type="button" class="small" data-up-item="' + ci + ',' + ii + '">↑</button> ' +
+          '<button type="button" class="small" data-down-item="' + ci + ',' + ii + '">↓</button> ' +
+          '<button type="button" class="small primary" data-add-tab="' + ci + ',' + ii + '">+ Another tab</button>' +
+        '</span></div>' +
+        '<p class="muted" style="margin:0 0 8px;font-size:11px;">Each tab = one agency (or topic). Add links under each tab.</p>' +
         tabsHtml;
     }
     div.querySelectorAll('input[data-item]').forEach(function (inp) {
@@ -260,7 +325,7 @@
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-del-item').split(',').map(Number);
         state.cards[p[0]].items.splice(p[1], 1);
-        sync();
+        refresh();
       });
     });
     div.querySelectorAll('button[data-up-item]').forEach(function (b) {
@@ -269,7 +334,7 @@
         if (p[1] <= 0) return;
         var arr = state.cards[p[0]].items;
         var t = arr[p[1]-1]; arr[p[1]-1] = arr[p[1]]; arr[p[1]] = t;
-        sync();
+        refresh();
       });
     });
     div.querySelectorAll('button[data-down-item]').forEach(function (b) {
@@ -278,38 +343,39 @@
         var arr = state.cards[p[0]].items;
         if (p[1] >= arr.length - 1) return;
         var t2 = arr[p[1]+1]; arr[p[1]+1] = arr[p[1]]; arr[p[1]] = t2;
-        sync();
+        refresh();
       });
     });
     div.querySelectorAll('button[data-add-tab]').forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-add-tab').split(',').map(Number);
-        state.cards[p[0]].items[p[1]].tabs.push({ id: uid(), name: 'New tab', links: [{ id: uid(), label: 'Link', url: 'https://' }] });
-        sync();
+        state.cards[p[0]].items[p[1]].tabs.push({ id: uid(), name: 'New tab', links: [{ id: uid(), label: 'Link label', url: 'https://' }] });
+        refresh();
       });
     });
     div.querySelectorAll('button[data-add-tlink]').forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-add-tlink').split(',').map(Number);
         state.cards[p[0]].items[p[1]].tabs[p[2]].links.push({ id: uid(), label: 'New link', url: 'https://' });
-        sync();
+        refresh();
       });
     });
     div.querySelectorAll('button[data-del-tab]').forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-del-tab').split(',').map(Number);
         var tabs = state.cards[p[0]].items[p[1]].tabs;
+        if (tabs.length <= 1) return;
         tabs.splice(p[2], 1);
-        if (tabs.length === 0) state.cards[p[0]].items.splice(p[1], 1);
-        sync();
+        refresh();
       });
     });
     div.querySelectorAll('button[data-del-tlink]').forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-del-tlink').split(',').map(Number);
         var links = state.cards[p[0]].items[p[1]].tabs[p[2]].links;
+        if (links.length <= 1) return;
         links.splice(p[3], 1);
-        sync();
+        refresh();
       });
     });
     return div;
@@ -386,6 +452,7 @@
   }
 
   function sync() {
+    sanitize();
     state.pageTitle = document.getElementById('pageTitle').value || state.pageTitle;
     state.accent = document.getElementById('accent').value;
     state.logoPath = document.getElementById('logoPath').value || state.logoPath;
@@ -405,17 +472,15 @@
 
   document.getElementById('btnAddCard').addEventListener('click', function () {
     state.cards.push(defaultCard());
-    sync();
-    renderEditors();
+    refresh();
   });
 
   document.getElementById('btnSave').addEventListener('click', function () { saveState(); alert('Draft saved in this browser.'); });
-  document.getElementById('btnLoad').addEventListener('click', function () { loadState(); renderEditors(); sync(); });
+  document.getElementById('btnLoad').addEventListener('click', function () { loadState(); refresh(); });
   document.getElementById('btnClear').addEventListener('click', function () {
     if (!confirm('Clear all cards?')) return;
     state.cards = [];
-    sync();
-    renderEditors();
+    refresh();
   });
 
   document.getElementById('btnExportJson').addEventListener('click', function () {
@@ -435,7 +500,7 @@
     r.onload = function () {
       try {
         var o = JSON.parse(r.result);
-        if (o && Array.isArray(o.cards)) { state = o; renderEditors(); sync(); }
+        if (o && Array.isArray(o.cards)) { state = o; refresh(); }
         else alert('Invalid JSON');
       } catch (e) { alert('Could not parse JSON'); }
     };
@@ -457,8 +522,7 @@
 
   loadState();
   if (state.cards.length === 0) state.cards.push(defaultCard());
-  renderEditors();
-  sync();
+  refresh();
 })();
   </script>
 </body>
