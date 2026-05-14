@@ -1583,6 +1583,9 @@
         0 0 0 1px rgba(168, 85, 247, 0.35),
         0 4px 18px rgba(0, 0, 0, 0.45);
       animation: mf-onboarding-hint-pop 0.55s ease-out;
+      white-space: normal !important;
+      box-sizing: border-box;
+      min-width: 0;
     }
     @keyframes mf-onboarding-hint-pop {
       0% {
@@ -1627,6 +1630,9 @@
     .mf-onboarding-hint-text {
       display: block;
       padding: 2px 2.75rem 0 0;
+      min-width: 0;
+      word-break: break-word;
+      overflow-wrap: anywhere;
     }
     .mf-onboarding-hint--closing .mf-onboarding-hint-text {
       padding-top: 4px;
@@ -1635,37 +1641,48 @@
       font-weight: 600;
     }
 
-    /* Onboarding hints on phones: readable width, safe areas, wrapping */
+    /* Onboarding hints on phones: near full-width card, no sideways slide, safe areas */
     @media (max-width: 640px) {
       .dropdown-tooltip.mf-onboarding-hint {
-        padding: 10px 12px 12px;
-        padding-left: max(12px, env(safe-area-inset-left, 0px));
-        padding-right: max(12px, env(safe-area-inset-right, 0px));
-        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-        font-size: 0.88rem;
-        line-height: 1.4;
-        font-weight: 700;
-        max-width: min(
-          calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 16px),
-          94vw
-        ) !important;
+        padding: 12px 14px 14px;
+        padding-left: max(14px, env(safe-area-inset-left, 0px));
+        padding-right: max(14px, env(safe-area-inset-right, 0px));
+        padding-top: max(12px, env(safe-area-inset-top, 0px));
+        padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
+        font-size: max(15px, 0.92rem);
+        line-height: 1.42;
+        font-weight: 650;
+        width: calc(100vw - 14px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
+        max-width: calc(100vw - 14px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
+        white-space: normal !important;
         word-wrap: break-word;
-        overflow-wrap: break-word;
+        overflow-wrap: anywhere;
         hyphens: auto;
         -webkit-hyphens: auto;
+        transition: opacity 0.35s ease, box-shadow 0.35s ease;
+        transform: none !important;
+        -webkit-font-smoothing: antialiased;
+      }
+      .dropdown-tooltip.mf-onboarding-hint.show {
+        transform: none !important;
+      }
+      .dropdown-tooltip.mf-onboarding-hint.mf-onboarding-hint--stack-below::after,
+      .dropdown-tooltip.mf-onboarding-hint.mf-onboarding-hint--stack-below.dropdown-tooltip--arrow-right::after {
+        display: none;
       }
       .mf-onboarding-hint-step,
       .mf-onboarding-hint-done {
-        top: max(5px, env(safe-area-inset-top, 0px));
-        right: max(7px, env(safe-area-inset-right, 0px));
+        top: max(6px, calc(env(safe-area-inset-top, 0px) + 4px));
+        right: max(8px, env(safe-area-inset-right, 0px));
+        font-size: 0.68rem;
       }
       .mf-onboarding-hint-text {
-        padding-right: 3rem;
-        font-size: 0.88rem;
+        padding-right: 3.1rem;
+        font-size: max(15px, 0.9rem);
         line-height: 1.42;
       }
       .mf-onboarding-hint--closing .mf-onboarding-hint-text {
-        font-size: 0.93rem;
+        font-size: max(15px, 0.95rem);
         line-height: 1.48;
         padding-bottom: 2px;
       }
@@ -4867,14 +4884,16 @@
       (elOpts && elOpts.progress && elOpts.progress.current != null && elOpts.progress.total != null);
     let maxW = narrow ? 'min(92vw, 300px)' : '240px';
     if (narrow && isOnboarding) {
-      maxW =
-        'min(calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 16px), 94vw)';
-    } else if (elOpts && elOpts.closing) {
-      maxW = narrow ? 'min(94vw, 380px)' : 'min(420px, 92vw)';
-    } else if (elOpts && elOpts.progress && elOpts.progress.current != null && !narrow) {
-      maxW = 'min(320px, 92vw)';
+      t.style.maxWidth = '';
+      t.style.width = '';
+    } else {
+      if (elOpts && elOpts.closing) {
+        maxW = narrow ? 'min(94vw, 380px)' : 'min(420px, 92vw)';
+      } else if (elOpts && elOpts.progress && elOpts.progress.current != null && !narrow) {
+        maxW = 'min(320px, 92vw)';
+      }
+      t.style.maxWidth = maxW;
     }
-    t.style.maxWidth = maxW;
     t.style.whiteSpace = 'normal';
     t.style.zIndex = '10070';
 
@@ -4905,6 +4924,28 @@
     return t;
   }
 
+  /** Layout box for `position:fixed` tooltips (accounts for mobile browser chrome when available). */
+  function mfViewportLayoutBox() {
+    try {
+      const vv = window.visualViewport;
+      if (vv && vv.width > 10) {
+        return {
+          left: Number(vv.offsetLeft) || 0,
+          top: Number(vv.offsetTop) || 0,
+          width: vv.width,
+          height: vv.height
+        };
+      }
+    } catch (_) {}
+    const d = document.documentElement;
+    return {
+      left: 0,
+      top: 0,
+      width: window.innerWidth || d.clientWidth || 0,
+      height: window.innerHeight || d.clientHeight || 0
+    };
+  }
+
   function mfShowAnchoredTooltip(targetEl, text, opts) {
     if (!targetEl) return null;
     const rect = targetEl.getBoundingClientRect();
@@ -4922,28 +4963,48 @@
     try {
       const w = tooltip.offsetWidth || 180;
       const h = tooltip.offsetHeight || 40;
-      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      const vb = mfViewportLayoutBox();
+      const L0 = vb.left + edge;
+      const R0 = vb.left + vb.width - edge;
+      const T0 = vb.top + edge;
+      const B0 = vb.top + vb.height - edge;
+
       let left = rect.right + pad;
       let placedLeftOfTarget = false;
-      if (vw && left + w > vw - edge) {
+      if (vb.width && left + w > R0) {
         left = rect.left - w - pad;
         placedLeftOfTarget = true;
       }
-      // Vertically center tooltip on target (bus / stop / chip), then clamp to viewport + safe margin
       let t =
         opts && opts.top != null
           ? opts.top
           : rect.top + rect.height / 2 - h / 2;
-      if (vh && t + h > vh - edge) t = vh - h - edge;
-      if (t < edge) t = edge;
-      tooltip.style.left = `${Math.max(edge, Math.round(left))}px`;
-      tooltip.style.top = `${Math.max(edge, Math.round(t))}px`;
+      if (vb.height && t + h > B0) t = B0 - h;
+      if (t < T0) t = T0;
+
+      if (mobile && tooltip.classList.contains('mf-onboarding-hint')) {
+        const maxWAvail = Math.max(0, R0 - L0);
+        if (w > maxWAvail - 1) {
+          tooltip.classList.add('mf-onboarding-hint--stack-below');
+          tooltip.classList.remove('dropdown-tooltip--arrow-right');
+          placedLeftOfTarget = false;
+          left = rect.left + rect.width / 2 - w / 2;
+          left = Math.max(L0, Math.min(left, R0 - w));
+          t = rect.bottom + Math.max(8, pad);
+          if (t + h > B0) t = Math.max(T0, rect.top - h - Math.max(8, pad));
+          if (t + h > B0) t = Math.max(T0, B0 - h);
+        } else {
+          left = Math.max(L0, Math.min(left, R0 - w));
+        }
+      }
+
+      tooltip.style.left = `${Math.round(left)}px`;
+      tooltip.style.top = `${Math.round(Math.max(T0, t))}px`;
       try {
         const tw = tooltip.offsetWidth || w;
-        if (vw && tw) {
+        if (vb.width && tw) {
           let L = parseFloat(tooltip.style.left) || 0;
-          L = Math.max(edge, Math.min(L, vw - tw - edge));
+          L = Math.max(L0, Math.min(L, R0 - tw));
           tooltip.style.left = `${Math.round(L)}px`;
         }
       } catch (_) {}
@@ -4986,23 +5047,31 @@
     try {
       const w = tooltip.offsetWidth || 240;
       const h = tooltip.offsetHeight || 52;
-      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      const vb = mfViewportLayoutBox();
       const mobile = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
       let edge = mobile ? 12 : 8;
       if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
         edge = Math.max(edge, 14);
       }
-      let left = vw ? Math.round((vw - w) / 2) : edge;
-      const topFrac = mobile && tooltip.classList.contains('mf-onboarding-hint') ? 0.38 : 0.44;
-      let top = vh ? Math.round(vh * topFrac - h / 2) : edge;
-      if (left < edge) left = edge;
-      if (vw && left + w > vw - edge) left = Math.max(edge, vw - w - edge);
-      if (top < edge) top = edge;
-      if (vh && top + h > vh - edge) top = Math.max(edge, vh - h - edge);
+      const L0 = vb.left + edge;
+      const R0 = vb.left + vb.width - edge;
+      const T0 = vb.top + edge;
+      const B0 = vb.top + vb.height - edge;
+
+      let left = vb.width ? Math.round(vb.left + (vb.width - w) / 2) : L0;
+      const topFrac = mobile && tooltip.classList.contains('mf-onboarding-hint') ? 0.36 : 0.44;
+      let top = vb.height ? Math.round(vb.top + vb.height * topFrac - h / 2) : T0;
+      if (left < L0) left = L0;
+      if (vb.width && left + w > R0) left = Math.max(L0, R0 - w);
+      if (top < T0) top = T0;
+      if (vb.height && top + h > B0) top = Math.max(T0, B0 - h);
       tooltip.style.left = `${left}px`;
       tooltip.style.top = `${top}px`;
-      tooltip.style.transform = 'translateX(0)'; // avoid sideways drift for centered hints
+      if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
+        tooltip.style.transform = 'none';
+      } else {
+        tooltip.style.transform = 'translateX(0)';
+      }
     } catch (_) {}
     setTimeout(() => {
       tooltip.classList.remove('show');
@@ -5059,28 +5128,36 @@
     try {
       const w = tooltip.offsetWidth || 220;
       const h = tooltip.offsetHeight || 52;
-      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      const vb = mfViewportLayoutBox();
       const mobile = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
       let edge = mobile ? 12 : 8;
       if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
         edge = Math.max(edge, 14);
       }
+      const L0 = vb.left + edge;
+      const R0 = vb.left + vb.width - edge;
+      const T0 = vb.top + edge;
+      const B0 = vb.top + vb.height - edge;
+      const bottomPad =
+        mobile && tooltip.classList.contains('mf-onboarding-hint') ? edge + 18 : edge;
 
       // Center horizontally over marker, sit above it.
       let left = rect.left + rect.width / 2 - w / 2;
       let top = rect.top - h - 10;
 
       // Clamp.
-      if (left < edge) left = edge;
-      if (vw && left + w > vw - edge) left = Math.max(edge, vw - w - edge);
-      if (top < edge) top = rect.bottom + 10; // if no room above, place below
-      const bottomPad =
-        mobile && tooltip.classList.contains('mf-onboarding-hint') ? edge + 16 : edge;
-      if (vh && top + h > vh - bottomPad) top = Math.max(edge, vh - h - bottomPad);
+      if (left < L0) left = L0;
+      if (vb.width && left + w > R0) left = Math.max(L0, R0 - w);
+      if (top < T0) top = rect.bottom + 10; // if no room above, place below
+      if (vb.height && top + h > B0 - (bottomPad - edge)) {
+        top = Math.max(T0, B0 - h - (bottomPad - edge));
+      }
 
       tooltip.style.left = `${Math.round(left)}px`;
       tooltip.style.top = `${Math.round(top)}px`;
+      if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
+        tooltip.style.transform = 'none';
+      }
     } catch (_) {}
     setTimeout(() => {
       tooltip.classList.remove('show');
