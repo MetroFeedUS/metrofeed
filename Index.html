@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RoamRaven | National map</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#9333ea" />
+  <link rel="icon" type="image/png" href="/RoamRavenbird.png" sizes="512x512" />
+  <link rel="apple-touch-icon" href="/RoamRavenbird.png" />
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <style>
@@ -148,7 +152,7 @@
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
-      justify-content: space-between;
+      justify-content: stretch;
       background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.96) 100%);
       border: 1px solid var(--rr-silver-edge);
       border-radius: 14px;
@@ -159,18 +163,6 @@
         0 0 18px var(--rr-accent-soft);
     }
 
-    .mf-brand-mark {
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    .mf-brand-mark img {
-      width: 34px;
-      height: 34px;
-      object-fit: contain;
-      display: block;
-    }
-
     .mf-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -179,10 +171,34 @@
       justify-content: space-between;
       flex: 1 1 auto;
       min-width: 0;
+      width: 100%;
+    }
+
+    /* Logo + search stay on one row (desktop + mobile) */
+    .mf-search-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1 1 200px;
+      min-width: 0;
+    }
+
+    .mf-brand-mark {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .mf-brand-mark img {
+      height: clamp(28px, 5.5vw, 40px);
+      width: auto;
+      max-width: min(200px, 42vw);
+      object-fit: contain;
+      object-position: left center;
+      display: block;
     }
 
     .mf-city-search-wrap {
-      flex: 1 1 140px;
+      flex: 1 1 120px;
       min-width: 0;
       max-width: 100%;
       display: flex;
@@ -456,8 +472,20 @@
       font-weight: 700;
     }
     @media (max-width: 480px) {
-      .mf-toolbar { width: 100%; flex-direction: column; align-items: stretch; }
-      .mf-city-search-wrap { max-width: none; flex: 1 1 auto; }
+      .mf-toolbar {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .mf-search-logo-row {
+        width: 100%;
+        flex: 1 1 auto;
+      }
+      .mf-city-search-wrap {
+        max-width: none;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
     }
   </style>
 </head>
@@ -466,29 +494,31 @@
 
   <div class="mf-topbar">
     <div class="mf-topbar-inner">
-      <div class="mf-brand-mark" aria-hidden="true">
-        <img src="MetroFeedMainLogo.png" alt="RoamRaven" width="34" height="34" />
-      </div>
       <div class="mf-toolbar">
-        <div class="mf-city-search-wrap mf-city-combobox" id="mfCityComboWrap">
-          <label class="mf-sr-only" for="mfCitySearch">Search for a city</label>
-          <input
-            id="mfCitySearch"
-            type="text"
-            inputmode="search"
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="off"
-            spellcheck="false"
-            enterkeyhint="go"
-            placeholder="Search city…"
-            aria-label="Search for a supported city"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded="false"
-            aria-controls="mfCitySuggest"
-          />
-          <div id="mfCitySuggest" class="mf-city-suggest" role="listbox" hidden></div>
+        <div class="mf-search-logo-row">
+          <div class="mf-brand-mark">
+            <img src="RoamRavenNamelogo.png" alt="RoamRaven" width="180" height="40" decoding="async" />
+          </div>
+          <div class="mf-city-search-wrap mf-city-combobox" id="mfCityComboWrap">
+            <label class="mf-sr-only" for="mfCitySearch">Search for a city</label>
+            <input
+              id="mfCitySearch"
+              type="text"
+              inputmode="search"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              enterkeyhint="go"
+              placeholder="Search city…"
+              aria-label="Search for a supported city"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded="false"
+              aria-controls="mfCitySuggest"
+            />
+            <div id="mfCitySuggest" class="mf-city-suggest" role="listbox" hidden></div>
+          </div>
         </div>
         <button id="mfUseMapLocationBtn" class="mf-btn mf-btn--primary" type="button">Use map location</button>
       </div>
