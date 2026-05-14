@@ -6,20 +6,31 @@
   <title>Ticket Purchase | MetroFeed Portland</title>
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <style>
+    :root {
+      --rr-accent: #9333ea;
+      --rr-accent-hover: #7c3aed;
+      --rr-accent-text: #e9d5ff;
+      --rr-accent-soft: rgba(147, 51, 234, 0.35);
+      --rr-silver: #e2e8f0;
+      --rr-silver-muted: #94a3b8;
+      --rr-silver-edge: rgba(226, 232, 240, 0.42);
+      --rr-charcoal: #121214;
+      --rr-charcoal-raised: #1a1b20;
+    }
     html, body {
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: #0d0d0d;
-      color: #cccccc;
+      background-color: var(--rr-charcoal);
+      color: var(--rr-silver-muted);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
     header {
-      background-color: #0d0d0d;
-      border-top: 4px solid #4dd0e1;
-      border-bottom: 3px solid #4dd0e1;
+      background-color: var(--rr-charcoal);
+      border-top: 4px solid var(--rr-accent);
+      border-bottom: 3px solid var(--rr-accent);
       padding: 1rem 0;
       text-align: center;
     }
@@ -32,30 +43,30 @@
       left: 20px;
       width: 45px;
       height: 45px;
-      background-color: #4dd0e1;
-      border: 2px solid #000;
+      background-color: var(--rr-accent);
+      border: 2px solid var(--rr-silver-edge);
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1001;
-      box-shadow: 0 0 10px #4dd0e1;
+      box-shadow: 0 0 12px var(--rr-accent-soft);
       cursor: pointer;
       transition: background 0.2s;
       outline: none;
     }
     .back-button-fixed:active, .back-button-fixed:focus {
-      background-color: #1976d2;
+      background-color: var(--rr-accent-hover);
     }
     .back-button-fixed svg {
       width: 24px;
       height: 24px;
-      fill: #000;
+      fill: var(--rr-charcoal);
       display: block;
     }
     .back-button-fixed:active svg,
     .back-button-fixed:focus svg {
-      fill: #fff;
+      fill: var(--rr-silver);
     }
     .content-box {
       flex: 1 0 auto;
@@ -63,17 +74,17 @@
       max-width: 500px;
       padding: 2rem 1.5rem;
       border-radius: 12px;
-      background-color: #181818;
+      background-color: var(--rr-charcoal-raised);
       text-align: center;
-      box-shadow: 0 4px 24px #000a;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--rr-accent-soft);
     }
     .content-box h1 {
-      color: #4dd0e1;
+      color: var(--rr-accent-text);
       margin-bottom: 1.2rem;
       font-size: 2rem;
     }
     .content-box p {
-      color: #ddd;
+      color: var(--rr-silver);
       font-size: 1.15rem;
       margin-bottom: 1.3rem;
     }
@@ -82,11 +93,11 @@
       margin-top: auto;
       margin-bottom: 1.5rem;
       font-size: 0.92rem;
-      color: #aaa;
+      color: var(--rr-silver-muted);
       padding-bottom: 0.5rem;
     }
     .site-footer a {
-      color: #00BFFF;
+      color: var(--rr-accent-text);
       text-decoration: none;
       margin: 0 0.7em;
     }
@@ -94,7 +105,7 @@
       text-decoration: underline;
     }
     .disclaimer {
-      color: #888;
+      color: var(--rr-silver-muted);
       font-size: 0.9rem;
       text-align: center;
       margin: 0 auto 1.4rem auto;
@@ -123,14 +134,14 @@
       <br><br>
       We hope to offer in-app ticket purchases in the future. For now, please purchase your fare through your transit agency's official channels.
     </p>
-    <p style="font-size:1rem; color:#bbb;">
-      For official TriMet ticket sales, visit <a href="https://trimet.org/fares/" style="color:#4dd0e1;">trimet.org/fares</a>
+    <p style="font-size:1rem; color:var(--rr-silver-muted);">
+      For official TriMet ticket sales, visit <a href="https://trimet.org/fares/" style="color:var(--rr-accent-text);">trimet.org/fares</a>
     </p>
   </div>
 
   <div class="disclaimer">
     This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit
-    <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+    <a href="https://trimet.org" style="color:var(--rr-accent-text);">trimet.org</a>.
   </div>
 
   <footer class="site-footer">

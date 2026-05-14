@@ -950,11 +950,24 @@
       font-size: 0.78rem;
       font-weight: 800;
       line-height: 1.2;
-      color: #fff;
-      background: linear-gradient(165deg, #1a5588 0%, #0c2036 100%);
-      border: 1px solid var(--rr-accent-soft);
+      color: #e9eefc;
+      letter-spacing: 0.02em;
+      /* Raven-feather metallic blue: deep base + cool highlight sheen */
+      background: linear-gradient(
+        158deg,
+        #3a5d8f 0%,
+        #274771 18%,
+        #1a3358 45%,
+        #0f1f3d 72%,
+        #070f22 100%
+      );
+      border: 1px solid rgba(130, 175, 235, 0.42);
       border-radius: 8px;
-      box-shadow: 0 0 10px var(--rr-accent-soft);
+      box-shadow:
+        inset 0 1px 0 rgba(210, 225, 255, 0.2),
+        inset 0 -10px 18px rgba(0, 0, 0, 0.28),
+        0 2px 12px rgba(2, 8, 22, 0.75),
+        0 0 16px rgba(40, 85, 155, 0.32);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -4823,7 +4836,7 @@
   // Function to show tooltips for dropdown buttons
   function showDropdownTooltips() {
     const tooltipData = [
-      { selector: '#youtubeBtn', text: 'Daily Brief' },
+      { selector: '#youtubeBtn', text: 'Monitor on Youtube' },
       { selector: '#dropdownTwitterBtn', text: 'RoamRaven on X' },
       { selector: '#dropdownBusesBtn', text: 'Bus Routes' },
       { selector: '#dropdownRailBtn', text: 'Rail Routes' },
@@ -4831,7 +4844,8 @@
       { selector: '#dropdownCamerasBtn', text: 'Traffic Cameras' },
       { selector: '#dropdownWeatherBtn', text: 'Weather' },
       { selector: '#dropdownAiChatBtn', text: 'ADA and Official Resources' },
-      { selector: '#dropdownAlertsBtn', text: 'Alerts' }
+      { selector: '#dropdownAlertsBtn', text: 'Alerts' },
+      { selector: '#dropdownBackToNationalBtn', text: 'Switch cities' }
     ];
     
     tooltipData.forEach((item, index) => {
@@ -8382,10 +8396,61 @@
     }
   }
 
-  // Cincinnati/NKY NWS "all links out" destination (user-provided).
-  const MF_NWS_CINCY_MAPCLICK_URL = 'https://forecast.weather.gov/MapClick.php?lat=39.1271&lon=-84.5144';
-  // NWS API point for Cincinnati (used to fetch hourly + 7-day forecast).
-  const MF_NWS_CINCY_POINTS_API = 'https://api.weather.gov/points/39.1271,-84.5144';
+  /** Lat/lon for NWS from CITY_CONFIG.defaultCenter [lon, lat] (MapLibre order). */
+  function mfNwsPointFromCityConfig() {
+    const c = typeof CITY_CONFIG !== 'undefined' && CITY_CONFIG ? CITY_CONFIG : null;
+    if (c && Array.isArray(c.defaultCenter) && c.defaultCenter.length >= 2) {
+      const lon = Number(c.defaultCenter[0]);
+      const lat = Number(c.defaultCenter[1]);
+      if (Number.isFinite(lat) && Number.isFinite(lon)) return { lat, lon };
+    }
+    return { lat: 39.1271, lon: -84.5144 };
+  }
+
+  function mfNwsMapClickUrl() {
+    const { lat, lon } = mfNwsPointFromCityConfig();
+    return 'https://forecast.weather.gov/MapClick.php?lat=' + lat + '&lon=' + lon;
+  }
+
+  function mfNwsAlertsActiveUrl() {
+    const { lat, lon } = mfNwsPointFromCityConfig();
+    return 'https://api.weather.gov/alerts/active?point=' + lat + ',' + lon;
+  }
+
+  function mfNwsPointsApiUrl() {
+    const { lat, lon } = mfNwsPointFromCityConfig();
+    return 'https://api.weather.gov/points/' + lat + ',' + lon;
+  }
+
+  /**
+   * Best public NWS URL for one GeoJSON alert feature (CAP same / web / uri, else www rewrite of API id).
+   * Falls back to city MapClick when the payload has no outbound link.
+   */
+  function mfNwsAlertWebUrl(feature, fallbackMapClickUrl) {
+    const alert = feature && feature.properties ? feature.properties : {};
+    const featureId =
+      feature && feature.id != null ? String(feature.id) : alert.id != null ? String(alert.id) : '';
+    const fallback = fallbackMapClickUrl || mfNwsMapClickUrl();
+    let u = '';
+    if (alert.same && Array.isArray(alert.same) && alert.same.length > 0) {
+      u = String(alert.same[0]).trim();
+    } else if (alert.web && typeof alert.web === 'string') {
+      u = alert.web.trim();
+    } else if (alert.uri && typeof alert.uri === 'string') {
+      u = alert.uri.trim();
+    } else if (featureId && featureId.indexOf('api.weather.gov') >= 0) {
+      u = featureId.replace('api.weather.gov', 'www.weather.gov');
+    }
+    if (!u || !/^https?:\/\//i.test(u)) return fallback;
+    return u;
+  }
+
+  function mfEscapeWeatherModalAttr(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   function loadWeatherAlerts() {
     const alertsContent = document.getElementById('weatherAlertsContent');
@@ -8396,8 +8461,8 @@
     // Show loading state
     alertsContent.innerHTML = '<div data-translate="checkingAlerts">Checking for alerts...</div>';
     
-    // Cincinnati/NKY area alerts (NWS supports point queries).
-    const alertUrl = 'https://api.weather.gov/alerts/active?point=39.1271,-84.5144';
+    const alertUrl = mfNwsAlertsActiveUrl();
+    const cityNwsMapClick = mfNwsMapClickUrl();
     
     // Set proper User-Agent header as required by NWS API
     const headers = {
@@ -8429,30 +8494,31 @@
         data.features.forEach((feature, index) => {
           const alert = feature.properties;
           const alertId = feature.id || '';
-          
-          // All outbound links must go to Cincinnati MapClick.
-          const nwsUrl = MF_NWS_CINCY_MAPCLICK_URL;
-          
-          // Escape alert data for use in onclick
-          const alertEvent = (alert.event || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-          const alertHeadline = (alert.headline || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-          const alertDesc = (alert.description || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;").substring(0, 500);
-          const alertInstruction = (alert.instruction || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-          const alertArea = (alert.areaDesc || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+          const nwsUrl = mfNwsAlertWebUrl(feature, cityNwsMapClick);
+          const alertIdEsc = mfEscapeWeatherModalAttr(alertId);
+          const nwsUrlEsc = mfEscapeWeatherModalAttr(nwsUrl);
+          // Escape alert data for use in onclick (HTML attribute + single-quoted JS args)
+          const alertEvent = mfEscapeWeatherModalAttr(alert.event || '');
+          const alertHeadline = mfEscapeWeatherModalAttr(alert.headline || '');
+          const alertDesc = mfEscapeWeatherModalAttr(
+            (alert.description || '').substring(0, 500)
+          );
+          const alertInstruction = mfEscapeWeatherModalAttr(alert.instruction || '');
+          const alertArea = mfEscapeWeatherModalAttr(alert.areaDesc || '');
           
           html += `
             <div style="margin-bottom: ${index < data.features.length - 1 ? '1rem' : '0'}; padding-bottom: ${index < data.features.length - 1 ? '1rem' : '0'}; border-bottom: ${index < data.features.length - 1 ? '1px solid #333' : 'none'};">
               <div style="color:#f44336; font-weight:bold; font-size:1.1rem; margin-bottom:0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;" 
                    onmouseover="this.style.background='#222'" 
                    onmouseout="this.style.background='transparent'"
-                   onclick="showAlertDetails('${alertId}', '${alertEvent}', '${alertHeadline}', '${alertDesc}', '${alertInstruction}', '${alertArea}', '${nwsUrl}')">
+                   onclick="showAlertDetails('${alertIdEsc}', '${alertEvent}', '${alertHeadline}', '${alertDesc}', '${alertInstruction}', '${alertArea}', '${nwsUrlEsc}')">
                 <span>⚠️ ${alert.event}</span>
                 <span style="font-size:0.85rem; color:#888;">${typeof translateText !== 'undefined' ? translateText('viewDetails') : 'View Details'} →</span>
               </div>
               <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${alert.headline || (alert.description ? alert.description.substring(0, 200) + '...' : 'No description available')}</div>
               ${alert.instruction ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${alert.instruction.substring(0, 150)}${alert.instruction.length > 150 ? '...' : ''}</div>` : ''}
               <div style="margin-top:0.5rem;">
-                <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">View on NWS →</a>
+                <a href="${nwsUrlEsc}" target="_blank" rel="noopener noreferrer" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">View on NWS →</a>
               </div>
             </div>
           `;
@@ -8471,7 +8537,10 @@
         alertsSummary.style.background = '#ff9800';
         alertsSummary.style.borderColor = '#ff9800';
         alertsText.textContent = 'Unable to Load Alerts';
-        alertsContent.innerHTML = '<div style="color:#ff9800; padding:1rem;">Unable to load weather alerts. Please check the NWS page for official alerts.</div>';
+        const nwsFallback = mfEscapeWeatherModalAttr(mfNwsMapClickUrl());
+        alertsContent.innerHTML =
+          '<div style="color:#ff9800; padding:1rem;">Unable to load weather alerts. ' +
+          '<a href="' + nwsFallback + '" target="_blank" rel="noopener noreferrer" style="color:#1DA1F2;">Open NWS for this area →</a></div>';
       });
   }
 
@@ -8485,7 +8554,9 @@
     }
     
     // Check if details already shown for this alert
-    const existingDetails = alertsContent.querySelector(`[data-alert-id="${alertId}"]`);
+    const existingDetails = Array.from(alertsContent.querySelectorAll('[data-alert-id]')).find(
+      (el) => el.getAttribute('data-alert-id') === alertId
+    );
     if (existingDetails) {
       // Toggle: remove if already shown
       existingDetails.remove();
@@ -8497,14 +8568,14 @@
     
     // Create full details section
     const fullDetails = `
-      <div data-alert-id="${alertId}" style="background: #111; border: 2px solid #f44336; border-radius: 8px; padding: 1rem; margin-top: 0.75rem; margin-bottom: 0.75rem;">
+      <div data-alert-id="${mfEscapeWeatherModalAttr(alertId)}" style="background: #111; border: 2px solid #f44336; border-radius: 8px; padding: 1rem; margin-top: 0.75rem; margin-bottom: 0.75rem;">
         <div style="color:#f44336; font-weight:bold; font-size:1.2rem; margin-bottom:0.75rem;">⚠️ ${event}</div>
         ${headline ? `<div style="color:#fff; font-weight:bold; font-size:1rem; margin-bottom:0.5rem;">${headline}</div>` : ''}
         <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.75rem; white-space: pre-wrap; line-height:1.5;">${description || 'No description available'}</div>
         ${instruction ? `<div style="color:#aaa; font-size:0.9rem; font-style:italic; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333; line-height:1.4;">${instruction}</div>` : ''}
         ${areaDesc ? `<div style="color:#888; font-size:0.85rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333;">Areas affected: ${areaDesc}</div>` : ''}
         <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #333; text-align:center;">
-          <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">View on NWS →</a>
+          <a href="${mfEscapeWeatherModalAttr(nwsUrl)}" target="_blank" rel="noopener noreferrer" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">View on NWS →</a>
         </div>
       </div>
     `;
@@ -8589,7 +8660,7 @@
     // Show loading state
     forecastContent.innerHTML = '<div data-translate="loadingForecast">Loading 7-day forecast...</div>';
     
-    const apiUrl = MF_NWS_CINCY_POINTS_API;
+    const apiUrl = mfNwsPointsApiUrl();
     
     fetch(apiUrl)
       .then(res => {
@@ -8638,7 +8709,7 @@
     // Show loading state
     hourlyContent.innerHTML = '<div>Loading hourly forecast...</div>';
     
-    const apiUrl = MF_NWS_CINCY_POINTS_API;
+    const apiUrl = mfNwsPointsApiUrl();
     
     fetch(apiUrl)
       .then(res => {
@@ -11878,8 +11949,9 @@
       const alerts = await fetchAlertsData();
       const routeAlertInfo = getRouteAlerts(route.id, alerts);
       const alertBadge = createAlertBadge(route.id, routeAlertInfo);
-      
-      routeHeader.innerHTML = `<span style="display: flex; align-items: center;">${alertBadge}<span>${routeLabel}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      const rb = busModalBadgeText(route);
+      const rbWrap = rb.length > 7 ? ' bus-route-modal-badge--wrap' : '';
+      routeHeader.innerHTML = `<span style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">${alertBadge}<span class="bus-route-modal-badge${rbWrap}">${rb}</span><span style="color: ${routeColor}; min-width: 0;">${routeLabel}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
       routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = `${routeColor}15`; // 15 = ~8% opacity
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
@@ -12070,8 +12142,9 @@
       const alerts = await fetchAlertsData();
       const routeAlertInfo = getRouteAlerts(route.id, alerts);
       const alertBadge = createAlertBadge(route.id, routeAlertInfo);
-      
-      routeHeader.innerHTML = `<span style="display: flex; align-items: center;">${alertBadge}<span>${routeLabel}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      const rb = busModalBadgeText(route);
+      const rbWrap = rb.length > 7 ? ' bus-route-modal-badge--wrap' : '';
+      routeHeader.innerHTML = `<span style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">${alertBadge}<span class="bus-route-modal-badge${rbWrap}">${rb}</span><span style="color: ${routeColor}; min-width: 0;">${routeLabel}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
       routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = `${routeColor}15`; // 15 = ~8% opacity
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
