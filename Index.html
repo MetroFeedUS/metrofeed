@@ -174,27 +174,36 @@
       width: 100%;
     }
 
-    /* Logo + search stay on one row (desktop + mobile) */
+    /* Logo + search: one row when space allows; logo stays within the card */
     .mf-search-logo-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      flex: 1 1 200px;
+      flex: 1 1 220px;
       min-width: 0;
+      max-width: 100%;
     }
 
     .mf-brand-mark {
       display: flex;
       align-items: center;
-      flex-shrink: 0;
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: min(42vw, 240px);
     }
     .mf-brand-mark img {
-      height: clamp(72px, 22vw, min(400px, 42vh));
+      display: block;
       width: auto;
-      max-width: min(1800px, 96vw);
+      height: auto;
+      max-height: clamp(32px, 5vw, 48px);
+      max-width: 100%;
       object-fit: contain;
       object-position: left center;
-      display: block;
+    }
+
+    #mfUseMapLocationBtn {
+      flex: 0 0 auto;
+      white-space: nowrap;
     }
 
     .mf-city-search-wrap {
@@ -471,7 +480,7 @@
       color: var(--rr-silver);
       font-weight: 700;
     }
-    @media (max-width: 480px) {
+    @media (max-width: 768px) {
       .mf-toolbar {
         width: 100%;
         flex-direction: column;
@@ -481,10 +490,17 @@
         width: 100%;
         flex: 1 1 auto;
       }
+      .mf-brand-mark {
+        max-width: min(55vw, 200px);
+      }
       .mf-city-search-wrap {
         max-width: none;
         flex: 1 1 auto;
         min-width: 0;
+      }
+      #mfUseMapLocationBtn {
+        width: 100%;
+        text-align: center;
       }
     }
   </style>
