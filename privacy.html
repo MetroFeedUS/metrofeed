@@ -12,127 +12,275 @@
 </script>
 
 <meta charset="UTF-8">
-  <title>Privacy Policy – MetroFeed</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #000;
-      color: #fff;
-      line-height: 1.6;
+<title>Privacy Policy – MetroFeed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="apple-touch-icon" href="metrofeedsimplelogo.png">
+<link rel="icon" type="image/png" sizes="512x512" href="metrofeedsimplelogo.png">
+
+<style>
+  :root {
+    --rr-accent: #9333ea;
+    --rr-accent-hover: #7c3aed;
+    --rr-accent-text: #e9d5ff;
+    --rr-accent-soft: rgba(147, 51, 234, 0.35);
+    --rr-silver: #e2e8f0;
+    --rr-silver-muted: #94a3b8;
+    --rr-silver-edge: rgba(226, 232, 240, 0.42);
+    --rr-charcoal: #121214;
+    --rr-charcoal-raised: #1a1b20;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--rr-charcoal);
+    color: var(--rr-silver-muted);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  header {
+    background: var(--rr-charcoal);
+    padding: 0.12rem 0 0.15rem 0;
+    text-align: center;
+    border-top: 2px solid var(--rr-accent);
+    border-bottom: 2px solid var(--rr-accent);
+    position: relative;
+    line-height: 0;
+  }
+  header img {
+    display: block;
+    width: auto;
+    max-width: min(1800px, calc(100vw - 72px));
+    max-height: min(360px, 40vh);
+    height: auto;
+    margin: 0 auto;
+    object-fit: contain;
+  }
+  .back-button {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    background: var(--rr-accent);
+    border: 2px solid var(--rr-silver-edge);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 12px var(--rr-accent-soft);
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+    padding: 0;
+  }
+  .back-button svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--rr-charcoal);
+  }
+  .back-button:active, .back-button:focus {
+    background: var(--rr-accent-hover);
+  }
+  .main-content {
+    max-width: 720px;
+    margin: 1.15rem auto 0 auto;
+    padding: 0 1rem 2rem 1rem;
+  }
+  .resource-section {
+    width: 100%;
+    background: var(--rr-charcoal-raised);
+    border: 2px solid var(--rr-accent-soft);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 0 14px var(--rr-accent-soft);
+    box-sizing: border-box;
+  }
+  .resource-section h1 {
+    color: var(--rr-accent-text);
+    margin-top: 0;
+    font-size: 1.65rem;
+  }
+  .resource-section h2 {
+    color: var(--rr-accent-text);
+    margin-top: 1.5rem;
+    font-size: 1.15rem;
+  }
+  .resource-section p,
+  .resource-section li {
+    color: var(--rr-silver-muted);
+  }
+  .resource-section ul {
+    padding-left: 1.25rem;
+  }
+  .resource-section a {
+    color: var(--rr-accent-text);
+    text-decoration: none;
+  }
+  .resource-section a:hover {
+    color: var(--rr-silver);
+    text-decoration: underline;
+  }
+  @media (max-width: 540px) {
+    .main-content {
+      padding: 0 2vw 2rem 2vw;
     }
-    header {
-      background-color: #000;
-      border-top: 4px solid #0071CE;
-      border-bottom: 4px solid #0071CE;
+    .resource-section {
       padding: 1rem;
-      text-align: center;
     }
     header img {
-      max-width: 200px;
-      height: auto;
+      max-width: min(1800px, calc(100vw - 56px));
+      max-height: min(320px, 36vh);
     }
     .back-button {
-      display: block;
-      margin: 1rem auto;
-      background-color: #0071CE;
-      color: white;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 90%;
-      max-width: 400px;
+      left: 8px;
+      width: 40px;
+      height: 40px;
     }
-    .back-button:hover {
-      background-color: #005fa3;
-    }
-    main {
-      padding: 1.5rem;
-    }
-    h1, h2 {
-      color: #FFA500;
-    }
-    a {
-      color: #00BFFF;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .site-footer {
-      text-align: center;
-      margin-top: 3rem;
-      margin-bottom: 120px;
-      font-size: 0.85rem;
-      color: #aaa;
-    }
-    .site-footer a {
-      color: #00BFFF;
-      text-decoration: none;
-    }
-    .site-footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  }
+  .site-footer {
+    text-align: center;
+    margin-top: 2.8rem;
+    margin-bottom: 70px;
+    font-size: 0.783rem;
+    color: var(--rr-silver-muted);
+  }
+  .site-footer a {
+    color: var(--rr-accent-text);
+    text-decoration: none;
+    margin: 0 6px;
+  }
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+
 </head>
 <body>
 
-  <header>
-    <img src="MetroFeedMainLogo.png" alt="MetroFeed Logo">
-  </header>
+<header>
+  <button type="button" class="back-button" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
+  <img src="RoamRavenNamelogo.svg" alt="RoamRaven" decoding="async" />
+</header>
 
-  <!-- Top Back Button -->
-  <button onclick="history.back()" class="back-button">← Back</button>
+<main class="main-content">
+  <div class="resource-section">
+  <h1>Privacy Policy</h1>
+  <p>Effective Date: April 16, 2025</p>
 
-  <main>
-    <h1>Privacy Policy</h1>
-    <p>Effective Date: April 16, 2025</p>
+  <h2>1. Overview</h2>
+  <p>
+    MetroFeed is committed to protecting your privacy and being transparent about how data is handled when you use the site.
+    This policy explains what limited information may be processed and how it is used. 
+  </p>
+  
+  <p>
+    MetroFeed may display sponsor advertisements. MetroFeed does not use third-party ad networks or engage in cross-site or behavioral tracking.
+  </p>
 
-    <h2>1. Overview</h2>
-    <p>MetroFeed is committed to protecting your privacy and ensuring transparency in how we handle any data associated with your visit. This policy outlines what limited information may be collected and how it is used. MetroFeed does not serve third-party advertising and does not track you across the web.</p>
+  <h2>2. Information We Collect</h2>
+  <p>
+    MetroFeed does not collect or store personal information such as names, email addresses, account credentials, or payment details.
+    MetroFeed does not require user accounts.
+  </p>
 
-    <h2>2. Information We Collect</h2>
-    <p>MetroFeed does not collect or store personal information such as names, emails, or account logins. Our analytics system may collect anonymized data, including browser type, device type, general location (city-level), time on page, and which pages are visited. All IP addresses are anonymized before processing.</p>
+  <p>
+    With the user’s permission, MetroFeed may access device location data to support map-based features. Location data is used in real time
+    and is not stored, logged, or retained by MetroFeed. Location accuracy varies based on the user’s device, browser, settings, and environment.
+  </p>
 
-    <h2>3. Purpose of Data Use</h2>
-    <p>We use anonymous traffic data to monitor performance, detect outages, evaluate which pages get the most use, and improve our overall design and responsiveness. Data is not used for targeting, profiling, or resold to any outside party.</p>
+  <p>
+    MetroFeed may allow users to save preferences, such as favorite routes, using local storage within the user’s browser or device.
+    This information remains stored locally on the user’s device and is not transmitted to or accessible by MetroFeed.
+  </p>
 
-    <h2>4. Cookies</h2>
-    <p>Cookies may be placed by Google Analytics to support basic performance tracking. These cookies do not store personally identifying data. You may opt out by disabling cookies in your browser settings. This may slightly impact how certain features behave.</p>
+  <p>
+    MetroFeed also uses Google Analytics to collect limited technical and usage information, such as device type, browser type,
+    pages visited, and general usage patterns, in aggregated form.
+  </p>
 
-    <h2>5. Links to External Services</h2>
-    <p>MetroFeed contains links to external services, such as transit agency websites, alert feeds, or weather maps. We are not responsible for the content or privacy practices of those third-party platforms. Use at your own discretion.</p>
+  <h2>3. Purpose of Data Use</h2>
+  <p>
+    We use usage and performance data to monitor reliability, detect outages, evaluate which pages are most used, and improve overall design
+    and responsiveness. Data is not used for targeting, profiling, or sold to outside parties.
+  </p>
 
-    <h2>6. Data Security</h2>
-    <p>MetroFeed does not operate user accounts, store sensitive data, or run a backend database. All analytics and cookie data is managed by Google under their privacy framework. No user-identifiable information is retained on our end. All reasonable steps are taken to prevent unauthorized access to any part of our system.</p>
+  <h2>4. Cookies</h2>
+  <p>
+    MetroFeed uses cookies associated with Google Analytics solely for basic performance measurement and site improvement.
+    These cookies are not used for advertising profiling or cross-site tracking.
+  </p>
 
-    <h2>7. Youth Usage</h2>
-    <p>MetroFeed is not intended for children under the age of 13. While we do not collect any personal data regardless of age, our content is designed for general public use and not specifically directed at minors. We encourage parents and guardians to monitor internet usage by minors.</p>
+  <p>
+    Users may disable cookies through browser settings, though doing so may affect how certain features function.
+  </p>
 
-    <h2>8. Legal Compliance</h2>
-    <p>MetroFeed aims to comply with applicable U.S. privacy regulations to the best of our ability. Users from jurisdictions with stricter privacy laws (e.g., GDPR, CCPA) are advised that MetroFeed does not offer personalized tracking or data processing, and any collected analytics data remains anonymous and is handled by Google.</p>
+  <h2>5. Links to External Services</h2>
+  <p>
+    MetroFeed may contain links to external services, such as transit agency websites, alert feeds, or weather maps.
+    We are not responsible for the content or privacy practices of those third-party platforms. Use at your own discretion.
+  </p>
 
-    <h2>9. Voluntary Communication</h2>
-    <p>If you choose to contact MetroFeed (e.g., through our contact form or by email) or submit advertising material, you may voluntarily provide personal or business information such as your name, email address, or promotional content. This information is used solely to respond to your inquiry or coordinate advertising services. We do not share this information with third parties or use it for marketing purposes. Advertisers may request removal of their submitted information at any time.</p>
+  <h2>6. Data Security</h2>
+  <p>
+    MetroFeed does not operate user accounts, store sensitive personal data, or maintain user profiles. Analytics data is processed by
+    Google Analytics under their privacy framework. MetroFeed does not retain user-identifiable information on its own systems.
+  </p>
 
-    <h2>10. Updates to This Policy</h2>
-    <p>This policy may be revised at any time to reflect operational changes, compliance needs, or platform updates. Continued use of MetroFeed after any change constitutes acceptance of the revised policy.</p>
+  <p>
+    Reasonable technical and organizational measures are used to protect the site and its services from unauthorized access or misuse.
+  </p>
 
-    <h2>11. Contact</h2>
-    <p>If you have any questions, concerns, or requests related to this Privacy Policy, please <a href="contact.html">Contact Us</a>.</p>
-  </main>
+  <h2>7. Youth Usage</h2>
+  <p>
+    MetroFeed is not intended for children under the age of 13. While we do not collect personal data regardless of age,
+    our content is designed for general public use and not specifically directed at minors. We encourage parents and guardians
+    to monitor internet usage by minors.
+  </p>
 
-  <!-- Footer -->
-  <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a>
-  </footer>
+  <h2>8. Legal Compliance</h2>
+  <p>
+    MetroFeed aims to comply with applicable U.S. privacy regulations to the best of our ability. Users from jurisdictions with stricter
+    privacy laws (e.g., GDPR, CCPA) are advised that MetroFeed does not offer personalized tracking or behavioral profiling, and any
+    analytics data collected is used only for performance measurement and site improvement.
+  </p>
+
+  <h2>9. Voluntary Communication</h2>
+  <p>
+    If you choose to contact MetroFeed (e.g., through our contact form or by email) or submit advertising material, you may voluntarily provide
+    personal or business information such as your name, email address, or promotional content. This information is used solely to respond to your
+    inquiry or coordinate advertising services. We do not share this information with third parties or use it for marketing purposes. Advertisers may
+    request removal of their submitted information at any time.
+  </p>
+
+  <h2>10. Updates to This Policy</h2>
+  <p>
+    This policy may be revised at any time to reflect operational changes, compliance needs, or platform updates.
+    Continued use of MetroFeed after any change constitutes acceptance of the revised policy.
+  </p>
+
+  <h2>11. Contact</h2>
+  <p>
+    If you have any questions, concerns, or requests related to this Privacy Policy, please <a href="contact.html">Contact Us</a>.
+  </p>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
 
 </body>
 </html>

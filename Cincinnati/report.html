@@ -14,122 +14,200 @@
   <meta charset="UTF-8" />
   <title>Report a Problem – MetroFeed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="metrofeedsimplelogo.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="metrofeedsimplelogo.png">
 
   <style>
+    :root {
+      --rr-accent: #9333ea;
+      --rr-accent-hover: #7c3aed;
+      --rr-accent-text: #e9d5ff;
+      --rr-accent-soft: rgba(147, 51, 234, 0.35);
+      --rr-silver: #e2e8f0;
+      --rr-silver-muted: #94a3b8;
+      --rr-silver-edge: rgba(226, 232, 240, 0.42);
+      --rr-charcoal: #121214;
+      --rr-charcoal-raised: #1a1b20;
+    }
     html, body {
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: #000;
-      color: #fff;
+      background: var(--rr-charcoal);
+      color: var(--rr-silver-muted);
       line-height: 1.6;
+      min-height: 100vh;
     }
     header {
-      background-color: #000;
-      border-top: 4px solid #0071CE;
-      border-bottom: 4px solid #0071CE;
-      padding: 1rem;
+      background: var(--rr-charcoal);
+      padding: 0.12rem 0 0.15rem 0;
       text-align: center;
+      border-top: 2px solid var(--rr-accent);
+      border-bottom: 2px solid var(--rr-accent);
+      position: relative;
+      line-height: 0;
     }
     header img {
-      max-width: 200px;
+      display: block;
+      width: auto;
+      max-width: min(1800px, calc(100vw - 72px));
+      max-height: min(360px, 40vh);
       height: auto;
+      margin: 0 auto;
+      object-fit: contain;
     }
     .back-button {
-      display: block;
-      margin: 1rem auto;
-      background-color: #0071CE;
-      color: white;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      border-radius: 6px;
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      background: var(--rr-accent);
+      border: 2px solid var(--rr-silver-edge);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      box-shadow: 0 0 12px var(--rr-accent-soft);
       cursor: pointer;
-      width: 90%;
-      max-width: 400px;
+      transition: background 0.2s;
+      outline: none;
+      padding: 0;
     }
-    .back-button:hover {
-      background-color: #005fa3;
+    .back-button svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--rr-charcoal);
     }
-    main {
+    .back-button:active, .back-button:focus {
+      background: var(--rr-accent-hover);
+    }
+    .main-content {
+      max-width: 720px;
+      margin: 1.15rem auto 0 auto;
+      padding: 0 1rem 2rem 1rem;
+    }
+    .resource-section {
+      width: 100%;
+      background: var(--rr-charcoal-raised);
+      border: 2px solid var(--rr-accent-soft);
+      border-radius: 12px;
       padding: 1.5rem;
+      box-shadow: 0 0 14px var(--rr-accent-soft);
+      box-sizing: border-box;
       text-align: center;
     }
-    h1, h2 {
-      color: #FFA500;
+    .resource-section h1,
+    .resource-section h2 {
+      color: var(--rr-accent-text);
       margin-bottom: 0.5rem;
     }
-    p {
+    .resource-section h1 { margin-top: 0; font-size: 1.65rem; }
+    .resource-section p {
+      color: var(--rr-silver-muted);
       margin-bottom: 1rem;
     }
-    a {
-      color: #00BFFF;
+    .resource-section a {
+      color: var(--rr-accent-text);
       text-decoration: none;
     }
-    a:hover {
+    .resource-section a:hover {
+      color: var(--rr-silver);
       text-decoration: underline;
     }
-
     .form-wrap {
       width: 100%;
       max-width: 650px;
       margin: 0 auto;
       text-align: left;
     }
-
+    .form-wrap label {
+      display: block;
+      color: var(--rr-accent-text);
+      font-size: 0.95rem;
+      margin-bottom: 0.35rem;
+    }
     textarea {
       width: 100%;
       padding: 1rem;
-      background-color: #222;
-      color: #ccc;
-      border: 1px solid #555;
-      border-radius: 0.5rem;
+      background: var(--rr-charcoal);
+      color: var(--rr-silver);
+      border: 1px solid var(--rr-accent-soft);
+      border-radius: 8px;
       box-sizing: border-box;
       font-size: 1rem;
       resize: vertical;
     }
-
+    textarea:focus {
+      outline: none;
+      border-color: var(--rr-accent);
+      box-shadow: 0 0 0 2px var(--rr-accent-soft);
+    }
     .helper {
       font-size: 0.9rem;
-      color: #bbb;
+      color: var(--rr-silver-muted);
       margin-top: 0.25rem;
       margin-bottom: 1rem;
     }
-
     .note {
       font-size: 0.92rem;
-      color: #bbb;
+      color: var(--rr-silver-muted);
       max-width: 750px;
       margin: 0.75rem auto 1.25rem auto;
       text-align: center;
     }
-
     .btn {
-      padding: 0.6rem 1.1rem;
-      background-color: #4dd0e1;
-      color: black;
-      border: none;
-      border-radius: 0.5rem;
+      padding: 0.65rem 1.25rem;
+      background: var(--rr-accent);
+      color: var(--rr-charcoal);
+      border: 2px solid var(--rr-silver-edge);
+      border-radius: 10px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 0 12px var(--rr-accent-soft);
+      transition: background 0.2s;
     }
-    .btn:hover { filter: brightness(0.95); }
-
+    .btn:hover,
+    .btn:focus {
+      background: var(--rr-accent-hover);
+      color: var(--rr-silver);
+    }
+    @media (max-width: 540px) {
+      .main-content {
+        padding: 0 2vw 2rem 2vw;
+      }
+      .resource-section {
+        padding: 1rem;
+      }
+      header img {
+        max-width: min(1800px, calc(100vw - 56px));
+        max-height: min(320px, 36vh);
+      }
+      .back-button {
+        left: 8px;
+        width: 40px;
+        height: 40px;
+      }
+    }
     .site-footer {
       text-align: center;
-      margin-top: 3rem;
-      margin-bottom: 120px;
-      font-size: 0.85rem;
-      color: #aaa;
+      margin-top: 2.8rem;
+      margin-bottom: 70px;
+      font-size: 0.783rem;
+      color: var(--rr-silver-muted);
     }
     .site-footer a {
-      color: #00BFFF;
+      color: var(--rr-accent-text);
       text-decoration: none;
+      margin: 0 6px;
     }
     .site-footer a:hover {
       text-decoration: underline;
     }
-
     .hidden { display: none; }
   </style>
 
@@ -138,12 +216,16 @@
 <body>
 
   <header>
-    <img src="MetroFeedMainLogo.png" alt="MetroFeed Logo">
+    <button type="button" class="back-button" onclick="history.back()" aria-label="Go back">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+      </svg>
+    </button>
+    <img src="RoamRavenNamelogo.svg" alt="RoamRaven" decoding="async" />
   </header>
 
-  <button onclick="history.back()" class="back-button">← Back</button>
-
-  <main>
+  <main class="main-content">
+    <div class="resource-section">
     <h1>Report a Problem</h1>
     <p>If you’ve encountered an issue with MetroFeed, let us know so we can fix it.</p>
     <p>Please include the city, page name (e.g., “Portland Traffic”), and a brief description of the issue.</p>
@@ -180,11 +262,13 @@
       </p>
 
     </div>
+    </div>
   </main>
 
   <footer class="site-footer">
     <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
     <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
     <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
     <a href="privacy.html">Privacy Policy</a>
   </footer>

@@ -12,128 +12,273 @@
 </script>
 
 <meta charset="UTF-8">
-  <title>Terms of Use – MetroFeed</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #000;
-      color: #fff;
-      line-height: 1.6;
+<title>Terms of Use – MetroFeed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="apple-touch-icon" href="metrofeedsimplelogo.png">
+<link rel="icon" type="image/png" sizes="512x512" href="metrofeedsimplelogo.png">
+
+<style>
+  :root {
+    --rr-accent: #9333ea;
+    --rr-accent-hover: #7c3aed;
+    --rr-accent-text: #e9d5ff;
+    --rr-accent-soft: rgba(147, 51, 234, 0.35);
+    --rr-silver: #e2e8f0;
+    --rr-silver-muted: #94a3b8;
+    --rr-silver-edge: rgba(226, 232, 240, 0.42);
+    --rr-charcoal: #121214;
+    --rr-charcoal-raised: #1a1b20;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--rr-charcoal);
+    color: var(--rr-silver-muted);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  header {
+    background: var(--rr-charcoal);
+    padding: 0.12rem 0 0.15rem 0;
+    text-align: center;
+    border-top: 2px solid var(--rr-accent);
+    border-bottom: 2px solid var(--rr-accent);
+    position: relative;
+    line-height: 0;
+  }
+  header img {
+    display: block;
+    width: auto;
+    max-width: min(1800px, calc(100vw - 72px));
+    max-height: min(360px, 40vh);
+    height: auto;
+    margin: 0 auto;
+    object-fit: contain;
+  }
+  .back-button {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    background: var(--rr-accent);
+    border: 2px solid var(--rr-silver-edge);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 12px var(--rr-accent-soft);
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+    padding: 0;
+  }
+  .back-button svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--rr-charcoal);
+  }
+  .back-button:active, .back-button:focus {
+    background: var(--rr-accent-hover);
+  }
+  .main-content {
+    max-width: 720px;
+    margin: 1.15rem auto 0 auto;
+    padding: 0 1rem 2rem 1rem;
+  }
+  .resource-section {
+    width: 100%;
+    background: var(--rr-charcoal-raised);
+    border: 2px solid var(--rr-accent-soft);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 0 14px var(--rr-accent-soft);
+    box-sizing: border-box;
+  }
+  .resource-section h1 {
+    color: var(--rr-accent-text);
+    margin-top: 0;
+    font-size: 1.65rem;
+  }
+  .resource-section h2 {
+    color: var(--rr-accent-text);
+    margin-top: 1.5rem;
+    font-size: 1.15rem;
+  }
+  .resource-section p,
+  .resource-section li {
+    color: var(--rr-silver-muted);
+  }
+  .resource-section ul {
+    padding-left: 1.25rem;
+  }
+  .resource-section a {
+    color: var(--rr-accent-text);
+    text-decoration: none;
+  }
+  .resource-section a:hover {
+    color: var(--rr-silver);
+    text-decoration: underline;
+  }
+  @media (max-width: 540px) {
+    .main-content {
+      padding: 0 2vw 2rem 2vw;
     }
-    header {
-      background-color: #000;
-      border-top: 4px solid #0071CE;
-      border-bottom: 4px solid #0071CE;
+    .resource-section {
       padding: 1rem;
-      text-align: center;
     }
     header img {
-      max-width: 200px;
-      height: auto;
+      max-width: min(1800px, calc(100vw - 56px));
+      max-height: min(320px, 36vh);
     }
     .back-button {
-      display: block;
-      margin: 1rem auto;
-      background-color: #0071CE;
-      color: white;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 90%;
-      max-width: 400px;
+      left: 8px;
+      width: 40px;
+      height: 40px;
     }
-    .back-button:hover {
-      background-color: #005fa3;
-    }
-    main {
-      padding: 1.5rem;
-    }
-    h1, h2 {
-      color: #FFA500;
-    }
-    a {
-      color: #00BFFF;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .site-footer {
-      text-align: center;
-      margin-top: 3rem;
-      margin-bottom: 120px;
-      font-size: 0.85rem;
-      color: #aaa;
-    }
-    .site-footer a {
-      color: #00BFFF;
-      text-decoration: none;
-    }
-    .site-footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  }
+  .site-footer {
+    text-align: center;
+    margin-top: 2.8rem;
+    margin-bottom: 70px;
+    font-size: 0.783rem;
+    color: var(--rr-silver-muted);
+  }
+  .site-footer a {
+    color: var(--rr-accent-text);
+    text-decoration: none;
+    margin: 0 6px;
+  }
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+
 </head>
 <body>
 
-  <header>
-    <img src="MetroFeedMainLogo.png" alt="MetroFeed Logo">
-  </header>
+<header>
+  <button type="button" class="back-button" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
+  <img src="RoamRavenNamelogo.svg" alt="RoamRaven" decoding="async" />
+</header>
 
-  <!-- Top Back Button -->
-  <button onclick="history.back()" class="back-button">← Back</button>
+<main class="main-content">
+  <div class="resource-section">
 
-  <main>
-    <h1>Terms of Use</h1>
-    <p>Effective Date: April 16, 2025</p>
+<h1>Terms of Use</h1>
+<p>Effective Date: April 16, 2025</p>
 
-    <h2>1. Acceptance of Terms</h2>
-    <p>By accessing or using the MetroFeed website or any of its services, you agree to be legally bound by these Terms of Use. These terms govern your access to and use of all content, functionality, and services provided by MetroFeed. If you do not agree with any part of these terms, you must not use the site.</p>
+<h2>1. Acceptance of Terms</h2>
+<p>
+By accessing or using the MetroFeed website or any of its services, you agree to be bound by these Terms of Use. These terms govern your access to and use of all content, features, and services provided by MetroFeed. If you do not agree with any part of these terms, you must not use the site.
+</p>
 
-    <h2>2. Use of Information</h2>
-<p>All content provided by MetroFeed is for general informational purposes only. Although we strive for accuracy, we make no guarantees regarding the completeness, reliability, or timeliness of any data, including traffic, transit, weather, and alert information. Users rely on this information at their own risk. MetroFeed does not host user accounts, does not collect personally identifiable information, and does not operate a backend database or store user data beyond temporary session activity.</p>
+<h2>2. Use of Information</h2>
+<p>
+MetroFeed provides information for general reference purposes only. While we aim to present helpful and timely data, we do not guarantee the accuracy, completeness, availability, or reliability of any information displayed, including transit schedules, traffic conditions, weather information, or alerts.
+</p>
 
-    <h2>3. Third-Party Sources</h2>
-<p>MetroFeed utilizes data from external entities including TomTom, public transit systems, weather services, and government alert feeds. We are not affiliated with, sponsored by, or endorsed by any of these providers. Their data is offered "as-is" and may contain inaccuracies, delays, or outages beyond our control. MetroFeed may link to external websites or services. We do not control and are not responsible for the content, policies, or practices of third-party platforms linked from our site.</p>
+<p>
+MetroFeed does not require user accounts and does not collect personal details such as names, email addresses, phone numbers, payment information, or government-issued identifiers.
+</p>
 
-    <h2>4. Limitation of Liability</h2>
-    <p>To the fullest extent permitted by applicable law, MetroFeed, its owners, operators, affiliates, and contributors disclaim all liability for any direct, indirect, incidental, consequential, or punitive damages resulting from your use of, or inability to use, the platform. You understand and agree that you use the MetroFeed platform entirely at your own risk.</p>
+<p>
+With the user’s permission, MetroFeed may access device location data to support map-based features such as nearby transit routes, traffic views, or weather context. Location data is used in real time and is not stored, logged, or retained by MetroFeed. Location accuracy depends on the user’s device, browser, and environment, and may vary. MetroFeed does not guarantee or verify location precision.
+</p>
 
-    <h2>5. Advertisements</h2>
-    <p>MetroFeed displays advertisements and sponsored placements. These do not constitute endorsements, approvals, or recommendations of any advertiser or product. We do not validate claims made within ads. Advertisers are solely responsible for the content and accuracy of their materials. MetroFeed is not liable for any interactions, purchases, or disputes that arise from third-party ads.</p>
+<p>
+MetroFeed may allow users to save preferences, such as favorite routes, using local storage within the user’s browser or device. This information is stored locally on the user’s device and is not transmitted to, accessed by, or stored on MetroFeed servers.
+</p>
 
-    <h2>6. Cookies and Analytics</h2>
-    <p>MetroFeed uses cookies and other tracking tools, including Google Analytics, to monitor website performance and improve user experience. By continuing to use our site, you consent to the use of cookies as described in our <a href="privacy.html">Privacy Policy</a>. You may manage cookie preferences through your browser settings. MetroFeed does not currently use third-party ad platforms like Google AdSense.</p>
+<p>
+Users are responsible for how they choose to use the information provided by MetroFeed.
+</p>
 
-    <h2>7. Intellectual Property & Copyright</h2>
-    <p>All original content on MetroFeed, including code, design, and written material, is the intellectual property of MetroFeed and may not be reproduced without explicit written permission. If you believe your copyrighted work has been used on our platform without authorization, please <a href="dmca.html">view our DMCA Policy</a> and follow the process outlined.</p>
+<h2>3. Third-Party Sources</h2>
+<p>
+MetroFeed utilizes data from third-party sources, including TomTom, the National Weather Service, and public city transit systems and traffic camera feeds. MetroFeed is an independent information platform and is not affiliated with, operated by, sponsored by, or endorsed by any public transit agency, transportation authority, government entity, traffic authority, weather service, or other data provider unless explicitly stated otherwise on a specific page or service.
+</p>
 
-    <h2>8. Modifications</h2>
-    <p>MetroFeed reserves the right to modify, update, or revise these Terms of Use at any time. We will post the revised terms on this page. Your continued use of the site constitutes your acceptance of any changes made.</p>
+<p>
+Third-party data is provided “as-is” and may be inaccurate, delayed, incomplete, or unavailable. MetroFeed is not responsible for errors, outages, or omissions originating from third-party sources.
+</p>
 
-    <h2>9. Governing Law</h2>
-    <p>These Terms of Use are governed by and construed in accordance with the laws of the Commonwealth of Kentucky, without regard to conflict of law principles. Any legal action related to these terms must be brought in a court of competent jurisdiction located in Kentucky, USA.</p>
+<h2>4. Emergency and Safety Disclaimer</h2>
+<p>
+MetroFeed is not an emergency service and should not be used for emergency response, medical decisions, public safety actions, evacuation planning, or other time-sensitive situations. Always follow guidance from official authorities and contact emergency services directly when needed.
+</p>
 
-    <h2>10. Voluntary Submissions</h2>
-    <p>If you choose to contact MetroFeed (e.g., for feedback, bug reports, or advertising inquiries), you may voluntarily provide personal or business information such as your name, email, or ad materials. This information is used only to respond to your message or fulfill requested services. We do not sell or share this information outside the scope of your communication.</p>
+<p>
+Information shown on MetroFeed should be verified through official sources when accuracy or timing is critical.
+</p>
 
-    <h2>11. Contact</h2>
-    <p>For any legal questions, content disputes, DMCA claims, or other inquiries, please <a href="contact.html">Contact Us</a> or email us at <a href="mailto:connect.metrofeed@outlook.com">connect.metrofeed@outlook.com</a>.</p>
-  </main>
+<h2>5. Limitation of Liability</h2>
+<p>
+To the fullest extent permitted by law, MetroFeed, its owners, operators, and contributors are not liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of, or inability to use, the site or its information.
+</p>
 
-  <!-- Footer -->
-  <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
-    <a href="privacy.html">Privacy Policy</a> &nbsp;|&nbsp;
-    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
-    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
-    <a href="report.html">Report a Problem</a>
-  </footer>
+<h2>6. Advertisements</h2>
+<p>
+MetroFeed displays advertisements and sponsored placements. These do not constitute endorsements, approvals, or recommendations. MetroFeed does not verify advertiser claims and is not responsible for products, services, transactions, or disputes involving advertisers.
+</p>
+
+<h2>7. Cookies and Analytics</h2>
+<p>
+MetroFeed uses Google Analytics to understand site usage and improve performance. Analytics data is collected in aggregated form and is not used for advertising profiling or cross-site tracking.
+</p>
+
+<p>
+You can manage or disable cookies through your browser settings, though some features may not function properly if cookies are disabled. Additional details are available in our <a href="privacy.html">Privacy Policy</a>.
+</p>
+
+<h2>8. Intellectual Property & Copyright</h2>
+<p>
+All original content on MetroFeed, including design, code, and written materials, is the intellectual property of MetroFeed unless otherwise stated. Unauthorized reproduction or distribution is prohibited.
+</p>
+
+<p>
+If you believe copyrighted material has been used improperly, please review our <a href="dmca.html">DMCA Policy</a> for instructions on submitting a notice.
+</p>
+
+<h2>9. Access and Availability</h2>
+<p>
+MetroFeed may update, suspend, restrict, or discontinue any part of the site or its services at any time. Access may also be limited in cases of misuse, technical issues, or operational needs.
+</p>
+
+<h2>10. Modifications</h2>
+<p>
+MetroFeed may revise these Terms of Use at any time. Updated terms will be posted on this page. Continued use of the site after changes are posted constitutes acceptance of the revised terms.
+</p>
+
+<h2>11. Governing Law</h2>
+<p>
+These Terms of Use are governed by the laws of the Commonwealth of Kentucky, without regard to conflict-of-law principles. Any legal action related to these terms must be brought in a court located in Kentucky, USA.
+</p>
+
+<h2>12. Contact</h2>
+<p>
+For legal questions, content concerns, or other inquiries, please <a href="contact.html">Contact Us</a> or email
+<a href="mailto:connect.metrofeed@outlook.com">connect.metrofeed@outlook.com</a>.
+</p>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
 
 </body>
 </html>
