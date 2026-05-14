@@ -1634,6 +1634,42 @@
       line-height: 1.45;
       font-weight: 600;
     }
+
+    /* Onboarding hints on phones: readable width, safe areas, wrapping */
+    @media (max-width: 640px) {
+      .dropdown-tooltip.mf-onboarding-hint {
+        padding: 10px 12px 12px;
+        padding-left: max(12px, env(safe-area-inset-left, 0px));
+        padding-right: max(12px, env(safe-area-inset-right, 0px));
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+        font-size: 0.88rem;
+        line-height: 1.4;
+        font-weight: 700;
+        max-width: min(
+          calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 16px),
+          94vw
+        ) !important;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        -webkit-hyphens: auto;
+      }
+      .mf-onboarding-hint-step,
+      .mf-onboarding-hint-done {
+        top: max(5px, env(safe-area-inset-top, 0px));
+        right: max(7px, env(safe-area-inset-right, 0px));
+      }
+      .mf-onboarding-hint-text {
+        padding-right: 3rem;
+        font-size: 0.88rem;
+        line-height: 1.42;
+      }
+      .mf-onboarding-hint--closing .mf-onboarding-hint-text {
+        font-size: 0.93rem;
+        line-height: 1.48;
+        padding-bottom: 2px;
+      }
+    }
     
     /* Mobile: attribution lives inside #map; footer sits above the map — lift OSM control clear of footer + home indicator */
     @media (max-width: 768px) {
@@ -4825,9 +4861,18 @@
     }
     const narrow =
       typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+    const isOnboarding =
+      (elOpts && elOpts.variant === 'onboarding') ||
+      (elOpts && elOpts.closing) ||
+      (elOpts && elOpts.progress && elOpts.progress.current != null && elOpts.progress.total != null);
     let maxW = narrow ? 'min(92vw, 300px)' : '240px';
-    if (elOpts && elOpts.closing) {
-      maxW = narrow ? 'min(92vw, 360px)' : 'min(420px, 92vw)';
+    if (narrow && isOnboarding) {
+      maxW =
+        'min(calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 16px), 94vw)';
+    } else if (elOpts && elOpts.closing) {
+      maxW = narrow ? 'min(94vw, 380px)' : 'min(420px, 92vw)';
+    } else if (elOpts && elOpts.progress && elOpts.progress.current != null && !narrow) {
+      maxW = 'min(320px, 92vw)';
     }
     t.style.maxWidth = maxW;
     t.style.whiteSpace = 'normal';
@@ -4865,7 +4910,11 @@
     const rect = targetEl.getBoundingClientRect();
     const tooltip = mfTooltipEl(text, opts);
     const pad = (opts && opts.padPx) ? opts.padPx : 10;
-    const edge = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches ? 12 : 8;
+    const mobile = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+    let edge = mobile ? 12 : 8;
+    if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
+      edge = Math.max(edge, 14);
+    }
     // Position: prefer to the right of target; flip to left if we'd overflow viewport.
     tooltip.style.top = '0px';
     tooltip.style.left = '-9999px'; // temp offscreen for measurement
@@ -4890,12 +4939,20 @@
       if (t < edge) t = edge;
       tooltip.style.left = `${Math.max(edge, Math.round(left))}px`;
       tooltip.style.top = `${Math.max(edge, Math.round(t))}px`;
+      try {
+        const tw = tooltip.offsetWidth || w;
+        if (vw && tw) {
+          let L = parseFloat(tooltip.style.left) || 0;
+          L = Math.max(edge, Math.min(L, vw - tw - edge));
+          tooltip.style.left = `${Math.round(L)}px`;
+        }
+      } catch (_) {}
       if (placedLeftOfTarget) {
         tooltip.classList.add('dropdown-tooltip--arrow-right');
       }
     } catch (_) {
       const left = rect.right + pad;
-      tooltip.style.left = `${Math.max(8, Math.round(left))}px`;
+      tooltip.style.left = `${Math.max(edge, Math.round(left))}px`;
     }
     setTimeout(() => {
       tooltip.classList.remove('show');
@@ -4931,9 +4988,14 @@
       const h = tooltip.offsetHeight || 52;
       const vw = window.innerWidth || document.documentElement.clientWidth || 0;
       const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-      const edge = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches ? 12 : 8;
+      const mobile = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+      let edge = mobile ? 12 : 8;
+      if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
+        edge = Math.max(edge, 14);
+      }
       let left = vw ? Math.round((vw - w) / 2) : edge;
-      let top = vh ? Math.round(vh * 0.44 - h / 2) : edge;
+      const topFrac = mobile && tooltip.classList.contains('mf-onboarding-hint') ? 0.38 : 0.44;
+      let top = vh ? Math.round(vh * topFrac - h / 2) : edge;
       if (left < edge) left = edge;
       if (vw && left + w > vw - edge) left = Math.max(edge, vw - w - edge);
       if (top < edge) top = edge;
@@ -4999,7 +5061,11 @@
       const h = tooltip.offsetHeight || 52;
       const vw = window.innerWidth || document.documentElement.clientWidth || 0;
       const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-      const edge = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches ? 12 : 8;
+      const mobile = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+      let edge = mobile ? 12 : 8;
+      if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
+        edge = Math.max(edge, 14);
+      }
 
       // Center horizontally over marker, sit above it.
       let left = rect.left + rect.width / 2 - w / 2;
@@ -5009,7 +5075,9 @@
       if (left < edge) left = edge;
       if (vw && left + w > vw - edge) left = Math.max(edge, vw - w - edge);
       if (top < edge) top = rect.bottom + 10; // if no room above, place below
-      if (vh && top + h > vh - edge) top = Math.max(edge, vh - h - edge);
+      const bottomPad =
+        mobile && tooltip.classList.contains('mf-onboarding-hint') ? edge + 16 : edge;
+      if (vh && top + h > vh - bottomPad) top = Math.max(edge, vh - h - bottomPad);
 
       tooltip.style.left = `${Math.round(left)}px`;
       tooltip.style.top = `${Math.round(top)}px`;
