@@ -1575,6 +1575,37 @@
       border-right: none;
       border-left: 6px solid rgba(226, 232, 240, 0.42);
     }
+
+    /* Onboarding / quick-tutorial hints: purple frame + subtle pop */
+    .dropdown-tooltip.mf-onboarding-hint {
+      border: 2px solid #a855f7;
+      box-shadow:
+        0 0 0 1px rgba(168, 85, 247, 0.35),
+        0 4px 18px rgba(0, 0, 0, 0.45);
+      animation: mf-onboarding-hint-pop 0.55s ease-out;
+    }
+    @keyframes mf-onboarding-hint-pop {
+      0% {
+        opacity: 0.82;
+        box-shadow: 0 0 0 0 rgba(168, 85, 247, 0), 0 2px 10px rgba(0, 0, 0, 0.35);
+      }
+      45% {
+        opacity: 1;
+        box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.5), 0 6px 22px rgba(88, 28, 135, 0.3);
+      }
+      100% {
+        opacity: 1;
+        box-shadow:
+          0 0 0 1px rgba(168, 85, 247, 0.35),
+          0 4px 18px rgba(0, 0, 0, 0.45);
+      }
+    }
+    .dropdown-tooltip.mf-onboarding-hint::after {
+      border-right-color: rgba(192, 132, 252, 0.9);
+    }
+    .dropdown-tooltip.mf-onboarding-hint.dropdown-tooltip--arrow-right::after {
+      border-left-color: rgba(192, 132, 252, 0.9);
+    }
     
     /* Mobile: attribution lives inside #map; footer sits above the map — lift OSM control clear of footer + home indicator */
     @media (max-width: 768px) {
@@ -4755,9 +4786,12 @@
   }
   
   // === SECTION: POST-TUTORIAL TOOLTIP NUDGES ===
-  function mfTooltipEl(text) {
+  function mfTooltipEl(text, elOpts) {
     const t = document.createElement('div');
     t.className = 'dropdown-tooltip show';
+    if (elOpts && elOpts.variant === 'onboarding') {
+      t.classList.add('mf-onboarding-hint');
+    }
     t.textContent = text;
     const narrow =
       typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
@@ -4770,7 +4804,7 @@
   function mfShowAnchoredTooltip(targetEl, text, opts) {
     if (!targetEl) return null;
     const rect = targetEl.getBoundingClientRect();
-    const tooltip = mfTooltipEl(text);
+    const tooltip = mfTooltipEl(text, opts);
     const pad = (opts && opts.padPx) ? opts.padPx : 10;
     const edge = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches ? 12 : 8;
     // Position: prefer to the right of target; flip to left if we'd overflow viewport.
@@ -4815,7 +4849,7 @@
     const canvas = window.map && window.map.getCanvas ? window.map.getCanvas() : null;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
-    const tooltip = mfTooltipEl(text);
+    const tooltip = mfTooltipEl(text, opts);
     const top = rect.top + 16;
     const left = rect.left + 16;
     tooltip.style.top = `${Math.max(8, Math.round(top))}px`;
@@ -4829,7 +4863,7 @@
   }
 
   function mfShowCenteredTooltip(text, opts) {
-    const tooltip = mfTooltipEl(text);
+    const tooltip = mfTooltipEl(text, opts);
     tooltip.style.top = '0px';
     tooltip.style.left = '-9999px';
     document.body.appendChild(tooltip);
@@ -4897,7 +4931,7 @@
   function mfShowTooltipAboveEl(targetEl, text, opts) {
     if (!targetEl) return null;
     const rect = targetEl.getBoundingClientRect();
-    const tooltip = mfTooltipEl(text);
+    const tooltip = mfTooltipEl(text, opts);
     tooltip.style.top = '0px';
     tooltip.style.left = '-9999px';
     document.body.appendChild(tooltip);
@@ -4947,22 +4981,25 @@
   /**
    * Sequenced map/UI hints (bus → stop → route tab → favorites). Used by post–"Got it" nudges and Quick tutorial.
    * @param {Array<{key:string,text:string,getEl:function():Element|null}>} steps
-   * @param {{stepPauseMs?:number,busStopTooltipMs?:number,anchoredTooltipMs?:number,waitTimeoutMs?:number}} [opts]
+   * @param {{stepPauseMs?:number,busStopTooltipMs?:number,anchoredTooltipMs?:number,waitTimeoutMs?:number,tooltipVariant?:string}} [opts]
    */
   async function mfRunOnboardingMapHintSteps(steps, opts) {
     const stepPauseMs = opts && opts.stepPauseMs != null ? opts.stepPauseMs : 4000;
     const busStopMs = opts && opts.busStopTooltipMs != null ? opts.busStopTooltipMs : 3200;
     const anchoredMs = opts && opts.anchoredTooltipMs != null ? opts.anchoredTooltipMs : 3600;
     const waitTimeoutMs = opts && opts.waitTimeoutMs != null ? opts.waitTimeoutMs : 2600;
+    const variant = opts && opts.tooltipVariant ? opts.tooltipVariant : null;
+    const busOpts = Object.assign({ ms: busStopMs }, variant ? { variant } : {});
+    const anchOpts = Object.assign({ ms: anchoredMs, padPx: 12 }, variant ? { variant } : {});
     for (let i = 0; i < steps.length; i++) {
       const s = steps[i];
       const el = await mfWaitForElement(s.getEl, { timeoutMs: waitTimeoutMs, intervalMs: 120 });
       if (s.key === 'bus' || s.key === 'stop') {
-        if (el) mfShowTooltipAboveEl(el, s.text, { ms: busStopMs });
-        else mfShowCenteredTooltip(s.text, { ms: busStopMs });
+        if (el) mfShowTooltipAboveEl(el, s.text, busOpts);
+        else mfShowCenteredTooltip(s.text, busOpts);
       } else {
         if (!el) continue;
-        mfShowAnchoredTooltip(el, s.text, { ms: anchoredMs, padPx: 12 });
+        mfShowAnchoredTooltip(el, s.text, anchOpts);
       }
       await new Promise((r) => setTimeout(r, stepPauseMs));
     }
@@ -5004,10 +5041,11 @@
         }
       ];
       await mfRunOnboardingMapHintSteps(steps, {
-        stepPauseMs: 4000,
-        busStopTooltipMs: 3200,
-        anchoredTooltipMs: 3600,
-        waitTimeoutMs: 2600
+        stepPauseMs: 6000,
+        busStopTooltipMs: 5400,
+        anchoredTooltipMs: 5400,
+        waitTimeoutMs: 2600,
+        tooltipVariant: 'onboarding'
       });
     })();
   };
@@ -6105,7 +6143,12 @@
     window.metrofeedStartQuickTutorial ||
     async function metrofeedStartQuickTutorial() {
       const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-      const stepPause = 4200;
+      /** Tooltip visible ~this long; step wait ≈ tooltip + 600ms fade + short gap so the next beat follows quickly. */
+      const tipMenu = 5400;
+      const tipBus = 5400;
+      const tipDash = 5400;
+      const stepAfter = (tipMs) => tipMs + 700;
+      const pop = { variant: 'onboarding' };
 
       const finishOnboarding = () => {
         try {
@@ -6125,12 +6168,12 @@
           mfShowAnchoredTooltip(
             menuBtn,
             'Open the menu for bus and rail routes, traffic, cameras, weather, alerts, and more.',
-            { ms: 3800, padPx: 12 }
+            Object.assign({ ms: tipMenu, padPx: 12 }, pop)
           );
         } else {
-          mfShowCenteredTooltip('Use the menu (top-left) for routes, overlays, and tools.', { ms: 3800 });
+          mfShowCenteredTooltip('Use the menu (top-left) for routes, overlays, and tools.', Object.assign({ ms: tipMenu }, pop));
         }
-        await delay(stepPause);
+        await delay(stepAfter(tipMenu));
 
         if (dropdownMenu && busesBtn) {
           try {
@@ -6140,13 +6183,35 @@
           mfShowAnchoredTooltip(
             busesBtn,
             'Choose Bus Routes to pick a line and direction. Rail and other tools are in this menu too.',
-            { ms: 4000, padPx: 12 }
+            Object.assign({ ms: tipBus, padPx: 12 }, pop)
           );
-          await delay(stepPause);
+          await delay(stepAfter(tipBus));
           try {
             dropdownMenu.style.display = 'none';
           } catch (_) {}
         }
+
+        const openBar = document.getElementById('mfTripPlannerOpenBar');
+        const tripToggle = document.getElementById('mfTripPlannerToggle');
+        let dashboardEl = null;
+        if (openBar) {
+          const cs = window.getComputedStyle(openBar);
+          if (cs.display !== 'none' && cs.visibility !== 'hidden' && openBar.offsetWidth > 0) dashboardEl = openBar;
+        }
+        if (!dashboardEl && tripToggle) dashboardEl = tripToggle;
+        if (dashboardEl) {
+          mfShowAnchoredTooltip(
+            dashboardEl,
+            'The dashboard up here is for trip planning, Find Me, Go/Clear, and opening full trip options.',
+            Object.assign({ ms: tipDash, padPx: 12 }, pop)
+          );
+        } else {
+          mfShowCenteredTooltip(
+            'Use the trip planner row at the top for the dashboard — trip planning, Find Me, and trip options.',
+            Object.assign({ ms: tipDash }, pop)
+          );
+        }
+        await delay(stepAfter(tipDash));
 
         const mapCanvas = window.map && window.map.getCanvas ? window.map.getCanvas() : null;
         const steps = [
@@ -6172,10 +6237,11 @@
           }
         ];
         await mfRunOnboardingMapHintSteps(steps, {
-          stepPauseMs: stepPause,
-          busStopTooltipMs: 3400,
-          anchoredTooltipMs: 3800,
-          waitTimeoutMs: 2800
+          stepPauseMs: 6000,
+          busStopTooltipMs: 5400,
+          anchoredTooltipMs: 5400,
+          waitTimeoutMs: 2800,
+          tooltipVariant: 'onboarding'
         });
       } catch (e) {
         console.warn('[metrofeedStartQuickTutorial]', e);
