@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetroFeed | National map</title>
+  <title>RoamRaven | National map</title>
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <style>
@@ -229,38 +229,56 @@
       color: #fff;
     }
 
-    /* Cookie prompt: fullscreen dim + centered card */
+    /* Cookie prompt: fullscreen dim + centered card (symmetric safe-area so flex/grid center stays optical viewport center) */
     #mfCookieBar {
       display: none;
       position: fixed;
       inset: 0;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
       z-index: 1500;
-      align-items: center;
-      justify-content: center;
-      padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
-        max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+      box-sizing: border-box;
+      --mf-cookie-pad-y: max(16px, env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px));
+      padding: var(--mf-cookie-pad-y) max(16px, env(safe-area-inset-right, 0px)) var(--mf-cookie-pad-y)
+        max(16px, env(safe-area-inset-left, 0px));
       background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
     }
-    #mfCookieBar.is-visible { display: flex; }
+    #mfCookieBar.is-visible {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
     .mf-cookie-card {
       width: min(520px, 100%);
       background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.97) 100%);
       border: 1px solid var(--rr-silver-edge);
       border-radius: 16px;
-      padding: 16px 18px;
+      padding: 18px 20px 20px;
       font-size: 0.82rem;
       color: var(--rr-silver-muted);
       box-shadow: 0 20px 56px rgba(0, 0, 0, 0.72), inset 0 1px 0 var(--rr-silver-dim);
-      text-align: left;
+      text-align: center;
+    }
+    .mf-cookie-card #mfCookieTitle {
+      text-align: center;
+    }
+    .mf-cookie-card > p {
+      max-width: 38rem;
+      margin-left: auto;
+      margin-right: auto;
     }
     .mf-cookie-card .mf-cookie-actions {
-      margin-top: 12px;
+      margin-top: 14px;
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
-      justify-content: flex-end;
+      justify-content: center;
+      align-items: center;
     }
     .mf-cookie-card button {
       appearance: none;
@@ -369,12 +387,12 @@
   </style>
 </head>
 <body>
-  <div id="map" aria-label="MetroFeed national map (OH KY IN)"></div>
+  <div id="map" aria-label="RoamRaven national map (OH KY IN)"></div>
 
   <div class="mf-topbar">
     <div class="mf-topbar-inner">
       <div class="mf-brand-mark" aria-hidden="true">
-        <img src="MetroFeedMainLogo.png" alt="" width="34" height="34" />
+        <img src="MetroFeedMainLogo.png" alt="RoamRaven" width="34" height="34" />
       </div>
       <div class="mf-toolbar">
         <div class="mf-city-search-wrap">
@@ -397,11 +415,11 @@
 
   <div id="mfCookieBar" class="" role="presentation">
     <div class="mf-cookie-card" role="dialog" aria-modal="true" aria-labelledby="mfCookieTitle">
-      <strong id="mfCookieTitle" style="color: var(--rr-silver); display: block; margin-bottom: 8px; font-size: 0.95rem;">Cookies &amp; location</strong>
-      <p style="margin: 0 0 10px; line-height: 1.45;">
+      <strong id="mfCookieTitle" style="color: var(--rr-silver); display: block; margin: 0 auto 10px; font-size: 0.95rem; text-align: center;">Cookies &amp; location</strong>
+      <p style="margin: 0 auto 10px; line-height: 1.45; text-align: center;">
         We use cookies <strong style="color: var(--rr-silver);">to save your personal settings</strong> (not only for GPS). With your browser’s permission, we can also use <strong style="color: var(--rr-silver);">location</strong> to show where you are on the map. You can search for a city or explore without sharing location.
       </p>
-      <p style="margin: 0 0 12px; line-height: 1.45; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(147, 51, 234, 0.45); background: rgba(147, 51, 234, 0.12); color: #f1f5f9; font-weight: 700; font-size: 0.84rem;">
+      <p style="margin: 0 auto 12px; line-height: 1.45; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(147, 51, 234, 0.45); background: rgba(147, 51, 234, 0.12); color: #f1f5f9; font-weight: 700; font-size: 0.84rem; text-align: center;">
         We do not collect or sell any personal data.
       </p>
       <div class="mf-cookie-actions">
@@ -412,7 +430,7 @@
   </div>
 
   <div id="mfGpsRegionBar" role="status" aria-live="polite">
-    <strong>Your location isn’t in a MetroFeed city yet</strong>
+    <strong>Your location isn’t in a RoamRaven city yet</strong>
     Zoom out and pick a purple region, or use search to jump to a supported city.
   </div>
 
@@ -702,7 +720,7 @@
         var nm = MF_SUPPORTED_CITIES[o.key] && MF_SUPPORTED_CITIES[o.key].name ? MF_SUPPORTED_CITIES[o.key].name : o.key;
         o.el.setAttribute(
           'aria-label',
-          armed ? nm + ': tap again to open MetroFeed' : nm + ': zoom to city (tap twice to open)'
+          armed ? nm + ': tap again to open RoamRaven' : nm + ': zoom to city (tap twice to open)'
         );
       });
     }

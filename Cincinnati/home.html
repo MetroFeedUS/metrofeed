@@ -5207,7 +5207,7 @@
   }
 
   /**
-   * Sequenced map/UI hints (bus → stop → route tab → favorites). Used by post–"Got it" nudges and Quick tutorial.
+   * Sequenced map/UI hints (bus → stop → route tab → favorites). Used by Quick tutorial only.
    * @param {Array<{key:string,text:string,getEl:function():Element|null}>} steps
    * @param {{stepPauseMs?:number,busStopTooltipMs?:number,anchoredTooltipMs?:number,waitTimeoutMs?:number,tooltipVariant?:string,progressStart?:number,progressTotal?:number}} [opts]
    */
@@ -5238,57 +5238,11 @@
     }
   }
 
-  window.metrofeedAfterTutorial = function () {
-    try {
-      if (localStorage.getItem('mfOnboardingDone') === '1' && sessionStorage.getItem('mfTutorialShown') !== '1') {
-        // If onboarding already completed in a previous visit, never show tooltips again.
-        return;
-      }
-      if (sessionStorage.getItem('mfPostTutorialHintsShown') === '1') return;
-      sessionStorage.setItem('mfPostTutorialHintsShown', '1');
-    } catch (_) {}
-
-    // Smart 4-step onboarding tour (bus -> stop -> chip -> favorites). If a target isn't available, skip that step.
-    (async () => {
-      const mapCanvas = window.map && window.map.getCanvas ? window.map.getCanvas() : null;
-      const steps = [
-        {
-          key: 'bus',
-          text: 'Tap a bus for details.',
-          getEl: () => mfPickMostCenteredEl('.mf-bus-marker', mapCanvas)
-        },
-        {
-          key: 'stop',
-          text: 'Tap a stop for times.',
-          getEl: () => mfPickMostCenteredEl('.mf-stop-marker', mapCanvas)
-        },
-        {
-          key: 'chip',
-          text: 'Tap this route tab for options.',
-          getEl: () => document.querySelector('.route-info-panel, .otp-trip-route-chip')
-        },
-        {
-          key: 'favorites',
-          text: 'Your favorites live down here.',
-          getEl: () => document.getElementById('favoritesWrapper')
-        }
-      ];
-      const totalSteps = steps.length;
-      await mfRunOnboardingMapHintSteps(steps, {
-        stepPauseMs: 6000,
-        busStopTooltipMs: 5400,
-        anchoredTooltipMs: 5400,
-        waitTimeoutMs: 2600,
-        tooltipVariant: 'onboarding',
-        progressStart: 1,
-        progressTotal: totalSteps
-      });
-      await mfShowOnboardingClosingStatement(
-        "You're all set. Explore the map, use the route tab for trip options, and save favorites below. Welcome to RoamRaven.",
-        5400
-      );
-    })();
-  };
+  /**
+   * Optional extension hook. Welcome dismiss ("Got it", X, Escape) no longer runs map hints here —
+   * those run only from "Quick tutorial" (`metrofeedStartQuickTutorial`).
+   */
+  window.metrofeedAfterTutorial = function () {};
 
   // === SECTION: FAVORITES COLLAPSE TOGGLE ===
   const favoritesWrapper = document.getElementById('favoritesWrapper');
@@ -6348,9 +6302,11 @@
       detachKey();
       modal.style.display = 'none';
       try {
-        if (typeof window.metrofeedAfterTutorial === 'function') window.metrofeedAfterTutorial();
+        sessionStorage.setItem('mfPostTutorialHintsShown', '1');
       } catch (_) {}
-      try { localStorage.setItem('mfOnboardingDone', '1'); } catch (_) {}
+      try {
+        localStorage.setItem('mfOnboardingDone', '1');
+      } catch (_) {}
     };
 
     const startQuickTutorial = () => {
