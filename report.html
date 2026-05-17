@@ -12,7 +12,7 @@
   </script>
 
   <meta charset="UTF-8" />
-  <title>Report a Problem – MetroFeed</title>
+  <title>Report a Problem – RoamRaven</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="apple-touch-icon" href="metrofeedsimplelogo.png">
@@ -129,9 +129,18 @@
       margin-bottom: 0.5rem;
     }
     .resource-section h1 { margin-top: 0; font-size: 1.65rem; }
-    .resource-section p {
+    .resource-section p,
+    .resource-section li {
       color: var(--rr-silver-muted);
       margin-bottom: 1rem;
+    }
+    .resource-section ul {
+      text-align: left;
+      margin: 0.5rem 0 1rem 0;
+      padding-left: 1.25rem;
+    }
+    .resource-section ul li {
+      margin-bottom: 0.35rem;
     }
     .resource-section a {
       color: var(--rr-accent-text);
@@ -164,10 +173,23 @@
       font-size: 1rem;
       resize: vertical;
     }
-    textarea:focus {
+    textarea:focus,
+    select:focus {
       outline: none;
       border-color: var(--rr-accent);
       box-shadow: 0 0 0 2px var(--rr-accent-soft);
+    }
+    select {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      margin-bottom: 1rem;
+      background: var(--rr-charcoal);
+      color: var(--rr-silver);
+      border: 1px solid var(--rr-accent-soft);
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 1rem;
+      font-family: inherit;
     }
     .helper {
       font-size: 0.9rem;
@@ -260,15 +282,38 @@
   <main class="main-content">
     <div class="resource-section">
     <h1>Report a Problem</h1>
-    <p>If you’ve encountered an issue with MetroFeed, let us know so we can fix it.</p>
-    <p>Please include the city, page name (e.g., “Portland Traffic”), and a brief description of the issue.</p>
+    <p>
+      If you encounter an issue while using RoamRaven, please let us know so we can investigate and improve the platform.
+    </p>
+    <p>When possible include:</p>
+    <ul>
+      <li>City or region</li>
+      <li>Page name or feature</li>
+      <li>Route or stop information</li>
+      <li>Expected behavior</li>
+      <li>Actual behavior</li>
+      <li>Approximate time of issue</li>
+    </ul>
 
-    <h2>Anonymous Bug Report</h2>
-    <p>No account. No email. Just tell us what’s broken.</p>
+    <h2>Issue Categories (optional)</h2>
+    <ul>
+      <li>Route Information</li>
+      <li>Transit Data</li>
+      <li>Traffic Information</li>
+      <li>Cameras</li>
+      <li>Weather</li>
+      <li>Routing / Trip Planning</li>
+      <li>GPS / Location</li>
+      <li>Accessibility</li>
+      <li>Broken Page</li>
+      <li>Incorrect Information</li>
+      <li>Sponsor Content</li>
+      <li>Performance Issue</li>
+      <li>Other</li>
+    </ul>
 
     <p class="note">
-      Please do not submit sensitive personal information (passwords, payment details, full addresses, or medical information).
-      MetroFeed is not an emergency service — for urgent or safety-related issues, use official sources or emergency services.
+      RoamRaven is not an emergency service. Do not submit urgent medical, safety, law enforcement, or emergency requests through this form.
     </p>
 
     <div class="form-wrap">
@@ -282,16 +327,36 @@
           <label>Don’t fill this out: <input name="bot-field"></label>
         </p>
 
+        <label for="issue-category">Issue category (optional)</label>
+        <select id="issue-category" name="issue-category">
+          <option value="">— Select a category —</option>
+          <option value="Route Information">Route Information</option>
+          <option value="Transit Data">Transit Data</option>
+          <option value="Traffic Information">Traffic Information</option>
+          <option value="Cameras">Cameras</option>
+          <option value="Weather">Weather</option>
+          <option value="Routing / Trip Planning">Routing / Trip Planning</option>
+          <option value="GPS / Location">GPS / Location</option>
+          <option value="Accessibility">Accessibility</option>
+          <option value="Broken Page">Broken Page</option>
+          <option value="Incorrect Information">Incorrect Information</option>
+          <option value="Sponsor Content">Sponsor Content</option>
+          <option value="Performance Issue">Performance Issue</option>
+          <option value="Other">Other</option>
+        </select>
+
         <label for="message">Message</label>
         <textarea id="message" name="message" required placeholder="Describe the issue here..." rows="7"></textarea>
-        <div class="helper">Tip: city + page name + what you expected vs what happened.</div>
+        <div class="helper">Tip: include city, page or feature, route/stop if relevant, expected vs actual behavior, and approximate time.</div>
 
         <button type="submit" class="btn">Send</button>
       </form>
 
       <p class="note" style="margin-top: 1.25rem;">
-        Submissions are used for troubleshooting only and are delivered to MetroFeed via our site form provider.
-        For more information, see our <a href="privacy.html">Privacy Policy</a>.
+        Reports are used only for troubleshooting, platform improvement, operational review, and issue resolution.
+      </p>
+      <p class="note">
+        Please avoid submitting passwords, payment information, medical information, government identifiers, or other sensitive data.
       </p>
 
     </div>
