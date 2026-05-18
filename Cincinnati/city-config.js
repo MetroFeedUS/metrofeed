@@ -243,10 +243,11 @@ const CITIES = {
     // Static per-route JSON hosting
     routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/",
 
-    // Multi-agency bus modal tabs (Metro / TANK)
+    // Multi-agency bus modal tabs (Metro / TANK / BCRTA Butler County)
     busModalSystems: [
-      { id: "metro", label: "Metro", idPrefix: "sorta_" },
-      { id: "tank", label: "TANK", idPrefix: "tank_" }
+      { id: "metro", label: "Metro", idPrefix: "sorta_", feedAgency: "sorta" },
+      { id: "tank", label: "TANK", idPrefix: "tank_", feedAgency: "tank" },
+      { id: "bcrta", label: "BCRTA", idPrefix: "bcrta_", feedAgency: "bcrta" }
     ],
 
     // Live vehicle marker SVG alignment. bus.svg faces WEST; flip 180° so it faces direction-of-travel.
@@ -291,8 +292,42 @@ function getCityConfig(cityId) {
   return config;
 }
 
+/**
+ * Cincinnati multi-agency route ids (sorta_, tank_, bcrta_) → display + realtime feed agency key.
+ * @param {string} routeId
+ * @returns {{ feedAgency: string, label: string, idPrefix: string, digits: string }|null}
+ */
+function metrofeedAgencyFromRouteId(routeId) {
+  const r = String(routeId || "");
+  const cfg = typeof getCityConfig === "function" ? getCityConfig() : null;
+  const systems = cfg && Array.isArray(cfg.busModalSystems) ? cfg.busModalSystems : [];
+  for (let i = 0; i < systems.length; i++) {
+    const sys = systems[i];
+    const pref = sys && sys.idPrefix ? String(sys.idPrefix) : "";
+    if (!pref || !r.startsWith(pref)) continue;
+    const feedAgency =
+      sys.feedAgency != null && String(sys.feedAgency).trim() !== ""
+        ? String(sys.feedAgency).toLowerCase()
+        : pref === "sorta_"
+          ? "sorta"
+          : pref === "tank_"
+            ? "tank"
+            : pref === "bcrta_"
+              ? "bcrta"
+              : String(sys.id || "").toLowerCase();
+    return {
+      feedAgency,
+      label: String(sys.label || sys.id || ""),
+      idPrefix: pref,
+      digits: r.slice(pref.length)
+    };
+  }
+  return null;
+}
+
 // Export for use in template
 window.CITIES = CITIES;
 window.getCityConfig = getCityConfig;
 window.getCityIdFromPath = getCityIdFromPath;
+window.metrofeedAgencyFromRouteId = metrofeedAgencyFromRouteId;
 

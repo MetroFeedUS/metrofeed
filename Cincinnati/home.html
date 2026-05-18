@@ -7485,6 +7485,8 @@
         vehicleID: vehId != null ? String(vehId) : '',
         displayNumber,
         routeNumber: route != null ? String(route) : '',
+        routeId: v.routeId != null ? String(v.routeId) : (v.route_id != null ? String(v.route_id) : null),
+        agency: (v.agency ?? v.operator ?? v.system ?? null) != null ? String(v.agency ?? v.operator ?? v.system).toLowerCase() : null,
         direction: dir != null ? Number(dir) : null,
         tripId: tripId != null ? String(tripId) : null,
         tripHeadsign: tripHeadsign || null,
@@ -7551,10 +7553,8 @@
         ? busOrVehicleId
         : { vehicleID: busOrVehicleId };
     const badgeRoute = String(routeNumber || '');
-    const badgeText =
-      badgeRoute.startsWith('sorta_') ? badgeRoute.slice(6) :
-      badgeRoute.startsWith('tank_') ? badgeRoute.slice(5) :
-      badgeRoute;
+    const badgeAg = metrofeedHomeAgencyParts(badgeRoute);
+    const badgeText = badgeAg && badgeAg.digits ? badgeAg.digits : badgeRoute;
     const displayMain =
       typeof window.metrofeedFormatVehicleMainLabel === 'function'
         ? window.metrofeedFormatVehicleMainLabel(bus, routeNumber)
@@ -7562,10 +7562,8 @@
             const rawId = String(bus.displayNumber || bus.label || bus.vehicleID || '');
             const numeric = rawId.replace(/\D+/g, '');
             const idPart = numeric || rawId || '?';
-            const agencyPrefix =
-              badgeRoute.startsWith('sorta_') ? 'Metro ' :
-              badgeRoute.startsWith('tank_') ? 'TANK ' :
-              '';
+            const badgeAg2 = metrofeedHomeAgencyParts(badgeRoute);
+            const agencyPrefix = badgeAg2 && badgeAg2.label ? badgeAg2.label + ' ' : '';
             return agencyPrefix ? agencyPrefix + idPart : idPart;
           })();
     const bearing = bus.bearing != null ? Number(bus.bearing) : null;
@@ -11225,13 +11223,25 @@
     }
   }
 
+  /** sorta_ / tank_ / bcrta_ → { feedAgency, label, digits } (uses city-config when available). */
+  function metrofeedHomeAgencyParts(routeId) {
+    if (typeof window.metrofeedAgencyFromRouteId === 'function') {
+      return window.metrofeedAgencyFromRouteId(routeId);
+    }
+    const s = String(routeId || '');
+    if (s.startsWith('sorta_')) return { feedAgency: 'sorta', label: 'Metro', digits: s.slice(6) };
+    if (s.startsWith('tank_')) return { feedAgency: 'tank', label: 'TANK', digits: s.slice(5) };
+    if (s.startsWith('bcrta_')) return { feedAgency: 'bcrta', label: 'BCRTA', digits: s.slice(6) };
+    return null;
+  }
+
   /**
-   * routes_index `label` without leading [SORTA] / [TANK] tag — aligns with go-metro style names in the index.
+   * routes_index `label` without leading [SORTA] / [TANK] / [BCRTA] tag — aligns with go-metro style names in the index.
    */
   function metrofeedPublicRouteListLabel(route) {
     const label = route && route.label != null ? String(route.label).trim() : '';
     if (!label) return '';
-    return label.replace(/^\[(?:SORTA|TANK)\]\s*/i, '').trim() || label;
+    return label.replace(/^\[(?:SORTA|TANK|BCRTA)\]\s*/i, '').trim() || label;
   }
 
   /**
@@ -11681,8 +11691,8 @@
       const rid = routeIdRaw != null ? String(routeIdRaw) : '';
       if (!rid) return { agency: '', route: '' };
       const base = rid.includes('-') ? rid.split('-')[0] : rid;
-      if (base.startsWith('sorta_')) return { agency: 'Metro', route: base.slice(6) };
-      if (base.startsWith('tank_')) return { agency: 'TANK', route: base.slice(5) };
+      const ag = metrofeedHomeAgencyParts(base);
+      if (ag && ag.label) return { agency: ag.label, route: ag.digits || base };
       const m = base.match(/\d+/);
       return { agency: '', route: m ? m[0] : base };
     };
@@ -12590,12 +12600,14 @@
     const isCincySchema = mfIsCincyVpsAlertsSchema(alerts);
 
     function mfRouteIdAgencyAndNumber(rid) {
+      const ag = metrofeedHomeAgencyParts(rid);
+      if (ag) {
+        const m = String(ag.digits || '').match(/\d+/);
+        return { agency: ag.feedAgency, num: m ? String(m[0]) : String(ag.digits || '') };
+      }
       const s = String(rid || '');
-      const agency = s.startsWith('sorta_') ? 'sorta' : s.startsWith('tank_') ? 'tank' : null;
-      const rawNum = s.startsWith('sorta_') ? s.slice(6) : s.startsWith('tank_') ? s.slice(5) : s;
-      const m = String(rawNum).match(/\d+/);
-      const num = m ? String(m[0]) : String(rawNum);
-      return { agency, num };
+      const m = s.match(/\d+/);
+      return { agency: null, num: m ? String(m[0]) : s };
     }
 
     // Extract only explicit "Route N" references. Avoid matching dates/addresses/random numbers.
@@ -12755,12 +12767,14 @@
         const rf = normalizeRouteFilter(routeFilter);
 
         const routeIdAgencyAndNumber = (rid) => {
+          const ag = metrofeedHomeAgencyParts(rid);
+          if (ag) {
+            const m = String(ag.digits || '').match(/\d+/);
+            return { agency: ag.feedAgency, num: m ? String(m[0]) : String(ag.digits || '') };
+          }
           const s = String(rid || '');
-          const agency = s.startsWith('sorta_') ? 'sorta' : s.startsWith('tank_') ? 'tank' : null;
-          const rawNum = s.startsWith('sorta_') ? s.slice(6) : s.startsWith('tank_') ? s.slice(5) : s;
-          const m = String(rawNum).match(/\d+/);
-          const num = m ? String(m[0]) : String(rawNum);
-          return { agency, num };
+          const m = s.match(/\d+/);
+          return { agency: null, num: m ? String(m[0]) : s };
         };
 
         const extractExplicitRouteNums = (text) => {
@@ -12797,11 +12811,12 @@
           return;
         }
 
-        const byAgency = { sorta: [], tank: [], other: [] };
+        const byAgency = { sorta: [], tank: [], bcrta: [], other: [] };
         alerts.forEach((a) => {
           const ag = String(a.agency || '').toLowerCase();
           if (ag === 'sorta') byAgency.sorta.push(a);
           else if (ag === 'tank') byAgency.tank.push(a);
+          else if (ag === 'bcrta') byAgency.bcrta.push(a);
           else byAgency.other.push(a);
         });
 
@@ -12840,6 +12855,7 @@
         const html =
           renderGroup('Metro', byAgency.sorta) +
           renderGroup('TANK', byAgency.tank) +
+          renderGroup('BCRTA', byAgency.bcrta) +
           renderGroup('Other', byAgency.other);
 
         alertsContent.innerHTML = html || '<div style="color:#4CAF50; padding: 1rem; text-align:center;">✅ No active transit alerts at this time.</div>';

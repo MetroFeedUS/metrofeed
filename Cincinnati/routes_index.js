@@ -3,13 +3,13 @@ window.ROUTES = {
     "busRoutes": [
       {
         "id": "bcrta_5635",
-        "label": "R1 - R1 - Hamilton/Middletown Shuttle",
+        "label": "[BCRTA] R1 - R1 - Hamilton/Middletown Shuttle",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
         "id": "bcrta_6750",
-        "label": "O1 - O1",
+        "label": "[BCRTA] O1 - O1",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
@@ -27,7 +27,7 @@ window.ROUTES = {
       },
       {
         "id": "bcrta_6752",
-        "label": "O2 - O2",
+        "label": "[BCRTA] O2 - O2",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
@@ -45,13 +45,13 @@ window.ROUTES = {
       },
       {
         "id": "bcrta_5638",
-        "label": "R3 - R3 - Oxford-Forest Park Connector",
+        "label": "[BCRTA] R3 - R3 - Oxford-Forest Park Connector",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
         "id": "bcrta_6753",
-        "label": "O3 - O3",
+        "label": "[BCRTA] O3 - O3",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
@@ -69,7 +69,7 @@ window.ROUTES = {
       },
       {
         "id": "bcrta_6754",
-        "label": "O4 - O4",
+        "label": "[BCRTA] O4 - O4",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
@@ -93,7 +93,7 @@ window.ROUTES = {
       },
       {
         "id": "bcrta_5640",
-        "label": "R6 - R6 - Job Connector",
+        "label": "[BCRTA] R6 - R6 - Job Connector",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
@@ -501,43 +501,43 @@ window.ROUTES = {
       },
       {
         "id": "bcrta_5620",
-        "label": "BL - Blue Line",
+        "label": "[BCRTA] BL - Blue Line",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
         "id": "bcrta_5632",
-        "label": "GL - Gold Line",
+        "label": "[BCRTA] GL - Gold Line",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
         "id": "bcrta_5633",
-        "label": "GRL - Green Line",
+        "label": "[BCRTA] GRL - Green Line",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
         "id": "bcrta_5636",
-        "label": "RL - Red Line",
+        "label": "[BCRTA] RL - Red Line",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
         "id": "bcrta_6067",
-        "label": "CL - CincyLink",
+        "label": "[BCRTA] CL - CincyLink",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
         "id": "bcrta_6734",
-        "label": "CLX - CincyLink Express",
+        "label": "[BCRTA] CLX - CincyLink Express",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
         "id": "bcrta_7048",
-        "label": "Miami Flyer PR - Miami Flyer Park and Ride",
+        "label": "[BCRTA] Miami Flyer PR - Miami Flyer Park and Ride",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },

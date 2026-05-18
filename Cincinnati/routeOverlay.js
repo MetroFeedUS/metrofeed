@@ -697,6 +697,17 @@ function metrofeedBuildDirectionalStopElement(directionId, shape, stopLat, stopL
  * @param {string|{vehicleID?:string,displayNumber?:string}} vehicleIDRawOrBus - legacy string id, or bus object from parseVehiclesJsonToGtfsLike
  * @param {string} routeId
  */
+function metrofeedAgencyRouteParts(routeId) {
+  if (typeof window.metrofeedAgencyFromRouteId === "function") {
+    return window.metrofeedAgencyFromRouteId(routeId);
+  }
+  const rid = String(routeId || "");
+  if (rid.startsWith("sorta_")) return { feedAgency: "sorta", label: "Metro", idPrefix: "sorta_", digits: rid.slice(6) };
+  if (rid.startsWith("tank_")) return { feedAgency: "tank", label: "TANK", idPrefix: "tank_", digits: rid.slice(5) };
+  if (rid.startsWith("bcrta_")) return { feedAgency: "bcrta", label: "BCRTA", idPrefix: "bcrta_", digits: rid.slice(6) };
+  return null;
+}
+
 function metrofeedFormatVehicleLabel(vehicleIDRawOrBus, routeId) {
   const rid = routeId != null ? String(routeId) : "";
   let raw = "";
@@ -713,22 +724,21 @@ function metrofeedFormatVehicleLabel(vehicleIDRawOrBus, routeId) {
   }
   const numeric = raw.replace(/\D+/g, "");
   const idPart = numeric || raw || "?";
-  if (rid.startsWith("sorta_")) return "Metro " + idPart;
-  if (rid.startsWith("tank_")) return "TANK " + idPart;
+  const ag = metrofeedAgencyRouteParts(rid);
+  if (ag && ag.label) return ag.label + " " + idPart;
   return idPart;
 }
 
 function metrofeedFormatRouteBadge(routeId) {
-  const rid = routeId != null ? String(routeId) : "";
-  if (rid.startsWith("sorta_")) return rid.slice(6);
-  if (rid.startsWith("tank_")) return rid.slice(5);
-  return rid;
+  const ag = metrofeedAgencyRouteParts(routeId);
+  if (ag && ag.digits) return ag.digits;
+  return routeId != null ? String(routeId) : "";
 }
 
 function buildRouteFloatingChipLabel(routeId) {
+  const ag = metrofeedAgencyRouteParts(routeId);
+  if (ag && ag.label && ag.digits) return { label: ag.label + " " + ag.digits, isAgencyStyle: true };
   const rid = String(routeId || "");
-  if (rid.startsWith("sorta_")) return { label: "Metro " + rid.slice(6), isAgencyStyle: true };
-  if (rid.startsWith("tank_")) return { label: "TANK " + rid.slice(5), isAgencyStyle: true };
   const m = rid.match(/\d+/);
   return { label: m ? m[0] : rid, isAgencyStyle: false };
 }
@@ -785,10 +795,13 @@ function parseVehiclesJsonToGtfsLike(json) {
         ? String(displayNumberRaw).trim()
         : null;
 
+    const agencyRaw = v.agency ?? v.operator ?? v.system ?? null;
     out.push({
       vehicleID: vehId != null ? String(vehId) : "",
       displayNumber,
       routeNumber: route != null ? String(route) : "",
+      routeId: v.routeId != null ? String(v.routeId) : (v.route_id != null ? String(v.route_id) : null),
+      agency: agencyRaw != null && String(agencyRaw).trim() !== "" ? String(agencyRaw).toLowerCase() : null,
       direction: dir != null && dir !== "" ? Number(dir) : null,
       latitude: Number(lat),
       longitude: Number(lon),
@@ -846,9 +859,9 @@ function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
   const nowSec = Math.floor(Date.now() / 1000);
 
   const feed = String(feedRouteId || "");
-  const agencyWant = feed.startsWith("sorta_") ? "sorta" : feed.startsWith("tank_") ? "tank" : null;
-  const feedRouteNum =
-    feed.startsWith("sorta_") ? feed.slice(6) : feed.startsWith("tank_") ? feed.slice(5) : feed;
+  const feedAg = metrofeedAgencyRouteParts(feed);
+  const agencyWant = feedAg ? feedAg.feedAgency : null;
+  const feedRouteNum = feedAg ? feedAg.digits : feed;
   const dataRouteNum =
     routeData && routeData.route_number != null ? String(routeData.route_number) : null;
   const normNum = (s) => {
@@ -930,12 +943,13 @@ function metrofeedTripStopOverlapCount(trip, stopIdSet) {
       hits++;
       continue;
     }
-    // Normalize common prefixes so `sorta_XXXX` matches `XXXX` (and same for TANK).
+    const stopAg = metrofeedAgencyRouteParts(sid);
     const stripped =
-      sid.startsWith("sorta_") ? sid.slice(6)
-      : sid.startsWith("tank_") ? sid.slice(5)
-      : sid.includes("_") ? sid.slice(sid.indexOf("_") + 1)
-      : "";
+      stopAg && stopAg.idPrefix && sid.startsWith(stopAg.idPrefix)
+        ? sid.slice(stopAg.idPrefix.length)
+        : sid.includes("_")
+          ? sid.slice(sid.indexOf("_") + 1)
+          : "";
     if (stripped && stopIdSet.has(stripped)) hits++;
   }
   return hits;
@@ -2283,7 +2297,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
       } catch (_) {}
       const chipSpec = buildRouteFloatingChipLabel(routeId);
       const isPill = !!chipSpec.isAgencyStyle;
-      const chipBg = routeColor || (String(routeId || "").startsWith("tank_") ? "#8B5CF6" : (String(routeId || "").startsWith("sorta_") ? "#1E90FF" : "#FF6B35"));
+      const chipBg = routeColor || (function () {
+        const ag = metrofeedAgencyRouteParts(routeId);
+        if (ag && ag.feedAgency === "tank") return "#8B5CF6";
+        if (ag && ag.feedAgency === "sorta") return "#1E90FF";
+        if (ag && ag.feedAgency === "bcrta") return "#22C55E";
+        return "#FF6B35";
+      })();
       const chipFg = pickContrastingTextColor(chipBg);
       const circleSize = isPill ? 28 : 34;
       const pillWidth = 66; // Standardized collapsed pill width (text shrinks to fit)
@@ -2779,9 +2799,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
           // Cincinnati multi-agency safety: match agency + exact route_id number.
           // Also drop vehicles far away from the route polyline (prevents "deep Ohio" outliers).
-          const mfOverlayAgency = routeNum.startsWith('sorta_') ? 'sorta' : routeNum.startsWith('tank_') ? 'tank' : null;
+          const mfFeedAg = metrofeedAgencyRouteParts(routeNum);
+          const mfOverlayAgency = mfFeedAg ? mfFeedAg.feedAgency : null;
           const mfOverlayRouteDigits = (function () {
-            const raw = routeNum.startsWith('sorta_') ? routeNum.slice(6) : routeNum.startsWith('tank_') ? routeNum.slice(5) : routeNum;
+            const raw = mfFeedAg ? mfFeedAg.digits : routeNum;
             const m = String(raw).match(/\d+/);
             return m ? String(m[0]).replace(/^0+/, '') || String(m[0]) : '';
           })();
@@ -2876,10 +2897,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
               const id = s.stop_id != null ? String(s.stop_id) : "";
               if (!id) return;
               stopIdSet.add(id);
-              // Add common normalized variant so `sorta_XXXX` matches `XXXX`.
-              if (id.startsWith("sorta_")) stopIdSet.add(id.slice(6));
-              else if (id.startsWith("tank_")) stopIdSet.add(id.slice(5));
-              else if (id.includes("_")) stopIdSet.add(id.slice(id.indexOf("_") + 1));
+              const stopAg = metrofeedAgencyRouteParts(id);
+              if (stopAg && stopAg.idPrefix && id.startsWith(stopAg.idPrefix)) {
+                stopIdSet.add(id.slice(stopAg.idPrefix.length));
+              } else if (id.includes("_")) {
+                stopIdSet.add(id.slice(id.indexOf("_") + 1));
+              }
             });
             const beforeCt = routeBuses.length;
             routeBuses = routeBuses.filter((v) => {
