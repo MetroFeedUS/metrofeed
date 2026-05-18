@@ -10,6 +10,8 @@
   <link rel="apple-touch-icon" href="/RoamRavenbird.png" />
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
   <style>
     :root {
       --rr-accent: #9333ea;
@@ -620,7 +622,7 @@
           </div>
         </div>
         <button id="mfUseMapLocationBtn" class="mf-btn mf-btn--primary" type="button">Use map location</button>
-        <p class="mf-map-legend"><strong>Purple counties</strong> = RoamRaven service area · tap twice on a city pin or county to open</p>
+        <p class="mf-map-legend"><strong>Purple</strong> = Cincinnati Metro (6 counties) · tap pin or county twice to open</p>
       </div>
     </div>
   </div>
@@ -674,17 +676,19 @@
   <script>
     const MF_COOKIE_KEY = 'cookieConsent';
 
+    const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
+
     const MF_SUPPORTED_CITIES = {
       cincinnati: {
-        shortLabel: 'Cincinnati',
-        name: 'Cincinnati, OH / NKY',
-        bbox: { west: -85.10, south: 38.85, east: -84.20, north: 39.45 },
+        shortLabel: 'Cincinnati Metro',
+        name: 'Cincinnati Metro',
+        bbox: { west: -84.86, south: 38.76, east: -84.18, north: 39.56 },
         countyGeoids: [
-          '39061', '39017', '39165', '39025', '39015', '39027',
-          '21015', '21117', '21037', '21081', '21191',
-          '18029', '18115'
+          '39061', '39017', '39165',
+          '21037', '21117', '21015'
         ],
-        defaultView: { center: [-84.512, 39.103], zoom: 10.5 },
+        pinCenter: [-84.562, 39.198],
+        defaultView: { center: [-84.52, 39.16], zoom: 10.2 },
         href: 'Cincinnati/home.html'
       }
     };
@@ -726,22 +730,107 @@
       }
     }
 
+    var MF_COUNTIES_IDB_NAME = 'mf-national-map';
+    var MF_COUNTIES_IDB_STORE = 'counties';
+    var MF_COUNTIES_CACHE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+    var MF_COUNTIES_CACHE_VER = 2;
+
+    function mfCountyUrlVariants(baseUrl) {
+      var u = String(baseUrl || '').replace(/\.geojson(\.gz)?$/i, '');
+      return [u + '.geojson.gz', u + '.geojson'];
+    }
+
     /** Same-origin first (avoids CORS on metrofeedus.com); then maps host fallback. */
     function mfResolveCountiesUrls() {
-      var list = [];
+      var bases = [];
       try {
         var origin = window.location.origin || '';
         if (origin && origin !== 'null' && /^https?:/i.test(origin)) {
-          list.push(origin.replace(/\/$/, '') + '/national/us_counties.geojson');
+          bases.push(origin.replace(/\/$/, '') + '/national/us_counties');
         }
       } catch (_) {}
-      list.push('/national/us_counties.geojson');
-      list.push('https://maps.metrofeedus.com/national/us_counties.geojson');
+      bases.push('/national/us_counties');
+      bases.push('https://maps.metrofeedus.com/national/us_counties');
+      var list = [];
+      bases.forEach(function (b) {
+        mfCountyUrlVariants(b).forEach(function (u) {
+          list.push(u);
+        });
+      });
       var seen = Object.create(null);
       return list.filter(function (u) {
         if (!u || seen[u]) return false;
         seen[u] = true;
         return true;
+      });
+    }
+
+    function mfIdbOpenCounties() {
+      return new Promise(function (resolve, reject) {
+        if (!window.indexedDB) {
+          reject(new Error('no indexedDB'));
+          return;
+        }
+        var req = indexedDB.open(MF_COUNTIES_IDB_NAME, 1);
+        req.onupgradeneeded = function () {
+          try {
+            req.result.createObjectStore(MF_COUNTIES_IDB_STORE);
+          } catch (_) {}
+        };
+        req.onsuccess = function () {
+          resolve(req.result);
+        };
+        req.onerror = function () {
+          reject(req.error || new Error('idb open failed'));
+        };
+      });
+    }
+
+    function mfCountiesCacheRead(url) {
+      return mfIdbOpenCounties()
+        .then(function (db) {
+          return new Promise(function (resolve, reject) {
+            var tx = db.transaction(MF_COUNTIES_IDB_STORE, 'readonly');
+            var store = tx.objectStore(MF_COUNTIES_IDB_STORE);
+            var req = store.get(url);
+            req.onsuccess = function () {
+              resolve(req.result || null);
+            };
+            req.onerror = function () {
+              reject(req.error);
+            };
+          });
+        })
+        .catch(function () {
+          return null;
+        });
+    }
+
+    function mfCountiesCacheWrite(url, entry) {
+      return mfIdbOpenCounties()
+        .then(function (db) {
+          return new Promise(function (resolve, reject) {
+            var tx = db.transaction(MF_COUNTIES_IDB_STORE, 'readwrite');
+            var store = tx.objectStore(MF_COUNTIES_IDB_STORE);
+            var req = store.put(entry, url);
+            req.onsuccess = function () {
+              resolve();
+            };
+            req.onerror = function () {
+              reject(req.error);
+            };
+          });
+        })
+        .catch(function () {});
+    }
+
+    function mfFetchCountiesFromNetwork(url) {
+      return fetch(url, { cache: 'default' }).then(function (r) {
+        if (!r.ok) throw new Error('counties HTTP ' + r.status + ' (' + url + ')');
+        var etag = r.headers.get('etag') || r.headers.get('last-modified') || '';
+        return r.json().then(function (geojson) {
+          return { url: url, geojson: geojson, etag: etag };
+        });
       });
     }
 
@@ -752,17 +841,59 @@
           return Promise.reject(new Error('All county URLs failed'));
         }
         var url = urls[i];
-        return fetch(url, { cache: 'default' })
-          .then(function (r) {
-            if (!r.ok) throw new Error('counties HTTP ' + r.status + ' (' + url + ')');
-            return r.json();
-          })
-          .catch(function (err) {
-            console.warn('[Index] counties try failed:', url, err);
-            return tryNext(i + 1);
-          });
+        return mfFetchCountiesFromNetwork(url).catch(function (err) {
+          console.warn('[Index] counties try failed:', url, err);
+          return tryNext(i + 1);
+        });
       }
-      return tryNext(0);
+
+      function tryCacheThenNetwork(i) {
+        if (i >= urls.length) return tryNext(0);
+        var url = urls[i];
+        return mfCountiesCacheRead(url).then(function (cached) {
+          var fresh =
+            cached &&
+            cached.data &&
+            cached.version === MF_COUNTIES_CACHE_VER &&
+            cached.fetchedAt &&
+            Date.now() - cached.fetchedAt < MF_COUNTIES_CACHE_MAX_AGE_MS;
+          if (fresh) {
+            tryNext(0).then(function (net) {
+              if (!net || net.url !== url) return;
+              if (net.etag && cached.etag && net.etag === cached.etag) return;
+              return mfAugmentCountiesGeoJSONAsync(net.geojson, function (data) {
+                mfCountiesCacheWrite(url, {
+                  version: MF_COUNTIES_CACHE_VER,
+                  data: data,
+                  etag: net.etag,
+                  fetchedAt: Date.now()
+                });
+                if (map && mfCountiesReady && map.getSource('mf-counties')) {
+                  mfApplyCountiesToMap(data);
+                }
+              });
+            }).catch(function () {});
+            return { url: url, geojson: null, data: cached.data, fromCache: true };
+          }
+          return mfFetchCountiesFromNetwork(url)
+            .catch(function () {
+              return tryCacheThenNetwork(i + 1);
+            })
+            .then(function (net) {
+              return mfAugmentCountiesGeoJSONAsync(net.geojson, function (data) {
+                mfCountiesCacheWrite(url, {
+                  version: MF_COUNTIES_CACHE_VER,
+                  data: data,
+                  etag: net.etag,
+                  fetchedAt: Date.now()
+                });
+                return { url: url, geojson: net.geojson, data: data, fromCache: false };
+              });
+            });
+        });
+      }
+
+      return tryCacheThenNetwork(0);
     }
 
     function mfBuildCountyGeoidToCityMap() {
@@ -776,30 +907,291 @@
       return lookup;
     }
 
+    function mfAugmentCountyFeature(f, lookup) {
+      if (!f || !f.geometry) return null;
+      var props = f.properties || {};
+      var geoid = props.GEOID != null ? String(props.GEOID) : '';
+      var cityKey = geoid && lookup[geoid] ? lookup[geoid] : '';
+      return {
+        type: 'Feature',
+        properties: {
+          GEOID: geoid,
+          NAME: props.NAME || '',
+          NAMELSAD: props.NAMELSAD || props.NAME || '',
+          STUSPS: props.STUSPS || '',
+          STATE_NAME: props.STATE_NAME || '',
+          cityKey: cityKey
+        },
+        geometry: f.geometry
+      };
+    }
+
     function mfAugmentCountiesGeoJSON(geojson) {
       var lookup = mfBuildCountyGeoidToCityMap();
       var features = [];
       var raw = geojson && Array.isArray(geojson.features) ? geojson.features : [];
       for (var i = 0; i < raw.length; i++) {
-        var f = raw[i];
-        if (!f || !f.geometry) continue;
-        var props = f.properties || {};
-        var geoid = props.GEOID != null ? String(props.GEOID) : '';
-        var cityKey = geoid && lookup[geoid] ? lookup[geoid] : '';
+        var feat = mfAugmentCountyFeature(raw[i], lookup);
+        if (feat) features.push(feat);
+      }
+      return { type: 'FeatureCollection', features: features };
+    }
+
+    /** Chunked so first paint stays responsive on ~3k counties. */
+    function mfAugmentCountiesGeoJSONAsync(geojson, done) {
+      var lookup = mfBuildCountyGeoidToCityMap();
+      var raw = geojson && Array.isArray(geojson.features) ? geojson.features : [];
+      var features = [];
+      var i = 0;
+      var chunk = 350;
+      function step() {
+        var end = Math.min(i + chunk, raw.length);
+        for (; i < end; i++) {
+          var feat = mfAugmentCountyFeature(raw[i], lookup);
+          if (feat) features.push(feat);
+        }
+        if (i < raw.length) {
+          requestAnimationFrame(step);
+        } else {
+          done({ type: 'FeatureCollection', features: features });
+        }
+      }
+      if (!raw.length) {
+        done({ type: 'FeatureCollection', features: [] });
+        return;
+      }
+      step();
+    }
+
+    function mfServicePreviewGeoJSON() {
+      var features = [];
+      for (var key in MF_SUPPORTED_CITIES) {
+        if (!MF_SUPPORTED_CITIES.hasOwnProperty(key)) continue;
+        var b = MF_SUPPORTED_CITIES[key].bbox;
+        if (!b) continue;
         features.push({
           type: 'Feature',
-          properties: {
-            GEOID: geoid,
-            NAME: props.NAME || '',
-            NAMELSAD: props.NAMELSAD || props.NAME || '',
-            STUSPS: props.STUSPS || '',
-            STATE_NAME: props.STATE_NAME || '',
-            cityKey: cityKey
-          },
-          geometry: f.geometry
+          properties: { cityKey: key },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[
+              [b.west, b.south],
+              [b.east, b.south],
+              [b.east, b.north],
+              [b.west, b.north],
+              [b.west, b.south]
+            ]]
+          }
         });
       }
       return { type: 'FeatureCollection', features: features };
+    }
+
+    function mfInstallServicePreviewLayer() {
+      if (!map || map.getSource('mf-service-preview')) return;
+      map.addSource('mf-service-preview', {
+        type: 'geojson',
+        data: mfServicePreviewGeoJSON()
+      });
+      map.addLayer({
+        id: 'mf-service-preview-fill',
+        type: 'fill',
+        source: 'mf-service-preview',
+        paint: {
+          'fill-color': '#9333ea',
+          'fill-opacity': 0.22
+        }
+      });
+      map.addLayer({
+        id: 'mf-service-preview-line',
+        type: 'line',
+        source: 'mf-service-preview',
+        paint: {
+          'line-color': '#ddd6fe',
+          'line-width': 1.5,
+          'line-opacity': 0.5,
+          'line-dasharray': [1.2, 1.8]
+        }
+      });
+    }
+
+    function mfRemoveServicePreviewLayer() {
+      if (!map) return;
+      ['mf-service-preview-line', 'mf-service-preview-fill'].forEach(function (id) {
+        try {
+          if (map.getLayer(id)) map.removeLayer(id);
+        } catch (_) {}
+      });
+      try {
+        if (map.getSource('mf-service-preview')) map.removeSource('mf-service-preview');
+      } catch (_) {}
+    }
+
+    function mfEnsureStatesLayer() {
+      if (!map || map.getSource('mf-states')) return Promise.resolve();
+      if (!window.topojson) return Promise.resolve();
+      return fetch(MF_STATES_TOPO_URL, { cache: 'default' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('states ' + r.status);
+          return r.json();
+        })
+        .then(function (topo) {
+          if (!map) return;
+          var states = topojson.feature(topo, topo.objects.states);
+          map.addSource('mf-states', { type: 'geojson', data: states });
+          var before = map.getLayer('mf-counties-fill') ? 'mf-counties-fill' : undefined;
+          map.addLayer(
+            {
+              id: 'mf-states-line',
+              type: 'line',
+              source: 'mf-states',
+              paint: {
+                'line-color': '#f8fafc',
+                'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1.25, 6, 2, 9, 2.6],
+                'line-opacity': 0.88
+              }
+            },
+            before
+          );
+        })
+        .catch(function (err) {
+          console.warn('[Index] states outline failed', err);
+        });
+    }
+
+    function mfBuildMetroOutlineGeoJSON(countyData) {
+      if (!window.turf || !countyData || !Array.isArray(countyData.features)) return null;
+      var metro = [];
+      for (var i = 0; i < countyData.features.length; i++) {
+        var f = countyData.features[i];
+        if (f && f.properties && f.properties.cityKey === 'cincinnati') metro.push(f);
+      }
+      if (!metro.length) return null;
+      var merged = metro[0];
+      for (var j = 1; j < metro.length; j++) {
+        try {
+          var u = turf.union(merged, metro[j]);
+          if (u) merged = u;
+        } catch (_) {}
+      }
+      try {
+        return turf.polygonToLine(merged);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function mfInstallMetroOutlineLayers(outlineFc) {
+      if (!map || !outlineFc) return;
+      if (!map.getSource('mf-metro-outline')) {
+        map.addSource('mf-metro-outline', { type: 'geojson', data: outlineFc });
+      } else {
+        map.getSource('mf-metro-outline').setData(outlineFc);
+      }
+      if (!map.getLayer('mf-metro-glow')) {
+        map.addLayer({
+          id: 'mf-metro-glow',
+          type: 'line',
+          source: 'mf-metro-outline',
+          paint: {
+            'line-color': '#9333ea',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 9, 11, 12],
+            'line-blur': ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 11, 7],
+            'line-opacity': 0.7
+          }
+        });
+      }
+      if (!map.getLayer('mf-metro-outline')) {
+        map.addLayer({
+          id: 'mf-metro-outline',
+          type: 'line',
+          source: 'mf-metro-outline',
+          paint: {
+            'line-color': '#f5f3ff',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2, 11, 2.8],
+            'line-opacity': 0.95
+          }
+        });
+      }
+    }
+
+    function mfApplyCountiesToMap(data) {
+      if (!map) return;
+      if (!map.getSource('mf-counties')) {
+        map.addSource('mf-counties', {
+          type: 'geojson',
+          data: data,
+          generateId: false,
+          promoteId: 'GEOID'
+        });
+      } else {
+        map.getSource('mf-counties').setData(data);
+      }
+
+      var beforeCounties = map.getLayer('mf-states-line') ? 'mf-states-line' : undefined;
+
+      if (!map.getLayer('mf-counties-fill')) {
+        map.addLayer(
+          {
+            id: 'mf-counties-fill',
+            type: 'fill',
+            source: 'mf-counties',
+            paint: {
+              'fill-color': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                '#c4b5fd',
+                ['boolean', ['feature-state', 'armed'], false],
+                '#a855f7',
+                ['==', ['get', 'cityKey'], ''],
+                '#16161a',
+                '#9333ea'
+              ],
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                0.58,
+                ['==', ['get', 'cityKey'], ''],
+                0.82,
+                ['interpolate', ['linear'], ['zoom'], 4, 0.48, 8, 0.42, 11, 0.36]
+              ]
+            }
+          },
+          beforeCounties
+        );
+      }
+
+      if (!map.getLayer('mf-counties-line')) {
+        map.addLayer(
+          {
+            id: 'mf-counties-line',
+            type: 'line',
+            source: 'mf-counties',
+            filter: ['==', ['get', 'cityKey'], ''],
+            paint: {
+              'line-color': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                '#e2e8f0',
+                '#404048'
+              ],
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 0.45, 8, 0.75, 12, 1.1],
+              'line-opacity': 0.5
+            }
+          },
+          'mf-counties-fill'
+        );
+      }
+
+      var outline = mfBuildMetroOutlineGeoJSON(data);
+      mfInstallMetroOutlineLayers(outline);
+
+      mfCountiesReady = true;
+      mfRemoveServicePreviewLayer();
+      mfRaiseUserLocationLayers();
+      mfInstallCountyInteractions();
+      if (!mfHotspotsInstalled) mfInstallCityMarkers();
+      mfSyncArmedCountyStates();
     }
 
     function mfCityKeyAtPoint(lng, lat) {
@@ -1084,6 +1476,9 @@
 
       map.once('load', function () {
         try {
+          mfEnsureStatesLayer();
+        } catch (_) {}
+        try {
           mfLoadCountiesLayer();
         } catch (_) {}
         try {
@@ -1101,82 +1496,17 @@
       mfSetMapLoading(true);
       mfSetMapLoadError('');
       mfFetchCountiesGeoJSON()
-        .then(function (raw) {
-          if (!map) return;
-          var data = mfAugmentCountiesGeoJSON(raw);
-          if (!map.getSource('mf-counties')) {
-            map.addSource('mf-counties', {
-              type: 'geojson',
-              data: data,
-              generateId: false,
-              promoteId: 'GEOID'
-            });
-          } else {
-            map.getSource('mf-counties').setData(data);
+        .then(function (result) {
+          if (!map || !result) return;
+          if (result.data) {
+            mfApplyCountiesToMap(result.data);
+            return;
           }
-          if (!map.getLayer('mf-counties-fill')) {
-            map.addLayer({
-              id: 'mf-counties-fill',
-              type: 'fill',
-              source: 'mf-counties',
-              paint: {
-                'fill-color': [
-                  'case',
-                  ['boolean', ['feature-state', 'hover'], false],
-                  '#c4b5fd',
-                  ['boolean', ['feature-state', 'armed'], false],
-                  '#a855f7',
-                  ['==', ['get', 'cityKey'], ''],
-                  '#141416',
-                  '#9333ea'
-                ],
-                'fill-opacity': [
-                  'case',
-                  ['boolean', ['feature-state', 'hover'], false],
-                  0.55,
-                  ['boolean', ['feature-state', 'armed'], false],
-                  0.42,
-                  ['==', ['get', 'cityKey'], ''],
-                  0.78,
-                  ['interpolate', ['linear'], ['zoom'], 4, 0.38, 7, 0.32, 10, 0.26, 12, 0.2]
-                ]
-              }
+          if (result.geojson) {
+            mfAugmentCountiesGeoJSONAsync(result.geojson, function (data) {
+              mfApplyCountiesToMap(data);
             });
           }
-          if (!map.getLayer('mf-counties-line')) {
-            map.addLayer({
-              id: 'mf-counties-line',
-              type: 'line',
-              source: 'mf-counties',
-              paint: {
-                'line-color': [
-                  'case',
-                  ['boolean', ['feature-state', 'hover'], false],
-                  '#f5f3ff',
-                  ['==', ['get', 'cityKey'], ''],
-                  '#3f3f46',
-                  '#ddd6fe'
-                ],
-                'line-width': [
-                  'interpolate',
-                  ['linear'],
-                  ['zoom'],
-                  4,
-                  0.6,
-                  8,
-                  1,
-                  12,
-                  1.6
-                ],
-                'line-opacity': ['case', ['==', ['get', 'cityKey'], ''], 0.55, 0.72]
-              }
-            });
-          }
-          mfCountiesReady = true;
-          mfRaiseUserLocationLayers();
-          mfInstallCountyInteractions();
-          mfInstallCityMarkers();
-          mfSyncArmedCountyStates();
         })
         .catch(function (err) {
           console.warn('[Index] counties load failed', err);
@@ -1268,7 +1598,11 @@
         if (!MF_SUPPORTED_CITIES.hasOwnProperty(cityKey)) continue;
         (function (key) {
           var city = MF_SUPPORTED_CITIES[key];
-          if (!city.defaultView || !city.defaultView.center) return;
+          var pinLngLat =
+            city.pinCenter ||
+            (city.defaultView && city.defaultView.center) ||
+            null;
+          if (!pinLngLat) return;
           var label =
             city.shortLabel ||
             (city.name ? String(city.name).split(',')[0].trim() : key);
@@ -1289,12 +1623,12 @@
           try {
             new maplibregl.Marker({
               element: el,
-              anchor: 'bottom',
-              offset: [0, -2],
+              anchor: 'center',
+              offset: [0, 0],
               pitchAlignment: 'viewport',
               rotationAlignment: 'viewport'
             })
-              .setLngLat(city.defaultView.center)
+              .setLngLat(pinLngLat)
               .addTo(map);
           } catch (_) {}
         })(cityKey);
