@@ -726,12 +726,12 @@
       }
     }
 
-  /** County GeoJSON URLs in order: small metro bundle (ships with site), then VPS full US. */
+  /** County GeoJSON URLs: same-origin us_counties first, then maps VPS fallback. */
     function mfResolveCountiesFetchUrls() {
       var list = [
-        '/national/metro_counties.geojson',
+        '/national/us_counties.geojson',
         'https://maps.metrofeedus.com/national/us_counties.geojson',
-        '/national/us_counties.geojson'
+        '/national/metro_counties.geojson'
       ];
       try {
         var origin = window.location.origin || '';
@@ -1375,7 +1375,7 @@
         .catch(function (err) {
           console.warn('[Index] counties load failed', err);
           mfSetMapLoadError(
-            'County map could not load. Deploy the national/ folder (metro_counties.geojson) with Index.html.'
+            'County map could not load. Deploy national/us_counties.geojson with Index.html (or allow maps.metrofeedus.com).'
           );
         })
         .finally(function () {
