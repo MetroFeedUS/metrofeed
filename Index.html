@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RoamRaven | National map</title>
-  <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#9333ea" />
   <link rel="icon" type="image/png" href="/RoamRavenbird.png" sizes="512x512" />
   <link rel="apple-touch-icon" href="/RoamRavenbird.png" />
@@ -727,33 +726,19 @@
       }
     }
 
-    var MF_COUNTIES_IDB_NAME = 'mf-national-map';
-    var MF_COUNTIES_IDB_STORE = 'counties';
-    var MF_COUNTIES_CACHE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
-    var MF_COUNTIES_CACHE_VER = 2;
-
-    function mfCountyUrlVariants(baseUrl) {
-      var u = String(baseUrl || '').replace(/\.geojson(\.gz)?$/i, '');
-      return [u + '.geojson.gz', u + '.geojson'];
-    }
-
-    /** Same-origin first (avoids CORS on metrofeedus.com); then maps host fallback. */
-    function mfResolveCountiesUrls() {
-      var bases = [];
+  /** County GeoJSON URLs in order: small metro bundle (ships with site), then VPS full US. */
+    function mfResolveCountiesFetchUrls() {
+      var list = [
+        '/national/metro_counties.geojson',
+        'https://maps.metrofeedus.com/national/us_counties.geojson',
+        '/national/us_counties.geojson'
+      ];
       try {
         var origin = window.location.origin || '';
         if (origin && origin !== 'null' && /^https?:/i.test(origin)) {
-          bases.push(origin.replace(/\/$/, '') + '/national/us_counties');
+          list.push(origin.replace(/\/$/, '') + '/national/us_counties.geojson');
         }
       } catch (_) {}
-      bases.push('/national/us_counties');
-      bases.push('https://maps.metrofeedus.com/national/us_counties');
-      var list = [];
-      bases.forEach(function (b) {
-        mfCountyUrlVariants(b).forEach(function (u) {
-          list.push(u);
-        });
-      });
       var seen = Object.create(null);
       return list.filter(function (u) {
         if (!u || seen[u]) return false;
@@ -762,135 +747,44 @@
       });
     }
 
-    function mfIdbOpenCounties() {
-      return new Promise(function (resolve, reject) {
-        if (!window.indexedDB) {
-          reject(new Error('no indexedDB'));
-          return;
-        }
-        var req = indexedDB.open(MF_COUNTIES_IDB_NAME, 1);
-        req.onupgradeneeded = function () {
-          try {
-            req.result.createObjectStore(MF_COUNTIES_IDB_STORE);
-          } catch (_) {}
-        };
-        req.onsuccess = function () {
-          resolve(req.result);
-        };
-        req.onerror = function () {
-          reject(req.error || new Error('idb open failed'));
-        };
-      });
-    }
-
-    function mfCountiesCacheRead(url) {
-      return mfIdbOpenCounties()
-        .then(function (db) {
-          return new Promise(function (resolve, reject) {
-            var tx = db.transaction(MF_COUNTIES_IDB_STORE, 'readonly');
-            var store = tx.objectStore(MF_COUNTIES_IDB_STORE);
-            var req = store.get(url);
-            req.onsuccess = function () {
-              resolve(req.result || null);
-            };
-            req.onerror = function () {
-              reject(req.error);
-            };
-          });
-        })
-        .catch(function () {
-          return null;
-        });
-    }
-
-    function mfCountiesCacheWrite(url, entry) {
-      return mfIdbOpenCounties()
-        .then(function (db) {
-          return new Promise(function (resolve, reject) {
-            var tx = db.transaction(MF_COUNTIES_IDB_STORE, 'readwrite');
-            var store = tx.objectStore(MF_COUNTIES_IDB_STORE);
-            var req = store.put(entry, url);
-            req.onsuccess = function () {
-              resolve();
-            };
-            req.onerror = function () {
-              reject(req.error);
-            };
-          });
-        })
-        .catch(function () {});
-    }
-
-    function mfFetchCountiesFromNetwork(url) {
-      return fetch(url, { cache: 'default' }).then(function (r) {
-        if (!r.ok) throw new Error('counties HTTP ' + r.status + ' (' + url + ')');
-        var etag = r.headers.get('etag') || r.headers.get('last-modified') || '';
-        return r.json().then(function (geojson) {
-          return { url: url, geojson: geojson, etag: etag };
-        });
+    function mfFetchJsonUrl(url) {
+      var opts = { cache: 'default' };
+      try {
+        if (String(url).charAt(0) === '/') opts.credentials = 'same-origin';
+      } catch (_) {}
+      return fetch(url, opts).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' (' + url + ')');
+        return r.json();
       });
     }
 
     function mfFetchCountiesGeoJSON() {
-      var urls = mfResolveCountiesUrls();
-      function tryNext(i) {
-        if (i >= urls.length) {
-          return Promise.reject(new Error('All county URLs failed'));
-        }
-        var url = urls[i];
-        return mfFetchCountiesFromNetwork(url).catch(function (err) {
-          console.warn('[Index] counties try failed:', url, err);
-          return tryNext(i + 1);
+      var urls = mfResolveCountiesFetchUrls();
+      function tryAt(i) {
+        if (i >= urls.length) return Promise.reject(new Error('All county URLs failed'));
+        return mfFetchJsonUrl(urls[i]).catch(function (err) {
+          console.warn('[Index] counties:', urls[i], err);
+          return tryAt(i + 1);
         });
       }
+      return tryAt(0);
+    }
 
-      function tryCacheThenNetwork(i) {
-        if (i >= urls.length) return tryNext(0);
-        var url = urls[i];
-        return mfCountiesCacheRead(url).then(function (cached) {
-          var fresh =
-            cached &&
-            cached.data &&
-            cached.version === MF_COUNTIES_CACHE_VER &&
-            cached.fetchedAt &&
-            Date.now() - cached.fetchedAt < MF_COUNTIES_CACHE_MAX_AGE_MS;
-          if (fresh) {
-            tryNext(0).then(function (net) {
-              if (!net || net.url !== url) return;
-              if (net.etag && cached.etag && net.etag === cached.etag) return;
-              return mfAugmentCountiesGeoJSONAsync(net.geojson, function (data) {
-                mfCountiesCacheWrite(url, {
-                  version: MF_COUNTIES_CACHE_VER,
-                  data: data,
-                  etag: net.etag,
-                  fetchedAt: Date.now()
-                });
-                if (map && mfCountiesReady && map.getSource('mf-counties')) {
-                  mfApplyCountiesToMap(data);
-                }
-              });
-            }).catch(function () {});
-            return { url: url, geojson: null, data: cached.data, fromCache: true };
-          }
-          return mfFetchCountiesFromNetwork(url)
-            .catch(function () {
-              return tryCacheThenNetwork(i + 1);
-            })
-            .then(function (net) {
-              return mfAugmentCountiesGeoJSONAsync(net.geojson, function (data) {
-                mfCountiesCacheWrite(url, {
-                  version: MF_COUNTIES_CACHE_VER,
-                  data: data,
-                  etag: net.etag,
-                  fetchedAt: Date.now()
-                });
-                return { url: url, geojson: net.geojson, data: data, fromCache: false };
-              });
-            });
-        });
-      }
-
-      return tryCacheThenNetwork(0);
+    function mfLoadFullCountiesInBackground() {
+      if (window.__mfFullCountiesLoaded) return;
+      window.__mfFullCountiesLoaded = true;
+      mfFetchJsonUrl('https://maps.metrofeedus.com/national/us_counties.geojson')
+        .then(function (raw) {
+          if (!map || !raw) return;
+          mfAugmentCountiesGeoJSONAsync(raw, function (data) {
+            try {
+              mfApplyCountiesToMap(data);
+            } catch (e) {
+              console.warn('[Index] full counties apply failed', e);
+            }
+          });
+        })
+        .catch(function () {});
     }
 
     function mfBuildCountyGeoidToCityMap() {
@@ -1081,7 +975,8 @@
     }
 
     function mfApplyCountiesToMap(data) {
-      if (!map) return;
+      if (!map || !data) return;
+      try {
       if (!map.getSource('mf-counties')) {
         map.addSource('mf-counties', {
           type: 'geojson',
@@ -1143,8 +1038,12 @@
         );
       }
 
-      var outline = mfBuildMetroOutlineGeoJSON(data);
-      mfInstallMetroOutlineLayers(outline);
+      try {
+        var outline = mfBuildMetroOutlineGeoJSON(data);
+        mfInstallMetroOutlineLayers(outline);
+      } catch (outlineErr) {
+        console.warn('[Index] metro outline skipped', outlineErr);
+      }
 
       mfCountiesReady = true;
       mfRemoveServicePreviewLayer();
@@ -1152,6 +1051,10 @@
       mfInstallCountyInteractions();
       if (!mfHotspotsInstalled) mfInstallCityMarkers();
       mfSyncArmedCountyStates();
+      } catch (e) {
+        console.error('[Index] mfApplyCountiesToMap failed', e);
+        throw e;
+      }
     }
 
     function mfCityKeyAtPoint(lng, lat) {
@@ -1436,6 +1339,9 @@
 
       map.once('load', function () {
         try {
+          if (!mfHotspotsInstalled) mfInstallCityMarkers();
+        } catch (_) {}
+        try {
           mfLoadCountiesLayer();
         } catch (_) {}
         try {
@@ -1453,27 +1359,28 @@
       mfSetMapLoading(true);
       mfSetMapLoadError('');
       mfFetchCountiesGeoJSON()
-        .then(function (result) {
-          if (!map || !result) return;
-          if (result.data) {
-            mfApplyCountiesToMap(result.data);
-            return;
-          }
-          if (result.geojson) {
-            mfAugmentCountiesGeoJSONAsync(result.geojson, function (data) {
+        .then(function (raw) {
+          if (!map || !raw || !Array.isArray(raw.features)) return;
+          var metroOnly = raw.features.length <= 12;
+          mfAugmentCountiesGeoJSONAsync(raw, function (data) {
+            try {
               mfApplyCountiesToMap(data);
-            });
-          }
+              if (metroOnly) mfLoadFullCountiesInBackground();
+            } catch (e) {
+              console.error('[Index] counties apply failed', e);
+              mfSetMapLoadError('Could not draw counties. Check browser console.');
+            }
+          });
         })
         .catch(function (err) {
           console.warn('[Index] counties load failed', err);
           mfSetMapLoadError(
-            'County map could not load. Host us_counties.geojson at /national/ on this site (copy from maps.metrofeedus.com/national/). City pins still work.'
+            'County map could not load. Deploy the national/ folder (metro_counties.geojson) with Index.html.'
           );
-          mfInstallCityMarkers();
         })
         .finally(function () {
           mfSetMapLoading(false);
+          if (!mfHotspotsInstalled) mfInstallCityMarkers();
         });
     }
 
