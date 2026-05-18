@@ -2,6 +2,18 @@ window.ROUTES = {
   "cincinnati": {
     "busRoutes": [
       {
+        "id": "bcrta_5635",
+        "label": "R1 - R1 - Hamilton/Middletown Shuttle",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_6750",
+        "label": "O1 - O1",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
         "id": "sorta_1",
         "label": "[SORTA] 1 - Mt. Adams",
         "dir0": "Outbound",
@@ -10,6 +22,12 @@ window.ROUTES = {
       {
         "id": "tank_1",
         "label": "[TANK] 1 - Dixie Hwy/Florence",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_6752",
+        "label": "O2 - O2",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
@@ -26,6 +44,18 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
+        "id": "bcrta_5638",
+        "label": "R3 - R3 - Oxford-Forest Park Connector",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_6753",
+        "label": "O3 - O3",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
         "id": "sorta_3",
         "label": "[SORTA] 3X - Montgomery Express",
         "dir0": "Outbound",
@@ -34,6 +64,12 @@ window.ROUTES = {
       {
         "id": "tank_3",
         "label": "[TANK] 3 - Ludlow/Bromley",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_6754",
+        "label": "O4 - O4",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
@@ -52,6 +88,12 @@ window.ROUTES = {
       {
         "id": "tank_5",
         "label": "[TANK] 5 - Holman Ave/Fort Wright",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_5640",
+        "label": "R6 - R6 - Job Connector",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
@@ -454,6 +496,48 @@ window.ROUTES = {
       {
         "id": "tank_3701",
         "label": "[TANK] 3701 - Southbank Shuttle",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_5620",
+        "label": "BL - Blue Line",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_5632",
+        "label": "GL - Gold Line",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_5633",
+        "label": "GRL - Green Line",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_5636",
+        "label": "RL - Red Line",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_6067",
+        "label": "CL - CincyLink",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_6734",
+        "label": "CLX - CincyLink Express",
+        "dir0": "Outbound",
+        "dir1": "Inbound"
+      },
+      {
+        "id": "bcrta_7048",
+        "label": "Miami Flyer PR - Miami Flyer Park and Ride",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
