@@ -10,7 +10,6 @@
   <link rel="apple-touch-icon" href="/RoamRavenbird.png" />
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
   <style>
     :root {
@@ -676,8 +675,6 @@
   <script>
     const MF_COOKIE_KEY = 'cookieConsent';
 
-    const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
-
     const MF_SUPPORTED_CITIES = {
       cincinnati: {
         shortLabel: 'Cincinnati Metro',
@@ -1027,38 +1024,6 @@
       } catch (_) {}
     }
 
-    function mfEnsureStatesLayer() {
-      if (!map || map.getSource('mf-states')) return Promise.resolve();
-      if (!window.topojson) return Promise.resolve();
-      return fetch(MF_STATES_TOPO_URL, { cache: 'default' })
-        .then(function (r) {
-          if (!r.ok) throw new Error('states ' + r.status);
-          return r.json();
-        })
-        .then(function (topo) {
-          if (!map) return;
-          var states = topojson.feature(topo, topo.objects.states);
-          map.addSource('mf-states', { type: 'geojson', data: states });
-          var before = map.getLayer('mf-counties-fill') ? 'mf-counties-fill' : undefined;
-          map.addLayer(
-            {
-              id: 'mf-states-line',
-              type: 'line',
-              source: 'mf-states',
-              paint: {
-                'line-color': '#f8fafc',
-                'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1.25, 6, 2, 9, 2.6],
-                'line-opacity': 0.88
-              }
-            },
-            before
-          );
-        })
-        .catch(function (err) {
-          console.warn('[Index] states outline failed', err);
-        });
-    }
-
     function mfBuildMetroOutlineGeoJSON(countyData) {
       if (!window.turf || !countyData || !Array.isArray(countyData.features)) return null;
       var metro = [];
@@ -1128,37 +1093,32 @@
         map.getSource('mf-counties').setData(data);
       }
 
-      var beforeCounties = map.getLayer('mf-states-line') ? 'mf-states-line' : undefined;
-
       if (!map.getLayer('mf-counties-fill')) {
-        map.addLayer(
-          {
-            id: 'mf-counties-fill',
-            type: 'fill',
-            source: 'mf-counties',
-            paint: {
-              'fill-color': [
-                'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                '#c4b5fd',
-                ['boolean', ['feature-state', 'armed'], false],
-                '#a855f7',
-                ['==', ['get', 'cityKey'], ''],
-                '#16161a',
-                '#9333ea'
-              ],
-              'fill-opacity': [
-                'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                0.58,
-                ['==', ['get', 'cityKey'], ''],
-                0.82,
-                ['interpolate', ['linear'], ['zoom'], 4, 0.48, 8, 0.42, 11, 0.36]
-              ]
-            }
-          },
-          beforeCounties
-        );
+        map.addLayer({
+          id: 'mf-counties-fill',
+          type: 'fill',
+          source: 'mf-counties',
+          paint: {
+            'fill-color': [
+              'case',
+              ['boolean', ['feature-state', 'hover'], false],
+              '#c4b5fd',
+              ['boolean', ['feature-state', 'armed'], false],
+              '#a855f7',
+              ['==', ['get', 'cityKey'], ''],
+              '#16161a',
+              '#9333ea'
+            ],
+            'fill-opacity': [
+              'case',
+              ['boolean', ['feature-state', 'hover'], false],
+              0.58,
+              ['==', ['get', 'cityKey'], ''],
+              0.82,
+              ['interpolate', ['linear'], ['zoom'], 4, 0.48, 8, 0.42, 11, 0.36]
+            ]
+          }
+        });
       }
 
       if (!map.getLayer('mf-counties-line')) {
@@ -1475,9 +1435,6 @@
       } catch (_) {}
 
       map.once('load', function () {
-        try {
-          mfEnsureStatesLayer();
-        } catch (_) {}
         try {
           mfLoadCountiesLayer();
         } catch (_) {}
