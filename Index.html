@@ -127,6 +127,10 @@
     .mf-hotspot-marker--armed .mf-hotspot-marker__hint {
       display: block;
     }
+    .mf-hotspot-marker.mf-hotspot-marker--zoom-hidden {
+      display: none !important;
+      pointer-events: none !important;
+    }
     @keyframes mf-hotspot-ring {
       0% { transform: scale(0.65); opacity: 0.9; }
       70% { transform: scale(1.35); opacity: 0; }
@@ -666,6 +670,10 @@
   <script>
     const MF_COOKIE_KEY = 'cookieConsent';
     const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
+    /** National “coverage map” zoom — city pins stay hidden below MF_CITY_MARKER_MIN_ZOOM. */
+    const MF_ZOOM_NATIONAL = 4.2;
+    const MF_ZOOM_IN_SERVICE = 10.8;
+    const MF_CITY_MARKER_MIN_ZOOM = 7.5;
 
     const MF_SUPPORTED_CITIES = {
       cincinnati: {
@@ -693,6 +701,23 @@
     var mfDidGpsRecenter = false;
     var mfHotspotArmedKey = null;
     var mfHotspotMarkerControls = [];
+    var mfCityMarkerZoomBound = false;
+
+    function mfSyncCityMarkerVisibility() {
+      if (!map) return;
+      var show = map.getZoom() >= MF_CITY_MARKER_MIN_ZOOM;
+      mfHotspotMarkerControls.forEach(function (o) {
+        if (!o.el) return;
+        o.el.classList.toggle('mf-hotspot-marker--zoom-hidden', !show);
+      });
+    }
+
+    function mfBindCityMarkerZoomVisibility() {
+      if (!map || mfCityMarkerZoomBound) return;
+      mfCityMarkerZoomBound = true;
+      map.on('zoom', mfSyncCityMarkerVisibility);
+      map.on('zoomend', mfSyncCityMarkerVisibility);
+    }
 
     function mfSetGpsUnsupportedBar(show) {
       var el = document.getElementById('mfGpsRegionBar');
@@ -1266,9 +1291,10 @@
               var inRegion = mfUserInAnySupportedRegion(lat, lon);
               map.easeTo({
                 center: [lon, lat],
-                zoom: inRegion ? 10.8 : 6.2,
+                zoom: inRegion ? MF_ZOOM_IN_SERVICE : MF_ZOOM_NATIONAL,
                 duration: 700
               });
+              mfSyncCityMarkerVisibility();
             } catch (_) {}
           }
           mfUpdateGpsRegionNotice();
@@ -1330,7 +1356,7 @@
     function mfInitMap() {
       if (map) return;
       const defaultCenter = [-98, 39];
-      const defaultZoom = 4.2;
+      const defaultZoom = MF_ZOOM_NATIONAL;
 
       map = new maplibregl.Map({
         container: 'map',
@@ -1527,6 +1553,7 @@
             e.stopPropagation();
             mfOnHotspotCityInteraction(key);
           });
+          el.classList.add('mf-hotspot-marker--zoom-hidden');
           mfHotspotMarkerControls.push({ key: key, el: el });
           try {
             new maplibregl.Marker({
@@ -1541,6 +1568,8 @@
           } catch (_) {}
         })(cityKey);
       }
+      mfBindCityMarkerZoomVisibility();
+      mfSyncHotspotMarkerVisibility();
       mfSyncHotspotMarkerArmState();
     }
 
@@ -1573,6 +1602,7 @@
       if (!city || !map) return;
       try {
         map.easeTo({ center: city.defaultView.center, zoom: city.defaultView.zoom, duration: 650 });
+        mfSyncCityMarkerVisibility();
       } catch (_) {}
     }
 
