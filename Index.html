@@ -9,6 +9,7 @@
   <link rel="apple-touch-icon" href="/RoamRavenbird.png" />
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
   <style>
     :root {
@@ -673,6 +674,7 @@
 
   <script>
     const MF_COOKIE_KEY = 'cookieConsent';
+    const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
 
     const MF_SUPPORTED_CITIES = {
       cincinnati: {
@@ -918,6 +920,51 @@
       } catch (_) {}
     }
 
+    function mfRaiseStatesLineLayer() {
+      if (!map || !map.getLayer('mf-states-line')) return;
+      try {
+        if (map.getLayer('mf-metro-glow')) map.moveLayer('mf-states-line', 'mf-metro-glow');
+      } catch (_) {}
+    }
+
+    function mfEnsureStatesLayer() {
+      if (!map || map.getSource('mf-states')) {
+        mfRaiseStatesLineLayer();
+        return Promise.resolve();
+      }
+      if (!window.topojson) return Promise.resolve();
+      return fetch(MF_STATES_TOPO_URL, { cache: 'default' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('states HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (topo) {
+          if (!map || map.getSource('mf-states')) return;
+          var states = topojson.feature(topo, topo.objects.states);
+          map.addSource('mf-states', { type: 'geojson', data: states });
+          var before;
+          if (map.getLayer('mf-metro-glow')) before = 'mf-metro-glow';
+          else if (map.getLayer('mf-metro-outline')) before = 'mf-metro-outline';
+          map.addLayer(
+            {
+              id: 'mf-states-line',
+              type: 'line',
+              source: 'mf-states',
+              paint: {
+                'line-color': '#404048',
+                'line-width': ['interpolate', ['linear'], ['zoom'], 4, 0.9, 7, 1.4, 11, 2],
+                'line-opacity': 0.62
+              }
+            },
+            before
+          );
+          mfRaiseStatesLineLayer();
+        })
+        .catch(function (err) {
+          console.warn('[Index] states outline failed', err);
+        });
+    }
+
     function mfBuildMetroOutlineGeoJSON(countyData) {
       if (!window.turf || !countyData || !Array.isArray(countyData.features)) return null;
       var metro = [];
@@ -1047,6 +1094,7 @@
 
       mfCountiesReady = true;
       mfRemoveServicePreviewLayer();
+      mfRaiseStatesLineLayer();
       mfRaiseUserLocationLayers();
       mfInstallCountyInteractions();
       if (!mfHotspotsInstalled) mfInstallCityMarkers();
@@ -1340,6 +1388,9 @@
       map.once('load', function () {
         try {
           if (!mfHotspotsInstalled) mfInstallCityMarkers();
+        } catch (_) {}
+        try {
+          mfEnsureStatesLayer();
         } catch (_) {}
         try {
           mfLoadCountiesLayer();
