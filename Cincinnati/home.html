@@ -1658,50 +1658,75 @@
       font-weight: 600;
     }
 
-    /* Onboarding hints on phones: near full-width card, no sideways slide, safe areas */
+    /* Onboarding hints on phones: compact bottom dock (keeps map + controls visible) */
     @media (max-width: 640px) {
       .dropdown-tooltip.mf-onboarding-hint {
-        padding: 12px 14px 14px;
-        padding-left: max(14px, env(safe-area-inset-left, 0px));
-        padding-right: max(14px, env(safe-area-inset-right, 0px));
-        padding-top: max(12px, env(safe-area-inset-top, 0px));
-        padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
-        font-size: max(15px, 0.92rem);
-        line-height: 1.42;
-        font-weight: 650;
-        width: calc(100vw - 14px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
-        max-width: calc(100vw - 14px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
+        padding: 10px 12px 11px;
+        padding-left: max(12px, env(safe-area-inset-left, 0px));
+        padding-right: max(12px, env(safe-area-inset-right, 0px));
+        font-size: 0.88rem;
+        line-height: 1.38;
+        font-weight: 600;
         white-space: normal !important;
         word-wrap: break-word;
         overflow-wrap: anywhere;
-        hyphens: auto;
-        -webkit-hyphens: auto;
-        transition: opacity 0.35s ease, box-shadow 0.35s ease;
+        transition: opacity 0.28s ease, box-shadow 0.28s ease;
         transform: none !important;
         -webkit-font-smoothing: antialiased;
       }
       .dropdown-tooltip.mf-onboarding-hint.show {
         transform: none !important;
       }
+      .dropdown-tooltip.mf-onboarding-hint.mf-onboarding-hint--mobile-dock {
+        top: auto !important;
+        left: 50% !important;
+        right: auto !important;
+        width: min(calc(100vw - 20px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)), 340px) !important;
+        max-width: min(calc(100vw - 20px), 340px) !important;
+        transform: translateX(-50%) !important;
+        border-radius: 10px;
+        box-shadow:
+          0 0 0 1px rgba(168, 85, 247, 0.35),
+          0 8px 28px rgba(0, 0, 0, 0.55);
+      }
+      .dropdown-tooltip.mf-onboarding-hint.mf-onboarding-hint--mobile-dock.show {
+        transform: translateX(-50%) !important;
+      }
+      .dropdown-tooltip.mf-onboarding-hint.mf-onboarding-hint--mobile-dock::after,
       .dropdown-tooltip.mf-onboarding-hint.mf-onboarding-hint--stack-below::after,
       .dropdown-tooltip.mf-onboarding-hint.mf-onboarding-hint--stack-below.dropdown-tooltip--arrow-right::after {
         display: none;
       }
       .mf-onboarding-hint-step,
       .mf-onboarding-hint-done {
-        top: max(6px, calc(env(safe-area-inset-top, 0px) + 4px));
+        top: 7px;
         right: max(8px, env(safe-area-inset-right, 0px));
-        font-size: 0.68rem;
+        font-size: 0.64rem;
       }
       .mf-onboarding-hint-text {
-        padding-right: 3.1rem;
-        font-size: max(15px, 0.9rem);
-        line-height: 1.42;
+        padding-right: 2.75rem;
+        font-size: 0.88rem;
+        line-height: 1.38;
       }
       .mf-onboarding-hint--closing .mf-onboarding-hint-text {
-        font-size: max(15px, 0.95rem);
-        line-height: 1.48;
+        font-size: 0.9rem;
+        line-height: 1.42;
         padding-bottom: 2px;
+      }
+    }
+
+    .mf-onboarding-target-highlight {
+      position: relative;
+      z-index: 10065 !important;
+      border-radius: 8px;
+      animation: mf-onboarding-target-glow 1.35s ease-in-out infinite;
+    }
+    @keyframes mf-onboarding-target-glow {
+      0%, 100% {
+        box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.75), 0 0 14px rgba(168, 85, 247, 0.28);
+      }
+      50% {
+        box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.92), 0 0 22px rgba(168, 85, 247, 0.42);
       }
     }
     
@@ -2123,10 +2148,27 @@
     box-sizing: border-box;
   }
   @media (max-width: 640px) {
+    #mfTutorialModal .mf-modal {
+      padding: 14px 16px 16px;
+    }
     #mfTutorialModal .mf-tutorial-header h2 {
       font-size: 1.05rem;
       line-height: 1.25;
       padding: 0 4px;
+    }
+    #mfTutorialModal #mfTutorialBody {
+      font-size: 0.9rem !important;
+      line-height: 1.45 !important;
+    }
+    #mfTutorialModal #mfTutorialActions {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    #mfTutorialModal #mfTutorialActions .mf-btn {
+      flex: none;
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
     }
   }
 
@@ -4964,20 +5006,103 @@
     };
   }
 
+  function mfIsMobileTutorialViewport() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+  }
+
+  let _mfOnboardingHighlightEl = null;
+  function mfClearOnboardingHighlight() {
+    if (_mfOnboardingHighlightEl) {
+      try { _mfOnboardingHighlightEl.classList.remove('mf-onboarding-target-highlight'); } catch (_) {}
+      _mfOnboardingHighlightEl = null;
+    }
+  }
+  function mfSetOnboardingHighlight(el) {
+    mfClearOnboardingHighlight();
+    if (!el || !el.classList) return;
+    try { el.classList.add('mf-onboarding-target-highlight'); } catch (_) {}
+    _mfOnboardingHighlightEl = el;
+  }
+
+  function mfOnboardingMobileDockBottomPx() {
+    const vb = mfViewportLayoutBox();
+    let gap = 10;
+    try {
+      const fav = document.getElementById('favoritesWrapper');
+      if (fav && fav.getBoundingClientRect) {
+        const fr = fav.getBoundingClientRect();
+        if (fr.height > 0) {
+          gap = Math.max(gap, vb.top + vb.height - fr.top + 8);
+        }
+      }
+    } catch (_) {}
+    return Math.max(72, Math.round(gap));
+  }
+
+  function mfApplyOnboardingMobileDock(tooltip) {
+    if (!tooltip) return;
+    tooltip.classList.add('mf-onboarding-hint--mobile-dock');
+    tooltip.classList.remove('dropdown-tooltip--arrow-right', 'mf-onboarding-hint--stack-below');
+    const vb = mfViewportLayoutBox();
+    const bottomPx = mfOnboardingMobileDockBottomPx();
+    tooltip.style.top = 'auto';
+    tooltip.style.bottom = `${bottomPx}px`;
+    tooltip.style.left = '50%';
+    tooltip.style.right = 'auto';
+    tooltip.style.transform = 'translateX(-50%)';
+    try {
+      const w = tooltip.offsetWidth || 280;
+      const edge = 10;
+      const L0 = vb.left + edge;
+      const R0 = vb.left + vb.width - edge;
+      let left = vb.width ? Math.round(vb.left + (vb.width - w) / 2) : L0;
+      if (left < L0) left = L0;
+      if (vb.width && left + w > R0) left = Math.max(L0, R0 - w);
+      tooltip.style.left = `${left}px`;
+      tooltip.style.transform = 'none';
+    } catch (_) {}
+  }
+
+  function mfShouldUseOnboardingMobileDock(tooltip, opts) {
+    return (
+      mfIsMobileTutorialViewport() &&
+      tooltip &&
+      tooltip.classList &&
+      tooltip.classList.contains('mf-onboarding-hint') &&
+      !(opts && opts.forceAnchor)
+    );
+  }
+
+  function mfScheduleOnboardingTooltipDismiss(tooltip, ms) {
+    const fadeMs = mfIsMobileTutorialViewport() ? 380 : 600;
+    setTimeout(() => {
+      tooltip.classList.remove('show');
+      setTimeout(() => {
+        if (tooltip.parentNode) tooltip.parentNode.removeChild(tooltip);
+        mfClearOnboardingHighlight();
+      }, fadeMs);
+    }, ms != null ? ms : 3600);
+  }
+
   function mfShowAnchoredTooltip(targetEl, text, opts) {
     if (!targetEl) return null;
     const rect = targetEl.getBoundingClientRect();
     const tooltip = mfTooltipEl(text, opts);
     const pad = (opts && opts.padPx) ? opts.padPx : 10;
-    const mobile = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+    const mobile = mfIsMobileTutorialViewport();
     let edge = mobile ? 12 : 8;
     if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
       edge = Math.max(edge, 14);
     }
-    // Position: prefer to the right of target; flip to left if we'd overflow viewport.
     tooltip.style.top = '0px';
-    tooltip.style.left = '-9999px'; // temp offscreen for measurement
+    tooltip.style.left = '-9999px';
     document.body.appendChild(tooltip);
+    if (mfShouldUseOnboardingMobileDock(tooltip, opts)) {
+      mfSetOnboardingHighlight(targetEl);
+      mfApplyOnboardingMobileDock(tooltip);
+      mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
+      return tooltip;
+    }
     try {
       const w = tooltip.offsetWidth || 180;
       const h = tooltip.offsetHeight || 40;
@@ -5033,10 +5158,7 @@
       const left = rect.right + pad;
       tooltip.style.left = `${Math.max(edge, Math.round(left))}px`;
     }
-    setTimeout(() => {
-      tooltip.classList.remove('show');
-      setTimeout(() => tooltip.parentNode && tooltip.parentNode.removeChild(tooltip), 600);
-    }, (opts && opts.ms) ? opts.ms : 3600);
+    mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
     return tooltip;
   }
 
@@ -5062,11 +5184,16 @@
     tooltip.style.top = '0px';
     tooltip.style.left = '-9999px';
     document.body.appendChild(tooltip);
+    if (mfShouldUseOnboardingMobileDock(tooltip, opts)) {
+      mfApplyOnboardingMobileDock(tooltip);
+      mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
+      return tooltip;
+    }
     try {
       const w = tooltip.offsetWidth || 240;
       const h = tooltip.offsetHeight || 52;
       const vb = mfViewportLayoutBox();
-      const mobile = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+      const mobile = mfIsMobileTutorialViewport();
       let edge = mobile ? 12 : 8;
       if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
         edge = Math.max(edge, 14);
@@ -5091,10 +5218,7 @@
         tooltip.style.transform = 'translateX(0)';
       }
     } catch (_) {}
-    setTimeout(() => {
-      tooltip.classList.remove('show');
-      setTimeout(() => tooltip.parentNode && tooltip.parentNode.removeChild(tooltip), 600);
-    }, (opts && opts.ms) ? opts.ms : 3600);
+    mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
     return tooltip;
   }
 
@@ -5143,11 +5267,17 @@
     tooltip.style.top = '0px';
     tooltip.style.left = '-9999px';
     document.body.appendChild(tooltip);
+    if (mfShouldUseOnboardingMobileDock(tooltip, opts)) {
+      mfSetOnboardingHighlight(targetEl);
+      mfApplyOnboardingMobileDock(tooltip);
+      mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
+      return tooltip;
+    }
     try {
       const w = tooltip.offsetWidth || 220;
       const h = tooltip.offsetHeight || 52;
       const vb = mfViewportLayoutBox();
-      const mobile = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches;
+      const mobile = mfIsMobileTutorialViewport();
       let edge = mobile ? 12 : 8;
       if (tooltip.classList.contains('mf-onboarding-hint') && mobile) {
         edge = Math.max(edge, 14);
@@ -5159,14 +5289,12 @@
       const bottomPad =
         mobile && tooltip.classList.contains('mf-onboarding-hint') ? edge + 18 : edge;
 
-      // Center horizontally over marker, sit above it.
       let left = rect.left + rect.width / 2 - w / 2;
       let top = rect.top - h - 10;
 
-      // Clamp.
       if (left < L0) left = L0;
       if (vb.width && left + w > R0) left = Math.max(L0, R0 - w);
-      if (top < T0) top = rect.bottom + 10; // if no room above, place below
+      if (top < T0) top = rect.bottom + 10;
       if (vb.height && top + h > B0 - (bottomPad - edge)) {
         top = Math.max(T0, B0 - h - (bottomPad - edge));
       }
@@ -5177,10 +5305,7 @@
         tooltip.style.transform = 'none';
       }
     } catch (_) {}
-    setTimeout(() => {
-      tooltip.classList.remove('show');
-      setTimeout(() => tooltip.parentNode && tooltip.parentNode.removeChild(tooltip), 600);
-    }, (opts && opts.ms) ? opts.ms : 3600);
+    mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
     return tooltip;
   }
 
@@ -5189,9 +5314,10 @@
   }
 
   async function mfShowOnboardingClosingStatement(text, tipMs) {
-    const ms = tipMs != null ? tipMs : 5600;
+    const mobile = mfIsMobileTutorialViewport();
+    const ms = tipMs != null ? tipMs : mobile ? 4800 : 5600;
     mfShowCenteredTooltip(text, { ms: ms, variant: 'onboarding', closing: true });
-    await mfDelay(ms + 700);
+    await mfDelay(ms + (mobile ? 480 : 700));
   }
 
   function mfWaitForElement(getEl, opts) {
@@ -5216,18 +5342,24 @@
    * @param {{stepPauseMs?:number,busStopTooltipMs?:number,anchoredTooltipMs?:number,waitTimeoutMs?:number,tooltipVariant?:string,progressStart?:number,progressTotal?:number}} [opts]
    */
   async function mfRunOnboardingMapHintSteps(steps, opts) {
-    const stepPauseMs = opts && opts.stepPauseMs != null ? opts.stepPauseMs : 4000;
-    const busStopMs = opts && opts.busStopTooltipMs != null ? opts.busStopTooltipMs : 3200;
-    const anchoredMs = opts && opts.anchoredTooltipMs != null ? opts.anchoredTooltipMs : 3600;
+    const mobile = mfIsMobileTutorialViewport();
+    const stepPauseMs =
+      opts && opts.stepPauseMs != null ? opts.stepPauseMs : mobile ? 4400 : 4000;
+    const busStopMs =
+      opts && opts.busStopTooltipMs != null ? opts.busStopTooltipMs : mobile ? 3800 : 3200;
+    const anchoredMs =
+      opts && opts.anchoredTooltipMs != null ? opts.anchoredTooltipMs : mobile ? 3800 : 3600;
     const waitTimeoutMs = opts && opts.waitTimeoutMs != null ? opts.waitTimeoutMs : 2600;
     const variant = opts && opts.tooltipVariant ? opts.tooltipVariant : null;
     const progTotal = opts && opts.progressTotal != null ? opts.progressTotal : steps.length;
     const progStart = opts && opts.progressStart != null ? opts.progressStart : 1;
     const baseBus = Object.assign({ ms: busStopMs }, variant ? { variant } : {});
     const baseAnch = Object.assign({ ms: anchoredMs, padPx: 12 }, variant ? { variant } : {});
+    const stepGapMs = mobile ? 420 : 0;
     for (let i = 0; i < steps.length; i++) {
       const s = steps[i];
       const el = await mfWaitForElement(s.getEl, { timeoutMs: waitTimeoutMs, intervalMs: 120 });
+      if (stepGapMs) await mfDelay(stepGapMs);
       const prog = { progress: { current: progStart + i, total: progTotal } };
       const busOpts = Object.assign({}, baseBus, prog);
       const anchOpts = Object.assign({}, baseAnch, prog);
@@ -6343,11 +6475,12 @@
     window.metrofeedStartQuickTutorial ||
     async function metrofeedStartQuickTutorial() {
       const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-      /** Tooltip visible ~this long; step wait ≈ tooltip + 600ms fade + short gap so the next beat follows quickly. */
-      const tipMenu = 5400;
-      const tipBus = 5400;
-      const tipDash = 5400;
-      const stepAfter = (tipMs) => tipMs + 700;
+      const mobile = typeof mfIsMobileTutorialViewport === 'function' && mfIsMobileTutorialViewport();
+      /** Tooltip visible duration; step wait ≈ tooltip + fade + gap (mobile: shorter copy window, tighter handoff). */
+      const tipMenu = mobile ? 4000 : 5400;
+      const tipBus = mobile ? 3800 : 5400;
+      const tipDash = mobile ? 4000 : 5400;
+      const stepAfter = (tipMs) => tipMs + (mobile ? 480 : 700);
       const pop = { variant: 'onboarding' };
 
       const finishOnboarding = () => {
@@ -6360,6 +6493,8 @@
       };
 
       try {
+        if (mobile) await delay(320);
+
         const menuBtn = document.getElementById('menuBtn');
         const dropdownMenu = document.getElementById('dropdownMenu');
         const busesBtn = document.getElementById('dropdownBusesBtn');
@@ -6387,6 +6522,7 @@
             dropdownMenu.style.display = 'flex';
             if (typeof window.positionDropdownMenu === 'function') window.positionDropdownMenu();
           } catch (_) {}
+          if (mobile) await delay(380);
           mfShowAnchoredTooltip(
             busesBtn,
             'Choose Bus Routes to pick a line and direction. Rail and other tools are in this menu too.',
@@ -6444,17 +6580,17 @@
           }
         ];
         await mfRunOnboardingMapHintSteps(steps, {
-          stepPauseMs: 6000,
-          busStopTooltipMs: 5400,
-          anchoredTooltipMs: 5400,
-          waitTimeoutMs: 2800,
+          stepPauseMs: mobile ? 4400 : 6000,
+          busStopTooltipMs: mobile ? 3800 : 5400,
+          anchoredTooltipMs: mobile ? 3800 : 5400,
+          waitTimeoutMs: mobile ? 3200 : 2800,
           tooltipVariant: 'onboarding',
           progressStart: stepI + 1,
           progressTotal: totalHintSteps
         });
         await mfShowOnboardingClosingStatement(
           "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
-          5600
+          mobile ? 4800 : 5600
         );
       } catch (e) {
         console.warn('[metrofeedStartQuickTutorial]', e);
