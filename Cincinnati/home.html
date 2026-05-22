@@ -3284,22 +3284,13 @@
   const CITY_CONFIG = getCityConfig();
   window.CITY_CONFIG = CITY_CONFIG; // Expose globally for otp.js and other modules
 
-  /** Cincinnati route JSON base — from city-config `routeDataBase` (path on main site or full URL to VPS). */
+  /** Per-route JSON base — city-config `routeDataBase` (default ./route_data/ next to home.html). */
   const ROUTE_DATA_BASE = (function () {
-    // Dev override: force local built JSON instead of VPS.
-    // Usage: add `?localRouteData=1` to the URL.
-    try {
-      const qs = new URLSearchParams(window.location.search || '');
-      if (qs.get('localRouteData') === '1') {
-        // Served from /Cincinnati/home.html → local route_data lives at /Cincinnati/route_data/
-        return './route_data/';
-      }
-    } catch (e) {}
     const raw = CITY_CONFIG.routeDataBase != null ? String(CITY_CONFIG.routeDataBase).trim() : '';
     if (raw) {
       return raw.endsWith('/') ? raw : raw + '/';
     }
-    return '/route_data/cincinnati/';
+    return './route_data/';
   })();
 
   /**
@@ -3789,7 +3780,7 @@
           return routeData;
         }
       }
-      // Cincinnati: JSON under ROUTE_DATA_BASE (proxy/CDN).
+      // Cincinnati: JSON under ROUTE_DATA_BASE (./route_data/ on the site).
       // Some routes have two direction files, others are one-way or ship a single non-direction JSON.
       const safeId = String(routeId).replace(/[/?#]+/g, '_');
       const tryFiles = [

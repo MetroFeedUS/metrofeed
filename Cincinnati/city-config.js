@@ -240,8 +240,8 @@ const CITIES = {
     // Hard safety: only render vehicles within this distance of the route polyline (prevents out-of-area vehicles on same route number).
     busMaxDistanceFromRouteMeters: 1500,
 
-    // Static per-route JSON hosting
-    routeDataBase: "https://routes.metrofeedus.com/route_data/cincinnati/",
+    // Static per-route JSON: same folder as home.html (deploy route_data/ with the city site)
+    routeDataBase: "./route_data/",
 
     // Multi-agency bus modal tabs (Metro / TANK / BCRTA Butler County)
     busModalSystems: [
