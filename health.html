@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoamRaven Health Monitor</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0d0d0d;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+/* Password Gate */
+#gate {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #0d0d0d;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 1rem;
+}
+#gate h2 { color: #1E90FF; font-size: 1.4rem; }
+#gate input {
+  background: #1a1a1a; border: 1px solid #333; color: #fff;
+  padding: 0.75rem 1.2rem; border-radius: 6px; font-size: 1rem;
+  width: 240px; text-align: center;
+}
+#gate input:focus { outline: none; border-color: #1E90FF; }
+#gate .gate-error { color: #ff4444; font-size: 0.85rem; min-height: 1.2em; }
+/* Header */
+header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #222;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 0.75rem;
+}
+header h1 { color: #1E90FF; font-size: 1.3rem; font-weight: 700; }
+header .meta { font-size: 0.8rem; color: #888; }
+.btn {
+  background: #1E90FF; color: #fff; border: none;
+  padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem;
+  cursor: pointer; font-weight: 600;
+}
+.btn:hover { background: #1a7fd4; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Main */
+main { padding: 1.5rem; max-width: 900px; margin: 0 auto; }
+/* City Card */
+.city-card {
+  background: #141414; border: 1px solid #222; border-radius: 10px;
+  margin-bottom: 1.25rem; overflow: hidden;
+}
+.city-header {
+  padding: 0.9rem 1.2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
+}
+.city-header:hover { background: #1a1a1a; }
+.city-name { font-weight: 700; font-size: 1.05rem; }
+.city-badge {
+  font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem;
+  border-radius: 4px; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.badge-pass { background: #0a3d0a; color: #4cff4c; }
+.badge-warn { background: #3d3d0a; color: #ffff4c; }
+.badge-fail { background: #3d0a0a; color: #ff4c4c; }
+.badge-running { background: #1a1a3d; color: #90c0ff; }
+/* Check Table */
+.city-checks {
+  border-top: 1px solid #222;
+  padding: 0.5rem 0;
+  display: none;
+}
+.city-card.expanded .city-checks { display: block; }
+.check-row {
+  display: grid; grid-template-columns: 10px 1fr 70px auto;
+  align-items: center; gap: 0.75rem;
+  padding: 0.45rem 1.2rem;
+  font-size: 0.85rem;
+}
+.check-row:hover { background: #1a1a1a; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-pass { background: #4cff4c; }
+.dot-warn { background: #ffff4c; }
+.dot-fail { background: #ff4c4c; }
+.dot-skip { background: #555; }
+.dot-running { background: #90c0ff; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.check-name { color: #ccc; }
+.check-ms { color: #888; font-size: 0.8rem; text-align: right; font-variant-numeric: tabular-nums; }
+.check-detail { color: #999; font-size: 0.78rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.check-detail.error { color: #ff6666; }
+/* Footer */
+footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h2>RoamRaven Health Monitor</h2>
+  <input type="password" id="gateInput" placeholder="Access code" autofocus>
+  <div class="gate-error" id="gateError"></div>
+</div>
+
+<header style="display:none" id="appHeader">
+  <h1>RoamRaven Health Monitor</h1>
+  <div class="meta" id="lastRun">Not run yet</div>
+  <button class="btn" id="runAllBtn" onclick="runAllChecks()">Run All</button>
+</header>
+
+<main style="display:none" id="appMain"></main>
+
+<footer style="display:none" id="appFooter">
+  <span id="totalTime"></span>
+</footer>
+
+<script src="health-config.js"></script>
+<script>
+(function() {
+  const PASS_CODE = 'admin2024';
+  const TIMEOUT_MS = 8000;
+
+  // --- Password Gate ---
+  const gate = document.getElementById('gate');
+  const gateInput = document.getElementById('gateInput');
+  const gateError = document.getElementById('gateError');
+
+  if (sessionStorage.getItem('healthAuth') === '1') {
+    unlockApp();
+  }
+
+  gateInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      if (gateInput.value === PASS_CODE) {
+        sessionStorage.setItem('healthAuth', '1');
+        unlockApp();
+      } else {
+        gateError.textContent = 'Invalid code';
+        gateInput.value = '';
+      }
+    }
+  });
+
+  function unlockApp() {
+    gate.style.display = 'none';
+    document.getElementById('appHeader').style.display = '';
+    document.getElementById('appMain').style.display = '';
+    document.getElementById('appFooter').style.display = '';
+    buildCards();
+    runAllChecks();
+  }
+
+  // --- Build City Cards ---
+  function buildCards() {
+    const main = document.getElementById('appMain');
+    main.innerHTML = '';
+    HEALTH_CITIES.forEach((city) => {
+      const card = document.createElement('div');
+      card.className = 'city-card expanded';
+      card.id = 'card-' + city.id;
+      card.innerHTML = `
+        <div class="city-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="city-name">${city.name}</span>
+          <span class="city-badge badge-running" id="badge-${city.id}">CHECKING...</span>
+        </div>
+        <div class="city-checks" id="checks-${city.id}"></div>
+      `;
+      main.appendChild(card);
+    });
+  }
+
+  // --- Fetch with timeout ---
+  function timedFetch(url, opts = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const start = performance.now();
+    return fetch(url, { ...opts, signal: controller.signal })
+      .then((res) => {
+        clearTimeout(timer);
+        return { res, ms: Math.round(performance.now() - start) };
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        return { err, ms: Math.round(performance.now() - start) };
+      });
+  }
+
+  // --- Individual Check Functions ---
+
+  async function checkPageLoad(city) {
+    const url = city.baseUrl + city.homeFile;
+    const { res, err, ms } = await timedFetch(url, { method: 'HEAD' });
+    if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
+    if (!res.ok) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    if (ms > 3000) return { status: 'warn', ms, detail: 'Slow response' };
+    return { status: 'pass', ms, detail: '' };
+  }
+
+  async function checkRouteIndex(city) {
+    const url = city.baseUrl + city.routeIndex;
+    const { res, err, ms } = await timedFetch(url);
+    if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
+    if (!res.ok) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    try {
+      const text = await res.text();
+      // routes_index.js sets window.ROUTES = [...]; extract the array
+      const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (!match) return { status: 'fail', ms, detail: 'Could not parse ROUTES array' };
+      const routes = JSON.parse(match[0]);
+      if (!Array.isArray(routes) || routes.length === 0) return { status: 'warn', ms, detail: '0 routes in index' };
+      return { status: 'pass', ms, detail: `${routes.length} routes` };
+    } catch (e) {
+      return { status: 'fail', ms, detail: 'Parse error: ' + e.message };
+    }
+  }
+
+  async function checkSampleRoutes(city) {
+    const indexUrl = city.baseUrl + city.routeIndex;
+    const { res: indexRes, err: indexErr } = await timedFetch(indexUrl);
+    if (indexErr || !indexRes || !indexRes.ok) return { status: 'fail', ms: 0, detail: 'Index unavailable' };
+    let routes;
+    try {
+      const text = await indexRes.text();
+      const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      routes = JSON.parse(match[0]);
+    } catch (_) {
+      return { status: 'fail', ms: 0, detail: 'Index parse failed' };
+    }
+    // Sample up to 3 random routes
+    const sample = routes.sort(() => Math.random() - 0.5).slice(0, 3);
+    let passCount = 0, warnCount = 0, failCount = 0;
+    let detail = '';
+    const start = performance.now();
+    for (const route of sample) {
+      const rid = route.id || route.route_id;
+      if (!rid) { failCount++; continue; }
+      const url = city.baseUrl + city.routeDataBase + rid + '-dir0.json';
+      const { res, err } = await timedFetch(url);
+      if (err || !res || !res.ok) { failCount++; detail = `${rid}: fetch failed`; continue; }
+      try {
+        const data = await res.json();
+        const hasShape = (Array.isArray(data.shape) && data.shape.length > 1) ||
+                         (Array.isArray(data.shapes) && data.shapes.some(s => s.length > 1));
+        const hasStops = Array.isArray(data.stops) && data.stops.length > 0;
+        const hasGeometry = data.geometry && typeof data.geometry === 'object' &&
+                            ('weekday' in data.geometry || 'saturday' in data.geometry || 'sunday' in data.geometry);
+        if (!hasShape || !hasStops) { failCount++; detail = `${rid}: missing shape/stops`; }
+        else if (!hasGeometry) { warnCount++; detail = `${rid}: no geometry block`; }
+        else { passCount++; }
+      } catch (e) {
+        failCount++; detail = `${rid}: JSON parse error`;
+      }
+    }
+    const ms = Math.round(performance.now() - start);
+    if (failCount > 0) return { status: 'fail', ms, detail: detail || `${failCount}/${sample.length} failed` };
+    if (warnCount > 0) return { status: 'warn', ms, detail: detail || `${warnCount}/${sample.length} missing geometry` };
+    return { status: 'pass', ms, detail: `${passCount}/${sample.length} valid` };
+  }
+
+  async function checkOtp(city) {
+    if (!city.otpApi) return { status: 'skip', ms: 0, detail: 'Not configured' };
+    const { res, err, ms } = await timedFetch(city.otpApi, { method: 'GET' });
+    if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
+    // OTP Transmodel returns 405 on bare GET (needs query body); that still means the server is alive
+    if (res.status >= 500) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    if (ms > 3000) return { status: 'warn', ms, detail: 'Slow (>3s)' };
+    return { status: 'pass', ms, detail: `HTTP ${res.status} (alive)` };
+  }
+
+  async function checkGtfsRt(city) {
+    if (!city.gtfsRtProxy) return { status: 'skip', ms: 0, detail: 'Not configured' };
+    const { res, err, ms } = await timedFetch(city.gtfsRtProxy);
+    if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
+    if (!res.ok) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    // For JSON endpoints, try to parse and count vehicles
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (ct.includes('json')) {
+      try {
+        const data = await res.json();
+        const vehicles = Array.isArray(data) ? data : (data.entity || data.vehicles || []);
+        if (vehicles.length === 0) return { status: 'warn', ms, detail: '0 vehicles' };
+        return { status: 'pass', ms, detail: `${vehicles.length} vehicles` };
+      } catch (_) {
+        return { status: 'warn', ms, detail: 'JSON parse failed but endpoint up' };
+      }
+    }
+    // Protobuf or other binary - just check response size
+    return { status: 'pass', ms, detail: `${res.status} (binary)` };
+  }
+
+  async function checkRealtimeAlerts(city) {
+    if (!city.realtimeAlerts) return { status: 'skip', ms: 0, detail: 'Not configured' };
+    const { res, err, ms } = await timedFetch(city.realtimeAlerts);
+    if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
+    if (!res.ok) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    return { status: 'pass', ms, detail: '' };
+  }
+
+  async function checkTrafficApi(city) {
+    if (!city.trafficApi) return { status: 'skip', ms: 0, detail: 'Not configured' };
+    const { res, err, ms } = await timedFetch(city.trafficApi);
+    if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
+    if (!res.ok) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (ct.includes('json')) {
+      try {
+        await res.json();
+        return { status: 'pass', ms, detail: 'Valid JSON' };
+      } catch (_) {
+        return { status: 'warn', ms, detail: 'Response not JSON' };
+      }
+    }
+    return { status: 'pass', ms, detail: '' };
+  }
+
+  async function checkTileServer(city) {
+    if (!city.tileStyle) return { status: 'skip', ms: 0, detail: 'Not configured' };
+    const { res, err, ms } = await timedFetch(city.tileStyle);
+    if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
+    if (!res.ok) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    try {
+      const data = await res.json();
+      if (!data.sources && !data.layers) return { status: 'warn', ms, detail: 'Unexpected style format' };
+      return { status: 'pass', ms, detail: `${(data.layers || []).length} layers` };
+    } catch (_) {
+      return { status: 'warn', ms, detail: 'Not valid JSON style' };
+    }
+  }
+
+  async function checkDataFreshness(city) {
+    // Fetch a sample route JSON and check build_timestamp or Last-Modified
+    const indexUrl = city.baseUrl + city.routeIndex;
+    const { res: indexRes, err: indexErr } = await timedFetch(indexUrl);
+    if (indexErr || !indexRes || !indexRes.ok) return { status: 'fail', ms: 0, detail: 'Index unavailable' };
+    let routes;
+    try {
+      const text = await indexRes.text();
+      const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      routes = JSON.parse(match[0]);
+    } catch (_) {
+      return { status: 'fail', ms: 0, detail: 'Index parse failed' };
+    }
+    if (!routes.length) return { status: 'warn', ms: 0, detail: 'No routes' };
+    const rid = (routes[0].id || routes[0].route_id);
+    const url = city.baseUrl + city.routeDataBase + rid + '-dir0.json';
+    const start = performance.now();
+    const { res, err } = await timedFetch(url);
+    const ms = Math.round(performance.now() - start);
+    if (err || !res || !res.ok) return { status: 'fail', ms, detail: 'Could not fetch sample route' };
+    try {
+      const data = await res.json();
+      let buildDate = null;
+      if (data.build_timestamp) {
+        buildDate = new Date(data.build_timestamp);
+      } else {
+        const lm = res.headers.get('last-modified');
+        if (lm) buildDate = new Date(lm);
+      }
+      if (!buildDate || isNaN(buildDate.getTime())) return { status: 'warn', ms, detail: 'No timestamp found' };
+      const ageDays = Math.round((Date.now() - buildDate.getTime()) / 86400000);
+      const max = city.maxDataAgeDays || 14;
+      if (ageDays > max) return { status: 'fail', ms, detail: `${ageDays} days old (max ${max})` };
+      if (ageDays > max * 0.5) return { status: 'warn', ms, detail: `${ageDays} days old` };
+      return { status: 'pass', ms, detail: `${ageDays} day${ageDays !== 1 ? 's' : ''} old` };
+    } catch (e) {
+      return { status: 'warn', ms, detail: 'Could not determine age' };
+    }
+  }
+
+  async function checkStaticAssets(city) {
+    const assets = [city.logo, 'city-config.js'];
+    let failCount = 0;
+    let detail = '';
+    const start = performance.now();
+    for (const asset of assets) {
+      if (!asset) continue;
+      const url = city.baseUrl + asset;
+      const { res, err } = await timedFetch(url, { method: 'HEAD' });
+      if (err || !res || !res.ok) {
+        failCount++;
+        detail = `${asset}: ${err ? err.message : 'HTTP ' + (res ? res.status : '?')}`;
+      }
+    }
+    const ms = Math.round(performance.now() - start);
+    if (failCount > 0) return { status: 'fail', ms, detail };
+    return { status: 'pass', ms, detail: `${assets.length} assets OK` };
+  }
+
+  // --- Check Definitions (ordered) ---
+  const CHECK_DEFS = [
+    { id: 'page',      name: 'Page Load',        fn: checkPageLoad },
+    { id: 'index',     name: 'Route Index',      fn: checkRouteIndex },
+    { id: 'sample',    name: 'Sample Routes',    fn: checkSampleRoutes },
+    { id: 'otp',       name: 'OTP API',          fn: checkOtp },
+    { id: 'gtfsrt',    name: 'GTFS-RT Proxy',    fn: checkGtfsRt },
+    { id: 'alerts',    name: 'Realtime Alerts',  fn: checkRealtimeAlerts },
+    { id: 'traffic',   name: 'Traffic API',      fn: checkTrafficApi },
+    { id: 'tiles',     name: 'Tile Server',      fn: checkTileServer },
+    { id: 'freshness', name: 'Data Freshness',   fn: checkDataFreshness },
+    { id: 'assets',    name: 'Static Assets',    fn: checkStaticAssets },
+  ];
+
+  // --- Render Check Rows ---
+  function renderChecks(cityId, results) {
+    const container = document.getElementById('checks-' + cityId);
+    container.innerHTML = '';
+    results.forEach((r) => {
+      const row = document.createElement('div');
+      row.className = 'check-row';
+      const dotClass = r.status === 'pass' ? 'dot-pass' :
+                       r.status === 'warn' ? 'dot-warn' :
+                       r.status === 'fail' ? 'dot-fail' :
+                       r.status === 'skip' ? 'dot-skip' : 'dot-running';
+      const detailClass = r.status === 'fail' ? 'check-detail error' : 'check-detail';
+      row.innerHTML = `
+        <div class="dot ${dotClass}"></div>
+        <span class="check-name">${r.name}</span>
+        <span class="check-ms">${r.status === 'skip' ? '—' : r.ms + 'ms'}</span>
+        <span class="${detailClass}" title="${r.detail || ''}">${r.detail || ''}</span>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function updateBadge(cityId, results) {
+    const badge = document.getElementById('badge-' + cityId);
+    const fails = results.filter(r => r.status === 'fail').length;
+    const warns = results.filter(r => r.status === 'warn').length;
+    if (fails > 0) {
+      badge.className = 'city-badge badge-fail';
+      badge.textContent = `${fails} FAIL${fails > 1 ? 'S' : ''}`;
+    } else if (warns > 0) {
+      badge.className = 'city-badge badge-warn';
+      badge.textContent = `${warns} WARN${warns > 1 ? 'S' : ''}`;
+    } else {
+      badge.className = 'city-badge badge-pass';
+      badge.textContent = 'ALL PASS';
+    }
+  }
+
+  // --- Run Checks ---
+  async function runCityChecks(city) {
+    const badge = document.getElementById('badge-' + city.id);
+    badge.className = 'city-badge badge-running';
+    badge.textContent = 'CHECKING...';
+
+    const results = [];
+    for (const def of CHECK_DEFS) {
+      // Show running state
+      results.push({ name: def.name, status: 'running', ms: 0, detail: '' });
+      renderChecks(city.id, results);
+      // Run the check
+      const result = await def.fn(city);
+      results[results.length - 1] = { name: def.name, ...result };
+      renderChecks(city.id, results);
+    }
+    updateBadge(city.id, results);
+    return results;
+  }
+
+  window.runAllChecks = async function() {
+    const btn = document.getElementById('runAllBtn');
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+    const globalStart = performance.now();
+
+    const promises = HEALTH_CITIES.map((city) => runCityChecks(city));
+    await Promise.all(promises);
+
+    const elapsed = Math.round(performance.now() - globalStart);
+    document.getElementById('lastRun').textContent = 'Last run: ' + new Date().toLocaleString();
+    document.getElementById('totalTime').textContent = `Total check time: ${(elapsed / 1000).toFixed(1)}s`;
+    btn.disabled = false;
+    btn.textContent = 'Run All';
+  };
+})();
+</script>
+</body>
+</html>
