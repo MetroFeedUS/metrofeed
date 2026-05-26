@@ -125,9 +125,8 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
   const gateInput = document.getElementById('gateInput');
   const gateError = document.getElementById('gateError');
 
-  if (sessionStorage.getItem('healthAuth') === '1') {
-    unlockApp();
-  }
+  // Auto-unlock deferred until all functions are defined below
+  const autoUnlock = sessionStorage.getItem('healthAuth') === '1';
 
   gateInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -485,6 +484,8 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
     btn.disabled = false;
     btn.textContent = 'Run All';
   };
+
+  if (autoUnlock) unlockApp();
 })();
 </script>
 </body>
