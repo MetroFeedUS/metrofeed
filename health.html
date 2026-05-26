@@ -195,36 +195,32 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
     return { status: 'pass', ms, detail: '' };
   }
 
-  async function checkRouteIndex(city) {
-    const url = city.baseUrl + city.routeIndex;
+  // Shared helper: fetch and parse routes_index.js, returns route array or null
+  async function fetchRouteIndex(city) {
+    const url = city.routeIndexUrl || (city.baseUrl + (city.routeIndex || 'routes_index.js'));
     const { res, err, ms } = await timedFetch(url);
-    if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
-    if (!res.ok) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    if (err || !res || !res.ok) return { routes: null, ms, err: err || `HTTP ${res ? res.status : '?'}` };
     try {
       const text = await res.text();
-      // routes_index.js sets window.ROUTES = [...]; extract the array
       const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (!match) return { status: 'fail', ms, detail: 'Could not parse ROUTES array' };
+      if (!match) return { routes: null, ms, err: 'Could not parse ROUTES array' };
       const routes = JSON.parse(match[0]);
-      if (!Array.isArray(routes) || routes.length === 0) return { status: 'warn', ms, detail: '0 routes in index' };
-      return { status: 'pass', ms, detail: `${routes.length} routes` };
+      return { routes: Array.isArray(routes) ? routes : null, ms, err: null };
     } catch (e) {
-      return { status: 'fail', ms, detail: 'Parse error: ' + e.message };
+      return { routes: null, ms, err: 'Parse error: ' + e.message };
     }
   }
 
+  async function checkRouteIndex(city) {
+    const { routes, ms, err } = await fetchRouteIndex(city);
+    if (err) return { status: 'fail', ms, detail: String(err) };
+    if (!routes || routes.length === 0) return { status: 'warn', ms, detail: '0 routes in index' };
+    return { status: 'pass', ms, detail: `${routes.length} routes` };
+  }
+
   async function checkSampleRoutes(city) {
-    const indexUrl = city.baseUrl + city.routeIndex;
-    const { res: indexRes, err: indexErr } = await timedFetch(indexUrl);
-    if (indexErr || !indexRes || !indexRes.ok) return { status: 'fail', ms: 0, detail: 'Index unavailable' };
-    let routes;
-    try {
-      const text = await indexRes.text();
-      const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      routes = JSON.parse(match[0]);
-    } catch (_) {
-      return { status: 'fail', ms: 0, detail: 'Index parse failed' };
-    }
+    const { routes, err } = await fetchRouteIndex(city);
+    if (err || !routes) return { status: 'fail', ms: 0, detail: 'Index unavailable' };
     // Sample up to 3 random routes
     const sample = routes.sort(() => Math.random() - 0.5).slice(0, 3);
     let passCount = 0, warnCount = 0, failCount = 0;
@@ -233,8 +229,7 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
     for (const route of sample) {
       const rid = route.id || route.route_id;
       if (!rid) { failCount++; continue; }
-      const file = route.file || (city.routeDataBase + 'route-' + rid + '-dir0.json');
-      const url = city.baseUrl + file;
+      const url = city.routeDataBase + 'route-' + rid + '-dir0.json';
       const { res, err } = await timedFetch(url);
       if (err || !res || !res.ok) { failCount++; detail = `${rid}: fetch failed`; continue; }
       try {
@@ -339,21 +334,11 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
 
   async function checkDataFreshness(city) {
     // Fetch a sample route JSON and check build_timestamp or Last-Modified
-    const indexUrl = city.baseUrl + city.routeIndex;
-    const { res: indexRes, err: indexErr } = await timedFetch(indexUrl);
-    if (indexErr || !indexRes || !indexRes.ok) return { status: 'fail', ms: 0, detail: 'Index unavailable' };
-    let routes;
-    try {
-      const text = await indexRes.text();
-      const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      routes = JSON.parse(match[0]);
-    } catch (_) {
-      return { status: 'fail', ms: 0, detail: 'Index parse failed' };
-    }
+    const { routes, err: indexErr } = await fetchRouteIndex(city);
+    if (indexErr || !routes) return { status: 'fail', ms: 0, detail: 'Index unavailable' };
     if (!routes.length) return { status: 'warn', ms: 0, detail: 'No routes' };
     const rid = (routes[0].id || routes[0].route_id);
-    const file = routes[0].file || (city.routeDataBase + 'route-' + rid + '-dir0.json');
-    const url = city.baseUrl + file;
+    const url = city.routeDataBase + 'route-' + rid + '-dir0.json';
     const start = performance.now();
     const { res, err } = await timedFetch(url);
     const ms = Math.round(performance.now() - start);

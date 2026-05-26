@@ -8,10 +8,10 @@ const HEALTH_CITIES = [
   {
     id: 'cincinnati',
     name: 'Cincinnati',
-    baseUrl: 'https://roamravenapp.com/Cincinnati/',
+    baseUrl: './Cincinnati/',
     homeFile: 'home.html',
-    routeIndex: 'routes_index.js',
-    routeDataBase: 'route_data/',
+    routeIndexUrl: 'https://routes.metrofeedus.com/route_data/cincinnati/Cincinnati/routes_index.js',
+    routeDataBase: 'https://routes.metrofeedus.com/route_data/cincinnati/',
     otpApi: 'https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3',
     gtfsRtProxy: 'https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json',
     realtimeAlerts: 'https://routes.metrofeedus.com/realtime/cincinnati/alerts.json',
