@@ -234,7 +234,8 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
     for (const route of sample) {
       const rid = route.id || route.route_id;
       if (!rid) { failCount++; continue; }
-      const url = city.baseUrl + city.routeDataBase + rid + '-dir0.json';
+      const file = route.file || (city.routeDataBase + 'route-' + rid + '-dir0.json');
+      const url = city.baseUrl + file;
       const { res, err } = await timedFetch(url);
       if (err || !res || !res.ok) { failCount++; detail = `${rid}: fetch failed`; continue; }
       try {
@@ -259,12 +260,22 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
 
   async function checkOtp(city) {
     if (!city.otpApi) return { status: 'skip', ms: 0, detail: 'Not configured' };
-    const { res, err, ms } = await timedFetch(city.otpApi, { method: 'GET' });
+    const { res, err, ms } = await timedFetch(city.otpApi, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '{serverInfo{version}}' })
+    });
     if (err) return { status: 'fail', ms, detail: err.name === 'AbortError' ? 'Timeout' : err.message };
-    // OTP Transmodel returns 405 on bare GET (needs query body); that still means the server is alive
-    if (res.status >= 500) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
-    if (ms > 3000) return { status: 'warn', ms, detail: 'Slow (>3s)' };
-    return { status: 'pass', ms, detail: `HTTP ${res.status} (alive)` };
+    if (res.status >= 500) return { status: 'fail', ms, detail: `HTTP ${res.status} (server error)` };
+    if (!res.ok) return { status: 'fail', ms, detail: `HTTP ${res.status}` };
+    try {
+      const data = await res.json();
+      const version = data?.data?.serverInfo?.version || 'unknown';
+      if (ms > 3000) return { status: 'warn', ms, detail: `v${version} (slow)` };
+      return { status: 'pass', ms, detail: `v${version}` };
+    } catch (_) {
+      return { status: 'pass', ms, detail: 'Alive (non-JSON response)' };
+    }
   }
 
   async function checkGtfsRt(city) {
@@ -342,7 +353,8 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
     }
     if (!routes.length) return { status: 'warn', ms: 0, detail: 'No routes' };
     const rid = (routes[0].id || routes[0].route_id);
-    const url = city.baseUrl + city.routeDataBase + rid + '-dir0.json';
+    const file = routes[0].file || (city.routeDataBase + 'route-' + rid + '-dir0.json');
+    const url = city.baseUrl + file;
     const start = performance.now();
     const { res, err } = await timedFetch(url);
     const ms = Math.round(performance.now() - start);
