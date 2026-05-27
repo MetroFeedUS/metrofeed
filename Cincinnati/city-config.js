@@ -255,7 +255,10 @@ const CITIES = {
 
     showRailRoutes: false,
 
-    useLazyLoading: false
+    useLazyLoading: false,
+
+    /** Enable OBS 24/7 TV page at obs-route-tv.html */
+    tvModeEnabled: true
   }
 };
 
