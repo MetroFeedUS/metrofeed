@@ -6,6 +6,7 @@
   <title>RoamRaven Map</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#9333ea" />
+  <script src="obs-tv-bootstrap.js"></script>
   <link rel="icon" type="image/png" href="RoamRavenbird.png" sizes="512x512" />
   <link rel="apple-touch-icon" href="RoamRavenbird.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -3258,6 +3259,7 @@
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
 <script src="routeOverlay.js?v=20260506alertBtnRed"></script>
+<script src="trafficIncidents.js"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js?v=20260506otpPrefs"></script>
 <script src="savedPlaces.js"></script>
@@ -3292,6 +3294,52 @@
     }
     return './route_data/';
   })();
+
+  /**
+   * Determine today's service day bucket key for per-day geometry lookup.
+   * Returns "weekday", "saturday", or "sunday".
+   */
+  function mfGetDayType(date) {
+    const d = (date || new Date()).getDay();
+    return d === 0 ? 'sunday' : d === 6 ? 'saturday' : 'weekday';
+  }
+  window.mfGetDayType = mfGetDayType;
+
+  /**
+   * Apply per-day geometry to routeData in-place.
+   * If geometry[dayType] has data, overwrite shape/shapes/stops.
+   * Falls back to weekday when today has trip_count===0.
+   * Returns the dayType that was applied (or null if legacy path was used).
+   */
+  function mfApplyDayGeometry(routeData) {
+    if (!routeData || !routeData.geometry || typeof routeData.geometry !== 'object') return null;
+    const dayType = mfGetDayType();
+    const geo = routeData.geometry[dayType];
+    if (geo && geo.trip_count > 0) {
+      const hasShape = Array.isArray(geo.shape) && geo.shape.length > 1;
+      const hasShapes = Array.isArray(geo.shapes) && geo.shapes.length > 0 && geo.shapes.some(s => Array.isArray(s) && s.length > 1);
+      if (hasShape || hasShapes) {
+        if (hasShape) routeData.shape = geo.shape;
+        if (hasShapes) routeData.shapes = geo.shapes;
+        else delete routeData.shapes;
+        if (Array.isArray(geo.stops) && geo.stops.length > 0) routeData.stops = geo.stops;
+        return dayType;
+      }
+    } else if (geo && geo.trip_count === 0) {
+      const wk = routeData.geometry.weekday;
+      if (wk && wk.trip_count > 0) {
+        const wkHasShape = Array.isArray(wk.shape) && wk.shape.length > 1;
+        const wkHasShapes = Array.isArray(wk.shapes) && wk.shapes.length > 0 && wk.shapes.some(s => Array.isArray(s) && s.length > 1);
+        if (wkHasShape) routeData.shape = wk.shape;
+        if (wkHasShapes) routeData.shapes = wk.shapes;
+        else delete routeData.shapes;
+        if (Array.isArray(wk.stops) && wk.stops.length > 0) routeData.stops = wk.stops;
+        return 'weekday';
+      }
+    }
+    return null;
+  }
+  window.mfApplyDayGeometry = mfApplyDayGeometry;
 
   /**
    * Route overlay UI mount point.
@@ -3814,6 +3862,7 @@
     for (const dir of [0, 1]) {
       try {
         const d = await getRouteData(routeId, dir);
+        if (d) mfApplyDayGeometry(d);
         if (!d || !d.stops || !d.stops.length) continue;
         for (let i = 0; i < d.stops.length; i++) {
           const s = d.stops[i];
@@ -3852,6 +3901,7 @@
             const direction_id = await pickBestDirectionForLocation(otpPick.route_id, userLat, userLon);
             try {
               const routeData = await getRouteData(otpPick.route_id, direction_id);
+              mfApplyDayGeometry(routeData);
               closestRoute = routeData;
               backgroundRouteData = { route: routeData, distance: otpPick.walkDistanceM, source: 'otp' };
               closestRouteFound = true;
@@ -3900,6 +3950,7 @@
       }
       try {
         const routeData = await getRouteData(best.route_id, best.direction_id);
+        mfApplyDayGeometry(routeData);
         closestRoute = routeData;
         backgroundRouteData = { route: routeData, distance: bestDist, source: 'sample' };
         closestRouteFound = true;
@@ -6398,6 +6449,7 @@
   let metrofeedStartupRouteFired = false;
 
   window.metrofeedShowTutorial = window.metrofeedShowTutorial || function () {
+    if (window.MF_TV_MODE) return;
     const modal = document.getElementById('mfTutorialModal');
     const body = document.getElementById('mfTutorialBody');
     const closeX = document.getElementById('mfTutorialCloseX');
@@ -6613,9 +6665,11 @@
     } catch (e) {
       console.warn('[startupAutoLoad] queued showRouteOverlay failed:', e);
     }
-    setTimeout(() => {
-      try { window.metrofeedShowTutorial && window.metrofeedShowTutorial(); } catch (_) {}
-    }, 2500);
+    if (!window.MF_TV_MODE) {
+      setTimeout(() => {
+        try { window.metrofeedShowTutorial && window.metrofeedShowTutorial(); } catch (_) {}
+      }, 2500);
+    }
   }
 
   // If the entry page (Index.html) detected location denial/timeout, queue the default route immediately.
@@ -6753,10 +6807,11 @@
       return;
     }
 
-    // Tutorial hook: within ~3s after route is pulled up (first-ever onboarding only).
-    setTimeout(() => {
-      try { window.metrofeedShowTutorial && window.metrofeedShowTutorial(); } catch (_) {}
-    }, 2500);
+    if (!window.MF_TV_MODE) {
+      setTimeout(() => {
+        try { window.metrofeedShowTutorial && window.metrofeedShowTutorial(); } catch (_) {}
+      }, 2500);
+    }
   }
 
   /** Keep Find Me line, stop markers, and bus polling in sync with backgroundRouteData (live GPS updates). */
@@ -10393,10 +10448,13 @@
     } else if (useCincyTraffic) {
       console.log('[toggleTrafficOverlay] Fetching Ohio traffic (VPS)...');
       try {
-        // Fake loader: keep it up for ~3.5s to mask network delay.
-        metrofeedSetTrafficLegendVisible(false);
-        const start = Date.now();
-        const loaderPromise = metrofeedRunFakeTrafficLoader(3500);
+        const tvMode = !!window.MF_TV_MODE;
+        if (!tvMode) {
+          metrofeedSetTrafficLegendVisible(false);
+        }
+        const loaderPromise = tvMode
+          ? Promise.resolve()
+          : metrofeedRunFakeTrafficLoader(3500);
 
         const incUrl = CITY_CONFIG.incidentsFeedUrl ? String(CITY_CONFIG.incidentsFeedUrl).trim() : null;
         const flowUrl = CITY_CONFIG.flowFeedUrl ? String(CITY_CONFIG.flowFeedUrl).trim() : null;
@@ -10436,11 +10494,11 @@
         trafficLayerActive = true;
         metrofeedStopFakeTrafficLoader();
         console.log('[toggleTrafficOverlay] Ohio traffic on; cached:', { incidents: window.allIncidents.length, flow: window.allFlow.length, slowdowns: window.allSlowdowns.length, construction: window.allConstruction.length });
-        metrofeedUpdateTrafficLegend();
+        if (!tvMode) metrofeedUpdateTrafficLegend();
       } catch (err) {
         console.error('[toggleTrafficOverlay] Ohio traffic fetch failed:', err);
         metrofeedStopFakeTrafficLoader();
-        alert('Failed to load Ohio traffic data (incidents/flow).');
+        if (!window.MF_TV_MODE) alert('Failed to load Ohio traffic data (incidents/flow).');
       }
     } else {
       // Turn on (MassDOT / Boston-style traffic links)
@@ -10479,6 +10537,104 @@
     // Update button state
     updateDropdownButtonStates();
   }
+
+  window.toggleTrafficOverlay = toggleTrafficOverlay;
+
+  function metrofeedTvInitApi() {
+    if (!window.MF_TV_MODE) return;
+    window.metrofeedTvApi = {
+      cityBoundsBox: function () {
+        const b = typeof CITY_BOUNDS !== 'undefined' ? CITY_BOUNDS : (CITY_CONFIG && CITY_CONFIG.bounds);
+        if (!b) return { west: -85.22, south: 38.59, east: -83.88, north: 39.71 };
+        return { west: b.west, east: b.east, south: b.south, north: b.north };
+      },
+      incidentsInCity: function () {
+        return metrofeedIncidentsInBounds(window.allIncidents || [], window.metrofeedTvApi.cityBoundsBox());
+      },
+      slowdownsInCity: function () {
+        return metrofeedGenericInBounds(window.allSlowdowns || [], window.metrofeedTvApi.cityBoundsBox());
+      },
+      incidentDisplay: function (inc, index) {
+        if (window.MfTrafficIncidents && window.MfTrafficIncidents.formatIncidentForDisplay) {
+          return window.MfTrafficIncidents.formatIncidentForDisplay(inc, index);
+        }
+        const ll = metrofeedIncidentLngLat(inc);
+        return {
+          title: inc.headline || inc.title || 'Incident',
+          description: inc.description || '',
+          lngLat: ll,
+          score: 10,
+          lines: []
+        };
+      },
+      slowdownDisplay: function (s, index) {
+        const ll = metrofeedGenericLngLat(s);
+        const title = String(s.location || s.routeName || s.road || s.name || 'Slowdown');
+        const desc = String(s.description || s.details || s.text || '');
+        return { title: title, description: desc, lngLat: ll, score: 40, lines: [desc] };
+      },
+      showTrafficDetail: function (lng, lat, title, description) {
+        window.metrofeedTvApi.closeTrafficDetail();
+        const titleEsc = metrofeedEscapeHtml(title || 'Traffic');
+        const descEsc = metrofeedEscapeHtml(description || '');
+        if (!window.map) return;
+        window._mfTvTrafficPopup = new maplibregl.Popup({ closeOnClick: false, closeButton: true, maxWidth: '420px' })
+          .setLngLat([lng, lat])
+          .setHTML(
+            '<div style="padding:10px 12px;max-width:340px;color:#eaeaea;"><div style="font-weight:800;margin-bottom:6px;">' +
+              titleEsc +
+              '</div><div style="font-size:12px;line-height:1.3;color:#cfcfcf;">' +
+              descEsc +
+              '</div></div>'
+          )
+          .addTo(window.map);
+      },
+      closeTrafficDetail: function () {
+        try {
+          if (window._mfTvTrafficPopup) {
+            window._mfTvTrafficPopup.remove();
+            window._mfTvTrafficPopup = null;
+          }
+        } catch (_) {}
+      },
+      ensureTraffic: async function () {
+        if (!trafficLayerActive) {
+          await toggleTrafficOverlay();
+        } else if (window.map) {
+          metrofeedDisplayTrafficIncidents(window.map);
+          metrofeedDisplayTrafficSlowdowns(window.map);
+        }
+        if (window.map && typeof metrofeedRemoveTrafficFlow === 'function') {
+          metrofeedRemoveTrafficFlow(window.map);
+        }
+      },
+      trafficOff: async function () {
+        if (trafficLayerActive) await toggleTrafficOverlay();
+      },
+      showConstructionLayer: function () {
+        if (window.map) metrofeedDisplayTrafficConstruction(window.map);
+      },
+      hideConstructionLayer: function () {
+        if (window.map) metrofeedRemoveTrafficConstruction(window.map);
+      },
+      fitCity: function (padding) {
+        const b = window.metrofeedTvApi.cityBoundsBox();
+        if (!window.map) return;
+        window.map.fitBounds(
+          [
+            [b.west, b.south],
+            [b.east, b.north]
+          ],
+          { padding: padding || 60, duration: 2200, maxZoom: 11 }
+        );
+      },
+      isTrafficOn: function () {
+        return !!trafficLayerActive;
+      }
+    };
+    console.log('[metrofeedTvApi] TV director API ready');
+  }
+  metrofeedTvInitApi();
   
   function toggleTrafficFromDropdown() {
     console.log('[toggleTrafficFromDropdown] Function called');
@@ -10865,9 +11021,9 @@
       return;
     }
     
-    // Show loading spinner for Boston
+    // Show loading spinner for Boston (hidden in TV director mode)
     let loadingSpinner = null;
-    if (CITY_CONFIG.useLazyLoading) {
+    if (CITY_CONFIG.useLazyLoading && !window.MF_TV_MODE) {
       loadingSpinner = document.createElement('div');
       loadingSpinner.id = 'route-loading-spinner';
       loadingSpinner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:var(--rr-accent-text);padding:20px;border-radius:8px;z-index:10000;text-align:center;';
@@ -10903,17 +11059,18 @@
         loadingSpinner.remove();
       }
       
-      // Show error with retry button
-      const errorDiv = document.createElement('div');
-      errorDiv.id = 'route-error-message';
-      errorDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(200,0,0,0.9);color:#fff;padding:20px;border-radius:8px;z-index:10000;text-align:center;max-width:400px;';
-      errorDiv.innerHTML = `
+      if (!window.MF_TV_MODE) {
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'route-error-message';
+        errorDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(200,0,0,0.9);color:#fff;padding:20px;border-radius:8px;z-index:10000;text-align:center;max-width:400px;';
+        errorDiv.innerHTML = `
         <div style="margin-bottom:15px;font-weight:bold;">Error Loading Route</div>
         <div style="margin-bottom:15px;font-size:14px;">${error.message}</div>
         <button onclick="this.parentElement.remove(); window.showRouteOverlay('${routeId}', ${directionId});" style="background:var(--rr-accent);color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;margin-right:10px;">Retry</button>
         <button onclick="this.parentElement.remove();" style="background:#666;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Close</button>
       `;
-      document.body.appendChild(errorDiv);
+        document.body.appendChild(errorDiv);
+      }
       return;
     }
     
@@ -10921,7 +11078,18 @@
     if (loadingSpinner) {
       loadingSpinner.remove();
     }
-    
+
+    // Per-day geometry: use today's shape/stops from geometry block if available.
+    try {
+      const appliedDay = mfApplyDayGeometry(routeData);
+      if (appliedDay) {
+        const geo = routeData.geometry[appliedDay];
+        console.log(`[showRouteOverlay] Using geometry.${appliedDay} (${geo ? geo.trip_count : '?'} trips, ${(routeData.shape || []).length} shape pts, ${(routeData.stops || []).length} stops)`);
+      }
+    } catch (geoErr) {
+      console.warn('[showRouteOverlay] geometry day-select failed, using legacy fields:', geoErr);
+    }
+
     // Validate route data structure (mirror attachRouteToMap: shape XOR shapes[])
     const hasShapesArr =
       Array.isArray(routeData.shapes) && routeData.shapes.some((s) => Array.isArray(s) && s.length > 1);
@@ -10929,7 +11097,9 @@
       Array.isArray(routeData.shape) && routeData.shape.length > 1;
     if ((!hasShapesArr && !hasSingleShape) || !routeData.stops || !Array.isArray(routeData.stops)) {
       console.error('[showRouteOverlay] Route data missing shape/shapes or stops:', routeData);
-      alert(`Route ${routeId} data is incomplete. Missing shape/shapes or stops data.`);
+      if (!window.MF_TV_MODE) {
+        alert(`Route ${routeId} data is incomplete. Missing shape/shapes or stops data.`);
+      }
       return;
     }
     const dbgPts = hasSingleShape ? routeData.shape.length : routeData.shapes.reduce((n, s) => n + (Array.isArray(s) ? s.length : 0), 0);
@@ -10937,11 +11107,12 @@
     console.log('[showRouteOverlay] Found route data:', routeData.route_title, '| polyline pts:', dbgPts, '| stops:', routeData.stops.length);
 
     let oppositeRouteData = null;
-    if (!skipRouteInfoPanel) {
+    if (!skipRouteInfoPanel && !window.MF_TV_MODE) {
       const dirNum = Number(directionId);
       const oppositeDir = dirNum === 0 ? 1 : 0;
       const tryLoadOpposite = async (rid) => {
         const d = await getRouteData(rid, oppositeDir);
+        mfApplyDayGeometry(d);
         const hasShape =
           (Array.isArray(d.shape) && d.shape.length > 1) ||
           (Array.isArray(d.shapes) && d.shapes.some((s) => Array.isArray(s) && s.length > 1));
@@ -10981,12 +11152,16 @@
       routeColorSlot = window.pickNextRouteOverlayColorSlot();
       routeColorHex = window.ROUTE_OVERLAY_COLOR_PALETTE[routeColorSlot];
     }
+    const tvFitBounds = !!(window.MF_TV_MODE || (opts && opts.fitBounds === true));
+    if (window.MF_TV_MODE) {
+      skipRouteInfoPanelUi = true;
+    }
     const overlay = window.attachRouteToMap(mapRef, busTrackingRouteId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)
       oppositeRouteData: oppositeRouteData || undefined,
       routePageUrl: routePageUrl,
-      fitBounds: false, // Don't auto-fit on main map
+      fitBounds: tvFitBounds,
       routeColor: routeColorHex,
       apiKey: apiKey, // Pass API key for bus tracking (TriMet)
       busApiType: CITY_CONFIG.busApiType, // Pass bus API type (mbta-gtfs-rt or trimet)
@@ -11009,7 +11184,7 @@
       routeData: JSON.parse(JSON.stringify(routeData)), // Deep clone
       oppositeRouteData: oppositeRouteData ? JSON.parse(JSON.stringify(oppositeRouteData)) : undefined,
       routePageUrl,
-      fitBounds: false,
+      fitBounds: tvFitBounds,
       routeColor: routeColorHex,
       apiKey,
       busApiType: CITY_CONFIG.busApiType,
@@ -11410,6 +11585,7 @@
       // Load direction 0 only for list rendering. Some routes (e.g., school specials) are one-way
       // and calling dir1 for every route creates noisy 404s.
       const routeData0 = await getRouteData(route.id, 0).catch(() => null);
+      if (routeData0) mfApplyDayGeometry(routeData0);
       let routeData1 = null;
 
       let terminal0 = 'Unknown';
@@ -11446,6 +11622,7 @@
         // This avoids background fetch noise for one-way routes.
         if (!isExpanded && routeData1 == null) {
           routeData1 = await getRouteData(route.id, 1).catch(() => null);
+          if (routeData1) mfApplyDayGeometry(routeData1);
           if (routeData1 && routeData1.stops && routeData1.stops.length > 0) {
             const dir1Start = metrofeedDecodeHtmlEntities(routeData1.stops[0].name || 'Unknown');
             const dir1Terminal = routeData1.stops[routeData1.stops.length - 1].name;
@@ -11932,6 +12109,7 @@
   async function getRouteEndpoint(routeId, directionId) {
     try {
       const routeData = await getRouteData(routeId, directionId);
+      mfApplyDayGeometry(routeData);
       if (routeData && routeData.stops && routeData.stops.length > 0) {
         // Always get the last stop - this is the terminal station for this direction
         const endpointStop = routeData.stops[routeData.stops.length - 1];
@@ -13276,6 +13454,7 @@
           // Boston: Use lazy-loading system
           try {
             routeData = await getRouteData(legInfo.route, legInfo.direction);
+            mfApplyDayGeometry(routeData);
             console.log('[drawExtendedRoutes] Loaded route data for Boston:', routeData.route_title || routeData.route_id);
           } catch (error) {
             console.error('[drawExtendedRoutes] Error loading route data:', error);
@@ -13573,6 +13752,7 @@
   async function loadRouteDataForStopTimes(routeId, directionId) {
     try {
       const routeData = await getRouteData(routeId, directionId);
+      mfApplyDayGeometry(routeData);
       stopTimesModalData.routeData = routeData;
       
       // Populate stops dropdown
@@ -13632,6 +13812,7 @@
       let routeData = stopTimesModalData.routeData;
       if (!routeData || routeData.route_id !== routeId || routeData.direction_id !== directionId) {
         routeData = await getRouteData(routeId, directionId);
+        mfApplyDayGeometry(routeData);
         stopTimesModalData.routeData = routeData;
       }
       
@@ -14174,20 +14355,31 @@
           window.initMetrofeedSavedPlaces();
         }
 
-        // Startup failsafe: if geolocation denied or delayed, fire queued default route once map+overlay are ready.
-        try {
-          metrofeedFireQueuedStartupRouteIfReady && metrofeedFireQueuedStartupRouteIfReady();
-          // If nothing queued and no overlays yet, load the configured default route after a short delay.
-          setTimeout(() => {
-            try {
-              const hasAnyOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
-              if (!metrofeedStartupRouteFired && !hasAnyOverlays && CITY_CONFIG && CITY_CONFIG.startupDefaultRouteId) {
-                metrofeedQueueStartupRoute(String(CITY_CONFIG.startupDefaultRouteId), Number(CITY_CONFIG.startupDefaultDirectionId) || 0);
-                metrofeedFireQueuedStartupRouteIfReady && metrofeedFireQueuedStartupRouteIfReady();
-              }
-            } catch (_) {}
-          }, 1400);
-        } catch (_) {}
+        if (window.MF_TV_MODE) {
+          try {
+            if (typeof window.mfTvDirectorStart === 'function') {
+              setTimeout(function () {
+                window.mfTvDirectorStart();
+              }, 1200);
+            }
+          } catch (e) {
+            console.warn('[TV] director start failed', e);
+          }
+        } else {
+          // Startup failsafe: if geolocation denied or delayed, fire queued default route once map+overlay are ready.
+          try {
+            metrofeedFireQueuedStartupRouteIfReady && metrofeedFireQueuedStartupRouteIfReady();
+            setTimeout(() => {
+              try {
+                const hasAnyOverlays = window.activeRouteOverlays && Object.keys(window.activeRouteOverlays).length > 0;
+                if (!metrofeedStartupRouteFired && !hasAnyOverlays && CITY_CONFIG && CITY_CONFIG.startupDefaultRouteId) {
+                  metrofeedQueueStartupRoute(String(CITY_CONFIG.startupDefaultRouteId), Number(CITY_CONFIG.startupDefaultDirectionId) || 0);
+                  metrofeedFireQueuedStartupRouteIfReady && metrofeedFireQueuedStartupRouteIfReady();
+                }
+              } catch (_) {}
+            }, 1400);
+          } catch (_) {}
+        }
       });
       
       map.on('error', (e) => {
@@ -14296,6 +14488,32 @@
     console.log('[DOMContentLoaded] Map and event listeners initialization complete');
   });
 </script>
+
+<!-- OBS TV director overlays (home.html?tv=1) -->
+<div id="mfTvLowerThird" class="mf-tv-lower-third mf-tv-hidden" aria-hidden="true">
+  <span id="mfTvLowerThirdTitle" class="mf-tv-lower-third-title"></span>
+  <span id="mfTvLowerThirdSub" class="mf-tv-lower-third-sub"></span>
+</div>
+<div id="mfTvPhaseBadge" class="mf-tv-phase-badge"></div>
+<div id="mfTvTrafficDetail" class="mf-tv-traffic-detail mf-tv-hidden" aria-hidden="true">
+  <div id="mfTvTrafficDetailTitle" class="mf-tv-traffic-detail-title"></div>
+  <div id="mfTvTrafficDetailBody" class="mf-tv-traffic-detail-body"></div>
+  <div id="mfTvTrafficDetailMeta" class="mf-tv-traffic-detail-meta"></div>
+</div>
+<div id="mfTvWeatherPanel" class="mf-tv-weather mf-tv-hidden" aria-hidden="true">
+  <div id="mfTvWeatherAlerts" class="mf-tv-weather-alerts no-alert">Loading weather…</div>
+  <div class="mf-tv-weather-header">
+    <span id="mfTvWeatherEmoji" class="mf-tv-weather-emoji">🌤️</span>
+    <div>
+      <div id="mfTvWeatherTemp" class="mf-tv-weather-temp">—</div>
+      <div id="mfTvWeatherFeels" class="mf-tv-weather-feels"></div>
+    </div>
+  </div>
+  <div id="mfTvWeatherDesc" class="mf-tv-weather-desc"></div>
+  <div id="mfTvWeatherHourly" class="mf-tv-weather-hourly"></div>
+  <div class="mf-tv-weather-attrib">Data: National Weather Service · roamravenapp.com</div>
+</div>
+<script src="obs-director.js"></script>
 <!-- 2026-04-16 Next: verify stop times vs GTFS for sorta_4 dir0 at stop X -->
 </body>
 </html>

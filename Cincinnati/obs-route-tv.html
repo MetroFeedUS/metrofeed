@@ -2,43 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1920, height=1080, initial-scale=1" />
-  <title>RoamRaven TV — OBS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RoamRaven TV — Access</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" type="image/png" href="RoamRavenbird.png" />
-  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <style>
-    :root {
-      --rr-accent: #9333ea;
-      --rr-accent-text: #e9d5ff;
-      --rr-bg: #0a0a0c;
-      --rr-panel: rgba(18, 18, 22, 0.92);
-      --rr-border: rgba(147, 51, 234, 0.45);
-      --rr-safe: 48px;
-    }
+    :root { --rr-accent: #9333ea; --rr-bg: #0a0a0c; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      width: 100%;
       height: 100%;
-      overflow: hidden;
-      background: var(--rr-bg);
       font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--rr-bg);
       color: #e8e8e8;
-    }
-    #gate {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1rem;
-      background: var(--rr-bg);
     }
-    #gate h1 { color: var(--rr-accent); font-size: 1.5rem; font-weight: 700; }
-    #gate input {
-      width: 220px;
+    .gate-form {
+      padding: 2rem;
+      background: #141418;
+      border: 1px solid rgba(147, 51, 234, 0.45);
+      border-radius: 12px;
+      max-width: 360px;
+      width: 90%;
+      text-align: center;
+    }
+    h1 { color: var(--rr-accent); font-size: 1.35rem; margin-bottom: 0.5rem; }
+    p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem; }
+    input {
+      width: 100%;
       padding: 0.75rem 1rem;
       border-radius: 8px;
       border: 1px solid #333;
@@ -46,333 +38,62 @@
       color: #fff;
       text-align: center;
       font-size: 1rem;
+      margin-bottom: 0.75rem;
     }
-    #gate .err { color: #ff6b6b; font-size: 0.85rem; min-height: 1.2em; }
-    #gate .gate-form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 2rem;
-      background: #141418;
-      border: 1px solid var(--rr-border);
-      border-radius: 12px;
-      max-width: 360px;
-    }
-    #gate .gate-btn {
+    button {
+      width: 100%;
       background: var(--rr-accent);
       color: #fff;
       border: none;
       padding: 0.65rem 1.5rem;
       border-radius: 8px;
-      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      width: 100%;
     }
-    #gate .gate-btn:hover { background: #7c3aed; }
-    #app { display: none; width: 100%; height: 100%; position: relative; }
-    #map { position: absolute; inset: 0; }
-    .maplibregl-ctrl-attrib { opacity: 0.35; font-size: 10px; }
-    /* HUD */
-    .hud { position: absolute; pointer-events: none; z-index: 10; }
-    .hud-live {
-      top: var(--rr-safe);
-      left: var(--rr-safe);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .live-pill {
-      background: #c41e1e;
-      color: #fff;
-      font-weight: 800;
-      font-size: 13px;
-      letter-spacing: 0.08em;
-      padding: 6px 12px;
-      border-radius: 4px;
-      animation: livePulse 2s ease-in-out infinite;
-    }
-    @keyframes livePulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.75; }
-    }
-    .clock { font-size: 22px; font-weight: 600; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
-    .hud-ticker {
-      bottom: var(--rr-safe);
-      left: var(--rr-safe);
-      right: var(--rr-safe);
-      background: var(--rr-panel);
-      border: 1px solid var(--rr-border);
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 15px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .lower-third {
-      bottom: calc(var(--rr-safe) + 56px);
-      left: var(--rr-safe);
-      max-width: 720px;
-      background: linear-gradient(90deg, rgba(147,51,234,0.95), rgba(147,51,234,0.55));
-      border-left: 4px solid #fff;
-      padding: 14px 20px;
-      border-radius: 0 8px 8px 0;
-      opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-    .lower-third.visible { opacity: 1; transform: translateY(0); }
-    .lower-third .lt-title { font-size: 22px; font-weight: 800; line-height: 1.2; }
-    .lower-third .lt-sub { font-size: 14px; opacity: 0.9; margin-top: 4px; }
-    .lower-third .lt-meta { font-size: 12px; opacity: 0.75; margin-top: 6px; }
-    /* Incident panel */
-    #incidentPanel {
-      top: var(--rr-safe);
-      right: var(--rr-safe);
-      width: 420px;
-      max-height: calc(100% - var(--rr-safe) * 2 - 80px);
-      background: var(--rr-panel);
-      border: 2px solid #c41e1e;
-      border-radius: 10px;
-      padding: 0;
-      opacity: 0;
-      transform: translateX(20px);
-      transition: opacity 0.45s ease, transform 0.45s ease;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    #incidentPanel.visible { opacity: 1; transform: translateX(0); }
-    #incidentPanel .ip-head {
-      background: #c41e1e;
-      color: #fff;
-      font-weight: 800;
-      font-size: 14px;
-      letter-spacing: 0.12em;
-      padding: 10px 16px;
-    }
-    #incidentPanel .ip-body {
-      padding: 14px 16px;
-      overflow-y: auto;
-      font-size: 14px;
-      line-height: 1.45;
-    }
-    #incidentPanel .ip-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #fff; }
-    #incidentPanel .ip-line { color: #ccc; margin-bottom: 6px; }
-  /* Camera overlay */
-    #cameraPanel {
-      position: absolute;
-      inset: var(--rr-safe);
-      z-index: 12;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    #cameraPanel.visible { display: flex; }
-    #cameraPanel img {
-      max-width: 100%;
-      max-height: 75%;
-      border-radius: 8px;
-      border: 2px solid var(--rr-border);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-      object-fit: contain;
-      background: #000;
-    }
-    #cameraPanel .cam-label {
-      margin-top: 12px;
-      background: var(--rr-panel);
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 15px;
-    }
-    .sponsor {
-      bottom: var(--rr-safe);
-      right: var(--rr-safe);
-      width: 200px;
-      height: 80px;
-      border: 1px dashed rgba(255,255,255,0.25);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: rgba(255,255,255,0.35);
-      pointer-events: none;
-    }
-    /* Admin */
-    #adminPanel {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 100000;
-      background: #16161a;
-      border: 1px solid var(--rr-border);
-      border-radius: 12px;
-      padding: 20px;
-      min-width: 320px;
-      display: none;
-      font-size: 13px;
-      pointer-events: auto;
-    }
-    #adminPanel.open { display: block; }
-    #adminPanel h3 { color: var(--rr-accent); margin-bottom: 12px; }
-    #adminPanel label { display: block; margin: 8px 0 4px; color: #aaa; }
-    #adminPanel button {
-      margin: 4px 4px 4px 0;
-      padding: 6px 12px;
-      background: var(--rr-accent);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    #adminPanel .debug {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #333;
-      font-family: monospace;
-      font-size: 11px;
-      color: #8f8;
-      max-height: 200px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-    }
+    button:hover { background: #7c3aed; }
+    .err { color: #ff6b6b; font-size: 0.85rem; min-height: 1.2em; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
-
-<div id="gate">
   <div class="gate-form">
     <h1>RoamRaven TV</h1>
-    <p style="color:#888;font-size:0.9rem;text-align:center;">Private OBS stream — password required</p>
-    <input type="password" id="gateInput" placeholder="Access code" autocomplete="off" autofocus />
-    <button type="button" class="gate-btn" id="gateSubmit">Unlock stream</button>
+    <p>OBS director mode uses the live map at <code>home.html?tv=1</code>.</p>
+    <input id="gateInput" type="password" autocomplete="off" placeholder="Access code" />
+    <button type="button" id="gateSubmit">Enter broadcast</button>
     <div class="err" id="gateError"></div>
   </div>
-</div>
+  <script>
+  (function () {
+    var OBS_TV_ACCESS_CODE = 'admin2024';
+    var AUTH_KEY = 'obsTvAuth';
 
-<div id="app">
-  <div id="map"></div>
-
-  <div class="hud hud-live">
-    <span class="live-pill">LIVE</span>
-    <span class="clock" id="clock">--:--</span>
-  </div>
-
-  <div class="hud lower-third" id="lowerThird">
-    <div class="lt-title" id="ltTitle">RoamRaven Cincinnati</div>
-    <div class="lt-sub" id="ltSub">Loading routes…</div>
-    <div class="lt-meta" id="ltMeta"></div>
-  </div>
-
-  <div class="hud" id="incidentPanel">
-    <div class="ip-head">TRAFFIC ALERT</div>
-    <div class="ip-body">
-      <div class="ip-title" id="ipTitle"></div>
-      <div id="ipLines"></div>
-    </div>
-  </div>
-
-  <div id="cameraPanel">
-    <img id="cameraImg" alt="" />
-    <div class="cam-label" id="cameraLabel"></div>
-  </div>
-
-  <div class="hud hud-ticker" id="ticker">Now: Starting…</div>
-  <div class="hud sponsor">Sponsor</div>
-</div>
-
-<div id="adminPanel">
-  <h3>TV Director (Ctrl+Shift+P)</h3>
-  <button type="button" id="btnPause">Pause</button>
-  <button type="button" id="btnPlay">Play</button>
-  <button type="button" id="btnNextRoute">Next route</button>
-  <button type="button" id="btnPrevRoute">Prev route</button>
-  <button type="button" id="btnForceIncident">Force incident</button>
-  <button type="button" id="btnForceCamera">Camera break</button>
-  <button type="button" id="btnRouteMode">Route mode</button>
-  <label>Overview sec <input type="number" id="cfgOverview" min="4" max="20" value="7" style="width:60px" /></label>
-  <label>Segment sec <input type="number" id="cfgSegment" min="8" max="40" value="16" style="width:60px" /></label>
-  <div class="debug" id="adminDebug">—</div>
-</div>
-
-<script>
-(function () {
-  /** Change this passcode before going live. Not server-side auth — use hosting HTTP auth for stronger protection. */
-  var OBS_TV_ACCESS_CODE = 'admin2024';
-  var AUTH_KEY = 'obsTvAuth';
-
-  function loadScript(src, cb) {
-    var s = document.createElement('script');
-    s.src = src;
-    s.onload = function () { if (cb) cb(); };
-    s.onerror = function () { if (cb) cb(new Error('Failed to load ' + src)); };
-    document.body.appendChild(s);
-  }
-
-  function loadAppScripts(done) {
-    var chain = [
-      'city-config.js',
-      'trafficIncidents.js',
-      'metroFeedMap.js',
-      'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js',
-      'obs-route-tv.js'
-    ];
-    var i = 0;
-    function next(err) {
-      if (err) {
-        document.getElementById('gateError').textContent = 'Failed to load app. Refresh and try again.';
-        document.getElementById('gate').style.display = 'flex';
-        document.getElementById('app').style.display = 'none';
-        return;
-      }
-      if (i >= chain.length) {
-        if (typeof window.obsTvStart === 'function') window.obsTvStart();
-        else if (done) done();
-        return;
-      }
-      loadScript(chain[i++], next);
+    function goLive() {
+      sessionStorage.setItem(AUTH_KEY, '1');
+      window.location.replace('home.html?tv=1');
     }
-    next();
-  }
 
-  function unlock() {
-    sessionStorage.setItem(AUTH_KEY, '1');
-    document.getElementById('gate').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadAppScripts();
-  }
-
-  function tryUnlock() {
-    var input = document.getElementById('gateInput');
-    var err = document.getElementById('gateError');
-    if (input.value === OBS_TV_ACCESS_CODE) {
-      err.textContent = '';
-      unlock();
-    } else {
-      err.textContent = 'Invalid access code';
-      input.value = '';
-      input.focus();
+    function tryUnlock() {
+      var input = document.getElementById('gateInput');
+      var err = document.getElementById('gateError');
+      if (input.value === OBS_TV_ACCESS_CODE) {
+        err.textContent = '';
+        goLive();
+      } else {
+        err.textContent = 'Invalid access code';
+        input.value = '';
+        input.focus();
+      }
     }
-  }
 
-  document.getElementById('gateSubmit').addEventListener('click', tryUnlock);
-  document.getElementById('gateInput').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') tryUnlock();
-  });
+    document.getElementById('gateSubmit').addEventListener('click', tryUnlock);
+    document.getElementById('gateInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') tryUnlock();
+    });
 
-  if (sessionStorage.getItem(AUTH_KEY) === '1') {
-    unlock();
-  }
-})();
-</script>
+    if (sessionStorage.getItem(AUTH_KEY) === '1') {
+      goLive();
+    }
+  })();
+  </script>
 </body>
 </html>

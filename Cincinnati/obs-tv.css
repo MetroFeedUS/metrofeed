@@ -1,0 +1,256 @@
+/**
+ * RoamRaven OBS director mode — hides interactive chrome on home.html?tv=1
+ */
+html.tv-mode,
+html.tv-mode body {
+  overflow: hidden !important;
+}
+
+html.tv-mode .search-bar,
+html.tv-mode #mfTripPlannerSearchBar,
+html.tv-mode .side-buttons,
+html.tv-mode #themeToggleBtn,
+html.tv-mode #aiChatBtn,
+html.tv-mode #languageBtn,
+html.tv-mode #dropdownMenu,
+html.tv-mode #menuBtn,
+html.tv-mode .sponsor-box,
+html.tv-mode #sponsorBox,
+html.tv-mode #sponsorModal,
+html.tv-mode #favoritesBar,
+html.tv-mode #minimizedItinerary,
+html.tv-mode #mfTripGuideDock,
+html.tv-mode #sponsorBox,
+html.tv-mode .sponsor-box,
+html.tv-mode #weatherForecastModal,
+html.tv-mode #otpModal,
+html.tv-mode #busRoutesModal,
+html.tv-mode #railRoutesModal,
+html.tv-mode #mbtaAlertsModal,
+html.tv-mode #mfLeaveCityOverlay,
+html.tv-mode #tutorialOverlay,
+html.tv-mode #quickTutorialOverlay,
+html.tv-mode .route-info-panel,
+html.tv-mode .otp-trip-route-chip,
+html.tv-mode #route-loading-spinner,
+html.tv-mode #route-error-message,
+html.tv-mode .mf-traffic-legend-wrap,
+html.tv-mode .mf-traffic-loader,
+html.tv-mode #trafficCamerasPanel,
+html.tv-mode .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(:has(.maplibregl-ctrl-attrib)) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+html.tv-mode .maplibregl-ctrl-attrib {
+  opacity: 0.35;
+  font-size: 10px;
+}
+
+html.tv-mode #map {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* --- TV overlays (director-controlled) --- */
+.mf-tv-lower-third {
+  position: fixed;
+  left: 48px;
+  bottom: 48px;
+  z-index: 10050;
+  max-width: min(920px, 72vw);
+  padding: 14px 22px;
+  background: linear-gradient(90deg, rgba(18, 18, 24, 0.94) 0%, rgba(18, 18, 24, 0.72) 100%);
+  border-left: 4px solid #9333ea;
+  border-radius: 4px;
+  pointer-events: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.mf-tv-lower-third-title {
+  display: block;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  line-height: 1.2;
+}
+
+.mf-tv-lower-third-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.05rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.mf-tv-phase-badge {
+  position: fixed;
+  top: 40px;
+  right: 48px;
+  z-index: 10050;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e9d5ff;
+  background: rgba(147, 51, 234, 0.35);
+  border: 1px solid rgba(147, 51, 234, 0.55);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.mf-tv-traffic-detail {
+  position: fixed;
+  left: 48px;
+  right: 48px;
+  bottom: 120px;
+  z-index: 10055;
+  max-height: 38vh;
+  overflow: auto;
+  padding: 20px 24px;
+  background: rgba(14, 14, 18, 0.94);
+  border: 1px solid rgba(147, 51, 234, 0.45);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.mf-tv-traffic-detail-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 10px;
+}
+
+.mf-tv-traffic-detail-body {
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  white-space: pre-wrap;
+}
+
+.mf-tv-traffic-detail-meta {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.mf-tv-weather {
+  position: fixed;
+  inset: 0;
+  z-index: 10060;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  padding: 56px 72px 72px;
+  background: linear-gradient(160deg, #0c0c10 0%, #1a1028 45%, #0f0f14 100%);
+  pointer-events: none;
+}
+
+.mf-tv-weather-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.mf-tv-weather-emoji {
+  font-size: 4.5rem;
+  line-height: 1;
+}
+
+.mf-tv-weather-temp {
+  font-size: 5.5rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1;
+}
+
+.mf-tv-weather-feels {
+  font-size: 1.35rem;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+.mf-tv-weather-desc {
+  font-size: 1.6rem;
+  color: #e2e8f0;
+  margin-bottom: 8px;
+}
+
+.mf-tv-weather-alerts {
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.mf-tv-weather-alerts.has-alert {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid #f44336;
+  color: #ffcdd2;
+}
+
+.mf-tv-weather-alerts.no-alert {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid #4caf50;
+  color: #c8e6c9;
+}
+
+.mf-tv-weather-hourly {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.mf-tv-weather-hour {
+  flex: 0 0 auto;
+  min-width: 120px;
+  padding: 14px 12px;
+  text-align: center;
+  background: rgba(30, 30, 38, 0.9);
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.mf-tv-weather-hour-time {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.mf-tv-weather-hour-emoji {
+  font-size: 1.8rem;
+}
+
+.mf-tv-weather-hour-temp {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #a78bfa;
+  margin-top: 6px;
+}
+
+.mf-tv-weather-hour-label {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
+.mf-tv-weather-attrib {
+  position: absolute;
+  bottom: 24px;
+  right: 48px;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.mf-tv-hidden {
+  display: none !important;
+}
