@@ -278,10 +278,10 @@
 
     const leg = TV.legs[TV.legIndex % TV.legs.length];
     TV.legIndex = (TV.legIndex + 1) % TV.legs.length;
-    TV.legsThisCycle++;
 
     hideAllRouteOverlays();
-    TV.currentRouteKey = leg.routeId + '-' + leg.directionId;
+    const overlayKey = leg.routeId + '-' + leg.directionId;
+    TV.currentRouteKey = overlayKey;
 
     const disp = parseRouteDisplay(leg.label, leg.routeId);
     setLowerThird('Route ' + disp.number, disp.title + ' · ' + leg.dirLabel);
@@ -295,6 +295,23 @@
       console.warn('[mfTvDirector] showRouteOverlay failed', e);
     }
 
+    const overlayOk =
+      window.activeRouteOverlays && window.activeRouteOverlays[overlayKey];
+    if (!overlayOk) {
+      log('Skipping route (no data): ' + overlayKey);
+      setLowerThird('', '');
+      schedulePhase(1500, function () {
+        if (TV.legsThisCycle >= cfg('routeLegsBeforeTraffic', 10)) {
+          TV.legsThisCycle = 0;
+          enterTrafficMode();
+        } else {
+          enterRouteMode();
+        }
+      });
+      return;
+    }
+
+    TV.legsThisCycle++;
     startSegmentPan(leg.routeId, leg.directionId);
 
     const maxLegs = cfg('routeLegsBeforeTraffic', 10);

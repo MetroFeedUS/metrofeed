@@ -6753,6 +6753,7 @@
   }
 
   async function metrofeedStartupAutoLoadClosestRouteOnce(userLat, userLon) {
+    if (window.MF_TV_MODE) return;
     // If map isn't ready yet, bail; watchPosition will call again, and map.on('load') will fire queued fallback.
     if (!window.map || typeof window.showRouteOverlay !== 'function') return;
     // Wait for routes list (masterRoutes) to exist if needed.
@@ -6954,7 +6955,7 @@
       // Auto-load a route once on startup:
       // - If user is in bounds, load closest route to their nearest stop
       // - If out of bounds, keep map centered on city, show edge arrow, and load "center-most" route
-      if (!hasInitializedRoute && map) {
+      if (!hasInitializedRoute && map && !window.MF_TV_MODE) {
         hasInitializedRoute = true;
         metrofeedStartupAutoLoadClosestRouteOnce(userLat, userLon);
       }
@@ -10956,7 +10957,9 @@
     // OTP leg overlays are multi-instance; keep the "skip toggle/off + opposite-direction replace" behavior,
     // but allow showing the standard floating route chip when caller requests it.
     const skipRouteInfoPanel = isOtpLegOverlay;
-    const skipRouteInfoPanelUi = isOtpLegOverlay && !(opts && (opts.forceRouteInfoPanel === true || opts.useRouteInfoPanel === true));
+    let skipRouteInfoPanelUi =
+      !!window.MF_TV_MODE ||
+      (isOtpLegOverlay && !(opts && (opts.forceRouteInfoPanel === true || opts.useRouteInfoPanel === true)));
 
     // Startup/auto-load should be idempotent: repeated calls should not toggle the overlay off.
     const ensureOn = !!(opts && (opts.ensureOn === true || opts.noToggleOff === true));
@@ -11153,9 +11156,6 @@
       routeColorHex = window.ROUTE_OVERLAY_COLOR_PALETTE[routeColorSlot];
     }
     const tvFitBounds = !!(window.MF_TV_MODE || (opts && opts.fitBounds === true));
-    if (window.MF_TV_MODE) {
-      skipRouteInfoPanelUi = true;
-    }
     const overlay = window.attachRouteToMap(mapRef, busTrackingRouteId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)

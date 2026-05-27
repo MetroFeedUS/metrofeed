@@ -25,10 +25,16 @@
     constructionDwellMs: 28000,
     weatherDwellMs: 55000,
     mapFlyDurationMs: 2800,
-    routeAgencyPrefix: null
+    /** SORTA/Metro only — index includes agencies without local route JSON (e.g. acrta_). */
+    routeAgencyPrefix: 'sorta_'
   };
 
   document.documentElement.classList.add('tv-mode');
+
+  try {
+    var manifestLink = document.querySelector('link[rel="manifest"]');
+    if (manifestLink) manifestLink.remove();
+  } catch (_) {}
 
   var link = document.createElement('link');
   link.rel = 'stylesheet';
