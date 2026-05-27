@@ -13,9 +13,15 @@
   const LAYER_ROUTE_SRC = 'rr-tv-route-src';
   const LAYER_VEH = 'rr-tv-vehicles';
   const LAYER_VEH_SRC = 'rr-tv-vehicles-src';
+  const LAYER_VEH_MATCH = 'rr-tv-vehicles-match';
+  const LAYER_VEH_OTHER = 'rr-tv-vehicles-other';
   const LAYER_INC_SRC = 'rr-tv-incidents-src';
   const LAYER_INC = 'rr-tv-incidents';
   const LAYER_INC_HI = 'rr-tv-incident-highlight';
+  const LAYER_SLOW_SRC = 'rr-tv-slow-src';
+  const LAYER_SLOW = 'rr-tv-slow';
+  const LAYER_FLOW_SRC = 'rr-tv-flow-src';
+  const LAYER_FLOW = 'rr-tv-flow';
 
   const TV = {
     map: null,
@@ -23,12 +29,15 @@
     mode: 'ROUTE_MODE', // ROUTE_MODE | INCIDENT_MODE | CAMERA_MODE | IDLE_MODE
     routes: [],
     routeCursor: 0,
+    currentRouteId: null,
     directionId: 0,
     segmentIndex: 0,
     segments: [],
     currentRouteData: null,
     vehicles: [],
     incidents: [],
+    slowdowns: [],
+    flow: [],
     cameras: [],
     shownIncidentIds: new Map(),
     lastIncidentInterrupt: 0,
@@ -70,6 +79,8 @@
       defaultZoom: c.defaultZoom || 11,
       bounds: c.bounds || { west: -85.22, south: 38.59, east: -83.88, north: 39.71 },
       incidentsFeedUrl: c.incidentsFeedUrl || 'https://traffic-api.metrofeedus.com/incidents/ohio',
+      slowdownsFeedUrl: c.slowdownsFeedUrl || 'https://traffic-api.metrofeedus.com/slowdowns/ohio',
+      flowFeedUrl: c.flowFeedUrl || 'https://traffic-api.metrofeedus.com/flow/ohio',
       camerasFeedUrl: c.camerasFeedUrl || 'https://traffic-api.metrofeedus.com/cameras/ohio',
       vehiclesUrl:
         (c.gtfsRtProxyUrls && c.gtfsRtProxyUrls[0]) ||
@@ -84,7 +95,8 @@
       incidentCooldownMs: 180000,
       cameraBreakIntervalMs: 600000,
       incidentMinScore: 50,
-      cameraRadiusMiles: 8
+      cameraRadiusMiles: 8,
+      startInRouteModeMs: 120000
     };
   }
 
@@ -217,7 +229,7 @@
     for (let i = 0; i < TV.vehicles.length; i++) {
       const v = TV.vehicles[i];
       const vr = v.route_id != null ? String(v.route_id) : v.routeId != null ? String(v.routeId) : '';
-      if (vr === rid || rid.endsWith(vr) || vr.endsWith(rid)) n++;
+      if (vr === rid) n++;
     }
     return n;
   }
@@ -248,10 +260,11 @@
       const lat = Number(v.lat ?? v.latitude);
       const lon = Number(v.lon ?? v.lng ?? v.longitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      const routeId = v.route_id != null ? String(v.route_id) : v.routeId != null ? String(v.routeId) : '';
       features.push({
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [lon, lat] },
-        properties: { id: String(v.id || i) }
+        properties: { id: String(v.id || i), route_id: routeId }
       });
     }
     const fc = { type: 'FeatureCollection', features };
@@ -260,16 +273,107 @@
     } else {
       map.addSource(LAYER_VEH_SRC, { type: 'geojson', data: fc });
       map.addLayer({
-        id: LAYER_VEH,
+        id: LAYER_VEH_OTHER,
+        type: 'circle',
+        source: LAYER_VEH_SRC,
+        paint: {
+          'circle-radius': 4,
+          'circle-color': '#93c5fd',
+          'circle-opacity': 0.22,
+          'circle-stroke-width': 0
+        }
+      });
+      map.addLayer({
+        id: LAYER_VEH_MATCH,
         type: 'circle',
         source: LAYER_VEH_SRC,
         paint: {
           'circle-radius': 7,
           'circle-color': '#1E90FF',
+          'circle-opacity': 0.95,
           'circle-stroke-width': 2,
           'circle-stroke-color': '#fff'
         }
       });
+    }
+
+    const rid = TV.currentRouteId != null ? String(TV.currentRouteId) : '';
+    try {
+      if (map.getLayer(LAYER_VEH_MATCH)) {
+        map.setFilter(LAYER_VEH_MATCH, ['==', ['get', 'route_id'], rid]);
+      }
+      if (map.getLayer(LAYER_VEH_OTHER)) {
+        map.setFilter(LAYER_VEH_OTHER, rid ? ['!=', ['get', 'route_id'], rid] : true);
+      }
+    } catch (_) {}
+  }
+
+  function updateSlowdownsLayer() {
+    const map = TV.map;
+    if (!map || !map.isStyleLoaded()) return;
+    const feats = [];
+    for (let i = 0; i < TV.slowdowns.length; i++) {
+      const it = TV.slowdowns[i];
+      const lat = Number(it.lat ?? it.latitude);
+      const lon = Number(it.lon ?? it.lng ?? it.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      feats.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lon, lat] },
+        properties: { title: String(it.location || 'Slowdown'), description: String(it.description || '') }
+      });
+    }
+    const fc = { type: 'FeatureCollection', features: feats };
+    if (!map.getSource(LAYER_SLOW_SRC)) {
+      map.addSource(LAYER_SLOW_SRC, { type: 'geojson', data: fc });
+      map.addLayer({
+        id: LAYER_SLOW,
+        type: 'circle',
+        source: LAYER_SLOW_SRC,
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#ff9800',
+          'circle-opacity': 0.6,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#fff'
+        }
+      });
+    } else {
+      map.getSource(LAYER_SLOW_SRC).setData(fc);
+    }
+  }
+
+  function updateFlowLayer() {
+    const map = TV.map;
+    if (!map || !map.isStyleLoaded()) return;
+    const feats = [];
+    for (let i = 0; i < TV.flow.length; i++) {
+      const it = TV.flow[i];
+      const lat = Number(it.lat ?? it.latitude);
+      const lon = Number(it.lon ?? it.lng ?? it.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      feats.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lon, lat] },
+        properties: { title: String(it.location || 'Flow'), description: String(it.description || '') }
+      });
+    }
+    const fc = { type: 'FeatureCollection', features: feats };
+    if (!map.getSource(LAYER_FLOW_SRC)) {
+      map.addSource(LAYER_FLOW_SRC, { type: 'geojson', data: fc });
+      map.addLayer({
+        id: LAYER_FLOW,
+        type: 'circle',
+        source: LAYER_FLOW_SRC,
+        paint: {
+          'circle-radius': 4,
+          'circle-color': '#00bcd4',
+          'circle-opacity': 0.45,
+          'circle-stroke-width': 0
+        }
+      });
+    } else {
+      map.getSource(LAYER_FLOW_SRC).setData(fc);
     }
   }
 
@@ -414,6 +518,7 @@
     TV.routeCursor = pickNextRouteIndex();
     const entry = TV.routes[TV.routeCursor];
     const routeId = entry.id || entry.route_id;
+    TV.currentRouteId = routeId;
     TV.directionId = 0;
     try {
       TV.currentRouteData = await fetchRouteJson(routeId, TV.directionId);
@@ -440,6 +545,7 @@
       );
       setTicker('Now: ' + title + ' → Next: route overview');
       flyToBounds(coords, 100, 2500);
+      updateVehicleLayer();
       TV.phase = 'overview';
       TV.phaseEndsAt = Date.now() + CFG.overviewSec * 1000;
       log('Route: ' + routeId);
@@ -580,8 +686,9 @@
 
     if (
       TV.mode === 'ROUTE_MODE' &&
+      now - TV.lastCameraBreak > CFG.startInRouteModeMs &&
       now - TV.lastCameraBreak > CFG.cameraBreakIntervalMs &&
-      Math.random() < 0.15
+      Math.random() < 0.06
     ) {
       enterCameraBreak(false);
       return;
@@ -646,6 +753,31 @@
       if (TV.mode === 'ROUTE_MODE') updateIncidentsLayer(null);
     } catch (e) {
       log('Incidents: ' + e.message);
+    }
+  }
+
+  async function pollSlowdownsAndFlow() {
+    try {
+      const [slowRes, flowRes] = await Promise.all([
+        fetch(CFG.slowdownsFeedUrl, { cache: 'no-store' }),
+        fetch(CFG.flowFeedUrl, { cache: 'no-store' })
+      ]);
+      if (slowRes && slowRes.ok) {
+        const slowData = await slowRes.json();
+        TV.slowdowns = Array.isArray(slowData.slowdowns)
+          ? slowData.slowdowns
+          : Array.isArray(slowData.items)
+            ? slowData.items
+            : [];
+      }
+      if (flowRes && flowRes.ok) {
+        const flowData = await flowRes.json();
+        TV.flow = Array.isArray(flowData.flow) ? flowData.flow : [];
+      }
+      updateSlowdownsLayer();
+      updateFlowLayer();
+    } catch (e) {
+      log('Flow/slow: ' + e.message);
     }
   }
 
@@ -725,6 +857,7 @@
       await loadRoutesCatalog();
       await pollCameras();
       await pollIncidents();
+      await pollSlowdownsAndFlow();
       await pollVehicles();
       if (TV.routes.length) await loadCurrentRoute();
       else setLowerThird('RoamRaven TV', 'No routes loaded', 'Check route index URLs');
@@ -732,6 +865,7 @@
       TV.tickTimer = setInterval(tick, 1000);
       TV.vehicleTimer = setInterval(pollVehicles, 12000);
       TV.incidentTimer = setInterval(pollIncidents, 90000);
+      setInterval(pollSlowdownsAndFlow, 120000);
       setInterval(pollCameras, 300000);
       log('Director running');
     });
