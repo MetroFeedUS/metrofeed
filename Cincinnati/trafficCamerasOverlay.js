@@ -351,7 +351,15 @@ const TrafficCamerasOverlay = (function() {
     toggle: toggle,
     showCameraFeed: showCameraFeed,
     hideCameraModal: hideCameraModal,
-    isActive: isActive
+    isActive: isActive,
+    /** Load + return camera list without toggling markers. */
+    getCamerasData: async function () {
+      return await loadCamerasData();
+    },
+    /** Return whatever is currently cached (may be empty until loaded). */
+    getCachedCameras: function () {
+      return Array.isArray(camerasData) ? camerasData : [];
+    }
   };
 })();
 

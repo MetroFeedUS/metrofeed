@@ -650,18 +650,24 @@
     }
 
     if (!window._mfTvAllCameras || !Array.isArray(window._mfTvAllCameras)) {
+      // Prefer the production camera overlay loader (it already knows how to parse both local and Ohio feeds).
       try {
-        const res = await fetch(camsUrl, { cache: 'no-store' });
-        if (res.ok) {
-          const raw = await res.json();
-          window._mfTvAllCameras = normalizeCamerasPayload(raw);
+        if (typeof window.TrafficCamerasOverlay !== 'undefined' && TrafficCamerasOverlay.getCamerasData) {
+          log('Cameras: loading via TrafficCamerasOverlay…');
+          window._mfTvAllCameras = await TrafficCamerasOverlay.getCamerasData();
         } else {
-          window._mfTvAllCameras = [];
-          log('Cameras fetch failed: HTTP ' + res.status);
+          const res = await fetch(camsUrl, { cache: 'no-store' });
+          if (res.ok) {
+            const raw = await res.json();
+            window._mfTvAllCameras = normalizeCamerasPayload(raw);
+          } else {
+            window._mfTvAllCameras = [];
+            log('Cameras fetch failed: HTTP ' + res.status);
+          }
         }
-      } catch (_) {
+      } catch (e) {
         window._mfTvAllCameras = [];
-        log('Cameras fetch failed (network/CORS)');
+        log('Cameras fetch failed (network/CORS): ' + String(e && e.message ? e.message : e));
       }
     }
 
