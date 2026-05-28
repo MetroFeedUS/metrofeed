@@ -19,28 +19,28 @@
     routeLegDwellMs: 0,
     routeLegsBeforeTraffic: 10,
     segmentPanEnabled: true,
-    segmentPanIntervalMs: 4000,
-    segmentPanChunks: 8,
-    segmentPanStartDelayMs: 2500,
+    /** ~1 min/route: 3 pans × 2 directions + traffic/cams */
+    segmentPanIntervalMs: 3200,
+    segmentPanChunks: 3,
+    segmentPanStartDelayMs: 600,
     incidentDwellMs: 32000,
     slowdownDwellMs: 28000,
     constructionDwellMs: 28000,
     weatherDwellMs: 55000,
-    mapFlyDurationMs: 900,
+    mapFlyDurationMs: 850,
     vehiclePollMs: 6000,
-    // Per-route package: all nearby incidents, then slowdowns, then cameras (route stays on map)
     routeBucketRadiusMiles: 0.5,
     routeBucketMaxIncidents: 0,
     routeBucketMaxSlowdowns: 0,
     routeBucketMaxCameras: 4,
-    routeBucketItemCap: 20,
-    routeBucketIncidentDwellMs: 10000,
-    routeBucketSlowdownDwellMs: 9000,
-    routeBucketCameraDwellMs: 7000,
+    routeBucketItemCap: 12,
+    routeBucketIncidentDwellMs: 5500,
+    routeBucketSlowdownDwellMs: 5000,
+    routeBucketCameraDwellMs: 5000,
     routeBucketEnabled: true,
-    routeBucketPrefetchOppositeMs: 8000,
-    /** SORTA/Metro only — index includes agencies without local route JSON (e.g. acrta_). */
-    routeAgencyPrefix: 'sorta_'
+    routeBucketPrefetchOppositeMs: 2500,
+    /** null = all agencies in routes_index order (SORTA, TANK, BCRTA, …) */
+    routeAgencyPrefix: null
   };
 
   document.documentElement.classList.add('tv-mode');

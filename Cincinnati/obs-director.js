@@ -17,6 +17,9 @@
 
   const TV = {
     mode: MODES.IDLE,
+    routes: [],
+    routeIndex: 0,
+    episodeGeneration: 0,
     legs: [],
     legIndex: 0,
     legsThisCycle: 0,
@@ -29,11 +32,11 @@
     phaseRemainingMs: null,
     paused: false,
     running: false,
+    currentRoute: null,
     currentRouteKey: null,
     currentLeg: null,
     tempPinMarker: null,
-    routeShapeCache: Object.create(null),
-    routeBucketDone: Object.create(null)
+    routeShapeCache: Object.create(null)
   };
 
   function log(msg) {
@@ -317,27 +320,78 @@
     });
   }
 
-  function buildLegQueue() {
+  /** Master list: every route in index order (all agencies). */
+  function buildRouteQueue() {
     const routes = (window.ROUTES && window.ROUTES.cincinnati && window.ROUTES.cincinnati.busRoutes) || [];
     const prefix = cfg('routeAgencyPrefix', null);
-    const legs = [];
+    const out = [];
     routes.forEach(function (r) {
       if (!r || !r.id) return;
       if (prefix && String(r.id).indexOf(prefix) !== 0) return;
-      legs.push({
-        routeId: r.id,
-        directionId: 0,
+      out.push({
+        routeId: String(r.id),
         label: r.label || r.id,
-        dirLabel: r.dir0 || 'Direction 0'
-      });
-      legs.push({
-        routeId: r.id,
-        directionId: 1,
-        label: r.label || r.id,
-        dirLabel: r.dir1 || 'Direction 1'
+        dir0: r.dir0 || 'Outbound',
+        dir1: r.dir1 || 'Inbound'
       });
     });
-    return legs;
+    return out;
+  }
+
+  function legDwellMs() {
+    const fixed = cfg('routeLegDwellMs', null);
+    if (fixed != null && Number(fixed) > 0) return Number(fixed);
+    const panDelay = Number(cfg('segmentPanStartDelayMs', 600)) || 600;
+    const panInterval = Number(cfg('segmentPanIntervalMs', 3200)) || 3200;
+    const panChunks = Number(cfg('segmentPanChunks', 3)) || 3;
+    return panDelay + panChunks * panInterval + 1200;
+  }
+
+  function episodeStale(gen) {
+    return gen !== TV.episodeGeneration || TV.paused;
+  }
+
+  async function waitUnlessPaused(ms) {
+    const end = Date.now() + ms;
+    while (Date.now() < end) {
+      if (TV.paused) {
+        await new Promise(function (resolve) {
+          const tick = function () {
+            if (!TV.paused) {
+              clearInterval(TV._pauseWaitTimer);
+              TV._pauseWaitTimer = null;
+              resolve();
+            }
+          };
+          TV._pauseWaitTimer = setInterval(tick, 250);
+        });
+      }
+      const left = end - Date.now();
+      if (left <= 0) break;
+      await sleep(Math.min(200, left));
+    }
+  }
+
+  function clearMapBetweenRoutes() {
+    stopSegmentPan();
+    hideAllRouteOverlays();
+    try {
+      if (typeof window.clearAllRouteOverlays === 'function') {
+        window.clearAllRouteOverlays();
+      }
+    } catch (_) {}
+    clearGlobalFleetMarkers();
+    hideTrafficDetail();
+    setLowerThird('');
+    removeTempPin();
+    TV.currentRouteKey = null;
+    TV.currentLeg = null;
+    const a = api();
+    if (a && a.trafficOff) {
+      try {
+        a.trafficOff();
+      } catch (_) {}
+    }
   }
 
   function parseRouteDisplay(label, routeId) {
@@ -554,24 +608,6 @@
     return out.length > 1 ? out : (Array.isArray(s0) ? s0 : (Array.isArray(s1) ? s1 : []));
   }
 
-  function hasBothDirectionShapes(routeId) {
-    const entry = TV.routeShapeCache[String(routeId || '')];
-    if (!entry) return false;
-    const d0 = Array.isArray(entry['0']) && entry['0'].length > 1;
-    const d1 = Array.isArray(entry['1']) && entry['1'].length > 1;
-    return d0 && d1;
-  }
-
-  function shouldRunRoutePackage(leg) {
-    const nextLeg = TV.legs.length ? TV.legs[TV.legIndex % TV.legs.length] : null;
-    const routeWillChange = nextLeg && String(nextLeg.routeId) !== String(leg.routeId);
-    const dir = Number(leg.directionId);
-    if (dir === 1) return true;
-    if (routeWillChange) return true;
-    if (dir === 0 && hasBothDirectionShapes(leg.routeId)) return true;
-    return false;
-  }
-
   function normalizeCamerasPayload(raw) {
     const list = Array.isArray(raw) ? raw : raw && (raw.cameras || raw.items || raw.data) || [];
     if (!Array.isArray(list)) return [];
@@ -639,13 +675,6 @@
       console.warn('[mfTvDirector] prefetch shape failed', key, e);
     }
     return false;
-  }
-
-  async function maybeRunRouteBucket(routeId) {
-    const rid = String(routeId || '');
-    if (!rid || TV.routeBucketDone[rid]) return;
-    await runRouteBucketForRoute(rid);
-    TV.routeBucketDone[rid] = true;
   }
 
   async function runRouteBucketForRoute(routeId) {
@@ -858,130 +887,165 @@
     log('Route package complete: ' + String(routeId));
   }
 
-  async function enterRouteMode() {
-    TV.mode = MODES.ROUTE;
-    setPhaseBadge('Transit');
-    hideTrafficDetail();
-    el('mfTvWeatherPanel') && el('mfTvWeatherPanel').classList.add('mf-tv-hidden');
-
-    const a = api();
-    if (a && a.trafficOff) await a.trafficOff();
-
-    if (!TV.legs.length) TV.legs = buildLegQueue();
-    if (!TV.legs.length) {
-      log('No routes in queue');
-      schedulePhase(5000, enterTrafficMode);
-      return;
-    }
-
-    const leg = TV.legs[TV.legIndex % TV.legs.length];
-    TV.legIndex = (TV.legIndex + 1) % TV.legs.length;
+  /**
+   * One direction: production overlay + short pans + cache shape (then hide overlay).
+   */
+  async function playDirectionLeg(route, directionId, gen) {
+    const routeId = route.routeId;
+    const dirLabel = Number(directionId) === 1 ? route.dir1 : route.dir0;
+    const leg = {
+      routeId: routeId,
+      directionId: directionId,
+      label: route.label,
+      dirLabel: dirLabel
+    };
     TV.currentLeg = leg;
-
-    if (Number(leg.directionId) === 0) {
-      delete TV.routeBucketDone[String(leg.routeId)];
-    }
-
-    hideAllRouteOverlays();
-    const overlayKey = leg.routeId + '-' + leg.directionId;
+    const overlayKey = routeId + '-' + directionId;
     TV.currentRouteKey = overlayKey;
     adminUpdateStatus();
 
-    const disp = parseRouteDisplay(leg.label, leg.routeId);
-    setLowerThird('Route ' + disp.number, disp.title + ' · ' + leg.dirLabel);
+    const disp = parseRouteDisplay(route.label, routeId);
+    setLowerThird('Route ' + disp.number, disp.title + ' · ' + dirLabel);
 
+    hideAllRouteOverlays();
+    clearGlobalFleetMarkers();
+
+    let overlayOk = false;
     try {
-      await window.showRouteOverlay(leg.routeId, leg.directionId, undefined, undefined, {
+      await window.showRouteOverlay(routeId, directionId, undefined, undefined, {
         ensureOn: true,
-        tvMode: true
+        tvMode: true,
+        fitBounds: Number(directionId) === 1
       });
+      overlayOk = !!(window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]);
     } catch (e) {
-      console.warn('[mfTvDirector] showRouteOverlay failed', e);
+      console.warn('[mfTvDirector] showRouteOverlay failed', overlayKey, e);
     }
 
-    const overlayOk =
-      window.activeRouteOverlays && window.activeRouteOverlays[overlayKey];
     if (!overlayOk) {
-      log('Skipping route (no data): ' + overlayKey);
+      log('Skip leg (no overlay): ' + overlayKey);
       setLowerThird('', '');
-      // If dir1 is missing for this route (one-way / limited service),
-      // still run the per-route bucket using the cached dir0 polyline.
-      (async function () {
-        try {
-          cacheLegShape(leg);
-          if (shouldRunRoutePackage(leg)) {
-            await maybeRunRouteBucket(leg.routeId);
-          }
-        } catch (e) {
-          console.warn('[mfTvDirector] bucket failed (missing dir1)', e);
+      return false;
+    }
+
+    const oppositeDir = Number(directionId) === 1 ? 0 : 1;
+    const pfMs = Number(cfg('routeBucketPrefetchOppositeMs', 2500)) || 0;
+    if (pfMs > 0) {
+      setTimeout(function () {
+        if (!episodeStale(gen) && TV.currentRouteKey === overlayKey) {
+          prefetchLegShapeQuiet(routeId, oppositeDir);
         }
-        if (TV.paused) return;
-        schedulePhase(1200, function () {
-          enterRouteMode();
-        });
-      })();
+      }, pfMs);
+    }
+
+    const panDelay = Number(cfg('segmentPanStartDelayMs', 600)) || 600;
+    await waitUnlessPaused(panDelay);
+    if (episodeStale(gen)) return false;
+
+    if (cfg('segmentPanEnabled', true) !== false) {
+      startSegmentPan(routeId, directionId);
+    }
+    await waitUnlessPaused(legDwellMs());
+    if (episodeStale(gen)) return false;
+
+    stopSegmentPan();
+    cacheLegShape(leg);
+    try {
+      window.hideRouteOverlay(routeId, directionId);
+    } catch (_) {}
+    if (TV.currentRouteKey === overlayKey) {
+      TV.currentRouteKey = null;
+    }
+    setLowerThird('', '');
+    return true;
+  }
+
+  /** One route episode: dir 1 → dir 0 → traffic/cams → clear map. */
+  async function runRouteEpisode(route, gen) {
+    const routeId = route.routeId;
+    TV.currentRoute = route;
+    TV.mode = MODES.ROUTE;
+    setPhaseBadge('Transit');
+    hideTrafficDetail();
+    const wp = el('mfTvWeatherPanel');
+    if (wp) wp.classList.add('mf-tv-hidden');
+    const a = api();
+    if (a && a.trafficOff) {
+      try {
+        await a.trafficOff();
+      } catch (_) {}
+    }
+
+    delete TV.routeShapeCache[routeId];
+    clearGlobalFleetMarkers();
+
+    const disp = parseRouteDisplay(route.label, routeId);
+    log('Episode start: ' + disp.number + ' (' + routeId + ')');
+
+    await playDirectionLeg(route, 1, gen);
+    if (episodeStale(gen)) return;
+
+    await playDirectionLeg(route, 0, gen);
+    if (episodeStale(gen)) return;
+
+    if (getCachedRouteShapeLatLon(routeId).length < 2) {
+      await prefetchLegShapeQuiet(routeId, 0);
+      if (!episodeStale(gen)) await prefetchLegShapeQuiet(routeId, 1);
+    }
+
+    if (getCachedRouteShapeLatLon(routeId).length > 1) {
+      try {
+        await runRouteBucketForRoute(routeId);
+      } catch (e) {
+        console.warn('[mfTvDirector] route bucket failed', e);
+      }
+    } else {
+      log('Skip traffic/cams (no route shape): ' + routeId);
+    }
+
+    if (episodeStale(gen)) return;
+    clearMapBetweenRoutes();
+    delete TV.routeShapeCache[routeId];
+    TV.currentRoute = null;
+    log('Episode done: ' + routeId);
+  }
+
+  async function runNextRouteEpisode() {
+    if (!TV.running) return;
+    clearPhaseTimerOnly();
+
+    if (!TV.routes.length) TV.routes = buildRouteQueue();
+    if (!TV.routes.length) {
+      log('No routes in queue — retry in 10s');
+      schedulePhase(10000, runNextRouteEpisode);
       return;
     }
 
-    TV.legsThisCycle++;
+    const idx = TV.routeIndex % TV.routes.length;
+    const route = TV.routes[idx];
+    TV.routeIndex = (TV.routeIndex + 1) % TV.routes.length;
+    const gen = ++TV.episodeGeneration;
 
-    const panInterval = cfg('segmentPanIntervalMs', 4000);
-    const panChunks = cfg('segmentPanChunks', 8);
-    const panDelay = cfg('segmentPanStartDelayMs', 2500);
-    const dwellCfg = cfg('routeLegDwellMs', null);
-    const dwell =
-      dwellCfg != null && Number(dwellCfg) > 0
-        ? Number(dwellCfg)
-        : panDelay + panChunks * panInterval + 3000;
-
-    setTimeout(function () {
-      if (TV.mode === MODES.ROUTE && TV.currentRouteKey === overlayKey) {
-        startSegmentPan(leg.routeId, leg.directionId);
-      }
-    }, panDelay);
-
-    if (Number(leg.directionId) === 0) {
-      const pfMs = Number(cfg('routeBucketPrefetchOppositeMs', 8000)) || 0;
-      if (pfMs > 0) {
-        setTimeout(function () {
-          if (TV.mode === MODES.ROUTE && TV.currentRouteKey === overlayKey) {
-            prefetchLegShapeQuiet(leg.routeId, 1);
-          }
-        }, pfMs);
-      }
+    try {
+      await runRouteEpisode(route, gen);
+    } catch (e) {
+      console.warn('[mfTvDirector] episode error', e);
+      clearMapBetweenRoutes();
     }
 
-    schedulePhase(dwell, function routeLegEnded() {
-      cacheLegShape(leg);
-      stopSegmentPan();
-      setLowerThird('', '');
-      adminUpdateStatus();
-      (async function () {
-        try {
-          const packageNow = shouldRunRoutePackage(leg);
-          log(
-            'Leg ended ' +
-              leg.routeId +
-              '-' +
-              leg.directionId +
-              ' packageTraffic=' +
-              packageNow +
-              ' bothDirs=' +
-              hasBothDirectionShapes(leg.routeId)
-          );
-          if (packageNow) {
-            await maybeRunRouteBucket(leg.routeId);
-          }
-        } catch (e) {
-          console.warn('[mfTvDirector] bucket failed', e);
-        }
-        try {
-          window.hideRouteOverlay(leg.routeId, leg.directionId);
-        } catch (_) {}
-        if (TV.paused) return;
-        enterRouteMode();
-      })();
-    });
+    if (!TV.running || TV.paused || TV.mode !== MODES.ROUTE) return;
+    setTimeout(function () {
+      runNextRouteEpisode();
+    }, 400);
+  }
+
+  function enterRouteMode() {
+    TV.mode = MODES.ROUTE;
+    const wp = el('mfTvWeatherPanel');
+    if (wp) wp.classList.add('mf-tv-hidden');
+    TV.episodeGeneration++;
+    clearMapBetweenRoutes();
+    runNextRouteEpisode();
   }
 
   function finishRouteLeg(leg) {
@@ -1002,11 +1066,15 @@
     const st = el('mfTvAdminStatus');
     if (!st) return;
     const leg = TV.currentLeg;
+    const r = TV.currentRoute;
+    const total = TV.routes.length;
+    const pos = total ? ((TV.routeIndex - 1 + total) % total) + 1 : 0;
     const lines = [
       'Mode: ' + (TV.mode || '—'),
       'Paused: ' + (TV.paused ? 'YES' : 'no'),
-      'Routes in block: ' + TV.legsThisCycle + ' / ' + cfg('routeLegsBeforeTraffic', 10),
-      leg ? 'Leg: ' + leg.routeId + ' · dir ' + leg.directionId : 'Leg: —',
+      total ? 'Route ' + pos + ' / ' + total : 'Route —',
+      r ? 'On air: ' + parseRouteDisplay(r.label, r.routeId).number : '',
+      leg ? 'Leg: dir ' + leg.directionId + ' · ' + leg.dirLabel : '',
       TV.mode === MODES.TRAFFIC
         ? 'Traffic: ' + TV.trafficIndex + ' / ' + TV.trafficQueue.length
         : ''
@@ -1032,8 +1100,9 @@
   function adminSkipStep() {
     adminInterrupt(function () {
       if (TV.mode === MODES.ROUTE) {
-        finishRouteLeg(TV.currentLeg);
-        enterRouteMode();
+        TV.episodeGeneration++;
+        clearMapBetweenRoutes();
+        runNextRouteEpisode();
         return;
       }
       if (TV.mode === MODES.TRAFFIC) {
@@ -1057,12 +1126,15 @@
 
   function adminSkipPhase() {
     adminInterrupt(function () {
+      if (TV.mode === MODES.ROUTE) {
+        TV.episodeGeneration++;
+        clearMapBetweenRoutes();
+        runNextRouteEpisode();
+        return;
+      }
       hideAllRouteOverlays();
       finishRouteLeg(TV.currentLeg);
-      if (TV.mode === MODES.ROUTE) {
-        TV.legsThisCycle = 0;
-        enterTrafficMode();
-      } else if (TV.mode === MODES.TRAFFIC) {
+      if (TV.mode === MODES.TRAFFIC) {
         enterConstructionMode();
       } else if (TV.mode === MODES.CONSTRUCTION) {
         enterWeatherMode();
@@ -1075,18 +1147,20 @@
 
   function adminNextRoute() {
     adminInterrupt(function () {
-      TV.legsThisCycle = 0;
-      finishRouteLeg(TV.currentLeg);
-      enterRouteMode();
+      TV.episodeGeneration++;
+      clearMapBetweenRoutes();
+      runNextRouteEpisode();
     });
   }
 
   function adminPrevRoute() {
     adminInterrupt(function () {
-      if (!TV.legs.length) return;
-      TV.legIndex = (TV.legIndex - 2 + TV.legs.length * 2) % TV.legs.length;
-      finishRouteLeg(TV.currentLeg);
-      enterRouteMode();
+      if (!TV.routes.length) TV.routes = buildRouteQueue();
+      if (!TV.routes.length) return;
+      TV.routeIndex = (TV.routeIndex - 2 + TV.routes.length * 2) % TV.routes.length;
+      TV.episodeGeneration++;
+      clearMapBetweenRoutes();
+      runNextRouteEpisode();
     });
   }
 
@@ -1107,24 +1181,8 @@
     const wait = TV.phaseRemainingMs != null ? TV.phaseRemainingMs : 8000;
     TV.phaseRemainingMs = null;
 
-    if (TV.mode === MODES.ROUTE && TV.currentLeg) {
-      const leg = TV.currentLeg;
-      const panDelay = 200;
-      setTimeout(function () {
-        if (!TV.paused && TV.currentRouteKey === leg.routeId + '-' + leg.directionId) {
-          startSegmentPan(leg.routeId, leg.directionId);
-        }
-      }, panDelay);
-      const maxLegs = cfg('routeLegsBeforeTraffic', 10);
-      schedulePhase(wait, function () {
-        finishRouteLeg(leg);
-        if (TV.legsThisCycle >= maxLegs) {
-          TV.legsThisCycle = 0;
-          enterTrafficMode();
-        } else {
-          enterRouteMode();
-        }
-      });
+    if (TV.mode === MODES.ROUTE) {
+      runNextRouteEpisode();
     } else if (TV.mode === MODES.TRAFFIC) {
       showNextTrafficItem();
     } else if (TV.mode === MODES.CONSTRUCTION) {
@@ -1152,7 +1210,8 @@
       } else if (mode === 'weather') {
         enterWeatherMode();
       } else {
-        TV.legsThisCycle = 0;
+        TV.episodeGeneration++;
+        clearMapBetweenRoutes();
         enterRouteMode();
       }
     });
@@ -1526,6 +1585,32 @@
     window.CITY_CONFIG.useSharedVehicleCache = true;
   }
 
+  function clearGlobalFleetMarkers() {
+    try {
+      if (window.allBusesInterval) {
+        clearInterval(window.allBusesInterval);
+        window.allBusesInterval = null;
+      }
+      if (window.busMarkers) {
+        const bm = window.busMarkers;
+        if (Array.isArray(bm)) {
+          bm.forEach(function (m) {
+            if (m && typeof m.remove === 'function') m.remove();
+          });
+          window.busMarkers = [];
+        } else if (bm && typeof bm === 'object') {
+          Object.keys(bm).forEach(function (k) {
+            const m = bm[k];
+            if (m && typeof m.remove === 'function') m.remove();
+          });
+          window.busMarkers = {};
+        }
+      }
+    } catch (e) {
+      console.warn('[mfTvDirector] clearGlobalFleetMarkers', e);
+    }
+  }
+
   function hidePageChrome() {
     var sel = [
       '#favoritesWrapper',
@@ -1550,11 +1635,13 @@
     if (TV.running) return;
     TV.running = true;
     applyTvVehicleTuning();
+    clearGlobalFleetMarkers();
     hidePageChrome();
     bindAdminPanel();
-    TV.legs = buildLegQueue();
-    log('Director started; ' + TV.legs.length + ' route legs');
-    enterRouteMode();
+    TV.routes = buildRouteQueue();
+    TV.routeIndex = 0;
+    log('Director started; ' + TV.routes.length + ' routes (episode loop)');
+    runNextRouteEpisode();
   }
 
   window.mfTvDirectorStart = function () {
@@ -1591,7 +1678,9 @@
       return {
         mode: TV.mode,
         paused: TV.paused,
-        legsThisCycle: TV.legsThisCycle,
+        routeIndex: TV.routeIndex,
+        routeTotal: TV.routes.length,
+        currentRoute: TV.currentRoute,
         currentLeg: TV.currentLeg,
         trafficIndex: TV.trafficIndex,
         trafficTotal: TV.trafficQueue.length
