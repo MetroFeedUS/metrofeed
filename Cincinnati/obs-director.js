@@ -30,7 +30,8 @@
     paused: false,
     running: false,
     currentRouteKey: null,
-    currentLeg: null
+    currentLeg: null,
+    tempPinMarker: null
   };
 
   function log(msg) {
@@ -71,6 +72,52 @@
     if (p) p.classList.add('mf-tv-hidden');
     if (window.metrofeedTvApi && window.metrofeedTvApi.closeTrafficDetail) {
       window.metrofeedTvApi.closeTrafficDetail();
+    }
+  }
+
+  function removeTempPin() {
+    try {
+      if (TV.tempPinMarker && typeof TV.tempPinMarker.remove === 'function') {
+        TV.tempPinMarker.remove();
+      }
+    } catch (_) {}
+    TV.tempPinMarker = null;
+  }
+
+  function showTempPin(lng, lat, label, kind) {
+    removeTempPin();
+    const m = map();
+    if (!m || typeof maplibregl === 'undefined' || !maplibregl.Marker) return;
+    const elPin = document.createElement('div');
+    elPin.style.cssText =
+      'pointer-events:none;transform:translateY(-10px);' +
+      'background:rgba(10,10,14,0.88);border:1px solid rgba(147,51,234,0.6);' +
+      'border-radius:10px;padding:8px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.55);' +
+      'color:#e2e8f0;font:700 12px/1.2 Segoe UI,system-ui,sans-serif;max-width:260px;';
+    const badge = document.createElement('div');
+    badge.style.cssText =
+      'display:inline-block;margin-bottom:6px;padding:2px 8px;border-radius:999px;' +
+      'background:rgba(147,51,234,0.28);border:1px solid rgba(147,51,234,0.55);' +
+      'color:#e9d5ff;font:700 10px/1 Segoe UI,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;';
+    badge.textContent = kind === 'camera' ? 'Camera' : 'Traffic';
+    const txt = document.createElement('div');
+    txt.textContent = label || '';
+    txt.style.cssText = 'font-weight:800;color:#f8fafc;';
+    const dot = document.createElement('div');
+    dot.style.cssText =
+      'width:12px;height:12px;border-radius:50%;margin:8px auto 0;' +
+      'background:' +
+      (kind === 'camera' ? '#38bdf8' : '#fb7185') +
+      ';box-shadow:0 0 0 3px rgba(0,0,0,0.35), 0 0 18px rgba(147,51,234,0.35);';
+    elPin.appendChild(badge);
+    elPin.appendChild(txt);
+    elPin.appendChild(dot);
+    try {
+      TV.tempPinMarker = new maplibregl.Marker({ element: elPin, anchor: 'bottom' })
+        .setLngLat([lng, lat])
+        .addTo(m);
+    } catch (_) {
+      TV.tempPinMarker = null;
     }
   }
 
@@ -119,6 +166,17 @@
 
   function map() {
     return window.map;
+  }
+
+  function milesToMeters(mi) {
+    const n = Number(mi);
+    return Number.isFinite(n) ? n * 1609.344 : 0;
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
   }
 
   function waitForReady() {
@@ -223,6 +281,28 @@
         });
       });
       if (out.length > 1) return out;
+    }
+    return [];
+  }
+
+  function getRouteShapeLatLon(routeId, directionId) {
+    const key = routeId + '-' + directionId;
+    const desc =
+      (window.activeRouteOverlayDescriptors && window.activeRouteOverlayDescriptors[key]) ||
+      null;
+    const rd = desc && desc.options && desc.options.routeData;
+    if (!rd) return [];
+    if (Array.isArray(rd.shape) && rd.shape.length > 1) return rd.shape;
+    if (Array.isArray(rd.shapes) && rd.shapes.length) {
+      // Flatten for distance checks; segment distance only needs a continuous polyline.
+      const out = [];
+      rd.shapes.forEach(function (s) {
+        if (!Array.isArray(s)) return;
+        s.forEach(function (pt) {
+          if (pt && pt.length >= 2) out.push(pt);
+        });
+      });
+      return out;
     }
     return [];
   }
@@ -336,6 +416,172 @@
     tryStart(0);
   }
 
+  async function runRouteBucketForLeg(leg) {
+    if (!leg || TV.paused) return;
+    const m = map();
+    const a = api();
+    if (!m || !a) return;
+
+    const radiusM = milesToMeters(cfg('routeBucketRadiusMiles', 0.5));
+    const maxIncidents = Math.max(0, Number(cfg('routeBucketMaxIncidents', 1)) || 0);
+    const maxCameras = Math.max(0, Number(cfg('routeBucketMaxCameras', 4)) || 0);
+    const incDwell = Math.max(2000, Number(cfg('routeBucketIncidentDwellMs', 12000)) || 12000);
+    const camDwell = Math.max(1500, Number(cfg('routeBucketCameraDwellMs', 8000)) || 8000);
+
+    const shapeLatLon = getRouteShapeLatLon(leg.routeId, leg.directionId);
+    const canDist =
+      typeof window.metrofeedNearestSegmentInfo === 'function' &&
+      Array.isArray(shapeLatLon) &&
+      shapeLatLon.length > 1;
+
+    if (!canDist) {
+      log('Bucket skipped (no polyline distance): ' + leg.routeId + '-' + leg.directionId);
+      return;
+    }
+
+    // --- Incidents near route ---
+    try {
+      await a.ensureTraffic();
+    } catch (_) {}
+
+    const nearIncidents = [];
+    try {
+      const incs = a.incidentsInCity ? a.incidentsInCity() : [];
+      for (let i = 0; i < incs.length; i++) {
+        const inc = incs[i];
+        const fmt =
+          window.MfTrafficIncidents && window.MfTrafficIncidents.formatIncidentForDisplay
+            ? window.MfTrafficIncidents.formatIncidentForDisplay(inc, i)
+            : a.incidentDisplay
+              ? a.incidentDisplay(inc, i)
+              : null;
+        if (!fmt || !fmt.lngLat) continue;
+        const lat = Number(fmt.lngLat[1]);
+        const lon = Number(fmt.lngLat[0]);
+        const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
+        if (!info || !Number.isFinite(info.distanceM)) continue;
+        if (info.distanceM <= radiusM) {
+          nearIncidents.push({
+            kind: 'incident',
+            distanceM: info.distanceM,
+            lng: lon,
+            lat: lat,
+            title: fmt.title || 'Incident',
+            body: fmt.description || (fmt.lines && fmt.lines.join('\n')) || '',
+            meta:
+              'Near route · ' +
+              (info.distanceM <= 50 ? '<50m' : Math.round(info.distanceM) + 'm')
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[mfTvDirector] bucket incidents failed', e);
+    }
+
+    nearIncidents.sort(function (x, y) {
+      return x.distanceM - y.distanceM;
+    });
+
+    for (let i = 0; i < Math.min(maxIncidents, nearIncidents.length); i++) {
+      if (TV.paused) return;
+      const it = nearIncidents[i];
+      setPhaseBadge('Transit + Traffic');
+      setLowerThird('Route update', it.title);
+      hideTrafficDetail();
+      showTempPin(it.lng, it.lat, it.title, 'incident');
+      try {
+        m.flyTo({
+          center: [it.lng, it.lat],
+          zoom: 14.1,
+          duration: cfg('mapFlyDurationMs', 900),
+          essential: true
+        });
+      } catch (_) {}
+      if (a.showTrafficDetail) a.showTrafficDetail(it.lng, it.lat, it.title, it.body);
+      showTrafficDetail(it.title, it.body, it.meta);
+      await sleep(incDwell);
+      hideTrafficDetail();
+      removeTempPin();
+    }
+
+    // --- Cameras near route (up to 4) ---
+    const camsUrl =
+      window.CITY_CONFIG && window.CITY_CONFIG.camerasFeedUrl
+        ? String(window.CITY_CONFIG.camerasFeedUrl).trim()
+        : '';
+    if (!camsUrl) return;
+
+    if (!window._mfTvAllCameras || !Array.isArray(window._mfTvAllCameras)) {
+      try {
+        const res = await fetch(camsUrl, { cache: 'no-store' });
+        if (res.ok) {
+          const raw = await res.json();
+          const list = Array.isArray(raw) ? raw : raw.cameras || raw.items || raw.data || [];
+          window._mfTvAllCameras = Array.isArray(list) ? list : [];
+        } else {
+          window._mfTvAllCameras = [];
+        }
+      } catch (_) {
+        window._mfTvAllCameras = [];
+      }
+    }
+
+    const box = a.cityBoundsBox ? a.cityBoundsBox() : null;
+    const inBox = function (lon, lat) {
+      if (!box) return true;
+      return lon >= box.west && lon <= box.east && lat >= box.south && lat <= box.north;
+    };
+
+    const nearCams = [];
+    const cams = window._mfTvAllCameras || [];
+    for (let i = 0; i < cams.length; i++) {
+      const c = cams[i];
+      const lat = Number(c.lat ?? c.latitude);
+      const lon = Number(c.lon ?? c.lng ?? c.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      if (!inBox(lon, lat)) continue;
+      const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
+      if (!info || !Number.isFinite(info.distanceM)) continue;
+      if (info.distanceM <= radiusM) {
+        nearCams.push({
+          kind: 'camera',
+          distanceM: info.distanceM,
+          lng: lon,
+          lat: lat,
+          title: String(c.name || c.title || 'Traffic camera'),
+          body: String(c.description || c.location || ''),
+          meta:
+            'Near route · ' +
+            (info.distanceM <= 50 ? '<50m' : Math.round(info.distanceM) + 'm')
+        });
+      }
+    }
+    nearCams.sort(function (x, y) {
+      return x.distanceM - y.distanceM;
+    });
+
+    for (let i = 0; i < Math.min(maxCameras, nearCams.length); i++) {
+      if (TV.paused) return;
+      const it = nearCams[i];
+      setPhaseBadge('Transit + Cameras');
+      setLowerThird('Traffic camera', it.title);
+      hideTrafficDetail();
+      showTempPin(it.lng, it.lat, it.title, 'camera');
+      try {
+        m.flyTo({
+          center: [it.lng, it.lat],
+          zoom: 15.0,
+          duration: cfg('mapFlyDurationMs', 900),
+          essential: true
+        });
+      } catch (_) {}
+      showTrafficDetail(it.title, it.body, it.meta);
+      await sleep(camDwell);
+      hideTrafficDetail();
+      removeTempPin();
+    }
+  }
+
   async function enterRouteMode() {
     TV.mode = MODES.ROUTE;
     setPhaseBadge('Transit');
@@ -415,12 +661,20 @@
       } catch (_) {}
       setLowerThird('', '');
       adminUpdateStatus();
-      if (TV.legsThisCycle >= maxLegs) {
-        TV.legsThisCycle = 0;
-        enterTrafficMode();
-      } else {
-        enterRouteMode();
-      }
+      (async function () {
+        try {
+          await runRouteBucketForLeg(leg);
+        } catch (e) {
+          console.warn('[mfTvDirector] bucket failed', e);
+        }
+        if (TV.paused) return;
+        if (TV.legsThisCycle >= maxLegs) {
+          TV.legsThisCycle = 0;
+          enterTrafficMode();
+        } else {
+          enterRouteMode();
+        }
+      })();
     });
   }
 
