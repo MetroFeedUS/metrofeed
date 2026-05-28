@@ -533,6 +533,7 @@
     if (!m || !a) return;
 
     if (cfg('routeBucketEnabled', true) === false) return;
+    log('Bucket start: ' + String(routeId));
 
     const radiusM = milesToMeters(cfg('routeBucketRadiusMiles', 0.5));
     const maxIncidents = Math.max(0, Number(cfg('routeBucketMaxIncidents', 1)) || 0);
@@ -763,14 +764,21 @@
     if (!overlayOk) {
       log('Skipping route (no data): ' + overlayKey);
       setLowerThird('', '');
-      schedulePhase(1500, function () {
-        if (TV.legsThisCycle >= cfg('routeLegsBeforeTraffic', 10)) {
-          TV.legsThisCycle = 0;
-          enterTrafficMode();
-        } else {
-          enterRouteMode();
+      // If dir1 is missing for this route (one-way / limited service),
+      // still run the per-route bucket using the cached dir0 polyline.
+      (async function () {
+        try {
+          if (Number(leg.directionId) === 1) {
+            await runRouteBucketForRoute(leg.routeId);
+          }
+        } catch (e) {
+          console.warn('[mfTvDirector] bucket failed (missing dir1)', e);
         }
-      });
+        if (TV.paused) return;
+        schedulePhase(1200, function () {
+          enterRouteMode();
+        });
+      })();
       return;
     }
 
