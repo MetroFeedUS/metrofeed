@@ -31,7 +31,8 @@
     running: false,
     currentRouteKey: null,
     currentLeg: null,
-    tempPinMarker: null
+    tempPinMarker: null,
+    routeShapeCache: Object.create(null)
   };
 
   function log(msg) {
@@ -416,8 +417,53 @@
     tryStart(0);
   }
 
-  async function runRouteBucketForLeg(leg) {
-    if (!leg || TV.paused) return;
+  function cacheLegShape(leg) {
+    try {
+      if (!leg || !leg.routeId) return;
+      const shape = getRouteShapeLatLon(leg.routeId, leg.directionId);
+      if (!Array.isArray(shape) || shape.length < 2) return;
+      const rid = String(leg.routeId);
+      if (!TV.routeShapeCache[rid]) TV.routeShapeCache[rid] = Object.create(null);
+      TV.routeShapeCache[rid][String(leg.directionId)] = shape;
+    } catch (_) {}
+  }
+
+  function getCachedRouteShapeLatLon(routeId) {
+    const rid = String(routeId || '');
+    const entry = TV.routeShapeCache[rid];
+    if (!entry) return [];
+    const s0 = entry['0'];
+    const s1 = entry['1'];
+    // Prefer longest; also allow combining for better coverage.
+    const out = [];
+    if (Array.isArray(s0) && s0.length > 1) out.push.apply(out, s0);
+    if (Array.isArray(s1) && s1.length > 1) out.push.apply(out, s1);
+    return out.length > 1 ? out : (Array.isArray(s0) ? s0 : (Array.isArray(s1) ? s1 : []));
+  }
+
+  function normalizeCamerasPayload(raw) {
+    const list = Array.isArray(raw) ? raw : raw && (raw.cameras || raw.items || raw.data) || [];
+    if (!Array.isArray(list)) return [];
+    return list
+      .map(function (c, idx) {
+        const id = c && c.id != null ? String(c.id) : String(idx);
+        const lat = Number(c && (c.lat ?? c.latitude));
+        const lon = Number(c && (c.lon ?? c.lng ?? c.longitude));
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+        return {
+          id: id,
+          name: (c && (c.name || c.title)) || ('Camera ' + id),
+          description: (c && (c.description || c.location || c.name)) || '',
+          lat: lat,
+          lon: lon,
+          url: (c && (c.url || c.imageUrl || c.image_url || c.streamUrl || c.stream_url)) || ''
+        };
+      })
+      .filter(Boolean);
+  }
+
+  async function runRouteBucketForRoute(routeId) {
+    if (!routeId || TV.paused) return;
     const m = map();
     const a = api();
     if (!m || !a) return;
@@ -428,23 +474,23 @@
     const incDwell = Math.max(2000, Number(cfg('routeBucketIncidentDwellMs', 12000)) || 12000);
     const camDwell = Math.max(1500, Number(cfg('routeBucketCameraDwellMs', 8000)) || 8000);
 
-    const shapeLatLon = getRouteShapeLatLon(leg.routeId, leg.directionId);
+    const shapeLatLon = getCachedRouteShapeLatLon(routeId);
     const canDist =
       typeof window.metrofeedNearestSegmentInfo === 'function' &&
       Array.isArray(shapeLatLon) &&
       shapeLatLon.length > 1;
 
     if (!canDist) {
-      log('Bucket skipped (no polyline distance): ' + leg.routeId + '-' + leg.directionId);
+      log('Bucket skipped (no polyline distance): ' + String(routeId));
       return;
     }
 
-    // --- Incidents near route ---
+    // --- Incidents + slowdowns near route ---
     try {
       await a.ensureTraffic();
     } catch (_) {}
 
-    const nearIncidents = [];
+    const nearItems = [];
     try {
       const incs = a.incidentsInCity ? a.incidentsInCity() : [];
       for (let i = 0; i < incs.length; i++) {
@@ -461,8 +507,8 @@
         const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
         if (!info || !Number.isFinite(info.distanceM)) continue;
         if (info.distanceM <= radiusM) {
-          nearIncidents.push({
-            kind: 'incident',
+          nearItems.push({
+            kind: 'incident', // traffic
             distanceM: info.distanceM,
             lng: lon,
             lat: lat,
@@ -474,19 +520,42 @@
           });
         }
       }
+      const slows = a.slowdownsInCity ? a.slowdownsInCity() : [];
+      for (let i = 0; i < slows.length; i++) {
+        const s = slows[i];
+        const fmt = a.slowdownDisplay ? a.slowdownDisplay(s, i) : null;
+        if (!fmt || !fmt.lngLat) continue;
+        const lat = Number(fmt.lngLat[1]);
+        const lon = Number(fmt.lngLat[0]);
+        const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
+        if (!info || !Number.isFinite(info.distanceM)) continue;
+        if (info.distanceM <= radiusM) {
+          nearItems.push({
+            kind: 'slowdown', // traffic
+            distanceM: info.distanceM,
+            lng: lon,
+            lat: lat,
+            title: fmt.title || 'Slowdown',
+            body: fmt.description || (fmt.lines && fmt.lines.join('\n')) || '',
+            meta:
+              'Near route · ' +
+              (info.distanceM <= 50 ? '<50m' : Math.round(info.distanceM) + 'm')
+          });
+        }
+      }
     } catch (e) {
       console.warn('[mfTvDirector] bucket incidents failed', e);
     }
 
-    nearIncidents.sort(function (x, y) {
+    nearItems.sort(function (x, y) {
       return x.distanceM - y.distanceM;
     });
 
-    for (let i = 0; i < Math.min(maxIncidents, nearIncidents.length); i++) {
+    for (let i = 0; i < Math.min(maxIncidents, nearItems.length); i++) {
       if (TV.paused) return;
-      const it = nearIncidents[i];
+      const it = nearItems[i];
       setPhaseBadge('Transit + Traffic');
-      setLowerThird('Route update', it.title);
+      setLowerThird(it.kind === 'slowdown' ? 'Route slowdown' : 'Route incident', it.title);
       hideTrafficDetail();
       showTempPin(it.lng, it.lat, it.title, 'incident');
       try {
@@ -516,8 +585,7 @@
         const res = await fetch(camsUrl, { cache: 'no-store' });
         if (res.ok) {
           const raw = await res.json();
-          const list = Array.isArray(raw) ? raw : raw.cameras || raw.items || raw.data || [];
-          window._mfTvAllCameras = Array.isArray(list) ? list : [];
+          window._mfTvAllCameras = normalizeCamerasPayload(raw);
         } else {
           window._mfTvAllCameras = [];
         }
@@ -534,10 +602,11 @@
 
     const nearCams = [];
     const cams = window._mfTvAllCameras || [];
+    log('Cameras cached: ' + cams.length);
     for (let i = 0; i < cams.length; i++) {
       const c = cams[i];
-      const lat = Number(c.lat ?? c.latitude);
-      const lon = Number(c.lon ?? c.lng ?? c.longitude);
+      const lat = Number(c.lat);
+      const lon = Number(c.lon);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
       if (!inBox(lon, lat)) continue;
       const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
@@ -559,6 +628,7 @@
     nearCams.sort(function (x, y) {
       return x.distanceM - y.distanceM;
     });
+    log('Cameras near route: ' + nearCams.length + ' (radius ' + cfg('routeBucketRadiusMiles', 0.5) + 'mi)');
 
     for (let i = 0; i < Math.min(maxCameras, nearCams.length); i++) {
       if (TV.paused) return;
@@ -655,6 +725,8 @@
     const maxLegs = cfg('routeLegsBeforeTraffic', 10);
 
     schedulePhase(dwell, function routeLegEnded() {
+      // Cache the route polyline before we remove the overlay (hideRouteOverlay deletes descriptors).
+      cacheLegShape(leg);
       stopSegmentPan();
       try {
         window.hideRouteOverlay(leg.routeId, leg.directionId);
@@ -663,7 +735,15 @@
       adminUpdateStatus();
       (async function () {
         try {
-          await runRouteBucketForLeg(leg);
+          // Bucket runs once per route after both directions (or after the last available leg).
+          // - If dir 1 just completed → always bucket.
+          // - If only dir 0 exists (dir1 404), we'll bucket when the route changes (handled below).
+          const nextLeg = TV.legs.length ? TV.legs[TV.legIndex % TV.legs.length] : null;
+          const routeWillChange = nextLeg && String(nextLeg.routeId) !== String(leg.routeId);
+          const shouldBucket = Number(leg.directionId) === 1 || routeWillChange;
+          if (shouldBucket) {
+            await runRouteBucketForRoute(leg.routeId);
+          }
         } catch (e) {
           console.warn('[mfTvDirector] bucket failed', e);
         }
