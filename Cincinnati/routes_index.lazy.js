@@ -1,5 +1,5 @@
 window.routesIndex = {
-  "version": "20260517-2232",
+  "version": "20260525-1330",
   "city_id": "cincinnati",
   "routes": [
     {
@@ -245,39 +245,6 @@ window.routesIndex = {
       "route_title": "Route O4 - Inbound"
     },
     {
-      "route_id": "bcrta_7048",
-      "direction_id": 0,
-      "file": "route-bcrta_7048-dir0.json",
-      "route_type": "3",
-      "route_short_name": "Miami Flyer PR",
-      "route_long_name": "Miami Flyer Park and Ride",
-      "agency_id": "222",
-      "direction_name": "Outbound",
-      "route_title": "Route Miami Flyer PR - Outbound"
-    },
-    {
-      "route_id": "sorta_1",
-      "direction_id": 0,
-      "file": "route-sorta_1-dir0.json",
-      "route_type": "3",
-      "route_short_name": "1",
-      "route_long_name": "Mt. Adams",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 1 - Mt. Adams (Outbound)"
-    },
-    {
-      "route_id": "sorta_1",
-      "direction_id": 1,
-      "file": "route-sorta_1-dir1.json",
-      "route_type": "3",
-      "route_short_name": "1",
-      "route_long_name": "Mt. Adams",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 1 - Mt. Adams (Inbound)"
-    },
-    {
       "route_id": "sorta_10",
       "direction_id": 0,
       "file": "route-sorta_10-dir0.json",
@@ -331,28 +298,6 @@ window.routesIndex = {
       "agency_id": "nan",
       "direction_name": "Inbound",
       "route_title": "[SORTA] 11 - Madison Road (Inbound)"
-    },
-    {
-      "route_id": "sorta_12",
-      "direction_id": 0,
-      "file": "route-sorta_12-dir0.json",
-      "route_type": "3",
-      "route_short_name": "12",
-      "route_long_name": "Madisonville Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 12 - Madisonville Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_12",
-      "direction_id": 1,
-      "file": "route-sorta_12-dir1.json",
-      "route_type": "3",
-      "route_short_name": "12",
-      "route_long_name": "Madisonville Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 12 - Madisonville Commuter (Inbound)"
     },
     {
       "route_id": "sorta_16",
@@ -421,28 +366,6 @@ window.routesIndex = {
       "route_title": "[SORTA] 19 - Colerain Avenue (Inbound)"
     },
     {
-      "route_id": "sorta_2",
-      "direction_id": 0,
-      "file": "route-sorta_2-dir0.json",
-      "route_type": "3",
-      "route_short_name": "2",
-      "route_long_name": "Madeira Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 2 - Madeira Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_2",
-      "direction_id": 1,
-      "file": "route-sorta_2-dir1.json",
-      "route_type": "3",
-      "route_short_name": "2",
-      "route_long_name": "Madeira Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 2 - Madeira Commuter (Inbound)"
-    },
-    {
       "route_id": "sorta_20",
       "direction_id": 0,
       "file": "route-sorta_20-dir0.json",
@@ -487,50 +410,6 @@ window.routesIndex = {
       "route_title": "[SORTA] 21 - Harrison Avenue (Inbound)"
     },
     {
-      "route_id": "sorta_22",
-      "direction_id": 0,
-      "file": "route-sorta_22-dir0.json",
-      "route_type": "3",
-      "route_short_name": "22",
-      "route_long_name": "Glenway / Madison",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 22 - Glenway / Madison (Outbound)"
-    },
-    {
-      "route_id": "sorta_22",
-      "direction_id": 1,
-      "file": "route-sorta_22-dir1.json",
-      "route_type": "3",
-      "route_short_name": "22",
-      "route_long_name": "Glenway / Madison",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 22 - Glenway / Madison (Inbound)"
-    },
-    {
-      "route_id": "sorta_23",
-      "direction_id": 0,
-      "file": "route-sorta_23-dir0.json",
-      "route_type": "3",
-      "route_short_name": "23X",
-      "route_long_name": "Forest Park Express",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 23X - Forest Park Express (Outbound)"
-    },
-    {
-      "route_id": "sorta_23",
-      "direction_id": 1,
-      "file": "route-sorta_23-dir1.json",
-      "route_type": "3",
-      "route_short_name": "23X",
-      "route_long_name": "Forest Park Express",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 23X - Forest Park Express (Inbound)"
-    },
-    {
       "route_id": "sorta_24",
       "direction_id": 0,
       "file": "route-sorta_24-dir0.json",
@@ -551,28 +430,6 @@ window.routesIndex = {
       "agency_id": "nan",
       "direction_name": "Inbound",
       "route_title": "[SORTA] 24 - MLK / Beechmont (Inbound)"
-    },
-    {
-      "route_id": "sorta_25",
-      "direction_id": 0,
-      "file": "route-sorta_25-dir0.json",
-      "route_type": "3",
-      "route_short_name": "25",
-      "route_long_name": "Mt. Lookout Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 25 - Mt. Lookout Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_25",
-      "direction_id": 1,
-      "file": "route-sorta_25-dir1.json",
-      "route_type": "3",
-      "route_short_name": "25",
-      "route_long_name": "Mt. Lookout Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 25 - Mt. Lookout Commuter (Inbound)"
     },
     {
       "route_id": "sorta_27",
@@ -617,72 +474,6 @@ window.routesIndex = {
       "agency_id": "nan",
       "direction_name": "Inbound",
       "route_title": "[SORTA] 28 - East End (Inbound)"
-    },
-    {
-      "route_id": "sorta_29",
-      "direction_id": 0,
-      "file": "route-sorta_29-dir0.json",
-      "route_type": "3",
-      "route_short_name": "29X",
-      "route_long_name": "Milford Express",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 29X - Milford Express (Outbound)"
-    },
-    {
-      "route_id": "sorta_29",
-      "direction_id": 1,
-      "file": "route-sorta_29-dir1.json",
-      "route_type": "3",
-      "route_short_name": "29X",
-      "route_long_name": "Milford Express",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 29X - Milford Express (Inbound)"
-    },
-    {
-      "route_id": "sorta_3",
-      "direction_id": 0,
-      "file": "route-sorta_3-dir0.json",
-      "route_type": "3",
-      "route_short_name": "3X",
-      "route_long_name": "Montgomery Express",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 3X - Montgomery Express (Outbound)"
-    },
-    {
-      "route_id": "sorta_3",
-      "direction_id": 1,
-      "file": "route-sorta_3-dir1.json",
-      "route_type": "3",
-      "route_short_name": "3X",
-      "route_long_name": "Montgomery Express",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 3X - Montgomery Express (Inbound)"
-    },
-    {
-      "route_id": "sorta_30",
-      "direction_id": 0,
-      "file": "route-sorta_30-dir0.json",
-      "route_type": "3",
-      "route_short_name": "30",
-      "route_long_name": "Beechmont Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 30 - Beechmont Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_30",
-      "direction_id": 1,
-      "file": "route-sorta_30-dir1.json",
-      "route_type": "3",
-      "route_short_name": "30",
-      "route_long_name": "Beechmont Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 30 - Beechmont Commuter (Inbound)"
     },
     {
       "route_id": "sorta_31",
@@ -795,28 +586,6 @@ window.routesIndex = {
       "route_title": "[SORTA] 37 - MLK / Westwood Northern (Inbound)"
     },
     {
-      "route_id": "sorta_38",
-      "direction_id": 0,
-      "file": "route-sorta_38-dir0.json",
-      "route_type": "3",
-      "route_short_name": "38",
-      "route_long_name": "Uptown Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 38 - Uptown Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_38",
-      "direction_id": 1,
-      "file": "route-sorta_38-dir1.json",
-      "route_type": "3",
-      "route_short_name": "38",
-      "route_long_name": "Uptown Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 38 - Uptown Commuter (Inbound)"
-    },
-    {
       "route_id": "sorta_4",
       "direction_id": 0,
       "file": "route-sorta_4-dir0.json",
@@ -837,28 +606,6 @@ window.routesIndex = {
       "agency_id": "nan",
       "direction_name": "Inbound",
       "route_title": "[SORTA] 4 - Montgomery Road (Inbound)"
-    },
-    {
-      "route_id": "sorta_40",
-      "direction_id": 0,
-      "file": "route-sorta_40-dir0.json",
-      "route_type": "3",
-      "route_short_name": "40",
-      "route_long_name": "Montana Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 40 - Montana Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_40",
-      "direction_id": 1,
-      "file": "route-sorta_40-dir1.json",
-      "route_type": "3",
-      "route_short_name": "40",
-      "route_long_name": "Montana Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 40 - Montana Commuter (Inbound)"
     },
     {
       "route_id": "sorta_41",
@@ -971,28 +718,6 @@ window.routesIndex = {
       "route_title": "[SORTA] 5 - Blue Ash (Inbound)"
     },
     {
-      "route_id": "sorta_50",
-      "direction_id": 0,
-      "file": "route-sorta_50-dir0.json",
-      "route_type": "3",
-      "route_short_name": "50",
-      "route_long_name": "River Road Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 50 - River Road Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_50",
-      "direction_id": 1,
-      "file": "route-sorta_50-dir1.json",
-      "route_type": "3",
-      "route_short_name": "50",
-      "route_long_name": "River Road Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 50 - River Road Commuter (Inbound)"
-    },
-    {
       "route_id": "sorta_51",
       "direction_id": 0,
       "file": "route-sorta_51-dir0.json",
@@ -1013,28 +738,6 @@ window.routesIndex = {
       "agency_id": "nan",
       "direction_name": "Inbound",
       "route_title": "[SORTA] 51 - Uptown Connector (Inbound)"
-    },
-    {
-      "route_id": "sorta_52",
-      "direction_id": 0,
-      "file": "route-sorta_52-dir0.json",
-      "route_type": "3",
-      "route_short_name": "52X",
-      "route_long_name": "Harrison Express",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 52X - Harrison Express (Outbound)"
-    },
-    {
-      "route_id": "sorta_52",
-      "direction_id": 1,
-      "file": "route-sorta_52-dir1.json",
-      "route_type": "3",
-      "route_short_name": "52X",
-      "route_long_name": "Harrison Express",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 52X - Harrison Express (Inbound)"
     },
     {
       "route_id": "sorta_6",
@@ -1103,28 +806,6 @@ window.routesIndex = {
       "route_title": "[SORTA] 64 - Westwood (Inbound)"
     },
     {
-      "route_id": "sorta_65",
-      "direction_id": 0,
-      "file": "route-sorta_65-dir0.json",
-      "route_type": "3",
-      "route_short_name": "65",
-      "route_long_name": "Western Hills",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 65 - Western Hills (Outbound)"
-    },
-    {
-      "route_id": "sorta_65",
-      "direction_id": 1,
-      "file": "route-sorta_65-dir1.json",
-      "route_type": "3",
-      "route_short_name": "65",
-      "route_long_name": "Western Hills",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 65 - Western Hills (Inbound)"
-    },
-    {
       "route_id": "sorta_67",
       "direction_id": 0,
       "file": "route-sorta_67-dir0.json",
@@ -1145,72 +826,6 @@ window.routesIndex = {
       "agency_id": "nan",
       "direction_name": "Inbound",
       "route_title": "[SORTA] 67 - Kemper Road (Inbound)"
-    },
-    {
-      "route_id": "sorta_71",
-      "direction_id": 0,
-      "file": "route-sorta_71-dir0.json",
-      "route_type": "3",
-      "route_short_name": "71X",
-      "route_long_name": "Kings Island Express",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 71X - Kings Island Express (Outbound)"
-    },
-    {
-      "route_id": "sorta_71",
-      "direction_id": 1,
-      "file": "route-sorta_71-dir1.json",
-      "route_type": "3",
-      "route_short_name": "71X",
-      "route_long_name": "Kings Island Express",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 71X - Kings Island Express (Inbound)"
-    },
-    {
-      "route_id": "sorta_74",
-      "direction_id": 0,
-      "file": "route-sorta_74-dir0.json",
-      "route_type": "3",
-      "route_short_name": "74X",
-      "route_long_name": "Colerain Express",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 74X - Colerain Express (Outbound)"
-    },
-    {
-      "route_id": "sorta_74",
-      "direction_id": 1,
-      "file": "route-sorta_74-dir1.json",
-      "route_type": "3",
-      "route_short_name": "74X",
-      "route_long_name": "Colerain Express",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 74X - Colerain Express (Inbound)"
-    },
-    {
-      "route_id": "sorta_75",
-      "direction_id": 0,
-      "file": "route-sorta_75-dir0.json",
-      "route_type": "3",
-      "route_short_name": "75X",
-      "route_long_name": "Anderson Express",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 75X - Anderson Express (Outbound)"
-    },
-    {
-      "route_id": "sorta_75",
-      "direction_id": 1,
-      "file": "route-sorta_75-dir1.json",
-      "route_type": "3",
-      "route_short_name": "75X",
-      "route_long_name": "Anderson Express",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 75X - Anderson Express (Inbound)"
     },
     {
       "route_id": "sorta_77",
@@ -1255,94 +870,6 @@ window.routesIndex = {
       "agency_id": "nan",
       "direction_name": "Inbound",
       "route_title": "[SORTA] 78 - Vine Street (Inbound)"
-    },
-    {
-      "route_id": "sorta_8",
-      "direction_id": 0,
-      "file": "route-sorta_8-dir0.json",
-      "route_type": "3",
-      "route_short_name": "8",
-      "route_long_name": "Blue Ash / Silverton Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 8 - Blue Ash / Silverton Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_8",
-      "direction_id": 1,
-      "file": "route-sorta_8-dir1.json",
-      "route_type": "3",
-      "route_short_name": "8",
-      "route_long_name": "Blue Ash / Silverton Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 8 - Blue Ash / Silverton Commuter (Inbound)"
-    },
-    {
-      "route_id": "sorta_81",
-      "direction_id": 0,
-      "file": "route-sorta_81-dir0.json",
-      "route_type": "3",
-      "route_short_name": "81",
-      "route_long_name": "Mt. Washington Commuter",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 81 - Mt. Washington Commuter (Outbound)"
-    },
-    {
-      "route_id": "sorta_81",
-      "direction_id": 1,
-      "file": "route-sorta_81-dir1.json",
-      "route_type": "3",
-      "route_short_name": "81",
-      "route_long_name": "Mt. Washington Commuter",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 81 - Mt. Washington Commuter (Inbound)"
-    },
-    {
-      "route_id": "sorta_82",
-      "direction_id": 0,
-      "file": "route-sorta_82-dir0.json",
-      "route_type": "3",
-      "route_short_name": "82X",
-      "route_long_name": "Eastgate Express",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] 82X - Eastgate Express (Outbound)"
-    },
-    {
-      "route_id": "sorta_82",
-      "direction_id": 1,
-      "file": "route-sorta_82-dir1.json",
-      "route_type": "3",
-      "route_short_name": "82X",
-      "route_long_name": "Eastgate Express",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] 82X - Eastgate Express (Inbound)"
-    },
-    {
-      "route_id": "sorta_90",
-      "direction_id": 0,
-      "file": "route-sorta_90-dir0.json",
-      "route_type": "3",
-      "route_short_name": "M+",
-      "route_long_name": "MetroPlus",
-      "agency_id": "nan",
-      "direction_name": "Outbound",
-      "route_title": "[SORTA] M+ - MetroPlus (Outbound)"
-    },
-    {
-      "route_id": "sorta_90",
-      "direction_id": 1,
-      "file": "route-sorta_90-dir1.json",
-      "route_type": "3",
-      "route_short_name": "M+",
-      "route_long_name": "MetroPlus",
-      "agency_id": "nan",
-      "direction_name": "Inbound",
-      "route_title": "[SORTA] M+ - MetroPlus (Inbound)"
     },
     {
       "route_id": "tank_1",
@@ -1433,17 +960,6 @@ window.routesIndex = {
       "route_title": "[TANK] 2X - Airporter (Inbound)"
     },
     {
-      "route_id": "tank_24",
-      "direction_id": 1,
-      "file": "route-tank_24-dir1.json",
-      "route_type": "3",
-      "route_short_name": "24",
-      "route_long_name": "NKU Shuttle",
-      "agency_id": "40019",
-      "direction_name": "Inbound",
-      "route_title": "[TANK] 24 - NKU Shuttle (Inbound)"
-    },
-    {
       "route_id": "tank_25",
       "direction_id": 0,
       "file": "route-tank_25-dir0.json",
@@ -1464,28 +980,6 @@ window.routesIndex = {
       "agency_id": "40019",
       "direction_name": "Inbound",
       "route_title": "[TANK] 25 - NKU/Alexandria (Inbound)"
-    },
-    {
-      "route_id": "tank_2501",
-      "direction_id": 0,
-      "file": "route-tank_2501-dir0.json",
-      "route_type": "3",
-      "route_short_name": "25X",
-      "route_long_name": "Alexandria Express",
-      "agency_id": "40019",
-      "direction_name": "Outbound",
-      "route_title": "[TANK] 25X - Alexandria Express (Outbound)"
-    },
-    {
-      "route_id": "tank_2501",
-      "direction_id": 1,
-      "file": "route-tank_2501-dir1.json",
-      "route_type": "3",
-      "route_short_name": "25X",
-      "route_long_name": "Alexandria Express",
-      "agency_id": "40019",
-      "direction_name": "Inbound",
-      "route_title": "[TANK] 25X - Alexandria Express (Inbound)"
     },
     {
       "route_id": "tank_3",
@@ -1530,17 +1024,6 @@ window.routesIndex = {
       "agency_id": "40019",
       "direction_name": "Inbound",
       "route_title": "[TANK] 30X - Fort Wright/Lake Park Dr Express (Inbound)"
-    },
-    {
-      "route_id": "tank_352",
-      "direction_id": 0,
-      "file": "route-tank_352-dir0.json",
-      "route_type": "3",
-      "route_short_name": "352",
-      "route_long_name": "Holmes HS #3 PM",
-      "agency_id": "40019",
-      "direction_name": "Outbound",
-      "route_title": "[TANK] 352 - Holmes HS #3 PM (Outbound)"
     },
     {
       "route_id": "tank_3701",
@@ -1631,39 +1114,6 @@ window.routesIndex = {
       "route_title": "[TANK] 42X - Florence Hub/Industrial Rd Express (Inbound)"
     },
     {
-      "route_id": "tank_450",
-      "direction_id": 1,
-      "file": "route-tank_450-dir1.json",
-      "route_type": "3",
-      "route_short_name": "450",
-      "route_long_name": "Holmes HS #2 PM",
-      "agency_id": "40019",
-      "direction_name": "Inbound",
-      "route_title": "[TANK] 450 - Holmes HS #2 PM (Inbound)"
-    },
-    {
-      "route_id": "tank_451",
-      "direction_id": 1,
-      "file": "route-tank_451-dir1.json",
-      "route_type": "3",
-      "route_short_name": "451",
-      "route_long_name": "Holmes HS #2 AM",
-      "agency_id": "40019",
-      "direction_name": "Inbound",
-      "route_title": "[TANK] 451 - Holmes HS #2 AM (Inbound)"
-    },
-    {
-      "route_id": "tank_485",
-      "direction_id": 0,
-      "file": "route-tank_485-dir0.json",
-      "route_type": "3",
-      "route_short_name": "485",
-      "route_long_name": "Holmes HS #5 PM",
-      "agency_id": "40019",
-      "direction_name": "Outbound",
-      "route_title": "[TANK] 485 - Holmes HS #5 PM (Outbound)"
-    },
-    {
       "route_id": "tank_5",
       "direction_id": 0,
       "file": "route-tank_5-dir0.json",
@@ -1684,28 +1134,6 @@ window.routesIndex = {
       "agency_id": "40019",
       "direction_name": "Inbound",
       "route_title": "[TANK] 5 - Holman Ave/Fort Wright (Inbound)"
-    },
-    {
-      "route_id": "tank_552",
-      "direction_id": 1,
-      "file": "route-tank_552-dir1.json",
-      "route_type": "3",
-      "route_short_name": "552",
-      "route_long_name": "Holmes HS #1 AM",
-      "agency_id": "40019",
-      "direction_name": "Inbound",
-      "route_title": "[TANK] 552 - Holmes HS #1 AM (Inbound)"
-    },
-    {
-      "route_id": "tank_553",
-      "direction_id": 0,
-      "file": "route-tank_553-dir0.json",
-      "route_type": "3",
-      "route_short_name": "553",
-      "route_long_name": "Holmes HS #6 PM",
-      "agency_id": "40019",
-      "direction_name": "Outbound",
-      "route_title": "[TANK] 553 - Holmes HS #6 PM (Outbound)"
     },
     {
       "route_id": "tank_64",
@@ -1730,17 +1158,6 @@ window.routesIndex = {
       "route_title": "[TANK] 64 - 64 (Inbound)"
     },
     {
-      "route_id": "tank_652",
-      "direction_id": 1,
-      "file": "route-tank_652-dir1.json",
-      "route_type": "3",
-      "route_short_name": "652",
-      "route_long_name": "Holmes HS #8 AM",
-      "agency_id": "40019",
-      "direction_name": "Inbound",
-      "route_title": "[TANK] 652 - Holmes HS #8 AM (Inbound)"
-    },
-    {
       "route_id": "tank_7",
       "direction_id": 0,
       "file": "route-tank_7-dir0.json",
@@ -1763,28 +1180,6 @@ window.routesIndex = {
       "route_title": "[TANK] 7 - Madison Ave/Latonia (Inbound)"
     },
     {
-      "route_id": "tank_751",
-      "direction_id": 0,
-      "file": "route-tank_751-dir0.json",
-      "route_type": "3",
-      "route_short_name": "751",
-      "route_long_name": "Holmes HS #7 PM",
-      "agency_id": "40019",
-      "direction_name": "Outbound",
-      "route_title": "[TANK] 751 - Holmes HS #7 PM (Outbound)"
-    },
-    {
-      "route_id": "tank_752",
-      "direction_id": 0,
-      "file": "route-tank_752-dir0.json",
-      "route_type": "3",
-      "route_short_name": "752",
-      "route_long_name": "Holmes HS #9 PM",
-      "agency_id": "40019",
-      "direction_name": "Outbound",
-      "route_title": "[TANK] 752 - Holmes HS #9 PM (Outbound)"
-    },
-    {
       "route_id": "tank_8",
       "direction_id": 0,
       "file": "route-tank_8-dir0.json",
@@ -1805,17 +1200,6 @@ window.routesIndex = {
       "agency_id": "40019",
       "direction_name": "Inbound",
       "route_title": "[TANK] 8 - Eastern Ave/Crestview Hills (Inbound)"
-    },
-    {
-      "route_id": "tank_851",
-      "direction_id": 0,
-      "file": "route-tank_851-dir0.json",
-      "route_type": "3",
-      "route_short_name": "851",
-      "route_long_name": "Holmes HS #4 PM",
-      "agency_id": "40019",
-      "direction_name": "Outbound",
-      "route_title": "[TANK] 851 - Holmes HS #4 PM (Outbound)"
     }
   ]
 };

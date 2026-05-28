@@ -303,12 +303,15 @@
       const tick = function () {
         n++;
         const m = map();
+        const needLazy = cfg('useLazyRouteIndex', true) !== false;
+        const lazyReady = !needLazy || (window.routesIndex && window.routesIndex.routes);
         if (
           m &&
           typeof window.showRouteOverlay === 'function' &&
           window.metrofeedTvApi &&
           window.ROUTES &&
-          window.ROUTES.cincinnati
+          window.ROUTES.cincinnati &&
+          lazyReady
         ) {
           if (m.isStyleLoaded && m.isStyleLoaded()) return resolve();
           if (m.loaded && m.loaded()) return resolve();
@@ -320,21 +323,90 @@
     });
   }
 
-  /** Master list: every route in index order (all agencies). */
+  function routeDeployablePrefixes() {
+    const p = cfg('routeDeployablePrefixes', ['sorta_', 'tank_', 'bcrta_']);
+    return Array.isArray(p) ? p : ['sorta_', 'tank_', 'bcrta_'];
+  }
+
+  function routeIdAllowed(id) {
+    const rid = String(id || '');
+    const one = cfg('routeAgencyPrefix', null);
+    if (one && rid.indexOf(one) !== 0) return false;
+    const prefixes = routeDeployablePrefixes();
+    if (!prefixes.length) return true;
+    for (let i = 0; i < prefixes.length; i++) {
+      if (rid.indexOf(prefixes[i]) === 0) return true;
+    }
+    return false;
+  }
+
+  /** Queue from routes_index.lazy.js — only routes that have JSON files on disk. */
+  function buildRouteQueueFromLazyIndex() {
+    const entries = window.routesIndex && window.routesIndex.routes;
+    if (!Array.isArray(entries) || !entries.length) return null;
+
+    const byId = Object.create(null);
+    const order = [];
+    entries.forEach(function (e) {
+      if (!e || !e.route_id || !e.file) return;
+      const rid = String(e.route_id);
+      if (!routeIdAllowed(rid)) return;
+      if (!byId[rid]) {
+        byId[rid] = { dirs: Object.create(null) };
+        order.push(rid);
+      }
+      byId[rid].dirs[String(e.direction_id)] = true;
+    });
+
+    const busMeta = Object.create(null);
+    const busRoutes =
+      (window.ROUTES && window.ROUTES.cincinnati && window.ROUTES.cincinnati.busRoutes) || [];
+    busRoutes.forEach(function (r) {
+      if (r && r.id) busMeta[String(r.id)] = r;
+    });
+
+    const out = [];
+    order.forEach(function (rid) {
+      const dirs = byId[rid].dirs;
+      const hasDir0 = !!dirs['0'];
+      const hasDir1 = !!dirs['1'];
+      if (!hasDir0 && !hasDir1) return;
+      const meta = busMeta[rid] || {};
+      out.push({
+        routeId: rid,
+        label: meta.label || rid,
+        dir0: meta.dir0 || 'Outbound',
+        dir1: meta.dir1 || 'Inbound',
+        hasDir0: hasDir0,
+        hasDir1: hasDir1
+      });
+    });
+    return out.length ? out : null;
+  }
+
+  /** Master list: deployable agencies only (SORTA, TANK, BCRTA), index order. */
   function buildRouteQueue() {
+    const fromLazy = cfg('useLazyRouteIndex', true) !== false ? buildRouteQueueFromLazyIndex() : null;
+    if (fromLazy && fromLazy.length) {
+      log('Route queue: ' + fromLazy.length + ' routes (from routes_index.lazy.js)');
+      return fromLazy;
+    }
+
     const routes = (window.ROUTES && window.ROUTES.cincinnati && window.ROUTES.cincinnati.busRoutes) || [];
-    const prefix = cfg('routeAgencyPrefix', null);
     const out = [];
     routes.forEach(function (r) {
       if (!r || !r.id) return;
-      if (prefix && String(r.id).indexOf(prefix) !== 0) return;
+      if (!routeIdAllowed(r.id)) return;
       out.push({
         routeId: String(r.id),
         label: r.label || r.id,
         dir0: r.dir0 || 'Outbound',
-        dir1: r.dir1 || 'Inbound'
+        dir1: r.dir1 || 'Inbound',
+        hasDir0: true,
+        hasDir1: true
       });
     });
+    log('Route queue: ' + out.length + ' routes (from routes_index.js, deployable filter)');
     return out;
   }
 

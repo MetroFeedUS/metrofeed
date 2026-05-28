@@ -40,8 +40,19 @@
     routeBucketEnabled: true,
     routeBucketPrefetchOppositeMs: 2500,
     /** null = all agencies in routes_index order (SORTA, TANK, BCRTA, …) */
-    routeAgencyPrefix: null
+    routeAgencyPrefix: null,
+    /** Only agencies with route_data JSON on the server (skips index-only rows like acrta_). */
+    routeDeployablePrefixes: ['sorta_', 'tank_', 'bcrta_'],
+    /** Build TV queue from routes_index.lazy.js when available (matches real files). */
+    useLazyRouteIndex: true
   };
+
+  if (window.MF_TV_CONFIG.useLazyRouteIndex && !window.routesIndex) {
+    var lazyIdx = document.createElement('script');
+    lazyIdx.src = 'routes_index.lazy.js';
+    lazyIdx.async = false;
+    document.head.appendChild(lazyIdx);
+  }
 
   document.documentElement.classList.add('tv-mode');
 
