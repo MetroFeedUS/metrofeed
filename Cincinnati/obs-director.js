@@ -32,7 +32,8 @@
     currentRouteKey: null,
     currentLeg: null,
     tempPinMarker: null,
-    routeShapeCache: Object.create(null)
+    routeShapeCache: Object.create(null),
+    routeBucketDone: Object.create(null)
   };
 
   function log(msg) {
@@ -236,6 +237,15 @@
   function milesToMeters(mi) {
     const n = Number(mi);
     return Number.isFinite(n) ? n * 1609.344 : 0;
+  }
+
+  /** 0 in config = show all found (capped by routeBucketItemCap). */
+  function bucketKindCap(cfgKey, fallback) {
+    const n = Number(cfg(cfgKey, fallback));
+    if (!Number.isFinite(n) || n <= 0) {
+      return Math.max(1, Number(cfg('routeBucketItemCap', 20)) || 20);
+    }
+    return Math.floor(n);
   }
 
   function sleep(ms) {
@@ -505,6 +515,24 @@
     return out.length > 1 ? out : (Array.isArray(s0) ? s0 : (Array.isArray(s1) ? s1 : []));
   }
 
+  function hasBothDirectionShapes(routeId) {
+    const entry = TV.routeShapeCache[String(routeId || '')];
+    if (!entry) return false;
+    const d0 = Array.isArray(entry['0']) && entry['0'].length > 1;
+    const d1 = Array.isArray(entry['1']) && entry['1'].length > 1;
+    return d0 && d1;
+  }
+
+  function shouldRunRoutePackage(leg) {
+    const nextLeg = TV.legs.length ? TV.legs[TV.legIndex % TV.legs.length] : null;
+    const routeWillChange = nextLeg && String(nextLeg.routeId) !== String(leg.routeId);
+    const dir = Number(leg.directionId);
+    if (dir === 1) return true;
+    if (routeWillChange) return true;
+    if (dir === 0 && hasBothDirectionShapes(leg.routeId)) return true;
+    return false;
+  }
+
   function normalizeCamerasPayload(raw) {
     const list = Array.isArray(raw) ? raw : raw && (raw.cameras || raw.items || raw.data) || [];
     if (!Array.isArray(list)) return [];
@@ -526,6 +554,61 @@
       .filter(Boolean);
   }
 
+  async function displayBucketItem(it, dwellMs, badge) {
+    if (TV.paused) return;
+    const m = map();
+    setPhaseBadge(badge || 'Transit + Traffic');
+    setLowerThird('', '');
+    hideTrafficDetail();
+    setFocusRing(it.lng, it.lat);
+    try {
+      m.flyTo({
+        center: [it.lng, it.lat],
+        zoom: it.kind === 'camera' ? 15.0 : 14.1,
+        duration: cfg('mapFlyDurationMs', 900),
+        essential: true
+      });
+    } catch (_) {}
+    showTrafficDetail(it.title, it.body, it.meta);
+    await sleep(dwellMs);
+    hideTrafficDetail();
+  }
+
+  async function prefetchLegShapeQuiet(routeId, directionId) {
+    const rid = String(routeId);
+    const dir = String(directionId);
+    const cached = TV.routeShapeCache[rid] && TV.routeShapeCache[rid][dir];
+    if (Array.isArray(cached) && cached.length > 1) return true;
+    const key = routeId + '-' + directionId;
+    const keepKey = TV.currentRouteKey;
+    try {
+      await window.showRouteOverlay(routeId, directionId, undefined, undefined, {
+        ensureOn: true,
+        tvMode: true
+      });
+      if (window.activeRouteOverlays && window.activeRouteOverlays[key]) {
+        cacheLegShape({ routeId: routeId, directionId: directionId });
+        if (keepKey && keepKey !== key) {
+          try {
+            window.hideRouteOverlay(routeId, directionId);
+          } catch (_) {}
+        }
+        log('Prefetched shape ' + key);
+        return true;
+      }
+    } catch (e) {
+      console.warn('[mfTvDirector] prefetch shape failed', key, e);
+    }
+    return false;
+  }
+
+  async function maybeRunRouteBucket(routeId) {
+    const rid = String(routeId || '');
+    if (!rid || TV.routeBucketDone[rid]) return;
+    await runRouteBucketForRoute(rid);
+    TV.routeBucketDone[rid] = true;
+  }
+
   async function runRouteBucketForRoute(routeId) {
     if (!routeId || TV.paused) return;
     const m = map();
@@ -533,13 +616,15 @@
     if (!m || !a) return;
 
     if (cfg('routeBucketEnabled', true) === false) return;
-    log('Bucket start: ' + String(routeId));
+    log('Route package — traffic & cameras: ' + String(routeId));
 
     const radiusM = milesToMeters(cfg('routeBucketRadiusMiles', 0.5));
-    const maxIncidents = Math.max(0, Number(cfg('routeBucketMaxIncidents', 1)) || 0);
+    const maxIncidents = bucketKindCap('routeBucketMaxIncidents', 0);
+    const maxSlowdowns = bucketKindCap('routeBucketMaxSlowdowns', 0);
     const maxCameras = Math.max(0, Number(cfg('routeBucketMaxCameras', 4)) || 0);
-    const incDwell = Math.max(2000, Number(cfg('routeBucketIncidentDwellMs', 12000)) || 12000);
-    const camDwell = Math.max(1500, Number(cfg('routeBucketCameraDwellMs', 8000)) || 8000);
+    const incDwell = Math.max(2000, Number(cfg('routeBucketIncidentDwellMs', 10000)) || 10000);
+    const slowDwell = Math.max(2000, Number(cfg('routeBucketSlowdownDwellMs', 9000)) || 9000);
+    const camDwell = Math.max(1500, Number(cfg('routeBucketCameraDwellMs', 7000)) || 7000);
 
     const shapeLatLon = getCachedRouteShapeLatLon(routeId);
     const canDist =
@@ -564,7 +649,8 @@
       await a.ensureTraffic();
     } catch (_) {}
 
-    const nearItems = [];
+    const nearIncidents = [];
+    const nearSlowdowns = [];
     try {
       const incs = a.incidentsInCity ? a.incidentsInCity() : [];
       for (let i = 0; i < incs.length; i++) {
@@ -581,8 +667,8 @@
         const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
         if (!info || !Number.isFinite(info.distanceM)) continue;
         if (info.distanceM <= radiusM) {
-          nearItems.push({
-            kind: 'incident', // traffic
+          nearIncidents.push({
+            kind: 'incident',
             distanceM: info.distanceM,
             lng: lon,
             lat: lat,
@@ -604,8 +690,8 @@
         const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
         if (!info || !Number.isFinite(info.distanceM)) continue;
         if (info.distanceM <= radiusM) {
-          nearItems.push({
-            kind: 'slowdown', // traffic
+          nearSlowdowns.push({
+            kind: 'slowdown',
             distanceM: info.distanceM,
             lng: lon,
             lat: lat,
@@ -621,29 +707,29 @@
       console.warn('[mfTvDirector] bucket incidents failed', e);
     }
 
-    nearItems.sort(function (x, y) {
+    nearIncidents.sort(function (x, y) {
+      return x.distanceM - y.distanceM;
+    });
+    nearSlowdowns.sort(function (x, y) {
       return x.distanceM - y.distanceM;
     });
 
-    for (let i = 0; i < Math.min(maxIncidents, nearItems.length); i++) {
-      if (TV.paused) return;
-      const it = nearItems[i];
-      setPhaseBadge('Transit + Traffic');
-      setLowerThird('', '');
-      hideTrafficDetail();
-      setFocusRing(it.lng, it.lat);
-      try {
-        m.flyTo({
-          center: [it.lng, it.lat],
-          zoom: 14.1,
-          duration: cfg('mapFlyDurationMs', 900),
-          essential: true
-        });
-      } catch (_) {}
-      // TV-only: keep a single large panel; no MapLibre popup.
-      showTrafficDetail(it.title, it.body, it.meta);
-      await sleep(incDwell);
-      hideTrafficDetail();
+    log(
+      'Near route: ' +
+        nearIncidents.length +
+        ' incidents, ' +
+        nearSlowdowns.length +
+        ' slowdowns (≤' +
+        cfg('routeBucketRadiusMiles', 0.5) +
+        'mi)'
+    );
+
+    for (let i = 0; i < Math.min(maxIncidents, nearIncidents.length); i++) {
+      await displayBucketItem(nearIncidents[i], incDwell, 'Incidents near route');
+    }
+
+    for (let i = 0; i < Math.min(maxSlowdowns, nearSlowdowns.length); i++) {
+      await displayBucketItem(nearSlowdowns[i], slowDwell, 'Slowdowns near route');
     }
 
     // --- Cameras near route (up to 4) ---
@@ -715,24 +801,10 @@
     log('Cameras near route: ' + nearCams.length + ' (radius ' + cfg('routeBucketRadiusMiles', 0.5) + 'mi)');
 
     for (let i = 0; i < Math.min(maxCameras, nearCams.length); i++) {
-      if (TV.paused) return;
-      const it = nearCams[i];
-      setPhaseBadge('Transit + Cameras');
-      setLowerThird('', '');
-      hideTrafficDetail();
-      setFocusRing(it.lng, it.lat);
-      try {
-        m.flyTo({
-          center: [it.lng, it.lat],
-          zoom: 15.0,
-          duration: cfg('mapFlyDurationMs', 900),
-          essential: true
-        });
-      } catch (_) {}
-      showTrafficDetail(it.title, it.body, it.meta);
-      await sleep(camDwell);
-      hideTrafficDetail();
+      await displayBucketItem(nearCams[i], camDwell, 'Cameras near route');
     }
+
+    log('Route package complete: ' + String(routeId));
   }
 
   async function enterRouteMode() {
@@ -754,6 +826,10 @@
     const leg = TV.legs[TV.legIndex % TV.legs.length];
     TV.legIndex = (TV.legIndex + 1) % TV.legs.length;
     TV.currentLeg = leg;
+
+    if (Number(leg.directionId) === 0) {
+      delete TV.routeBucketDone[String(leg.routeId)];
+    }
 
     hideAllRouteOverlays();
     const overlayKey = leg.routeId + '-' + leg.directionId;
@@ -781,8 +857,9 @@
       // still run the per-route bucket using the cached dir0 polyline.
       (async function () {
         try {
-          if (Number(leg.directionId) === 1) {
-            await runRouteBucketForRoute(leg.routeId);
+          cacheLegShape(leg);
+          if (shouldRunRoutePackage(leg)) {
+            await maybeRunRouteBucket(leg.routeId);
           }
         } catch (e) {
           console.warn('[mfTvDirector] bucket failed (missing dir1)', e);
@@ -812,45 +889,45 @@
       }
     }, panDelay);
 
+    if (Number(leg.directionId) === 0) {
+      const pfMs = Number(cfg('routeBucketPrefetchOppositeMs', 8000)) || 0;
+      if (pfMs > 0) {
+        setTimeout(function () {
+          if (TV.mode === MODES.ROUTE && TV.currentRouteKey === overlayKey) {
+            prefetchLegShapeQuiet(leg.routeId, 1);
+          }
+        }, pfMs);
+      }
+    }
+
     schedulePhase(dwell, function routeLegEnded() {
-      // Cache the route polyline before we remove the overlay (hideRouteOverlay deletes descriptors).
       cacheLegShape(leg);
       stopSegmentPan();
-      try {
-        window.hideRouteOverlay(leg.routeId, leg.directionId);
-      } catch (_) {}
       setLowerThird('', '');
       adminUpdateStatus();
       (async function () {
         try {
-          // Bucket runs once per route after both directions (or after the last available leg).
-          // - If dir 1 just completed → always bucket.
-          // - If only dir 0 exists (dir1 404), we'll bucket when the route changes (handled below).
-          const nextLeg = TV.legs.length ? TV.legs[TV.legIndex % TV.legs.length] : null;
-          const routeWillChange = nextLeg && String(nextLeg.routeId) !== String(leg.routeId);
-          const shouldBucket = Number(leg.directionId) === 1 || routeWillChange;
-          const cached = getCachedRouteShapeLatLon(leg.routeId);
+          const packageNow = shouldRunRoutePackage(leg);
           log(
             'Leg ended ' +
               leg.routeId +
               '-' +
               leg.directionId +
-              ' shouldBucket=' +
-              shouldBucket +
-              ' next=' +
-              (nextLeg ? nextLeg.routeId + '-' + nextLeg.directionId : 'none') +
-              ' shapePts=' +
-              cached.length
+              ' packageTraffic=' +
+              packageNow +
+              ' bothDirs=' +
+              hasBothDirectionShapes(leg.routeId)
           );
-          if (shouldBucket) {
-            await runRouteBucketForRoute(leg.routeId);
+          if (packageNow) {
+            await maybeRunRouteBucket(leg.routeId);
           }
         } catch (e) {
           console.warn('[mfTvDirector] bucket failed', e);
         }
+        try {
+          window.hideRouteOverlay(leg.routeId, leg.directionId);
+        } catch (_) {}
         if (TV.paused) return;
-        // Director v1 now packages each route with its nearby traffic+cameras bucket.
-        // Keep the global traffic phase available via admin controls, but do not auto-enter it.
         enterRouteMode();
       })();
     });

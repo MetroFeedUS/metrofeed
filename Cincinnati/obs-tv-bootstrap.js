@@ -28,13 +28,17 @@
     weatherDwellMs: 55000,
     mapFlyDurationMs: 900,
     vehiclePollMs: 6000,
-    // Per-route bucket: after both directions for a route, show nearby traffic + cameras
+    // Per-route package: all nearby incidents, then slowdowns, then cameras (route stays on map)
     routeBucketRadiusMiles: 0.5,
-    routeBucketMaxIncidents: 1,
+    routeBucketMaxIncidents: 0,
+    routeBucketMaxSlowdowns: 0,
     routeBucketMaxCameras: 4,
-    routeBucketIncidentDwellMs: 12000,
-    routeBucketCameraDwellMs: 8000,
+    routeBucketItemCap: 20,
+    routeBucketIncidentDwellMs: 10000,
+    routeBucketSlowdownDwellMs: 9000,
+    routeBucketCameraDwellMs: 7000,
     routeBucketEnabled: true,
+    routeBucketPrefetchOppositeMs: 8000,
     /** SORTA/Metro only — index includes agencies without local route JSON (e.g. acrta_). */
     routeAgencyPrefix: 'sorta_'
   };
