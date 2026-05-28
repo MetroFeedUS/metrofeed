@@ -185,7 +185,6 @@ html.tv-mode .maplibregl-marker.mf-bus-marker {
   padding: 0;
   border: none;
   border-left: 3px solid rgba(56, 189, 248, 0.7);
-  border-radius: 10px;
   gap: 0;
   overflow: hidden;
   display: flex;
@@ -210,13 +209,23 @@ html.tv-mode .maplibregl-marker.mf-bus-marker {
   order: 2;
   flex: 1 1 auto;
   width: 100%;
+  height: 100%;
   min-height: 0;
   max-height: none;
   margin: 0;
   border: none;
   border-radius: 0;
+  /* Fill the panel — crop edges instead of letterboxing */
+  object-fit: cover;
+  object-position: center center;
+  background: #0a0c10;
+}
+
+/* Ohio 2×2 multi-view tiles (very wide) — show full grid, minimal bars */
+.mf-tv-camera-card .mf-tv-traffic-detail-image.mf-tv-cam-fit-grid {
   object-fit: contain;
-  background: #000;
+  object-position: center center;
+  background: #0a0c10;
 }
 
 .mf-tv-camera-card .mf-tv-traffic-detail-meta,

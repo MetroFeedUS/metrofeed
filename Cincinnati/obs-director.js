@@ -230,12 +230,25 @@
         const sep = url.indexOf('?') >= 0 ? '&' : '?';
         img.onerror = function () {
           img.classList.add('mf-tv-hidden');
+          img.classList.remove('mf-tv-cam-fit-grid');
           img.removeAttribute('src');
           if (bo && !bo.textContent) {
             bo.textContent = 'Camera image could not be loaded.';
           }
         };
         img.onload = function () {
+          if (kind === 'camera') {
+            img.classList.remove('mf-tv-cam-fit-grid');
+            const w = img.naturalWidth;
+            const h = img.naturalHeight;
+            if (w > 0 && h > 0) {
+              const ar = w / h;
+              // Wide composite tiles (e.g. four highway views in one frame)
+              if (ar >= 2.15 && w >= 640) {
+                img.classList.add('mf-tv-cam-fit-grid');
+              }
+            }
+          }
           if (bo && bo.textContent === 'Camera image could not be loaded.') {
             bo.textContent = body || '';
           }
