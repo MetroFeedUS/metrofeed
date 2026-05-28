@@ -272,8 +272,12 @@
     const flyMs = Number(cfg('mapFlyDurationMs', 900)) || 900;
     try {
       if (it.kind === 'camera') {
-        const panelW = Number(cfg('tvCameraPanelWidthPx', 380)) || 380;
-        const padExtra = Number(cfg('tvCameraMapPadExtraPx', 56)) || 56;
+        const ratio = Number(cfg('tvCameraPanelWidthRatio', 0.5));
+        const panelW =
+          ratio > 0 && ratio < 1
+            ? Math.round((window.innerWidth || 1920) * ratio)
+            : Number(cfg('tvCameraPanelWidthPx', 960)) || 960;
+        const padExtra = Number(cfg('tvCameraMapPadExtraPx', 32)) || 32;
         const padRight = panelW + padExtra;
         m.flyTo({
           center: [it.lng, it.lat],
