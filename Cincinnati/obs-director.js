@@ -7,7 +7,6 @@
 
   if (!window.MF_TV_MODE) return;
 
-  const CFG = window.MF_TV_CONFIG;
   const MODES = {
     ROUTE: 'ROUTE_MODE',
     TRAFFIC: 'INCIDENT_MODE',
@@ -26,8 +25,12 @@
     segmentTimer: null,
     segmentIndex: 0,
     phaseTimer: null,
+    phaseEndsAt: 0,
+    phaseRemainingMs: null,
+    paused: false,
     running: false,
-    currentRouteKey: null
+    currentRouteKey: null,
+    currentLeg: null
   };
 
   function log(msg) {
@@ -35,7 +38,8 @@
   }
 
   function cfg(key, fallback) {
-    const v = CFG[key];
+    const c = window.MF_TV_CONFIG || {};
+    const v = c[key];
     return v != null ? v : fallback;
   }
 
@@ -85,17 +89,28 @@
     }
   }
 
-  function clearPhaseTimer() {
+  function clearPhaseTimerOnly() {
     if (TV.phaseTimer) {
       clearTimeout(TV.phaseTimer);
       TV.phaseTimer = null;
     }
+    TV.phaseEndsAt = 0;
+  }
+
+  function clearPhaseTimer() {
+    clearPhaseTimerOnly();
     stopSegmentPan();
   }
 
   function schedulePhase(ms, fn) {
-    clearPhaseTimer();
-    TV.phaseTimer = setTimeout(fn, ms);
+    clearPhaseTimerOnly();
+    TV.phaseEndsAt = Date.now() + ms;
+    TV.phaseTimer = setTimeout(function () {
+      TV.phaseTimer = null;
+      TV.phaseEndsAt = 0;
+      if (TV.paused) return;
+      fn();
+    }, ms);
   }
 
   function api() {
@@ -172,25 +187,42 @@
     });
   }
 
+  function shapePtToLngLat(pt) {
+    if (!pt || pt.length < 2) return null;
+    const a = Number(pt[0]);
+    const b = Number(pt[1]);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    // Cincinnati JSON uses [lat, lon]; MapLibre wants [lon, lat]
+    if (Math.abs(a) <= 90 && Math.abs(b) > 90) return [b, a];
+    if (Math.abs(b) <= 90 && Math.abs(a) > 90) return [a, b];
+    return [b, a];
+  }
+
   function getRouteShapeCoords(routeId, directionId) {
     const key = routeId + '-' + directionId;
-    const desc = window.activeRouteOverlayDescriptors && window.activeRouteOverlayDescriptors[key];
+    const desc =
+      (window.activeRouteOverlayDescriptors && window.activeRouteOverlayDescriptors[key]) ||
+      null;
     const rd = desc && desc.options && desc.options.routeData;
     if (!rd) return [];
+
+    const out = [];
     if (Array.isArray(rd.shape) && rd.shape.length > 1) {
-      return rd.shape.map(function (pt) {
-        return [Number(pt[1]), Number(pt[0])];
+      rd.shape.forEach(function (pt) {
+        const ll = shapePtToLngLat(pt);
+        if (ll) out.push(ll);
       });
+      if (out.length > 1) return out;
     }
     if (Array.isArray(rd.shapes) && rd.shapes.length) {
-      const out = [];
       rd.shapes.forEach(function (s) {
         if (!Array.isArray(s)) return;
         s.forEach(function (pt) {
-          out.push([Number(pt[1]), Number(pt[0])]);
+          const ll = shapePtToLngLat(pt);
+          if (ll) out.push(ll);
         });
       });
-      return out;
+      if (out.length > 1) return out;
     }
     return [];
   }
@@ -219,46 +251,89 @@
     if (!cfg('segmentPanEnabled', true)) return;
     const m = map();
     if (!m) return;
-    const coords = getRouteShapeCoords(routeId, directionId);
-    if (coords.length < 2) return;
-    const dwell = cfg('routeLegDwellMs', 60000);
-    const interval = cfg('segmentPanIntervalMs', 14000);
-    const maxChunks = cfg('segmentPanMaxChunks', 4);
-    const segCount = Math.max(2, Math.min(maxChunks, Math.floor(dwell / interval)));
-    const chunks = chunkShape(coords, segCount);
-    TV.segmentIndex = 0;
 
-    const flyChunk = function () {
-      const chunk = chunks[TV.segmentIndex % chunks.length];
-      TV.segmentIndex++;
-      if (!chunk || chunk.length < 2) return;
-      let minLng = Infinity,
-        minLat = Infinity,
-        maxLng = -Infinity,
-        maxLat = -Infinity;
-      chunk.forEach(function (c) {
-        minLng = Math.min(minLng, c[0]);
-        maxLng = Math.max(maxLng, c[0]);
-        minLat = Math.min(minLat, c[1]);
-        maxLat = Math.max(maxLat, c[1]);
-      });
-      try {
-        m.fitBounds(
-          [
-            [minLng, minLat],
-            [maxLng, maxLat]
-          ],
-          {
-            padding: { top: 100, bottom: 160, left: 80, right: 80 },
-            maxZoom: 14,
-            duration: cfg('mapFlyDurationMs', 2800)
-          }
-        );
-      } catch (_) {}
-    };
+    const interval = cfg('segmentPanIntervalMs', 4000);
+    const numChunks = cfg('segmentPanChunks', 8);
+    const flyMs = cfg('mapFlyDurationMs', 900);
 
-    flyChunk();
-    TV.segmentTimer = setInterval(flyChunk, interval);
+    function runWithCoords(coords) {
+      if (!coords || coords.length < 2) {
+        log('Segment pan skipped (no shape): ' + routeId + '-' + directionId);
+        return;
+      }
+      const chunks = chunkShape(coords, numChunks);
+      TV.segmentIndex = 0;
+      log(
+        'Segment pan: ' +
+          chunks.length +
+          ' steps every ' +
+          interval +
+          'ms on ' +
+          routeId +
+          '-' +
+          directionId
+      );
+
+      const flyChunk = function () {
+        const chunk = chunks[TV.segmentIndex % chunks.length];
+        TV.segmentIndex++;
+        if (!chunk || chunk.length < 2) return;
+        let minLng = Infinity,
+          minLat = Infinity,
+          maxLng = -Infinity,
+          maxLat = -Infinity;
+        chunk.forEach(function (c) {
+          minLng = Math.min(minLng, c[0]);
+          maxLng = Math.max(maxLng, c[0]);
+          minLat = Math.min(minLat, c[1]);
+          maxLat = Math.max(maxLat, c[1]);
+        });
+        const centerLng = (minLng + maxLng) / 2;
+        const centerLat = (minLat + maxLat) / 2;
+        try {
+          m.flyTo({
+            center: [centerLng, centerLat],
+            zoom: 13.2,
+            duration: flyMs,
+            essential: true
+          });
+        } catch (_) {
+          try {
+            m.fitBounds(
+              [
+                [minLng, minLat],
+                [maxLng, maxLat]
+              ],
+              {
+                padding: { top: 90, bottom: 150, left: 70, right: 70 },
+                maxZoom: 14,
+                duration: flyMs
+              }
+            );
+          } catch (_2) {}
+        }
+      };
+
+      flyChunk();
+      TV.segmentTimer = setInterval(flyChunk, interval);
+    }
+
+    function tryStart(attempt) {
+      const coords = getRouteShapeCoords(routeId, directionId);
+      if (coords.length >= 2) {
+        runWithCoords(coords);
+        return;
+      }
+      if (attempt < 8) {
+        setTimeout(function () {
+          tryStart(attempt + 1);
+        }, 400);
+      } else {
+        log('Segment pan gave up waiting for shape: ' + routeId + '-' + directionId);
+      }
+    }
+
+    tryStart(0);
   }
 
   async function enterRouteMode() {
@@ -279,10 +354,12 @@
 
     const leg = TV.legs[TV.legIndex % TV.legs.length];
     TV.legIndex = (TV.legIndex + 1) % TV.legs.length;
+    TV.currentLeg = leg;
 
     hideAllRouteOverlays();
     const overlayKey = leg.routeId + '-' + leg.directionId;
     TV.currentRouteKey = overlayKey;
+    adminUpdateStatus();
 
     const disp = parseRouteDisplay(leg.label, leg.routeId);
     setLowerThird('Route ' + disp.number, disp.title + ' · ' + leg.dirLabel);
@@ -313,17 +390,31 @@
     }
 
     TV.legsThisCycle++;
-    startSegmentPan(leg.routeId, leg.directionId);
+
+    const panInterval = cfg('segmentPanIntervalMs', 4000);
+    const panChunks = cfg('segmentPanChunks', 8);
+    const panDelay = cfg('segmentPanStartDelayMs', 2500);
+    const dwellCfg = cfg('routeLegDwellMs', null);
+    const dwell =
+      dwellCfg != null && Number(dwellCfg) > 0
+        ? Number(dwellCfg)
+        : panDelay + panChunks * panInterval + 3000;
+
+    setTimeout(function () {
+      if (TV.mode === MODES.ROUTE && TV.currentRouteKey === overlayKey) {
+        startSegmentPan(leg.routeId, leg.directionId);
+      }
+    }, panDelay);
 
     const maxLegs = cfg('routeLegsBeforeTraffic', 10);
-    const dwell = cfg('routeLegDwellMs', 60000);
 
-    schedulePhase(dwell, function () {
+    schedulePhase(dwell, function routeLegEnded() {
       stopSegmentPan();
       try {
         window.hideRouteOverlay(leg.routeId, leg.directionId);
       } catch (_) {}
       setLowerThird('', '');
+      adminUpdateStatus();
       if (TV.legsThisCycle >= maxLegs) {
         TV.legsThisCycle = 0;
         enterTrafficMode();
@@ -331,6 +422,244 @@
         enterRouteMode();
       }
     });
+  }
+
+  function finishRouteLeg(leg) {
+    stopSegmentPan();
+    try {
+      if (leg) window.hideRouteOverlay(leg.routeId, leg.directionId);
+    } catch (_) {}
+    setLowerThird('', '');
+  }
+
+  function parseOverlayKey(key) {
+    const m = String(key || '').match(/^(.+)-(\d+)$/);
+    if (!m) return null;
+    return { routeId: m[1], directionId: Number(m[2]) };
+  }
+
+  function adminUpdateStatus() {
+    const st = el('mfTvAdminStatus');
+    if (!st) return;
+    const leg = TV.currentLeg;
+    const lines = [
+      'Mode: ' + (TV.mode || '—'),
+      'Paused: ' + (TV.paused ? 'YES' : 'no'),
+      'Routes in block: ' + TV.legsThisCycle + ' / ' + cfg('routeLegsBeforeTraffic', 10),
+      leg ? 'Leg: ' + leg.routeId + ' · dir ' + leg.directionId : 'Leg: —',
+      TV.mode === MODES.TRAFFIC
+        ? 'Traffic: ' + TV.trafficIndex + ' / ' + TV.trafficQueue.length
+        : ''
+    ].filter(Boolean);
+    st.textContent = lines.join('\n');
+  }
+
+  function adminInterrupt(fn) {
+    TV.paused = false;
+    TV.phaseRemainingMs = null;
+    clearPhaseTimer();
+    hideTrafficDetail();
+    const wp = el('mfTvWeatherPanel');
+    if (wp) wp.classList.add('mf-tv-hidden');
+    try {
+      fn();
+    } catch (e) {
+      console.warn('[mfTvDirector] admin', e);
+    }
+    adminUpdateStatus();
+  }
+
+  function adminSkipStep() {
+    adminInterrupt(function () {
+      if (TV.mode === MODES.ROUTE) {
+        finishRouteLeg(TV.currentLeg);
+        enterRouteMode();
+        return;
+      }
+      if (TV.mode === MODES.TRAFFIC) {
+        hideTrafficDetail();
+        if (TV.trafficIndex < TV.trafficQueue.length) {
+          showNextTrafficItem();
+        } else {
+          enterConstructionMode();
+        }
+        return;
+      }
+      if (TV.mode === MODES.CONSTRUCTION) {
+        enterWeatherMode();
+        return;
+      }
+      if (TV.mode === MODES.WEATHER) {
+        enterRouteMode();
+      }
+    });
+  }
+
+  function adminSkipPhase() {
+    adminInterrupt(function () {
+      hideAllRouteOverlays();
+      finishRouteLeg(TV.currentLeg);
+      if (TV.mode === MODES.ROUTE) {
+        TV.legsThisCycle = 0;
+        enterTrafficMode();
+      } else if (TV.mode === MODES.TRAFFIC) {
+        enterConstructionMode();
+      } else if (TV.mode === MODES.CONSTRUCTION) {
+        enterWeatherMode();
+      } else {
+        TV.legsThisCycle = 0;
+        enterRouteMode();
+      }
+    });
+  }
+
+  function adminNextRoute() {
+    adminInterrupt(function () {
+      TV.legsThisCycle = 0;
+      finishRouteLeg(TV.currentLeg);
+      enterRouteMode();
+    });
+  }
+
+  function adminPrevRoute() {
+    adminInterrupt(function () {
+      if (!TV.legs.length) return;
+      TV.legIndex = (TV.legIndex - 2 + TV.legs.length * 2) % TV.legs.length;
+      finishRouteLeg(TV.currentLeg);
+      enterRouteMode();
+    });
+  }
+
+  function adminPause() {
+    if (TV.paused) return;
+    TV.paused = true;
+    if (TV.phaseEndsAt > Date.now()) {
+      TV.phaseRemainingMs = TV.phaseEndsAt - Date.now();
+    }
+    clearPhaseTimer();
+    adminUpdateStatus();
+    log('Paused');
+  }
+
+  function adminResume() {
+    if (!TV.paused) return;
+    TV.paused = false;
+    const wait = TV.phaseRemainingMs != null ? TV.phaseRemainingMs : 8000;
+    TV.phaseRemainingMs = null;
+
+    if (TV.mode === MODES.ROUTE && TV.currentLeg) {
+      const leg = TV.currentLeg;
+      const panDelay = 200;
+      setTimeout(function () {
+        if (!TV.paused && TV.currentRouteKey === leg.routeId + '-' + leg.directionId) {
+          startSegmentPan(leg.routeId, leg.directionId);
+        }
+      }, panDelay);
+      const maxLegs = cfg('routeLegsBeforeTraffic', 10);
+      schedulePhase(wait, function () {
+        finishRouteLeg(leg);
+        if (TV.legsThisCycle >= maxLegs) {
+          TV.legsThisCycle = 0;
+          enterTrafficMode();
+        } else {
+          enterRouteMode();
+        }
+      });
+    } else if (TV.mode === MODES.TRAFFIC) {
+      showNextTrafficItem();
+    } else if (TV.mode === MODES.CONSTRUCTION) {
+      schedulePhase(wait, enterWeatherMode);
+    } else if (TV.mode === MODES.WEATHER) {
+      schedulePhase(wait, function () {
+        const panel = el('mfTvWeatherPanel');
+        if (panel) panel.classList.add('mf-tv-hidden');
+        enterRouteMode();
+      });
+    }
+    adminUpdateStatus();
+    log('Resumed');
+  }
+
+  function adminForceMode(mode) {
+    adminInterrupt(function () {
+      hideAllRouteOverlays();
+      finishRouteLeg(TV.currentLeg);
+      if (mode === 'traffic') {
+        TV.legsThisCycle = 0;
+        enterTrafficMode();
+      } else if (mode === 'construction') {
+        enterConstructionMode();
+      } else if (mode === 'weather') {
+        enterWeatherMode();
+      } else {
+        TV.legsThisCycle = 0;
+        enterRouteMode();
+      }
+    });
+  }
+
+  function adminPanelOpen(open) {
+    const panel = el('mfTvAdminPanel');
+    const toggle = el('mfTvAdminToggle');
+    if (!panel) return;
+    if (open) {
+      panel.classList.remove('mf-tv-hidden');
+      panel.setAttribute('aria-hidden', 'false');
+      if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    } else {
+      panel.classList.add('mf-tv-hidden');
+      panel.setAttribute('aria-hidden', 'true');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    }
+    adminUpdateStatus();
+  }
+
+  function adminPanelToggle() {
+    const panel = el('mfTvAdminPanel');
+    adminPanelOpen(panel && panel.classList.contains('mf-tv-hidden'));
+  }
+
+  function bindAdminPanel() {
+    const toggle = el('mfTvAdminToggle');
+    const closeBtn = el('mfTvAdminClose');
+    const panel = el('mfTvAdminPanel');
+    if (!toggle || !panel) return;
+
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      adminPanelToggle();
+    });
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        adminPanelOpen(false);
+      });
+    }
+
+    panel.querySelectorAll('[data-mf-tv-cmd]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const cmd = btn.getAttribute('data-mf-tv-cmd');
+        if (cmd === 'pause') adminPause();
+        else if (cmd === 'resume') adminResume();
+        else if (cmd === 'skipStep') adminSkipStep();
+        else if (cmd === 'skipPhase') adminSkipPhase();
+        else if (cmd === 'nextRoute') adminNextRoute();
+        else if (cmd === 'prevRoute') adminPrevRoute();
+        else if (cmd === 'traffic') adminForceMode('traffic');
+        else if (cmd === 'construction') adminForceMode('construction');
+        else if (cmd === 'weather') adminForceMode('weather');
+        else if (cmd === 'routes') adminForceMode('routes');
+      });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+        e.preventDefault();
+        adminPanelToggle();
+      }
+    });
+
+    setInterval(adminUpdateStatus, 2000);
+    adminUpdateStatus();
   }
 
   function buildTrafficQueue() {
@@ -378,6 +707,7 @@
 
   async function enterTrafficMode() {
     TV.mode = MODES.TRAFFIC;
+    adminUpdateStatus();
     setPhaseBadge('Traffic');
     hideAllRouteOverlays();
     setLowerThird('Traffic', 'Incidents & slowdowns');
@@ -447,6 +777,7 @@
 
   async function enterConstructionMode() {
     TV.mode = MODES.CONSTRUCTION;
+    adminUpdateStatus();
     setPhaseBadge('Construction');
     hideTrafficDetail();
     setLowerThird('Construction', 'Metro area overview');
@@ -611,6 +942,7 @@
 
   async function enterWeatherMode() {
     TV.mode = MODES.WEATHER;
+    adminUpdateStatus();
     setPhaseBadge('Weather');
     hideTrafficDetail();
     setLowerThird('', '');
@@ -659,6 +991,7 @@
     TV.running = true;
     applyTvVehicleTuning();
     hidePageChrome();
+    bindAdminPanel();
     TV.legs = buildLegQueue();
     log('Director started; ' + TV.legs.length + ' route legs');
     enterRouteMode();
@@ -666,5 +999,43 @@
 
   window.mfTvDirectorStart = function () {
     waitForReady().then(startDirector);
+  };
+
+  window.mfTvDirector = {
+    skipStep: adminSkipStep,
+    skipPhase: adminSkipPhase,
+    nextRoute: adminNextRoute,
+    prevRoute: adminPrevRoute,
+    pause: adminPause,
+    resume: adminResume,
+    forceTraffic: function () {
+      adminForceMode('traffic');
+    },
+    forceConstruction: function () {
+      adminForceMode('construction');
+    },
+    forceWeather: function () {
+      adminForceMode('weather');
+    },
+    forceRoutes: function () {
+      adminForceMode('routes');
+    },
+    togglePanel: adminPanelToggle,
+    openPanel: function () {
+      adminPanelOpen(true);
+    },
+    closePanel: function () {
+      adminPanelOpen(false);
+    },
+    getState: function () {
+      return {
+        mode: TV.mode,
+        paused: TV.paused,
+        legsThisCycle: TV.legsThisCycle,
+        currentLeg: TV.currentLeg,
+        trafficIndex: TV.trafficIndex,
+        trafficTotal: TV.trafficQueue.length
+      };
+    }
   };
 })();

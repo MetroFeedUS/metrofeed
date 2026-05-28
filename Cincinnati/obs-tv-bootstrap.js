@@ -16,17 +16,17 @@
 
   window.MF_TV_MODE = true;
   window.MF_TV_CONFIG = window.MF_TV_CONFIG || {
-    routeLegDwellMs: 45000,
+    routeLegDwellMs: 0,
     routeLegsBeforeTraffic: 10,
     segmentPanEnabled: true,
-    segmentPanIntervalMs: 5500,
-    segmentPanStartDelayMs: 4000,
-    segmentPanMaxChunks: 4,
+    segmentPanIntervalMs: 4000,
+    segmentPanChunks: 8,
+    segmentPanStartDelayMs: 2500,
     incidentDwellMs: 32000,
     slowdownDwellMs: 28000,
     constructionDwellMs: 28000,
     weatherDwellMs: 55000,
-    mapFlyDurationMs: 1200,
+    mapFlyDurationMs: 900,
     vehiclePollMs: 6000,
     /** SORTA/Metro only — index includes agencies without local route JSON (e.g. acrta_). */
     routeAgencyPrefix: 'sorta_'
