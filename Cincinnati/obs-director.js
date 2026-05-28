@@ -71,7 +71,20 @@
 
   function hideTrafficDetail() {
     const p = el('mfTvTrafficDetail');
+    const img = el('mfTvTrafficDetailImage');
     if (p) p.classList.add('mf-tv-hidden');
+    if (img) {
+      img.classList.add('mf-tv-hidden');
+      img.removeAttribute('src');
+    }
+    if (
+      typeof window.TrafficCamerasOverlay !== 'undefined' &&
+      window.TrafficCamerasOverlay.hideCameraModal
+    ) {
+      try {
+        window.TrafficCamerasOverlay.hideCameraModal();
+      } catch (_) {}
+    }
     if (window.metrofeedTvApi && window.metrofeedTvApi.closeTrafficDetail) {
       window.metrofeedTvApi.closeTrafficDetail();
     }
@@ -187,14 +200,40 @@
     } catch (_) {}
   }
 
-  function showTrafficDetail(title, body, meta) {
+  function showTrafficDetail(title, body, meta, imageUrl) {
     const p = el('mfTvTrafficDetail');
     const ti = el('mfTvTrafficDetailTitle');
+    const img = el('mfTvTrafficDetailImage');
     const bo = el('mfTvTrafficDetailBody');
     const me = el('mfTvTrafficDetailMeta');
     if (!p) return;
     p.classList.remove('mf-tv-hidden');
     if (ti) ti.textContent = title || 'Traffic';
+    const url = imageUrl != null ? String(imageUrl).trim() : '';
+    if (img) {
+      if (url) {
+        img.classList.remove('mf-tv-hidden');
+        img.alt = title || 'Traffic camera';
+        img.referrerPolicy = 'no-referrer';
+        const sep = url.indexOf('?') >= 0 ? '&' : '?';
+        img.onerror = function () {
+          img.classList.add('mf-tv-hidden');
+          img.removeAttribute('src');
+          if (bo && !bo.textContent) {
+            bo.textContent = 'Camera image could not be loaded.';
+          }
+        };
+        img.onload = function () {
+          if (bo && bo.textContent === 'Camera image could not be loaded.') {
+            bo.textContent = body || '';
+          }
+        };
+        img.src = url + sep + 't=' + Date.now();
+      } else {
+        img.classList.add('mf-tv-hidden');
+        img.removeAttribute('src');
+      }
+    }
     if (bo) bo.textContent = body || '';
     if (me) {
       me.textContent = meta || '';
@@ -784,11 +823,13 @@
       if (info.distanceM <= radiusM) {
         nearCams.push({
           kind: 'camera',
+          id: String(c.id != null ? c.id : i),
+          url: String(c.url || c.imageUrl || c.image_url || '').trim(),
           distanceM: info.distanceM,
           lng: lon,
           lat: lat,
           title: String(c.name || c.title || 'Traffic camera'),
-          body: String(c.description || c.location || ''),
+          body: String(c.description || c.location || c.name || ''),
           meta:
             'Near route · ' +
             (info.distanceM <= 50 ? '<50m' : Math.round(info.distanceM) + 'm')
@@ -798,7 +839,17 @@
     nearCams.sort(function (x, y) {
       return x.distanceM - y.distanceM;
     });
-    log('Cameras near route: ' + nearCams.length + ' (radius ' + cfg('routeBucketRadiusMiles', 0.5) + 'mi)');
+    log(
+      'Cameras near route: ' +
+        nearCams.length +
+        ' (radius ' +
+        cfg('routeBucketRadiusMiles', 0.5) +
+        'mi, with image URL: ' +
+        nearCams.filter(function (c) {
+          return c.url;
+        }).length +
+        ')'
+    );
 
     for (let i = 0; i < Math.min(maxCameras, nearCams.length); i++) {
       await displayBucketItem(nearCams[i], camDwell, 'Cameras near route');
