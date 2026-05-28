@@ -4440,10 +4440,19 @@
         }
 
         const cityKey = typeof window.getCityIdFromPath === 'function' ? window.getCityIdFromPath() : null;
-        const routes =
+        let routes =
           cityKey && window.ROUTES && window.ROUTES[cityKey] && Array.isArray(window.ROUTES[cityKey].busRoutes)
             ? window.ROUTES[cityKey].busRoutes
             : [];
+        if (window.MF_TV_MODE && routes.length) {
+          const tvPrefixes = ['sorta_', 'tank_', 'bcrta_'];
+          routes = routes.filter(function (r) {
+            const id = r && r.id ? String(r.id) : '';
+            return tvPrefixes.some(function (p) {
+              return id.indexOf(p) === 0;
+            });
+          });
+        }
         if (!routes.length) return;
 
         console.log('[StopsIndex] Building stop index from route JSONs...', { routes: routes.length });
@@ -8001,6 +8010,21 @@
   // Enhanced function to fetch and display buses for multiple routes
   async function fetchAndDisplayBuses(routesToTrack = null) {
     try {
+      // TV director: never paint the whole SORTA fleet — only per-route overlays may show buses.
+      if (window.MF_TV_MODE) {
+        try {
+          Object.values(busMarkers).forEach(function (m) {
+            if (m && typeof m.remove === 'function') m.remove();
+          });
+          busMarkers = {};
+        } catch (_) {}
+        if (window.allBusesInterval) {
+          clearInterval(window.allBusesInterval);
+          window.allBusesInterval = null;
+        }
+        return;
+      }
+
       let allBuses = [];
 
       // Skip the entire global pass while OTP route overlays are authoritative (avoids clearing overlay
@@ -11179,6 +11203,7 @@
       ...tvBusOpts,
       overlayKey: overlayKey, // Pass the actual overlay key for close button to use
       skipRouteInfoPanel: skipRouteInfoPanelUi,
+      tvMode: !!(window.MF_TV_MODE || (opts && opts.tvMode)),
       // OTP leg overlay helpers (used to dim/brighten only the ridden segment + stops)
       otpFromStop: opts && opts.otpFromStop ? String(opts.otpFromStop) : undefined,
       otpToStop: opts && opts.otpToStop ? String(opts.otpToStop) : undefined,

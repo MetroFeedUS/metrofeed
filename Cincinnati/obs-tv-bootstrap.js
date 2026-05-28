@@ -19,10 +19,11 @@
     routeLegDwellMs: 0,
     routeLegsBeforeTraffic: 10,
     segmentPanEnabled: true,
-    /** ~1 min/route: 3 pans × 2 directions + traffic/cams */
-    segmentPanIntervalMs: 3200,
-    segmentPanChunks: 3,
-    segmentPanStartDelayMs: 600,
+    /** Slower pans so the route line is readable on stream */
+    segmentPanIntervalMs: 7000,
+    segmentPanChunks: 4,
+    segmentPanStartDelayMs: 2800,
+    routeOverlaySettleMs: 3500,
     incidentDwellMs: 32000,
     slowdownDwellMs: 28000,
     constructionDwellMs: 28000,
@@ -38,7 +39,7 @@
     routeBucketSlowdownDwellMs: 5000,
     routeBucketCameraDwellMs: 5000,
     routeBucketEnabled: true,
-    routeBucketPrefetchOppositeMs: 2500,
+    routeBucketPrefetchOppositeMs: 4000,
     /** null = all agencies in routes_index order (SORTA, TANK, BCRTA, …) */
     routeAgencyPrefix: null,
     /** Only agencies with route_data JSON on the server (skips index-only rows like acrta_). */

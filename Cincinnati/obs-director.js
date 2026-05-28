@@ -413,10 +413,112 @@
   function legDwellMs() {
     const fixed = cfg('routeLegDwellMs', null);
     if (fixed != null && Number(fixed) > 0) return Number(fixed);
-    const panDelay = Number(cfg('segmentPanStartDelayMs', 600)) || 600;
-    const panInterval = Number(cfg('segmentPanIntervalMs', 3200)) || 3200;
-    const panChunks = Number(cfg('segmentPanChunks', 3)) || 3;
-    return panDelay + panChunks * panInterval + 1200;
+    const panInterval = Number(cfg('segmentPanIntervalMs', 7000)) || 7000;
+    const panChunks = Number(cfg('segmentPanChunks', 4)) || 4;
+    return panChunks * panInterval + 2000;
+  }
+
+  function routeDataBaseUrl() {
+    const base =
+      (typeof window.ROUTE_DATA_BASE !== 'undefined' && window.ROUTE_DATA_BASE) ||
+      (window.CITY_CONFIG && window.CITY_CONFIG.routeDataBase) ||
+      './route_data/';
+    return String(base).endsWith('/') ? String(base) : String(base) + '/';
+  }
+
+  function shapeFromRouteJson(rd) {
+    if (!rd) return [];
+    if (Array.isArray(rd.shape) && rd.shape.length > 1) return rd.shape;
+    if (Array.isArray(rd.shapes) && rd.shapes.length) {
+      const out = [];
+      rd.shapes.forEach(function (s) {
+        if (!Array.isArray(s)) return;
+        s.forEach(function (pt) {
+          if (pt && pt.length >= 2) out.push(pt);
+        });
+      });
+      if (out.length > 1) return out;
+    }
+    return [];
+  }
+
+  async function fetchRouteJsonQuiet(routeId, directionId) {
+    const safeId = String(routeId).replace(/[/?#]+/g, '_');
+    const dir = Number(directionId);
+    const base = routeDataBaseUrl();
+    const tryFiles = [
+      'route-' + safeId + '-dir' + dir + '.json',
+      'route-' + encodeURIComponent(String(routeId)) + '-dir' + dir + '.json',
+      'route-' + safeId + '.json'
+    ];
+    for (let i = 0; i < tryFiles.length; i++) {
+      try {
+        const res = await fetch(base + tryFiles[i], { cache: 'force-cache' });
+        if (res.ok) return await res.json();
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  function storeShapeInCache(routeId, directionId, shapeLatLon) {
+    if (!Array.isArray(shapeLatLon) || shapeLatLon.length < 2) return;
+    const rid = String(routeId);
+    if (!TV.routeShapeCache[rid]) TV.routeShapeCache[rid] = Object.create(null);
+    TV.routeShapeCache[rid][String(directionId)] = shapeLatLon;
+  }
+
+  async function waitForOverlayReady(routeId, directionId, maxMs, gen) {
+    const overlayKey = routeId + '-' + directionId;
+    const limit = Number(maxMs) || 12000;
+    const start = Date.now();
+    while (Date.now() - start < limit) {
+      if (gen != null && episodeStale(gen)) return false;
+      const hasOverlay = window.activeRouteOverlays && window.activeRouteOverlays[overlayKey];
+      const coords = getRouteShapeCoords(routeId, directionId);
+      if (hasOverlay && coords.length >= 2) return true;
+      await sleep(300);
+    }
+    return !!(window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]);
+  }
+
+  function hideOtherLegOverlays(routeId, keepDirectionId) {
+    [0, 1].forEach(function (d) {
+      if (Number(d) === Number(keepDirectionId)) return;
+      const key = routeId + '-' + d;
+      if (window.activeRouteOverlays && window.activeRouteOverlays[key]) {
+        try {
+          window.hideRouteOverlay(routeId, d);
+        } catch (_) {}
+      }
+    });
+  }
+
+  function directionExists(route, directionId) {
+    const d = Number(directionId);
+    if (d === 0) {
+      if (route.hasDir0 === false) return false;
+      return true;
+    }
+    if (d === 1) {
+      if (route.hasDir1 === false) return false;
+      return true;
+    }
+    return true;
+  }
+
+  function episodeLegDirections(route) {
+    const dirs = [];
+    const fromLazy =
+      route.hasDir0 === true ||
+      route.hasDir1 === true ||
+      route.hasDir0 === false ||
+      route.hasDir1 === false;
+    if (fromLazy) {
+      if (route.hasDir1) dirs.push(1);
+      if (route.hasDir0) dirs.push(0);
+      return dirs;
+    }
+    return [1, 0];
   }
 
   function episodeStale(gen) {
@@ -572,8 +674,8 @@
     const m = map();
     if (!m) return;
 
-    const interval = cfg('segmentPanIntervalMs', 4000);
-    const numChunks = cfg('segmentPanChunks', 8);
+    const interval = cfg('segmentPanIntervalMs', 7000);
+    const numChunks = cfg('segmentPanChunks', 4);
     const flyMs = cfg('mapFlyDurationMs', 900);
 
     function runWithCoords(coords) {
@@ -660,10 +762,7 @@
     try {
       if (!leg || !leg.routeId) return;
       const shape = getRouteShapeLatLon(leg.routeId, leg.directionId);
-      if (!Array.isArray(shape) || shape.length < 2) return;
-      const rid = String(leg.routeId);
-      if (!TV.routeShapeCache[rid]) TV.routeShapeCache[rid] = Object.create(null);
-      TV.routeShapeCache[rid][String(leg.directionId)] = shape;
+      storeShapeInCache(leg.routeId, leg.directionId, shape);
     } catch (_) {}
   }
 
@@ -726,27 +825,18 @@
     const dir = String(directionId);
     const cached = TV.routeShapeCache[rid] && TV.routeShapeCache[rid][dir];
     if (Array.isArray(cached) && cached.length > 1) return true;
-    const key = routeId + '-' + directionId;
-    const keepKey = TV.currentRouteKey;
+    const rd = await fetchRouteJsonQuiet(routeId, directionId);
+    if (!rd) return false;
     try {
-      await window.showRouteOverlay(routeId, directionId, undefined, undefined, {
-        ensureOn: true,
-        tvMode: true
-      });
-      if (window.activeRouteOverlays && window.activeRouteOverlays[key]) {
-        cacheLegShape({ routeId: routeId, directionId: directionId });
-        if (keepKey && keepKey !== key) {
-          try {
-            window.hideRouteOverlay(routeId, directionId);
-          } catch (_) {}
-        }
-        log('Prefetched shape ' + key);
-        return true;
+      if (typeof window.mfApplyDayGeometry === 'function') {
+        window.mfApplyDayGeometry(rd);
       }
-    } catch (e) {
-      console.warn('[mfTvDirector] prefetch shape failed', key, e);
-    }
-    return false;
+    } catch (_) {}
+    const shape = shapeFromRouteJson(rd);
+    if (shape.length < 2) return false;
+    storeShapeInCache(routeId, directionId, shape);
+    log('Prefetched shape (json) ' + routeId + '-' + directionId);
+    return true;
   }
 
   async function runRouteBucketForRoute(routeId) {
@@ -960,7 +1050,7 @@
   }
 
   /**
-   * One direction: production overlay + short pans + cache shape (then hide overlay).
+   * One direction: overlay + pans; keep line on map until episode clear (after traffic).
    */
   async function playDirectionLeg(route, directionId, gen) {
     const routeId = route.routeId;
@@ -979,7 +1069,7 @@
     const disp = parseRouteDisplay(route.label, routeId);
     setLowerThird('Route ' + disp.number, disp.title + ' · ' + dirLabel);
 
-    hideAllRouteOverlays();
+    hideOtherLegOverlays(routeId, directionId);
     clearGlobalFleetMarkers();
 
     let overlayOk = false;
@@ -989,7 +1079,12 @@
         tvMode: true,
         fitBounds: Number(directionId) === 1
       });
-      overlayOk = !!(window.activeRouteOverlays && window.activeRouteOverlays[overlayKey]);
+      overlayOk = await waitForOverlayReady(
+        routeId,
+        directionId,
+        Number(cfg('routeOverlaySettleMs', 3500)) + 10000,
+        gen
+      );
     } catch (e) {
       console.warn('[mfTvDirector] showRouteOverlay failed', overlayKey, e);
     }
@@ -1001,8 +1096,9 @@
     }
 
     const oppositeDir = Number(directionId) === 1 ? 0 : 1;
-    const pfMs = Number(cfg('routeBucketPrefetchOppositeMs', 2500)) || 0;
-    if (pfMs > 0) {
+    const oppositeOk = directionExists(route, oppositeDir);
+    const pfMs = Number(cfg('routeBucketPrefetchOppositeMs', 4000)) || 0;
+    if (oppositeOk && pfMs > 0) {
       setTimeout(function () {
         if (!episodeStale(gen) && TV.currentRouteKey === overlayKey) {
           prefetchLegShapeQuiet(routeId, oppositeDir);
@@ -1010,7 +1106,7 @@
       }, pfMs);
     }
 
-    const panDelay = Number(cfg('segmentPanStartDelayMs', 600)) || 600;
+    const panDelay = Number(cfg('segmentPanStartDelayMs', 2800)) || 2800;
     await waitUnlessPaused(panDelay);
     if (episodeStale(gen)) return false;
 
@@ -1022,12 +1118,6 @@
 
     stopSegmentPan();
     cacheLegShape(leg);
-    try {
-      window.hideRouteOverlay(routeId, directionId);
-    } catch (_) {}
-    if (TV.currentRouteKey === overlayKey) {
-      TV.currentRouteKey = null;
-    }
     setLowerThird('', '');
     return true;
   }
@@ -1054,15 +1144,17 @@
     const disp = parseRouteDisplay(route.label, routeId);
     log('Episode start: ' + disp.number + ' (' + routeId + ')');
 
-    await playDirectionLeg(route, 1, gen);
-    if (episodeStale(gen)) return;
-
-    await playDirectionLeg(route, 0, gen);
-    if (episodeStale(gen)) return;
+    const legDirs = episodeLegDirections(route);
+    for (let li = 0; li < legDirs.length; li++) {
+      await playDirectionLeg(route, legDirs[li], gen);
+      if (episodeStale(gen)) return;
+    }
 
     if (getCachedRouteShapeLatLon(routeId).length < 2) {
-      await prefetchLegShapeQuiet(routeId, 0);
-      if (!episodeStale(gen)) await prefetchLegShapeQuiet(routeId, 1);
+      if (directionExists(route, 0)) await prefetchLegShapeQuiet(routeId, 0);
+      if (!episodeStale(gen) && directionExists(route, 1)) {
+        await prefetchLegShapeQuiet(routeId, 1);
+      }
     }
 
     if (getCachedRouteShapeLatLon(routeId).length > 1) {
@@ -1108,7 +1200,7 @@
     if (!TV.running || TV.paused || TV.mode !== MODES.ROUTE) return;
     setTimeout(function () {
       runNextRouteEpisode();
-    }, 400);
+    }, 1200);
   }
 
   function enterRouteMode() {
