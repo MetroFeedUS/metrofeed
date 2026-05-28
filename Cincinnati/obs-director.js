@@ -223,7 +223,8 @@
     if (coords.length < 2) return;
     const dwell = cfg('routeLegDwellMs', 60000);
     const interval = cfg('segmentPanIntervalMs', 14000);
-    const segCount = Math.max(2, Math.min(6, Math.floor(dwell / interval)));
+    const maxChunks = cfg('segmentPanMaxChunks', 4);
+    const segCount = Math.max(2, Math.min(maxChunks, Math.floor(dwell / interval)));
     const chunks = chunkShape(coords, segCount);
     TV.segmentIndex = 0;
 
@@ -626,9 +627,38 @@
     });
   }
 
+  function applyTvVehicleTuning() {
+    if (!window.CITY_CONFIG) return;
+    const poll = cfg('vehiclePollMs', 6000);
+    window.CITY_CONFIG.sharedVehiclePollMs = poll;
+    window.CITY_CONFIG.useSharedVehicleCache = true;
+  }
+
+  function hidePageChrome() {
+    var sel = [
+      '#favoritesWrapper',
+      '.favorites-wrapper',
+      'footer.site-footer',
+      '#minimizedItinerary',
+      '.minimized-itinerary',
+      '#mfTripPlannerSearchBar',
+      '#menuBtn',
+      '.side-buttons'
+    ];
+    sel.forEach(function (s) {
+      document.querySelectorAll(s).forEach(function (el) {
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('visibility', 'hidden', 'important');
+        el.setAttribute('aria-hidden', 'true');
+      });
+    });
+  }
+
   function startDirector() {
     if (TV.running) return;
     TV.running = true;
+    applyTvVehicleTuning();
+    hidePageChrome();
     TV.legs = buildLegQueue();
     log('Director started; ' + TV.legs.length + ' route legs');
     enterRouteMode();

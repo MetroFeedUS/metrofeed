@@ -11156,6 +11156,14 @@
       routeColorHex = window.ROUTE_OVERLAY_COLOR_PALETTE[routeColorSlot];
     }
     const tvFitBounds = !!(window.MF_TV_MODE || (opts && opts.fitBounds === true));
+    const tvBusOpts = window.MF_TV_MODE
+      ? {
+          gtfsRtProxyUrls: CITY_CONFIG.gtfsRtProxyUrls,
+          realtimeTripsUrl: CITY_CONFIG.realtimeTripsUrl,
+          disableGtfsRt: false,
+          trackBuses: true
+        }
+      : {};
     const overlay = window.attachRouteToMap(mapRef, busTrackingRouteId, directionId, {
       mode: 'mainOverlay',
       routeData: routeData,  // Pass routeData explicitly (required by new version)
@@ -11168,6 +11176,7 @@
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl, // Pass GTFS-RT URL for MBTA
       disableGtfsRt: CITY_CONFIG.disableGtfsRt, // Keep code but skip GTFS-RT fetch/parse when true
       trackBuses: true, // Enable bus tracking for route overlay
+      ...tvBusOpts,
       overlayKey: overlayKey, // Pass the actual overlay key for close button to use
       skipRouteInfoPanel: skipRouteInfoPanelUi,
       // OTP leg overlay helpers (used to dim/brighten only the ridden segment + stops)
@@ -11189,7 +11198,9 @@
       apiKey,
       busApiType: CITY_CONFIG.busApiType,
       gtfsRtUrl: CITY_CONFIG.gtfsRtUrl,
-      disableGtfsRt: CITY_CONFIG.disableGtfsRt,
+      gtfsRtProxyUrls: CITY_CONFIG.gtfsRtProxyUrls,
+      realtimeTripsUrl: CITY_CONFIG.realtimeTripsUrl,
+      disableGtfsRt: window.MF_TV_MODE ? false : CITY_CONFIG.disableGtfsRt,
       trackBuses: true,
       overlayKey: overlayKey,
       skipRouteInfoPanel: skipRouteInfoPanelUi,

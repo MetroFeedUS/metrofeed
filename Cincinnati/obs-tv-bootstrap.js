@@ -16,15 +16,18 @@
 
   window.MF_TV_MODE = true;
   window.MF_TV_CONFIG = window.MF_TV_CONFIG || {
-    routeLegDwellMs: 60000,
+    routeLegDwellMs: 45000,
     routeLegsBeforeTraffic: 10,
     segmentPanEnabled: true,
-    segmentPanIntervalMs: 14000,
+    segmentPanIntervalMs: 5500,
+    segmentPanStartDelayMs: 4000,
+    segmentPanMaxChunks: 4,
     incidentDwellMs: 32000,
     slowdownDwellMs: 28000,
     constructionDwellMs: 28000,
     weatherDwellMs: 55000,
-    mapFlyDurationMs: 2800,
+    mapFlyDurationMs: 1200,
+    vehiclePollMs: 6000,
     /** SORTA/Metro only — index includes agencies without local route JSON (e.g. acrta_). */
     routeAgencyPrefix: 'sorta_'
   };
@@ -40,4 +43,27 @@
   link.rel = 'stylesheet';
   link.href = 'obs-tv.css';
   document.head.appendChild(link);
+
+  function hideTvChrome() {
+    [
+      '#favoritesWrapper',
+      '.favorites-wrapper',
+      'footer.site-footer',
+      '#minimizedItinerary',
+      '#mfTripPlannerSearchBar',
+      '#menuBtn'
+    ].forEach(function (sel) {
+      try {
+        document.querySelectorAll(sel).forEach(function (el) {
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('visibility', 'hidden', 'important');
+        });
+      } catch (_) {}
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hideTvChrome);
+  } else {
+    hideTvChrome();
+  }
 })();
