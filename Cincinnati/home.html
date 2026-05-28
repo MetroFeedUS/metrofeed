@@ -9826,6 +9826,150 @@
     });
   }
 
+  /** Items within radiusM of route polyline ([lat,lon] points). Used by TV director + map sync. */
+  function metrofeedItemsNearRouteShape(shapeLatLon, items, radiusM, getLngLat) {
+    if (!Array.isArray(shapeLatLon) || shapeLatLon.length < 2 || !Array.isArray(items)) return [];
+    if (typeof window.metrofeedNearestSegmentInfo !== 'function') return [];
+    const r = Number(radiusM);
+    if (!Number.isFinite(r) || r <= 0) return [];
+    const out = [];
+    for (let i = 0; i < items.length; i++) {
+      const ll = getLngLat(items[i]);
+      if (!ll) continue;
+      const info = window.metrofeedNearestSegmentInfo(shapeLatLon, ll[1], ll[0]);
+      if (info && Number.isFinite(info.distanceM) && info.distanceM <= r) out.push(items[i]);
+    }
+    return out;
+  }
+  window.metrofeedItemsNearRouteShape = metrofeedItemsNearRouteShape;
+
+  function metrofeedDisplayTrafficIncidentsList(map, incidents) {
+    if (!map || !Array.isArray(incidents)) return;
+    metrofeedRemoveTrafficIncidents(map);
+    metrofeedEnsureTrafficRasterMapIcons(map, function () {
+      const geojson = metrofeedBuildIncidentsGeoJSON(incidents);
+      map.addSource('traffic-incidents', { type: 'geojson', data: geojson });
+      map.addLayer({
+        id: 'traffic-incidents',
+        type: 'symbol',
+        source: 'traffic-incidents',
+        layout: {
+          'icon-image': 'mf-traffic-accident',
+          'icon-size': 0.44,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true
+        },
+        paint: { 'icon-opacity': 0.95 }
+      });
+      trafficLayers.incidents = 'traffic-incidents';
+      map.on('click', 'traffic-incidents', metrofeedTrafficIncidentsClick);
+      map.on('mouseenter', 'traffic-incidents', metrofeedTrafficIncidentsMouseEnter);
+      map.on('mouseleave', 'traffic-incidents', metrofeedTrafficIncidentsMouseLeave);
+      window._mfTrafficCounts.incidents = geojson.features.length;
+      console.log(
+        '[metrofeedDisplayTrafficIncidents] Showing',
+        geojson.features.length,
+        'incidents near route (of',
+        (window.allIncidents && window.allIncidents.length) || 0,
+        'cached)'
+      );
+    });
+  }
+
+  function metrofeedDisplayTrafficSlowdownsList(map, slowdowns) {
+    if (!map || !Array.isArray(slowdowns)) return;
+    metrofeedRemoveTrafficSlowdowns(map);
+    metrofeedEnsureTrafficRasterMapIcons(map, function () {
+      const geojson = metrofeedBuildGenericGeoJSON(slowdowns, 'slowdown');
+      map.addSource('traffic-slowdowns', { type: 'geojson', data: geojson });
+      map.addLayer({
+        id: 'traffic-slowdowns',
+        type: 'symbol',
+        source: 'traffic-slowdowns',
+        layout: {
+          'icon-image': 'mf-traffic-slow',
+          'icon-size': 0.42,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true
+        },
+        paint: { 'icon-opacity': 0.72 }
+      });
+      trafficLayers.slowdowns = 'traffic-slowdowns';
+      map.on('click', 'traffic-slowdowns', metrofeedTrafficGenericClick);
+      map.on('mouseenter', 'traffic-slowdowns', metrofeedTrafficGenericMouseEnter);
+      map.on('mouseleave', 'traffic-slowdowns', metrofeedTrafficGenericMouseLeave);
+      window._mfTrafficCounts.slowdowns = geojson.features.length;
+      console.log(
+        '[metrofeedDisplayTrafficSlowdowns] Showing',
+        geojson.features.length,
+        'slowdowns near route'
+      );
+    });
+  }
+
+  function metrofeedFilteredIncidentsForMap(map) {
+    const f = window.MF_TV_MODE && window._mfTvTrafficRouteFilter;
+    if (f && Array.isArray(f.shapeLatLon) && f.shapeLatLon.length > 1) {
+      const radiusM = (Number(f.radiusMiles) || 1) * 1609.344;
+      return metrofeedItemsNearRouteShape(
+        f.shapeLatLon,
+        window.allIncidents || [],
+        radiusM,
+        metrofeedIncidentLngLat
+      );
+    }
+    const box = metrofeedPaddedMapBounds(map);
+    return metrofeedIncidentsInBounds(window.allIncidents || [], box);
+  }
+
+  function metrofeedFilteredSlowdownsForMap(map) {
+    const f = window.MF_TV_MODE && window._mfTvTrafficRouteFilter;
+    if (f && Array.isArray(f.shapeLatLon) && f.shapeLatLon.length > 1) {
+      const radiusM = (Number(f.radiusMiles) || 1) * 1609.344;
+      return metrofeedItemsNearRouteShape(
+        f.shapeLatLon,
+        window.allSlowdowns || [],
+        radiusM,
+        metrofeedGenericLngLat
+      );
+    }
+    const box = metrofeedPaddedMapBounds(map);
+    return metrofeedGenericInBounds(window.allSlowdowns || [], box);
+  }
+
+  /** TV: only plot incidents/slowdowns we will narrate (same distance rule as obs-director). */
+  function metrofeedSyncTrafficLayersNearRoute(map, shapeLatLon, radiusMiles) {
+    if (!map || !Array.isArray(shapeLatLon) || shapeLatLon.length < 2) return;
+    const radiusMi = Number(radiusMiles) || 1;
+    if (window.MF_TV_MODE) {
+      window._mfTvTrafficRouteFilter = { shapeLatLon: shapeLatLon, radiusMiles: radiusMi };
+    }
+    const radiusM = radiusMi * 1609.344;
+    const incs = metrofeedItemsNearRouteShape(
+      shapeLatLon,
+      window.allIncidents || [],
+      radiusM,
+      metrofeedIncidentLngLat
+    );
+    const slows = metrofeedItemsNearRouteShape(
+      shapeLatLon,
+      window.allSlowdowns || [],
+      radiusM,
+      metrofeedGenericLngLat
+    );
+    metrofeedDisplayTrafficIncidentsList(map, incs);
+    metrofeedDisplayTrafficSlowdownsList(map, slows);
+    if (window.map && typeof metrofeedRemoveTrafficFlow === 'function') {
+      metrofeedRemoveTrafficFlow(window.map);
+    }
+  }
+  window.metrofeedSyncTrafficLayersNearRoute = metrofeedSyncTrafficLayersNearRoute;
+
+  function metrofeedClearTvTrafficRouteFilter() {
+    window._mfTvTrafficRouteFilter = null;
+  }
+  window.metrofeedClearTvTrafficRouteFilter = metrofeedClearTvTrafficRouteFilter;
+
   function metrofeedFlowInBounds(flowArr, box) {
     if (!Array.isArray(flowArr) || !box) return [];
     return flowArr.filter(function (f) {
@@ -10098,8 +10242,7 @@
   function metrofeedUpdateTrafficIncidentsData(map) {
     if (!map || !window.allIncidents || !Array.isArray(window.allIncidents)) return;
     if (!map.getSource('traffic-incidents')) return;
-    const box = metrofeedPaddedMapBounds(map);
-    const filtered = metrofeedIncidentsInBounds(window.allIncidents, box);
+    const filtered = metrofeedFilteredIncidentsForMap(map);
     const geojson = metrofeedBuildIncidentsGeoJSON(filtered);
     map.getSource('traffic-incidents').setData(geojson);
     window._mfTrafficCounts.incidents = geojson.features.length;
@@ -10118,8 +10261,7 @@
   function metrofeedUpdateTrafficSlowdownsData(map) {
     if (!map || !window.allSlowdowns || !Array.isArray(window.allSlowdowns)) return;
     if (!map.getSource('traffic-slowdowns')) return;
-    const box = metrofeedPaddedMapBounds(map);
-    const filtered = metrofeedGenericInBounds(window.allSlowdowns, box);
+    const filtered = metrofeedFilteredSlowdownsForMap(map);
     const geojson = metrofeedBuildGenericGeoJSON(filtered, 'slowdown');
     map.getSource('traffic-slowdowns').setData(geojson);
     window._mfTrafficCounts.slowdowns = geojson.features.length;

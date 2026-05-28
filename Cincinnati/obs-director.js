@@ -75,7 +75,12 @@
   function hideTrafficDetail() {
     const p = el('mfTvTrafficDetail');
     const img = el('mfTvTrafficDetailImage');
-    if (p) p.classList.add('mf-tv-hidden');
+    const bo = el('mfTvTrafficDetailBody');
+    if (p) {
+      p.classList.add('mf-tv-hidden');
+      p.classList.remove('mf-tv-camera-card', 'mf-tv-incident-card', 'mf-tv-slowdown-card');
+    }
+    if (bo) bo.style.display = '';
     if (img) {
       img.classList.add('mf-tv-hidden');
       img.removeAttribute('src');
@@ -203,14 +208,17 @@
     } catch (_) {}
   }
 
-  function showTrafficDetail(title, body, meta, imageUrl) {
+  function showTrafficDetail(title, body, meta, imageUrl, kind) {
     const p = el('mfTvTrafficDetail');
     const ti = el('mfTvTrafficDetailTitle');
     const img = el('mfTvTrafficDetailImage');
     const bo = el('mfTvTrafficDetailBody');
     const me = el('mfTvTrafficDetailMeta');
     if (!p) return;
-    p.classList.remove('mf-tv-hidden');
+    p.classList.remove('mf-tv-hidden', 'mf-tv-camera-card', 'mf-tv-incident-card', 'mf-tv-slowdown-card');
+    if (kind === 'camera') p.classList.add('mf-tv-camera-card');
+    else if (kind === 'incident') p.classList.add('mf-tv-incident-card');
+    else if (kind === 'slowdown') p.classList.add('mf-tv-slowdown-card');
     p.setAttribute('aria-hidden', 'false');
     if (ti) ti.textContent = title || 'Traffic';
     const url = imageUrl != null ? String(imageUrl).trim() : '';
@@ -238,7 +246,15 @@
         img.removeAttribute('src');
       }
     }
-    if (bo) bo.textContent = body || '';
+    if (bo) {
+      if (kind === 'camera' && url) {
+        bo.textContent = '';
+        bo.style.display = 'none';
+      } else {
+        bo.textContent = body || '';
+        bo.style.display = body ? 'block' : 'none';
+      }
+    }
     if (me) {
       me.textContent = meta || '';
       me.style.display = meta ? 'block' : 'none';
@@ -616,6 +632,11 @@
         a.trafficOff();
       } catch (_) {}
     }
+    if (typeof window.metrofeedClearTvTrafficRouteFilter === 'function') {
+      try {
+        window.metrofeedClearTvTrafficRouteFilter();
+      } catch (_) {}
+    }
   }
 
   function parseRouteDisplay(label, routeId) {
@@ -906,6 +927,9 @@
 
     await sleep(dwellMs);
     hideTrafficDetail();
+    if (it.kind === 'incident' || it.kind === 'slowdown') {
+      setLowerThird('', '');
+    }
   }
 
   async function prefetchLegShapeQuiet(routeId, directionId) {
@@ -936,7 +960,8 @@
     if (cfg('routeBucketEnabled', true) === false) return;
     log('Route package — traffic & cameras: ' + String(routeId));
 
-    const radiusM = milesToMeters(cfg('routeBucketRadiusMiles', 0.5));
+    const radiusMi = Number(cfg('routeBucketRadiusMiles', 1)) || 1;
+    const radiusM = milesToMeters(radiusMi);
     const maxIncidents = bucketKindCap('routeBucketMaxIncidents', 0);
     const maxSlowdowns = bucketKindCap('routeBucketMaxSlowdowns', 0);
     const maxCameras = Math.max(0, Number(cfg('routeBucketMaxCameras', 4)) || 0);
@@ -967,6 +992,14 @@
       await a.ensureTraffic();
     } catch (_) {}
 
+    if (typeof window.metrofeedSyncTrafficLayersNearRoute === 'function') {
+      try {
+        window.metrofeedSyncTrafficLayersNearRoute(m, shapeLatLon, radiusMi);
+      } catch (syncErr) {
+        console.warn('[mfTvDirector] sync traffic near route failed', syncErr);
+      }
+    }
+
     const nearIncidents = [];
     const nearSlowdowns = [];
     try {
@@ -985,16 +1018,16 @@
         const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
         if (!info || !Number.isFinite(info.distanceM)) continue;
         if (info.distanceM <= radiusM) {
+          const distLabel =
+            info.distanceM <= 50 ? '<50 m from route' : Math.round(info.distanceM) + ' m from route';
           nearIncidents.push({
             kind: 'incident',
             distanceM: info.distanceM,
             lng: lon,
             lat: lat,
-            title: fmt.title || 'Incident',
+            title: fmt.title || 'Traffic incident',
             body: fmt.description || (fmt.lines && fmt.lines.join('\n')) || '',
-            meta:
-              'Near route · ' +
-              (info.distanceM <= 50 ? '<50m' : Math.round(info.distanceM) + 'm')
+            meta: distLabel
           });
         }
       }
@@ -1038,12 +1071,15 @@
         ' incidents, ' +
         nearSlowdowns.length +
         ' slowdowns (≤' +
-        cfg('routeBucketRadiusMiles', 0.5) +
+        radiusMi +
         'mi)'
     );
 
+    if (nearIncidents.length) {
+      setPhaseBadge('Incident on route');
+    }
     for (let i = 0; i < Math.min(maxIncidents, nearIncidents.length); i++) {
-      await displayBucketItem(nearIncidents[i], incDwell, 'Incidents near route');
+      await displayBucketItem(nearIncidents[i], incDwell, 'Incident on route');
     }
 
     for (let i = 0; i < Math.min(maxSlowdowns, nearSlowdowns.length); i++) {

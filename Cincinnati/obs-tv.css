@@ -117,34 +117,38 @@ html.tv-mode .maplibregl-marker.mf-bus-marker {
   position: fixed;
   left: 48px;
   right: 48px;
-  bottom: 120px;
+  bottom: 100px;
   z-index: 10055;
-  max-height: 38vh;
-  overflow: auto;
-  padding: 20px 24px;
-  background: rgba(14, 14, 18, 0.94);
-  border: 1px solid rgba(147, 51, 234, 0.45);
-  border-radius: 10px;
+  max-height: 42vh;
+  overflow: hidden;
+  padding: 18px 22px;
+  background: rgba(10, 10, 14, 0.96);
+  border: 1px solid rgba(147, 51, 234, 0.5);
+  border-radius: 12px;
   pointer-events: none;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .mf-tv-traffic-detail-title {
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #f8fafc;
-  margin-bottom: 10px;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .mf-tv-traffic-detail-image {
   display: block;
   width: 100%;
-  max-height: min(42vh, 520px);
+  max-height: min(38vh, 480px);
   object-fit: contain;
-  margin: 0 0 12px;
+  margin: 0;
   border-radius: 8px;
-  border: 2px solid rgba(56, 189, 248, 0.55);
-  background: #0a0a0e;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: #050508;
 }
 
 .mf-tv-traffic-detail-image.mf-tv-hidden {
@@ -152,21 +156,78 @@ html.tv-mode .maplibregl-marker.mf-bus-marker {
 }
 
 .mf-tv-traffic-detail-body {
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1.45;
   color: #cbd5e1;
   white-space: pre-wrap;
+  margin: 0;
 }
 
 .mf-tv-traffic-detail-meta {
-  margin-top: 10px;
-  font-size: 0.9rem;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: #94a3b8;
 }
 
-/* Same camera modal as home.html — visible above TV chrome when director shows a feed */
+/* Camera: compact card bottom-right — image-first, no duplicate modal */
+.mf-tv-traffic-detail.mf-tv-camera-card {
+  left: auto;
+  right: 40px;
+  bottom: 40px;
+  width: min(46vw, 680px);
+  max-height: min(52vh, 560px);
+  padding: 0;
+  border-color: rgba(56, 189, 248, 0.55);
+  gap: 0;
+}
+
+.mf-tv-camera-card .mf-tv-traffic-detail-title {
+  padding: 12px 16px;
+  font-size: 1.1rem;
+  background: linear-gradient(180deg, rgba(12, 18, 28, 0.98) 0%, rgba(8, 10, 16, 0.95) 100%);
+  border-bottom: 2px solid rgba(56, 189, 248, 0.65);
+}
+
+.mf-tv-camera-card .mf-tv-traffic-detail-image {
+  flex: 1 1 auto;
+  max-height: min(44vh, 500px);
+  min-height: 180px;
+  border: none;
+  border-radius: 0;
+  object-fit: cover;
+}
+
+.mf-tv-camera-card .mf-tv-traffic-detail-meta {
+  padding: 8px 16px 12px;
+  border-top: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.mf-tv-camera-card .mf-tv-traffic-detail-body {
+  display: none !important;
+}
+
+/* Incident / slowdown: full-width lower third style */
+.mf-tv-traffic-detail.mf-tv-incident-card {
+  border-color: rgba(251, 113, 133, 0.55);
+  border-left-width: 5px;
+}
+
+.mf-tv-incident-card .mf-tv-traffic-detail-title {
+  color: #fecdd3;
+}
+
+.mf-tv-traffic-detail.mf-tv-slowdown-card {
+  border-color: rgba(251, 191, 36, 0.5);
+  border-left-width: 5px;
+}
+
+/* Hide legacy camera modal in TV — director uses mfTvTrafficDetail only */
 html.tv-mode #cameraModal {
-  z-index: 10070 !important;
+  display: none !important;
+  visibility: hidden !important;
 }
 
 .mf-tv-weather {
