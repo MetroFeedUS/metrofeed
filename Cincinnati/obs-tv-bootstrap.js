@@ -44,6 +44,10 @@
     routeAgencyPrefix: null,
     /** Only agencies with route_data JSON on the server (skips index-only rows like acrta_). */
     routeDeployablePrefixes: ['sorta_', 'tank_', 'bcrta_'],
+    /** Episode order: SORTA (live buses) first, BCRTA last. */
+    routeAgencyOrder: ['sorta_', 'tank_', 'bcrta_'],
+    /** Shorter pan segment on BCRTA (no live vehicles in feed). */
+    bcrtaLegDwellMs: 22000,
     /** Build TV queue from routes_index.lazy.js when available (matches real files). */
     useLazyRouteIndex: true
   };

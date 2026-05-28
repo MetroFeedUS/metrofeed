@@ -211,6 +211,7 @@
     const me = el('mfTvTrafficDetailMeta');
     if (!p) return;
     p.classList.remove('mf-tv-hidden');
+    p.setAttribute('aria-hidden', 'false');
     if (ti) ti.textContent = title || 'Traffic';
     const url = imageUrl != null ? String(imageUrl).trim() : '';
     if (img) {
@@ -328,6 +329,40 @@
     return Array.isArray(p) ? p : ['sorta_', 'tank_', 'bcrta_'];
   }
 
+  /** SORTA first (live GTFS), then TANK, then BCRTA last. */
+  function routeAgencyOrderPrefixes() {
+    const p = cfg('routeAgencyOrder', ['sorta_', 'tank_', 'bcrta_']);
+    return Array.isArray(p) ? p : ['sorta_', 'tank_', 'bcrta_'];
+  }
+
+  function agencySortRank(routeId) {
+    const rid = String(routeId || '');
+    const order = routeAgencyOrderPrefixes();
+    for (let i = 0; i < order.length; i++) {
+      if (rid.indexOf(order[i]) === 0) return i;
+    }
+    return order.length;
+  }
+
+  function sortRoutesByAgency(routes, idOrder) {
+    const orderMap = Object.create(null);
+    if (Array.isArray(idOrder)) {
+      idOrder.forEach(function (id, idx) {
+        orderMap[String(id)] = idx;
+      });
+    }
+    routes.sort(function (a, b) {
+      const ra = agencySortRank(a.routeId);
+      const rb = agencySortRank(b.routeId);
+      if (ra !== rb) return ra - rb;
+      const ia = orderMap[a.routeId];
+      const ib = orderMap[b.routeId];
+      if (Number.isFinite(ia) && Number.isFinite(ib) && ia !== ib) return ia - ib;
+      return String(a.routeId).localeCompare(String(b.routeId));
+    });
+    return routes;
+  }
+
   function routeIdAllowed(id) {
     const rid = String(id || '');
     const one = cfg('routeAgencyPrefix', null);
@@ -381,6 +416,7 @@
         hasDir1: hasDir1
       });
     });
+    sortRoutesByAgency(out, order);
     return out.length ? out : null;
   }
 
@@ -388,7 +424,7 @@
   function buildRouteQueue() {
     const fromLazy = cfg('useLazyRouteIndex', true) !== false ? buildRouteQueueFromLazyIndex() : null;
     if (fromLazy && fromLazy.length) {
-      log('Route queue: ' + fromLazy.length + ' routes (from routes_index.lazy.js)');
+      log('Route queue: ' + fromLazy.length + ' routes (SORTA→TANK→BCRTA, lazy index)');
       return fromLazy;
     }
 
@@ -406,16 +442,30 @@
         hasDir1: true
       });
     });
-    log('Route queue: ' + out.length + ' routes (from routes_index.js, deployable filter)');
+    sortRoutesByAgency(out, null);
+    log(
+      'Route queue: ' +
+        out.length +
+        ' routes (SORTA→TANK→BCRTA, routes_index.js)'
+    );
     return out;
   }
 
-  function legDwellMs() {
+  function legDwellMs(routeId) {
+    const rid = String(routeId || '');
+    const bcrtaFast = cfg('bcrtaLegDwellMs', null);
+    if (rid.indexOf('bcrta_') === 0 && bcrtaFast != null && Number(bcrtaFast) > 0) {
+      return Number(bcrtaFast);
+    }
     const fixed = cfg('routeLegDwellMs', null);
     if (fixed != null && Number(fixed) > 0) return Number(fixed);
     const panInterval = Number(cfg('segmentPanIntervalMs', 7000)) || 7000;
     const panChunks = Number(cfg('segmentPanChunks', 4)) || 4;
-    return panChunks * panInterval + 2000;
+    let ms = panChunks * panInterval + 2000;
+    if (rid.indexOf('bcrta_') === 0) {
+      ms = Math.max(12000, Math.floor(ms * 0.5));
+    }
+    return ms;
   }
 
   function routeDataBaseUrl() {
@@ -779,6 +829,24 @@
     return out.length > 1 ? out : (Array.isArray(s0) ? s0 : (Array.isArray(s1) ? s1 : []));
   }
 
+  function resolveCameraImageUrl(c) {
+    if (!c) return '';
+    const direct = String(c.url || c.imageUrl || c.image_url || c.streamUrl || c.stream_url || '').trim();
+    if (direct) return direct;
+    const id = c.id != null ? String(c.id) : '';
+    if (!id) return '';
+    const feed =
+      window.CITY_CONFIG && window.CITY_CONFIG.camerasFeedUrl
+        ? String(window.CITY_CONFIG.camerasFeedUrl)
+        : '';
+    if (feed.indexOf('ohio') >= 0) {
+      return (
+        'https://traffic-api.metrofeedus.com/cameras/ohio/' + encodeURIComponent(id) + '/image'
+      );
+    }
+    return '';
+  }
+
   function normalizeCamerasPayload(raw) {
     const list = Array.isArray(raw) ? raw : raw && (raw.cameras || raw.items || raw.data) || [];
     if (!Array.isArray(list)) return [];
@@ -815,7 +883,27 @@
         essential: true
       });
     } catch (_) {}
-    showTrafficDetail(it.title, it.body, it.meta);
+
+    if (it.kind === 'camera') {
+      const imgUrl = resolveCameraImageUrl(it);
+      showTrafficDetail(it.title, it.body, it.meta, imgUrl);
+      if (
+        imgUrl &&
+        typeof window.TrafficCamerasOverlay !== 'undefined' &&
+        window.TrafficCamerasOverlay.showCameraFeed
+      ) {
+        try {
+          window.TrafficCamerasOverlay.showCameraFeed(
+            String(it.id || ''),
+            it.title || 'Traffic camera',
+            imgUrl
+          );
+        } catch (_) {}
+      }
+    } else {
+      showTrafficDetail(it.title, it.body, it.meta);
+    }
+
     await sleep(dwellMs);
     hideTrafficDetail();
   }
@@ -962,23 +1050,20 @@
       await displayBucketItem(nearSlowdowns[i], slowDwell, 'Slowdowns near route');
     }
 
-    // --- Cameras near route (up to 4) ---
-    const camsUrl =
-      window.CITY_CONFIG && window.CITY_CONFIG.camerasFeedUrl
-        ? String(window.CITY_CONFIG.camerasFeedUrl).trim()
-        : '';
-    if (!camsUrl) {
-      log('Cameras skipped (no camerasFeedUrl in CITY_CONFIG)');
-      return;
-    }
-
+    // --- Cameras near route (up to 4) — same loader as home.html / TrafficCamerasOverlay ---
     if (!window._mfTvAllCameras || !Array.isArray(window._mfTvAllCameras)) {
-      // Prefer the production camera overlay loader (it already knows how to parse both local and Ohio feeds).
       try {
-        if (typeof window.TrafficCamerasOverlay !== 'undefined' && TrafficCamerasOverlay.getCamerasData) {
-          log('Cameras: loading via TrafficCamerasOverlay…');
-          window._mfTvAllCameras = await TrafficCamerasOverlay.getCamerasData();
+        if (
+          typeof window.TrafficCamerasOverlay !== 'undefined' &&
+          window.TrafficCamerasOverlay.getCamerasData
+        ) {
+          log('Cameras: loading via TrafficCamerasOverlay.getCamerasData()…');
+          window._mfTvAllCameras = await window.TrafficCamerasOverlay.getCamerasData();
         } else {
+          const camsUrl =
+            window.CITY_CONFIG && window.CITY_CONFIG.camerasFeedUrl
+              ? String(window.CITY_CONFIG.camerasFeedUrl).trim()
+              : 'data/cameras.json';
           const res = await fetch(camsUrl, { cache: 'no-store' });
           if (res.ok) {
             const raw = await res.json();
@@ -1012,10 +1097,12 @@
       const info = window.metrofeedNearestSegmentInfo(shapeLatLon, lat, lon);
       if (!info || !Number.isFinite(info.distanceM)) continue;
       if (info.distanceM <= radiusM) {
+        const camUrl = resolveCameraImageUrl(c);
+        if (!camUrl) continue;
         nearCams.push({
           kind: 'camera',
           id: String(c.id != null ? c.id : i),
-          url: String(c.url || c.imageUrl || c.image_url || '').trim(),
+          url: camUrl,
           distanceM: info.distanceM,
           lng: lon,
           lat: lat,
@@ -1113,7 +1200,7 @@
     if (cfg('segmentPanEnabled', true) !== false) {
       startSegmentPan(routeId, directionId);
     }
-    await waitUnlessPaused(legDwellMs());
+    await waitUnlessPaused(legDwellMs(routeId));
     if (episodeStale(gen)) return false;
 
     stopSegmentPan();
