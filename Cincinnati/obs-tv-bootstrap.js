@@ -34,6 +34,7 @@
     routeBucketMaxCameras: 4,
     routeBucketIncidentDwellMs: 12000,
     routeBucketCameraDwellMs: 8000,
+    routeBucketEnabled: true,
     /** SORTA/Metro only — index includes agencies without local route JSON (e.g. acrta_). */
     routeAgencyPrefix: 'sorta_'
   };

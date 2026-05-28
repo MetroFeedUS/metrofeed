@@ -74,6 +74,7 @@
     if (window.metrofeedTvApi && window.metrofeedTvApi.closeTrafficDetail) {
       window.metrofeedTvApi.closeTrafficDetail();
     }
+    clearFocusRing();
   }
 
   function removeTempPin() {
@@ -120,6 +121,69 @@
     } catch (_) {
       TV.tempPinMarker = null;
     }
+  }
+
+  function ensureFocusRingLayer() {
+    const m = map();
+    if (!m || typeof m.getSource !== 'function') return false;
+    const srcId = 'mf-tv-focus-src';
+    const layerId = 'mf-tv-focus-ring';
+    try {
+      if (!m.getSource(srcId)) {
+        m.addSource(srcId, {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+      }
+      if (!m.getLayer(layerId)) {
+        m.addLayer({
+          id: layerId,
+          type: 'circle',
+          source: srcId,
+          paint: {
+            'circle-radius': 18,
+            'circle-color': 'rgba(0,0,0,0)',
+            'circle-stroke-color': '#9333ea',
+            'circle-stroke-width': 4,
+            'circle-stroke-opacity': 0.9
+          }
+        });
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function setFocusRing(lng, lat) {
+    const m = map();
+    if (!m) return;
+    if (!ensureFocusRingLayer()) return;
+    try {
+      const src = m.getSource('mf-tv-focus-src');
+      if (!src || typeof src.setData !== 'function') return;
+      src.setData({
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'Point', coordinates: [lng, lat] }
+          }
+        ]
+      });
+    } catch (_) {}
+  }
+
+  function clearFocusRing() {
+    const m = map();
+    if (!m) return;
+    try {
+      const src = m.getSource && m.getSource('mf-tv-focus-src');
+      if (src && typeof src.setData === 'function') {
+        src.setData({ type: 'FeatureCollection', features: [] });
+      }
+    } catch (_) {}
   }
 
   function showTrafficDetail(title, body, meta) {
@@ -468,6 +532,8 @@
     const a = api();
     if (!m || !a) return;
 
+    if (cfg('routeBucketEnabled', true) === false) return;
+
     const radiusM = milesToMeters(cfg('routeBucketRadiusMiles', 0.5));
     const maxIncidents = Math.max(0, Number(cfg('routeBucketMaxIncidents', 1)) || 0);
     const maxCameras = Math.max(0, Number(cfg('routeBucketMaxCameras', 4)) || 0);
@@ -555,9 +621,9 @@
       if (TV.paused) return;
       const it = nearItems[i];
       setPhaseBadge('Transit + Traffic');
-      setLowerThird(it.kind === 'slowdown' ? 'Route slowdown' : 'Route incident', it.title);
+      setLowerThird('', '');
       hideTrafficDetail();
-      showTempPin(it.lng, it.lat, it.title, 'incident');
+      setFocusRing(it.lng, it.lat);
       try {
         m.flyTo({
           center: [it.lng, it.lat],
@@ -566,11 +632,10 @@
           essential: true
         });
       } catch (_) {}
-      if (a.showTrafficDetail) a.showTrafficDetail(it.lng, it.lat, it.title, it.body);
+      // TV-only: keep a single large panel; no MapLibre popup.
       showTrafficDetail(it.title, it.body, it.meta);
       await sleep(incDwell);
       hideTrafficDetail();
-      removeTempPin();
     }
 
     // --- Cameras near route (up to 4) ---
@@ -578,7 +643,10 @@
       window.CITY_CONFIG && window.CITY_CONFIG.camerasFeedUrl
         ? String(window.CITY_CONFIG.camerasFeedUrl).trim()
         : '';
-    if (!camsUrl) return;
+    if (!camsUrl) {
+      log('Cameras skipped (no camerasFeedUrl in CITY_CONFIG)');
+      return;
+    }
 
     if (!window._mfTvAllCameras || !Array.isArray(window._mfTvAllCameras)) {
       try {
@@ -588,9 +656,11 @@
           window._mfTvAllCameras = normalizeCamerasPayload(raw);
         } else {
           window._mfTvAllCameras = [];
+          log('Cameras fetch failed: HTTP ' + res.status);
         }
       } catch (_) {
         window._mfTvAllCameras = [];
+        log('Cameras fetch failed (network/CORS)');
       }
     }
 
@@ -634,9 +704,9 @@
       if (TV.paused) return;
       const it = nearCams[i];
       setPhaseBadge('Transit + Cameras');
-      setLowerThird('Traffic camera', it.title);
+      setLowerThird('', '');
       hideTrafficDetail();
-      showTempPin(it.lng, it.lat, it.title, 'camera');
+      setFocusRing(it.lng, it.lat);
       try {
         m.flyTo({
           center: [it.lng, it.lat],
@@ -648,7 +718,6 @@
       showTrafficDetail(it.title, it.body, it.meta);
       await sleep(camDwell);
       hideTrafficDetail();
-      removeTempPin();
     }
   }
 
@@ -722,8 +791,6 @@
       }
     }, panDelay);
 
-    const maxLegs = cfg('routeLegsBeforeTraffic', 10);
-
     schedulePhase(dwell, function routeLegEnded() {
       // Cache the route polyline before we remove the overlay (hideRouteOverlay deletes descriptors).
       cacheLegShape(leg);
@@ -748,12 +815,9 @@
           console.warn('[mfTvDirector] bucket failed', e);
         }
         if (TV.paused) return;
-        if (TV.legsThisCycle >= maxLegs) {
-          TV.legsThisCycle = 0;
-          enterTrafficMode();
-        } else {
-          enterRouteMode();
-        }
+        // Director v1 now packages each route with its nearby traffic+cameras bucket.
+        // Keep the global traffic phase available via admin controls, but do not auto-enter it.
+        enterRouteMode();
       })();
     });
   }
