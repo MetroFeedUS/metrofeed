@@ -309,6 +309,8 @@ function metrofeedNearestSegmentInfo(routeShape, lat, lon) {
   const distanceM = metrofeedHaversineM(la, lo, bestPy, bestPx);
   return { bearingFwd, distanceM };
 }
+// TV director + traffic proximity use this from window (obs-director.js).
+window.metrofeedNearestSegmentInfo = metrofeedNearestSegmentInfo;
 
 function metrofeedSegmentProjectionInfo(routeShape, segIdx, lat, lon) {
   if (!Array.isArray(routeShape) || routeShape.length < 2) return null;

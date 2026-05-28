@@ -548,7 +548,14 @@
       shapeLatLon.length > 1;
 
     if (!canDist) {
-      log('Bucket skipped (no polyline distance): ' + String(routeId));
+      log(
+        'Bucket skipped (no polyline distance): ' +
+          String(routeId) +
+          ' nearestFn=' +
+          (typeof window.metrofeedNearestSegmentInfo === 'function') +
+          ' shapePts=' +
+          (Array.isArray(shapeLatLon) ? shapeLatLon.length : 0)
+      );
       return;
     }
 
@@ -822,6 +829,19 @@
           const nextLeg = TV.legs.length ? TV.legs[TV.legIndex % TV.legs.length] : null;
           const routeWillChange = nextLeg && String(nextLeg.routeId) !== String(leg.routeId);
           const shouldBucket = Number(leg.directionId) === 1 || routeWillChange;
+          const cached = getCachedRouteShapeLatLon(leg.routeId);
+          log(
+            'Leg ended ' +
+              leg.routeId +
+              '-' +
+              leg.directionId +
+              ' shouldBucket=' +
+              shouldBucket +
+              ' next=' +
+              (nextLeg ? nextLeg.routeId + '-' + nextLeg.directionId : 'none') +
+              ' shapePts=' +
+              cached.length
+          );
           if (shouldBucket) {
             await runRouteBucketForRoute(leg.routeId);
           }
