@@ -256,9 +256,41 @@
       }
     }
     if (me) {
-      me.textContent = meta || '';
-      me.style.display = meta ? 'block' : 'none';
+      if (kind === 'camera') {
+        me.textContent = '';
+        me.style.display = 'none';
+      } else {
+        me.textContent = meta || '';
+        me.style.display = meta ? 'block' : 'none';
+      }
     }
+  }
+
+  /** Shift map center left so camera location stays visible beside the right-side feed panel. */
+  function flyToTvBucketItem(m, it) {
+    if (!m || !it || !Number.isFinite(it.lng) || !Number.isFinite(it.lat)) return;
+    const flyMs = Number(cfg('mapFlyDurationMs', 900)) || 900;
+    try {
+      if (it.kind === 'camera') {
+        const panelW = Number(cfg('tvCameraPanelWidthPx', 380)) || 380;
+        const padExtra = Number(cfg('tvCameraMapPadExtraPx', 56)) || 56;
+        const padRight = panelW + padExtra;
+        m.flyTo({
+          center: [it.lng, it.lat],
+          zoom: Number(cfg('tvCameraMapZoom', 14.3)) || 14.3,
+          padding: { top: 64, bottom: 64, left: 40, right: padRight },
+          duration: flyMs,
+          essential: true
+        });
+      } else {
+        m.flyTo({
+          center: [it.lng, it.lat],
+          zoom: 14.1,
+          duration: flyMs,
+          essential: true
+        });
+      }
+    } catch (_) {}
   }
 
   function clearPhaseTimerOnly() {
@@ -896,31 +928,17 @@
     setLowerThird('', '');
     hideTrafficDetail();
     setFocusRing(it.lng, it.lat);
-    try {
-      m.flyTo({
-        center: [it.lng, it.lat],
-        zoom: it.kind === 'camera' ? 15.0 : 14.1,
-        duration: cfg('mapFlyDurationMs', 900),
-        essential: true
-      });
-    } catch (_) {}
+    flyToTvBucketItem(m, it);
 
     if (it.kind === 'camera') {
       const imgUrl = resolveCameraImageUrl(it);
-      showTrafficDetail(it.title, it.body, it.meta, imgUrl);
-      if (
-        imgUrl &&
-        typeof window.TrafficCamerasOverlay !== 'undefined' &&
-        window.TrafficCamerasOverlay.showCameraFeed
-      ) {
-        try {
-          window.TrafficCamerasOverlay.showCameraFeed(
-            String(it.id || ''),
-            it.title || 'Traffic camera',
-            imgUrl
-          );
-        } catch (_) {}
-      }
+      showTrafficDetail(it.title, '', '', imgUrl, 'camera');
+    } else if (it.kind === 'incident') {
+      showTrafficDetail(it.title, it.body, it.meta, null, 'incident');
+      setLowerThird('Traffic incident', it.title);
+    } else if (it.kind === 'slowdown') {
+      showTrafficDetail(it.title, it.body, it.meta, null, 'slowdown');
+      setLowerThird('Slowdown', it.title);
     } else {
       showTrafficDetail(it.title, it.body, it.meta);
     }

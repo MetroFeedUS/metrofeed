@@ -38,6 +38,9 @@
     routeBucketIncidentDwellMs: 9000,
     routeBucketSlowdownDwellMs: 5000,
     routeBucketCameraDwellMs: 5000,
+    tvCameraPanelWidthPx: 380,
+    tvCameraMapZoom: 14.3,
+    tvCameraMapPadExtraPx: 56,
     routeBucketEnabled: true,
     routeBucketPrefetchOppositeMs: 4000,
     /** null = all agencies in routes_index order (SORTA, TANK, BCRTA, …) */
