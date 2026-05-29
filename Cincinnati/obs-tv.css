@@ -516,36 +516,58 @@ html.tv-mode .mf-tv-alerts-panel.mf-tv-hidden {
   display: none !important;
 }
 
+/* Vertical column ~400×700 (OBS crop under logo) */
 .mf-tv-alerts-panel {
   position: fixed;
   right: 12px;
-  bottom: 96px;
+  top: 120px;
+  bottom: auto;
   z-index: 10100;
-  width: min(360px, calc(100vw - 24px));
-  max-height: min(72vh, 560px);
-  overflow: auto;
-  padding: 12px 14px 14px;
+  box-sizing: border-box;
+  width: 400px;
+  max-width: calc(100vw - 24px);
+  height: 700px;
+  max-height: min(700px, calc(100vh - 140px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 14px 16px 12px;
   border-radius: 10px;
   border: 1px solid rgba(251, 146, 60, 0.55);
   background: rgba(10, 10, 14, 0.96);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
   pointer-events: auto;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #cbd5e1;
 }
 
+.mf-tv-alerts-panel .mf-tv-admin-head {
+  flex-shrink: 0;
+}
+
 .mf-tv-alerts-panel-route {
+  flex-shrink: 0;
   font-weight: 700;
   color: #f1f5f9;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   line-height: 1.3;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .mf-tv-alerts-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-right: 2px;
+}
+
+.mf-tv-alerts-panel .mf-tv-admin-hint {
+  flex-shrink: 0;
+  margin-top: 8px;
 }
 
 .mf-tv-alerts-panel__empty {
@@ -558,6 +580,9 @@ html.tv-mode .mf-tv-alerts-panel.mf-tv-hidden {
   border-radius: 8px;
   background: rgba(17, 17, 24, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .mf-tv-alerts-panel__more {
