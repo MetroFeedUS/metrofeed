@@ -226,6 +226,10 @@ const CITIES = {
     sharedVehiclePollMs: 12000,
     realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
     realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    /** OBS: map writes, alerts browser reads (same folder as home.html). */
+    tvSyncReadUrl: "./tv-now-playing.json",
+    tvSyncWriteUrl: "./tv-sync-publish.php",
+    tvSyncPollMs: 1500,
     gtfsRtStrictVehicleDirection: true,
     // Legacy: used to flip bearing-only inference. Prefer polyline+tangent matching in routeOverlay instead.
     gtfsRtFlipInferredDirection: false,

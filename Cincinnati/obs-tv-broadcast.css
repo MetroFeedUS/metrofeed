@@ -1,0 +1,304 @@
+/**
+ * RoamRaven TV — single-page OBS canvas 2540×1080
+ * [ map | cameras 2×2 | alerts ] + bottom HUD
+ */
+:root {
+  --mf-bcast-w: 2540px;
+  --mf-bcast-h: 1080px;
+  --mf-bcast-hud-h: 216px;
+  --mf-bcast-accent: #9333ea;
+  --mf-bcast-border: 2px solid rgba(147, 51, 234, 0.85);
+}
+
+html.tv-broadcast-layout,
+html.tv-broadcast-layout body {
+  width: var(--mf-bcast-w) !important;
+  height: var(--mf-bcast-h) !important;
+  min-width: var(--mf-bcast-w) !important;
+  min-height: var(--mf-bcast-h) !important;
+  max-width: var(--mf-bcast-w) !important;
+  max-height: var(--mf-bcast-h) !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #000 !important;
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast-root {
+  position: fixed;
+  inset: 0;
+  width: var(--mf-bcast-w);
+  height: var(--mf-bcast-h);
+  z-index: 9000;
+  display: grid;
+  grid-template-rows: 1fr var(--mf-bcast-hud-h);
+  background: #000;
+  box-sizing: border-box;
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast-root.mf-tv-hidden {
+  display: none !important;
+}
+
+.mf-tv-broadcast__main {
+  display: grid;
+  grid-template-columns: 35fr 35fr 30fr;
+  min-height: 0;
+  border-bottom: var(--mf-bcast-border);
+}
+
+.mf-tv-broadcast__map-wrap,
+.mf-tv-broadcast__cams,
+.mf-tv-broadcast__alerts-wrap {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+  border-right: var(--mf-bcast-border);
+}
+
+.mf-tv-broadcast__alerts-wrap {
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.mf-tv-broadcast__alerts-brand {
+  flex-shrink: 0;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(147, 51, 234, 0.35);
+  text-align: center;
+}
+
+.mf-tv-broadcast__alerts-brand img {
+  display: block;
+  margin: 0 auto 8px;
+  max-width: 92%;
+  height: auto;
+  max-height: 52px;
+}
+
+.mf-tv-broadcast__alerts-brand-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+}
+
+/* Map fills left column */
+html.tv-broadcast-layout .mf-tv-broadcast__map-wrap #map {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast__map-wrap .maplibregl-map,
+html.tv-broadcast-layout .mf-tv-broadcast__map-wrap .maplibregl-canvas-container {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Route badge — inside map column */
+html.tv-broadcast-layout .mf-tv-lower-third {
+  left: 28px !important;
+  top: 28px !important;
+  max-width: min(520px, 90%) !important;
+}
+
+html.tv-broadcast-layout .mf-tv-traffic-detail {
+  display: none !important;
+}
+
+/* --- Camera 2×2 grid (center column) --- */
+.mf-tv-camera-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.mf-tv-camera-grid__cell {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: #050508;
+  border-right: 1px solid rgba(147, 51, 234, 0.35);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.mf-tv-camera-grid__cell:nth-child(2n) {
+  border-right: none;
+}
+
+.mf-tv-camera-grid__cell:nth-child(n + 3) {
+  border-bottom: none;
+}
+
+.mf-tv-camera-grid__cell--active {
+  outline: 3px solid rgba(56, 189, 248, 0.9);
+  outline-offset: -3px;
+  z-index: 2;
+}
+
+.mf-tv-camera-grid__title {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #e0f2fe;
+  background: rgba(8, 14, 22, 0.96);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mf-tv-camera-grid__img-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.mf-tv-camera-grid__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mf-tv-camera-grid__img.mf-tv-hidden {
+  display: none !important;
+}
+
+.mf-tv-camera-grid__placeholder {
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 12px;
+}
+
+/* --- Alerts column --- */
+html.tv-broadcast-layout .mf-tv-alerts-toggle,
+html.tv-broadcast-layout .mf-tv-broadcast__alerts-wrap .mf-tv-admin-hint,
+html.tv-broadcast-layout .mf-tv-broadcast__alerts-wrap #mfTvAlertsClose {
+  display: none !important;
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast__alerts-wrap .mf-tv-alerts-panel {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 12px 14px !important;
+  background: #000 !important;
+}
+
+html.tv-broadcast-layout .mf-tv-alerts-panel.mf-tv-hidden {
+  display: flex !important;
+}
+
+html.tv-broadcast-layout .mf-tv-alerts-panel .mf-tv-admin-head {
+  display: none !important;
+}
+
+html.tv-broadcast-layout .mf-tv-alerts-panel-route {
+  font-size: 0.88rem;
+}
+
+html.tv-broadcast-layout .mf-tv-alerts-panel-body {
+  flex: 1;
+}
+
+/* --- Bottom HUD (scaled support ticker) --- */
+.mf-tv-broadcast__hud {
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+  border-top: var(--mf-bcast-border);
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast__hud .rr-ticker {
+  --rr-w: 2540px;
+  --rr-h: 216px;
+  width: 2540px !important;
+  height: 216px !important;
+  max-width: 2540px !important;
+  max-height: 216px !important;
+  grid-template-columns: 480px 580px 1fr 140px;
+  grid-template-rows: 168px 48px;
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast__hud .rr-clock__time {
+  font-size: 2.85rem;
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast__hud .rr-weather-now__temp {
+  font-size: 2.1rem;
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast__hud .rr-hourly__row {
+  gap: 8px;
+}
+
+html.tv-broadcast-layout .mf-tv-broadcast__hud .rr-hourly__slot {
+  min-width: 72px;
+}
+
+html.tv-broadcast-layout .mf-tv-weather.mf-tv-hidden {
+  display: none !important;
+}
+
+/* Weather takeover: full main row */
+html.tv-broadcast-layout.tv-broadcast-weather .mf-tv-broadcast__main {
+  grid-template-columns: 1fr;
+}
+
+html.tv-broadcast-layout.tv-broadcast-weather .mf-tv-broadcast__cams,
+html.tv-broadcast-layout.tv-broadcast-weather .mf-tv-broadcast__alerts-wrap {
+  display: none !important;
+}
+
+html.tv-broadcast-layout.tv-broadcast-weather .mf-tv-weather:not(.mf-tv-hidden) {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: var(--mf-bcast-w) !important;
+  height: calc(var(--mf-bcast-h) - var(--mf-bcast-hud-h)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 9500 !important;
+  background: #000 !important;
+  padding: 32px 48px !important;
+  box-sizing: border-box !important;
+}
+
+html.tv-broadcast-layout .mf-tv-admin-toggle {
+  z-index: 10200;
+}

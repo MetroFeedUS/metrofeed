@@ -14540,7 +14540,7 @@
           window.initMetrofeedSavedPlaces();
         }
 
-        if (window.MF_TV_MODE) {
+        if (window.MF_TV_MODE && !window.MF_TV_NO_DIRECTOR) {
           try {
             if (typeof window.mfTvDirectorStart === 'function') {
               setTimeout(function () {
@@ -14550,6 +14550,23 @@
           } catch (e) {
             console.warn('[TV] director start failed', e);
           }
+        } else if (
+          window.MF_TV_MODE &&
+          window.MF_TV_NO_DIRECTOR &&
+          (window.MF_TV_ALERTS_FOLLOWER || window.MF_TV_ALERTS_COLUMN)
+        ) {
+          try {
+            if (typeof window.fetchAlertsData !== 'function') {
+              var apiScript = document.createElement('script');
+              apiScript.src = 'mf-tv-alerts-api.js';
+              document.head.appendChild(apiScript);
+            }
+            setTimeout(function () {
+              if (typeof window.mfTvAlertsFollowerStart === 'function') {
+                window.mfTvAlertsFollowerStart();
+              }
+            }, 400);
+          } catch (_) {}
         } else {
           // Startup failsafe: if geolocation denied or delayed, fire queued default route once map+overlay are ready.
           try {
@@ -14673,6 +14690,85 @@
     console.log('[DOMContentLoaded] Map and event listeners initialization complete');
   });
 </script>
+
+<!-- OBS TV broadcast canvas 2540×1080 (home.html?tv=1&broadcast=1) -->
+<div id="mfTvBroadcastRoot" class="mf-tv-broadcast-root mf-tv-hidden" aria-hidden="true">
+  <div class="mf-tv-broadcast__main">
+    <div id="mfTvBroadcastMapWrap" class="mf-tv-broadcast__map-wrap"></div>
+    <div class="mf-tv-broadcast__cams">
+      <div id="mfTvCameraGrid" class="mf-tv-camera-grid">
+        <div class="mf-tv-camera-grid__cell" data-slot="0">
+          <div class="mf-tv-camera-grid__title"></div>
+          <div class="mf-tv-camera-grid__img-wrap">
+            <img class="mf-tv-camera-grid__img mf-tv-hidden" alt="" />
+            <div class="mf-tv-camera-grid__placeholder">—</div>
+          </div>
+        </div>
+        <div class="mf-tv-camera-grid__cell" data-slot="1">
+          <div class="mf-tv-camera-grid__title"></div>
+          <div class="mf-tv-camera-grid__img-wrap">
+            <img class="mf-tv-camera-grid__img mf-tv-hidden" alt="" />
+            <div class="mf-tv-camera-grid__placeholder">—</div>
+          </div>
+        </div>
+        <div class="mf-tv-camera-grid__cell" data-slot="2">
+          <div class="mf-tv-camera-grid__title"></div>
+          <div class="mf-tv-camera-grid__img-wrap">
+            <img class="mf-tv-camera-grid__img mf-tv-hidden" alt="" />
+            <div class="mf-tv-camera-grid__placeholder">—</div>
+          </div>
+        </div>
+        <div class="mf-tv-camera-grid__cell" data-slot="3">
+          <div class="mf-tv-camera-grid__title"></div>
+          <div class="mf-tv-camera-grid__img-wrap">
+            <img class="mf-tv-camera-grid__img mf-tv-hidden" alt="" />
+            <div class="mf-tv-camera-grid__placeholder">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="mfTvBroadcastAlertsWrap" class="mf-tv-broadcast__alerts-wrap">
+      <div class="mf-tv-broadcast__alerts-brand">
+        <img src="RoamRavenNamelogo.svg" alt="RoamRaven" width="280" height="48" />
+        <div class="mf-tv-broadcast__alerts-brand-sub">Cincinnati / NKY · SORTA · TANK · BCRTA</div>
+      </div>
+    </div>
+  </div>
+  <div class="mf-tv-broadcast__hud" id="mfTvBroadcastHud">
+    <div class="rr-ticker" role="presentation">
+      <section class="rr-ticker__cell rr-ticker__clock" aria-label="Clock">
+        <div id="rrClockTime" class="rr-clock__time">—:—</div>
+        <div id="rrClockDate" class="rr-clock__date">—</div>
+        <div id="rrClockPlace" class="rr-clock__place">Cincinnati, OH</div>
+      </section>
+      <section class="rr-ticker__cell rr-ticker__weather" aria-label="Current weather">
+        <div class="rr-weather-now">
+          <div id="rrWeatherEmoji" class="rr-weather-now__emoji" aria-hidden="true">🌤️</div>
+          <div id="rrWeatherTemp" class="rr-weather-now__temp">—</div>
+          <div class="rr-weather-now__meta">
+            <div id="rrWeatherDesc" class="rr-weather-now__desc">Loading…</div>
+            <div id="rrWeatherFeels" class="rr-weather-now__feels"></div>
+            <div id="rrWeatherAlert" class="rr-weather-alert rr-weather-alert--ok">—</div>
+          </div>
+        </div>
+      </section>
+      <section class="rr-ticker__cell rr-ticker__hourly" aria-label="Hourly forecast">
+        <div class="rr-hourly__label">Next hours</div>
+        <div id="rrHourlyRow" class="rr-hourly__row">
+          <div class="rr-ticker__loading">…</div>
+        </div>
+      </section>
+      <div class="rr-ticker__brand-col" aria-hidden="true">
+        <div class="rr-ticker__brand">ROAMRAVEN</div>
+      </div>
+      <footer class="rr-ticker__bar">
+        <div id="rrTickerTip" class="rr-ticker__tip"><span>Tip ·</span> roamravenapp.com</div>
+        <div id="rrTonight" class="rr-ticker__tonight">—</div>
+        <div id="rrWeatherUpdated" class="rr-ticker__updated">—</div>
+      </footer>
+    </div>
+  </div>
+</div>
 
 <!-- OBS TV director overlays (home.html?tv=1) -->
 <div id="mfTvLowerThird" class="mf-tv-lower-third mf-tv-hidden" aria-hidden="true">

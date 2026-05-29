@@ -8,13 +8,62 @@
   var tv = params.get('tv');
   if (tv !== '1' && tv !== 'true') return;
 
-  if (sessionStorage.getItem('obsTvAuth') !== '1') {
+  var broadcastParam = params.get('broadcast') === '1' || params.get('broadcast') === 'true';
+  var alertsFollowerParam =
+    params.get('alertsFollower') === '1' || params.get('alertsFollower') === 'true';
+  var alertsColumnParam =
+    params.get('alertsColumn') === '1' || params.get('alertsColumn') === 'true';
+  /** Second OBS browser source: no director, no auth gate (sessionStorage is not shared). */
+  var tvAlertsOnlySource =
+    !broadcastParam && (alertsFollowerParam || alertsColumnParam);
+
+  if (!tvAlertsOnlySource && sessionStorage.getItem('obsTvAuth') !== '1') {
     var ret = encodeURIComponent(window.location.pathname.split('/').pop() + window.location.search);
     window.location.replace('obs-route-tv.html?return=' + ret);
     return;
   }
 
   window.MF_TV_MODE = true;
+  window.MF_TV_SYNC_LEADER = true;
+
+  if (alertsFollowerParam || alertsColumnParam) {
+    window.MF_TV_SYNC_LEADER = false;
+    window.MF_TV_NO_DIRECTOR = true;
+    window.MF_TV_ALERTS_FOLLOWER = true;
+    document.documentElement.classList.add('tv-alerts-follower');
+  }
+
+  if (alertsColumnParam) {
+    window.MF_TV_ALERTS_COLUMN = true;
+  }
+
+  if (broadcastParam) {
+    window.MF_TV_BROADCAST = true;
+    window.MF_TV_ALERTS_COLUMN = true;
+    window.MF_TV_SYNC_LEADER = false;
+    document.documentElement.classList.add('tv-broadcast-layout');
+    var vp = document.querySelector('meta[name="viewport"]');
+    if (vp) {
+      vp.setAttribute('content', 'width=2540, height=1080, initial-scale=1');
+    }
+    var bcastCss = document.createElement('link');
+    bcastCss.rel = 'stylesheet';
+    bcastCss.href = 'obs-tv-broadcast.css?v=1';
+    document.head.appendChild(bcastCss);
+    var tickerCss = document.createElement('link');
+    tickerCss.rel = 'stylesheet';
+    tickerCss.href = 'obs-support-ticker.css?v=2';
+    document.head.appendChild(tickerCss);
+    var bcastJs = document.createElement('script');
+    bcastJs.src = 'obs-tv-broadcast.js?v=1';
+    document.head.appendChild(bcastJs);
+    var alertsApi = document.createElement('script');
+    alertsApi.src = 'mf-tv-alerts-api.js';
+    document.head.appendChild(alertsApi);
+    var tickerJs = document.createElement('script');
+    tickerJs.src = 'obs-support-ticker.js?v=2';
+    document.head.appendChild(tickerJs);
+  }
   window.MF_TV_CONFIG = window.MF_TV_CONFIG || {
     routeLegDwellMs: 0,
     routeLegsBeforeTraffic: 10,
@@ -81,12 +130,18 @@
     if (manifestLink) manifestLink.remove();
   } catch (_) {}
 
-  if (params.get('alertsColumn') === '1' || params.get('alertsColumn') === 'true') {
-    window.MF_TV_ALERTS_COLUMN = true;
+  if (broadcastParam) {
+    window.MF_TV_CONFIG.tvCameraPanelWidthRatio = 0;
+    window.MF_TV_CONFIG.tvCameraPanelWidthPx = 0;
+    window.MF_TV_CONFIG.tvMapPadTop = 48;
+    window.MF_TV_CONFIG.tvMapPadBottom = 48;
+    window.MF_TV_CONFIG.tvMapPadLeft = 36;
+    window.MF_TV_CONFIG.tvMapPadRight = 36;
+    window.MF_TV_CONFIG.routeBucketMaxCameras = 4;
   }
 
   /** ?obs=1 — full-width map, no in-browser camera column (for OBS multi-source layout) */
-  if (params.get('obs') === '1' || params.get('obs') === 'true') {
+  if (!broadcastParam && (params.get('obs') === '1' || params.get('obs') === 'true')) {
     window.MF_TV_CONFIG.tvCameraPanelWidthRatio = 0;
     window.MF_TV_CONFIG.tvCameraPanelWidthPx = 0;
     window.MF_TV_CONFIG.tvMapPadTop = 56;
@@ -96,9 +151,15 @@
     document.documentElement.classList.add('tv-obs-layout');
   }
 
+  if (!broadcastParam) {
+    var syncScript = document.createElement('script');
+    syncScript.src = 'mf-tv-sync.js?v=1';
+    document.head.appendChild(syncScript);
+  }
+
   var link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'obs-tv.css?v=20260602';
+  link.href = 'obs-tv.css?v=20260603';
   document.head.appendChild(link);
 
   /** OBS Browser Source: keep MapLibre canvas pixel size = container (fixes route line drift). */

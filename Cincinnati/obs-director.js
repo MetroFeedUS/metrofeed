@@ -230,6 +230,9 @@
   }
 
   function showTrafficDetail(title, body, meta, imageUrl, kind) {
+    if (isTvBroadcast() && kind === 'camera') {
+      return;
+    }
     const p = el('mfTvTrafficDetail');
     const ti = el('mfTvTrafficDetailTitle');
     const img = el('mfTvTrafficDetailImage');
@@ -416,6 +419,116 @@
 
   function map() {
     return window.map;
+  }
+
+  function isTvBroadcast() {
+    return !!window.MF_TV_BROADCAST;
+  }
+
+  function broadcastCameraCell(slot) {
+    return document.querySelector('.mf-tv-camera-grid__cell[data-slot="' + slot + '"]');
+  }
+
+  function clearBroadcastCameraGrid() {
+    for (let s = 0; s < 4; s++) {
+      const cell = broadcastCameraCell(s);
+      if (!cell) continue;
+      cell.classList.remove('mf-tv-camera-grid__cell--active');
+      const title = cell.querySelector('.mf-tv-camera-grid__title');
+      const img = cell.querySelector('.mf-tv-camera-grid__img');
+      const ph = cell.querySelector('.mf-tv-camera-grid__placeholder');
+      if (title) title.textContent = '';
+      if (img) {
+        img.classList.add('mf-tv-hidden');
+        img.removeAttribute('src');
+      }
+      if (ph) {
+        ph.textContent = '—';
+        ph.style.display = '';
+      }
+    }
+    TV.broadcastCamBatch = null;
+  }
+
+  function fillBroadcastCameraGrid(cameras) {
+    const list = Array.isArray(cameras) ? cameras.slice(0, 4) : [];
+    TV.broadcastCamBatch = list;
+    for (let s = 0; s < 4; s++) {
+      const cell = broadcastCameraCell(s);
+      if (!cell) continue;
+      const title = cell.querySelector('.mf-tv-camera-grid__title');
+      const img = cell.querySelector('.mf-tv-camera-grid__img');
+      const ph = cell.querySelector('.mf-tv-camera-grid__placeholder');
+      const cam = list[s];
+      if (!cam) {
+        if (title) title.textContent = '';
+        if (img) {
+          img.classList.add('mf-tv-hidden');
+          img.removeAttribute('src');
+        }
+        if (ph) {
+          ph.textContent = '—';
+          ph.style.display = '';
+        }
+        continue;
+      }
+      const url = resolveCameraImageUrl(cam);
+      if (title) title.textContent = cam.title || 'Camera';
+      if (ph) ph.style.display = 'none';
+      if (img) {
+        if (url) {
+          img.classList.remove('mf-tv-hidden');
+          img.alt = cam.title || 'Traffic camera';
+          img.referrerPolicy = 'no-referrer';
+          const sep = url.indexOf('?') >= 0 ? '&' : '?';
+          img.onerror = function () {
+            img.classList.add('mf-tv-hidden');
+            img.removeAttribute('src');
+            if (ph) {
+              ph.textContent = 'No image';
+              ph.style.display = '';
+            }
+          };
+          img.src = url + sep + 't=' + Date.now();
+        } else {
+          img.classList.add('mf-tv-hidden');
+          img.removeAttribute('src');
+          if (ph) {
+            ph.textContent = 'No image';
+            ph.style.display = '';
+          }
+        }
+      }
+    }
+  }
+
+  function setBroadcastCameraActive(index) {
+    for (let s = 0; s < 4; s++) {
+      const cell = broadcastCameraCell(s);
+      if (cell) cell.classList.toggle('mf-tv-camera-grid__cell--active', s === index);
+    }
+  }
+
+  function broadcastCameraIndexForItem(it) {
+    const batch = TV.broadcastCamBatch;
+    if (!batch || !it) return -1;
+    for (let i = 0; i < batch.length; i++) {
+      if (batch[i] === it) return i;
+      if (batch[i].id != null && it.id != null && String(batch[i].id) === String(it.id)) return i;
+    }
+    return -1;
+  }
+
+  function publishTvSyncNow() {
+    if (typeof window.mfTvPublishSync !== 'function') return;
+    const r = TV.currentRoute;
+    const leg = TV.currentLeg;
+    window.mfTvPublishSync({
+      routeId: r && r.routeId ? String(r.routeId) : '',
+      routeLabel: r && r.label != null ? String(r.label) : '',
+      dirLabel: leg && leg.dirLabel != null ? String(leg.dirLabel) : '',
+      phase: String(TV.mode || 'idle')
+    });
   }
 
   function tvMapResize() {
@@ -857,6 +970,8 @@
     removeTempPin();
     TV.currentRouteKey = null;
     TV.currentLeg = null;
+    if (isTvBroadcast()) clearBroadcastCameraGrid();
+    publishTvSyncNow();
     const a = api();
     if (a && a.trafficOff) {
       try {
@@ -1114,8 +1229,13 @@
     await waitForMapSettled(flyMs);
 
     if (it.kind === 'camera') {
-      const imgUrl = resolveCameraImageUrl(it);
-      showTrafficDetail(it.title, '', '', imgUrl, 'camera');
+      if (isTvBroadcast()) {
+        const idx = broadcastCameraIndexForItem(it);
+        if (idx >= 0) setBroadcastCameraActive(idx);
+      } else {
+        const imgUrl = resolveCameraImageUrl(it);
+        showTrafficDetail(it.title, '', '', imgUrl, 'camera');
+      }
     } else if (it.kind === 'incident') {
       showTrafficDetail(it.title, it.body, it.meta, null, 'incident');
       setLowerThird('Traffic incident', it.title);
@@ -1370,11 +1490,18 @@
         ')'
     );
 
+    if (isTvBroadcast() && nearCams.length) {
+      fillBroadcastCameraGrid(nearCams.slice(0, maxCameras));
+    } else if (isTvBroadcast()) {
+      clearBroadcastCameraGrid();
+    }
+
     for (let i = 0; i < Math.min(maxCameras, nearCams.length); i++) {
       await displayBucketItem(nearCams[i], camDwell, 'Cameras near route');
     }
 
     hideTrafficDetail();
+    if (isTvBroadcast()) clearBroadcastCameraGrid();
     tvResetMapViewForRoute(routeId);
     const postLeg = TV.currentLeg;
     const postDir =
@@ -1402,6 +1529,7 @@
     const overlayKey = routeId + '-' + directionId;
     TV.currentRouteKey = overlayKey;
     adminUpdateStatus();
+    publishTvSyncNow();
 
     const disp = parseRouteDisplay(route.label, routeId);
     setLowerThird('Route ' + disp.number, disp.title + ' · ' + dirLabel);
@@ -1469,10 +1597,14 @@
     const routeId = route.routeId;
     TV.currentRoute = route;
     TV.mode = MODES.ROUTE;
+    publishTvSyncNow();
     setPhaseBadge('Transit');
     hideTrafficDetail();
     const wp = el('mfTvWeatherPanel');
     if (wp) wp.classList.add('mf-tv-hidden');
+    if (isTvBroadcast() && typeof window.mfTvBroadcastSetWeatherMode === 'function') {
+      window.mfTvBroadcastSetWeatherMode(false);
+    }
     const a = api();
     if (a && a.trafficOff) {
       try {
@@ -1513,6 +1645,7 @@
     clearMapBetweenRoutes();
     delete TV.routeShapeCache[routeId];
     TV.currentRoute = null;
+    publishTvSyncNow();
     log('Episode done: ' + routeId);
   }
 
@@ -1550,6 +1683,9 @@
     TV.mode = MODES.ROUTE;
     const wp = el('mfTvWeatherPanel');
     if (wp) wp.classList.add('mf-tv-hidden');
+    if (isTvBroadcast() && typeof window.mfTvBroadcastSetWeatherMode === 'function') {
+      window.mfTvBroadcastSetWeatherMode(false);
+    }
     TV.episodeGeneration++;
     clearMapBetweenRoutes();
     runNextRouteEpisode();
@@ -1761,7 +1897,7 @@
       panel.style.height = '700px';
       panel.style.maxWidth = '400px';
       panel.style.maxHeight = '700px';
-      if (!opts.noFreeze) setMapFrozen(true);
+      if (!opts.noFreeze && !isTvBroadcast()) setMapFrozen(true);
       refreshAlertsPanel(true);
     } else {
       if (!window.MF_TV_ALERTS_COLUMN) {
@@ -1801,7 +1937,17 @@
     alertsPanelOpen(panel && panel.classList.contains('mf-tv-hidden'));
   }
 
-  function alertsRouteFromState() {
+  async function alertsRouteFromSync() {
+    if (typeof window.mfTvFetchSync === 'function') {
+      const sync = await window.mfTvFetchSync();
+      if (sync && sync.routeId) {
+        return {
+          routeId: String(sync.routeId),
+          label: sync.routeLabel ? String(sync.routeLabel) : String(sync.routeId),
+          dir: sync.dirLabel ? String(sync.dirLabel) : ''
+        };
+      }
+    }
     const r = TV.currentRoute;
     const leg = TV.currentLeg;
     const routeId = r && r.routeId ? String(r.routeId) : '';
@@ -1825,10 +1971,22 @@
     if (!routeEl || !bodyEl || !panel) return;
     if (panel.classList.contains('mf-tv-hidden') && !force) return;
 
-    const rt = alertsRouteFromState();
+    const rt = window.MF_TV_ALERTS_FOLLOWER
+      ? await alertsRouteFromSync()
+      : await (async function () {
+          const r = TV.currentRoute;
+          const leg = TV.currentLeg;
+          return {
+            routeId: r && r.routeId ? String(r.routeId) : '',
+            label: r && r.label != null ? String(r.label) : '',
+            dir: leg && leg.dirLabel ? String(leg.dirLabel) : ''
+          };
+        })();
     const key = rt.routeId + '|' + (rt.dir || '');
     if (!rt.routeId) {
-      routeEl.textContent = 'Waiting for route…';
+      routeEl.textContent = window.MF_TV_ALERTS_FOLLOWER
+        ? 'Waiting for map…'
+        : 'Waiting for route…';
       alertsRenderEmpty(bodyEl, '—');
       alertsLastKey = '';
       return;
@@ -1914,7 +2072,9 @@
       }
     }, 2500);
 
-    if (window.MF_TV_ALERTS_COLUMN) {
+    if (window.MF_TV_BROADCAST) {
+      alertsPanelOpen(true, { noFreeze: true });
+    } else if (window.MF_TV_ALERTS_COLUMN && !window.MF_TV_ALERTS_FOLLOWER) {
       alertsPanelOpen(true, { noFreeze: true });
     }
   }
@@ -2007,6 +2167,10 @@
 
   async function enterTrafficMode() {
     TV.mode = MODES.TRAFFIC;
+    if (isTvBroadcast() && typeof window.mfTvBroadcastSetWeatherMode === 'function') {
+      window.mfTvBroadcastSetWeatherMode(false);
+    }
+    publishTvSyncNow();
     adminUpdateStatus();
     setPhaseBadge('Traffic');
     hideAllRouteOverlays();
@@ -2082,6 +2246,10 @@
 
   async function enterConstructionMode() {
     TV.mode = MODES.CONSTRUCTION;
+    if (isTvBroadcast() && typeof window.mfTvBroadcastSetWeatherMode === 'function') {
+      window.mfTvBroadcastSetWeatherMode(false);
+    }
+    publishTvSyncNow();
     adminUpdateStatus();
     setPhaseBadge('Construction');
     hideTrafficDetail();
@@ -2247,10 +2415,14 @@
 
   async function enterWeatherMode() {
     TV.mode = MODES.WEATHER;
+    publishTvSyncNow();
     adminUpdateStatus();
     setPhaseBadge('Weather');
     hideTrafficDetail();
     setLowerThird('', '');
+    if (isTvBroadcast() && typeof window.mfTvBroadcastSetWeatherMode === 'function') {
+      window.mfTvBroadcastSetWeatherMode(true);
+    }
 
     const a = api();
     if (a && a.hideConstructionLayer) a.hideConstructionLayer();
@@ -2332,8 +2504,25 @@
     TV.routes = buildRouteQueue();
     TV.routeIndex = 0;
     log('Director started; ' + TV.routes.length + ' routes (episode loop)');
+    if (isTvBroadcast() && typeof window.mfTvBroadcastInit === 'function') {
+      window.mfTvBroadcastInit();
+    }
+    if (window.MF_TV_BROADCAST) {
+      alertsPanelOpen(true, { noFreeze: true });
+    }
+    publishTvSyncNow();
     runNextRouteEpisode();
   }
+
+  window.mfTvAlertsFollowerStart = function () {
+    if (window.MF_TV_ALERTS_COLUMN) {
+      alertsPanelOpen(true, { noFreeze: true });
+    }
+    setInterval(function () {
+      refreshAlertsPanel(true);
+    }, typeof window.mfTvSyncPollMs === 'function' ? window.mfTvSyncPollMs() : 1500);
+    refreshAlertsPanel(true);
+  };
 
   window.mfTvDirectorStart = function () {
     waitForReady().then(startDirector);
