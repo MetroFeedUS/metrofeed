@@ -77,4 +77,23 @@
   global.MF_TV_STAGE = STAGE;
   global.mfTvParsePanelParams = parseTvPanelParams;
   global.mfTvBuildQuery = buildTvQuery;
+
+  /** Map/director: use fixed OBS pixels, not window.innerWidth (CEF lies in browser sources). */
+  global.mfTvViewportPx = function () {
+    if (global.MF_TV_MAP_PX && global.MF_TV_MAP_PX.w) {
+      return { w: global.MF_TV_MAP_PX.w, h: global.MF_TV_MAP_PX.h };
+    }
+    var mapEl = global.document && global.document.getElementById('map');
+    if (mapEl) {
+      var r = mapEl.getBoundingClientRect();
+      if (r.width > 80 && r.height > 80) {
+        return { w: Math.round(r.width), h: Math.round(r.height) };
+      }
+    }
+    var spec = global.MF_TV_STAGE_SPEC;
+    if (spec && spec.crop) {
+      return { w: spec.crop.w, h: spec.crop.h };
+    }
+    return { w: 1920, h: 1080 };
+  };
 })(typeof window !== 'undefined' ? window : global);

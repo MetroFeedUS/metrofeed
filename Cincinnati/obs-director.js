@@ -169,14 +169,27 @@
     }
   }
 
-  /** Right-side camera panel width — keeps map pin on the left half of the frame. */
-  function resolveTvCameraPanelWidthPx() {
-    const ratio = Number(cfg('tvCameraPanelWidthRatio', 0));
-    if (ratio > 0 && ratio < 1) {
-      return Math.round((window.innerWidth || 1920) * ratio);
+  /** Map/director: use fixed OBS pixels, not window.innerWidth (CEF lies in browser sources). */
+  function tvViewportW() {
+    if (typeof window.mfTvViewportPx === 'function') {
+      return window.mfTvViewportPx().w;
     }
+    const mapEl = document.getElementById('map');
+    if (mapEl) {
+      const r = mapEl.getBoundingClientRect();
+      if (r.width > 80) return Math.round(r.width);
+    }
+    return window.innerWidth || 1920;
+  }
+
+  function resolveTvCameraPanelWidthPx() {
     const fixed = Number(cfg('tvCameraPanelWidthPx', 0));
     if (fixed > 0) return fixed;
+
+    const ratio = Number(cfg('tvCameraPanelWidthRatio', 0));
+    if (ratio > 0 && ratio < 1) {
+      return Math.round(tvViewportW() * ratio);
+    }
 
     const panel = el('mfTvTrafficDetail');
     if (
@@ -188,13 +201,16 @@
       if (r.width > 80) return Math.round(r.width);
     }
 
-    const W = window.innerWidth || 1920;
+    const W = tvViewportW();
     if (document.documentElement.classList.contains('tv-obs-layout')) {
       return Math.min(420, Math.round(W * 0.38)) + 24;
     }
     if (panel && panel.classList.contains('mf-tv-layout-positioned')) {
       const r = panel.getBoundingClientRect();
       if (r.width > 80) return Math.round(r.width);
+    }
+    if (window.MF_TV_STAGE_MODE) {
+      return 880;
     }
     return Math.round(W * 0.5);
   }

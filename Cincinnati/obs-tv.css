@@ -64,10 +64,38 @@ html.tv-mode #map {
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
   width: 100% !important;
   height: 100% !important;
+}
+
+/* Stage mode: fixed OBS pixels — overrides home.html 100vw/100vh */
+html.tv-stage-mode.tv-mode,
+html.tv-stage-mode.tv-mode body {
+  width: var(--mf-tv-bw, 1920px) !important;
+  height: var(--mf-tv-bh, 1080px) !important;
+  min-width: 0 !important;
+  max-width: var(--mf-tv-bw, 1920px) !important;
+  max-height: var(--mf-tv-bh, 1080px) !important;
+}
+
+html.tv-stage-mode.tv-mode #map {
+  width: var(--mf-tv-crop-w, 1920px) !important;
+  height: var(--mf-tv-crop-h, 1080px) !important;
+  max-width: var(--mf-tv-crop-w, 1920px) !important;
+  max-height: var(--mf-tv-crop-h, 1080px) !important;
+}
+
+html.tv-stage-mode.tv-mode .maplibregl-map,
+html.tv-stage-mode.tv-mode .maplibregl-canvas-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
 }
 
 html.tv-mode .maplibregl-map {

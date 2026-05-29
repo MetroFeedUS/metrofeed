@@ -1,13 +1,11 @@
 /**
  * TV director bootstrap — home.html?tv=1&panel=map&bw=1920&bh=1080
- * Non-map panels redirect to obs-tv.html (same query params).
  */
 (function () {
   'use strict';
 
   var params = new URLSearchParams(window.location.search);
-  var tv = params.get('tv');
-  if (tv !== '1' && tv !== 'true') return;
+  if (params.get('tv') !== '1' && params.get('tv') !== 'true') return;
 
   if (sessionStorage.getItem('obsTvAuth') !== '1') {
     var ret = encodeURIComponent(window.location.pathname.split('/').pop() + window.location.search);
@@ -18,7 +16,15 @@
   var spec =
     typeof window.mfTvParsePanelParams === 'function'
       ? window.mfTvParsePanelParams(params)
-      : { panel: 'map', needsDirector: true, isMap: true, bw: 1920, bh: 1080, scale: 1, crop: { x: 0, y: 0, w: 1920, h: 1080 }, stage: { width: 2400, height: 1350 } };
+      : {
+          panel: 'map',
+          isMap: true,
+          bw: 1920,
+          bh: 1080,
+          scale: 1,
+          crop: { x: 0, y: 0, w: 1920, h: 1080 },
+          stage: { width: 2400, height: 1350 }
+        };
 
   window.MF_TV_STAGE_SPEC = spec;
   window.MF_TV_STAGE_MODE = true;
@@ -30,6 +36,62 @@
   }
 
   window.MF_TV_MODE = true;
+
+  var crop = spec.crop || { x: 0, y: 0, w: 1920, h: 1080 };
+  window.MF_TV_MAP_PX = { w: crop.w, h: crop.h, bw: spec.bw, bh: spec.bh };
+
+  /** Lock page pixels NOW (before #map exists) — fixes OBS 100vw/100vh blow-up. */
+  function applyStageCritical() {
+    var root = document.documentElement;
+    root.style.setProperty('--mf-tv-bw', spec.bw + 'px');
+    root.style.setProperty('--mf-tv-bh', spec.bh + 'px');
+    root.style.setProperty('--mf-tv-crop-w', crop.w + 'px');
+    root.style.setProperty('--mf-tv-crop-h', crop.h + 'px');
+    root.classList.add('tv-mode', 'tv-stage-mode', 'tv-panel-' + spec.panel);
+
+    var vp = document.querySelector('meta[name="viewport"]');
+    if (!vp) {
+      vp = document.createElement('meta');
+      vp.setAttribute('name', 'viewport');
+      document.head.appendChild(vp);
+    }
+    vp.setAttribute(
+      'content',
+      'width=' +
+        spec.bw +
+        ', height=' +
+        spec.bh +
+        ', initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no'
+    );
+
+    var crit = document.getElementById('mfTvStageCritical');
+    if (!crit) {
+      crit = document.createElement('style');
+      crit.id = 'mfTvStageCritical';
+      document.head.appendChild(crit);
+    }
+    crit.textContent =
+      'html.tv-stage-mode,html.tv-stage-mode body{width:' +
+      spec.bw +
+      'px!important;height:' +
+      spec.bh +
+      'px!important;max-width:' +
+      spec.bw +
+      'px!important;max-height:' +
+      spec.bh +
+      'px!important;overflow:hidden!important;margin:0!important;padding:0!important;}' +
+      'html.tv-stage-mode #map{width:' +
+      crop.w +
+      'px!important;height:' +
+      crop.h +
+      'px!important;max-width:' +
+      crop.w +
+      'px!important;max-height:' +
+      crop.h +
+      'px!important;position:absolute!important;top:0!important;left:0!important;right:auto!important;bottom:auto!important;}';
+  }
+
+  applyStageCritical();
 
   if (params.get('tvReset') === '1' || params.get('tvReset') === 'true') {
     try {
@@ -63,14 +125,14 @@
     routeBucketIncidentDwellMs: 14000,
     routeBucketSlowdownDwellMs: 12000,
     routeBucketCameraDwellMs: 11000,
-    tvCameraPanelWidthPx: 0,
+    tvCameraPanelWidthPx: 880,
     tvCameraPanelWidthRatio: 0,
     tvCameraMapZoom: 14.3,
     tvCameraMapPadExtraPx: 56,
     tvPostCamResetMs: 1600,
     tvTransitMaxZoom: 15.4,
-    tvMapPadTop: 56,
-    tvMapPadBottom: 56,
+    tvMapPadTop: 48,
+    tvMapPadBottom: 48,
     tvMapPadLeft: 40,
     tvMapPadRight: 40,
     routeBucketEnabled: true,
@@ -89,8 +151,6 @@
     document.head.appendChild(lazyIdx);
   }
 
-  document.documentElement.classList.add('tv-mode');
-
   try {
     var manifestLink = document.querySelector('link[rel="manifest"]');
     if (manifestLink) manifestLink.remove();
@@ -98,55 +158,48 @@
 
   var link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'obs-tv.css?v=20260601';
+  link.href = 'obs-tv.css?v=20260602';
   document.head.appendChild(link);
 
   var stageCss = document.createElement('link');
   stageCss.rel = 'stylesheet';
-  stageCss.href = 'obs-tv-stage.css?v=1';
+  stageCss.href = 'obs-tv-stage.css?v=2';
   document.head.appendChild(stageCss);
-
-  var stageJs = document.createElement('script');
-  stageJs.src = 'obs-tv-stage.js?v=1';
-  document.head.appendChild(stageJs);
 
   var busJs = document.createElement('script');
   busJs.src = 'obs-tv-bus.js?v=1';
   document.head.appendChild(busJs);
 
-  function applyStageWhenReady() {
-    if (typeof window.mfTvStageApply === 'function') {
-      window.mfTvStageApply(document, spec);
-    }
+  function forceMapBoxSize() {
+    var mapEl = document.getElementById('map');
+    if (!mapEl) return;
+    mapEl.style.setProperty('width', crop.w + 'px', 'important');
+    mapEl.style.setProperty('height', crop.h + 'px', 'important');
+    mapEl.style.setProperty('max-width', crop.w + 'px', 'important');
+    mapEl.style.setProperty('max-height', crop.h + 'px', 'important');
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyStageWhenReady);
-  } else {
-    applyStageWhenReady();
+
+  function resizeMap() {
+    forceMapBoxSize();
+    try {
+      if (window.map && typeof window.map.resize === 'function') {
+        window.map.resize();
+      }
+      if (window.mfTvDirector && typeof window.mfTvDirector.refitMap === 'function') {
+        window.mfTvDirector.refitMap();
+      }
+    } catch (_) {}
   }
+
+  window.addEventListener('resize', resizeMap);
 
   function ensureTvMapResize() {
-    function resizeMap() {
-      try {
-        if (window.map && typeof window.map.resize === 'function') {
-          window.map.resize();
-        }
-        if (window.mfTvDirector && typeof window.mfTvDirector.refitMap === 'function') {
-          window.mfTvDirector.refitMap();
-        }
-      } catch (_) {}
-    }
-
-    window.addEventListener('resize', resizeMap);
     if (typeof ResizeObserver !== 'undefined') {
       var attachRo = function () {
         var mapEl = document.getElementById('map');
         if (!mapEl) return;
         try {
-          var ro = new ResizeObserver(function () {
-            resizeMap();
-          });
-          ro.observe(mapEl);
+          new ResizeObserver(resizeMap).observe(mapEl);
         } catch (_) {}
       };
       if (document.readyState === 'loading') {
@@ -156,9 +209,17 @@
       }
     }
 
-    [0, 200, 600, 1500, 3500, 8000].forEach(function (ms) {
+    [0, 200, 600, 1500, 3500, 8000, 12000].forEach(function (ms) {
       setTimeout(resizeMap, ms);
     });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        forceMapBoxSize();
+        setTimeout(resizeMap, 100);
+        setTimeout(resizeMap, 800);
+      });
+    }
 
     var poll = setInterval(function () {
       if (!window.map) return;
@@ -175,21 +236,16 @@
   ensureTvMapResize();
 
   function hideTvChrome() {
-    [
-      '#favoritesWrapper',
-      '.favorites-wrapper',
-      'footer.site-footer',
-      '#minimizedItinerary',
-      '#mfTripPlannerSearchBar',
-      '#menuBtn'
-    ].forEach(function (sel) {
-      try {
-        document.querySelectorAll(sel).forEach(function (el) {
-          el.style.setProperty('display', 'none', 'important');
-          el.style.setProperty('visibility', 'hidden', 'important');
-        });
-      } catch (_) {}
-    });
+    ['#favoritesWrapper', '.favorites-wrapper', 'footer.site-footer', '#minimizedItinerary', '#mfTripPlannerSearchBar', '#menuBtn'].forEach(
+      function (sel) {
+        try {
+          document.querySelectorAll(sel).forEach(function (el) {
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('visibility', 'hidden', 'important');
+          });
+        } catch (_) {}
+      }
+    );
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', hideTvChrome);
