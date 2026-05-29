@@ -158,13 +158,11 @@
               });
               const tipEl = el('rrTonight');
               if (tipEl && tonight) {
+                const fc = String(tonight.shortForecast || '').trim();
+                const short =
+                  fc.length > 42 ? fc.slice(0, 40) + '…' : fc;
                 tipEl.textContent =
-                  'Tonight: ' +
-                  (tonight.shortForecast || '') +
-                  ' · Low ' +
-                  tonight.temperature +
-                  '°' +
-                  (tonight.temperatureUnit || 'F');
+                  'Tonight: ' + short + ' · ' + tonight.temperature + '°';
               }
             }
           } catch (_) {}
@@ -215,7 +213,7 @@
       return;
     }
     let html = '';
-    periods.slice(0, 5).forEach(function (p, i) {
+    periods.slice(0, 6).forEach(function (p, i) {
       const time = new Date(p.startTime);
       const timeStr = time.toLocaleTimeString('en-US', {
         timeZone: TZ,
