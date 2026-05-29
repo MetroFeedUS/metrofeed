@@ -516,29 +516,39 @@ html.tv-mode .mf-tv-alerts-panel.mf-tv-hidden {
   display: none !important;
 }
 
-/* Vertical column ~400×700 (OBS crop under logo) */
-.mf-tv-alerts-panel {
-  position: fixed;
-  right: 12px;
-  top: 120px;
-  bottom: auto;
-  z-index: 10100;
-  box-sizing: border-box;
-  width: 400px;
-  max-width: calc(100vw - 24px);
-  height: 700px;
-  max-height: min(700px, calc(100vh - 140px));
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 14px 16px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(251, 146, 60, 0.55);
-  background: rgba(10, 10, 14, 0.96);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
-  pointer-events: auto;
-  font-size: 0.8rem;
-  color: #cbd5e1;
+/* Vertical column ~400×700 — OBS crops this region (under logo on the right) */
+html.tv-mode .mf-tv-alerts-panel:not(.mf-tv-hidden),
+html.tv-mode.tv-alerts-open .mf-tv-alerts-panel {
+  position: fixed !important;
+  right: 0 !important;
+  top: 80px !important;
+  left: auto !important;
+  bottom: auto !important;
+  z-index: 10100 !important;
+  box-sizing: border-box !important;
+  width: 400px !important;
+  min-width: 400px !important;
+  max-width: 400px !important;
+  height: 700px !important;
+  min-height: 700px !important;
+  max-height: 700px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding: 14px 16px 12px !important;
+  border-radius: 0 !important;
+  border: 2px solid rgba(251, 146, 60, 0.7) !important;
+  border-right: none !important;
+  background: rgba(10, 10, 14, 0.98) !important;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45) !important;
+  pointer-events: auto !important;
+  font-size: 0.8rem !important;
+  color: #cbd5e1 !important;
+}
+
+/* OBS always-on column: home.html?tv=1&alertsColumn=1 */
+html.tv-mode.tv-alerts-open #mfTvAlertsPanel {
+  visibility: visible !important;
 }
 
 .mf-tv-alerts-panel .mf-tv-admin-head {

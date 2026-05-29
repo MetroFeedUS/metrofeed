@@ -76,9 +76,13 @@
     if (manifestLink) manifestLink.remove();
   } catch (_) {}
 
+  if (params.get('alertsColumn') === '1' || params.get('alertsColumn') === 'true') {
+    window.MF_TV_ALERTS_COLUMN = true;
+  }
+
   var link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'obs-tv.css';
+  link.href = 'obs-tv.css?v=20260529';
   document.head.appendChild(link);
 
   function hideTvChrome() {

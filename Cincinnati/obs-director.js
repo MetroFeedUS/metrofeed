@@ -1652,7 +1652,8 @@
     adminPanelOpen(panel && panel.classList.contains('mf-tv-hidden'));
   }
 
-  function alertsPanelOpen(open) {
+  function alertsPanelOpen(open, opts) {
+    opts = opts || {};
     const panel = el('mfTvAlertsPanel');
     const toggle = el('mfTvAlertsToggle');
     if (!panel) return;
@@ -1660,18 +1661,50 @@
       panel.classList.remove('mf-tv-hidden');
       panel.setAttribute('aria-hidden', 'false');
       if (toggle) toggle.setAttribute('aria-expanded', 'true');
-      setMapFrozen(true);
+      try {
+        document.documentElement.classList.add('tv-alerts-open');
+      } catch (_) {}
+      panel.style.width = '400px';
+      panel.style.height = '700px';
+      panel.style.maxWidth = '400px';
+      panel.style.maxHeight = '700px';
+      if (!opts.noFreeze) setMapFrozen(true);
       refreshAlertsPanel(true);
     } else {
-      panel.classList.add('mf-tv-hidden');
-      panel.setAttribute('aria-hidden', 'true');
+      if (!window.MF_TV_ALERTS_COLUMN) {
+        panel.classList.add('mf-tv-hidden');
+        panel.setAttribute('aria-hidden', 'true');
+        setMapFrozen(false);
+      }
       if (toggle) toggle.setAttribute('aria-expanded', 'false');
-      setMapFrozen(false);
+      try {
+        if (!window.MF_TV_ALERTS_COLUMN) {
+          document.documentElement.classList.remove('tv-alerts-open');
+        }
+      } catch (_) {}
+      panel.style.width = '';
+      panel.style.height = '';
+      panel.style.maxWidth = '';
+      panel.style.maxHeight = '';
     }
   }
 
   function alertsPanelToggle() {
     const panel = el('mfTvAlertsPanel');
+    if (window.MF_TV_ALERTS_COLUMN && panel && !panel.classList.contains('mf-tv-hidden')) {
+      const frozen = mapFrozen();
+      if (frozen) {
+        setMapFrozen(false);
+        try {
+          document.documentElement.classList.remove('tv-alerts-open');
+        } catch (_) {}
+        const toggle = el('mfTvAlertsToggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      } else {
+        alertsPanelOpen(true);
+      }
+      return;
+    }
     alertsPanelOpen(panel && panel.classList.contains('mf-tv-hidden'));
   }
 
@@ -1763,7 +1796,15 @@
     });
     if (closeBtn) {
       closeBtn.addEventListener('click', function () {
-        alertsPanelOpen(false);
+        if (window.MF_TV_ALERTS_COLUMN) {
+          setMapFrozen(false);
+          try {
+            document.documentElement.classList.remove('tv-alerts-open');
+          } catch (_) {}
+          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        } else {
+          alertsPanelOpen(false);
+        }
       });
     }
 
@@ -1779,6 +1820,10 @@
         refreshAlertsPanel(false);
       }
     }, 2500);
+
+    if (window.MF_TV_ALERTS_COLUMN) {
+      alertsPanelOpen(true, { noFreeze: true });
+    }
   }
 
   function bindAdminPanel() {
