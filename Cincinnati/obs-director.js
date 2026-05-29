@@ -87,6 +87,7 @@
       img.removeAttribute('src');
     }
     if (
+      !window.MF_TV_MODE &&
       typeof window.TrafficCamerasOverlay !== 'undefined' &&
       window.TrafficCamerasOverlay.hideCameraModal
     ) {
@@ -562,9 +563,6 @@
     });
     if (!Number.isFinite(minLng)) return;
 
-    removeTempPin();
-    clearFocusRing();
-    hideTrafficDetail();
     const ms = Number(cfg('mapFlyDurationMs', 2400)) || 2400;
     tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, ms);
     log('Map re-centered (post-cam): ' + routeId);
@@ -1144,19 +1142,29 @@
   async function displayBucketItem(it, dwellMs, badge) {
     if (TV.paused) return;
     const m = map();
+    const isCam = it && it.kind === 'camera';
     setPhaseBadge(badge || 'Transit + Traffic');
     setLowerThird('', '');
-    hideTrafficDetail();
+
+    if (!isCam) {
+      hideTrafficDetail();
+    }
 
     ensureFocusRingLayer();
     setFocusRing(it.lng, it.lat);
     showTempPin(it.lng, it.lat, it.title, it.kind);
 
     let flyMs = 0;
-    if (it.kind === 'camera') {
-      const imgUrl = resolveCameraImageUrl(it);
+    if (isCam) {
+      const imgUrl = resolveCameraImageUrl(it) || (it.url ? String(it.url) : '');
+      if (!imgUrl) {
+        log('Camera skipped (no image URL): ' + (it.title || ''));
+        removeTempPin();
+        clearFocusRing();
+        return;
+      }
       showTrafficDetail(it.title, '', '', imgUrl, 'camera');
-      await sleep(100);
+      await sleep(150);
       tvMapResize();
       bringFocusRingToFront();
       flyMs = flyToTvBucketItem(m, it);
@@ -1164,26 +1172,31 @@
     } else {
       flyMs = flyToTvBucketItem(m, it);
       await waitForMapSettled(flyMs);
-    }
-
-    if (it.kind === 'incident') {
-      showTrafficDetail(it.title, it.body, it.meta, null, 'incident');
-      setLowerThird('Traffic incident', it.title);
-    } else if (it.kind === 'slowdown') {
-      showTrafficDetail(it.title, it.body, it.meta, null, 'slowdown');
-      setLowerThird('Slowdown', it.title);
-    } else {
-      showTrafficDetail(it.title, it.body, it.meta);
+      if (it.kind === 'incident') {
+        showTrafficDetail(it.title, it.body, it.meta, null, 'incident');
+        setLowerThird('Traffic incident', it.title);
+      } else if (it.kind === 'slowdown') {
+        showTrafficDetail(it.title, it.body, it.meta, null, 'slowdown');
+        setLowerThird('Slowdown', it.title);
+      } else {
+        showTrafficDetail(it.title, it.body, it.meta);
+      }
     }
 
     const minHold = Number(cfg('tvBucketMinHoldMs', 4500)) || 4500;
-    const holdMs = Math.max(Number(dwellMs) || 0, minHold, flyMs + 600);
+    const camMinHold = Math.max(8000, Number(cfg('routeBucketCameraDwellMs', 11000)) || 11000);
+    const holdMs = isCam
+      ? Math.max(camMinHold, flyMs + 800)
+      : Math.max(Number(dwellMs) || 0, minHold, flyMs + 600);
     await sleep(holdMs);
-    hideTrafficDetail();
+
     removeTempPin();
     clearFocusRing();
-    if (it.kind === 'incident' || it.kind === 'slowdown') {
-      setLowerThird('', '');
+    if (!isCam) {
+      hideTrafficDetail();
+      if (it.kind === 'incident' || it.kind === 'slowdown') {
+        setLowerThird('', '');
+      }
     }
   }
 
@@ -1420,11 +1433,16 @@
         ')'
     );
 
+    if (nearCams.length) {
+      setPhaseBadge('Cameras near route');
+    }
     for (let i = 0; i < Math.min(maxCameras, nearCams.length); i++) {
       await displayBucketItem(nearCams[i], camDwell, 'Cameras near route');
     }
 
     hideTrafficDetail();
+    removeTempPin();
+    clearFocusRing();
     tvResetMapViewForRoute(routeId);
     const postLeg = TV.currentLeg;
     const postDir =
