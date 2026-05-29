@@ -82,7 +82,7 @@
 
   var link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'obs-tv.css?v=20260529';
+  link.href = 'obs-tv.css?v=20260530';
   document.head.appendChild(link);
 
   function hideTvChrome() {
