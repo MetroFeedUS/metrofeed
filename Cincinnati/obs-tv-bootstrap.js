@@ -42,6 +42,12 @@
     tvCameraPanelWidthRatio: 0.5,
     tvCameraMapZoom: 14.3,
     tvCameraMapPadExtraPx: 56,
+    tvPostCamResetMs: 700,
+    tvTransitMaxZoom: 15.2,
+    tvMapPadTop: 120,
+    tvMapPadBottom: 48,
+    tvMapPadLeft: 40,
+    tvMapPadRight: 40,
     routeBucketEnabled: true,
     routeBucketPrefetchOppositeMs: 4000,
     /** null = all agencies in routes_index order (SORTA, TANK, BCRTA, …) */

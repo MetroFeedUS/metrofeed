@@ -347,6 +347,75 @@
     return Number.isFinite(n) ? n * 1609.344 : 0;
   }
 
+  /** Padding for full-frame transit (OBS 16:9) — room for lower-third, balanced L/R. */
+  function tvTransitMapPadding() {
+    return {
+      top: Number(cfg('tvMapPadTop', 64)) || 64,
+      bottom: Number(cfg('tvMapPadBottom', 150)) || 150,
+      left: Number(cfg('tvMapPadLeft', 40)) || 40,
+      right: Number(cfg('tvMapPadRight', 40)) || 40
+    };
+  }
+
+  function tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, flyMs) {
+    if (!m) return;
+    const pad = tvTransitMapPadding();
+    const minSpan = 0.004;
+    let w = maxLng - minLng;
+    let h = maxLat - minLat;
+    if (w < minSpan) {
+      const c = (minLng + maxLng) / 2;
+      minLng = c - minSpan / 2;
+      maxLng = c + minSpan / 2;
+    }
+    if (h < minSpan) {
+      const c = (minLat + maxLat) / 2;
+      minLat = c - minSpan / 2;
+      maxLat = c + minSpan / 2;
+    }
+    try {
+      m.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat]
+        ],
+        {
+          padding: pad,
+          maxZoom: Number(cfg('tvTransitMaxZoom', 15.2)) || 15.2,
+          duration: flyMs,
+          essential: true
+        }
+      );
+    } catch (_) {}
+  }
+
+  /** Undo camera flyTo right-padding — symmetric fit on the route before next episode. */
+  function tvResetMapViewForRoute(routeId) {
+    const m = map();
+    if (!m || !routeId) return;
+    const shape = getCachedRouteShapeLatLon(routeId);
+    if (!Array.isArray(shape) || shape.length < 2) return;
+
+    let minLng = Infinity;
+    let minLat = Infinity;
+    let maxLng = -Infinity;
+    let maxLat = -Infinity;
+    shape.forEach(function (pt) {
+      const ll = shapePtToLngLat(pt);
+      if (!ll) return;
+      minLng = Math.min(minLng, ll[0]);
+      maxLng = Math.max(maxLng, ll[0]);
+      minLat = Math.min(minLat, ll[1]);
+      maxLat = Math.max(maxLat, ll[1]);
+    });
+    if (!Number.isFinite(minLng)) return;
+
+    hideTrafficDetail();
+    const ms = Number(cfg('tvPostCamResetMs', 700)) || 700;
+    tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, ms);
+    log('Map re-centered (post-cam): ' + routeId);
+  }
+
   /** 0 in config = show all found (capped by routeBucketItemCap). */
   function bucketKindCap(cfgKey, fallback) {
     const n = Number(cfg(cfgKey, fallback));
@@ -1204,6 +1273,11 @@
       await displayBucketItem(nearCams[i], camDwell, 'Cameras near route');
     }
 
+    hideTrafficDetail();
+    tvResetMapViewForRoute(routeId);
+    const resetMs = Number(cfg('tvPostCamResetMs', 700)) || 700;
+    if (resetMs > 0) await sleep(Math.min(resetMs, 1200));
+
     log('Route package complete: ' + String(routeId));
   }
 
@@ -1235,7 +1309,7 @@
       await window.showRouteOverlay(routeId, directionId, undefined, undefined, {
         ensureOn: true,
         tvMode: true,
-        fitBounds: Number(directionId) === 1
+        fitBounds: true
       });
       overlayOk = await waitForOverlayReady(
         routeId,
@@ -1927,6 +2001,10 @@
           });
           window.busMarkers = {};
         }
+      }
+      if (typeof window.metrofeedSweepOrphanBusMarkers === 'function') {
+        const n = window.metrofeedSweepOrphanBusMarkers(map());
+        if (n > 0) log('Swept orphan bus markers: ' + n);
       }
     } catch (e) {
       console.warn('[mfTvDirector] clearGlobalFleetMarkers', e);

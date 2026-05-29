@@ -4,6 +4,12 @@
 html.tv-mode,
 html.tv-mode body {
   overflow: hidden !important;
+  background: #0c0c10;
+}
+
+html.tv-mode .maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 html.tv-mode .search-bar,
@@ -65,15 +71,16 @@ html.tv-mode .maplibregl-marker.mf-bus-marker {
   pointer-events: none !important;
 }
 
-/* --- TV overlays (director-controlled) --- */
+/* Route title — upper left (broadcast safe area) */
 .mf-tv-lower-third {
   position: fixed;
-  left: 48px;
-  bottom: 48px;
+  left: 40px;
+  top: 40px;
+  bottom: auto;
   z-index: 10050;
-  max-width: min(920px, 72vw);
-  padding: 14px 22px;
-  background: linear-gradient(90deg, rgba(18, 18, 24, 0.94) 0%, rgba(18, 18, 24, 0.72) 100%);
+  max-width: min(720px, 58vw);
+  padding: 12px 18px;
+  background: linear-gradient(90deg, rgba(18, 18, 24, 0.94) 0%, rgba(18, 18, 24, 0.78) 100%);
   border-left: 4px solid #9333ea;
   border-radius: 4px;
   pointer-events: none;
@@ -97,20 +104,8 @@ html.tv-mode .maplibregl-marker.mf-bus-marker {
 }
 
 .mf-tv-phase-badge {
-  position: fixed;
-  top: 40px;
-  right: 48px;
-  z-index: 10050;
-  padding: 8px 16px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #e9d5ff;
-  background: rgba(147, 51, 234, 0.35);
-  border: 1px solid rgba(147, 51, 234, 0.55);
-  border-radius: 6px;
-  pointer-events: none;
+  display: none !important;
+  visibility: hidden !important;
 }
 
 .mf-tv-traffic-detail {
@@ -231,12 +226,6 @@ html.tv-mode .maplibregl-marker.mf-bus-marker {
 .mf-tv-camera-card .mf-tv-traffic-detail-meta,
 .mf-tv-camera-card .mf-tv-traffic-detail-body {
   display: none !important;
-}
-
-/* Phase badge moves left when camera panel is open so it does not cover the feed */
-html.tv-mode:has(.mf-tv-camera-card:not(.mf-tv-hidden)) .mf-tv-phase-badge {
-  right: auto;
-  left: 40px;
 }
 
 /* Incident / slowdown: full-width lower third style */

@@ -312,6 +312,36 @@ function metrofeedNearestSegmentInfo(routeShape, lat, lon) {
 // TV director + traffic proximity use this from window (obs-director.js).
 window.metrofeedNearestSegmentInfo = metrofeedNearestSegmentInfo;
 
+/**
+ * Remove bus markers that outlived their overlay (stale async GTFS fetch, etc.).
+ * Prefer Marker.remove() when the element was tagged at creation.
+ */
+function metrofeedSweepOrphanBusMarkers(mapInstance) {
+  const map = mapInstance || (typeof window !== 'undefined' ? window.map : null);
+  const root = map && typeof map.getContainer === 'function' ? map.getContainer() : null;
+  if (!root) return 0;
+  let removed = 0;
+  try {
+    root.querySelectorAll('.mf-bus-marker').forEach(function (el) {
+      const mk = el && el._mfBusMarker;
+      if (mk && typeof mk.remove === 'function') {
+        try {
+          mk.remove();
+          removed++;
+        } catch (_) {}
+        return;
+      }
+      const wrap = el && el.closest ? el.closest('.maplibregl-marker') : null;
+      if (wrap && wrap.parentNode) {
+        wrap.parentNode.removeChild(wrap);
+        removed++;
+      }
+    });
+  } catch (_) {}
+  return removed;
+}
+window.metrofeedSweepOrphanBusMarkers = metrofeedSweepOrphanBusMarkers;
+
 function metrofeedSegmentProjectionInfo(routeShape, segIdx, lat, lon) {
   if (!Array.isArray(routeShape) || routeShape.length < 2) return null;
   const i = Number(segIdx);
@@ -1592,6 +1622,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
     busPopupRefreshers: [] // functions to refresh bus popups when ETAs load
   };
 
+  const overlayKeyForLifecycle = options.overlayKey || `${routeId}-${directionId}`;
+  let overlayAlive = true;
+
   // ==== Internal: build & attach =================================================
   const addRouteToMap = () => {
     // Unique MapLibre source/layer + route-info DOM id (supports multiple OTP legs for same route+dir)
@@ -1745,13 +1778,22 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const [[west, south], [east, north]] = currentBounds;
       const latRange = north - south;
       const lonRange = east - west;
-      const expansion = 0.20; // 20% expansion
-      
+      const tvMode = !!(window.MF_TV_MODE || options.tvMode);
+      const expansion = tvMode ? 0.06 : 0.20;
+
       const expandedBounds = new maplibregl.LngLatBounds();
       expandedBounds.extend([west - (lonRange * expansion), south - (latRange * expansion)]);
       expandedBounds.extend([east + (lonRange * expansion), north + (latRange * expansion)]);
-      
-      map.fitBounds(expandedBounds, { padding: 40, maxZoom: 14 });
+
+      if (tvMode) {
+        map.fitBounds(expandedBounds, {
+          padding: { top: 120, bottom: 48, left: 40, right: 40 },
+          maxZoom: 15.2,
+          duration: 900
+        });
+      } else {
+        map.fitBounds(expandedBounds, { padding: 40, maxZoom: 14 });
+      }
     }
 
     // ---------- Stops + popups ----------
@@ -2710,6 +2752,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
      * Cincinnati: JSON vehicle proxy (gtfsRtProxyUrls) + optional trips.json for ETAs.
      */
     if (trackBuses && mode === "mainOverlay") {
+      function overlayIsLive() {
+        return overlayAlive;
+      }
+
       const busMarkers = {}; // Store bus markers separately
       /** @type {Record<string, { lastLat?: number, lastLon?: number, lastTime?: number, smoothedHeading?: number|null }>} */
       const vehicleHeadingState = Object.create(null);
@@ -2756,6 +2802,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const seq = busesFetchSeq;
         busesFetchInFlight = true;
         try {
+          if (!overlayIsLive()) {
+            return;
+          }
+
           let allBuses = hasOverride ? allBusesOverride : [];
           
           console.log('[attachRouteToMap] fetchAndDisplayBuses start', {
@@ -2798,6 +2848,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
           // Also check routeData.route_id if available (from routes_index.js)
           const routeNum = String(routeId);
           const routeDataRouteId = routeData?.route_id || routeData?.meta?.route_id || null;
+          const tvMode = !!(window.MF_TV_MODE || options.tvMode);
+          const feedShortName =
+            routeData && (routeData.route_short_name || routeData.route_number)
+              ? String(routeData.route_short_name || routeData.route_number).trim()
+              : "";
+          const feedShortHasLetters = feedShortName && /[A-Za-z]/.test(feedShortName);
 
           // Cincinnati multi-agency safety: match agency + exact route_id number.
           // Also drop vehicles far away from the route polyline (prevents "deep Ohio" outliers).
@@ -2844,9 +2900,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
               }
             } catch (_) {}
 
+            // TV + lettered routes (23X): require GTFS short name — never bleed route "23".
+            if (feedShortName) {
+              const vn = String(v.routeNumber || v.route || "").trim();
+              const shortOk =
+                vn === feedShortName || vn.toUpperCase() === feedShortName.toUpperCase();
+              if (!shortOk) return false;
+            }
+
             // Exact route_id gate when available (Cincinnati vehicles.json uses route_id digits).
             try {
-              if (mfOverlayAgency && mfOverlayRouteDigits) {
+              if (!feedShortHasLetters && mfOverlayAgency && mfOverlayRouteDigits) {
                 const vr = v.routeId != null ? String(v.routeId) : (v.route_id != null ? String(v.route_id) : String(v.routeNumber || ''));
                 const m = vr.match(/\d+/);
                 const vDigits = m ? (String(m[0]).replace(/^0+/, '') || String(m[0])) : '';
@@ -2859,13 +2923,20 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const exactMatch = String(v.routeNumber) === routeNum;
             // 2. Match with routeData.route_id
             const routeIdMatch = routeDataNorm && vNorm.str === routeDataNorm.str;
-            // 3. Numeric match: "7", "07", 7 all match
-            const numericMatch = routeNorm.numeric && vNorm.numeric && routeNorm.numeric === vNorm.numeric;
+            // 3. Numeric match: "7", "07", 7 all match (skip for 23X-style names)
+            const allowNumericMatch = !feedShortHasLetters;
+            const numericMatch =
+              allowNumericMatch &&
+              routeNorm.numeric &&
+              vNorm.numeric &&
+              routeNorm.numeric === vNorm.numeric;
             // 4. Fallback string match
             const stringMatch = String(v.routeNumber) === String(routeId);
 
-            const routeMatch = exactMatch || routeIdMatch || numericMatch || stringMatch;
-            if (routeMatch) {
+            const routeMatch = feedShortName
+              ? true
+              : exactMatch || routeIdMatch || numericMatch || stringMatch;
+            if (routeMatch && !tvMode) {
               console.log(
                 `[attachRouteToMap] ✅ Matched bus: route "${v.routeNumber}" == "${routeNum}"${routeDataRouteId ? ` (route_id: "${routeDataRouteId}")` : ""}`
               );
@@ -2918,6 +2989,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
           }
 
+          if (!overlayIsLive()) {
+            return;
+          }
+
           overlayElements.busPopupRefreshers.length = 0;
           // Remove old bus markers from map and overlayElements
           Object.keys(busMarkers).forEach(vehicleId => {
@@ -2948,9 +3023,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             window.CITY_CONFIG && window.CITY_CONFIG.busMarkerHeading === false
           );
 
-          if (isOtpLegOverlay) {
+          if (isOtpLegOverlay || tvMode) {
             // We need busDir to filter, so precompute using the same inference logic.
-            const strictDir = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
+            const strictDir = tvMode || !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
             const want = Number(directionId);
             vehiclesForMarkers = vehiclesForMarkers.filter((bus) => {
               const latN = Number(bus.latitude);
@@ -3100,7 +3175,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
               displayVehicleID,
               displayHeading
             );
-            try { busElement.classList.add('mf-bus-marker'); } catch (_) {}
+            try {
+              busElement.classList.add('mf-bus-marker');
+              busElement._mfBusMarker = null;
+            } catch (_) {}
             if (isOtpLegOverlay && isOppositeDir) {
               // OTP overlays shouldn't render opposite-direction buses at all (filtered above),
               // but keep a guard here for safety.
@@ -3157,10 +3235,34 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const popup = new maplibregl.Popup().setDOMContent(popupContent);
             busMarker.setPopup(popup);
             busMarker.addTo(map);
-            
+            try {
+              busElement._mfBusMarker = busMarker;
+            } catch (_) {}
+
             busMarkers[markerKey] = busMarker;
             overlayElements.markers.push(busMarker);
           });
+
+          if (!overlayIsLive()) {
+            Object.keys(busMarkers).forEach(function (vehicleId) {
+              const marker = busMarkers[vehicleId];
+              if (marker && typeof marker.remove === 'function') {
+                try {
+                  marker.remove();
+                } catch (_) {}
+              }
+              delete busMarkers[vehicleId];
+            });
+            overlayElements.markers = overlayElements.markers.filter(function (m) {
+              try {
+                const el = m && typeof m.getElement === 'function' ? m.getElement() : null;
+                return !(el && el.classList && el.classList.contains('mf-bus-marker'));
+              } catch (_) {
+                return true;
+              }
+            });
+            return;
+          }
 
           const aliveHeadingIds = new Set(
             vehiclesForMarkers.map((v) => {
@@ -3322,7 +3424,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
   // ==== Cleanup handle =======================================================
   return {
     remove: function () {
-      const thisOverlayKey = options.overlayKey || `${routeId}-${directionId}`;
+      overlayAlive = false;
+      const thisOverlayKey = overlayKeyForLifecycle;
       metrofeedRemoveRouteTripUpdatesForOverlay(thisOverlayKey);
       
       // Layers
@@ -3365,6 +3468,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       overlayElements.controls = [];
       overlayElements.intervals = [];
       overlayElements.unsubscribers = [];
+      try {
+        metrofeedSweepOrphanBusMarkers(map);
+      } catch (_) {}
     }
   };
 }

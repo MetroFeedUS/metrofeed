@@ -11453,6 +11453,13 @@
     updateAlertIndicator();
     
     console.log('[clearAllRouteOverlays] All route overlays cleared');
+
+    if (typeof window.metrofeedSweepOrphanBusMarkers === 'function' && window.map) {
+      const swept = window.metrofeedSweepOrphanBusMarkers(window.map);
+      if (swept > 0) {
+        console.log('[clearAllRouteOverlays] Swept orphan bus markers:', swept);
+      }
+    }
     
     // Reset map bounds to default
     if (window.MapBoundsManager) {
