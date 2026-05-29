@@ -31,6 +31,7 @@
     phaseEndsAt: 0,
     phaseRemainingMs: null,
     paused: false,
+    mapFrozen: false,
     running: false,
     currentRoute: null,
     currentRouteKey: null,
@@ -280,7 +281,20 @@
   }
 
   /** Shift map center left so camera location stays visible beside the right-side feed panel. */
+  function mapFrozen() {
+    return !!TV.mapFrozen;
+  }
+
+  function setMapFrozen(on) {
+    TV.mapFrozen = !!on;
+    try {
+      document.documentElement.classList.toggle('tv-map-frozen', TV.mapFrozen);
+    } catch (_) {}
+    if (TV.mapFrozen) stopSegmentPan();
+  }
+
   function flyToTvBucketItem(m, it) {
+    if (mapFrozen()) return;
     if (!m || !it || !Number.isFinite(it.lng) || !Number.isFinite(it.lat)) return;
     const flyMs = Number(cfg('mapFlyDurationMs', 900)) || 900;
     try {
@@ -358,6 +372,7 @@
   }
 
   function tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, flyMs) {
+    if (mapFrozen()) return;
     if (!m) return;
     const pad = tvTransitMapPadding();
     const minSpan = 0.004;
@@ -391,6 +406,7 @@
 
   /** Undo camera flyTo right-padding — symmetric fit on the route before next episode. */
   function tvResetMapViewForRoute(routeId) {
+    if (mapFrozen()) return;
     const m = map();
     if (!m || !routeId) return;
     const shape = getCachedRouteShapeLatLon(routeId);
@@ -859,6 +875,7 @@
 
   function startSegmentPan(routeId, directionId) {
     stopSegmentPan();
+    if (mapFrozen()) return;
     if (!cfg('segmentPanEnabled', true)) return;
     const m = map();
     if (!m) return;
@@ -886,6 +903,7 @@
       );
 
       const flyChunk = function () {
+        if (mapFrozen()) return;
         const chunk = chunks[TV.segmentIndex % chunks.length];
         TV.segmentIndex++;
         if (!chunk || chunk.length < 2) return;
@@ -1309,7 +1327,7 @@
       await window.showRouteOverlay(routeId, directionId, undefined, undefined, {
         ensureOn: true,
         tvMode: true,
-        fitBounds: true
+        fitBounds: !mapFrozen()
       });
       overlayOk = await waitForOverlayReady(
         routeId,
@@ -1634,6 +1652,135 @@
     adminPanelOpen(panel && panel.classList.contains('mf-tv-hidden'));
   }
 
+  function alertsPanelOpen(open) {
+    const panel = el('mfTvAlertsPanel');
+    const toggle = el('mfTvAlertsToggle');
+    if (!panel) return;
+    if (open) {
+      panel.classList.remove('mf-tv-hidden');
+      panel.setAttribute('aria-hidden', 'false');
+      if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      setMapFrozen(true);
+      refreshAlertsPanel(true);
+    } else {
+      panel.classList.add('mf-tv-hidden');
+      panel.setAttribute('aria-hidden', 'true');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      setMapFrozen(false);
+    }
+  }
+
+  function alertsPanelToggle() {
+    const panel = el('mfTvAlertsPanel');
+    alertsPanelOpen(panel && panel.classList.contains('mf-tv-hidden'));
+  }
+
+  function alertsRouteFromState() {
+    const r = TV.currentRoute;
+    const leg = TV.currentLeg;
+    const routeId = r && r.routeId ? String(r.routeId) : '';
+    const label = r && r.label != null ? String(r.label) : routeId;
+    const dir = leg && leg.dirLabel ? String(leg.dirLabel) : '';
+    return { routeId, label, dir };
+  }
+
+  function alertsRenderEmpty(bodyEl, msg) {
+    if (!bodyEl) return;
+    bodyEl.innerHTML =
+      '<div class="mf-tv-alerts-panel__empty">' + String(msg || 'No active alerts.') + '</div>';
+  }
+
+  let alertsLastKey = '';
+
+  async function refreshAlertsPanel(force) {
+    const routeEl = el('mfTvAlertsPanelRoute');
+    const bodyEl = el('mfTvAlertsPanelBody');
+    const panel = el('mfTvAlertsPanel');
+    if (!routeEl || !bodyEl || !panel) return;
+    if (panel.classList.contains('mf-tv-hidden') && !force) return;
+
+    const rt = alertsRouteFromState();
+    const key = rt.routeId + '|' + (rt.dir || '');
+    if (!rt.routeId) {
+      routeEl.textContent = 'Waiting for route…';
+      alertsRenderEmpty(bodyEl, '—');
+      alertsLastKey = '';
+      return;
+    }
+
+    routeEl.textContent = rt.label + (rt.dir ? (' · ' + rt.dir) : '');
+
+    if (!force && key === alertsLastKey) return;
+    alertsLastKey = key;
+
+    if (typeof window.fetchAlertsData !== 'function' || typeof window.getRouteAlerts !== 'function') {
+      alertsRenderEmpty(bodyEl, 'Alerts not available.');
+      return;
+    }
+
+    alertsRenderEmpty(bodyEl, 'Loading…');
+    try {
+      const alerts = await window.fetchAlertsData();
+      const info = window.getRouteAlerts(rt.routeId, alerts);
+      if (!info || !Array.isArray(info.alerts) || info.alerts.length === 0) {
+        alertsRenderEmpty(bodyEl, 'No active alerts for this route.');
+        return;
+      }
+      const max = 6;
+      const slice = info.alerts.slice(0, max);
+      const cards = slice.map(function (a) {
+        if (typeof window.mfCincyAlertCardInnerHtml === 'function') {
+          return '<div class="mf-tv-alerts-panel__card">' + window.mfCincyAlertCardInnerHtml(a) + '</div>';
+        }
+        const txt = String(
+          (a && (a.title || a.header || a.text || a.description || a.body || a.detail)) || ''
+        ).trim();
+        return (
+          '<div class="mf-tv-alerts-panel__card"><div style="color:#fff;white-space:pre-wrap;line-height:1.35;">' +
+          (txt || 'Alert') +
+          '</div></div>'
+        );
+      });
+      const more =
+        info.alerts.length > max
+          ? '<div class="mf-tv-alerts-panel__more">+' + (info.alerts.length - max) + ' more</div>'
+          : '';
+      bodyEl.innerHTML = cards.join('') + more;
+    } catch (_) {
+      alertsRenderEmpty(bodyEl, 'Unable to load alerts.');
+    }
+  }
+
+  function bindAlertsPanel() {
+    const toggle = el('mfTvAlertsToggle');
+    const closeBtn = el('mfTvAlertsClose');
+    const panel = el('mfTvAlertsPanel');
+    if (!toggle || !panel) return;
+
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      alertsPanelToggle();
+    });
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        alertsPanelOpen(false);
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        alertsPanelToggle();
+      }
+    });
+
+    setInterval(function () {
+      if (!panel.classList.contains('mf-tv-hidden')) {
+        refreshAlertsPanel(false);
+      }
+    }, 2500);
+  }
+
   function bindAdminPanel() {
     const toggle = el('mfTvAdminToggle');
     const closeBtn = el('mfTvAdminClose');
@@ -1768,7 +1915,7 @@
 
     setLowerThird(item.kind === 'slowdown' ? 'Slowdown' : 'Incident', item.title);
 
-    if (m) {
+    if (m && !mapFrozen()) {
       try {
         m.flyTo({
           center: [item.lng, item.lat],
@@ -2038,6 +2185,7 @@
     clearGlobalFleetMarkers();
     hidePageChrome();
     bindAdminPanel();
+    bindAlertsPanel();
     TV.routes = buildRouteQueue();
     TV.routeIndex = 0;
     log('Director started; ' + TV.routes.length + ' routes (episode loop)');
@@ -2074,10 +2222,18 @@
     closePanel: function () {
       adminPanelOpen(false);
     },
+    toggleAlertsPanel: alertsPanelToggle,
+    openAlertsPanel: function () {
+      alertsPanelOpen(true);
+    },
+    closeAlertsPanel: function () {
+      alertsPanelOpen(false);
+    },
     getState: function () {
       return {
         mode: TV.mode,
         paused: TV.paused,
+        mapFrozen: TV.mapFrozen,
         routeIndex: TV.routeIndex,
         routeTotal: TV.routes.length,
         currentRoute: TV.currentRoute,

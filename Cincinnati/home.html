@@ -14700,15 +14700,18 @@
   <div class="mf-tv-weather-attrib">Data: National Weather Service · roamravenapp.com</div>
 </div>
 
-<!-- TV: Alerts rail lives "below the fold" so OBS can crop a second view from the same source -->
-<div id="mfTvAlertsRail" class="mf-tv-alerts-rail" aria-hidden="true">
-  <div class="mf-tv-alerts-rail__head">
-    <div class="mf-tv-alerts-rail__kicker">Route alerts</div>
-    <div id="mfTvAlertsRailTitle" class="mf-tv-alerts-rail__title">Waiting for route…</div>
+<!-- TV: Route alerts panel (operator; map camera frozen while open) -->
+<button type="button" id="mfTvAlertsToggle" class="mf-tv-alerts-toggle" title="Route alerts (Ctrl+Shift+A)" aria-label="Route alerts" aria-expanded="false">⚠</button>
+<div id="mfTvAlertsPanel" class="mf-tv-alerts-panel mf-tv-hidden" aria-hidden="true">
+  <div class="mf-tv-admin-head">
+    <span>Route alerts</span>
+    <button type="button" id="mfTvAlertsClose" class="mf-tv-admin-close" aria-label="Close alerts">×</button>
   </div>
-  <div id="mfTvAlertsRailBody" class="mf-tv-alerts-rail__body">
-    <div class="mf-tv-alerts-rail__empty">No active alerts.</div>
+  <div id="mfTvAlertsPanelRoute" class="mf-tv-alerts-panel-route">Waiting for route…</div>
+  <div id="mfTvAlertsPanelBody" class="mf-tv-alerts-panel-body">
+    <div class="mf-tv-alerts-panel__empty">No active alerts.</div>
   </div>
+  <p class="mf-tv-admin-hint">Ctrl+Shift+A · Map frozen while open · Director keeps running</p>
 </div>
 
 <!-- TV director admin (hidden from broadcast; corner toggle) -->
@@ -14734,95 +14737,6 @@
   <p class="mf-tv-admin-hint">Ctrl+Shift+P · Panel hidden from normal UI</p>
 </div>
 <script src="obs-director.js"></script>
-<script>
-  (function () {
-    'use strict';
-    if (!window.MF_TV_MODE) return;
-
-    function el(id) {
-      return document.getElementById(id);
-    }
-
-    const rail = el('mfTvAlertsRail');
-    const titleEl = el('mfTvAlertsRailTitle');
-    const bodyEl = el('mfTvAlertsRailBody');
-    if (!rail || !titleEl || !bodyEl) return;
-
-    let lastKey = '';
-
-    function renderEmpty(msg) {
-      bodyEl.innerHTML = '<div class="mf-tv-alerts-rail__empty">' + String(msg || 'No active alerts.') + '</div>';
-    }
-
-    function routeTitleFromState(st) {
-      const r = st && st.currentRoute ? st.currentRoute : null;
-      const leg = st && st.currentLeg ? st.currentLeg : null;
-      const routeId = r && r.routeId ? String(r.routeId) : '';
-      const label = r && r.label != null ? String(r.label) : routeId;
-      const dir = leg && leg.dirLabel ? String(leg.dirLabel) : '';
-      return { routeId, label, dir };
-    }
-
-    async function tick() {
-      try {
-        if (!window.mfTvDirector || typeof window.mfTvDirector.getState !== 'function') {
-          titleEl.textContent = 'Waiting for director…';
-          renderEmpty('—');
-          return;
-        }
-
-        const st = window.mfTvDirector.getState();
-        const rt = routeTitleFromState(st);
-        const key = rt.routeId + '|' + (rt.dir || '');
-        if (!rt.routeId) {
-          titleEl.textContent = 'Waiting for route…';
-          renderEmpty('—');
-          lastKey = '';
-          return;
-        }
-
-        titleEl.textContent = rt.label + (rt.dir ? (' · ' + rt.dir) : '');
-
-        // Only refetch + rerender when the on-air route (or direction label) changes.
-        if (key === lastKey) return;
-        lastKey = key;
-
-        if (typeof window.fetchAlertsData !== 'function' || typeof window.getRouteAlerts !== 'function') {
-          renderEmpty('Alerts not available on this build.');
-          return;
-        }
-
-        renderEmpty('Loading…');
-        const alerts = await window.fetchAlertsData();
-        const info = window.getRouteAlerts(rt.routeId, alerts);
-        if (!info || !Array.isArray(info.alerts) || info.alerts.length === 0) {
-          renderEmpty('No active alerts.');
-          return;
-        }
-
-        const max = 3;
-        const slice = info.alerts.slice(0, max);
-        const cards = slice.map(function (a) {
-          if (typeof window.mfCincyAlertCardInnerHtml === 'function') {
-            return '<div class="mf-tv-alerts-rail__card">' + window.mfCincyAlertCardInnerHtml(a) + '</div>';
-          }
-          // Fallback: plain text
-          const txt = String((a && (a.title || a.header || a.text || a.description || a.body || a.detail)) || '').trim();
-          return '<div class="mf-tv-alerts-rail__card"><div style="color:#fff;white-space:pre-wrap;line-height:1.35;">' + (txt || 'Alert') + '</div></div>';
-        });
-        const more = info.alerts.length > max ? ('<div class="mf-tv-alerts-rail__more">+' + (info.alerts.length - max) + ' more</div>') : '';
-        bodyEl.innerHTML = cards.join('') + more;
-      } catch (_) {
-        titleEl.textContent = 'Route alerts';
-        renderEmpty('Unable to load alerts.');
-      }
-    }
-
-    // Initial + poll for route changes.
-    tick();
-    setInterval(tick, 2500);
-  })();
-</script>
 <!-- 2026-04-16 Next: verify stop times vs GTFS for sorta_4 dir0 at stop X -->
 </body>
 </html>
