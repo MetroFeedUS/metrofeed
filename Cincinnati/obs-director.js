@@ -320,13 +320,13 @@
     const pad = tvTransitMapPadding();
     try {
       if (it.kind === 'camera') {
-        const ratio = Number(cfg('tvCameraPanelWidthRatio', 0.5));
+        const ratio = Number(cfg('tvCameraPanelWidthRatio', 0));
         const panelW =
           ratio > 0 && ratio < 1
             ? Math.round((window.innerWidth || 1920) * ratio)
-            : Number(cfg('tvCameraPanelWidthPx', 960)) || 960;
+            : Number(cfg('tvCameraPanelWidthPx', 0)) || 0;
         const padExtra = Number(cfg('tvCameraMapPadExtraPx', 56)) || 56;
-        const padRight = panelW + padExtra;
+        const padRight = panelW > 0 ? panelW + padExtra : pad.right;
         m.flyTo({
           center: [it.lng, it.lat],
           zoom: Number(cfg('tvCameraMapZoom', 14.3)) || 14.3,
@@ -431,14 +431,41 @@
     return Number.isFinite(n) ? n * 1609.344 : 0;
   }
 
-  /** Padding for full-frame transit (OBS 16:9) — room for lower-third, balanced L/R. */
+  /** Padding for full-frame transit (OBS 16:9) */
   function tvTransitMapPadding() {
     return {
       top: Number(cfg('tvMapPadTop', 64)) || 64,
-      bottom: Number(cfg('tvMapPadBottom', 150)) || 150,
-      left: Number(cfg('tvMapPadLeft', 40)) || 40,
-      right: Number(cfg('tvMapPadRight', 40)) || 40
+      bottom: Number(cfg('tvMapPadBottom', 64)) || 64,
+      left: Number(cfg('tvMapPadLeft', 48)) || 48,
+      right: Number(cfg('tvMapPadRight', 48)) || 48
     };
+  }
+
+  function refitRouteLegView(routeId, directionId, flyMs) {
+    const m = map();
+    if (!m || mapFrozen()) return;
+    const coords = getRouteShapeCoords(routeId, directionId);
+    if (!coords || coords.length < 2) return;
+    let minLng = Infinity;
+    let minLat = Infinity;
+    let maxLng = -Infinity;
+    let maxLat = -Infinity;
+    coords.forEach(function (c) {
+      minLng = Math.min(minLng, c[0]);
+      maxLng = Math.max(maxLng, c[0]);
+      minLat = Math.min(minLat, c[1]);
+      maxLat = Math.max(maxLat, c[1]);
+    });
+    if (!Number.isFinite(minLng)) return;
+    tvMapResize();
+    const ms = flyMs != null ? flyMs : Number(cfg('mapFlyDurationMs', 2400)) || 2400;
+    tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, ms);
+  }
+
+  function refitCurrentRouteView() {
+    const leg = TV.currentLeg;
+    if (!leg || !leg.routeId) return;
+    refitRouteLegView(leg.routeId, leg.directionId, 0);
   }
 
   function tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, flyMs) {
@@ -1349,7 +1376,11 @@
 
     hideTrafficDetail();
     tvResetMapViewForRoute(routeId);
-    const resetMs = Number(cfg('tvPostCamResetMs', 700)) || 700;
+    const postLeg = TV.currentLeg;
+    const postDir =
+      postLeg && String(postLeg.routeId) === String(routeId) ? postLeg.directionId : 0;
+    refitRouteLegView(routeId, postDir, Number(cfg('mapFlyDurationMs', 2400)) || 2400);
+    const resetMs = Number(cfg('tvPostCamResetMs', 1600)) || 1600;
     if (resetMs > 0) await sleep(Math.min(resetMs, 1200));
 
     log('Route package complete: ' + String(routeId));
@@ -1394,6 +1425,8 @@
       tvMapResize();
       await sleep(120);
       tvMapResize();
+      refitRouteLegView(routeId, directionId, Number(cfg('mapFlyDurationMs', 2400)) || 2400);
+      await waitForMapSettled(Number(cfg('mapFlyDurationMs', 2400)) || 2400);
     } catch (e) {
       console.warn('[mfTvDirector] showRouteOverlay failed', overlayKey, e);
     }
@@ -2339,6 +2372,7 @@
     closeAlertsPanel: function () {
       alertsPanelOpen(false);
     },
+    refitMap: refitCurrentRouteView,
     getState: function () {
       return {
         mode: TV.mode,

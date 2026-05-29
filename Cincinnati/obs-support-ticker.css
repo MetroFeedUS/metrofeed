@@ -1,0 +1,232 @@
+/**
+ * RoamRaven OBS support ticker — bottom bar (clock, weather, extras)
+ */
+:root {
+  --rr-accent: #9333ea;
+  --rr-accent-soft: #c084fc;
+  --rr-bg: #000000;
+  --rr-panel: #0a0a0e;
+  --rr-border: rgba(147, 51, 234, 0.55);
+  --rr-text: #f1f5f9;
+  --rr-muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--rr-bg);
+  color: var(--rr-text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.rr-ticker {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.1fr) minmax(320px, 1.4fr) minmax(260px, 1fr);
+  grid-template-rows: 1fr auto;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  border-top: 2px solid var(--rr-border);
+}
+
+.rr-ticker__cell {
+  padding: 20px 28px;
+  border-right: 1px solid rgba(147, 51, 234, 0.22);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.rr-ticker__cell:last-child {
+  border-right: none;
+}
+
+.rr-ticker__bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 28px;
+  background: rgba(147, 51, 234, 0.08);
+  border-top: 1px solid rgba(147, 51, 234, 0.25);
+  font-size: 0.82rem;
+  color: var(--rr-muted);
+  min-height: 44px;
+}
+
+/* --- Clock --- */
+.rr-clock__time {
+  font-size: clamp(2.8rem, 5.5vw, 4.2rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--rr-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rr-clock__time .rr-clock__sec {
+  font-size: 0.55em;
+  color: var(--rr-accent-soft);
+  font-weight: 700;
+}
+
+.rr-clock__date {
+  margin-top: 8px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--rr-accent-soft);
+}
+
+.rr-clock__place {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: var(--rr-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* --- Weather now --- */
+.rr-weather-now {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.rr-weather-now__emoji {
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  line-height: 1;
+}
+
+.rr-weather-now__temp {
+  font-size: clamp(2.4rem, 4.5vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--rr-text);
+}
+
+.rr-weather-now__meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.rr-weather-now__desc {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--rr-text);
+  line-height: 1.25;
+}
+
+.rr-weather-now__feels {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: var(--rr-muted);
+}
+
+.rr-weather-alert {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rr-weather-alert--ok {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  color: #86efac;
+}
+
+.rr-weather-alert--warn {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fecaca;
+}
+
+/* --- Hourly strip --- */
+.rr-hourly__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rr-accent-soft);
+  margin-bottom: 10px;
+}
+
+.rr-hourly__row {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.rr-hourly__card {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 8px;
+  text-align: center;
+  background: rgba(17, 17, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.rr-hourly__card--now {
+  border-color: rgba(147, 51, 234, 0.65);
+  box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.25);
+}
+
+.rr-hourly__time {
+  font-size: 0.75rem;
+  color: var(--rr-muted);
+  font-weight: 600;
+}
+
+.rr-hourly__emoji {
+  font-size: 1.35rem;
+  margin: 4px 0;
+}
+
+.rr-hourly__temp {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--rr-accent-soft);
+}
+
+/* --- Bottom bar extras --- */
+.rr-ticker__tip {
+  flex: 1;
+  color: var(--rr-text);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rr-ticker__tip span {
+  color: var(--rr-accent-soft);
+}
+
+.rr-ticker__updated {
+  white-space: nowrap;
+}
+
+.rr-ticker__brand {
+  font-weight: 800;
+  color: var(--rr-accent-soft);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.rr-ticker__loading {
+  color: var(--rr-muted);
+  font-style: italic;
+}

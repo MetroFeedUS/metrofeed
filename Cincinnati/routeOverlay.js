@@ -1788,10 +1788,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
       if (tvMode) {
         const tvCfg = window.MF_TV_CONFIG || {};
         const tvPad = {
-          top: Number(tvCfg.tvMapPadTop) || 120,
-          bottom: Number(tvCfg.tvMapPadBottom) || 48,
-          left: Number(tvCfg.tvMapPadLeft) || 40,
-          right: Number(tvCfg.tvMapPadRight) || 40
+          top: Number(tvCfg.tvMapPadTop) || 64,
+          bottom: Number(tvCfg.tvMapPadBottom) || 64,
+          left: Number(tvCfg.tvMapPadLeft) || 48,
+          right: Number(tvCfg.tvMapPadRight) || 48
         };
         const tvFly = Number(tvCfg.mapFlyDurationMs) || 2400;
         try {

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RoamRaven TV — Support ticker</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="RoamRavenbird.png" />
+  <link rel="stylesheet" href="obs-support-ticker.css?v=1" />
+</head>
+<body>
+  <div class="rr-ticker" role="presentation">
+    <section class="rr-ticker__cell rr-ticker__clock" aria-label="Clock">
+      <div id="rrClockTime" class="rr-clock__time">—:—</div>
+      <div id="rrClockDate" class="rr-clock__date">—</div>
+      <div id="rrClockPlace" class="rr-clock__place">Cincinnati, OH</div>
+    </section>
+
+    <section class="rr-ticker__cell rr-ticker__weather" aria-label="Current weather">
+      <div class="rr-weather-now">
+        <div id="rrWeatherEmoji" class="rr-weather-now__emoji" aria-hidden="true">🌤️</div>
+        <div id="rrWeatherTemp" class="rr-weather-now__temp">—</div>
+        <div class="rr-weather-now__meta">
+          <div id="rrWeatherDesc" class="rr-weather-now__desc">Loading…</div>
+          <div id="rrWeatherFeels" class="rr-weather-now__feels"></div>
+          <div id="rrWeatherAlert" class="rr-weather-alert rr-weather-alert--ok">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rr-ticker__cell rr-ticker__hourly" aria-label="Hourly forecast">
+      <div class="rr-hourly__label">Next hours</div>
+      <div id="rrHourlyRow" class="rr-hourly__row">
+        <div class="rr-ticker__loading">Loading…</div>
+      </div>
+    </section>
+
+    <footer class="rr-ticker__bar">
+      <div id="rrTickerTip" class="rr-ticker__tip"><span>Tip ·</span> roamravenapp.com</div>
+      <div id="rrTonight" class="rr-ticker__updated">—</div>
+      <div id="rrWeatherUpdated" class="rr-ticker__updated">—</div>
+      <div class="rr-ticker__brand">ROAMRAVEN</div>
+    </footer>
+  </div>
+
+  <script src="city-config.js"></script>
+  <script>
+    (function () {
+      var id = 'cincinnati';
+      if (typeof getCityIdFromPath === 'function') {
+        try { id = getCityIdFromPath(); } catch (_) {}
+      }
+      if (typeof CITIES !== 'undefined' && CITIES[id]) {
+        window.CITY_CONFIG = CITIES[id];
+      }
+    })();
+  </script>
+  <script src="obs-support-ticker.js?v=1"></script>
+</body>
+</html>

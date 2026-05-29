@@ -42,15 +42,17 @@
     routeBucketSlowdownDwellMs: 12000,
     routeBucketCameraDwellMs: 11000,
     tvCameraPanelWidthPx: 0,
-    tvCameraPanelWidthRatio: 0.5,
+    /** 0 = no in-browser camera split (OBS uses separate layers / full-width map) */
+    tvCameraPanelWidthRatio: 0,
     tvCameraMapZoom: 14.3,
     tvCameraMapPadExtraPx: 56,
-    tvPostCamResetMs: 700,
-    tvTransitMaxZoom: 15.2,
-    tvMapPadTop: 120,
-    tvMapPadBottom: 48,
-    tvMapPadLeft: 40,
-    tvMapPadRight: 40,
+    tvPostCamResetMs: 1600,
+    tvTransitMaxZoom: 15.4,
+    /** Balanced padding — fills 16:9 frame (avoids empty band at bottom) */
+    tvMapPadTop: 64,
+    tvMapPadBottom: 64,
+    tvMapPadLeft: 48,
+    tvMapPadRight: 48,
     routeBucketEnabled: true,
     routeBucketPrefetchOppositeMs: 4000,
     /** null = all agencies in routes_index order (SORTA, TANK, BCRTA, …) */
@@ -83,9 +85,20 @@
     window.MF_TV_ALERTS_COLUMN = true;
   }
 
+  /** ?obs=1 — full-width map, no in-browser camera column (for OBS multi-source layout) */
+  if (params.get('obs') === '1' || params.get('obs') === 'true') {
+    window.MF_TV_CONFIG.tvCameraPanelWidthRatio = 0;
+    window.MF_TV_CONFIG.tvCameraPanelWidthPx = 0;
+    window.MF_TV_CONFIG.tvMapPadTop = 56;
+    window.MF_TV_CONFIG.tvMapPadBottom = 56;
+    window.MF_TV_CONFIG.tvMapPadLeft = 40;
+    window.MF_TV_CONFIG.tvMapPadRight = 40;
+    document.documentElement.classList.add('tv-obs-layout');
+  }
+
   var link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'obs-tv.css?v=20260601';
+  link.href = 'obs-tv.css?v=20260602';
   document.head.appendChild(link);
 
   /** OBS Browser Source: keep MapLibre canvas pixel size = container (fixes route line drift). */
@@ -94,6 +107,9 @@
       try {
         if (window.map && typeof window.map.resize === 'function') {
           window.map.resize();
+        }
+        if (window.mfTvDirector && typeof window.mfTvDirector.refitMap === 'function') {
+          window.mfTvDirector.refitMap();
         }
       } catch (_) {}
     }
