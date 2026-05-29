@@ -64,6 +64,72 @@ html.tv-mode #map {
   height: 100vh;
 }
 
+/* TV: allow a second "below fold" rail to render for OBS cropping.
+   Set your OBS browser source height > 1080 (e.g. 1600) and then
+   crop/position the same source twice: map (top) + alerts rail (bottom). */
+html.tv-mode body {
+  height: calc(100vh + 520px);
+}
+
+html.tv-mode .mf-tv-alerts-rail {
+  position: absolute;
+  top: 100vh;
+  left: 0;
+  width: 100vw;
+  height: 520px;
+  padding: 28px 40px;
+  background: #07070b;
+  border-top: 2px solid rgba(147, 51, 234, 0.35);
+  z-index: 10040;
+}
+
+html.tv-mode .mf-tv-alerts-rail__head {
+  margin-bottom: 16px;
+}
+
+html.tv-mode .mf-tv-alerts-rail__kicker {
+  color: #a78bfa;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+html.tv-mode .mf-tv-alerts-rail__title {
+  margin-top: 6px;
+  color: #f1f5f9;
+  font-weight: 900;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+html.tv-mode .mf-tv-alerts-rail__body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  max-height: 420px;
+  overflow: hidden;
+}
+
+html.tv-mode .mf-tv-alerts-rail__empty {
+  color: #94a3b8;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+html.tv-mode .mf-tv-alerts-rail__card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(17, 17, 24, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html.tv-mode .mf-tv-alerts-rail__more {
+  color: #cbd5e1;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
 html.tv-mode .maplibregl-marker.mf-bus-marker {
   display: block !important;
   visibility: visible !important;
