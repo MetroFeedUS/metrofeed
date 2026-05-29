@@ -20,24 +20,27 @@
     routeLegsBeforeTraffic: 10,
     segmentPanEnabled: true,
     /** Slower pans so the route line is readable on stream */
-    segmentPanIntervalMs: 7000,
+    segmentPanIntervalMs: 11000,
     segmentPanChunks: 4,
-    segmentPanStartDelayMs: 2800,
-    routeOverlaySettleMs: 3500,
+    segmentPanStartDelayMs: 4500,
+    routeOverlaySettleMs: 5000,
     incidentDwellMs: 32000,
     slowdownDwellMs: 28000,
     constructionDwellMs: 28000,
     weatherDwellMs: 55000,
-    mapFlyDurationMs: 850,
+    /** Slower map flies / fitBounds (readable on TV) */
+    mapFlyDurationMs: 2400,
+    tvBucketMinHoldMs: 4500,
+    tvEpisodeGapMs: 2800,
     vehiclePollMs: 6000,
     routeBucketRadiusMiles: 1.0,
     routeBucketMaxIncidents: 0,
     routeBucketMaxSlowdowns: 0,
     routeBucketMaxCameras: 4,
     routeBucketItemCap: 12,
-    routeBucketIncidentDwellMs: 9000,
-    routeBucketSlowdownDwellMs: 5000,
-    routeBucketCameraDwellMs: 5000,
+    routeBucketIncidentDwellMs: 14000,
+    routeBucketSlowdownDwellMs: 12000,
+    routeBucketCameraDwellMs: 11000,
     tvCameraPanelWidthPx: 0,
     tvCameraPanelWidthRatio: 0.5,
     tvCameraMapZoom: 14.3,
@@ -82,8 +85,58 @@
 
   var link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'obs-tv.css?v=20260530';
+  link.href = 'obs-tv.css?v=20260601';
   document.head.appendChild(link);
+
+  /** OBS Browser Source: keep MapLibre canvas pixel size = container (fixes route line drift). */
+  function ensureTvMapResize() {
+    function resizeMap() {
+      try {
+        if (window.map && typeof window.map.resize === 'function') {
+          window.map.resize();
+        }
+      } catch (_) {}
+    }
+
+    window.addEventListener('resize', resizeMap);
+    if (typeof ResizeObserver !== 'undefined') {
+      var attachRo = function () {
+        var mapEl = document.getElementById('map');
+        if (!mapEl) return;
+        try {
+          var ro = new ResizeObserver(function () {
+            resizeMap();
+          });
+          ro.observe(mapEl);
+        } catch (_) {}
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachRo);
+      } else {
+        attachRo();
+      }
+    }
+
+    var waits = [0, 200, 600, 1500, 3500, 8000];
+    for (var i = 0; i < waits.length; i++) {
+      (function (ms) {
+        setTimeout(resizeMap, ms);
+      })(waits[i]);
+    }
+
+    var poll = setInterval(function () {
+      if (!window.map) return;
+      clearInterval(poll);
+      try {
+        window.map.on('load', resizeMap);
+        if (window.map.loaded && window.map.loaded()) resizeMap();
+      } catch (_) {
+        resizeMap();
+      }
+    }, 150);
+  }
+
+  ensureTvMapResize();
 
   function hideTvChrome() {
     [

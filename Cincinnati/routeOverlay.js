@@ -1786,10 +1786,21 @@ function attachRouteToMap(map, routeId, directionId, options) {
       expandedBounds.extend([east + (lonRange * expansion), north + (latRange * expansion)]);
 
       if (tvMode) {
+        const tvCfg = window.MF_TV_CONFIG || {};
+        const tvPad = {
+          top: Number(tvCfg.tvMapPadTop) || 120,
+          bottom: Number(tvCfg.tvMapPadBottom) || 48,
+          left: Number(tvCfg.tvMapPadLeft) || 40,
+          right: Number(tvCfg.tvMapPadRight) || 40
+        };
+        const tvFly = Number(tvCfg.mapFlyDurationMs) || 2400;
+        try {
+          if (typeof map.resize === 'function') map.resize();
+        } catch (_) {}
         map.fitBounds(expandedBounds, {
-          padding: { top: 120, bottom: 48, left: 40, right: 40 },
-          maxZoom: 15.2,
-          duration: 900
+          padding: tvPad,
+          maxZoom: Number(tvCfg.tvTransitMaxZoom) || 15.2,
+          duration: tvFly
         });
       } else {
         map.fitBounds(expandedBounds, { padding: 40, maxZoom: 14 });

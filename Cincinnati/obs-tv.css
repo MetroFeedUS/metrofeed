@@ -5,12 +5,13 @@ html.tv-mode,
 html.tv-mode body {
   overflow: hidden !important;
   background: #0c0c10;
-}
-
-html.tv-mode .maplibregl-canvas {
   width: 100% !important;
   height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
+
+/* MapLibre sets canvas pixel size via map.resize() — do not override canvas dimensions here (OBS drift). */
 
 html.tv-mode .search-bar,
 html.tv-mode #mfTripPlannerSearchBar,
@@ -60,8 +61,13 @@ html.tv-mode .maplibregl-ctrl-attrib {
 }
 
 html.tv-mode #map {
-  width: 100vw;
-  height: 100vh;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 html.tv-mode .maplibregl-marker.mf-bus-marker {
@@ -608,4 +614,83 @@ html.tv-mode.tv-map-frozen #map::after {
   pointer-events: none;
   z-index: 2;
   box-shadow: inset 0 0 0 2px rgba(251, 146, 60, 0.25);
+}
+
+/* TV focus pin — anchor center on dot; label floats above */
+.mf-tv-focus-pin__label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 240px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(10, 10, 14, 0.94);
+  border: 1px solid rgba(147, 51, 234, 0.65);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.mf-tv-focus-pin__badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(147, 51, 234, 0.35);
+  color: #e9d5ff;
+  font: 700 10px/1 Segoe UI, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mf-tv-focus-pin__title {
+  color: #f8fafc;
+  font: 800 12px/1.25 Segoe UI, system-ui, sans-serif;
+}
+
+.mf-tv-focus-pin__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid #c084fc;
+  animation: mfTvPinPulse 1.8s ease-out infinite;
+}
+
+.mf-tv-focus-pin__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #9333ea;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.45), 0 0 14px rgba(147, 51, 234, 0.55);
+}
+
+.mf-tv-focus-pin__dot--camera {
+  background: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.45), 0 0 14px rgba(56, 189, 248, 0.5);
+}
+
+.mf-tv-focus-pin__dot--slow {
+  background: #fb7185;
+}
+
+@keyframes mfTvPinPulse {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.95;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0.15;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
 }

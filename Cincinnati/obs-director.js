@@ -98,6 +98,7 @@
       window.metrofeedTvApi.closeTrafficDetail();
     }
     clearFocusRing();
+    removeTempPin();
   }
 
   function removeTempPin() {
@@ -113,32 +114,40 @@
     removeTempPin();
     const m = map();
     if (!m || typeof maplibregl === 'undefined' || !maplibregl.Marker) return;
-    const elPin = document.createElement('div');
-    elPin.style.cssText =
-      'pointer-events:none;transform:translateY(-10px);' +
-      'background:rgba(10,10,14,0.88);border:1px solid rgba(147,51,234,0.6);' +
-      'border-radius:10px;padding:8px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.55);' +
-      'color:#e2e8f0;font:700 12px/1.2 Segoe UI,system-ui,sans-serif;max-width:260px;';
-    const badge = document.createElement('div');
-    badge.style.cssText =
-      'display:inline-block;margin-bottom:6px;padding:2px 8px;border-radius:999px;' +
-      'background:rgba(147,51,234,0.28);border:1px solid rgba(147,51,234,0.55);' +
-      'color:#e9d5ff;font:700 10px/1 Segoe UI,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;';
-    badge.textContent = kind === 'camera' ? 'Camera' : 'Traffic';
-    const txt = document.createElement('div');
-    txt.textContent = label || '';
-    txt.style.cssText = 'font-weight:800;color:#f8fafc;';
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'mf-tv-focus-pin';
+    wrap.style.cssText =
+      'position:relative;width:28px;height:28px;pointer-events:none;';
+
+    const title = String(label || '').trim();
+    if (title) {
+      const bubble = document.createElement('div');
+      bubble.className = 'mf-tv-focus-pin__label';
+      const badge = document.createElement('span');
+      badge.className = 'mf-tv-focus-pin__badge';
+      badge.textContent =
+        kind === 'camera' ? 'Camera' : kind === 'slowdown' ? 'Slowdown' : 'Incident';
+      const txt = document.createElement('span');
+      txt.className = 'mf-tv-focus-pin__title';
+      txt.textContent = title;
+      bubble.appendChild(badge);
+      bubble.appendChild(txt);
+      wrap.appendChild(bubble);
+    }
+
+    const ring = document.createElement('div');
+    ring.className = 'mf-tv-focus-pin__ring';
     const dot = document.createElement('div');
-    dot.style.cssText =
-      'width:12px;height:12px;border-radius:50%;margin:8px auto 0;' +
-      'background:' +
-      (kind === 'camera' ? '#38bdf8' : '#fb7185') +
-      ';box-shadow:0 0 0 3px rgba(0,0,0,0.35), 0 0 18px rgba(147,51,234,0.35);';
-    elPin.appendChild(badge);
-    elPin.appendChild(txt);
-    elPin.appendChild(dot);
+    dot.className = 'mf-tv-focus-pin__dot';
+    if (kind === 'camera') dot.classList.add('mf-tv-focus-pin__dot--camera');
+    else if (kind === 'slowdown') dot.classList.add('mf-tv-focus-pin__dot--slow');
+    wrap.appendChild(ring);
+    wrap.appendChild(dot);
+
     try {
-      TV.tempPinMarker = new maplibregl.Marker({ element: elPin, anchor: 'bottom' })
+      TV.tempPinMarker = new maplibregl.Marker({ element: wrap, anchor: 'center' })
         .setLngLat([lng, lat])
         .addTo(m);
     } catch (_) {
@@ -164,23 +173,33 @@
           type: 'circle',
           source: srcId,
           paint: {
-            'circle-radius': 18,
-            'circle-color': 'rgba(0,0,0,0)',
-            'circle-stroke-color': '#9333ea',
-            'circle-stroke-width': 4,
-            'circle-stroke-opacity': 0.9
+            'circle-radius': 14,
+            'circle-color': 'rgba(147, 51, 234, 0.2)',
+            'circle-stroke-color': '#c084fc',
+            'circle-stroke-width': 3,
+            'circle-stroke-opacity': 0.95
           }
         });
       }
+      bringFocusRingToFront();
       return true;
     } catch (_) {
       return false;
     }
   }
 
+  function bringFocusRingToFront() {
+    const m = map();
+    if (!m || typeof m.getLayer !== 'function' || !m.getLayer('mf-tv-focus-ring')) return;
+    try {
+      m.moveLayer('mf-tv-focus-ring');
+    } catch (_) {}
+  }
+
   function setFocusRing(lng, lat) {
     const m = map();
     if (!m) return;
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
     if (!ensureFocusRingLayer()) return;
     try {
       const src = m.getSource('mf-tv-focus-src');
@@ -195,6 +214,7 @@
           }
         ]
       });
+      bringFocusRingToFront();
     } catch (_) {}
   }
 
@@ -294,9 +314,10 @@
   }
 
   function flyToTvBucketItem(m, it) {
-    if (mapFrozen()) return;
-    if (!m || !it || !Number.isFinite(it.lng) || !Number.isFinite(it.lat)) return;
-    const flyMs = Number(cfg('mapFlyDurationMs', 900)) || 900;
+    if (mapFrozen()) return 0;
+    if (!m || !it || !Number.isFinite(it.lng) || !Number.isFinite(it.lat)) return 0;
+    const flyMs = Number(cfg('mapFlyDurationMs', 2400)) || 2400;
+    const pad = tvTransitMapPadding();
     try {
       if (it.kind === 'camera') {
         const ratio = Number(cfg('tvCameraPanelWidthRatio', 0.5));
@@ -304,24 +325,65 @@
           ratio > 0 && ratio < 1
             ? Math.round((window.innerWidth || 1920) * ratio)
             : Number(cfg('tvCameraPanelWidthPx', 960)) || 960;
-        const padExtra = Number(cfg('tvCameraMapPadExtraPx', 32)) || 32;
+        const padExtra = Number(cfg('tvCameraMapPadExtraPx', 56)) || 56;
         const padRight = panelW + padExtra;
         m.flyTo({
           center: [it.lng, it.lat],
           zoom: Number(cfg('tvCameraMapZoom', 14.3)) || 14.3,
-          padding: { top: 64, bottom: 64, left: 40, right: padRight },
+          padding: {
+            top: pad.top,
+            bottom: pad.bottom,
+            left: pad.left,
+            right: padRight
+          },
           duration: flyMs,
           essential: true
         });
       } else {
         m.flyTo({
           center: [it.lng, it.lat],
-          zoom: 14.1,
+          zoom: 14.15,
+          padding: pad,
           duration: flyMs,
           essential: true
         });
       }
     } catch (_) {}
+    return flyMs;
+  }
+
+  function waitForMapSettled(expectedMs) {
+    const m = map();
+    const ms = Math.max(500, Number(expectedMs) || Number(cfg('mapFlyDurationMs', 2400)) || 2400);
+    if (!m || mapFrozen()) return Promise.resolve();
+    return new Promise(function (resolve) {
+      let done = false;
+      const finish = function () {
+        if (done) return;
+        done = true;
+        try {
+          m.off('moveend', onMoveEnd);
+        } catch (_) {}
+        clearTimeout(fallback);
+        resolve();
+      };
+      const onMoveEnd = function () {
+        try {
+          if (typeof m.isMoving === 'function' && m.isMoving()) return;
+        } catch (_) {}
+        finish();
+      };
+      const fallback = setTimeout(finish, ms + 900);
+      try {
+        if (typeof m.isMoving === 'function' && !m.isMoving()) {
+          setTimeout(finish, 180);
+          return;
+        }
+        m.once('moveend', onMoveEnd);
+      } catch (_) {
+        setTimeout(finish, ms);
+      }
+    });
   }
 
   function clearPhaseTimerOnly() {
@@ -354,6 +416,14 @@
 
   function map() {
     return window.map;
+  }
+
+  function tvMapResize() {
+    const m = map();
+    if (!m || typeof m.resize !== 'function') return;
+    try {
+      m.resize();
+    } catch (_) {}
   }
 
   function milesToMeters(mi) {
@@ -427,7 +497,7 @@
     if (!Number.isFinite(minLng)) return;
 
     hideTrafficDetail();
-    const ms = Number(cfg('tvPostCamResetMs', 700)) || 700;
+    const ms = Number(cfg('tvPostCamResetMs', 1600)) || 1600;
     tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, ms);
     log('Map re-centered (post-cam): ' + routeId);
   }
@@ -880,9 +950,9 @@
     const m = map();
     if (!m) return;
 
-    const interval = cfg('segmentPanIntervalMs', 7000);
+    const interval = cfg('segmentPanIntervalMs', 11000);
     const numChunks = cfg('segmentPanChunks', 4);
-    const flyMs = cfg('mapFlyDurationMs', 900);
+    const flyMs = Number(cfg('mapFlyDurationMs', 2400)) || 2400;
 
     function runWithCoords(coords) {
       if (!coords || coords.length < 2) {
@@ -904,6 +974,7 @@
 
       const flyChunk = function () {
         if (mapFrozen()) return;
+        tvMapResize();
         const chunk = chunks[TV.segmentIndex % chunks.length];
         TV.segmentIndex++;
         if (!chunk || chunk.length < 2) return;
@@ -917,30 +988,7 @@
           minLat = Math.min(minLat, c[1]);
           maxLat = Math.max(maxLat, c[1]);
         });
-        const centerLng = (minLng + maxLng) / 2;
-        const centerLat = (minLat + maxLat) / 2;
-        try {
-          m.flyTo({
-            center: [centerLng, centerLat],
-            zoom: 13.2,
-            duration: flyMs,
-            essential: true
-          });
-        } catch (_) {
-          try {
-            m.fitBounds(
-              [
-                [minLng, minLat],
-                [maxLng, maxLat]
-              ],
-              {
-                padding: { top: 90, bottom: 150, left: 70, right: 70 },
-                maxZoom: 14,
-                duration: flyMs
-              }
-            );
-          } catch (_2) {}
-        }
+        tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, flyMs);
       };
 
       flyChunk();
@@ -1031,8 +1079,12 @@
     setPhaseBadge(badge || 'Transit + Traffic');
     setLowerThird('', '');
     hideTrafficDetail();
+
+    ensureFocusRingLayer();
     setFocusRing(it.lng, it.lat);
-    flyToTvBucketItem(m, it);
+    showTempPin(it.lng, it.lat, it.title, it.kind);
+    const flyMs = flyToTvBucketItem(m, it);
+    await waitForMapSettled(flyMs);
 
     if (it.kind === 'camera') {
       const imgUrl = resolveCameraImageUrl(it);
@@ -1047,8 +1099,12 @@
       showTrafficDetail(it.title, it.body, it.meta);
     }
 
-    await sleep(dwellMs);
+    const minHold = Number(cfg('tvBucketMinHoldMs', 4500)) || 4500;
+    const holdMs = Math.max(Number(dwellMs) || 0, minHold, flyMs + 600);
+    await sleep(holdMs);
     hideTrafficDetail();
+    removeTempPin();
+    clearFocusRing();
     if (it.kind === 'incident' || it.kind === 'slowdown') {
       setLowerThird('', '');
     }
@@ -1335,6 +1391,9 @@
         Number(cfg('routeOverlaySettleMs', 3500)) + 10000,
         gen
       );
+      tvMapResize();
+      await sleep(120);
+      tvMapResize();
     } catch (e) {
       console.warn('[mfTvDirector] showRouteOverlay failed', overlayKey, e);
     }
@@ -1448,9 +1507,10 @@
     }
 
     if (!TV.running || TV.paused || TV.mode !== MODES.ROUTE) return;
+    const gap = Number(cfg('tvEpisodeGapMs', 2800)) || 2800;
     setTimeout(function () {
       runNextRouteEpisode();
-    }, 1200);
+    }, gap);
   }
 
   function enterRouteMode() {
@@ -1961,11 +2021,16 @@
     setLowerThird(item.kind === 'slowdown' ? 'Slowdown' : 'Incident', item.title);
 
     if (m && !mapFrozen()) {
+      const flyMs = Number(cfg('mapFlyDurationMs', 2400)) || 2400;
+      const pad = tvTransitMapPadding();
       try {
+        setFocusRing(item.lng, item.lat);
+        showTempPin(item.lng, item.lat, item.title, item.kind);
         m.flyTo({
           center: [item.lng, item.lat],
           zoom: 13.5,
-          duration: cfg('mapFlyDurationMs', 2800),
+          padding: pad,
+          duration: flyMs,
           essential: true
         });
       } catch (_) {}
