@@ -1769,10 +1769,19 @@
       if (typeof window.mfTvLayoutApply === 'function') {
         window.mfTvLayoutApply('alerts');
       } else {
-        panel.style.width = '400px';
-        panel.style.height = '700px';
-        panel.style.maxWidth = '400px';
-        panel.style.maxHeight = '700px';
+        try {
+          var savedSize = JSON.parse(localStorage.getItem('mfTvAlertsSize_v1') || 'null');
+          if (savedSize && savedSize.w && savedSize.h) {
+            panel.style.width = Math.round(savedSize.w) + 'px';
+            panel.style.height = Math.round(savedSize.h) + 'px';
+          } else {
+            panel.style.width = '400px';
+            panel.style.height = '700px';
+          }
+        } catch (_) {
+          panel.style.width = '400px';
+          panel.style.height = '700px';
+        }
       }
       if (!opts.noFreeze && !(typeof window.mfTvLayoutIsEditMode === 'function' && window.mfTvLayoutIsEditMode())) {
         setMapFrozen(true);

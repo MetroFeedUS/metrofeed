@@ -159,6 +159,12 @@ html.tv-mode .maplibregl-marker.mf-bus-marker {
   gap: 10px;
 }
 
+/* Camera always stacks above route alerts (alerts stay open underneath) */
+.mf-tv-traffic-detail.mf-tv-camera-card {
+  z-index: 10150 !important;
+  pointer-events: none;
+}
+
 .mf-tv-traffic-detail-title {
   font-size: 1.35rem;
   font-weight: 800;
@@ -548,9 +554,9 @@ html.tv-mode .mf-tv-alerts-panel.mf-tv-hidden {
   display: none !important;
 }
 
-/* Vertical column ~400×700 — OBS crops this region (under logo on the right) */
-html.tv-mode .mf-tv-alerts-panel:not(.mf-tv-hidden),
-html.tv-mode.tv-alerts-open .mf-tv-alerts-panel {
+/* Vertical column — default ~400×700, user-resizable (drag bottom-right corner) */
+html.tv-mode .mf-tv-alerts-panel:not(.mf-tv-hidden):not(.mf-tv-layout-positioned),
+html.tv-mode.tv-alerts-open .mf-tv-alerts-panel:not(.mf-tv-layout-positioned) {
   position: fixed !important;
   right: 0 !important;
   top: 80px !important;
@@ -558,15 +564,16 @@ html.tv-mode.tv-alerts-open .mf-tv-alerts-panel {
   bottom: auto !important;
   z-index: 10100 !important;
   box-sizing: border-box !important;
-  width: 400px !important;
-  min-width: 400px !important;
-  max-width: 400px !important;
-  height: 700px !important;
-  min-height: 700px !important;
-  max-height: 700px !important;
+  width: 400px;
+  height: 700px;
+  min-width: 260px;
+  min-height: 280px;
+  max-width: min(640px, 52vw);
+  max-height: min(920px, 88vh);
+  resize: both;
   display: flex !important;
   flex-direction: column !important;
-  overflow: hidden !important;
+  overflow: auto !important;
   padding: 14px 16px 12px !important;
   border-radius: 0 !important;
   border: 2px solid rgba(251, 146, 60, 0.7) !important;
@@ -574,8 +581,15 @@ html.tv-mode.tv-alerts-open .mf-tv-alerts-panel {
   background: #000000 !important;
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45) !important;
   pointer-events: auto !important;
-  font-size: 0.8rem !important;
+  font-size: 0.85rem !important;
   color: #cbd5e1 !important;
+}
+
+html.tv-mode .mf-tv-alerts-panel.mf-tv-layout-positioned:not(.mf-tv-hidden) {
+  z-index: 10100 !important;
+  pointer-events: auto !important;
+  resize: both;
+  overflow: auto !important;
 }
 
 /* OBS always-on column: home.html?tv=1&alertsColumn=1 */
@@ -585,15 +599,34 @@ html.tv-mode.tv-alerts-open #mfTvAlertsPanel {
 
 .mf-tv-alerts-panel .mf-tv-admin-head {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 6px;
+  border-bottom: 2px solid rgba(251, 146, 60, 0.55);
+}
+
+.mf-tv-alerts-panel .mf-tv-admin-head > span,
+.mf-tv-alerts-panel__title {
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #fed7aa;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  line-height: 1.2;
 }
 
 .mf-tv-alerts-panel-route {
   flex-shrink: 0;
   font-weight: 700;
-  color: #f1f5f9;
-  font-size: 0.9rem;
-  line-height: 1.3;
-  margin-bottom: 8px;
+  color: #ffffff;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .mf-tv-alerts-panel-body {
@@ -618,12 +651,12 @@ html.tv-mode.tv-alerts-open #mfTvAlertsPanel {
 }
 
 .mf-tv-alerts-panel__card {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 8px;
   background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: 0.78rem;
-  line-height: 1.35;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.88rem;
+  line-height: 1.4;
   word-break: break-word;
 }
 
@@ -631,31 +664,6 @@ html.tv-mode.tv-alerts-open #mfTvAlertsPanel {
   color: #94a3b8;
   font-weight: 700;
   font-size: 0.8rem;
-}
-
-/* OBS alerts-only browser: home.html?tv=1&alertsColumn=1 — no second director */
-html.tv-mode.tv-alerts-follower #map,
-html.tv-mode.tv-alerts-follower #mapRouteOverlayRoot,
-html.tv-mode.tv-alerts-follower .mf-tv-admin-toggle,
-html.tv-mode.tv-alerts-follower .mf-tv-alerts-toggle {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-html.tv-mode.tv-alerts-follower .mf-tv-alerts-panel {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  border: none !important;
-  border-radius: 0 !important;
 }
 
 html.tv-mode.tv-map-frozen #map::after {

@@ -376,10 +376,37 @@
     return editMode;
   };
 
+  function bindAlertsSizePersist() {
+    var panel = document.getElementById('mfTvAlertsPanel');
+    if (!panel || panel.getAttribute('data-mf-alerts-size-ro') === '1') return;
+    panel.setAttribute('data-mf-alerts-size-ro', '1');
+    if (typeof ResizeObserver === 'undefined') return;
+    var timer;
+    try {
+      var ro = new ResizeObserver(function () {
+        if (editMode || panel.classList.contains('mf-tv-hidden')) return;
+        if (panel.classList.contains('mf-tv-layout-positioned')) return;
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          var r = panel.getBoundingClientRect();
+          if (r.width < 200 || r.height < 200) return;
+          try {
+            localStorage.setItem(
+              'mfTvAlertsSize_v1',
+              JSON.stringify({ w: Math.round(r.width), h: Math.round(r.height) })
+            );
+          } catch (_) {}
+        }, 400);
+      });
+      ro.observe(panel);
+    } catch (_) {}
+  }
+
   window.mfTvLayoutInit = function () {
     ensureToolbar();
     setupPanelChrome();
     bindPointerDrag();
+    bindAlertsSizePersist();
 
     document.addEventListener('keydown', function (e) {
       if (!window.MF_TV_MODE) return;

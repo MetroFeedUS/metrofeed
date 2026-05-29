@@ -200,7 +200,7 @@
 
   link.rel = 'stylesheet';
 
-  link.href = 'obs-tv.css?v=20260603';
+  link.href = 'obs-tv.css?v=20260529b';
   document.head.appendChild(link);
 
   var layoutCss = document.createElement('link');
