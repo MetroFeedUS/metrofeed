@@ -44,6 +44,12 @@
     console.log('[mfTvDirector]', msg);
   }
 
+  function busPublish(msg) {
+    if (typeof window.mfTvBusPublish === 'function') {
+      window.mfTvBusPublish(msg);
+    }
+  }
+
   function cfg(key, fallback) {
     const c = window.MF_TV_CONFIG || {};
     const v = c[key];
@@ -66,11 +72,13 @@
     if (!root) return;
     if (!title) {
       root.classList.add('mf-tv-hidden');
+      busPublish({ t: 'lower', title: '', sub: '' });
       return;
     }
     root.classList.remove('mf-tv-hidden');
     if (t) t.textContent = title;
     if (s) s.textContent = sub || '';
+    busPublish({ t: 'lower', title: title || '', sub: sub || '' });
   }
 
   function hideTrafficDetail() {
@@ -100,6 +108,7 @@
     }
     clearFocusRing();
     removeTempPin();
+    busPublish({ t: 'camera', open: false });
   }
 
   function removeTempPin() {
@@ -333,7 +342,7 @@
         me.style.display = meta ? 'block' : 'none';
       }
     }
-    if (typeof window.mfTvLayoutApply === 'function') {
+    if (typeof window.mfTvLayoutApply === 'function' && !window.MF_TV_STAGE_MODE) {
       window.mfTvLayoutApply(
         typeof window.mfTvLayoutKeyForKind === 'function'
           ? window.mfTvLayoutKeyForKind(kind)
@@ -341,6 +350,16 @@
             ? 'camera'
             : 'traffic'
       );
+    }
+    if (kind === 'camera') {
+      busPublish({
+        t: 'camera',
+        open: true,
+        title: title || 'Traffic camera',
+        imgUrl: url || ''
+      });
+    } else {
+      busPublish({ t: 'camera', open: false });
     }
   }
 
@@ -1908,7 +1927,8 @@
     const bodyEl = el('mfTvAlertsPanelBody');
     const panel = el('mfTvAlertsPanel');
     if (!routeEl || !bodyEl || !panel) return;
-    if (panel.classList.contains('mf-tv-hidden') && !force) return;
+    const stageMode = !!window.MF_TV_STAGE_MODE;
+    if (panel.classList.contains('mf-tv-hidden') && !force && !stageMode) return;
 
     const rt = alertsRouteFromState();
     const key = rt.routeId + '|' + (rt.dir || '');
@@ -1916,6 +1936,11 @@
       routeEl.textContent = 'Waiting for route…';
       alertsRenderEmpty(bodyEl, '—');
       alertsLastKey = '';
+      busPublish({
+        t: 'alerts',
+        route: 'Waiting for route…',
+        html: '<div class="mf-tv-alerts-panel__empty">—</div>'
+      });
       return;
     }
 
@@ -1926,6 +1951,11 @@
 
     if (typeof window.fetchAlertsData !== 'function' || typeof window.getRouteAlerts !== 'function') {
       alertsRenderEmpty(bodyEl, 'Alerts not available.');
+      busPublish({
+        t: 'alerts',
+        route: routeEl.textContent,
+        html: '<div class="mf-tv-alerts-panel__empty">Alerts not available.</div>'
+      });
       return;
     }
 
@@ -1935,6 +1965,11 @@
       const info = window.getRouteAlerts(rt.routeId, alerts);
       if (!info || !Array.isArray(info.alerts) || info.alerts.length === 0) {
         alertsRenderEmpty(bodyEl, 'No active alerts for this route.');
+        busPublish({
+          t: 'alerts',
+          route: routeEl.textContent,
+          html: '<div class="mf-tv-alerts-panel__empty">No active alerts for this route.</div>'
+        });
         return;
       }
       const max = 6;
@@ -1956,9 +1991,16 @@
         info.alerts.length > max
           ? '<div class="mf-tv-alerts-panel__more">+' + (info.alerts.length - max) + ' more</div>'
           : '';
-      bodyEl.innerHTML = cards.join('') + more;
+      const html = cards.join('') + more;
+      bodyEl.innerHTML = html;
+      busPublish({ t: 'alerts', route: routeEl.textContent, html: html });
     } catch (_) {
       alertsRenderEmpty(bodyEl, 'Unable to load alerts.');
+      busPublish({
+        t: 'alerts',
+        route: routeEl.textContent,
+        html: '<div class="mf-tv-alerts-panel__empty">Unable to load alerts.</div>'
+      });
     }
   }
 
@@ -1994,12 +2036,16 @@
     });
 
     setInterval(function () {
-      if (!panel.classList.contains('mf-tv-hidden')) {
+      if (window.MF_TV_STAGE_MODE) {
+        refreshAlertsPanel(false);
+      } else if (!panel.classList.contains('mf-tv-hidden')) {
         refreshAlertsPanel(false);
       }
     }, 2500);
 
-    if (window.MF_TV_ALERTS_COLUMN) {
+    if (window.MF_TV_STAGE_MODE) {
+      refreshAlertsPanel(true);
+    } else if (window.MF_TV_ALERTS_COLUMN) {
       alertsPanelOpen(true, { noFreeze: true });
     }
   }

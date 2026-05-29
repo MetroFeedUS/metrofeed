@@ -137,12 +137,50 @@
     return kind === 'camera' ? 'camera' : 'traffic';
   };
 
+  function clearLayoutInline(el) {
+    if (!el) return;
+    [
+      'position',
+      'left',
+      'top',
+      'right',
+      'bottom',
+      'width',
+      'height',
+      'max-width',
+      'max-height',
+      'min-width',
+      'min-height'
+    ].forEach(function (prop) {
+      el.style.removeProperty(prop);
+    });
+    el.classList.remove('mf-tv-layout-positioned');
+    el.removeAttribute('data-mf-tv-layout-key');
+  }
+
+  window.mfTvClearSavedLayout = function () {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('mfTvAlertsSize_v1');
+    } catch (_) {}
+    Object.keys(PANEL_META).forEach(function (key) {
+      var meta = PANEL_META[key];
+      var node = meta && meta.resolveEl ? meta.resolveEl() : null;
+      if (node) clearLayoutInline(node);
+    });
+  };
+
   window.mfTvLayoutApply = function (key) {
     var meta = PANEL_META[key];
     if (!meta) return;
     var el = meta.resolveEl();
     if (!el) return;
     el.setAttribute('data-mf-tv-layout-active', key);
+    var obsLayout = document.documentElement.classList.contains('tv-obs-layout');
+    if (obsLayout && (key === 'camera' || key === 'traffic') && !editMode) {
+      clearLayoutInline(el);
+      return;
+    }
     applyRect(el, getRect(key));
   };
 

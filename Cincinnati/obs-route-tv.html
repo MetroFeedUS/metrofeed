@@ -57,7 +57,7 @@
 <body>
   <div class="gate-form">
     <h1>RoamRaven TV</h1>
-    <p>OBS director mode uses the live map at <code>home.html?tv=1</code>.</p>
+    <p>OBS uses <code>obs-tv.html?tv=1&panel=…</code> — one URL per browser source.</p>
     <input id="gateInput" type="password" autocomplete="off" placeholder="Access code" />
     <button type="button" id="gateSubmit">Enter broadcast</button>
     <div class="err" id="gateError"></div>
@@ -69,7 +69,15 @@
 
     function goLive() {
       sessionStorage.setItem(AUTH_KEY, '1');
-      window.location.replace('home.html?tv=1');
+      var params = new URLSearchParams(window.location.search);
+      var ret = params.get('return');
+      if (ret) {
+        try {
+          window.location.replace(decodeURIComponent(ret));
+          return;
+        } catch (_) {}
+      }
+      window.location.replace('obs-tv.html?tv=1&panel=map&bw=1920&bh=1080');
     }
 
     function tryUnlock() {
