@@ -147,12 +147,46 @@
     wrap.appendChild(dot);
 
     try {
-      TV.tempPinMarker = new maplibregl.Marker({ element: wrap, anchor: 'center' })
+      TV.tempPinMarker = new maplibregl.Marker({
+        element: wrap,
+        anchor: 'center',
+        className: 'mf-tv-focus-pin-marker'
+      })
         .setLngLat([lng, lat])
         .addTo(m);
     } catch (_) {
       TV.tempPinMarker = null;
     }
+  }
+
+  /** Right-side camera panel width — keeps map pin on the left half of the frame. */
+  function resolveTvCameraPanelWidthPx() {
+    const ratio = Number(cfg('tvCameraPanelWidthRatio', 0));
+    if (ratio > 0 && ratio < 1) {
+      return Math.round((window.innerWidth || 1920) * ratio);
+    }
+    const fixed = Number(cfg('tvCameraPanelWidthPx', 0));
+    if (fixed > 0) return fixed;
+
+    const panel = el('mfTvTrafficDetail');
+    if (
+      panel &&
+      !panel.classList.contains('mf-tv-hidden') &&
+      panel.classList.contains('mf-tv-camera-card')
+    ) {
+      const r = panel.getBoundingClientRect();
+      if (r.width > 80) return Math.round(r.width);
+    }
+
+    const W = window.innerWidth || 1920;
+    if (document.documentElement.classList.contains('tv-obs-layout')) {
+      return Math.min(420, Math.round(W * 0.38)) + 24;
+    }
+    if (panel && panel.classList.contains('mf-tv-layout-positioned')) {
+      const r = panel.getBoundingClientRect();
+      if (r.width > 80) return Math.round(r.width);
+    }
+    return Math.round(W * 0.5);
   }
 
   function ensureFocusRingLayer() {
@@ -329,13 +363,9 @@
     const pad = tvTransitMapPadding();
     try {
       if (it.kind === 'camera') {
-        const ratio = Number(cfg('tvCameraPanelWidthRatio', 0));
-        const panelW =
-          ratio > 0 && ratio < 1
-            ? Math.round((window.innerWidth || 1920) * ratio)
-            : Number(cfg('tvCameraPanelWidthPx', 0)) || 0;
+        const panelW = resolveTvCameraPanelWidthPx();
         const padExtra = Number(cfg('tvCameraMapPadExtraPx', 56)) || 56;
-        const padRight = panelW > 0 ? panelW + padExtra : pad.right;
+        const padRight = Math.max(pad.right, panelW + padExtra);
         m.flyTo({
           center: [it.lng, it.lat],
           zoom: Number(cfg('tvCameraMapZoom', 14.3)) || 14.3,
@@ -532,8 +562,10 @@
     });
     if (!Number.isFinite(minLng)) return;
 
+    removeTempPin();
+    clearFocusRing();
     hideTrafficDetail();
-    const ms = Number(cfg('tvPostCamResetMs', 1600)) || 1600;
+    const ms = Number(cfg('mapFlyDurationMs', 2400)) || 2400;
     tvFitChunkBounds(m, minLng, minLat, maxLng, maxLat, ms);
     log('Map re-centered (post-cam): ' + routeId);
   }
@@ -1119,13 +1151,22 @@
     ensureFocusRingLayer();
     setFocusRing(it.lng, it.lat);
     showTempPin(it.lng, it.lat, it.title, it.kind);
-    const flyMs = flyToTvBucketItem(m, it);
-    await waitForMapSettled(flyMs);
 
+    let flyMs = 0;
     if (it.kind === 'camera') {
       const imgUrl = resolveCameraImageUrl(it);
       showTrafficDetail(it.title, '', '', imgUrl, 'camera');
-    } else if (it.kind === 'incident') {
+      await sleep(100);
+      tvMapResize();
+      bringFocusRingToFront();
+      flyMs = flyToTvBucketItem(m, it);
+      await waitForMapSettled(flyMs);
+    } else {
+      flyMs = flyToTvBucketItem(m, it);
+      await waitForMapSettled(flyMs);
+    }
+
+    if (it.kind === 'incident') {
       showTrafficDetail(it.title, it.body, it.meta, null, 'incident');
       setLowerThird('Traffic incident', it.title);
     } else if (it.kind === 'slowdown') {

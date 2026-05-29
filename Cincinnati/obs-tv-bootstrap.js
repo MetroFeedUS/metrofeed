@@ -96,9 +96,9 @@
 
     tvCameraPanelWidthPx: 0,
 
-    /** 0 = no in-browser camera split (OBS uses separate layers / full-width map) */
+    /** ~half screen for camera column — map flyTo pads right so pin stays on the left */
 
-    tvCameraPanelWidthRatio: 0,
+    tvCameraPanelWidthRatio: 0.5,
 
     tvCameraMapZoom: 14.3,
 
@@ -178,6 +178,8 @@
 
   if (params.get('obs') === '1' || params.get('obs') === 'true') {
 
+    /** Corner cam overlay — resolveTvCameraPanelWidthPx() uses ~38vw when ratio is 0 */
+
     window.MF_TV_CONFIG.tvCameraPanelWidthRatio = 0;
 
     window.MF_TV_CONFIG.tvCameraPanelWidthPx = 0;
@@ -200,7 +202,7 @@
 
   link.rel = 'stylesheet';
 
-  link.href = 'obs-tv.css?v=20260529b';
+  link.href = 'obs-tv.css?v=20260530';
   document.head.appendChild(link);
 
   var layoutCss = document.createElement('link');
