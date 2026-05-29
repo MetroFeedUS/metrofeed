@@ -163,7 +163,7 @@
 
   var stageCss = document.createElement('link');
   stageCss.rel = 'stylesheet';
-  stageCss.href = 'obs-tv-stage.css?v=2';
+  stageCss.href = 'obs-tv-stage.css?v=3';
   document.head.appendChild(stageCss);
 
   var busJs = document.createElement('script');

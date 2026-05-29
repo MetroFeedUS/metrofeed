@@ -128,9 +128,9 @@
     }
     var panel = spec.panel;
     document.querySelectorAll('[data-panel]').forEach(function (node) {
-      if (node.getAttribute('data-panel') === panel) {
-        node.hidden = false;
-      }
+      var isMine = node.getAttribute('data-panel') === panel;
+      node.hidden = !isMine;
+      node.style.display = isMine ? '' : 'none';
     });
     if (panel === 'ticker') {
       var cc = document.createElement('script');
@@ -152,7 +152,7 @@
       document.body.appendChild(lb);
     } else {
       var sl = document.createElement('script');
-      sl.src = 'obs-tv-slices.js?v=1';
+      sl.src = 'obs-tv-slices.js?v=2';
       document.body.appendChild(sl);
     }
   })();

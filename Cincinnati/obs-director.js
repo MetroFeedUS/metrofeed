@@ -108,7 +108,6 @@
     }
     clearFocusRing();
     removeTempPin();
-    busPublish({ t: 'camera', open: false });
   }
 
   function removeTempPin() {
@@ -366,16 +365,6 @@
             ? 'camera'
             : 'traffic'
       );
-    }
-    if (kind === 'camera') {
-      busPublish({
-        t: 'camera',
-        open: true,
-        title: title || 'Traffic camera',
-        imgUrl: url || ''
-      });
-    } else {
-      busPublish({ t: 'camera', open: false });
     }
   }
 

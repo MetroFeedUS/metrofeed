@@ -1,12 +1,13 @@
 /**
- * RoamRaven TV — lightweight panel slices (alerts, camera, ticker, live, lower).
- * Loaded by obs-tv.html — syncs from map/director via BroadcastChannel.
+ * RoamRaven TV — panel slices (alerts, camera, lower). One panel per OBS browser source.
  */
 (function () {
   'use strict';
 
   var spec = window.MF_TV_STAGE_SPEC;
   if (!spec) return;
+
+  var myPanel = spec.panel;
 
   function el(id) {
     return document.getElementById(id);
@@ -62,12 +63,12 @@
 
   function onBus(msg) {
     if (!msg || !msg.t) return;
-    if (msg.t === 'alerts') {
+    if (msg.t === 'alerts' && myPanel === 'alerts') {
       setAlerts(msg.route, msg.html);
-    } else if (msg.t === 'camera') {
+    } else if (msg.t === 'camera' && myPanel === 'camera') {
       if (msg.open) setCamera(msg.title, msg.imgUrl);
       else setCamera('', '');
-    } else if (msg.t === 'lower') {
+    } else if (msg.t === 'lower' && myPanel === 'lower') {
       setLower(msg.title, msg.sub);
     }
   }
@@ -76,11 +77,11 @@
     window.mfTvBusSubscribe(onBus);
   }
 
-  if (spec.panel === 'alerts') {
+  if (myPanel === 'alerts') {
     setAlerts('', '<div class="mf-tv-alerts-panel__empty">Waiting for map source…</div>');
-  } else if (spec.panel === 'camera') {
+  } else if (myPanel === 'camera') {
     setCamera('', '');
-  } else if (spec.panel === 'lower') {
+  } else if (myPanel === 'lower') {
     setLower('', '');
   }
 })();
