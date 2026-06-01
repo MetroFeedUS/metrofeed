@@ -251,6 +251,15 @@ const CITIES = {
     // Live vehicle marker SVG alignment. bus.svg faces WEST; flip 180° so it faces direction-of-travel.
     busSvgHeadingOffsetDeg: 180,
 
+    /** Test City only: snap position, motion tracker, chevrons, softer opposite-bus styling. */
+    busTrackerV2: true,
+    busMarkerSnapMaxMeters: 120,
+    busMarkerSnapLookaheadSegs: 4,
+    busMarkerSnapHysteresisRatio: 0.28,
+    busRouteChevronSpacingM: 420,
+    busUseMotionDirection: true,
+    busSoftOppositeDim: true,
+
     showRailRoutes: false,
 
     useLazyLoading: false,
