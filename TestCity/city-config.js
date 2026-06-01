@@ -170,22 +170,23 @@ const CITIES = {
     otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
     busApi: null,
 
-    // Lexington, KY (map shell only; route geometry is still Greater Cincinnati).
+    // Default view: Lexington, KY. Pan limits include full Greater Cincinnati (same as production Cincy).
     defaultCenter: [-84.503, 38.040],
     defaultZoom: 11,
     startupDefaultRouteId: "sorta_4",
     startupDefaultDirectionId: 0,
+    // Union of Lexington sandbox + Cincinnati service area (I-75 corridor).
     bounds: {
-      north: 38.6486,
+      north: 39.7114,
       south: 37.4314,
-      east: -84.1328,
-      west: -84.9672
+      east: -83.8828,
+      west: -85.2172
     },
     maxExtendedBounds: {
-      north: 38.8486,
+      north: 39.9114,
       south: 37.2314,
-      east: -83.9328,
-      west: -85.1672
+      east: -83.6828,
+      west: -85.5172
     },
     // Ohio road incidents (VPS JSON).
     incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
