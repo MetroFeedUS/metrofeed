@@ -257,6 +257,8 @@ const CITIES = {
     busMarkerSnapLookaheadSegs: 4,
     busMarkerSnapHysteresisRatio: 0.28,
     busRouteChevronSpacingM: 420,
+    /** Spacing of ▸ symbols along the route line (screen pixels, MapLibre symbol-spacing). */
+    busRouteArrowSpacingPx: 150,
     busUseMotionDirection: true,
     busSoftOppositeDim: true,
 

@@ -514,90 +514,110 @@ function metrofeedUpdateMotionDirection(hState, snap) {
   return hState.motionDir;
 }
 
-/** Sample polyline at fixed spacing (m) for direction chevrons. shape coords [lat, lon]. */
-function metrofeedSamplePolylineBySpacing(shape, spacingM, reverse) {
-  if (!Array.isArray(shape) || shape.length < 2) return [];
-  const step = Math.max(80, Number(spacingM) || 400);
-  const pts = [];
-  let acc = 0;
-  let nextAt = step * 0.5;
-  const segs = [];
-  for (let i = 0; i < shape.length - 1; i++) {
-    const p0 = shape[i];
-    const p1 = shape[i + 1];
-    const y0 = Number(p0 && p0[0]);
-    const x0 = Number(p0 && p0[1]);
-    const y1 = Number(p1 && p1[0]);
-    const x1 = Number(p1 && p1[1]);
-    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
-    segs.push({ y0, x0, y1, x1, len: metrofeedHaversineM(y0, x0, y1, x1) });
-  }
-  if (!segs.length) return [];
-  const total = segs.reduce((s, g) => s + g.len, 0);
-  if (total < step) {
-    const mid = segs[Math.floor(segs.length / 2)];
-    const br = reverse
-      ? metrofeedBearingDeg(mid.y1, mid.x1, mid.y0, mid.x0)
-      : metrofeedBearingDeg(mid.y0, mid.x0, mid.y1, mid.x1);
-    return [{ lat: (mid.y0 + mid.y1) / 2, lon: (mid.x0 + mid.x1) / 2, bearing: br }];
-  }
-  for (let si = 0; si < segs.length; si++) {
-    const g = segs[si];
-    const segStart = acc;
-    acc += g.len;
-    while (nextAt <= acc) {
-      const t = g.len > 0 ? (nextAt - segStart) / g.len : 0;
-      const tf = Math.max(0, Math.min(1, t));
-      const lat = g.y0 + (g.y1 - g.y0) * tf;
-      const lon = g.x0 + (g.x1 - g.x0) * tf;
-      const br = reverse
-        ? metrofeedBearingDeg(g.y1, g.x1, g.y0, g.x0)
-        : metrofeedBearingDeg(g.y0, g.x0, g.y1, g.x1);
-      pts.push({ lat, lon, bearing: br });
-      nextAt += step;
-    }
-  }
-  return pts;
+/** Remove legacy tiny HTML route chevrons (replaced by symbol layer). */
+function metrofeedSweepLegacyRouteChevrons(mapInstance) {
+  const map = mapInstance || (typeof window !== "undefined" ? window.map : null);
+  const root = map && typeof map.getContainer === "function" ? map.getContainer() : null;
+  if (!root) return 0;
+  let removed = 0;
+  try {
+    root.querySelectorAll(".mf-route-dir-chevron").forEach(function (el) {
+      const wrap = el && el.closest ? el.closest(".maplibregl-marker") : null;
+      if (wrap && wrap.parentNode) {
+        wrap.parentNode.removeChild(wrap);
+        removed++;
+      } else if (el && el.parentNode) {
+        el.parentNode.removeChild(el);
+        removed++;
+      }
+    });
+  } catch (_) {}
+  return removed;
 }
 
-function metrofeedInstallRouteDirectionChevrons(map, shape, routeColor, directionId, overlayElements) {
+/**
+ * Direction arrows baked into the route line (MapLibre symbol layer along the polyline).
+ */
+function metrofeedInstallRouteDirectionSymbolLayer(
+  map,
+  shape,
+  routeColor,
+  directionId,
+  mapLayerKey,
+  shapeIndex,
+  overlayElements
+) {
   if (!metrofeedTestCityBusV2Enabled() || !map || !shape || shape.length < 2) return;
-  const spacing =
-    window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
-      ? Number(window.CITY_CONFIG.busRouteChevronSpacingM)
-      : 420;
-  const reverse = Number(directionId) === 1;
-  const samples = metrofeedSamplePolylineBySpacing(shape, spacing, reverse);
+
+  const spacingPx =
+    window.CITY_CONFIG && window.CITY_CONFIG.busRouteArrowSpacingPx != null
+      ? Number(window.CITY_CONFIG.busRouteArrowSpacingPx)
+      : window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
+        ? Math.max(80, Math.round(Number(window.CITY_CONFIG.busRouteChevronSpacingM) * 0.45))
+        : 160;
+
+  let coords = [];
+  for (let i = 0; i < shape.length; i++) {
+    const p = shape[i];
+    const lat = Number(p && p[0]);
+    const lon = Number(p && p[1]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    coords.push([lon, lat]);
+  }
+  if (coords.length < 2) return;
+  if (Number(directionId) === 1) coords = coords.slice().reverse();
+
+  const srcId = `route-dir-arrows-src-${mapLayerKey}-${shapeIndex}`;
+  const layerId = `route-dir-arrows-layer-${mapLayerKey}-${shapeIndex}`;
+
+  try {
+    if (map.getLayer(layerId)) map.removeLayer(layerId);
+    if (map.getSource(srcId)) map.removeSource(srcId);
+  } catch (_) {}
+
   const fg = pickContrastingTextColor(routeColor);
-  samples.forEach(function (pt) {
-    const el = document.createElement("div");
-    el.className = "mf-route-dir-chevron";
-    el.setAttribute("aria-hidden", "true");
-    const br = metrofeedNormalizeHeadingDeg(pt.bearing);
-    const rot = br != null ? (br - 90 + 3600) % 360 : 0;
-    el.style.cssText = [
-      "width:14px",
-      "height:14px",
-      "display:flex",
-      "align-items:center",
-      "justify-content:center",
-      "font-size:11px",
-      "line-height:1",
-      "color:" + routeColor,
-      "text-shadow:0 0 2px " + fg + ",0 1px 3px rgba(0,0,0,0.65)",
-      "transform:rotate(" + rot + "deg)",
-      "transform-origin:50% 50%",
-      "pointer-events:none",
-      "user-select:none"
-    ].join(";");
-    el.textContent = "›";
-    try {
-      const mk = new maplibregl.Marker({ element: el, anchor: "center" })
-        .setLngLat([pt.lon, pt.lat])
-        .addTo(map);
-      overlayElements.markers.push(mk);
-    } catch (_) {}
-  });
+  const halo = fg === "#ffffff" ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.92)";
+
+  try {
+    map.addSource(srcId, {
+      type: "geojson",
+      data: {
+        type: "Feature",
+        properties: {},
+        geometry: { type: "LineString", coordinates: coords }
+      }
+    });
+    overlayElements.sources.push(srcId);
+
+    const layerDef = {
+      id: layerId,
+      type: "symbol",
+      source: srcId,
+      layout: {
+        "symbol-placement": "line",
+        "symbol-spacing": spacingPx,
+        "text-field": "▸",
+        "text-size": ["interpolate", ["linear"], ["zoom"], 9, 14, 12, 18, 15, 24],
+        "text-allow-overlap": true,
+        "text-ignore-placement": true,
+        "text-keep-upright": false,
+        "text-rotation-alignment": "map",
+        "text-pitch-alignment": "viewport"
+      },
+      paint: {
+        "text-color": fg,
+        "text-halo-color": halo,
+        "text-halo-width": 2.5,
+        "text-opacity": 1
+      }
+    };
+
+    // No beforeId — layer stacks above the route line so arrows stay visible.
+    map.addLayer(layerDef);
+    overlayElements.layers.push(layerId);
+  } catch (e) {
+    console.warn("[metrofeedInstallRouteDirectionSymbolLayer]", e);
+  }
 }
 
 function metrofeedShapeBearingLookahead(shape, segIdx, forward, lookaheadSegs) {
@@ -1320,8 +1340,7 @@ function metrofeedBusMarkerDiamPx() {
 
 /**
  * Live bus marker: pill label + route-color dot.
- * If heading is known: replace dot with a single "paper plane" arrow (clean + obvious).
- * If heading is unknown: show the dot (no implied direction).
+ * Test City v2: route-colored circle + `newbus.svg` + separate direction arrow.
  */
 function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg, markerOpts) {
   markerOpts = markerOpts && typeof markerOpts === "object" ? markerOpts : {};
@@ -1332,7 +1351,6 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   wrap.style.pointerEvents = "auto";
   const dc = metrofeedBusMarkerDiamPx();
   const fg = pickContrastingTextColor(routeColor);
-  const arrowColor = pickContrastingTextColor(routeColor);
   const badgeBg = fg;
   const badgeFg = routeColor;
 
@@ -1341,98 +1359,64 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   label.innerHTML = `<span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}`;
 
   const dialWrap = document.createElement("div");
-  dialWrap.style.cssText = `position:relative;width:${dc}px;height:${dc}px;flex-shrink:0;`;
+  dialWrap.style.cssText = [
+    "position:relative",
+    `width:${dc}px`,
+    `height:${dc}px`,
+    "flex-shrink:0",
+    "border-radius:50%",
+    `background:${routeColor}`,
+    "border:2px solid rgba(255,255,255,0.95)",
+    "box-shadow:0 2px 6px rgba(0,0,0,0.45)",
+    "display:flex",
+    "align-items:center",
+    "justify-content:center"
+  ].join(";");
 
   const normH = metrofeedNormalizeHeadingDeg(headingDeg);
-  const showPlane = normH != null;
-  const iconFlip180 = !!markerOpts.iconFlip180;
   const motionMismatch = markerOpts.motionMismatch === true;
-  const showBusChevron = markerOpts.showBusChevron === true;
+  // newbus.svg (100x100 viewBox): keep bus icon stable; only arrow rotates.
+  try {
+    const busSize = Math.max(12, Math.round(dc * 0.68));
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", String(busSize));
+    svg.setAttribute("height", String(busSize));
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.style.display = "block";
+    svg.style.filter = "drop-shadow(0 1px 2px rgba(0,0,0,0.45))";
 
-  if (showPlane) {
-    // A single, obvious directional icon (bus silhouette) — no dot, no extra decorations.
-    // We render inline SVG so we can recolor to the route and rotate to direction of travel.
-    const planeSize = Math.max(14, Math.round(dc * 1.2)); // +20% for legibility
-    const planeWrap = document.createElement("div");
-    planeWrap.setAttribute("aria-hidden", "true");
-    // bus.svg heading alignment:
-    // - Heading is 0°=north. SVG artwork has its own "forward" direction.
-    // - We apply a baseline -90° (east-facing art) plus an optional per-city offset knob.
-    const svgOffsetDeg =
-      window.CITY_CONFIG && Number.isFinite(Number(window.CITY_CONFIG.busSvgHeadingOffsetDeg))
-        ? Number(window.CITY_CONFIG.busSvgHeadingOffsetDeg)
-        : 0;
-    const busRot = (normH - 90 + svgOffsetDeg + (iconFlip180 ? 180 : 0) + 3600) % 360;
-    planeWrap.style.cssText = [
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute(
+      "d",
+      "m91.5600586 26.25h-5.9400635v-5.9399414c0-6.555685-5.3144302-11.8701172-11.8701172-11.8701172h-47.499876c-6.5556183 0-11.8699951 5.3143778-11.8699951 11.8699951v5.9400635h-5.9400025c-3.2805729 0-5.9400024 2.6594296-5.9400024 5.9400024v9.7041588c0 1.1961899.9697061 2.1658974 2.1658988 2.1658974h1.6082048c1.1961927 0 2.1658988-.9697075 2.1658988-2.1658974v-9.7042198h5.9400024v57.204216c0 1.1961975.9697056 2.1659012 2.1658993 2.1659012h7.5381966c1.1961918 0 2.1658993-.9697037 2.1658993-2.1659012v-3.7741623h47.5v3.7741623c0 1.1961975.9697037 2.1659012 2.1659012 2.1659012h7.5381927c1.1961975 0 2.1659012-.9697037 2.1659012-2.1659012v-57.204216h5.9400024v9.7042198c0 1.1961899.9697037 2.1658974 2.1658936 2.1658974h1.6082077c1.1961899 0 2.1659012-.9697075 2.1659012-2.1658974v-9.7042198c-.0000019-3.2805386-2.6594028-5.9399414-5.9399433-5.9399414zm-56.4050331-11.8699951h29.6899452c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v.0000057c0 1.6375389-1.3274841 2.9650249-2.9650269 2.9650249h-29.6899452c-1.6375351 0-2.965023-1.327486-2.965023-2.9650249v-.0000057c-.0000001-1.637537 1.3274879-2.965023 2.965023-2.965023zm-5.1415444 57.3099365h-7.5269604c-1.2020588 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744625-2.1765213 2.1765213-2.1765213h7.5269604c1.2020588 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744625 2.1765213-2.1765213 2.1765213zm17.0165482-15.75h-23.7550068c-1.637537 0-2.965023-1.3274879-2.965023-2.965023v-23.7598954c0-1.637537 1.327486-2.965023 2.965023-2.965023h23.7550068zm30.4834518 15.75h-7.5269623c-1.2020569 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744644-2.1765213 2.1765213-2.1765213h7.5269623c1.2020569 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744644 2.1765213-2.1765213 2.1765213zm-.7885055-15.75h-23.7550049v-29.6899414h23.7550049c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v23.7598953c-.0000001 1.6375352-1.3274842 2.9650231-2.9650269 2.9650231z"
+    );
+    path.setAttribute("fill", fg);
+    svg.appendChild(path);
+    dialWrap.appendChild(svg);
+  } catch (_) {}
+
+  // Direction arrow (rotates; bus icon does not).
+  if (normH != null) {
+    const arrow = document.createElement("div");
+    arrow.setAttribute("aria-hidden", "true");
+    const rot = (normH - 90 + 3600) % 360;
+    const arrowColor = motionMismatch ? "#fbbf24" : fg;
+    arrow.style.cssText = [
       "position:absolute",
       "left:50%",
       "top:50%",
-      "transform:translate(-50%,-50%) rotate(" + busRot + "deg)",
+      "transform:translate(-50%,-50%) rotate(" + rot + "deg) translateX(" + Math.round(dc * 0.46) + "px)",
       "transform-origin:50% 50%",
-      "width:" + planeSize + "px",
-      "height:" + planeSize + "px",
-      "pointer-events:none"
+      "font-size:" + Math.max(10, Math.round(dc * 0.55)) + "px",
+      "font-weight:900",
+      "line-height:1",
+      "color:" + arrowColor,
+      "text-shadow:0 0 2px rgba(0,0,0,0.85)",
+      "pointer-events:none",
+      "user-select:none"
     ].join(";");
-
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("width", String(planeSize));
-    svg.setAttribute("height", String(planeSize));
-    svg.setAttribute("viewBox", "0 0 512 512");
-    svg.style.display = "block";
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    // bus.svg path (single combined path) — keep as a literal for reliable recoloring.
-    path.setAttribute(
-      "d",
-      "m376.03 310.75a22.875 22.875 0 0 0 -22.85 22.85 22.845 22.845 0 0 0 45.69 0 22.873 22.873 0 0 0 -22.84-22.85zm0 34.14a11.29 11.29 0 1 1 11.28-11.29 11.29 11.29 0 0 1 -11.28 11.29zm-240.06-34.14a22.873 22.873 0 0 0 -22.84 22.85 22.845 22.845 0 0 0 45.69 0 22.875 22.875 0 0 0 -22.85-22.85zm0 34.14a11.29 11.29 0 1 1 11.29-11.29 11.288 11.288 0 0 1 -11.29 11.29zm372.02-171.81c-.74-8.83-8.18-25.52-31.06-25.52h-413.78c-16.7 0-25.97 7.26-29.19 10.38-8.56 8.32-16.17 34.3-22.62 77.23-4.9 32.62-7.35 63.45-7.35 66.88v18.29c0 13.54 11.19 27.93 31.93 27.93h72.93a31.027 31.027 0 0 1 -2.99-8 30.568 30.568 0 0 1 -.73-6.67 30.845 30.845 0 1 1 61.69 0 30.568 30.568 0 0 1 -.73 6.67 31.027 31.027 0 0 1 -2.99 8h185.8a31.027 31.027 0 0 1 -2.99-8 30.568 30.568 0 0 1 -.73-6.67 30.845 30.845 0 1 1 61.69 0 30.568 30.568 0 0 1 -.73 6.67 31.027 31.027 0 0 1 -2.99 8h80.93c17.66 0 23.93-12.89 23.93-23.93v-150.93c0-.11-.01-.22-.02-.33zm-473.31 128.93c-.83 8.19-5.43 14.95-22.69 16.31v-16.27c0-.55.03-1.43.1-2.6a129.791 129.791 0 0 1 16.53-3.37 5.417 5.417 0 0 1 6.06 5.93zm-1.35-55.98c-2.75 23.58-3.7 36.93-20.22 40.7 2.53-27.17 9.25-82.03 18.99-109.15 13.98 3.85 5.7 30.2 1.23 68.45zm108.66-19.96c0 50.56-49.42 64.86-70.55 68.67a7.991 7.991 0 0 1 -9.39-7.89v-103.12a8 8 0 0 1 8-8h63.94a8 8 0 0 1 8 8zm98.77 34.51h-66.71a8.006 8.006 0 0 1 -8.01-8v-67a8.006 8.006 0 0 1 8.01-8h66.71zm78.71 0h-70.71v-83h70.71zm78.71 0h-70.71v-83h70.71zm82.71-8a8 8 0 0 1 -8 8h-66.71v-83h66.71a8 8 0 0 1 8 8zm19.12 62.35h-6.75a11.169 11.169 0 0 1 -11.17-11.17v-6.6a21.906 21.906 0 0 1 17.92-21.54z"
-    );
-    path.setAttribute("fill", routeColor);
-    // Thin contrasting stroke makes it readable on bright routes without adding clutter.
-    path.setAttribute("stroke", arrowColor);
-    path.setAttribute("stroke-width", "14");
-    path.setAttribute("stroke-linejoin", "round");
-    path.setAttribute("stroke-linecap", "round");
-
-    svg.appendChild(path);
-    svg.style.filter = "drop-shadow(0 2px 3px rgba(0,0,0,0.45))";
-
-    planeWrap.appendChild(svg);
-    dialWrap.appendChild(planeWrap);
-
-    if (showBusChevron) {
-      const chev = document.createElement("div");
-      chev.setAttribute("aria-hidden", "true");
-      const chevRot = (normH - 90 + 3600) % 360;
-      const chevColor = motionMismatch ? "#fbbf24" : "#ffffff";
-      chev.style.cssText = [
-        "position:absolute",
-        "left:50%",
-        "top:2px",
-        "transform:translate(-50%,-100%) rotate(" + chevRot + "deg)",
-        "transform-origin:50% 120%",
-        "font-size:10px",
-        "font-weight:900",
-        "line-height:1",
-        "color:" + chevColor,
-        "text-shadow:0 0 2px rgba(0,0,0,0.85)",
-        "pointer-events:none"
-      ].join(";");
-      chev.textContent = "▲";
-      dialWrap.appendChild(chev);
-    }
-  } else {
-    const dot = document.createElement("div");
-    dot.style.cssText = [
-      "box-sizing:border-box",
-      `width:${dc}px`,
-      `height:${dc}px`,
-      "border-radius:50%",
-      `background:${routeColor}`,
-      "border:2px solid #fff",
-      "box-shadow:0 1px 3px rgba(0,0,0,0.4)",
-      "position:relative"
-    ].join(";");
-    dialWrap.appendChild(dot);
+    arrow.textContent = "›";
+    dialWrap.appendChild(arrow);
   }
 
   if (motionMismatch) {
@@ -1873,6 +1857,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
   // ==== Internal: build & attach =================================================
   const addRouteToMap = () => {
+    metrofeedSweepLegacyRouteChevrons(map);
+
     // Unique MapLibre source/layer + route-info DOM id (supports multiple OTP legs for same route+dir)
     const rawOverlayKeyForDom =
       options.overlayKey != null && String(options.overlayKey).trim() !== ""
@@ -2001,21 +1987,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
         beforeId
       );
       overlayElements.layers.push(routeLayerId);
-    });
 
-    if (metrofeedTestCityBusV2Enabled()) {
-      const chevronShape =
-        Number(directionId) === 1 && hasOppositeShapes && oppositeShapes[0]
-          ? oppositeShapes[0]
-          : primaryShape;
-      metrofeedInstallRouteDirectionChevrons(
+      metrofeedInstallRouteDirectionSymbolLayer(
         map,
-        chevronShape,
+        shape,
         routeColor,
         directionId,
+        mapLayerKey,
+        shapeIndex,
         overlayElements
       );
-    }
+    });
 
     // ---------- Fit bounds (if desired) ----------
     // Calculate bounds from all shapes
@@ -3030,6 +3012,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busMarkers = {}; // Store bus markers separately
       /** @type {Record<string, { lastLat?: number, lastLon?: number, lastTime?: number, smoothedHeading?: number|null }>} */
       const vehicleHeadingState = Object.create(null);
+      /** Test City v2: keep a short snapped trail for tracer rendering. */
+      const vehicleTrailState = Object.create(null); // key -> { coords: [[lon,lat]...], sourceId, layerId }
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
       /** Latest trips.json trip_id → trip (same route); used to drop vehicles on other Route N branches. */
@@ -3062,6 +3046,96 @@ function attachRouteToMap(map, routeId, directionId, options) {
         Array.isArray(gtfsRtUrls) && gtfsRtUrls.length ? gtfsRtUrls.filter(Boolean) : (gtfsRtUrl ? [gtfsRtUrl] : []);
       const urlsToFetchShared = resolvedProxyUrls.length ? resolvedProxyUrls : resolvedUrls;
       
+      function mfSanitizeKeyForId(s) {
+        return String(s || "").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 80);
+      }
+
+      function upsertVehicleTracer(markerKey, routeColor, lon, lat) {
+        if (!metrofeedTestCityBusV2Enabled()) return;
+        if (!Number.isFinite(Number(lon)) || !Number.isFinite(Number(lat))) return;
+        const key = String(markerKey || "");
+        if (!key) return;
+        const state = vehicleTrailState[key] || (vehicleTrailState[key] = { coords: [] });
+        const now = Date.now();
+
+        const coords = Array.isArray(state.coords) ? state.coords : (state.coords = []);
+        const last = coords.length ? coords[coords.length - 1] : null;
+        const movedEnough = !last
+          ? true
+          : (() => {
+              try {
+                const d = metrofeedHaversineM(Number(last[1]), Number(last[0]), Number(lat), Number(lon));
+                return Number.isFinite(d) ? d >= 7 : true;
+              } catch (_) {
+                return true;
+              }
+            })();
+        if (movedEnough) {
+          coords.push([Number(lon), Number(lat)]);
+          while (coords.length > 6) coords.shift();
+        }
+
+        // Need at least 2 points to draw.
+        if (coords.length < 2) return;
+
+        const mk = mfSanitizeKeyForId(key);
+        const srcId = state.sourceId || (`mf-bus-trace-src-${mapLayerKey}-${mk}`);
+        const layerId = state.layerId || (`mf-bus-trace-layer-${mapLayerKey}-${mk}`);
+        state.sourceId = srcId;
+        state.layerId = layerId;
+
+        const data = {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: { updated: now },
+              geometry: { type: "LineString", coordinates: coords }
+            }
+          ]
+        };
+
+        try {
+          if (!map.getSource(srcId)) {
+            map.addSource(srcId, { type: "geojson", data });
+            overlayElements.sources.push(srcId);
+          } else {
+            map.getSource(srcId).setData(data);
+          }
+
+          if (!map.getLayer(layerId)) {
+            map.addLayer({
+              id: layerId,
+              type: "line",
+              source: srcId,
+              layout: {
+                "line-cap": "round",
+                "line-join": "round"
+              },
+              paint: {
+                "line-color": routeColor,
+                "line-width": 2,
+                "line-opacity": 0.6,
+                "line-dasharray": [0.5, 1.6]
+              }
+            });
+            overlayElements.layers.push(layerId);
+          }
+        } catch (_) {}
+      }
+
+      function removeVehicleTracer(markerKey) {
+        const st = vehicleTrailState[String(markerKey || "")];
+        if (!st) return;
+        try {
+          if (st.layerId && map.getLayer(st.layerId)) map.removeLayer(st.layerId);
+        } catch (_) {}
+        try {
+          if (st.sourceId && map.getSource(st.sourceId)) map.removeSource(st.sourceId);
+        } catch (_) {}
+        delete vehicleTrailState[String(markerKey || "")];
+      }
+
       async function fetchAndDisplayBuses(allBusesOverride) {
         const hasOverride = Array.isArray(allBusesOverride);
         if (busesFetchInFlight && !hasOverride) {
@@ -3432,6 +3506,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
               }
             }
 
+            // Tracer: store snapped trail and draw as dashed tail behind the bus.
+            upsertVehicleTracer(markerKey, routeColor, lonN, latN);
+
             const isOppositeDir = busDir != null && Number(busDir) !== Number(directionId);
             const motionMismatch =
               busV2 &&
@@ -3480,9 +3557,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
             hState.lastLon = lonN;
             hState.lastTime = Date.now();
 
-            const iconFlip180 =
-              busV2 && motionDir != null && Number(motionDir) !== Number(directionId);
-
             const busElement = buildMbtaBusMarkerElement(
               routeColor,
               metrofeedFormatRouteBadge(routeId),
@@ -3490,8 +3564,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
               displayHeading,
               busV2
                 ? {
-                    showBusChevron: true,
-                    iconFlip180,
                     motionMismatch
                   }
                 : undefined
@@ -3609,6 +3681,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           );
           Object.keys(vehicleHeadingState).forEach((k) => {
             if (!aliveHeadingIds.has(k)) delete vehicleHeadingState[k];
+          });
+          Object.keys(vehicleTrailState).forEach((k) => {
+            if (!aliveHeadingIds.has(k)) removeVehicleTracer(k);
           });
           
           console.log(`[attachRouteToMap] Displayed ${vehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
