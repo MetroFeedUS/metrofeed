@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Resources page builder (dev)</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; background: #0d0d0d; color: #ccc; }
+    h1 { font-size: 1.1rem; margin: 0 0 6px; color: #f1f5f9; }
+    .sub { font-size: 12px; color: #94a3b8; margin: 0 0 14px; line-height: 1.45; max-width: 52ch; }
+    #app { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; max-width: 1400px; margin: 0 auto; }
+    @media (max-width: 900px) { #app { grid-template-columns: 1fr; } }
+    .panel { background: #161616; border: 1px solid #334155; border-radius: 12px; padding: 12px; }
+    .panel h2 { margin: 0 0 10px; font-size: 13px; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.06em; }
+    label { display: block; font-size: 11px; color: #94a3b8; margin: 8px 0 4px; }
+    input[type="text"], textarea { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #444; background: #0f0f0f; color: #e2e8f0; font-size: 13px; }
+    textarea { min-height: 64px; resize: vertical; font-family: inherit; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #555; background: #252525; color: #e2e8f0; font-size: 12px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #333; }
+    button.primary { background: #6d28d9; border-color: #7c3aed; color: #fff; }
+    button.danger { border-color: #7f1d1d; color: #fecaca; }
+    button.small { padding: 4px 8px; font-size: 11px; }
+    .card-editor { border: 1px solid #334155; border-radius: 10px; padding: 10px; margin-bottom: 10px; background: #111; }
+    .card-editor > .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+    .item { border: 1px dashed #444; border-radius: 8px; padding: 8px; margin-top: 8px; background: #0c0c0c; }
+    .item .item-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 11px; color: #94a3b8; }
+    .tab-editor { margin-left: 8px; border-left: 2px solid #6d28d9; padding-left: 8px; margin-top: 6px; background: rgba(109, 40, 217, 0.06); border-radius: 0 8px 8px 0; padding-top: 8px; padding-bottom: 8px; }
+    .card-badge { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .howto { font-size: 12px; color: #94a3b8; line-height: 1.5; background: #1a1a1c; border: 1px solid #334155; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+    .howto strong { color: #e2e8f0; }
+    .item-tabs-outer { border: 1px solid #4c1d95; border-radius: 10px; padding: 10px; margin-top: 8px; background: rgba(76, 29, 149, 0.12); }
+    .item-tabs-outer > .item-head { margin-bottom: 8px; }
+    .empty-cards { text-align: center; padding: 20px; color: #94a3b8; font-size: 13px; border: 1px dashed #475569; border-radius: 10px; margin-bottom: 10px; }
+    pre#exportOut { margin: 0; max-height: 42vh; overflow: auto; font-size: 11px; line-height: 1.35; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; padding: 10px; white-space: pre-wrap; word-break: break-all; color: #a5b4fc; }
+    #previewFrame { width: 100%; min-height: 480px; border: 1px solid #333; border-radius: 8px; background: #fff; }
+    .muted { color: #64748b; font-size: 11px; }
+    select { padding: 6px 8px; border-radius: 6px; background: #1a1a1a; color: #e2e8f0; border: 1px solid #444; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="panel">
+      <h1>Resources builder</h1>
+      <p class="sub">For you only: stack <strong>cards</strong> (big bordered blocks like your live page). Inside each card add <strong>subheadings</strong>, <strong>links</strong>, or a <strong>tab group</strong> (each tab has its own links). Then copy the HTML into that city’s <code>resources.html</code>. Draft saves in this browser (localStorage).</p>
+
+      <label>Browser tab title</label>
+      <input type="text" id="pageTitle" placeholder="ADA and Official Resources - RoamRaven" />
+
+      <label>Export accent (matches link / border color on public page)</label>
+      <select id="accent">
+        <option value="#1E90FF">Blue #1E90FF (current resources template)</option>
+        <option value="#9333ea">Purple #9333ea (Roam)</option>
+        <option value="#22c55e">Green</option>
+      </select>
+
+      <label>Header logo path (relative to that city’s folder)</label>
+      <input type="text" id="logoPath" placeholder="metrofeedsimplelogo.png" />
+
+      <div class="row" style="margin-top:12px;">
+        <button type="button" class="primary" id="btnAddCard">+ Card</button>
+        <button type="button" id="btnSave">Save draft</button>
+        <button type="button" id="btnLoad">Load draft</button>
+        <button type="button" id="btnClear">Clear all</button>
+      </div>
+      <div class="row">
+        <button type="button" id="btnExportJson">Export JSON</button>
+        <button type="button" id="btnImportJson">Import JSON…</button>
+        <input type="file" id="jsonFile" accept=".json,application/json" style="display:none" />
+      </div>
+
+      <h2 style="margin-top:16px;">Cards & content</h2>
+      <div class="howto">
+        <strong>How this works</strong><br />
+        1) Each <strong>card</strong> = one big box on the public page (title + intro + stuff inside).<br />
+        2) Inside a card, add pieces in order: <strong>Subheading</strong>, plain <strong>Link</strong>, or one <strong>Tabbed links</strong> block.<br />
+        3) A <strong>Tabbed links</strong> block = row of tabs; under each tab you add <strong>label + URL</strong> rows (like mini link list).<br />
+        Tip: use <strong>+ Tab</strong> for more agencies; <strong>+ link in tab</strong> for more URLs under that tab.
+      </div>
+      <div id="cards"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Live preview</h2>
+      <p class="muted">Rough match to public resources layout (tabs work here).</p>
+      <iframe id="previewFrame" title="Preview"></iframe>
+
+      <h2 style="margin-top:14px;">Copy-paste HTML</h2>
+      <p class="muted">Replace that city’s resources.html (fix logo if needed). Tabs use CSS only (no JS on the public page).</p>
+      <div class="row">
+        <button type="button" class="primary" id="btnCopy">Copy HTML</button>
+        <button type="button" id="btnDownload">Download .html</button>
+      </div>
+      <pre id="exportOut" aria-label="Exported HTML"></pre>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const STORAGE_KEY = 'resourcesBuilderDraft_v1';
+
+  /** @type {{ pageTitle: string, accent: string, logoPath: string, cards: Array<{ id: string, title: string, intro: string, showDisclaimer: boolean, items: Array<any> }> }} */
+  let state = {
+    pageTitle: 'ADA and Official Resources - RoamRaven',
+    accent: '#1E90FF',
+    logoPath: 'metrofeedsimplelogo.png',
+    cards: []
+  };
+
+  function uid() { return 'x' + Math.random().toString(36).slice(2, 10); }
+
+  function sanitize() {
+    state.cards.forEach(function (card) {
+      if (!card.items) card.items = [];
+      card.items.forEach(function (it) {
+        if (it.type !== 'tabs') return;
+        if (!it.tabs || !Array.isArray(it.tabs) || it.tabs.length === 0) {
+          it.tabs = [{ id: uid(), name: 'Tab A', links: [{ id: uid(), label: 'Link label', url: 'https://' }] }];
+        }
+        it.tabs.forEach(function (tab) {
+          if (!tab.links || !Array.isArray(tab.links) || tab.links.length === 0) {
+            tab.links = [{ id: uid(), label: 'Link label', url: 'https://' }];
+          }
+        });
+      });
+    });
+  }
+
+  function defaultCard() {
+    return {
+      id: uid(),
+      title: 'ADA and Official Resources',
+      intro: 'Official links and resources for RoamRaven users.',
+      showDisclaimer: true,
+      items: []
+    };
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var o = JSON.parse(raw);
+      if (o && o.cards) state = Object.assign(state, o);
+    } catch (_) {}
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (_) {}
+  }
+
+  /** Rebuild editor DOM from state, then refresh preview + export + localStorage */
+  function refresh() {
+    renderEditors();
+    sync();
+  }
+
+  function escapeAttr(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  function escapeHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderEditors() {
+    document.getElementById('pageTitle').value = state.pageTitle;
+    document.getElementById('accent').value = state.accent;
+    document.getElementById('logoPath').value = state.logoPath;
+
+    var root = document.getElementById('cards');
+    root.innerHTML = '';
+    if (state.cards.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty-cards';
+      empty.innerHTML = 'No cards yet. Click <strong>+ Card</strong> above to start (or <strong>Load draft</strong>).';
+      root.appendChild(empty);
+    }
+    state.cards.forEach(function (card, ci) {
+      var wrap = document.createElement('div');
+      wrap.className = 'card-editor';
+      wrap.innerHTML =
+        '<div class="card-badge">Card ' + (ci + 1) + ' of ' + state.cards.length + '</div>' +
+        '<div class="head">' +
+          '<div style="flex:1;min-width:180px">' +
+            '<label>Card title (h2)</label>' +
+            '<input type="text" data-k="title" data-ci="' + ci + '" value="' + escapeAttr(card.title) + '" />' +
+            '<label>Intro line</label>' +
+            '<textarea data-k="intro" data-ci="' + ci + '">' + escapeHtml(card.intro) + '</textarea>' +
+            '<label><input type="checkbox" data-k="disclaimer" data-ci="' + ci + '"' + (card.showDisclaimer ? ' checked' : '') + '> Include disclaimer box</label>' +
+          '</div>' +
+          '<div class="row">' +
+            '<button type="button" class="small danger" data-act="del-card" data-ci="' + ci + '">Delete card</button>' +
+            '<button type="button" class="small" data-act="up-card" data-ci="' + ci + '">↑</button>' +
+            '<button type="button" class="small" data-act="down-card" data-ci="' + ci + '">↓</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="row" style="margin-top:10px">' +
+          '<button type="button" class="primary small" data-act="add-h3" data-ci="' + ci + '" title="Section line inside this card">+ Subheading</button>' +
+          '<button type="button" class="primary small" data-act="add-link" data-ci="' + ci + '" title="One big link button">+ Single link</button>' +
+          '<button type="button" class="primary small" data-act="add-tabs" data-ci="' + ci + '" title="Tabs like agency switcher">+ Tabbed links</button>' +
+        '</div>' +
+        '<div class="items" data-items="' + ci + '"></div>';
+      root.appendChild(wrap);
+      var itemsEl = wrap.querySelector('[data-items]');
+      card.items.forEach(function (it, ii) {
+        itemsEl.appendChild(renderItem(card, ci, it, ii));
+      });
+    });
+
+    root.querySelectorAll('input[data-k]:not([type=checkbox]), textarea[data-k]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var ci = +el.getAttribute('data-ci');
+        var k = el.getAttribute('data-k');
+        state.cards[ci][k] = el.value;
+        sync();
+      });
+    });
+    root.querySelectorAll('input[type=checkbox][data-k]').forEach(function (el) {
+      el.addEventListener('change', function () {
+        var ci = +el.getAttribute('data-ci');
+        var k = el.getAttribute('data-k');
+        if (k === 'disclaimer') state.cards[ci].showDisclaimer = el.checked;
+        sync();
+      });
+    });
+    root.querySelectorAll('button[data-act]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var act = btn.getAttribute('data-act');
+        var ci = +btn.getAttribute('data-ci');
+        if (act === 'del-card') { state.cards.splice(ci, 1); refresh(); return; }
+        if (act === 'up-card' && ci > 0) { var t = state.cards[ci-1]; state.cards[ci-1] = state.cards[ci]; state.cards[ci] = t; refresh(); return; }
+        if (act === 'down-card' && ci < state.cards.length - 1) { var t2 = state.cards[ci+1]; state.cards[ci+1] = state.cards[ci]; state.cards[ci] = t2; refresh(); return; }
+        if (act === 'add-h3') { state.cards[ci].items.push({ type: 'h3', id: uid(), text: 'New section' }); refresh(); return; }
+        if (act === 'add-link') { state.cards[ci].items.push({ type: 'link', id: uid(), label: 'Link title', url: 'https://' }); refresh(); return; }
+        if (act === 'add-tabs') {
+          state.cards[ci].items.push({ type: 'tabs', id: uid(), tabs: [{ id: uid(), name: 'Tab A', links: [{ id: uid(), label: 'Link label', url: 'https://' }] }] });
+          refresh(); return;
+        }
+      });
+    });
+  }
+
+  function renderItem(card, ci, it, ii) {
+    var div = document.createElement('div');
+    div.className = 'item';
+    if (it.type === 'h3') {
+      div.innerHTML =
+        '<div class="item-head"><span>Subheading (h3)</span><span><button type="button" class="small danger" data-del-item="' + ci + ',' + ii + '">Remove</button> <button type="button" class="small" data-up-item="' + ci + ',' + ii + '">↑</button> <button type="button" class="small" data-down-item="' + ci + ',' + ii + '">↓</button></span></div>' +
+        '<input type="text" data-item="' + ci + ',' + ii + '" data-f="text" value="' + escapeAttr(it.text) + '" />';
+    } else if (it.type === 'link') {
+      div.innerHTML =
+        '<div class="item-head"><span>Link</span><span><button type="button" class="small danger" data-del-item="' + ci + ',' + ii + '">Remove</button> <button type="button" class="small" data-up-item="' + ci + ',' + ii + '">↑</button> <button type="button" class="small" data-down-item="' + ci + ',' + ii + '">↓</button></span></div>' +
+        '<label>Label</label><input type="text" data-item="' + ci + ',' + ii + '" data-f="label" value="' + escapeAttr(it.label) + '" />' +
+        '<label>URL</label><input type="text" data-item="' + ci + ',' + ii + '" data-f="url" value="' + escapeAttr(it.url) + '" />';
+    } else if (it.type === 'tabs') {
+      var nTabs = it.tabs.length;
+      var tabsHtml = it.tabs.map(function (tab, ti) {
+        var nLinks = tab.links.length;
+        var linksHtml = tab.links.map(function (ln, li) {
+          return '<div class="item" style="margin-top:6px">' +
+            '<div class="item-head"><span>Hyperlink (' + (li + 1) + ')</span><span>' +
+            (nLinks > 1
+              ? '<button type="button" class="small danger" data-del-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '">Remove link</button>'
+              : '<span class="muted" style="font-size:10px;">min 1 link</span>') +
+            '</span></div>' +
+            '<label>Button text</label><input type="text" placeholder="Label" data-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '" data-lf="label" value="' + escapeAttr(ln.label) + '" />' +
+            '<label>URL</label><input type="text" placeholder="https://…" data-tlink="' + ci + ',' + ii + ',' + ti + ',' + li + '" data-lf="url" value="' + escapeAttr(ln.url) + '" />' +
+            '</div>';
+        }).join('');
+        return '<div class="tab-editor">' +
+          '<div class="item-head"><span>Tab ' + (ti + 1) + '</span><span>' +
+            (nTabs > 1
+              ? '<button type="button" class="small danger" data-del-tab="' + ci + ',' + ii + ',' + ti + '">Delete tab</button>'
+              : '<span class="muted" style="font-size:10px;">min 1 tab</span>') +
+            ' <button type="button" class="small primary" data-add-tlink="' + ci + ',' + ii + ',' + ti + '">+ Link in this tab</button>' +
+          '</span></div>' +
+          '<label>Tab name (shown on public page)</label><input type="text" data-tabname="' + ci + ',' + ii + ',' + ti + '" value="' + escapeAttr(tab.name) + '" />' +
+          linksHtml +
+          '</div>';
+      }).join('');
+      div.className = 'item item-tabs-outer';
+      div.innerHTML =
+        '<div class="item-head"><span>Tabbed links block</span><span>' +
+          '<button type="button" class="small danger" data-del-item="' + ci + ',' + ii + '">Remove whole block</button> ' +
+          '<button type="button" class="small" data-up-item="' + ci + ',' + ii + '">↑</button> ' +
+          '<button type="button" class="small" data-down-item="' + ci + ',' + ii + '">↓</button> ' +
+          '<button type="button" class="small primary" data-add-tab="' + ci + ',' + ii + '">+ Another tab</button>' +
+        '</span></div>' +
+        '<p class="muted" style="margin:0 0 8px;font-size:11px;">Each tab = one agency (or topic). Add links under each tab.</p>' +
+        tabsHtml;
+    }
+    div.querySelectorAll('input[data-item]').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var p = inp.getAttribute('data-item').split(',').map(Number);
+        var f = inp.getAttribute('data-f');
+        state.cards[p[0]].items[p[1]][f] = inp.value;
+        sync();
+      });
+    });
+    div.querySelectorAll('input[data-tlink]').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var p = inp.getAttribute('data-tlink').split(',').map(Number);
+        var lf = inp.getAttribute('data-lf');
+        state.cards[p[0]].items[p[1]].tabs[p[2]].links[p[3]][lf] = inp.value;
+        sync();
+      });
+    });
+    div.querySelectorAll('input[data-tabname]').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var p = inp.getAttribute('data-tabname').split(',').map(Number);
+        state.cards[p[0]].items[p[1]].tabs[p[2]].name = inp.value;
+        sync();
+      });
+    });
+    div.querySelectorAll('button[data-del-item]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = b.getAttribute('data-del-item').split(',').map(Number);
+        state.cards[p[0]].items.splice(p[1], 1);
+        refresh();
+      });
+    });
+    div.querySelectorAll('button[data-up-item]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = b.getAttribute('data-up-item').split(',').map(Number);
+        if (p[1] <= 0) return;
+        var arr = state.cards[p[0]].items;
+        var t = arr[p[1]-1]; arr[p[1]-1] = arr[p[1]]; arr[p[1]] = t;
+        refresh();
+      });
+    });
+    div.querySelectorAll('button[data-down-item]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = b.getAttribute('data-down-item').split(',').map(Number);
+        var arr = state.cards[p[0]].items;
+        if (p[1] >= arr.length - 1) return;
+        var t2 = arr[p[1]+1]; arr[p[1]+1] = arr[p[1]]; arr[p[1]] = t2;
+        refresh();
+      });
+    });
+    div.querySelectorAll('button[data-add-tab]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = b.getAttribute('data-add-tab').split(',').map(Number);
+        state.cards[p[0]].items[p[1]].tabs.push({ id: uid(), name: 'New tab', links: [{ id: uid(), label: 'Link label', url: 'https://' }] });
+        refresh();
+      });
+    });
+    div.querySelectorAll('button[data-add-tlink]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = b.getAttribute('data-add-tlink').split(',').map(Number);
+        state.cards[p[0]].items[p[1]].tabs[p[2]].links.push({ id: uid(), label: 'New link', url: 'https://' });
+        refresh();
+      });
+    });
+    div.querySelectorAll('button[data-del-tab]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = b.getAttribute('data-del-tab').split(',').map(Number);
+        var tabs = state.cards[p[0]].items[p[1]].tabs;
+        if (tabs.length <= 1) return;
+        tabs.splice(p[2], 1);
+        refresh();
+      });
+    });
+    div.querySelectorAll('button[data-del-tlink]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = b.getAttribute('data-del-tlink').split(',').map(Number);
+        var links = state.cards[p[0]].items[p[1]].tabs[p[2]].links;
+        if (links.length <= 1) return;
+        links.splice(p[3], 1);
+        refresh();
+      });
+    });
+    return div;
+  }
+
+  /** Tabs: radio + label pairs as siblings, then .rb-panels (CSS :checked ~ .rb-panels .panel) */
+  function buildHtmlDocFixed() {
+    var A = state.accent;
+    var cardsHtml = state.cards.map(function (card, cidx) {
+      var disc = '';
+      if (card.showDisclaimer) {
+        disc =
+          '<div style="background: #1a1a1a; border: 1px solid ' + A + '; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #aaa; line-height: 1.5;">' +
+          '<strong style="color: ' + A + ';">Disclaimer:</strong> RoamRaven is an independent service and is not affiliated with, endorsed by, or partnered with the organizations listed below. These links are provided for convenience and direct access to official information.' +
+          '</div>';
+      }
+      var body = card.items.map(function (it) {
+        if (it.type === 'h3') return '<h3 style="color:' + A + ';margin:1.2rem 0 0.6rem;font-size:1.1rem;">' + escapeHtml(it.text) + '</h3>';
+        if (it.type === 'link') return '<a href="' + escapeAttr(it.url) + '" target="_blank" rel="noopener noreferrer" class="resource-link">' + escapeHtml(it.label) + '</a>';
+        if (it.type === 'tabs') {
+          var gid = 'tg_' + cidx + '_' + it.id.replace(/[^a-z0-9]/gi, '');
+          var head = '';
+          it.tabs.forEach(function (tab, ti) {
+            var id = gid + '_r' + ti;
+            head += '<input class="rb-inp" type="radio" name="' + gid + '" id="' + id + '"' + (ti === 0 ? ' checked' : '') + ' />' +
+              '<label class="rb-lab" for="' + id + '">' + escapeHtml(tab.name) + '</label>';
+          });
+          var panels = '<div class="rb-panels">';
+          it.tabs.forEach(function (tab, ti) {
+            var links = tab.links.map(function (ln) {
+              return '<a href="' + escapeAttr(ln.url) + '" target="_blank" rel="noopener noreferrer" class="resource-link">' + escapeHtml(ln.label) + '</a>';
+            }).join('');
+            panels += '<div class="rb-panel rb-p' + ti + '">' + links + '</div>';
+          });
+          panels += '</div>';
+          var rules =
+            '.rb-wrap > .rb-panels > .rb-panel{display:none;}' +
+            it.tabs.map(function (_, ti) {
+              return '#' + gid + '_r' + ti + ':checked ~ .rb-panels .rb-p' + ti + '{display:block;}';
+            }).join('');
+          return '<div class="rb-wrap"><style>' + rules + '</style>' + head + panels + '</div>';
+        }
+        return '';
+      }).join('');
+      return '<div class="resource-section"><h2>' + escapeHtml(card.title) + '</h2><p style="color: #ccc; margin-bottom: 1rem; text-align: center;">' + escapeHtml(card.intro) + '</p>' + disc + body + '</div>';
+    }).join('');
+
+    var css =
+      '.rb-wrap{margin:1rem 0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;align-items:center;}' +
+      '.rb-panels{flex:1 0 100%;width:100%;min-height:1rem;}' +
+      '.rb-inp{position:absolute;opacity:0;width:0;height:0;pointer-events:none;}' +
+      '.rb-lab{padding:8px 14px;border-radius:8px;border:1px solid ' + A + ';background:#23272a;color:' + A + ';font-size:13px;font-weight:600;cursor:pointer;}' +
+      '.rb-inp:focus + .rb-lab,.rb-lab:hover{filter:brightness(1.1);}' +
+      '.rb-inp:checked + .rb-lab{background:' + A + ';color:#0d0d0d;}';
+
+    var base =
+      'html,body{margin:0;padding:0;font-family:\'Segoe UI\',sans-serif;background:#0d0d0d;color:#cccccc;min-height:100vh;}' +
+      'header{display:flex;flex-direction:row;align-items:center;justify-content:space-between;background:#0d0d0d;padding:0.35rem 0 0.4rem;border-top:4px solid ' + A + ';border-bottom:4px solid ' + A + ';line-height:0;}' +
+      '.header-side{flex:0 0 56px;width:56px;min-width:56px;max-width:56px;display:flex;align-items:center;box-sizing:border-box;}' +
+      '.header-side--left{justify-content:flex-start;padding-left:4px;}' +
+      '.header-side--right{justify-content:flex-end;padding-right:4px;}' +
+      '.header-brand{flex:1 1 auto;min-width:0;display:flex;justify-content:center;align-items:center;line-height:0;}' +
+      '.header-brand img{display:block;width:auto;max-width:min(1800px,calc(100vw - 128px));max-height:min(360px,40vh);height:auto;margin:0;object-fit:contain;}' +
+      '.back-button{width:44px;height:44px;flex-shrink:0;background:' + A + ';border:2px solid #000;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px ' + A + ';cursor:pointer;padding:0;border:none;}' +
+      '.back-button svg{width:24px;height:24px;fill:#000;}' +
+      '.main-content{max-width:600px;margin:2.5rem auto 0 auto;padding:1.2rem 1rem 2rem 1rem;display:flex;flex-direction:column;align-items:center;}' +
+      '.resource-section{width:100%;margin-bottom:2rem;background:#111;border:2px solid ' + A + ';border-radius:12px;padding:1.5rem;box-shadow:0 0 10px ' + A + '55;}' +
+      '.resource-section h2{color:' + A + ';margin-top:0;margin-bottom:1rem;font-size:1.5rem;text-align:center;}' +
+      '.resource-link{display:block;margin:0.8rem 0;padding:0.8rem 1rem;font-size:1rem;background:#23272a;color:' + A + ';border:1px solid ' + A + ';border-radius:8px;text-decoration:none;}' +
+      '.resource-link:hover,.resource-link:focus{background:' + A + ';color:#0d0d0d;}' +
+      '@media(max-width:540px){.main-content{max-width:100vw;padding:1.1rem 2vw 2rem 2vw;}.resource-section{padding:1rem;}.header-side{flex-basis:48px;width:48px;min-width:48px;max-width:48px;}.header-brand img{max-width:min(1800px,calc(100vw - 108px));max-height:min(320px,36vh);}.back-button{width:40px;height:40px;}}' +
+      '.site-footer{text-align:center;margin-top:2.8rem;margin-bottom:70px;font-size:0.783rem;color:#888;}' +
+      '.site-footer a{color:' + A + ';text-decoration:none;margin:0 6px;}' +
+      '.site-footer a:hover{text-decoration:underline;}' +
+      css;
+
+    return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1.0"/>\n<title>' + escapeHtml(state.pageTitle) + '</title>\n<link rel="icon" href="favicon.ico" type="image/x-icon">\n<style>\n' + base + '\n</style>\n</head>\n<body>\n<header>\n<div class="header-side header-side--left">\n<button type="button" class="back-button" onclick="history.back()" aria-label="Go back">\n<svg viewBox="0 0 24 24"><path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/></svg>\n</button>\n</div>\n<div class="header-brand">\n<img src="' + escapeAttr(state.logoPath) + '" alt="Logo" decoding="async" />\n</div>\n<div class="header-side header-side--right" aria-hidden="true"></div>\n</header>\n<main class="main-content">\n' + cardsHtml + '\n</main>\n<footer class="site-footer">\n<a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;\n<a href="contact.html">Contact Us</a> &nbsp;|&nbsp;\n<a href="report.html">Report a Problem</a> &nbsp;|&nbsp;\n<a href="dmca.html">DMCA</a> &nbsp;|&nbsp;\n<a href="privacy.html">Privacy Policy</a>\n</footer>\n</body>\n</html>';
+  }
+
+  function sync() {
+    sanitize();
+    state.pageTitle = document.getElementById('pageTitle').value || state.pageTitle;
+    state.accent = document.getElementById('accent').value;
+    state.logoPath = document.getElementById('logoPath').value || state.logoPath;
+    var html = buildHtmlDocFixed();
+    document.getElementById('exportOut').textContent = html;
+    var blob = new Blob([html], { type: 'text/html' });
+    var u = URL.createObjectURL(blob);
+    var iframe = document.getElementById('previewFrame');
+    iframe.src = u;
+    setTimeout(function () { try { URL.revokeObjectURL(u); } catch (_) {} }, 20000);
+    saveState();
+  }
+
+  document.getElementById('pageTitle').addEventListener('input', sync);
+  document.getElementById('accent').addEventListener('change', sync);
+  document.getElementById('logoPath').addEventListener('input', sync);
+
+  document.getElementById('btnAddCard').addEventListener('click', function () {
+    state.cards.push(defaultCard());
+    refresh();
+  });
+
+  document.getElementById('btnSave').addEventListener('click', function () { saveState(); alert('Draft saved in this browser.'); });
+  document.getElementById('btnLoad').addEventListener('click', function () { loadState(); refresh(); });
+  document.getElementById('btnClear').addEventListener('click', function () {
+    if (!confirm('Clear all cards?')) return;
+    state.cards = [];
+    refresh();
+  });
+
+  document.getElementById('btnExportJson').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'resources-draft.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  document.getElementById('btnImportJson').addEventListener('click', function () { document.getElementById('jsonFile').click(); });
+  document.getElementById('jsonFile').addEventListener('change', function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    ev.target.value = '';
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var o = JSON.parse(r.result);
+        if (o && Array.isArray(o.cards)) { state = o; refresh(); }
+        else alert('Invalid JSON');
+      } catch (e) { alert('Could not parse JSON'); }
+    };
+    r.readAsText(f);
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    var t = document.getElementById('exportOut').textContent;
+    navigator.clipboard.writeText(t).then(function () { alert('Copied.'); }).catch(function () { alert('Copy failed — select the HTML manually.'); });
+  });
+  document.getElementById('btnDownload').addEventListener('click', function () {
+    var blob = new Blob([document.getElementById('exportOut').textContent], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'resources.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  loadState();
+  if (state.cards.length === 0) state.cards.push(defaultCard());
+  refresh();
+})();
+  </script>
+</body>
+</html>

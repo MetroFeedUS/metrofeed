@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#000000" />
+  <title data-translate="weatherTitle">Portland, OR Weather - MetroFeed</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      padding: 1rem;
+      text-align: center;
+      border-top: 4px solid #1E90FF;
+      border-bottom: 4px solid #1E90FF;
+    }
+
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    .sidebar-ad {
+      display: none;
+    }
+
+    #radar {
+      width: 100%;
+      min-height: 70vh;
+      max-height: 85vh;
+      border: none;
+      display: block;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      #radar {
+        height: 80vh;
+      }
+    }
+
+    .button-bar {
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .button-bar .back-button {
+      background-color: #1E90FF;
+      color: #0d0d0d;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #1E90FF;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .button-bar .back-button:hover {
+      background-color: #1C7AE6;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.72rem;
+      color: #888;
+    }
+
+    .site-footer a {
+      color: #1E90FF;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* BACK BUTTON */
+    .back-button-fixed {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
+      background-color: #1E90FF;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      box-shadow: 0 0 10px #1E90FF;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
+    }
+    .back-button-fixed:active, .back-button-fixed:focus {
+      background-color: #1C7AE6;
+    }
+    .back-button-fixed svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button-fixed:active svg,
+    .back-button-fixed:focus svg {
+      fill: #fff;
+    }
+  </style>
+  <script>
+    console.log('🔍 WEATHER PAGE DEBUG START');
+    console.log('🔍 Current localStorage language:', localStorage.getItem('metrofeed_language'));
+    console.log('🔍 Document readyState:', document.readyState);
+    console.log('🔍 translations.js script tag exists:', !!document.querySelector('script[src="../translations.js"]'));
+  </script>
+  <script src="../translations.js?v=15"></script>
+  <script>
+    console.log('🔍 AFTER translations.js loaded');
+    console.log('🔍 translateText function exists:', typeof translateText);
+    console.log('🔍 updatePageLanguage function exists:', typeof updatePageLanguage);
+    console.log('🔍 translations object exists:', typeof translations);
+    if (typeof translations !== 'undefined') {
+      console.log('🔍 translations.en exists:', !!translations.en);
+      console.log('🔍 translations.es exists:', !!translations.es);
+      console.log('🔍 weatherTitle in en:', translations.en?.weatherTitle);
+      console.log('🔍 weatherTitle in es:', translations.es?.weatherTitle);
+      console.log('🔍 ALL EN KEYS:', Object.keys(translations.en || {}));
+      console.log('🔍 ALL ES KEYS:', Object.keys(translations.es || {}));
+      console.log('🔍 Sample EN keys:', Object.keys(translations.en || {}).slice(0, 10));
+      console.log('🔍 Sample ES keys:', Object.keys(translations.es || {}).slice(0, 10));
+    }
+    
+    // Fallback for translateText if not available yet
+    if (typeof window.translateText === 'undefined') {
+      console.warn('❌ translateText not available, creating fallback');
+      window.translateText = function(key) {
+        console.warn('translateText fallback called with key:', key);
+        return key;
+      };
+    } else {
+      console.log('✅ translateText is available');
+    }
+    
+    // Debug DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🔍 WEATHER PAGE DOMContentLoaded FIRED');
+      console.log('🔍 Document readyState:', document.readyState);
+      console.log('🔍 updatePageLanguage available:', typeof updatePageLanguage);
+      console.log('🔍 translateText available:', typeof translateText);
+      console.log('🔍 translations object available:', typeof translations);
+      
+      if (typeof updatePageLanguage === 'function') {
+        console.log('✅ Calling updatePageLanguage from weather page...');
+        updatePageLanguage();
+      } else {
+        console.error('❌ updatePageLanguage not available in weather page DOMContentLoaded');
+      }
+    });
+    
+    // Debug window load
+    window.addEventListener('load', function() {
+      console.log('🔍 WEATHER PAGE WINDOW LOAD FIRED');
+      console.log('🔍 All scripts loaded, checking final state...');
+      console.log('🔍 updatePageLanguage available:', typeof updatePageLanguage);
+      console.log('🔍 translateText available:', typeof translateText);
+      console.log('🔍 translations object available:', typeof translations);
+      
+      // Check if elements are translated
+      const title = document.querySelector('title[data-translate="weatherTitle"]');
+      console.log('🔍 Title element found:', !!title);
+      if (title) {
+        console.log('🔍 Title text content:', title.textContent);
+        console.log('🔍 Title innerHTML:', title.innerHTML);
+      }
+      
+      const betaMessage = document.querySelector('[data-translate="weatherBetaMessage"]');
+      console.log('🔍 Beta message element found:', !!betaMessage);
+      if (betaMessage) {
+        console.log('🔍 Beta message text content:', betaMessage.textContent);
+        console.log('🔍 Beta message innerHTML:', betaMessage.innerHTML);
+      }
+    });
+  </script>
+</head>
+<body>
+
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+  </header>
+
+  <!-- BACK BUTTON -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <!-- Left Arrow SVG -->
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
+
+  <div style="background-color: #111; color: #ccc; padding: 0.75rem 1rem; text-align: center; font-size: 0.9rem; border-bottom: 1px solid #333;" data-translate="weatherDisclaimerFull" data-translate-html>
+    <strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href="https://www.weather.gov" target="_blank" style="color: #1DA1F2; text-decoration: none;">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.
+  </div>
+
+  <div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+    <span data-translate="weatherBetaMessage">⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.</span>
+  </div>
+
+  <div style="padding: 1rem; max-width: 95%; margin: 1rem auto;">
+    <details style="background:#111; border:2px solid #F7630C; border-radius:8px; padding:1rem;">
+              <summary style="color:#F7630C; font-weight:bold; font-size:1.2rem; cursor:pointer;">
+          <span data-translate="weatherAlerts">⚠️ Weather Alerts (Tap to View)</span>
+        </summary>
+        <div id="alertBox" style="margin-top: 1rem; color: #ccc;" data-translate="checkingAlerts">Checking for alerts...</div>
+    </details>
+  </div>
+
+  <!-- Jump to Forecast button -->
+  <div class="button-bar">
+    <a href="#forecast-section" class="back-button" data-translate="jumpToForecast">Jump to Forecast</a>
+  </div>
+
+  <iframe
+    id="radar"
+    src="https://radar.weather.gov/?settings=v1_eyJhZ2VuZGEiOnsiaWQiOiJwb3J0bGFuZCIsImNlbnRlciI6Wy0xMjIuNzEsNDUuNTddLCJ6b29tIjo4LCJsYXllciI6InJlZmxlY3Rpdml0eSIsInN0YXRpb24iOiJLUlRYIn0sImFuaW1hdGluZyI6ZmFsc2UsImJhc2UiOiJzdGFuZGFyZCIsImNvdW50eSI6ZmFsc2UsImN3YSI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJ3YXJuaW5ncyI6dHJ1ZX0%3D"
+    loading="lazy">
+  </iframe>
+
+  <div id="legend" style="margin: 1rem auto; background: rgba(0,0,0,0.7); padding: 10px; color: white; font-family: Arial, sans-serif; border-radius: 8px; font-size: 12px; backdrop-filter: blur(4px); display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 95%;">
+    <div><span style="width: 12px; height: 12px; background: rgba(255,0,0,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="tornadoWarning">Tornado Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(255,255,0,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="severeThunderstormWarning">Severe Thunderstorm Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(0,255,0,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="flashFloodWarning">Flash Flood Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(0,128,255,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="floodWarning">Flood Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(255,192,203,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="winterStormWarning">Winter Storm Warning</span></div>
+    <div><span style="width: 12px; height: 12px; background: rgba(255,165,0,0.8); display: inline-block; margin-right: 6px;"></span><span data-translate="specialWeatherStatement">Special Weather Statement</span></div>
+  </div>
+
+  <!-- Forecast container with updated ID -->
+  <div class="forecast" id="forecast-section" style="padding: 1rem; max-width: 400px; margin: 2rem auto 0; background-color: #111; border-radius: 8px; border: 2px solid #0071CE;">
+    <span data-translate="loadingForecast">Loading 7-day forecast...</span>
+  </div>
+
+  <script>
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      // No referrer + user opened directly = likely a bookmark
+      window.location.href = "/index.html";
+    }
+
+    const alertUrl = 'https://api.weather.gov/alerts/active?zone=ORZ006';
+    fetch(alertUrl)
+      .then(res => res.json())
+      .then(data => {
+        const box = document.getElementById('alertBox');
+        if (!data.features || data.features.length === 0) {
+          box.innerHTML = '<div style="color:#1DA1F2;font-weight:bold;">' + translateText('noActiveAlerts') + '</div>';
+          return;
+        }
+        const alert = data.features[0].properties;
+        box.innerHTML = `
+          <div style="color:#F7630C; font-weight:bold; font-size:1.1rem;">⚠️ ${alert.event}</div>
+          <div style="margin-top:0.5rem; color:#ccc; font-size:0.95rem;">${alert.headline || alert.description}</div>
+        `;
+      })
+      .catch(() => {
+        document.getElementById('alertBox').textContent = translateText('unableToLoadAlerts');
+      });
+
+    // Auto-refresh radar every 5 minutes
+    setInterval(() => {
+      document.getElementById('radar').src += '';
+    }, 300000);
+
+    // 7-Day Forecast logic (unchanged)
+    const apiUrl = 'https://api.weather.gov/points/45.5152,-122.6784';
+    function getEmoji(forecast) {
+      forecast = forecast.toLowerCase();
+      if (forecast.includes('thunder')) return '⛈️';
+      if (forecast.includes('storm')) return '🌩️';
+      if (forecast.includes('snow')) return '❄️';
+      if (forecast.includes('rain') || forecast.includes('showers')) return '🌧️';
+      if (forecast.includes('sunny') && forecast.includes('partly')) return '🌤️';
+      if (forecast.includes('mostly sunny')) return '🌤️';
+      if (forecast.includes('sunny')) return '☀️';
+      if (forecast.includes('cloudy') && forecast.includes('partly')) return '⛅';
+      if (forecast.includes('mostly cloudy')) return '🌥️';
+      if (forecast.includes('cloudy')) return '☁️';
+      if (forecast.includes('fog') || forecast.includes('haze')) return '🌫️';
+      if (forecast.includes('mostly clear')) return '🌙';
+      if (forecast.includes('clear')) return '🌙';
+      return '❓';
+    }
+
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => fetch(data.properties.forecast))
+      .then(res => res.json())
+      .then(data => {
+        const periods = data.properties.periods.slice(0, 7);
+        const forecastEl = document.getElementById('forecast-section');
+        forecastEl.innerHTML = '<h2 style="color:#F7630C; font-size:1.2rem; margin-bottom:0.75rem;">' + translateText('sevenDayForecast') + '</h2>';
+        periods.forEach(period => {
+          const emoji = getEmoji(period.shortForecast);
+          const el = document.createElement('div');
+          el.style.display = 'flex';
+          el.style.justifyContent = 'space-between';
+          el.style.alignItems = 'center';
+          el.style.borderBottom = '1px solid #333';
+          el.style.padding = '0.4rem 0';
+          el.innerHTML = `
+            <div>
+              <div style="color:#F7630C; font-weight:bold;">${period.name} ${emoji}</div>
+              <div style="font-size:0.9rem; color:#ccc;">${period.shortForecast}</div>
+            </div>
+            <div style="color:#1DA1F2;">${period.temperature}°${period.temperatureUnit}</div>
+          `;
+          forecastEl.appendChild(el);
+        });
+      })
+      .catch(() => {
+        document.getElementById('forecast-section').textContent = translateText('failedToLoadForecast');
+      });
+
+    // Refresh entire page every 30 minutes
+    setInterval(() => location.reload(), 1800000);
+  </script>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <a href="terms.html" data-translate="terms">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html" data-translate="contact">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html" data-translate="report">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html" data-translate="dmca">DMCA</a> &nbsp;|&nbsp;
+    <a href="privacy.html" data-translate="privacy">Privacy Policy</a>
+  </footer>
+
+  <script>
+    if (!localStorage.getItem('cookieConsent')) {
+      document.write(`
+        <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+          <span data-translate="cookieMessage">📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our</span> <a href='privacy.html' style='color: #1E90FF; text-decoration: underline;' data-translate="privacy">Privacy Policy</a>.<br>
+          <button onclick='localStorage.setItem("cookieConsent", "true"); document.getElementById("cookie-banner").remove();' style='margin-top: 0.5rem; background: #1E90FF; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;' data-translate="ok">OK</button>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>

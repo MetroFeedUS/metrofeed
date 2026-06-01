@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RoamRaven TV</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="RoamRavenbird.png" />
+  <script src="obs-tv-panels.js?v=3"></script>
+  <script>
+  (function () {
+    'use strict';
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('tv') !== '1' && params.get('tv') !== 'true') return;
+    if (sessionStorage.getItem('obsTvAuth') !== '1') {
+      window.location.replace(
+        'obs-route-tv.html?return=' + encodeURIComponent('obs-tv.html?' + params.toString())
+      );
+      return;
+    }
+    var spec = window.mfTvParsePanelParams(params);
+    window.MF_TV_STAGE_SPEC = spec;
+    window.MF_TV_PANEL = spec.panel;
+
+    if (spec.panel === 'map' || spec.panel === 'preview') {
+      window.location.replace('home.html?' + params.toString());
+      return;
+    }
+
+    document.documentElement.classList.add('tv-slice-page', 'tv-panel-' + spec.panel);
+    var stageCss = document.createElement('link');
+    stageCss.rel = 'stylesheet';
+    stageCss.href = 'obs-tv-stage.css?v=4';
+    document.head.appendChild(stageCss);
+
+    if (spec.panel === 'ticker') {
+      var tc = document.createElement('link');
+      tc.rel = 'stylesheet';
+      tc.href = 'obs-support-ticker.css?v=4';
+      document.head.appendChild(tc);
+      document.documentElement.style.setProperty('--rr-w', spec.bw + 'px');
+      document.documentElement.style.setProperty('--rr-h', spec.bh + 'px');
+    } else if (spec.panel === 'live') {
+      var lc = document.createElement('link');
+      lc.rel = 'stylesheet';
+      lc.href = 'obs-live-badge.css?v=2';
+      document.head.appendChild(lc);
+    }
+  })();
+  </script>
+</head>
+<body>
+  <noscript>Enable JavaScript for RoamRaven TV.</noscript>
+
+  <div id="mfTvSliceAlerts" class="mf-tv-slice mf-tv-slice-alerts" data-panel="alerts" hidden>
+    <div class="mf-tv-slice-alerts__head">Route alerts</div>
+    <div id="mfTvSliceAlertsRoute" class="mf-tv-slice-alerts__route">Waiting…</div>
+    <div id="mfTvSliceAlertsBody" class="mf-tv-slice-alerts__body">
+      <div class="mf-tv-alerts-panel__empty">Waiting for map source…</div>
+    </div>
+  </div>
+
+  <div id="mfTvSliceTicker" data-panel="ticker" hidden>
+    <div class="rr-ticker" role="presentation">
+      <section class="rr-ticker__cell rr-ticker__clock" aria-label="Clock">
+        <div id="rrClockTime" class="rr-clock__time">—:—</div>
+        <div id="rrClockDate" class="rr-clock__date">—</div>
+        <div id="rrClockPlace" class="rr-clock__place">Test City, KY</div>
+      </section>
+      <section class="rr-ticker__cell rr-ticker__weather" aria-label="Current weather">
+        <div class="rr-weather-now">
+          <div id="rrWeatherEmoji" class="rr-weather-now__emoji" aria-hidden="true">🌤️</div>
+          <div id="rrWeatherTemp" class="rr-weather-now__temp">—</div>
+          <div class="rr-weather-now__meta">
+            <div id="rrWeatherDesc" class="rr-weather-now__desc">Loading…</div>
+            <div id="rrWeatherFeels" class="rr-weather-now__feels"></div>
+            <div id="rrWeatherAlert" class="rr-weather-alert rr-weather-alert--ok">—</div>
+          </div>
+        </div>
+      </section>
+      <section class="rr-ticker__cell rr-ticker__hourly" aria-label="Hourly forecast">
+        <div class="rr-hourly__label">Next hours</div>
+        <div id="rrHourlyRow" class="rr-hourly__row">
+          <div class="rr-ticker__loading">…</div>
+        </div>
+      </section>
+      <div class="rr-ticker__brand-col" aria-hidden="true">
+        <div class="rr-ticker__brand">ROAMRAVEN</div>
+      </div>
+      <footer class="rr-ticker__bar">
+        <div id="rrTickerTip" class="rr-ticker__tip"><span>Tip ·</span> roamravenapp.com</div>
+        <div id="rrTonight" class="rr-ticker__tonight">—</div>
+        <div id="rrWeatherUpdated" class="rr-ticker__updated">—</div>
+      </footer>
+    </div>
+  </div>
+
+  <div id="mfTvSliceLive" data-panel="live" hidden>
+    <div id="mfLiveBadge" class="mf-live-badge" role="status" aria-label="Live broadcast">
+      <span class="mf-live-badge__dot" aria-hidden="true"></span>
+      <span class="mf-live-badge__text">LIVE</span>
+    </div>
+  </div>
+
+  <script src="obs-tv-stage.js?v=2"></script>
+  <script src="obs-tv-bus.js?v=1"></script>
+  <script>
+  (function () {
+    'use strict';
+    var spec = window.MF_TV_STAGE_SPEC;
+    if (!spec) return;
+    if (typeof window.mfTvStageApply === 'function') {
+      window.mfTvStageApply(document, spec);
+    }
+    var panel = spec.panel;
+    document.querySelectorAll('[data-panel]').forEach(function (node) {
+      var isMine = node.getAttribute('data-panel') === panel;
+      node.hidden = !isMine;
+      node.style.display = isMine ? '' : 'none';
+    });
+    if (panel === 'ticker') {
+      var cc = document.createElement('script');
+      cc.src = 'city-config.js';
+      cc.onload = function () {
+        try {
+          var id = 'testcity';
+          if (typeof getCityIdFromPath === 'function') id = getCityIdFromPath();
+          if (typeof CITIES !== 'undefined' && CITIES[id]) window.CITY_CONFIG = CITIES[id];
+        } catch (_) {}
+        var ts = document.createElement('script');
+        ts.src = 'obs-support-ticker.js?v=3';
+        document.body.appendChild(ts);
+      };
+      document.body.appendChild(cc);
+    } else if (panel === 'live') {
+      var lb = document.createElement('script');
+      lb.src = 'obs-live-badge.js?v=2';
+      document.body.appendChild(lb);
+    } else if (panel === 'alerts') {
+      var sl = document.createElement('script');
+      sl.src = 'obs-tv-slices.js?v=3';
+      document.body.appendChild(sl);
+    }
+  })();
+  </script>
+</body>
+</html>

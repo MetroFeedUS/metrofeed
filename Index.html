@@ -687,6 +687,17 @@
         pinCenter: [-84.562, 39.198],
         defaultView: { center: [-84.52, 39.16], zoom: 10.2 },
         href: 'Cincinnati/home.html'
+      },
+      testcity: {
+        shortLabel: 'Test City',
+        name: 'Test City (Lexington sandbox)',
+        bbox: { west: -84.97, south: 37.43, east: -84.13, north: 38.65 },
+        countyGeoids: [
+          '21067', '21209', '21151', '21113'
+        ],
+        pinCenter: [-84.503, 38.040],
+        defaultView: { center: [-84.503, 38.040], zoom: 10.5 },
+        href: 'TestCity/home.html'
       }
     };
 
@@ -986,7 +997,7 @@
       var metro = [];
       for (var i = 0; i < countyData.features.length; i++) {
         var f = countyData.features[i];
-        if (f && f.properties && f.properties.cityKey === 'cincinnati') metro.push(f);
+        if (f && f.properties && f.properties.cityKey && MF_SUPPORTED_CITIES[f.properties.cityKey]) metro.push(f);
       }
       if (!metro.length) return null;
       var merged = metro[0];
