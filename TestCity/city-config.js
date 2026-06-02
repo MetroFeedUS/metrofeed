@@ -270,11 +270,13 @@ const CITIES = {
     busTracerJumpResetM: 200,
     busTracerMaxTrailPoints: 16,
     busTracerMaxDots: 10,
+    /** Ignore duplicate vehicle paints within this window (ms) so trail history is not double-advanced. */
+    busPaintCoalesceMs: 450,
+    /** Compass wedge before tail: use nearest route segment bearing (not GPS). */
+    busWedgeUseRouteTangent: true,
     busUseMotionDirection: true,
     busSoftOppositeDim: true,
-    /** Heading wedge: fraction of bus circle diameter (0.25 = 25%). */
-    busHeadingArrowScale: 0.25,
-    /** Show heading wedge only when zoomed in (map maxZoom is 18 → shows at 17+). */
+    /** Show compass wedge only when zoomed in (map maxZoom is 18 → shows at 17+). Hidden once tail exists. */
     busHeadingArrowMinZoom: 17,
 
     showRailRoutes: false,
