@@ -1441,8 +1441,8 @@ function mfSanitizedOverlayDomKey(raw) {
   return `${safe}_${tag}`;
 }
 
-/** MetroFeed route line + direction chevron layers from attachRouteToMap. */
-const MF_ROUTE_OVERLAY_LAYER_RE = /^route-(layer|chevron)(-opp)?-/;
+/** MetroFeed route line layers from attachRouteToMap. */
+const MF_ROUTE_OVERLAY_LAYER_RE = /^route-layer(-opp)?-/;
 
 /** Test City: schedule-direction chevrons along the selected route line (symbol layer). */
 function metrofeedRouteLineChevronsEnabled() {
@@ -1455,124 +1455,128 @@ function metrofeedRouteLineChevronsEnabled() {
   }
 }
 
-/** Raster chevron for route line (no glyph server — avoids tiles.metrofeedus.com font 400s). */
-function metrofeedEnsureRouteChevronIcon(map) {
-  const iconId = "mf-route-chevron";
-  if (!map) return null;
-  try {
-    if (map._mfRouteChevronIconReady === iconId) return iconId;
-    if (typeof map.hasImage === "function" && map.hasImage(iconId)) {
-      map._mfRouteChevronIconReady = iconId;
-      return iconId;
+/** Sample points + bearings along shape [[lat,lon]...] for DOM chevrons (vertex order = direction). */
+function metrofeedSampleRouteChevronPoints(shape, spacingM, maxPts) {
+  if (!Array.isArray(shape) || shape.length < 2) return [];
+  const stepM = Math.max(80, Number(spacingM) || 350);
+  const cap = Math.max(12, Number(maxPts) || 100);
+  const out = [];
+  for (let i = 0; i < shape.length - 1; i++) {
+    const a = shape[i];
+    const b = shape[i + 1];
+    const la0 = Number(a[0]);
+    const lo0 = Number(a[1]);
+    const la1 = Number(b[0]);
+    const lo1 = Number(b[1]);
+    if (![la0, lo0, la1, lo1].every(Number.isFinite)) continue;
+    const segLen = metrofeedHaversineM(la0, lo0, la1, lo1);
+    if (segLen < 20) continue;
+    const br = metrofeedBearingDeg(la0, lo0, la1, lo1);
+    if (!Number.isFinite(br)) continue;
+    let dist = stepM * 0.5;
+    while (dist < segLen && out.length < cap * 2) {
+      const t = dist / segLen;
+      out.push({
+        lat: la0 + (la1 - la0) * t,
+        lon: lo0 + (lo1 - lo0) * t,
+        bearing: br
+      });
+      dist += stepM;
     }
-  } catch (_) {}
-  const w = 32;
-  const h = 32;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  ctx.clearRect(0, 0, w, h);
-  ctx.beginPath();
-  ctx.moveTo(6, 5);
-  ctx.lineTo(24, 16);
-  ctx.lineTo(6, 27);
-  ctx.closePath();
-  ctx.fillStyle = "#ffffff";
-  ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "#141414";
-  ctx.lineJoin = "round";
-  ctx.stroke();
-  try {
-    const imageData = ctx.getImageData(0, 0, w, h);
-    map.addImage(iconId, imageData, { pixelRatio: 2 });
-    map._mfRouteChevronIconReady = iconId;
-    return iconId;
-  } catch (e) {
-    console.warn("[metrofeedEnsureRouteChevronIcon] addImage failed:", e);
-    return null;
   }
+  if (out.length <= cap) return out;
+  const thin = [];
+  const stride = out.length / cap;
+  for (let j = 0; j < cap; j++) {
+    thin.push(out[Math.min(out.length - 1, Math.round(j * stride))]);
+  }
+  return thin;
+}
+
+function metrofeedCreateRouteChevronMarkerElement(sizePx, bearingDeg, opacity) {
+  const sz = Math.max(10, Math.min(20, Number(sizePx) || 14));
+  const op = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.88;
+  const br = Number.isFinite(Number(bearingDeg)) ? Number(bearingDeg) : 0;
+  const wrap = document.createElement("div");
+  wrap.className = "mf-route-chevron";
+  wrap.setAttribute("aria-hidden", "true");
+  wrap.style.cssText = [
+    "width:" + sz + "px",
+    "height:" + sz + "px",
+    "pointer-events:none",
+    "opacity:" + op,
+    "transform:rotate(" + (br - 90) + "deg)",
+    "filter:drop-shadow(0 1px 2px rgba(0,0,0,0.85))"
+  ].join(";");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("width", String(sz));
+  svg.setAttribute("height", String(sz));
+  svg.style.display = "block";
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M 5 4 L 19 12 L 5 20 Z");
+  path.setAttribute("fill", "#ffffff");
+  path.setAttribute("stroke", "#1a1a1a");
+  path.setAttribute("stroke-width", "2");
+  path.setAttribute("stroke-linejoin", "round");
+  svg.appendChild(path);
+  wrap.appendChild(svg);
+  return wrap;
 }
 
 /**
- * Add direction chevrons along a route LineString (vertex order = schedule / stop direction).
- * Inserts above the route line, below the same anchor as the line layer.
+ * DOM chevrons along the route (same stack as stop markers — avoids font + layer-order bugs).
  */
-function metrofeedAddRouteLineChevronLayer(map, opts) {
-  if (!map || !opts || !metrofeedRouteLineChevronsEnabled()) return null;
-  const sourceId = opts.sourceId;
-  const routeLayerId = opts.routeLayerId;
-  const beforeId = opts.beforeId;
-  const overlayElements = opts.overlayElements;
-  if (!sourceId || !routeLayerId) return null;
-
-  const iconId = metrofeedEnsureRouteChevronIcon(map);
-  if (!iconId) return null;
-
+function metrofeedInstallRouteLineChevronsDom(map, shape, overlayElements) {
+  if (!map || !metrofeedRouteLineChevronsEnabled() || !overlayElements) return 0;
   const cfg = window.CITY_CONFIG || {};
-  const chevronLayerId = String(opts.chevronLayerId || routeLayerId.replace(/^route-layer-/, "route-chevron-"));
-  const spacingPx = Number.isFinite(Number(cfg.routeLineChevronSpacingPx))
-    ? Math.max(40, Number(cfg.routeLineChevronSpacingPx))
-    : 72;
-  const sizeBase = Number.isFinite(Number(cfg.routeLineChevronSizePx))
-    ? Math.max(0.2, Math.min(1.2, Number(cfg.routeLineChevronSizePx) / 32))
-    : 0.42;
+  const spacingM = Number.isFinite(Number(cfg.routeLineChevronSpacingM))
+    ? Number(cfg.routeLineChevronSpacingM)
+    : 350;
+  const sizePx = Number.isFinite(Number(cfg.routeLineChevronSizePx))
+    ? Number(cfg.routeLineChevronSizePx)
+    : 14;
   const opacity = Number.isFinite(Number(cfg.routeLineChevronOpacity))
-    ? Math.max(0.5, Math.min(1, Number(cfg.routeLineChevronOpacity)))
-    : 0.95;
+    ? Number(cfg.routeLineChevronOpacity)
+    : 0.88;
+  const maxPts = Number.isFinite(Number(cfg.routeLineChevronMaxCount))
+    ? Number(cfg.routeLineChevronMaxCount)
+    : 90;
   const minZoom = Number.isFinite(Number(cfg.routeLineChevronMinZoom))
     ? Number(cfg.routeLineChevronMinZoom)
-    : 11;
+    : 10;
 
+  let zoomOk = true;
   try {
-    if (map.getLayer(chevronLayerId)) map.removeLayer(chevronLayerId);
+    const z = typeof map.getZoom === "function" ? Number(map.getZoom()) : 99;
+    zoomOk = !Number.isFinite(z) || z >= minZoom;
   } catch (_) {}
 
-  try {
-    map.addLayer(
-      {
-        id: chevronLayerId,
-        type: "symbol",
-        source: sourceId,
-        minzoom: minZoom,
-        layout: {
-          "icon-image": iconId,
-          "icon-size": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            11,
-            sizeBase * 0.85,
-            13,
-            sizeBase,
-            15,
-            sizeBase * 1.15,
-            17,
-            sizeBase * 1.35
-          ],
-          "symbol-placement": "line",
-          "symbol-spacing": spacingPx,
-          "icon-rotation-alignment": "map",
-          "icon-pitch-alignment": "map",
-          "icon-allow-overlap": true,
-          "icon-ignore-placement": true
-        },
-        paint: {
-          "icon-opacity": opacity
-        }
-      },
-      beforeId || routeLayerId
-    );
-    if (overlayElements && Array.isArray(overlayElements.layers)) {
-      overlayElements.layers.push(chevronLayerId);
-    }
-    return chevronLayerId;
-  } catch (e) {
-    console.warn("[metrofeedAddRouteLineChevronLayer] failed:", e);
-    return null;
+  const pts = metrofeedSampleRouteChevronPoints(shape, spacingM, maxPts);
+  if (!pts.length || !zoomOk) return 0;
+
+  if (!Array.isArray(overlayElements.chevronMarkers)) {
+    overlayElements.chevronMarkers = [];
   }
+
+  let n = 0;
+  pts.forEach(function (pt) {
+    try {
+      const el = metrofeedCreateRouteChevronMarkerElement(sizePx, pt.bearing, opacity);
+      const mk = new maplibregl.Marker({ element: el, anchor: "center" })
+        .setLngLat([pt.lon, pt.lat])
+        .addTo(map);
+      overlayElements.chevronMarkers.push(mk);
+      overlayElements.markers.push(mk);
+      n += 1;
+    } catch (_) {}
+  });
+  if (n > 0) {
+    try {
+      console.log("[Test City] Route direction chevrons placed:", n);
+    } catch (_) {}
+  }
+  return n;
 }
 
 /**
@@ -1888,14 +1892,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       overlayElements.layers.push(routeLayerId);
 
       if (metrofeedRouteLineChevronsEnabled()) {
-        metrofeedAddRouteLineChevronLayer(map, {
-          sourceId: routeSourceId,
-          routeLayerId: routeLayerId,
-          chevronLayerId: `route-chevron-${mapLayerKey}-${shapeIndex}`,
-          routeColor: routeColor,
-          beforeId: beforeId,
-          overlayElements: overlayElements
-        });
+        metrofeedInstallRouteLineChevronsDom(map, shape, overlayElements);
       }
     });
 
