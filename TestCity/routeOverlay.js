@@ -838,6 +838,47 @@ function metrofeedRouteChevronRotationDeg(bearingDeg) {
   return (br - 90 + 3600) % 360;
 }
 
+/** Thin ">" SVG (~12px) — route stroke + contrasting ring so it reads on the line. */
+function metrofeedCreateRouteChevronGlyphEl(sizePx, routeColor) {
+  const n = Math.max(10, Math.round(Number(sizePx) || 12));
+  const fg = routeColor || "#facc15";
+  const ring = pickContrastingTextColor(fg);
+
+  const wrap = document.createElement("div");
+  wrap.className = "mf-route-dir-chevron-glyph";
+  wrap.style.cssText =
+    "width:" + n + "px;height:" + n + "px;display:block;pointer-events:none;";
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", String(n));
+  svg.setAttribute("height", String(n));
+  svg.setAttribute("viewBox", "0 0 12 12");
+  svg.style.display = "block";
+  svg.style.overflow = "visible";
+
+  const d = "M3.4 2.4 L9.1 6 L3.4 9.6";
+  const halo = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  halo.setAttribute("d", d);
+  halo.setAttribute("fill", "none");
+  halo.setAttribute("stroke", ring);
+  halo.setAttribute("stroke-width", "2.6");
+  halo.setAttribute("stroke-linecap", "round");
+  halo.setAttribute("stroke-linejoin", "round");
+
+  const core = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  core.setAttribute("d", d);
+  core.setAttribute("fill", "none");
+  core.setAttribute("stroke", fg);
+  core.setAttribute("stroke-width", "1.35");
+  core.setAttribute("stroke-linecap", "round");
+  core.setAttribute("stroke-linejoin", "round");
+
+  svg.appendChild(halo);
+  svg.appendChild(core);
+  wrap.appendChild(svg);
+  return wrap;
+}
+
 /** Route-direction chevrons along the polyline (plain ">" on the line, map-aligned). */
 function metrofeedInstallRouteDirectionChevrons(
   map,
@@ -862,46 +903,35 @@ function metrofeedInstallRouteDirectionChevrons(
   const reverse = Number(directionId) === 1;
   const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, reverse);
   const fg = routeColor || "#facc15";
-  const fontPx = Math.max(8, Math.round(chevronPx * 0.82));
-  const half = chevronPx / 2;
 
   samples.forEach(function (pt) {
-    const br = metrofeedNormalizeHeadingDeg(pt.bearing);
-    const rot = metrofeedRouteChevronRotationDeg(br);
+    const rot = metrofeedRouteChevronRotationDeg(pt.bearing);
 
-    // MapLibre owns transform on the marker root — rotate on a child instead.
     const anchor = document.createElement("div");
-    anchor.className = "mf-route-dir-chevron-anchor";
+    anchor.className = "mf-route-dir-chevron";
     anchor.setAttribute("aria-hidden", "true");
-    anchor.style.cssText = "position:relative;width:0;height:0;overflow:visible;pointer-events:none;";
-
-    const el = document.createElement("div");
-    el.className = "mf-route-dir-chevron";
-    el.textContent = ">";
-    el.style.cssText = [
-      "position:absolute",
-      "left:0",
-      "top:0",
+    anchor.style.cssText = [
       "width:" + chevronPx + "px",
       "height:" + chevronPx + "px",
-      "margin-left:" + -half + "px",
-      "margin-top:" + -half + "px",
       "display:flex",
       "align-items:center",
       "justify-content:center",
-      "font-family:Arial,Helvetica Neue,sans-serif",
-      "font-size:" + fontPx + "px",
-      "font-weight:700",
-      "line-height:1",
-      "color:" + fg,
-      "opacity:0.92",
-      "transform:rotate(" + rot + "deg)",
-      "transform-origin:50% 50%",
       "pointer-events:none",
-      "user-select:none"
+      "z-index:3"
     ].join(";");
 
-    anchor.appendChild(el);
+    const rotWrap = document.createElement("div");
+    rotWrap.style.cssText = [
+      "width:100%",
+      "height:100%",
+      "display:flex",
+      "align-items:center",
+      "justify-content:center",
+      "transform:rotate(" + rot + "deg)",
+      "transform-origin:50% 50%"
+    ].join(";");
+    rotWrap.appendChild(metrofeedCreateRouteChevronGlyphEl(chevronPx, fg));
+    anchor.appendChild(rotWrap);
 
     try {
       const mk = new maplibregl.Marker({ element: anchor, anchor: "center" })
