@@ -68,6 +68,38 @@ function pickContrastingTextColor(hex) {
   return L > 0.55 ? "#0d0d0d" : "#ffffff";
 }
 
+/** Parse #rgb / #rrggbb to [r,g,b] or null. */
+function metrofeedParseHexRgb(hex) {
+  if (!hex) return null;
+  let h = String(hex).trim();
+  if (h.startsWith("#")) h = h.slice(1);
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (h.length !== 6) return null;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  if ([r, g, b].some((x) => Number.isNaN(x))) return null;
+  return [r, g, b];
+}
+
+/** Darken a hex color (amount 0–1 toward black) while keeping the same hue. */
+function metrofeedDarkenHex(hex, amount) {
+  const rgb = metrofeedParseHexRgb(hex);
+  if (!rgb) return hex || "#000000";
+  const t = Math.max(0, Math.min(1, Number(amount) || 0));
+  const out = rgb.map(function (c) {
+    return Math.round(c * (1 - t));
+  });
+  return (
+    "#" +
+    out
+      .map(function (c) {
+        return c.toString(16).padStart(2, "0");
+      })
+      .join("")
+  );
+}
+
 function metrofeedAngleDeltaDeg(a, b) {
   // Smallest signed diff between headings a and b (degrees)
   let d = ((Number(a) - Number(b)) % 360 + 540) % 360 - 180;
@@ -692,7 +724,30 @@ function metrofeedSweepLegacyRouteChevrons(mapInstance) {
   return removed;
 }
 
-/** Route-direction chevrons along the polyline (original › style, larger). */
+/** Bold filled chevron for route direction (points east; rotate for bearing). */
+function metrofeedCreateRouteChevronSvg(sizePx, routeColor) {
+  const sz = Math.max(16, Number(sizePx) || 40);
+  const fill = routeColor || "#facc15";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", String(sz));
+  svg.setAttribute("height", String(sz));
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.style.display = "block";
+  svg.style.overflow = "visible";
+  svg.style.filter = "drop-shadow(0 1px 3px rgba(0,0,0,0.75))";
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M7 3 L19 12 L7 21 Z");
+  path.setAttribute("fill", fill);
+  path.setAttribute("stroke", "#ffffff");
+  path.setAttribute("stroke-width", "2.5");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("paint-order", "stroke fill");
+  svg.appendChild(path);
+  return svg;
+}
+
+/** Route-direction chevrons along the polyline (SVG triangles, larger). */
 function metrofeedInstallRouteDirectionChevrons(
   map,
   shape,
@@ -705,15 +760,13 @@ function metrofeedInstallRouteDirectionChevrons(
   const spacingM =
     window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
       ? Number(window.CITY_CONFIG.busRouteChevronSpacingM)
-      : 280;
+      : 220;
   const chevronPx =
     window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSizePx != null
       ? Number(window.CITY_CONFIG.busRouteChevronSizePx)
-      : 26;
+      : 44;
   const reverse = Number(directionId) === 1;
   const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, reverse);
-  const fg = pickContrastingTextColor(routeColor);
-  const halo = fg === "#ffffff" ? "rgba(0,0,0,0.85)" : "rgba(255,255,255,0.95)";
 
   samples.forEach(function (pt) {
     const el = document.createElement("div");
@@ -727,17 +780,12 @@ function metrofeedInstallRouteDirectionChevrons(
       "display:flex",
       "align-items:center",
       "justify-content:center",
-      "font-size:" + Math.round(chevronPx * 0.85) + "px",
-      "font-weight:900",
-      "line-height:1",
-      "color:" + (routeColor || "#facc15"),
-      "text-shadow:0 0 3px " + halo + ",0 1px 4px rgba(0,0,0,0.75)",
       "transform:rotate(" + rot + "deg)",
       "transform-origin:50% 50%",
       "pointer-events:none",
       "user-select:none"
     ].join(";");
-    el.textContent = "›";
+    el.appendChild(metrofeedCreateRouteChevronSvg(chevronPx, routeColor));
     try {
       const mk = new maplibregl.Marker({ element: el, anchor: "center" })
         .setLngLat([pt.lon, pt.lat])
@@ -1540,17 +1588,19 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   }
 
   try {
-    const busSize = Math.max(14, Math.round(dc * 0.56));
+    const busSize = Math.max(16, Math.round(dc * 0.68));
+    const busFill = metrofeedDarkenHex(routeFill, 0.42);
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("width", String(busSize));
     svg.setAttribute("height", String(busSize));
     svg.setAttribute("viewBox", "0 0 100 100");
     svg.style.display = "block";
+    svg.style.filter = "drop-shadow(0 0 1px rgba(0,0,0,0.35))";
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", MF_NEWBUS_SVG_PATH);
-    path.setAttribute("fill", routeFill);
+    path.setAttribute("fill", busFill);
     path.setAttribute("stroke", "#ffffff");
-    path.setAttribute("stroke-width", "3");
+    path.setAttribute("stroke-width", "3.5");
     path.setAttribute("stroke-linejoin", "round");
     path.setAttribute("paint-order", "stroke fill");
     svg.appendChild(path);

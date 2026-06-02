@@ -256,9 +256,9 @@ const CITIES = {
     busMarkerSnapMaxMeters: 120,
     busMarkerSnapLookaheadSegs: 4,
     busMarkerSnapHysteresisRatio: 0.28,
-    busRouteChevronSpacingM: 280,
-    /** Route › chevron size (px). */
-    busRouteChevronSizePx: 26,
+    busRouteChevronSpacingM: 220,
+    /** Route chevron triangle size (px). */
+    busRouteChevronSizePx: 44,
     /** White dot tracer behind bus (meters). */
     busTracerLengthM: 100,
     busTracerDotSpacingM: 12,
