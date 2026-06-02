@@ -2194,8 +2194,11 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   const normH = metrofeedNormalizeHeadingDeg(headingDeg);
   const motionMismatch = markerOpts.motionMismatch === true;
   const R = dc / 2;
-  const pinPad = Math.round(R * 1.1);
-  const pinSize = dc + pinPad * 2;
+  const compassR = R + 3;
+  const arrowLen = Math.max(10, Math.round(R * 1.05));
+  const outward = Math.ceil(arrowLen + 6);
+  const pinPad = Math.round(R * 0.45);
+  const pinSize = dc + outward * 2 + pinPad * 2;
 
   const label = document.createElement("div");
   label.className = "mf-bus-marker-label";
