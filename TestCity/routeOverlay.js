@@ -560,23 +560,115 @@ function metrofeedSamplePolylineBySpacing(shape, spacingM, reverse) {
   return pts;
 }
 
-/** SVG triangle pointing right (east); rotate wrapper for map bearing. */
-function metrofeedCreateDirectionTriangleSvg(sizePx, fill, stroke, strokeW) {
-  const sz = Math.max(12, Number(sizePx) || 18);
+const MF_NEWBUS_SVG_PATH =
+  "m91.5600586 26.25h-5.9400635v-5.9399414c0-6.555685-5.3144302-11.8701172-11.8701172-11.8701172h-47.499876c-6.5556183 0-11.8699951 5.3143778-11.8699951 11.8699951v5.9400635h-5.9400025c-3.2805729 0-5.9400024 2.6594296-5.9400024 5.9400024v9.7041588c0 1.1961899.9697061 2.1658974 2.1658988 2.1658974h1.6082048c1.1961927 0 2.1658988-.9697075 2.1658988-2.1658974v-9.7042198h5.9400024v57.204216c0 1.1961975.9697056 2.1659012 2.1658993 2.1659012h7.5381966c1.1961918 0 2.1658993-.9697037 2.1658993-2.1659012v-3.7741623h47.5v3.7741623c0 1.1961975.9697037 2.1659012 2.1659012 2.1659012h7.5381927c1.1961975 0 2.1659012-.9697037 2.1659012-2.1659012v-57.204216h5.9400024v9.7042198c0 1.1961899.9697037 2.1658974 2.1658936 2.1658974h1.6082077c1.1961899 0 2.1659012-.9697075 2.1659012-2.1658974v-9.7042198c-.0000019-3.2805386-2.6594028-5.9399414-5.9399433-5.9399414zm-56.4050331-11.8699951h29.6899452c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v.0000057c0 1.6375389-1.3274841 2.9650249-2.9650269 2.9650249h-29.6899452c-1.6375351 0-2.965023-1.327486-2.965023-2.9650249v-.0000057c-.0000001-1.637537 1.3274879-2.965023 2.965023-2.965023zm-5.1415444 57.3099365h-7.5269604c-1.2020588 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744625-2.1765213 2.1765213-2.1765213h7.5269604c1.2020588 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744625 2.1765213-2.1765213 2.1765213zm17.0165482-15.75h-23.7550068c-1.637537 0-2.965023-1.3274879-2.965023-2.965023v-23.7598954c0-1.637537 1.327486-2.965023 2.965023-2.965023h23.7550068zm30.4834518 15.75h-7.5269623c-1.2020569 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744644-2.1765213 2.1765213-2.1765213h7.5269623c1.2020569 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744644 2.1765213-2.1765213 2.1765213zm-.7885055-15.75h-23.7550049v-29.6899414h23.7550049c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v23.7598953c-.0000001 1.6375352-1.3274842 2.9650231-2.9650269 2.9650231z";
+
+/**
+ * Arrow wedge whose inner edge is a circle arc (hugs the bus pin circle).
+ * Drawn pointing east; rotate the returned SVG for map bearing.
+ */
+function metrofeedCreateCircleHugArrowSvg(routeColor, circleR, arrowLen, spreadDeg) {
+  const R = Number(circleR) || 14;
+  const L = Math.max(R * 0.5, Number(arrowLen) || R * 0.9);
+  const half = Math.max(8, Math.min(40, Number(spreadDeg) || 26));
+  const cx = R;
+  const cy = R;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const a0 = -half;
+  const a1 = half;
+  const x0 = cx + R * Math.cos(toRad(a0));
+  const y0 = cy - R * Math.sin(toRad(a0));
+  const x1 = cx + R * Math.cos(toRad(a1));
+  const y1 = cy - R * Math.sin(toRad(a1));
+  const tipX = cx + R + L;
+  const tipY = cy;
+  const pad = 3;
+  const w = R + L + pad * 2;
+  const h = R * 2 + pad * 2;
+  const ox = pad;
+  const oy = pad;
+
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", String(sz));
-  svg.setAttribute("height", String(sz));
-  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("width", String(Math.ceil(w)));
+  svg.setAttribute("height", String(Math.ceil(h)));
+  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
   svg.style.display = "block";
   svg.style.overflow = "visible";
+
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", "M3 3 L21 12 L3 21 Z");
-  path.setAttribute("fill", fill || "#ffffff");
-  path.setAttribute("stroke", stroke || "rgba(0,0,0,0.85)");
-  path.setAttribute("stroke-width", String(strokeW != null ? strokeW : 1.8));
+  const d =
+    "M " +
+    (x0 + ox) +
+    " " +
+    (y0 + oy) +
+    " A " +
+    R +
+    " " +
+    R +
+    " 0 0 1 " +
+    (x1 + ox) +
+    " " +
+    (y1 + oy) +
+    " L " +
+    (tipX + ox) +
+    " " +
+    (tipY + oy) +
+    " Z";
+  path.setAttribute("d", d);
+  path.setAttribute("fill", routeColor || "#facc15");
+  path.setAttribute("stroke", "#ffffff");
+  path.setAttribute("stroke-width", "2");
   path.setAttribute("stroke-linejoin", "round");
   svg.appendChild(path);
   return svg;
+}
+
+/** Trim polyline coords [[lon,lat]...] to at most maxM meters (keeps newest end). */
+function metrofeedTrimPolylineTailMeters(coords, maxM) {
+  if (!Array.isArray(coords) || coords.length < 2) return coords || [];
+  const maxLen = Math.max(20, Number(maxM) || 100);
+  let total = 0;
+  const segs = [];
+  for (let i = coords.length - 1; i > 0; i--) {
+    const a = coords[i];
+    const b = coords[i - 1];
+    const d = metrofeedHaversineM(Number(a[1]), Number(a[0]), Number(b[1]), Number(b[0]));
+    segs.unshift({ a, b, d });
+    total += d;
+    if (total >= maxLen) break;
+  }
+  if (!segs.length) return coords.slice(-2);
+  const out = [segs[0].a];
+  for (let i = 0; i < segs.length; i++) out.push(segs[i].b);
+  return out;
+}
+
+/** Sample points along a lon/lat polyline for dot tracers. */
+function metrofeedSamplePolylineDots(coords, spacingM) {
+  if (!Array.isArray(coords) || coords.length < 2) return [];
+  const step = Math.max(8, Number(spacingM) || 14);
+  const out = [];
+  for (let i = coords.length - 1; i > 0; i--) {
+    const a = coords[i];
+    const b = coords[i - 1];
+    const la1 = Number(a[1]);
+    const lo1 = Number(a[0]);
+    const la0 = Number(b[1]);
+    const lo0 = Number(b[0]);
+    if (![la1, lo1, la0, lo0].every(Number.isFinite)) continue;
+    const segLen = metrofeedHaversineM(la0, lo0, la1, lo1);
+    if (segLen < 0.5) continue;
+    let dist = 0;
+    while (dist < segLen) {
+      const t = dist / segLen;
+      out.push({
+        lon: lo1 + (lo0 - lo1) * t,
+        lat: la1 + (la0 - la1) * t
+      });
+      dist += step;
+    }
+  }
+  return out;
 }
 
 /** Remove legacy tiny HTML route chevrons (replaced by larger arrow markers). */
@@ -586,7 +678,7 @@ function metrofeedSweepLegacyRouteChevrons(mapInstance) {
   if (!root) return 0;
   let removed = 0;
   try {
-    root.querySelectorAll(".mf-route-dir-chevron").forEach(function (el) {
+    root.querySelectorAll(".mf-route-dir-chevron, .mf-route-dir-arrow").forEach(function (el) {
       const wrap = el && el.closest ? el.closest(".maplibregl-marker") : null;
       if (wrap && wrap.parentNode) {
         wrap.parentNode.removeChild(wrap);
@@ -600,8 +692,8 @@ function metrofeedSweepLegacyRouteChevrons(mapInstance) {
   return removed;
 }
 
-/** Visible direction triangles along the route polyline (DOM markers; works on all tile styles). */
-function metrofeedInstallRouteDirectionArrows(
+/** Route-direction chevrons along the polyline (original › style, larger). */
+function metrofeedInstallRouteDirectionChevrons(
   map,
   shape,
   routeColor,
@@ -613,33 +705,39 @@ function metrofeedInstallRouteDirectionArrows(
   const spacingM =
     window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
       ? Number(window.CITY_CONFIG.busRouteChevronSpacingM)
-      : 320;
+      : 280;
+  const chevronPx =
+    window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSizePx != null
+      ? Number(window.CITY_CONFIG.busRouteChevronSizePx)
+      : 26;
   const reverse = Number(directionId) === 1;
   const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, reverse);
   const fg = pickContrastingTextColor(routeColor);
-  const arrowFill = fg;
-  const arrowStroke = fg === "#ffffff" ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.95)";
-  const arrowPx = 20;
+  const halo = fg === "#ffffff" ? "rgba(0,0,0,0.85)" : "rgba(255,255,255,0.95)";
 
   samples.forEach(function (pt) {
     const el = document.createElement("div");
-    el.className = "mf-route-dir-arrow";
+    el.className = "mf-route-dir-chevron";
     el.setAttribute("aria-hidden", "true");
     const br = metrofeedNormalizeHeadingDeg(pt.bearing);
     const rot = br != null ? (br - 90 + 3600) % 360 : 0;
     el.style.cssText = [
-      "width:" + arrowPx + "px",
-      "height:" + arrowPx + "px",
+      "width:" + chevronPx + "px",
+      "height:" + chevronPx + "px",
       "display:flex",
       "align-items:center",
       "justify-content:center",
+      "font-size:" + Math.round(chevronPx * 0.85) + "px",
+      "font-weight:900",
+      "line-height:1",
+      "color:" + (routeColor || "#facc15"),
+      "text-shadow:0 0 3px " + halo + ",0 1px 4px rgba(0,0,0,0.75)",
       "transform:rotate(" + rot + "deg)",
       "transform-origin:50% 50%",
-      "filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
       "pointer-events:none",
       "user-select:none"
     ].join(";");
-    el.appendChild(metrofeedCreateDirectionTriangleSvg(arrowPx, arrowFill, arrowStroke, 2));
+    el.textContent = "›";
     try {
       const mk = new maplibregl.Marker({ element: el, anchor: "center" })
         .setLngLat([pt.lon, pt.lat])
@@ -1371,10 +1469,128 @@ function metrofeedBusMarkerDiamPx() {
 
 /**
  * Live bus marker.
- * Test City v2: [circle + newbus] [triangle arrow] — bus stays upright; arrow shows heading.
+ * Test City v2: route-colored circle + same-color newbus + circle-hugging arrow + white dot tracer (map).
  */
 function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg, markerOpts) {
+  if (!metrofeedTestCityBusV2Enabled()) {
+    return buildMbtaBusMarkerElementLegacy(routeColor, routeNum, displayVehicleID, headingDeg);
+  }
+
   markerOpts = markerOpts && typeof markerOpts === "object" ? markerOpts : {};
+  const wrap = document.createElement("div");
+  wrap.className = "mf-bus-marker";
+  wrap.style.display = "flex";
+  wrap.style.flexDirection = "column";
+  wrap.style.alignItems = "center";
+  wrap.style.pointerEvents = "auto";
+
+  const dc = metrofeedBusMarkerDiamPx();
+  const routeFill = routeColor || "#facc15";
+  const labelFg = pickContrastingTextColor(routeFill);
+  const normH = metrofeedNormalizeHeadingDeg(headingDeg);
+  const motionMismatch = markerOpts.motionMismatch === true;
+  const R = dc / 2;
+  const pinPad = Math.round(R * 1.1);
+  const pinSize = dc + pinPad * 2;
+
+  const label = document.createElement("div");
+  label.className = "mf-bus-marker-label";
+  label.style.cssText =
+    "margin-bottom:5px;background:" +
+    routeFill +
+    ";color:" +
+    labelFg +
+    ";padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;";
+  label.innerHTML =
+    '<span style="background:rgba(0,0,0,0.18);color:' +
+    labelFg +
+    ';padding:1px 4px;border-radius:3px;font-size:9px;margin-right:4px;">' +
+    String(routeNum) +
+    "</span>" +
+    String(displayVehicleID);
+
+  const pin = document.createElement("div");
+  pin.className = "mf-bus-marker-pin";
+  pin.style.cssText = [
+    "position:relative",
+    "width:" + pinSize + "px",
+    "height:" + pinSize + "px"
+  ].join(";");
+
+  const circle = document.createElement("div");
+  circle.className = "mf-bus-marker-circle";
+  circle.style.cssText = [
+    "box-sizing:border-box",
+    "position:absolute",
+    "left:" + pinPad + "px",
+    "top:" + pinPad + "px",
+    "width:" + dc + "px",
+    "height:" + dc + "px",
+    "border-radius:50%",
+    "background:" + routeFill,
+    "border:2.5px solid #fff",
+    "box-shadow:0 2px 8px rgba(0,0,0,0.55)",
+    "display:flex",
+    "align-items:center",
+    "justify-content:center"
+  ].join(";");
+  if (motionMismatch) {
+    circle.style.outline = "2px solid #fbbf24";
+    circle.style.outlineOffset = "2px";
+  }
+
+  try {
+    const busSize = Math.max(14, Math.round(dc * 0.56));
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", String(busSize));
+    svg.setAttribute("height", String(busSize));
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.style.display = "block";
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", MF_NEWBUS_SVG_PATH);
+    path.setAttribute("fill", routeFill);
+    path.setAttribute("stroke", "#ffffff");
+    path.setAttribute("stroke-width", "3");
+    path.setAttribute("stroke-linejoin", "round");
+    path.setAttribute("paint-order", "stroke fill");
+    svg.appendChild(path);
+    circle.appendChild(svg);
+  } catch (_) {}
+
+  pin.appendChild(circle);
+
+  if (normH != null) {
+    const arrowWrap = document.createElement("div");
+    arrowWrap.className = "mf-bus-marker-arrow";
+    arrowWrap.setAttribute("aria-hidden", "true");
+    const arrowFill = motionMismatch ? "#fbbf24" : routeFill;
+    const arrowLen = R * 0.95;
+    const arrowSvg = metrofeedCreateCircleHugArrowSvg(arrowFill, R, arrowLen, 24);
+    const aw = parseFloat(arrowSvg.getAttribute("width") || String(R * 2 + arrowLen + 6));
+    const ah = parseFloat(arrowSvg.getAttribute("height") || String(dc + 6));
+    arrowWrap.style.cssText = [
+      "position:absolute",
+      "left:" + pinPad + "px",
+      "top:" + pinPad + "px",
+      "width:" + aw + "px",
+      "height:" + ah + "px",
+      "transform:rotate(" + ((normH - 90 + 3600) % 360) + "deg)",
+      "transform-origin:" + R + "px " + R + "px",
+      "filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
+      "pointer-events:none"
+    ].join(";");
+    arrowWrap.appendChild(arrowSvg);
+    pin.appendChild(arrowWrap);
+  }
+
+  wrap.appendChild(label);
+  wrap.appendChild(pin);
+  wrap._mfBusPinCenterOffsetX = 0;
+  return wrap;
+}
+
+/** Pre–Test City v2 marker (rotating side-view bus). */
+function buildMbtaBusMarkerElementLegacy(routeColor, routeNum, displayVehicleID, headingDeg) {
   const wrap = document.createElement("div");
   wrap.style.display = "flex";
   wrap.style.flexDirection = "column";
@@ -1382,103 +1598,68 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   wrap.style.pointerEvents = "auto";
   const dc = metrofeedBusMarkerDiamPx();
   const fg = pickContrastingTextColor(routeColor);
-  const badgeBg = fg;
-  const badgeFg = routeColor;
-  const normH = metrofeedNormalizeHeadingDeg(headingDeg);
-  const motionMismatch = markerOpts.motionMismatch === true;
-  const arrowPx = Math.max(16, Math.round(dc * 0.72));
-  const gap = 2;
-  const bodyW = dc + (normH != null ? arrowPx + gap : 0);
-
   const label = document.createElement("div");
-  label.style.cssText = `margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;`;
-  label.innerHTML = `<span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}`;
-
-  const body = document.createElement("div");
-  body.className = "mf-bus-marker-body";
-  body.style.cssText = [
-    "position:relative",
-    "display:flex",
-    "flex-direction:row",
-    "align-items:center",
-    "justify-content:flex-start",
-    "width:" + bodyW + "px",
-    "height:" + dc + "px"
-  ].join(";");
-
-  const circle = document.createElement("div");
-  circle.className = "mf-bus-marker-circle";
-  circle.style.cssText = [
-    "box-sizing:border-box",
-    "flex-shrink:0",
-    "width:" + dc + "px",
-    "height:" + dc + "px",
-    "border-radius:50%",
-    "background:" + routeColor,
-    "border:2.5px solid rgba(255,255,255,0.95)",
-    "box-shadow:0 2px 8px rgba(0,0,0,0.5)",
-    "display:flex",
-    "align-items:center",
-    "justify-content:center"
-  ].join(";");
-
-  if (motionMismatch) {
-    circle.style.outline = "2px solid #fbbf24";
-    circle.style.outlineOffset = "2px";
-  }
-
-  try {
-    const busSize = Math.max(14, Math.round(dc * 0.62));
+  label.style.cssText =
+    "margin-bottom:6px;background:" +
+    routeColor +
+    ";color:" +
+    fg +
+    ";padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;";
+  label.innerHTML =
+    '<span style="background:' +
+    fg +
+    ";color:" +
+    routeColor +
+    ';padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">' +
+    String(routeNum) +
+    "</span>" +
+    String(displayVehicleID);
+  const dialWrap = document.createElement("div");
+  dialWrap.style.cssText = "position:relative;width:" + dc + "px;height:" + dc + "px;flex-shrink:0;";
+  const normH = metrofeedNormalizeHeadingDeg(headingDeg);
+  if (normH != null) {
+    const planeSize = Math.max(14, Math.round(dc * 1.2));
+    const planeWrap = document.createElement("div");
+    planeWrap.style.cssText =
+      "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(" +
+      ((normH - 90 + 3600) % 360) +
+      "deg);width:" +
+      planeSize +
+      "px;height:" +
+      planeSize +
+      "px;";
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("width", String(busSize));
-    svg.setAttribute("height", String(busSize));
-    svg.setAttribute("viewBox", "0 0 100 100");
-    svg.style.display = "block";
+    svg.setAttribute("width", String(planeSize));
+    svg.setAttribute("height", String(planeSize));
+    svg.setAttribute("viewBox", "0 0 512 512");
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("fill", routeColor);
     path.setAttribute(
       "d",
-      "m91.5600586 26.25h-5.9400635v-5.9399414c0-6.555685-5.3144302-11.8701172-11.8701172-11.8701172h-47.499876c-6.5556183 0-11.8699951 5.3143778-11.8699951 11.8699951v5.9400635h-5.9400025c-3.2805729 0-5.9400024 2.6594296-5.9400024 5.9400024v9.7041588c0 1.1961899.9697061 2.1658974 2.1658988 2.1658974h1.6082048c1.1961927 0 2.1658988-.9697075 2.1658988-2.1658974v-9.7042198h5.9400024v57.204216c0 1.1961975.9697056 2.1659012 2.1658993 2.1659012h7.5381966c1.1961918 0 2.1658993-.9697037 2.1658993-2.1659012v-3.7741623h47.5v3.7741623c0 1.1961975.9697037 2.1659012 2.1659012 2.1659012h7.5381927c1.1961975 0 2.1659012-.9697037 2.1659012-2.1659012v-57.204216h5.9400024v9.7042198c0 1.1961899.9697037 2.1658974 2.1658936 2.1658974h1.6082077c1.1961899 0 2.1659012-.9697075 2.1659012-2.1658974v-9.7042198c-.0000019-3.2805386-2.6594028-5.9399414-5.9399433-5.9399414zm-56.4050331-11.8699951h29.6899452c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v.0000057c0 1.6375389-1.3274841 2.9650249-2.9650269 2.9650249h-29.6899452c-1.6375351 0-2.965023-1.327486-2.965023-2.9650249v-.0000057c-.0000001-1.637537 1.3274879-2.965023 2.965023-2.965023zm-5.1415444 57.3099365h-7.5269604c-1.2020588 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744625-2.1765213 2.1765213-2.1765213h7.5269604c1.2020588 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744625 2.1765213-2.1765213 2.1765213zm17.0165482-15.75h-23.7550068c-1.637537 0-2.965023-1.3274879-2.965023-2.965023v-23.7598954c0-1.637537 1.327486-2.965023 2.965023-2.965023h23.7550068zm30.4834518 15.75h-7.5269623c-1.2020569 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744644-2.1765213 2.1765213-2.1765213h7.5269623c1.2020569 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744644 2.1765213-2.1765213 2.1765213zm-.7885055-15.75h-23.7550049v-29.6899414h23.7550049c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v23.7598953c-.0000001 1.6375352-1.3274842 2.9650231-2.9650269 2.9650231z"
+      "m376.03 310.75a22.875 22.875 0 0 0 -22.85 22.85 22.845 22.845 0 0 0 45.69 0 22.873 22.873 0 0 0 -22.84-22.85zm0 34.14a11.29 11.29 0 1 1 11.28-11.29 11.29 11.29 0 0 1 -11.28 11.29zm-240.06-34.14a22.873 22.873 0 0 0 -22.84 22.85 22.845 22.845 0 0 0 45.69 0 22.875 22.875 0 0 0 -22.85-22.85zm0 34.14a11.29 11.29 0 1 1 11.29-11.29 11.288 11.288 0 0 1 -11.29 11.29zm372.02-171.81c-.74-8.83-8.18-25.52-31.06-25.52h-413.78c-16.7 0-25.97 7.26-29.19 10.38-8.56 8.32-16.17 34.3-22.62 77.23-4.9 32.62-7.35 63.45-7.35 66.88v18.29c0 13.54 11.19 27.93 31.93 27.93h72.93a31.027 31.027 0 0 1 -2.99-8 30.568 30.568 0 0 1 -.73-6.67 30.845 30.845 0 1 1 61.69 0 30.568 30.568 0 0 1 -.73 6.67 31.027 31.027 0 0 1 -2.99 8h185.8a31.027 31.027 0 0 1 -2.99-8 30.568 30.568 0 0 1 -.73-6.67 30.845 30.845 0 1 1 61.69 0 30.568 30.568 0 0 1 -.73 6.67 31.027 31.027 0 0 1 -2.99 8h80.93c17.66 0 23.93-12.89 23.93-23.93v-150.93c0-.11-.01-.22-.02-.33zm-473.31 128.93c-.83 8.19-5.43 14.95-22.69 16.31v-16.27c0-.55.03-1.43.1-2.6a129.791 129.791 0 0 1 16.53-3.37 5.417 5.417 0 0 1 6.06 5.93zm-1.35-55.98c-2.75 23.58-3.7 36.93-20.22 40.7 2.53-27.17 9.25-82.03 18.99-109.15 13.98 3.85 5.7 30.2 1.23 68.45zm108.66-19.96c0 50.56-49.42 64.86-70.55 68.67a7.991 7.991 0 0 1 -9.39-7.89v-103.12a8 8 0 0 1 8-8h63.94a8 8 0 0 1 8 8zm98.77 34.51h-66.71a8.006 8.006 0 0 1 -8.01-8v-67a8.006 8.006 0 0 1 8.01-8h66.71zm78.71 0h-70.71v-83h70.71zm78.71 0h-70.71v-83h70.71zm82.71-8a8 8 0 0 1 -8 8h-66.71v-83h66.71a8 8 0 0 1 8 8zm19.12 62.35h-6.75a11.169 11.169 0 0 1 -11.17-11.17v-6.6a21.906 21.906 0 0 1 17.92-21.54z"
     );
-    path.setAttribute("fill", fg);
     svg.appendChild(path);
-    circle.appendChild(svg);
-  } catch (_) {}
-
-  body.appendChild(circle);
-
-  if (normH != null) {
-    const arrowWrap = document.createElement("div");
-    arrowWrap.className = "mf-bus-marker-arrow";
-    arrowWrap.setAttribute("aria-hidden", "true");
-    const rot = (normH - 90 + 3600) % 360;
-    const arrowFill = motionMismatch ? "#fbbf24" : fg;
-    const arrowStroke = motionMismatch ? "rgba(0,0,0,0.9)" : fg === "#ffffff" ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.95)";
-    arrowWrap.style.cssText = [
-      "flex-shrink:0",
-      "width:" + arrowPx + "px",
-      "height:" + arrowPx + "px",
-      "margin-left:" + gap + "px",
-      "display:flex",
-      "align-items:center",
-      "justify-content:center",
-      "transform:rotate(" + rot + "deg)",
-      "transform-origin:50% 50%",
-      "filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
-      "pointer-events:none"
-    ].join(";");
-    arrowWrap.appendChild(metrofeedCreateDirectionTriangleSvg(arrowPx, arrowFill, arrowStroke, 2));
-    body.appendChild(arrowWrap);
+    planeWrap.appendChild(svg);
+    dialWrap.appendChild(planeWrap);
+  } else {
+    const dot = document.createElement("div");
+    dot.style.cssText =
+      "width:" + dc + "px;height:" + dc + "px;border-radius:50%;background:" + routeColor + ";border:2px solid #fff;";
+    dialWrap.appendChild(dot);
   }
-
   wrap.appendChild(label);
-  wrap.appendChild(body);
+  wrap.appendChild(dialWrap);
   return wrap;
 }
 
-function mbtaBusMarkerMapOptions() {
+function mbtaBusMarkerMapOptions(markerElement) {
   const dc = metrofeedBusMarkerDiamPx();
   if (metrofeedTestCityBusV2Enabled()) {
-    return { anchor: "center", offset: [Math.round(dc * 0.12), 0] };
+    const pinPad = Math.round((dc / 2) * 1.1);
+    return {
+      anchor: "center",
+      offset: [0, -Math.round(14 + pinPad * 0.15)]
+    };
   }
   return { anchor: "bottom", offset: [0, -dc / 2] };
 }
@@ -2035,7 +2216,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       );
       overlayElements.layers.push(routeLayerId);
 
-      metrofeedInstallRouteDirectionArrows(
+      metrofeedInstallRouteDirectionChevrons(
         map,
         shape,
         routeColor,
@@ -3100,8 +3281,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (!Number.isFinite(Number(lon)) || !Number.isFinite(Number(lat))) return;
         const key = String(markerKey || "");
         if (!key) return;
-        const state = vehicleTrailState[key] || (vehicleTrailState[key] = { coords: [] });
-        const now = Date.now();
+        const state = vehicleTrailState[key] || (vehicleTrailState[key] = { coords: [], dotMarkers: [] });
 
         const coords = Array.isArray(state.coords) ? state.coords : (state.coords = []);
         const last = coords.length ? coords[coords.length - 1] : null;
@@ -3110,68 +3290,80 @@ function attachRouteToMap(map, routeId, directionId, options) {
           : (() => {
               try {
                 const d = metrofeedHaversineM(Number(last[1]), Number(last[0]), Number(lat), Number(lon));
-                return Number.isFinite(d) ? d >= 7 : true;
+                return Number.isFinite(d) ? d >= 6 : true;
               } catch (_) {
                 return true;
               }
             })();
         if (movedEnough) {
           coords.push([Number(lon), Number(lat)]);
-          while (coords.length > 6) coords.shift();
         }
 
-        // Need at least 2 points to draw.
-        if (coords.length < 2) return;
+        const maxLenM =
+          window.CITY_CONFIG && window.CITY_CONFIG.busTracerLengthM != null
+            ? Number(window.CITY_CONFIG.busTracerLengthM)
+            : 100;
+        const dotSpacingM =
+          window.CITY_CONFIG && window.CITY_CONFIG.busTracerDotSpacingM != null
+            ? Number(window.CITY_CONFIG.busTracerDotSpacingM)
+            : 12;
+        const trimmed = metrofeedTrimPolylineTailMeters(coords, maxLenM);
+        const dots = metrofeedSamplePolylineDots(trimmed, dotSpacingM);
+        if (dots.length < 1) return;
 
-        const mk = mfSanitizeKeyForId(key);
-        const srcId = state.sourceId || (`mf-bus-trace-src-${mapLayerKey}-${mk}`);
-        const layerId = state.layerId || (`mf-bus-trace-layer-${mapLayerKey}-${mk}`);
-        state.sourceId = srcId;
-        state.layerId = layerId;
+        if (Array.isArray(state.dotMarkers)) {
+          state.dotMarkers.forEach(function (mk) {
+            try {
+              if (mk && typeof mk.remove === "function") mk.remove();
+            } catch (_) {}
+          });
+        }
+        state.dotMarkers = [];
 
-        const data = {
-          type: "FeatureCollection",
-          features: [
-            {
-              type: "Feature",
-              properties: { updated: now },
-              geometry: { type: "LineString", coordinates: coords }
-            }
-          ]
-        };
-
-        try {
-          if (!map.getSource(srcId)) {
-            map.addSource(srcId, { type: "geojson", data });
-            overlayElements.sources.push(srcId);
-          } else {
-            map.getSource(srcId).setData(data);
-          }
-
-          if (!map.getLayer(layerId)) {
-            map.addLayer({
-              id: layerId,
-              type: "line",
-              source: srcId,
-              layout: {
-                "line-cap": "round",
-                "line-join": "round"
-              },
-              paint: {
-                "line-color": routeColor,
-                "line-width": 2,
-                "line-opacity": 0.6,
-                "line-dasharray": [0.5, 1.6]
-              }
-            });
-            overlayElements.layers.push(layerId);
-          }
-        } catch (_) {}
+        const maxDots = Math.max(
+          4,
+          window.CITY_CONFIG && window.CITY_CONFIG.busTracerMaxDots != null
+            ? Number(window.CITY_CONFIG.busTracerMaxDots)
+            : 10
+        );
+        const slice = dots.slice(0, maxDots);
+        const n = slice.length;
+        slice.forEach(function (pt, idx) {
+          const t = n > 1 ? idx / (n - 1) : 0;
+          const sizePx = Math.max(3, Math.round(9 - t * 6));
+          const el = document.createElement("div");
+          el.className = "mf-bus-trace-dot";
+          el.setAttribute("aria-hidden", "true");
+          el.style.cssText = [
+            "width:" + sizePx + "px",
+            "height:" + sizePx + "px",
+            "border-radius:50%",
+            "background:#ffffff",
+            "border:1px solid rgba(0,0,0,0.35)",
+            "box-shadow:0 0 2px rgba(0,0,0,0.45)",
+            "opacity:" + (0.45 + (1 - t) * 0.55).toFixed(2),
+            "pointer-events:none"
+          ].join(";");
+          try {
+            const mk = new maplibregl.Marker({ element: el, anchor: "center" })
+              .setLngLat([pt.lon, pt.lat])
+              .addTo(map);
+            state.dotMarkers.push(mk);
+            overlayElements.markers.push(mk);
+          } catch (_) {}
+        });
       }
 
       function removeVehicleTracer(markerKey) {
         const st = vehicleTrailState[String(markerKey || "")];
         if (!st) return;
+        if (Array.isArray(st.dotMarkers)) {
+          st.dotMarkers.forEach(function (mk) {
+            try {
+              if (mk && typeof mk.remove === "function") mk.remove();
+            } catch (_) {}
+          });
+        }
         try {
           if (st.layerId && map.getLayer(st.layerId)) map.removeLayer(st.layerId);
         } catch (_) {}
@@ -3629,7 +3821,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
             const busMarker = new maplibregl.Marker({
               element: busElement,
-              ...mbtaBusMarkerMapOptions()
+              ...mbtaBusMarkerMapOptions(busElement)
             });
             busMarker.setLngLat([lonN, latN]);
             

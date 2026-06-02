@@ -256,9 +256,13 @@ const CITIES = {
     busMarkerSnapMaxMeters: 120,
     busMarkerSnapLookaheadSegs: 4,
     busMarkerSnapHysteresisRatio: 0.28,
-    busRouteChevronSpacingM: 420,
-    /** Spacing of ▸ symbols along the route line (screen pixels, MapLibre symbol-spacing). */
-    busRouteArrowSpacingPx: 150,
+    busRouteChevronSpacingM: 280,
+    /** Route › chevron size (px). */
+    busRouteChevronSizePx: 26,
+    /** White dot tracer behind bus (meters). */
+    busTracerLengthM: 100,
+    busTracerDotSpacingM: 12,
+    busTracerMaxDots: 10,
     busUseMotionDirection: true,
     busSoftOppositeDim: true,
 

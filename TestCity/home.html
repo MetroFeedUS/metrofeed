@@ -3259,7 +3259,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260528busCircleArrow"></script>
+<script src="routeOverlay.js?v=20260528busPinDotsChevrons"></script>
 <script src="trafficIncidents.js"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js?v=20260506otpPrefs"></script>
@@ -7779,7 +7779,10 @@
         <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
       </div>`;
     }
-    const mapOpts = typeof window.mbtaBusMarkerMapOptions === 'function' ? window.mbtaBusMarkerMapOptions() : {};
+    const mapOpts =
+      typeof window.mbtaBusMarkerMapOptions === 'function'
+        ? window.mbtaBusMarkerMapOptions(markerElement)
+        : {};
     return new maplibregl.Marker({
       element: markerElement,
       ...mapOpts
@@ -8027,6 +8030,24 @@
       }
 
       let allBuses = [];
+
+      // When a route overlay is open, it owns bus markers (same vehicles). Skip global "all buses" pass.
+      try {
+        const overlayCount =
+          window.activeRouteOverlays && typeof window.activeRouteOverlays === "object"
+            ? Object.keys(window.activeRouteOverlays).length
+            : 0;
+        if (overlayCount > 0) {
+          Object.values(busMarkers).forEach(function (m) {
+            if (m && typeof m.remove === "function") m.remove();
+          });
+          busMarkers = {};
+          if (typeof window.metrofeedSweepOrphanBusMarkers === "function") {
+            window.metrofeedSweepOrphanBusMarkers(map);
+          }
+          return;
+        }
+      } catch (_) {}
 
       // Skip the entire global pass while OTP route overlays are authoritative (avoids clearing overlay
       // markers mid-attach and avoids redundant vehicle fetches during multi-leg overlay setup).
