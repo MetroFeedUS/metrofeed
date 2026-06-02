@@ -811,7 +811,55 @@ function metrofeedCreateCircleHugArrowSvg(routeColor, circleR, arrowLen, spreadD
   path.setAttribute("stroke-width", "2");
   path.setAttribute("stroke-linejoin", "round");
   svg.appendChild(path);
-  return svg;
+  return {
+    svg: svg,
+    width: Math.ceil(w),
+    height: Math.ceil(h),
+    centerX: R + pad,
+    centerY: R + pad
+  };
+}
+
+/** One history vertex per vehicle poll (so the 2nd refresh can draw a tail). */
+function metrofeedAppendVehicleTrailOnPoll(coords, lon, lat, pollSeq, state, minStepM) {
+  const lo = Number(lon);
+  const la = Number(lat);
+  if (!Number.isFinite(lo) || !Number.isFinite(la)) return;
+  const pt = [lo, la];
+  const minStep = Math.max(0.25, Number(minStepM) || 2);
+  const pollKey = pollSeq != null && pollSeq !== "" ? String(pollSeq) : "";
+  if (pollKey && state && state.lastTrailPoll === pollKey) {
+    if (coords.length) coords[coords.length - 1] = pt;
+    return;
+  }
+  if (state) state.lastTrailPoll = pollKey;
+  if (!coords.length) {
+    coords.push(pt);
+    return;
+  }
+  const last = coords[coords.length - 1];
+  const d = metrofeedHaversineM(Number(last[1]), Number(last[0]), la, lo);
+  if (!Number.isFinite(d) || d < 0.25) {
+    coords[coords.length - 1] = pt;
+    return;
+  }
+  if (coords.length === 1 || d >= minStep) {
+    coords.push(pt);
+  } else {
+    coords[coords.length - 1] = pt;
+  }
+}
+
+function metrofeedEnsureBusTracerMarkerCss() {
+  if (typeof document === "undefined" || document.getElementById("mf-bus-trace-marker-css")) return;
+  const s = document.createElement("style");
+  s.id = "mf-bus-trace-marker-css";
+  s.textContent =
+    ".maplibregl-marker.mf-bus-trace-marker{z-index:4!important;pointer-events:none!important}" +
+    ".maplibregl-marker.mf-bus-marker-wrap{z-index:8!important}";
+  try {
+    document.head.appendChild(s);
+  } catch (_) {}
 }
 
 /** Trim polyline coords [[lon,lat]...] to at most maxM meters (keeps newest end). */
@@ -969,6 +1017,21 @@ function metrofeedBuildBusTracerDots(coords, headLon, headLat, opts) {
   if (!dots.length) {
     const all = metrofeedSamplePolylineDots(trail, spacingM);
     dots = all.length > 1 ? all.slice(1) : all;
+  }
+  if (!dots.length && trail.length >= 2) {
+    const a = trail[trail.length - 2];
+    const b = trail[trail.length - 1];
+    const lo0 = Number(a[0]);
+    const la0 = Number(a[1]);
+    const lo1 = Number(b[0]);
+    const la1 = Number(b[1]);
+    if ([lo0, la0, lo1, la1].every(Number.isFinite)) {
+      const t = 0.32;
+      dots.push({
+        lon: lo1 + (lo0 - lo1) * t,
+        lat: la1 + (la0 - la1) * t
+      });
+    }
   }
   return dots;
 }
@@ -2158,13 +2221,18 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
     "height:" + pinSize + "px"
   ].join(";");
 
+  const circleLeft = pinPad + outward;
+  const circleTop = pinPad + outward;
+  const circleCX = circleLeft + dc / 2;
+  const circleCY = circleTop + dc / 2;
+
   const circle = document.createElement("div");
   circle.className = "mf-bus-marker-circle";
   circle.style.cssText = [
     "box-sizing:border-box",
     "position:absolute",
-    "left:" + pinPad + "px",
-    "top:" + pinPad + "px",
+    "left:" + circleLeft + "px",
+    "top:" + circleTop + "px",
     "width:" + dc + "px",
     "height:" + dc + "px",
     "border-radius:50%",
@@ -2173,7 +2241,8 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
     "box-shadow:0 2px 8px rgba(0,0,0,0.55)",
     "display:flex",
     "align-items:center",
-    "justify-content:center"
+    "justify-content:center",
+    "z-index:3"
   ].join(";");
   if (motionMismatch) {
     circle.style.outline = "2px solid #fbbf24";
@@ -2185,34 +2254,29 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
     circle.appendChild(metrofeedCreateNewbusIconEl(busSize));
   } catch (_) {}
 
-  pin.appendChild(circle);
-
   if (normH != null && markerOpts.hideHeadingArrow !== true) {
-    const arrowWrap = document.createElement("div");
-    arrowWrap.className = "mf-bus-marker-arrow";
-    arrowWrap.setAttribute("aria-hidden", "true");
     const arrowFill = motionMismatch ? "#fbbf24" : routeFill;
-    const arrowDiam = Math.max(5, Math.round(dc * metrofeedBusHeadingArrowScale()));
-    const tri = metrofeedCreateBusSideArrowSvg(arrowFill, arrowDiam);
-    const aw = tri.width;
-    const ah = tri.height;
-    const triOffsetX = R - 1;
-    const rotOriginX = R - triOffsetX;
-    const rotOriginY = ah / 2;
-    arrowWrap.style.cssText = [
+    const hug = metrofeedCreateCircleHugArrowSvg(arrowFill, compassR, arrowLen, 24);
+    const compassWrap = document.createElement("div");
+    compassWrap.className = "mf-bus-marker-arrow mf-bus-marker-compass";
+    compassWrap.setAttribute("aria-hidden", "true");
+    compassWrap.style.cssText = [
       "position:absolute",
-      "left:" + (pinPad + triOffsetX) + "px",
-      "top:" + (pinPad + (dc - ah) / 2) + "px",
-      "width:" + aw + "px",
-      "height:" + ah + "px",
+      "left:" + (circleCX - hug.centerX) + "px",
+      "top:" + (circleCY - hug.centerY) + "px",
+      "width:" + hug.width + "px",
+      "height:" + hug.height + "px",
       "transform:rotate(" + ((normH - 90 + 3600) % 360) + "deg)",
-      "transform-origin:" + rotOriginX + "px " + rotOriginY + "px",
-      "filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6))",
-      "pointer-events:none"
+      "transform-origin:" + hug.centerX + "px " + hug.centerY + "px",
+      "filter:drop-shadow(0 2px 5px rgba(0,0,0,0.65))",
+      "pointer-events:none",
+      "z-index:1"
     ].join(";");
-    arrowWrap.appendChild(tri.svg);
-    pin.appendChild(arrowWrap);
+    compassWrap.appendChild(hug.svg);
+    pin.appendChild(compassWrap);
   }
+
+  pin.appendChild(circle);
 
   wrap.appendChild(label);
   wrap.appendChild(pin);
@@ -2286,10 +2350,12 @@ function buildMbtaBusMarkerElementLegacy(routeColor, routeNum, displayVehicleID,
 function mbtaBusMarkerMapOptions(markerElement) {
   const dc = metrofeedBusMarkerDiamPx();
   if (metrofeedTestCityBusV2Enabled()) {
-    const pinPad = Math.round((dc / 2) * 1.1);
+    const R = dc / 2;
+    const outward = Math.ceil(Math.max(10, Math.round(R * 1.05)) + 6);
+    const pinPad = Math.round(R * 0.45);
     return {
       anchor: "center",
-      offset: [0, -Math.round(14 + pinPad * 0.15)]
+      offset: [0, -Math.round(12 + pinPad + outward * 0.12)]
     };
   }
   return { anchor: "bottom", offset: [0, -dc / 2] };
@@ -3936,8 +4002,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
 
       /** @returns {boolean} true when motion-history tail dots are on the map */
-      function upsertVehicleTracer(markerKey, routeColor, lon, lat, headingDeg) {
+      function upsertVehicleTracer(markerKey, routeColor, lon, lat, headingDeg, pollSeq) {
         if (!metrofeedTestCityBusV2Enabled()) return false;
+        metrofeedEnsureBusTracerMarkerCss();
         const headLo = Number(lon);
         const headLa = Number(lat);
         if (!Number.isFinite(headLo) || !Number.isFinite(headLa)) return false;
@@ -3971,9 +4038,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
           );
           if (Number.isFinite(dJump) && dJump > jumpResetM) {
             coords.length = 0;
+            state.lastTrailPoll = null;
           }
         }
-        metrofeedSyncVehicleTrailCoords(coords, headLo, headLa, trailMinStep);
+        metrofeedAppendVehicleTrailOnPoll(coords, headLo, headLa, pollSeq, state, trailMinStep);
 
         const maxLenM =
           window.CITY_CONFIG && window.CITY_CONFIG.busTracerLengthM != null
@@ -3986,7 +4054,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const headGapM =
           window.CITY_CONFIG && window.CITY_CONFIG.busTracerHeadGapM != null
             ? Number(window.CITY_CONFIG.busTracerHeadGapM)
-            : null;
+            : Math.max(4, dotSpacingM * 0.28);
         state.coords = metrofeedTrimPolylineTailMeters(coords, maxLenM);
         while (state.coords.length > Math.max(4, maxTrailPts)) {
           state.coords.shift();
@@ -4011,7 +4079,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const n = slice.length;
         slice.forEach(function (pt, idx) {
           const t = n > 1 ? 1 - idx / (n - 1) : 1;
-          const sizePx = Math.max(4, Math.round(4 + t * 10));
+          const sizePx = Math.max(7, Math.round(6 + t * 12));
           const el = document.createElement("div");
           el.className = "mf-bus-trace-dot";
           el.setAttribute("aria-hidden", "true");
@@ -4020,13 +4088,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
             "height:" + sizePx + "px",
             "border-radius:50%",
             "background:#ffffff",
-            "border:2px solid rgba(0,0,0,0.65)",
-            "box-shadow:0 1px 4px rgba(0,0,0,0.55)",
-            "opacity:" + (0.55 + t * 0.45).toFixed(2),
+            "border:2.5px solid rgba(0,0,0,0.8)",
+            "box-shadow:0 1px 6px rgba(0,0,0,0.7)",
+            "opacity:" + (0.65 + t * 0.35).toFixed(2),
             "pointer-events:none"
           ].join(";");
           try {
-            const mk = new maplibregl.Marker({ element: el, anchor: "center" })
+            const mk = new maplibregl.Marker({
+              element: el,
+              anchor: "center",
+              className: "mf-bus-trace-marker"
+            })
               .setLngLat([pt.lon, pt.lat])
               .addTo(map);
             state.dotMarkers.push(mk);
@@ -4481,7 +4553,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 : rawHeading != null
                   ? rawHeading
                   : metrofeedNormalizeHeadingDeg(bus.bearing);
-            const hasTracerTail = upsertVehicleTracer(markerKey, routeColor, lonN, latN, trailHeading);
+            const hasTracerTail = upsertVehicleTracer(
+              markerKey,
+              routeColor,
+              lonN,
+              latN,
+              trailHeading,
+              seq
+            );
             const headingForMarker =
               hasTracerTail ? displayHeading : trailHeading != null ? trailHeading : displayHeading;
 
@@ -4515,6 +4594,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
             const busMarker = new maplibregl.Marker({
               element: busElement,
+              className: "mf-bus-marker-wrap",
               ...mbtaBusMarkerMapOptions(busElement)
             });
             busMarker.setLngLat([lonN, latN]);
