@@ -68,38 +68,6 @@ function pickContrastingTextColor(hex) {
   return L > 0.55 ? "#0d0d0d" : "#ffffff";
 }
 
-/** Parse #rgb / #rrggbb to [r,g,b] or null. */
-function metrofeedParseHexRgb(hex) {
-  if (!hex) return null;
-  let h = String(hex).trim();
-  if (h.startsWith("#")) h = h.slice(1);
-  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-  if (h.length !== 6) return null;
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  if ([r, g, b].some((x) => Number.isNaN(x))) return null;
-  return [r, g, b];
-}
-
-/** Darken a hex color (amount 0–1 toward black) while keeping the same hue. */
-function metrofeedDarkenHex(hex, amount) {
-  const rgb = metrofeedParseHexRgb(hex);
-  if (!rgb) return hex || "#000000";
-  const t = Math.max(0, Math.min(1, Number(amount) || 0));
-  const out = rgb.map(function (c) {
-    return Math.round(c * (1 - t));
-  });
-  return (
-    "#" +
-    out
-      .map(function (c) {
-        return c.toString(16).padStart(2, "0");
-      })
-      .join("")
-  );
-}
-
 function metrofeedAngleDeltaDeg(a, b) {
   // Smallest signed diff between headings a and b (degrees)
   let d = ((Number(a) - Number(b)) % 360 + 540) % 360 - 180;
@@ -344,29 +312,6 @@ function metrofeedNearestSegmentInfo(routeShape, lat, lon) {
 // TV director + traffic proximity use this from window (obs-director.js).
 window.metrofeedNearestSegmentInfo = metrofeedNearestSegmentInfo;
 
-/** Compass wedge heading before a motion tail exists (route tangent preferred over GPS). */
-function metrofeedWedgeHeadingDeg(shape, lat, lon, opts) {
-  opts = opts && typeof opts === "object" ? opts : {};
-  if (opts.stoppedNow) {
-    if (opts.displayHeading != null) return metrofeedNormalizeHeadingDeg(opts.displayHeading);
-    if (opts.smoothedHeading != null) return metrofeedNormalizeHeadingDeg(opts.smoothedHeading);
-    return null;
-  }
-  const useTangent =
-    !window.CITY_CONFIG || window.CITY_CONFIG.busWedgeUseRouteTangent !== false;
-  if (useTangent && Array.isArray(shape) && shape.length >= 2) {
-    const seg = metrofeedNearestSegmentInfo(shape, lat, lon);
-    if (seg && Number.isFinite(seg.bearingFwd)) {
-      let b = seg.bearingFwd;
-      if (Number(opts.motionDir) === 1) b = (b + 180) % 360;
-      return metrofeedNormalizeHeadingDeg(b);
-    }
-  }
-  if (opts.displayHeading != null) return metrofeedNormalizeHeadingDeg(opts.displayHeading);
-  if (opts.rawHeading != null) return metrofeedNormalizeHeadingDeg(opts.rawHeading);
-  return null;
-}
-
 /**
  * Remove bus markers that outlived their overlay (stale async GTFS fetch, etc.).
  * Prefer Marker.remove() when the element was tagged at creation.
@@ -441,1017 +386,6 @@ function metrofeedNearestSegmentCandidate(routeShape, lat, lon) {
     if (!best || info.distanceM < best.distanceM) best = info;
   }
   return best;
-}
-
-/** Test City sandbox: enhanced bus snap / motion / chevrons (not enabled on production Cincinnati). */
-function metrofeedTestCityBusV2Enabled() {
-  try {
-    if (typeof getCityIdFromPath !== "function" || getCityIdFromPath() !== "testcity") return false;
-    if (window.CITY_CONFIG && window.CITY_CONFIG.busTrackerV2 === false) return false;
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-
-/** Min map zoom before the bus heading wedge is shown (near max zoom = street / single-bus view). */
-function metrofeedBusHeadingArrowMinZoom(map) {
-  const cfg = window.CITY_CONFIG && window.CITY_CONFIG.busHeadingArrowMinZoom;
-  if (Number.isFinite(Number(cfg))) return Number(cfg);
-  try {
-    if (map && typeof map.getMaxZoom === "function") {
-      const mz = Number(map.getMaxZoom());
-      if (Number.isFinite(mz)) return Math.max(12, mz - 1);
-    }
-  } catch (_) {}
-  return 17;
-}
-
-function metrofeedBusHeadingArrowScale() {
-  const cfg = window.CITY_CONFIG && window.CITY_CONFIG.busHeadingArrowScale;
-  if (Number.isFinite(Number(cfg))) return Math.max(0.1, Math.min(1, Number(cfg)));
-  return 0.25;
-}
-
-function metrofeedUpdateBusHeadingArrowVisibility(map) {
-  if (!metrofeedTestCityBusV2Enabled() || !map) return;
-  let showAtZoom = true;
-  try {
-    const z = typeof map.getZoom === "function" ? Number(map.getZoom()) : NaN;
-    showAtZoom = Number.isFinite(z) && z >= metrofeedBusHeadingArrowMinZoom(map);
-  } catch (_) {}
-  let root = null;
-  try {
-    root = typeof map.getContainer === "function" ? map.getContainer() : null;
-  } catch (_) {}
-  if (!root) return;
-  root.querySelectorAll(".mf-bus-marker").forEach(function (wrap) {
-    const arrow = wrap.querySelector(".mf-bus-marker-arrow");
-    if (!arrow) return;
-    if (wrap.getAttribute("data-mf-has-trail") === "1") {
-      arrow.style.display = "none";
-      return;
-    }
-    arrow.style.display = showAtZoom ? "" : "none";
-  });
-}
-
-function metrofeedEnsureBusArrowZoomListener(map) {
-  if (!map || !metrofeedTestCityBusV2Enabled() || map._mfBusArrowZoomBound) return;
-  map._mfBusArrowZoomBound = true;
-  const onZoom = function () {
-    metrofeedUpdateBusHeadingArrowVisibility(map);
-  };
-  try {
-    map.on("zoom", onZoom);
-    map.on("zoomend", onZoom);
-    map.on("moveend", onZoom);
-  } catch (_) {}
-  onZoom();
-}
-
-function metrofeedShapeAlongMeters(shape, segIdx, t) {
-  if (!Array.isArray(shape) || shape.length < 2) return null;
-  const i = Number(segIdx);
-  const frac = Number(t);
-  if (!Number.isFinite(i) || i < 0 || i >= shape.length - 1) return null;
-  let m = 0;
-  for (let s = 0; s < i; s++) {
-    const p0 = shape[s];
-    const p1 = shape[s + 1];
-    const y0 = Number(p0 && p0[0]);
-    const x0 = Number(p0 && p0[1]);
-    const y1 = Number(p1 && p1[0]);
-    const x1 = Number(p1 && p1[1]);
-    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
-    m += metrofeedHaversineM(y0, x0, y1, x1);
-  }
-  const p0 = shape[i];
-  const p1 = shape[i + 1];
-  const y0 = Number(p0 && p0[0]);
-  const x0 = Number(p0 && p0[1]);
-  const y1 = Number(p1 && p1[0]);
-  const x1 = Number(p1 && p1[1]);
-  if (![y0, x0, y1, x1].every(Number.isFinite)) return m;
-  const segLen = metrofeedHaversineM(y0, x0, y1, x1);
-  const tf = Number.isFinite(frac) ? Math.max(0, Math.min(1, frac)) : 0;
-  return m + segLen * tf;
-}
-
-/**
- * Snap GPS to the route polyline (segment lock + hysteresis). Returns snapped lat/lon and along-route meters.
- */
-function metrofeedSnapPositionParallelLocked({
-  shapes,
-  lat,
-  lon,
-  maxSnapMeters,
-  hysteresisRatio,
-  state
-}) {
-  const la = Number(lat);
-  const lo = Number(lon);
-  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
-  const maxM = Math.max(10, Number(maxSnapMeters) || 60);
-  const hyst = Math.max(0, Number(hysteresisRatio) || 0.25);
-  if (!Array.isArray(shapes) || shapes.length === 0) return null;
-
-  let best = null;
-  for (let si = 0; si < shapes.length; si++) {
-    const cand = metrofeedNearestSegmentCandidate(shapes[si], la, lo);
-    if (!cand) continue;
-    const withIdx = { ...cand, shapeIdx: si };
-    if (!best || withIdx.distanceM < best.distanceM) best = withIdx;
-  }
-  if (!best || !(best.distanceM <= maxM)) {
-    if (state) state.lockedSeg = null;
-    return null;
-  }
-
-  let chosen = best;
-  try {
-    const locked = state && state.lockedSeg ? state.lockedSeg : null;
-    if (
-      locked &&
-      Number.isFinite(locked.shapeIdx) &&
-      Number.isFinite(locked.segIdx) &&
-      shapes[locked.shapeIdx]
-    ) {
-      const lockedInfo = metrofeedSegmentProjectionInfo(
-        shapes[locked.shapeIdx],
-        locked.segIdx,
-        la,
-        lo
-      );
-      if (lockedInfo && lockedInfo.distanceM <= maxM) {
-        if (lockedInfo.distanceM <= best.distanceM * (1 + hyst)) {
-          chosen = { ...lockedInfo, shapeIdx: locked.shapeIdx };
-        }
-      }
-    }
-  } catch (_) {}
-
-  if (state) state.lockedSeg = { shapeIdx: chosen.shapeIdx, segIdx: chosen.segIdx };
-
-  const shape = shapes[chosen.shapeIdx];
-  const alongM = metrofeedShapeAlongMeters(shape, chosen.segIdx, chosen.t);
-  return {
-    lat: chosen.py,
-    lon: chosen.px,
-    distanceM: chosen.distanceM,
-    shapeIdx: chosen.shapeIdx,
-    segIdx: chosen.segIdx,
-    t: chosen.t,
-    alongM
-  };
-}
-
-/** Infer travel direction (0 = with shape order, 1 = against) from along-route motion. */
-function metrofeedUpdateMotionDirection(hState, snap) {
-  if (!hState || !snap || !Number.isFinite(snap.alongM)) return hState.motionDir != null ? hState.motionDir : null;
-  const now = snap.alongM;
-  const prev = Number.isFinite(hState.alongM) ? hState.alongM : null;
-  const tPrev = Number.isFinite(hState.lastMotionTime) ? hState.lastMotionTime : null;
-  hState.alongM = now;
-  hState.lastMotionTime = Date.now();
-  if (prev == null || tPrev == null) return hState.motionDir != null ? hState.motionDir : null;
-  if (Date.now() - tPrev > 45000) {
-    hState.motionDir = null;
-    return null;
-  }
-  const delta = now - prev;
-  if (Math.abs(delta) < 1.5) return hState.motionDir != null ? hState.motionDir : null;
-  hState.motionDir = delta > 0 ? 0 : 1;
-  return hState.motionDir;
-}
-
-/** Sample polyline at fixed spacing (m) for route direction arrows. shape coords [lat, lon]. */
-function metrofeedSamplePolylineBySpacing(shape, spacingM, reverse) {
-  if (!Array.isArray(shape) || shape.length < 2) return [];
-  const step = Math.max(80, Number(spacingM) || 350);
-  const pts = [];
-  let acc = 0;
-  let nextAt = step * 0.5;
-  const segs = [];
-  for (let i = 0; i < shape.length - 1; i++) {
-    const p0 = shape[i];
-    const p1 = shape[i + 1];
-    const y0 = Number(p0 && p0[0]);
-    const x0 = Number(p0 && p0[1]);
-    const y1 = Number(p1 && p1[0]);
-    const x1 = Number(p1 && p1[1]);
-    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
-    segs.push({ y0, x0, y1, x1, len: metrofeedHaversineM(y0, x0, y1, x1) });
-  }
-  if (!segs.length) return [];
-  const total = segs.reduce((s, g) => s + g.len, 0);
-  if (total < step) {
-    const mid = segs[Math.floor(segs.length / 2)];
-    const br = reverse
-      ? metrofeedBearingDeg(mid.y1, mid.x1, mid.y0, mid.x0)
-      : metrofeedBearingDeg(mid.y0, mid.x0, mid.y1, mid.x1);
-    return [{ lat: (mid.y0 + mid.y1) / 2, lon: (mid.x0 + mid.x1) / 2, bearing: br }];
-  }
-  for (let si = 0; si < segs.length; si++) {
-    const g = segs[si];
-    const segStart = acc;
-    acc += g.len;
-    while (nextAt <= acc) {
-      const t = g.len > 0 ? (nextAt - segStart) / g.len : 0;
-      const tf = Math.max(0, Math.min(1, t));
-      const lat = g.y0 + (g.y1 - g.y0) * tf;
-      const lon = g.x0 + (g.x1 - g.x0) * tf;
-      const br = reverse
-        ? metrofeedBearingDeg(g.y1, g.x1, g.y0, g.x0)
-        : metrofeedBearingDeg(g.y0, g.x0, g.y1, g.x1);
-      pts.push({ lat, lon, bearing: br });
-      nextAt += step;
-    }
-  }
-  return pts;
-}
-
-/** Bus glyph asset (Test City v2 marker). */
-const MF_NEWBUS_SVG_FILE = "newbus.svg";
-/** Path geometry from newbus.svg — inline fallback if the file fails to load. */
-const MF_NEWBUS_SVG_PATH =
-  "m91.5600586 26.25h-5.9400635v-5.9399414c0-6.555685-5.3144302-11.8701172-11.8701172-11.8701172h-47.499876c-6.5556183 0-11.8699951 5.3143778-11.8699951 11.8699951v5.9400635h-5.9400025c-3.2805729 0-5.9400024 2.6594296-5.9400024 5.9400024v9.7041588c0 1.1961899.9697061 2.1658974 2.1658988 2.1658974h1.6082048c1.1961927 0 2.1658988-.9697075 2.1658988-2.1658974v-9.7042198h5.9400024v57.204216c0 1.1961975.9697056 2.1659012 2.1658993 2.1659012h7.5381966c1.1961918 0 2.1658993-.9697037 2.1658993-2.1659012v-3.7741623h47.5v3.7741623c0 1.1961975.9697037 2.1659012 2.1659012 2.1659012h7.5381927c1.1961975 0 2.1659012-.9697037 2.1659012-2.1659012v-57.204216h5.9400024v9.7042198c0 1.1961899.9697037 2.1658974 2.1658936 2.1658974h1.6082077c1.1961899 0 2.1659012-.9697075 2.1659012-2.1658974v-9.7042198c-.0000019-3.2805386-2.6594028-5.9399414-5.9399433-5.9399414zm-56.4050331-11.8699951h29.6899452c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v.0000057c0 1.6375389-1.3274841 2.9650249-2.9650269 2.9650249h-29.6899452c-1.6375351 0-2.965023-1.327486-2.965023-2.9650249v-.0000057c-.0000001-1.637537 1.3274879-2.965023 2.965023-2.965023zm-5.1415444 57.3099365h-7.5269604c-1.2020588 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744625-2.1765213 2.1765213-2.1765213h7.5269604c1.2020588 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744625 2.1765213-2.1765213 2.1765213zm17.0165482-15.75h-23.7550068c-1.637537 0-2.965023-1.3274879-2.965023-2.965023v-23.7598954c0-1.637537 1.327486-2.965023 2.965023-2.965023h23.7550068zm30.4834518 15.75h-7.5269623c-1.2020569 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744644-2.1765213 2.1765213-2.1765213h7.5269623c1.2020569 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744644 2.1765213-2.1765213 2.1765213zm-.7885055-15.75h-23.7550049v-29.6899414h23.7550049c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v23.7598953c-.0000001 1.6375352-1.3274842 2.9650231-2.9650269 2.9650231z";
-
-/**
- * newbus.svg inside the route-colored circle (img + inline fallback).
- */
-function metrofeedCreateNewbusIconEl(sizePx) {
-  const n = Math.max(14, Math.round(Number(sizePx) || 20));
-  const wrap = document.createElement("span");
-  wrap.className = "mf-newbus-icon";
-  wrap.style.cssText =
-    "display:flex;align-items:center;justify-content:center;width:" +
-    n +
-    "px;height:" +
-    n +
-    "px;pointer-events:none;";
-
-  function appendInlineFallback() {
-    try {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("width", String(n));
-      svg.setAttribute("height", String(n));
-      svg.setAttribute("viewBox", "0 0 100 100");
-      svg.style.display = "block";
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", MF_NEWBUS_SVG_PATH);
-      path.setAttribute("fill", "#1a1a1a");
-      path.setAttribute("stroke", "#ffffff");
-      path.setAttribute("stroke-width", "3");
-      path.setAttribute("stroke-linejoin", "round");
-      path.setAttribute("paint-order", "stroke fill");
-      svg.appendChild(path);
-      wrap.appendChild(svg);
-    } catch (_) {}
-  }
-
-  const svgFile =
-    (typeof window !== "undefined" &&
-      window.CITY_CONFIG &&
-      typeof window.CITY_CONFIG.busMarkerSvgFile === "string" &&
-      window.CITY_CONFIG.busMarkerSvgFile.trim()) ||
-    MF_NEWBUS_SVG_FILE;
-
-  try {
-    const img = document.createElement("img");
-    img.className = "mf-newbus-icon-img";
-    img.src = svgFile;
-    img.alt = "";
-    img.width = n;
-    img.height = n;
-    img.draggable = false;
-    img.decoding = "async";
-    img.style.cssText =
-      "display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;" +
-      "filter:brightness(0) saturate(100%);";
-    img.onerror = function () {
-      try {
-        img.remove();
-      } catch (_) {}
-      appendInlineFallback();
-    };
-    wrap.appendChild(img);
-  } catch (_) {
-    appendInlineFallback();
-  }
-  return wrap;
-}
-
-/**
- * Solid heading triangle beside the bus circle (points east; rotate for bearing).
- */
-function metrofeedCreateBusSideArrowSvg(routeColor, circleDiam) {
-  const h = Math.max(5, Math.round(Number(circleDiam) || 28));
-  const w = Math.max(4, Math.round(h * 0.78));
-  const pad = h < 10 ? 1 : 2;
-  const strokeW = Math.max(0.5, h * 0.14);
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", String(w + pad * 2));
-  svg.setAttribute("height", String(h + pad * 2));
-  svg.setAttribute("viewBox", "0 0 " + (w + pad * 2) + " " + (h + pad * 2));
-  svg.style.display = "block";
-  svg.style.overflow = "visible";
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute(
-    "d",
-    "M " +
-      pad +
-      " " +
-      (pad + h * 0.1) +
-      " L " +
-      (pad + w) +
-      " " +
-      (pad + h / 2) +
-      " L " +
-      pad +
-      " " +
-      (pad + h * 0.9) +
-      " Z"
-  );
-  path.setAttribute("fill", routeColor || "#facc15");
-  path.setAttribute("stroke", "#ffffff");
-  path.setAttribute("stroke-width", String(strokeW));
-  path.setAttribute("stroke-linejoin", "round");
-  path.setAttribute("paint-order", "stroke fill");
-  svg.appendChild(path);
-  return { svg: svg, width: w + pad * 2, height: h + pad * 2, offsetX: pad };
-}
-
-/**
- * Arrow wedge whose inner edge is a circle arc (hugs the bus pin circle).
- * Drawn pointing east; rotate the returned SVG for map bearing.
- */
-function metrofeedCreateCircleHugArrowSvg(routeColor, circleR, arrowLen, spreadDeg) {
-  const R = Number(circleR) || 14;
-  const L = Math.max(R * 0.5, Number(arrowLen) || R * 0.9);
-  const half = Math.max(8, Math.min(40, Number(spreadDeg) || 26));
-  const cx = R;
-  const cy = R;
-  const toRad = (d) => (d * Math.PI) / 180;
-  const a0 = -half;
-  const a1 = half;
-  const x0 = cx + R * Math.cos(toRad(a0));
-  const y0 = cy - R * Math.sin(toRad(a0));
-  const x1 = cx + R * Math.cos(toRad(a1));
-  const y1 = cy - R * Math.sin(toRad(a1));
-  const tipX = cx + R + L;
-  const tipY = cy;
-  const pad = 3;
-  const w = R + L + pad * 2;
-  const h = R * 2 + pad * 2;
-  const ox = pad;
-  const oy = pad;
-
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", String(Math.ceil(w)));
-  svg.setAttribute("height", String(Math.ceil(h)));
-  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
-  svg.style.display = "block";
-  svg.style.overflow = "visible";
-
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  const d =
-    "M " +
-    (x0 + ox) +
-    " " +
-    (y0 + oy) +
-    " A " +
-    R +
-    " " +
-    R +
-    " 0 0 1 " +
-    (x1 + ox) +
-    " " +
-    (y1 + oy) +
-    " L " +
-    (tipX + ox) +
-    " " +
-    (tipY + oy) +
-    " Z";
-  path.setAttribute("d", d);
-  path.setAttribute("fill", routeColor || "#facc15");
-  path.setAttribute("stroke", "#ffffff");
-  path.setAttribute("stroke-width", "2");
-  path.setAttribute("stroke-linejoin", "round");
-  svg.appendChild(path);
-  return {
-    svg: svg,
-    width: Math.ceil(w),
-    height: Math.ceil(h),
-    centerX: R + pad,
-    centerY: R + pad
-  };
-}
-
-/** One history vertex per vehicle poll (so the 2nd refresh can draw a tail). */
-function metrofeedAppendVehicleTrailOnPoll(coords, lon, lat, pollSeq, state, minStepM) {
-  const lo = Number(lon);
-  const la = Number(lat);
-  if (!Number.isFinite(lo) || !Number.isFinite(la)) return;
-  const pt = [lo, la];
-  const minStep = Math.max(0.25, Number(minStepM) || 2);
-  const pollKey = pollSeq != null && pollSeq !== "" ? String(pollSeq) : "";
-  if (pollKey && state && state.lastTrailPoll === pollKey) {
-    if (coords.length) coords[coords.length - 1] = pt;
-    return;
-  }
-  if (state) state.lastTrailPoll = pollKey;
-  if (!coords.length) {
-    coords.push(pt);
-    return;
-  }
-  const last = coords[coords.length - 1];
-  const d = metrofeedHaversineM(Number(last[1]), Number(last[0]), la, lo);
-  if (!Number.isFinite(d) || d < 0.25) {
-    coords[coords.length - 1] = pt;
-    return;
-  }
-  if (coords.length === 1 || d >= minStep) {
-    coords.push(pt);
-  } else {
-    coords[coords.length - 1] = pt;
-  }
-}
-
-function metrofeedEnsureBusTracerMarkerCss() {
-  if (typeof document === "undefined" || document.getElementById("mf-bus-trace-marker-css")) return;
-  const s = document.createElement("style");
-  s.id = "mf-bus-trace-marker-css";
-  s.textContent =
-    ".maplibregl-marker.mf-bus-trace-marker{z-index:6!important;pointer-events:none!important}" +
-    ".maplibregl-marker.mf-bus-marker-wrap{z-index:9!important}";
-  try {
-    document.head.appendChild(s);
-  } catch (_) {}
-}
-
-/** Trim polyline coords [[lon,lat]...] to at most maxM meters (keeps newest end). */
-function metrofeedTrimPolylineTailMeters(coords, maxM) {
-  if (!Array.isArray(coords) || coords.length < 2) return coords || [];
-  const maxLen = Math.max(20, Number(maxM) || 100);
-  let total = 0;
-  const segs = [];
-  for (let i = coords.length - 1; i > 0; i--) {
-    const a = coords[i];
-    const b = coords[i - 1];
-    const d = metrofeedHaversineM(Number(a[1]), Number(a[0]), Number(b[1]), Number(b[0]));
-    segs.unshift({ a, b, d });
-    total += d;
-    if (total >= maxLen) break;
-  }
-  if (!segs.length) return coords.slice(-2);
-  const out = [segs[0].a];
-  for (let i = 0; i < segs.length; i++) out.push(segs[i].b);
-  return out;
-}
-
-/** Sample points along a lon/lat polyline for dot tracers. */
-function metrofeedSamplePolylineDots(coords, spacingM) {
-  if (!Array.isArray(coords) || coords.length < 2) return [];
-  const step = Math.max(8, Number(spacingM) || 14);
-  const out = [];
-  for (let i = coords.length - 1; i > 0; i--) {
-    const a = coords[i];
-    const b = coords[i - 1];
-    const la1 = Number(a[1]);
-    const lo1 = Number(a[0]);
-    const la0 = Number(b[1]);
-    const lo0 = Number(b[0]);
-    if (![la1, lo1, la0, lo0].every(Number.isFinite)) continue;
-    const segLen = metrofeedHaversineM(la0, lo0, la1, lo1);
-    if (segLen < 0.5) continue;
-    let dist = 0;
-    while (dist < segLen) {
-      const t = dist / segLen;
-      out.push({
-        lon: lo1 + (lo0 - lo1) * t,
-        lat: la1 + (la0 - la1) * t
-      });
-      dist += step;
-    }
-  }
-  return out;
-}
-
-/** Offset a point by geographic bearing (deg, north=0) and distance (m). */
-function metrofeedOffsetLonLatByBearing(lat, lon, bearingDegNorth, distM) {
-  const la = Number(lat);
-  const lo = Number(lon);
-  const br = Number(bearingDegNorth);
-  const d = Number(distM);
-  if (![la, lo, br, d].every(Number.isFinite) || d <= 0) return { lat: la, lon: lo };
-  const R = 6371000;
-  const t = d / R;
-  const brRad = (br * Math.PI) / 180;
-  const latRad = (la * Math.PI) / 180;
-  const lat2 = Math.asin(
-    Math.sin(latRad) * Math.cos(t) + Math.cos(latRad) * Math.sin(t) * Math.cos(brRad)
-  );
-  const lon2 =
-    ((lo * Math.PI) / 180 +
-      Math.atan2(
-        Math.sin(brRad) * Math.sin(t) * Math.cos(latRad),
-        Math.cos(t) - Math.sin(latRad) * Math.sin(lat2)
-      )) *
-    (180 / Math.PI);
-  return { lat: (lat2 * 180) / Math.PI, lon: lon2 };
-}
-
-/** Sample dots behind the bus only (not on the marker); out[0] is nearest the bus. */
-function metrofeedSamplePolylineDotsBehind(coords, spacingM, headGapM) {
-  if (!Array.isArray(coords) || coords.length < 2) return [];
-  const step = Math.max(6, Number(spacingM) || 12);
-  const gapDefault = Math.max(3, Number(headGapM) != null ? Number(headGapM) : step * 0.35);
-  const out = [];
-  for (let i = coords.length - 1; i > 0; i--) {
-    const a = coords[i];
-    const b = coords[i - 1];
-    const la1 = Number(a[1]);
-    const lo1 = Number(a[0]);
-    const la0 = Number(b[1]);
-    const lo0 = Number(b[0]);
-    if (![la1, lo1, la0, lo0].every(Number.isFinite)) continue;
-    const segLen = metrofeedHaversineM(la0, lo0, la1, lo1);
-    if (segLen < 2) continue;
-    const gap =
-      i === coords.length - 1 ? Math.min(gapDefault, Math.max(2, segLen * 0.28)) : 0;
-    if (segLen <= gap + 0.5) continue;
-    let dist = gap;
-    while (dist < segLen) {
-      const t = dist / segLen;
-      out.push({
-        lon: lo1 + (lo0 - lo1) * t,
-        lat: la1 + (la0 - la1) * t
-      });
-      dist += step;
-    }
-  }
-  return out;
-}
-
-/** Build tail dots anchored at the live bus head (needs ≥2 vertices or heading to seed). */
-function metrofeedBuildBusTracerDots(coords, headLon, headLat, opts) {
-  opts = opts || {};
-  const spacingM = Math.max(6, Number(opts.spacingM) || 12);
-  const headGapM = opts.headGapM;
-  const bearing = metrofeedNormalizeHeadingDeg(opts.bearingDeg);
-  const headLo = Number(headLon);
-  const headLa = Number(headLat);
-  if (!Number.isFinite(headLo) || !Number.isFinite(headLa)) return [];
-
-  let trail = Array.isArray(coords) ? coords.slice() : [];
-  const head = [headLo, headLa];
-  if (trail.length) trail[trail.length - 1] = head;
-  else trail = [head];
-
-  if (trail.length < 2 && bearing != null && opts.historyOnly !== true) {
-    const seedM = Math.max(8, spacingM * 0.85);
-    const back = metrofeedOffsetLonLatByBearing(headLa, headLo, (bearing + 180) % 360, seedM);
-    trail = [[back.lon, back.lat], head];
-  }
-  if (trail.length < 2) return [];
-
-  let dots = metrofeedSamplePolylineDotsBehind(trail, spacingM, headGapM);
-  if (!dots.length) {
-    const all = metrofeedSamplePolylineDots(trail, spacingM);
-    dots = all.length > 1 ? all.slice(1) : all;
-  }
-  if (!dots.length && trail.length >= 2) {
-    const a = trail[trail.length - 2];
-    const b = trail[trail.length - 1];
-    const lo0 = Number(a[0]);
-    const la0 = Number(a[1]);
-    const lo1 = Number(b[0]);
-    const la1 = Number(b[1]);
-    if ([lo0, la0, lo1, la1].every(Number.isFinite)) {
-      const t = 0.32;
-      dots.push({
-        lon: lo1 + (lo0 - lo1) * t,
-        lat: la1 + (la0 - la1) * t
-      });
-    }
-  }
-  return dots;
-}
-
-/** Remove legacy tiny HTML route chevrons (replaced by larger arrow markers). */
-function metrofeedSweepLegacyRouteChevrons(mapInstance) {
-  const map = mapInstance || (typeof window !== "undefined" ? window.map : null);
-  const root = map && typeof map.getContainer === "function" ? map.getContainer() : null;
-  if (!root) return 0;
-  let removed = 0;
-  try {
-    root.querySelectorAll(".mf-route-dir-chevron, .mf-route-dir-arrow").forEach(function (el) {
-      const wrap = el && el.closest ? el.closest(".maplibregl-marker") : null;
-      if (wrap && wrap.parentNode) {
-        wrap.parentNode.removeChild(wrap);
-        removed++;
-      } else if (el && el.parentNode) {
-        el.parentNode.removeChild(el);
-        removed++;
-      }
-    });
-  } catch (_) {}
-  return removed;
-}
-
-/** Bearing (deg) for a ">" glyph: geographic bearing → CSS rotation (glyph points east at 0°). */
-function metrofeedRouteChevronRotationDeg(bearingDeg) {
-  const br = metrofeedNormalizeHeadingDeg(bearingDeg);
-  if (br == null) return 0;
-  return (br - 90 + 3600) % 360;
-}
-
-/** Thin ">" SVG (~12px) — route stroke + contrasting ring so it reads on the line. */
-function metrofeedCreateRouteChevronGlyphEl(sizePx, routeColor) {
-  const n = Math.max(10, Math.round(Number(sizePx) || 12));
-  const fg = routeColor || "#facc15";
-  const ring = pickContrastingTextColor(fg);
-
-  const wrap = document.createElement("div");
-  wrap.className = "mf-route-dir-chevron-glyph";
-  wrap.style.cssText =
-    "width:" + n + "px;height:" + n + "px;display:block;pointer-events:none;";
-
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", String(n));
-  svg.setAttribute("height", String(n));
-  svg.setAttribute("viewBox", "0 0 12 12");
-  svg.style.display = "block";
-  svg.style.overflow = "visible";
-
-  const d = "M3.4 2.4 L9.1 6 L3.4 9.6";
-  const halo = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  halo.setAttribute("d", d);
-  halo.setAttribute("fill", "none");
-  halo.setAttribute("stroke", ring);
-  halo.setAttribute("stroke-width", "2.6");
-  halo.setAttribute("stroke-linecap", "round");
-  halo.setAttribute("stroke-linejoin", "round");
-
-  const core = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  core.setAttribute("d", d);
-  core.setAttribute("fill", "none");
-  core.setAttribute("stroke", fg);
-  core.setAttribute("stroke-width", "1.35");
-  core.setAttribute("stroke-linecap", "round");
-  core.setAttribute("stroke-linejoin", "round");
-
-  svg.appendChild(halo);
-  svg.appendChild(core);
-  wrap.appendChild(svg);
-  return wrap;
-}
-
-/** Along-route meters for a stop snapped to a shape ([lat,lon] vertices). */
-function metrofeedStopAlongMOnShape(shape, lat, lon) {
-  try {
-    const snap = metrofeedSnapPositionParallelLocked({
-      shapes: [shape],
-      lat: Number(lat),
-      lon: Number(lon),
-      maxSnapMeters: 280,
-      hysteresisRatio: 0,
-      state: {}
-    });
-    return snap && Number.isFinite(snap.alongM) ? snap.alongM : null;
-  } catch (_) {
-    return null;
-  }
-}
-
-/** Match stop_id keys in VPS trips.json (prefix / suffix variants). */
-function metrofeedGetStopUpdatesList(stopId, updatesByStopId) {
-  if (!updatesByStopId || stopId == null) return [];
-  const sid = String(stopId);
-  if (Array.isArray(updatesByStopId[sid])) return updatesByStopId[sid];
-  const stopAg = metrofeedAgencyRouteParts(sid);
-  const stripped =
-    stopAg && stopAg.idPrefix && sid.startsWith(stopAg.idPrefix)
-      ? sid.slice(stopAg.idPrefix.length)
-      : sid.includes("_")
-        ? sid.slice(sid.indexOf("_") + 1)
-        : "";
-  if (stripped && Array.isArray(updatesByStopId[stripped])) return updatesByStopId[stripped];
-  const keys = Object.keys(updatesByStopId);
-  for (let i = 0; i < keys.length; i++) {
-    const k = keys[i];
-    if (k === sid || (stripped && (k.endsWith("_" + stripped) || k.endsWith(stripped)))) {
-      return updatesByStopId[k];
-    }
-  }
-  return [];
-}
-
-/** Next scheduled departure (minutes, today/tomorrow adjusted) — same buckets as stop popups. */
-function metrofeedStopScheduleNextMins(stopId, routeData, scheduleBucket) {
-  try {
-    const schedule = routeData && routeData.schedule;
-    const weeklyTimes = (routeData && routeData.weeklyTimes) || {};
-    const sid = String(stopId || "");
-    let timesArray = [];
-    if (schedule && schedule[scheduleBucket] && schedule[scheduleBucket].stops && schedule[scheduleBucket].stops[sid]) {
-      timesArray = schedule[scheduleBucket].stops[sid];
-    } else if (schedule && schedule.weekday && schedule.weekday.stops && schedule.weekday.stops[sid]) {
-      timesArray = schedule.weekday.stops[sid];
-    } else if (weeklyTimes[scheduleBucket] && weeklyTimes[scheduleBucket][sid]) {
-      timesArray = weeklyTimes[scheduleBucket][sid];
-    } else if (weeklyTimes.weekday && weeklyTimes.weekday[sid]) {
-      timesArray = weeklyTimes.weekday[sid];
-    }
-    if (!timesArray.length) return null;
-
-    const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
-    let best = null;
-    for (let i = 0; i < timesArray.length; i++) {
-      const parts = String(timesArray[i]).trim().split(":");
-      if (parts.length < 2) continue;
-      let h = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
-      if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
-      if (h >= 24) h -= 24;
-      const schedMins = h * 60 + m;
-      const adj = schedMins < nowMins ? schedMins + 1440 : schedMins;
-      if (best == null || adj < best) best = adj;
-    }
-    return best;
-  } catch (_) {
-    return null;
-  }
-}
-
-/**
- * Given stops sorted by increasing "time", does alongM increase (forward) or decrease (reverse)?
- * Returns true = reverse chevrons, false = forward, null = unknown.
- */
-function metrofeedInferReverseFromTimedStops(shape, stops, timeForStopFn) {
-  if (!Array.isArray(shape) || shape.length < 2 || !Array.isArray(stops)) return null;
-  const pts = [];
-  for (let i = 0; i < stops.length; i++) {
-    const s = stops[i];
-    if (!s) continue;
-    const t = timeForStopFn(s);
-    if (!Number.isFinite(t)) continue;
-    const alongM = metrofeedStopAlongMOnShape(shape, s.lat, s.lon);
-    if (!Number.isFinite(alongM)) continue;
-    pts.push({ t, alongM });
-  }
-  if (pts.length < 3) return null;
-  pts.sort((a, b) => a.t - b.t);
-
-  let pos = 0;
-  let neg = 0;
-  for (let i = 1; i < pts.length; i++) {
-    const d = pts[i].alongM - pts[i - 1].alongM;
-    if (Math.abs(d) < 12) continue;
-    if (d > 0) pos++;
-    else neg++;
-  }
-  const total = pos + neg;
-  if (total < 2) return null;
-  if (pos >= total * 0.55) return false;
-  if (neg >= total * 0.55) return true;
-  return null;
-}
-
-/** GTFS stop list order vs shape: if sequence runs backward along shape, reverse chevrons. */
-function metrofeedInferReverseFromStopSequence(shape, stops) {
-  if (!Array.isArray(shape) || shape.length < 2 || !Array.isArray(stops) || stops.length < 3) return null;
-  let pos = 0;
-  let neg = 0;
-  let prevM = null;
-  for (let i = 0; i < stops.length; i++) {
-    const s = stops[i];
-    if (!s) continue;
-    const m = metrofeedStopAlongMOnShape(shape, s.lat, s.lon);
-    if (!Number.isFinite(m)) continue;
-    if (prevM != null) {
-      const d = m - prevM;
-      if (Math.abs(d) >= 12) {
-        if (d > 0) pos++;
-        else neg++;
-      }
-    }
-    prevM = m;
-  }
-  const total = pos + neg;
-  if (total < 3) return null;
-  if (pos >= total * 0.55) return false;
-  if (neg >= total * 0.55) return true;
-  return null;
-}
-
-/** Best overlapping live trip: stop_update order vs shape. */
-function metrofeedInferReverseFromLiveTrips(shape, stops, tripUpdatesByTripId) {
-  try {
-    if (!tripUpdatesByTripId || typeof tripUpdatesByTripId !== "object") return null;
-    const stopIdSet = new Set();
-    for (let i = 0; i < stops.length; i++) {
-      const sid = stops[i] && stops[i].stop_id != null ? String(stops[i].stop_id) : "";
-      if (sid) stopIdSet.add(sid);
-    }
-    let bestTrip = null;
-    let bestHits = 0;
-    const trips = Object.keys(tripUpdatesByTripId);
-    for (let i = 0; i < trips.length; i++) {
-      const trip = tripUpdatesByTripId[trips[i]];
-      const hits = metrofeedTripStopOverlapCount(trip, stopIdSet);
-      if (hits > bestHits) {
-        bestHits = hits;
-        bestTrip = trip;
-      }
-    }
-    if (!bestTrip || bestHits < 3 || !Array.isArray(bestTrip.stop_updates)) return null;
-
-    const nowSec = Math.floor(Date.now() / 1000);
-    const pts = [];
-    for (let j = 0; j < bestTrip.stop_updates.length; j++) {
-      const su = bestTrip.stop_updates[j];
-      const sid = su.stop_id != null ? String(su.stop_id) : "";
-      if (!sid) continue;
-      const stop = stops.find(function (s) {
-        return s && String(s.stop_id) === sid;
-      });
-      if (!stop) continue;
-      const t =
-        su.arrival != null
-          ? Number(su.arrival)
-          : su.departure != null
-            ? Number(su.departure)
-            : null;
-      if (!Number.isFinite(t) || t < nowSec - 180) continue;
-      const alongM = metrofeedStopAlongMOnShape(shape, stop.lat, stop.lon);
-      if (!Number.isFinite(alongM)) continue;
-      pts.push({ t, alongM, seq: j });
-    }
-    if (pts.length < 3) return null;
-    pts.sort((a, b) => a.seq - b.seq);
-    let pos = 0;
-    let neg = 0;
-    for (let k = 1; k < pts.length; k++) {
-      const d = pts[k].alongM - pts[k - 1].alongM;
-      if (Math.abs(d) < 12) continue;
-      if (d > 0) pos++;
-      else neg++;
-    }
-    const total = pos + neg;
-    if (total < 2) return null;
-    if (pos >= total * 0.55) return false;
-    if (neg >= total * 0.55) return true;
-    return null;
-  } catch (_) {
-    return null;
-  }
-}
-
-/**
- * Should chevrons run backward along the drawn shape?
- * Shape is already direction-specific — never flip just because directionId===1.
- */
-function metrofeedInferChevronReverse(args) {
-  const shape = args && args.shape;
-  const stops = args && args.stops;
-  const routeData = args && args.routeData;
-  const scheduleBucket = (args && args.scheduleBucket) || "weekday";
-  const updatesByStopId = args && args.updatesByStopId;
-  const tripUpdatesByTripId = args && args.tripUpdatesByTripId;
-
-  const sources = [
-    function () {
-      return metrofeedInferReverseFromStopSequence(shape, stops);
-    },
-    function () {
-      return metrofeedInferReverseFromTimedStops(shape, stops, function (s) {
-        return metrofeedStopScheduleNextMins(s.stop_id, routeData, scheduleBucket);
-      });
-    },
-    function () {
-      const nowSec = Math.floor(Date.now() / 1000);
-      return metrofeedInferReverseFromTimedStops(shape, stops, function (s) {
-        const list = metrofeedGetStopUpdatesList(s.stop_id, updatesByStopId);
-        if (!list.length) return null;
-        const t = Number(list[0] && list[0].time);
-        if (!Number.isFinite(t) || t < nowSec - 120 || t > nowSec + 3 * 3600) return null;
-        return t;
-      });
-    },
-    function () {
-      return metrofeedInferReverseFromLiveTrips(shape, stops, tripUpdatesByTripId);
-    }
-  ];
-
-  for (let i = 0; i < sources.length; i++) {
-    const rev = sources[i]();
-    if (rev === true || rev === false) return rev;
-  }
-  return false;
-}
-
-function metrofeedRefreshRouteChevronDirection(ctx) {
-  if (!metrofeedTestCityBusV2Enabled() || !ctx || !ctx.map || !ctx.overlayElements) return;
-  const shape = ctx.shape;
-  if (!Array.isArray(shape) || shape.length < 2) return;
-
-  let tu = null;
-  try {
-    if (ctx.overlayKey) tu = metrofeedGetRouteTripUpdatesForOverlay(ctx.overlayKey);
-  } catch (_) {}
-
-  const reverse = metrofeedInferChevronReverse({
-    shape: shape,
-    stops: ctx.stops,
-    routeData: ctx.routeData,
-    scheduleBucket: ctx.scheduleBucket,
-    updatesByStopId: (tu && tu.updatesByStopId) || ctx.updatesByStopId,
-    tripUpdatesByTripId: (tu && tu.tripUpdatesByTripId) || ctx.tripUpdatesByTripId
-  });
-
-  if (ctx.overlayElements._mfChevronReverse === reverse && ctx.overlayElements._mfChevronInstalled) return;
-  ctx.overlayElements._mfChevronReverse = reverse;
-  ctx.overlayElements._mfChevronInstalled = true;
-  metrofeedInstallRouteDirectionChevrons(ctx.map, shape, ctx.routeColor, reverse, ctx.overlayElements);
-}
-
-/** Route-direction chevrons along the polyline (plain ">" on the line, map-aligned). */
-function metrofeedInstallRouteDirectionChevrons(
-  map,
-  shape,
-  routeColor,
-  reverse,
-  overlayElements
-) {
-  if (!metrofeedTestCityBusV2Enabled() || !map || !shape || shape.length < 2) return;
-
-  // 0.5 mi between chevrons (match busRouteChevronSpacingM in city-config).
-  const halfMileM = 804.672;
-  const spacingM =
-    window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
-      ? Number(window.CITY_CONFIG.busRouteChevronSpacingM)
-      : halfMileM;
-  // Same footprint as route stop dots (12px circles in attachRouteToMap).
-  const chevronPx =
-    window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSizePx != null
-      ? Number(window.CITY_CONFIG.busRouteChevronSizePx)
-      : 12;
-  const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, !!reverse);
-  const fg = routeColor || "#facc15";
-
-  // Clear previously installed chevrons for this overlay.
-  try {
-    if (overlayElements && Array.isArray(overlayElements.chevronMarkers)) {
-      overlayElements.chevronMarkers.forEach((mk) => {
-        try {
-          if (mk && typeof mk.remove === "function") mk.remove();
-        } catch (_) {}
-      });
-      overlayElements.chevronMarkers = [];
-    }
-  } catch (_) {}
-
-  samples.forEach(function (pt) {
-    const rot = metrofeedRouteChevronRotationDeg(pt.bearing);
-
-    const anchor = document.createElement("div");
-    anchor.className = "mf-route-dir-chevron";
-    anchor.setAttribute("aria-hidden", "true");
-    anchor.style.cssText = [
-      "width:" + chevronPx + "px",
-      "height:" + chevronPx + "px",
-      "display:flex",
-      "align-items:center",
-      "justify-content:center",
-      "pointer-events:none",
-      "z-index:3"
-    ].join(";");
-
-    const rotWrap = document.createElement("div");
-    rotWrap.style.cssText = [
-      "width:100%",
-      "height:100%",
-      "display:flex",
-      "align-items:center",
-      "justify-content:center",
-      "transform:rotate(" + rot + "deg)",
-      "transform-origin:50% 50%"
-    ].join(";");
-    rotWrap.appendChild(metrofeedCreateRouteChevronGlyphEl(chevronPx, fg));
-    anchor.appendChild(rotWrap);
-
-    try {
-      const mk = new maplibregl.Marker({ element: anchor, anchor: "center" })
-        .setLngLat([pt.lon, pt.lat])
-        .addTo(map);
-      overlayElements.markers.push(mk);
-      if (overlayElements && Array.isArray(overlayElements.chevronMarkers)) {
-        overlayElements.chevronMarkers.push(mk);
-      }
-    } catch (_) {}
-  });
 }
 
 function metrofeedShapeBearingLookahead(shape, segIdx, forward, lookaheadSegs) {
@@ -2168,157 +1102,16 @@ var MF_BUS_COMPASS_DIAM_PX =
 try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_COMPASS_DIAM_PX; } catch (_) {}
 
 function metrofeedBusMarkerDiamPx() {
-  if (metrofeedTestCityBusV2Enabled()) {
-    return Math.max(24, Math.round(MF_BUS_COMPASS_DIAM_PX * 2.5 * 0.81));
-  }
+  // Scale live vehicle marker size up by ~30% vs prior baseline.
   return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.43));
 }
 
-/** Shared pin / compass layout for v2 bus markers (DOM + MapLibre anchor). */
-function metrofeedBusMarkerPinLayout(dc) {
-  const d = Number.isFinite(Number(dc)) ? Number(dc) : metrofeedBusMarkerDiamPx();
-  const R = d / 2;
-  const compassR = R + 3;
-  const arrowLen = Math.max(10, Math.round(R * 1.05));
-  const outward = Math.ceil(arrowLen + 6);
-  const pinPad = Math.round(R * 0.45);
-  const pinSize = d + outward * 2 + pinPad * 2;
-  const circleLeft = pinPad + outward;
-  const circleTop = pinPad + outward;
-  return {
-    dc: d,
-    R: R,
-    compassR: compassR,
-    arrowLen: arrowLen,
-    outward: outward,
-    pinPad: pinPad,
-    pinSize: pinSize,
-    circleLeft: circleLeft,
-    circleTop: circleTop,
-    circleCX: circleLeft + d / 2,
-    circleCY: circleTop + d / 2,
-    mapOffsetY: -Math.round(12 + pinPad + outward * 0.12)
-  };
-}
-
 /**
- * Live bus marker.
- * Test City v2: route-colored circle + newbus.svg + compass wedge + white dot tracer (map).
+ * Live bus marker: pill label + route-color dot.
+ * If heading is known: replace dot with a single "paper plane" arrow (clean + obvious).
+ * If heading is unknown: show the dot (no implied direction).
  */
-function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg, markerOpts) {
-  if (!metrofeedTestCityBusV2Enabled()) {
-    return buildMbtaBusMarkerElementLegacy(routeColor, routeNum, displayVehicleID, headingDeg);
-  }
-
-  markerOpts = markerOpts && typeof markerOpts === "object" ? markerOpts : {};
-  const wrap = document.createElement("div");
-  wrap.className = "mf-bus-marker";
-  wrap.style.display = "flex";
-  wrap.style.flexDirection = "column";
-  wrap.style.alignItems = "center";
-  wrap.style.pointerEvents = "auto";
-
-  const dc = metrofeedBusMarkerDiamPx();
-  const routeFill = routeColor || "#facc15";
-  const labelFg = pickContrastingTextColor(routeFill);
-  const normH = metrofeedNormalizeHeadingDeg(headingDeg);
-  const motionMismatch = markerOpts.motionMismatch === true;
-  const layout = metrofeedBusMarkerPinLayout(dc);
-
-  const label = document.createElement("div");
-  label.className = "mf-bus-marker-label";
-  label.style.cssText =
-    "margin-bottom:5px;background:" +
-    routeFill +
-    ";color:" +
-    labelFg +
-    ";padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;";
-  label.innerHTML =
-    '<span style="background:rgba(0,0,0,0.18);color:' +
-    labelFg +
-    ';padding:1px 4px;border-radius:3px;font-size:9px;margin-right:4px;">' +
-    String(routeNum) +
-    "</span>" +
-    String(displayVehicleID);
-
-  const pin = document.createElement("div");
-  pin.className = "mf-bus-marker-pin";
-  pin.style.cssText = [
-    "position:relative",
-    "width:" + pinSize + "px",
-    "height:" + pinSize + "px"
-  ].join(";");
-
-  const circleLeft = pinPad + outward;
-  const circleTop = pinPad + outward;
-  const circleCX = circleLeft + dc / 2;
-  const circleCY = circleTop + dc / 2;
-
-  const circle = document.createElement("div");
-  circle.className = "mf-bus-marker-circle";
-  circle.style.cssText = [
-    "box-sizing:border-box",
-    "position:absolute",
-    "left:" + circleLeft + "px",
-    "top:" + circleTop + "px",
-    "width:" + dc + "px",
-    "height:" + dc + "px",
-    "border-radius:50%",
-    "background:" + routeFill,
-    "border:2.5px solid #fff",
-    "box-shadow:0 2px 8px rgba(0,0,0,0.55)",
-    "display:flex",
-    "align-items:center",
-    "justify-content:center",
-    "z-index:3"
-  ].join(";");
-  if (motionMismatch) {
-    circle.style.outline = "2px solid #fbbf24";
-    circle.style.outlineOffset = "2px";
-  }
-
-  try {
-    const busSize = Math.max(18, Math.round(layout.dc * 0.72));
-    circle.appendChild(metrofeedCreateNewbusIconEl(busSize));
-  } catch (_) {}
-
-  if (normH != null && markerOpts.hideHeadingArrow !== true) {
-    const arrowFill = motionMismatch ? "#fbbf24" : routeFill;
-    const hug = metrofeedCreateCircleHugArrowSvg(
-      arrowFill,
-      layout.compassR,
-      layout.arrowLen,
-      24
-    );
-    const compassWrap = document.createElement("div");
-    compassWrap.className = "mf-bus-marker-arrow mf-bus-marker-compass";
-    compassWrap.setAttribute("aria-hidden", "true");
-    compassWrap.style.cssText = [
-      "position:absolute",
-      "left:" + (layout.circleCX - hug.centerX) + "px",
-      "top:" + (layout.circleCY - hug.centerY) + "px",
-      "width:" + hug.width + "px",
-      "height:" + hug.height + "px",
-      "transform:rotate(" + ((normH - 90 + 3600) % 360) + "deg)",
-      "transform-origin:" + hug.centerX + "px " + hug.centerY + "px",
-      "filter:drop-shadow(0 2px 5px rgba(0,0,0,0.65))",
-      "pointer-events:none",
-      "z-index:1"
-    ].join(";");
-    compassWrap.appendChild(hug.svg);
-    pin.appendChild(compassWrap);
-  }
-
-  pin.appendChild(circle);
-
-  wrap.appendChild(label);
-  wrap.appendChild(pin);
-  wrap._mfBusPinCenterOffsetX = 0;
-  return wrap;
-}
-
-/** Pre–Test City v2 marker (rotating side-view bus). */
-function buildMbtaBusMarkerElementLegacy(routeColor, routeNum, displayVehicleID, headingDeg) {
+function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg) {
   const wrap = document.createElement("div");
   wrap.style.display = "flex";
   wrap.style.flexDirection = "column";
@@ -2326,75 +1119,96 @@ function buildMbtaBusMarkerElementLegacy(routeColor, routeNum, displayVehicleID,
   wrap.style.pointerEvents = "auto";
   const dc = metrofeedBusMarkerDiamPx();
   const fg = pickContrastingTextColor(routeColor);
+  const arrowColor = pickContrastingTextColor(routeColor);
+  const badgeBg = fg;
+  const badgeFg = routeColor;
+
   const label = document.createElement("div");
-  label.style.cssText =
-    "margin-bottom:6px;background:" +
-    routeColor +
-    ";color:" +
-    fg +
-    ";padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;";
-  label.innerHTML =
-    '<span style="background:' +
-    fg +
-    ";color:" +
-    routeColor +
-    ';padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">' +
-    String(routeNum) +
-    "</span>" +
-    String(displayVehicleID);
+  label.style.cssText = `margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;`;
+  label.innerHTML = `<span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}`;
+
   const dialWrap = document.createElement("div");
-  dialWrap.style.cssText = "position:relative;width:" + dc + "px;height:" + dc + "px;flex-shrink:0;";
+  dialWrap.style.cssText = `position:relative;width:${dc}px;height:${dc}px;flex-shrink:0;`;
+
   const normH = metrofeedNormalizeHeadingDeg(headingDeg);
-  if (normH != null) {
-    const planeSize = Math.max(14, Math.round(dc * 1.2));
+  const showPlane = normH != null;
+
+  if (showPlane) {
+    // A single, obvious directional icon (bus silhouette) — no dot, no extra decorations.
+    // We render inline SVG so we can recolor to the route and rotate to direction of travel.
+    const planeSize = Math.max(14, Math.round(dc * 1.2)); // +20% for legibility
     const planeWrap = document.createElement("div");
-    planeWrap.style.cssText =
-      "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(" +
-      ((normH - 90 + 3600) % 360) +
-      "deg);width:" +
-      planeSize +
-      "px;height:" +
-      planeSize +
-      "px;";
+    planeWrap.setAttribute("aria-hidden", "true");
+    // bus.svg heading alignment:
+    // - Heading is 0°=north. SVG artwork has its own "forward" direction.
+    // - We apply a baseline -90° (east-facing art) plus an optional per-city offset knob.
+    const svgOffsetDeg =
+      window.CITY_CONFIG && Number.isFinite(Number(window.CITY_CONFIG.busSvgHeadingOffsetDeg))
+        ? Number(window.CITY_CONFIG.busSvgHeadingOffsetDeg)
+        : 0;
+    const busRot = (normH - 90 + svgOffsetDeg + 3600) % 360;
+    planeWrap.style.cssText = [
+      "position:absolute",
+      "left:50%",
+      "top:50%",
+      "transform:translate(-50%,-50%) rotate(" + busRot + "deg)",
+      "transform-origin:50% 50%",
+      "width:" + planeSize + "px",
+      "height:" + planeSize + "px",
+      "pointer-events:none"
+    ].join(";");
+
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("width", String(planeSize));
     svg.setAttribute("height", String(planeSize));
     svg.setAttribute("viewBox", "0 0 512 512");
+    svg.style.display = "block";
+
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("fill", routeColor);
+    // bus.svg path (single combined path) — keep as a literal for reliable recoloring.
     path.setAttribute(
       "d",
       "m376.03 310.75a22.875 22.875 0 0 0 -22.85 22.85 22.845 22.845 0 0 0 45.69 0 22.873 22.873 0 0 0 -22.84-22.85zm0 34.14a11.29 11.29 0 1 1 11.28-11.29 11.29 11.29 0 0 1 -11.28 11.29zm-240.06-34.14a22.873 22.873 0 0 0 -22.84 22.85 22.845 22.845 0 0 0 45.69 0 22.875 22.875 0 0 0 -22.85-22.85zm0 34.14a11.29 11.29 0 1 1 11.29-11.29 11.288 11.288 0 0 1 -11.29 11.29zm372.02-171.81c-.74-8.83-8.18-25.52-31.06-25.52h-413.78c-16.7 0-25.97 7.26-29.19 10.38-8.56 8.32-16.17 34.3-22.62 77.23-4.9 32.62-7.35 63.45-7.35 66.88v18.29c0 13.54 11.19 27.93 31.93 27.93h72.93a31.027 31.027 0 0 1 -2.99-8 30.568 30.568 0 0 1 -.73-6.67 30.845 30.845 0 1 1 61.69 0 30.568 30.568 0 0 1 -.73 6.67 31.027 31.027 0 0 1 -2.99 8h185.8a31.027 31.027 0 0 1 -2.99-8 30.568 30.568 0 0 1 -.73-6.67 30.845 30.845 0 1 1 61.69 0 30.568 30.568 0 0 1 -.73 6.67 31.027 31.027 0 0 1 -2.99 8h80.93c17.66 0 23.93-12.89 23.93-23.93v-150.93c0-.11-.01-.22-.02-.33zm-473.31 128.93c-.83 8.19-5.43 14.95-22.69 16.31v-16.27c0-.55.03-1.43.1-2.6a129.791 129.791 0 0 1 16.53-3.37 5.417 5.417 0 0 1 6.06 5.93zm-1.35-55.98c-2.75 23.58-3.7 36.93-20.22 40.7 2.53-27.17 9.25-82.03 18.99-109.15 13.98 3.85 5.7 30.2 1.23 68.45zm108.66-19.96c0 50.56-49.42 64.86-70.55 68.67a7.991 7.991 0 0 1 -9.39-7.89v-103.12a8 8 0 0 1 8-8h63.94a8 8 0 0 1 8 8zm98.77 34.51h-66.71a8.006 8.006 0 0 1 -8.01-8v-67a8.006 8.006 0 0 1 8.01-8h66.71zm78.71 0h-70.71v-83h70.71zm78.71 0h-70.71v-83h70.71zm82.71-8a8 8 0 0 1 -8 8h-66.71v-83h66.71a8 8 0 0 1 8 8zm19.12 62.35h-6.75a11.169 11.169 0 0 1 -11.17-11.17v-6.6a21.906 21.906 0 0 1 17.92-21.54z"
     );
+    path.setAttribute("fill", routeColor);
+    // Thin contrasting stroke makes it readable on bright routes without adding clutter.
+    path.setAttribute("stroke", arrowColor);
+    path.setAttribute("stroke-width", "14");
+    path.setAttribute("stroke-linejoin", "round");
+    path.setAttribute("stroke-linecap", "round");
+
     svg.appendChild(path);
+    svg.style.filter = "drop-shadow(0 2px 3px rgba(0,0,0,0.45))";
+
     planeWrap.appendChild(svg);
     dialWrap.appendChild(planeWrap);
   } else {
     const dot = document.createElement("div");
-    dot.style.cssText =
-      "width:" + dc + "px;height:" + dc + "px;border-radius:50%;background:" + routeColor + ";border:2px solid #fff;";
+    dot.style.cssText = [
+      "box-sizing:border-box",
+      `width:${dc}px`,
+      `height:${dc}px`,
+      "border-radius:50%",
+      `background:${routeColor}`,
+      "border:2px solid #fff",
+      "box-shadow:0 1px 3px rgba(0,0,0,0.4)",
+      "position:relative"
+    ].join(";");
     dialWrap.appendChild(dot);
   }
+
   wrap.appendChild(label);
   wrap.appendChild(dialWrap);
   return wrap;
 }
 
-function mbtaBusMarkerMapOptions(markerElement) {
+function mbtaBusMarkerMapOptions() {
   const dc = metrofeedBusMarkerDiamPx();
-  if (metrofeedTestCityBusV2Enabled()) {
-    const layout = metrofeedBusMarkerPinLayout(dc);
-    return {
-      anchor: "center",
-      offset: [0, layout.mapOffsetY]
-    };
-  }
   return { anchor: "bottom", offset: [0, -dc / 2] };
 }
 
 window.buildMbtaBusMarkerElement = buildMbtaBusMarkerElement;
 window.mbtaBusMarkerMapOptions = mbtaBusMarkerMapOptions;
-window.metrofeedTestCityBusV2Enabled = metrofeedTestCityBusV2Enabled;
 /** Used by home.html createBusMarker when present; same rules as metrofeedFormatVehicleLabel(bus, routeNumber). */
 try {
   window.metrofeedFormatVehicleMainLabel = function (bus, routeNumber) {
@@ -2627,8 +1441,89 @@ function mfSanitizedOverlayDomKey(raw) {
   return `${safe}_${tag}`;
 }
 
-/** MetroFeed route line layers from attachRouteToMap (solid + dashed opposite-direction underlay). */
-const MF_ROUTE_OVERLAY_LAYER_RE = /^route-layer(-opp)?-/;
+/** MetroFeed route line + direction chevron layers from attachRouteToMap. */
+const MF_ROUTE_OVERLAY_LAYER_RE = /^route-(layer|chevron)(-opp)?-/;
+
+/** Test City: schedule-direction chevrons along the selected route line (symbol layer). */
+function metrofeedRouteLineChevronsEnabled() {
+  try {
+    if (typeof getCityIdFromPath !== "function" || getCityIdFromPath() !== "testcity") return false;
+    if (window.CITY_CONFIG && window.CITY_CONFIG.routeLineChevrons === false) return false;
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
+ * Add › symbols along a route LineString (vertex order = schedule / stop direction).
+ * Inserts above the route line, below the same anchor as the line layer.
+ */
+function metrofeedAddRouteLineChevronLayer(map, opts) {
+  if (!map || !opts || !metrofeedRouteLineChevronsEnabled()) return null;
+  const sourceId = opts.sourceId;
+  const routeLayerId = opts.routeLayerId;
+  const routeColor = opts.routeColor || "#708090";
+  const beforeId = opts.beforeId;
+  const overlayElements = opts.overlayElements;
+  if (!sourceId || !routeLayerId) return null;
+
+  const cfg = window.CITY_CONFIG || {};
+  const chevronLayerId = String(opts.chevronLayerId || routeLayerId.replace(/^route-layer-/, "route-chevron-"));
+  const spacingPx = Number.isFinite(Number(cfg.routeLineChevronSpacingPx))
+    ? Math.max(48, Number(cfg.routeLineChevronSpacingPx))
+    : 96;
+  const sizePx = Number.isFinite(Number(cfg.routeLineChevronSizePx))
+    ? Math.max(9, Math.min(14, Number(cfg.routeLineChevronSizePx)))
+    : 11;
+  const opacity = Number.isFinite(Number(cfg.routeLineChevronOpacity))
+    ? Math.max(0.35, Math.min(1, Number(cfg.routeLineChevronOpacity)))
+    : 0.62;
+  const minZoom = Number.isFinite(Number(cfg.routeLineChevronMinZoom))
+    ? Number(cfg.routeLineChevronMinZoom)
+    : 12;
+
+  try {
+    if (map.getLayer(chevronLayerId)) map.removeLayer(chevronLayerId);
+  } catch (_) {}
+
+  try {
+    map.addLayer(
+      {
+        id: chevronLayerId,
+        type: "symbol",
+        source: sourceId,
+        minzoom: minZoom,
+        layout: {
+          "symbol-placement": "line",
+          "symbol-spacing": spacingPx,
+          "text-field": "\u203A",
+          "text-size": sizePx,
+          "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+          "text-rotation-alignment": "map",
+          "text-pitch-alignment": "viewport",
+          "text-keep-upright": false,
+          "text-allow-overlap": true,
+          "text-ignore-placement": true
+        },
+        paint: {
+          "text-color": routeColor,
+          "text-opacity": opacity,
+          "text-halo-color": "rgba(255,255,255,0.92)",
+          "text-halo-width": 1.25
+        }
+      },
+      beforeId || routeLayerId
+    );
+    if (overlayElements && Array.isArray(overlayElements.layers)) {
+      overlayElements.layers.push(chevronLayerId);
+    }
+    return chevronLayerId;
+  } catch (e) {
+    console.warn("[metrofeedAddRouteLineChevronLayer] failed:", e);
+    return null;
+  }
+}
 
 /**
  * Insert new route overlay layers *above* existing MetroFeed route overlays but still below the OTP
@@ -2800,7 +1695,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
     sources:  [],
     layers:   [],
     markers:  [],
-    chevronMarkers: [],
     controls: [],
     intervals: [], // For bus tracking intervals
     unsubscribers: [], // cleanup hooks (shared vehicle feed subscriptions, observers, etc.)
@@ -2814,11 +1708,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
   // ==== Internal: build & attach =================================================
   const addRouteToMap = () => {
-    if (metrofeedTestCityBusV2Enabled()) {
-      metrofeedEnsureBusArrowZoomListener(map);
-    }
-    metrofeedSweepLegacyRouteChevrons(map);
-
     // Unique MapLibre source/layer + route-info DOM id (supports multiple OTP legs for same route+dir)
     const rawOverlayKeyForDom =
       options.overlayKey != null && String(options.overlayKey).trim() !== ""
@@ -2947,6 +1836,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
         beforeId
       );
       overlayElements.layers.push(routeLayerId);
+
+      if (metrofeedRouteLineChevronsEnabled()) {
+        metrofeedAddRouteLineChevronLayer(map, {
+          sourceId: routeSourceId,
+          routeLayerId: routeLayerId,
+          chevronLayerId: `route-chevron-${mapLayerKey}-${shapeIndex}`,
+          routeColor: routeColor,
+          beforeId: beforeId,
+          overlayElements: overlayElements
+        });
+      }
     });
 
     // ---------- Fit bounds (if desired) ----------
@@ -3494,21 +2394,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
       });
     }
 
-    // Direction chevrons (after stops + schedule bucket exist — uses top times / live ETAs).
-    if (metrofeedTestCityBusV2Enabled() && Array.isArray(primaryShape) && primaryShape.length > 1) {
-      metrofeedRefreshRouteChevronDirection({
-        map: map,
-        shape: primaryShape,
-        routeColor: routeColor,
-        stops: stops,
-        routeData: routeData,
-        scheduleBucket: scheduleBucket,
-        overlayElements: overlayElements,
-        overlayKey: etaOverlayKey,
-        routeId: routeId
-      });
-    }
-
     // ---------- Route info panel (mainOverlay only) ----------
     // OTP trip legs use .otp-trip-route-chip on the rail instead (see otp.js).
     // Route chip UI (floating chips). Historically gated by routePageUrl; that caused OTP legs
@@ -3977,15 +2862,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busMarkers = {}; // Store bus markers separately
       /** @type {Record<string, { lastLat?: number, lastLon?: number, lastTime?: number, smoothedHeading?: number|null }>} */
       const vehicleHeadingState = Object.create(null);
-      /** Test City v2: keep a short snapped trail for tracer rendering. */
-      const vehicleTrailState = Object.create(null); // key -> { coords: [[lon,lat]...], sourceId, layerId }
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
-      let lastBusPaintAt = 0;
-      const busPaintCoalesceMs =
-        window.CITY_CONFIG && Number.isFinite(Number(window.CITY_CONFIG.busPaintCoalesceMs))
-          ? Math.max(0, Number(window.CITY_CONFIG.busPaintCoalesceMs))
-          : 450;
       /** Latest trips.json trip_id → trip (same route); used to drop vehicles on other Route N branches. */
       let tripIndexForPatternFilter = null;
 
@@ -4016,149 +2894,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         Array.isArray(gtfsRtUrls) && gtfsRtUrls.length ? gtfsRtUrls.filter(Boolean) : (gtfsRtUrl ? [gtfsRtUrl] : []);
       const urlsToFetchShared = resolvedProxyUrls.length ? resolvedProxyUrls : resolvedUrls;
       
-      function mfSanitizeKeyForId(s) {
-        return String(s || "").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 80);
-      }
-
-      function metrofeedClearTracerDotMarkers(state) {
-        if (!state || !Array.isArray(state.dotMarkers)) {
-          if (state) state.dotMarkers = [];
-          return;
-        }
-        state.dotMarkers.forEach(function (mk) {
-          try {
-            if (mk && typeof mk.remove === "function") mk.remove();
-          } catch (_) {}
-          try {
-            const idx = overlayElements.markers.indexOf(mk);
-            if (idx > -1) overlayElements.markers.splice(idx, 1);
-          } catch (_) {}
-        });
-        state.dotMarkers = [];
-      }
-
-      /** @returns {boolean} true when motion-history tail dots are on the map */
-      function upsertVehicleTracer(markerKey, routeColor, lon, lat, headingDeg, pollSeq) {
-        if (!metrofeedTestCityBusV2Enabled()) return false;
-        metrofeedEnsureBusTracerMarkerCss();
-        const headLo = Number(lon);
-        const headLa = Number(lat);
-        if (!Number.isFinite(headLo) || !Number.isFinite(headLa)) return false;
-        const key = String(markerKey || "");
-        if (!key) return false;
-        const state = vehicleTrailState[key] || (vehicleTrailState[key] = { coords: [], dotMarkers: [] });
-
-        metrofeedClearTracerDotMarkers(state);
-
-        const coords = Array.isArray(state.coords) ? state.coords : (state.coords = []);
-        const trailMinStep =
-          window.CITY_CONFIG && window.CITY_CONFIG.busTracerMinStepM != null
-            ? Number(window.CITY_CONFIG.busTracerMinStepM)
-            : 2;
-        const jumpResetM =
-          window.CITY_CONFIG && window.CITY_CONFIG.busTracerJumpResetM != null
-            ? Number(window.CITY_CONFIG.busTracerJumpResetM)
-            : 200;
-        const maxTrailPts =
-          window.CITY_CONFIG && window.CITY_CONFIG.busTracerMaxTrailPoints != null
-            ? Number(window.CITY_CONFIG.busTracerMaxTrailPoints)
-            : 16;
-
-        if (coords.length) {
-          const prev = coords[coords.length - 1];
-          const dJump = metrofeedHaversineM(
-            Number(prev[1]),
-            Number(prev[0]),
-            headLa,
-            headLo
-          );
-          if (Number.isFinite(dJump) && dJump > jumpResetM) {
-            coords.length = 0;
-            state.lastTrailPoll = null;
-          }
-        }
-        metrofeedAppendVehicleTrailOnPoll(coords, headLo, headLa, pollSeq, state, trailMinStep);
-
-        const maxLenM =
-          window.CITY_CONFIG && window.CITY_CONFIG.busTracerLengthM != null
-            ? Number(window.CITY_CONFIG.busTracerLengthM)
-            : 100;
-        const dotSpacingM =
-          window.CITY_CONFIG && window.CITY_CONFIG.busTracerDotSpacingM != null
-            ? Number(window.CITY_CONFIG.busTracerDotSpacingM)
-            : 12;
-        const headGapM =
-          window.CITY_CONFIG && window.CITY_CONFIG.busTracerHeadGapM != null
-            ? Number(window.CITY_CONFIG.busTracerHeadGapM)
-            : Math.max(4, dotSpacingM * 0.28);
-        state.coords = metrofeedTrimPolylineTailMeters(coords, maxLenM);
-        while (state.coords.length > Math.max(4, maxTrailPts)) {
-          state.coords.shift();
-        }
-
-        const trimmed = state.coords;
-        const dots = metrofeedBuildBusTracerDots(trimmed, headLo, headLa, {
-          spacingM: dotSpacingM,
-          headGapM: headGapM,
-          historyOnly: true
-        });
-        state.hasTail = dots.length > 0;
-        if (!dots.length) return false;
-
-        const maxDots = Math.max(
-          4,
-          window.CITY_CONFIG && window.CITY_CONFIG.busTracerMaxDots != null
-            ? Number(window.CITY_CONFIG.busTracerMaxDots)
-            : 10
-        );
-        const slice = dots.length > maxDots ? dots.slice(0, maxDots) : dots;
-        const n = slice.length;
-        slice.forEach(function (pt, idx) {
-          const t = n > 1 ? 1 - idx / (n - 1) : 1;
-          const sizePx = Math.max(7, Math.round(6 + t * 12));
-          const el = document.createElement("div");
-          el.className = "mf-bus-trace-dot";
-          el.setAttribute("aria-hidden", "true");
-          el.style.cssText = [
-            "width:" + sizePx + "px",
-            "height:" + sizePx + "px",
-            "border-radius:50%",
-            "background:#ffffff",
-            "border:2.5px solid rgba(0,0,0,0.8)",
-            "box-shadow:0 1px 6px rgba(0,0,0,0.7)",
-            "opacity:" + (0.65 + t * 0.35).toFixed(2),
-            "pointer-events:none"
-          ].join(";");
-          try {
-            const mk = new maplibregl.Marker({
-              element: el,
-              anchor: "center",
-              className: "mf-bus-trace-marker"
-            })
-              .setLngLat([pt.lon, pt.lat])
-              .addTo(map);
-            state.dotMarkers.push(mk);
-            try {
-              overlayElements.markers.push(mk);
-            } catch (_) {}
-          } catch (_) {}
-        });
-        return true;
-      }
-
-      function removeVehicleTracer(markerKey) {
-        const st = vehicleTrailState[String(markerKey || "")];
-        if (!st) return;
-        metrofeedClearTracerDotMarkers(st);
-        try {
-          if (st.layerId && map.getLayer(st.layerId)) map.removeLayer(st.layerId);
-        } catch (_) {}
-        try {
-          if (st.sourceId && map.getSource(st.sourceId)) map.removeSource(st.sourceId);
-        } catch (_) {}
-        delete vehicleTrailState[String(markerKey || "")];
-      }
-
       async function fetchAndDisplayBuses(allBusesOverride) {
         const hasOverride = Array.isArray(allBusesOverride);
         if (busesFetchInFlight && !hasOverride) {
@@ -4166,12 +2901,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
           console.log('[attachRouteToMap] Bus fetch skipped (in-flight)', { routeId, directionId, busesFetchSeq });
           return;
         }
-        const paintNow = Date.now();
-        const didAdvanceTrailPoll = paintNow - lastBusPaintAt >= busPaintCoalesceMs;
-        if (didAdvanceTrailPoll) {
-          busesFetchSeq += 1;
-          lastBusPaintAt = paintNow;
-        }
+        busesFetchSeq += 1;
         const seq = busesFetchSeq;
         busesFetchInFlight = true;
         try {
@@ -4183,7 +2913,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
           
           console.log('[attachRouteToMap] fetchAndDisplayBuses start', {
             seq,
-            coalesced: !didAdvanceTrailPoll,
             routeId,
             directionId,
             busApiType,
@@ -4419,14 +3148,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             });
           }
 
-          const sheetHeadsign =
-            (Array.isArray(routeData.trip_headsign_samples) && routeData.trip_headsign_samples[0]) ||
-            routeData.direction_name ||
-            "";
-
           vehiclesForMarkers.forEach((bus) => {
-            let latN = Number(bus.latitude);
-            let lonN = Number(bus.longitude);
+            const latN = Number(bus.latitude);
+            const lonN = Number(bus.longitude);
             if (!Number.isFinite(latN) || !Number.isFinite(lonN)) return;
             const blockId = bus.blockID || bus.vehicleID || '';
             if (!blockId) return;
@@ -4499,6 +3223,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
               );
               if (inferred === 0 || inferred === 1) busDir = inferred;
             }
+            const isOppositeDir = busDir != null && Number(busDir) !== Number(directionId);
+
+            let rawHeading = headingEnabled
+              ? metrofeedBusMarkerHeadingDeg(bus, hState, primaryShape)
+              : null;
+
+            // Snap marker heading to the route tangent and LOCK to a segment (hysteresis),
+            // so the plane stays parallel to the line even on loops/curves.
             const snapMaxM =
               (window.CITY_CONFIG && window.CITY_CONFIG.busMarkerSnapMaxMeters) != null
                 ? Number(window.CITY_CONFIG.busMarkerSnapMaxMeters)
@@ -4512,56 +3244,13 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 ? Number(window.CITY_CONFIG.busMarkerSnapHysteresisRatio)
                 : 0.25;
 
-            const busV2 = metrofeedTestCityBusV2Enabled();
-            let motionDir = null;
-            if (busV2) {
-              const posSnap = metrofeedSnapPositionParallelLocked({
-                shapes,
-                lat: latN,
-                lon: lonN,
-                maxSnapMeters: snapMaxM,
-                hysteresisRatio: hystRatio,
-                state: hState
-              });
-              if (posSnap) {
-                latN = posSnap.lat;
-                lonN = posSnap.lon;
-                if (
-                  window.CITY_CONFIG &&
-                  window.CITY_CONFIG.busUseMotionDirection !== false
-                ) {
-                  motionDir = metrofeedUpdateMotionDirection(hState, posSnap);
-                }
-              }
-            }
-
-            const isOppositeDir = busDir != null && Number(busDir) !== Number(directionId);
-            const motionMismatch =
-              busV2 &&
-              motionDir != null &&
-              Number(motionDir) !== Number(directionId);
-            const agencyMismatch =
-              busDir != null && Number(busDir) !== Number(directionId);
-            const useMotionForDim =
-              busV2 &&
-              !!(window.CITY_CONFIG && window.CITY_CONFIG.busSoftOppositeDim) &&
-              motionDir != null;
-            const visualMismatch = useMotionForDim ? motionMismatch : isOppositeDir;
-
-            let rawHeading = headingEnabled
-              ? metrofeedBusMarkerHeadingDeg(bus, hState, primaryShape)
-              : null;
-
-            const headingDirForSnap =
-              busV2 && motionDir != null ? motionDir : directionId;
-
             const snappedHeading = headingEnabled
               ? metrofeedSnapHeadingParallelLocked({
                   shapes,
                   lat: latN,
                   lon: lonN,
                   rawHeading,
-                  directionId: headingDirForSnap,
+                  directionId,
                   maxSnapMeters: snapMaxM,
                   lookaheadSegs,
                   hysteresisRatio: hystRatio,
@@ -4575,63 +3264,38 @@ function attachRouteToMap(map, routeId, directionId, options) {
               hState.smoothedHeading = displayHeading;
             } else if (!stoppedNow && rawHeading == null && hState.smoothedHeading != null) {
               displayHeading = metrofeedNormalizeHeadingDeg(hState.smoothedHeading);
-            } else if (stoppedNow && hState.smoothedHeading != null) {
-              displayHeading = metrofeedNormalizeHeadingDeg(hState.smoothedHeading);
+            } else {
+              if (stoppedNow) hState.smoothedHeading = null;
             }
 
             hState.lastLat = latN;
             hState.lastLon = lonN;
             hState.lastTime = Date.now();
 
-            const wedgeHeading = metrofeedWedgeHeadingDeg(primaryShape, latN, lonN, {
-              stoppedNow: stoppedNow,
-              displayHeading: displayHeading,
-              rawHeading: rawHeading,
-              smoothedHeading: hState.smoothedHeading,
-              motionDir: motionDir
-            });
-            const hasTracerTail = upsertVehicleTracer(
-              markerKey,
-              routeColor,
-              lonN,
-              latN,
-              wedgeHeading,
-              seq
-            );
-            const headingForMarker = hasTracerTail ? displayHeading : wedgeHeading;
-
             const busElement = buildMbtaBusMarkerElement(
               routeColor,
               metrofeedFormatRouteBadge(routeId),
               displayVehicleID,
-              headingForMarker,
-              busV2
-                ? {
-                    motionMismatch,
-                    hideHeadingArrow: hasTracerTail
-                  }
-                : undefined
+              displayHeading
             );
             try {
               busElement.classList.add('mf-bus-marker');
-              if (hasTracerTail) busElement.setAttribute("data-mf-has-trail", "1");
-              else busElement.removeAttribute("data-mf-has-trail");
               busElement._mfBusMarker = null;
             } catch (_) {}
-            if (isOtpLegOverlay && visualMismatch) {
+            if (isOtpLegOverlay && isOppositeDir) {
               // OTP overlays shouldn't render opposite-direction buses at all (filtered above),
               // but keep a guard here for safety.
               return;
             }
-            if (visualMismatch) {
-              busElement.style.opacity = busV2 && motionMismatch ? "0.92" : busV2 ? "0.72" : "0.45";
+            if (isOppositeDir) {
+              // Visual language: opposite direction = faded (like dashed line / hollow stops).
+              busElement.style.opacity = "0.45";
             } else {
               busElement.style.opacity = "1";
             }
             const busMarker = new maplibregl.Marker({
               element: busElement,
-              className: "mf-bus-marker-wrap",
-              ...mbtaBusMarkerMapOptions(busElement)
+              ...mbtaBusMarkerMapOptions()
             });
             busMarker.setLngLat([lonN, latN]);
             
@@ -4639,22 +3303,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             
             const refreshBusPopup = () => {
               let dirLabel = "";
-              if (busDir === 1) dirLabel = agencyMismatch ? "Inbound (feed)" : "Inbound";
-              else if (busDir === 0) dirLabel = agencyMismatch ? "Outbound (feed)" : "Outbound";
+              if (busDir === 1) dirLabel = isOppositeDir ? "Inbound (opposite)" : "Inbound";
+              else if (busDir === 0) dirLabel = isOppositeDir ? "Outbound (opposite)" : "Outbound";
               else dirLabel = "Unknown";
-              let motionLabel = "";
-              if (busV2 && motionDir === 0) motionLabel = "Along route →";
-              else if (busV2 && motionDir === 1) motionLabel = "Along route ←";
-              else if (busV2) motionLabel = "Motion: —";
-              const headsignLine = sheetHeadsign
-                ? `<div style='margin-bottom:4px;'><strong>Headsign:</strong> ${sheetHeadsign}</div>`
-                : "";
-              const motionLine =
-                busV2 && motionLabel
-                  ? `<div style='margin-bottom:4px;color:${motionMismatch ? "#fbbf24" : "#94a3b8"};'><strong>Tracker:</strong> ${motionLabel}${
-                      motionMismatch ? " · differs from this map direction" : ""
-                    }</div>`
-                  : "";
               const nextStopETA = getNextStopFromETAs();
               const tuLive = metrofeedGetRouteTripUpdatesForOverlay(etaOverlayKey);
               const hasRealtimeTrips = tuLive && tuLive.etaSource === "realtime-trips";
@@ -4674,9 +3325,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                   <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
                 </div>
                 <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
-                ${headsignLine}
                 <div style='margin-bottom:4px;'><strong>Direction:</strong> ${dirLabel}</div>
-                ${motionLine}
                 ${nextStopHTML}
                 <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${getOccupancyTextLive()}</div>
               </div>
@@ -4729,13 +3378,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           Object.keys(vehicleHeadingState).forEach((k) => {
             if (!aliveHeadingIds.has(k)) delete vehicleHeadingState[k];
           });
-          Object.keys(vehicleTrailState).forEach((k) => {
-            if (!aliveHeadingIds.has(k)) removeVehicleTracer(k);
-          });
           
           console.log(`[attachRouteToMap] Displayed ${vehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
-          metrofeedUpdateBusHeadingArrowVisibility(map);
-
+          
           if (routeBuses.length === 0 && allBuses.length > 0) {
             console.warn(`[attachRouteToMap] ⚠️ No buses matched for route "${routeNum}" direction ${directionId}, but ${allBuses.length} total buses found in feed`);
             console.warn(`[attachRouteToMap] This suggests a route ID mismatch. Check route matching logic.`);
@@ -4806,20 +3451,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
               }
             } catch (e2) {}
           }, 150);
-
-          try {
-            metrofeedRefreshRouteChevronDirection({
-              map: map,
-              shape: primaryShape,
-              routeColor: routeColor,
-              stops: stops,
-              routeData: routeData,
-              scheduleBucket: scheduleBucket,
-              overlayElements: overlayElements,
-              overlayKey: overlayKeyForTrips,
-              routeId: routeId
-            });
-          } catch (_) {}
         } catch (e) {
           console.warn("[realtimeTrips] Unavailable:", e);
         }

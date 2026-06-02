@@ -251,33 +251,12 @@ const CITIES = {
     // Live vehicle marker SVG alignment. bus.svg faces WEST; flip 180° so it faces direction-of-travel.
     busSvgHeadingOffsetDeg: 180,
 
-    /** Test City only: snap position, motion tracker, chevrons, softer opposite-bus styling. */
-    busTrackerV2: true,
-    busMarkerSnapMaxMeters: 120,
-    busMarkerSnapLookaheadSegs: 4,
-    busMarkerSnapHysteresisRatio: 0.28,
-    /** One direction chevron every 0.5 mi (~805 m). */
-    busRouteChevronSpacingM: 804.672,
-    /** Match stop dot size (12px). */
-    busRouteChevronSizePx: 12,
-    /** Bus circle uses newbus.svg from site root. */
-    busMarkerSvgFile: "newbus.svg",
-    /** White dot tracer behind bus (meters). */
-    busTracerLengthM: 100,
-    busTracerDotSpacingM: 12,
-    busTracerMinStepM: 2,
-    /** Reset trail history if the bus jumps farther than this (snap / GPS leap). */
-    busTracerJumpResetM: 200,
-    busTracerMaxTrailPoints: 16,
-    busTracerMaxDots: 10,
-    /** Ignore duplicate vehicle paints within this window (ms) so trail history is not double-advanced. */
-    busPaintCoalesceMs: 450,
-    /** Compass wedge before tail: use nearest route segment bearing (not GPS). */
-    busWedgeUseRouteTangent: true,
-    busUseMotionDirection: true,
-    busSoftOppositeDim: true,
-    /** Show compass wedge only when zoomed in (map maxZoom is 18 → shows at 17+). Hidden once tail exists. */
-    busHeadingArrowMinZoom: 17,
+    /** Route direction › along the selected overlay line (schedule / stop order). Test City only. */
+    routeLineChevrons: true,
+    routeLineChevronSpacingPx: 96,
+    routeLineChevronSizePx: 11,
+    routeLineChevronOpacity: 0.62,
+    routeLineChevronMinZoom: 12,
 
     showRailRoutes: false,
 
