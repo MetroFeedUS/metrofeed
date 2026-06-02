@@ -592,8 +592,115 @@ function metrofeedSamplePolylineBySpacing(shape, spacingM, reverse) {
   return pts;
 }
 
+/** Bus glyph asset (Test City v2 marker). */
+const MF_NEWBUS_SVG_FILE = "newbus.svg";
+/** Path geometry from newbus.svg — inline fallback if the file fails to load. */
 const MF_NEWBUS_SVG_PATH =
   "m91.5600586 26.25h-5.9400635v-5.9399414c0-6.555685-5.3144302-11.8701172-11.8701172-11.8701172h-47.499876c-6.5556183 0-11.8699951 5.3143778-11.8699951 11.8699951v5.9400635h-5.9400025c-3.2805729 0-5.9400024 2.6594296-5.9400024 5.9400024v9.7041588c0 1.1961899.9697061 2.1658974 2.1658988 2.1658974h1.6082048c1.1961927 0 2.1658988-.9697075 2.1658988-2.1658974v-9.7042198h5.9400024v57.204216c0 1.1961975.9697056 2.1659012 2.1658993 2.1659012h7.5381966c1.1961918 0 2.1658993-.9697037 2.1658993-2.1659012v-3.7741623h47.5v3.7741623c0 1.1961975.9697037 2.1659012 2.1659012 2.1659012h7.5381927c1.1961975 0 2.1659012-.9697037 2.1659012-2.1659012v-57.204216h5.9400024v9.7042198c0 1.1961899.9697037 2.1658974 2.1658936 2.1658974h1.6082077c1.1961899 0 2.1659012-.9697075 2.1659012-2.1658974v-9.7042198c-.0000019-3.2805386-2.6594028-5.9399414-5.9399433-5.9399414zm-56.4050331-11.8699951h29.6899452c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v.0000057c0 1.6375389-1.3274841 2.9650249-2.9650269 2.9650249h-29.6899452c-1.6375351 0-2.965023-1.327486-2.965023-2.9650249v-.0000057c-.0000001-1.637537 1.3274879-2.965023 2.965023-2.965023zm-5.1415444 57.3099365h-7.5269604c-1.2020588 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744625-2.1765213 2.1765213-2.1765213h7.5269604c1.2020588 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744625 2.1765213-2.1765213 2.1765213zm17.0165482-15.75h-23.7550068c-1.637537 0-2.965023-1.3274879-2.965023-2.965023v-23.7598954c0-1.637537 1.327486-2.965023 2.965023-2.965023h23.7550068zm30.4834518 15.75h-7.5269623c-1.2020569 0-2.1765213-.9744644-2.1765213-2.1765213v-1.5868988c0-1.2020569.9744644-2.1765213 2.1765213-2.1765213h7.5269623c1.2020569 0 2.1765213.9744644 2.1765213 2.1765213v1.5868988c0 1.2020569-.9744644 2.1765213-2.1765213 2.1765213zm-.7885055-15.75h-23.7550049v-29.6899414h23.7550049c1.6375427 0 2.9650269 1.327486 2.9650269 2.965023v23.7598953c-.0000001 1.6375352-1.3274842 2.9650231-2.9650269 2.9650231z";
+
+/**
+ * newbus.svg inside the route-colored circle (img + inline fallback).
+ */
+function metrofeedCreateNewbusIconEl(sizePx) {
+  const n = Math.max(14, Math.round(Number(sizePx) || 20));
+  const wrap = document.createElement("span");
+  wrap.className = "mf-newbus-icon";
+  wrap.style.cssText =
+    "display:flex;align-items:center;justify-content:center;width:" +
+    n +
+    "px;height:" +
+    n +
+    "px;pointer-events:none;";
+
+  function appendInlineFallback() {
+    try {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", String(n));
+      svg.setAttribute("height", String(n));
+      svg.setAttribute("viewBox", "0 0 100 100");
+      svg.style.display = "block";
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", MF_NEWBUS_SVG_PATH);
+      path.setAttribute("fill", "#1a1a1a");
+      path.setAttribute("stroke", "#ffffff");
+      path.setAttribute("stroke-width", "3");
+      path.setAttribute("stroke-linejoin", "round");
+      path.setAttribute("paint-order", "stroke fill");
+      svg.appendChild(path);
+      wrap.appendChild(svg);
+    } catch (_) {}
+  }
+
+  const svgFile =
+    (typeof window !== "undefined" &&
+      window.CITY_CONFIG &&
+      typeof window.CITY_CONFIG.busMarkerSvgFile === "string" &&
+      window.CITY_CONFIG.busMarkerSvgFile.trim()) ||
+    MF_NEWBUS_SVG_FILE;
+
+  try {
+    const img = document.createElement("img");
+    img.className = "mf-newbus-icon-img";
+    img.src = svgFile;
+    img.alt = "";
+    img.width = n;
+    img.height = n;
+    img.draggable = false;
+    img.decoding = "async";
+    img.style.cssText =
+      "display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;" +
+      "filter:brightness(0) saturate(100%);";
+    img.onerror = function () {
+      try {
+        img.remove();
+      } catch (_) {}
+      appendInlineFallback();
+    };
+    wrap.appendChild(img);
+  } catch (_) {
+    appendInlineFallback();
+  }
+  return wrap;
+}
+
+/**
+ * Solid heading triangle beside the bus circle (points east; rotate for bearing).
+ */
+function metrofeedCreateBusSideArrowSvg(routeColor, circleDiam) {
+  const h = Math.max(20, Math.round(Number(circleDiam) || 28));
+  const w = Math.max(14, Math.round(h * 0.78));
+  const pad = 2;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", String(w + pad * 2));
+  svg.setAttribute("height", String(h + pad * 2));
+  svg.setAttribute("viewBox", "0 0 " + (w + pad * 2) + " " + (h + pad * 2));
+  svg.style.display = "block";
+  svg.style.overflow = "visible";
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute(
+    "d",
+    "M " +
+      pad +
+      " " +
+      (pad + h * 0.1) +
+      " L " +
+      (pad + w) +
+      " " +
+      (pad + h / 2) +
+      " L " +
+      pad +
+      " " +
+      (pad + h * 0.9) +
+      " Z"
+  );
+  path.setAttribute("fill", routeColor || "#facc15");
+  path.setAttribute("stroke", "#ffffff");
+  path.setAttribute("stroke-width", "2.5");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("paint-order", "stroke fill");
+  svg.appendChild(path);
+  return { svg: svg, width: w + pad * 2, height: h + pad * 2, offsetX: pad };
+}
 
 /**
  * Arrow wedge whose inner edge is a circle arc (hugs the bus pin circle).
@@ -724,30 +831,7 @@ function metrofeedSweepLegacyRouteChevrons(mapInstance) {
   return removed;
 }
 
-/** Bold filled chevron for route direction (points east; rotate for bearing). */
-function metrofeedCreateRouteChevronSvg(sizePx, routeColor) {
-  const sz = Math.max(16, Number(sizePx) || 40);
-  const fill = routeColor || "#facc15";
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", String(sz));
-  svg.setAttribute("height", String(sz));
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.style.display = "block";
-  svg.style.overflow = "visible";
-  svg.style.filter = "drop-shadow(0 1px 3px rgba(0,0,0,0.75))";
-
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", "M7 3 L19 12 L7 21 Z");
-  path.setAttribute("fill", fill);
-  path.setAttribute("stroke", "#ffffff");
-  path.setAttribute("stroke-width", "2.5");
-  path.setAttribute("stroke-linejoin", "round");
-  path.setAttribute("paint-order", "stroke fill");
-  svg.appendChild(path);
-  return svg;
-}
-
-/** Route-direction chevrons along the polyline (SVG triangles, larger). */
+/** Route-direction chevrons along the polyline (plain ">" glyphs, large). */
 function metrofeedInstallRouteDirectionChevrons(
   map,
   shape,
@@ -760,13 +844,15 @@ function metrofeedInstallRouteDirectionChevrons(
   const spacingM =
     window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
       ? Number(window.CITY_CONFIG.busRouteChevronSpacingM)
-      : 220;
+      : 260;
   const chevronPx =
     window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSizePx != null
       ? Number(window.CITY_CONFIG.busRouteChevronSizePx)
-      : 44;
+      : 80;
   const reverse = Number(directionId) === 1;
   const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, reverse);
+  const fg = routeColor || "#facc15";
+  const halo = pickContrastingTextColor(fg) === "#ffffff" ? "#000000" : "#ffffff";
 
   samples.forEach(function (pt) {
     const el = document.createElement("div");
@@ -774,18 +860,27 @@ function metrofeedInstallRouteDirectionChevrons(
     el.setAttribute("aria-hidden", "true");
     const br = metrofeedNormalizeHeadingDeg(pt.bearing);
     const rot = br != null ? (br - 90 + 3600) % 360 : 0;
+    const fontPx = Math.round(chevronPx * 0.96);
+    el.textContent = ">";
     el.style.cssText = [
       "width:" + chevronPx + "px",
       "height:" + chevronPx + "px",
       "display:flex",
       "align-items:center",
       "justify-content:center",
+      "font-family:Arial Black,Helvetica Neue,Arial,sans-serif",
+      "font-size:" + fontPx + "px",
+      "font-weight:900",
+      "line-height:0.85",
+      "color:" + fg,
+      "-webkit-text-stroke:3px " + halo,
+      "paint-order:stroke fill",
+      "text-shadow:0 0 5px " + halo + ",0 2px 8px rgba(0,0,0,0.9)",
       "transform:rotate(" + rot + "deg)",
       "transform-origin:50% 50%",
       "pointer-events:none",
       "user-select:none"
     ].join(";");
-    el.appendChild(metrofeedCreateRouteChevronSvg(chevronPx, routeColor));
     try {
       const mk = new maplibregl.Marker({ element: el, anchor: "center" })
         .setLngLat([pt.lon, pt.lat])
@@ -1510,14 +1605,14 @@ try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_
 
 function metrofeedBusMarkerDiamPx() {
   if (metrofeedTestCityBusV2Enabled()) {
-    return Math.max(26, Math.round(MF_BUS_COMPASS_DIAM_PX * 2.1));
+    return Math.max(30, Math.round(MF_BUS_COMPASS_DIAM_PX * 2.5));
   }
   return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.43));
 }
 
 /**
  * Live bus marker.
- * Test City v2: route-colored circle + same-color newbus + circle-hugging arrow + white dot tracer (map).
+ * Test City v2: route-colored circle + newbus.svg + side triangle + white dot tracer (map).
  */
 function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg, markerOpts) {
   if (!metrofeedTestCityBusV2Enabled()) {
@@ -1588,23 +1683,8 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   }
 
   try {
-    const busSize = Math.max(16, Math.round(dc * 0.68));
-    const busFill = metrofeedDarkenHex(routeFill, 0.42);
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("width", String(busSize));
-    svg.setAttribute("height", String(busSize));
-    svg.setAttribute("viewBox", "0 0 100 100");
-    svg.style.display = "block";
-    svg.style.filter = "drop-shadow(0 0 1px rgba(0,0,0,0.35))";
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", MF_NEWBUS_SVG_PATH);
-    path.setAttribute("fill", busFill);
-    path.setAttribute("stroke", "#ffffff");
-    path.setAttribute("stroke-width", "3.5");
-    path.setAttribute("stroke-linejoin", "round");
-    path.setAttribute("paint-order", "stroke fill");
-    svg.appendChild(path);
-    circle.appendChild(svg);
+    const busSize = Math.max(18, Math.round(dc * 0.72));
+    circle.appendChild(metrofeedCreateNewbusIconEl(busSize));
   } catch (_) {}
 
   pin.appendChild(circle);
@@ -1614,22 +1694,24 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
     arrowWrap.className = "mf-bus-marker-arrow";
     arrowWrap.setAttribute("aria-hidden", "true");
     const arrowFill = motionMismatch ? "#fbbf24" : routeFill;
-    const arrowLen = R * 0.95;
-    const arrowSvg = metrofeedCreateCircleHugArrowSvg(arrowFill, R, arrowLen, 24);
-    const aw = parseFloat(arrowSvg.getAttribute("width") || String(R * 2 + arrowLen + 6));
-    const ah = parseFloat(arrowSvg.getAttribute("height") || String(dc + 6));
+    const tri = metrofeedCreateBusSideArrowSvg(arrowFill, dc);
+    const aw = tri.width;
+    const ah = tri.height;
+    const triOffsetX = R - 1;
+    const rotOriginX = R - triOffsetX;
+    const rotOriginY = ah / 2;
     arrowWrap.style.cssText = [
       "position:absolute",
-      "left:" + pinPad + "px",
-      "top:" + pinPad + "px",
+      "left:" + (pinPad + triOffsetX) + "px",
+      "top:" + (pinPad + (dc - ah) / 2) + "px",
       "width:" + aw + "px",
       "height:" + ah + "px",
       "transform:rotate(" + ((normH - 90 + 3600) % 360) + "deg)",
-      "transform-origin:" + R + "px " + R + "px",
-      "filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
+      "transform-origin:" + rotOriginX + "px " + rotOriginY + "px",
+      "filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6))",
       "pointer-events:none"
     ].join(";");
-    arrowWrap.appendChild(arrowSvg);
+    arrowWrap.appendChild(tri.svg);
     pin.appendChild(arrowWrap);
   }
 
@@ -3379,8 +3461,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const slice = dots.slice(0, maxDots);
         const n = slice.length;
         slice.forEach(function (pt, idx) {
-          const t = n > 1 ? idx / (n - 1) : 0;
-          const sizePx = Math.max(3, Math.round(9 - t * 6));
+          const t = n > 1 ? 1 - idx / (n - 1) : 1;
+          const sizePx = Math.max(5, Math.round(5 + t * 11));
           const el = document.createElement("div");
           el.className = "mf-bus-trace-dot";
           el.setAttribute("aria-hidden", "true");
@@ -3389,9 +3471,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             "height:" + sizePx + "px",
             "border-radius:50%",
             "background:#ffffff",
-            "border:1px solid rgba(0,0,0,0.35)",
-            "box-shadow:0 0 2px rgba(0,0,0,0.45)",
-            "opacity:" + (0.45 + (1 - t) * 0.55).toFixed(2),
+            "border:2px solid rgba(0,0,0,0.65)",
+            "box-shadow:0 1px 4px rgba(0,0,0,0.55)",
+            "opacity:" + (0.55 + t * 0.45).toFixed(2),
             "pointer-events:none"
           ].join(";");
           try {
