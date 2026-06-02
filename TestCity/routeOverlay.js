@@ -514,7 +514,72 @@ function metrofeedUpdateMotionDirection(hState, snap) {
   return hState.motionDir;
 }
 
-/** Remove legacy tiny HTML route chevrons (replaced by symbol layer). */
+/** Sample polyline at fixed spacing (m) for route direction arrows. shape coords [lat, lon]. */
+function metrofeedSamplePolylineBySpacing(shape, spacingM, reverse) {
+  if (!Array.isArray(shape) || shape.length < 2) return [];
+  const step = Math.max(80, Number(spacingM) || 350);
+  const pts = [];
+  let acc = 0;
+  let nextAt = step * 0.5;
+  const segs = [];
+  for (let i = 0; i < shape.length - 1; i++) {
+    const p0 = shape[i];
+    const p1 = shape[i + 1];
+    const y0 = Number(p0 && p0[0]);
+    const x0 = Number(p0 && p0[1]);
+    const y1 = Number(p1 && p1[0]);
+    const x1 = Number(p1 && p1[1]);
+    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
+    segs.push({ y0, x0, y1, x1, len: metrofeedHaversineM(y0, x0, y1, x1) });
+  }
+  if (!segs.length) return [];
+  const total = segs.reduce((s, g) => s + g.len, 0);
+  if (total < step) {
+    const mid = segs[Math.floor(segs.length / 2)];
+    const br = reverse
+      ? metrofeedBearingDeg(mid.y1, mid.x1, mid.y0, mid.x0)
+      : metrofeedBearingDeg(mid.y0, mid.x0, mid.y1, mid.x1);
+    return [{ lat: (mid.y0 + mid.y1) / 2, lon: (mid.x0 + mid.x1) / 2, bearing: br }];
+  }
+  for (let si = 0; si < segs.length; si++) {
+    const g = segs[si];
+    const segStart = acc;
+    acc += g.len;
+    while (nextAt <= acc) {
+      const t = g.len > 0 ? (nextAt - segStart) / g.len : 0;
+      const tf = Math.max(0, Math.min(1, t));
+      const lat = g.y0 + (g.y1 - g.y0) * tf;
+      const lon = g.x0 + (g.x1 - g.x0) * tf;
+      const br = reverse
+        ? metrofeedBearingDeg(g.y1, g.x1, g.y0, g.x0)
+        : metrofeedBearingDeg(g.y0, g.x0, g.y1, g.x1);
+      pts.push({ lat, lon, bearing: br });
+      nextAt += step;
+    }
+  }
+  return pts;
+}
+
+/** SVG triangle pointing right (east); rotate wrapper for map bearing. */
+function metrofeedCreateDirectionTriangleSvg(sizePx, fill, stroke, strokeW) {
+  const sz = Math.max(12, Number(sizePx) || 18);
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", String(sz));
+  svg.setAttribute("height", String(sz));
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.style.display = "block";
+  svg.style.overflow = "visible";
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M3 3 L21 12 L3 21 Z");
+  path.setAttribute("fill", fill || "#ffffff");
+  path.setAttribute("stroke", stroke || "rgba(0,0,0,0.85)");
+  path.setAttribute("stroke-width", String(strokeW != null ? strokeW : 1.8));
+  path.setAttribute("stroke-linejoin", "round");
+  svg.appendChild(path);
+  return svg;
+}
+
+/** Remove legacy tiny HTML route chevrons (replaced by larger arrow markers). */
 function metrofeedSweepLegacyRouteChevrons(mapInstance) {
   const map = mapInstance || (typeof window !== "undefined" ? window.map : null);
   const root = map && typeof map.getContainer === "function" ? map.getContainer() : null;
@@ -535,89 +600,53 @@ function metrofeedSweepLegacyRouteChevrons(mapInstance) {
   return removed;
 }
 
-/**
- * Direction arrows baked into the route line (MapLibre symbol layer along the polyline).
- */
-function metrofeedInstallRouteDirectionSymbolLayer(
+/** Visible direction triangles along the route polyline (DOM markers; works on all tile styles). */
+function metrofeedInstallRouteDirectionArrows(
   map,
   shape,
   routeColor,
   directionId,
-  mapLayerKey,
-  shapeIndex,
   overlayElements
 ) {
   if (!metrofeedTestCityBusV2Enabled() || !map || !shape || shape.length < 2) return;
 
-  const spacingPx =
-    window.CITY_CONFIG && window.CITY_CONFIG.busRouteArrowSpacingPx != null
-      ? Number(window.CITY_CONFIG.busRouteArrowSpacingPx)
-      : window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
-        ? Math.max(80, Math.round(Number(window.CITY_CONFIG.busRouteChevronSpacingM) * 0.45))
-        : 160;
-
-  let coords = [];
-  for (let i = 0; i < shape.length; i++) {
-    const p = shape[i];
-    const lat = Number(p && p[0]);
-    const lon = Number(p && p[1]);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-    coords.push([lon, lat]);
-  }
-  if (coords.length < 2) return;
-  if (Number(directionId) === 1) coords = coords.slice().reverse();
-
-  const srcId = `route-dir-arrows-src-${mapLayerKey}-${shapeIndex}`;
-  const layerId = `route-dir-arrows-layer-${mapLayerKey}-${shapeIndex}`;
-
-  try {
-    if (map.getLayer(layerId)) map.removeLayer(layerId);
-    if (map.getSource(srcId)) map.removeSource(srcId);
-  } catch (_) {}
-
+  const spacingM =
+    window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
+      ? Number(window.CITY_CONFIG.busRouteChevronSpacingM)
+      : 320;
+  const reverse = Number(directionId) === 1;
+  const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, reverse);
   const fg = pickContrastingTextColor(routeColor);
-  const halo = fg === "#ffffff" ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.92)";
+  const arrowFill = fg;
+  const arrowStroke = fg === "#ffffff" ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.95)";
+  const arrowPx = 20;
 
-  try {
-    map.addSource(srcId, {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        properties: {},
-        geometry: { type: "LineString", coordinates: coords }
-      }
-    });
-    overlayElements.sources.push(srcId);
-
-    const layerDef = {
-      id: layerId,
-      type: "symbol",
-      source: srcId,
-      layout: {
-        "symbol-placement": "line",
-        "symbol-spacing": spacingPx,
-        "text-field": "▸",
-        "text-size": ["interpolate", ["linear"], ["zoom"], 9, 14, 12, 18, 15, 24],
-        "text-allow-overlap": true,
-        "text-ignore-placement": true,
-        "text-keep-upright": false,
-        "text-rotation-alignment": "map",
-        "text-pitch-alignment": "viewport"
-      },
-      paint: {
-        "text-color": fg,
-        "text-halo-color": halo,
-        "text-halo-width": 2.5,
-        "text-opacity": 1
-      }
-    };
-
-    // No beforeId — layer stacks above the route line so arrows stay visible.
-    map.addLayer(layerDef);
-    overlayElements.layers.push(layerId);
-  } catch (e) {
-    console.warn("[metrofeedInstallRouteDirectionSymbolLayer]", e);
-  }
+  samples.forEach(function (pt) {
+    const el = document.createElement("div");
+    el.className = "mf-route-dir-arrow";
+    el.setAttribute("aria-hidden", "true");
+    const br = metrofeedNormalizeHeadingDeg(pt.bearing);
+    const rot = br != null ? (br - 90 + 3600) % 360 : 0;
+    el.style.cssText = [
+      "width:" + arrowPx + "px",
+      "height:" + arrowPx + "px",
+      "display:flex",
+      "align-items:center",
+      "justify-content:center",
+      "transform:rotate(" + rot + "deg)",
+      "transform-origin:50% 50%",
+      "filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
+      "pointer-events:none",
+      "user-select:none"
+    ].join(";");
+    el.appendChild(metrofeedCreateDirectionTriangleSvg(arrowPx, arrowFill, arrowStroke, 2));
+    try {
+      const mk = new maplibregl.Marker({ element: el, anchor: "center" })
+        .setLngLat([pt.lon, pt.lat])
+        .addTo(map);
+      overlayElements.markers.push(mk);
+    } catch (_) {}
+  });
 }
 
 function metrofeedShapeBearingLookahead(shape, segIdx, forward, lookaheadSegs) {
@@ -1334,13 +1363,15 @@ var MF_BUS_COMPASS_DIAM_PX =
 try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_COMPASS_DIAM_PX; } catch (_) {}
 
 function metrofeedBusMarkerDiamPx() {
-  // Scale live vehicle marker size up by ~30% vs prior baseline.
+  if (metrofeedTestCityBusV2Enabled()) {
+    return Math.max(26, Math.round(MF_BUS_COMPASS_DIAM_PX * 2.1));
+  }
   return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.43));
 }
 
 /**
- * Live bus marker: pill label + route-color dot.
- * Test City v2: route-colored circle + `newbus.svg` + separate direction arrow.
+ * Live bus marker.
+ * Test City v2: [circle + newbus] [triangle arrow] — bus stays upright; arrow shows heading.
  */
 function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg, markerOpts) {
   markerOpts = markerOpts && typeof markerOpts === "object" ? markerOpts : {};
@@ -1353,38 +1384,56 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   const fg = pickContrastingTextColor(routeColor);
   const badgeBg = fg;
   const badgeFg = routeColor;
+  const normH = metrofeedNormalizeHeadingDeg(headingDeg);
+  const motionMismatch = markerOpts.motionMismatch === true;
+  const arrowPx = Math.max(16, Math.round(dc * 0.72));
+  const gap = 2;
+  const bodyW = dc + (normH != null ? arrowPx + gap : 0);
 
   const label = document.createElement("div");
   label.style.cssText = `margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;`;
   label.innerHTML = `<span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}`;
 
-  const dialWrap = document.createElement("div");
-  dialWrap.style.cssText = [
+  const body = document.createElement("div");
+  body.className = "mf-bus-marker-body";
+  body.style.cssText = [
     "position:relative",
-    `width:${dc}px`,
-    `height:${dc}px`,
+    "display:flex",
+    "flex-direction:row",
+    "align-items:center",
+    "justify-content:flex-start",
+    "width:" + bodyW + "px",
+    "height:" + dc + "px"
+  ].join(";");
+
+  const circle = document.createElement("div");
+  circle.className = "mf-bus-marker-circle";
+  circle.style.cssText = [
+    "box-sizing:border-box",
     "flex-shrink:0",
+    "width:" + dc + "px",
+    "height:" + dc + "px",
     "border-radius:50%",
-    `background:${routeColor}`,
-    "border:2px solid rgba(255,255,255,0.95)",
-    "box-shadow:0 2px 6px rgba(0,0,0,0.45)",
+    "background:" + routeColor,
+    "border:2.5px solid rgba(255,255,255,0.95)",
+    "box-shadow:0 2px 8px rgba(0,0,0,0.5)",
     "display:flex",
     "align-items:center",
     "justify-content:center"
   ].join(";");
 
-  const normH = metrofeedNormalizeHeadingDeg(headingDeg);
-  const motionMismatch = markerOpts.motionMismatch === true;
-  // newbus.svg (100x100 viewBox): keep bus icon stable; only arrow rotates.
+  if (motionMismatch) {
+    circle.style.outline = "2px solid #fbbf24";
+    circle.style.outlineOffset = "2px";
+  }
+
   try {
-    const busSize = Math.max(12, Math.round(dc * 0.68));
+    const busSize = Math.max(14, Math.round(dc * 0.62));
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("width", String(busSize));
     svg.setAttribute("height", String(busSize));
     svg.setAttribute("viewBox", "0 0 100 100");
     svg.style.display = "block";
-    svg.style.filter = "drop-shadow(0 1px 2px rgba(0,0,0,0.45))";
-
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute(
       "d",
@@ -1392,47 +1441,45 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
     );
     path.setAttribute("fill", fg);
     svg.appendChild(path);
-    dialWrap.appendChild(svg);
+    circle.appendChild(svg);
   } catch (_) {}
 
-  // Direction arrow (rotates; bus icon does not).
-  if (normH != null) {
-    const arrow = document.createElement("div");
-    arrow.setAttribute("aria-hidden", "true");
-    const rot = (normH - 90 + 3600) % 360;
-    const arrowColor = motionMismatch ? "#fbbf24" : fg;
-    arrow.style.cssText = [
-      "position:absolute",
-      "left:50%",
-      "top:50%",
-      "transform:translate(-50%,-50%) rotate(" + rot + "deg) translateX(" + Math.round(dc * 0.46) + "px)",
-      "transform-origin:50% 50%",
-      "font-size:" + Math.max(10, Math.round(dc * 0.55)) + "px",
-      "font-weight:900",
-      "line-height:1",
-      "color:" + arrowColor,
-      "text-shadow:0 0 2px rgba(0,0,0,0.85)",
-      "pointer-events:none",
-      "user-select:none"
-    ].join(";");
-    arrow.textContent = "›";
-    dialWrap.appendChild(arrow);
-  }
+  body.appendChild(circle);
 
-  if (motionMismatch) {
-    dialWrap.style.boxSizing = "border-box";
-    dialWrap.style.borderRadius = "50%";
-    dialWrap.style.outline = "2px solid #fbbf24";
-    dialWrap.style.outlineOffset = "2px";
+  if (normH != null) {
+    const arrowWrap = document.createElement("div");
+    arrowWrap.className = "mf-bus-marker-arrow";
+    arrowWrap.setAttribute("aria-hidden", "true");
+    const rot = (normH - 90 + 3600) % 360;
+    const arrowFill = motionMismatch ? "#fbbf24" : fg;
+    const arrowStroke = motionMismatch ? "rgba(0,0,0,0.9)" : fg === "#ffffff" ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.95)";
+    arrowWrap.style.cssText = [
+      "flex-shrink:0",
+      "width:" + arrowPx + "px",
+      "height:" + arrowPx + "px",
+      "margin-left:" + gap + "px",
+      "display:flex",
+      "align-items:center",
+      "justify-content:center",
+      "transform:rotate(" + rot + "deg)",
+      "transform-origin:50% 50%",
+      "filter:drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
+      "pointer-events:none"
+    ].join(";");
+    arrowWrap.appendChild(metrofeedCreateDirectionTriangleSvg(arrowPx, arrowFill, arrowStroke, 2));
+    body.appendChild(arrowWrap);
   }
 
   wrap.appendChild(label);
-  wrap.appendChild(dialWrap);
+  wrap.appendChild(body);
   return wrap;
 }
 
 function mbtaBusMarkerMapOptions() {
   const dc = metrofeedBusMarkerDiamPx();
+  if (metrofeedTestCityBusV2Enabled()) {
+    return { anchor: "center", offset: [Math.round(dc * 0.12), 0] };
+  }
   return { anchor: "bottom", offset: [0, -dc / 2] };
 }
 
@@ -1988,13 +2035,11 @@ function attachRouteToMap(map, routeId, directionId, options) {
       );
       overlayElements.layers.push(routeLayerId);
 
-      metrofeedInstallRouteDirectionSymbolLayer(
+      metrofeedInstallRouteDirectionArrows(
         map,
         shape,
         routeColor,
         directionId,
-        mapLayerKey,
-        shapeIndex,
         overlayElements
       );
     });
