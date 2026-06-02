@@ -879,6 +879,68 @@ function metrofeedCreateRouteChevronGlyphEl(sizePx, routeColor) {
   return wrap;
 }
 
+/**
+ * Infer chevron direction from realtime "next arrivals" times.
+ * Idea: stops earlier in time should be earlier along the shape (or later, if reverse).
+ * Returns 0 (forward), 1 (reverse), or null (insufficient signal).
+ */
+function metrofeedInferDirectionFromStopEtas(shape, stops, updatesByStopId) {
+  try {
+    if (!Array.isArray(shape) || shape.length < 2) return null;
+    if (!Array.isArray(stops) || stops.length < 4) return null;
+    if (!updatesByStopId || typeof updatesByStopId !== "object") return null;
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const pts = [];
+    for (let i = 0; i < stops.length; i++) {
+      const s = stops[i];
+      const sid = s && (s.stop_id != null ? String(s.stop_id) : "");
+      const la = s && Number(s.lat);
+      const lo = s && Number(s.lon);
+      if (!sid || !Number.isFinite(la) || !Number.isFinite(lo)) continue;
+      const list = Array.isArray(updatesByStopId[sid]) ? updatesByStopId[sid] : [];
+      if (!list.length) continue;
+      const t = Number(list[0] && list[0].time);
+      if (!Number.isFinite(t)) continue;
+      if (t < nowSec - 120) continue;
+      if (t > nowSec + 2 * 3600) continue; // ignore far-future noise
+
+      const snap = metrofeedSnapPositionParallelLocked({
+        shapes: [shape],
+        lat: la,
+        lon: lo,
+        maxSnapMeters: 200,
+        hysteresisRatio: 0,
+        state: {}
+      });
+      if (!snap || !Number.isFinite(snap.alongM)) continue;
+      pts.push({ t, alongM: snap.alongM });
+    }
+
+    // Need enough ETA-bearing stops to be confident.
+    if (pts.length < 5) return null;
+    pts.sort((a, b) => a.t - b.t);
+
+    let pos = 0;
+    let neg = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const d = pts[i].alongM - pts[i - 1].alongM;
+      if (Math.abs(d) < 20) continue;
+      if (d > 0) pos++;
+      else neg++;
+    }
+    const total = pos + neg;
+    if (total < 3) return null;
+    const fracPos = pos / total;
+    const fracNeg = neg / total;
+    if (fracPos >= 0.67) return 0;
+    if (fracNeg >= 0.67) return 1;
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
 /** Route-direction chevrons along the polyline (plain ">" on the line, map-aligned). */
 function metrofeedInstallRouteDirectionChevrons(
   map,
@@ -903,6 +965,18 @@ function metrofeedInstallRouteDirectionChevrons(
   const reverse = Number(directionId) === 1;
   const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, reverse);
   const fg = routeColor || "#facc15";
+
+  // Clear previously installed chevrons for this overlay.
+  try {
+    if (overlayElements && Array.isArray(overlayElements.chevronMarkers)) {
+      overlayElements.chevronMarkers.forEach((mk) => {
+        try {
+          if (mk && typeof mk.remove === "function") mk.remove();
+        } catch (_) {}
+      });
+      overlayElements.chevronMarkers = [];
+    }
+  } catch (_) {}
 
   samples.forEach(function (pt) {
     const rot = metrofeedRouteChevronRotationDeg(pt.bearing);
@@ -938,6 +1012,9 @@ function metrofeedInstallRouteDirectionChevrons(
         .setLngLat([pt.lon, pt.lat])
         .addTo(map);
       overlayElements.markers.push(mk);
+      if (overlayElements && Array.isArray(overlayElements.chevronMarkers)) {
+        overlayElements.chevronMarkers.push(mk);
+      }
     } catch (_) {}
   });
 }
@@ -2256,6 +2333,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     sources:  [],
     layers:   [],
     markers:  [],
+    chevronMarkers: [],
     controls: [],
     intervals: [], // For bus tracking intervals
     unsubscribers: [], // cleanup hooks (shared vehicle feed subscriptions, observers, etc.)
@@ -2399,14 +2477,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
         beforeId
       );
       overlayElements.layers.push(routeLayerId);
-
-      metrofeedInstallRouteDirectionChevrons(
-        map,
-        shape,
-        routeColor,
-        directionId,
-        overlayElements
-      );
+      // Chevrons: install once on the primary shape (keeps it visually clean, avoids branch duplication).
+      if (shapeIndex === 0) {
+        metrofeedInstallRouteDirectionChevrons(map, shape, routeColor, directionId, overlayElements);
+      }
     });
 
     // ---------- Fit bounds (if desired) ----------
@@ -4179,6 +4253,22 @@ function attachRouteToMap(map, routeId, directionId, options) {
               }
             } catch (e2) {}
           }, 150);
+
+          // Infer direction from the *top* ETA times and flip chevrons if needed.
+          try {
+            const tu = metrofeedGetRouteTripUpdatesForOverlay(overlayKeyForTrips);
+            const inferred = metrofeedInferDirectionFromStopEtas(
+              primaryShape,
+              stops,
+              tu && tu.updatesByStopId ? tu.updatesByStopId : null
+            );
+            if (inferred === 0 || inferred === 1) {
+              if (overlayElements._mfChevronInferredDir !== inferred) {
+                overlayElements._mfChevronInferredDir = inferred;
+                metrofeedInstallRouteDirectionChevrons(map, primaryShape, routeColor, inferred, overlayElements);
+              }
+            }
+          } catch (_) {}
         } catch (e) {
           console.warn("[realtimeTrips] Unavailable:", e);
         }
