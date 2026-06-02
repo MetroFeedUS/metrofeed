@@ -886,11 +886,35 @@ function metrofeedSyncVehicleTrailCoords(coords, lon, lat, minMoveM) {
   return coords;
 }
 
+/** Offset a point by geographic bearing (deg, north=0) and distance (m). */
+function metrofeedOffsetLonLatByBearing(lat, lon, bearingDegNorth, distM) {
+  const la = Number(lat);
+  const lo = Number(lon);
+  const br = Number(bearingDegNorth);
+  const d = Number(distM);
+  if (![la, lo, br, d].every(Number.isFinite) || d <= 0) return { lat: la, lon: lo };
+  const R = 6371000;
+  const t = d / R;
+  const brRad = (br * Math.PI) / 180;
+  const latRad = (la * Math.PI) / 180;
+  const lat2 = Math.asin(
+    Math.sin(latRad) * Math.cos(t) + Math.cos(latRad) * Math.sin(t) * Math.cos(brRad)
+  );
+  const lon2 =
+    ((lo * Math.PI) / 180 +
+      Math.atan2(
+        Math.sin(brRad) * Math.sin(t) * Math.cos(latRad),
+        Math.cos(t) - Math.sin(latRad) * Math.sin(lat2)
+      )) *
+    (180 / Math.PI);
+  return { lat: (lat2 * 180) / Math.PI, lon: lon2 };
+}
+
 /** Sample dots behind the bus only (not on the marker); out[0] is nearest the bus. */
 function metrofeedSamplePolylineDotsBehind(coords, spacingM, headGapM) {
   if (!Array.isArray(coords) || coords.length < 2) return [];
-  const step = Math.max(8, Number(spacingM) || 14);
-  const gap = Math.max(4, Number(headGapM) != null ? Number(headGapM) : step * 0.55);
+  const step = Math.max(6, Number(spacingM) || 12);
+  const gapDefault = Math.max(3, Number(headGapM) != null ? Number(headGapM) : step * 0.35);
   const out = [];
   for (let i = coords.length - 1; i > 0; i--) {
     const a = coords[i];
@@ -901,8 +925,11 @@ function metrofeedSamplePolylineDotsBehind(coords, spacingM, headGapM) {
     const lo0 = Number(b[0]);
     if (![la1, lo1, la0, lo0].every(Number.isFinite)) continue;
     const segLen = metrofeedHaversineM(la0, lo0, la1, lo1);
-    if (segLen < gap + 0.5) continue;
-    let dist = i === coords.length - 1 ? gap : 0;
+    if (segLen < 2) continue;
+    const gap =
+      i === coords.length - 1 ? Math.min(gapDefault, Math.max(2, segLen * 0.28)) : 0;
+    if (segLen <= gap + 0.5) continue;
+    let dist = gap;
     while (dist < segLen) {
       const t = dist / segLen;
       out.push({
@@ -913,6 +940,36 @@ function metrofeedSamplePolylineDotsBehind(coords, spacingM, headGapM) {
     }
   }
   return out;
+}
+
+/** Build tail dots anchored at the live bus head (needs ≥2 vertices or heading to seed). */
+function metrofeedBuildBusTracerDots(coords, headLon, headLat, opts) {
+  opts = opts || {};
+  const spacingM = Math.max(6, Number(opts.spacingM) || 12);
+  const headGapM = opts.headGapM;
+  const bearing = metrofeedNormalizeHeadingDeg(opts.bearingDeg);
+  const headLo = Number(headLon);
+  const headLa = Number(headLat);
+  if (!Number.isFinite(headLo) || !Number.isFinite(headLa)) return [];
+
+  let trail = Array.isArray(coords) ? coords.slice() : [];
+  const head = [headLo, headLa];
+  if (trail.length) trail[trail.length - 1] = head;
+  else trail = [head];
+
+  if (trail.length < 2 && bearing != null) {
+    const seedM = Math.max(12, spacingM);
+    const back = metrofeedOffsetLonLatByBearing(headLa, headLo, (bearing + 180) % 360, seedM);
+    trail = [[back.lon, back.lat], head];
+  }
+  if (trail.length < 2) return [];
+
+  let dots = metrofeedSamplePolylineDotsBehind(trail, spacingM, headGapM);
+  if (!dots.length) {
+    const all = metrofeedSamplePolylineDots(trail, spacingM);
+    dots = all.length > 1 ? all.slice(1) : all;
+  }
+  return dots;
 }
 
 /** Remove legacy tiny HTML route chevrons (replaced by larger arrow markers). */
@@ -2045,7 +2102,7 @@ try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_
 
 function metrofeedBusMarkerDiamPx() {
   if (metrofeedTestCityBusV2Enabled()) {
-    return Math.max(27, Math.round(MF_BUS_COMPASS_DIAM_PX * 2.5 * 0.9));
+    return Math.max(24, Math.round(MF_BUS_COMPASS_DIAM_PX * 2.5 * 0.81));
   }
   return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.43));
 }
@@ -4325,9 +4382,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
               }
             }
 
-            // Tracer: store snapped trail and draw as dashed tail behind the bus.
-            upsertVehicleTracer(markerKey, routeColor, lonN, latN);
-
             const isOppositeDir = busDir != null && Number(busDir) !== Number(directionId);
             const motionMismatch =
               busV2 &&
@@ -4375,6 +4429,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
             hState.lastLat = latN;
             hState.lastLon = lonN;
             hState.lastTime = Date.now();
+
+            const trailHeading =
+              displayHeading != null
+                ? displayHeading
+                : rawHeading != null
+                  ? rawHeading
+                  : metrofeedNormalizeHeadingDeg(bus.bearing);
+            upsertVehicleTracer(markerKey, routeColor, lonN, latN, trailHeading);
 
             const busElement = buildMbtaBusMarkerElement(
               routeColor,
