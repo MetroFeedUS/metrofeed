@@ -831,7 +831,14 @@ function metrofeedSweepLegacyRouteChevrons(mapInstance) {
   return removed;
 }
 
-/** Route-direction chevrons along the polyline (plain ">" glyphs, large). */
+/** Bearing (deg) for a ">" glyph: geographic bearing → CSS rotation (glyph points east at 0°). */
+function metrofeedRouteChevronRotationDeg(bearingDeg) {
+  const br = metrofeedNormalizeHeadingDeg(bearingDeg);
+  if (br == null) return 0;
+  return (br - 90 + 3600) % 360;
+}
+
+/** Route-direction chevrons along the polyline (plain ">" on the line, map-aligned). */
 function metrofeedInstallRouteDirectionChevrons(
   map,
   shape,
@@ -841,48 +848,63 @@ function metrofeedInstallRouteDirectionChevrons(
 ) {
   if (!metrofeedTestCityBusV2Enabled() || !map || !shape || shape.length < 2) return;
 
+  // 0.5 mi between chevrons (match busRouteChevronSpacingM in city-config).
+  const halfMileM = 804.672;
   const spacingM =
     window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSpacingM != null
       ? Number(window.CITY_CONFIG.busRouteChevronSpacingM)
-      : 260;
+      : halfMileM;
+  // Same footprint as route stop dots (12px circles in attachRouteToMap).
   const chevronPx =
     window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSizePx != null
       ? Number(window.CITY_CONFIG.busRouteChevronSizePx)
-      : 80;
+      : 12;
   const reverse = Number(directionId) === 1;
   const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, reverse);
   const fg = routeColor || "#facc15";
-  const halo = pickContrastingTextColor(fg) === "#ffffff" ? "#000000" : "#ffffff";
+  const fontPx = Math.max(8, Math.round(chevronPx * 0.82));
+  const half = chevronPx / 2;
 
   samples.forEach(function (pt) {
+    const br = metrofeedNormalizeHeadingDeg(pt.bearing);
+    const rot = metrofeedRouteChevronRotationDeg(br);
+
+    // MapLibre owns transform on the marker root — rotate on a child instead.
+    const anchor = document.createElement("div");
+    anchor.className = "mf-route-dir-chevron-anchor";
+    anchor.setAttribute("aria-hidden", "true");
+    anchor.style.cssText = "position:relative;width:0;height:0;overflow:visible;pointer-events:none;";
+
     const el = document.createElement("div");
     el.className = "mf-route-dir-chevron";
-    el.setAttribute("aria-hidden", "true");
-    const br = metrofeedNormalizeHeadingDeg(pt.bearing);
-    const rot = br != null ? (br - 90 + 3600) % 360 : 0;
-    const fontPx = Math.round(chevronPx * 0.96);
     el.textContent = ">";
     el.style.cssText = [
+      "position:absolute",
+      "left:0",
+      "top:0",
       "width:" + chevronPx + "px",
       "height:" + chevronPx + "px",
+      "margin-left:" + -half + "px",
+      "margin-top:" + -half + "px",
       "display:flex",
       "align-items:center",
       "justify-content:center",
-      "font-family:Arial Black,Helvetica Neue,Arial,sans-serif",
+      "font-family:Arial,Helvetica Neue,sans-serif",
       "font-size:" + fontPx + "px",
-      "font-weight:900",
-      "line-height:0.85",
+      "font-weight:700",
+      "line-height:1",
       "color:" + fg,
-      "-webkit-text-stroke:3px " + halo,
-      "paint-order:stroke fill",
-      "text-shadow:0 0 5px " + halo + ",0 2px 8px rgba(0,0,0,0.9)",
+      "opacity:0.92",
       "transform:rotate(" + rot + "deg)",
       "transform-origin:50% 50%",
       "pointer-events:none",
       "user-select:none"
     ].join(";");
+
+    anchor.appendChild(el);
+
     try {
-      const mk = new maplibregl.Marker({ element: el, anchor: "center" })
+      const mk = new maplibregl.Marker({ element: anchor, anchor: "center" })
         .setLngLat([pt.lon, pt.lat])
         .addTo(map);
       overlayElements.markers.push(mk);

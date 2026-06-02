@@ -256,9 +256,10 @@ const CITIES = {
     busMarkerSnapMaxMeters: 120,
     busMarkerSnapLookaheadSegs: 4,
     busMarkerSnapHysteresisRatio: 0.28,
-    busRouteChevronSpacingM: 260,
-    /** Route ">" chevron size (px) — mockup-scale on the line. */
-    busRouteChevronSizePx: 80,
+    /** One direction chevron every 0.5 mi (~805 m). */
+    busRouteChevronSpacingM: 804.672,
+    /** Match stop dot size (12px). */
+    busRouteChevronSizePx: 12,
     /** Bus circle uses newbus.svg from site root. */
     busMarkerSvgFile: "newbus.svg",
     /** White dot tracer behind bus (meters). */
