@@ -1471,17 +1471,23 @@ function metrofeedAddRouteLineChevronLayer(map, opts) {
   const cfg = window.CITY_CONFIG || {};
   const chevronLayerId = String(opts.chevronLayerId || routeLayerId.replace(/^route-layer-/, "route-chevron-"));
   const spacingPx = Number.isFinite(Number(cfg.routeLineChevronSpacingPx))
-    ? Math.max(48, Number(cfg.routeLineChevronSpacingPx))
-    : 96;
-  const sizePx = Number.isFinite(Number(cfg.routeLineChevronSizePx))
-    ? Math.max(9, Math.min(14, Number(cfg.routeLineChevronSizePx)))
-    : 11;
+    ? Math.max(40, Number(cfg.routeLineChevronSpacingPx))
+    : 72;
+  const sizeBase = Number.isFinite(Number(cfg.routeLineChevronSizePx))
+    ? Math.max(12, Math.min(32, Number(cfg.routeLineChevronSizePx)))
+    : 18;
   const opacity = Number.isFinite(Number(cfg.routeLineChevronOpacity))
-    ? Math.max(0.35, Math.min(1, Number(cfg.routeLineChevronOpacity)))
-    : 0.62;
+    ? Math.max(0.5, Math.min(1, Number(cfg.routeLineChevronOpacity)))
+    : 0.92;
   const minZoom = Number.isFinite(Number(cfg.routeLineChevronMinZoom))
     ? Number(cfg.routeLineChevronMinZoom)
-    : 12;
+    : 11;
+  const chevronOnLine =
+    cfg.routeLineChevronColor === "route"
+      ? routeColor
+      : cfg.routeLineChevronColor === "dark"
+        ? "#1a1a1a"
+        : "#ffffff";
 
   try {
     if (map.getLayer(chevronLayerId)) map.removeLayer(chevronLayerId);
@@ -1497,9 +1503,21 @@ function metrofeedAddRouteLineChevronLayer(map, opts) {
         layout: {
           "symbol-placement": "line",
           "symbol-spacing": spacingPx,
-          "text-field": "\u203A",
-          "text-size": sizePx,
-          "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+          "text-field": "\u25B8",
+          "text-size": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            11,
+            sizeBase,
+            13,
+            sizeBase + 4,
+            15,
+            sizeBase + 8,
+            17,
+            sizeBase + 12
+          ],
+          "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
           "text-rotation-alignment": "map",
           "text-pitch-alignment": "viewport",
           "text-keep-upright": false,
@@ -1507,10 +1525,13 @@ function metrofeedAddRouteLineChevronLayer(map, opts) {
           "text-ignore-placement": true
         },
         paint: {
-          "text-color": routeColor,
+          "text-color": chevronOnLine,
           "text-opacity": opacity,
-          "text-halo-color": "rgba(255,255,255,0.92)",
-          "text-halo-width": 1.25
+          "text-halo-color":
+            chevronOnLine === "#ffffff"
+              ? "rgba(0,0,0,0.88)"
+              : "rgba(255,255,255,0.95)",
+          "text-halo-width": 2.25
         }
       },
       beforeId || routeLayerId
