@@ -268,6 +268,10 @@ const CITIES = {
     busTracerMaxDots: 10,
     busUseMotionDirection: true,
     busSoftOppositeDim: true,
+    /** Heading wedge: fraction of bus circle diameter (0.25 = 25%). */
+    busHeadingArrowScale: 0.25,
+    /** Show heading wedge only when zoomed in (map maxZoom is 18 → shows at 17+). */
+    busHeadingArrowMinZoom: 17,
 
     showRailRoutes: false,
 
