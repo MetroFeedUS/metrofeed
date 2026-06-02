@@ -879,66 +879,273 @@ function metrofeedCreateRouteChevronGlyphEl(sizePx, routeColor) {
   return wrap;
 }
 
-/**
- * Infer chevron direction from realtime "next arrivals" times.
- * Idea: stops earlier in time should be earlier along the shape (or later, if reverse).
- * Returns 0 (forward), 1 (reverse), or null (insufficient signal).
- */
-function metrofeedInferDirectionFromStopEtas(shape, stops, updatesByStopId) {
+/** Along-route meters for a stop snapped to a shape ([lat,lon] vertices). */
+function metrofeedStopAlongMOnShape(shape, lat, lon) {
   try {
-    if (!Array.isArray(shape) || shape.length < 2) return null;
-    if (!Array.isArray(stops) || stops.length < 4) return null;
-    if (!updatesByStopId || typeof updatesByStopId !== "object") return null;
+    const snap = metrofeedSnapPositionParallelLocked({
+      shapes: [shape],
+      lat: Number(lat),
+      lon: Number(lon),
+      maxSnapMeters: 280,
+      hysteresisRatio: 0,
+      state: {}
+    });
+    return snap && Number.isFinite(snap.alongM) ? snap.alongM : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/** Match stop_id keys in VPS trips.json (prefix / suffix variants). */
+function metrofeedGetStopUpdatesList(stopId, updatesByStopId) {
+  if (!updatesByStopId || stopId == null) return [];
+  const sid = String(stopId);
+  if (Array.isArray(updatesByStopId[sid])) return updatesByStopId[sid];
+  const stopAg = metrofeedAgencyRouteParts(sid);
+  const stripped =
+    stopAg && stopAg.idPrefix && sid.startsWith(stopAg.idPrefix)
+      ? sid.slice(stopAg.idPrefix.length)
+      : sid.includes("_")
+        ? sid.slice(sid.indexOf("_") + 1)
+        : "";
+  if (stripped && Array.isArray(updatesByStopId[stripped])) return updatesByStopId[stripped];
+  const keys = Object.keys(updatesByStopId);
+  for (let i = 0; i < keys.length; i++) {
+    const k = keys[i];
+    if (k === sid || (stripped && (k.endsWith("_" + stripped) || k.endsWith(stripped)))) {
+      return updatesByStopId[k];
+    }
+  }
+  return [];
+}
+
+/** Next scheduled departure (minutes, today/tomorrow adjusted) — same buckets as stop popups. */
+function metrofeedStopScheduleNextMins(stopId, routeData, scheduleBucket) {
+  try {
+    const schedule = routeData && routeData.schedule;
+    const weeklyTimes = (routeData && routeData.weeklyTimes) || {};
+    const sid = String(stopId || "");
+    let timesArray = [];
+    if (schedule && schedule[scheduleBucket] && schedule[scheduleBucket].stops && schedule[scheduleBucket].stops[sid]) {
+      timesArray = schedule[scheduleBucket].stops[sid];
+    } else if (schedule && schedule.weekday && schedule.weekday.stops && schedule.weekday.stops[sid]) {
+      timesArray = schedule.weekday.stops[sid];
+    } else if (weeklyTimes[scheduleBucket] && weeklyTimes[scheduleBucket][sid]) {
+      timesArray = weeklyTimes[scheduleBucket][sid];
+    } else if (weeklyTimes.weekday && weeklyTimes.weekday[sid]) {
+      timesArray = weeklyTimes.weekday[sid];
+    }
+    if (!timesArray.length) return null;
+
+    const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+    let best = null;
+    for (let i = 0; i < timesArray.length; i++) {
+      const parts = String(timesArray[i]).trim().split(":");
+      if (parts.length < 2) continue;
+      let h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
+      if (h >= 24) h -= 24;
+      const schedMins = h * 60 + m;
+      const adj = schedMins < nowMins ? schedMins + 1440 : schedMins;
+      if (best == null || adj < best) best = adj;
+    }
+    return best;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Given stops sorted by increasing "time", does alongM increase (forward) or decrease (reverse)?
+ * Returns true = reverse chevrons, false = forward, null = unknown.
+ */
+function metrofeedInferReverseFromTimedStops(shape, stops, timeForStopFn) {
+  if (!Array.isArray(shape) || shape.length < 2 || !Array.isArray(stops)) return null;
+  const pts = [];
+  for (let i = 0; i < stops.length; i++) {
+    const s = stops[i];
+    if (!s) continue;
+    const t = timeForStopFn(s);
+    if (!Number.isFinite(t)) continue;
+    const alongM = metrofeedStopAlongMOnShape(shape, s.lat, s.lon);
+    if (!Number.isFinite(alongM)) continue;
+    pts.push({ t, alongM });
+  }
+  if (pts.length < 3) return null;
+  pts.sort((a, b) => a.t - b.t);
+
+  let pos = 0;
+  let neg = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const d = pts[i].alongM - pts[i - 1].alongM;
+    if (Math.abs(d) < 12) continue;
+    if (d > 0) pos++;
+    else neg++;
+  }
+  const total = pos + neg;
+  if (total < 2) return null;
+  if (pos >= total * 0.55) return false;
+  if (neg >= total * 0.55) return true;
+  return null;
+}
+
+/** GTFS stop list order vs shape: if sequence runs backward along shape, reverse chevrons. */
+function metrofeedInferReverseFromStopSequence(shape, stops) {
+  if (!Array.isArray(shape) || shape.length < 2 || !Array.isArray(stops) || stops.length < 3) return null;
+  let pos = 0;
+  let neg = 0;
+  let prevM = null;
+  for (let i = 0; i < stops.length; i++) {
+    const s = stops[i];
+    if (!s) continue;
+    const m = metrofeedStopAlongMOnShape(shape, s.lat, s.lon);
+    if (!Number.isFinite(m)) continue;
+    if (prevM != null) {
+      const d = m - prevM;
+      if (Math.abs(d) >= 12) {
+        if (d > 0) pos++;
+        else neg++;
+      }
+    }
+    prevM = m;
+  }
+  const total = pos + neg;
+  if (total < 3) return null;
+  if (pos >= total * 0.55) return false;
+  if (neg >= total * 0.55) return true;
+  return null;
+}
+
+/** Best overlapping live trip: stop_update order vs shape. */
+function metrofeedInferReverseFromLiveTrips(shape, stops, tripUpdatesByTripId) {
+  try {
+    if (!tripUpdatesByTripId || typeof tripUpdatesByTripId !== "object") return null;
+    const stopIdSet = new Set();
+    for (let i = 0; i < stops.length; i++) {
+      const sid = stops[i] && stops[i].stop_id != null ? String(stops[i].stop_id) : "";
+      if (sid) stopIdSet.add(sid);
+    }
+    let bestTrip = null;
+    let bestHits = 0;
+    const trips = Object.keys(tripUpdatesByTripId);
+    for (let i = 0; i < trips.length; i++) {
+      const trip = tripUpdatesByTripId[trips[i]];
+      const hits = metrofeedTripStopOverlapCount(trip, stopIdSet);
+      if (hits > bestHits) {
+        bestHits = hits;
+        bestTrip = trip;
+      }
+    }
+    if (!bestTrip || bestHits < 3 || !Array.isArray(bestTrip.stop_updates)) return null;
 
     const nowSec = Math.floor(Date.now() / 1000);
     const pts = [];
-    for (let i = 0; i < stops.length; i++) {
-      const s = stops[i];
-      const sid = s && (s.stop_id != null ? String(s.stop_id) : "");
-      const la = s && Number(s.lat);
-      const lo = s && Number(s.lon);
-      if (!sid || !Number.isFinite(la) || !Number.isFinite(lo)) continue;
-      const list = Array.isArray(updatesByStopId[sid]) ? updatesByStopId[sid] : [];
-      if (!list.length) continue;
-      const t = Number(list[0] && list[0].time);
-      if (!Number.isFinite(t)) continue;
-      if (t < nowSec - 120) continue;
-      if (t > nowSec + 2 * 3600) continue; // ignore far-future noise
-
-      const snap = metrofeedSnapPositionParallelLocked({
-        shapes: [shape],
-        lat: la,
-        lon: lo,
-        maxSnapMeters: 200,
-        hysteresisRatio: 0,
-        state: {}
+    for (let j = 0; j < bestTrip.stop_updates.length; j++) {
+      const su = bestTrip.stop_updates[j];
+      const sid = su.stop_id != null ? String(su.stop_id) : "";
+      if (!sid) continue;
+      const stop = stops.find(function (s) {
+        return s && String(s.stop_id) === sid;
       });
-      if (!snap || !Number.isFinite(snap.alongM)) continue;
-      pts.push({ t, alongM: snap.alongM });
+      if (!stop) continue;
+      const t =
+        su.arrival != null
+          ? Number(su.arrival)
+          : su.departure != null
+            ? Number(su.departure)
+            : null;
+      if (!Number.isFinite(t) || t < nowSec - 180) continue;
+      const alongM = metrofeedStopAlongMOnShape(shape, stop.lat, stop.lon);
+      if (!Number.isFinite(alongM)) continue;
+      pts.push({ t, alongM, seq: j });
     }
-
-    // Need enough ETA-bearing stops to be confident.
-    if (pts.length < 5) return null;
-    pts.sort((a, b) => a.t - b.t);
-
+    if (pts.length < 3) return null;
+    pts.sort((a, b) => a.seq - b.seq);
     let pos = 0;
     let neg = 0;
-    for (let i = 1; i < pts.length; i++) {
-      const d = pts[i].alongM - pts[i - 1].alongM;
-      if (Math.abs(d) < 20) continue;
+    for (let k = 1; k < pts.length; k++) {
+      const d = pts[k].alongM - pts[k - 1].alongM;
+      if (Math.abs(d) < 12) continue;
       if (d > 0) pos++;
       else neg++;
     }
     const total = pos + neg;
-    if (total < 3) return null;
-    const fracPos = pos / total;
-    const fracNeg = neg / total;
-    if (fracPos >= 0.67) return 0;
-    if (fracNeg >= 0.67) return 1;
+    if (total < 2) return null;
+    if (pos >= total * 0.55) return false;
+    if (neg >= total * 0.55) return true;
     return null;
   } catch (_) {
     return null;
   }
+}
+
+/**
+ * Should chevrons run backward along the drawn shape?
+ * Shape is already direction-specific — never flip just because directionId===1.
+ */
+function metrofeedInferChevronReverse(args) {
+  const shape = args && args.shape;
+  const stops = args && args.stops;
+  const routeData = args && args.routeData;
+  const scheduleBucket = (args && args.scheduleBucket) || "weekday";
+  const updatesByStopId = args && args.updatesByStopId;
+  const tripUpdatesByTripId = args && args.tripUpdatesByTripId;
+
+  const sources = [
+    function () {
+      return metrofeedInferReverseFromStopSequence(shape, stops);
+    },
+    function () {
+      return metrofeedInferReverseFromTimedStops(shape, stops, function (s) {
+        return metrofeedStopScheduleNextMins(s.stop_id, routeData, scheduleBucket);
+      });
+    },
+    function () {
+      const nowSec = Math.floor(Date.now() / 1000);
+      return metrofeedInferReverseFromTimedStops(shape, stops, function (s) {
+        const list = metrofeedGetStopUpdatesList(s.stop_id, updatesByStopId);
+        if (!list.length) return null;
+        const t = Number(list[0] && list[0].time);
+        if (!Number.isFinite(t) || t < nowSec - 120 || t > nowSec + 3 * 3600) return null;
+        return t;
+      });
+    },
+    function () {
+      return metrofeedInferReverseFromLiveTrips(shape, stops, tripUpdatesByTripId);
+    }
+  ];
+
+  for (let i = 0; i < sources.length; i++) {
+    const rev = sources[i]();
+    if (rev === true || rev === false) return rev;
+  }
+  return false;
+}
+
+function metrofeedRefreshRouteChevronDirection(ctx) {
+  if (!metrofeedTestCityBusV2Enabled() || !ctx || !ctx.map || !ctx.overlayElements) return;
+  const shape = ctx.shape;
+  if (!Array.isArray(shape) || shape.length < 2) return;
+
+  let tu = null;
+  try {
+    if (ctx.overlayKey) tu = metrofeedGetRouteTripUpdatesForOverlay(ctx.overlayKey);
+  } catch (_) {}
+
+  const reverse = metrofeedInferChevronReverse({
+    shape: shape,
+    stops: ctx.stops,
+    routeData: ctx.routeData,
+    scheduleBucket: ctx.scheduleBucket,
+    updatesByStopId: (tu && tu.updatesByStopId) || ctx.updatesByStopId,
+    tripUpdatesByTripId: (tu && tu.tripUpdatesByTripId) || ctx.tripUpdatesByTripId
+  });
+
+  if (ctx.overlayElements._mfChevronReverse === reverse && ctx.overlayElements._mfChevronInstalled) return;
+  ctx.overlayElements._mfChevronReverse = reverse;
+  ctx.overlayElements._mfChevronInstalled = true;
+  metrofeedInstallRouteDirectionChevrons(ctx.map, shape, ctx.routeColor, reverse, ctx.overlayElements);
 }
 
 /** Route-direction chevrons along the polyline (plain ">" on the line, map-aligned). */
@@ -946,7 +1153,7 @@ function metrofeedInstallRouteDirectionChevrons(
   map,
   shape,
   routeColor,
-  directionId,
+  reverse,
   overlayElements
 ) {
   if (!metrofeedTestCityBusV2Enabled() || !map || !shape || shape.length < 2) return;
@@ -962,8 +1169,7 @@ function metrofeedInstallRouteDirectionChevrons(
     window.CITY_CONFIG && window.CITY_CONFIG.busRouteChevronSizePx != null
       ? Number(window.CITY_CONFIG.busRouteChevronSizePx)
       : 12;
-  const reverse = Number(directionId) === 1;
-  const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, reverse);
+  const samples = metrofeedSamplePolylineBySpacing(shape, spacingM, !!reverse);
   const fg = routeColor || "#facc15";
 
   // Clear previously installed chevrons for this overlay.
@@ -2477,10 +2683,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         beforeId
       );
       overlayElements.layers.push(routeLayerId);
-      // Chevrons: install once on the primary shape (keeps it visually clean, avoids branch duplication).
-      if (shapeIndex === 0) {
-        metrofeedInstallRouteDirectionChevrons(map, shape, routeColor, directionId, overlayElements);
-      }
     });
 
     // ---------- Fit bounds (if desired) ----------
@@ -3025,6 +3227,21 @@ function attachRouteToMap(map, routeId, directionId, options) {
         marker.setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml));
         marker.addTo(map);
         overlayElements.markers.push(marker);
+      });
+    }
+
+    // Direction chevrons (after stops + schedule bucket exist — uses top times / live ETAs).
+    if (metrofeedTestCityBusV2Enabled() && Array.isArray(primaryShape) && primaryShape.length > 1) {
+      metrofeedRefreshRouteChevronDirection({
+        map: map,
+        shape: primaryShape,
+        routeColor: routeColor,
+        stops: stops,
+        routeData: routeData,
+        scheduleBucket: scheduleBucket,
+        overlayElements: overlayElements,
+        overlayKey: etaOverlayKey,
+        routeId: routeId
       });
     }
 
@@ -4254,20 +4471,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
             } catch (e2) {}
           }, 150);
 
-          // Infer direction from the *top* ETA times and flip chevrons if needed.
           try {
-            const tu = metrofeedGetRouteTripUpdatesForOverlay(overlayKeyForTrips);
-            const inferred = metrofeedInferDirectionFromStopEtas(
-              primaryShape,
-              stops,
-              tu && tu.updatesByStopId ? tu.updatesByStopId : null
-            );
-            if (inferred === 0 || inferred === 1) {
-              if (overlayElements._mfChevronInferredDir !== inferred) {
-                overlayElements._mfChevronInferredDir = inferred;
-                metrofeedInstallRouteDirectionChevrons(map, primaryShape, routeColor, inferred, overlayElements);
-              }
-            }
+            metrofeedRefreshRouteChevronDirection({
+              map: map,
+              shape: primaryShape,
+              routeColor: routeColor,
+              stops: stops,
+              routeData: routeData,
+              scheduleBucket: scheduleBucket,
+              overlayElements: overlayElements,
+              overlayKey: overlayKeyForTrips,
+              routeId: routeId
+            });
           } catch (_) {}
         } catch (e) {
           console.warn("[realtimeTrips] Unavailable:", e);
