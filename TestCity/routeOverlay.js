@@ -958,7 +958,7 @@ function metrofeedBuildBusTracerDots(coords, headLon, headLat, opts) {
   else trail = [head];
 
   if (trail.length < 2 && bearing != null) {
-    const seedM = Math.max(12, spacingM);
+    const seedM = Math.max(8, spacingM * 0.85);
     const back = metrofeedOffsetLonLatByBearing(headLa, headLo, (bearing + 180) % 360, seedM);
     trail = [[back.lon, back.lat], head];
   }
@@ -3917,19 +3917,57 @@ function attachRouteToMap(map, routeId, directionId, options) {
         return String(s || "").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 80);
       }
 
-      function upsertVehicleTracer(markerKey, routeColor, lon, lat) {
+      function metrofeedClearTracerDotMarkers(state) {
+        if (!state || !Array.isArray(state.dotMarkers)) {
+          if (state) state.dotMarkers = [];
+          return;
+        }
+        state.dotMarkers.forEach(function (mk) {
+          try {
+            if (mk && typeof mk.remove === "function") mk.remove();
+          } catch (_) {}
+          try {
+            const idx = overlayElements.markers.indexOf(mk);
+            if (idx > -1) overlayElements.markers.splice(idx, 1);
+          } catch (_) {}
+        });
+        state.dotMarkers = [];
+      }
+
+      function upsertVehicleTracer(markerKey, routeColor, lon, lat, headingDeg) {
         if (!metrofeedTestCityBusV2Enabled()) return;
-        if (!Number.isFinite(Number(lon)) || !Number.isFinite(Number(lat))) return;
+        const headLo = Number(lon);
+        const headLa = Number(lat);
+        if (!Number.isFinite(headLo) || !Number.isFinite(headLa)) return;
         const key = String(markerKey || "");
         if (!key) return;
         const state = vehicleTrailState[key] || (vehicleTrailState[key] = { coords: [], dotMarkers: [] });
+
+        metrofeedClearTracerDotMarkers(state);
 
         const coords = Array.isArray(state.coords) ? state.coords : (state.coords = []);
         const trailMinStep =
           window.CITY_CONFIG && window.CITY_CONFIG.busTracerMinStepM != null
             ? Number(window.CITY_CONFIG.busTracerMinStepM)
-            : 6;
-        metrofeedSyncVehicleTrailCoords(coords, lon, lat, trailMinStep);
+            : 3;
+        const jumpResetM =
+          window.CITY_CONFIG && window.CITY_CONFIG.busTracerJumpResetM != null
+            ? Number(window.CITY_CONFIG.busTracerJumpResetM)
+            : 35;
+
+        if (coords.length) {
+          const prev = coords[coords.length - 1];
+          const dJump = metrofeedHaversineM(
+            Number(prev[1]),
+            Number(prev[0]),
+            headLa,
+            headLo
+          );
+          if (Number.isFinite(dJump) && dJump > jumpResetM) {
+            coords.length = 0;
+          }
+        }
+        metrofeedSyncVehicleTrailCoords(coords, headLo, headLa, trailMinStep);
 
         const maxLenM =
           window.CITY_CONFIG && window.CITY_CONFIG.busTracerLengthM != null
@@ -3944,20 +3982,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
             ? Number(window.CITY_CONFIG.busTracerHeadGapM)
             : null;
         const trimmed = metrofeedTrimPolylineTailMeters(coords, maxLenM);
-        if (trimmed.length) {
-          trimmed[trimmed.length - 1] = [Number(lon), Number(lat)];
-        }
-        const dots = metrofeedSamplePolylineDotsBehind(trimmed, dotSpacingM, headGapM);
-        if (dots.length < 1) return;
-
-        if (Array.isArray(state.dotMarkers)) {
-          state.dotMarkers.forEach(function (mk) {
-            try {
-              if (mk && typeof mk.remove === "function") mk.remove();
-            } catch (_) {}
-          });
-        }
-        state.dotMarkers = [];
+        const dots = metrofeedBuildBusTracerDots(trimmed, headLo, headLa, {
+          spacingM: dotSpacingM,
+          headGapM: headGapM,
+          bearingDeg: headingDeg
+        });
+        if (!dots.length) return;
 
         const maxDots = Math.max(
           4,
@@ -3988,7 +4018,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
               .setLngLat([pt.lon, pt.lat])
               .addTo(map);
             state.dotMarkers.push(mk);
-            overlayElements.markers.push(mk);
           } catch (_) {}
         });
       }
