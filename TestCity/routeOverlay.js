@@ -452,18 +452,19 @@ function metrofeedBusHeadingArrowScale() {
 
 function metrofeedUpdateBusHeadingArrowVisibility(map) {
   if (!metrofeedTestCityBusV2Enabled() || !map) return;
-  let show = false;
-  try {
-    const z = typeof map.getZoom === "function" ? Number(map.getZoom()) : NaN;
-    show = Number.isFinite(z) && z >= metrofeedBusHeadingArrowMinZoom(map);
-  } catch (_) {}
   let root = null;
   try {
     root = typeof map.getContainer === "function" ? map.getContainer() : null;
   } catch (_) {}
   if (!root) return;
-  root.querySelectorAll(".mf-bus-marker-arrow").forEach(function (el) {
-    el.style.display = show ? "" : "none";
+  root.querySelectorAll(".mf-bus-marker").forEach(function (wrap) {
+    const arrow = wrap.querySelector(".mf-bus-marker-arrow");
+    if (!arrow) return;
+    if (wrap.getAttribute("data-mf-has-trail") === "1") {
+      arrow.style.display = "none";
+      return;
+    }
+    arrow.style.display = "";
   });
 }
 
@@ -957,7 +958,7 @@ function metrofeedBuildBusTracerDots(coords, headLon, headLat, opts) {
   if (trail.length) trail[trail.length - 1] = head;
   else trail = [head];
 
-  if (trail.length < 2 && bearing != null) {
+  if (trail.length < 2 && bearing != null && opts.historyOnly !== true) {
     const seedM = Math.max(8, spacingM * 0.85);
     const back = metrofeedOffsetLonLatByBearing(headLa, headLo, (bearing + 180) % 360, seedM);
     trail = [[back.lon, back.lat], head];
@@ -2186,7 +2187,7 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
 
   pin.appendChild(circle);
 
-  if (normH != null) {
+  if (normH != null && markerOpts.hideHeadingArrow !== true) {
     const arrowWrap = document.createElement("div");
     arrowWrap.className = "mf-bus-marker-arrow";
     arrowWrap.setAttribute("aria-hidden", "true");
@@ -3934,13 +3935,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
         state.dotMarkers = [];
       }
 
+      /** @returns {boolean} true when motion-history tail dots are on the map */
       function upsertVehicleTracer(markerKey, routeColor, lon, lat, headingDeg) {
-        if (!metrofeedTestCityBusV2Enabled()) return;
+        if (!metrofeedTestCityBusV2Enabled()) return false;
         const headLo = Number(lon);
         const headLa = Number(lat);
-        if (!Number.isFinite(headLo) || !Number.isFinite(headLa)) return;
+        if (!Number.isFinite(headLo) || !Number.isFinite(headLa)) return false;
         const key = String(markerKey || "");
-        if (!key) return;
+        if (!key) return false;
         const state = vehicleTrailState[key] || (vehicleTrailState[key] = { coords: [], dotMarkers: [] });
 
         metrofeedClearTracerDotMarkers(state);
@@ -3949,11 +3951,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const trailMinStep =
           window.CITY_CONFIG && window.CITY_CONFIG.busTracerMinStepM != null
             ? Number(window.CITY_CONFIG.busTracerMinStepM)
-            : 3;
+            : 2;
         const jumpResetM =
           window.CITY_CONFIG && window.CITY_CONFIG.busTracerJumpResetM != null
             ? Number(window.CITY_CONFIG.busTracerJumpResetM)
-            : 35;
+            : 200;
+        const maxTrailPts =
+          window.CITY_CONFIG && window.CITY_CONFIG.busTracerMaxTrailPoints != null
+            ? Number(window.CITY_CONFIG.busTracerMaxTrailPoints)
+            : 16;
 
         if (coords.length) {
           const prev = coords[coords.length - 1];
@@ -3981,13 +3987,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
           window.CITY_CONFIG && window.CITY_CONFIG.busTracerHeadGapM != null
             ? Number(window.CITY_CONFIG.busTracerHeadGapM)
             : null;
-        const trimmed = metrofeedTrimPolylineTailMeters(coords, maxLenM);
+        state.coords = metrofeedTrimPolylineTailMeters(coords, maxLenM);
+        while (state.coords.length > Math.max(4, maxTrailPts)) {
+          state.coords.shift();
+        }
+
+        const trimmed = state.coords;
         const dots = metrofeedBuildBusTracerDots(trimmed, headLo, headLa, {
           spacingM: dotSpacingM,
           headGapM: headGapM,
-          bearingDeg: headingDeg
+          historyOnly: true
         });
-        if (!dots.length) return;
+        state.hasTail = dots.length > 0;
+        if (!dots.length) return false;
 
         const maxDots = Math.max(
           4,
@@ -4018,8 +4030,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
               .setLngLat([pt.lon, pt.lat])
               .addTo(map);
             state.dotMarkers.push(mk);
+            try {
+              overlayElements.markers.push(mk);
+            } catch (_) {}
           } catch (_) {}
         });
+        return true;
       }
 
       function removeVehicleTracer(markerKey) {
@@ -4465,21 +4481,26 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 : rawHeading != null
                   ? rawHeading
                   : metrofeedNormalizeHeadingDeg(bus.bearing);
-            upsertVehicleTracer(markerKey, routeColor, lonN, latN, trailHeading);
+            const hasTracerTail = upsertVehicleTracer(markerKey, routeColor, lonN, latN, trailHeading);
+            const headingForMarker =
+              hasTracerTail ? displayHeading : trailHeading != null ? trailHeading : displayHeading;
 
             const busElement = buildMbtaBusMarkerElement(
               routeColor,
               metrofeedFormatRouteBadge(routeId),
               displayVehicleID,
-              displayHeading,
+              headingForMarker,
               busV2
                 ? {
-                    motionMismatch
+                    motionMismatch,
+                    hideHeadingArrow: hasTracerTail
                   }
                 : undefined
             );
             try {
               busElement.classList.add('mf-bus-marker');
+              if (hasTracerTail) busElement.setAttribute("data-mf-has-trail", "1");
+              else busElement.removeAttribute("data-mf-has-trail");
               busElement._mfBusMarker = null;
             } catch (_) {}
             if (isOtpLegOverlay && visualMismatch) {

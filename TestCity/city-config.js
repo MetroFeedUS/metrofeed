@@ -265,9 +265,10 @@ const CITIES = {
     /** White dot tracer behind bus (meters). */
     busTracerLengthM: 100,
     busTracerDotSpacingM: 12,
-    busTracerMinStepM: 3,
+    busTracerMinStepM: 2,
     /** Reset trail history if the bus jumps farther than this (snap / GPS leap). */
-    busTracerJumpResetM: 35,
+    busTracerJumpResetM: 200,
+    busTracerMaxTrailPoints: 16,
     busTracerMaxDots: 10,
     busUseMotionDirection: true,
     busSoftOppositeDim: true,
