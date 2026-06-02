@@ -1455,18 +1455,61 @@ function metrofeedRouteLineChevronsEnabled() {
   }
 }
 
+/** Raster chevron for route line (no glyph server — avoids tiles.metrofeedus.com font 400s). */
+function metrofeedEnsureRouteChevronIcon(map) {
+  const iconId = "mf-route-chevron";
+  if (!map) return null;
+  try {
+    if (map._mfRouteChevronIconReady === iconId) return iconId;
+    if (typeof map.hasImage === "function" && map.hasImage(iconId)) {
+      map._mfRouteChevronIconReady = iconId;
+      return iconId;
+    }
+  } catch (_) {}
+  const w = 32;
+  const h = 32;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.clearRect(0, 0, w, h);
+  ctx.beginPath();
+  ctx.moveTo(6, 5);
+  ctx.lineTo(24, 16);
+  ctx.lineTo(6, 27);
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#141414";
+  ctx.lineJoin = "round";
+  ctx.stroke();
+  try {
+    const imageData = ctx.getImageData(0, 0, w, h);
+    map.addImage(iconId, imageData, { pixelRatio: 2 });
+    map._mfRouteChevronIconReady = iconId;
+    return iconId;
+  } catch (e) {
+    console.warn("[metrofeedEnsureRouteChevronIcon] addImage failed:", e);
+    return null;
+  }
+}
+
 /**
- * Add › symbols along a route LineString (vertex order = schedule / stop direction).
+ * Add direction chevrons along a route LineString (vertex order = schedule / stop direction).
  * Inserts above the route line, below the same anchor as the line layer.
  */
 function metrofeedAddRouteLineChevronLayer(map, opts) {
   if (!map || !opts || !metrofeedRouteLineChevronsEnabled()) return null;
   const sourceId = opts.sourceId;
   const routeLayerId = opts.routeLayerId;
-  const routeColor = opts.routeColor || "#708090";
   const beforeId = opts.beforeId;
   const overlayElements = opts.overlayElements;
   if (!sourceId || !routeLayerId) return null;
+
+  const iconId = metrofeedEnsureRouteChevronIcon(map);
+  if (!iconId) return null;
 
   const cfg = window.CITY_CONFIG || {};
   const chevronLayerId = String(opts.chevronLayerId || routeLayerId.replace(/^route-layer-/, "route-chevron-"));
@@ -1474,20 +1517,14 @@ function metrofeedAddRouteLineChevronLayer(map, opts) {
     ? Math.max(40, Number(cfg.routeLineChevronSpacingPx))
     : 72;
   const sizeBase = Number.isFinite(Number(cfg.routeLineChevronSizePx))
-    ? Math.max(12, Math.min(32, Number(cfg.routeLineChevronSizePx)))
-    : 18;
+    ? Math.max(0.2, Math.min(1.2, Number(cfg.routeLineChevronSizePx) / 32))
+    : 0.42;
   const opacity = Number.isFinite(Number(cfg.routeLineChevronOpacity))
     ? Math.max(0.5, Math.min(1, Number(cfg.routeLineChevronOpacity)))
-    : 0.92;
+    : 0.95;
   const minZoom = Number.isFinite(Number(cfg.routeLineChevronMinZoom))
     ? Number(cfg.routeLineChevronMinZoom)
     : 11;
-  const chevronOnLine =
-    cfg.routeLineChevronColor === "route"
-      ? routeColor
-      : cfg.routeLineChevronColor === "dark"
-        ? "#1a1a1a"
-        : "#ffffff";
 
   try {
     if (map.getLayer(chevronLayerId)) map.removeLayer(chevronLayerId);
@@ -1501,37 +1538,29 @@ function metrofeedAddRouteLineChevronLayer(map, opts) {
         source: sourceId,
         minzoom: minZoom,
         layout: {
-          "symbol-placement": "line",
-          "symbol-spacing": spacingPx,
-          "text-field": "\u25B8",
-          "text-size": [
+          "icon-image": iconId,
+          "icon-size": [
             "interpolate",
             ["linear"],
             ["zoom"],
             11,
-            sizeBase,
+            sizeBase * 0.85,
             13,
-            sizeBase + 4,
+            sizeBase,
             15,
-            sizeBase + 8,
+            sizeBase * 1.15,
             17,
-            sizeBase + 12
+            sizeBase * 1.35
           ],
-          "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
-          "text-rotation-alignment": "map",
-          "text-pitch-alignment": "viewport",
-          "text-keep-upright": false,
-          "text-allow-overlap": true,
-          "text-ignore-placement": true
+          "symbol-placement": "line",
+          "symbol-spacing": spacingPx,
+          "icon-rotation-alignment": "map",
+          "icon-pitch-alignment": "map",
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true
         },
         paint: {
-          "text-color": chevronOnLine,
-          "text-opacity": opacity,
-          "text-halo-color":
-            chevronOnLine === "#ffffff"
-              ? "rgba(0,0,0,0.88)"
-              : "rgba(255,255,255,0.95)",
-          "text-halo-width": 2.25
+          "icon-opacity": opacity
         }
       },
       beforeId || routeLayerId
