@@ -251,13 +251,16 @@ const CITIES = {
     // Live vehicle marker SVG alignment. bus.svg faces WEST; flip 180° so it faces direction-of-travel.
     busSvgHeadingOffsetDeg: 180,
 
-    /** Route direction chevrons (DOM markers on the line; Test City only). */
+    /** Route direction chevrons (down = default in chevron.svg; rotated to route bearing). */
     routeLineChevrons: true,
-    routeLineChevronSpacingM: 350,
-    routeLineChevronSizePx: 14,
+    routeLineChevronSvg: "chevron.svg",
+    routeLineChevronSpacingM: 280,
+    routeLineChevronSizePx: 12,
+    routeLineChevronColor: "#ffffff",
+    routeLineChevronStrokeWidth: 2.75,
     routeLineChevronOpacity: 0.88,
-    routeLineChevronMinZoom: 10,
-    routeLineChevronMaxCount: 90,
+    routeLineChevronOffsetDeg: 0,
+    routeLineChevronMaxCount: 100,
 
     showRailRoutes: false,
 
