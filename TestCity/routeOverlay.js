@@ -1455,42 +1455,50 @@ function metrofeedRouteLineChevronsEnabled() {
   }
 }
 
-/** Sample points + bearings along shape [[lat,lon]...] for DOM chevrons (vertex order = direction). */
+function metrofeedShapeLatLon(pt) {
+  if (!pt) return null;
+  if (Array.isArray(pt) && pt.length >= 2) {
+    const la = Number(pt[0]);
+    const lo = Number(pt[1]);
+    if (Number.isFinite(la) && Number.isFinite(lo)) return { lat: la, lon: lo };
+  }
+  const la = Number(pt.lat != null ? pt.lat : pt.latitude);
+  const lo = Number(pt.lon != null ? pt.lon : pt.lng != null ? pt.lng : pt.longitude);
+  if (Number.isFinite(la) && Number.isFinite(lo)) return { lat: la, lon: lo };
+  return null;
+}
+
+/** Sample points + bearings along shape (vertex order = schedule direction). Works on dense polylines. */
 function metrofeedSampleRouteChevronPoints(shape, spacingM, maxPts) {
   if (!Array.isArray(shape) || shape.length < 2) return [];
-  const stepM = Math.max(80, Number(spacingM) || 350);
+  const stepM = Math.max(40, Number(spacingM) || 280);
   const cap = Math.max(12, Number(maxPts) || 100);
   const out = [];
-  for (let i = 0; i < shape.length - 1; i++) {
-    const a = shape[i];
-    const b = shape[i + 1];
-    const la0 = Number(a[0]);
-    const lo0 = Number(a[1]);
-    const la1 = Number(b[0]);
-    const lo1 = Number(b[1]);
-    if (![la0, lo0, la1, lo1].every(Number.isFinite)) continue;
-    const segLen = metrofeedHaversineM(la0, lo0, la1, lo1);
-    if (segLen < 20) continue;
-    const br = metrofeedBearingDeg(la0, lo0, la1, lo1);
+  let nextAt = stepM * 0.5;
+  let acc = 0;
+
+  for (let i = 0; i < shape.length - 1 && out.length < cap; i++) {
+    const p0 = metrofeedShapeLatLon(shape[i]);
+    const p1 = metrofeedShapeLatLon(shape[i + 1]);
+    if (!p0 || !p1) continue;
+    const segLen = metrofeedHaversineM(p0.lat, p0.lon, p1.lat, p1.lon);
+    if (!Number.isFinite(segLen) || segLen < 0.01) continue;
+    const br = metrofeedBearingDeg(p0.lat, p0.lon, p1.lat, p1.lon);
     if (!Number.isFinite(br)) continue;
-    let dist = stepM * 0.5;
-    while (dist < segLen && out.length < cap * 2) {
-      const t = dist / segLen;
+
+    while (acc + segLen >= nextAt && out.length < cap) {
+      const into = nextAt - acc;
+      const t = into / segLen;
       out.push({
-        lat: la0 + (la1 - la0) * t,
-        lon: lo0 + (lo1 - lo0) * t,
+        lat: p0.lat + (p1.lat - p0.lat) * t,
+        lon: p0.lon + (p1.lon - p0.lon) * t,
         bearing: br
       });
-      dist += stepM;
+      nextAt += stepM;
     }
+    acc += segLen;
   }
-  if (out.length <= cap) return out;
-  const thin = [];
-  const stride = out.length / cap;
-  for (let j = 0; j < cap; j++) {
-    thin.push(out[Math.min(out.length - 1, Math.round(j * stride))]);
-  }
-  return thin;
+  return out;
 }
 
 /** chevron.svg default points down (south); rotate to match route bearing (deg, north=0). */
