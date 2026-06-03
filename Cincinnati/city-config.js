@@ -226,10 +226,6 @@ const CITIES = {
     sharedVehiclePollMs: 12000,
     realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
     realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
-    /** OBS: map writes, alerts browser reads (same folder as home.html). */
-    tvSyncReadUrl: "./tv-now-playing.json",
-    tvSyncWriteUrl: "./tv-sync-publish.php",
-    tvSyncPollMs: 1500,
     gtfsRtStrictVehicleDirection: true,
     // Legacy: used to flip bearing-only inference. Prefer polyline+tangent matching in routeOverlay instead.
     gtfsRtFlipInferredDirection: false,
@@ -256,12 +252,30 @@ const CITIES = {
 
     // Live vehicle marker SVG alignment. bus.svg faces WEST; flip 180° so it faces direction-of-travel.
     busSvgHeadingOffsetDeg: 180,
+    /** Route-colored circle + newbus.svg (contrast matches vehicle ID pill). */
+    busMarkerNewbusSvg: true,
+    busMarkerSvgFile: "newbus.svg",
+    busMarkerSizeScale: 1.1,
+    /** Vehicle ID pill visible at this zoom and closer (route overview is usually ≤14). */
+    busMarkerLabelMinZoom: 15,
+
+    /** Direction comet: white dots behind bus from confirmed travel along route shape. */
+    busTracerEnabled: true,
+    busTracerLengthM: 48,
+    busTracerDotCount: 5,
+    busTracerDotMaxPx: 10,
+    busTracerDotMinPx: 4,
+    busTracerSizeScale: 1.2,
+
+    /** Dim buses only after move along shape proves opposite to overlay direction. */
+    busDimOppositeAfterMove: true,
+    busDirConfirmMoveM: 3,
 
     showRailRoutes: false,
 
     useLazyLoading: false,
 
-    /** Enable OBS 24/7 TV page at obs-route-tv.html */
+    /** Enable OBS TV at obs-tv.html / home.html?tv=1 */
     tvModeEnabled: true
   }
 };
