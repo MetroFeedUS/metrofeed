@@ -420,9 +420,8 @@ function metrofeedDrawDirectionCometTail(
   hState,
   headLon,
   headLat,
-  bus,
+  overlayShape,
   shapes,
-  directionId,
   snapMaxM,
   opacity,
   cfg,
@@ -431,7 +430,14 @@ function metrofeedDrawDirectionCometTail(
   metrofeedClearVehicleTracerDots(hState);
   if (!map || !hState || !cfg) return;
 
-  const travel = metrofeedResolveBusTravelBearingDeg(hState, headLon, headLat, bus, shapes, directionId);
+  const travel = metrofeedResolveBusTravelBearingDeg(
+    hState,
+    headLon,
+    headLat,
+    overlayShape,
+    shapes,
+    snapMaxM
+  );
   if (travel == null) {
     hState.tracerPrevLon = Number(headLon);
     hState.tracerPrevLat = Number(headLat);
@@ -456,7 +462,7 @@ function metrofeedDrawDirectionCometTail(
     const lon = Number(c[0]);
     const lat = Number(c[1]);
     if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
-    const d = metrofeedTracerDotDiameterPx(i, n, maxPx, minPx);
+    const d = metrofeedTracerDotDiameterPx(n - 1 - i, n, maxPx, minPx);
     const el = document.createElement("div");
     el.className = "mf-bus-tracer-dot";
     el.style.cssText = [
@@ -563,6 +569,108 @@ function metrofeedSegmentProjectionInfo(routeShape, segIdx, lat, lon) {
   const distanceM = metrofeedHaversineM(la, lo, py, px);
   const bearingFwd = metrofeedBearingDeg(y0, x0, y1, x1);
   return { segIdx: i, t, px, py, distanceM, bearingFwd };
+}
+
+/**
+ * Distance (m) along route polyline from first vertex to closest point on the line.
+ * Increasing progress = same direction as shape vertex order (chevrons on this overlay).
+ */
+function metrofeedPolylineArcProgressM(routeShape, lat, lon) {
+  if (!Array.isArray(routeShape) || routeShape.length < 2) return null;
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+
+  let cumM = 0;
+  let bestProgressM = null;
+  let bestDistM = Infinity;
+
+  for (let i = 0; i < routeShape.length - 1; i++) {
+    const p0 = routeShape[i];
+    const p1 = routeShape[i + 1];
+    const y0 = Number(p0 && p0[0]);
+    const x0 = Number(p0 && p0[1]);
+    const y1 = Number(p1 && p1[0]);
+    const x1 = Number(p1 && p1[1]);
+    if (![y0, x0, y1, x1].every(Number.isFinite)) continue;
+
+    const segM = metrofeedHaversineM(y0, x0, y1, x1);
+    const vx = x1 - x0;
+    const vy = y1 - y0;
+    const wx = lo - x0;
+    const wy = la - y0;
+    const vv = vx * vx + vy * vy;
+    if (vv < 1e-12) continue;
+    let t = (wx * vx + wy * vy) / vv;
+    if (t < 0) t = 0;
+    else if (t > 1) t = 1;
+    const py = y0 + t * vy;
+    const px = x0 + t * vx;
+    const distM = metrofeedHaversineM(la, lo, py, px);
+    const alongM = cumM + segM * t;
+    if (distM < bestDistM) {
+      bestDistM = distM;
+      bestProgressM = alongM;
+    }
+    cumM += segM;
+  }
+
+  if (!Number.isFinite(bestProgressM)) return null;
+  return { progressM: bestProgressM, distanceM: bestDistM };
+}
+
+/** Tangent bearing (deg) along shape; forward=true follows vertex order (overlay chevrons). */
+function metrofeedPolylineTangentBearingAt(routeShape, lat, lon, forwardAlongShape) {
+  const cand = metrofeedNearestSegmentCandidate(routeShape, lat, lon);
+  if (!cand || !Number.isFinite(cand.bearingFwd)) return null;
+  let br = cand.bearingFwd;
+  if (!forwardAlongShape) br = metrofeedNormalizeHeadingDeg(br + 180);
+  return metrofeedNormalizeHeadingDeg(br);
+}
+
+/**
+ * After confirmed move along overlay shape: true = with chevrons, false = against.
+ * Uses tracer prev snapped position (same as comet). No GPS heading / GTFS direction.
+ */
+function metrofeedResolveBusWithOverlayFromArc(hState, headLon, headLat, overlayShape, minMoveM) {
+  const lo = Number(headLon);
+  const la = Number(headLat);
+  const prevLo = hState.tracerPrevLon;
+  const prevLa = hState.tracerPrevLat;
+  if (!Number.isFinite(lo) || !Number.isFinite(la)) return null;
+
+  if (!Number.isFinite(prevLo) || !Number.isFinite(prevLa)) {
+    return hState.confirmedWithOverlay === true || hState.confirmedWithOverlay === false
+      ? hState.confirmedWithOverlay
+      : null;
+  }
+
+  const distM = metrofeedHaversineM(prevLa, prevLo, la, lo);
+  const minM = Math.max(2, Number(minMoveM) || 3);
+  if (!Number.isFinite(distM) || distM < minM) {
+    return hState.confirmedWithOverlay === true || hState.confirmedWithOverlay === false
+      ? hState.confirmedWithOverlay
+      : null;
+  }
+
+  const prevP = metrofeedPolylineArcProgressM(overlayShape, prevLa, prevLo);
+  const nowP = metrofeedPolylineArcProgressM(overlayShape, la, lo);
+  if (!prevP || !nowP) {
+    return hState.confirmedWithOverlay === true || hState.confirmedWithOverlay === false
+      ? hState.confirmedWithOverlay
+      : null;
+  }
+
+  const deltaAlong = nowP.progressM - prevP.progressM;
+  const minAlongM = Math.max(2, minM * 0.5);
+  if (Math.abs(deltaAlong) < minAlongM) {
+    return hState.confirmedWithOverlay === true || hState.confirmedWithOverlay === false
+      ? hState.confirmedWithOverlay
+      : null;
+  }
+
+  hState.confirmedWithOverlay = deltaAlong > 0;
+  return hState.confirmedWithOverlay;
 }
 
 function metrofeedNearestSegmentCandidate(routeShape, lat, lon) {
@@ -3562,27 +3670,26 @@ function attachRouteToMap(map, routeId, directionId, options) {
             window.CITY_CONFIG && window.CITY_CONFIG.busMarkerHeading === false
           );
 
-          if (isOtpLegOverlay || tvMode) {
-            // We need busDir to filter, so precompute using the same inference logic.
-            const strictDir = tvMode || !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
+          // TV director: optional strict direction filter only (not OTP / normal route view).
+          if (tvMode) {
+            const strictDir = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
             const want = Number(directionId);
             vehiclesForMarkers = vehiclesForMarkers.filter((bus) => {
               const latN = Number(bus.latitude);
               const lonN = Number(bus.longitude);
               if (!Number.isFinite(latN) || !Number.isFinite(lonN)) return false;
-              let busDir = null;
-              if (bus.direction === 0 || bus.direction === 1) {
-                busDir = Number(bus.direction);
-              } else {
-                const inferred = metrofeedMaybeFlipInferredDirection(
-                  inferDirectionFromPolylineAndBearing(canonicalDirShape, latN, lonN, bus.bearing)
-                );
-                if (inferred === 0 || inferred === 1) busDir = inferred;
-              }
-              if (busDir === 0 || busDir === 1) return Number(busDir) === want;
-              return !strictDir; // if strict, drop unknown-dir vehicles in OTP mode
+              if (bus.direction === 0 || bus.direction === 1) return Number(bus.direction) === want;
+              return !strictDir;
             });
           }
+
+          const dimOppositeAfterMove = !(
+            window.CITY_CONFIG && window.CITY_CONFIG.busDimOppositeAfterMove === false
+          );
+          const dirConfirmMoveM =
+            window.CITY_CONFIG && Number.isFinite(Number(window.CITY_CONFIG.busDirConfirmMoveM))
+              ? Number(window.CITY_CONFIG.busDirConfirmMoveM)
+              : 3;
 
           vehiclesForMarkers.forEach((bus) => {
             const latN = Number(bus.latitude);
@@ -3647,19 +3754,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
             }
             const movedStep = hasLast && distLast > 3;
             const stoppedNow = hasLast && (hasSpd ? slow && !movedStep : distLast < 2.5);
-
-            // Determine this vehicle's direction relative to the currently-selected overlay direction.
-            // We show all buses for the route, but dim the opposite-direction ones.
-            let busDir = null;
-            if (bus.direction === 0 || bus.direction === 1) {
-              busDir = Number(bus.direction);
-            } else {
-              const inferred = metrofeedMaybeFlipInferredDirection(
-                inferDirectionFromPolylineAndBearing(canonicalDirShape, latN, lonN, bus.bearing)
-              );
-              if (inferred === 0 || inferred === 1) busDir = inferred;
-            }
-            const isOppositeDir = busDir != null && Number(busDir) !== Number(directionId);
 
             let rawHeading = headingEnabled
               ? metrofeedBusMarkerHeadingDeg(bus, hState, primaryShape)
@@ -3726,18 +3820,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
               busElement.classList.add('mf-bus-marker');
               busElement._mfBusMarker = null;
             } catch (_) {}
-            if (isOtpLegOverlay && isOppositeDir) {
-              // OTP overlays shouldn't render opposite-direction buses at all (filtered above),
-              // but keep a guard here for safety.
-              return;
+            let withOverlay = null;
+            if (dimOppositeAfterMove && primaryShape && primaryShape.length > 1) {
+              withOverlay = metrofeedResolveBusWithOverlayFromArc(
+                hState,
+                displayLon,
+                displayLat,
+                primaryShape,
+                dirConfirmMoveM
+              );
             }
-            const trailOpacity = isOppositeDir ? 0.45 : 1;
-            if (isOppositeDir) {
-              // Visual language: opposite direction = faded (like dashed line / hollow stops).
-              busElement.style.opacity = "0.45";
-            } else {
-              busElement.style.opacity = "1";
-            }
+            const shouldDim = withOverlay === false;
+            const markerOpacity = shouldDim ? 0.45 : 1;
+            busElement.style.opacity = String(markerOpacity);
 
             if (tracerCfg) {
               metrofeedDrawDirectionCometTail(
@@ -3745,11 +3840,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 hState,
                 displayLon,
                 displayLat,
-                bus,
+                primaryShape,
                 shapes,
-                directionId,
                 snapMaxM,
-                trailOpacity,
+                markerOpacity,
                 tracerCfg,
                 overlayElements.markers
               );
@@ -3764,10 +3858,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
             const popupContent = document.createElement('div');
             
             const refreshBusPopup = () => {
-              let dirLabel = "";
-              if (busDir === 1) dirLabel = isOppositeDir ? "Inbound (opposite)" : "Inbound";
-              else if (busDir === 0) dirLabel = isOppositeDir ? "Outbound (opposite)" : "Outbound";
-              else dirLabel = "Unknown";
+              let dirLabel = "Unknown";
+              if (withOverlay === true) dirLabel = "With route";
+              else if (withOverlay === false) dirLabel = "Opposite";
               const nextStopETA = getNextStopFromETAs();
               const tuLive = metrofeedGetRouteTripUpdatesForOverlay(etaOverlayKey);
               const hasRealtimeTrips = tuLive && tuLive.etaSource === "realtime-trips";

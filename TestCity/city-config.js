@@ -261,6 +261,10 @@ const CITIES = {
     busTracerDotMaxPx: 10,
     busTracerDotMinPx: 4,
 
+    /** Dim buses only after move along shape proves opposite to overlay chevrons. */
+    busDimOppositeAfterMove: true,
+    busDirConfirmMoveM: 3,
+
     /** Route direction chevrons (down = default in chevron.svg; rotated to route bearing). */
     routeLineChevrons: true,
     routeLineChevronSvg: "chevron.svg",
