@@ -253,6 +253,9 @@ const CITIES = {
     /** Route-colored circle + newbus.svg (contrast matches vehicle ID pill). */
     busMarkerNewbusSvg: true,
     busMarkerSvgFile: "newbus.svg",
+    busMarkerSizeScale: 1.1,
+    /** Vehicle ID pill visible at this zoom and closer (route overview is usually ≤14). */
+    busMarkerLabelMinZoom: 15,
 
     /** Direction comet: white dots behind bus from last→now bearing (not GPS history). */
     busTracerEnabled: true,

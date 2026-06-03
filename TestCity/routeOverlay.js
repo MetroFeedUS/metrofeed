@@ -1392,11 +1392,63 @@ var MF_BUS_COMPASS_DIAM_PX =
     : 16;
 try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_COMPASS_DIAM_PX; } catch (_) {}
 
+function metrofeedBusMarkerSizeScale() {
+  const cfg = window.CITY_CONFIG || {};
+  const s = cfg.busMarkerSizeScale != null ? Number(cfg.busMarkerSizeScale) : 1.1;
+  return Number.isFinite(s) && s > 0 ? s : 1.1;
+}
+
 function metrofeedBusMarkerDiamPx() {
+  const scale = metrofeedBusMarkerSizeScale();
   if (metrofeedTestCityNewBusMarkerEnabled()) {
-    return Math.max(22, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.35));
+    return Math.max(22, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.35 * scale));
   }
-  return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.43));
+  return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.43 * scale));
+}
+
+/** Show vehicle ID pill at this zoom and closer (route fit is usually ≤14). */
+function metrofeedBusMarkerLabelMinZoom() {
+  const cfg = window.CITY_CONFIG || {};
+  const z = cfg.busMarkerLabelMinZoom != null ? Number(cfg.busMarkerLabelMinZoom) : 15;
+  return Number.isFinite(z) ? z : 15;
+}
+
+function metrofeedBusMarkerShowsLabel(map) {
+  try {
+    if (!map || typeof map.getZoom !== "function") return true;
+    return map.getZoom() >= metrofeedBusMarkerLabelMinZoom();
+  } catch (_) {
+    return true;
+  }
+}
+
+function metrofeedApplyBusMarkerLabelVisibility(markerEl, map) {
+  if (!markerEl) return;
+  const label = markerEl.querySelector(".mf-bus-marker-label");
+  if (!label) return;
+  const show = metrofeedBusMarkerShowsLabel(map);
+  label.style.display = show ? "" : "none";
+  const mk = markerEl._mfBusMarker;
+  if (mk && typeof mk.setOffset === "function" && metrofeedTestCityNewBusMarkerEnabled()) {
+    const dc = metrofeedBusMarkerDiamPx();
+    mk.setOffset(show ? [0, -Math.round(14 + dc * 0.08)] : [0, 0]);
+  }
+}
+
+function metrofeedEnsureBusLabelZoomListener(map) {
+  if (!map || map._mfBusLabelZoomBound) return;
+  map._mfBusLabelZoomBound = true;
+  const sync = function () {
+    try {
+      const root = map.getContainer && map.getContainer();
+      if (!root) return;
+      root.querySelectorAll(".mf-bus-marker").forEach(function (el) {
+        metrofeedApplyBusMarkerLabelVisibility(el, map);
+      });
+    } catch (_) {}
+  };
+  map.on("zoom", sync);
+  map.on("zoomend", sync);
 }
 
 function metrofeedTestCityNewBusMarkerEnabled() {
@@ -1482,8 +1534,15 @@ function buildMbtaBusMarkerElementNewbus(routeColor, routeNum, displayVehicleID)
 
   const label = document.createElement("div");
   label.className = "mf-bus-marker-label";
+  let labelDisplay = "none";
+  try {
+    const mapRef = typeof window !== "undefined" ? window.map : null;
+    if (mapRef && metrofeedBusMarkerShowsLabel(mapRef)) labelDisplay = "";
+  } catch (_) {}
   label.style.cssText =
-    "margin-bottom:5px;background:" +
+    "display:" +
+    (labelDisplay || "none") +
+    ";margin-bottom:5px;background:" +
     routeFill +
     ";color:" +
     labelFg +
@@ -1624,7 +1683,12 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
 function mbtaBusMarkerMapOptions(markerElement) {
   const dc = metrofeedBusMarkerDiamPx();
   if (metrofeedTestCityNewBusMarkerEnabled()) {
-    return { anchor: "center", offset: [0, -Math.round(14 + dc * 0.08)] };
+    const mapRef = typeof window !== "undefined" ? window.map : null;
+    const showLabel = metrofeedBusMarkerShowsLabel(mapRef);
+    return {
+      anchor: "center",
+      offset: showLabel ? [0, -Math.round(14 + dc * 0.08)] : [0, 0]
+    };
   }
   return { anchor: "bottom", offset: [0, -dc / 2] };
 }
@@ -3393,6 +3457,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
       const busMarkers = {}; // Store bus markers separately
       const tracerCfg = metrofeedVehicleTracerConfig();
+      metrofeedEnsureBusLabelZoomListener(map);
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
       /** Latest trips.json trip_id → trip (same route); used to drop vehicles on other Route N branches. */
@@ -3883,6 +3948,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             busMarker.addTo(map);
             try {
               busElement._mfBusMarker = busMarker;
+              metrofeedApplyBusMarkerLabelVisibility(busElement, map);
             } catch (_) {}
 
             busMarkers[markerKey] = busMarker;
