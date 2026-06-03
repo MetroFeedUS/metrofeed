@@ -1455,6 +1455,20 @@ function metrofeedRouteLineChevronsEnabled() {
   }
 }
 
+/** Route JSON shape: [[lat,lon],...] or shapes[0] wrapper. */
+function metrofeedNormalizeRouteShapeLine(shape) {
+  if (!shape) return null;
+  if (Array.isArray(shape) && shape.length >= 2) {
+    if (Array.isArray(shape[0]) && shape[0].length >= 2 && typeof shape[0][0] === "number") {
+      return shape;
+    }
+    if (Array.isArray(shape[0]) && Array.isArray(shape[0][0])) {
+      return shape[0];
+    }
+  }
+  return null;
+}
+
 function metrofeedShapeLatLon(pt) {
   if (!pt) return null;
   if (Array.isArray(pt) && pt.length >= 2) {
@@ -1577,10 +1591,21 @@ function metrofeedInstallRouteLineChevronsDom(map, shape, overlayElements) {
   const maxPts = Number.isFinite(Number(cfg.routeLineChevronMaxCount))
     ? Number(cfg.routeLineChevronMaxCount)
     : 90;
-  const pts = metrofeedSampleRouteChevronPoints(shape, spacingM, maxPts);
+  const chevronColor = cfg.routeLineChevronColor || "#ffffff";
+  const lineShape = metrofeedNormalizeRouteShapeLine(shape);
+  if (!lineShape) {
+    try {
+      console.warn("[Test City] Route chevrons: invalid shape", { shapeType: typeof shape });
+    } catch (_) {}
+    return 0;
+  }
+  const pts = metrofeedSampleRouteChevronPoints(lineShape, spacingM, maxPts);
   if (!pts.length) {
     try {
-      console.warn("[Test City] Route chevrons: no sample points", { shapeLen: shape.length });
+      console.warn("[Test City] Route chevrons: no sample points", {
+        shapeLen: lineShape.length,
+        spacingM: spacingM
+      });
     } catch (_) {}
     return 0;
   }
@@ -1599,13 +1624,15 @@ function metrofeedInstallRouteLineChevronsDom(map, shape, overlayElements) {
       overlayElements.chevronMarkers.push(mk);
       overlayElements.markers.push(mk);
       n += 1;
-    } catch (_) {}
+    } catch (err) {
+      try {
+        console.warn("[Test City] Route chevron marker failed:", err);
+      } catch (_) {}
+    }
   });
-  if (n > 0) {
-    try {
-      console.log("[Test City] Route direction chevrons placed:", n);
-    } catch (_) {}
-  }
+  try {
+    console.log("[Test City] Route direction chevrons placed:", n, "of", pts.length);
+  } catch (_) {}
   return n;
 }
 
@@ -2468,12 +2495,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
     }
 
     if (metrofeedRouteLineChevronsEnabled()) {
-      let chevronTotal = 0;
-      shapes.forEach(function (shapeLine) {
-        if (Array.isArray(shapeLine) && shapeLine.length >= 2) {
-          chevronTotal += metrofeedInstallRouteLineChevronsDom(map, shapeLine, overlayElements);
-        }
-      });
+      const chevronShape = metrofeedNormalizeRouteShapeLine(primaryShape) || metrofeedNormalizeRouteShapeLine(shapes[0]);
+      const chevronTotal = chevronShape
+        ? metrofeedInstallRouteLineChevronsDom(map, chevronShape, overlayElements)
+        : 0;
       try {
         console.log("[Test City] Route chevron install done, total:", chevronTotal);
       } catch (_) {}
