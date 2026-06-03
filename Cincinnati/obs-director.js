@@ -72,13 +72,11 @@
     if (!root) return;
     if (!title) {
       root.classList.add('mf-tv-hidden');
-      busPublish({ t: 'lower', title: '', sub: '' });
       return;
     }
     root.classList.remove('mf-tv-hidden');
     if (t) t.textContent = title;
     if (s) s.textContent = sub || '';
-    busPublish({ t: 'lower', title: title || '', sub: sub || '' });
   }
 
   function hideTrafficDetail() {
@@ -201,16 +199,6 @@
     }
 
     const W = tvViewportW();
-    if (document.documentElement.classList.contains('tv-obs-layout')) {
-      return Math.min(420, Math.round(W * 0.38)) + 24;
-    }
-    if (panel && panel.classList.contains('mf-tv-layout-positioned')) {
-      const r = panel.getBoundingClientRect();
-      if (r.width > 80) return Math.round(r.width);
-    }
-    if (window.MF_TV_STAGE_MODE) {
-      return 880;
-    }
     return Math.round(W * 0.5);
   }
 
@@ -356,15 +344,6 @@
         me.textContent = meta || '';
         me.style.display = meta ? 'block' : 'none';
       }
-    }
-    if (typeof window.mfTvLayoutApply === 'function' && !window.MF_TV_STAGE_MODE) {
-      window.mfTvLayoutApply(
-        typeof window.mfTvLayoutKeyForKind === 'function'
-          ? window.mfTvLayoutKeyForKind(kind)
-          : kind === 'camera'
-            ? 'camera'
-            : 'traffic'
-      );
     }
   }
 
@@ -1849,24 +1828,7 @@
       try {
         document.documentElement.classList.add('tv-alerts-open');
       } catch (_) {}
-      if (typeof window.mfTvLayoutApply === 'function') {
-        window.mfTvLayoutApply('alerts');
-      } else {
-        try {
-          var savedSize = JSON.parse(localStorage.getItem('mfTvAlertsSize_v1') || 'null');
-          if (savedSize && savedSize.w && savedSize.h) {
-            panel.style.width = Math.round(savedSize.w) + 'px';
-            panel.style.height = Math.round(savedSize.h) + 'px';
-          } else {
-            panel.style.width = '400px';
-            panel.style.height = '700px';
-          }
-        } catch (_) {
-          panel.style.width = '400px';
-          panel.style.height = '700px';
-        }
-      }
-      if (!opts.noFreeze && !(typeof window.mfTvLayoutIsEditMode === 'function' && window.mfTvLayoutIsEditMode())) {
+      if (!opts.noFreeze) {
         setMapFrozen(true);
       }
       refreshAlertsPanel(true);
@@ -1882,12 +1844,10 @@
           document.documentElement.classList.remove('tv-alerts-open');
         }
       } catch (_) {}
-      if (typeof window.mfTvLayoutApply !== 'function') {
-        panel.style.width = '';
-        panel.style.height = '';
-        panel.style.maxWidth = '';
-        panel.style.maxHeight = '';
-      }
+      panel.style.width = '';
+      panel.style.height = '';
+      panel.style.maxWidth = '';
+      panel.style.maxHeight = '';
     }
   }
 
@@ -2428,10 +2388,7 @@
           window.busMarkers = {};
         }
       }
-      if (typeof window.metrofeedSweepOrphanBusMarkers === 'function') {
-        const n = window.metrofeedSweepOrphanBusMarkers(map());
-        if (n > 0) log('Swept orphan bus markers: ' + n);
-      }
+      // Do not sweep .mf-bus-marker here — route overlays own those; sweeping kills live OBS buses.
     } catch (e) {
       console.warn('[mfTvDirector] clearGlobalFleetMarkers', e);
     }

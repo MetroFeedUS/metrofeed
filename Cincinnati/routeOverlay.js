@@ -621,6 +621,7 @@ function metrofeedSweepOrphanBusMarkers(mapInstance) {
   let removed = 0;
   try {
     root.querySelectorAll('.mf-bus-marker').forEach(function (el) {
+      if (el && el.getAttribute && el.getAttribute('data-mf-route-overlay-bus') === '1') return;
       const mk = el && el._mfBusMarker;
       if (mk && typeof mk.remove === 'function') {
         try {
@@ -3515,17 +3516,30 @@ function attachRouteToMap(map, routeId, directionId, options) {
             window.CITY_CONFIG && window.CITY_CONFIG.busMarkerHeading === false
           );
 
-          // TV director: optional strict direction filter only (not OTP / normal route view).
+          // TV/OBS: only strict-filter when the feed reports direction 0/1 (Cincinnati JSON often omits it).
           if (tvMode) {
             const strictDir = !!(window.CITY_CONFIG && window.CITY_CONFIG.gtfsRtStrictVehicleDirection);
             const want = Number(directionId);
+            const beforeTv = vehiclesForMarkers.length;
             vehiclesForMarkers = vehiclesForMarkers.filter((bus) => {
               const latN = Number(bus.latitude);
               const lonN = Number(bus.longitude);
               if (!Number.isFinite(latN) || !Number.isFinite(lonN)) return false;
-              if (bus.direction === 0 || bus.direction === 1) return Number(bus.direction) === want;
-              return !strictDir;
+              if (bus.direction === 0 || bus.direction === 1) {
+                return strictDir ? Number(bus.direction) === want : true;
+              }
+              return true;
             });
+            if (beforeTv !== vehiclesForMarkers.length) {
+              console.log(
+                "[attachRouteToMap] TV direction filter:",
+                beforeTv,
+                "->",
+                vehiclesForMarkers.length,
+                "want dir",
+                want
+              );
+            }
           }
 
           const dimOppositeAfterMove = !(
@@ -3662,6 +3676,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             );
             try {
               busElement.classList.add('mf-bus-marker');
+              busElement.setAttribute('data-mf-route-overlay-bus', '1');
               busElement._mfBusMarker = null;
             } catch (_) {}
             let withOverlay = null;

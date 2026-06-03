@@ -226,7 +226,8 @@ const CITIES = {
     sharedVehiclePollMs: 12000,
     realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
     realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
-    gtfsRtStrictVehicleDirection: true,
+    // Cincinnati vehicles.json has no direction_id; strict TV filter would hide every bus.
+    gtfsRtStrictVehicleDirection: false,
     // Legacy: used to flip bearing-only inference. Prefer polyline+tangent matching in routeOverlay instead.
     gtfsRtFlipInferredDirection: false,
     // Stop marker styling: directional "pin + fin" (rotates along route direction at each stop).

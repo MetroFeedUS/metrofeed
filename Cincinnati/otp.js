@@ -154,6 +154,44 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+function otpLegModeIsWalk(mode) {
+  const m = String(mode || '').toLowerCase();
+  return m === 'walk' || m === 'foot' || m === 'bicycle';
+}
+
+function otpItineraryHasTransit(itin) {
+  return (itin && itin.legs ? itin.legs : []).some((leg) => !otpLegModeIsWalk(leg.mode));
+}
+
+function otpTripPatternHasTransit(pattern) {
+  return (pattern && pattern.legs ? pattern.legs : []).some((leg) => !otpLegModeIsWalk(leg.mode));
+}
+
+function otpFirstRoutingError(errors) {
+  return Array.isArray(errors) && errors.length ? errors[0] : null;
+}
+
+/** OTP often returns a long walk-only pattern when routing fails; do not treat that as a transit trip. */
+function otpRenderNoTransitFound(itinList, routingErrors, extraHint) {
+  const rErr = otpFirstRoutingError(routingErrors);
+  const detail = rErr && (rErr.description || rErr.code) ? escapeHtml(rErr.description || rErr.code) : '';
+  const hint =
+    extraHint ||
+    'Try tapping closer to a bus stop, or use Find Me to open a nearby route. The trip planner needs a working transit graph on the server.';
+  const hintHtml = hint
+    ? `<div style="color:#aaa;font-size:12px;margin-top:8px;line-height:1.35;">${escapeHtml(hint)}</div>`
+    : '';
+  const detailHtml = detail
+    ? `<div style="color:#aaa;font-size:12px;margin-top:8px;line-height:1.35;">${detail}</div>`
+    : '';
+  itinList.innerHTML =
+    `<em style='color: #f55;'>No transit trips found.</em>${detailHtml}${hintHtml}`;
+  try {
+    if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_no_trips_found');
+    else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('No transit trips found.');
+  } catch (_) {}
+}
+
 function otpFmtCoord(n) {
   const x = Number(n);
   if (!isFinite(x)) return '0';
@@ -836,30 +874,31 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     }
 
     // OTP 2.9 GraphQL returns { data: { trip: { tripPatterns: [...] } } }
-    if (!response.data || !response.data.trip || !response.data.trip.tripPatterns || !response.data.trip.tripPatterns.length) {
-      const patterns = response.data?.trip?.tripPatterns;
-      const rErr = Array.isArray(tripRoutingErrors) && tripRoutingErrors.length ? tripRoutingErrors[0] : null;
+    const tripPatternsProbe = response.data?.trip?.tripPatterns;
+    const tripPatternsArr = Array.isArray(tripPatternsProbe) ? tripPatternsProbe : [];
+    const transmodelHasTransit = tripPatternsArr.some(otpTripPatternHasTransit);
+
+    if (!response.data?.trip || !tripPatternsArr.length || !transmodelHasTransit) {
+      const rErr = otpFirstRoutingError(tripRoutingErrors);
       logOtpDebug('NO_TRIP_PATTERNS', {
         hasData: !!response.data,
         hasTripField: !!response.data?.trip,
-        tripPatternsLength: Array.isArray(patterns) ? patterns.length : null,
+        tripPatternsLength: tripPatternsArr.length,
+        transmodelHasTransit,
         routingError: rErr?.description || rErr?.code || null,
-        note: 'Transmodel returned no tripPatterns; trying GTFS plan fallback next'
+        note: 'No usable transit patterns from Transmodel; trying GTFS planConnection fallback'
       });
 
       try {
         const gtfsConverted = await fetchGtfsPlanItineraries({ fromLat, fromLon, toLat, toLon, dateTimeIso: tripDateTimeIso });
-        logOtpDebug('GTFS_CONVERTED', { count: gtfsConverted.length });
-        if (!gtfsConverted.length) {
-          const detail = rErr?.description ? escapeHtml(rErr.description) : '';
-          itinList.innerHTML = detail
-            ? `<em style='color: #f55;'>No trips found.</em><div style="color:#aaa;font-size:12px;margin-top:8px;line-height:1.35;">${detail}</div>`
-            : "<em style='color: #f55;'>No trips found for this route.</em>";
+        const gtfsTransit = gtfsConverted.filter(otpItineraryHasTransit);
+        logOtpDebug('GTFS_CONVERTED', { count: gtfsConverted.length, withTransit: gtfsTransit.length });
+        if (!gtfsTransit.length) {
+          otpRenderNoTransitFound(itinList, tripRoutingErrors);
           return;
         }
 
-        // Mirror the existing downstream pipeline
-        currentItins = gtfsConverted;
+        currentItins = gtfsTransit;
         window.currentItins = currentItins;
 
         console.log('🔄 [fetchAndShowOtpItineraries] Normalizing GTFS fallback itineraries into Journey objects...');
@@ -874,11 +913,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       } catch (fallbackErr) {
         logOtpDebug('GTFS_FALLBACK_ERROR', { message: fallbackErr?.message || String(fallbackErr) });
         console.error('[OTP] GTFS fallback error:', fallbackErr);
-        itinList.innerHTML = "<em style='color: #f55;'>No trips found for this route.</em>";
-        try {
-          if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_no_trips_found');
-          else if (typeof window.metrofeedAnnounce === 'function') window.metrofeedAnnounce('No trips found.');
-        } catch (_) {}
+        otpRenderNoTransitFound(itinList, tripRoutingErrors);
         return;
       }
     }
@@ -1077,8 +1112,17 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     // Filter to max transfers
     const filtered = convertedItineraries.filter(it => countTransfers(it) <= MAX_TRANSFERS);
     
-    // Use filtered if available, otherwise fall back to all (so user isn't stuck)
-    currentItins = filtered.length ? filtered : convertedItineraries;
+    const transitItins = filtered.filter(otpItineraryHasTransit);
+    if (!transitItins.length) {
+      logOtpDebug('WALK_ONLY_REJECTED', {
+        converted: convertedItineraries.length,
+        note: 'Transmodel returned only walk/foot patterns (routing failure)'
+      });
+      otpRenderNoTransitFound(itinList, tripRoutingErrors);
+      return;
+    }
+
+    currentItins = transitItins;
     window.currentItins = currentItins; // Also set on window for compatibility
     logOtpDebug('TRANSFER_FILTER', {
       rawPatterns: tripPatterns.length,
