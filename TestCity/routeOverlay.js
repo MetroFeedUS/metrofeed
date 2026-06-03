@@ -360,38 +360,32 @@ function metrofeedTracerDotDiameterPx(index, total, maxPx, minPx) {
   return Math.round(minD + (maxD - minD) * t);
 }
 
-/** Travel direction (deg): last snapped → now, else feed bearing, else route tangent. */
-function metrofeedResolveBusTravelBearingDeg(hState, headLon, headLat, bus, shapes, directionId) {
-  const lo = Number(headLon);
-  const la = Number(headLat);
-  if (!Number.isFinite(lo) || !Number.isFinite(la)) return null;
-
-  const prevLo = hState.tracerPrevLon;
-  const prevLa = hState.tracerPrevLat;
-  if (Number.isFinite(prevLo) && Number.isFinite(prevLa)) {
-    try {
-      const d = metrofeedHaversineM(prevLa, prevLo, la, lo);
-      if (Number.isFinite(d) && d >= 2) {
-        return metrofeedNormalizeHeadingDeg(metrofeedBearingDeg(prevLa, prevLo, la, lo));
-      }
-    } catch (_) {}
+/** Per-route vehicle motion (survives overlay direction switch). */
+function metrofeedGetRouteVehicleState(routeId, markerKey) {
+  try {
+    if (!window.metrofeedRouteVehicleMotion) window.metrofeedRouteVehicleMotion = Object.create(null);
+    const rk = String(routeId || "");
+    if (!window.metrofeedRouteVehicleMotion[rk]) {
+      window.metrofeedRouteVehicleMotion[rk] = Object.create(null);
+    }
+    const bucket = window.metrofeedRouteVehicleMotion[rk];
+    const mk = String(markerKey || "");
+    if (!bucket[mk]) bucket[mk] = {};
+    return bucket[mk];
+  } catch (_) {
+    return {};
   }
+}
 
-  if (Number.isFinite(hState.tailBearingDeg)) return hState.tailBearingDeg;
-
-  const feedBr = bus && bus.bearing != null ? Number(bus.bearing) : NaN;
-  if (Number.isFinite(feedBr)) return metrofeedNormalizeHeadingDeg(feedBr);
-
-  let bestSeg = null;
-  for (let si = 0; si < (shapes || []).length; si++) {
-    const cand = metrofeedNearestSegmentCandidate(shapes[si], la, lo);
-    if (!cand) continue;
-    if (!bestSeg || cand.distanceM < bestSeg.distanceM) bestSeg = cand;
-  }
-  if (!bestSeg || !Number.isFinite(bestSeg.bearingFwd)) return null;
-  let fwd = bestSeg.bearingFwd;
-  if (Number(directionId) === 1) fwd = metrofeedNormalizeHeadingDeg(fwd + 180);
-  return metrofeedNormalizeHeadingDeg(fwd);
+function metrofeedPruneRouteVehicleState(routeId, aliveKeys) {
+  try {
+    const rk = String(routeId || "");
+    const bucket = window.metrofeedRouteVehicleMotion && window.metrofeedRouteVehicleMotion[rk];
+    if (!bucket) return;
+    Object.keys(bucket).forEach(function (k) {
+      if (!aliveKeys.has(k)) delete bucket[k];
+    });
+  } catch (_) {}
 }
 
 /** Dot positions behind the bus head — visual tail for travel bearing, not GPS history. */
@@ -420,6 +414,7 @@ function metrofeedDrawDirectionCometTail(
   hState,
   headLon,
   headLat,
+  overlayDirectionId,
   overlayShape,
   shapes,
   snapMaxM,
@@ -430,21 +425,17 @@ function metrofeedDrawDirectionCometTail(
   metrofeedClearVehicleTracerDots(hState);
   if (!map || !hState || !cfg) return;
 
-  const travel = metrofeedResolveBusTravelBearingDeg(
-    hState,
-    headLon,
-    headLat,
-    overlayShape,
-    shapes,
-    snapMaxM
-  );
+  const confirmed =
+    hState.confirmedAlongShape === true || hState.confirmedAlongShape === false;
+  const sameConfirmDir =
+    confirmed && Number(hState.confirmedOnDirectionId) === Number(overlayDirectionId);
+  const travel =
+    sameConfirmDir && Number.isFinite(hState.tailBearingDeg) ? hState.tailBearingDeg : null;
   if (travel == null) {
     hState.tracerPrevLon = Number(headLon);
     hState.tracerPrevLat = Number(headLat);
     return;
   }
-
-  hState.tailBearingDeg = travel;
   const tailCoords = metrofeedBuildCometTailCoords(headLon, headLat, travel, shapes, snapMaxM, cfg);
   if (!tailCoords.length) {
     hState.tracerPrevLon = Number(headLon);
@@ -629,48 +620,48 @@ function metrofeedPolylineTangentBearingAt(routeShape, lat, lon, forwardAlongSha
 }
 
 /**
- * After confirmed move along overlay shape: true = with chevrons, false = against.
- * Uses tracer prev snapped position (same as comet). No GPS heading / GTFS direction.
+ * Confirm travel along shape on first real move; remap for overlay direction switch without re-learning.
+ * Returns true = with current overlay chevrons, false = opposite, null = not confirmed yet.
  */
-function metrofeedResolveBusWithOverlayFromArc(hState, headLon, headLat, overlayShape, minMoveM) {
+function metrofeedBusOverlayDirectionView(hState, headLon, headLat, overlayShape, overlayDirectionId, minMoveM) {
   const lo = Number(headLon);
   const la = Number(headLat);
-  const prevLo = hState.tracerPrevLon;
-  const prevLa = hState.tracerPrevLat;
   if (!Number.isFinite(lo) || !Number.isFinite(la)) return null;
 
-  if (!Number.isFinite(prevLo) || !Number.isFinite(prevLa)) {
-    return hState.confirmedWithOverlay === true || hState.confirmedWithOverlay === false
-      ? hState.confirmedWithOverlay
-      : null;
-  }
-
-  const distM = metrofeedHaversineM(prevLa, prevLo, la, lo);
+  const prevLo = hState.tracerPrevLon;
+  const prevLa = hState.tracerPrevLat;
   const minM = Math.max(2, Number(minMoveM) || 3);
-  if (!Number.isFinite(distM) || distM < minM) {
-    return hState.confirmedWithOverlay === true || hState.confirmedWithOverlay === false
-      ? hState.confirmedWithOverlay
-      : null;
+
+  if (
+    Number.isFinite(prevLo) &&
+    Number.isFinite(prevLa) &&
+    Array.isArray(overlayShape) &&
+    overlayShape.length > 1
+  ) {
+    const distM = metrofeedHaversineM(prevLa, prevLo, la, lo);
+    if (Number.isFinite(distM) && distM >= minM) {
+      const prevP = metrofeedPolylineArcProgressM(overlayShape, prevLa, prevLo);
+      const nowP = metrofeedPolylineArcProgressM(overlayShape, la, lo);
+      if (prevP && nowP) {
+        const deltaAlong = nowP.progressM - prevP.progressM;
+        const minAlongM = Math.max(2, minM * 0.5);
+        if (Math.abs(deltaAlong) >= minAlongM) {
+          const forward = deltaAlong > 0;
+          hState.confirmedAlongShape = forward;
+          hState.confirmedOnDirectionId = Number(overlayDirectionId);
+          const br = metrofeedPolylineTangentBearingAt(overlayShape, la, lo, forward);
+          if (br != null) hState.tailBearingDeg = br;
+        }
+      }
+    }
   }
 
-  const prevP = metrofeedPolylineArcProgressM(overlayShape, prevLa, prevLo);
-  const nowP = metrofeedPolylineArcProgressM(overlayShape, la, lo);
-  if (!prevP || !nowP) {
-    return hState.confirmedWithOverlay === true || hState.confirmedWithOverlay === false
-      ? hState.confirmedWithOverlay
-      : null;
-  }
+  const hasConfirm =
+    hState.confirmedAlongShape === true || hState.confirmedAlongShape === false;
+  if (!hasConfirm) return null;
 
-  const deltaAlong = nowP.progressM - prevP.progressM;
-  const minAlongM = Math.max(2, minM * 0.5);
-  if (Math.abs(deltaAlong) < minAlongM) {
-    return hState.confirmedWithOverlay === true || hState.confirmedWithOverlay === false
-      ? hState.confirmedWithOverlay
-      : null;
-  }
-
-  hState.confirmedWithOverlay = deltaAlong > 0;
-  return hState.confirmedWithOverlay;
+  const sameOverlayDir = Number(hState.confirmedOnDirectionId) === Number(overlayDirectionId);
+  return sameOverlayDir ? hState.confirmedAlongShape : !hState.confirmedAlongShape;
 }
 
 function metrofeedNearestSegmentCandidate(routeShape, lat, lon) {
@@ -3401,8 +3392,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
 
       const busMarkers = {}; // Store bus markers separately
-      /** @type {Record<string, { lastLat?: number, lastLon?: number, lastTime?: number, smoothedHeading?: number|null }>} */
-      const vehicleHeadingState = Object.create(null);
       const tracerCfg = metrofeedVehicleTracerConfig();
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
@@ -3650,9 +3639,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               }
             }
             delete busMarkers[vehicleId];
-            if (vehicleHeadingState[vehicleId]) {
-              metrofeedClearVehicleTracerDots(vehicleHeadingState[vehicleId]);
-            }
+            metrofeedClearVehicleTracerDots(metrofeedGetRouteVehicleState(routeId, vehicleId));
           });
           
           // OTP mode: only show buses traveling in the selected direction.
@@ -3739,8 +3726,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 ? bus.vehicleID
                 : blockId
             );
-            if (!vehicleHeadingState[markerKey]) vehicleHeadingState[markerKey] = {};
-            const hState = vehicleHeadingState[markerKey];
+            const hState = metrofeedGetRouteVehicleState(routeId, markerKey);
             const spd = Number(bus.speed);
             const hasSpd = Number.isFinite(spd);
             const slow = hasSpd ? spd < 0.45 : false;
@@ -3822,11 +3808,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
             } catch (_) {}
             let withOverlay = null;
             if (dimOppositeAfterMove && primaryShape && primaryShape.length > 1) {
-              withOverlay = metrofeedResolveBusWithOverlayFromArc(
+              withOverlay = metrofeedBusOverlayDirectionView(
                 hState,
                 displayLon,
                 displayLat,
                 primaryShape,
+                directionId,
                 dirConfirmMoveM
               );
             }
@@ -3840,6 +3827,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 hState,
                 displayLon,
                 displayLat,
+                directionId,
                 primaryShape,
                 shapes,
                 snapMaxM,
@@ -3930,9 +3918,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               );
             }).filter(Boolean)
           );
-          Object.keys(vehicleHeadingState).forEach((k) => {
-            if (!aliveHeadingIds.has(k)) delete vehicleHeadingState[k];
-          });
+          metrofeedPruneRouteVehicleState(routeId, aliveHeadingIds);
           
           console.log(`[attachRouteToMap] Displayed ${vehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
           
