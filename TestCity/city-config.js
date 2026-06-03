@@ -250,14 +250,17 @@ const CITIES = {
 
     // Live vehicle marker SVG alignment. bus.svg faces WEST; flip 180° so it faces direction-of-travel.
     busSvgHeadingOffsetDeg: 180,
+    /** Route-colored circle + newbus.svg (contrast matches vehicle ID pill). */
+    busMarkerNewbusSvg: true,
+    busMarkerSvgFile: "newbus.svg",
 
     /** Route direction chevrons (down = default in chevron.svg; rotated to route bearing). */
     routeLineChevrons: true,
     routeLineChevronSvg: "chevron.svg",
     routeLineChevronSpacingM: 280,
-    routeLineChevronSizePx: 15,
+    routeLineChevronSizePx: 12,
     routeLineChevronColor: "#ffffff",
-    routeLineChevronStrokeWidth: 3.5,
+    routeLineChevronStrokeWidth: 2.75,
     routeLineChevronOpacity: 0.88,
     routeLineChevronOffsetDeg: 0,
     routeLineChevronMaxCount: 100,

@@ -1102,8 +1102,133 @@ var MF_BUS_COMPASS_DIAM_PX =
 try { if (typeof window !== 'undefined') window.MF_BUS_COMPASS_DIAM_PX = MF_BUS_COMPASS_DIAM_PX; } catch (_) {}
 
 function metrofeedBusMarkerDiamPx() {
-  // Scale live vehicle marker size up by ~30% vs prior baseline.
+  if (metrofeedTestCityNewBusMarkerEnabled()) {
+    return Math.max(22, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.35));
+  }
   return Math.max(12, Math.round(MF_BUS_COMPASS_DIAM_PX * 1.43));
+}
+
+function metrofeedTestCityNewBusMarkerEnabled() {
+  try {
+    if (typeof getCityIdFromPath !== "function" || getCityIdFromPath() !== "testcity") return false;
+    if (window.CITY_CONFIG && window.CITY_CONFIG.busMarkerNewbusSvg === false) return false;
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function metrofeedNewbusSvgUrl() {
+  const cfg = window.CITY_CONFIG || {};
+  const file = (cfg.busMarkerSvgFile && String(cfg.busMarkerSvgFile).trim()) || "newbus.svg";
+  try {
+    const base = (window.location.pathname || "").replace(/[^/]*$/, "");
+    return base + file;
+  } catch (_) {
+    return file;
+  }
+}
+
+/** newbus.svg inside route-colored circle; icon uses same contrast rule as vehicle ID text. */
+function metrofeedCreateNewbusIconEl(sizePx, iconColor) {
+  const sz = Math.max(14, Number(sizePx) || 20);
+  const fg = iconColor || "#ffffff";
+  const wrap = document.createElement("div");
+  wrap.style.cssText =
+    "width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;";
+  const img = document.createElement("img");
+  img.src = metrofeedNewbusSvgUrl();
+  img.alt = "";
+  img.draggable = false;
+  img.decoding = "async";
+  const light = String(fg).toLowerCase() !== "#0d0d0d";
+  img.style.cssText = [
+    "display:block",
+    "width:" + Math.round(sz * 0.78) + "px",
+    "height:" + Math.round(sz * 0.78) + "px",
+    "object-fit:contain",
+    "pointer-events:none",
+    "filter:" + (light ? "brightness(0) invert(1)" : "brightness(0)")
+  ].join(";");
+  img.onerror = function () {
+    try {
+      img.remove();
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 100 100");
+      svg.setAttribute("width", String(Math.round(sz * 0.78)));
+      svg.setAttribute("height", String(Math.round(sz * 0.78)));
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute(
+        "d",
+        "m91.56 26.25h-5.94v-5.94c0-6.56-5.31-11.87-11.87-11.87h-47.5c-6.56 0-11.87 5.31-11.87 11.87v5.94h-5.94c-3.28 0-5.94 2.66-5.94 5.94v9.7c0 1.2.97 2.17 2.17 2.17h1.61c1.2 0 2.17-.97 2.17-2.17v-9.7h5.94v57.2c0 1.2.97 2.17 2.17 2.17h7.54c1.2 0 2.17-.97 2.17-2.17V41.3h47.5v3.77c0 1.2.97 2.17 2.17 2.17h7.54c1.2 0 2.17-.97 2.17-2.17v-57.2h5.94v9.7c0 1.2.97 2.17 2.17 2.17h1.61c1.2 0 2.17-.97 2.17-2.17v-9.7c0-3.28-2.66-5.94-5.94-5.94z"
+      );
+      path.setAttribute("fill", fg);
+      svg.appendChild(path);
+      wrap.appendChild(svg);
+    } catch (_) {}
+  };
+  wrap.appendChild(img);
+  return wrap;
+}
+
+/**
+ * Test City: pill label + route-color dot with contrasting newbus.svg (no heading wedge).
+ */
+function buildMbtaBusMarkerElementNewbus(routeColor, routeNum, displayVehicleID) {
+  const wrap = document.createElement("div");
+  wrap.className = "mf-bus-marker";
+  wrap.style.display = "flex";
+  wrap.style.flexDirection = "column";
+  wrap.style.alignItems = "center";
+  wrap.style.pointerEvents = "auto";
+
+  const routeFill = routeColor || "#facc15";
+  const dc = metrofeedBusMarkerDiamPx();
+  const labelFg = pickContrastingTextColor(routeFill);
+  const iconFg = pickContrastingTextColor(routeFill);
+  const badgeBg = labelFg;
+  const badgeFg = routeFill;
+
+  const label = document.createElement("div");
+  label.className = "mf-bus-marker-label";
+  label.style.cssText =
+    "margin-bottom:5px;background:" +
+    routeFill +
+    ";color:" +
+    labelFg +
+    ";padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;";
+  label.innerHTML =
+    '<span style="background:rgba(0,0,0,0.18);color:' +
+    labelFg +
+    ';padding:1px 4px;border-radius:3px;font-size:9px;margin-right:4px;">' +
+    String(routeNum) +
+    "</span>" +
+    String(displayVehicleID);
+
+  const pin = document.createElement("div");
+  pin.className = "mf-bus-marker-pin";
+  pin.style.cssText = "position:relative;width:" + dc + "px;height:" + dc + "px;flex-shrink:0;";
+
+  const circle = document.createElement("div");
+  circle.className = "mf-bus-marker-circle";
+  circle.style.cssText = [
+    "box-sizing:border-box",
+    "width:" + dc + "px",
+    "height:" + dc + "px",
+    "border-radius:50%",
+    "background:" + routeFill,
+    "border:2.5px solid #fff",
+    "box-shadow:0 2px 8px rgba(0,0,0,0.55)",
+    "display:flex",
+    "align-items:center",
+    "justify-content:center"
+  ].join(";");
+  circle.appendChild(metrofeedCreateNewbusIconEl(dc, iconFg));
+
+  pin.appendChild(circle);
+  wrap.appendChild(label);
+  wrap.appendChild(pin);
+  return wrap;
 }
 
 /**
@@ -1112,6 +1237,9 @@ function metrofeedBusMarkerDiamPx() {
  * If heading is unknown: show the dot (no implied direction).
  */
 function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headingDeg) {
+  if (metrofeedTestCityNewBusMarkerEnabled()) {
+    return buildMbtaBusMarkerElementNewbus(routeColor, routeNum, displayVehicleID);
+  }
   const wrap = document.createElement("div");
   wrap.style.display = "flex";
   wrap.style.flexDirection = "column";
@@ -1202,8 +1330,11 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
   return wrap;
 }
 
-function mbtaBusMarkerMapOptions() {
+function mbtaBusMarkerMapOptions(markerElement) {
   const dc = metrofeedBusMarkerDiamPx();
+  if (metrofeedTestCityNewBusMarkerEnabled()) {
+    return { anchor: "center", offset: [0, -Math.round(14 + dc * 0.08)] };
+  }
   return { anchor: "bottom", offset: [0, -dc / 2] };
 }
 
