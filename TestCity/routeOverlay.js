@@ -312,6 +312,148 @@ function metrofeedNearestSegmentInfo(routeShape, lat, lon) {
 // TV director + traffic proximity use this from window (obs-director.js).
 window.metrofeedNearestSegmentInfo = metrofeedNearestSegmentInfo;
 
+/** Snap GPS to nearest point on any overlay shape ([lat,lon] arrays). */
+function metrofeedSnapPositionToShapes(shapes, lat, lon, maxSnapMeters) {
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+  const maxM = Math.max(10, Number(maxSnapMeters) || 60);
+  if (!Array.isArray(shapes) || !shapes.length) return null;
+  let best = null;
+  for (let si = 0; si < shapes.length; si++) {
+    const cand = metrofeedNearestSegmentCandidate(shapes[si], la, lo);
+    if (!cand) continue;
+    if (!best || cand.distanceM < best.distanceM) best = cand;
+  }
+  if (!best || !(best.distanceM <= maxM)) return null;
+  return { lat: best.py, lon: best.px, distanceM: best.distanceM };
+}
+
+function metrofeedTrimTrailCoordsLonLat(coords, maxLenM) {
+  if (!Array.isArray(coords) || coords.length < 2) return Array.isArray(coords) ? coords.slice() : [];
+  const out = coords.slice();
+  let total = 0;
+  for (let i = out.length - 1; i > 0; i--) {
+    total += metrofeedHaversineM(out[i][1], out[i][0], out[i - 1][1], out[i - 1][0]);
+  }
+  const maxM = Math.max(20, Number(maxLenM) || 100);
+  while (out.length > 2 && total > maxM) {
+    total -= metrofeedHaversineM(out[1][1], out[1][0], out[0][1], out[0][0]);
+    out.shift();
+  }
+  return out;
+}
+
+function metrofeedClearVehicleTracerDots(state) {
+  if (!state || !Array.isArray(state.dotMarkers)) return;
+  state.dotMarkers.forEach(function (mk) {
+    try {
+      if (mk && typeof mk.remove === "function") mk.remove();
+    } catch (_) {}
+  });
+  state.dotMarkers.length = 0;
+}
+
+function metrofeedTracerDotDiameterPx(index, total, maxPx, minPx) {
+  const maxD = Math.max(6, Number(maxPx) || 10);
+  const minD = Math.max(3, Number(minPx) || 4);
+  if (total <= 1) return maxD;
+  const t = index / (total - 1);
+  return Math.round(minD + (maxD - minD) * t);
+}
+
+/**
+ * White dot trail behind bus (snapped coords); largest dot nearest bus.
+ * state: { coords: [[lon,lat]...], dotMarkers: Marker[] }
+ */
+function metrofeedSyncVehicleTracerDots(map, state, opacity, cfg, overlayMarkers) {
+  metrofeedClearVehicleTracerDots(state);
+  if (!map || !state || !Array.isArray(state.coords) || state.coords.length < 2) return;
+  const trailCoords = state.coords.slice(0, -1);
+  if (!trailCoords.length) return;
+  const op = Number.isFinite(Number(opacity)) ? Number(opacity) : 1;
+  const maxPx = cfg && cfg.dotMaxPx != null ? Number(cfg.dotMaxPx) : 10;
+  const minPx = cfg && cfg.dotMinPx != null ? Number(cfg.dotMinPx) : 4;
+  const n = trailCoords.length;
+  state.dotMarkers = state.dotMarkers || [];
+  trailCoords.forEach(function (c, i) {
+    const lon = Number(c[0]);
+    const lat = Number(c[1]);
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+    const d = metrofeedTracerDotDiameterPx(i, n, maxPx, minPx);
+    const el = document.createElement("div");
+    el.className = "mf-bus-tracer-dot";
+    el.style.cssText = [
+      "box-sizing:border-box",
+      "width:" + d + "px",
+      "height:" + d + "px",
+      "border-radius:50%",
+      "background:#ffffff",
+      "border:1px solid rgba(0,0,0,0.35)",
+      "box-shadow:0 1px 3px rgba(0,0,0,0.45)",
+      "opacity:" + op,
+      "pointer-events:none"
+    ].join(";");
+    const mk = new maplibregl.Marker({ element: el, anchor: "center" });
+    mk.setLngLat([lon, lat]);
+    mk.addTo(map);
+    state.dotMarkers.push(mk);
+    if (Array.isArray(overlayMarkers)) overlayMarkers.push(mk);
+  });
+}
+
+function metrofeedUpsertVehicleTracerTrail(state, snapLon, snapLat, cfg) {
+  if (!state) return;
+  const lon = Number(snapLon);
+  const lat = Number(snapLat);
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+  const minMoveM = cfg && cfg.minMoveM != null ? Number(cfg.minMoveM) : 6;
+  const maxLenM = cfg && cfg.lengthM != null ? Number(cfg.lengthM) : 100;
+  const maxPts =
+    cfg && cfg.maxDots != null ? Math.max(4, Math.round(Number(cfg.maxDots))) + 1 : 20;
+  const coords = Array.isArray(state.coords) ? state.coords : (state.coords = []);
+  const last = coords.length ? coords[coords.length - 1] : null;
+  let movedEnough = !last;
+  if (last) {
+    try {
+      const d = metrofeedHaversineM(Number(last[1]), Number(last[0]), lat, lon);
+      movedEnough = Number.isFinite(d) ? d >= minMoveM : true;
+    } catch (_) {
+      movedEnough = true;
+    }
+  }
+  if (movedEnough) coords.push([lon, lat]);
+  state.coords = metrofeedTrimTrailCoordsLonLat(coords, maxLenM);
+  if (state.coords.length > maxPts) state.coords = state.coords.slice(-maxPts);
+}
+
+function metrofeedVehicleTracerConfig() {
+  const cfg = window.CITY_CONFIG || {};
+  if (cfg.busTracerEnabled === false) return null;
+  return {
+    lengthM:
+      cfg.busTracerLengthM != null && Number.isFinite(Number(cfg.busTracerLengthM))
+        ? Number(cfg.busTracerLengthM)
+        : 100,
+    minMoveM:
+      cfg.busTracerMinMoveM != null && Number.isFinite(Number(cfg.busTracerMinMoveM))
+        ? Number(cfg.busTracerMinMoveM)
+        : 6,
+    maxDots:
+      cfg.busTracerMaxDots != null && Number.isFinite(Number(cfg.busTracerMaxDots))
+        ? Number(cfg.busTracerMaxDots)
+        : 18,
+    dotMaxPx:
+      cfg.busTracerDotMaxPx != null && Number.isFinite(Number(cfg.busTracerDotMaxPx))
+        ? Number(cfg.busTracerDotMaxPx)
+        : 10,
+    dotMinPx:
+      cfg.busTracerDotMinPx != null && Number.isFinite(Number(cfg.busTracerDotMinPx))
+        ? Number(cfg.busTracerDotMinPx)
+        : 4
+  };
+}
+
 /**
  * Remove bus markers that outlived their overlay (stale async GTFS fetch, etc.).
  * Prefer Marker.remove() when the element was tagged at creation.
@@ -3103,6 +3245,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const busMarkers = {}; // Store bus markers separately
       /** @type {Record<string, { lastLat?: number, lastLon?: number, lastTime?: number, smoothedHeading?: number|null }>} */
       const vehicleHeadingState = Object.create(null);
+      /** @type {Record<string, { coords: number[][], dotMarkers: object[] }>} */
+      const vehicleTrailState = Object.create(null);
+      const tracerCfg = metrofeedVehicleTracerConfig();
       let busesFetchInFlight = false;
       let busesFetchSeq = 0;
       /** Latest trips.json trip_id → trip (same route); used to drop vehicles on other Route N branches. */
@@ -3338,18 +3483,21 @@ function attachRouteToMap(map, routeId, directionId, options) {
           }
 
           overlayElements.busPopupRefreshers.length = 0;
-          // Remove old bus markers from map and overlayElements
+          // Remove old bus markers + tracer dots from map and overlayElements
           Object.keys(busMarkers).forEach(vehicleId => {
             const marker = busMarkers[vehicleId];
             if (marker && typeof marker.remove === "function") {
               marker.remove();
-              // Remove from overlayElements.markers
               const index = overlayElements.markers.indexOf(marker);
               if (index > -1) {
                 overlayElements.markers.splice(index, 1);
               }
             }
             delete busMarkers[vehicleId];
+            if (vehicleTrailState[vehicleId]) {
+              metrofeedClearVehicleTracerDots(vehicleTrailState[vehicleId]);
+              delete vehicleTrailState[vehicleId];
+            }
           });
           
           // OTP mode: only show buses traveling in the selected direction.
@@ -3513,6 +3661,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
             hState.lastLon = lonN;
             hState.lastTime = Date.now();
 
+            let displayLat = latN;
+            let displayLon = lonN;
+            const snappedPos = metrofeedSnapPositionToShapes(shapes, latN, lonN, snapMaxM);
+            if (snappedPos) {
+              displayLat = snappedPos.lat;
+              displayLon = snappedPos.lon;
+            }
+
             const busElement = buildMbtaBusMarkerElement(
               routeColor,
               metrofeedFormatRouteBadge(routeId),
@@ -3528,17 +3684,38 @@ function attachRouteToMap(map, routeId, directionId, options) {
               // but keep a guard here for safety.
               return;
             }
+            const trailOpacity = isOppositeDir ? 0.45 : 1;
             if (isOppositeDir) {
               // Visual language: opposite direction = faded (like dashed line / hollow stops).
               busElement.style.opacity = "0.45";
             } else {
               busElement.style.opacity = "1";
             }
+
+            if (tracerCfg) {
+              if (!vehicleTrailState[markerKey]) {
+                vehicleTrailState[markerKey] = { coords: [], dotMarkers: [] };
+              }
+              metrofeedUpsertVehicleTracerTrail(
+                vehicleTrailState[markerKey],
+                displayLon,
+                displayLat,
+                tracerCfg
+              );
+              metrofeedSyncVehicleTracerDots(
+                map,
+                vehicleTrailState[markerKey],
+                trailOpacity,
+                tracerCfg,
+                overlayElements.markers
+              );
+            }
+
             const busMarker = new maplibregl.Marker({
               element: busElement,
               ...mbtaBusMarkerMapOptions()
             });
-            busMarker.setLngLat([lonN, latN]);
+            busMarker.setLngLat([displayLon, displayLat]);
             
             const popupContent = document.createElement('div');
             
@@ -3618,6 +3795,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
           );
           Object.keys(vehicleHeadingState).forEach((k) => {
             if (!aliveHeadingIds.has(k)) delete vehicleHeadingState[k];
+          });
+          Object.keys(vehicleTrailState).forEach((k) => {
+            if (!aliveHeadingIds.has(k)) {
+              metrofeedClearVehicleTracerDots(vehicleTrailState[k]);
+              delete vehicleTrailState[k];
+            }
           });
           
           console.log(`[attachRouteToMap] Displayed ${vehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);

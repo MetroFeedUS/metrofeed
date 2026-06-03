@@ -254,6 +254,14 @@ const CITIES = {
     busMarkerNewbusSvg: true,
     busMarkerSvgFile: "newbus.svg",
 
+    /** White dot trail snapped to route polyline (~100 m behind bus). */
+    busTracerEnabled: true,
+    busTracerLengthM: 100,
+    busTracerMinMoveM: 6,
+    busTracerMaxDots: 18,
+    busTracerDotMaxPx: 10,
+    busTracerDotMinPx: 4,
+
     /** Route direction chevrons (down = default in chevron.svg; rotated to route bearing). */
     routeLineChevrons: true,
     routeLineChevronSvg: "chevron.svg",
