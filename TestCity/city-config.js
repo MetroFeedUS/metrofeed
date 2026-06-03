@@ -254,12 +254,10 @@ const CITIES = {
     busMarkerNewbusSvg: true,
     busMarkerSvgFile: "newbus.svg",
 
-    /** White dot trail snapped to route polyline (~100 m behind bus). */
+    /** Direction comet: white dots behind bus from last→now bearing (not GPS history). */
     busTracerEnabled: true,
-    busTracerLengthM: 100,
-    busTracerMinMoveM: 3,
-    busTracerSeedBackM: 22,
-    busTracerMaxDots: 18,
+    busTracerLengthM: 48,
+    busTracerDotCount: 5,
     busTracerDotMaxPx: 10,
     busTracerDotMinPx: 4,
 
