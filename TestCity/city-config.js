@@ -257,7 +257,8 @@ const CITIES = {
     /** White dot trail snapped to route polyline (~100 m behind bus). */
     busTracerEnabled: true,
     busTracerLengthM: 100,
-    busTracerMinMoveM: 6,
+    busTracerMinMoveM: 3,
+    busTracerSeedBackM: 22,
     busTracerMaxDots: 18,
     busTracerDotMaxPx: 10,
     busTracerDotMinPx: 4,

@@ -329,6 +329,19 @@ function metrofeedSnapPositionToShapes(shapes, lat, lon, maxSnapMeters) {
   return { lat: best.py, lon: best.px, distanceM: best.distanceM };
 }
 
+/** Move lon/lat by distance (m) along map bearing (0=north). */
+function metrofeedOffsetLonLatM(lon, lat, bearingDeg, distM) {
+  const lo = Number(lon);
+  const la = Number(lat);
+  const br = Number(bearingDeg);
+  const d = Number(distM);
+  if (![lo, la, br, d].every(Number.isFinite)) return null;
+  const rad = (br * Math.PI) / 180;
+  const dLat = (d / 111320) * Math.cos(rad);
+  const dLon = (d / (111320 * Math.max(0.2, Math.cos((la * Math.PI) / 180)))) * Math.sin(rad);
+  return [lo + dLon, la + dLat];
+}
+
 function metrofeedTrimTrailCoordsLonLat(coords, maxLenM) {
   if (!Array.isArray(coords) || coords.length < 2) return Array.isArray(coords) ? coords.slice() : [];
   const out = coords.slice();
@@ -402,12 +415,41 @@ function metrofeedSyncVehicleTracerDots(map, state, opacity, cfg, overlayMarkers
   });
 }
 
+/**
+ * First time we see a bus: add one synthetic point behind it on the line so a dot
+ * shows immediately (real trail replaces this as GPS updates arrive).
+ */
+function metrofeedSeedTracerTailIfNeeded(state, snapLon, snapLat, shapes, directionId, cfg) {
+  if (!state || !Array.isArray(state.coords) || state.coords.length !== 1) return;
+  const lon = Number(snapLon);
+  const lat = Number(snapLat);
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+  const seedM =
+    cfg && cfg.seedBackM != null && Number.isFinite(Number(cfg.seedBackM))
+      ? Number(cfg.seedBackM)
+      : 22;
+  let bestSeg = null;
+  for (let si = 0; si < (shapes || []).length; si++) {
+    const cand = metrofeedNearestSegmentCandidate(shapes[si], lat, lon);
+    if (!cand) continue;
+    if (!bestSeg || cand.distanceM < bestSeg.distanceM) bestSeg = cand;
+  }
+  let fwd = bestSeg && Number.isFinite(bestSeg.bearingFwd) ? bestSeg.bearingFwd : null;
+  if (fwd == null) return;
+  const forward = Number(directionId) !== 1;
+  if (!forward) fwd = metrofeedNormalizeHeadingDeg(fwd + 180);
+  const back = metrofeedNormalizeHeadingDeg(fwd + 180);
+  const pt = metrofeedOffsetLonLatM(lon, lat, back, seedM);
+  if (!pt) return;
+  state.coords.unshift(pt);
+}
+
 function metrofeedUpsertVehicleTracerTrail(state, snapLon, snapLat, cfg) {
   if (!state) return;
   const lon = Number(snapLon);
   const lat = Number(snapLat);
   if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
-  const minMoveM = cfg && cfg.minMoveM != null ? Number(cfg.minMoveM) : 6;
+  const minMoveM = cfg && cfg.minMoveM != null ? Number(cfg.minMoveM) : 3;
   const maxLenM = cfg && cfg.lengthM != null ? Number(cfg.lengthM) : 100;
   const maxPts =
     cfg && cfg.maxDots != null ? Math.max(4, Math.round(Number(cfg.maxDots))) + 1 : 20;
@@ -3496,7 +3538,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
             delete busMarkers[vehicleId];
             if (vehicleTrailState[vehicleId]) {
               metrofeedClearVehicleTracerDots(vehicleTrailState[vehicleId]);
-              delete vehicleTrailState[vehicleId];
             }
           });
           
@@ -3700,6 +3741,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 vehicleTrailState[markerKey],
                 displayLon,
                 displayLat,
+                tracerCfg
+              );
+              metrofeedSeedTracerTailIfNeeded(
+                vehicleTrailState[markerKey],
+                displayLon,
+                displayLat,
+                shapes,
+                directionId,
                 tracerCfg
               );
               metrofeedSyncVehicleTracerDots(
