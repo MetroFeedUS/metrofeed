@@ -481,23 +481,31 @@ function metrofeedDrawDirectionCometTail(
 function metrofeedVehicleTracerConfig() {
   const cfg = window.CITY_CONFIG || {};
   if (cfg.busTracerEnabled === false) return null;
+  const scale =
+    cfg.busTracerSizeScale != null && Number.isFinite(Number(cfg.busTracerSizeScale))
+      ? Number(cfg.busTracerSizeScale)
+      : 1;
+  const s = scale > 0 ? scale : 1;
+  const lengthM =
+    cfg.busTracerLengthM != null && Number.isFinite(Number(cfg.busTracerLengthM))
+      ? Number(cfg.busTracerLengthM)
+      : 48;
+  const dotMax =
+    cfg.busTracerDotMaxPx != null && Number.isFinite(Number(cfg.busTracerDotMaxPx))
+      ? Number(cfg.busTracerDotMaxPx)
+      : 10;
+  const dotMin =
+    cfg.busTracerDotMinPx != null && Number.isFinite(Number(cfg.busTracerDotMinPx))
+      ? Number(cfg.busTracerDotMinPx)
+      : 4;
   return {
-    lengthM:
-      cfg.busTracerLengthM != null && Number.isFinite(Number(cfg.busTracerLengthM))
-        ? Number(cfg.busTracerLengthM)
-        : 48,
+    lengthM: Math.round(lengthM * s),
     dotCount:
       cfg.busTracerDotCount != null && Number.isFinite(Number(cfg.busTracerDotCount))
         ? Number(cfg.busTracerDotCount)
         : 5,
-    dotMaxPx:
-      cfg.busTracerDotMaxPx != null && Number.isFinite(Number(cfg.busTracerDotMaxPx))
-        ? Number(cfg.busTracerDotMaxPx)
-        : 10,
-    dotMinPx:
-      cfg.busTracerDotMinPx != null && Number.isFinite(Number(cfg.busTracerDotMinPx))
-        ? Number(cfg.busTracerDotMinPx)
-        : 4
+    dotMaxPx: Math.max(4, Math.round(dotMax * s)),
+    dotMinPx: Math.max(3, Math.round(dotMin * s))
   };
 }
 

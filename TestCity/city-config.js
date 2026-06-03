@@ -263,6 +263,7 @@ const CITIES = {
     busTracerDotCount: 5,
     busTracerDotMaxPx: 10,
     busTracerDotMinPx: 4,
+    busTracerSizeScale: 1.2,
 
     /** Dim buses only after move along shape proves opposite to overlay chevrons. */
     busDimOppositeAfterMove: true,
