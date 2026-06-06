@@ -114,15 +114,7 @@ html.tv-mode .maplibregl-canvas-container {
   height: 100% !important;
 }
 
-/* OBS: camera feed panel overlays corner instead of stealing 50% width */
-html.tv-mode.tv-obs-layout .mf-tv-traffic-detail.mf-tv-camera-card {
-  width: min(420px, 38vw);
-  max-height: 38vh;
-  right: 24px;
-  top: auto;
-  bottom: 48px;
-  left: auto;
-}
+/* Camera card on map (stage layout: right half of 1920 frame) */
 
 html.tv-mode .maplibregl-marker.mf-bus-marker {
   display: block !important;
@@ -448,6 +440,36 @@ html.tv-mode #cameraModal {
   display: none !important;
 }
 
+/* FOUC: keep director panels off-air until obs-tv.css is ready (~200ms flash) */
+html.tv-mode:not(.tv-ready) #mfTvAdminPanel,
+html.tv-mode:not(.tv-ready) #mfTvAlertsPanel {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Mobile / touch OBS: no ghost operator chrome (viewport may still be 1920px) */
+@media (pointer: coarse), (hover: none) {
+  html.tv-mode #mfTvAdminToggle,
+  html.tv-mode #mfTvAlertsToggle,
+  html.tv-mode #mfTvAdminPanel,
+  html.tv-mode #mfTvAlertsPanel {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+html.tv-no-operator-chrome.tv-mode #mfTvAdminToggle,
+html.tv-no-operator-chrome.tv-mode #mfTvAlertsToggle,
+html.tv-no-operator-chrome.tv-mode #mfTvAdminPanel,
+html.tv-no-operator-chrome.tv-mode #mfTvAlertsPanel {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* --- Director admin (operator only; pointer-events on toggle + panel) --- */
 .mf-tv-admin-toggle {
   position: fixed;
@@ -476,7 +498,13 @@ html.tv-mode #cameraModal {
   outline: none;
 }
 
-html.tv-mode .mf-tv-admin-panel.mf-tv-hidden {
+html.tv-mode .mf-tv-admin-panel.mf-tv-hidden,
+html.tv-mode .mf-tv-admin-panel[hidden] {
+  display: none !important;
+}
+
+html.tv-mode .mf-tv-alerts-panel.mf-tv-hidden,
+html.tv-mode .mf-tv-alerts-panel[hidden] {
   display: none !important;
 }
 
@@ -594,13 +622,14 @@ html.tv-mode .mf-tv-admin-panel.mf-tv-hidden {
   outline: none;
 }
 
-html.tv-mode .mf-tv-alerts-panel.mf-tv-hidden {
+html.tv-mode .mf-tv-alerts-panel.mf-tv-hidden,
+html.tv-mode .mf-tv-alerts-panel[hidden] {
   display: none !important;
 }
 
-/* Vertical column — default ~400×700, user-resizable (drag bottom-right corner) */
-html.tv-mode .mf-tv-alerts-panel:not(.mf-tv-hidden):not(.mf-tv-layout-positioned),
-html.tv-mode.tv-alerts-open .mf-tv-alerts-panel:not(.mf-tv-layout-positioned) {
+/* Vertical column — operator preview on map (OBS uses separate panel=alerts source) */
+html.tv-mode .mf-tv-alerts-panel:not(.mf-tv-hidden):not([hidden]),
+html.tv-mode.tv-alerts-open .mf-tv-alerts-panel:not(.mf-tv-hidden):not([hidden]) {
   position: fixed !important;
   right: 0 !important;
   top: 80px !important;
@@ -627,13 +656,6 @@ html.tv-mode.tv-alerts-open .mf-tv-alerts-panel:not(.mf-tv-layout-positioned) {
   pointer-events: auto !important;
   font-size: 0.85rem !important;
   color: #cbd5e1 !important;
-}
-
-html.tv-mode .mf-tv-alerts-panel.mf-tv-layout-positioned:not(.mf-tv-hidden) {
-  z-index: 10100 !important;
-  pointer-events: auto !important;
-  resize: both;
-  overflow: auto !important;
 }
 
 /* OBS always-on column: home.html?tv=1&alertsColumn=1 */

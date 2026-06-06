@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ticket Purchase | RoamRaven</title>
-  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
     :root {
       --rr-accent: #9333ea;
@@ -21,134 +21,248 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: var(--rr-charcoal);
+      background: var(--rr-charcoal);
       color: var(--rr-silver-muted);
+      line-height: 1.6;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
     header {
-      background-color: var(--rr-charcoal);
-      border-top: 4px solid var(--rr-accent);
-      border-bottom: 3px solid var(--rr-accent);
-      padding: 1rem 0;
-      text-align: center;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--rr-charcoal);
+      padding: 0.12rem 0 0.15rem 0;
+      border-top: 2px solid var(--rr-accent);
+      border-bottom: 2px solid var(--rr-accent);
+      line-height: 0;
     }
-    header img {
-      max-height: 60px;
+    .header-side {
+      flex: 0 0 56px;
+      width: 56px;
+      min-width: 56px;
+      max-width: 56px;
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
     }
-    .back-button-fixed {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      width: 45px;
-      height: 45px;
-      background-color: var(--rr-accent);
+    .header-side--left {
+      justify-content: flex-start;
+      padding-left: 4px;
+    }
+    .header-side--right {
+      justify-content: flex-end;
+      padding-right: 4px;
+    }
+    .header-brand {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      line-height: 0;
+    }
+    .header-brand img {
+      display: block;
+      width: auto;
+      max-width: min(1800px, calc(100vw - 128px));
+      max-height: min(360px, 40vh);
+      height: auto;
+      margin: 0;
+      object-fit: contain;
+    }
+    .back-button {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      background: var(--rr-accent);
       border: 2px solid var(--rr-silver-edge);
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1001;
       box-shadow: 0 0 12px var(--rr-accent-soft);
       cursor: pointer;
       transition: background 0.2s;
       outline: none;
+      padding: 0;
     }
-    .back-button-fixed:active, .back-button-fixed:focus {
-      background-color: var(--rr-accent-hover);
-    }
-    .back-button-fixed svg {
+    .back-button svg {
       width: 24px;
       height: 24px;
       fill: var(--rr-charcoal);
-      display: block;
     }
-    .back-button-fixed:active svg,
-    .back-button-fixed:focus svg {
-      fill: var(--rr-silver);
+    .back-button:active, .back-button:focus {
+      background: var(--rr-accent-hover);
+    }
+    .main-content {
+      flex: 1 0 auto;
+      max-width: 560px;
+      width: 100%;
+      margin: 1.15rem auto 0 auto;
+      padding: 0 1rem 2rem 1rem;
+      box-sizing: border-box;
     }
     .content-box {
-      flex: 1 0 auto;
-      margin: 3rem auto 2rem auto;
-      max-width: 500px;
-      padding: 2rem 1.5rem;
+      background: var(--rr-charcoal-raised);
+      border: 2px solid var(--rr-accent-soft);
       border-radius: 12px;
-      background-color: var(--rr-charcoal-raised);
+      padding: 1.75rem 1.5rem;
       text-align: center;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--rr-accent-soft);
+      box-shadow: 0 0 14px var(--rr-accent-soft);
     }
     .content-box h1 {
       color: var(--rr-accent-text);
-      margin-bottom: 1.2rem;
-      font-size: 2rem;
+      margin: 0 0 1rem;
+      font-size: 1.65rem;
     }
     .content-box p {
       color: var(--rr-silver);
-      font-size: 1.15rem;
-      margin-bottom: 1.3rem;
+      font-size: 1rem;
+      margin: 0 0 1.1rem;
+      line-height: 1.5;
+    }
+    .content-box p:last-child {
+      margin-bottom: 0;
+    }
+    .agency-list {
+      list-style: none;
+      margin: 1.25rem 0 0;
+      padding: 0;
+      text-align: left;
+    }
+    .agency-list li {
+      margin: 0.65rem 0;
+    }
+    .agency-link {
+      display: block;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      background: var(--rr-charcoal);
+      color: var(--rr-accent-text);
+      border: 1px solid var(--rr-accent-soft);
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .agency-link:hover,
+    .agency-link:focus {
+      background: var(--rr-accent);
+      color: var(--rr-charcoal);
+      border-color: var(--rr-accent);
+    }
+    .agency-link span {
+      color: var(--rr-silver-muted);
+      font-weight: 600;
+    }
+    .agency-link:hover span,
+    .agency-link:focus span {
+      color: var(--rr-charcoal);
+    }
+    .disclaimer {
+      color: var(--rr-silver-muted);
+      font-size: 0.85rem;
+      text-align: center;
+      margin: 1.5rem auto 0;
+      max-width: 560px;
+      padding: 0 1rem;
+      line-height: 1.5;
+    }
+    @media (max-width: 540px) {
+      .main-content {
+        padding: 0 2vw 2rem 2vw;
+      }
+      .content-box {
+        padding: 1.25rem 1rem;
+      }
+      .header-side {
+        flex-basis: 48px;
+        width: 48px;
+        min-width: 48px;
+        max-width: 48px;
+      }
+      .header-brand img {
+        max-width: min(1800px, calc(100vw - 108px));
+        max-height: min(320px, 36vh);
+      }
+      .back-button {
+        width: 40px;
+        height: 40px;
+      }
     }
     .site-footer {
       text-align: center;
-      margin-top: auto;
-      margin-bottom: 1.5rem;
-      font-size: 0.92rem;
+      margin-top: 2.8rem;
+      margin-bottom: 70px;
+      font-size: 0.783rem;
       color: var(--rr-silver-muted);
-      padding-bottom: 0.5rem;
     }
     .site-footer a {
       color: var(--rr-accent-text);
       text-decoration: none;
-      margin: 0 0.7em;
+      margin: 0 6px;
     }
     .site-footer a:hover {
       text-decoration: underline;
-    }
-    .disclaimer {
-      color: var(--rr-silver-muted);
-      font-size: 0.9rem;
-      text-align: center;
-      margin: 0 auto 1.4rem auto;
-      max-width: 600px;
-      padding: 0.25rem 1rem;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="RoamRavenNamelogo.svg" alt="RoamRaven" decoding="async">
+    <div class="header-side header-side--left">
+      <button type="button" class="back-button" onclick="history.back()" aria-label="Go back">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="header-brand">
+      <img src="RoamRavenNamelogo.svg" alt="RoamRaven" decoding="async" />
+    </div>
+    <div class="header-side header-side--right" aria-hidden="true"></div>
   </header>
 
-  <!-- Back button -->
-  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
-    <svg viewBox="0 0 24 24">
-      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
-    </svg>
-  </button>
+  <main class="main-content">
+    <div class="content-box">
+      <h1>Ticket Purchase</h1>
+      <p>
+        <strong>RoamRaven does not currently sell fares or passes.</strong>
+        We hope to offer in-app ticket purchases in the future. For now, please buy your fare directly from the transit agency that serves your trip.
+      </p>
+      <p style="color: var(--rr-silver-muted); font-size: 0.92rem; margin-bottom: 0;">
+        Visit an official agency site for fares, passes, and payment options:
+      </p>
+      <ul class="agency-list">
+        <li>
+          <a href="https://www.go-metro.com/" target="_blank" rel="noopener noreferrer" class="agency-link">
+            <span>Visit</span> SORTA / Metro
+          </a>
+        </li>
+        <li>
+          <a href="https://www.tankbus.org/" target="_blank" rel="noopener noreferrer" class="agency-link">
+            <span>Visit</span> TANK
+          </a>
+        </li>
+        <li>
+          <a href="https://www.butlercountyrta.com/" target="_blank" rel="noopener noreferrer" class="agency-link">
+            <span>Visit</span> BCRTA
+          </a>
+        </li>
+      </ul>
+    </div>
 
-  <div class="content-box">
-    <h1>Ticket Purchase</h1>
-    <p>
-      Welcome to the ticket purchase page.<br><br>
-      <strong>Unfortunately, RoamRaven does not currently have a partnership with any ticketing provider.</strong>
-      <br><br>
-      We hope to offer in-app ticket purchases in the future. For now, please purchase your fare through your transit agency's official channels.
+    <p class="disclaimer">
+      RoamRaven is an independent service and is not affiliated with, endorsed by, or operated by the Southwest Ohio Regional Transit Authority (SORTA/Metro), the Transit Authority of Northern Kentucky (TANK), or the Butler County Regional Transit Authority (BCRTA).
     </p>
-    <p style="font-size:1rem; color:var(--rr-silver-muted);">
-      For official TriMet ticket sales, visit <a href="https://trimet.org/fares/" style="color:var(--rr-accent-text);">trimet.org/fares</a>
-    </p>
-  </div>
-
-  <div class="disclaimer">
-    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit
-    <a href="https://trimet.org" style="color:var(--rr-accent-text);">trimet.org</a>.
-  </div>
+  </main>
 
   <footer class="site-footer">
-    <a href="terms.html">Terms of Use</a> |
-    <a href="contact.html">Contact Us</a> |
-    <a href="report.html">Report a Problem</a> |
-    <a href="dmca.html">DMCA</a> |
+    <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+    <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+    <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+    <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
     <a href="privacy.html">Privacy Policy</a>
   </footer>
 </body>

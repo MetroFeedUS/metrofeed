@@ -1796,15 +1796,18 @@
   }
 
   function adminPanelOpen(open) {
+    if (window.MF_TV_HIDE_OPERATOR_CHROME && open) return;
     const panel = el('mfTvAdminPanel');
     const toggle = el('mfTvAdminToggle');
     if (!panel) return;
     if (open) {
       panel.classList.remove('mf-tv-hidden');
+      panel.removeAttribute('hidden');
       panel.setAttribute('aria-hidden', 'false');
       if (toggle) toggle.setAttribute('aria-expanded', 'true');
     } else {
       panel.classList.add('mf-tv-hidden');
+      panel.setAttribute('hidden', '');
       panel.setAttribute('aria-hidden', 'true');
       if (toggle) toggle.setAttribute('aria-expanded', 'false');
     }
@@ -1817,12 +1820,14 @@
   }
 
   function alertsPanelOpen(open, opts) {
+    if (window.MF_TV_HIDE_OPERATOR_CHROME && open) return;
     opts = opts || {};
     const panel = el('mfTvAlertsPanel');
     const toggle = el('mfTvAlertsToggle');
     if (!panel) return;
     if (open) {
       panel.classList.remove('mf-tv-hidden');
+      panel.removeAttribute('hidden');
       panel.setAttribute('aria-hidden', 'false');
       if (toggle) toggle.setAttribute('aria-expanded', 'true');
       try {
@@ -1835,6 +1840,7 @@
     } else {
       if (!window.MF_TV_ALERTS_COLUMN) {
         panel.classList.add('mf-tv-hidden');
+        panel.setAttribute('hidden', '');
         panel.setAttribute('aria-hidden', 'true');
         setMapFrozen(false);
       }

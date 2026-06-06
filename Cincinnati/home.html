@@ -1,13 +1,27 @@
 <!DOCTYPE html>
 <html lang="en" data-tier="free">
 <head>
+  <script>
+    /* TV FOUC: hide director panels before any body markup paints (~200ms flash fix) */
+    (function () {
+      var q = location.search;
+      if (q.indexOf('tv=1') === -1 && q.indexOf('tv=true') === -1) return;
+      document.documentElement.classList.add('tv-mode');
+      var s = document.createElement('style');
+      s.id = 'mfTvInstantHide';
+      s.textContent =
+        'html.tv-mode:not(.tv-ready) #mfTvAdminPanel,html.tv-mode:not(.tv-ready) #mfTvAlertsPanel{display:none!important;visibility:hidden!important;}' +
+        '#mfTvAdminPanel[hidden],#mfTvAlertsPanel[hidden],#mfTvAdminToggle[hidden],#mfTvAlertsToggle[hidden]{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}';
+      (document.head || document.documentElement).appendChild(s);
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RoamRaven Map</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#9333ea" />
   <script src="obs-tv-panels.js?v=3"></script>
-  <script src="obs-tv-bootstrap.js?v=20260606fouc"></script>
+  <script src="obs-tv-bootstrap.js?v=20260606fouc2"></script>
   <link rel="icon" type="image/png" href="RoamRavenbird.png" sizes="512x512" />
   <link rel="apple-touch-icon" href="RoamRavenbird.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -23,7 +37,7 @@
     /** 1×1 transparent GIF: hide sponsor UI until a real asset URL is set here. */
     var ROAMRAVEN_SPONSOR_PIXEL_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
     if (window.TIER_CONFIG && window.TIER_CONFIG.hasFeature('sponsors')) {
-      var SPONSOR_IMAGE = 'Turning Information Into Infrastructure.png';
+      var SPONSOR_IMAGE = 'cornerlogo.png';
     }
   </script>
   
@@ -94,7 +108,7 @@
       z-index: 1002;
       overflow: visible;
     }
-    /* Trip planner: collapse only the address rows; Go/Clear/Find Me + edge toggle stay */
+    /* Trip planner: collapse address rows + Go/Clear; edge toggle stays on otp row */
     .mf-trip-planner-fields {
       max-height: 280px;
       opacity: 1;
@@ -120,9 +134,9 @@
     .mf-trip-planner-otp-row {
       display: grid;
       grid-template-columns: 1fr auto;
-      align-items: center;
+      align-items: start;
       gap: 10px;
-      margin-top: 4px;
+      margin-top: 0;
       margin-left: -60px;
       margin-right: -60px;
       width: calc(100% + 120px);
@@ -133,12 +147,13 @@
     }
     .mf-trip-planner-otp-group {
       display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
+      flex-direction: column;
+      flex-wrap: nowrap;
       gap: 8px;
       justify-content: center;
-      align-items: center;
+      align-items: stretch;
       min-width: 0;
+      width: 100%;
     }
 
     .mf-traffic-legend {
@@ -484,10 +499,8 @@
     }
     .sponsor-box img {
       display: block;
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       object-position: center;
     }
@@ -1486,6 +1499,12 @@
       justify-content: center;
       margin-top: 4px;
     }
+    .mf-trip-planner-fields .otp-btn-row {
+      width: 100%;
+      justify-content: center;
+      margin-top: 2px;
+      margin-bottom: 0;
+    }
     .mf-trip-planner-otp-row .otp-btn-row {
       margin-top: 0;
     }
@@ -1961,33 +1980,9 @@
       color: #fff;
     }
 
-    /* Find Me: default off (gray); active on = orange + pulse */
-    #findMeBtn.otp-quick-btn--findme {
-      white-space: nowrap !important;
-      background-color: #b3e5fc !important;
-      color: #01579b !important;
-      border: 1px solid #81d4fa !important;
-      cursor: pointer;
-      transition: color 0.25s ease, transform 0.25s ease, background-color 0.25s ease;
-    }
-    #findMeBtn.otp-quick-btn--findme.find-me-active {
-      background-color: #ff8c00 !important;
-      color: #1a1a1a !important;
-      border: 2px solid #e65100 !important;
-      font-weight: 600;
-      animation: findMeBtnPulse 1.5s ease-in-out infinite;
-    }
-    #findMeBtn.otp-quick-btn--findme.find-me-active:disabled {
-      cursor: wait;
-      opacity: 0.95;
-    }
-    @keyframes findMeBtnPulse {
-      0%, 100% {
-        box-shadow: 0 0 6px rgba(255, 140, 0, 0.45);
-      }
-      50% {
-        box-shadow: 0 0 14px rgba(255, 140, 0, 0.9), 0 0 24px rgba(255, 152, 0, 0.45);
-      }
+    /* Find Me hidden (startup auto-load replaces it); keep node for legacy JS */
+    #findMeBtn {
+      display: none !important;
     }
 
   </style>
@@ -2276,7 +2271,7 @@
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <!-- Sponsor Box (Free tier only) -->
 <div class="sponsor-box" id="sponsorBox">
-  <img src="Turning Information Into Infrastructure.png" alt="Turning Information Into Infrastructure" id="sponsorImage" onerror="this.style.display='none'" />
+  <img src="cornerlogo.png" alt="Sponsor" id="sponsorImage" onerror="this.style.display='none'" />
 </div>
 <script>
   // Set sponsor image from configuration constant (Free tier only)
@@ -2914,14 +2909,14 @@
         <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
       </button>
     </div>
+    <div class="otp-btn-row" role="group" aria-label="Plan trip actions">
+      <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go" aria-label="Plan trip">Go</button>
+      <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear" aria-label="Clear trip planner inputs">Clear</button>
+      <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" hidden aria-hidden="true" tabindex="-1" title="Find my location and closest route" data-translate="find_me">Find Me</button>
+    </div>
   </div>
-  <div class="mf-trip-planner-otp-row" role="group" aria-label="Trip actions">
+  <div class="mf-trip-planner-otp-row" role="group" aria-label="Trip planner tools">
     <div class="mf-trip-planner-otp-group">
-      <div class="otp-btn-row">
-        <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go" aria-label="Plan trip">Go</button>
-        <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear" aria-label="Clear trip planner inputs">Clear</button>
-        <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" title="Find my location and closest route" data-translate="find_me">Find Me</button>
-      </div>
       <div id="trafficLoadingBar" class="mf-traffic-loading" style="display:none;" aria-hidden="true">
         <div class="mf-traffic-loading__track">
           <div class="mf-traffic-loading__bar"></div>
@@ -3308,7 +3303,7 @@
         Your support helps keep RoamRaven free for all users. We appreciate your partnership!
       </p>
       <div style="width: 100%; max-width: 100%; background: #1a1a1a; border-radius: 8px; padding: 1.5rem; border: 1px solid #333; text-align: center; box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 200px;">
-        <img id="sponsorModalImage" src="Turning Information Into Infrastructure.png" alt="Turning Information Into Infrastructure" style="max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; display: block;" onerror="this.style.display='none'">
+        <img id="sponsorModalImage" src="cornerlogo.png" alt="Sponsor" style="max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; display: block;" onerror="this.style.display='none'">
       </div>
     </div>
   </div>
@@ -3607,7 +3602,7 @@
         } catch (e) {}
 
         // Dock traffic legend + loading bar:
-        // - Expanded: inside OTP group (under Go/Clear/Find Me)
+        // - Expanded: inside OTP group (under Go/Clear)
         // - Collapsed: under "Open dashboard" bar so legend + loader stay visible on mobile
         try {
           const legend = document.getElementById('trafficLegendBar');
@@ -5754,8 +5749,8 @@
     if (!dashboardEl && tripToggle) dashboardEl = tripToggle;
     mfTutorialCoachShowStep(
       dashboardEl
-        ? 'The dashboard up here is for trip planning, Find Me, Go/Clear, and opening full trip options.'
-        : 'Use the trip planner row at the top for the dashboard — trip planning, Find Me, and trip options.',
+        ? 'The dashboard up here is for trip planning — Go, Clear, and opening full trip options.'
+        : 'Use the trip planner row at the top for the dashboard — trip planning and trip options.',
       prog(),
       dashboardEl
     );
@@ -6947,12 +6942,12 @@
         if (dashboardEl) {
           mfShowAnchoredTooltip(
             dashboardEl,
-            'The dashboard up here is for trip planning, Find Me, Go/Clear, and opening full trip options.',
+            'The dashboard up here is for trip planning — Go, Clear, and opening full trip options.',
             Object.assign({ ms: tipDash, padPx: 12 }, pop, nextProg())
           );
         } else {
           mfShowCenteredTooltip(
-            'Use the trip planner row at the top for the dashboard — trip planning, Find Me, and trip options.',
+            'Use the trip planner row at the top for the dashboard — trip planning and trip options.',
             Object.assign({ ms: tipDash }, pop, nextProg())
           );
         }
@@ -15074,8 +15069,8 @@
 </div>
 
 <!-- TV: Route alerts panel (operator; map camera frozen while open) -->
-<button type="button" id="mfTvAlertsToggle" class="mf-tv-alerts-toggle" title="Route alerts (Ctrl+Shift+A)" aria-label="Route alerts" aria-expanded="false">⚠</button>
-<div id="mfTvAlertsPanel" class="mf-tv-alerts-panel mf-tv-hidden" aria-hidden="true">
+<button type="button" id="mfTvAlertsToggle" class="mf-tv-alerts-toggle" title="Route alerts (Ctrl+Shift+A)" aria-label="Route alerts" aria-expanded="false" hidden>⚠</button>
+<div id="mfTvAlertsPanel" class="mf-tv-alerts-panel mf-tv-hidden" aria-hidden="true" hidden>
   <div class="mf-tv-admin-head">
     <span class="mf-tv-alerts-panel__title">Route alerts</span>
     <button type="button" id="mfTvAlertsClose" class="mf-tv-admin-close" aria-label="Close alerts">×</button>
@@ -15087,8 +15082,8 @@
 </div>
 
 <!-- TV director admin (hidden from broadcast; corner toggle) -->
-<button type="button" id="mfTvAdminToggle" class="mf-tv-admin-toggle" title="Director controls (Ctrl+Shift+P)" aria-label="Director controls">⚙</button>
-<div id="mfTvAdminPanel" class="mf-tv-admin-panel mf-tv-hidden" aria-hidden="true">
+<button type="button" id="mfTvAdminToggle" class="mf-tv-admin-toggle" title="Director controls (Ctrl+Shift+P)" aria-label="Director controls" hidden>⚙</button>
+<div id="mfTvAdminPanel" class="mf-tv-admin-panel mf-tv-hidden" aria-hidden="true" hidden>
   <div class="mf-tv-admin-head">
     <span>Director</span>
     <button type="button" id="mfTvAdminClose" class="mf-tv-admin-close" aria-label="Close panel">×</button>
@@ -15108,7 +15103,7 @@
   </div>
   <p class="mf-tv-admin-hint">Ctrl+Shift+P · Panel hidden from normal UI</p>
 </div>
-<script src="obs-director.js?v=20260603obsBuses"></script>
+<script src="obs-director.js?v=20260606fouc2"></script>
 <!-- 2026-04-16 Next: verify stop times vs GTFS for sorta_4 dir0 at stop X -->
 </body>
 </html>

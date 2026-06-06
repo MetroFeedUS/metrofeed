@@ -177,7 +177,7 @@ function otpRenderNoTransitFound(itinList, routingErrors, extraHint) {
   const detail = rErr && (rErr.description || rErr.code) ? escapeHtml(rErr.description || rErr.code) : '';
   const hint =
     extraHint ||
-    'Try tapping closer to a bus stop, or use Find Me to open a nearby route. The trip planner needs a working transit graph on the server.';
+    'Try tapping closer to a bus stop, or open a nearby route from the map. The trip planner needs a working transit graph on the server.';
   const hintHtml = hint
     ? `<div style="color:#aaa;font-size:12px;margin-top:8px;line-height:1.35;">${escapeHtml(hint)}</div>`
     : '';

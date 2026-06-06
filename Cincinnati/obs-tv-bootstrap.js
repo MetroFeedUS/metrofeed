@@ -40,9 +40,24 @@
   var crop = spec.crop || { x: 0, y: 0, w: 1920, h: 1080 };
   window.MF_TV_MAP_PX = { w: crop.w, h: crop.h, bw: spec.bw, bh: spec.bh };
 
+  /** Touch / coarse pointer — layout viewport may still be 1920px in TV mode. */
+  function tvHideOperatorChrome() {
+    try {
+      if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+      if (window.matchMedia && window.matchMedia('(hover: none)').matches) return true;
+      if (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) return true;
+    } catch (_) {}
+    return false;
+  }
+
+  window.MF_TV_HIDE_OPERATOR_CHROME = tvHideOperatorChrome();
+
   /** Lock page pixels NOW (before #map exists) — fixes OBS 100vw/100vh blow-up. */
   function applyStageCritical() {
     var root = document.documentElement;
+    if (window.MF_TV_HIDE_OPERATOR_CHROME) {
+      root.classList.add('tv-no-operator-chrome');
+    }
     root.style.setProperty('--mf-tv-bw', spec.bw + 'px');
     root.style.setProperty('--mf-tv-bh', spec.bh + 'px');
     root.style.setProperty('--mf-tv-crop-w', crop.w + 'px');
@@ -97,14 +112,24 @@
       'html.tv-mode .site-footer,html.tv-mode #minimizedItinerary,html.tv-mode #mfTripGuideDock,' +
       'html.tv-mode #otpModal,html.tv-mode #busRoutesModal,html.tv-mode #railRoutesModal,' +
       'html.tv-mode .route-info-panel,html.tv-mode .mf-traffic-legend-wrap{display:none!important;visibility:hidden!important;}' +
-      '#mfTvAdminPanel.mf-tv-hidden,#mfTvAlertsPanel.mf-tv-hidden,.mf-tv-hidden,#mfTvPhaseBadge{display:none!important;visibility:hidden!important;}' +
-      '#mfTvAdminToggle,#mfTvAlertsToggle{opacity:0!important;pointer-events:none!important;}' +
-      'html.tv-ready #mfTvAdminToggle,html.tv-ready #mfTvAlertsToggle{opacity:.35!important;pointer-events:auto!important;}';
+      'html.tv-mode:not(.tv-ready) #mfTvAdminPanel,html.tv-mode:not(.tv-ready) #mfTvAlertsPanel{display:none!important;visibility:hidden!important;}' +
+      '#mfTvAdminPanel[hidden],#mfTvAlertsPanel[hidden],#mfTvAdminPanel.mf-tv-hidden,#mfTvAlertsPanel.mf-tv-hidden,.mf-tv-hidden,#mfTvPhaseBadge{display:none!important;visibility:hidden!important;}' +
+      '#mfTvAdminToggle[hidden],#mfTvAlertsToggle[hidden]{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}' +
+      '#mfTvAdminToggle:not([hidden]),#mfTvAlertsToggle:not([hidden]){opacity:0!important;pointer-events:none!important;}' +
+      'html.tv-ready:not(.tv-no-operator-chrome) #mfTvAdminToggle:not([hidden]),html.tv-ready:not(.tv-no-operator-chrome) #mfTvAlertsToggle:not([hidden]){display:inline-flex!important;visibility:visible!important;opacity:.35!important;pointer-events:auto!important;}' +
+      'html.tv-no-operator-chrome #mfTvAdminToggle,html.tv-no-operator-chrome #mfTvAlertsToggle,' +
+      'html.tv-no-operator-chrome #mfTvAdminPanel,html.tv-no-operator-chrome #mfTvAlertsPanel{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}';
   }
 
   function markTvStylesReady() {
     try {
       document.documentElement.classList.add('tv-ready');
+      if (!window.MF_TV_HIDE_OPERATOR_CHROME) {
+        ['mfTvAdminToggle', 'mfTvAlertsToggle'].forEach(function (id) {
+          var btn = document.getElementById(id);
+          if (btn) btn.removeAttribute('hidden');
+        });
+      }
     } catch (_) {}
   }
 
@@ -175,7 +200,7 @@
 
   var link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'obs-tv.css?v=20260606fouc';
+  link.href = 'obs-tv.css?v=20260606fouc2';
   link.onload = markTvStylesReady;
   link.onerror = markTvStylesReady;
   document.head.appendChild(link);
