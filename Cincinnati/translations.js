@@ -202,8 +202,8 @@ const translations = {
     // TrafficCameras page specific
     "trafficCamerasTitle": "Live Traffic Cameras – MetroFeed Portland",
     "liveTrafficCameras": "Live Traffic Cameras – Portland, OR",
-    "cameraCourtesy": "Camera courtesy of ODOT",
-    "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of the Oregon Department of Transportation (ODOT)."
+    "cameraCourtesy": "Camera courtesy of OHGO",
+    "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of OHGO."
   },
   
   es: {
@@ -401,8 +401,8 @@ const translations = {
     // TrafficCameras page specific
     "trafficCamerasTitle": "Cámaras de Tráfico en Vivo – MetroFeed Portland",
     "liveTrafficCameras": "Cámaras de Tráfico en Vivo – Portland, OR",
-    "cameraCourtesy": "Cámara cortesía de ODOT",
-    "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía del Departamento de Transporte de Oregon (ODOT)."
+    "cameraCourtesy": "Cámara cortesía de OHGO",
+    "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía de OHGO."
   }
 };
 

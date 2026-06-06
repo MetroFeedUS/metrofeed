@@ -319,7 +319,7 @@ const TrafficCamerasOverlay = (function() {
     modalImage.alt = cameraName;
     
     if (modalAttribution) {
-      modalAttribution.textContent = 'Camera courtesy of ODOT';
+      modalAttribution.textContent = 'Camera courtesy of OHGO';
     }
     
     modal.style.display = 'flex';

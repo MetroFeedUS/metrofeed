@@ -88,14 +88,31 @@
       crop.w +
       'px!important;max-height:' +
       crop.h +
-      'px!important;position:absolute!important;top:0!important;left:0!important;right:auto!important;bottom:auto!important;}';
+      'px!important;position:absolute!important;top:0!important;left:0!important;right:auto!important;bottom:auto!important;}' +
+      /* FOUC: hide site chrome + director panels before obs-tv.css loads (OBS stream flash) */
+      'html.tv-mode .search-bar,html.tv-mode #mfTripPlannerSearchBar,html.tv-mode .side-buttons,' +
+      'html.tv-mode #themeToggleBtn,html.tv-mode #aiChatBtn,html.tv-mode #languageBtn,' +
+      'html.tv-mode #dropdownMenu,html.tv-mode #menuBtn,html.tv-mode .sponsor-box,html.tv-mode #sponsorBox,' +
+      'html.tv-mode #favoritesWrapper,html.tv-mode .favorites-wrapper,html.tv-mode footer.site-footer,' +
+      'html.tv-mode .site-footer,html.tv-mode #minimizedItinerary,html.tv-mode #mfTripGuideDock,' +
+      'html.tv-mode #otpModal,html.tv-mode #busRoutesModal,html.tv-mode #railRoutesModal,' +
+      'html.tv-mode .route-info-panel,html.tv-mode .mf-traffic-legend-wrap{display:none!important;visibility:hidden!important;}' +
+      '#mfTvAdminPanel.mf-tv-hidden,#mfTvAlertsPanel.mf-tv-hidden,.mf-tv-hidden,#mfTvPhaseBadge{display:none!important;visibility:hidden!important;}' +
+      '#mfTvAdminToggle,#mfTvAlertsToggle{opacity:0!important;pointer-events:none!important;}' +
+      'html.tv-ready #mfTvAdminToggle,html.tv-ready #mfTvAlertsToggle{opacity:.35!important;pointer-events:auto!important;}';
+  }
+
+  function markTvStylesReady() {
+    try {
+      document.documentElement.classList.add('tv-ready');
+    } catch (_) {}
   }
 
   applyStageCritical();
 
   if (params.get('tvReset') === '1' || params.get('tvReset') === 'true') {
     try {
-      ['mfTvObsPanelLayout_v1', 'mfTvAlertsSize_v1', 'mfLiveBadgePos_v1'].forEach(function (k) {
+      ['mfTvAlertsSize_v1', 'mfLiveBadgePos_v1'].forEach(function (k) {
         localStorage.removeItem(k);
       });
     } catch (_) {}
@@ -158,12 +175,16 @@
 
   var link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'obs-tv.css?v=20260602';
+  link.href = 'obs-tv.css?v=20260606fouc';
+  link.onload = markTvStylesReady;
+  link.onerror = markTvStylesReady;
   document.head.appendChild(link);
+  /* Fallback if stylesheet is cached and onload does not fire */
+  setTimeout(markTvStylesReady, 120);
 
   var stageCss = document.createElement('link');
   stageCss.rel = 'stylesheet';
-  stageCss.href = 'obs-tv-stage.css?v=3';
+  stageCss.href = 'obs-tv-stage.css?v=4';
   document.head.appendChild(stageCss);
 
   var busJs = document.createElement('script');
@@ -248,8 +269,12 @@
     );
   }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', hideTvChrome);
+    document.addEventListener('DOMContentLoaded', function () {
+      hideTvChrome();
+      markTvStylesReady();
+    });
   } else {
     hideTvChrome();
+    markTvStylesReady();
   }
 })();

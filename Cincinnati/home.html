@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#9333ea" />
   <script src="obs-tv-panels.js?v=3"></script>
-  <script src="obs-tv-bootstrap.js?v=20260605"></script>
+  <script src="obs-tv-bootstrap.js?v=20260606fouc"></script>
   <link rel="icon" type="image/png" href="RoamRavenbird.png" sizes="512x512" />
   <link rel="apple-touch-icon" href="RoamRavenbird.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -23,7 +23,7 @@
     /** 1×1 transparent GIF: hide sponsor UI until a real asset URL is set here. */
     var ROAMRAVEN_SPONSOR_PIXEL_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
     if (window.TIER_CONFIG && window.TIER_CONFIG.hasFeature('sponsors')) {
-      var SPONSOR_IMAGE = ROAMRAVEN_SPONSOR_PIXEL_GIF;
+      var SPONSOR_IMAGE = 'Turning Information Into Infrastructure.png';
     }
   </script>
   
@@ -480,14 +480,16 @@
       width: 90px; /* Square size - as large as possible with 10px spacing */
       height: 90px; /* Square size - matches width */
       aspect-ratio: 1 / 1; /* Force square */
+      overflow: hidden;
     }
     .sponsor-box img {
+      display: block;
       max-width: 100%;
       max-height: 100%;
-      width: 100%;
-      height: 100%;
-      display: block;
+      width: auto;
+      height: auto;
       object-fit: contain;
+      object-position: center;
     }
 
     /* Trip guide: one box above sponsor; hidden until an OTP itinerary is chosen */
@@ -1715,6 +1717,94 @@
         line-height: 1.42;
         padding-bottom: 2px;
       }
+
+      /* Mobile quick tutorial: fixed bottom coach card + SVG pointer to target */
+      .mf-tutorial-coach {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%) translateY(12px);
+        z-index: 10070;
+        width: min(calc(100vw - 20px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)), 340px);
+        max-width: min(calc(100vw - 20px), 340px);
+        padding: 12px 14px 13px;
+        padding-left: max(14px, env(safe-area-inset-left, 0px));
+        padding-right: max(14px, env(safe-area-inset-right, 0px));
+        border-radius: 12px;
+        border: 2px solid #a855f7;
+        background: rgba(12, 10, 18, 0.94);
+        box-shadow:
+          0 0 0 1px rgba(168, 85, 247, 0.35),
+          0 10px 32px rgba(0, 0, 0, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.32s ease, transform 0.32s ease;
+        box-sizing: border-box;
+      }
+      .mf-tutorial-coach.mf-tutorial-coach--visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .mf-tutorial-coach-step {
+        position: absolute;
+        top: 8px;
+        right: max(10px, env(safe-area-inset-right, 0px));
+        font-size: 0.64rem;
+        font-weight: 800;
+        color: #f3e8ff;
+        letter-spacing: 0.04em;
+        line-height: 1;
+        pointer-events: none;
+      }
+      .mf-tutorial-coach-text {
+        margin: 0;
+        padding: 2px 2.5rem 0 0;
+        color: #f1f5f9;
+        font-size: 0.9rem;
+        line-height: 1.42;
+        font-weight: 600;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      .mf-tutorial-coach--closing .mf-tutorial-coach-text {
+        padding-right: 0;
+        font-size: 0.9rem;
+      }
+      .mf-tutorial-coach-notch {
+        position: absolute;
+        top: -7px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 14px;
+        height: 14px;
+        background: rgba(12, 10, 18, 0.94);
+        border-left: 2px solid #a855f7;
+        border-top: 2px solid #a855f7;
+        border-radius: 3px 0 0 0;
+        transform: translateX(-50%) rotate(45deg);
+        pointer-events: none;
+      }
+      .mf-tutorial-pointer {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10066;
+        pointer-events: none;
+        overflow: visible;
+      }
+      .mf-tutorial-pointer-line {
+        stroke: rgba(192, 132, 252, 0.92);
+        stroke-width: 2.25;
+        stroke-linecap: round;
+        filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.45));
+      }
+      .mf-tutorial-pointer-dot {
+        fill: #faf5ff;
+        stroke: #a855f7;
+        stroke-width: 2.5;
+        filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.55));
+      }
     }
 
     .mf-onboarding-target-highlight {
@@ -2186,7 +2276,7 @@
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <!-- Sponsor Box (Free tier only) -->
 <div class="sponsor-box" id="sponsorBox">
-  <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Sponsor" id="sponsorImage" onerror="this.style.display='none'" />
+  <img src="Turning Information Into Infrastructure.png" alt="Turning Information Into Infrastructure" id="sponsorImage" onerror="this.style.display='none'" />
 </div>
 <script>
   // Set sponsor image from configuration constant (Free tier only)
@@ -2199,8 +2289,10 @@
     }
     
     const sponsorImg = document.getElementById('sponsorImage');
-    if (sponsorImg && typeof SPONSOR_IMAGE !== 'undefined') {
-      sponsorImg.src = SPONSOR_IMAGE;
+    const sponsorModalImg = document.getElementById('sponsorModalImage');
+    if (typeof SPONSOR_IMAGE !== 'undefined') {
+      if (sponsorImg) sponsorImg.src = SPONSOR_IMAGE;
+      if (sponsorModalImg) sponsorModalImg.src = SPONSOR_IMAGE;
     }
   })();
 </script>
@@ -3102,7 +3194,7 @@
       <img id="cameraModalImage" src="" alt="Traffic Camera" style="max-width: 100%; max-height: 70vh; border-radius: 8px; border: 2px solid var(--rr-accent);">
     </div>
     <div style="margin-top: 1rem; text-align: center; color: #888; font-size: 0.85rem;" id="cameraModalAttribution">
-      Camera courtesy of ODOT
+      Camera courtesy of OHGO
     </div>
     <button class="mf-btn" onclick="hideCameraModal()" style="margin-top: 1rem;" data-translate="close">Close</button>
   </div>
@@ -3216,7 +3308,7 @@
         Your support helps keep RoamRaven free for all users. We appreciate your partnership!
       </p>
       <div style="width: 100%; max-width: 100%; background: #1a1a1a; border-radius: 8px; padding: 1.5rem; border: 1px solid #333; text-align: center; box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 200px;">
-        <img id="sponsorModalImage" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Sponsor" style="max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; display: block;" onerror="this.style.display='none'">
+        <img id="sponsorModalImage" src="Turning Information Into Infrastructure.png" alt="Turning Information Into Infrastructure" style="max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; display: block;" onerror="this.style.display='none'">
       </div>
     </div>
   </div>
@@ -5432,6 +5524,280 @@
    */
   window.metrofeedAfterTutorial = function () {};
 
+  /** Mobile quick tutorial: one bottom card + leader line (fixed pace, readable). */
+  const MF_TUTORIAL_MOBILE_TIMING = {
+    visibleMs: 5200,
+    fadeMs: 350,
+    gapMs: 250,
+    menuSettleMs: 450,
+    closingVisibleMs: 6000
+  };
+
+  let _mfTutorialCoachEl = null;
+  let _mfTutorialPointerSvg = null;
+  let _mfTutorialCoachTarget = null;
+  let _mfTutorialCoachResizeBound = null;
+
+  function mfTutorialCoachStepWaitMs() {
+    const t = MF_TUTORIAL_MOBILE_TIMING;
+    return t.visibleMs + t.fadeMs + t.gapMs;
+  }
+
+  function mfTutorialCoachFallbackPoint() {
+    const vb = mfViewportLayoutBox();
+    return {
+      x: vb.left + vb.width / 2,
+      y: vb.top + vb.height * 0.36
+    };
+  }
+
+  function mfTutorialCoachTargetPoint(el) {
+    if (!el || !el.getBoundingClientRect) return mfTutorialCoachFallbackPoint();
+    const r = el.getBoundingClientRect();
+    if (!r.width && !r.height) return mfTutorialCoachFallbackPoint();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  function mfTutorialCoachRedrawPointer() {
+    if (!_mfTutorialCoachEl || !_mfTutorialPointerSvg) return;
+    const coach = _mfTutorialCoachEl.getBoundingClientRect();
+    if (!coach.width) return;
+    const fromX = coach.left + coach.width / 2;
+    const fromY = coach.top;
+    const to = _mfTutorialCoachTarget || mfTutorialCoachFallbackPoint();
+    const line = _mfTutorialPointerSvg.querySelector('.mf-tutorial-pointer-line');
+    const dot = _mfTutorialPointerSvg.querySelector('.mf-tutorial-pointer-dot');
+    if (!line || !dot) return;
+    line.setAttribute('x1', String(fromX));
+    line.setAttribute('y1', String(fromY));
+    line.setAttribute('x2', String(to.x));
+    line.setAttribute('y2', String(to.y));
+    dot.setAttribute('cx', String(to.x));
+    dot.setAttribute('cy', String(to.y));
+    dot.setAttribute('r', '7');
+  }
+
+  function mfTutorialCoachPosition() {
+    if (!_mfTutorialCoachEl) return;
+    const bottomPx = mfOnboardingMobileDockBottomPx();
+    _mfTutorialCoachEl.style.bottom = `${bottomPx}px`;
+    _mfTutorialCoachEl.style.left = '50%';
+    _mfTutorialCoachEl.style.right = 'auto';
+    try {
+      const vb = mfViewportLayoutBox();
+      const w = _mfTutorialCoachEl.offsetWidth || 300;
+      const edge = 10;
+      const L0 = vb.left + edge;
+      const R0 = vb.left + vb.width - edge;
+      let left = vb.width ? Math.round(vb.left + (vb.width - w) / 2) : L0;
+      if (left < L0) left = L0;
+      if (vb.width && left + w > R0) left = Math.max(L0, R0 - w);
+      _mfTutorialCoachEl.style.left = `${left}px`;
+      _mfTutorialCoachEl.style.transform = 'translateX(0) translateY(0)';
+    } catch (_) {
+      _mfTutorialCoachEl.style.transform = 'translateX(-50%) translateY(0)';
+    }
+    requestAnimationFrame(mfTutorialCoachRedrawPointer);
+  }
+
+  function mfTutorialCoachInit() {
+    mfTutorialCoachTeardown();
+    const coach = document.createElement('div');
+    coach.id = 'mfTutorialCoach';
+    coach.className = 'mf-tutorial-coach';
+    coach.setAttribute('role', 'status');
+    coach.setAttribute('aria-live', 'polite');
+    coach.innerHTML =
+      '<span class="mf-tutorial-coach-notch" aria-hidden="true"></span>' +
+      '<span class="mf-tutorial-coach-step" aria-hidden="true"></span>' +
+      '<p class="mf-tutorial-coach-text"></p>';
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNs, 'svg');
+    svg.id = 'mfTutorialPointer';
+    svg.classList.add('mf-tutorial-pointer');
+    svg.setAttribute('aria-hidden', 'true');
+    const line = document.createElementNS(svgNs, 'line');
+    line.classList.add('mf-tutorial-pointer-line');
+    const dot = document.createElementNS(svgNs, 'circle');
+    dot.classList.add('mf-tutorial-pointer-dot');
+    svg.appendChild(line);
+    svg.appendChild(dot);
+    document.body.appendChild(svg);
+    document.body.appendChild(coach);
+    _mfTutorialCoachEl = coach;
+    _mfTutorialPointerSvg = svg;
+    _mfTutorialCoachResizeBound = function () {
+      mfTutorialCoachPosition();
+    };
+    window.addEventListener('resize', _mfTutorialCoachResizeBound);
+    try {
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', _mfTutorialCoachResizeBound);
+        window.visualViewport.addEventListener('scroll', _mfTutorialCoachResizeBound);
+      }
+    } catch (_) {}
+    mfTutorialCoachPosition();
+  }
+
+  function mfTutorialCoachTeardown() {
+    mfClearOnboardingHighlight();
+    if (_mfTutorialCoachResizeBound) {
+      try {
+        window.removeEventListener('resize', _mfTutorialCoachResizeBound);
+        if (window.visualViewport) {
+          window.visualViewport.removeEventListener('resize', _mfTutorialCoachResizeBound);
+          window.visualViewport.removeEventListener('scroll', _mfTutorialCoachResizeBound);
+        }
+      } catch (_) {}
+      _mfTutorialCoachResizeBound = null;
+    }
+    if (_mfTutorialCoachEl && _mfTutorialCoachEl.parentNode) {
+      _mfTutorialCoachEl.parentNode.removeChild(_mfTutorialCoachEl);
+    }
+    if (_mfTutorialPointerSvg && _mfTutorialPointerSvg.parentNode) {
+      _mfTutorialPointerSvg.parentNode.removeChild(_mfTutorialPointerSvg);
+    }
+    _mfTutorialCoachEl = null;
+    _mfTutorialPointerSvg = null;
+    _mfTutorialCoachTarget = null;
+  }
+
+  function mfTutorialCoachShowStep(text, progress, targetEl, opts) {
+    if (!_mfTutorialCoachEl) return;
+    const stepEl = _mfTutorialCoachEl.querySelector('.mf-tutorial-coach-step');
+    const textEl = _mfTutorialCoachEl.querySelector('.mf-tutorial-coach-text');
+    const closing = !!(opts && opts.closing);
+    _mfTutorialCoachEl.classList.toggle('mf-tutorial-coach--closing', closing);
+    if (stepEl) {
+      if (closing) {
+        stepEl.textContent = 'Done';
+      } else if (progress && progress.current != null && progress.total != null) {
+        stepEl.textContent = `${progress.current}/${progress.total}`;
+      } else {
+        stepEl.textContent = '';
+      }
+    }
+    if (textEl) textEl.textContent = text || '';
+    if (targetEl) {
+      mfSetOnboardingHighlight(targetEl);
+      _mfTutorialCoachTarget = mfTutorialCoachTargetPoint(targetEl);
+    } else {
+      mfClearOnboardingHighlight();
+      _mfTutorialCoachTarget = mfTutorialCoachFallbackPoint();
+    }
+    mfTutorialCoachPosition();
+    _mfTutorialCoachEl.classList.add('mf-tutorial-coach--visible');
+    requestAnimationFrame(mfTutorialCoachRedrawPointer);
+  }
+
+  async function mfTutorialCoachPause() {
+    const t = MF_TUTORIAL_MOBILE_TIMING;
+    await mfDelay(t.visibleMs);
+    if (_mfTutorialCoachEl) {
+      _mfTutorialCoachEl.classList.remove('mf-tutorial-coach--visible');
+    }
+    await mfDelay(t.fadeMs + t.gapMs);
+  }
+
+  /**
+   * Mobile-only quick tutorial: bottom coach card + pointer, unified timing.
+   */
+  async function metrofeedStartQuickTutorialMobile() {
+    const t = MF_TUTORIAL_MOBILE_TIMING;
+    mfTutorialCoachInit();
+    await mfDelay(t.menuSettleMs);
+
+    const menuBtn = document.getElementById('menuBtn');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const busesBtn = document.getElementById('dropdownBusesBtn');
+    const hasBusStep = !!(dropdownMenu && busesBtn);
+    const totalSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 4;
+    let stepI = 0;
+    const prog = () => ({ current: ++stepI, total: totalSteps });
+
+    mfTutorialCoachShowStep(
+      menuBtn
+        ? 'Open the menu for bus and rail routes, traffic, cameras, weather, alerts, and more.'
+        : 'Use the menu (top-left) for routes, overlays, and tools.',
+      prog(),
+      menuBtn || null
+    );
+    await mfTutorialCoachPause();
+
+    if (hasBusStep) {
+      try {
+        dropdownMenu.style.display = 'flex';
+        if (typeof window.positionDropdownMenu === 'function') window.positionDropdownMenu();
+      } catch (_) {}
+      await mfDelay(t.menuSettleMs);
+      mfTutorialCoachShowStep(
+        'Choose Bus Routes to pick a line and direction. Rail and other tools are in this menu too.',
+        prog(),
+        busesBtn
+      );
+      await mfTutorialCoachPause();
+      try {
+        dropdownMenu.style.display = 'none';
+      } catch (_) {}
+      await mfDelay(t.gapMs);
+    }
+
+    const openBar = document.getElementById('mfTripPlannerOpenBar');
+    const tripToggle = document.getElementById('mfTripPlannerToggle');
+    let dashboardEl = null;
+    if (openBar) {
+      const cs = window.getComputedStyle(openBar);
+      if (cs.display !== 'none' && cs.visibility !== 'hidden' && openBar.offsetWidth > 0) {
+        dashboardEl = openBar;
+      }
+    }
+    if (!dashboardEl && tripToggle) dashboardEl = tripToggle;
+    mfTutorialCoachShowStep(
+      dashboardEl
+        ? 'The dashboard up here is for trip planning, Find Me, Go/Clear, and opening full trip options.'
+        : 'Use the trip planner row at the top for the dashboard — trip planning, Find Me, and trip options.',
+      prog(),
+      dashboardEl
+    );
+    await mfTutorialCoachPause();
+
+    const mapCanvas = window.map && window.map.getCanvas ? window.map.getCanvas() : null;
+    const mapSteps = [
+      {
+        text: 'When your route is on the map, tap a bus for live details.',
+        getEl: () => mfPickMostCenteredEl('.mf-bus-marker', mapCanvas)
+      },
+      {
+        text: 'Tap a stop on the map for upcoming times.',
+        getEl: () => mfPickMostCenteredEl('.mf-stop-marker', mapCanvas)
+      },
+      {
+        text: 'Use this route tab for trip options and more.',
+        getEl: () => document.querySelector('.route-info-panel, .otp-trip-route-chip')
+      },
+      {
+        text: 'Save favorites here — tap the star on a direction while viewing a route.',
+        getEl: () => document.getElementById('favoritesWrapper')
+      }
+    ];
+
+    for (let i = 0; i < mapSteps.length; i++) {
+      const s = mapSteps[i];
+      const el = await mfWaitForElement(s.getEl, { timeoutMs: 2800, intervalMs: 120 });
+      mfTutorialCoachShowStep(s.text, prog(), el);
+      await mfTutorialCoachPause();
+    }
+
+    mfTutorialCoachShowStep(
+      "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
+      null,
+      null,
+      { closing: true }
+    );
+    await mfDelay(t.closingVisibleMs + t.fadeMs);
+    mfTutorialCoachTeardown();
+  }
+
   // === SECTION: FAVORITES COLLAPSE TOGGLE ===
   const favoritesWrapper = document.getElementById('favoritesWrapper');
   const minimizedItinerary = document.getElementById('minimizedItinerary');
@@ -6524,29 +6890,13 @@
    * Welcome modal → "Quick tutorial": menu + routes entry, then the same map hint sequence with fuller copy.
    * Marks onboarding complete and suppresses duplicate mfPostTutorialHintsShown nudges.
    */
-  window.metrofeedStartQuickTutorial =
-    window.metrofeedStartQuickTutorial ||
-    async function metrofeedStartQuickTutorial() {
+  async function metrofeedStartQuickTutorialDesktop() {
       const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-      const mobile = typeof mfIsMobileTutorialViewport === 'function' && mfIsMobileTutorialViewport();
-      /** Tooltip visible duration; step wait ≈ tooltip + fade + gap (mobile: shorter copy window, tighter handoff). */
-      const tipMenu = mobile ? 4000 : 5400;
-      const tipBus = mobile ? 3800 : 5400;
-      const tipDash = mobile ? 4000 : 5400;
-      const stepAfter = (tipMs) => tipMs + (mobile ? 480 : 700);
+      const tipMenu = 5400;
+      const tipBus = 5400;
+      const tipDash = 5400;
+      const stepAfter = (tipMs) => tipMs + 700;
       const pop = { variant: 'onboarding' };
-
-      const finishOnboarding = () => {
-        try {
-          localStorage.setItem('mfOnboardingDone', '1');
-        } catch (_) {}
-        try {
-          sessionStorage.setItem('mfPostTutorialHintsShown', '1');
-        } catch (_) {}
-      };
-
-      try {
-        if (mobile) await delay(320);
 
         const menuBtn = document.getElementById('menuBtn');
         const dropdownMenu = document.getElementById('dropdownMenu');
@@ -6575,7 +6925,6 @@
             dropdownMenu.style.display = 'flex';
             if (typeof window.positionDropdownMenu === 'function') window.positionDropdownMenu();
           } catch (_) {}
-          if (mobile) await delay(380);
           mfShowAnchoredTooltip(
             busesBtn,
             'Choose Bus Routes to pick a line and direction. Rail and other tools are in this menu too.',
@@ -6633,20 +6982,43 @@
           }
         ];
         await mfRunOnboardingMapHintSteps(steps, {
-          stepPauseMs: mobile ? 4400 : 6000,
-          busStopTooltipMs: mobile ? 3800 : 5400,
-          anchoredTooltipMs: mobile ? 3800 : 5400,
-          waitTimeoutMs: mobile ? 3200 : 2800,
+          stepPauseMs: 6000,
+          busStopTooltipMs: 5400,
+          anchoredTooltipMs: 5400,
+          waitTimeoutMs: 2800,
           tooltipVariant: 'onboarding',
           progressStart: stepI + 1,
           progressTotal: totalHintSteps
         });
         await mfShowOnboardingClosingStatement(
           "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
-          mobile ? 4800 : 5600
+          5600
         );
+  }
+
+  window.metrofeedStartQuickTutorial =
+    window.metrofeedStartQuickTutorial ||
+    async function metrofeedStartQuickTutorial() {
+      const finishOnboarding = () => {
+        try {
+          localStorage.setItem('mfOnboardingDone', '1');
+        } catch (_) {}
+        try {
+          sessionStorage.setItem('mfPostTutorialHintsShown', '1');
+        } catch (_) {}
+      };
+
+      const mobile = typeof mfIsMobileTutorialViewport === 'function' && mfIsMobileTutorialViewport();
+
+      try {
+        if (mobile) {
+          await metrofeedStartQuickTutorialMobile();
+        } else {
+          await metrofeedStartQuickTutorialDesktop();
+        }
       } catch (e) {
         console.warn('[metrofeedStartQuickTutorial]', e);
+        if (mobile) mfTutorialCoachTeardown();
       } finally {
         finishOnboarding();
       }
@@ -14680,7 +15052,7 @@
   <span id="mfTvLowerThirdTitle" class="mf-tv-lower-third-title"></span>
   <span id="mfTvLowerThirdSub" class="mf-tv-lower-third-sub"></span>
 </div>
-<div id="mfTvPhaseBadge" class="mf-tv-phase-badge"></div>
+<div id="mfTvPhaseBadge" class="mf-tv-phase-badge mf-tv-hidden" aria-hidden="true"></div>
 <div id="mfTvTrafficDetail" class="mf-tv-traffic-detail mf-tv-hidden" aria-hidden="true">
   <div id="mfTvTrafficDetailTitle" class="mf-tv-traffic-detail-title"></div>
   <img id="mfTvTrafficDetailImage" class="mf-tv-traffic-detail-image mf-tv-hidden" alt="" />
