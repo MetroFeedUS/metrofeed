@@ -484,23 +484,21 @@
       bottom: 40px; /* Match favorites banner bottom position */
       left: 10px; /* 10px from left of screen */
       background-color: rgba(30,30,30,0.85);
-      padding: 10px; /* Consistent 10px padding all around */
+      padding: 3px;
       border-radius: 8px;
       border: 1px solid var(--rr-silver-edge);
       z-index: 1001;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       box-sizing: border-box;
-      width: 90px; /* Square size - as large as possible with 10px spacing */
-      height: 90px; /* Square size - matches width */
-      aspect-ratio: 1 / 1; /* Force square */
+      width: 90px;
+      height: 90px;
       overflow: hidden;
     }
     .sponsor-box img {
       display: block;
-      width: 100%;
-      height: 100%;
+      position: absolute;
+      inset: 3px;
+      width: calc(100% - 6px);
+      height: calc(100% - 6px);
       object-fit: contain;
       object-position: center;
     }
@@ -1811,6 +1809,11 @@
         z-index: 10066;
         pointer-events: none;
         overflow: visible;
+        opacity: 0;
+        transition: opacity 0.32s ease;
+      }
+      .mf-tutorial-pointer.mf-tutorial-pointer--visible {
+        opacity: 1;
       }
       .mf-tutorial-pointer-line {
         stroke: rgba(192, 132, 252, 0.92);
@@ -3560,6 +3563,9 @@
     if (CITY_CONFIG.showRailRoutes === false) {
       const railBtn = document.getElementById('dropdownRailBtn');
       if (railBtn) railBtn.style.display = 'none';
+      document.querySelectorAll('[data-translate="fav_route_tutorial_rail_note"]').forEach(function (el) {
+        el.style.display = 'none';
+      });
     }
 
     (function initTripPlannerCollapseToggle() {
@@ -5024,7 +5030,7 @@
       { selector: '#youtubeBtn', text: 'Monitor on Youtube' },
       { selector: '#dropdownTwitterBtn', text: 'RoamRaven on X' },
       { selector: '#dropdownBusesBtn', text: 'Bus Routes' },
-      { selector: '#dropdownRailBtn', text: 'Rail Routes' },
+      { selector: '#dropdownRailBtn', text: 'Rail Routes', requiresRail: true },
       { selector: '#dropdownTrafficBtn', text: 'Traffic Overlay' },
       { selector: '#dropdownCamerasBtn', text: 'Traffic Cameras' },
       { selector: '#dropdownWeatherBtn', text: 'Weather' },
@@ -5032,11 +5038,19 @@
       { selector: '#dropdownAlertsBtn', text: 'Alerts' },
       { selector: '#dropdownBackToNationalBtn', text: 'Switch cities' }
     ];
-    
+    const railEnabled = !(window.CITY_CONFIG && window.CITY_CONFIG.showRailRoutes === false);
+
     tooltipData.forEach((item, index) => {
+      if (item.requiresRail && !railEnabled) return;
       const button = dropdownMenu.querySelector(item.selector);
-      if (button) {
-        const tooltip = document.createElement('div');
+      if (!button) return;
+      try {
+        const cs = window.getComputedStyle(button);
+        if (cs.display === 'none' || cs.visibility === 'hidden') return;
+        const br = button.getBoundingClientRect();
+        if (!br.width || !br.height) return;
+      } catch (_) {}
+      const tooltip = document.createElement('div');
         tooltip.className = 'dropdown-tooltip';
         tooltip.textContent = item.text;
         
@@ -5061,7 +5075,6 @@
             }
           }, 600);
         }, 5000 + (index * 200));
-      }
     });
   }
   
@@ -5453,10 +5466,10 @@
   }
 
   async function mfShowOnboardingClosingStatement(text, tipMs) {
-    const mobile = mfIsMobileTutorialViewport();
-    const ms = tipMs != null ? tipMs : mobile ? 4800 : 5600;
+    const dt = MF_TUTORIAL_DESKTOP_TIMING;
+    const ms = tipMs != null ? tipMs : dt.closingVisibleMs || 5200;
     mfShowCenteredTooltip(text, { ms: ms, variant: 'onboarding', closing: true });
-    await mfDelay(ms + (mobile ? 480 : 700));
+    await mfDelay(ms + dt.fadeMs);
   }
 
   function mfWaitForElement(getEl, opts) {
@@ -5481,27 +5494,25 @@
    * @param {{stepPauseMs?:number,busStopTooltipMs?:number,anchoredTooltipMs?:number,waitTimeoutMs?:number,tooltipVariant?:string,progressStart?:number,progressTotal?:number}} [opts]
    */
   async function mfRunOnboardingMapHintSteps(steps, opts) {
-    const mobile = mfIsMobileTutorialViewport();
-    const stepPauseMs =
-      opts && opts.stepPauseMs != null ? opts.stepPauseMs : mobile ? 4400 : 4000;
+    const dt = MF_TUTORIAL_DESKTOP_TIMING;
     const busStopMs =
-      opts && opts.busStopTooltipMs != null ? opts.busStopTooltipMs : mobile ? 3800 : 3200;
+      opts && opts.busStopTooltipMs != null ? opts.busStopTooltipMs : dt.visibleMs;
     const anchoredMs =
-      opts && opts.anchoredTooltipMs != null ? opts.anchoredTooltipMs : mobile ? 3800 : 3600;
+      opts && opts.anchoredTooltipMs != null ? opts.anchoredTooltipMs : dt.visibleMs;
     const waitTimeoutMs = opts && opts.waitTimeoutMs != null ? opts.waitTimeoutMs : 2600;
     const variant = opts && opts.tooltipVariant ? opts.tooltipVariant : null;
     const progTotal = opts && opts.progressTotal != null ? opts.progressTotal : steps.length;
     const progStart = opts && opts.progressStart != null ? opts.progressStart : 1;
     const baseBus = Object.assign({ ms: busStopMs }, variant ? { variant } : {});
     const baseAnch = Object.assign({ ms: anchoredMs, padPx: 12 }, variant ? { variant } : {});
-    const stepGapMs = mobile ? 420 : 0;
     for (let i = 0; i < steps.length; i++) {
       const s = steps[i];
       const el = await mfWaitForElement(s.getEl, { timeoutMs: waitTimeoutMs, intervalMs: 120 });
-      if (stepGapMs) await mfDelay(stepGapMs);
       const prog = { progress: { current: progStart + i, total: progTotal } };
       const busOpts = Object.assign({}, baseBus, prog);
       const anchOpts = Object.assign({}, baseAnch, prog);
+      const tipMs = s.key === 'bus' || s.key === 'stop' ? busStopMs : anchoredMs;
+      const stepMs = mfTutorialDesktopStepMs(tipMs);
       if (s.key === 'bus' || s.key === 'stop') {
         if (el) mfShowTooltipAboveEl(el, s.text, busOpts);
         else mfShowCenteredTooltip(s.text, busOpts);
@@ -5509,7 +5520,7 @@
         if (!el) continue;
         mfShowAnchoredTooltip(el, s.text, anchOpts);
       }
-      await new Promise((r) => setTimeout(r, stepPauseMs));
+      await mfDelay(stepMs);
     }
   }
 
@@ -5519,24 +5530,33 @@
    */
   window.metrofeedAfterTutorial = function () {};
 
-  /** Mobile quick tutorial: one bottom card + leader line (fixed pace, readable). */
+  /** Mobile quick tutorial: one rhythm for card, highlight, and pointer. */
   const MF_TUTORIAL_MOBILE_TIMING = {
-    visibleMs: 5200,
-    fadeMs: 350,
-    gapMs: 250,
-    menuSettleMs: 450,
-    closingVisibleMs: 6000
+    enterMs: 320,
+    visibleMs: 4600,
+    exitMs: 320,
+    gapMs: 180,
+    menuSettleMs: 360,
+    closingVisibleMs: 5200
   };
+
+  const MF_TUTORIAL_DESKTOP_TIMING = {
+    visibleMs: 4800,
+    fadeMs: 600,
+    gapMs: 200,
+    closingVisibleMs: 5200
+  };
+
+  function mfTutorialDesktopStepMs(visibleMs) {
+    const t = MF_TUTORIAL_DESKTOP_TIMING;
+    return visibleMs + t.fadeMs + t.gapMs;
+  }
 
   let _mfTutorialCoachEl = null;
   let _mfTutorialPointerSvg = null;
   let _mfTutorialCoachTarget = null;
+  let _mfTutorialCoachPendingTarget = null;
   let _mfTutorialCoachResizeBound = null;
-
-  function mfTutorialCoachStepWaitMs() {
-    const t = MF_TUTORIAL_MOBILE_TIMING;
-    return t.visibleMs + t.fadeMs + t.gapMs;
-  }
 
   function mfTutorialCoachFallbackPoint() {
     const vb = mfViewportLayoutBox();
@@ -5655,9 +5675,10 @@
     _mfTutorialCoachEl = null;
     _mfTutorialPointerSvg = null;
     _mfTutorialCoachTarget = null;
+    _mfTutorialCoachPendingTarget = null;
   }
 
-  function mfTutorialCoachShowStep(text, progress, targetEl, opts) {
+  function mfTutorialCoachSetStep(text, progress, targetEl, opts) {
     if (!_mfTutorialCoachEl) return;
     const stepEl = _mfTutorialCoachEl.querySelector('.mf-tutorial-coach-step');
     const textEl = _mfTutorialCoachEl.querySelector('.mf-tutorial-coach-text');
@@ -5673,25 +5694,55 @@
       }
     }
     if (textEl) textEl.textContent = text || '';
-    if (targetEl) {
-      mfSetOnboardingHighlight(targetEl);
-      _mfTutorialCoachTarget = mfTutorialCoachTargetPoint(targetEl);
+    _mfTutorialCoachPendingTarget = targetEl || null;
+    mfTutorialCoachPosition();
+  }
+
+  async function mfTutorialCoachFadeIn() {
+    const t = MF_TUTORIAL_MOBILE_TIMING;
+    if (!_mfTutorialCoachEl) return;
+    if (_mfTutorialCoachPendingTarget) {
+      mfSetOnboardingHighlight(_mfTutorialCoachPendingTarget);
+      _mfTutorialCoachTarget = mfTutorialCoachTargetPoint(_mfTutorialCoachPendingTarget);
     } else {
       mfClearOnboardingHighlight();
       _mfTutorialCoachTarget = mfTutorialCoachFallbackPoint();
     }
     mfTutorialCoachPosition();
     _mfTutorialCoachEl.classList.add('mf-tutorial-coach--visible');
+    if (_mfTutorialPointerSvg) {
+      _mfTutorialPointerSvg.classList.add('mf-tutorial-pointer--visible');
+    }
     requestAnimationFrame(mfTutorialCoachRedrawPointer);
+    await mfDelay(t.enterMs);
   }
 
-  async function mfTutorialCoachPause() {
+  async function mfTutorialCoachFadeOut() {
     const t = MF_TUTORIAL_MOBILE_TIMING;
-    await mfDelay(t.visibleMs);
-    if (_mfTutorialCoachEl) {
-      _mfTutorialCoachEl.classList.remove('mf-tutorial-coach--visible');
+    if (!_mfTutorialCoachEl) return;
+    _mfTutorialCoachEl.classList.remove('mf-tutorial-coach--visible');
+    if (_mfTutorialPointerSvg) {
+      _mfTutorialPointerSvg.classList.remove('mf-tutorial-pointer--visible');
     }
-    await mfDelay(t.fadeMs + t.gapMs);
+    mfClearOnboardingHighlight();
+    await mfDelay(t.exitMs);
+  }
+
+  async function mfTutorialCoachRunStep(text, progress, targetEl, opts) {
+    const t = MF_TUTORIAL_MOBILE_TIMING;
+    const closing = !!(opts && opts.closing);
+    if (_mfTutorialCoachEl && _mfTutorialCoachEl.classList.contains('mf-tutorial-coach--visible')) {
+      await mfTutorialCoachFadeOut();
+    }
+    if (!closing) {
+      await mfDelay(t.gapMs);
+    }
+    mfTutorialCoachSetStep(text, progress, targetEl, opts);
+    await mfTutorialCoachFadeIn();
+    await mfDelay(closing ? t.closingVisibleMs : t.visibleMs);
+    if (!closing) {
+      await mfTutorialCoachFadeOut();
+    }
   }
 
   /**
@@ -5700,7 +5751,6 @@
   async function metrofeedStartQuickTutorialMobile() {
     const t = MF_TUTORIAL_MOBILE_TIMING;
     mfTutorialCoachInit();
-    await mfDelay(t.menuSettleMs);
 
     const menuBtn = document.getElementById('menuBtn');
     const dropdownMenu = document.getElementById('dropdownMenu');
@@ -5710,14 +5760,13 @@
     let stepI = 0;
     const prog = () => ({ current: ++stepI, total: totalSteps });
 
-    mfTutorialCoachShowStep(
+    await mfTutorialCoachRunStep(
       menuBtn
         ? 'Open the menu for bus and rail routes, traffic, cameras, weather, alerts, and more.'
         : 'Use the menu (top-left) for routes, overlays, and tools.',
       prog(),
       menuBtn || null
     );
-    await mfTutorialCoachPause();
 
     if (hasBusStep) {
       try {
@@ -5725,16 +5774,14 @@
         if (typeof window.positionDropdownMenu === 'function') window.positionDropdownMenu();
       } catch (_) {}
       await mfDelay(t.menuSettleMs);
-      mfTutorialCoachShowStep(
+      await mfTutorialCoachRunStep(
         'Choose Bus Routes to pick a line and direction. Rail and other tools are in this menu too.',
         prog(),
         busesBtn
       );
-      await mfTutorialCoachPause();
       try {
         dropdownMenu.style.display = 'none';
       } catch (_) {}
-      await mfDelay(t.gapMs);
     }
 
     const openBar = document.getElementById('mfTripPlannerOpenBar');
@@ -5747,14 +5794,13 @@
       }
     }
     if (!dashboardEl && tripToggle) dashboardEl = tripToggle;
-    mfTutorialCoachShowStep(
+    await mfTutorialCoachRunStep(
       dashboardEl
         ? 'The dashboard up here is for trip planning — Go, Clear, and opening full trip options.'
         : 'Use the trip planner row at the top for the dashboard — trip planning and trip options.',
       prog(),
       dashboardEl
     );
-    await mfTutorialCoachPause();
 
     const mapCanvas = window.map && window.map.getCanvas ? window.map.getCanvas() : null;
     const mapSteps = [
@@ -5779,17 +5825,16 @@
     for (let i = 0; i < mapSteps.length; i++) {
       const s = mapSteps[i];
       const el = await mfWaitForElement(s.getEl, { timeoutMs: 2800, intervalMs: 120 });
-      mfTutorialCoachShowStep(s.text, prog(), el);
-      await mfTutorialCoachPause();
+      await mfTutorialCoachRunStep(s.text, prog(), el);
     }
 
-    mfTutorialCoachShowStep(
+    await mfTutorialCoachRunStep(
       "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
       null,
       null,
       { closing: true }
     );
-    await mfDelay(t.closingVisibleMs + t.fadeMs);
+    await mfTutorialCoachFadeOut();
     mfTutorialCoachTeardown();
   }
 
@@ -6886,11 +6931,9 @@
    * Marks onboarding complete and suppresses duplicate mfPostTutorialHintsShown nudges.
    */
   async function metrofeedStartQuickTutorialDesktop() {
-      const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-      const tipMenu = 5400;
-      const tipBus = 5400;
-      const tipDash = 5400;
-      const stepAfter = (tipMs) => tipMs + 700;
+      const dt = MF_TUTORIAL_DESKTOP_TIMING;
+      const tipMs = dt.visibleMs;
+      const stepMs = mfTutorialDesktopStepMs(tipMs);
       const pop = { variant: 'onboarding' };
 
         const menuBtn = document.getElementById('menuBtn');
@@ -6905,27 +6948,28 @@
           mfShowAnchoredTooltip(
             menuBtn,
             'Open the menu for bus and rail routes, traffic, cameras, weather, alerts, and more.',
-            Object.assign({ ms: tipMenu, padPx: 12 }, pop, nextProg())
+            Object.assign({ ms: tipMs, padPx: 12 }, pop, nextProg())
           );
         } else {
           mfShowCenteredTooltip(
             'Use the menu (top-left) for routes, overlays, and tools.',
-            Object.assign({ ms: tipMenu }, pop, nextProg())
+            Object.assign({ ms: tipMs }, pop, nextProg())
           );
         }
-        await delay(stepAfter(tipMenu));
+        await mfDelay(stepMs);
 
         if (hasBusStep) {
           try {
             dropdownMenu.style.display = 'flex';
             if (typeof window.positionDropdownMenu === 'function') window.positionDropdownMenu();
           } catch (_) {}
+          await mfDelay(360);
           mfShowAnchoredTooltip(
             busesBtn,
             'Choose Bus Routes to pick a line and direction. Rail and other tools are in this menu too.',
-            Object.assign({ ms: tipBus, padPx: 12 }, pop, nextProg())
+            Object.assign({ ms: tipMs, padPx: 12 }, pop, nextProg())
           );
-          await delay(stepAfter(tipBus));
+          await mfDelay(stepMs);
           try {
             dropdownMenu.style.display = 'none';
           } catch (_) {}
@@ -6943,15 +6987,15 @@
           mfShowAnchoredTooltip(
             dashboardEl,
             'The dashboard up here is for trip planning — Go, Clear, and opening full trip options.',
-            Object.assign({ ms: tipDash, padPx: 12 }, pop, nextProg())
+            Object.assign({ ms: tipMs, padPx: 12 }, pop, nextProg())
           );
         } else {
           mfShowCenteredTooltip(
             'Use the trip planner row at the top for the dashboard — trip planning and trip options.',
-            Object.assign({ ms: tipDash }, pop, nextProg())
+            Object.assign({ ms: tipMs }, pop, nextProg())
           );
         }
-        await delay(stepAfter(tipDash));
+        await mfDelay(stepMs);
 
         const mapCanvas = window.map && window.map.getCanvas ? window.map.getCanvas() : null;
         const steps = [
@@ -6977,9 +7021,8 @@
           }
         ];
         await mfRunOnboardingMapHintSteps(steps, {
-          stepPauseMs: 6000,
-          busStopTooltipMs: 5400,
-          anchoredTooltipMs: 5400,
+          busStopTooltipMs: tipMs,
+          anchoredTooltipMs: tipMs,
           waitTimeoutMs: 2800,
           tooltipVariant: 'onboarding',
           progressStart: stepI + 1,
@@ -6987,7 +7030,7 @@
         });
         await mfShowOnboardingClosingStatement(
           "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
-          5600
+          dt.closingVisibleMs || 5200
         );
   }
 

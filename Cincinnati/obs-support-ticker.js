@@ -227,12 +227,14 @@
         '<div class="rr-hourly__time">' +
         (i === 0 ? 'Now' : timeStr) +
         '</div>' +
+        '<div class="rr-hourly__main">' +
         '<div class="rr-hourly__emoji">' +
         weatherEmoji(p.shortForecast) +
         '</div>' +
         '<div class="rr-hourly__temp">' +
         p.temperature +
         '°</div>' +
+        '</div>' +
         '</div>';
     });
     row.innerHTML = html;

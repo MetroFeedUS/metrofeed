@@ -5,18 +5,16 @@
   <title>RoamRaven TV</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" type="image/png" href="RoamRavenbird.png" />
-  <script src="obs-tv-panels.js?v=1"></script>
+  <script src="obs-tv-panels.js?v=3"></script>
   <script>
   (function () {
     'use strict';
     var params = new URLSearchParams(window.location.search);
-    if (params.get('tv') !== '1' && params.get('tv') !== 'true') {
-      document.documentElement.classList.add('tv-gate-needed');
-      return;
-    }
+    if (params.get('tv') !== '1' && params.get('tv') !== 'true') return;
     if (sessionStorage.getItem('obsTvAuth') !== '1') {
-      var ret = encodeURIComponent('obs-tv.html?' + params.toString());
-      window.location.replace('obs-route-tv.html?return=' + ret);
+      window.location.replace(
+        'obs-route-tv.html?return=' + encodeURIComponent('obs-tv.html?' + params.toString())
+      );
       return;
     }
     var spec = window.mfTvParsePanelParams(params);
@@ -29,15 +27,15 @@
     }
 
     document.documentElement.classList.add('tv-slice-page', 'tv-panel-' + spec.panel);
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'obs-tv-stage.css?v=1';
-    document.head.appendChild(link);
+    var stageCss = document.createElement('link');
+    stageCss.rel = 'stylesheet';
+    stageCss.href = 'obs-tv-stage.css?v=4';
+    document.head.appendChild(stageCss);
 
     if (spec.panel === 'ticker') {
       var tc = document.createElement('link');
       tc.rel = 'stylesheet';
-      tc.href = 'obs-support-ticker.css?v=4';
+      tc.href = 'obs-support-ticker.css?v=5';
       document.head.appendChild(tc);
       document.documentElement.style.setProperty('--rr-w', spec.bw + 'px');
       document.documentElement.style.setProperty('--rr-h', spec.bh + 'px');
@@ -58,19 +56,6 @@
     <div id="mfTvSliceAlertsRoute" class="mf-tv-slice-alerts__route">Waiting…</div>
     <div id="mfTvSliceAlertsBody" class="mf-tv-slice-alerts__body">
       <div class="mf-tv-alerts-panel__empty">Waiting for map source…</div>
-    </div>
-  </div>
-
-  <div id="mfTvSliceCamera" class="mf-tv-slice mf-tv-slice-camera" data-panel="camera" hidden>
-    <div id="mfTvSliceCameraTitle" class="mf-tv-slice-camera__title">Traffic camera</div>
-    <img id="mfTvSliceCameraImg" class="mf-tv-slice-camera__img mf-tv-hidden" alt="" />
-    <div id="mfTvSliceCameraEmpty" class="mf-tv-slice-camera__empty">Waiting for camera…</div>
-  </div>
-
-  <div id="mfTvSliceLower" class="mf-tv-slice mf-tv-slice-lower" data-panel="lower" hidden>
-    <div class="mf-tv-slice-lower__box">
-      <span id="mfTvSliceLowerTitle" class="mf-tv-slice-lower__title"></span>
-      <span id="mfTvSliceLowerSub" class="mf-tv-slice-lower__sub"></span>
     </div>
   </div>
 
@@ -116,13 +101,13 @@
     </div>
   </div>
 
-  <script src="obs-tv-stage.js?v=1"></script>
+  <script src="obs-tv-stage.js?v=2"></script>
   <script src="obs-tv-bus.js?v=1"></script>
   <script>
   (function () {
     'use strict';
-    if (!window.MF_TV_STAGE_SPEC) return;
     var spec = window.MF_TV_STAGE_SPEC;
+    if (!spec) return;
     if (typeof window.mfTvStageApply === 'function') {
       window.mfTvStageApply(document, spec);
     }
@@ -142,7 +127,7 @@
           if (typeof CITIES !== 'undefined' && CITIES[id]) window.CITY_CONFIG = CITIES[id];
         } catch (_) {}
         var ts = document.createElement('script');
-        ts.src = 'obs-support-ticker.js?v=3';
+        ts.src = 'obs-support-ticker.js?v=4';
         document.body.appendChild(ts);
       };
       document.body.appendChild(cc);
@@ -150,9 +135,9 @@
       var lb = document.createElement('script');
       lb.src = 'obs-live-badge.js?v=2';
       document.body.appendChild(lb);
-    } else {
+    } else if (panel === 'alerts') {
       var sl = document.createElement('script');
-      sl.src = 'obs-tv-slices.js?v=2';
+      sl.src = 'obs-tv-slices.js?v=3';
       document.body.appendChild(sl);
     }
   })();
