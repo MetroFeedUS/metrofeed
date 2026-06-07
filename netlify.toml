@@ -1,6 +1,66 @@
-# MetroFeed / RoamRaven static site
-# Attach custom domains in Netlify: roamravenapp.com + metrofeedus.com (same site).
-# Routing rules live in _redirects (host-based).
+# MetroFeed / RoamRaven — one Netlify site, two domains.
+# Attach BOTH roamravenapp.com and metrofeedus.com to this site.
+# force = true is required so Netlify does not serve Index.html instead of these rules.
 
 [build]
   publish = "."
+
+# --- metrofeedus.com → corporate homepage (must beat default Index.html) ---
+[[redirects]]
+  from = "/"
+  to = "/metrofeedus-home.html"
+  status = 200
+  force = true
+  conditions = {Host = ["metrofeedus.com", "www.metrofeedus.com"]}
+
+# --- roamravenapp.com → national map ---
+[[redirects]]
+  from = "/"
+  to = "/Index.html"
+  status = 200
+  force = true
+  conditions = {Host = ["roamravenapp.com", "www.roamravenapp.com"]}
+
+# Corporate page should not appear on RoamRaven domain
+[[redirects]]
+  from = "/metrofeedus-home.html"
+  to = "https://metrofeedus.com/"
+  status = 301
+  force = true
+  conditions = {Host = ["roamravenapp.com", "www.roamravenapp.com"]}
+
+# --- metrofeedus.com: old app links → RoamRaven ---
+[[redirects]]
+  from = "/Index.html"
+  to = "https://roamravenapp.com/"
+  status = 301
+  force = true
+  conditions = {Host = ["metrofeedus.com", "www.metrofeedus.com"]}
+
+[[redirects]]
+  from = "/Cincinnati/*"
+  to = "https://roamravenapp.com/Cincinnati/:splat"
+  status = 301
+  force = true
+  conditions = {Host = ["metrofeedus.com", "www.metrofeedus.com"]}
+
+[[redirects]]
+  from = "/cincinnati/*"
+  to = "https://roamravenapp.com/Cincinnati/:splat"
+  status = 301
+  force = true
+  conditions = {Host = ["metrofeedus.com", "www.metrofeedus.com"]}
+
+[[redirects]]
+  from = "/Boston/*"
+  to = "https://roamravenapp.com/Boston/:splat"
+  status = 301
+  force = true
+  conditions = {Host = ["metrofeedus.com", "www.metrofeedus.com"]}
+
+[[redirects]]
+  from = "/health.html"
+  to = "https://roamravenapp.com/health.html"
+  status = 301
+  force = true
+  conditions = {Host = ["metrofeedus.com", "www.metrofeedus.com"]}

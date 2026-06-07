@@ -1,26 +1,18 @@
-# Domain routing (one Netlify site, two custom domains).
-# Deploy this repo to Netlify with BOTH metrofeedus.com and roamravenapp.com attached.
+# Backup of host rules (netlify.toml takes precedence). 200! = forced rewrite.
+/  /metrofeedus-home.html  200!  Host=metrofeedus.com
+/  /metrofeedus-home.html  200!  Host=www.metrofeedus.com
+/  /Index.html  200!  Host=roamravenapp.com
+/  /Index.html  200!  Host=www.roamravenapp.com
 
-# --- roamravenapp.com → RoamRaven app (national map at /) ---
-/  /Index.html  200  Host=roamravenapp.com
-/  /Index.html  200  Host=www.roamravenapp.com
-
-# --- metrofeedus.com → MetroFeed parent company homepage ---
-/  /metrofeedus-home.html  200  Host=metrofeedus.com
-/  /metrofeedus-home.html  200  Host=www.metrofeedus.com
-
-# Corporate page only on MetroFeed domain (optional cleanup)
-/metrofeedus-home.html  https://metrofeedus.com/  301  Host=roamravenapp.com
-/metrofeedus-home.html  https://metrofeedus.com/  301  Host=www.roamravenapp.com
-
-# --- metrofeedus.com: old app URLs → RoamRaven (bookmarks & shared links) ---
-/Index.html  https://roamravenapp.com/  301  Host=metrofeedus.com
-/Index.html  https://roamravenapp.com/  301  Host=www.metrofeedus.com
-/Cincinnati/*  https://roamravenapp.com/Cincinnati/:splat  301  Host=metrofeedus.com
-/Cincinnati/*  https://roamravenapp.com/Cincinnati/:splat  301  Host=www.metrofeedus.com
-/cincinnati/*  https://roamravenapp.com/Cincinnati/:splat  301  Host=metrofeedus.com
-/cincinnati/*  https://roamravenapp.com/Cincinnati/:splat  301  Host=www.metrofeedus.com
-/Boston/*  https://roamravenapp.com/Boston/:splat  301  Host=metrofeedus.com
-/Boston/*  https://roamravenapp.com/Boston/:splat  301  Host=www.metrofeedus.com
-/health.html  https://roamravenapp.com/health.html  301  Host=metrofeedus.com
-/health.html  https://roamravenapp.com/health.html  301  Host=www.metrofeedus.com
+/metrofeedus-home.html  https://metrofeedus.com/  301!  Host=roamravenapp.com
+/metrofeedus-home.html  https://metrofeedus.com/  301!  Host=www.roamravenapp.com
+/Index.html  https://roamravenapp.com/  301!  Host=metrofeedus.com
+/Index.html  https://roamravenapp.com/  301!  Host=www.metrofeedus.com
+/Cincinnati/*  https://roamravenapp.com/Cincinnati/:splat  301!  Host=metrofeedus.com
+/Cincinnati/*  https://roamravenapp.com/Cincinnati/:splat  301!  Host=www.metrofeedus.com
+/cincinnati/*  https://roamravenapp.com/Cincinnati/:splat  301!  Host=metrofeedus.com
+/cincinnati/*  https://roamravenapp.com/Cincinnati/:splat  301!  Host=www.metrofeedus.com
+/Boston/*  https://roamravenapp.com/Boston/:splat  301!  Host=metrofeedus.com
+/Boston/*  https://roamravenapp.com/Boston/:splat  301!  Host=www.metrofeedus.com
+/health.html  https://roamravenapp.com/health.html  301!  Host=metrofeedus.com
+/health.html  https://roamravenapp.com/health.html  301!  Host=www.metrofeedus.com
