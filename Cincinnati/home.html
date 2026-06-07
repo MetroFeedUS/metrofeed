@@ -41,14 +41,8 @@
     }
   </script>
   
-  <!-- Language System - DISABLED TEMPORARILY -->
-  	<!-- <script src="../translations.js?v=22"></script> -->
-  	<script>
-  		// Stub function to prevent errors
-  		function translateText(key) {
-  			return key;
-  		}
-  	</script>
+  <!-- Language System -->
+  <script src="translations.js?v=23"></script>
   <style>
     /* Roam Raven UI — purple primary + silver/charcoal chrome (map route colors unchanged) */
     :root {
@@ -1241,9 +1235,14 @@
       width: min(440px, calc(100vw - 32px));
       max-width: none;
       margin: 0;
+      animation: mf-homescreen-pop 0.22s cubic-bezier(.32, 1.56, .56, 1) 1;
     }
     #homescreenInstrModal .mf-modal {
       width: min(640px, calc(100vw - 32px));
+    }
+    @keyframes mf-homescreen-pop {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
     }
     .mf-homescreen-instr-modal { position: relative; }
     .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid var(--rr-accent); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
@@ -2268,11 +2267,11 @@
 <!-- -- INSTALL PROMPT -- -->
 <div id="installPrompt" style="display:none;">
   <strong>📲 Add RoamRaven <span id="city-name-pwa">City</span> to your home screen</strong><br>
-  <small>Use RoamRaven like an app for faster access!</small><br><br>
+  <small data-translate="install_prompt_subtitle">Use RoamRaven like an app for faster access!</small><br><br>
           <a href="AndroidInstructions.html"><button data-translate="android_instructions">Android Instructions</button></a>
         <a href="AppleInstructions.html"><button data-translate="apple_instructions">Apple Instructions</button></a>
         <button onclick="document.getElementById('installPrompt').style.display='none'" data-translate="later">Later</button>
-  <button onclick="localStorage.setItem('neverShowInstallPrompt', 'true'); document.getElementById('installPrompt').style.display='none'">Done / Don't ask again</button>
+  <button onclick="localStorage.setItem('neverShowInstallPrompt', 'true'); document.getElementById('installPrompt').style.display='none'" data-translate="done_dont_ask">Done / Don't ask again</button>
 </div>
 
 <!-- -- MAIN MAP DIV -- -->
@@ -2449,16 +2448,16 @@
   <div id="mfTripGuideBox" class="mf-trip-guide-box mf-trip-guide-box--collapsed">
     <div class="mf-trip-guide-expanded-block" id="mfTripGuideExpandedBlock" role="region" aria-labelledby="mfTripGuidePanelHeading" hidden>
       <div class="mf-trip-guide-detail-header">
-        <span id="mfTripGuidePanelHeading" class="mf-trip-guide-panel-title">Trip guide</span>
+        <span id="mfTripGuidePanelHeading" class="mf-trip-guide-panel-title" data-translate="trip_guide_title">Trip guide</span>
         <div class="mf-trip-guide-header-btns">
-          <button type="button" class="mf-trip-guide-icon-btn" id="mfTripGuideMinBtn" title="Minimize" aria-label="Minimize trip guide">&#8722;</button>
-          <button type="button" class="mf-trip-guide-icon-btn" id="mfTripGuideCloseBtn" title="Exit trip guide" aria-label="Exit trip guide">&times;</button>
+          <button type="button" class="mf-trip-guide-icon-btn" id="mfTripGuideMinBtn" data-translate-title="trip_guide_minimize" title="Minimize" data-translate-aria="trip_guide_minimize" aria-label="Minimize trip guide">&#8722;</button>
+          <button type="button" class="mf-trip-guide-icon-btn" id="mfTripGuideCloseBtn" data-translate-title="trip_guide_exit" title="Exit trip guide" data-translate-aria="trip_guide_exit" aria-label="Exit trip guide">&times;</button>
         </div>
       </div>
-      <div class="mf-trip-guide-panel-body" id="mfTripGuidePanelBody"></div>
+      <div class="mf-trip-guide-panel-body" id="mfTripGuidePanelBody" role="status" aria-live="polite" aria-atomic="true"></div>
     </div>
     <div class="mf-trip-guide-foot">
-      <button type="button" class="mf-trip-guide-start-btn" id="mfTripGuideStartBtn" data-trip-started="false" aria-expanded="false">
+      <button type="button" class="mf-trip-guide-start-btn" id="mfTripGuideStartBtn" data-trip-started="false" aria-expanded="false" data-translate="trip_guide_start">
         Start my trip
       </button>
     </div>
@@ -2466,6 +2465,14 @@
 </div>
 <script>
 (function initTripGuideDock() {
+  function tg(key, vars) {
+    try {
+      return (typeof window.mfT === 'function') ? window.mfT(key, vars) : String(key || '');
+    } catch (_) {
+      return String(key || '');
+    }
+  }
+
   const GAP_ABOVE_SPONSOR = 20;
   const SPONSOR_FALLBACK_HEIGHT = 90;
   const SPONSOR_FALLBACK_BOTTOM = 40;
@@ -2713,8 +2720,9 @@
     const btn = document.getElementById('mfTripGuideStartBtn');
     if (!btn) return;
     btn.setAttribute('data-trip-started', started ? 'true' : 'false');
-    btn.textContent = started ? 'Resume trip guide' : 'Start my trip';
+    btn.textContent = started ? tg('trip_guide_resume') : tg('trip_guide_start');
   }
+  window.mfSetTripStarted = mfSetTripStarted;
 
   function mfTripGuideCurrentJourney() {
     const idx = window.selectedTripIndex;
@@ -2730,24 +2738,20 @@
       // Summary view after itinerary selection but before starting.
       const j = mfTripGuideCurrentJourney();
       if (!j) {
-        body.innerHTML = '<p>Your trip is on the map. Tap <strong>Start my trip</strong> when you want step-by-step guidance.</p>';
+        body.innerHTML = '<p>' + tg('trip_guide_on_map', { start: tg('trip_guide_start') }) + '</p>';
         return;
       }
       const mins = Math.round((j.duration || 0) / 60);
       const transit = (j.legs || []).filter((leg) => leg && !(leg.type === 'WALK' || leg.mode === 'WALK'));
       body.innerHTML =
-        '<p><strong>Trip ready</strong> — about ' +
-        mins +
-        ' min total</p>' +
-        '<p>' +
-        transit.length +
-        ' transit segment(s). Tap <strong>Start my trip</strong> to begin.</p>';
+        '<p><strong>' + tg('trip_guide_trip_ready') + '</strong> — ' + tg('trip_guide_about_mins', { mins: String(mins) }) + '</p>' +
+        '<p>' + tg('trip_guide_transit_segments', { count: String(transit.length), start: tg('trip_guide_start') }) + '</p>';
       return;
     }
 
     const step = st.steps && st.steps[st.stepIndex] ? st.steps[st.stepIndex] : null;
     if (!step) {
-      body.innerHTML = '<p><strong>Trip guide</strong></p><p>No steps available.</p>';
+      body.innerHTML = '<p><strong>' + tg('trip_guide_title') + '</strong></p><p>' + tg('trip_guide_no_steps') + '</p>';
       return;
     }
 
@@ -2757,48 +2761,44 @@
     const nearKey = String(st.stepIndex);
     const isNear = !!(st.gps && st.gps.nearSinceMsByStep && st.gps.nearSinceMsByStep[nearKey + ':dwell']);
     const nearMsg = isNear
-      ? '<div style="margin:10px 0 0 0;padding:9px 10px;border-radius:10px;background:rgba(76,175,80,0.18);border:1px solid rgba(76,175,80,0.35);color:#d8ffe0;font-weight:800;">You’re close.</div>'
+      ? '<div style="margin:10px 0 0 0;padding:9px 10px;border-radius:10px;background:rgba(76,175,80,0.18);border:1px solid rgba(76,175,80,0.35);color:#d8ffe0;font-weight:800;">' + tg('tg_youre_close') + '</div>'
       : '';
 
     let title = '';
     let sub = '';
     if (step.kind === 'walk_to_board') {
-      title = 'Walk to ' + String(step.stopName || 'your stop');
+      title = tg('tg_walk_to', { stop: String(step.stopName || 'your stop') });
       sub =
-        '<div style="margin-top:6px;color:#9aa0a6;">Distance: <span id="mfTripGuideDistance">—</span></div>' +
+        '<div style="margin-top:6px;color:#9aa0a6;">' + tg('tg_distance') + ' <span id="mfTripGuideDistance">—</span></div>' +
         (Number.isFinite(step.arriveBeforeMs)
-          ? '<div style="margin-top:4px;color:#9aa0a6;">Arrive before <strong style="color:#e8eaed;">' +
-              mfFmtTime(step.arriveBeforeMs) +
-              '</strong></div>'
+          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_arrive_before', { time: '<strong style="color:#e8eaed;">' + mfFmtTime(step.arriveBeforeMs) + '</strong>' }) + '</div>'
           : '');
     } else if (step.kind === 'board') {
-      const towardTxt = step.toward ? (' toward <strong style=\"color:#e8eaed;\">' + String(step.toward).replace(/</g, '&lt;') + '</strong>') : '';
-      title = 'Board Route ' + String(step.route || '').replace(/</g, '&lt;') + towardTxt;
+      const towardTxt = step.toward
+        ? tg('tg_toward', { name: '<strong style="color:#e8eaed;">' + String(step.toward).replace(/</g, '&lt;') + '</strong>' })
+        : '';
+      title = tg('tg_board_route', { route: String(step.route || '').replace(/</g, '&lt;') }) + towardTxt;
       sub =
-        '<div style="margin-top:6px;color:#9aa0a6;">At <strong style=\"color:#e8eaed;\">' + String(step.boardStop || 'your stop').replace(/</g, '&lt;') + '</strong></div>' +
-        '<div style="margin-top:4px;color:#9aa0a6;">Distance: <span id="mfTripGuideDistance">—</span></div>' +
+        '<div style="margin-top:6px;color:#9aa0a6;">' + tg('tg_at', { stop: '<strong style="color:#e8eaed;">' + String(step.boardStop || 'your stop').replace(/</g, '&lt;') + '</strong>' }) + '</div>' +
+        '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_distance') + ' <span id="mfTripGuideDistance">—</span></div>' +
         (Number.isFinite(step.boardMs)
-          ? '<div style="margin-top:4px;color:#9aa0a6;">Board around <strong style="color:#e8eaed;">' +
-              mfFmtTime(step.boardMs) +
-              '</strong></div>'
+          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_board_around', { time: '<strong style="color:#e8eaed;">' + mfFmtTime(step.boardMs) + '</strong>' }) + '</div>'
           : '');
     } else if (step.kind === 'alight') {
-      title = 'Get off at ' + String(step.alightStop || 'your stop').replace(/</g, '&lt;');
+      title = tg('tg_get_off', { stop: String(step.alightStop || 'your stop').replace(/</g, '&lt;') });
       sub =
-        '<div style="margin-top:6px;color:#9aa0a6;">Distance: <span id="mfTripGuideDistance">—</span></div>' +
+        '<div style="margin-top:6px;color:#9aa0a6;">' + tg('tg_distance') + ' <span id="mfTripGuideDistance">—</span></div>' +
         (Number.isFinite(step.alightMs)
-          ? '<div style="margin-top:4px;color:#9aa0a6;">Arrive around <strong style="color:#e8eaed;">' +
-              mfFmtTime(step.alightMs) +
-              '</strong></div>'
+          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_arrive_around', { time: '<strong style="color:#e8eaed;">' + mfFmtTime(step.alightMs) + '</strong>' }) + '</div>'
           : '');
     }
 
     // Context CTA for each step (still manual; no auto-advance).
-    let primaryLabel = 'Next';
-    if (step.kind === 'walk_to_board') primaryLabel = "I'm at the stop";
-    else if (step.kind === 'board') primaryLabel = "I'm on the bus";
-    else if (step.kind === 'alight') primaryLabel = "I'm off the bus";
-    if (st.stepIndex >= (st.steps.length || 1) - 1) primaryLabel = 'Done';
+    let primaryLabel = tg('tg_next');
+    if (step.kind === 'walk_to_board') primaryLabel = tg('tg_at_stop_btn');
+    else if (step.kind === 'board') primaryLabel = tg('tg_on_bus_btn');
+    else if (step.kind === 'alight') primaryLabel = tg('tg_off_bus_btn');
+    if (st.stepIndex >= (st.steps.length || 1) - 1) primaryLabel = tg('tg_done');
 
     const primaryGlow = isNear
       ? 'box-shadow:0 0 0 2px rgba(76,175,80,0.35), 0 0 18px rgba(76,175,80,0.65);'
@@ -2806,15 +2806,11 @@
 
     body.innerHTML =
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">' +
-      '<div style="font-weight:800;color:#e8eaed;">Step ' +
-      stepNum +
-      ' of ' +
-      total +
-      '</div>' +
+      '<div style="font-weight:800;color:#e8eaed;">' + tg('tg_step_of', { current: String(stepNum), total: String(total) }) + '</div>' +
       '<div style="display:flex;gap:8px;">' +
       '<button type="button" id="mfTripGuidePrevBtn" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:#e8eaed;font-weight:800;cursor:pointer;"' +
       (st.stepIndex === 0 ? ' disabled aria-disabled="true" style="opacity:0.55;cursor:not-allowed;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:#e8eaed;font-weight:800;"' : '') +
-      '>Back</button>' +
+      '>' + tg('tg_back') + '</button>' +
       '<button type="button" id="mfTripGuidePrimaryBtn" style="padding:8px 12px;border-radius:8px;border:none;background:var(--rr-accent);color:#fff;font-weight:900;cursor:pointer;' + primaryGlow + '">' +
       primaryLabel +
       '</button>' +
@@ -2944,7 +2940,7 @@
   }
 
   function onCloseClick() {
-    if (!window.confirm('Are you sure you want to cancel your trip?')) return;
+    if (!window.confirm(tg('tg_cancel_confirm'))) return;
     mfTripGuideReset();
     mfSetTripStarted(false);
     minimizeDock();
@@ -2982,6 +2978,7 @@
 
   window.metrofeedSyncTripGuideDockVisibility = syncTripGuideDockVisibility;
   window.metrofeedPopulateTripGuidePanel = populateTripGuidePanel;
+  window.mfTripGuideRender = mfTripGuideRender;
 
   function bind() {
     var startBtn = document.getElementById('mfTripGuideStartBtn');
@@ -3022,7 +3019,7 @@
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
   <a href="#" id="dropdownWeatherBtn" onclick="event.preventDefault(); showWeatherForecastModal();"><img src="005-weather-radar.svg" alt="Weather"></a>
   <!-- ADA and Official Resources button in dropdown -->
-  <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA and Official Resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA and Official Resources"></a>
+  <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA and Official Resources" data-translate-aria="ada_resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA and Official Resources" data-translate-alt="ada_resources"></a>
   <a href="#" id="dropdownAlertsBtn" onclick="event.preventDefault(); showMBTAAlertsModal();"><img src="008-danger.svg" alt="Alerts"></a>
   <div class="dropdown-divider"></div>
   <a href="#" id="dropdownBackToNationalBtn" onclick="event.preventDefault(); window.metrofeedBackToNational && window.metrofeedBackToNational();"><img src="global.svg" alt="Back to National Map"></a>
@@ -5719,7 +5716,8 @@
       const busOpts = Object.assign({}, baseBus, prog);
       const anchOpts = Object.assign({}, baseAnch, prog);
       const tipMs = s.key === 'bus' || s.key === 'stop' ? busStopMs : anchoredMs;
-      const stepMs = mfTutorialDesktopStepMs(tipMs);
+      const isLast = i === steps.length - 1;
+      if (i > 0) mfDismissOnboardingTooltips();
       if (s.key === 'bus' || s.key === 'stop') {
         if (el) mfShowTooltipAboveEl(el, s.text, busOpts);
         else mfShowCenteredTooltip(s.text, busOpts);
@@ -5727,7 +5725,7 @@
         if (!el) continue;
         mfShowAnchoredTooltip(el, s.text, anchOpts);
       }
-      await mfDelay(stepMs);
+      await mfDelay(tipMs + (isLast ? dt.fadeMs + dt.gapMs : 140));
     }
   }
 
@@ -5905,8 +5903,17 @@
     mfTutorialCoachPosition();
   }
 
-  async function mfTutorialCoachFadeIn() {
-    const t = MF_TUTORIAL_MOBILE_TIMING;
+  function mfDismissOnboardingTooltips() {
+    try {
+      document.querySelectorAll('.mf-onboarding-hint').forEach((tooltip) => {
+        tooltip.classList.remove('show');
+        if (tooltip.parentNode) tooltip.parentNode.removeChild(tooltip);
+      });
+    } catch (_) {}
+    mfClearOnboardingHighlight();
+  }
+
+  async function mfTutorialCoachApplyTarget() {
     if (!_mfTutorialCoachEl) return;
     if (_mfTutorialCoachPendingTarget) {
       mfSetOnboardingHighlight(_mfTutorialCoachPendingTarget);
@@ -5916,11 +5923,17 @@
       _mfTutorialCoachTarget = mfTutorialCoachFallbackPoint();
     }
     mfTutorialCoachPosition();
-    _mfTutorialCoachEl.classList.add('mf-tutorial-coach--visible');
     if (_mfTutorialPointerSvg) {
       _mfTutorialPointerSvg.classList.add('mf-tutorial-pointer--visible');
     }
     requestAnimationFrame(mfTutorialCoachRedrawPointer);
+  }
+
+  async function mfTutorialCoachFadeIn() {
+    const t = MF_TUTORIAL_MOBILE_TIMING;
+    if (!_mfTutorialCoachEl) return;
+    await mfTutorialCoachApplyTarget();
+    _mfTutorialCoachEl.classList.add('mf-tutorial-coach--visible');
     await mfDelay(t.enterMs);
   }
 
@@ -5938,16 +5951,26 @@
   async function mfTutorialCoachRunStep(text, progress, targetEl, opts) {
     const t = MF_TUTORIAL_MOBILE_TIMING;
     const closing = !!(opts && opts.closing);
-    if (_mfTutorialCoachEl && _mfTutorialCoachEl.classList.contains('mf-tutorial-coach--visible')) {
-      await mfTutorialCoachFadeOut();
-    }
-    if (!closing) {
-      await mfDelay(t.gapMs);
+    const seamless = !!(opts && opts.seamless);
+    if (!seamless) {
+      if (_mfTutorialCoachEl && _mfTutorialCoachEl.classList.contains('mf-tutorial-coach--visible')) {
+        await mfTutorialCoachFadeOut();
+      }
+      if (!closing) {
+        await mfDelay(t.gapMs);
+      }
     }
     mfTutorialCoachSetStep(text, progress, targetEl, opts);
-    await mfTutorialCoachFadeIn();
+    if (seamless) {
+      await mfTutorialCoachApplyTarget();
+      if (!_mfTutorialCoachEl.classList.contains('mf-tutorial-coach--visible')) {
+        _mfTutorialCoachEl.classList.add('mf-tutorial-coach--visible');
+      }
+    } else {
+      await mfTutorialCoachFadeIn();
+    }
     await mfDelay(closing ? t.closingVisibleMs : t.visibleMs);
-    if (!closing) {
+    if (!closing && !seamless) {
       await mfTutorialCoachFadeOut();
     }
   }
@@ -6032,14 +6055,14 @@
     for (let i = 0; i < mapSteps.length; i++) {
       const s = mapSteps[i];
       const el = mfTutorialPickTarget(s.getEl);
-      await mfTutorialCoachRunStep(s.text, prog(), el);
+      await mfTutorialCoachRunStep(s.text, prog(), el, { seamless: i > 0 });
     }
 
     await mfTutorialCoachRunStep(
       "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
       null,
       null,
-      { closing: true }
+      { closing: true, seamless: true }
     );
     await mfTutorialCoachFadeOut();
     mfTutorialCoachTeardown();

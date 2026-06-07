@@ -1,5 +1,5 @@
-// MetroFeed Portland Translations
-// Comprehensive translation system for portlandindex.html
+// RoamRaven Cincinnati Translations
+// English + Spanish for home.html (OTP, trip guide, footer, modals)
 
 // Global variables
 let currentLanguage = 'en';
@@ -8,7 +8,7 @@ let currentLanguage = 'en';
 const translations = {
   en: {
     // Page title
-    "page_title": "MetroFeed Portland Map",
+    "page_title": "RoamRaven Cincinnati Map",
     
     // Search and UI
     "search_placeholder": "Search routes...",
@@ -48,7 +48,7 @@ const translations = {
     "saved_place_name_prompt": "Name this place (e.g. Gym)",
     "fav_route_tutorial_title": "Save a favorite route",
     "fav_route_tutorial_body": "Open a route, choose a direction, then tap the star next to that direction to save it here. You need both the route and the direction.",
-    "fav_route_tutorial_rail_note": "For subway or commuter rail, open Rail Routes from the menu and use the same star on a direction.",
+    "fav_route_tutorial_rail_note": "For the Cincinnati Streetcar or other rail lines, open Rail Routes from the menu and use the same star on a direction.",
     "fav_route_tutorial_never": "Don't show this again",
     "fav_route_tutorial_got_it": "Got it — pick a route",
     
@@ -99,6 +99,38 @@ const translations = {
     "sr_transfer_plural": "{count} transfers",
     "sr_route_selected": "Route selected: {mins} minute trip, {transfers}, starts at {start}, arrives at {end}.",
     "sr_route_selected_simple": "Route selected.",
+
+    // Trip guide (visual text — primary path for deaf/HOH users)
+    "trip_guide_title": "Trip guide",
+    "trip_guide_start": "Start my trip",
+    "trip_guide_resume": "Resume trip guide",
+    "trip_guide_minimize": "Minimize trip guide",
+    "trip_guide_exit": "Exit trip guide",
+    "trip_guide_on_map": "Your trip is on the map. Tap <strong>{start}</strong> when you want step-by-step guidance.",
+    "trip_guide_trip_ready": "Trip ready",
+    "trip_guide_about_mins": "about {mins} min total",
+    "trip_guide_transit_segments": "{count} transit segment(s). Tap <strong>{start}</strong> to begin.",
+    "trip_guide_no_steps": "No steps available.",
+    "tg_step_of": "Step {current} of {total}",
+    "tg_back": "Back",
+    "tg_next": "Next",
+    "tg_done": "Done",
+    "tg_at_stop_btn": "I'm at the stop",
+    "tg_on_bus_btn": "I'm on the bus",
+    "tg_off_bus_btn": "I'm off the bus",
+    "tg_youre_close": "You're close.",
+    "tg_walk_to": "Walk to {stop}",
+    "tg_board_route": "Board Route {route}",
+    "tg_toward": " toward {name}",
+    "tg_get_off": "Get off at {stop}",
+    "tg_distance": "Distance:",
+    "tg_arrive_before": "Arrive before {time}",
+    "tg_at": "At {stop}",
+    "tg_board_around": "Board around {time}",
+    "tg_arrive_around": "Arrive around {time}",
+    "tg_cancel_confirm": "Are you sure you want to cancel your trip?",
+    "ada_resources": "ADA and Official Resources",
+    "otp_loading": "Loading trip options...",
     
     // Modal buttons
     "close": "Close",
@@ -113,16 +145,18 @@ const translations = {
     "appleInstructions": "Apple Instructions",
     "apple_instructions": "Apple Instructions", 
     "later": "Later",
-    "installPromptTitle": "📲 Add MetroFeed Portland to your home screen",
-    "installPromptSubtitle": "Use MetroFeed like an app for faster access!",
+    "installPromptTitle": "📲 Add RoamRaven to your home screen",
+    "installPromptSubtitle": "Use RoamRaven like an app for faster access!",
     "doneDontAsk": "Done / Don't ask again",
+    "install_prompt_subtitle": "Use RoamRaven like an app for faster access!",
+    "done_dont_ask": "Done / Don't ask again",
     
     // Premium/Auth
     "sign_in_prompt": "Please sign in, sign up, or use the free version to continue:",
     "sign_in": "Sign In",
     "sign_up": "Sign Up",
     "use_free_version": "Use Free Version",
-    "try_premium": "Try MetroFeed Premium FREE for 24hrs",
+    "try_premium": "Try RoamRaven Premium FREE for 24hrs",
     "no_email_needed": "NO email needed",
     "start_free_trial": "Start Free Trial",
     
@@ -132,13 +166,13 @@ const translations = {
     "location_error": "Location error",
     
     // Data attribution
-    "data_courtesy": "Data courtesy of TriMet.",
-    "disclaimer": "This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit",
+    "data_courtesy": "Data courtesy of SORTA, TANK, and BCRTA.",
+    "disclaimer": "RoamRaven is not affiliated with or endorsed by local transit agencies. For official schedules and service alerts, visit",
     
     // PortlandHome specific
     "upgrade": "Upgrade",
     "betaDisclaimer": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
-    "portlandDashboard": "Portland, OR Dashboard",
+    "portlandDashboard": "Cincinnati, OH Dashboard",
     "busRoutes": "Bus Routes",
     "railRoutes": "Rail Routes", 
     "trafficCams": "Traffic Cams",
@@ -150,19 +184,19 @@ const translations = {
     "contactUs": "Contact Us",
     "reportProblem": "Report a Problem",
     "privacyPolicy": "Privacy",
-    "cookieMessage": "📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our",
+    "cookieMessage": "📢 We use cookies to improve functionality and analyze traffic. By using RoamRaven, you agree to our",
     "ok": "OK",
     
     // BusRoutesMain specific
-    "portlandBusRoutes": "Portland, OR - Bus Routes",
+    "portlandBusRoutes": "Cincinnati, OH - Bus Routes",
     "searchRoutes": "Search for a route...",
     
     // RailRoutes specific
-    "portlandRailRoutes": "Portland, OR - Rail Routes",
+    "portlandRailRoutes": "Cincinnati, OH - Rail Routes",
     
     // Weather page specific
-    "weatherTitle": "Portland, OR Weather - MetroFeed",
-    "weatherDisclaimerFull": "<strong>Disclaimer:</strong> MetroFeed is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.",
+    "weatherTitle": "Cincinnati, OH Weather - RoamRaven",
+    "weatherDisclaimerFull": "<strong>Disclaimer:</strong> RoamRaven is not an official source of emergency information. This site is for general awareness and entertainment purposes only. All weather data is sourced from the <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">National Weather Service (NWS)</a>. During severe weather or life-threatening events, always rely on official alerts at <strong>weather.gov</strong> or your local authorities.",
     "weatherBetaMessage": "⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.",
     "weatherAlerts": "⚠️ Weather Alerts (Tap to View)",
     "checkingAlerts": "Checking for alerts...",
@@ -193,24 +227,24 @@ const translations = {
     "stop_times": "Stop Times",
     
     // Alerts page specific
-    "alertsTitle": "Portland Alerts - MetroFeed",
-    "portlandAreaAlerts": "Portland Area Alerts",
-    "loadingAlerts": "Loading TriMet alerts…",
-    "noActiveTriMetAlerts": "No active TriMet alerts.",
-    "couldNotLoadAlerts": "Could not load TriMet alerts. Try again later.",
-    "trimetAlert": "TriMet Alert",
+    "alertsTitle": "Cincinnati Alerts - RoamRaven",
+    "portlandAreaAlerts": "Cincinnati Area Alerts",
+    "loadingAlerts": "Loading transit alerts…",
+    "noActiveTriMetAlerts": "No active transit alerts.",
+    "couldNotLoadAlerts": "Could not load transit alerts. Try again later.",
+    "trimetAlert": "Transit Alert",
     "fullAlert": "Full Alert →",
     
     // TrafficCameras page specific
-    "trafficCamerasTitle": "Live Traffic Cameras – MetroFeed Portland",
-    "liveTrafficCameras": "Live Traffic Cameras – Portland, OR",
+    "trafficCamerasTitle": "Live Traffic Cameras – RoamRaven Cincinnati",
+    "liveTrafficCameras": "Live Traffic Cameras – Cincinnati, OH",
     "cameraCourtesy": "Camera courtesy of OHGO",
     "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of OHGO."
   },
   
   es: {
     // Page title
-    "page_title": "Mapa de MetroFeed Portland",
+    "page_title": "Mapa de RoamRaven Cincinnati",
     
     // Search and UI
     "search_placeholder": "Buscar rutas...",
@@ -250,7 +284,7 @@ const translations = {
     "saved_place_name_prompt": "Nombre del lugar (ej. Gimnasio)",
     "fav_route_tutorial_title": "Guardar una ruta favorita",
     "fav_route_tutorial_body": "Abre una ruta, elige una dirección y toca la estrella junto a esa dirección para guardarla aquí. Necesitas la ruta y la dirección.",
-    "fav_route_tutorial_rail_note": "Para metro o cercanías, abre Rutas de tren en el menú y usa la misma estrella en una dirección.",
+    "fav_route_tutorial_rail_note": "Para el tranvía de Cincinnati u otras líneas de tren, abre Rutas de tren en el menú y usa la misma estrella en una dirección.",
     "fav_route_tutorial_never": "No volver a mostrar",
     "fav_route_tutorial_got_it": "Entendido — elegir ruta",
     
@@ -301,6 +335,38 @@ const translations = {
     "sr_transfer_plural": "{count} transbordos",
     "sr_route_selected": "Ruta seleccionada: viaje de {mins} minutos, {transfers}, sale a las {start}, llega a las {end}.",
     "sr_route_selected_simple": "Ruta seleccionada.",
+
+    // Trip guide (visual text — primary path for deaf/HOH users)
+    "trip_guide_title": "Guía del viaje",
+    "trip_guide_start": "Iniciar mi viaje",
+    "trip_guide_resume": "Reanudar guía del viaje",
+    "trip_guide_minimize": "Minimizar guía del viaje",
+    "trip_guide_exit": "Salir de la guía del viaje",
+    "trip_guide_on_map": "Tu viaje está en el mapa. Toca <strong>{start}</strong> cuando quieras orientación paso a paso.",
+    "trip_guide_trip_ready": "Viaje listo",
+    "trip_guide_about_mins": "aprox. {mins} min en total",
+    "trip_guide_transit_segments": "{count} tramo(s) de tránsito. Toca <strong>{start}</strong> para comenzar.",
+    "trip_guide_no_steps": "No hay pasos disponibles.",
+    "tg_step_of": "Paso {current} de {total}",
+    "tg_back": "Atrás",
+    "tg_next": "Siguiente",
+    "tg_done": "Listo",
+    "tg_at_stop_btn": "Estoy en la parada",
+    "tg_on_bus_btn": "Estoy en el autobús",
+    "tg_off_bus_btn": "Bajé del autobús",
+    "tg_youre_close": "Estás cerca.",
+    "tg_walk_to": "Camina a {stop}",
+    "tg_board_route": "Sube a la Ruta {route}",
+    "tg_toward": " hacia {name}",
+    "tg_get_off": "Baja en {stop}",
+    "tg_distance": "Distancia:",
+    "tg_arrive_before": "Llega antes de las {time}",
+    "tg_at": "En {stop}",
+    "tg_board_around": "Sube alrededor de las {time}",
+    "tg_arrive_around": "Llega alrededor de las {time}",
+    "tg_cancel_confirm": "¿Seguro que quieres cancelar tu viaje?",
+    "ada_resources": "ADA y Recursos Oficiales",
+    "otp_loading": "Cargando opciones de viaje...",
     
     // Modal buttons
     "close": "Cerrar",
@@ -315,16 +381,18 @@ const translations = {
     "appleInstructions": "Instrucciones Apple",
     "apple_instructions": "Instrucciones Apple",
     "later": "Más Tarde",
-    "installPromptTitle": "📲 Agregar MetroFeed Portland a tu pantalla de inicio",
-    "installPromptSubtitle": "¡Usa MetroFeed como una aplicación para acceso más rápido!",
+    "installPromptTitle": "📲 Agregar RoamRaven a tu pantalla de inicio",
+    "installPromptSubtitle": "¡Usa RoamRaven como una aplicación para acceso más rápido!",
     "doneDontAsk": "Listo / No preguntar de nuevo",
+    "install_prompt_subtitle": "¡Usa RoamRaven como una aplicación para acceso más rápido!",
+    "done_dont_ask": "Listo / No preguntar de nuevo",
     
     // Premium/Auth
     "sign_in_prompt": "Por favor inicie sesión, regístrese o use la versión gratuita para continuar:",
     "sign_in": "Iniciar Sesión",
     "sign_up": "Registrarse",
     "use_free_version": "Usar Versión Gratuita",
-    "try_premium": "Pruebe MetroFeed Premium GRATIS por 24 horas",
+    "try_premium": "Pruebe RoamRaven Premium GRATIS por 24 horas",
     "no_email_needed": "NO se necesita email",
     "start_free_trial": "Comenzar Prueba Gratuita",
     
@@ -334,12 +402,12 @@ const translations = {
     "location_error": "Error de ubicación",
     
     // Data attribution
-    "data_courtesy": "Datos cortesía de TriMet.",
+    "data_courtesy": "Datos cortesía de SORTA, TANK y BCRTA.",
     
     // PortlandHome specific
     "upgrade": "Actualizar",
     "betaDisclaimer": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
-    "portlandDashboard": "Panel de Portland, OR",
+    "portlandDashboard": "Panel de Cincinnati, OH",
     "busRoutes": "Rutas de Autobús",
     "railRoutes": "Rutas de Tren",
     "trafficCams": "Cámaras de Tráfico",
@@ -351,20 +419,20 @@ const translations = {
     "contactUs": "Contáctenos",
     "reportProblem": "Reportar Problema",
     "privacyPolicy": "Privacidad",
-    "cookieMessage": "📢 Usamos cookies para mejorar la funcionalidad y analizar el tráfico. Al usar MetroFeed, aceptas nuestra",
+    "cookieMessage": "📢 Usamos cookies para mejorar la funcionalidad y analizar el tráfico. Al usar RoamRaven, aceptas nuestra",
     "ok": "OK",
     
     // BusRoutesMain specific
-    "portlandBusRoutes": "Portland, OR - Rutas de Autobús",
+    "portlandBusRoutes": "Cincinnati, OH - Rutas de Autobús",
     "searchRoutes": "Buscar una ruta...",
     
     // RailRoutes specific
-    "portlandRailRoutes": "Portland, OR - Rutas de Tren",
-    "disclaimer": "Esta herramienta no está afiliada ni respaldada por TriMet. Para horarios oficiales y alertas de servicio, visite",
+    "portlandRailRoutes": "Cincinnati, OH - Rutas de Tren",
+    "disclaimer": "RoamRaven no está afiliado ni respaldado por las agencias de tránsito locales. Para horarios oficiales y alertas de servicio, visite",
     
     // Weather page specific
-    "weatherTitle": "Clima de Portland, OR - MetroFeed",
-    "weatherDisclaimerFull": "<strong>Descargo de responsabilidad:</strong> MetroFeed no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">Servicio Meteorológico Nacional (NWS)</a>. Durante condiciones meteorológicas severas o eventos que amenacen la vida, siempre confíe en alertas oficiales en <strong>weather.gov</strong> o sus autoridades locales.",
+    "weatherTitle": "Clima de Cincinnati, OH - RoamRaven",
+    "weatherDisclaimerFull": "<strong>Descargo de responsabilidad:</strong> RoamRaven no es una fuente oficial de información de emergencia. Este sitio es solo para conciencia general y entretenimiento. Todos los datos meteorológicos provienen del <a href=\"https://www.weather.gov\" target=\"_blank\" style=\"color: #1DA1F2; text-decoration: none;\">Servicio Meteorológico Nacional (NWS)</a>. Durante condiciones meteorológicas severas o eventos que amenacen la vida, siempre confíe en alertas oficiales en <strong>weather.gov</strong> o sus autoridades locales.",
     "weatherBetaMessage": "⚠️ Este es un programa Beta, trabajo en progreso. Por favor REPORTE errores y finja estar impresionado.",
     "weatherAlerts": "⚠️ Alertas Meteorológicas (Toca para Ver)",
     "checkingAlerts": "Verificando alertas...",
@@ -394,17 +462,17 @@ const translations = {
     "stop_times": "Horarios de Parada",
     
     // Alerts page specific
-    "alertsTitle": "Alertas de Portland - MetroFeed",
-    "portlandAreaAlerts": "Alertas del Área de Portland",
-    "loadingAlerts": "Cargando alertas de TriMet…",
-    "noActiveTriMetAlerts": "No hay alertas activas de TriMet.",
-    "couldNotLoadAlerts": "No se pudieron cargar las alertas de TriMet. Inténtalo más tarde.",
-    "trimetAlert": "Alerta de TriMet",
+    "alertsTitle": "Alertas de Cincinnati - RoamRaven",
+    "portlandAreaAlerts": "Alertas del Área de Cincinnati",
+    "loadingAlerts": "Cargando alertas de tránsito…",
+    "noActiveTriMetAlerts": "No hay alertas activas de tránsito.",
+    "couldNotLoadAlerts": "No se pudieron cargar las alertas de tránsito. Inténtalo más tarde.",
+    "trimetAlert": "Alerta de tránsito",
     "fullAlert": "Alerta Completa →",
     
     // TrafficCameras page specific
-    "trafficCamerasTitle": "Cámaras de Tráfico en Vivo – MetroFeed Portland",
-    "liveTrafficCameras": "Cámaras de Tráfico en Vivo – Portland, OR",
+    "trafficCamerasTitle": "Cámaras de Tráfico en Vivo – RoamRaven Cincinnati",
+    "liveTrafficCameras": "Cámaras de Tráfico en Vivo – Cincinnati, OH",
     "cameraCourtesy": "Cámara cortesía de OHGO",
     "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía de OHGO."
   }
@@ -465,6 +533,25 @@ function updatePageLanguage() {
     }
   });
   
+  document.querySelectorAll('[data-translate-aria]').forEach((element) => {
+    const key = element.getAttribute('data-translate-aria');
+    const translation = translateText(key);
+    if (translation) element.setAttribute('aria-label', translation);
+  });
+  document.querySelectorAll('[data-translate-alt]').forEach((element) => {
+    const key = element.getAttribute('data-translate-alt');
+    const translation = translateText(key);
+    if (translation) element.setAttribute('alt', translation);
+  });
+  document.querySelectorAll('[data-translate-title]').forEach((element) => {
+    const key = element.getAttribute('data-translate-title');
+    const translation = translateText(key);
+    if (translation) {
+      element.setAttribute('title', translation);
+      element.setAttribute('aria-label', translation);
+    }
+  });
+
   const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
   placeholderElements.forEach(element => {
     const key = element.getAttribute('data-translate-placeholder');
@@ -478,6 +565,17 @@ function updatePageLanguage() {
       element.placeholder = (focusedEmpty && focusHint) ? focusHint : translation;
     }
   });
+
+  // Refresh dynamic UI (trip guide button text, step panel, ADA menu label)
+  try {
+    const adaBtn = document.getElementById('dropdownAiChatBtn');
+    if (adaBtn) adaBtn.setAttribute('aria-label', translateText('ada_resources'));
+    if (typeof window.mfSetTripStarted === 'function') {
+      const tripBtn = document.getElementById('mfTripGuideStartBtn');
+      if (tripBtn) window.mfSetTripStarted(tripBtn.getAttribute('data-trip-started') === 'true');
+    }
+    if (typeof window.mfTripGuideRender === 'function') window.mfTripGuideRender();
+  } catch (_) {}
 }
 
 function setLanguage(lang) {
@@ -530,4 +628,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-// translations.js loaded (v22) 
+// translations.js loaded (v23 Cincinnati)
