@@ -3,151 +3,409 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetroFeed US — Transit technology</title>
-  <meta name="description" content="MetroFeed US builds real-time transit tools. RoamRaven is our public mobility app for riders." />
-  <meta name="theme-color" content="#1E90FF" />
+  <title>MetroFeed</title>
+  <meta name="description" content="MetroFeed builds software for transportation, mapping, and public services — tools that help people understand and move through the real world." />
+  <meta name="theme-color" content="#ffffff" />
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <style>
     :root {
-      --mf-blue: #1E90FF;
-      --mf-blue-soft: rgba(30, 144, 255, 0.35);
-      --mf-charcoal: #121214;
-      --mf-raised: #1a1b20;
-      --mf-text: #e2e8f0;
-      --mf-muted: #94a3b8;
-      --mf-edge: rgba(226, 232, 240, 0.42);
+      --bg: #fbfbfd;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --border: rgba(0, 0, 0, 0.08);
+      --shadow: 0 2px 24px rgba(0, 0, 0, 0.06);
+      --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --max: 1080px;
+      --prose: 680px;
     }
+
     * { box-sizing: border-box; }
-    html, body {
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
       margin: 0;
-      min-height: 100vh;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--mf-charcoal);
-      color: var(--mf-muted);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
-    header {
-      border-top: 3px solid var(--mf-blue);
-      border-bottom: 1px solid var(--mf-edge);
-      background: var(--mf-charcoal);
-      padding: 1rem 1.25rem;
-      text-align: center;
+
+    a { color: inherit; }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(251, 251, 253, 0.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
     }
-    header img {
-      max-width: min(320px, 88vw);
-      height: auto;
+
+    .site-header-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .logo-link img {
+      height: 36px;
+      width: auto;
       display: block;
-      margin: 0 auto;
     }
-    main {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 2.5rem 1.25rem 3rem;
-    }
-    h1 {
-      color: var(--mf-text);
-      font-size: clamp(1.6rem, 4vw, 2rem);
-      margin: 0 0 0.75rem;
-      text-align: center;
-      font-weight: 700;
-    }
-    .lead {
-      text-align: center;
-      font-size: 1.05rem;
-      margin: 0 0 2rem;
-      color: var(--mf-muted);
-    }
-    .card {
-      background: var(--mf-raised);
-      border: 1px solid var(--mf-blue-soft);
-      border-radius: 14px;
-      padding: 1.5rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 0 24px rgba(30, 144, 255, 0.08);
-    }
-    .card h2 {
-      margin: 0 0 0.6rem;
-      font-size: 1.1rem;
-      color: var(--mf-blue);
-    }
-    .card p { margin: 0 0 1rem; }
-    .card p:last-child { margin-bottom: 0; }
-    .actions {
+
+    .nav {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-top: 1.75rem;
+      gap: 6px 20px;
+      font-size: 0.875rem;
     }
-    .btn {
-      display: inline-block;
-      padding: 0.75rem 1.25rem;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 0.95rem;
+
+    .nav a {
+      color: var(--text-secondary);
       text-decoration: none;
-      border: 1px solid transparent;
+      transition: color 0.2s;
     }
-    .btn-primary {
-      background: var(--mf-blue);
-      color: #0d0d0d;
-      border-color: #0d0d0d;
-      box-shadow: 0 0 14px var(--mf-blue-soft);
+
+    .nav a:hover { color: var(--text); }
+
+    section {
+      padding: 80px 24px;
     }
-    .btn-primary:hover { filter: brightness(1.08); }
-    .btn-secondary {
-      background: transparent;
-      color: var(--mf-text);
-      border-color: var(--mf-edge);
+
+    section:nth-of-type(even) {
+      background: var(--surface);
     }
-    .btn-secondary:hover { border-color: var(--mf-blue); color: var(--mf-blue); }
-    footer {
+
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+    }
+
+    .prose {
+      max-width: var(--prose);
+    }
+
+    .prose p {
+      margin: 0 0 1.15em;
+      color: var(--text-secondary);
+      font-size: 1.0625rem;
+      line-height: 1.7;
+    }
+
+    .prose p:last-child { margin-bottom: 0; }
+
+    /* Hero */
+    .hero {
+      padding: 100px 24px 88px;
       text-align: center;
-      padding: 1.5rem 1rem 2.5rem;
-      font-size: 0.8rem;
-      border-top: 1px solid var(--mf-edge);
     }
-    footer a {
-      color: var(--mf-blue);
+
+    .hero h1 {
+      margin: 0 0 16px;
+      font-size: clamp(2.5rem, 6vw, 3.75rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+      color: var(--text);
+    }
+
+    .hero-tagline {
+      margin: 0 auto 14px;
+      max-width: 540px;
+      font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+      font-weight: 400;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      line-height: 1.45;
+    }
+
+    .hero-sub {
+      margin: 0 auto 36px;
+      max-width: 480px;
+      font-size: 1rem;
+      color: var(--text-tertiary);
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 22px;
+      border-radius: 980px;
+      font-size: 0.9375rem;
+      font-weight: 500;
       text-decoration: none;
-      margin: 0 8px;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      border: none;
+      cursor: pointer;
     }
-    footer a:hover { text-decoration: underline; }
+
+    .btn-primary {
+      background: var(--text);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #333;
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+
+    .btn-secondary:hover {
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+    }
+
+    /* Section headings */
+    .section-label {
+      margin: 0 0 10px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .section-title {
+      margin: 0 0 28px;
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--text);
+    }
+
+    /* Product card */
+    .product-card {
+      max-width: 520px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .product-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.375rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .product-card p {
+      margin: 0 0 20px;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .product-card a {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .product-card a:hover { text-decoration: underline; }
+
+    .product-card a::after {
+      content: "→";
+      font-size: 1em;
+    }
+
+    /* Contact links */
+    .contact-grid {
+      display: grid;
+      gap: 12px;
+      max-width: 400px;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      text-decoration: none;
+      color: var(--text);
+      font-size: 1rem;
+      transition: box-shadow 0.2s;
+    }
+
+    .contact-item:hover {
+      box-shadow: var(--shadow-soft);
+    }
+
+    .contact-item span:last-child {
+      color: var(--text-tertiary);
+      font-size: 1.1rem;
+    }
+
+    /* Footer */
+    .site-footer {
+      padding: 40px 24px 56px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+    }
+
+    .site-footer nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .site-footer nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .site-footer nav a:hover { text-decoration: underline; }
+
+    .site-footer p { margin: 0; }
+
+    @media (max-width: 600px) {
+      section { padding: 64px 20px; }
+      .hero { padding: 72px 20px 64px; }
+      .nav { display: none; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <img src="metrofeedsimplelogo.png" alt="MetroFeed" decoding="async" onerror="this.style.display='none'" />
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="logo-link" href="/">
+        <img src="metrofeedone.png" alt="MetroFeed" decoding="async" />
+      </a>
+      <nav class="nav" aria-label="Page sections">
+        <a href="#about">About</a>
+        <a href="#products">Products</a>
+        <a href="#approach">Approach</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
   </header>
 
-  <main>
-    <h1>MetroFeed US</h1>
-    <p class="lead">We build real-time transit technology — maps, live vehicles, trip planning, and rider tools for modern public mobility.</p>
-
-    <div class="card">
-      <h2>RoamRaven — our rider app</h2>
-      <p>RoamRaven is MetroFeed’s public-facing app: live buses on the map, trip planning, favorites, traffic overlays, and more. It’s free for riders in supported metros.</p>
-      <div class="actions">
-        <a class="btn btn-primary" href="https://roamravenapp.com/">Open RoamRaven</a>
-        <a class="btn btn-secondary" href="https://roamravenapp.com/Cincinnati/home.html">Cincinnati Metro</a>
+  <section class="hero">
+    <div class="wrap">
+      <h1>MetroFeed</h1>
+      <p class="hero-tagline">Building software for transportation, mapping, and public services.</p>
+      <p class="hero-sub">MetroFeed develops tools that connect people with the information they need to navigate their communities.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#products">Our Products</a>
+        <a class="btn btn-secondary" href="#contact">Contact</a>
+        <a class="btn btn-secondary" href="#about">About MetroFeed</a>
       </div>
     </div>
+  </section>
 
-    <div class="card">
-      <h2>For agencies &amp; partners</h2>
-      <p>MetroFeed powers the data layer behind RoamRaven — GTFS, real-time feeds, routing, and map infrastructure. For licensing, pilots, or technical questions, reach out below.</p>
-      <div class="actions">
-        <a class="btn btn-secondary" href="contact.html">Contact MetroFeed</a>
+  <section id="about">
+    <div class="wrap prose">
+      <p class="section-label">About MetroFeed</p>
+      <h2 class="section-title">Software for the real world</h2>
+      <p>MetroFeed is an independent software company focused on transportation, mapping, and public-sector technology.</p>
+      <p>We build tools that help people better understand the world around them—from public transit and traffic conditions to routing, infrastructure, and real-time information systems.</p>
+      <p>Our goal is simple: make complex public data easier to access, easier to understand, and more useful in everyday life.</p>
+      <p>MetroFeed's first public product, RoamRaven, combines transit, traffic, weather, and routing information into a single platform designed to help people move through their communities more efficiently.</p>
+      <p>As we grow, MetroFeed plans to expand into additional transportation, public safety, and government-focused software solutions.</p>
+    </div>
+  </section>
+
+  <section id="products">
+    <div class="wrap">
+      <p class="section-label">Products</p>
+      <h2 class="section-title">What we've built</h2>
+      <div class="product-card">
+        <h3>RoamRaven</h3>
+        <p>Real-time transit, traffic, weather, and trip planning in a single platform.</p>
+        <a href="https://roamravenapp.com/">Visit RoamRaven</a>
       </div>
     </div>
-  </main>
+  </section>
 
-  <footer>
-    <a href="contact.html">Contact</a>
-    <a href="terms.html">Terms</a>
-    <a href="privacy.html">Privacy</a>
-    <a href="report.html">Report a problem</a>
-    <p style="margin: 12px 0 0; color: #64748b;">© MetroFeed US. RoamRaven is a MetroFeed product.</p>
+  <section id="approach">
+    <div class="wrap prose">
+      <p class="section-label">Our Approach</p>
+      <h2 class="section-title">Public information should be accessible</h2>
+      <p>We believe public information should be accessible.</p>
+      <p>Many of the systems people rely on every day—transit networks, traffic management systems, weather services, and public infrastructure—already generate valuable data. Our focus is on turning that information into tools that are practical, understandable, and useful to the people who need it.</p>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <p class="section-label">Contact</p>
+      <h2 class="section-title">Get in touch</h2>
+      <div class="contact-grid">
+        <a class="contact-item" href="contact.html">
+          <span>Partnerships</span>
+          <span>→</span>
+        </a>
+        <a class="contact-item" href="contact.html">
+          <span>Sponsorships</span>
+          <span>→</span>
+        </a>
+        <a class="contact-item" href="contact.html">
+          <span>Media inquiries</span>
+          <span>→</span>
+        </a>
+        <a class="contact-item" href="contact.html">
+          <span>General contact</span>
+          <span>→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <nav aria-label="Legal">
+      <a href="contact.html">Contact</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="report.html">Report a problem</a>
+    </nav>
+    <p>© MetroFeed. RoamRaven is a MetroFeed product.</p>
   </footer>
+
 </body>
 </html>
