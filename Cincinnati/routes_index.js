@@ -183,7 +183,7 @@ window.ROUTES = {
       },
       {
         "id": "sorta_10",
-        "label": "[SORTA] 10 - Madison Rd/ Erie Ave",
+        "label": "[SORTA] 10 - Erie Avenue",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
