@@ -3588,7 +3588,7 @@ function showOtpRouteSelector(routeList) {
   if (hostEl !== document.body) {
     wrapper.style.cssText = 'display:contents;pointer-events:none;';
   } else {
-    wrapper.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:10001;overflow:visible;';
+    wrapper.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1002;overflow:visible;';
   }
 
   const layout = getOtpTripChipStackLayout(hostEl);

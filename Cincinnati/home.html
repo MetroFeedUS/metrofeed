@@ -374,14 +374,14 @@
     .mf-trip-planner-toggle {
       position: relative;
       flex-shrink: 0;
-      width: 40px;
-      height: 32px;
+      width: 34px;
+      height: 26px;
       padding: 0;
       border: 1px solid var(--rr-silver-edge);
-      border-radius: 8px;
+      border-radius: 6px;
       background: linear-gradient(180deg, var(--rr-charcoal-raised) 0%, var(--rr-charcoal) 100%);
       color: var(--rr-silver-muted);
-      font-size: 14px;
+      font-size: 12px;
       line-height: 1;
       cursor: pointer;
       display: inline-flex;
@@ -413,9 +413,9 @@
     }
     @media (max-width: 480px) {
       .mf-trip-planner-toggle {
-        width: 44px;
-        height: 36px;
-        font-size: 15px;
+        width: 36px;
+        height: 28px;
+        font-size: 13px;
       }
       .mf-trip-planner-collapsed-pill {
         height: 36px;
@@ -1225,6 +1225,26 @@
       text-underline-offset: 2px;
     }
     .mf-homescreen-prompt__link:hover { color: var(--rr-accent-soft); }
+    #homescreenPromptModal.mf-overlay,
+    #homescreenInstrModal.mf-overlay {
+      align-items: center;
+      justify-content: center;
+      padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+      box-sizing: border-box;
+    }
+    #homescreenPromptModal .mf-modal,
+    #homescreenInstrModal .mf-modal {
+      position: relative;
+      top: auto;
+      left: auto;
+      transform: none;
+      width: min(440px, calc(100vw - 32px));
+      max-width: none;
+      margin: 0;
+    }
+    #homescreenInstrModal .mf-modal {
+      width: min(640px, calc(100vw - 32px));
+    }
     .mf-homescreen-instr-modal { position: relative; }
     .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid var(--rr-accent); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
     #installPrompt { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 1.5rem; text-align: center; border: 2px solid var(--rr-accent); border-radius: 12px; max-width: 390px; width: 95vw; min-width: 0; z-index: 10000; box-shadow: 0 0 12px var(--rr-accent-glow); margin: 0; box-sizing: border-box; }
@@ -1601,21 +1621,35 @@
     }
     .mf-trip-planner-fields .otp-btn-row {
       width: 100%;
-      justify-content: flex-start;
+      justify-content: center;
       margin-top: 2px;
       margin-bottom: 0;
     }
     .mf-trip-planner-fields .otp-btn-row.mf-trip-planner-actions-row {
-      margin-left: -60px;
-      margin-right: -60px;
-      width: calc(100% + 120px);
-      padding-left: 60px;
-      padding-right: calc(max(10px, env(safe-area-inset-right, 0px)) + 2.5px);
-      box-sizing: border-box;
+      position: relative;
+      display: flex;
+      justify-content: center;
       align-items: center;
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 0;
+      padding-right: 42px;
+      box-sizing: border-box;
+    }
+    .mf-trip-planner-actions-center {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
     }
     .mf-trip-planner-fields .otp-btn-row.mf-trip-planner-actions-row .mf-trip-planner-toggle {
-      margin-left: auto;
+      position: absolute;
+      right: calc(-60px + max(10px, env(safe-area-inset-right, 0px)) + 2.5px);
+      top: 50%;
+      transform: translateY(-50%);
+      margin-left: 0;
       flex-shrink: 0;
     }
     .mf-trip-planner-otp-row .otp-btn-row {
@@ -3028,8 +3062,10 @@
       </button>
     </div>
     <div class="otp-btn-row mf-trip-planner-actions-row" role="group" aria-label="Plan trip actions">
-      <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go" aria-label="Plan trip">Go</button>
-      <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear" aria-label="Clear trip planner inputs">Clear</button>
+      <div class="mf-trip-planner-actions-center">
+        <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go" aria-label="Plan trip">Go</button>
+        <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear" aria-label="Clear trip planner inputs">Clear</button>
+      </div>
       <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" hidden aria-hidden="true" tabindex="-1" title="Find my location and closest route" data-translate="find_me">Find Me</button>
       <button type="button" id="mfTripPlannerToggle" class="mf-trip-planner-toggle" aria-expanded="true" aria-controls="mfTripPlannerFields" title="Hide dashboard">
         <span class="mf-trip-planner-toggle-che" aria-hidden="true">▲</span>
@@ -3409,7 +3445,7 @@
 
 <!-- -- ADD TO HOME SCREEN PROMPT -- -->
 <div id="homescreenPromptModal" class="mf-overlay" style="display: none; z-index: 10058;">
-  <div class="mf-modal" style="max-width: 440px; padding: 1.25rem 1.35rem 1.35rem; box-sizing: border-box; position: relative;">
+  <div class="mf-modal" style="max-width: 440px; padding: 1.25rem 1.35rem 1.35rem; box-sizing: border-box;">
     <button type="button" id="homescreenPromptClose" class="mf-homescreen-prompt__x" title="Close" aria-label="Close">×</button>
     <h2 style="margin: 0 0 0.65rem; font-size: 1.2rem; color: var(--rr-accent-text); text-align: center; padding-right: 28px;">Put RoamRaven on your home screen</h2>
     <p style="margin: 0 0 1.15rem; color: #ccc; font-size: 0.92rem; line-height: 1.5; text-align: center;">
@@ -3588,11 +3624,13 @@
       hud.style.cssText = [
         'position:fixed',
         'inset:0',
-        'z-index:12000',
+        'z-index:1002',
         'pointer-events:none',
         'overflow:visible'
       ].join(';');
       document.body.appendChild(hud);
+    } else {
+      hud.style.zIndex = '1002';
     }
     return hud;
   };
