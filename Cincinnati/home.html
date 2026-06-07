@@ -112,7 +112,7 @@
     .mf-trip-planner-fields {
       max-height: 280px;
       opacity: 1;
-      overflow: hidden;
+      overflow: visible;
       transition: max-height 0.28s ease, opacity 0.2s ease, margin 0.2s ease;
       display: flex;
       flex-direction: column;
@@ -124,6 +124,7 @@
       pointer-events: none;
       margin: 0;
       gap: 0;
+      overflow: hidden;
     }
     @media (prefers-reduced-motion: reduce) {
       .mf-trip-planner-fields {
@@ -275,10 +276,7 @@
       100% { left: 100%; }
     }
     .mf-trip-planner-right-controls {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      justify-content: flex-end;
+      display: none;
     }
     .mf-trip-planner-collapsed-pill {
       display: none;
@@ -303,6 +301,9 @@
       pointer-events: auto;
     }
     .search-bar.mf-trip-planner--collapsed .mf-trip-planner-otp-group {
+      display: none;
+    }
+    .search-bar:not(.mf-trip-planner--collapsed) .mf-trip-planner-otp-row:not(.mf-traffic-ui-on) {
       display: none;
     }
     .search-bar.mf-trip-planner--collapsed #mfTripPlannerOpenBar.mf-trip-planner-collapsed-pill {
@@ -431,7 +432,71 @@
       display: none !important;
     }
     .search-bar { position: absolute; top: 10px; left: 60px; right: 60px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
-    .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: var(--rr-charcoal); border: 1px solid var(--rr-silver-edge); border-radius: 8px; padding: 5px 10px; }
+    .search-bar .input-wrapper { position: relative; display: flex; align-items: center; background-color: var(--rr-charcoal); border: 1px solid var(--rr-silver-edge); border-radius: 8px; padding: 5px 10px; overflow: visible; }
+    .otp-autocomplete-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 4px;
+      background: #0d0d0d;
+      border: 1px solid rgba(226, 232, 240, 0.42);
+      color: #cccccc;
+      z-index: 1003;
+      max-height: 340px;
+      overflow-y: auto;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    }
+    .otp-autocomplete-loc {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.88rem;
+      color: #fff;
+      background: linear-gradient(90deg, rgba(138, 99, 210, 0.42) 0%, rgba(138, 99, 210, 0.14) 100%);
+      border-bottom: 2px solid var(--rr-accent);
+      user-select: none;
+    }
+    .otp-autocomplete-loc:hover,
+    .otp-autocomplete-loc:focus {
+      background: linear-gradient(90deg, rgba(138, 99, 210, 0.55) 0%, rgba(138, 99, 210, 0.22) 100%);
+    }
+    .otp-autocomplete-loc-icon {
+      flex: 0 0 auto;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--rr-accent);
+      color: #fff;
+      font-size: 13px;
+      line-height: 1;
+    }
+    .otp-autocomplete-loc-label { flex: 1 1 auto; }
+    .otp-autocomplete-loc-hint {
+      flex: 0 0 auto;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.72);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .otp-autocomplete-option {
+      padding: 6px 10px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .otp-autocomplete-option:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
     .search-bar .input-wrapper:focus-within {
       border-color: var(--rr-accent);
       box-shadow: 0 0 0 1px var(--rr-accent-soft);
@@ -1124,6 +1189,43 @@
     .mf-actions { display: flex; gap: 0.65rem; margin-bottom: 1.1rem; justify-content: center; flex-wrap: wrap; }
     .mf-btn { flex: 1; background: #0d0d0d; color: var(--rr-accent-text); border: 2px solid #fff; font-size: 1.01rem; border-radius: 8px; padding: 0.68rem 0.5rem; font-weight: bold; cursor: pointer; transition: background .15s, color .12s, border .18s; margin-bottom: 2px; min-width: 105px; outline: none; box-shadow: 0 0 6px var(--rr-accent-soft);}
     .mf-btn:hover, .mf-btn:focus { background: var(--rr-accent-hover); color: #0d0d0d; border-color: #fff; }
+    .mf-homescreen-prompt__x {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .mf-homescreen-prompt__x:hover { background: rgba(255,255,255,0.1); }
+    .mf-homescreen-prompt__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+    .mf-homescreen-prompt__link {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 8px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .mf-homescreen-prompt__link:hover { color: var(--rr-accent-soft); }
+    .mf-homescreen-instr-modal { position: relative; }
     .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid var(--rr-accent); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
     #installPrompt { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 1.5rem; text-align: center; border: 2px solid var(--rr-accent); border-radius: 12px; max-width: 390px; width: 95vw; min-width: 0; z-index: 10000; box-shadow: 0 0 12px var(--rr-accent-glow); margin: 0; box-sizing: border-box; }
     #installPrompt button { display: block; margin: 0.5rem auto; padding: 0.6rem 1.2rem; background-color: var(--rr-accent); color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 90%; max-width: 240px; }
@@ -1499,9 +1601,22 @@
     }
     .mf-trip-planner-fields .otp-btn-row {
       width: 100%;
-      justify-content: center;
+      justify-content: flex-start;
       margin-top: 2px;
       margin-bottom: 0;
+    }
+    .mf-trip-planner-fields .otp-btn-row.mf-trip-planner-actions-row {
+      margin-left: -60px;
+      margin-right: -60px;
+      width: calc(100% + 120px);
+      padding-left: 60px;
+      padding-right: calc(max(10px, env(safe-area-inset-right, 0px)) + 2.5px);
+      box-sizing: border-box;
+      align-items: center;
+    }
+    .mf-trip-planner-fields .otp-btn-row.mf-trip-planner-actions-row .mf-trip-planner-toggle {
+      margin-left: auto;
+      flex-shrink: 0;
     }
     .mf-trip-planner-otp-row .otp-btn-row {
       margin-top: 0;
@@ -1543,7 +1658,7 @@
     /* Custom attribution positioning - just above footer */
     .maplibregl-ctrl-attrib {
       position: absolute !important;
-      bottom: 120px !important; /* Much higher above footer to avoid favorites bar */
+      bottom: 125px !important; /* Just above footer / favorites bar */
       right: 0 !important;
       z-index: 1000 !important;
     }
@@ -1848,7 +1963,7 @@
     @media (max-width: 768px) {
       .maplibregl-ctrl-attrib {
         /* ~1–2 lines of compact footer + small gap; safe-area avoids home indicator */
-        bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(73px + env(safe-area-inset-bottom, 0px)) !important;
       }
     }
     
@@ -2900,22 +3015,26 @@
   <div id="mfTripPlannerFields" class="mf-trip-planner-fields">
     <div class="input-wrapper">
       <img class="icon-placeholder" src="009-pin-1.svg" alt="Start" />
-      <input id="startInput" type="text" placeholder="Start or Current Location" data-translate-placeholder="start_location" aria-label="Start location" autocomplete="off" />
+      <input id="startInput" type="text" placeholder="Start" data-translate-placeholder="start_location" data-translate-placeholder-focus="otp_input_focus_hint" aria-label="Start location" autocomplete="off" />
       <button id="startMapBtn" class="map-select-btn" data-tooltip="Click on map to select start location">
         <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
       </button>
     </div>
     <div class="input-wrapper">
       <img class="icon-placeholder" src="008-pin.svg" alt="Destination" />
-      <input id="endInput" type="text" placeholder="Destination" data-translate-placeholder="destination" aria-label="Destination" autocomplete="off" />
+      <input id="endInput" type="text" placeholder="Destination" data-translate-placeholder="destination" data-translate-placeholder-focus="otp_input_focus_hint" aria-label="Destination" autocomplete="off" />
       <button id="endMapBtn" class="map-select-btn" data-tooltip="Click on map to select destination">
         <img src="marker.svg" alt="Select on map" style="width: 16px; height: 16px;" />
       </button>
     </div>
-    <div class="otp-btn-row" role="group" aria-label="Plan trip actions">
+    <div class="otp-btn-row mf-trip-planner-actions-row" role="group" aria-label="Plan trip actions">
       <button id="goBtn" class="otp-quick-btn otp-quick-btn--go" style="background-color: #4CAF50; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);" data-translate="go" aria-label="Plan trip">Go</button>
       <button id="clearBtn" class="otp-quick-btn otp-quick-btn--clear" style="background-color: #e53935; color: #fff; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(229, 57, 53, 0.35);" data-translate="clear" aria-label="Clear trip planner inputs">Clear</button>
       <button id="findMeBtn" class="otp-quick-btn otp-quick-btn--findme" type="button" hidden aria-hidden="true" tabindex="-1" title="Find my location and closest route" data-translate="find_me">Find Me</button>
+      <button type="button" id="mfTripPlannerToggle" class="mf-trip-planner-toggle" aria-expanded="true" aria-controls="mfTripPlannerFields" title="Hide dashboard">
+        <span class="mf-trip-planner-toggle-che" aria-hidden="true">▲</span>
+        <span class="mf-trip-planner-toggle-sr" id="mfTripPlannerToggleLabel">Hide dashboard</span>
+      </button>
     </div>
   </div>
   <div class="mf-trip-planner-otp-row" role="group" aria-label="Trip planner tools">
@@ -2927,12 +3046,6 @@
       </div>
       <div id="trafficLegendBar" class="mf-traffic-legend" style="display:none;" aria-live="polite"></div>
       <span id="mfTrafficLegendPlaceholder" style="display:none;"></span>
-    </div>
-    <div class="mf-trip-planner-right-controls">
-      <button type="button" id="mfTripPlannerToggle" class="mf-trip-planner-toggle" aria-expanded="true" aria-controls="mfTripPlannerFields" title="Hide dashboard">
-        <span class="mf-trip-planner-toggle-che" aria-hidden="true">▲</span>
-        <span class="mf-trip-planner-toggle-sr" id="mfTripPlannerToggleLabel">Hide dashboard</span>
-      </button>
     </div>
     <button type="button" id="mfTripPlannerOpenBar" class="mf-trip-planner-collapsed-pill" style="display:none;" aria-hidden="true">
       <span style="flex:1; text-align:center;">Open dashboard</span>
@@ -3294,6 +3407,34 @@
   </div>
 </div>
 
+<!-- -- ADD TO HOME SCREEN PROMPT -- -->
+<div id="homescreenPromptModal" class="mf-overlay" style="display: none; z-index: 10058;">
+  <div class="mf-modal" style="max-width: 440px; padding: 1.25rem 1.35rem 1.35rem; box-sizing: border-box; position: relative;">
+    <button type="button" id="homescreenPromptClose" class="mf-homescreen-prompt__x" title="Close" aria-label="Close">×</button>
+    <h2 style="margin: 0 0 0.65rem; font-size: 1.2rem; color: var(--rr-accent-text); text-align: center; padding-right: 28px;">Put RoamRaven on your home screen</h2>
+    <p style="margin: 0 0 1.15rem; color: #ccc; font-size: 0.92rem; line-height: 1.5; text-align: center;">
+      Skip the browser tab hunt — open live buses, routes, and alerts from an icon on your home screen. It runs full-screen like an app and stays on your city.
+    </p>
+    <div style="display: flex; gap: 0.65rem; margin-bottom: 1rem;">
+      <button type="button" class="mf-btn" id="homescreenPromptIos" style="flex: 1; margin-bottom: 0;">iPhone / iPad</button>
+      <button type="button" class="mf-btn" id="homescreenPromptAndroid" style="flex: 1; margin-bottom: 0;">Android</button>
+    </div>
+    <div class="mf-homescreen-prompt__actions">
+      <button type="button" class="mf-homescreen-prompt__link" id="homescreenPromptNever">Don&apos;t show again</button>
+      <button type="button" class="mf-homescreen-prompt__link" id="homescreenPromptLater">Remind me later</button>
+      <button type="button" class="mf-homescreen-prompt__link" id="homescreenPromptDone">I already did it</button>
+    </div>
+  </div>
+</div>
+
+<!-- -- HOME SCREEN INSTRUCTIONS (iframe) -- -->
+<div id="homescreenInstrModal" class="mf-overlay" style="display: none; z-index: 10059;">
+  <div class="mf-modal mf-homescreen-instr-modal" style="max-width: 640px; width: calc(100% - 24px); max-height: 90vh; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+    <button type="button" id="homescreenInstrClose" class="mf-homescreen-prompt__x" style="top: 8px; right: 8px; z-index: 2;" title="Close" aria-label="Close">×</button>
+    <iframe id="homescreenInstrFrame" title="Add to home screen instructions" style="width: 100%; flex: 1; min-height: 420px; border: none; background: #000;"></iframe>
+  </div>
+</div>
+
 <!-- -- SPONSOR MODAL -- -->
 <div id="sponsorModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 700px; max-height: 90vh; display: flex; flex-direction: column;">
@@ -3472,6 +3613,7 @@
       const toggleBtn = document.getElementById('mfTripPlannerToggle');
       const openBar = document.getElementById('mfTripPlannerOpenBar');
       const legend = document.getElementById('trafficLegendBar');
+      const loading = document.getElementById('trafficLoadingBar');
 
       let railAnchorTop = 110; // fallback if button not found
       try {
@@ -3485,9 +3627,21 @@
             const lr = legend.getBoundingClientRect();
             railAnchorTop = Math.max(railAnchorTop, Math.round(lr.bottom + 6));
           }
-        } else if (toggleBtn && typeof toggleBtn.getBoundingClientRect === 'function') {
-          const r = toggleBtn.getBoundingClientRect();
-          railAnchorTop = Math.max(10, Math.round(r.bottom + 6));
+        } else {
+          let anchor = 110;
+          if (toggleBtn && typeof toggleBtn.getBoundingClientRect === 'function') {
+            const r = toggleBtn.getBoundingClientRect();
+            anchor = Math.max(10, Math.round(r.bottom + 6));
+          }
+          if (loading && loading.style.display !== 'none' && typeof loading.getBoundingClientRect === 'function') {
+            const lr = loading.getBoundingClientRect();
+            anchor = Math.max(anchor, Math.round(lr.bottom + 6));
+          }
+          if (legend && legend.style.display !== 'none' && typeof legend.getBoundingClientRect === 'function') {
+            const lr = legend.getBoundingClientRect();
+            anchor = Math.max(anchor, Math.round(lr.bottom + 6));
+          }
+          railAnchorTop = anchor;
         }
       } catch (e) {}
 
@@ -3640,6 +3794,7 @@
           } catch (e) {}
         };
         scheduleChips();
+        try { metrofeedSyncTripPlannerOtpRow(); } catch (_) {}
       }
       // Default to collapsed on load.
       applyCollapsed(true);
@@ -4776,24 +4931,76 @@
     txt.innerHTML = text;
     return txt.value;
   }
+  function mfSetOtpInputPlaceholder(input, focused) {
+    if (!input || input.value.trim()) return;
+    const key = focused
+      ? input.getAttribute('data-translate-placeholder-focus')
+      : input.getAttribute('data-translate-placeholder');
+    if (!key) return;
+    const t = (typeof translateText === 'function') ? translateText(key) : '';
+    if (t) input.placeholder = t;
+  }
   function createAutocomplete(input) {
     const wrapper = input.closest('.input-wrapper');
     const dropdown = document.createElement("div");
-    dropdown.style.position = "absolute";
-    dropdown.style.top = "100%";
-    dropdown.style.left = "0";
-    dropdown.style.right = "0";
-    dropdown.style.background = "#0d0d0d";
-    dropdown.style.border = "1px solid rgba(226, 232, 240, 0.42)";
-    dropdown.style.color = "#cccccc";
-    dropdown.style.zIndex = 1002;
-    // Tall enough to show ~10 results + the location option without scrolling.
-    dropdown.style.maxHeight = "340px";
-    dropdown.style.overflowY = "auto";
-    dropdown.style.fontSize = "0.8rem";
-    dropdown.style.borderRadius = "6px";
-    dropdown.style.display = "none";
+    dropdown.className = "otp-autocomplete-dropdown";
     wrapper.appendChild(dropdown);
+
+    function appendUseMyLocationOption() {
+      const locOpt = document.createElement("div");
+      locOpt.className = "otp-autocomplete-loc";
+      locOpt.setAttribute("role", "option");
+      locOpt.tabIndex = 0;
+      const locLabel = (typeof translateText === 'function') ? translateText('use_my_location') : 'Use my location';
+      locOpt.innerHTML =
+        '<span class="otp-autocomplete-loc-icon" aria-hidden="true">◎</span>' +
+        '<span class="otp-autocomplete-loc-label">' + locLabel.replace(/</g, '&lt;') + '</span>' +
+        '<span class="otp-autocomplete-loc-hint">GPS</span>';
+      const pickLocation = async () => {
+        dropdown.style.display = "none";
+        try {
+          if (!navigator.geolocation) {
+            alert("Geolocation is not available in this browser.");
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              try {
+                const lat = Number(pos && pos.coords && pos.coords.latitude);
+                const lon = Number(pos && pos.coords && pos.coords.longitude);
+                if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+                input.value = "Current Location";
+                pinStopOnMap({ name: "Current Location", lat: lat, lon: lon, stop_id: null }, true);
+              } catch (_) {}
+            },
+            () => {
+              alert("Unable to get your location.");
+            },
+            { enableHighAccuracy: false, maximumAge: 10000, timeout: 12000 }
+          );
+        } catch (_) {}
+      };
+      locOpt.addEventListener("click", pickLocation);
+      locOpt.addEventListener("keydown", (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pickLocation();
+        }
+      });
+      dropdown.appendChild(locOpt);
+    }
+
+    function showStartLocationMenu() {
+      dropdown.innerHTML = "";
+      appendUseMyLocationOption();
+      dropdown.style.display = "block";
+    }
+
+    input.addEventListener("focus", () => {
+      if (input.id === 'startInput' && !input.value.trim()) {
+        showStartLocationMenu();
+      }
+    });
 
     input.addEventListener("input", async () => {
       const query = input.value.trim().toLowerCase();
@@ -4811,43 +5018,15 @@
           destinationPin = null;
           window.endCoords = null;
         }
+        if (isStart && document.activeElement === input) {
+          showStartLocationMenu();
+        }
         return;
       }
 
-      // Start field: offer "Use my location" as a quick option.
+      // Start field: prominent "Use my location" at top of every results list.
       if (input.id === 'startInput') {
-        const locOpt = document.createElement("div");
-        locOpt.textContent = "Use my location";
-        locOpt.style.padding = "6px 10px";
-        locOpt.style.cursor = "pointer";
-        locOpt.style.fontWeight = "700";
-        locOpt.style.color = "#e8eaed";
-        locOpt.style.borderBottom = "1px solid rgba(255,255,255,0.08)";
-        locOpt.addEventListener("click", async () => {
-          dropdown.style.display = "none";
-          try {
-            if (!navigator.geolocation) {
-              alert("Geolocation is not available in this browser.");
-              return;
-            }
-            navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                try {
-                  const lat = Number(pos && pos.coords && pos.coords.latitude);
-                  const lon = Number(pos && pos.coords && pos.coords.longitude);
-                  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-                  input.value = "Current Location";
-                  pinStopOnMap({ name: "Current Location", lat: lat, lon: lon, stop_id: null }, true);
-                } catch (_) {}
-              },
-              () => {
-                alert("Unable to get your location.");
-              },
-              { enableHighAccuracy: false, maximumAge: 10000, timeout: 12000 }
-            );
-          } catch (_) {}
-        });
-        dropdown.appendChild(locOpt);
+        appendUseMyLocationOption();
       }
 
       // First-time build UX: show a placeholder while the stop index is being built/cached.
@@ -4883,6 +5062,8 @@
       const matches = starts.concat(tokenStarts, contains).slice(0, 10);
       matches.forEach(name => {
         const option = document.createElement("div");
+        option.className = "otp-autocomplete-option";
+        option.setAttribute("role", "option");
         // Highlight match for quicker scanning
         try {
           const lower = name.toLowerCase();
@@ -4903,9 +5084,6 @@
         } catch (_) {
           option.textContent = name;
         }
-        option.style.padding = "6px 10px";
-        option.style.cursor = "pointer";
-        option.style.borderBottom = "1px solid rgba(255,255,255,0.06)";
         option.addEventListener("click", async () => {
           input.value = name;
           dropdown.style.display = "none";
@@ -4922,7 +5100,7 @@
         });
         dropdown.appendChild(option);
       });
-      dropdown.style.display = matches.length ? "block" : "none";
+      dropdown.style.display = (input.id === 'startInput' || matches.length) ? "block" : "none";
       
       // Check if the current input matches a valid stop name exactly
       const exactMatch = allStops.find(name => name.toLowerCase() === query);
@@ -5472,26 +5650,18 @@
     await mfDelay(ms + dt.fadeMs);
   }
 
-  function mfWaitForElement(getEl, opts) {
-    const timeoutMs = (opts && opts.timeoutMs) ? opts.timeoutMs : 2200;
-    const intervalMs = (opts && opts.intervalMs) ? opts.intervalMs : 120;
-    const started = Date.now();
-    return new Promise((resolve) => {
-      const tick = () => {
-        let el = null;
-        try { el = typeof getEl === 'function' ? getEl() : null; } catch (_) { el = null; }
-        if (el) return resolve(el);
-        if (Date.now() - started > timeoutMs) return resolve(null);
-        setTimeout(tick, intervalMs);
-      };
-      tick();
-    });
+  function mfTutorialPickTarget(getEl) {
+    try {
+      return typeof getEl === 'function' ? getEl() : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /**
    * Sequenced map/UI hints (bus → stop → route tab → favorites). Used by Quick tutorial only.
    * @param {Array<{key:string,text:string,getEl:function():Element|null}>} steps
-   * @param {{stepPauseMs?:number,busStopTooltipMs?:number,anchoredTooltipMs?:number,waitTimeoutMs?:number,tooltipVariant?:string,progressStart?:number,progressTotal?:number}} [opts]
+   * @param {{busStopTooltipMs?:number,anchoredTooltipMs?:number,tooltipVariant?:string,progressStart?:number,progressTotal?:number}} [opts]
    */
   async function mfRunOnboardingMapHintSteps(steps, opts) {
     const dt = MF_TUTORIAL_DESKTOP_TIMING;
@@ -5499,7 +5669,6 @@
       opts && opts.busStopTooltipMs != null ? opts.busStopTooltipMs : dt.visibleMs;
     const anchoredMs =
       opts && opts.anchoredTooltipMs != null ? opts.anchoredTooltipMs : dt.visibleMs;
-    const waitTimeoutMs = opts && opts.waitTimeoutMs != null ? opts.waitTimeoutMs : 2600;
     const variant = opts && opts.tooltipVariant ? opts.tooltipVariant : null;
     const progTotal = opts && opts.progressTotal != null ? opts.progressTotal : steps.length;
     const progStart = opts && opts.progressStart != null ? opts.progressStart : 1;
@@ -5507,7 +5676,7 @@
     const baseAnch = Object.assign({ ms: anchoredMs, padPx: 12 }, variant ? { variant } : {});
     for (let i = 0; i < steps.length; i++) {
       const s = steps[i];
-      const el = await mfWaitForElement(s.getEl, { timeoutMs: waitTimeoutMs, intervalMs: 120 });
+      const el = mfTutorialPickTarget(s.getEl);
       const prog = { progress: { current: progStart + i, total: progTotal } };
       const busOpts = Object.assign({}, baseBus, prog);
       const anchOpts = Object.assign({}, baseAnch, prog);
@@ -5824,7 +5993,7 @@
 
     for (let i = 0; i < mapSteps.length; i++) {
       const s = mapSteps[i];
-      const el = await mfWaitForElement(s.getEl, { timeoutMs: 2800, intervalMs: 120 });
+      const el = mfTutorialPickTarget(s.getEl);
       await mfTutorialCoachRunStep(s.text, prog(), el);
     }
 
@@ -6514,29 +6683,11 @@
     }
     if (clearBtn) clearBtn.addEventListener('click', clearTripPlan);
     
-    // Show tooltips when search bar inputs are focused/clicked (for mobile)
-    // Check if tooltips have been shown this session
-    let hasShownMapTooltips = sessionStorage.getItem('mapSelectTooltipsShown');
-    
-    if (startInput) {
-      startInput.addEventListener('focus', () => {
-        if (!hasShownMapTooltips) {
-          showMapSelectTooltips();
-          sessionStorage.setItem('mapSelectTooltipsShown', 'true');
-          hasShownMapTooltips = true;
-        }
-      });
-    }
-    
-    if (endInput) {
-      endInput.addEventListener('focus', () => {
-        if (!hasShownMapTooltips) {
-          showMapSelectTooltips();
-          sessionStorage.setItem('mapSelectTooltipsShown', 'true');
-          hasShownMapTooltips = true;
-        }
-      });
-    }
+    [startInput, endInput].forEach((input) => {
+      if (!input) return;
+      input.addEventListener('focus', () => mfSetOtpInputPlaceholder(input, true));
+      input.addEventListener('blur', () => mfSetOtpInputPlaceholder(input, false));
+    });
   }
   
   /**
@@ -7023,7 +7174,6 @@
         await mfRunOnboardingMapHintSteps(steps, {
           busStopTooltipMs: tipMs,
           anchoredTooltipMs: tipMs,
-          waitTimeoutMs: 2800,
           tooltipVariant: 'onboarding',
           progressStart: stepI + 1,
           progressTotal: totalHintSteps
@@ -9544,15 +9694,29 @@
   let trafficLayerActive = false;
   let metrofeedTrafficLoadingTimer = null;
 
+  function metrofeedSyncTripPlannerOtpRow() {
+    const row = document.querySelector('.mf-trip-planner-otp-row');
+    const loading = document.getElementById('trafficLoadingBar');
+    const legend = document.getElementById('trafficLegendBar');
+    if (!row) return;
+    const loadingOn = loading && loading.style.display !== 'none';
+    const legendOn = legend && legend.style.display !== 'none';
+    row.classList.toggle('mf-traffic-ui-on', !!(loadingOn || legendOn));
+    try {
+      if (typeof window.metrofeedRepositionRouteChips === 'function') {
+        requestAnimationFrame(() => window.metrofeedRepositionRouteChips());
+      }
+    } catch (_) {}
+  }
+  window.metrofeedSyncTripPlannerOtpRow = metrofeedSyncTripPlannerOtpRow;
+
   function metrofeedSetTrafficLoadingVisible(visible) {
     const el = document.getElementById('trafficLoadingBar');
     if (!el) return;
     el.style.display = visible ? 'block' : 'none';
     try {
       document.body.classList.toggle('mf-traffic-loader-on', !!visible);
-      if (typeof window.metrofeedRepositionRouteChips === 'function') {
-        requestAnimationFrame(() => window.metrofeedRepositionRouteChips());
-      }
+      metrofeedSyncTripPlannerOtpRow();
     } catch (_) {}
   }
 
@@ -9586,6 +9750,7 @@
     const el = document.getElementById('trafficLegendBar');
     if (!el) return;
     el.style.display = visible ? 'flex' : 'none';
+    try { metrofeedSyncTripPlannerOtpRow(); } catch (_) {}
   }
 
   window._mfTrafficCounts = window._mfTrafficCounts || { incidents: 0, flow: 0, slowdowns: 0, construction: 0 };
@@ -14541,12 +14706,123 @@
   }
 
   // DOM Content Loaded Event Listener
-  // === SECTION: SPONSOR MODAL ===
-  // Shows once per day (resets at 1am) to thank sponsor for keeping RoamRaven free
-  
+  // === SECTION: PROMPT CYCLE (sponsor visit 1, homescreen visit 2, every 72h) ===
+  const MF_PROMPT_CYCLE_MS = 72 * 60 * 60 * 1000;
+  const MF_PROMPT_KEYS = {
+    cycleStart: 'mfPromptCycleStart',
+    visitCount: 'mfPromptCycleVisitCount',
+    homescreenDismiss: 'mfHomescreenPromptDismiss'
+  };
+
+  function mfIsStandaloneApp() {
+    try {
+      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+      if (window.navigator.standalone === true) return true;
+    } catch (_) {}
+    return false;
+  }
+
+  function mfHomescreenPromptPermanentlyDismissed() {
+    try {
+      const v = localStorage.getItem(MF_PROMPT_KEYS.homescreenDismiss);
+      return v === 'never' || v === 'done';
+    } catch (_) {}
+    return false;
+  }
+
+  function mfResetPromptCycleIfExpired() {
+    try {
+      const raw = localStorage.getItem(MF_PROMPT_KEYS.cycleStart);
+      const now = Date.now();
+      if (!raw || now - parseInt(raw, 10) >= MF_PROMPT_CYCLE_MS) {
+        localStorage.setItem(MF_PROMPT_KEYS.cycleStart, String(now));
+        localStorage.setItem(MF_PROMPT_KEYS.visitCount, '0');
+      }
+    } catch (_) {}
+  }
+
+  function mfIncrementPromptVisit() {
+    mfResetPromptCycleIfExpired();
+    try {
+      const n = parseInt(localStorage.getItem(MF_PROMPT_KEYS.visitCount) || '0', 10) + 1;
+      localStorage.setItem(MF_PROMPT_KEYS.visitCount, String(n));
+      return n;
+    } catch (_) {}
+    return 0;
+  }
+
+  function showHomescreenPromptModal() {
+    const modal = document.getElementById('homescreenPromptModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function hideHomescreenPromptModal() {
+    const modal = document.getElementById('homescreenPromptModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function showHomescreenInstrModal(page) {
+    const modal = document.getElementById('homescreenInstrModal');
+    const frame = document.getElementById('homescreenInstrFrame');
+    if (!modal || !frame) return;
+    frame.src = page + (page.indexOf('?') >= 0 ? '&' : '?') + 'embed=1';
+    modal.style.display = 'flex';
+  }
+
+  function hideHomescreenInstrModal() {
+    const modal = document.getElementById('homescreenInstrModal');
+    const frame = document.getElementById('homescreenInstrFrame');
+    if (modal) modal.style.display = 'none';
+    if (frame) frame.src = 'about:blank';
+  }
+
+  function mfBindHomescreenPromptModal() {
+    if (window._mfHomescreenPromptBound) return;
+    window._mfHomescreenPromptBound = true;
+    const ios = document.getElementById('homescreenPromptIos');
+    const android = document.getElementById('homescreenPromptAndroid');
+    const neverBtn = document.getElementById('homescreenPromptNever');
+    const laterBtn = document.getElementById('homescreenPromptLater');
+    const doneBtn = document.getElementById('homescreenPromptDone');
+    const closeBtn = document.getElementById('homescreenPromptClose');
+    const instrClose = document.getElementById('homescreenInstrClose');
+
+    if (ios) {
+      ios.addEventListener('click', function () {
+        hideHomescreenPromptModal();
+        showHomescreenInstrModal('AppleInstructions.html');
+      });
+    }
+    if (android) {
+      android.addEventListener('click', function () {
+        hideHomescreenPromptModal();
+        showHomescreenInstrModal('AndroidInstructions.html');
+      });
+    }
+    if (neverBtn) {
+      neverBtn.addEventListener('click', function () {
+        try { localStorage.setItem(MF_PROMPT_KEYS.homescreenDismiss, 'never'); } catch (_) {}
+        hideHomescreenPromptModal();
+      });
+    }
+    if (laterBtn) {
+      laterBtn.addEventListener('click', function () {
+        hideHomescreenPromptModal();
+      });
+    }
+    if (doneBtn) {
+      doneBtn.addEventListener('click', function () {
+        try { localStorage.setItem(MF_PROMPT_KEYS.homescreenDismiss, 'done'); } catch (_) {}
+        hideHomescreenPromptModal();
+      });
+    }
+    if (closeBtn) closeBtn.addEventListener('click', hideHomescreenPromptModal);
+    if (instrClose) instrClose.addEventListener('click', hideHomescreenInstrModal);
+  }
+
   /**
    * Check if sponsor modal should be shown today
-   * Resets at 1am (not 24-hour timer)
+   * @deprecated Use 72h prompt cycle (visit 1 = sponsor)
    */
   function shouldShowSponsorModal() {
     try {
@@ -14594,8 +14870,6 @@
     const modal = document.getElementById('sponsorModal');
     if (modal) {
       modal.style.display = 'flex';
-      // Save current date/time to localStorage
-      localStorage.setItem('sponsorModalLastShown', new Date().toISOString());
     }
   }
   
@@ -14610,20 +14884,31 @@
   }
   
   /**
-   * Initialize sponsor modal (check and show after 3 seconds if needed)
+   * 72h cycle: visit 1 = sponsor, visit 2 = add-to-homescreen (3s after load).
    */
-  function initSponsorModal() {
+  function mfInitPromptModals() {
     try {
-      // Sponsor shows once per day, but NEVER on the very first onboarding visit.
       if (localStorage.getItem('mfOnboardingDone') !== '1') return;
-    } catch (e) {}
-
-    if (shouldShowSponsorModal()) {
-      // Show modal 3 seconds after page load
-      setTimeout(() => {
-        showSponsorModal();
-      }, 3000);
+    } catch (e) {
+      return;
     }
+    if (mfIsStandaloneApp()) return;
+
+    mfBindHomescreenPromptModal();
+
+    setTimeout(function () {
+      const visit = mfIncrementPromptVisit();
+      if (visit === 1) {
+        showSponsorModal();
+      } else if (visit === 2 && !mfHomescreenPromptPermanentlyDismissed()) {
+        showHomescreenPromptModal();
+      }
+    }, 3000);
+  }
+
+  /** @deprecated Use mfInitPromptModals */
+  function initSponsorModal() {
+    mfInitPromptModals();
   }
 
   // Setup route/stop search functionality for stop times modal
@@ -14787,7 +15072,7 @@
     }
     
     // Initialize sponsor modal
-    initSponsorModal();
+    mfInitPromptModals();
     
     // Use shared map initialization (from metroFeedMap.js)
     try {

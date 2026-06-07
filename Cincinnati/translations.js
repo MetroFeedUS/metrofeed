@@ -12,8 +12,10 @@ const translations = {
     
     // Search and UI
     "search_placeholder": "Search routes...",
-    "start_location": "Start or Current Location", 
+    "start_location": "Start",
     "destination": "Destination",
+    "otp_input_focus_hint": "Type stop or use pin for map →",
+    "use_my_location": "Use my location",
     "find_me": "Find Me",
     "menu": "Menu",
     "account": "Account",
@@ -212,8 +214,10 @@ const translations = {
     
     // Search and UI
     "search_placeholder": "Buscar rutas...",
-    "start_location": "Ubicación de inicio o actual",
+    "start_location": "Inicio",
     "destination": "Destino",
+    "otp_input_focus_hint": "Escribe parada o usa el pin en el mapa →",
+    "use_my_location": "Usar mi ubicación",
     "find_me": "Encontrar",
     "menu": "Menú",
     "account": "Cuenta",
@@ -466,7 +470,12 @@ function updatePageLanguage() {
     const key = element.getAttribute('data-translate-placeholder');
     const translation = translateText(key);
     if (translation) {
-      element.placeholder = translation;
+      element.dataset.mfPlaceholderIdle = translation;
+      const focusKey = element.getAttribute('data-translate-placeholder-focus');
+      const focusHint = focusKey ? translateText(focusKey) : '';
+      if (focusHint) element.dataset.mfPlaceholderFocus = focusHint;
+      const focusedEmpty = document.activeElement === element && !element.value.trim();
+      element.placeholder = (focusedEmpty && focusHint) ? focusHint : translation;
     }
   });
 }
