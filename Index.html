@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    (function () {
+      var host = (location.hostname || '').replace(/^www\./i, '').toLowerCase();
+      if (host !== 'metrofeedus.com') return;
+      var path = (location.pathname || '/').toLowerCase();
+      if (path === '/' || path === '/index.html') {
+        location.replace('/metrofeedus-home.html' + location.search + location.hash);
+      }
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RoamRaven | National map</title>
