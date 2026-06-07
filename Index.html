@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RoamRaven | National map</title>
   <meta name="theme-color" content="#9333ea" />
-  <link rel="icon" type="image/png" href="/RoamRavenbird.png" sizes="512x512" />
-  <link rel="apple-touch-icon" href="/RoamRavenbird.png" />
+  <link rel="icon" type="image/png" href="/manifestbird.png" sizes="512x512" />
+  <link rel="apple-touch-icon" href="/manifestbird.png" />
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
@@ -340,6 +340,7 @@
       min-height: 100dvh;
       min-height: -webkit-fill-available;
       z-index: 1500;
+      pointer-events: none;
       box-sizing: border-box;
       --mf-cookie-pad-y: max(16px, env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px));
       padding: var(--mf-cookie-pad-y) max(16px, env(safe-area-inset-right, 0px)) var(--mf-cookie-pad-y)
@@ -355,6 +356,7 @@
       justify-content: center;
     }
     .mf-cookie-card {
+      pointer-events: auto;
       width: min(520px, 100%);
       background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.97) 100%);
       border: 1px solid var(--rr-silver-edge);
@@ -466,7 +468,6 @@
     }
     #mfMapLoading.is-visible {
       display: flex;
-      pointer-events: auto;
     }
     #mfMapLoadError {
       display: none;
@@ -1364,6 +1365,38 @@
       };
     }
 
+    /** Desktop (wide): wheel/box/dbl-click zoom + nav buttons. Phones: pinch + drag only. */
+    function mfConfigureMapInteractions() {
+      if (!map) return;
+      var desktop = window.matchMedia('(min-width: 769px)').matches;
+      try {
+        if (desktop) {
+          map.scrollZoom.enable();
+          map.boxZoom.enable();
+          map.doubleClickZoom.enable();
+          map.dragPan.enable();
+          if (!map.__mfNavControl) {
+            map.__mfNavControl = new maplibregl.NavigationControl({ showCompass: true });
+            map.addControl(map.__mfNavControl, 'bottom-right');
+          }
+        } else {
+          map.scrollZoom.disable();
+          map.boxZoom.disable();
+          map.doubleClickZoom.disable();
+          if (map.__mfNavControl) {
+            map.removeControl(map.__mfNavControl);
+            map.__mfNavControl = null;
+          }
+        }
+      } catch (_) {}
+    }
+
+    var mfMapInteractResizeTimer;
+    window.addEventListener('resize', function () {
+      clearTimeout(mfMapInteractResizeTimer);
+      mfMapInteractResizeTimer = setTimeout(mfConfigureMapInteractions, 120);
+    });
+
     function mfInitMap() {
       if (map) return;
       const defaultCenter = [-98, 39];
@@ -1379,9 +1412,7 @@
         attributionControl: false
       });
       map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
-      map.scrollZoom.disable();
-      map.boxZoom.disable();
-      map.doubleClickZoom.disable();
+      mfConfigureMapInteractions();
 
       const seen = new Set();
       map.on('styleimagemissing', function (e) {
