@@ -1202,7 +1202,7 @@
       }
       var outFeatures = [];
       for (var key in byCity) {
-        if (!byCity.hasOwnProperty(key)) continue;
+        if (!Object.prototype.hasOwnProperty.call(byCity, key)) continue;
         var cityStatus = MF_SUPPORTED_CITIES[key].status || 'live';
         var clusters = mfUnionCountyClusters(byCity[key]);
         for (var k = 0; k < clusters.length; k++) {
@@ -1346,7 +1346,7 @@
                 0.5,
                 ['==', ['get', 'cityKey'], ''],
                 0.82,
-                ['interpolate', ['linear'], ['zoom'], 4, 0.48, 8, 0.42, 11, 0.36]
+                0.42
               ]
             }
           },
@@ -1371,11 +1371,11 @@
           0.5,
           ['==', ['get', 'cityKey'], ''],
           0.82,
-          ['interpolate', ['linear'], ['zoom'], 4, 0.48, 8, 0.42, 11, 0.36]
+          0.42
         ]);
       }
 
-      if (!map.getLayer('mf-counties-line')) {
+      if (!map.getLayer('mf-counties-line') && map.getLayer('mf-counties-fill')) {
         map.addLayer(
           {
             id: 'mf-counties-line',
@@ -1923,7 +1923,7 @@
         })(cityKey);
       }
       mfBindCityMarkerZoomVisibility();
-      mfSyncHotspotMarkerVisibility();
+      mfSyncCityMarkerVisibility();
       mfSyncHotspotMarkerArmState();
     }
 
