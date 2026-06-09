@@ -153,6 +153,7 @@
     }
     .mf-hotspot-marker--planned .mf-hotspot-marker__pulse {
       background: radial-gradient(circle, rgba(161, 161, 170, 0.55) 0%, transparent 70%);
+      animation: mf-hotspot-ring 2.4s ease-out infinite;
     }
     .mf-hotspot-marker--planned .mf-hotspot-marker__label {
       color: #e4e4e7;
@@ -1110,6 +1111,65 @@
         });
     }
 
+    /** Merge touching counties into clusters (Cincinnati = OH block + KY block). */
+    function mfUnionCountyClusters(features) {
+      var clusters = [];
+      if (!features || !features.length) return clusters;
+      for (var i = 0; i < features.length; i++) {
+        var feat = features[i];
+        if (!feat || !feat.geometry) continue;
+        var placed = false;
+        for (var c = 0; c < clusters.length; c++) {
+          try {
+            var u = turf.union(clusters[c], feat);
+            if (u && u.geometry) {
+              clusters[c] = u;
+              placed = true;
+              break;
+            }
+          } catch (_) {}
+        }
+        if (!placed) clusters.push(feat);
+      }
+      var merged = true;
+      while (merged && clusters.length > 1) {
+        merged = false;
+        outer: for (var a = 0; a < clusters.length; a++) {
+          for (var b = a + 1; b < clusters.length; b++) {
+            try {
+              var u2 = turf.union(clusters[a], clusters[b]);
+              if (u2 && u2.geometry) {
+                clusters.splice(b, 1);
+                clusters[a] = u2;
+                merged = true;
+                break outer;
+              }
+            } catch (_) {}
+          }
+        }
+      }
+      return clusters;
+    }
+
+    function mfPushMetroOutlineLines(outFeatures, cluster, cityKey, cityStatus) {
+      try {
+        var line = turf.polygonToLine(cluster);
+        if (!line) return;
+        if (line.type === 'FeatureCollection' && Array.isArray(line.features)) {
+          for (var i = 0; i < line.features.length; i++) {
+            var lf = line.features[i];
+            lf.properties = { cityKey: cityKey, cityStatus: cityStatus };
+            outFeatures.push(lf);
+          }
+          return;
+        }
+        if (line.type === 'Feature') {
+          line.properties = { cityKey: cityKey, cityStatus: cityStatus };
+          outFeatures.push(line);
+        }
+      } catch (_) {}
+    }
+
     function mfBuildMetroOutlineGeoJSON(countyData) {
       if (!window.turf || !countyData || !Array.isArray(countyData.features)) return null;
       var byCity = Object.create(null);
@@ -1123,72 +1183,67 @@
       var outFeatures = [];
       for (var key in byCity) {
         if (!byCity.hasOwnProperty(key)) continue;
-        var metro = byCity[key];
-        var merged = metro[0];
-        for (var j = 1; j < metro.length; j++) {
-          try {
-            var u = turf.union(merged, metro[j]);
-            if (u) merged = u;
-          } catch (_) {}
+        var cityStatus = MF_SUPPORTED_CITIES[key].status || 'live';
+        var clusters = mfUnionCountyClusters(byCity[key]);
+        for (var k = 0; k < clusters.length; k++) {
+          mfPushMetroOutlineLines(outFeatures, clusters[k], key, cityStatus);
         }
-        try {
-          var line = turf.polygonToLine(merged);
-          if (line) {
-            line.properties = {
-              cityKey: key,
-              cityStatus: MF_SUPPORTED_CITIES[key].status || 'live'
-            };
-            outFeatures.push(line);
-          }
-        } catch (_) {}
       }
       return outFeatures.length
         ? { type: 'FeatureCollection', features: outFeatures }
         : null;
     }
 
+    function mfMetroStatusColor(liveColor, plannedColor) {
+      return ['case', ['==', ['get', 'cityStatus'], 'planned'], plannedColor, liveColor];
+    }
+
     function mfInstallMetroOutlineLayers(outlineFc) {
       if (!map || !outlineFc) return;
+      ['mf-metro-glow', 'mf-metro-outline', 'mf-metro-glow-planned', 'mf-metro-outline-planned'].forEach(
+        function (legacyId) {
+          try {
+            if (map.getLayer(legacyId)) map.removeLayer(legacyId);
+          } catch (_) {}
+        }
+      );
       if (!map.getSource('mf-metro-outline')) {
         map.addSource('mf-metro-outline', { type: 'geojson', data: outlineFc });
       } else {
         map.getSource('mf-metro-outline').setData(outlineFc);
       }
-      var statusColor = function (liveColor, plannedColor) {
-        return ['case', ['==', ['get', 'cityStatus'], 'planned'], plannedColor, liveColor];
-      };
-      if (!map.getLayer('mf-metro-glow')) {
-        map.addLayer({
+      var beforeId = null;
+      try {
+        if (map.getLayer('mf-user-gps-halo')) beforeId = 'mf-user-gps-halo';
+      } catch (_) {}
+      map.addLayer(
+        {
           id: 'mf-metro-glow',
           type: 'line',
           source: 'mf-metro-outline',
           paint: {
-            'line-color': statusColor('#9333ea', '#71717a'),
+            'line-color': mfMetroStatusColor('#9333ea', '#71717a'),
             'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 9, 11, 12],
             'line-blur': ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 11, 7],
             'line-opacity': 0.7
           }
-        });
-      } else {
-        map.setPaintProperty('mf-metro-glow', 'line-color', statusColor('#9333ea', '#71717a'));
-      }
-      if (!map.getLayer('mf-metro-outline')) {
-        map.addLayer({
+        },
+        beforeId
+      );
+      map.addLayer(
+        {
           id: 'mf-metro-outline',
           type: 'line',
           source: 'mf-metro-outline',
           paint: {
-            'line-color': statusColor('#f5f3ff', '#f4f4f5'),
+            'line-color': mfMetroStatusColor('#f5f3ff', '#f4f4f5'),
             'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2, 11, 2.8],
             'line-opacity': 0.95
           }
-        });
-      } else {
-        map.setPaintProperty('mf-metro-outline', 'line-color', statusColor('#f5f3ff', '#f4f4f5'));
-      }
-      ['mf-metro-glow-planned', 'mf-metro-outline-planned'].forEach(function (legacyId) {
-        if (map.getLayer(legacyId)) map.removeLayer(legacyId);
-      });
+        },
+        beforeId
+      );
+      mfRaiseStatesLineLayer();
     }
 
     function mfApplyCountiesToMap(data) {
