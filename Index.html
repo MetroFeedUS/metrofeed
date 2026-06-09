@@ -1033,7 +1033,28 @@
             '#71717a',
             '#9333ea'
           ],
-          'fill-opacity': 0.22
+          'fill-opacity': [
+            'case',
+            ['==', ['get', 'cityStatus'], 'planned'],
+            0.28,
+            0.38
+          ]
+        }
+      });
+      map.addLayer({
+        id: 'mf-service-preview-glow',
+        type: 'line',
+        source: 'mf-service-preview',
+        paint: {
+          'line-color': [
+            'case',
+            ['==', ['get', 'cityStatus'], 'planned'],
+            '#71717a',
+            '#9333ea'
+          ],
+          'line-width': 4,
+          'line-blur': 3,
+          'line-opacity': 0.55
         }
       });
       map.addLayer({
@@ -1044,19 +1065,18 @@
           'line-color': [
             'case',
             ['==', ['get', 'cityStatus'], 'planned'],
-            '#d4d4d8',
-            '#ddd6fe'
+            '#f4f4f5',
+            '#f5f3ff'
           ],
-          'line-width': 1.5,
-          'line-opacity': 0.5,
-          'line-dasharray': [1.2, 1.8]
+          'line-width': 1.4,
+          'line-opacity': 0.85
         }
       });
     }
 
     function mfRemoveServicePreviewLayer() {
       if (!map) return;
-      ['mf-service-preview-line', 'mf-service-preview-fill'].forEach(function (id) {
+      ['mf-service-preview-line', 'mf-service-preview-glow', 'mf-service-preview-fill'].forEach(function (id) {
         try {
           if (map.getLayer(id)) map.removeLayer(id);
         } catch (_) {}
@@ -1200,50 +1220,74 @@
 
     function mfInstallMetroOutlineLayers(outlineFc) {
       if (!map || !outlineFc) return;
-      ['mf-metro-glow', 'mf-metro-outline', 'mf-metro-glow-planned', 'mf-metro-outline-planned'].forEach(
-        function (legacyId) {
-          try {
-            if (map.getLayer(legacyId)) map.removeLayer(legacyId);
-          } catch (_) {}
-        }
-      );
+      var data =
+        outlineFc.type === 'FeatureCollection'
+          ? outlineFc
+          : { type: 'FeatureCollection', features: outlineFc.features ? outlineFc.features : [outlineFc] };
+
+      ['mf-metro-glow-planned', 'mf-metro-outline-planned'].forEach(function (legacyId) {
+        try {
+          if (map.getLayer(legacyId)) map.removeLayer(legacyId);
+        } catch (_) {}
+      });
+
       if (!map.getSource('mf-metro-outline')) {
-        map.addSource('mf-metro-outline', { type: 'geojson', data: outlineFc });
+        map.addSource('mf-metro-outline', { type: 'geojson', data: data });
       } else {
-        map.getSource('mf-metro-outline').setData(outlineFc);
+        map.getSource('mf-metro-outline').setData(data);
       }
-      var beforeId = null;
-      try {
-        if (map.getLayer('mf-user-gps-halo')) beforeId = 'mf-user-gps-halo';
-      } catch (_) {}
-      map.addLayer(
-        {
+
+      var glowPaint = {
+        'line-color': mfMetroStatusColor('#9333ea', '#71717a'),
+        'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 9, 11, 12],
+        'line-blur': ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 11, 7],
+        'line-opacity': 0.7
+      };
+      var strokePaint = {
+        'line-color': mfMetroStatusColor('#f5f3ff', '#f4f4f5'),
+        'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2, 11, 2.8],
+        'line-opacity': 0.95
+      };
+
+      if (!map.getLayer('mf-metro-glow')) {
+        map.addLayer({
           id: 'mf-metro-glow',
           type: 'line',
           source: 'mf-metro-outline',
-          paint: {
-            'line-color': mfMetroStatusColor('#9333ea', '#71717a'),
-            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 9, 11, 12],
-            'line-blur': ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 11, 7],
-            'line-opacity': 0.7
-          }
-        },
-        beforeId
-      );
-      map.addLayer(
-        {
+          paint: glowPaint
+        });
+      } else {
+        try {
+          map.setFilter('mf-metro-glow', null);
+        } catch (_) {}
+        map.setPaintProperty('mf-metro-glow', 'line-color', glowPaint['line-color']);
+        map.setPaintProperty('mf-metro-glow', 'line-width', glowPaint['line-width']);
+        map.setPaintProperty('mf-metro-glow', 'line-blur', glowPaint['line-blur']);
+        map.setPaintProperty('mf-metro-glow', 'line-opacity', glowPaint['line-opacity']);
+      }
+
+      if (!map.getLayer('mf-metro-outline')) {
+        map.addLayer({
           id: 'mf-metro-outline',
           type: 'line',
           source: 'mf-metro-outline',
-          paint: {
-            'line-color': mfMetroStatusColor('#f5f3ff', '#f4f4f5'),
-            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2, 11, 2.8],
-            'line-opacity': 0.95
-          }
-        },
-        beforeId
-      );
+          paint: strokePaint
+        });
+      } else {
+        try {
+          map.setFilter('mf-metro-outline', null);
+        } catch (_) {}
+        map.setPaintProperty('mf-metro-outline', 'line-color', strokePaint['line-color']);
+        map.setPaintProperty('mf-metro-outline', 'line-width', strokePaint['line-width']);
+        map.setPaintProperty('mf-metro-outline', 'line-opacity', strokePaint['line-opacity']);
+      }
+
+      try {
+        if (map.getLayer('mf-metro-glow')) map.moveLayer('mf-metro-glow');
+        if (map.getLayer('mf-metro-outline')) map.moveLayer('mf-metro-outline');
+      } catch (_) {}
       mfRaiseStatesLineLayer();
+      mfRaiseUserLocationLayers();
     }
 
     function mfApplyCountiesToMap(data) {
@@ -1260,47 +1304,75 @@
         map.getSource('mf-counties').setData(data);
       }
 
+      var beforeCounties = map.getLayer('mf-states-line') ? 'mf-states-line' : undefined;
+
       if (!map.getLayer('mf-counties-fill')) {
-        map.addLayer({
-          id: 'mf-counties-fill',
-          type: 'fill',
-          source: 'mf-counties',
-          paint: {
-            'fill-color': [
-              'case',
-              ['boolean', ['feature-state', 'hover'], false],
-              [
+        map.addLayer(
+          {
+            id: 'mf-counties-fill',
+            type: 'fill',
+            source: 'mf-counties',
+            paint: {
+              'fill-color': [
                 'case',
-                ['==', ['get', 'cityStatus'], 'planned'],
-                '#d4d4d8',
-                '#c4b5fd'
+                ['boolean', ['feature-state', 'hover'], false],
+                [
+                  'case',
+                  ['==', ['get', 'cityStatus'], 'planned'],
+                  '#d4d4d8',
+                  '#c4b5fd'
+                ],
+                ['boolean', ['feature-state', 'armed'], false],
+                [
+                  'case',
+                  ['==', ['get', 'cityStatus'], 'planned'],
+                  '#a1a1aa',
+                  '#a855f7'
+                ],
+                ['==', ['get', 'cityKey'], ''],
+                '#16161a',
+                [
+                  'case',
+                  ['==', ['get', 'cityStatus'], 'planned'],
+                  '#71717a',
+                  '#9333ea'
+                ]
               ],
-              ['boolean', ['feature-state', 'armed'], false],
-              [
+              'fill-opacity': [
                 'case',
-                ['==', ['get', 'cityStatus'], 'planned'],
-                '#a1a1aa',
-                '#a855f7'
-              ],
-              ['==', ['get', 'cityKey'], ''],
-              '#16161a',
-              [
-                'case',
-                ['==', ['get', 'cityStatus'], 'planned'],
-                '#71717a',
-                '#9333ea'
+                ['boolean', ['feature-state', 'hover'], false],
+                0.58,
+                ['boolean', ['feature-state', 'armed'], false],
+                0.5,
+                ['==', ['get', 'cityKey'], ''],
+                0.82,
+                ['interpolate', ['linear'], ['zoom'], 4, 0.48, 8, 0.42, 11, 0.36]
               ]
-            ],
-            'fill-opacity': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              4, 0.15,
-              8, 0.30,
-              12, 0.45
-            ]
-          }
-        });
+            }
+          },
+          beforeCounties
+        );
+      } else {
+        map.setPaintProperty('mf-counties-fill', 'fill-color', [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          ['case', ['==', ['get', 'cityStatus'], 'planned'], '#d4d4d8', '#c4b5fd'],
+          ['boolean', ['feature-state', 'armed'], false],
+          ['case', ['==', ['get', 'cityStatus'], 'planned'], '#a1a1aa', '#a855f7'],
+          ['==', ['get', 'cityKey'], ''],
+          '#16161a',
+          ['case', ['==', ['get', 'cityStatus'], 'planned'], '#71717a', '#9333ea']
+        ]);
+        map.setPaintProperty('mf-counties-fill', 'fill-opacity', [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          0.58,
+          ['boolean', ['feature-state', 'armed'], false],
+          0.5,
+          ['==', ['get', 'cityKey'], ''],
+          0.82,
+          ['interpolate', ['linear'], ['zoom'], 4, 0.48, 8, 0.42, 11, 0.36]
+        ]);
       }
 
       if (!map.getLayer('mf-counties-line')) {
@@ -1660,7 +1732,7 @@
 
       map.once('load', function () {
         try {
-          if (!mfHotspotsInstalled) mfInstallCityMarkers();
+          mfInstallServicePreviewLayer();
         } catch (_) {}
         try {
           mfEnsureStatesLayer();
