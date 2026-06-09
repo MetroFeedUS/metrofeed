@@ -147,27 +147,28 @@
       display: block;
     }
     .mf-hotspot-marker--planned .mf-hotspot-marker__dot {
-      background: radial-gradient(circle at 30% 30%, #f4f4f5, #a1a1aa 50%, #52525b 100%);
-      border-color: rgba(212, 212, 216, 0.9);
-      box-shadow: 0 0 10px rgba(161, 161, 170, 0.35);
+      background: radial-gradient(circle at 30% 30%, #f4f4f5, #d4d4d8 45%, #71717a 100%);
+      border: 2px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 0 14px rgba(161, 161, 170, 0.55);
     }
     .mf-hotspot-marker--planned .mf-hotspot-marker__pulse {
-      background: radial-gradient(circle, rgba(161, 161, 170, 0.45) 0%, transparent 70%);
-      animation: none;
-      opacity: 0.35;
+      background: radial-gradient(circle, rgba(161, 161, 170, 0.55) 0%, transparent 70%);
     }
     .mf-hotspot-marker--planned .mf-hotspot-marker__label {
-      color: #d4d4d8;
-      border-color: rgba(161, 161, 170, 0.5);
-      font-weight: 700;
+      color: #e4e4e7;
+    }
+    .mf-hotspot-marker--planned:hover .mf-hotspot-marker__label,
+    .mf-hotspot-marker--planned:focus-visible .mf-hotspot-marker__label {
+      border-color: rgba(161, 161, 170, 0.55);
+      box-shadow: 0 0 12px rgba(161, 161, 170, 0.45);
     }
     .mf-hotspot-marker--planned.mf-hotspot-marker--armed .mf-hotspot-marker__label {
       border-color: rgba(212, 212, 216, 0.75);
-      background: linear-gradient(180deg, rgba(82, 82, 91, 0.35) 0%, rgba(12, 12, 14, 0.98) 100%);
-      box-shadow: 0 0 12px rgba(161, 161, 170, 0.25);
+      background: linear-gradient(180deg, rgba(113, 113, 122, 0.22) 0%, rgba(12, 12, 14, 0.98) 100%);
+      box-shadow: 0 0 16px rgba(161, 161, 170, 0.45);
     }
     .mf-hotspot-marker--planned .mf-hotspot-marker__hint {
-      color: #d4d4d8;
+      color: #e4e4e7;
     }
     .mf-hotspot-marker.mf-hotspot-marker--zoom-hidden {
       display: none !important;
@@ -682,7 +683,7 @@
 
   <div id="mfGpsRegionBar" role="status" aria-live="polite">
     <strong>Your location isn’t in a RoamRaven service county yet</strong>
-    Zoom out and pick a purple county to open RoamRaven, or explore grey areas marked coming soon.
+    Zoom out and pick a highlighted county, use search, or tap a city pin twice to open.
   </div>
 
   <footer class="mf-national-footer">
@@ -1028,7 +1029,7 @@
           'fill-color': [
             'case',
             ['==', ['get', 'cityStatus'], 'planned'],
-            '#52525b',
+            '#71717a',
             '#9333ea'
           ],
           'fill-opacity': 0.22
@@ -1042,7 +1043,7 @@
           'line-color': [
             'case',
             ['==', ['get', 'cityStatus'], 'planned'],
-            '#a1a1aa',
+            '#d4d4d8',
             '#ddd6fe'
           ],
           'line-width': 1.5,
@@ -1153,63 +1154,41 @@
       } else {
         map.getSource('mf-metro-outline').setData(outlineFc);
       }
-      var liveFilter = ['==', ['get', 'cityStatus'], 'live'];
-      var plannedFilter = ['==', ['get', 'cityStatus'], 'planned'];
+      var statusColor = function (liveColor, plannedColor) {
+        return ['case', ['==', ['get', 'cityStatus'], 'planned'], plannedColor, liveColor];
+      };
       if (!map.getLayer('mf-metro-glow')) {
         map.addLayer({
           id: 'mf-metro-glow',
           type: 'line',
           source: 'mf-metro-outline',
-          filter: liveFilter,
           paint: {
-            'line-color': '#9333ea',
+            'line-color': statusColor('#9333ea', '#71717a'),
             'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 9, 11, 12],
             'line-blur': ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 11, 7],
             'line-opacity': 0.7
           }
         });
+      } else {
+        map.setPaintProperty('mf-metro-glow', 'line-color', statusColor('#9333ea', '#71717a'));
       }
       if (!map.getLayer('mf-metro-outline')) {
         map.addLayer({
           id: 'mf-metro-outline',
           type: 'line',
           source: 'mf-metro-outline',
-          filter: liveFilter,
           paint: {
-            'line-color': '#f5f3ff',
+            'line-color': statusColor('#f5f3ff', '#f4f4f5'),
             'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2, 11, 2.8],
             'line-opacity': 0.95
           }
         });
+      } else {
+        map.setPaintProperty('mf-metro-outline', 'line-color', statusColor('#f5f3ff', '#f4f4f5'));
       }
-      if (!map.getLayer('mf-metro-glow-planned')) {
-        map.addLayer({
-          id: 'mf-metro-glow-planned',
-          type: 'line',
-          source: 'mf-metro-outline',
-          filter: plannedFilter,
-          paint: {
-            'line-color': '#a1a1aa',
-            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 11, 9],
-            'line-blur': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 11, 5],
-            'line-opacity': 0.45
-          }
-        });
-      }
-      if (!map.getLayer('mf-metro-outline-planned')) {
-        map.addLayer({
-          id: 'mf-metro-outline-planned',
-          type: 'line',
-          source: 'mf-metro-outline',
-          filter: plannedFilter,
-          paint: {
-            'line-color': '#d4d4d8',
-            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1, 8, 1.6, 11, 2.2],
-            'line-opacity': 0.85,
-            'line-dasharray': [2, 2]
-          }
-        });
-      }
+      ['mf-metro-glow-planned', 'mf-metro-outline-planned'].forEach(function (legacyId) {
+        if (map.getLayer(legacyId)) map.removeLayer(legacyId);
+      });
     }
 
     function mfApplyCountiesToMap(data) {
@@ -1238,14 +1217,14 @@
               [
                 'case',
                 ['==', ['get', 'cityStatus'], 'planned'],
-                '#94a3b8',
+                '#d4d4d8',
                 '#c4b5fd'
               ],
               ['boolean', ['feature-state', 'armed'], false],
               [
                 'case',
                 ['==', ['get', 'cityStatus'], 'planned'],
-                '#71717a',
+                '#a1a1aa',
                 '#a855f7'
               ],
               ['==', ['get', 'cityKey'], ''],
@@ -1253,7 +1232,7 @@
               [
                 'case',
                 ['==', ['get', 'cityStatus'], 'planned'],
-                '#3f3f46',
+                '#71717a',
                 '#9333ea'
               ]
             ],
