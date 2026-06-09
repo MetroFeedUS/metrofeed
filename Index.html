@@ -146,6 +146,29 @@
     .mf-hotspot-marker--armed .mf-hotspot-marker__hint {
       display: block;
     }
+    .mf-hotspot-marker--planned .mf-hotspot-marker__dot {
+      background: radial-gradient(circle at 30% 30%, #f4f4f5, #a1a1aa 50%, #52525b 100%);
+      border-color: rgba(212, 212, 216, 0.9);
+      box-shadow: 0 0 10px rgba(161, 161, 170, 0.35);
+    }
+    .mf-hotspot-marker--planned .mf-hotspot-marker__pulse {
+      background: radial-gradient(circle, rgba(161, 161, 170, 0.45) 0%, transparent 70%);
+      animation: none;
+      opacity: 0.35;
+    }
+    .mf-hotspot-marker--planned .mf-hotspot-marker__label {
+      color: #d4d4d8;
+      border-color: rgba(161, 161, 170, 0.5);
+      font-weight: 700;
+    }
+    .mf-hotspot-marker--planned.mf-hotspot-marker--armed .mf-hotspot-marker__label {
+      border-color: rgba(212, 212, 216, 0.75);
+      background: linear-gradient(180deg, rgba(82, 82, 91, 0.35) 0%, rgba(12, 12, 14, 0.98) 100%);
+      box-shadow: 0 0 12px rgba(161, 161, 170, 0.25);
+    }
+    .mf-hotspot-marker--planned .mf-hotspot-marker__hint {
+      color: #d4d4d8;
+    }
     .mf-hotspot-marker.mf-hotspot-marker--zoom-hidden {
       display: none !important;
       pointer-events: none !important;
@@ -659,7 +682,7 @@
 
   <div id="mfGpsRegionBar" role="status" aria-live="polite">
     <strong>Your location isn’t in a RoamRaven service county yet</strong>
-    Zoom out and pick a purple county, use search, or tap a city pin twice to open.
+    Zoom out and pick a purple county to open RoamRaven, or explore grey areas marked coming soon.
   </div>
 
   <footer class="mf-national-footer">
@@ -687,6 +710,16 @@
     </div>
   </div>
 
+  <div id="mfComingSoonOverlay" class="mf-overlay" role="dialog" aria-modal="true" aria-labelledby="mfCS_Title">
+    <div class="mf-modal">
+      <h2 id="mfCS_Title">Coming soon</h2>
+      <p id="mfCS_Body">This metro is on the roadmap and not open yet.</p>
+      <div class="mf-row">
+        <button type="button" class="mf-btn mf-btn--primary" id="mfCS_Close">OK</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const MF_COOKIE_KEY = 'cookieConsent';
     const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
@@ -695,8 +728,10 @@
     const MF_ZOOM_IN_SERVICE = 10.8;
     const MF_CITY_MARKER_MIN_ZOOM = 7.5;
 
+    /** City folders: Cincinnati = live. Planned: Columbus, Cleveland, Toledo, Youngstown, Allen. */
     const MF_SUPPORTED_CITIES = {
       cincinnati: {
+        status: 'live',
         shortLabel: 'Cincinnati Metro',
         name: 'Cincinnati Metro',
         bbox: { west: -84.86, south: 38.76, east: -84.18, north: 39.56 },
@@ -707,8 +742,63 @@
         pinCenter: [-84.562, 39.198],
         defaultView: { center: [-84.52, 39.16], zoom: 10.2 },
         href: 'Cincinnati/home.html'
+      },
+      columbus: {
+        status: 'planned',
+        shortLabel: 'Columbus',
+        name: 'Columbus Metro',
+        bbox: { west: -83.15, south: 39.55, east: -82.75, north: 40.15 },
+        countyGeoids: ['39049'],
+        pinCenter: [-82.995, 39.961],
+        defaultView: { center: [-82.995, 39.961], zoom: 9.8 }
+      },
+      cleveland: {
+        status: 'planned',
+        shortLabel: 'Cleveland',
+        name: 'Cleveland Metro',
+        bbox: { west: -81.95, south: 41.15, east: -81.0, north: 41.72 },
+        countyGeoids: ['39035', '39085', '39153'],
+        pinCenter: [-81.694, 41.499],
+        defaultView: { center: [-81.694, 41.499], zoom: 9.4 }
+      },
+      toledo: {
+        status: 'planned',
+        shortLabel: 'Toledo',
+        name: 'Toledo Metro',
+        bbox: { west: -84.35, south: 41.15, east: -82.75, north: 41.75 },
+        countyGeoids: ['39095', '39173', '39123'],
+        pinCenter: [-83.555, 41.654],
+        defaultView: { center: [-83.555, 41.654], zoom: 9.6 }
+      },
+      youngstown: {
+        status: 'planned',
+        shortLabel: 'Youngstown',
+        name: 'Youngstown Metro',
+        bbox: { west: -81.05, south: 40.85, east: -80.35, north: 41.35 },
+        countyGeoids: ['39155', '39099'],
+        pinCenter: [-80.651, 41.100],
+        defaultView: { center: [-80.651, 41.100], zoom: 10.0 }
+      },
+      allen: {
+        status: 'planned',
+        shortLabel: 'Allen County',
+        name: 'Allen County Metro',
+        bbox: { west: -84.45, south: 40.55, east: -83.85, north: 41.05 },
+        countyGeoids: ['39003'],
+        pinCenter: [-84.130, 40.742],
+        defaultView: { center: [-84.130, 40.742], zoom: 10.2 }
       }
     };
+
+    function mfCityIsLive(cityKey) {
+      var c = MF_SUPPORTED_CITIES[cityKey];
+      return !!(c && (!c.status || c.status === 'live') && c.href);
+    }
+
+    function mfCityIsPlanned(cityKey) {
+      var c = MF_SUPPORTED_CITIES[cityKey];
+      return !!(c && c.status === 'planned');
+    }
 
     let map = null;
     var mfCountiesReady = false;
@@ -841,6 +931,10 @@
       var props = f.properties || {};
       var geoid = props.GEOID != null ? String(props.GEOID) : '';
       var cityKey = geoid && lookup[geoid] ? lookup[geoid] : '';
+      var cityStatus = '';
+      if (cityKey && MF_SUPPORTED_CITIES[cityKey]) {
+        cityStatus = MF_SUPPORTED_CITIES[cityKey].status || 'live';
+      }
       return {
         type: 'Feature',
         properties: {
@@ -849,7 +943,8 @@
           NAMELSAD: props.NAMELSAD || props.NAME || '',
           STUSPS: props.STUSPS || '',
           STATE_NAME: props.STATE_NAME || '',
-          cityKey: cityKey
+          cityKey: cityKey,
+          cityStatus: cityStatus
         },
         geometry: f.geometry
       };
@@ -900,7 +995,10 @@
         if (!b) continue;
         features.push({
           type: 'Feature',
-          properties: { cityKey: key },
+          properties: {
+            cityKey: key,
+            cityStatus: MF_SUPPORTED_CITIES[key].status || 'live'
+          },
           geometry: {
             type: 'Polygon',
             coordinates: [[
@@ -927,7 +1025,12 @@
         type: 'fill',
         source: 'mf-service-preview',
         paint: {
-          'fill-color': '#9333ea',
+          'fill-color': [
+            'case',
+            ['==', ['get', 'cityStatus'], 'planned'],
+            '#52525b',
+            '#9333ea'
+          ],
           'fill-opacity': 0.22
         }
       });
@@ -936,7 +1039,12 @@
         type: 'line',
         source: 'mf-service-preview',
         paint: {
-          'line-color': '#ddd6fe',
+          'line-color': [
+            'case',
+            ['==', ['get', 'cityStatus'], 'planned'],
+            '#a1a1aa',
+            '#ddd6fe'
+          ],
           'line-width': 1.5,
           'line-opacity': 0.5,
           'line-dasharray': [1.2, 1.8]
@@ -1003,24 +1111,39 @@
 
     function mfBuildMetroOutlineGeoJSON(countyData) {
       if (!window.turf || !countyData || !Array.isArray(countyData.features)) return null;
-      var metro = [];
+      var byCity = Object.create(null);
       for (var i = 0; i < countyData.features.length; i++) {
         var f = countyData.features[i];
-        if (f && f.properties && f.properties.cityKey && MF_SUPPORTED_CITIES[f.properties.cityKey]) metro.push(f);
+        var ck = f && f.properties && f.properties.cityKey;
+        if (!ck || !MF_SUPPORTED_CITIES[ck]) continue;
+        if (!byCity[ck]) byCity[ck] = [];
+        byCity[ck].push(f);
       }
-      if (!metro.length) return null;
-      var merged = metro[0];
-      for (var j = 1; j < metro.length; j++) {
+      var outFeatures = [];
+      for (var key in byCity) {
+        if (!byCity.hasOwnProperty(key)) continue;
+        var metro = byCity[key];
+        var merged = metro[0];
+        for (var j = 1; j < metro.length; j++) {
+          try {
+            var u = turf.union(merged, metro[j]);
+            if (u) merged = u;
+          } catch (_) {}
+        }
         try {
-          var u = turf.union(merged, metro[j]);
-          if (u) merged = u;
+          var line = turf.polygonToLine(merged);
+          if (line) {
+            line.properties = {
+              cityKey: key,
+              cityStatus: MF_SUPPORTED_CITIES[key].status || 'live'
+            };
+            outFeatures.push(line);
+          }
         } catch (_) {}
       }
-      try {
-        return turf.polygonToLine(merged);
-      } catch (_) {
-        return null;
-      }
+      return outFeatures.length
+        ? { type: 'FeatureCollection', features: outFeatures }
+        : null;
     }
 
     function mfInstallMetroOutlineLayers(outlineFc) {
@@ -1030,11 +1153,14 @@
       } else {
         map.getSource('mf-metro-outline').setData(outlineFc);
       }
+      var liveFilter = ['==', ['get', 'cityStatus'], 'live'];
+      var plannedFilter = ['==', ['get', 'cityStatus'], 'planned'];
       if (!map.getLayer('mf-metro-glow')) {
         map.addLayer({
           id: 'mf-metro-glow',
           type: 'line',
           source: 'mf-metro-outline',
+          filter: liveFilter,
           paint: {
             'line-color': '#9333ea',
             'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 9, 11, 12],
@@ -1048,10 +1174,39 @@
           id: 'mf-metro-outline',
           type: 'line',
           source: 'mf-metro-outline',
+          filter: liveFilter,
           paint: {
             'line-color': '#f5f3ff',
             'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2, 11, 2.8],
             'line-opacity': 0.95
+          }
+        });
+      }
+      if (!map.getLayer('mf-metro-glow-planned')) {
+        map.addLayer({
+          id: 'mf-metro-glow-planned',
+          type: 'line',
+          source: 'mf-metro-outline',
+          filter: plannedFilter,
+          paint: {
+            'line-color': '#a1a1aa',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 11, 9],
+            'line-blur': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 11, 5],
+            'line-opacity': 0.45
+          }
+        });
+      }
+      if (!map.getLayer('mf-metro-outline-planned')) {
+        map.addLayer({
+          id: 'mf-metro-outline-planned',
+          type: 'line',
+          source: 'mf-metro-outline',
+          filter: plannedFilter,
+          paint: {
+            'line-color': '#d4d4d8',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1, 8, 1.6, 11, 2.2],
+            'line-opacity': 0.85,
+            'line-dasharray': [2, 2]
           }
         });
       }
@@ -1080,12 +1235,27 @@
             'fill-color': [
               'case',
               ['boolean', ['feature-state', 'hover'], false],
-              '#c4b5fd',
+              [
+                'case',
+                ['==', ['get', 'cityStatus'], 'planned'],
+                '#94a3b8',
+                '#c4b5fd'
+              ],
               ['boolean', ['feature-state', 'armed'], false],
-              '#a855f7',
+              [
+                'case',
+                ['==', ['get', 'cityStatus'], 'planned'],
+                '#71717a',
+                '#a855f7'
+              ],
               ['==', ['get', 'cityKey'], ''],
               '#16161a',
-              '#9333ea'
+              [
+                'case',
+                ['==', ['get', 'cityStatus'], 'planned'],
+                '#3f3f46',
+                '#9333ea'
+              ]
             ],
             'fill-opacity': [
               'interpolate',
@@ -1524,7 +1694,10 @@
         var label = f.properties.NAMELSAD || f.properties.NAME || 'County';
         var meta = '';
         if (f.properties.cityKey && MF_SUPPORTED_CITIES[f.properties.cityKey]) {
-          meta = MF_SUPPORTED_CITIES[f.properties.cityKey].name + ' · tap to focus';
+          var cn = MF_SUPPORTED_CITIES[f.properties.cityKey].name;
+          meta = mfCityIsPlanned(f.properties.cityKey)
+            ? cn + ' · coming soon'
+            : cn + ' · tap to focus';
         } else {
           meta = 'Not available here yet';
         }
@@ -1554,17 +1727,39 @@
         var armed = mfHotspotArmedKey === o.key;
         o.el.classList.toggle('mf-hotspot-marker--armed', armed);
         var nm = MF_SUPPORTED_CITIES[o.key] && MF_SUPPORTED_CITIES[o.key].name ? MF_SUPPORTED_CITIES[o.key].name : o.key;
-        o.el.setAttribute(
-          'aria-label',
-          armed ? nm + ': tap again to open RoamRaven' : nm + ': zoom to city (tap twice to open)'
-        );
+        if (mfCityIsPlanned(o.key)) {
+          o.el.setAttribute(
+            'aria-label',
+            armed ? nm + ': coming soon' : nm + ': zoom to planned metro'
+          );
+        } else {
+          o.el.setAttribute(
+            'aria-label',
+            armed ? nm + ': tap again to open RoamRaven' : nm + ': zoom to city (tap twice to open)'
+          );
+        }
       });
+    }
+
+    function mfShowComingSoonOverlay(cityKey) {
+      var city = MF_SUPPORTED_CITIES[cityKey];
+      var title = document.getElementById('mfCS_Title');
+      var body = document.getElementById('mfCS_Body');
+      if (title) title.textContent = (city && city.name ? city.name : 'This metro') + ' — coming soon';
+      if (body) {
+        body.textContent = 'We are building RoamRaven for this area. It is not open to the public yet.';
+      }
+      mfOverlay('mfComingSoonOverlay', true);
     }
 
     function mfOnHotspotCityInteraction(cityKey) {
       if (!MF_SUPPORTED_CITIES[cityKey] || !map) return;
       if (mfHotspotArmedKey === cityKey) {
-        mfRedirectToCity(cityKey);
+        if (mfCityIsLive(cityKey)) {
+          mfRedirectToCity(cityKey);
+        } else if (mfCityIsPlanned(cityKey)) {
+          mfShowComingSoonOverlay(cityKey);
+        }
         mfHotspotArmedKey = null;
       } else {
         mfHotspotArmedKey = cityKey;
@@ -1590,15 +1785,18 @@
           var label =
             city.shortLabel ||
             (city.name ? String(city.name).split(',')[0].trim() : key);
+          var planned = mfCityIsPlanned(key);
           var el = document.createElement('button');
           el.type = 'button';
-          el.className = 'mf-hotspot-marker';
+          el.className = 'mf-hotspot-marker' + (planned ? ' mf-hotspot-marker--planned' : '');
           el.setAttribute('aria-label', 'Focus map on ' + (city.name || label));
           el.innerHTML =
             '<span class="mf-hotspot-marker__pulse" aria-hidden="true"></span>' +
             '<span class="mf-hotspot-marker__dot" aria-hidden="true"></span>' +
-            '<span class="mf-hotspot-marker__label">' + mfEscapeHtml(label) + '</span>' +
-            '<span class="mf-hotspot-marker__hint" aria-hidden="true">Tap again to open</span>';
+            '<span class="mf-hotspot-marker__label">' + mfEscapeHtml(label) + (planned ? ' · Soon' : '') + '</span>' +
+            '<span class="mf-hotspot-marker__hint" aria-hidden="true">' +
+            (planned ? 'Coming soon' : 'Tap again to open') +
+            '</span>';
           el.addEventListener('click', function (e) {
             e.stopPropagation();
             mfOnHotspotCityInteraction(key);
@@ -1624,6 +1822,7 @@
     }
 
     function mfRedirectToCity(cityKey) {
+      if (!mfCityIsLive(cityKey)) return;
       var city = MF_SUPPORTED_CITIES[cityKey];
       if (!city || !map) return;
       try {
@@ -1643,7 +1842,8 @@
     function mfEvalCenterRedirect() {
       if (!map) return;
       var k = mfCityKeyAtMapCenter();
-      if (k) mfRedirectToCity(k);
+      if (k && mfCityIsLive(k)) mfRedirectToCity(k);
+      else if (k && mfCityIsPlanned(k)) mfShowComingSoonOverlay(k);
       else mfOverlay('mfNotAvailableOverlay', true);
     }
 
@@ -1681,7 +1881,10 @@
         var name = (c.name || '').toLowerCase();
         var sk = key.toLowerCase();
         if (!q || name.indexOf(q) !== -1 || sk.indexOf(q) !== -1 || q.indexOf(sk) === 0) {
-          rows.push({ key: key, label: c.name || key });
+          rows.push({
+            key: key,
+            label: (c.name || key) + (mfCityIsPlanned(key) ? ' — Coming soon' : '')
+          });
         }
       }
       return rows;
@@ -1836,6 +2039,7 @@
       sel.appendChild(ph);
       for (var key in MF_SUPPORTED_CITIES) {
         if (!MF_SUPPORTED_CITIES.hasOwnProperty(key)) continue;
+        if (!mfCityIsLive(key)) continue;
         var opt = document.createElement('option');
         opt.value = key;
         opt.textContent = MF_SUPPORTED_CITIES[key].name;
@@ -1911,12 +2115,18 @@
       var sel = document.getElementById('mfCitySelect');
       var key = sel ? sel.value : '';
       mfOverlay('mfNotAvailableOverlay', false);
-      if (key) {
+      if (key && mfCityIsLive(key)) {
+        mfRedirectToCity(key);
+      } else if (key) {
         mfHotspotArmedKey = null;
         mfPanToCity(key);
         mfSyncHotspotMarkerArmState();
         mfSyncArmedCountyStates();
       }
+    });
+
+    document.getElementById('mfCS_Close').addEventListener('click', function () {
+      mfOverlay('mfComingSoonOverlay', false);
     });
 
     window.addEventListener('storage', function (ev) {
