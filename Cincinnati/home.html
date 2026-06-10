@@ -51,17 +51,6 @@
     }
   </script>
 
-  <!-- Splash video — same as Index; skipped if already played this session -->
-  <script>
-    var MF_SPLASH = {
-      enabled: true,
-      src: '/final-highlight.mp4',
-      oncePerSession: true,
-      maxMs: 8000,
-      fadeMs: 420
-    };
-  </script>
-  
   <!-- Language System -->
   <script src="translations.js?v=23"></script>
   <style>
@@ -504,6 +493,15 @@
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
+    .otp-autocomplete-loc--home .otp-autocomplete-loc-icon { background: #4CAF50; }
+    .otp-autocomplete-loc--work .otp-autocomplete-loc-icon { background: #2196F3; }
+    .otp-autocomplete-loc--other .otp-autocomplete-loc-icon { background: #FF9800; }
+    .otp-autocomplete-loc--saved {
+      background: linear-gradient(90deg, rgba(60, 60, 68, 0.55) 0%, rgba(40, 40, 48, 0.35) 100%);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.12);
+      font-weight: 700;
+      font-size: 0.84rem;
+    }
     .otp-autocomplete-option {
       padding: 6px 10px;
       cursor: pointer;
@@ -558,57 +556,6 @@
       min-width: 20px; 
       text-align: center; 
     }
-    /* -- Splash video (mobile-first, cover on desktop) -- */
-    .mf-splash {
-      position: fixed;
-      inset: 0;
-      z-index: 200000;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 1;
-      transition: opacity 0.42s ease;
-      pointer-events: auto;
-    }
-    .mf-splash.mf-splash--hidden {
-      display: none !important;
-      pointer-events: none !important;
-    }
-    .mf-splash.mf-splash--out {
-      opacity: 0;
-      pointer-events: none;
-    }
-    .mf-splash.mf-splash--done {
-      display: none !important;
-    }
-    .mf-splash__video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      background: #000;
-    }
-    .mf-splash__skip {
-      position: absolute;
-      top: max(12px, env(safe-area-inset-top, 0px));
-      right: max(12px, env(safe-area-inset-right, 0px));
-      z-index: 2;
-      padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(226, 232, 240, 0.35);
-      background: rgba(12, 12, 14, 0.72);
-      color: #e2e8f0;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      cursor: pointer;
-    }
-    .mf-splash__skip:focus-visible {
-      outline: 2px solid var(--rr-accent);
-      outline-offset: 2px;
-    }
-
     /* -- SPONSOR BOX -- */
     .sponsor-box {
       position: absolute;
@@ -2211,71 +2158,6 @@
   </style>
 </head>
 <body>
-
-<div id="mfSplash" class="mf-splash mf-splash--hidden" aria-hidden="true">
-  <video id="mfSplashVideo" class="mf-splash__video" playsinline muted preload="auto" disablepictureinpicture>
-    <source id="mfSplashSource" src="/final-highlight.mp4" type="video/mp4" />
-  </video>
-  <button type="button" class="mf-splash__skip" id="mfSplashSkip" aria-label="Skip intro">Skip</button>
-</div>
-<script>
-(function () {
-  var cfg = window.MF_SPLASH;
-  if (!cfg || !cfg.enabled) return;
-  var search = window.location.search || '';
-  if (search.indexOf('tv=1') >= 0 || search.indexOf('tv=true') >= 0) return;
-  try {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  } catch (_) {}
-  if (cfg.oncePerSession) {
-    try {
-      if (sessionStorage.getItem('mfSplashSeen') === '1') return;
-    } catch (_) {}
-  }
-
-  var root = document.getElementById('mfSplash');
-  var video = document.getElementById('mfSplashVideo');
-  var source = document.getElementById('mfSplashSource');
-  var skip = document.getElementById('mfSplashSkip');
-  if (!root || !video) return;
-  if (cfg.src && source) source.setAttribute('src', cfg.src);
-
-  var finished = false;
-  function finishSplash() {
-    if (finished) return;
-    finished = true;
-    if (cfg.oncePerSession) {
-      try {
-        sessionStorage.setItem('mfSplashSeen', '1');
-      } catch (_) {}
-    }
-    root.classList.add('mf-splash--out');
-    window.setTimeout(function () {
-      root.classList.add('mf-splash--done');
-      root.setAttribute('aria-hidden', 'true');
-      try {
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
-      } catch (_) {}
-    }, cfg.fadeMs || 420);
-  }
-
-  root.classList.remove('mf-splash--hidden');
-  root.setAttribute('aria-hidden', 'false');
-  if (skip) skip.addEventListener('click', finishSplash);
-  video.addEventListener('ended', finishSplash);
-  video.addEventListener('error', finishSplash);
-  window.setTimeout(finishSplash, cfg.maxMs || 8000);
-
-  var p = video.play();
-  if (p && typeof p.catch === 'function') {
-    p.catch(function () {
-      finishSplash();
-    });
-  }
-})();
-</script>
 
 <!-- Screen reader live region for OTP + trip guide announcements -->
 <div id="mfSrLive" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"></div>
@@ -5162,15 +5044,65 @@
       dropdown.appendChild(locOpt);
     }
 
-    function showStartLocationMenu() {
+    function appendSavedPlaceOptions() {
+      if (typeof window.metrofeedListSavedPlacesForPicker !== "function") return;
+      const places = window.metrofeedListSavedPlacesForPicker();
+      if (!places.length) return;
+      const savedHint =
+        typeof translateText === "function" ? translateText("favorites") || "Saved" : "Saved";
+      places.forEach(function (place) {
+        const opt = document.createElement("div");
+        opt.className =
+          "otp-autocomplete-loc otp-autocomplete-loc--saved otp-autocomplete-loc--" + place.slot;
+        opt.setAttribute("role", "option");
+        opt.tabIndex = 0;
+        const safeLabel = String(place.label || "").replace(/</g, "&lt;");
+        const safeIcon = String(place.icon || "•").replace(/</g, "&lt;");
+        opt.innerHTML =
+          '<span class="otp-autocomplete-loc-icon" aria-hidden="true">' +
+          safeIcon +
+          "</span>" +
+          '<span class="otp-autocomplete-loc-label">' +
+          safeLabel +
+          "</span>" +
+          '<span class="otp-autocomplete-loc-hint">' +
+          savedHint.replace(/</g, "&lt;") +
+          "</span>";
+        const pickPlace = function () {
+          dropdown.style.display = "none";
+          const isStart = input.id === "startInput";
+          const displayName = place.label || "Saved place";
+          input.value = displayName;
+          if (typeof pinStopOnMap === "function") {
+            pinStopOnMap(
+              { name: displayName, lat: place.lat, lon: place.lng, stop_id: null },
+              isStart
+            );
+          }
+        };
+        opt.addEventListener("click", pickPlace);
+        opt.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            pickPlace();
+          }
+        });
+        dropdown.appendChild(opt);
+      });
+    }
+
+    function showQuickPickMenu() {
       dropdown.innerHTML = "";
-      appendUseMyLocationOption();
-      dropdown.style.display = "block";
+      if (input.id === "startInput") {
+        appendUseMyLocationOption();
+      }
+      appendSavedPlaceOptions();
+      dropdown.style.display = dropdown.childElementCount ? "block" : "none";
     }
 
     input.addEventListener("focus", () => {
-      if (input.id === 'startInput' && !input.value.trim()) {
-        showStartLocationMenu();
+      if (!input.value.trim()) {
+        showQuickPickMenu();
       }
     });
 
@@ -5190,16 +5122,17 @@
           destinationPin = null;
           window.endCoords = null;
         }
-        if (isStart && document.activeElement === input) {
-          showStartLocationMenu();
+        if (document.activeElement === input) {
+          showQuickPickMenu();
         }
         return;
       }
 
-      // Start field: prominent "Use my location" at top of every results list.
-      if (input.id === 'startInput') {
+      // Quick picks at top of every results list (GPS on start only; saved places when set).
+      if (input.id === "startInput") {
         appendUseMyLocationOption();
       }
+      appendSavedPlaceOptions();
 
       // First-time build UX: show a placeholder while the stop index is being built/cached.
       try {
@@ -5272,7 +5205,7 @@
         });
         dropdown.appendChild(option);
       });
-      dropdown.style.display = (input.id === 'startInput' || matches.length) ? "block" : "none";
+      dropdown.style.display = dropdown.childElementCount ? "block" : "none";
       
       // Check if the current input matches a valid stop name exactly
       const exactMatch = allStops.find(name => name.toLowerCase() === query);
@@ -5817,7 +5750,8 @@
 
   async function mfShowOnboardingClosingStatement(text, tipMs) {
     const dt = MF_TUTORIAL_DESKTOP_TIMING;
-    const ms = tipMs != null ? tipMs : dt.closingVisibleMs || 5200;
+    const ms = tipMs != null ? tipMs : dt.visibleMs;
+    mfDismissOnboardingTooltips();
     mfShowCenteredTooltip(text, { ms: ms, variant: 'onboarding', closing: true });
     await mfDelay(ms + dt.fadeMs);
   }
@@ -5853,7 +5787,6 @@
       const busOpts = Object.assign({}, baseBus, prog);
       const anchOpts = Object.assign({}, baseAnch, prog);
       const tipMs = s.key === 'bus' || s.key === 'stop' ? busStopMs : anchoredMs;
-      const isLast = i === steps.length - 1;
       if (i > 0) mfDismissOnboardingTooltips();
       if (s.key === 'bus' || s.key === 'stop') {
         if (el) mfShowTooltipAboveEl(el, s.text, busOpts);
@@ -5862,7 +5795,7 @@
         if (!el) continue;
         mfShowAnchoredTooltip(el, s.text, anchOpts);
       }
-      await mfDelay(tipMs + (isLast ? dt.fadeMs + dt.gapMs : 140));
+      await mfDelay(tipMs + 140);
     }
   }
 
@@ -6106,7 +6039,7 @@
     } else {
       await mfTutorialCoachFadeIn();
     }
-    await mfDelay(closing ? t.closingVisibleMs : t.visibleMs);
+    await mfDelay(t.visibleMs);
     if (!closing && !seamless) {
       await mfTutorialCoachFadeOut();
     }
@@ -7378,7 +7311,7 @@
         });
         await mfShowOnboardingClosingStatement(
           "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
-          dt.closingVisibleMs || 5200
+          dt.visibleMs
         );
   }
 

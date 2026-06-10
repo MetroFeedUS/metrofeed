@@ -1,6 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background:#000">
 <head>
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#000000" />
+  <style>
+    html, body { margin: 0; background: #000 !important; }
+    #mfBootShade {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483646;
+      background: #000;
+      pointer-events: none;
+    }
+  </style>
+  <title>RoamRaven | National map</title>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
@@ -20,10 +35,6 @@
       }
     })();
   </script>
-<meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RoamRaven | National map</title>
-  <meta name="theme-color" content="#9333ea" />
   <link rel="icon" type="image/png" href="/manifestbird.png" sizes="512x512" />
   <link rel="apple-touch-icon" href="/manifestbird.png" />
   <script>
@@ -624,6 +635,7 @@
       transition: opacity 0.42s ease;
     }
     .mf-splash.mf-splash--hidden { display: none !important; }
+    .mf-splash.mf-splash--hidden .mf-splash__skip { display: none; }
     .mf-splash.mf-splash--out { opacity: 0; pointer-events: none; }
     .mf-splash.mf-splash--done { display: none !important; }
     .mf-splash__video {
@@ -673,7 +685,8 @@
     }
   </style>
 </head>
-<body>
+<body style="background:#000">
+  <div id="mfBootShade" aria-hidden="true"></div>
   <div id="mfSplash" class="mf-splash mf-splash--hidden" aria-hidden="true">
     <video id="mfSplashVideo" class="mf-splash__video" playsinline muted preload="auto" disablepictureinpicture>
       <source id="mfSplashSource" src="/final-highlight.mp4" type="video/mp4" />
@@ -698,12 +711,27 @@
     var skip = document.getElementById('mfSplashSkip');
     if (!root || !video) return;
     if (cfg.src && source) source.setAttribute('src', cfg.src);
+
     var finished = false;
+    var shown = false;
+    var boot = document.getElementById('mfBootShade');
+
+    function clearBootShade() {
+      if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
+      boot = null;
+    }
+
     function finishSplash() {
       if (finished) return;
       finished = true;
       if (cfg.oncePerSession) {
         try { sessionStorage.setItem('mfSplashSeen', '1'); } catch (_) {}
+      }
+      clearBootShade();
+      if (!shown) {
+        root.classList.add('mf-splash--done');
+        root.setAttribute('aria-hidden', 'true');
+        return;
       }
       root.classList.add('mf-splash--out');
       window.setTimeout(function () {
@@ -712,14 +740,33 @@
         try { video.pause(); video.removeAttribute('src'); video.load(); } catch (_) {}
       }, cfg.fadeMs || 420);
     }
-    root.classList.remove('mf-splash--hidden');
-    root.setAttribute('aria-hidden', 'false');
+
+    function showAndPlay() {
+      if (finished || shown) return;
+      shown = true;
+      clearBootShade();
+      root.classList.remove('mf-splash--hidden');
+      root.setAttribute('aria-hidden', 'false');
+      var p = video.play();
+      if (p && typeof p.catch === 'function') p.catch(finishSplash);
+    }
+
     if (skip) skip.addEventListener('click', finishSplash);
     video.addEventListener('ended', finishSplash);
     video.addEventListener('error', finishSplash);
-    window.setTimeout(finishSplash, cfg.maxMs || 8000);
-    var p = video.play();
-    if (p && typeof p.catch === 'function') p.catch(finishSplash);
+    video.addEventListener('canplay', showAndPlay, { once: true });
+    video.load();
+    window.setTimeout(function () {
+      if (!shown) finishSplash();
+    }, cfg.maxMs || 8000);
+  })();
+  </script>
+  <script>
+  (function () {
+    if (!window.MF_SPLASH || !window.MF_SPLASH.enabled) {
+      var b = document.getElementById('mfBootShade');
+      if (b && b.parentNode) b.parentNode.removeChild(b);
+    }
   })();
   </script>
 

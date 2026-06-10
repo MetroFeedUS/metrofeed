@@ -378,4 +378,38 @@
   };
 
   window.refreshMetrofeedSavedPlaceMarkers = refreshMarkers;
+
+  /** For OTP autocomplete — only slots that have coordinates. */
+  window.metrofeedListSavedPlacesForPicker = function () {
+    const data = loadPlaces();
+    const out = [];
+    if (data.home) {
+      out.push({
+        slot: "home",
+        label: T("saved_place_home", "Home"),
+        lat: data.home.lat,
+        lng: data.home.lng,
+        icon: "H",
+      });
+    }
+    if (data.work) {
+      out.push({
+        slot: "work",
+        label: T("saved_place_work", "Work"),
+        lat: data.work.lat,
+        lng: data.work.lng,
+        icon: "W",
+      });
+    }
+    if (data.other) {
+      out.push({
+        slot: "other",
+        label: data.other.label || T("saved_place_other", "Place"),
+        lat: data.other.lat,
+        lng: data.other.lng,
+        icon: data.other.label && data.other.label[0] ? data.other.label[0].toUpperCase() : "P",
+      });
+    }
+    return out;
+  };
 })();
