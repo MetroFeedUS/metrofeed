@@ -50,6 +50,17 @@
       var SPONSOR_IMAGE = SPONSOR_LOGO_ENABLED ? 'cornerlogo2.png' : ROAMRAVEN_SPONSOR_PIXEL_GIF;
     }
   </script>
+
+  <!-- Splash video — same as Index; skipped if already played this session -->
+  <script>
+    var MF_SPLASH = {
+      enabled: true,
+      src: '/final-highlight.mp4',
+      oncePerSession: true,
+      maxMs: 8000,
+      fadeMs: 420
+    };
+  </script>
   
   <!-- Language System -->
   <script src="translations.js?v=23"></script>
@@ -547,6 +558,57 @@
       min-width: 20px; 
       text-align: center; 
     }
+    /* -- Splash video (mobile-first, cover on desktop) -- */
+    .mf-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 200000;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.42s ease;
+      pointer-events: auto;
+    }
+    .mf-splash.mf-splash--hidden {
+      display: none !important;
+      pointer-events: none !important;
+    }
+    .mf-splash.mf-splash--out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .mf-splash.mf-splash--done {
+      display: none !important;
+    }
+    .mf-splash__video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      background: #000;
+    }
+    .mf-splash__skip {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: max(12px, env(safe-area-inset-right, 0px));
+      z-index: 2;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(226, 232, 240, 0.35);
+      background: rgba(12, 12, 14, 0.72);
+      color: #e2e8f0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+    }
+    .mf-splash__skip:focus-visible {
+      outline: 2px solid var(--rr-accent);
+      outline-offset: 2px;
+    }
+
     /* -- SPONSOR BOX -- */
     .sponsor-box {
       position: absolute;
@@ -2149,6 +2211,71 @@
   </style>
 </head>
 <body>
+
+<div id="mfSplash" class="mf-splash mf-splash--hidden" aria-hidden="true">
+  <video id="mfSplashVideo" class="mf-splash__video" playsinline muted preload="auto" disablepictureinpicture>
+    <source id="mfSplashSource" src="/final-highlight.mp4" type="video/mp4" />
+  </video>
+  <button type="button" class="mf-splash__skip" id="mfSplashSkip" aria-label="Skip intro">Skip</button>
+</div>
+<script>
+(function () {
+  var cfg = window.MF_SPLASH;
+  if (!cfg || !cfg.enabled) return;
+  var search = window.location.search || '';
+  if (search.indexOf('tv=1') >= 0 || search.indexOf('tv=true') >= 0) return;
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  } catch (_) {}
+  if (cfg.oncePerSession) {
+    try {
+      if (sessionStorage.getItem('mfSplashSeen') === '1') return;
+    } catch (_) {}
+  }
+
+  var root = document.getElementById('mfSplash');
+  var video = document.getElementById('mfSplashVideo');
+  var source = document.getElementById('mfSplashSource');
+  var skip = document.getElementById('mfSplashSkip');
+  if (!root || !video) return;
+  if (cfg.src && source) source.setAttribute('src', cfg.src);
+
+  var finished = false;
+  function finishSplash() {
+    if (finished) return;
+    finished = true;
+    if (cfg.oncePerSession) {
+      try {
+        sessionStorage.setItem('mfSplashSeen', '1');
+      } catch (_) {}
+    }
+    root.classList.add('mf-splash--out');
+    window.setTimeout(function () {
+      root.classList.add('mf-splash--done');
+      root.setAttribute('aria-hidden', 'true');
+      try {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      } catch (_) {}
+    }, cfg.fadeMs || 420);
+  }
+
+  root.classList.remove('mf-splash--hidden');
+  root.setAttribute('aria-hidden', 'false');
+  if (skip) skip.addEventListener('click', finishSplash);
+  video.addEventListener('ended', finishSplash);
+  video.addEventListener('error', finishSplash);
+  window.setTimeout(finishSplash, cfg.maxMs || 8000);
+
+  var p = video.play();
+  if (p && typeof p.catch === 'function') {
+    p.catch(function () {
+      finishSplash();
+    });
+  }
+})();
+</script>
 
 <!-- Screen reader live region for OTP + trip guide announcements -->
 <div id="mfSrLive" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"></div>

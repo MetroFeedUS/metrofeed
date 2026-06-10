@@ -26,6 +26,16 @@
   <meta name="theme-color" content="#9333ea" />
   <link rel="icon" type="image/png" href="/manifestbird.png" sizes="512x512" />
   <link rel="apple-touch-icon" href="/manifestbird.png" />
+  <script>
+    /** Opening splash video (not the app icon). Icon = manifestbird.png only. */
+    var MF_SPLASH = {
+      enabled: true,
+      src: '/final-highlight.mp4',
+      oncePerSession: true,
+      maxMs: 8000,
+      fadeMs: 420
+    };
+  </script>
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
@@ -602,6 +612,42 @@
       color: var(--rr-silver);
       font-weight: 700;
     }
+    .mf-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 200000;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.42s ease;
+    }
+    .mf-splash.mf-splash--hidden { display: none !important; }
+    .mf-splash.mf-splash--out { opacity: 0; pointer-events: none; }
+    .mf-splash.mf-splash--done { display: none !important; }
+    .mf-splash__video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      background: #000;
+    }
+    .mf-splash__skip {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: max(12px, env(safe-area-inset-right, 0px));
+      z-index: 2;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(226, 232, 240, 0.35);
+      background: rgba(12, 12, 14, 0.72);
+      color: #e2e8f0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     @media (max-width: 768px) {
       .mf-toolbar {
         width: 100%;
@@ -628,6 +674,55 @@
   </style>
 </head>
 <body>
+  <div id="mfSplash" class="mf-splash mf-splash--hidden" aria-hidden="true">
+    <video id="mfSplashVideo" class="mf-splash__video" playsinline muted preload="auto" disablepictureinpicture>
+      <source id="mfSplashSource" src="/final-highlight.mp4" type="video/mp4" />
+    </video>
+    <button type="button" class="mf-splash__skip" id="mfSplashSkip" aria-label="Skip intro">Skip</button>
+  </div>
+  <script>
+  (function () {
+    var cfg = window.MF_SPLASH;
+    if (!cfg || !cfg.enabled) return;
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    } catch (_) {}
+    if (cfg.oncePerSession) {
+      try {
+        if (sessionStorage.getItem('mfSplashSeen') === '1') return;
+      } catch (_) {}
+    }
+    var root = document.getElementById('mfSplash');
+    var video = document.getElementById('mfSplashVideo');
+    var source = document.getElementById('mfSplashSource');
+    var skip = document.getElementById('mfSplashSkip');
+    if (!root || !video) return;
+    if (cfg.src && source) source.setAttribute('src', cfg.src);
+    var finished = false;
+    function finishSplash() {
+      if (finished) return;
+      finished = true;
+      if (cfg.oncePerSession) {
+        try { sessionStorage.setItem('mfSplashSeen', '1'); } catch (_) {}
+      }
+      root.classList.add('mf-splash--out');
+      window.setTimeout(function () {
+        root.classList.add('mf-splash--done');
+        root.setAttribute('aria-hidden', 'true');
+        try { video.pause(); video.removeAttribute('src'); video.load(); } catch (_) {}
+      }, cfg.fadeMs || 420);
+    }
+    root.classList.remove('mf-splash--hidden');
+    root.setAttribute('aria-hidden', 'false');
+    if (skip) skip.addEventListener('click', finishSplash);
+    video.addEventListener('ended', finishSplash);
+    video.addEventListener('error', finishSplash);
+    window.setTimeout(finishSplash, cfg.maxMs || 8000);
+    var p = video.play();
+    if (p && typeof p.catch === 'function') p.catch(finishSplash);
+  })();
+  </script>
+
   <div id="map" aria-label="RoamRaven national map (United States)"></div>
   <div id="mfMapLoading" aria-live="polite" aria-busy="true"><span>Loading U.S. counties…</span></div>
   <div id="mfMapLoadError" role="alert" aria-live="assertive"></div>
