@@ -193,10 +193,10 @@
     /* Product — quiet showcase, not hero energy */
     .product-item {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr);
-      gap: 40px;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+      gap: 32px 40px;
       align-items: center;
-      max-width: 1080px;
+      max-width: var(--max);
     }
 
     .product-copy {
@@ -229,23 +229,40 @@
       text-decoration: underline;
     }
 
+    /* Phone lineup PNG has large black margins — crop/zoom so phones fill the frame */
     .product-visual {
       margin: 0;
+      position: relative;
+      width: 100%;
+      aspect-ratio: 2.35 / 1;
       border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: #f5f5f7;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #000;
       overflow: hidden;
-      min-height: 240px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .product-visual img {
+      position: absolute;
+      left: 50%;
+      top: 50%;
       width: 100%;
       height: auto;
+      max-width: none;
       display: block;
-      vertical-align: middle;
+      transform: translate(-50%, -50%) scale(4.6);
+      transform-origin: center center;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .product-visual.is-empty {
+      aspect-ratio: auto;
+      min-height: 200px;
+      background: #f5f5f7;
+      border-color: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .product-visual.is-empty img { display: none; }
@@ -304,8 +321,13 @@
         gap: 24px;
       }
 
-      .product-visual { min-height: 280px; overflow: hidden; }
-      .product-visual img { width: 130%; transform: translateX(-11.5%); }
+      .product-visual:not(.is-empty) {
+        aspect-ratio: 2.1 / 1;
+      }
+
+      .product-visual img {
+        transform: translate(-50%, -50%) scale(3.6);
+      }
     }
 
     @media (max-width: 600px) {
