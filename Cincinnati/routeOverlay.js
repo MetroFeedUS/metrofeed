@@ -1460,20 +1460,41 @@ function metrofeedApplyOppositeStopPointer(el, map) {
   } catch (_) {}
 }
 
+/** Hide opposite-direction dashed lines + hollow stops until zoomed in (avoids dot-trail clutter). */
+function metrofeedSyncOppositeDirectionContext(map) {
+  if (!map) return;
+  const show = metrofeedOppositeStopClickable(map);
+  const vis = show ? "visible" : "none";
+  try {
+    const style = map.getStyle && map.getStyle();
+    const layers = style && style.layers ? style.layers : [];
+    layers.forEach(function (L) {
+      if (L && L.id && /^route-layer-opp-/.test(String(L.id))) {
+        if (map.getLayer(L.id)) {
+          map.setLayoutProperty(L.id, "visibility", vis);
+        }
+      }
+    });
+  } catch (_) {}
+  try {
+    const root = map.getContainer && map.getContainer();
+    if (!root) return;
+    root.querySelectorAll(".mf-opposite-stop-marker").forEach(function (el) {
+      el.style.display = show ? "" : "none";
+      metrofeedApplyOppositeStopPointer(el, map);
+    });
+  } catch (_) {}
+}
+
 function metrofeedEnsureOppositeStopZoomListener(map) {
   if (!map || map._mfOppositeStopZoomBound) return;
   map._mfOppositeStopZoomBound = true;
   const sync = function () {
-    try {
-      const root = map.getContainer && map.getContainer();
-      if (!root) return;
-      root.querySelectorAll(".mf-opposite-stop-marker").forEach(function (el) {
-        metrofeedApplyOppositeStopPointer(el, map);
-      });
-    } catch (_) {}
+    metrofeedSyncOppositeDirectionContext(map);
   };
   map.on("zoom", sync);
   map.on("zoomend", sync);
+  sync();
 }
 
 function metrofeedApplyBusMarkerLabelVisibility(markerEl, map) {
@@ -2213,6 +2234,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
     // Opposite-direction context: dashed underlay (drawn BEFORE selected solid lines)
     if (hasOppositeShapes && oppositeShapes.length) {
+      const oppLineVis = metrofeedOppositeStopClickable(map) ? "visible" : "none";
       oppositeShapes.forEach((shape, shapeIndex) => {
         if (!Array.isArray(shape) || shape.length < 2) return;
         const routeSourceId = `route-line-opp-${mapLayerKey}-${shapeIndex}`;
@@ -2239,6 +2261,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
             id: routeLayerId,
             type: "line",
             source: routeSourceId,
+            layout: { visibility: oppLineVis },
             paint: {
               "line-color": routeColor,
               "line-width": Math.max(2, lineWidth - 1),
@@ -2250,6 +2273,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         );
         overlayElements.layers.push(routeLayerId);
       });
+      metrofeedEnsureOppositeStopZoomListener(map);
     }
 
     // ---------- Render all shapes (for trunk-and-branch routes) ----------
@@ -2863,6 +2887,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         marker.addTo(map);
         overlayElements.markers.push(marker);
       });
+      metrofeedSyncOppositeDirectionContext(map);
     }
 
     // ---------- Route info panel (mainOverlay only) ----------
