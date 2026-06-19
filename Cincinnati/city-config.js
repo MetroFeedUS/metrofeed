@@ -200,6 +200,34 @@ const CITIES = {
     nwsAlertAreas: ["OHC061", "OHC017", "OHC165", "KYC037", "KYC117", "KYC015"],
     /** VPS Geoapify proxy — OTP Start/Destination place search (key stays on server). */
     geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    /** VPS Geoapify Place Details — stop Explore (lat/lon + features; key stays on server). */
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    /** Stop popup Explore: walk-time isochrones + up to 2 POI categories per search. */
+    explore: {
+      maxCategories: 2,
+      defaultGeometry: "walk_10",
+      geometries: [
+        { id: "walk_5", label: "5 min walk" },
+        { id: "walk_10", label: "10 min walk" },
+        { id: "walk_15", label: "15 min walk" },
+        { id: "walk_30", label: "30 min walk" }
+      ],
+      categories: [
+        { id: "restaurant", label: "Restaurants", icon: "🍽️", minGeometry: "walk_5", color: "#E53935" },
+        { id: "cafe", label: "Cafés", icon: "☕", minGeometry: "walk_5", color: "#8D6E63" },
+        { id: "supermarket", label: "Supermarkets", icon: "🛒", minGeometry: "walk_5", color: "#43A047" },
+        { id: "shopping_mall", label: "Shopping malls", icon: "🏬", minGeometry: "walk_5", color: "#7B1FA2" },
+        { id: "tourism", label: "Tourism", icon: "🎡", minGeometry: "walk_5", color: "#00897B" },
+        { id: "atm", label: "ATMs", icon: "🏧", minGeometry: "walk_5", color: "#546E7A" },
+        { id: "school", label: "Schools", icon: "🏫", minGeometry: "walk_5", color: "#F9A825" },
+        { id: "playground", label: "Playgrounds", icon: "🛝", minGeometry: "walk_5", color: "#FB8C00" },
+        { id: "toilet", label: "Restrooms", icon: "🚻", minGeometry: "walk_5", color: "#78909C" },
+        { id: "hotel", label: "Hotels", icon: "🏨", minGeometry: "walk_5", color: "#5C6BC0" },
+        { id: "park", label: "Parks", icon: "🌳", minGeometry: "walk_10", color: "#2E7D32" },
+        { id: "pharmacy", label: "Pharmacies", icon: "💊", minGeometry: "walk_10", color: "#1E88E5" },
+        { id: "entertainment", label: "Entertainment", icon: "🎬", minGeometry: "walk_10", color: "#D81B60" }
+      ]
+    },
     // Ohio road incidents (VPS JSON).
     incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
     // Ohio traffic flow / density (VPS JSON).
@@ -269,6 +297,8 @@ const CITIES = {
     busMarkerSizeScale: 1.1,
     /** Vehicle ID pill visible at this zoom and closer (route overview is usually ≤14). */
     busMarkerLabelMinZoom: 15,
+    /** Opposite-direction route stops only accept clicks at this zoom and closer. */
+    oppositeStopClickMinZoom: 15,
 
     /** Direction comet: white dots behind bus from confirmed travel along route shape. */
     busTracerEnabled: true,

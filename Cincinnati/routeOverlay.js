@@ -1430,6 +1430,52 @@ function metrofeedBusMarkerShowsLabel(map) {
   }
 }
 
+/** Opposite-direction stop markers: no click steal until zoomed in intentionally. */
+function metrofeedOppositeStopClickMinZoom() {
+  const cfg = window.CITY_CONFIG || {};
+  const z =
+    cfg.oppositeStopClickMinZoom != null ? Number(cfg.oppositeStopClickMinZoom) : 15;
+  return Number.isFinite(z) ? z : 15;
+}
+
+function metrofeedOppositeStopClickable(map) {
+  try {
+    if (!map || typeof map.getZoom !== "function") return false;
+    return map.getZoom() >= metrofeedOppositeStopClickMinZoom();
+  } catch (_) {
+    return false;
+  }
+}
+
+function metrofeedApplyOppositeStopPointer(el, map) {
+  if (!el) return;
+  const on = metrofeedOppositeStopClickable(map);
+  el.style.pointerEvents = on ? "auto" : "none";
+  el.style.cursor = on ? "pointer" : "default";
+  el.classList.toggle("mf-opposite-stop-marker--active", on);
+  try {
+    el.title = on
+      ? ""
+      : "Zoom in to tap other-direction stops";
+  } catch (_) {}
+}
+
+function metrofeedEnsureOppositeStopZoomListener(map) {
+  if (!map || map._mfOppositeStopZoomBound) return;
+  map._mfOppositeStopZoomBound = true;
+  const sync = function () {
+    try {
+      const root = map.getContainer && map.getContainer();
+      if (!root) return;
+      root.querySelectorAll(".mf-opposite-stop-marker").forEach(function (el) {
+        metrofeedApplyOppositeStopPointer(el, map);
+      });
+    } catch (_) {}
+  };
+  map.on("zoom", sync);
+  map.on("zoomend", sync);
+}
+
 function metrofeedApplyBusMarkerLabelVisibility(markerEl, map) {
   if (!markerEl) return;
   const label = markerEl.querySelector(".mf-bus-marker-label");
@@ -2607,6 +2653,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
         ? metrofeedBuildDirectionalStopElement(directionId, primaryShape, lat, lon)
         : document.createElement("div");
       try { stopElement.classList.add('mf-stop-marker'); } catch (_) {}
+      try {
+        stopElement.style.position = "relative";
+        stopElement.style.zIndex = "2";
+      } catch (_) {}
       // Metadata so OTP can decorate (B/A) without adding duplicate dots.
       try {
         stopElement.setAttribute('data-overlay-key', String(etaOverlayKey));
@@ -2722,9 +2772,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const updatePopupContent = () => {
         const uiAccent = metrofeedUiAccent();
         const etaDisplay = getETADisplay();
+        const stopDisplayName = stop.name || `Stop ${stop.stop_id}`;
         popupContent.innerHTML = `
           <div style="border:1px solid ${uiAccent};border-radius:8px;padding:10px;background:#222;color:#fff;min-width:200px;">
-            <strong style="color:${uiAccent};">${stop.name || `Stop ${stop.stop_id}`}</strong>
+            <strong style="color:${uiAccent};">${stopDisplayName}</strong>
             ${etaDisplay}
             ${
               highlightedTimes.length
@@ -2732,12 +2783,28 @@ function attachRouteToMap(map, routeId, directionId, options) {
               <hr style="border:none;border-top:1px solid ${uiAccent};margin:6px 0;">
               ${highlightedTimes.join("<br>")}
               <hr style="border:none;border-top:1px solid ${uiAccent};margin:8px 0;">
-              <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${(stop.name || `Stop ${stop.stop_id}`).replace(/'/g, "\\'")}')" style="width:100%;background:${uiAccent};color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
+              <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${stopDisplayName.replace(/'/g, "\\'")}')" style="width:100%;background:${uiAccent};color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
             `
                 : ""
             }
+            <button type="button" class="mf-stop-explore-btn" style="width:100%;background:#333;color:#fff;border:1px solid ${uiAccent};padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:6px;">Explore nearby</button>
           </div>
         `;
+        const exploreBtn = popupContent.querySelector(".mf-stop-explore-btn");
+        if (exploreBtn) {
+          exploreBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof window.openExploreFromStop === "function") {
+              window.openExploreFromStop({
+                lat,
+                lon,
+                stopId,
+                stopName: stopDisplayName
+              });
+            }
+          });
+        }
       };
       
       // Initial content (reads current ETA data)
@@ -2772,13 +2839,17 @@ function attachRouteToMap(map, routeId, directionId, options) {
         if (!stopId || selectedStopIds.has(stopId)) return;
 
         const el = document.createElement("div");
+        el.className = "mf-opposite-stop-marker";
         el.style.width = "12px";
         el.style.height = "12px";
         el.style.borderRadius = "50%";
         el.style.backgroundColor = "transparent";
         el.style.border = `2px solid ${routeColor || "#888"}`;
         el.style.opacity = "0.45";
-        el.style.cursor = "pointer";
+        el.style.position = "relative";
+        el.style.zIndex = "1";
+        metrofeedApplyOppositeStopPointer(el, map);
+        metrofeedEnsureOppositeStopZoomListener(map);
 
         const marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]);
         const name = stop.name || `Stop ${stop.stop_id}`;

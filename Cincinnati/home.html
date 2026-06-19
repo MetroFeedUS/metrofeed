@@ -3432,6 +3432,29 @@
   </div>
 </div>
 
+<!-- -- EXPLORE OPTIONS MODAL (nearby POI from bus stop) -- -->
+<div id="exploreOptionsModal" class="mf-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="exploreOptionsTitle">
+  <div class="mf-modal" style="max-width: 400px;" tabindex="-1">
+    <h2 id="exploreOptionsTitle">📍 Explore nearby</h2>
+    <p id="mfExploreStopTitle" style="margin:0.35rem 0 0;color:#bbb;font-size:0.9rem;"></p>
+    <div style="text-align: left; margin-top: 1rem;">
+      <div style="margin-bottom: 1rem;">
+        <label for="mfExploreGeometry" style="display: block; margin-bottom: 0.5rem; color: var(--rr-accent-text); font-weight: bold;">Walk time:</label>
+        <select id="mfExploreGeometry" style="width: 100%; padding: 0.5rem; background: #222; color: #fff; border: 1px solid var(--rr-accent); border-radius: 6px;"></select>
+      </div>
+      <div style="margin-bottom: 0.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: var(--rr-accent-text); font-weight: bold;">Place types <span style="font-weight:normal;color:#aaa;">(pick up to 2)</span>:</label>
+        <div id="mfExploreCategories" style="display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem;"></div>
+      </div>
+      <p id="mfExploreHint" style="margin:0.5rem 0 0;font-size:12px;color:#aaa;">Pick 1–2 place types to explore.</p>
+    </div>
+    <div class="mf-actions" style="margin-top: 1.5rem;">
+      <button type="button" class="mf-btn" onclick="hideExploreOptionsModal()">Cancel</button>
+      <button type="button" id="mfExploreGoBtn" class="mf-btn" onclick="runExploreFromModal()" disabled style="background: #4CAF50; border-color: #4CAF50; color: #000; font-weight: bold; opacity:0.45;cursor:not-allowed;">Explore</button>
+    </div>
+  </div>
+</div>
+
 <!-- -- STOP TIMES MODAL -- -->
 <div id="stopTimesModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
@@ -3669,6 +3692,7 @@
 <script src="city-config.js"></script>
 <script src="nwsServiceAlerts.js?v=2"></script>
 <script src="geocodeAutocomplete.js?v=1"></script>
+<script src="explorePlaces.js?v=20260619explore"></script>
 <!-- Cincinnati: static routes_index.js defines window.ROUTES (not lazy window.routesIndex). -->
 <script src="routes_index.js"></script>
 
@@ -3687,7 +3711,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260603obsBuses"></script>
+<script src="routeOverlay.js?v=20260619explore"></script>
 <script src="trafficIncidents.js"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js?v=20260602noWalkOnly"></script>
