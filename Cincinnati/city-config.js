@@ -297,8 +297,6 @@ const CITIES = {
     busMarkerSizeScale: 1.1,
     /** Vehicle ID pill visible at this zoom and closer (route overview is usually ≤14). */
     busMarkerLabelMinZoom: 15,
-    /** Opposite-direction route stops only accept clicks at this zoom and closer. */
-    oppositeStopClickMinZoom: 15,
 
     /** Direction comet: white dots behind bus from confirmed travel along route shape. */
     busTracerEnabled: true,

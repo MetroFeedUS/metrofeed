@@ -1430,73 +1430,6 @@ function metrofeedBusMarkerShowsLabel(map) {
   }
 }
 
-/** Opposite-direction stop markers: no click steal until zoomed in intentionally. */
-function metrofeedOppositeStopClickMinZoom() {
-  const cfg = window.CITY_CONFIG || {};
-  const z =
-    cfg.oppositeStopClickMinZoom != null ? Number(cfg.oppositeStopClickMinZoom) : 15;
-  return Number.isFinite(z) ? z : 15;
-}
-
-function metrofeedOppositeStopClickable(map) {
-  try {
-    if (!map || typeof map.getZoom !== "function") return false;
-    return map.getZoom() >= metrofeedOppositeStopClickMinZoom();
-  } catch (_) {
-    return false;
-  }
-}
-
-function metrofeedApplyOppositeStopPointer(el, map) {
-  if (!el) return;
-  const on = metrofeedOppositeStopClickable(map);
-  el.style.pointerEvents = on ? "auto" : "none";
-  el.style.cursor = on ? "pointer" : "default";
-  el.classList.toggle("mf-opposite-stop-marker--active", on);
-  try {
-    el.title = on
-      ? ""
-      : "Zoom in to tap other-direction stops";
-  } catch (_) {}
-}
-
-/** Hide opposite-direction dashed lines + hollow stops until zoomed in (avoids dot-trail clutter). */
-function metrofeedSyncOppositeDirectionContext(map) {
-  if (!map) return;
-  const show = metrofeedOppositeStopClickable(map);
-  const vis = show ? "visible" : "none";
-  try {
-    const style = map.getStyle && map.getStyle();
-    const layers = style && style.layers ? style.layers : [];
-    layers.forEach(function (L) {
-      if (L && L.id && /^route-layer-opp-/.test(String(L.id))) {
-        if (map.getLayer(L.id)) {
-          map.setLayoutProperty(L.id, "visibility", vis);
-        }
-      }
-    });
-  } catch (_) {}
-  try {
-    const root = map.getContainer && map.getContainer();
-    if (!root) return;
-    root.querySelectorAll(".mf-opposite-stop-marker").forEach(function (el) {
-      el.style.display = show ? "" : "none";
-      metrofeedApplyOppositeStopPointer(el, map);
-    });
-  } catch (_) {}
-}
-
-function metrofeedEnsureOppositeStopZoomListener(map) {
-  if (!map || map._mfOppositeStopZoomBound) return;
-  map._mfOppositeStopZoomBound = true;
-  const sync = function () {
-    metrofeedSyncOppositeDirectionContext(map);
-  };
-  map.on("zoom", sync);
-  map.on("zoomend", sync);
-  sync();
-}
-
 function metrofeedApplyBusMarkerLabelVisibility(markerEl, map) {
   if (!markerEl) return;
   const label = markerEl.querySelector(".mf-bus-marker-label");
@@ -2232,49 +2165,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
     const lineOpacity = isOtpActive ? 0.10 : 0.9;
     const lineWidth = isOtpActive ? 3 : 4;
 
-    // Opposite-direction context: dashed underlay (drawn BEFORE selected solid lines)
-    if (hasOppositeShapes && oppositeShapes.length) {
-      const oppLineVis = metrofeedOppositeStopClickable(map) ? "visible" : "none";
-      oppositeShapes.forEach((shape, shapeIndex) => {
-        if (!Array.isArray(shape) || shape.length < 2) return;
-        const routeSourceId = `route-line-opp-${mapLayerKey}-${shapeIndex}`;
-        const routeLayerId = `route-layer-opp-${mapLayerKey}-${shapeIndex}`;
-
-        if (map.getLayer(routeLayerId)) map.removeLayer(routeLayerId);
-        if (map.getSource(routeSourceId)) map.removeSource(routeSourceId);
-
-        map.addSource(routeSourceId, {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "LineString",
-              coordinates: shape.map((coord) => [coord[1], coord[0]])
-            }
-          }
-        });
-        overlayElements.sources.push(routeSourceId);
-
-        map.addLayer(
-          {
-            id: routeLayerId,
-            type: "line",
-            source: routeSourceId,
-            layout: { visibility: oppLineVis },
-            paint: {
-              "line-color": routeColor,
-              "line-width": Math.max(2, lineWidth - 1),
-              "line-opacity": isOtpActive ? 0.06 : 0.35,
-              "line-dasharray": [2, 2]
-            }
-          },
-          beforeId
-        );
-        overlayElements.layers.push(routeLayerId);
-      });
-      metrofeedEnsureOppositeStopZoomListener(map);
-    }
+    // Opposite-direction dashed underlay disabled — cluttered overview and looked like broken shapes.
 
     // ---------- Render all shapes (for trunk-and-branch routes) ----------
     // All shapes in shapes[] are rendered; opacity/width depends on OTP state
@@ -2677,10 +2568,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         ? metrofeedBuildDirectionalStopElement(directionId, primaryShape, lat, lon)
         : document.createElement("div");
       try { stopElement.classList.add('mf-stop-marker'); } catch (_) {}
-      try {
-        stopElement.style.position = "relative";
-        stopElement.style.zIndex = "2";
-      } catch (_) {}
       // Metadata so OTP can decorate (B/A) without adding duplicate dots.
       try {
         stopElement.setAttribute('data-overlay-key', String(etaOverlayKey));
@@ -2870,10 +2757,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         el.style.backgroundColor = "transparent";
         el.style.border = `2px solid ${routeColor || "#888"}`;
         el.style.opacity = "0.45";
-        el.style.position = "relative";
-        el.style.zIndex = "1";
-        metrofeedApplyOppositeStopPointer(el, map);
-        metrofeedEnsureOppositeStopZoomListener(map);
 
         const marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]);
         const name = stop.name || `Stop ${stop.stop_id}`;
@@ -2887,7 +2770,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
         marker.addTo(map);
         overlayElements.markers.push(marker);
       });
-      metrofeedSyncOppositeDirectionContext(map);
     }
 
     // ---------- Route info panel (mainOverlay only) ----------
