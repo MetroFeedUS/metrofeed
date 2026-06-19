@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RoamRaven TV — Access</title>
+  <title>RoamRaven TV — OBS setup</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" type="image/png" href="manifestbird.png" sizes="512x512" />
   <style>
@@ -18,89 +18,45 @@
       align-items: center;
       justify-content: center;
     }
-    .gate-form {
+    .panel {
       padding: 2rem;
       background: #141418;
       border: 1px solid rgba(147, 51, 234, 0.45);
       border-radius: 12px;
-      max-width: 360px;
+      max-width: 420px;
       width: 90%;
       text-align: center;
     }
     h1 { color: var(--rr-accent); font-size: 1.35rem; margin-bottom: 0.5rem; }
-    p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem; }
-    input {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      border: 1px solid #333;
-      background: #16161a;
-      color: #fff;
-      text-align: center;
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
-    }
-    button {
-      width: 100%;
-      background: var(--rr-accent);
-      color: #fff;
-      border: none;
-      padding: 0.65rem 1.5rem;
-      border-radius: 8px;
+    p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5; }
+    code { color: #e2e8f0; font-size: 0.82rem; word-break: break-all; }
+    a {
+      display: inline-block;
+      margin-top: 0.75rem;
+      color: var(--rr-accent);
+      text-decoration: none;
       font-weight: 600;
-      cursor: pointer;
     }
-    button:hover { background: #7c3aed; }
-    .err { color: #ff6b6b; font-size: 0.85rem; min-height: 1.2em; margin-top: 0.5rem; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div class="gate-form">
+  <div class="panel">
     <h1>RoamRaven TV</h1>
-    <p>OBS uses <code>obs-tv.html?tv=1&panel=…</code> — one URL per browser source.</p>
-    <input id="gateInput" type="password" autocomplete="off" placeholder="Access code" />
-    <button type="button" id="gateSubmit">Enter broadcast</button>
-    <div class="err" id="gateError"></div>
+    <p>OBS uses one browser source URL per panel. No access code is required — use the full URL in OBS.</p>
+    <p>Map:<br><code>home.html?tv=1&panel=map&bw=1920&bh=1080</code></p>
+    <p>Weather bar:<br><code>obs-tv.html?tv=1&panel=ticker&bw=1920&bh=160</code></p>
+    <p>Alerts:<br><code>obs-tv.html?tv=1&panel=alerts&bw=480&bh=860</code></p>
+    <a href="obs-tv.html?tv=1&panel=ticker&bw=1920&bh=160">Open weather bar preview</a>
   </div>
   <script>
   (function () {
-    var OBS_TV_ACCESS_CODE = 'admin2024';
-    var AUTH_KEY = 'obsTvAuth';
-
-    function goLive() {
-      sessionStorage.setItem(AUTH_KEY, '1');
-      var params = new URLSearchParams(window.location.search);
-      var ret = params.get('return');
-      if (ret) {
-        try {
-          window.location.replace(decodeURIComponent(ret));
-          return;
-        } catch (_) {}
-      }
-      window.location.replace('obs-tv.html?tv=1&panel=map&bw=1920&bh=1080');
-    }
-
-    function tryUnlock() {
-      var input = document.getElementById('gateInput');
-      var err = document.getElementById('gateError');
-      if (input.value === OBS_TV_ACCESS_CODE) {
-        err.textContent = '';
-        goLive();
-      } else {
-        err.textContent = 'Invalid access code';
-        input.value = '';
-        input.focus();
-      }
-    }
-
-    document.getElementById('gateSubmit').addEventListener('click', tryUnlock);
-    document.getElementById('gateInput').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') tryUnlock();
-    });
-
-    if (sessionStorage.getItem(AUTH_KEY) === '1') {
-      goLive();
-    }
+    var params = new URLSearchParams(window.location.search);
+    var ret = params.get('return');
+    if (!ret) return;
+    try {
+      window.location.replace(decodeURIComponent(ret));
+    } catch (_) {}
   })();
   </script>
 </body>

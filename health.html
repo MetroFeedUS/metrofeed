@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RoamRaven Health Monitor</title>
+<meta name="robots" content="noindex, nofollow" />
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -96,52 +97,30 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
 </head>
 <body>
 
-<div id="gate">
+<div id="gate" style="display:none" aria-hidden="true">
   <h2>RoamRaven Health Monitor</h2>
   <input type="password" id="gateInput" placeholder="Access code" autofocus>
   <div class="gate-error" id="gateError"></div>
 </div>
 
-<header style="display:none" id="appHeader">
+<header id="appHeader">
   <h1>RoamRaven Health Monitor</h1>
   <div class="meta" id="lastRun">Not run yet</div>
   <button class="btn" id="runAllBtn" onclick="runAllChecks()">Run All</button>
 </header>
 
-<main style="display:none" id="appMain"></main>
+<main id="appMain"></main>
 
-<footer style="display:none" id="appFooter">
+<footer id="appFooter">
   <span id="totalTime"></span>
 </footer>
 
 <script src="health-config.js"></script>
 <script>
 (function() {
-  const PASS_CODE = 'admin2024';
   const TIMEOUT_MS = 8000;
 
-  // --- Password Gate ---
-  const gate = document.getElementById('gate');
-  const gateInput = document.getElementById('gateInput');
-  const gateError = document.getElementById('gateError');
-
-  // Auto-unlock deferred until all functions are defined below
-  const autoUnlock = sessionStorage.getItem('healthAuth') === '1';
-
-  gateInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      if (gateInput.value === PASS_CODE) {
-        sessionStorage.setItem('healthAuth', '1');
-        unlockApp();
-      } else {
-        gateError.textContent = 'Invalid code';
-        gateInput.value = '';
-      }
-    }
-  });
-
   function unlockApp() {
-    gate.style.display = 'none';
     document.getElementById('appHeader').style.display = '';
     document.getElementById('appMain').style.display = '';
     document.getElementById('appFooter').style.display = '';
@@ -470,7 +449,7 @@ footer { text-align: center; padding: 1.5rem; color: #555; font-size: 0.8rem; }
     btn.textContent = 'Run All';
   };
 
-  if (autoUnlock) unlockApp();
+  unlockApp();
 })();
 </script>
 </body>

@@ -510,6 +510,35 @@
     .otp-autocomplete-option:hover {
       background: rgba(255, 255, 255, 0.06);
     }
+    .otp-autocomplete-section {
+      padding: 6px 12px 4px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--rr-silver-muted);
+      border-top: 1px solid rgba(226, 232, 240, 0.12);
+    }
+    .otp-autocomplete-section:first-child {
+      border-top: none;
+    }
+    .otp-autocomplete-option--place {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .otp-autocomplete-option--place::before {
+      content: "📍";
+      flex: 0 0 auto;
+      font-size: 0.85rem;
+      line-height: 1.35;
+      opacity: 0.85;
+    }
+    .otp-autocomplete-loading {
+      padding: 8px 12px;
+      color: #9aa0a6;
+      font-size: 0.78rem;
+    }
     .search-bar .input-wrapper:focus-within {
       border-color: var(--rr-accent);
       box-shadow: 0 0 0 1px var(--rr-accent-soft);
@@ -1262,6 +1291,101 @@
     @keyframes mf-homescreen-pop {
       from { opacity: 0; transform: scale(0.96); }
       to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Life-safety weather warnings — above sponsor, tutorial, and other startup modals */
+    #mfSevereWeatherModal.mf-overlay {
+      z-index: 20200;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal {
+      width: min(calc(100vw - 24px), 560px);
+      max-height: min(88vh, 720px);
+      overflow-y: auto;
+      border: 2px solid #f44336;
+      box-shadow: 0 0 40px rgba(244, 67, 54, 0.45), 0 20px 60px rgba(0, 0, 0, 0.75);
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal__head {
+      background: linear-gradient(180deg, rgba(244, 67, 54, 0.22) 0%, rgba(22, 23, 28, 0.98) 100%);
+      padding: 1.1rem 1.25rem 0.85rem;
+      border-bottom: 1px solid rgba(244, 67, 54, 0.45);
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal__title {
+      margin: 0;
+      color: #fecaca;
+      font-size: 1.35rem;
+      line-height: 1.25;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal__sub {
+      margin: 0.5rem 0 0;
+      color: #cbd5e1;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal__body {
+      padding: 1rem 1.25rem;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-card {
+      border: 1px solid rgba(244, 67, 54, 0.55);
+      border-radius: 10px;
+      padding: 0.85rem 0.95rem;
+      margin-bottom: 0.75rem;
+      background: rgba(244, 67, 54, 0.08);
+    }
+    #mfSevereWeatherModal .mf-severe-weather-card:last-child {
+      margin-bottom: 0;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-card__event {
+      color: #fca5a5;
+      font-weight: 800;
+      font-size: 1.05rem;
+      margin: 0 0 0.35rem;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-card__headline {
+      color: #f1f5f9;
+      font-size: 0.92rem;
+      line-height: 1.4;
+      margin: 0 0 0.35rem;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-card__area {
+      color: #94a3b8;
+      font-size: 0.8rem;
+      margin: 0 0 0.5rem;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-card__link {
+      color: #7dd3fc;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-card__link:hover {
+      text-decoration: underline;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal__foot {
+      padding: 0 1.25rem 1.15rem;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal__disclaimer {
+      color: #94a3b8;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      margin: 0 0 0.85rem;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal__btn {
+      width: 100%;
+      appearance: none;
+      border: none;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #mfSevereWeatherModal .mf-severe-weather-modal__btn:hover {
+      filter: brightness(1.05);
     }
     .mf-homescreen-instr-modal { position: relative; }
     .dev-switch { position: absolute; top: 10px; right: 15px; font-size: 0.9rem; color: #fff; background: #222; border: 1.5px solid var(--rr-accent); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
@@ -3488,6 +3612,25 @@
 </div>
 
 <!-- -- SPONSOR MODAL -- -->
+<!-- Life-safety weather warnings (blocks sponsor / tutorial until dismissed) -->
+<div id="mfSevereWeatherModal" class="mf-overlay" style="display: none;" role="alertdialog" aria-modal="true" aria-labelledby="mfSevereWeatherTitle" aria-describedby="mfSevereWeatherDesc">
+  <div class="mf-modal mf-severe-weather-modal">
+    <div class="mf-severe-weather-modal__head">
+      <h2 id="mfSevereWeatherTitle" class="mf-severe-weather-modal__title">⚠️ Active weather warning</h2>
+      <p id="mfSevereWeatherDesc" class="mf-severe-weather-modal__sub">
+        A severe weather warning is in effect for part of the RoamRaven service area. Follow official NWS guidance and local authorities.
+      </p>
+    </div>
+    <div id="mfSevereWeatherBody" class="mf-severe-weather-modal__body"></div>
+    <div class="mf-severe-weather-modal__foot">
+      <p class="mf-severe-weather-modal__disclaimer">
+        RoamRaven is not an official emergency source. For life-threatening situations, use NOAA Weather Radio, local alerts, and NWS.
+      </p>
+      <button type="button" id="mfSevereWeatherAckBtn" class="mf-severe-weather-modal__btn">I understand — continue to map</button>
+    </div>
+  </div>
+</div>
+
 <div id="sponsorModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 700px; max-height: 90vh; display: flex; flex-direction: column;">
     <button id="sponsorModalClose" onclick="hideSponsorModal()" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; z-index: 10; transition: background-color 0.2s ease;" title="Close" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseout="this.style.backgroundColor='transparent'">
@@ -3524,6 +3667,8 @@
 
 <!-- -- CITY CONFIGURATION (MUST LOAD FIRST) -- -->
 <script src="city-config.js"></script>
+<script src="nwsServiceAlerts.js?v=2"></script>
+<script src="geocodeAutocomplete.js?v=1"></script>
 <!-- Cincinnati: static routes_index.js defines window.ROUTES (not lazy window.routesIndex). -->
 <script src="routes_index.js"></script>
 
@@ -3569,6 +3714,140 @@
   }
   const CITY_CONFIG = getCityConfig();
   window.CITY_CONFIG = CITY_CONFIG; // Expose globally for otp.js and other modules
+
+  /** Prefetch service-area NWS alerts (severe-weather gate uses this on load). */
+  (function mfPrefetchServiceAreaAlerts() {
+    if (window.MF_TV_MODE) return;
+    var nws = window.MfNwsWeather;
+    if (!nws || typeof nws.fetchServiceAreaAlerts !== 'function') return;
+    try {
+      window._mfServiceAlertsPrefetch = nws.fetchServiceAreaAlerts(CITY_CONFIG);
+    } catch (_) {}
+  })();
+
+  /** Block sponsor / tutorial until life-safety weather modal is dismissed (if any). */
+  window._mfStartupUnblocked = false;
+  window._mfStartupWaiters = [];
+  window.mfWhenStartupUnblocked = function (fn) {
+    if (typeof fn !== 'function') return;
+    if (window._mfStartupUnblocked) {
+      try { fn(); } catch (_) {}
+      return;
+    }
+    window._mfStartupWaiters.push(fn);
+  };
+  window.mfNotifyStartupUnblocked = function () {
+    if (window._mfStartupUnblocked) return;
+    window._mfStartupUnblocked = true;
+    var q = (window._mfStartupWaiters || []).slice(0);
+    window._mfStartupWaiters = [];
+    q.forEach(function (fn) {
+      try { fn(); } catch (_) {}
+    });
+  };
+
+  function mfEscapeHtmlText(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function mfHideSevereWeatherModal() {
+    var modal = document.getElementById('mfSevereWeatherModal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    window.mfNotifyStartupUnblocked();
+  }
+
+  function mfShowSevereWeatherModal(features) {
+    var modal = document.getElementById('mfSevereWeatherModal');
+    var body = document.getElementById('mfSevereWeatherBody');
+    var ack = document.getElementById('mfSevereWeatherAckBtn');
+    var nws = window.MfNwsWeather;
+    if (!modal || !body || !features || !features.length) {
+      window.mfNotifyStartupUnblocked();
+      return;
+    }
+
+    var mapClick =
+      nws && nws.mapClickUrl
+        ? nws.mapClickUrl(CITY_CONFIG)
+        : 'https://forecast.weather.gov/MapClick.php?lat=39.103&lon=-84.512';
+    var html = '';
+    features.forEach(function (feature) {
+      var alert = feature.properties || {};
+      var event = String(alert.event || 'Weather warning');
+      var headline = String(alert.headline || alert.description || '').trim();
+      var rawArea = alert.areaDesc || '';
+      var area =
+        nws && typeof nws.filterAreaDescToServiceCounties === 'function'
+          ? nws.filterAreaDescToServiceCounties(rawArea, CITY_CONFIG)
+          : rawArea;
+      var nwsUrl =
+        nws && typeof nws.alertWebUrl === 'function'
+          ? nws.alertWebUrl(feature, mapClick)
+          : mapClick;
+      html +=
+        '<article class="mf-severe-weather-card">' +
+        '<p class="mf-severe-weather-card__event">' +
+        mfEscapeHtmlText(event) +
+        '</p>' +
+        (headline
+          ? '<p class="mf-severe-weather-card__headline">' + mfEscapeHtmlText(headline) + '</p>'
+          : '') +
+        (area
+          ? '<p class="mf-severe-weather-card__area">In service area: ' +
+            mfEscapeHtmlText(area) +
+            '</p>'
+          : '') +
+        '<a class="mf-severe-weather-card__link" href="' +
+        mfEscapeHtmlText(nwsUrl) +
+        '" target="_blank" rel="noopener noreferrer">View official NWS alert →</a>' +
+        '</article>';
+    });
+    body.innerHTML = html;
+
+    if (ack && !ack.__mfBound) {
+      ack.__mfBound = true;
+      ack.addEventListener('click', mfHideSevereWeatherModal);
+    }
+
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    try { ack && ack.focus(); } catch (_) {}
+  }
+
+  async function mfRunSevereWeatherGate() {
+    if (window.MF_TV_MODE) {
+      window.mfNotifyStartupUnblocked();
+      return;
+    }
+    var nws = window.MfNwsWeather;
+    if (!nws || typeof nws.filterLifeSafetyAlerts !== 'function') {
+      window.mfNotifyStartupUnblocked();
+      return;
+    }
+    try {
+      var prefetch = window._mfServiceAlertsPrefetch;
+      var result =
+        prefetch && typeof prefetch.then === 'function'
+          ? await prefetch
+          : await nws.fetchServiceAreaAlerts(CITY_CONFIG);
+      var severe = nws.filterLifeSafetyAlerts((result && result.features) || []);
+      if (severe.length) {
+        mfShowSevereWeatherModal(severe);
+        return;
+      }
+    } catch (e) {
+      console.warn('[mfSevereWeather] startup gate failed', e);
+    }
+    window.mfNotifyStartupUnblocked();
+  }
+  window.mfRunSevereWeatherGate = mfRunSevereWeatherGate;
 
   /** Per-route JSON base — city-config `routeDataBase` (default ./route_data/ next to home.html). */
   const ROUTE_DATA_BASE = (function () {
@@ -5106,8 +5385,125 @@
       }
     });
 
+    function appendPlaceOption(place) {
+      const option = document.createElement("div");
+      option.className = "otp-autocomplete-option otp-autocomplete-option--place";
+      option.setAttribute("role", "option");
+      const safeLabel = String(place.label || "").replace(/</g, "&lt;");
+      option.innerHTML = '<span>' + safeLabel + "</span>";
+      const pickPlace = function () {
+        input.value = place.label;
+        dropdown.style.display = "none";
+        const isStart = input.id === "startInput";
+        if (typeof pinStopOnMap === "function") {
+          pinStopOnMap(
+            { name: place.label, lat: place.lat, lon: place.lon, stop_id: null },
+            isStart
+          );
+        }
+      };
+      option.addEventListener("click", pickPlace);
+      option.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          pickPlace();
+        }
+      });
+      return option;
+    }
+
+    function appendStopOption(name, q) {
+      const option = document.createElement("div");
+      option.className = "otp-autocomplete-option";
+      option.setAttribute("role", "option");
+      try {
+        const lower = name.toLowerCase();
+        const at = lower.indexOf(q);
+        if (at >= 0) {
+          const a = name.slice(0, at);
+          const b = name.slice(at, at + q.length);
+          const c = name.slice(at + q.length);
+          option.innerHTML =
+            a.replace(/</g, "&lt;") +
+            '<span style="color:#fff;font-weight:800;">' +
+            b.replace(/</g, "&lt;") +
+            "</span>" +
+            c.replace(/</g, "&lt;");
+        } else {
+          option.textContent = name;
+        }
+      } catch (_) {
+        option.textContent = name;
+      }
+      option.addEventListener("click", async () => {
+        input.value = name;
+        dropdown.style.display = "none";
+        console.log("[Autocomplete] Stop selected from dropdown:", name);
+        const stopData = await findStopByName(name);
+        console.log("[Autocomplete] Stop data found:", stopData);
+        if (stopData) {
+          const isStart = input.id === "startInput";
+          pinStopOnMap(stopData, isStart);
+        } else {
+          console.warn("[Autocomplete] Could not find stop data for:", name);
+        }
+      });
+      return option;
+    }
+
+    function schedulePlaceSearch(query, placesSlot) {
+      const geo =
+        window.MfGeocodeAutocomplete &&
+        typeof window.MfGeocodeAutocomplete.fetchPlaceSuggestions === "function";
+      const base =
+        window.MfGeocodeAutocomplete &&
+        typeof window.MfGeocodeAutocomplete.autocompleteBaseUrl === "function"
+          ? window.MfGeocodeAutocomplete.autocompleteBaseUrl(
+              typeof CITY_CONFIG !== "undefined" ? CITY_CONFIG : null
+            )
+          : CITY_CONFIG && CITY_CONFIG.geocodeAutocompleteUrl
+            ? String(CITY_CONFIG.geocodeAutocompleteUrl)
+            : "";
+      if (!geo || !base || query.length < 2 || !placesSlot) return;
+
+      clearTimeout(input._placeTimer);
+      const seq = input._acSeq;
+      placesSlot.innerHTML = "";
+      const loadingEl = document.createElement("div");
+      loadingEl.className = "otp-autocomplete-loading";
+      loadingEl.textContent = "Searching places…";
+      placesSlot.appendChild(loadingEl);
+
+      input._placeTimer = setTimeout(async function () {
+        if (seq !== input._acSeq) return;
+        const places = await window.MfGeocodeAutocomplete.fetchPlaceSuggestions(
+          query,
+          typeof CITY_CONFIG !== "undefined" ? CITY_CONFIG : null
+        );
+        if (seq !== input._acSeq) return;
+        placesSlot.innerHTML = "";
+        if (!places.length) {
+          dropdown.style.display = dropdown.childElementCount ? "block" : "none";
+          return;
+        }
+
+        const section = document.createElement("div");
+        section.className = "otp-autocomplete-section";
+        section.textContent = "Places";
+        placesSlot.appendChild(section);
+        places.forEach(function (place) {
+          placesSlot.appendChild(appendPlaceOption(place));
+        });
+        dropdown.style.display = dropdown.childElementCount ? "block" : "none";
+      }, 300);
+    }
+
     input.addEventListener("input", async () => {
-      const query = input.value.trim().toLowerCase();
+      const query = input.value.trim();
+      const queryLower = query.toLowerCase();
+      input._acSeq = (input._acSeq || 0) + 1;
+      const seq = input._acSeq;
+      clearTimeout(input._placeTimer);
       dropdown.innerHTML = "";
       if (!query) {
         dropdown.style.display = "none";
@@ -5144,13 +5540,20 @@
           msg.style.padding = "8px 10px";
           msg.style.color = "#9aa0a6";
           dropdown.appendChild(msg);
+          const placesSlot = document.createElement("div");
+          placesSlot.className = "otp-autocomplete-places-slot";
+          dropdown.appendChild(placesSlot);
           dropdown.style.display = "block";
+          schedulePlaceSearch(query, placesSlot);
           return;
         }
       } catch (_) {}
 
-      // "Forward" matching: prefix + token-start matches first (so users don't need to scroll).
-      const q = query;
+      const placesSlot = document.createElement("div");
+      placesSlot.className = "otp-autocomplete-places-slot";
+      dropdown.appendChild(placesSlot);
+
+      const q = queryLower;
       const starts = [];
       const tokenStarts = [];
       const contains = [];
@@ -5165,55 +5568,29 @@
         if (starts.length + tokenStarts.length + contains.length >= 70) break;
       }
       const matches = starts.concat(tokenStarts, contains).slice(0, 10);
-      matches.forEach(name => {
-        const option = document.createElement("div");
-        option.className = "otp-autocomplete-option";
-        option.setAttribute("role", "option");
-        // Highlight match for quicker scanning
-        try {
-          const lower = name.toLowerCase();
-          const at = lower.indexOf(q);
-          if (at >= 0) {
-            const a = name.slice(0, at);
-            const b = name.slice(at, at + q.length);
-            const c = name.slice(at + q.length);
-            option.innerHTML =
-              a.replace(/</g, '&lt;') +
-              '<span style="color:#fff;font-weight:800;">' +
-              b.replace(/</g, '&lt;') +
-              '</span>' +
-              c.replace(/</g, '&lt;');
-          } else {
-            option.textContent = name;
-          }
-        } catch (_) {
-          option.textContent = name;
-        }
-        option.addEventListener("click", async () => {
-          input.value = name;
-          dropdown.style.display = "none";
-          // Auto-pin when stop is selected
-          console.log('[Autocomplete] Stop selected from dropdown:', name);
-          const stopData = await findStopByName(name);
-          console.log('[Autocomplete] Stop data found:', stopData);
-          if (stopData) {
-            const isStart = input.id === 'startInput';
-            pinStopOnMap(stopData, isStart);
-          } else {
-            console.warn('[Autocomplete] Could not find stop data for:', name);
-          }
+
+      if (matches.length) {
+        const section = document.createElement("div");
+        section.className = "otp-autocomplete-section";
+        section.textContent = "Transit stops";
+        dropdown.appendChild(section);
+        matches.forEach(function (name) {
+          dropdown.appendChild(appendStopOption(name, q));
         });
-        dropdown.appendChild(option);
-      });
+      }
+
+      schedulePlaceSearch(query, placesSlot);
+
       dropdown.style.display = dropdown.childElementCount ? "block" : "none";
       
       // Check if the current input matches a valid stop name exactly
-      const exactMatch = allStops.find(name => name.toLowerCase() === query);
+      const exactMatch = allStops.find(name => name.toLowerCase() === queryLower);
       if (exactMatch) {
         console.log('[Autocomplete] Exact match found:', exactMatch);
         // Debounce: wait a bit to see if user is still typing
         clearTimeout(input._pinTimeout);
         input._pinTimeout = setTimeout(async () => {
+          if (seq !== input._acSeq) return;
           console.log('[Autocomplete] Debounce complete, looking up stop:', exactMatch);
           const stopData = await findStopByName(exactMatch);
           console.log('[Autocomplete] Stop data found:', stopData);
@@ -5225,7 +5602,7 @@
           }
         }, 500); // Wait 500ms after user stops typing
       } else {
-        console.log('[Autocomplete] No exact match for:', query, 'Available stops:', allStops.slice(0, 5));
+        console.log('[Autocomplete] No exact match for:', queryLower, 'Available stops:', allStops.slice(0, 5));
       }
     });
 
@@ -7205,7 +7582,9 @@
     };
     window.addEventListener('keydown', onKey);
 
-    modal.style.display = 'flex';
+    window.mfWhenStartupUnblocked(function () {
+      modal.style.display = 'flex';
+    });
   };
 
   /**
@@ -9253,8 +9632,13 @@
     }
   }
 
-  /** Lat/lon for NWS from CITY_CONFIG.defaultCenter [lon, lat] (MapLibre order). */
+  function mfNwsApi() {
+    return window.MfNwsWeather || null;
+  }
+
   function mfNwsPointFromCityConfig() {
+    const api = mfNwsApi();
+    if (api) return api.pointFromConfig(CITY_CONFIG);
     const c = typeof CITY_CONFIG !== 'undefined' && CITY_CONFIG ? CITY_CONFIG : null;
     if (c && Array.isArray(c.defaultCenter) && c.defaultCenter.length >= 2) {
       const lon = Number(c.defaultCenter[0]);
@@ -9265,41 +9649,23 @@
   }
 
   function mfNwsMapClickUrl() {
+    const api = mfNwsApi();
+    if (api) return api.mapClickUrl(CITY_CONFIG);
     const { lat, lon } = mfNwsPointFromCityConfig();
     return 'https://forecast.weather.gov/MapClick.php?lat=' + lat + '&lon=' + lon;
   }
 
-  function mfNwsAlertsActiveUrl() {
-    const { lat, lon } = mfNwsPointFromCityConfig();
-    return 'https://api.weather.gov/alerts/active?point=' + lat + ',' + lon;
-  }
-
   function mfNwsPointsApiUrl() {
+    const api = mfNwsApi();
+    if (api) return api.pointsApiUrl(CITY_CONFIG);
     const { lat, lon } = mfNwsPointFromCityConfig();
     return 'https://api.weather.gov/points/' + lat + ',' + lon;
   }
 
-  /**
-   * Best public NWS URL for one GeoJSON alert feature (CAP same / web / uri, else www rewrite of API id).
-   * Falls back to city MapClick when the payload has no outbound link.
-   */
   function mfNwsAlertWebUrl(feature, fallbackMapClickUrl) {
-    const alert = feature && feature.properties ? feature.properties : {};
-    const featureId =
-      feature && feature.id != null ? String(feature.id) : alert.id != null ? String(alert.id) : '';
-    const fallback = fallbackMapClickUrl || mfNwsMapClickUrl();
-    let u = '';
-    if (alert.same && Array.isArray(alert.same) && alert.same.length > 0) {
-      u = String(alert.same[0]).trim();
-    } else if (alert.web && typeof alert.web === 'string') {
-      u = alert.web.trim();
-    } else if (alert.uri && typeof alert.uri === 'string') {
-      u = alert.uri.trim();
-    } else if (featureId && featureId.indexOf('api.weather.gov') >= 0) {
-      u = featureId.replace('api.weather.gov', 'www.weather.gov');
-    }
-    if (!u || !/^https?:\/\//i.test(u)) return fallback;
-    return u;
+    const api = mfNwsApi();
+    if (api) return api.alertWebUrl(feature, fallbackMapClickUrl || mfNwsMapClickUrl());
+    return mfNwsMapClickUrl();
   }
 
   function mfEscapeWeatherModalAttr(s) {
@@ -9317,54 +9683,68 @@
     
     // Show loading state
     alertsContent.innerHTML = '<div data-translate="checkingAlerts">Checking for alerts...</div>';
-    
-    const alertUrl = mfNwsAlertsActiveUrl();
+
+    const nwsApi = mfNwsApi();
     const cityNwsMapClick = mfNwsMapClickUrl();
-    
-    // Set proper User-Agent header as required by NWS API
-    const headers = {
-      'User-Agent': 'metrofeedus.com, contact@metrofeedus.com'
-    };
-    
-    fetch(alertUrl, { headers: headers })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch alerts');
-        return res.json();
-      })
-      .then(data => {
-        if (!data.features || data.features.length === 0) {
+    const serviceLabel =
+      nwsApi && typeof nwsApi.serviceAreaLabel === 'function'
+        ? nwsApi.serviceAreaLabel(CITY_CONFIG)
+        : 'the Greater Cincinnati service area';
+
+    const alertsPromise =
+      nwsApi && typeof nwsApi.fetchServiceAreaAlerts === 'function'
+        ? nwsApi.fetchServiceAreaAlerts(CITY_CONFIG)
+        : Promise.reject(new Error('NWS alerts module not loaded'));
+
+    alertsPromise
+      .then(result => {
+        const features = (result && result.features) || [];
+        if (!features.length) {
           // No alerts - green bar
           alertsSummary.style.background = '#4CAF50';
           alertsSummary.style.borderColor = '#4CAF50';
           alertsText.textContent = 'No Active Weather Alerts';
-          alertsContent.innerHTML = '<div style="color:#4CAF50;font-weight:bold;">✅ No active alerts for this area.</div>';
+          alertsContent.innerHTML =
+            '<div style="color:#4CAF50;font-weight:bold;">✅ No active alerts for ' +
+            mfEscapeWeatherModalAttr(serviceLabel) +
+            '.</div>';
           return;
         }
-        
+
         // Has alerts - red bar
         alertsSummary.style.background = '#f44336';
         alertsSummary.style.borderColor = '#f44336';
-        alertsText.textContent = `⚠️ ${data.features.length} Active Alert${data.features.length > 1 ? 's' : ''}`;
-        
-        // Display alerts
-        let html = '';
-        data.features.forEach((feature, index) => {
-          const alert = feature.properties;
+        alertsText.textContent = `⚠️ ${features.length} Active Alert${features.length > 1 ? 's' : ''}`;
+
+        // Display alerts (severity-sorted; counties trimmed to service area)
+        let html =
+          '<div style="color:#888;font-size:0.8rem;margin-bottom:0.75rem;line-height:1.35;">Alerts cover ' +
+          mfEscapeWeatherModalAttr(serviceLabel) +
+          '. Forecast uses Cincinnati center.</div>';
+        features.forEach((feature, index) => {
+          const alert = feature.properties || {};
           const alertId = feature.id || '';
           const nwsUrl = mfNwsAlertWebUrl(feature, cityNwsMapClick);
           const alertIdEsc = mfEscapeWeatherModalAttr(alertId);
           const nwsUrlEsc = mfEscapeWeatherModalAttr(nwsUrl);
-          // Escape alert data for use in onclick (HTML attribute + single-quoted JS args)
           const alertEvent = mfEscapeWeatherModalAttr(alert.event || '');
           const alertHeadline = mfEscapeWeatherModalAttr(alert.headline || '');
           const alertDesc = mfEscapeWeatherModalAttr(
             (alert.description || '').substring(0, 500)
           );
           const alertInstruction = mfEscapeWeatherModalAttr(alert.instruction || '');
-          const alertArea = mfEscapeWeatherModalAttr(alert.areaDesc || '');
-          
+          const rawArea = alert.areaDesc || '';
+          const filteredArea =
+            nwsApi && typeof nwsApi.filterAreaDescToServiceCounties === 'function'
+              ? nwsApi.filterAreaDescToServiceCounties(rawArea, CITY_CONFIG)
+              : rawArea;
+          const alertArea = mfEscapeWeatherModalAttr(filteredArea);
+          const areaLine = filteredArea
+            ? `<div style="color:#aaa;font-size:0.85rem;margin-top:0.35rem;">In service area: ${filteredArea}</div>`
+            : '';
+
           html += `
-            <div style="margin-bottom: ${index < data.features.length - 1 ? '1rem' : '0'}; padding-bottom: ${index < data.features.length - 1 ? '1rem' : '0'}; border-bottom: ${index < data.features.length - 1 ? '1px solid #333' : 'none'};">
+            <div style="margin-bottom: ${index < features.length - 1 ? '1rem' : '0'}; padding-bottom: ${index < features.length - 1 ? '1rem' : '0'}; border-bottom: ${index < features.length - 1 ? '1px solid #333' : 'none'};">
               <div style="color:#f44336; font-weight:bold; font-size:1.1rem; margin-bottom:0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;" 
                    onmouseover="this.style.background='#222'" 
                    onmouseout="this.style.background='transparent'"
@@ -9373,6 +9753,7 @@
                 <span style="font-size:0.85rem; color:#888;">${typeof translateText !== 'undefined' ? translateText('viewDetails') : 'View Details'} →</span>
               </div>
               <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${alert.headline || (alert.description ? alert.description.substring(0, 200) + '...' : 'No description available')}</div>
+              ${areaLine}
               ${alert.instruction ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${alert.instruction.substring(0, 150)}${alert.instruction.length > 150 ? '...' : ''}</div>` : ''}
               <div style="margin-top:0.5rem;">
                 <a href="${nwsUrlEsc}" target="_blank" rel="noopener noreferrer" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">View on NWS →</a>
@@ -9380,7 +9761,7 @@
             </div>
           `;
         });
-        
+
         alertsContent.innerHTML = html;
         
         // Auto-expand if there are alerts
@@ -15019,23 +15400,25 @@
    * 72h cycle: visit 1 = sponsor, visit 2 = add-to-homescreen (3s after load).
    */
   function mfInitPromptModals() {
-    try {
-      if (localStorage.getItem('mfOnboardingDone') !== '1') return;
-    } catch (e) {
-      return;
-    }
-    if (mfIsStandaloneApp()) return;
-
-    mfBindHomescreenPromptModal();
-
-    setTimeout(function () {
-      const visit = mfIncrementPromptVisit();
-      if (visit === 1) {
-        showSponsorModal();
-      } else if (visit === 2 && !mfHomescreenPromptPermanentlyDismissed()) {
-        showHomescreenPromptModal();
+    window.mfWhenStartupUnblocked(function () {
+      try {
+        if (localStorage.getItem('mfOnboardingDone') !== '1') return;
+      } catch (e) {
+        return;
       }
-    }, 3000);
+      if (mfIsStandaloneApp()) return;
+
+      mfBindHomescreenPromptModal();
+
+      setTimeout(function () {
+        const visit = mfIncrementPromptVisit();
+        if (visit === 1) {
+          showSponsorModal();
+        } else if (visit === 2 && !mfHomescreenPromptPermanentlyDismissed()) {
+          showHomescreenPromptModal();
+        }
+      }, 3000);
+    });
   }
 
   /** @deprecated Use mfInitPromptModals */
@@ -15176,6 +15559,13 @@
     // Setup stop times modal search
     setupStopTimesModalSearch();
     
+    // Life-safety weather gate — must run before sponsor / tutorial prompts
+    if (typeof window.mfRunSevereWeatherGate === 'function') {
+      window.mfRunSevereWeatherGate();
+    } else {
+      window.mfNotifyStartupUnblocked();
+    }
+
     // Initialize bus routes when routes index is ready
     if (CITY_CONFIG.useLazyLoading) {
       // For Boston: Wait for routeLoader to be ready

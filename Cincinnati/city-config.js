@@ -17,9 +17,8 @@ const CITIES = {
     state: "OR",
     timezone: "America/Los_Angeles",
     
-    // APIs
-    apiKey: "2C4447D4A42083BCD84DE3B8E",
-    otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
+    // APIs — use server proxies only; never ship API keys in client config.
+    apiKey: null,
     busApi: "https://developer.trimet.org/ws/v2/vehicles",
     // trafficApi: Removed - will use state DOT APIs in the future
     
@@ -54,9 +53,8 @@ const CITIES = {
     state: "KY",
     timezone: "America/New_York",
     
-    // APIs
-    apiKey: "2C4447D4A42083BCD84DE3B8E",
-    otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
+    // APIs — use server proxies only; never ship API keys in client config.
+    apiKey: null,
     busApi: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition",
     // trafficApi: Removed - will use state DOT APIs in the future
     
@@ -91,8 +89,8 @@ const CITIES = {
     state: "MA",
     timezone: "America/New_York",
     
-    // APIs
-    apiKey: "2C4447D4A42083BCD84DE3B8E",
+    // APIs — use server proxies only; never ship API keys in client config.
+    apiKey: null,
     otpApi: "https://otp.metrofeedus.com/otp/transmodel/v3", // Direct endpoint (CORS fixed on server)
     otpGtfsGraphql: "https://otp.metrofeedus.com/otp/gtfs/v1", // Fallback GraphQL endpoint when Transmodel returns no tripPatterns
     busApi: "https://maps.metrofeedus.com/api/mbta/VehiclePositions.pb", // Proxied through VPS
@@ -163,8 +161,8 @@ const CITIES = {
     state: "OH",
     timezone: "America/New_York",
 
-    // Public-style map identifier (MetroFeed-hosted tiles); restrict in tile provider dashboard by domain.
-    apiKey: "2C4447D4A42083BCD84DE3B8E",
+    // APIs — Cincinnati uses VPS proxies; no client-side API keys.
+    apiKey: null,
     // OTP endpoints (Cincinnati deployment).
     otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
     otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
@@ -190,6 +188,18 @@ const CITIES = {
       east: -83.6828,
       west: -85.5172
     },
+    // NWS weather alerts: all RoamRaven service counties (matches Index.html cincinnati countyGeoids).
+    serviceCounties: [
+      { geoid: "39061", name: "Hamilton", state: "OH", nwsArea: "OHC061" },
+      { geoid: "39017", name: "Butler", state: "OH", nwsArea: "OHC017" },
+      { geoid: "39165", name: "Warren", state: "OH", nwsArea: "OHC165" },
+      { geoid: "21037", name: "Campbell", state: "KY", nwsArea: "KYC037" },
+      { geoid: "21117", name: "Kenton", state: "KY", nwsArea: "KYC117" },
+      { geoid: "21015", name: "Boone", state: "KY", nwsArea: "KYC015" }
+    ],
+    nwsAlertAreas: ["OHC061", "OHC017", "OHC165", "KYC037", "KYC117", "KYC015"],
+    /** VPS Geoapify proxy — OTP Start/Destination place search (key stays on server). */
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
     // Ohio road incidents (VPS JSON).
     incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
     // Ohio traffic flow / density (VPS JSON).

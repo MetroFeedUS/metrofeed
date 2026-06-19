@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetroFeed Admin Dashboard</title>
+  <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <!-- Tier Configuration -->
@@ -279,7 +279,7 @@
 </head>
 <body>
   <!-- Access Gate -->
-  <div id="accessGate" class="access-gate">
+  <div id="accessGate" class="access-gate hidden" aria-hidden="true" style="display:none">
     <div class="access-form">
       <h2>Admin Access</h2>
       <input type="password" id="accessCode" placeholder="Enter access code" autocomplete="off" />
@@ -289,7 +289,7 @@
   </div>
   
   <!-- Admin Dashboard -->
-  <div class="admin-container" id="adminContent" style="display: none;">
+  <div class="admin-container" id="adminContent">
     <div class="admin-header">
       <h1>MetroFeed Admin Dashboard</h1>
       <div class="admin-nav">
@@ -356,40 +356,6 @@
   </div>
   
   <script>
-    // Access Gate
-    const ACCESS_CODE = 'admin2024'; // Change this in production
-    
-    function checkAccess() {
-      const input = document.getElementById('accessCode');
-      const error = document.getElementById('accessError');
-      const gate = document.getElementById('accessGate');
-      const content = document.getElementById('adminContent');
-      
-      if (input.value === ACCESS_CODE) {
-        gate.classList.add('hidden');
-        content.style.display = 'block';
-        localStorage.setItem('admin_access', 'granted');
-        addLog('success', 'Access granted');
-      } else {
-        error.textContent = 'Invalid access code';
-        input.value = '';
-        addLog('error', 'Failed access attempt');
-      }
-    }
-    
-    // Check if already authenticated
-    if (localStorage.getItem('admin_access') === 'granted') {
-      document.getElementById('accessGate').classList.add('hidden');
-      document.getElementById('adminContent').style.display = 'block';
-    }
-    
-    // Allow Enter key in access code input
-    document.getElementById('accessCode').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        checkAccess();
-      }
-    });
-    
     // Preview Toggle Functions
     function setPreviewTier(tier) {
       if (window.TIER_CONFIG) {

@@ -171,52 +171,69 @@
     <a href="privacy.html" data-translate="privacy">Privacy Policy</a>
   </footer>
 
-  <script src="../translations.js?v=15"></script>
+  <script src="city-config.js"></script>
   <script>
-    // Initialize language system
     document.addEventListener('DOMContentLoaded', function() {
-      setLanguage(getCurrentLanguage());
+      if (typeof setLanguage === 'function' && typeof getCurrentLanguage === 'function') {
+        setLanguage(getCurrentLanguage());
+      }
     });
   </script>
   <script>
-    // LIVE TriMet Alerts (XML endpoint)
-    const apiKey = "2C4447D4A42083BCD84DE3B8E";
-    const apiUrl = `https://developer.trimet.org/ws/V1/FeedSpecAlerts/alerts.xml?appID=${apiKey}`;
-    const alertsFeed = document.getElementById('alerts-feed');
-    alertsFeed.innerHTML = "<span data-translate='loadingAlerts'>Loading TriMet alerts…</span>";
+    (function () {
+      const alertsFeed = document.getElementById('alerts-feed');
+      if (!alertsFeed) return;
 
-    fetch(apiUrl)
-      .then(response => response.text())
-      .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
-      .then(data => {
-        const alertNodes = data.querySelectorAll("alert");
-        if (alertNodes.length > 0) {
-          alertsFeed.innerHTML = "";
-          alertNodes.forEach(alert => {
-            const header = alert.querySelector("header") ? alert.querySelector("header").textContent : translateText('trimetAlert');
-            const desc = alert.querySelector("description") ? alert.querySelector("description").textContent : "";
-            const issued = alert.querySelector("published") ? new Date(alert.querySelector("published").textContent).toLocaleString() : "";
-            const link = alert.querySelector("infoURL") ? alert.querySelector("infoURL").textContent : "https://trimet.org/alerts/";
-            const alertCard = document.createElement('div');
-            alertCard.className = 'alert-card';
-            alertCard.innerHTML = `
-              <div class="alert-title">${header}</div>
-              <span class="alert-time">${issued}</span>
-              <div class="alert-desc">${desc.slice(0,180)}${desc.length>180?'…':''}</div>
-              <a class="alert-link" href="${link}" target="_blank">${translateText('fullAlert')}</a>
-            `;
-            alertsFeed.appendChild(alertCard);
+      const cfg = typeof getCityConfig === 'function' ? getCityConfig() : null;
+      const url =
+        cfg && cfg.realtimeAlertsUrl
+          ? cfg.realtimeAlertsUrl
+          : 'https://routes.metrofeedus.com/realtime/cincinnati/alerts.json';
+
+      alertsFeed.innerHTML = "<span>Loading transit alerts…</span>";
+
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      fetch(url)
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          const alerts = data && Array.isArray(data.alerts) ? data.alerts : [];
+          if (!alerts.length) {
+            alertsFeed.innerHTML = '<span>No active transit alerts.</span>';
+            try { localStorage.setItem('hasActiveAlerts', 'false'); } catch (_) {}
+            return;
+          }
+          alertsFeed.innerHTML = '';
+          alerts.forEach(function (alert) {
+            const title = alert.title || alert.header || alert.agency || 'Transit alert';
+            const desc = alert.description || alert.body || alert.detail || alert.text || alert.summary || '';
+            const link = alert.url || alert.link || '';
+            const issued = alert.published || alert.updated_at || alert.updated || '';
+            const card = document.createElement('div');
+            card.className = 'alert-card';
+            card.innerHTML =
+              '<div class="alert-title">' + esc(title) + '</div>' +
+              (issued ? '<span class="alert-time">' + esc(String(issued)) + '</span>' : '') +
+              (desc ? '<div class="alert-desc">' + esc(String(desc).slice(0, 220)) + (String(desc).length > 220 ? '…' : '') + '</div>' : '') +
+              (link ? '<a class="alert-link" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Full alert</a>' : '');
+            alertsFeed.appendChild(card);
           });
-          localStorage.setItem('hasActiveAlerts', 'true');
-        } else {
-          alertsFeed.innerHTML = "<span data-translate='noActiveAlerts'>No active TriMet alerts.</span>";
-          localStorage.setItem('hasActiveAlerts', 'false');
-        }
-      })
-      .catch(() => {
-        alertsFeed.innerHTML = "<span style='color:#ffa500;' data-translate='couldNotLoadAlerts'>Could not load TriMet alerts. Try again later.</span>";
-        localStorage.setItem('hasActiveAlerts', 'false');
-      });
+          try { localStorage.setItem('hasActiveAlerts', 'true'); } catch (_) {}
+        })
+        .catch(function () {
+          alertsFeed.innerHTML = "<span style='color:#ffa500;'>Could not load alerts. Try again later.</span>";
+          try { localStorage.setItem('hasActiveAlerts', 'false'); } catch (_) {}
+        });
+    })();
   </script>
 </body>
 </html>
