@@ -101,6 +101,24 @@
     .maplibregl-popup-close-button:hover {
       background: var(--rr-silver-dim) !important;
     }
+    /* Route-colored / category-colored popups supply their own background + contrast text */
+    .mf-explore-popup .maplibregl-popup-content,
+    .mf-route-stop-popup .maplibregl-popup-content {
+      background: transparent !important;
+      color: inherit !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .mf-explore-popup .maplibregl-popup-tip,
+    .mf-route-stop-popup .maplibregl-popup-tip {
+      display: none !important;
+    }
+    .mf-explore-popup .maplibregl-popup-close-button,
+    .mf-route-stop-popup .maplibregl-popup-close-button {
+      color: #ffffff !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+    }
     /* Route chips/panels must NOT live inside #map: map is z-index 0, so children cannot paint above .search-bar (1000) / .side-buttons (1001). */
     #mapRouteOverlayRoot {
       position: absolute;
@@ -3692,7 +3710,7 @@
 <script src="city-config.js"></script>
 <script src="nwsServiceAlerts.js?v=2"></script>
 <script src="geocodeAutocomplete.js?v=1"></script>
-<script src="explorePlaces.js?v=20260619exploreMap"></script>
+<script src="explorePlaces.js?v=20260619explorePopup"></script>
 <!-- Cincinnati: static routes_index.js defines window.ROUTES (not lazy window.routesIndex). -->
 <script src="routes_index.js"></script>
 
@@ -3711,7 +3729,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260619stopsDrawOrder"></script>
+<script src="routeOverlay.js?v=20260619stopPopup"></script>
 <script src="trafficIncidents.js"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js?v=20260602noWalkOnly"></script>

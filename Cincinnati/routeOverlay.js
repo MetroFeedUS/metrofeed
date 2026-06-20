@@ -67,6 +67,7 @@ function pickContrastingTextColor(hex) {
   const L = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return L > 0.55 ? "#0d0d0d" : "#ffffff";
 }
+try { window.pickContrastingTextColor = pickContrastingTextColor; } catch (_) {}
 
 function metrofeedAngleDeltaDeg(a, b) {
   // Smallest signed diff between headings a and b (degrees)
@@ -2368,7 +2369,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
     }
 
     stops.forEach((stop) => {
-      const stopPopupAccent = metrofeedUiAccent();
+      const stopPopupFill = routeColor || "#1E90FF";
+      const stopPopupFg = pickContrastingTextColor(stopPopupFill);
+      const stopPopupMuted = stopPopupFg === "#ffffff" ? "rgba(255,255,255,0.78)" : "rgba(13,13,13,0.68)";
       const lat = stop.lat;
       const lon = stop.lon;
 
@@ -2529,7 +2532,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         
         // Add next time (highlighted)
         highlightedTimes.push(
-          `<span style="background:${stopPopupAccent};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${allTimes[nextTimeIndex].displayTime}</span>`
+          `<span style="background:${stopPopupFg};color:${stopPopupFill};padding:2px 6px;border-radius:6px;font-weight:bold;">${allTimes[nextTimeIndex].displayTime}</span>`
         );
         
         // Add after times (up to 3, no wrap-around)
@@ -2546,7 +2549,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         allTimes.slice(0, timesToShow).forEach((timeData, index) => {
           if (index === 0) {
             highlightedTimes.push(
-              `<span style="background:${stopPopupAccent};color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;">${timeData.displayTime}</span>`
+              `<span style="background:${stopPopupFg};color:${stopPopupFill};padding:2px 6px;border-radius:6px;font-weight:bold;">${timeData.displayTime}</span>`
             );
           } else {
             highlightedTimes.push(timeData.displayTime);
@@ -2685,7 +2688,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // ETA display (realtime trips.json → TripUpdates-shaped data)
       const getETADisplay = () => {
         try {
-          const uiA = metrofeedUiAccent();
           const overlayKey = etaOverlayKey;
           const tu = metrofeedGetRouteTripUpdatesForOverlay(overlayKey);
           const stopIdKey = String(stop.stop_id || stopId);
@@ -2698,14 +2700,14 @@ function attachRouteToMap(map, routeId, directionId, options) {
             .map(u => {
               const t = formatETA(new Date((u.time || 0) * 1000));
               const delay = (u.delay || u.delay === 0) ? `${u.delay >= 0 ? '+' : ''}${u.delay}s` : '';
-              return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:#bbb;">${tuLabel}</span><span style="color:${uiA};font-weight:bold;">${t}</span><span style="color:#888;font-size:12px;">${delay}</span></div>`;
+              return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:${stopPopupMuted};">${tuLabel}</span><span style="color:${stopPopupFg};font-weight:bold;">${t}</span><span style="color:${stopPopupMuted};font-size:12px;">${delay}</span></div>`;
             });
 
           if (tuList.length === 0) return '';
 
           return `
-            <hr style="border:none;border-top:1px solid ${uiA};margin:6px 0;">
-            <div style="font-size:12px;color:#fff;margin-bottom:4px;"><strong>Next arrivals</strong></div>
+            <hr style="border:none;border-top:1px solid ${stopPopupFg}44;margin:6px 0;">
+            <div style="font-size:12px;color:${stopPopupFg};margin-bottom:4px;"><strong>Next arrivals</strong></div>
             <div style="display:flex;flex-direction:column;gap:4px;">
               ${tuList.join('')}
             </div>
@@ -2718,24 +2720,23 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Popup content (reads latest ETA data when created/updated)
       const popupContent = document.createElement("div");
       const updatePopupContent = () => {
-        const uiAccent = metrofeedUiAccent();
         const etaDisplay = getETADisplay();
         const stopDisplayName = stop.name || `Stop ${stop.stop_id}`;
         popupContent.innerHTML = `
-          <div style="border:1px solid ${uiAccent};border-radius:8px;padding:10px;background:#222;color:#fff;min-width:200px;">
-            <strong style="color:${uiAccent};">${stopDisplayName}</strong>
+          <div style="border:2px solid ${stopPopupFg};border-radius:8px;padding:10px;background:${stopPopupFill};color:${stopPopupFg};min-width:200px;">
+            <strong style="color:${stopPopupFg};">${stopDisplayName}</strong>
             ${etaDisplay}
             ${
               highlightedTimes.length
                 ? `
-              <hr style="border:none;border-top:1px solid ${uiAccent};margin:6px 0;">
+              <hr style="border:none;border-top:1px solid ${stopPopupFg}44;margin:6px 0;">
               ${highlightedTimes.join("<br>")}
-              <hr style="border:none;border-top:1px solid ${uiAccent};margin:8px 0;">
-              <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${stopDisplayName.replace(/'/g, "\\'")}')" style="width:100%;background:${uiAccent};color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
+              <hr style="border:none;border-top:1px solid ${stopPopupFg}44;margin:8px 0;">
+              <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${stopDisplayName.replace(/'/g, "\\'")}')" style="width:100%;background:${stopPopupFg};color:${stopPopupFill};border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
             `
                 : ""
             }
-            <button type="button" class="mf-stop-explore-btn" style="width:100%;background:#333;color:#fff;border:1px solid ${uiAccent};padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:6px;">Explore nearby</button>
+            <button type="button" class="mf-stop-explore-btn" style="width:100%;background:transparent;color:${stopPopupFg};border:2px solid ${stopPopupFg};padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:6px;">Explore nearby</button>
           </div>
         `;
         const exploreBtn = popupContent.querySelector(".mf-stop-explore-btn");
@@ -2758,7 +2759,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       // Initial content (reads current ETA data)
       updatePopupContent();
       
-      const popup = new maplibregl.Popup().setDOMContent(popupContent);
+      const popup = new maplibregl.Popup({ className: "mf-route-stop-popup", offset: 12 }).setDOMContent(popupContent);
       
       const overlayKeyForStops = etaOverlayKey;
       overlayElements.stopPopupRefreshers.push({

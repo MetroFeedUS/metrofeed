@@ -233,6 +233,22 @@
     }
   }
 
+  function contrastingTextColor(hex) {
+    try {
+      if (typeof global.pickContrastingTextColor === 'function') {
+        return global.pickContrastingTextColor(hex);
+      }
+    } catch (_) {}
+    return '#ffffff';
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   function addPlaceMarker(map, feature, catMeta) {
     var pt = placeCoordsFromFeature(feature);
     if (!pt) return;
@@ -241,6 +257,7 @@
     var catId = parseCategoryFromFeatureType(ft, '') || (catMeta && catMeta.id) || '';
     var meta = catMeta || categoryById(catId) || {};
     var color = meta.color || uiAccent();
+    var fg = contrastingTextColor(color);
     var icon = meta.icon || '📍';
     var name = String(p.name || p.address_line1 || 'Place').trim();
 
@@ -254,14 +271,20 @@
     el.title = name;
 
     var popupHtml =
-      '<div style="padding:8px 10px;min-width:140px;color:#222;">' +
-      '<strong>' + name.replace(/</g, '&lt;') + '</strong>' +
-      (meta.label ? '<div style="font-size:12px;color:#555;margin-top:4px;">' + meta.label + '</div>' : '') +
+      '<div style="padding:8px 12px;min-width:140px;background:' + color + ';color:' + fg + ';' +
+      'border-radius:8px;border:2px solid ' + fg + ';">' +
+      '<strong style="color:' + fg + ';">' + escapeHtml(name) + '</strong>' +
+      (meta.label ? '<div style="font-size:12px;margin-top:4px;opacity:0.88;color:' + fg + ';">' +
+        escapeHtml(meta.label) + '</div>' : '') +
       '</div>';
 
     var marker = new global.maplibregl.Marker({ element: el, anchor: 'center' })
       .setLngLat([pt.lon, pt.lat])
-      .setPopup(new global.maplibregl.Popup({ offset: 14, closeButton: true }).setHTML(popupHtml))
+      .setPopup(new global.maplibregl.Popup({
+        offset: 14,
+        closeButton: true,
+        className: 'mf-explore-popup'
+      }).setHTML(popupHtml))
       .addTo(map);
     state.markers.push(marker);
   }
