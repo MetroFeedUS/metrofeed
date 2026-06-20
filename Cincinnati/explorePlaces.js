@@ -17,7 +17,7 @@
   var GEOM_RANK = { walk_5: 5, walk_10: 10, walk_15: 15, walk_30: 30 };
 
   function cfg() {
-    return global.CITY_CONFIG || global.getCityConfig && global.getCityConfig() || {};
+    return global.CITY_CONFIG || (global.getCityConfig && global.getCityConfig()) || {};
   }
 
   function exploreCfg() {
@@ -42,6 +42,30 @@
     if (global.map && typeof global.map.addSource === 'function') return global.map;
     if (global.metrofeedMap && typeof global.metrofeedMap.addSource === 'function') return global.metrofeedMap;
     return null;
+  }
+
+  function explorePanelTopPx() {
+    try {
+      var raw = getComputedStyle(document.documentElement).getPropertyValue('--mf-right-rail-alert-top');
+      var n = parseInt(String(raw || '').trim(), 10);
+      if (Number.isFinite(n) && n > 0) return n + 6;
+    } catch (_) {}
+    try {
+      var toggle = document.getElementById('mfTripPlannerToggle');
+      if (toggle && toggle.getBoundingClientRect) {
+        return Math.max(64, Math.round(toggle.getBoundingClientRect().bottom + 8));
+      }
+    } catch (_) {}
+    return 72;
+  }
+
+  function getExplorePanelHost() {
+    try {
+      if (typeof global.getRouteOverlayMount === 'function') {
+        return global.getRouteOverlayMount();
+      }
+    } catch (_) {}
+    return document.body;
   }
 
   function geometryRank(id) {
@@ -71,22 +95,39 @@
     return null;
   }
 
-  function parseCategoryFromFeatureType(featureType) {
+  function parseCategoryFromFeatureType(featureType, geometryId) {
     var ft = String(featureType || '');
+    var prefix = String(geometryId || '') + '.';
+    if (ft.indexOf(prefix) === 0) return ft.slice(prefix.length);
     var dot = ft.indexOf('.');
     if (dot < 0) return '';
     return ft.slice(dot + 1);
   }
 
-  function coordsFromGeometry(geom) {
-    if (!geom) return null;
-    if (geom.type === 'Point' && Array.isArray(geom.coordinates) && geom.coordinates.length >= 2) {
-      return { lon: geom.coordinates[0], lat: geom.coordinates[1] };
+  function placeCoordsFromFeature(feature) {
+    if (!feature) return null;
+    var p = feature.properties || {};
+    var lat = Number(p.lat);
+    var lon = Number(p.lon);
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      return { lat: lat, lon: lon };
+    }
+    var g = feature.geometry;
+    if (g && g.type === 'Point' && Array.isArray(g.coordinates) && g.coordinates.length >= 2) {
+      return { lon: Number(g.coordinates[0]), lat: Number(g.coordinates[1]) };
     }
     return null;
   }
 
-  function clearExploreLayers() {
+  function isPlaceExploreFeature(feature, geometryId, catSet) {
+    var ft = feature && feature.properties && feature.properties.feature_type;
+    if (!ft || ft === geometryId || ft === 'details') return false;
+    var catId = parseCategoryFromFeatureType(ft, geometryId);
+    if (!catId || !catSet[catId]) return false;
+    return !!placeCoordsFromFeature(feature);
+  }
+
+  function clearExploreMapLayers() {
     var map = getMap();
     if (!map) return;
     try {
@@ -102,6 +143,10 @@
       try { state.stopPin.remove(); } catch (_) {}
       state.stopPin = null;
     }
+  }
+
+  function clearExploreLayers() {
+    clearExploreMapLayers();
     if (state.panel && state.panel.parentNode) {
       state.panel.parentNode.removeChild(state.panel);
       state.panel = null;
@@ -109,21 +154,26 @@
   }
 
   function ensureExplorePanel() {
-    if (state.panel && state.panel.parentNode) return state.panel;
-    var map = getMap();
-    if (!map || !map.getContainer) return null;
+    if (state.panel && state.panel.parentNode) {
+      state.panel.style.top = explorePanelTopPx() + 'px';
+      return state.panel;
+    }
+    var host = getExplorePanelHost();
+    if (!host) return null;
+    var topPx = explorePanelTopPx();
     var el = document.createElement('div');
     el.id = 'mfExplorePanel';
     el.style.cssText =
-      'position:absolute;z-index:12;top:12px;left:50%;transform:translateX(-50%);' +
-      'max-width:min(92vw,420px);background:rgba(20,20,20,0.92);color:#fff;' +
+      'position:fixed;z-index:1003;top:' + topPx + 'px;left:50%;transform:translateX(-50%);' +
+      'max-width:min(92vw,420px);background:rgba(20,20,20,0.94);color:#fff;' +
       'border:1px solid ' + uiAccent() + ';border-radius:10px;padding:10px 14px;' +
-      'font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,0.45);display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+      'font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,0.45);display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
+      'pointer-events:auto;';
     el.innerHTML =
       '<span id="mfExplorePanelText" style="flex:1 1 auto;line-height:1.35;"></span>' +
       '<button type="button" id="mfExploreClearBtn" style="background:#444;color:#fff;border:1px solid #666;' +
       'padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:bold;white-space:nowrap;">Clear</button>';
-    map.getContainer().appendChild(el);
+    host.appendChild(el);
     var clearBtn = el.querySelector('#mfExploreClearBtn');
     if (clearBtn) {
       clearBtn.addEventListener('click', function () {
@@ -141,6 +191,13 @@
     if (span) span.textContent = String(text || '');
   }
 
+  function moveExploreLayersToTop(map) {
+    try {
+      if (map.getLayer(ISO_LAYER)) map.moveLayer(ISO_LAYER);
+      if (map.getLayer(ISO_LINE)) map.moveLayer(ISO_LINE);
+    } catch (_) {}
+  }
+
   function drawIsochrone(map, feature) {
     if (!map || !feature || !feature.geometry) return;
     var accent = uiAccent();
@@ -156,7 +213,7 @@
           source: ISO_SOURCE,
           paint: {
             'fill-color': accent,
-            'fill-opacity': 0.12
+            'fill-opacity': 0.14
           }
         });
         map.addLayer({
@@ -165,36 +222,34 @@
           source: ISO_SOURCE,
           paint: {
             'line-color': accent,
-            'line-width': 2,
-            'line-opacity': 0.55
+            'line-width': 2.5,
+            'line-opacity': 0.7
           }
         });
       }
+      moveExploreLayersToTop(map);
     } catch (err) {
       console.warn('[explorePlaces] isochrone layer', err);
     }
   }
 
   function addPlaceMarker(map, feature, catMeta) {
+    var pt = placeCoordsFromFeature(feature);
+    if (!pt) return;
     var p = feature.properties || {};
-    var pt = coordsFromGeometry(feature.geometry);
-    var lat = Number(p.lat);
-    var lon = Number(p.lon);
-    if (!pt) {
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-      pt = { lat: lat, lon: lon };
-    }
-    var catId = parseCategoryFromFeatureType(p.feature_type) || (catMeta && catMeta.id) || '';
+    var ft = String(p.feature_type || '');
+    var catId = parseCategoryFromFeatureType(ft, '') || (catMeta && catMeta.id) || '';
     var meta = catMeta || categoryById(catId) || {};
     var color = meta.color || uiAccent();
     var icon = meta.icon || '📍';
     var name = String(p.name || p.address_line1 || 'Place').trim();
 
     var el = document.createElement('div');
+    el.className = 'mf-explore-place-marker';
     el.style.cssText =
-      'width:28px;height:28px;border-radius:50%;background:' + color + ';' +
+      'width:30px;height:30px;border-radius:50%;background:' + color + ';' +
       'border:2px solid #fff;display:flex;align-items:center;justify-content:center;' +
-      'font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.35);cursor:pointer;';
+      'font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.45);cursor:pointer;';
     el.textContent = icon;
     el.title = name;
 
@@ -211,10 +266,48 @@
     state.markers.push(marker);
   }
 
+  function extendBoundsWithGeometry(bounds, geometry) {
+    if (!bounds || !geometry) return;
+    var t = geometry.type;
+    var c = geometry.coordinates;
+    if (t === 'Point' && c && c.length >= 2) {
+      bounds.extend([c[0], c[1]]);
+    } else if (t === 'Polygon' && Array.isArray(c)) {
+      c.forEach(function (ring) {
+        if (!Array.isArray(ring)) return;
+        ring.forEach(function (pt) {
+          if (Array.isArray(pt) && pt.length >= 2) bounds.extend([pt[0], pt[1]]);
+        });
+      });
+    } else if (t === 'MultiPolygon' && Array.isArray(c)) {
+      c.forEach(function (poly) {
+        extendBoundsWithGeometry(bounds, { type: 'Polygon', coordinates: poly });
+      });
+    }
+  }
+
+  function fitMapToExploreResults(map, geomFeature) {
+    if (!map || !state.pending) return;
+    try {
+      var bounds = new global.maplibregl.LngLatBounds();
+      bounds.extend([state.pending.lon, state.pending.lat]);
+      state.markers.forEach(function (m) {
+        try {
+          var ll = m.getLngLat && m.getLngLat();
+          if (ll) bounds.extend([ll.lng, ll.lat]);
+        } catch (_) {}
+      });
+      if (geomFeature && geomFeature.geometry) {
+        extendBoundsWithGeometry(bounds, geomFeature.geometry);
+      }
+      map.fitBounds(bounds, { padding: 56, maxZoom: 15, duration: 900 });
+    } catch (_) {}
+  }
+
   function renderExploreResults(data, geometryId, categoryIds) {
     var map = getMap();
     if (!map) return 0;
-    clearExploreLayers();
+    clearExploreMapLayers();
 
     var features = (data && data.features) || [];
     var geomFeature = null;
@@ -229,12 +322,10 @@
         geomFeature = f;
         return;
       }
-      var catId = parseCategoryFromFeatureType(ft);
-      if (!catId || !catSet[catId]) return;
-      if (f.geometry && (f.geometry.type === 'Point' || Number.isFinite(Number(f.properties && f.properties.lat)))) {
-        addPlaceMarker(map, f, categoryById(catId));
-        placeCount++;
-      }
+      if (!isPlaceExploreFeature(f, geometryId, catSet)) return;
+      var catId = parseCategoryFromFeatureType(ft, geometryId);
+      addPlaceMarker(map, f, categoryById(catId));
+      placeCount++;
     });
 
     if (geomFeature) drawIsochrone(map, geomFeature);
@@ -248,6 +339,18 @@
       state.stopPin = new global.maplibregl.Marker({ element: el })
         .setLngLat([state.pending.lon, state.pending.lat])
         .addTo(map);
+    }
+
+    if (placeCount > 0 || geomFeature) {
+      fitMapToExploreResults(map, geomFeature);
+    } else if (state.pending) {
+      try {
+        map.flyTo({
+          center: [state.pending.lon, state.pending.lat],
+          zoom: Math.max(map.getZoom(), 14),
+          duration: 800
+        });
+      } catch (_) {}
     }
 
     return placeCount;
@@ -421,22 +524,23 @@
       .then(function (data) {
         var count = renderExploreResults(data, sel.geometryId, sel.categories);
         if (count === 0) {
-          setPanelText('No places found within ' + geomLabel + ' of ' + stopName + '.');
-        } else {
-          setPanelText(count + ' place' + (count === 1 ? '' : 's') + ' within ' + geomLabel + ' of ' + stopName + '.');
-        }
-        try {
-          var map = getMap();
-          if (map && state.pending) {
-            map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 14), duration: 800 });
+          var onlyIso = !!(data && data.features && data.features.some(function (f) {
+            return f && f.properties && f.properties.feature_type === sel.geometryId;
+          }));
+          if (onlyIso) {
+            setPanelText('Walk area shown — no matching places found within ' + geomLabel + '.');
+          } else {
+            setPanelText('No places found within ' + geomLabel + ' of ' + stopName + '.');
           }
-        } catch (_) {}
+        } else {
+          setPanelText(count + ' place' + (count === 1 ? '' : 's') + ' on map within ' + geomLabel + ' of ' + stopName + '. Tap markers for names.');
+        }
       })
       .catch(function (err) {
         console.warn('[explorePlaces]', err);
         var msg = (err && err.message) ? err.message : 'Explore failed';
         if (/missing id/i.test(msg)) {
-          msg = 'Explore API needs lat/lon support on the server. Try again after the location API is updated.';
+          msg = 'Explore could not load — location API needs lat/lon support on the server.';
         }
         setPanelText(msg);
         ensureExplorePanel();

@@ -2330,6 +2330,43 @@ function attachRouteToMap(map, routeId, directionId, options) {
       scheduleBucket = "weekday";
     }
 
+    // Opposite-direction stops first so main-direction stops render on top (click priority).
+    if (hasOppositeShapes && oppositeRouteData && Array.isArray(oppositeRouteData.stops) && oppositeRouteData.stops.length) {
+      const selectedStopIds = new Set(
+        stops
+          .map((s) => (s && s.stop_id !== undefined && s.stop_id !== null ? String(s.stop_id) : ""))
+          .filter((id) => id)
+      );
+      oppositeRouteData.stops.forEach((stop) => {
+        const lat = stop.lat;
+        const lon = stop.lon;
+        if (typeof lat !== "number" || typeof lon !== "number") return;
+        const stopId = String(stop.stop_id || "");
+        if (!stopId || selectedStopIds.has(stopId)) return;
+
+        const el = document.createElement("div");
+        el.className = "mf-opposite-stop-marker";
+        el.style.width = "12px";
+        el.style.height = "12px";
+        el.style.borderRadius = "50%";
+        el.style.backgroundColor = "transparent";
+        el.style.border = `2px solid ${routeColor || "#888"}`;
+        el.style.opacity = "0.45";
+
+        const marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]);
+        const name = stop.name || `Stop ${stop.stop_id}`;
+        const popupHtml = `
+          <div style="border:1px solid #888;border-radius:8px;padding:10px;background:#222;color:#ccc;min-width:180px;">
+            <strong style="color:#aaa;">${name}</strong>
+            <div style="margin-top:8px;font-size:12px;color:#888;">Other direction — switch direction in Bus Routes to see times for this stop.</div>
+          </div>
+        `;
+        marker.setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml));
+        marker.addTo(map);
+        overlayElements.markers.push(marker);
+      });
+    }
+
     stops.forEach((stop) => {
       const stopPopupAccent = metrofeedUiAccent();
       const lat = stop.lat;
@@ -2734,43 +2771,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
 
       overlayElements.markers.push(stopMarker);
     });
-
-    // Opposite-direction-only stops: hollow + faded (no schedule UI; other-direction context)
-    if (hasOppositeShapes && oppositeRouteData && Array.isArray(oppositeRouteData.stops) && oppositeRouteData.stops.length) {
-      const selectedStopIds = new Set(
-        stops
-          .map((s) => (s && s.stop_id !== undefined && s.stop_id !== null ? String(s.stop_id) : ""))
-          .filter((id) => id)
-      );
-      oppositeRouteData.stops.forEach((stop) => {
-        const lat = stop.lat;
-        const lon = stop.lon;
-        if (typeof lat !== "number" || typeof lon !== "number") return;
-        const stopId = String(stop.stop_id || "");
-        if (!stopId || selectedStopIds.has(stopId)) return;
-
-        const el = document.createElement("div");
-        el.className = "mf-opposite-stop-marker";
-        el.style.width = "12px";
-        el.style.height = "12px";
-        el.style.borderRadius = "50%";
-        el.style.backgroundColor = "transparent";
-        el.style.border = `2px solid ${routeColor || "#888"}`;
-        el.style.opacity = "0.45";
-
-        const marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]);
-        const name = stop.name || `Stop ${stop.stop_id}`;
-        const popupHtml = `
-          <div style="border:1px solid #888;border-radius:8px;padding:10px;background:#222;color:#ccc;min-width:180px;">
-            <strong style="color:#aaa;">${name}</strong>
-            <div style="margin-top:8px;font-size:12px;color:#888;">Other direction — switch direction in Bus Routes to see times for this stop.</div>
-          </div>
-        `;
-        marker.setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml));
-        marker.addTo(map);
-        overlayElements.markers.push(marker);
-      });
-    }
 
     // ---------- Route info panel (mainOverlay only) ----------
     // OTP trip legs use .otp-trip-route-chip on the rail instead (see otp.js).
