@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OBS Weather Bar — Warning Style Mockups</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    :root {
+      --page-bg: #0c0c10;
+      --label: #94a3b8;
+      --purple: #9333ea;
+      --purple-soft: #c084fc;
+      --amber: #f59e0b;
+      --amber-soft: #fcd34d;
+      --red: #ef4444;
+      --red-soft: #fecaca;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --bar-w: 960px;
+      --bar-h: 160px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+      padding: 2rem 1.5rem 4rem;
+      line-height: 1.5;
+    }
+
+    header {
+      max-width: 960px;
+      margin: 0 auto 2.5rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: var(--purple-soft);
+      margin-bottom: 0.35rem;
+    }
+
+    header p {
+      color: var(--label);
+      font-size: 0.95rem;
+      max-width: 720px;
+    }
+
+    .example {
+      max-width: 960px;
+      margin: 0 auto 3rem;
+    }
+
+    .example__head {
+      margin-bottom: 0.65rem;
+    }
+
+    .example__head h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .example__head p {
+      font-size: 0.88rem;
+      color: var(--label);
+      margin-top: 0.2rem;
+    }
+
+    .example__tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+    }
+
+    .tag-clear { background: rgba(34,197,94,0.15); color: #86efac; }
+    .tag-caution { background: rgba(245,158,11,0.18); color: #fcd34d; }
+    .tag-warning { background: rgba(239,68,68,0.18); color: #fecaca; }
+    .tag-emergency { background: rgba(239,68,68,0.35); color: #fff; }
+
+    /* ---- shared ticker layout (scaled preview: 960px = half of 1920 OBS) ---- */
+    .rr-ticker {
+      display: grid;
+      grid-template-columns: 184px 234px 1fr 74px;
+      grid-template-rows: 118px 42px;
+      width: var(--bar-w);
+      height: var(--bar-h);
+      border-top: 2px solid rgba(147, 51, 234, 0.55);
+      background: #000;
+      overflow: hidden;
+    }
+
+    .rr-ticker__cell {
+      padding: 8px 12px;
+      border-right: 1px solid rgba(147, 51, 234, 0.22);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .rr-ticker__brand-col {
+      padding: 10px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      grid-row: 1 / 3;
+      grid-column: 4;
+      background: rgba(147, 51, 234, 0.06);
+      border-left: 1px solid rgba(147, 51, 234, 0.22);
+    }
+
+    .rr-ticker__bar {
+      grid-column: 1 / 4;
+      grid-row: 2;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 14px;
+      background: rgba(147, 51, 234, 0.08);
+      border-top: 1px solid rgba(147, 51, 234, 0.25);
+      font-size: 0.78rem;
+      color: var(--muted);
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .rr-clock__time {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .rr-clock__time .sec { font-size: 0.52em; color: var(--purple-soft); }
+
+    .rr-clock__date {
+      margin-top: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--purple-soft);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rr-clock__place {
+      margin-top: 2px;
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .rr-weather-now {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rr-weather-now__emoji { font-size: 2rem; line-height: 1; }
+    .rr-weather-now__temp { font-size: 2rem; font-weight: 800; line-height: 1; }
+
+    .rr-weather-now__meta { flex: 1; min-width: 0; }
+
+    .rr-weather-now__desc {
+      font-size: 0.88rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rr-weather-now__feels { font-size: 0.75rem; color: var(--muted); }
+
+    .rr-weather-alert {
+      margin-top: 4px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rr-weather-alert--ok {
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      color: #86efac;
+    }
+
+    .rr-weather-alert--warn {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #fecaca;
+    }
+
+    .rr-weather-alert--caution {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.55);
+      color: #fcd34d;
+    }
+
+    .rr-hourly__label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--purple-soft);
+      margin-bottom: 2px;
+    }
+
+    .rr-hourly__row { display: flex; gap: 5px; }
+
+    .rr-hourly__card {
+      flex: 1;
+      padding: 3px 2px;
+      text-align: center;
+      background: rgba(17, 17, 24, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+    }
+
+    .rr-hourly__card--now { border-color: rgba(147, 51, 234, 0.65); }
+
+    .rr-hourly__time { font-size: 0.72rem; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+    .rr-hourly__main { display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .rr-hourly__emoji { font-size: 1.1rem; }
+    .rr-hourly__temp { font-size: 0.85rem; font-weight: 800; color: var(--purple-soft); }
+
+    .rr-ticker__tip { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rr-ticker__tip span { color: var(--purple-soft); }
+    .rr-ticker__tonight { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+    .rr-ticker__updated { white-space: nowrap; flex-shrink: 0; }
+
+    .rr-ticker__brand {
+      font-weight: 800;
+      font-size: 0.68rem;
+      color: var(--purple-soft);
+      letter-spacing: 0.14em;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    /* ===== EXAMPLE 1: Normal (current) ===== */
+    .ticker--normal { /* default styles above */ }
+
+    /* ===== EXAMPLE 2: Accent — Caution (watch/advisory) ===== */
+    .ticker--accent-caution {
+      border-top-color: rgba(245, 158, 11, 0.75);
+      animation: borderPulseAmber 3.5s ease-in-out infinite;
+    }
+
+    .ticker--accent-caution .rr-ticker__cell { border-right-color: rgba(245, 158, 11, 0.2); }
+    .ticker--accent-caution .rr-ticker__brand-col {
+      background: rgba(245, 158, 11, 0.08);
+      border-left-color: rgba(245, 158, 11, 0.25);
+    }
+    .ticker--accent-caution .rr-ticker__bar {
+      background: rgba(245, 158, 11, 0.1);
+      border-top-color: rgba(245, 158, 11, 0.3);
+    }
+    .ticker--accent-caution .rr-clock__time .sec,
+    .ticker--accent-caution .rr-clock__date,
+    .ticker--accent-caution .rr-hourly__label,
+    .ticker--accent-caution .rr-hourly__temp,
+    .ticker--accent-caution .rr-ticker__brand,
+    .ticker--accent-caution .rr-ticker__tip span { color: var(--amber-soft); }
+    .ticker--accent-caution .rr-hourly__card--now { border-color: rgba(245, 158, 11, 0.65); }
+
+    @keyframes borderPulseAmber {
+      0%, 100% { box-shadow: 0 -2px 0 0 rgba(245, 158, 11, 0.35); }
+      50% { box-shadow: 0 -4px 12px 0 rgba(245, 158, 11, 0.45); }
+    }
+
+    /* ===== EXAMPLE 3: Accent — Warning (red accents, bigger alert pill) ===== */
+    .ticker--accent-warning {
+      border-top-color: rgba(239, 68, 68, 0.85);
+      animation: borderPulseRed 2.8s ease-in-out infinite;
+    }
+
+    .ticker--accent-warning .rr-ticker__cell { border-right-color: rgba(239, 68, 68, 0.22); }
+    .ticker--accent-warning .rr-ticker__brand-col {
+      background: rgba(239, 68, 68, 0.1);
+      border-left-color: rgba(239, 68, 68, 0.35);
+    }
+    .ticker--accent-warning .rr-ticker__bar {
+      background: rgba(239, 68, 68, 0.12);
+      border-top-color: rgba(239, 68, 68, 0.4);
+    }
+    .ticker--accent-warning .rr-clock__time .sec,
+    .ticker--accent-warning .rr-clock__date,
+    .ticker--accent-warning .rr-hourly__label,
+    .ticker--accent-warning .rr-hourly__temp,
+    .ticker--accent-warning .rr-ticker__brand,
+    .ticker--accent-warning .rr-ticker__tip span { color: var(--red-soft); }
+    .ticker--accent-warning .rr-hourly__card--now { border-color: rgba(239, 68, 68, 0.65); }
+    .ticker--accent-warning .rr-weather-alert--warn {
+      font-size: 0.82rem;
+      padding: 5px 10px;
+      animation: alertPulse 2.8s ease-in-out infinite;
+    }
+
+    @keyframes borderPulseRed {
+      0%, 100% { box-shadow: 0 -2px 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 -4px 16px 0 rgba(239, 68, 68, 0.55); }
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { background: rgba(239, 68, 68, 0.15); }
+      50% { background: rgba(239, 68, 68, 0.32); }
+    }
+
+    /* ===== EXAMPLE 4: Bottom bar takeover ===== */
+    .ticker--bottom-takeover {
+      border-top-color: rgba(239, 68, 68, 0.85);
+    }
+
+    .ticker--bottom-takeover .rr-ticker__bar {
+      background: linear-gradient(90deg, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%);
+      background-size: 200% 100%;
+      animation: barShimmer 4s linear infinite;
+      border-top: 2px solid #fca5a5;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      justify-content: flex-start;
+      gap: 10px;
+    }
+
+    .ticker--bottom-takeover .rr-alert-bar-icon {
+      flex-shrink: 0;
+      font-size: 1.1rem;
+      animation: iconBlink 1.8s step-end infinite;
+    }
+
+    .ticker--bottom-takeover .rr-alert-bar-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+    }
+
+    .ticker--bottom-takeover .rr-alert-bar-until {
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      font-weight: 600;
+      opacity: 0.9;
+      text-transform: none;
+    }
+
+    @keyframes barShimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    @keyframes iconBlink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0.35; }
+    }
+
+    /* ===== EXAMPLE 5: Full emergency bar ===== */
+    .ticker--emergency {
+      grid-template-columns: 140px 1fr 74px;
+      grid-template-rows: 1fr 42px;
+      border-top: 3px solid #fca5a5;
+      background: linear-gradient(135deg, #450a0a 0%, #1a0505 40%, #000 100%);
+      animation: emergencyGlow 3s ease-in-out infinite;
+    }
+
+    .ticker--emergency .rr-ticker__cell--clock {
+      grid-row: 1;
+      grid-column: 1;
+      border-right-color: rgba(239, 68, 68, 0.3);
+      padding: 10px;
+    }
+
+    .ticker--emergency .rr-ticker__cell--alert-main {
+      grid-row: 1;
+      grid-column: 2;
+      border-right: none;
+      justify-content: center;
+      padding: 12px 16px;
+    }
+
+    .ticker--emergency .rr-emergency__event {
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      line-height: 1.1;
+      animation: emergencyTextPulse 2.5s ease-in-out infinite;
+    }
+
+    .ticker--emergency .rr-emergency__detail {
+      margin-top: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fecaca;
+    }
+
+    .ticker--emergency .rr-emergency__counties {
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: #fca5a5;
+    }
+
+    .ticker--emergency .rr-ticker__brand-col {
+      background: rgba(239, 68, 68, 0.15);
+      border-left-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .ticker--emergency .rr-ticker__brand { color: #fecaca; }
+
+    .ticker--emergency .rr-ticker__bar {
+      grid-column: 1 / 4;
+      background: rgba(127, 29, 29, 0.85);
+      border-top: 1px solid rgba(252, 165, 165, 0.5);
+      color: #fecaca;
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+
+    .ticker--emergency .rr-emergency__mini {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .ticker--emergency .rr-emergency__mini-temp {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    @keyframes emergencyGlow {
+      0%, 100% { box-shadow: inset 0 0 40px rgba(239, 68, 68, 0.08); }
+      50% { box-shadow: inset 0 0 60px rgba(239, 68, 68, 0.18); }
+    }
+
+    @keyframes emergencyTextPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.92; transform: scale(1.01); }
+    }
+
+    .note {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: #64748b;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>OBS Weather Bar — Warning Style Mockups</h1>
+    <p>
+      Throwaway preview page. Each bar is half width (960px) of the real OBS source (1920px).
+      Mock data only — animations are live so you can judge how they feel on stream.
+    </p>
+  </header>
+
+  <!-- 0. Current / clear -->
+  <section class="example">
+    <div class="example__head">
+      <span class="example__tag tag-clear">Baseline</span>
+      <h2>0 — Normal (what you have today)</h2>
+      <p>Purple RoamRaven look. Green “no alerts” pill when clear; small red pill when something is active.</p>
+    </div>
+    <div class="rr-ticker ticker--normal">
+      <div class="rr-ticker__cell">
+        <div class="rr-clock__time">4:32<span class="sec">:18</span> PM</div>
+        <div class="rr-clock__date">Thursday, June 18, 2026</div>
+        <div class="rr-clock__place">Cincinnati, OH</div>
+      </div>
+      <div class="rr-ticker__cell">
+        <div class="rr-weather-now">
+          <div class="rr-weather-now__emoji">⛈️</div>
+          <div class="rr-weather-now__temp">78°F</div>
+          <div class="rr-weather-now__meta">
+            <div class="rr-weather-now__desc">Partly Cloudy</div>
+            <div class="rr-weather-now__feels">Feels like 81°F</div>
+            <div class="rr-weather-alert rr-weather-alert--ok">No active weather alerts</div>
+          </div>
+        </div>
+      </div>
+      <div class="rr-ticker__cell">
+        <div class="rr-hourly__label">Next hours</div>
+        <div class="rr-hourly__row">
+          <div class="rr-hourly__card rr-hourly__card--now"><div class="rr-hourly__time">Now</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">⛈️</span><span class="rr-hourly__temp">78°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">5 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">🌧️</span><span class="rr-hourly__temp">76°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">6 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">🌧️</span><span class="rr-hourly__temp">74°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">7 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">☁️</span><span class="rr-hourly__temp">72°</span></div></div>
+        </div>
+      </div>
+      <div class="rr-ticker__brand-col"><div class="rr-ticker__brand">ROAMRAVEN</div></div>
+      <footer class="rr-ticker__bar">
+        <div class="rr-ticker__tip"><span>Tip ·</span> Live buses &amp; routes at roamravenapp.com/cincinnati</div>
+        <div class="rr-ticker__tonight">Tonight: Showers · 68°</div>
+        <div class="rr-ticker__updated">Updated 4:30 PM</div>
+      </footer>
+    </div>
+  </section>
+
+  <!-- 1. Accent caution -->
+  <section class="example">
+    <div class="example__head">
+      <span class="example__tag tag-caution">Option 1 — Subtle</span>
+      <h2>1 — Accent mode: Watch / Advisory</h2>
+      <p>Same layout. Purple → amber accents, slow border pulse. Bigger amber alert pill. Good for Heat Advisory, Flood Watch, etc.</p>
+    </div>
+    <div class="rr-ticker ticker--accent-caution">
+      <div class="rr-ticker__cell">
+        <div class="rr-clock__time">4:32<span class="sec">:18</span> PM</div>
+        <div class="rr-clock__date">Thursday, June 18, 2026</div>
+        <div class="rr-clock__place">Cincinnati, OH</div>
+      </div>
+      <div class="rr-ticker__cell">
+        <div class="rr-weather-now">
+          <div class="rr-weather-now__emoji">☀️</div>
+          <div class="rr-weather-now__temp">92°F</div>
+          <div class="rr-weather-now__meta">
+            <div class="rr-weather-now__desc">Hot and Humid</div>
+            <div class="rr-weather-now__feels">Feels like 98°F</div>
+            <div class="rr-weather-alert rr-weather-alert--caution">⚠ Heat Advisory · Hamilton County</div>
+          </div>
+        </div>
+      </div>
+      <div class="rr-ticker__cell">
+        <div class="rr-hourly__label">Next hours</div>
+        <div class="rr-hourly__row">
+          <div class="rr-hourly__card rr-hourly__card--now"><div class="rr-hourly__time">Now</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">☀️</span><span class="rr-hourly__temp">92°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">5 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">☀️</span><span class="rr-hourly__temp">91°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">6 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">⛈️</span><span class="rr-hourly__temp">88°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">7 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">⛈️</span><span class="rr-hourly__temp">84°</span></div></div>
+        </div>
+      </div>
+      <div class="rr-ticker__brand-col"><div class="rr-ticker__brand">ROAMRAVEN</div></div>
+      <footer class="rr-ticker__bar">
+        <div class="rr-ticker__tip"><span>Tip ·</span> Live buses &amp; routes at roamravenapp.com/cincinnati</div>
+        <div class="rr-ticker__tonight">Tonight: Storms likely · 74°</div>
+        <div class="rr-ticker__updated">Updated 4:30 PM</div>
+      </footer>
+    </div>
+    <p class="note">Tips still rotate — only the accent colors change.</p>
+  </section>
+
+  <!-- 2. Accent warning -->
+  <section class="example">
+    <div class="example__head">
+      <span class="example__tag tag-warning">Option 1b — Subtle+</span>
+      <h2>2 — Accent mode: Warning (red)</h2>
+      <p>Same layout as today, but red accents + pulsing alert pill. Stronger than amber, still keeps hourly + tips.</p>
+    </div>
+    <div class="rr-ticker ticker--accent-warning">
+      <div class="rr-ticker__cell">
+        <div class="rr-clock__time">4:32<span class="sec">:18</span> PM</div>
+        <div class="rr-clock__date">Thursday, June 18, 2026</div>
+        <div class="rr-clock__place">Cincinnati, OH</div>
+      </div>
+      <div class="rr-ticker__cell">
+        <div class="rr-weather-now">
+          <div class="rr-weather-now__emoji">⛈️</div>
+          <div class="rr-weather-now__temp">74°F</div>
+          <div class="rr-weather-now__meta">
+            <div class="rr-weather-now__desc">Thunderstorms</div>
+            <div class="rr-weather-now__feels">Feels like 76°F</div>
+            <div class="rr-weather-alert rr-weather-alert--warn">⚠ Severe Thunderstorm Warning</div>
+          </div>
+        </div>
+      </div>
+      <div class="rr-ticker__cell">
+        <div class="rr-hourly__label">Next hours</div>
+        <div class="rr-hourly__row">
+          <div class="rr-hourly__card rr-hourly__card--now"><div class="rr-hourly__time">Now</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">⛈️</span><span class="rr-hourly__temp">74°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">5 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">🌧️</span><span class="rr-hourly__temp">72°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">6 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">🌧️</span><span class="rr-hourly__temp">70°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">7 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">☁️</span><span class="rr-hourly__temp">69°</span></div></div>
+        </div>
+      </div>
+      <div class="rr-ticker__brand-col"><div class="rr-ticker__brand">ROAMRAVEN</div></div>
+      <footer class="rr-ticker__bar">
+        <div class="rr-ticker__tip"><span>Tip ·</span> Tap a route on the map for stops, times &amp; alerts</div>
+        <div class="rr-ticker__tonight">Tonight: Showers · 66°</div>
+        <div class="rr-ticker__updated">Updated 4:30 PM</div>
+      </footer>
+    </div>
+  </section>
+
+  <!-- 3. Bottom bar takeover -->
+  <section class="example">
+    <div class="example__head">
+      <span class="example__tag tag-warning">Option 2 — Medium</span>
+      <h2>3 — Bottom bar takeover</h2>
+      <p>Clock + weather + hourly stay. Bottom strip becomes the alert headline — tips paused. My recommendation for TV.</p>
+    </div>
+    <div class="rr-ticker ticker--bottom-takeover">
+      <div class="rr-ticker__cell">
+        <div class="rr-clock__time">4:32<span class="sec">:18</span> PM</div>
+        <div class="rr-clock__date">Thursday, June 18, 2026</div>
+        <div class="rr-clock__place">Cincinnati, OH</div>
+      </div>
+      <div class="rr-ticker__cell">
+        <div class="rr-weather-now">
+          <div class="rr-weather-now__emoji">⛈️</div>
+          <div class="rr-weather-now__temp">74°F</div>
+          <div class="rr-weather-now__meta">
+            <div class="rr-weather-now__desc">Thunderstorms</div>
+            <div class="rr-weather-now__feels">Feels like 76°F</div>
+            <div class="rr-weather-alert rr-weather-alert--warn">⚠ Severe Thunderstorm Warning</div>
+          </div>
+        </div>
+      </div>
+      <div class="rr-ticker__cell">
+        <div class="rr-hourly__label">Next hours</div>
+        <div class="rr-hourly__row">
+          <div class="rr-hourly__card rr-hourly__card--now"><div class="rr-hourly__time">Now</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">⛈️</span><span class="rr-hourly__temp">74°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">5 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">🌧️</span><span class="rr-hourly__temp">72°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">6 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">🌧️</span><span class="rr-hourly__temp">70°</span></div></div>
+          <div class="rr-hourly__card"><div class="rr-hourly__time">7 PM</div><div class="rr-hourly__main"><span class="rr-hourly__emoji">☁️</span><span class="rr-hourly__temp">69°</span></div></div>
+        </div>
+      </div>
+      <div class="rr-ticker__brand-col"><div class="rr-ticker__brand">ROAMRAVEN</div></div>
+      <footer class="rr-ticker__bar">
+        <span class="rr-alert-bar-icon" aria-hidden="true">⚠</span>
+        <span class="rr-alert-bar-text">Severe Thunderstorm Warning · Hamilton, Butler &amp; Warren Counties</span>
+        <span class="rr-alert-bar-until">Until 5:15 PM</span>
+      </footer>
+    </div>
+    <p class="note">Shimmer + blinking ⚠ on the bottom strip only — not seizure-fast.</p>
+  </section>
+
+  <!-- 4. Full emergency -->
+  <section class="example">
+    <div class="example__head">
+      <span class="example__tag tag-emergency">Option 3 — Aggressive</span>
+      <h2>4 — Full emergency bar</h2>
+      <p>Entire bar flips red. Alert dominates; weather shrinks to a mini line at the bottom. Best reserved for tornado / flash flood warnings.</p>
+    </div>
+    <div class="rr-ticker ticker--emergency">
+      <div class="rr-ticker__cell rr-ticker__cell--clock">
+        <div class="rr-clock__time" style="font-size:1.65rem;">4:32<span class="sec">:18</span> PM</div>
+        <div class="rr-clock__date" style="font-size:0.7rem;">Jun 18, 2026</div>
+        <div class="rr-clock__place">Cincinnati</div>
+      </div>
+      <div class="rr-ticker__cell rr-ticker__cell--alert-main">
+        <div class="rr-emergency__event">Tornado Warning</div>
+        <div class="rr-emergency__detail">Take shelter now · Radar indicated rotation</div>
+        <div class="rr-emergency__counties">Hamilton · Butler · Clermont · Until 4:45 PM</div>
+      </div>
+      <div class="rr-ticker__brand-col"><div class="rr-ticker__brand">ROAMRAVEN</div></div>
+      <footer class="rr-ticker__bar">
+        <div class="rr-emergency__mini">
+          <span class="rr-emergency__mini-temp">74°F</span>
+          <span>⛈️ Thunderstorms · NWS data · Seek shelter immediately</span>
+        </div>
+      </footer>
+    </div>
+    <p class="note">Hourly strip hidden. Soft red glow pulse on the whole bar.</p>
+  </section>
+
+  <script>
+    /* Live clock on all mockups */
+    (function () {
+      function tick() {
+        var now = new Date();
+        var timeStr = now.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        });
+        var parts = timeStr.match(/^(\d{1,2}:\d{2})(:\d{2})?\s*(AM|PM)?$/i);
+        document.querySelectorAll('.rr-clock__time').forEach(function (el) {
+          if (parts) {
+            el.innerHTML = parts[1] + '<span class="sec">' + (parts[2] || '') + '</span> ' + (parts[3] || '');
+          } else {
+            el.textContent = timeStr;
+          }
+        });
+      }
+      tick();
+      setInterval(tick, 1000);
+    })();
+  </script>
+</body>
+</html>
