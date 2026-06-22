@@ -1040,6 +1040,45 @@ function metrofeedAgencyRouteParts(routeId) {
   return null;
 }
 
+/** Route JSON uses sorta_GILWINi; GTFS-RT trips.json often uses bare GILWINi. */
+function metrofeedBareStopId(stopId) {
+  const s = stopId != null ? String(stopId) : "";
+  if (!s) return "";
+  if (s.startsWith("sorta_")) return s.slice(6);
+  if (s.startsWith("tank_")) return s.slice(5);
+  if (s.startsWith("bcrta_")) return s.slice(6);
+  if (s.includes("_")) return s.slice(s.indexOf("_") + 1);
+  return s;
+}
+
+function metrofeedPrefixedStopId(stopId, feedAgency) {
+  const s = stopId != null ? String(stopId) : "";
+  if (!s) return "";
+  const ag = feedAgency != null ? String(feedAgency).toLowerCase() : "";
+  const prefix =
+    ag === "sorta" ? "sorta_" : ag === "tank" ? "tank_" : ag === "bcrta" ? "bcrta_" : "";
+  if (!prefix || s.startsWith(prefix)) return s;
+  return prefix + s;
+}
+
+/** Resolve live stop updates whether the feed key is bare or agency-prefixed. */
+function metrofeedLookupStopUpdates(updatesByStopId, staticStopId) {
+  if (!updatesByStopId || staticStopId == null || staticStopId === "") return [];
+  const key = String(staticStopId);
+  const bare = metrofeedBareStopId(key);
+  const candidates = [key];
+  if (bare && bare !== key) candidates.push(bare);
+  if (bare) {
+    candidates.push("sorta_" + bare, "tank_" + bare, "bcrta_" + bare);
+  }
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    const arr = c && updatesByStopId[c];
+    if (Array.isArray(arr) && arr.length) return arr;
+  }
+  return [];
+}
+
 function metrofeedFormatVehicleLabel(vehicleIDRawOrBus, routeId) {
   const rid = routeId != null ? String(routeId) : "";
   let raw = "";
@@ -1236,12 +1275,21 @@ function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
         su.arrival != null ? Number(su.arrival) : su.departure != null ? Number(su.departure) : null;
       if (!Number.isFinite(tSec)) continue;
       if (tSec < nowSec - 120) continue;
-      if (!updatesByStopId[sid]) updatesByStopId[sid] = [];
-      updatesByStopId[sid].push({
+      const updateEntry = {
         time: tSec,
         routeId: feedRouteId,
         directionId: null,
         delay: null
+      };
+      const storeKeys = new Set([sid]);
+      const prefixed = metrofeedPrefixedStopId(
+        sid,
+        trip.agency != null ? String(trip.agency) : agencyWant
+      );
+      if (prefixed && prefixed !== sid) storeKeys.add(prefixed);
+      storeKeys.forEach((storeKey) => {
+        if (!updatesByStopId[storeKey]) updatesByStopId[storeKey] = [];
+        updatesByStopId[storeKey].push(updateEntry);
       });
     }
   }
@@ -1275,14 +1323,8 @@ function metrofeedTripStopOverlapCount(trip, stopIdSet) {
       hits++;
       continue;
     }
-    const stopAg = metrofeedAgencyRouteParts(sid);
-    const stripped =
-      stopAg && stopAg.idPrefix && sid.startsWith(stopAg.idPrefix)
-        ? sid.slice(stopAg.idPrefix.length)
-        : sid.includes("_")
-          ? sid.slice(sid.indexOf("_") + 1)
-          : "";
-    if (stripped && stopIdSet.has(stripped)) hits++;
+    const stripped = metrofeedBareStopId(sid);
+    if (stripped && stripped !== sid && stopIdSet.has(stripped)) hits++;
   }
   return hits;
 }
@@ -2692,8 +2734,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const tu = metrofeedGetRouteTripUpdatesForOverlay(overlayKey);
           const stopIdKey = String(stop.stop_id || stopId);
           const tuLabel = (tu && tu.etaLabel) ? tu.etaLabel : "Live";
-          const tuListRaw = tu && tu.updatesByStopId && tu.updatesByStopId[stopIdKey] ? tu.updatesByStopId[stopIdKey] : [];
+          const nowSecEta = Math.floor(Date.now() / 1000);
+          const tuListRaw = metrofeedLookupStopUpdates(tu && tu.updatesByStopId, stopIdKey);
           const tuList = tuListRaw
+            .filter(u => Number.isFinite(Number(u.time)) && Number(u.time) >= nowSecEta)
             .filter(u => !u.routeId || String(u.routeId) === String(routeId))
             .filter(u => u.directionId === null || u.directionId === undefined || u.directionId == directionId)
             .slice(0, 2)
@@ -3264,7 +3308,10 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const stopIdToName = Object.create(null);
       (routeData.stops || []).forEach((s) => {
         const id = s.stop_id != null ? String(s.stop_id) : "";
-        if (id && s.name) stopIdToName[id] = s.name;
+        if (!id || !s.name) return;
+        stopIdToName[id] = s.name;
+        const bare = metrofeedBareStopId(id);
+        if (bare && bare !== id) stopIdToName[bare] = s.name;
       });
 
       const resolvedProxyUrls =
