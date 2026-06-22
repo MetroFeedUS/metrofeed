@@ -1079,6 +1079,117 @@ function metrofeedLookupStopUpdates(updatesByStopId, staticStopId) {
   return [];
 }
 
+function metrofeedStopIdsMatch(a, b) {
+  if (a == null || b == null) return false;
+  const A = String(a);
+  const B = String(b);
+  if (A === B) return true;
+  const ba = metrofeedBareStopId(A);
+  const bb = metrofeedBareStopId(B);
+  return !!(ba && ba === bb);
+}
+
+function metrofeedStopIndexOnTrip(trip, stopIdKey) {
+  if (!trip || !Array.isArray(trip.stop_updates)) return -1;
+  for (let i = 0; i < trip.stop_updates.length; i++) {
+    const sid =
+      trip.stop_updates[i].stop_id != null ? String(trip.stop_updates[i].stop_id) : "";
+    if (metrofeedStopIdsMatch(sid, stopIdKey)) return i;
+  }
+  return -1;
+}
+
+function metrofeedTripProgressStopIndex(trip, nowSec) {
+  if (!trip || !Array.isArray(trip.stop_updates)) return -1;
+  const grace = 90;
+  for (let i = 0; i < trip.stop_updates.length; i++) {
+    const tSec = metrofeedStopUpdateTimeSec(trip.stop_updates[i]);
+    if (!Number.isFinite(tSec)) continue;
+    if (tSec >= nowSec - grace) return i;
+  }
+  return trip.stop_updates.length > 0 ? trip.stop_updates.length - 1 : -1;
+}
+
+function metrofeedStopsAwayOnTrip(trip, stopIdKey, nowSec) {
+  const target = metrofeedStopIndexOnTrip(trip, stopIdKey);
+  if (target < 0) return null;
+  const current = metrofeedTripProgressStopIndex(trip, nowSec);
+  if (current < 0) return null;
+  const away = target - current;
+  return away >= 0 ? away : 0;
+}
+
+function metrofeedLiveSecToScheduleMins(liveSec, timezone) {
+  try {
+    const d = new Date(Number(liveSec) * 1000);
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone || "America/New_York",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false
+    });
+    const parts = fmt.formatToParts(d);
+    const h = parseInt(parts.find((p) => p.type === "hour").value, 10);
+    const m = parseInt(parts.find((p) => p.type === "minute").value, 10);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+    return h * 60 + m;
+  } catch (_) {
+    return null;
+  }
+}
+
+/** Minutes live vs closest scheduled time at this stop (− early, + late). */
+function metrofeedLatenessMinutes(allTimes, liveSec, timezone) {
+  if (!Array.isArray(allTimes) || !allTimes.length || !Number.isFinite(Number(liveSec))) return null;
+  const liveMins = metrofeedLiveSecToScheduleMins(liveSec, timezone);
+  if (liveMins == null) return null;
+  let bestDiff = null;
+  for (let i = 0; i < allTimes.length; i++) {
+    const om = allTimes[i].originalMins;
+    if (!Number.isFinite(om) || om >= 1440) continue;
+    const diff = liveMins - om;
+    if (diff < -3 || diff > 45) continue;
+    if (bestDiff == null || Math.abs(diff) < Math.abs(bestDiff)) bestDiff = diff;
+  }
+  return bestDiff;
+}
+
+function metrofeedFormatLateness(minDiff) {
+  if (minDiff == null || !Number.isFinite(minDiff)) return "";
+  if (Math.abs(minDiff) < 1) return "On time";
+  if (minDiff >= 1) return `${Math.round(minDiff)} min late`;
+  return `${Math.round(Math.abs(minDiff))} min early`;
+}
+
+function metrofeedFormatStopsAway(n) {
+  if (n == null || !Number.isFinite(n)) return "";
+  if (n <= 0) return "Arriving";
+  if (n === 1) return "1 stop away";
+  return `${n} stops away`;
+}
+
+function metrofeedBuildStopArrivalRowHtml(opts) {
+  const busLabel = opts.busLabel || "";
+  const stopsAway = opts.stopsAway || "";
+  const etaStr = opts.etaStr || "—";
+  const latenessStr = opts.latenessStr || "";
+  const muted = opts.muted || "#888";
+  const fg = opts.fg || "#fff";
+  const parts = [];
+  if (busLabel) parts.push(busLabel);
+  if (stopsAway) parts.push(stopsAway);
+  const left = parts.length ? parts.join(" · ") : "Live";
+  const latenessHtml = latenessStr
+    ? `<div style="font-size:11px;color:${muted};margin-top:2px;">${latenessStr}</div>`
+    : "";
+  return `<div style="padding:5px 0;border-bottom:1px solid ${fg}22;">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+      <span style="color:${fg};font-size:12px;line-height:1.35;">${left}</span>
+      <span style="color:${fg};font-weight:bold;white-space:nowrap;">${etaStr}</span>
+    </div>${latenessHtml}
+  </div>`;
+}
+
 function metrofeedFormatVehicleLabel(vehicleIDRawOrBus, routeId) {
   const rid = routeId != null ? String(routeId) : "";
   let raw = "";
@@ -1277,6 +1388,7 @@ function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
       if (tSec < nowSec - 120) continue;
       const updateEntry = {
         time: tSec,
+        tripId: tid || null,
         routeId: feedRouteId,
         directionId: null,
         delay: null
@@ -1302,14 +1414,23 @@ function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
     const seen = new Set();
     updatesByStopId[sid] = arr
       .filter((u) => {
-        if (seen.has(u.time)) return false;
-        seen.add(u.time);
+        const dedupeKey = String(u.tripId || "") + ":" + u.time;
+        if (seen.has(dedupeKey)) return false;
+        seen.add(dedupeKey);
         return true;
       })
       .slice(0, 4);
   }
 
-  return { updatesByStopId, tripUpdatesByTripId };
+  let futureUpdateCount = 0;
+  for (let fk = 0; fk < keys.length; fk++) {
+    const arr = updatesByStopId[keys[fk]];
+    for (let fi = 0; fi < arr.length; fi++) {
+      if (Number(arr[fi].time) >= nowSec) futureUpdateCount++;
+    }
+  }
+
+  return { updatesByStopId, tripUpdatesByTripId, futureUpdateCount };
 }
 
 /** How many stops on a live trip appear on the static route sheet (branch / direction alignment). */
@@ -2154,7 +2275,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
     unsubscribers: [], // cleanup hooks (shared vehicle feed subscriptions, observers, etc.)
     stopMarkers: [], // Store stop markers with their data for pulsing
     stopPopupRefreshers: [], // { overlayKey, fn } refresh stop popup when realtime trips load
-    busPopupRefreshers: [] // functions to refresh bus popups when ETAs load
+    busPopupRefreshers: [], // functions to refresh bus popups when ETAs load
+    latestRouteBuses: [] // last filtered vehicle list (for stop popup bus # + stops away)
   };
 
   const overlayKeyForLifecycle = options.overlayKey || `${routeId}-${directionId}`;
@@ -2733,7 +2855,6 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const overlayKey = etaOverlayKey;
           const tu = metrofeedGetRouteTripUpdatesForOverlay(overlayKey);
           const stopIdKey = String(stop.stop_id || stopId);
-          const tuLabel = (tu && tu.etaLabel) ? tu.etaLabel : "Live";
           const nowSecEta = Math.floor(Date.now() / 1000);
           const tuListRaw = metrofeedLookupStopUpdates(tu && tu.updatesByStopId, stopIdKey);
           const tuList = tuListRaw
@@ -2741,13 +2862,51 @@ function attachRouteToMap(map, routeId, directionId, options) {
             .filter(u => !u.routeId || String(u.routeId) === String(routeId))
             .filter(u => u.directionId === null || u.directionId === undefined || u.directionId == directionId)
             .slice(0, 2)
-            .map(u => {
-              const t = formatETA(new Date((u.time || 0) * 1000));
-              const delay = (u.delay || u.delay === 0) ? `${u.delay >= 0 ? '+' : ''}${u.delay}s` : '';
-              return `<div style="display:flex;justify-content:space-between;gap:10px;"><span style="color:${stopPopupMuted};">${tuLabel}</span><span style="color:${stopPopupFg};font-weight:bold;">${t}</span><span style="color:${stopPopupMuted};font-size:12px;">${delay}</span></div>`;
+            .map((u) => {
+              const trip =
+                u.tripId && tu.tripUpdatesByTripId
+                  ? tu.tripUpdatesByTripId[String(u.tripId)]
+                  : null;
+              const bus = (overlayElements.latestRouteBuses || []).find(
+                (b) => b.tripId && String(b.tripId) === String(u.tripId)
+              );
+              const busNum =
+                bus && (bus.displayNumber || bus.vehicleID)
+                  ? String(bus.displayNumber || bus.vehicleID).trim()
+                  : "";
+              const busLabel = busNum ? `Bus ${busNum}` : "";
+              const stopsAwayN = trip ? metrofeedStopsAwayOnTrip(trip, stopIdKey, nowSecEta) : null;
+              const stopsAway = metrofeedFormatStopsAway(stopsAwayN);
+              const etaStr = formatETA(new Date((u.time || 0) * 1000));
+              const latenessStr = metrofeedFormatLateness(
+                metrofeedLatenessMinutes(allTimes, u.time, agencyTimezone)
+              );
+              return metrofeedBuildStopArrivalRowHtml({
+                busLabel,
+                stopsAway,
+                etaStr,
+                latenessStr,
+                muted: stopPopupMuted,
+                fg: stopPopupFg
+              });
             });
 
-          if (tuList.length === 0) return '';
+          if (tuList.length === 0) {
+            if (tu && tu.etaSource === "realtime-trips") {
+              const muted = stopPopupMuted;
+              const fg = stopPopupFg;
+              let msg = "No buses predicted at this stop right now.";
+              if (tu.futureUpdateCount === 0) {
+                msg =
+                  "Live arrivals unavailable — trip feed has no upcoming times (may be stale). Scheduled times below.";
+              }
+              return `
+            <hr style="border:none;border-top:1px solid ${fg}44;margin:6px 0;">
+            <div style="font-size:12px;color:${muted};line-height:1.35;">${msg}</div>
+          `;
+            }
+            return "";
+          }
 
           return `
             <hr style="border:none;border-top:1px solid ${stopPopupFg}44;margin:6px 0;">
@@ -2804,6 +2963,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
       updatePopupContent();
       
       const popup = new maplibregl.Popup({ className: "mf-route-stop-popup", offset: 12 }).setDOMContent(popupContent);
+      try {
+        popup.on("open", updatePopupContent);
+      } catch (_) {}
       
       const overlayKeyForStops = etaOverlayKey;
       overlayElements.stopPopupRefreshers.push({
@@ -3821,6 +3983,15 @@ function attachRouteToMap(map, routeId, directionId, options) {
           metrofeedPruneRouteVehicleState(routeId, aliveHeadingIds);
           
           console.log(`[attachRouteToMap] Displayed ${vehiclesForMarkers.length} buses for route ${routeNum} direction ${directionId}`);
+
+          overlayElements.latestRouteBuses = vehiclesForMarkers.slice();
+          overlayElements.stopPopupRefreshers.forEach(({ overlayKey: ok, update }) => {
+            if (ok === etaOverlayKey) {
+              try {
+                update();
+              } catch (_) {}
+            }
+          });
           
           if (routeBuses.length === 0 && allBuses.length > 0) {
             console.warn(`[attachRouteToMap] ⚠️ No buses matched for route "${routeNum}" direction ${directionId}, but ${allBuses.length} total buses found in feed`);
@@ -3864,11 +4035,21 @@ function attachRouteToMap(map, routeId, directionId, options) {
             directionId,
             updatesByStopId: parsed.updatesByStopId,
             tripUpdatesByTripId: parsed.tripUpdatesByTripId,
+            futureUpdateCount: parsed.futureUpdateCount || 0,
             stopIdToName,
             etaLabel: "Live",
             etaSource: "realtime-trips",
             fetchedAt: new Date()
           });
+          try {
+            console.log("[realtimeTrips] ok", {
+              overlayKey: overlayKeyForTrips,
+              routeId,
+              trips: mergedTrips.length,
+              stopKeys: Object.keys(parsed.updatesByStopId || {}).length,
+              futureUpdates: parsed.futureUpdateCount || 0
+            });
+          } catch (_) {}
           overlayElements.stopPopupRefreshers.forEach(({ overlayKey: ok, update }) => {
             if (ok === overlayKeyForTrips) {
               try {
