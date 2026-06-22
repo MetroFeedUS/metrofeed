@@ -1,13 +1,21 @@
 <!DOCTYPE html>
 <html lang="en" data-tier="free">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-EL337T4JX4', { page_title: 'Cincinnati – RoamRaven Map', page_path: '/Cincinnati/home.html' });
+  /* Skip Google Analytics on OBS/TV browser sources (?tv=1) */
+  (function () {
+    var q = location.search;
+    if (q.indexOf('tv=1') !== -1 || q.indexOf('tv=true') !== -1) return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', 'G-EL337T4JX4', { page_title: 'Cincinnati – RoamRaven Map', page_path: '/Cincinnati/home.html' });
+  })();
 </script>
 
   <script>
@@ -30,7 +38,7 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#9333ea" />
   <script src="obs-tv-panels.js?v=3"></script>
-  <script src="obs-tv-bootstrap.js?v=20260606fouc2"></script>
+  <script src="obs-tv-bootstrap.js?v=20260618obsfix"></script>
   <link rel="icon" type="image/png" href="manifestbird.png" sizes="512x512" />
   <link rel="apple-touch-icon" href="manifestbird.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -3729,7 +3737,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260622stopArrivals"></script>
+<script src="routeOverlay.js?v=20260622stopDisclaimer"></script>
 <script src="trafficIncidents.js"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js?v=20260602noWalkOnly"></script>

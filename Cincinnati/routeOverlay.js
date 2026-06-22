@@ -1110,10 +1110,55 @@ function metrofeedTripProgressStopIndex(trip, nowSec) {
   return trip.stop_updates.length > 0 ? trip.stop_updates.length - 1 : -1;
 }
 
-function metrofeedStopsAwayOnTrip(trip, stopIdKey, nowSec) {
+/** Lat/lon keyed by prefixed + bare stop_id for GPS progress on a live trip. */
+function metrofeedBuildStopCoordById(stopsList) {
+  const out = Object.create(null);
+  (stopsList || []).forEach((s) => {
+    const id = s.stop_id != null ? String(s.stop_id) : "";
+    const lat = s.lat;
+    const lon = s.lon;
+    if (!id || typeof lat !== "number" || typeof lon !== "number") return;
+    out[id] = { lat, lon };
+    const bare = metrofeedBareStopId(id);
+    if (bare && bare !== id) out[bare] = { lat, lon };
+  });
+  return out;
+}
+
+/** Nearest stop on the trip sequence to the bus GPS fix (matches map dot, not predictions). */
+function metrofeedTripProgressStopIndexFromGps(trip, busLat, busLon, stopCoordById) {
+  if (!trip || !Array.isArray(trip.stop_updates) || !stopCoordById) return -1;
+  if (!Number.isFinite(busLat) || !Number.isFinite(busLon)) return -1;
+  let bestIdx = -1;
+  let bestDist = Infinity;
+  for (let i = 0; i < trip.stop_updates.length; i++) {
+    const sid = trip.stop_updates[i].stop_id != null ? String(trip.stop_updates[i].stop_id) : "";
+    if (!sid) continue;
+    const prefixed = metrofeedPrefixedStopId(
+      sid,
+      trip.agency != null ? String(trip.agency) : null
+    );
+    const bare = metrofeedBareStopId(sid);
+    const coord = stopCoordById[sid] || stopCoordById[prefixed] || stopCoordById[bare];
+    if (!coord) continue;
+    const d = metrofeedHaversineM(busLat, busLon, coord.lat, coord.lon);
+    if (d < bestDist) {
+      bestDist = d;
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
+}
+
+function metrofeedStopsAwayOnTrip(trip, stopIdKey, nowSec, busLat, busLon, stopCoordById) {
   const target = metrofeedStopIndexOnTrip(trip, stopIdKey);
   if (target < 0) return null;
-  const current = metrofeedTripProgressStopIndex(trip, nowSec);
+  const timeCurrent = metrofeedTripProgressStopIndex(trip, nowSec);
+  const gpsCurrent = metrofeedTripProgressStopIndexFromGps(trip, busLat, busLon, stopCoordById);
+  let current = timeCurrent;
+  // Predictions often run ahead of stale GPS — use whichever index is further back on the route.
+  if (gpsCurrent >= 0 && timeCurrent >= 0) current = Math.min(gpsCurrent, timeCurrent);
+  else if (gpsCurrent >= 0) current = gpsCurrent;
   if (current < 0) return null;
   const away = target - current;
   return away >= 0 ? away : 0;
@@ -2940,6 +2985,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 : ""
             }
             <button type="button" class="mf-stop-explore-btn" style="width:100%;background:transparent;color:${stopPopupFg};border:2px solid ${stopPopupFg};padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:6px;">Explore nearby</button>
+            <p style="margin:8px 0 0;font-size:10px;line-height:1.35;color:${stopPopupMuted};">Live arrivals and bus positions are estimates from agency feeds and may not match exactly. RoamRaven is not an official transit source.</p>
           </div>
         `;
         const exploreBtn = popupContent.querySelector(".mf-stop-explore-btn");

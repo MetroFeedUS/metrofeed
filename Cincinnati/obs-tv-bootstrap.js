@@ -7,12 +7,6 @@
   var params = new URLSearchParams(window.location.search);
   if (params.get('tv') !== '1' && params.get('tv') !== 'true') return;
 
-  if (sessionStorage.getItem('obsTvAuth') !== '1') {
-    var ret = encodeURIComponent(window.location.pathname.split('/').pop() + window.location.search);
-    window.location.replace('obs-route-tv.html?return=' + ret);
-    return;
-  }
-
   var spec =
     typeof window.mfTvParsePanelParams === 'function'
       ? window.mfTvParsePanelParams(params)
@@ -213,7 +207,7 @@
   document.head.appendChild(stageCss);
 
   var busJs = document.createElement('script');
-  busJs.src = 'obs-tv-bus.js?v=1';
+  busJs.src = 'obs-tv-bus.js?v=2';
   document.head.appendChild(busJs);
 
   function forceMapBoxSize() {
