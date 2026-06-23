@@ -20,7 +20,7 @@ const translations = {
     "menu": "Menu",
     "account": "Account",
     "theme": "Theme",
-    "ai_chat": "AI Chat",
+    "ai_chat": "Resources",
     "language": "EN",
     
     // Beta banner
@@ -129,8 +129,30 @@ const translations = {
     "tg_board_around": "Board around {time}",
     "tg_arrive_around": "Arrive around {time}",
     "tg_cancel_confirm": "Are you sure you want to cancel your trip?",
-    "ada_resources": "ADA and Official Resources",
+    "ada_resources": "ADA, Deaf & Official Resources",
     "otp_loading": "Loading trip options...",
+
+    // Sponsor modal
+    "sponsor_modal_title": "Thank You to Our Sponsor",
+    "sponsor_modal_body": "Your support helps keep RoamRaven free for all users. We appreciate your partnership!",
+    "sponsor_modal_visit": "Visit MetroFeed — metrofeedus.com",
+    "sponsor_logo_alt": "MetroFeed sponsor — visit metrofeedus.com",
+
+    // Resources page (ADA / Deaf / official links)
+    "resources_page_title": "ADA, Deaf & Official Resources - RoamRaven",
+    "resources_heading": "ADA, Deaf & Official Resources",
+    "resources_intro": "Official links and accessibility resources for RoamRaven users, including deaf and hard-of-hearing riders.",
+    "resources_disclaimer": "RoamRaven is an independent service and is not affiliated with, endorsed by, or partnered with the organizations listed below. These links are provided for convenience and direct access to official information.",
+    "resources_section_sorta": "SORTA/METRO",
+    "resources_link_sorta_official": "SORTA/METRO Official Page",
+    "resources_link_paratransit": "Paratransit Service",
+    "resources_section_tank": "TANK",
+    "resources_link_tank_official": "TANK Official Page",
+    "resources_section_bcrta": "BCRTA",
+    "resources_link_bcrta_official": "BCRTA Official Page",
+    "resources_section_other": "Other",
+    "resources_link_nws": "National Weather Service",
+    "resources_link_ohgo": "OHGO — Traffic Data and Cameras",
     
     // Modal buttons
     "close": "Close",
@@ -256,7 +278,7 @@ const translations = {
     "menu": "Menú",
     "account": "Cuenta",
     "theme": "Tema",
-    "ai_chat": "Chat IA",
+    "ai_chat": "Recursos",
     "language": "ES",
     
     // Beta banner
@@ -365,8 +387,30 @@ const translations = {
     "tg_board_around": "Sube alrededor de las {time}",
     "tg_arrive_around": "Llega alrededor de las {time}",
     "tg_cancel_confirm": "¿Seguro que quieres cancelar tu viaje?",
-    "ada_resources": "ADA y Recursos Oficiales",
+    "ada_resources": "ADA, Sordos y Recursos Oficiales",
     "otp_loading": "Cargando opciones de viaje...",
+
+    // Sponsor modal
+    "sponsor_modal_title": "Gracias a Nuestro Patrocinador",
+    "sponsor_modal_body": "Su apoyo ayuda a mantener RoamRaven gratis para todos los usuarios. ¡Agradecemos su colaboración!",
+    "sponsor_modal_visit": "Visitar MetroFeed — metrofeedus.com",
+    "sponsor_logo_alt": "Patrocinador MetroFeed — visite metrofeedus.com",
+
+    // Resources page (ADA / Deaf / official links)
+    "resources_page_title": "ADA, Sordos y Recursos Oficiales - RoamRaven",
+    "resources_heading": "ADA, Sordos y Recursos Oficiales",
+    "resources_intro": "Enlaces oficiales y recursos de accesibilidad para usuarios de RoamRaven, incluidos pasajeros sordos o con dificultad auditiva.",
+    "resources_disclaimer": "RoamRaven es un servicio independiente y no está afiliado, respaldado ni asociado con las organizaciones que se enumeran a continuación. Estos enlaces se ofrecen por conveniencia y acceso directo a información oficial.",
+    "resources_section_sorta": "SORTA/METRO",
+    "resources_link_sorta_official": "Página oficial de SORTA/METRO",
+    "resources_link_paratransit": "Servicio de paratransporte",
+    "resources_section_tank": "TANK",
+    "resources_link_tank_official": "Página oficial de TANK",
+    "resources_section_bcrta": "BCRTA",
+    "resources_link_bcrta_official": "Página oficial de BCRTA",
+    "resources_section_other": "Otros",
+    "resources_link_nws": "Servicio Meteorológico Nacional",
+    "resources_link_ohgo": "OHGO — Datos de tráfico y cámaras",
     
     // Modal buttons
     "close": "Cerrar",
@@ -628,4 +672,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-// translations.js loaded (v23 Cincinnati)
+// translations.js loaded (v24 Cincinnati)

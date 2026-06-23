@@ -37,6 +37,8 @@
   <title>RoamRaven Map</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#9333ea" />
+  <link rel="preload" as="image" href="manifesttest.png" />
+  <link rel="apple-touch-startup-image" href="manifesttest.png" />
   <script src="obs-tv-panels.js?v=3"></script>
   <script src="obs-tv-bootstrap.js?v=20260618obsfix"></script>
   <link rel="icon" type="image/png" href="manifestbird.png" sizes="512x512" />
@@ -54,13 +56,16 @@
     var ROAMRAVEN_SPONSOR_PIXEL_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
     /** Set false to hide cornerlogo2.png (e.g. marketing photos) without breaking layout */
     var SPONSOR_LOGO_ENABLED = true;
+    /** Sponsor website — corner logo and thank-you modal link here */
+    var SPONSOR_URL = 'https://metrofeedus.com/';
+    var SPONSOR_NAME = 'MetroFeed';
     if (window.TIER_CONFIG && window.TIER_CONFIG.hasFeature('sponsors')) {
       var SPONSOR_IMAGE = SPONSOR_LOGO_ENABLED ? 'cornerlogo2.png' : ROAMRAVEN_SPONSOR_PIXEL_GIF;
     }
   </script>
 
   <!-- Language System -->
-  <script src="translations.js?v=23"></script>
+  <script src="translations.js?v=24"></script>
   <style>
     /* Roam Raven UI — purple primary + silver/charcoal chrome (map route colors unchanged) */
     :root {
@@ -625,6 +630,12 @@
       width: 90px;
       height: 90px;
       overflow: hidden;
+    }
+    .sponsor-box__link {
+      display: block;
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
     }
     .sponsor-box img {
       display: block;
@@ -1857,19 +1868,19 @@
       }
     }
     
-    /* Custom attribution positioning - just above footer */
+    /* Custom attribution positioning — 5px above footer (height synced via --mf-footer-h) */
     .maplibregl-ctrl-attrib {
       position: absolute !important;
-      bottom: 125px !important; /* Just above footer / favorites bar */
+      bottom: calc(5px + var(--mf-footer-h, 30px)) !important;
       right: 0 !important;
       z-index: 1000 !important;
     }
     
-    /* Make attribution more vertical when expanded and move it up by 30px */
+    /* Expanded panel grows upward so it stays clear of the footer */
     .maplibregl-ctrl-attrib.maplibregl-compact-show {
       max-width: 200px !important;
       min-height: auto !important;
-      transform: translateY(-30px) !important;
+      transform: translateY(calc(-1 * var(--mf-attrib-expand-lift, 12px))) !important;
     }
     
     /* Force attribution to be collapsed by default, but allow expansion */
@@ -2161,16 +2172,6 @@
       }
     }
     
-    /* Mobile: attribution lives inside #map; footer sits above the map — lift OSM control clear of footer + home indicator */
-    @media (max-width: 768px) {
-      .maplibregl-ctrl-attrib {
-        /* ~1–2 lines of compact footer + small gap; safe-area avoids home indicator */
-        bottom: calc(73px + env(safe-area-inset-bottom, 0px)) !important;
-      }
-    }
-    
-
-    
     /* Pulsing animation for OTP buses */
     .otp-bus-pulse {
       animation: otpPulse 2s infinite;
@@ -2305,9 +2306,71 @@
       display: none !important;
     }
 
+    /* Full-screen startup splash (manifesttest.png) — hidden after map load */
+    #mfSplashScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #000;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      transition: opacity 0.35s ease;
+      pointer-events: auto;
+    }
+    #mfSplashScreen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+    #mfSplashScreen.mf-splash--hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    html.tv-mode #mfSplashScreen {
+      display: none !important;
+    }
+
   </style>
 </head>
 <body>
+
+<!-- Full-screen PWA / startup splash -->
+<div id="mfSplashScreen" aria-hidden="true">
+  <img src="manifesttest.png" alt="" width="1920" height="1080" decoding="async" fetchpriority="high" />
+</div>
+<script>
+  (function () {
+    if (/[?&]tv=(?:1|true)(?:&|$)/.test(location.search)) {
+      var s = document.getElementById('mfSplashScreen');
+      if (s) s.remove();
+      return;
+    }
+    var splash = document.getElementById('mfSplashScreen');
+    if (!splash) return;
+    var hidden = false;
+    var shownAt = Date.now();
+    var minMs = 500;
+    var maxMs = 6000;
+    function hideSplash() {
+      if (hidden || !splash) return;
+      hidden = true;
+      var run = function () {
+        splash.classList.add('mf-splash--hide');
+        setTimeout(function () {
+          if (splash.parentNode) splash.parentNode.removeChild(splash);
+        }, 380);
+      };
+      var wait = minMs - (Date.now() - shownAt);
+      if (wait > 0) setTimeout(run, wait);
+      else run();
+    }
+    window.mfHideSplashScreen = hideSplash;
+    setTimeout(hideSplash, maxMs);
+  })();
+</script>
 
 <!-- Screen reader live region for OTP + trip guide announcements -->
 <div id="mfSrLive" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"></div>
@@ -2544,6 +2607,47 @@
     transform: scale(1.04);
   }
 
+  /* Transit alerts modal — prevent horizontal scroll from long empty-agency copy */
+  .mf-alerts-modal {
+    width: min(720px, calc(100vw - 24px));
+    box-sizing: border-box;
+    overflow-x: hidden !important;
+  }
+  .mf-alerts-modal__content {
+    max-width: 100%;
+    overflow-x: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .mf-alert-empty-agency {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: #888;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .mf-alert-empty-agency__title {
+    display: block;
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+  }
+  .mf-alert-empty-agency__count {
+    color: #888;
+    font-weight: normal;
+  }
+  .mf-alert-empty-agency__note {
+    display: block;
+    font-weight: normal;
+  }
+
   /* Tutorial modal: mobile-first width + safe-area (primary = phones) */
   #mfTutorialModal .mf-modal {
     width: min(calc(100vw - max(24px, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))), 560px);
@@ -2591,10 +2695,12 @@
 <button id="menuBtn" class="side-buttons"><img src="005-list.svg" alt="Menu"></button>
 <!-- Sponsor Box (Free tier only) -->
 <div class="sponsor-box" id="sponsorBox">
-  <img src="" alt="" id="sponsorImage" onerror="this.style.display='none'" />
+  <a id="sponsorLink" href="https://metrofeedus.com/" target="_blank" rel="noopener noreferrer" class="sponsor-box__link" data-translate-aria="sponsor_logo_alt">
+    <img src="" alt="" id="sponsorImage" data-translate-alt="sponsor_logo_alt" onerror="this.style.display='none'" />
+  </a>
 </div>
 <script>
-  // Set sponsor image from configuration constant (Free tier only)
+  // Set sponsor image and outbound links from configuration (Free tier only)
   (function() {
     // Only show sponsors on Free tier
     if (window.TIER_CONFIG && !window.TIER_CONFIG.hasFeature('sponsors')) {
@@ -2602,7 +2708,13 @@
       if (sponsorBox) sponsorBox.style.display = 'none';
       return;
     }
-    
+
+    const sponsorUrl = (typeof SPONSOR_URL !== 'undefined' && SPONSOR_URL) ? SPONSOR_URL : 'https://metrofeedus.com/';
+    ['sponsorLink', 'sponsorModalLink', 'sponsorModalVisitLink'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.href = sponsorUrl;
+    });
+
     const sponsorImg = document.getElementById('sponsorImage');
     const sponsorModalImg = document.getElementById('sponsorModalImage');
     if (typeof SPONSOR_IMAGE !== 'undefined') {
@@ -3187,8 +3299,8 @@
   <a href="#" id="dropdownTrafficBtn" onclick="toggleTrafficFromDropdown()"><img src="003-warning.svg" alt="Traffic Overlay"></a>
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
   <a href="#" id="dropdownWeatherBtn" onclick="event.preventDefault(); showWeatherForecastModal();"><img src="005-weather-radar.svg" alt="Weather"></a>
-  <!-- ADA and Official Resources button in dropdown -->
-  <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA and Official Resources" data-translate-aria="ada_resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA and Official Resources" data-translate-alt="ada_resources"></a>
+  <!-- ADA, Deaf & Official Resources button in dropdown -->
+  <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA, Deaf &amp; Official Resources" data-translate-aria="ada_resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA, Deaf &amp; Official Resources" data-translate-alt="ada_resources"></a>
   <a href="#" id="dropdownAlertsBtn" onclick="event.preventDefault(); showMBTAAlertsModal();"><img src="008-danger.svg" alt="Alerts"></a>
   <div class="dropdown-divider"></div>
   <a href="#" id="dropdownBackToNationalBtn" onclick="event.preventDefault(); window.metrofeedBackToNational && window.metrofeedBackToNational();"><img src="global.svg" alt="Back to National Map"></a>
@@ -3538,12 +3650,12 @@
 
 <!-- -- MBTA ALERTS MODAL -- -->
 <div id="mbtaAlertsModal" class="mf-overlay" style="display: none;">
-  <div class="mf-modal" style="max-width: 720px; max-height: 85vh; overflow-y: auto;">
+  <div class="mf-modal mf-alerts-modal" style="max-width: 720px; max-height: 85vh; overflow-y: auto; overflow-x: hidden;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
       <h2 style="margin: 0; color: var(--rr-accent-text);">🚨 Transit alerts</h2>
       <button onclick="hideMBTAAlertsModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Close</button>
     </div>
-    <div id="mbtaAlertsContent" style="color: #ccc;">
+    <div id="mbtaAlertsContent" class="mf-alerts-modal__content" style="color: #ccc;">
       <div>Loading alerts...</div>
     </div>
   </div>
@@ -3686,13 +3798,18 @@
       ×
     </button>
     <div style="padding: 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box;">
-      <h2 style="color: var(--rr-accent-text); margin-bottom: 1rem; font-size: 1.5rem; width: 100%;">Thank You to Our Sponsor</h2>
-      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.5; width: 100%; max-width: 100%;">
+      <h2 style="color: var(--rr-accent-text); margin-bottom: 1rem; font-size: 1.5rem; width: 100%;" data-translate="sponsor_modal_title">Thank You to Our Sponsor</h2>
+      <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.5; width: 100%; max-width: 100%;" data-translate="sponsor_modal_body">
         Your support helps keep RoamRaven free for all users. We appreciate your partnership!
       </p>
       <div style="width: 100%; max-width: 100%; background: #1a1a1a; border-radius: 8px; padding: 1.5rem; border: 1px solid #333; text-align: center; box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 200px;">
-        <img id="sponsorModalImage" src="" alt="Sponsor" style="max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; display: block;" onerror="this.style.display='none'">
+        <a id="sponsorModalLink" href="https://metrofeedus.com/" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; justify-content: center; max-width: 100%;">
+          <img id="sponsorModalImage" src="" alt="MetroFeed sponsor" data-translate-alt="sponsor_logo_alt" style="max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; display: block;" onerror="this.style.display='none'">
+        </a>
       </div>
+      <p style="margin-top: 1rem; width: 100%;">
+        <a id="sponsorModalVisitLink" href="https://metrofeedus.com/" target="_blank" rel="noopener noreferrer" style="color: var(--rr-accent-text); font-weight: 600; text-decoration: none;" data-translate="sponsor_modal_visit">Visit MetroFeed — metrofeedus.com</a>
+      </p>
     </div>
   </div>
 </div>
@@ -5744,7 +5861,7 @@
       { selector: '#dropdownTrafficBtn', text: 'Traffic Overlay' },
       { selector: '#dropdownCamerasBtn', text: 'Traffic Cameras' },
       { selector: '#dropdownWeatherBtn', text: 'Weather' },
-      { selector: '#dropdownAiChatBtn', text: 'ADA and Official Resources' },
+      { selector: '#dropdownAiChatBtn', key: 'ada_resources' },
       { selector: '#dropdownAlertsBtn', text: 'Alerts' },
       { selector: '#dropdownBackToNationalBtn', text: 'Switch cities' }
     ];
@@ -5762,7 +5879,9 @@
       } catch (_) {}
       const tooltip = document.createElement('div');
         tooltip.className = 'dropdown-tooltip';
-        tooltip.textContent = item.text;
+        tooltip.textContent = item.key && typeof translateText === 'function'
+          ? translateText(item.key)
+          : (item.text || '');
         
         // Position tooltip relative to the button using fixed positioning
         const buttonRect = button.getBoundingClientRect();
@@ -6171,16 +6290,33 @@
     return tooltip;
   }
 
+  function mfSyncMapAttributionBottom() {
+    const footer = document.querySelector('footer.site-footer');
+    if (!footer) return;
+    const h = footer.offsetHeight;
+    if (h > 0) {
+      document.documentElement.style.setProperty('--mf-footer-h', `${h}px`);
+    }
+  }
+  window.mfSyncMapAttributionBottom = mfSyncMapAttributionBottom;
+  mfSyncMapAttributionBottom();
+  window.addEventListener('resize', mfSyncMapAttributionBottom);
+
   function mfDelay(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
 
-  async function mfShowOnboardingClosingStatement(text, tipMs) {
+  async function mfShowOnboardingClosingStatement(text, tipMs, progress) {
     const dt = MF_TUTORIAL_DESKTOP_TIMING;
     const ms = tipMs != null ? tipMs : dt.visibleMs;
     mfDismissOnboardingTooltips();
-    mfShowCenteredTooltip(text, { ms: ms, variant: 'onboarding', closing: true });
-    await mfDelay(ms + dt.fadeMs);
+    mfClearOnboardingHighlight();
+    const pop = { ms: ms, variant: 'onboarding', closing: true };
+    if (progress && progress.current != null && progress.total != null) {
+      pop.progress = progress;
+    }
+    mfShowCenteredTooltip(text, pop);
+    await mfDelay(ms);
   }
 
   function mfTutorialPickTarget(getEl) {
@@ -6222,7 +6358,7 @@
         if (!el) continue;
         mfShowAnchoredTooltip(el, s.text, anchOpts);
       }
-      await mfDelay(tipMs + 140);
+      await mfDelay(mfTutorialDesktopStepMs(tipMs));
     }
   }
 
@@ -6238,15 +6374,13 @@
     visibleMs: 4600,
     exitMs: 320,
     gapMs: 180,
-    menuSettleMs: 360,
-    closingVisibleMs: 5200
+    menuSettleMs: 360
   };
 
   const MF_TUTORIAL_DESKTOP_TIMING = {
     visibleMs: 4800,
     fadeMs: 600,
-    gapMs: 200,
-    closingVisibleMs: 5200
+    gapMs: 200
   };
 
   function mfTutorialDesktopStepMs(visibleMs) {
@@ -6387,10 +6521,10 @@
     const closing = !!(opts && opts.closing);
     _mfTutorialCoachEl.classList.toggle('mf-tutorial-coach--closing', closing);
     if (stepEl) {
-      if (closing) {
-        stepEl.textContent = 'Done';
-      } else if (progress && progress.current != null && progress.total != null) {
+      if (progress && progress.current != null && progress.total != null) {
         stepEl.textContent = `${progress.current}/${progress.total}`;
+      } else if (closing) {
+        stepEl.textContent = 'Done';
       } else {
         stepEl.textContent = '';
       }
@@ -6467,7 +6601,9 @@
       await mfTutorialCoachFadeIn();
     }
     await mfDelay(t.visibleMs);
-    if (!closing && !seamless) {
+    if (closing) {
+      await mfTutorialCoachFadeOut();
+    } else if (!seamless) {
       await mfTutorialCoachFadeOut();
     }
   }
@@ -6483,7 +6619,7 @@
     const dropdownMenu = document.getElementById('dropdownMenu');
     const busesBtn = document.getElementById('dropdownBusesBtn');
     const hasBusStep = !!(dropdownMenu && busesBtn);
-    const totalSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 4;
+    const totalSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 4 + 1;
     let stepI = 0;
     const prog = () => ({ current: ++stepI, total: totalSteps });
 
@@ -6557,11 +6693,10 @@
 
     await mfTutorialCoachRunStep(
       "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
-      null,
+      prog(),
       null,
       { closing: true, seamless: true }
     );
-    await mfTutorialCoachFadeOut();
     mfTutorialCoachTeardown();
   }
 
@@ -7651,7 +7786,7 @@
         const dropdownMenu = document.getElementById('dropdownMenu');
         const busesBtn = document.getElementById('dropdownBusesBtn');
         const hasBusStep = !!(dropdownMenu && busesBtn);
-        const totalHintSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 4;
+        const totalHintSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 4 + 1;
         let stepI = 0;
         const nextProg = () => ({ progress: { current: ++stepI, total: totalHintSteps } });
 
@@ -7740,7 +7875,8 @@
         });
         await mfShowOnboardingClosingStatement(
           "That's the quick tour. Open the menu anytime for routes and overlays, use the dashboard for trips, and star the lines you ride most. Have a good ride.",
-          dt.visibleMs
+          tipMs,
+          { current: totalHintSteps, total: totalHintSteps }
         );
   }
 
@@ -14779,13 +14915,14 @@
           if (!list.length) {
             if (!emptyNote) return '';
             return (
-              '<div style="margin-bottom: 1rem;">' +
-              '<div style="width:100%;background:#1a1a1a;border:2px solid #333;border-radius:6px;padding:0.75rem 1rem;color:#888;font-size:0.95rem;">' +
-              '<span style="color:#fff;font-weight:bold;">' +
-              title +
-              '</span> <span style="font-weight:normal;">(0)</span> — ' +
-              emptyNote +
-              '</div></div>'
+              '<div class="mf-alert-agency-group mf-alert-agency-group--empty" style="margin-bottom: 1rem;">' +
+              '<div class="mf-alert-empty-agency">' +
+              '<span class="mf-alert-empty-agency__title">' +
+              mfCincyAlertEscapeHtml(title) +
+              ' <span class="mf-alert-empty-agency__count">(0)</span></span>' +
+              '<span class="mf-alert-empty-agency__note">' +
+              mfCincyAlertEscapeHtml(emptyNote) +
+              '</span></div></div>'
             );
           }
 
@@ -15767,6 +15904,7 @@
    */
   function showSponsorModal() {
     if (typeof SPONSOR_LOGO_ENABLED !== 'undefined' && !SPONSOR_LOGO_ENABLED) return;
+    if (typeof updatePageLanguage === 'function') updatePageLanguage();
     const modal = document.getElementById('sponsorModal');
     if (modal) {
       modal.style.display = 'flex';
@@ -16113,6 +16251,7 @@
       // Add map event listeners for debugging
       map.on('load', () => {
         console.log('[Map] Map loaded successfully');
+        if (typeof window.mfHideSplashScreen === 'function') window.mfHideSplashScreen();
         console.log('[Map] Testing route overlay availability:');
         console.log('[Map]   - attachRouteToMap:', typeof window.attachRouteToMap);
         console.log('[Map]   - showRouteOverlay:', typeof window.showRouteOverlay);
@@ -16143,6 +16282,9 @@
         }
         if (typeof window.initMetrofeedSavedPlaces === 'function') {
           window.initMetrofeedSavedPlaces();
+        }
+        if (typeof mfSyncMapAttributionBottom === 'function') {
+          mfSyncMapAttributionBottom();
         }
 
         if (window.MF_TV_MODE && !window.MF_TV_NO_DIRECTOR) {
@@ -16217,6 +16359,7 @@
       
       // Force attribution to be collapsed by default for fallback map
       map.on('load', () => {
+        if (typeof window.mfHideSplashScreen === 'function') window.mfHideSplashScreen();
         const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
         if (attributionControl) {
           attributionControl.classList.add('maplibregl-compact');
