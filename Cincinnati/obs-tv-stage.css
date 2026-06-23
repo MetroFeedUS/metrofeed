@@ -1,6 +1,5 @@
 /**
- * RoamRaven TV stage — URL-driven viewport crop for OBS browser sources.
- * html/body = OBS source size (bw×bh). Stage content is scaled from fixed layout coords.
+ * RoamRaven TV stage — URL-driven sizing for OBS browser sources.
  */
 html.tv-stage-mode,
 html.tv-stage-mode body {
@@ -16,30 +15,6 @@ html.tv-stage-mode body {
 
 html.tv-stage-mode body {
   position: relative;
-}
-
-#mfTvStageViewport {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: var(--mf-tv-bw, 1920px);
-  height: var(--mf-tv-bh, 1080px);
-  overflow: hidden;
-  background: transparent;
-}
-
-#mfTvStageCanvas {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: var(--mf-tv-stage-w, 2400px);
-  height: var(--mf-tv-stage-h, 1350px);
-  transform-origin: 0 0;
-  transform: translate(
-      calc(-1 * var(--mf-tv-crop-x, 0px) * var(--mf-tv-scale, 1)),
-      calc(-1 * var(--mf-tv-crop-y, 0px) * var(--mf-tv-scale, 1))
-    )
-    scale(var(--mf-tv-scale, 1));
 }
 
 /* --- panel=map on home.html --- */
@@ -86,51 +61,6 @@ html.tv-stage-mode.tv-panel-map .mf-tv-lower-third {
   bottom: auto;
 }
 
-html.tv-slice-page.tv-panel-alerts .mf-tv-slice-alerts::before {
-  content: 'ROUTE ALERTS';
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: rgba(192, 132, 252, 0.55);
-  pointer-events: none;
-}
-
-html.tv-slice-page.tv-panel-camera .mf-tv-slice-camera::before {
-  content: 'CAMERA';
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: rgba(56, 189, 248, 0.55);
-  pointer-events: none;
-}
-
-.mf-tv-slice-alerts,
-.mf-tv-slice-camera {
-  position: relative;
-}
-
-html.tv-stage-mode.tv-panel-map .mf-tv-traffic-detail.mf-tv-incident-card,
-html.tv-stage-mode.tv-panel-map .mf-tv-traffic-detail.mf-tv-slowdown-card {
-  position: absolute;
-  left: 48px;
-  bottom: 120px;
-  right: 48px;
-  max-width: 880px;
-}
-
-html.tv-stage-mode.tv-panel-map .mf-tv-lower-third {
-  position: absolute;
-  left: 40px;
-  top: 40px;
-  bottom: auto;
-}
-
 html.tv-stage-mode.tv-panel-preview::after {
   content: '';
   position: fixed;
@@ -155,7 +85,7 @@ html.tv-stage-mode.tv-panel-preview::before {
   pointer-events: none;
 }
 
-/* --- standalone obs-tv.html shells --- */
+/* --- obs-tv.html slices --- */
 .mf-tv-slice {
   position: absolute;
   left: 0;
@@ -187,14 +117,13 @@ html.tv-slice-page.tv-panel-live body {
 }
 
 .mf-tv-slice-alerts {
-  display: flex;
+  position: relative;
   flex-direction: column;
   background: rgba(10, 10, 14, 0.96);
   border: 1px solid rgba(147, 51, 234, 0.45);
   border-radius: 10px;
   color: #f1f5f9;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  padding: 0;
 }
 
 .mf-tv-slice-alerts__head {
@@ -220,74 +149,6 @@ html.tv-slice-page.tv-panel-live body {
   padding: 8px 14px 14px;
   font-size: 0.92rem;
   line-height: 1.4;
-}
-
-.mf-tv-slice-camera {
-  background: #050508;
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.mf-tv-slice-camera__title {
-  padding: 10px 14px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #f8fafc;
-  background: rgba(10, 10, 14, 0.92);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.25);
-}
-
-.mf-tv-slice-camera__img {
-  flex: 1;
-  width: 100%;
-  object-fit: contain;
-  background: #000;
-  display: block;
-}
-
-.mf-tv-slice-camera__empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 0.95rem;
-}
-
-.mf-tv-slice-lower {
-  pointer-events: none;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-}
-
-.mf-tv-slice-lower__box {
-  display: inline-block;
-  max-width: 100%;
-  padding: 12px 18px;
-  background: linear-gradient(90deg, rgba(18, 18, 24, 0.94) 0%, rgba(18, 18, 24, 0.78) 100%);
-  border-left: 4px solid #9333ea;
-  border-radius: 4px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-}
-
-.mf-tv-slice-lower__title {
-  display: block;
-  font-size: 1.65rem;
-  font-weight: 800;
-  color: #f1f5f9;
-  line-height: 1.2;
-}
-
-.mf-tv-slice-lower__sub {
-  display: block;
-  margin-top: 4px;
-  font-size: 1.05rem;
-  color: #94a3b8;
-  font-weight: 500;
 }
 
 .mf-tv-alerts-panel__empty {

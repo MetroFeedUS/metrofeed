@@ -1,5 +1,5 @@
 /**
- * RoamRaven OBS support ticker — 1400 × 160 (bottom bar)
+ * RoamRaven OBS support ticker — 1920 × 160 (bottom bar)
  */
 :root {
   --rr-accent: #9333ea;
@@ -8,7 +8,11 @@
   --rr-border: rgba(147, 51, 234, 0.55);
   --rr-text: #f1f5f9;
   --rr-muted: #94a3b8;
-  --rr-w: 1400px;
+  --rr-amber: #f59e0b;
+  --rr-amber-soft: #fcd34d;
+  --rr-red: #ef4444;
+  --rr-red-soft: #fecaca;
+  --rr-w: 1920px;
   --rr-h: 160px;
 }
 
@@ -37,6 +41,7 @@ body {
   width: var(--rr-w);
   height: var(--rr-h);
   border-top: 2px solid var(--rr-border);
+  background: #000;
 }
 
 .rr-ticker__cell {
@@ -155,30 +160,6 @@ body {
   text-overflow: ellipsis;
 }
 
-.rr-weather-alert {
-  margin-top: 4px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rr-weather-alert--ok {
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.45);
-  color: #86efac;
-}
-
-.rr-weather-alert--warn {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  color: #fecaca;
-}
-
 /* --- Hourly strip --- */
 .rr-ticker__hourly {
   padding-top: 6px;
@@ -250,27 +231,66 @@ body {
   flex-shrink: 0;
 }
 
-/* --- Bottom bar + brand --- */
-.rr-ticker__tip {
+/* --- Bottom alert bar --- */
+.rr-alert-bar__icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.rr-alert-bar__text {
   flex: 1;
   min-width: 0;
-  color: var(--rr-text);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.rr-ticker__tip span {
-  color: var(--rr-accent-soft);
+.rr-alert-bar__text--clear {
+  color: #86efac;
+}
+
+.rr-alert-bar__text--caution {
+  color: var(--rr-amber-soft);
+  font-weight: 700;
+}
+
+.rr-alert-bar__text--warning {
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.rr-alert-bar__text--emergency {
+  color: #fecaca;
+  font-weight: 700;
+}
+
+.rr-alert-bar__until {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 .rr-ticker__tonight {
-  max-width: 280px;
+  max-width: 240px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 0;
+}
+
+.rr-ticker__source {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  color: var(--rr-muted);
+  opacity: 0.9;
+}
+
+.rr-ticker__source--demo {
+  color: var(--rr-amber-soft);
+  font-weight: 700;
 }
 
 .rr-ticker__updated {
@@ -294,4 +314,217 @@ body {
   color: var(--rr-muted);
   font-style: italic;
   font-size: 0.81rem;
+}
+
+/* ===== Emergency panel (tornado) ===== */
+.rr-emergency-panel {
+  display: none;
+  grid-column: 2 / 4;
+  grid-row: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 18px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rr-emergency-panel__event {
+  font-size: 2.15rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.05;
+  animation: rrEmergencyTextPulse 2.5s ease-in-out infinite;
+}
+
+.rr-emergency-panel__detail {
+  margin-top: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fecaca;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rr-emergency-panel__counties {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: #fca5a5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Tier: clear (baseline purple) ===== */
+.rr-ticker--clear .rr-ticker__bar {
+  background: rgba(34, 197, 94, 0.06);
+  border-top-color: rgba(34, 197, 94, 0.22);
+}
+
+/* ===== Tier: caution (watch / advisory — amber) ===== */
+.rr-ticker--caution {
+  border-top-color: rgba(245, 158, 11, 0.75);
+  animation: rrBorderPulseAmber 3.5s ease-in-out infinite;
+}
+
+.rr-ticker--caution .rr-ticker__cell {
+  border-right-color: rgba(245, 158, 11, 0.2);
+}
+
+.rr-ticker--caution .rr-ticker__brand-col {
+  background: rgba(245, 158, 11, 0.08);
+  border-left-color: rgba(245, 158, 11, 0.25);
+}
+
+.rr-ticker--caution .rr-ticker__bar {
+  background: rgba(245, 158, 11, 0.1);
+  border-top-color: rgba(245, 158, 11, 0.35);
+}
+
+.rr-ticker--caution .rr-clock__time .rr-clock__sec,
+.rr-ticker--caution .rr-clock__date,
+.rr-ticker--caution .rr-hourly__label,
+.rr-ticker--caution .rr-hourly__temp,
+.rr-ticker--caution .rr-ticker__brand {
+  color: var(--rr-amber-soft);
+}
+
+.rr-ticker--caution .rr-hourly__card--now {
+  border-color: rgba(245, 158, 11, 0.65);
+}
+
+.rr-ticker--caution .rr-alert-bar__until {
+  color: var(--rr-amber-soft);
+}
+
+/* ===== Tier: warning (red accents + bottom takeover) ===== */
+.rr-ticker--warning {
+  border-top-color: rgba(239, 68, 68, 0.85);
+  animation: rrBorderPulseRed 2.8s ease-in-out infinite;
+}
+
+.rr-ticker--warning .rr-ticker__cell {
+  border-right-color: rgba(239, 68, 68, 0.22);
+}
+
+.rr-ticker--warning .rr-ticker__brand-col {
+  background: rgba(239, 68, 68, 0.1);
+  border-left-color: rgba(239, 68, 68, 0.35);
+}
+
+.rr-ticker--warning .rr-clock__time .rr-clock__sec,
+.rr-ticker--warning .rr-clock__date,
+.rr-ticker--warning .rr-hourly__label,
+.rr-ticker--warning .rr-hourly__temp,
+.rr-ticker--warning .rr-ticker__brand {
+  color: var(--rr-red-soft);
+}
+
+.rr-ticker--warning .rr-hourly__card--now {
+  border-color: rgba(239, 68, 68, 0.65);
+}
+
+.rr-ticker__bar--warning {
+  background: linear-gradient(90deg, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%) !important;
+  background-size: 200% 100% !important;
+  animation: rrBarShimmer 4s linear infinite;
+  border-top: 2px solid #fca5a5 !important;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.rr-ticker__bar--warning .rr-alert-bar__icon {
+  animation: rrIconBlink 1.8s step-end infinite;
+}
+
+.rr-ticker__bar--warning .rr-alert-bar__until {
+  color: #fecaca;
+  font-size: 0.75rem;
+  text-transform: none;
+}
+
+/* ===== Tier: emergency (tornado — full takeover) ===== */
+.rr-ticker--emergency {
+  grid-template-columns: 200px 1fr 108px;
+  border-top: 3px solid #fca5a5;
+  background: linear-gradient(135deg, #450a0a 0%, #1a0505 40%, #000 100%);
+  animation: rrEmergencyGlow 3s ease-in-out infinite;
+}
+
+.rr-ticker--emergency .rr-ticker__weather,
+.rr-ticker--emergency .rr-ticker__hourly {
+  display: none !important;
+}
+
+.rr-ticker--emergency .rr-emergency-panel {
+  display: flex;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.rr-ticker--emergency .rr-ticker__cell.rr-ticker__clock {
+  border-right-color: rgba(239, 68, 68, 0.3);
+}
+
+.rr-ticker--emergency .rr-ticker__brand-col {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  background: rgba(239, 68, 68, 0.15);
+  border-left-color: rgba(239, 68, 68, 0.4);
+}
+
+.rr-ticker--emergency .rr-ticker__bar {
+  grid-column: 1 / 3;
+}
+
+.rr-ticker--emergency .rr-clock__time {
+  font-size: 2.4rem;
+}
+
+.rr-ticker--emergency .rr-clock__date {
+  font-size: 0.82rem;
+}
+
+.rr-ticker--emergency .rr-ticker__brand {
+  color: #fecaca;
+}
+
+.rr-ticker__bar--emergency {
+  background: rgba(127, 29, 29, 0.85) !important;
+  border-top: 1px solid rgba(252, 165, 165, 0.5) !important;
+  color: #fecaca;
+  font-weight: 700;
+}
+
+/* ===== Animations ===== */
+@keyframes rrBorderPulseAmber {
+  0%, 100% { box-shadow: 0 -2px 0 0 rgba(245, 158, 11, 0.35); }
+  50% { box-shadow: 0 -4px 12px 0 rgba(245, 158, 11, 0.45); }
+}
+
+@keyframes rrBorderPulseRed {
+  0%, 100% { box-shadow: 0 -2px 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 -4px 16px 0 rgba(239, 68, 68, 0.55); }
+}
+
+@keyframes rrBarShimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes rrIconBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.35; }
+}
+
+@keyframes rrEmergencyGlow {
+  0%, 100% { box-shadow: inset 0 0 40px rgba(239, 68, 68, 0.08); }
+  50% { box-shadow: inset 0 0 60px rgba(239, 68, 68, 0.18); }
+}
+
+@keyframes rrEmergencyTextPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.92; transform: scale(1.01); }
 }

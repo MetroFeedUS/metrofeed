@@ -1621,6 +1621,9 @@
     TV.mode = MODES.ROUTE;
     const wp = el('mfTvWeatherPanel');
     if (wp) wp.classList.add('mf-tv-hidden');
+    if (window.MF_TV_STAGE_MODE) {
+      refreshAlertsPanel(true);
+    }
     TV.episodeGeneration++;
     clearMapBetweenRoutes();
     runNextRouteEpisode();
@@ -1893,11 +1896,35 @@
 
   let alertsLastKey = '';
 
+  function publishRouteAlertsStandby() {
+    busPublish({
+      t: 'alerts',
+      route: 'Weather on air',
+      html:
+        '<div class="mf-tv-alerts-panel__empty">Transit route alerts are on the route panel only — not shown during weather.</div>'
+    });
+  }
+
+  function suppressRouteAlertsForWeather() {
+    const panel = el('mfTvAlertsPanel');
+    if (panel) {
+      panel.classList.add('mf-tv-hidden');
+      panel.setAttribute('hidden', '');
+      panel.setAttribute('aria-hidden', 'true');
+    }
+    try {
+      document.documentElement.classList.remove('tv-alerts-open');
+    } catch (_) {}
+    publishRouteAlertsStandby();
+  }
+
   async function refreshAlertsPanel(force) {
     const routeEl = el('mfTvAlertsPanelRoute');
     const bodyEl = el('mfTvAlertsPanelBody');
     const panel = el('mfTvAlertsPanel');
     if (!routeEl || !bodyEl || !panel) return;
+    /* Route/transit alerts only — never mix with NWS weather (weather bar + mfTvWeatherPanel). */
+    if (TV.mode === MODES.WEATHER) return;
     const stageMode = !!window.MF_TV_STAGE_MODE;
     if (panel.classList.contains('mf-tv-hidden') && !force && !stageMode) return;
 
@@ -2353,6 +2380,7 @@
     setPhaseBadge('Weather');
     hideTrafficDetail();
     setLowerThird('', '');
+    suppressRouteAlertsForWeather();
 
     const a = api();
     if (a && a.hideConstructionLayer) a.hideConstructionLayer();
