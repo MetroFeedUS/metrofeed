@@ -14307,6 +14307,154 @@
     return out;
   }
 
+  /** Lowest route number for sort (multi-route alerts use their smallest route). */
+  function mfCincyAlertRouteSortValue(a) {
+    const nums = mfCincyAlertRouteNums(a)
+      .map((n) => parseInt(n, 10))
+      .filter((n) => !Number.isNaN(n));
+    if (!nums.length) return 99999;
+    return Math.min(...nums);
+  }
+
+  function mfCincyAlertSortList(alerts) {
+    return (alerts || []).slice().sort((a, b) => {
+      const routeDiff = mfCincyAlertRouteSortValue(a) - mfCincyAlertRouteSortValue(b);
+      if (routeDiff !== 0) return routeDiff;
+      const ta = String(a.title || a.text || '').toLowerCase();
+      const tb = String(b.title || b.text || '').toLowerCase();
+      return ta.localeCompare(tb);
+    });
+  }
+
+  function mfCincyAlertCollapsedRouteLabel(a) {
+    const routeNums = mfCincyAlertRouteNums(a);
+    if (!routeNums.length) return 'General';
+    return (
+      'Route' +
+      (routeNums.length > 1 ? 's' : '') +
+      ' ' +
+      routeNums.join(', ')
+    );
+  }
+
+  function mfCincyAlertCollapsedTitle(a) {
+    return String(a.title || a.header || a.text || a.summary || 'Transit alert').trim();
+  }
+
+  /** Expanded body only (collapsed row already shows type + routes + title). */
+  function mfCincyAlertCardDetailsHtml(a) {
+    const tz =
+      (window.CITY_CONFIG && window.CITY_CONFIG.timezone) || 'America/New_York';
+    const title = String(a.title || a.header || '').trim();
+    const body = mfCincyAlertPrimaryBody(a);
+    const summary = String(a.summary || '').trim();
+    const text = String(a.text || '').trim();
+    const href = mfCincyAlertSafeHref(a);
+    const dateRange = mfCincyAlertDateRangeText(a, tz);
+    const stops = Array.isArray(a.stops)
+      ? a.stops.map((s) => String(s).trim()).filter(Boolean)
+      : [];
+
+    const headline =
+      title ||
+      (text && text !== body ? text : '') ||
+      (summary && summary !== body ? summary : '');
+    const headlineEsc = headline ? mfCincyAlertEscapeHtml(headline) : '';
+    const bodyEsc = body ? mfCincyAlertEscapeHtml(body) : '';
+    const showHeadline = headlineEsc && bodyEsc && headline !== body;
+    const showBody = bodyEsc && (showHeadline || !headlineEsc || headline === body);
+    const fallbackEsc =
+      !showHeadline && !showBody
+        ? mfCincyAlertEscapeHtml(text || summary || title || 'No details')
+        : '';
+
+    let html = '';
+    if (showHeadline) {
+      html +=
+        '<div style="font-weight:700;color:#fff;line-height:1.3;margin-bottom:0.45rem;">' +
+        headlineEsc +
+        '</div>';
+    }
+    if (showBody) {
+      html +=
+        '<div class="mf-cincy-alert-body" style="color:#e2e8f0;line-height:1.5;font-size:0.92rem;white-space:pre-wrap;margin-top:0.1rem;">' +
+        bodyEsc +
+        '</div>';
+    } else if (fallbackEsc) {
+      html +=
+        '<div class="mf-cincy-alert-body" style="color:#e2e8f0;line-height:1.5;font-size:0.92rem;white-space:pre-wrap;">' +
+        fallbackEsc +
+        '</div>';
+    }
+    if (stops.length) {
+      const stopPreview = stops.slice(0, 10).join(', ');
+      const stopSuffix = stops.length > 10 ? ' …' : '';
+      html +=
+        '<div style="margin-top:0.5rem;font-size:0.8rem;color:#94a3b8;line-height:1.35;">' +
+        '<span style="font-weight:700;color:#cbd5e1;">Affected stops:</span> ' +
+        mfCincyAlertEscapeHtml(stopPreview + stopSuffix) +
+        '</div>';
+    }
+    if (dateRange) {
+      html +=
+        '<div style="margin-top:0.5rem;font-size:0.8rem;color:#94a3b8;font-weight:600;">' +
+        mfCincyAlertEscapeHtml(dateRange) +
+        '</div>';
+    }
+    if (href) {
+      html +=
+        '<div style="margin-top:0.65rem;"><a href="' +
+        href +
+        '" target="_blank" rel="noopener noreferrer" style="color:#93c5fd;font-weight:600;text-decoration:underline;">Official link →</a></div>';
+    }
+    return html || '<div style="color:#94a3b8;font-size:0.9rem;">No additional details.</div>';
+  }
+
+  function mfCincyAlertCollapsibleHtml(a, alertId) {
+    const typeMeta = mfCincyAlertTypeMeta(a);
+    const routeLabel = mfCincyAlertCollapsedRouteLabel(a);
+    const title = mfCincyAlertCollapsedTitle(a);
+    const details = mfCincyAlertCardDetailsHtml(a);
+
+    return (
+      '<div style="background:#23272a;border-left:4px solid ' +
+      typeMeta.color +
+      ';border-radius:6px;margin-bottom:0.5rem;overflow:hidden;">' +
+      '<button type="button" onclick="toggleAlert(\'' +
+      alertId +
+      '\')" style="width:100%;background:transparent;border:none;padding:0.75rem 1rem;color:#fff;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:0.75rem;transition:background 0.2s;" onmouseover="this.style.background=\'#2a2f35\';" onmouseout="this.style.background=\'transparent\';">' +
+      '<div style="flex:1;min-width:0;">' +
+      '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.2rem;">' +
+      '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;background:' +
+      typeMeta.color +
+      '33;color:' +
+      typeMeta.color +
+      ';border:1px solid ' +
+      typeMeta.color +
+      '88;">' +
+      mfCincyAlertEscapeHtml(typeMeta.label) +
+      '</span>' +
+      '<span style="font-weight:800;color:#fff;font-size:0.95rem;">' +
+      mfCincyAlertEscapeHtml(routeLabel) +
+      '</span>' +
+      '</div>' +
+      '<div style="color:#cbd5e1;font-size:0.86rem;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+      mfCincyAlertEscapeHtml(title) +
+      '</div>' +
+      '</div>' +
+      '<span id="' +
+      alertId +
+      '-arrow" style="font-size:0.85rem;color:#94a3b8;flex-shrink:0;transition:transform 0.2s;">▶</span>' +
+      '</button>' +
+      '<div id="' +
+      alertId +
+      '-details" style="display:none;padding:0.75rem 1rem;border-top:1px solid #333;">' +
+      details +
+      '</div>' +
+      '</div>'
+    );
+  }
+
   /** Rich Cincinnati alert card — enriched GTFS-RT fields + legacy text fallback */
   function mfCincyAlertCardInnerHtml(a) {
     const tz =
@@ -14406,7 +14554,9 @@
   }
 
   window.mfCincyAlertCardInnerHtml = mfCincyAlertCardInnerHtml;
+  window.mfCincyAlertCardDetailsHtml = mfCincyAlertCardDetailsHtml;
   window.mfCincyAlertDedupeList = mfCincyAlertDedupeList;
+  window.mfCincyAlertSortList = mfCincyAlertSortList;
 
   function mfIsCincyVpsAlertsSchema(alerts) {
     return (
@@ -14453,7 +14603,8 @@
         else if (sev === 'moderate' && highestSeverity !== 'severe') highestSeverity = 'moderate';
       });
 
-      return { count: routeAlerts.length, severity: highestSeverity, alerts: routeAlerts };
+      const cleaned = mfCincyAlertSortList(mfCincyAlertDedupeList(routeAlerts));
+      return { count: cleaned.length, severity: highestSeverity, alerts: cleaned };
     }
     
     // MBTA V3 API stores route IDs in informed_entity array, not relationships.route.data
@@ -14494,6 +14645,9 @@
       alerts: routeAlerts
     };
   }
+
+  window.fetchAlertsData = fetchAlertsData;
+  window.getRouteAlerts = getRouteAlerts;
 
   // Create alert badge HTML
   function createAlertBadge(routeId, alertInfo) {
@@ -14542,21 +14696,24 @@
       await loadMBTAAlerts([String(routeId)]);
     } catch (_) {}
     
-    // Wait a bit for modal to render, then expand categories
+    // Wait a bit for modal to render, then expand categories and matching alerts
     setTimeout(() => {
-      // Expand all categories
       const alertsContent = document.getElementById('mbtaAlertsContent');
       if (!alertsContent) return;
 
       const categoryButtons = alertsContent.querySelectorAll('[id$="-arrow"]');
-      categoryButtons.forEach(arrow => {
+      categoryButtons.forEach((arrow) => {
         const categoryId = arrow.id.replace('-arrow', '');
         if (categoryId && categoryId.startsWith('category-')) {
           toggleAlertCategory(categoryId);
         }
       });
 
-      // Scroll to top of alerts
+      alertsContent.querySelectorAll('[id^="cincy-alert-"][id$="-details"]').forEach((detailsDiv) => {
+        const alertId = detailsDiv.id.replace('-details', '');
+        if (alertId) toggleAlert(alertId);
+      });
+
       alertsContent.scrollTop = 0;
     }, 300);
   }
@@ -14614,20 +14771,34 @@
           else byAgency.other.push(a);
         });
 
-        const renderGroup = (title, list) => {
-          if (!list.length) return '';
-          const items = list.map((a) => {
-            const inner = mfCincyAlertCardInnerHtml(a);
-            return `
-              <div style="background:#23272a;border-left:4px solid #ffa500;border-radius:6px;margin-bottom:0.5rem;overflow:hidden;">
-                <div style="padding:0.75rem 1rem;">
-                  ${inner}
-                </div>
-              </div>
-            `;
-          }).join('');
+        let cincyAlertIndex = 0;
+        const expandAgencyGroups = !rf.length;
 
-          const groupId = `category-cincy-${title.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}`;
+        const renderGroup = (title, list, emptyNote) => {
+          const groupId = `category-cincy-${title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
+          if (!list.length) {
+            if (!emptyNote) return '';
+            return (
+              '<div style="margin-bottom: 1rem;">' +
+              '<div style="width:100%;background:#1a1a1a;border:2px solid #333;border-radius:6px;padding:0.75rem 1rem;color:#888;font-size:0.95rem;">' +
+              '<span style="color:#fff;font-weight:bold;">' +
+              title +
+              '</span> <span style="font-weight:normal;">(0)</span> — ' +
+              emptyNote +
+              '</div></div>'
+            );
+          }
+
+          const sorted = mfCincyAlertSortList(list);
+          const items = sorted
+            .map((a) => {
+              const alertId = `cincy-alert-${cincyAlertIndex++}`;
+              return mfCincyAlertCollapsibleHtml(a, alertId);
+            })
+            .join('');
+          const groupOpen = expandAgencyGroups ? 'block' : 'none';
+          const arrowRotate = expandAgencyGroups ? 'rotate(180deg)' : 'rotate(0deg)';
+
           return `
             <div style="margin-bottom: 1rem;">
               <button
@@ -14636,10 +14807,10 @@
                 onmouseover="this.style.background='#23272a'; this.style.borderColor='#9333ea';"
                 onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#333';"
               >
-                <span>${title} <span style="color:#888;font-weight:normal;">(${list.length})</span></span>
-                <span id="${groupId}-arrow" style="font-size:1.2rem;transition:transform 0.2s;">▼</span>
+                <span>${title} <span style="color:#888;font-weight:normal;">(${sorted.length})</span></span>
+                <span id="${groupId}-arrow" style="font-size:1.2rem;transition:transform 0.2s;transform:${arrowRotate};">▼</span>
               </button>
-              <div id="${groupId}" style="display:none;margin-top:0.5rem;">
+              <div id="${groupId}" style="display:${groupOpen};margin-top:0.5rem;">
                 ${items}
               </div>
             </div>
@@ -14648,8 +14819,8 @@
 
         const html =
           renderGroup('Metro', byAgency.sorta) +
-          renderGroup('TANK', byAgency.tank) +
-          renderGroup('BCRTA', byAgency.bcrta) +
+          renderGroup('TANK', byAgency.tank, 'No active TANK alerts in the feed right now.') +
+          renderGroup('BCRTA', byAgency.bcrta, 'No active BCRTA alerts in the feed right now.') +
           renderGroup('Other', byAgency.other);
 
         alertsContent.innerHTML = html || '<div style="color:#4CAF50; padding: 1rem; text-align:center;">✅ No active transit alerts at this time.</div>';
@@ -16169,7 +16340,7 @@
   </div>
   <p class="mf-tv-admin-hint">Ctrl+Shift+P · Panel hidden from normal UI</p>
 </div>
-<script src="obs-director.js?v=20260623etaAlerts"></script>
+<script src="obs-director.js?v=20260623alertsrotate"></script>
 <!-- 2026-04-16 Next: verify stop times vs GTFS for sorta_4 dir0 at stop X -->
 </body>
 </html>

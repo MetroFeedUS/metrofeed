@@ -229,37 +229,29 @@
       text-decoration: underline;
     }
 
-    /* Phone lineup PNG has large black margins — crop/zoom so phones fill the frame */
+    /* RoamRaven product screenshot — wide PNG, natural fit (no crop/zoom) */
     .product-visual {
       margin: 0;
-      position: relative;
       width: 100%;
-      aspect-ratio: 2.35 / 1;
       border-radius: var(--radius);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: #000;
+      border: 1px solid var(--border);
+      background: #fff;
       overflow: hidden;
+      line-height: 0;
     }
 
     .product-visual img {
-      position: absolute;
-      left: 50%;
-      top: 50%;
       width: 100%;
       height: auto;
-      max-width: none;
       display: block;
-      transform: translate(-50%, -50%) scale(4.6);
-      transform-origin: center center;
+      max-width: 100%;
       pointer-events: none;
       user-select: none;
     }
 
     .product-visual.is-empty {
-      aspect-ratio: auto;
       min-height: 200px;
       background: #f5f5f7;
-      border-color: var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -320,14 +312,6 @@
         grid-template-columns: 1fr;
         gap: 24px;
       }
-
-      .product-visual:not(.is-empty) {
-        aspect-ratio: 2.1 / 1;
-      }
-
-      .product-visual img {
-        transform: translate(-50%, -50%) scale(3.6);
-      }
     }
 
     @media (max-width: 600px) {
@@ -386,11 +370,10 @@
           <p>Real time transit, traffic, weather, and trip planning in a single platform.</p>
           <a class="product-link" href="https://roamravenapp.com/">Visit RoamRaven →</a>
         </div>
-        <figure class="product-visual is-empty" id="roamraven-visual">
-          <img src="Phone%20lineup.png" alt="RoamRaven app on phone" decoding="async"
-               onload="document.getElementById('roamraven-visual').classList.remove('is-empty')"
+        <figure class="product-visual" id="roamraven-visual">
+          <img src="websitepicture.png" alt="RoamRaven app — transit map, trip guide, schedules, and cameras" decoding="async"
                onerror="document.getElementById('roamraven-visual').classList.add('is-empty')" />
-          <figcaption class="product-visual-placeholder">Product image: add <strong>Phone lineup.png</strong></figcaption>
+          <figcaption class="product-visual-placeholder">Product image: add <strong>websitepicture.png</strong></figcaption>
         </figure>
       </div>
     </div>

@@ -1895,6 +1895,109 @@
   }
 
   let alertsLastKey = '';
+  let alertsRotationList = [];
+  let alertsRotationIndex = 0;
+  let alertsRotationTimer = null;
+  let alertsLastFetchAt = 0;
+  const ALERTS_REFETCH_MS = 60000;
+
+  function alertsRotationDwellMs(count) {
+    if (!count || count <= 1) return 0;
+    if (count <= 3) return 4500;
+    if (count <= 6) return 3500;
+    return 2800;
+  }
+
+  function stopAlertsRotation() {
+    if (alertsRotationTimer) {
+      clearInterval(alertsRotationTimer);
+      alertsRotationTimer = null;
+    }
+  }
+
+  function restartAlertsRotation() {
+    stopAlertsRotation();
+    const n = alertsRotationList.length;
+    const dwell = alertsRotationDwellMs(n);
+    if (dwell > 0) {
+      alertsRotationTimer = setInterval(advanceAlertsRotation, dwell);
+    }
+  }
+
+  function renderObsAlertCard(a) {
+    if (typeof window.mfCincyAlertCardInnerHtml === 'function') {
+      return (
+        '<div class="mf-tv-alerts-panel__card">' +
+        window.mfCincyAlertCardInnerHtml(a) +
+        '</div>'
+      );
+    }
+    if (typeof window.mfCincyAlertCardDetailsHtml === 'function') {
+      const title = String((a && (a.title || a.header || a.text)) || 'Alert').trim();
+      return (
+        '<div class="mf-tv-alerts-panel__card"><div style="font-weight:700;color:#fff;margin-bottom:0.35rem;">' +
+        title +
+        '</div>' +
+        window.mfCincyAlertCardDetailsHtml(a) +
+        '</div>'
+      );
+    }
+    const txt = String(
+      (a && (a.title || a.header || a.text || a.description || a.body || a.detail)) || ''
+    ).trim();
+    return (
+      '<div class="mf-tv-alerts-panel__card"><div style="color:#fff;white-space:pre-wrap;line-height:1.35;">' +
+      (txt || 'Alert') +
+      '</div></div>'
+    );
+  }
+
+  function publishAlertsRotationFrame(routeLabel) {
+    const bodyEl = el('mfTvAlertsPanelBody');
+    const routeEl = el('mfTvAlertsPanelRoute');
+    if (!bodyEl) return;
+    const total = alertsRotationList.length;
+    if (!total) {
+      alertsRenderEmpty(bodyEl, 'No active alerts for this route.');
+      busPublish({
+        t: 'alerts',
+        route: routeLabel || '',
+        html: '<div class="mf-tv-alerts-panel__empty">No active alerts for this route.</div>'
+      });
+      return;
+    }
+    if (alertsRotationIndex >= total) alertsRotationIndex = 0;
+    const counter =
+      total > 1
+        ? '<div class="mf-tv-alerts-panel__counter">Alert ' +
+          (alertsRotationIndex + 1) +
+          ' of ' +
+          total +
+          '</div>'
+        : '';
+    const html = counter + renderObsAlertCard(alertsRotationList[alertsRotationIndex]);
+    bodyEl.innerHTML = html;
+    const routeText = routeEl ? routeEl.textContent : routeLabel || '';
+    busPublish({ t: 'alerts', route: routeText, html: html });
+  }
+
+  function advanceAlertsRotation() {
+    if (alertsRotationList.length <= 1) return;
+    alertsRotationIndex = (alertsRotationIndex + 1) % alertsRotationList.length;
+    publishAlertsRotationFrame();
+  }
+
+  function normalizeRouteAlertsList(info) {
+    let routeAlerts =
+      info && Array.isArray(info.alerts) ? info.alerts.slice() : [];
+    if (typeof window.mfCincyAlertDedupeList === 'function') {
+      routeAlerts = window.mfCincyAlertDedupeList(routeAlerts);
+    }
+    if (typeof window.mfCincyAlertSortList === 'function') {
+      routeAlerts = window.mfCincyAlertSortList(routeAlerts);
+    }
+    return routeAlerts;
+  }
 
   function publishRouteAlertsStandby() {
     busPublish({
@@ -1906,6 +2009,9 @@
   }
 
   function suppressRouteAlertsForWeather() {
+    stopAlertsRotation();
+    alertsRotationList = [];
+    alertsRotationIndex = 0;
     const panel = el('mfTvAlertsPanel');
     if (panel) {
       panel.classList.add('mf-tv-hidden');
@@ -1931,9 +2037,12 @@
     const rt = alertsRouteFromState();
     const key = rt.routeId + '|' + (rt.dir || '');
     if (!rt.routeId) {
+      stopAlertsRotation();
+      alertsRotationList = [];
+      alertsRotationIndex = 0;
+      alertsLastKey = '';
       routeEl.textContent = 'Waiting for route…';
       alertsRenderEmpty(bodyEl, '—');
-      alertsLastKey = '';
       busPublish({
         t: 'alerts',
         route: 'Waiting for route…',
@@ -1944,10 +2053,12 @@
 
     routeEl.textContent = rt.label + (rt.dir ? (' · ' + rt.dir) : '');
 
-    if (!force && key === alertsLastKey) return;
-    alertsLastKey = key;
+    const routeChanged = key !== alertsLastKey;
+    const stale = Date.now() - alertsLastFetchAt > ALERTS_REFETCH_MS;
+    if (!force && !routeChanged && !stale) return;
 
     if (typeof window.fetchAlertsData !== 'function' || typeof window.getRouteAlerts !== 'function') {
+      stopAlertsRotation();
       alertsRenderEmpty(bodyEl, 'Alerts not available.');
       busPublish({
         t: 'alerts',
@@ -1957,11 +2068,21 @@
       return;
     }
 
-    alertsRenderEmpty(bodyEl, 'Loading…');
+    if (routeChanged || force) {
+      alertsRenderEmpty(bodyEl, 'Loading…');
+    }
+
     try {
       const alerts = await window.fetchAlertsData();
+      alertsLastFetchAt = Date.now();
       const info = window.getRouteAlerts(rt.routeId, alerts);
-      if (!info || !Array.isArray(info.alerts) || info.alerts.length === 0) {
+      const routeAlerts = normalizeRouteAlertsList(info);
+
+      if (!routeAlerts.length) {
+        stopAlertsRotation();
+        alertsRotationList = [];
+        alertsRotationIndex = 0;
+        alertsLastKey = key;
         alertsRenderEmpty(bodyEl, 'No active alerts for this route.');
         busPublish({
           t: 'alerts',
@@ -1970,29 +2091,34 @@
         });
         return;
       }
-      const max = 6;
-      const slice = info.alerts.slice(0, max);
-      const cards = slice.map(function (a) {
-        if (typeof window.mfCincyAlertCardInnerHtml === 'function') {
-          return '<div class="mf-tv-alerts-panel__card">' + window.mfCincyAlertCardInnerHtml(a) + '</div>';
-        }
-        const txt = String(
-          (a && (a.title || a.header || a.text || a.description || a.body || a.detail)) || ''
-        ).trim();
-        return (
-          '<div class="mf-tv-alerts-panel__card"><div style="color:#fff;white-space:pre-wrap;line-height:1.35;">' +
-          (txt || 'Alert') +
-          '</div></div>'
-        );
-      });
-      const more =
-        info.alerts.length > max
-          ? '<div class="mf-tv-alerts-panel__more">+' + (info.alerts.length - max) + ' more</div>'
-          : '';
-      const html = cards.join('') + more;
-      bodyEl.innerHTML = html;
-      busPublish({ t: 'alerts', route: routeEl.textContent, html: html });
+
+      const prevKey = alertsLastKey;
+      alertsLastKey = key;
+      if (routeChanged || force || prevKey !== key) {
+        alertsRotationIndex = 0;
+      } else if (alertsRotationIndex >= routeAlerts.length) {
+        alertsRotationIndex = 0;
+      }
+
+      const listChanged =
+        routeAlerts.length !== alertsRotationList.length ||
+        routeAlerts.some(function (a, i) {
+          const b = alertsRotationList[i];
+          if (!b) return true;
+          return (
+            String(a.title || a.text || '') !== String(b.title || b.text || '') ||
+            String(a.starts_at || '') !== String(b.starts_at || '')
+          );
+        });
+
+      alertsRotationList = routeAlerts;
+
+      if (routeChanged || force || listChanged) {
+        publishAlertsRotationFrame(routeEl.textContent);
+        restartAlertsRotation();
+      }
     } catch (_) {
+      stopAlertsRotation();
       alertsRenderEmpty(bodyEl, 'Unable to load alerts.');
       busPublish({
         t: 'alerts',
@@ -2039,7 +2165,7 @@
       } else if (!panel.classList.contains('mf-tv-hidden')) {
         refreshAlertsPanel(false);
       }
-    }, 2500);
+    }, 30000);
 
     if (window.MF_TV_STAGE_MODE) {
       refreshAlertsPanel(true);
