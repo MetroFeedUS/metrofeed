@@ -3538,7 +3538,7 @@
 
 <!-- -- MBTA ALERTS MODAL -- -->
 <div id="mbtaAlertsModal" class="mf-overlay" style="display: none;">
-  <div class="mf-modal" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+  <div class="mf-modal" style="max-width: 720px; max-height: 85vh; overflow-y: auto;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
       <h2 style="margin: 0; color: var(--rr-accent-text);">🚨 Transit alerts</h2>
       <button onclick="hideMBTAAlertsModal()" style="background: #666; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Close</button>
@@ -14049,22 +14049,19 @@
   // Cache for alerts data (to avoid refetching when checking routes)
   let cachedAlerts = null;
   let alertsCacheTime = null;
+  let cachedAlertsUpdatedAt = null;
   const ALERTS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   // Fetch and cache alerts data
   async function fetchAlertsData() {
     const cacheNow = Date.now();
-    // Return cached data if still fresh
-    if (cachedAlerts && alertsCacheTime && (cacheNow - alertsCacheTime) < ALERTS_CACHE_DURATION) {
-      return cachedAlerts;
-    }
 
     try {
       const url =
         (window.CITY_CONFIG && window.CITY_CONFIG.realtimeAlertsUrl)
           ? window.CITY_CONFIG.realtimeAlertsUrl
           : 'https://maps.metrofeedus.com/api/mbta/v3/alerts?sort=-created_at&page[limit]=50';
-      const response = await fetch(url);
+      const response = await fetch(url, { cache: 'no-cache' });
 
       if (!response.ok) {
         console.warn('[fetchAlertsData] HTTP', response.status, response.statusText);
@@ -14085,7 +14082,18 @@
       // Each alert: required `agency`; body via legacy `text` and/or enriched fields:
       // `title`|`header`, `description`|`body`|`detail`, optional `url`|`link`, optional `summary`.
       if (data && Array.isArray(data.alerts)) {
+        const feedUpdated = data.updated_at || null;
+        if (
+          cachedAlerts &&
+          alertsCacheTime &&
+          (cacheNow - alertsCacheTime) < ALERTS_CACHE_DURATION &&
+          feedUpdated &&
+          feedUpdated === cachedAlertsUpdatedAt
+        ) {
+          return cachedAlerts;
+        }
         cachedAlerts = data.alerts;
+        cachedAlertsUpdatedAt = feedUpdated;
         alertsCacheTime = cacheNow;
         return cachedAlerts;
       }
@@ -14262,12 +14270,49 @@
     return ag ? ag.toUpperCase() : '';
   }
 
+  /** Best available long-form alert body (description preferred over legacy text). */
+  function mfCincyAlertPrimaryBody(a) {
+    if (!a || typeof a !== 'object') return '';
+    const title = String(a.title || a.header || '').trim();
+    const desc = String(a.description || a.body || a.detail || '').trim();
+    const summary = String(a.summary || '').trim();
+    const text = String(a.text || '').trim();
+    if (desc) return desc;
+    if (text && text !== title) return text;
+    if (summary && summary !== title) return summary;
+    return text || summary || '';
+  }
+
+  function mfCincyAlertDedupeKey(a) {
+    if (!a || typeof a !== 'object') return '';
+    const routes = mfCincyAlertRouteNums(a).join(',');
+    return [
+      String(a.agency || ''),
+      String(a.title || a.text || '').trim(),
+      String(a.starts_at || ''),
+      routes,
+      String(mfCincyAlertPrimaryBody(a)).slice(0, 120)
+    ].join('|');
+  }
+
+  function mfCincyAlertDedupeList(alerts) {
+    const seen = new Set();
+    const out = [];
+    (alerts || []).forEach((a) => {
+      const key = mfCincyAlertDedupeKey(a);
+      if (key && seen.has(key)) return;
+      if (key) seen.add(key);
+      out.push(a);
+    });
+    return out;
+  }
+
   /** Rich Cincinnati alert card — enriched GTFS-RT fields + legacy text fallback */
   function mfCincyAlertCardInnerHtml(a) {
     const tz =
       (window.CITY_CONFIG && window.CITY_CONFIG.timezone) || 'America/New_York';
     const title = String(a.title || a.header || '').trim();
-    const detail = String(a.description || a.body || a.detail || '').trim();
+    const body = mfCincyAlertPrimaryBody(a);
     const summary = String(a.summary || '').trim();
     const text = String(a.text || '').trim();
     const href = mfCincyAlertSafeHref(a);
@@ -14275,16 +14320,21 @@
     const routeNums = mfCincyAlertRouteNums(a);
     const dateRange = mfCincyAlertDateRangeText(a, tz);
     const agencyLabel = mfCincyAlertAgencyLabel(a.agency);
+    const stops = Array.isArray(a.stops)
+      ? a.stops.map((s) => String(s).trim()).filter(Boolean)
+      : [];
 
-    const titleEsc = title ? mfCincyAlertEscapeHtml(title) : '';
-    const detailEsc = detail ? mfCincyAlertEscapeHtml(detail) : '';
-    const summaryEsc =
-      summary && summary !== title && summary !== detail
-        ? mfCincyAlertEscapeHtml(summary)
-        : '';
-    const textEsc =
-      text && text !== title && text !== detail && text !== summary
-        ? mfCincyAlertEscapeHtml(text)
+    const headline =
+      title ||
+      (text && text !== body ? text : '') ||
+      (summary && summary !== body ? summary : '');
+    const headlineEsc = headline ? mfCincyAlertEscapeHtml(headline) : '';
+    const bodyEsc = body ? mfCincyAlertEscapeHtml(body) : '';
+    const showHeadline = headlineEsc && bodyEsc && headline !== body;
+    const showBody = bodyEsc && (showHeadline || !headlineEsc || headline === body);
+    const fallbackEsc =
+      !showHeadline && !showBody
+        ? mfCincyAlertEscapeHtml(text || summary || title || 'No details')
         : '';
 
     let html = '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:0.5rem;">';
@@ -14314,38 +14364,30 @@
     }
     html += '</div>';
 
-    if (titleEsc) {
+    if (showHeadline) {
       html +=
-        '<div style="font-weight:700;color:#fff;line-height:1.3;margin-bottom:0.4rem;">' +
-        titleEsc +
+        '<div style="font-weight:700;color:#fff;line-height:1.3;margin-bottom:0.45rem;">' +
+        headlineEsc +
         '</div>';
     }
-    if (summaryEsc) {
+    if (showBody) {
       html +=
-        '<div style="color:#cbd5e1;line-height:1.35;font-size:0.88rem;margin-bottom:0.35rem;">' +
-        summaryEsc +
+        '<div class="mf-cincy-alert-body" style="color:#e2e8f0;line-height:1.5;font-size:0.92rem;white-space:pre-wrap;margin-top:0.1rem;">' +
+        bodyEsc +
+        '</div>';
+    } else if (fallbackEsc) {
+      html +=
+        '<div class="mf-cincy-alert-body" style="color:#e2e8f0;line-height:1.5;font-size:0.92rem;white-space:pre-wrap;">' +
+        fallbackEsc +
         '</div>';
     }
-    if (detailEsc) {
+    if (stops.length) {
+      const stopPreview = stops.slice(0, 10).join(', ');
+      const stopSuffix = stops.length > 10 ? ' …' : '';
       html +=
-        '<div style="color:#ccc;line-height:1.45;font-size:0.93rem;white-space:pre-wrap;">' +
-        detailEsc +
-        '</div>';
-    } else if (!titleEsc && textEsc) {
-      html +=
-        '<div style="color:#ccc;line-height:1.45;font-size:0.93rem;white-space:pre-wrap;">' +
-        textEsc +
-        '</div>';
-    } else if (!titleEsc && !detailEsc) {
-      html +=
-        '<div style="color:#fff;line-height:1.38;font-size:0.95rem;">' +
-        mfCincyAlertEscapeHtml('No details') +
-        '</div>';
-    }
-    if (detailEsc && textEsc) {
-      html +=
-        '<div style="color:#aaa;line-height:1.45;font-size:0.85rem;white-space:pre-wrap;margin-top:0.45rem;padding-top:0.45rem;border-top:1px solid #333;">' +
-        textEsc +
+        '<div style="margin-top:0.5rem;font-size:0.8rem;color:#94a3b8;line-height:1.35;">' +
+        '<span style="font-weight:700;color:#cbd5e1;">Affected stops:</span> ' +
+        mfCincyAlertEscapeHtml(stopPreview + stopSuffix) +
         '</div>';
     }
     if (dateRange) {
@@ -14362,6 +14404,9 @@
     }
     return html;
   }
+
+  window.mfCincyAlertCardInnerHtml = mfCincyAlertCardInnerHtml;
+  window.mfCincyAlertDedupeList = mfCincyAlertDedupeList;
 
   function mfIsCincyVpsAlertsSchema(alerts) {
     return (
@@ -14550,6 +14595,7 @@
 
         // Apply route filter (if any)
         alerts = alerts.filter(matchesRouteFilter);
+        alerts = mfCincyAlertDedupeList(alerts);
 
         if (!alerts.length) {
           const message = rf.length

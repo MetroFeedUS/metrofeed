@@ -125,7 +125,14 @@
     });
 
     timeEl.innerHTML =
-      hour + ':' + minute + '<span class="rr-clock__sec">:' + second + '</span> ' + dayPeriod;
+      hour +
+      ':' +
+      minute +
+      '<span class="rr-clock__sec">:' +
+      second +
+      '</span><span class="rr-clock__period">' +
+      dayPeriod +
+      '</span>';
 
     const ticker = el('rrTicker');
     const isEmergency = ticker && ticker.classList.contains('rr-ticker--emergency');
