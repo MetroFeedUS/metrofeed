@@ -37,8 +37,6 @@
   <title>RoamRaven Map</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#9333ea" />
-  <link rel="preload" as="image" href="manifesttest.png" />
-  <link rel="apple-touch-startup-image" href="manifesttest.png" />
   <script src="obs-tv-panels.js?v=3"></script>
   <script src="obs-tv-bootstrap.js?v=20260618obsfix"></script>
   <link rel="icon" type="image/png" href="manifestbird.png" sizes="512x512" />
@@ -2306,71 +2304,9 @@
       display: none !important;
     }
 
-    /* Full-screen startup splash (manifesttest.png) — hidden after map load */
-    #mfSplashScreen {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      background: #000;
-      display: flex;
-      align-items: stretch;
-      justify-content: center;
-      transition: opacity 0.35s ease;
-      pointer-events: auto;
-    }
-    #mfSplashScreen img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      display: block;
-    }
-    #mfSplashScreen.mf-splash--hide {
-      opacity: 0;
-      pointer-events: none;
-    }
-    html.tv-mode #mfSplashScreen {
-      display: none !important;
-    }
-
   </style>
 </head>
 <body>
-
-<!-- Full-screen PWA / startup splash -->
-<div id="mfSplashScreen" aria-hidden="true">
-  <img src="manifesttest.png" alt="" width="1920" height="1080" decoding="async" fetchpriority="high" />
-</div>
-<script>
-  (function () {
-    if (/[?&]tv=(?:1|true)(?:&|$)/.test(location.search)) {
-      var s = document.getElementById('mfSplashScreen');
-      if (s) s.remove();
-      return;
-    }
-    var splash = document.getElementById('mfSplashScreen');
-    if (!splash) return;
-    var hidden = false;
-    var shownAt = Date.now();
-    var minMs = 500;
-    var maxMs = 6000;
-    function hideSplash() {
-      if (hidden || !splash) return;
-      hidden = true;
-      var run = function () {
-        splash.classList.add('mf-splash--hide');
-        setTimeout(function () {
-          if (splash.parentNode) splash.parentNode.removeChild(splash);
-        }, 380);
-      };
-      var wait = minMs - (Date.now() - shownAt);
-      if (wait > 0) setTimeout(run, wait);
-      else run();
-    }
-    window.mfHideSplashScreen = hideSplash;
-    setTimeout(hideSplash, maxMs);
-  })();
-</script>
 
 <!-- Screen reader live region for OTP + trip guide announcements -->
 <div id="mfSrLive" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"></div>
@@ -16251,7 +16187,6 @@
       // Add map event listeners for debugging
       map.on('load', () => {
         console.log('[Map] Map loaded successfully');
-        if (typeof window.mfHideSplashScreen === 'function') window.mfHideSplashScreen();
         console.log('[Map] Testing route overlay availability:');
         console.log('[Map]   - attachRouteToMap:', typeof window.attachRouteToMap);
         console.log('[Map]   - showRouteOverlay:', typeof window.showRouteOverlay);
@@ -16359,7 +16294,6 @@
       
       // Force attribution to be collapsed by default for fallback map
       map.on('load', () => {
-        if (typeof window.mfHideSplashScreen === 'function') window.mfHideSplashScreen();
         const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
         if (attributionControl) {
           attributionControl.classList.add('maplibregl-compact');

@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#000000" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="preload" as="image" href="/manifesttest.png" />
-  <link rel="apple-touch-startup-image" href="/manifesttest.png" />
   <title>RoamRaven | National map</title>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
@@ -514,31 +511,6 @@
       pointer-events: none;
       background: rgba(0, 0, 0, 0.35);
     }
-
-    /* Full-screen startup splash (manifesttest.png) */
-    #mfSplashScreen {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      background: #000;
-      display: flex;
-      align-items: stretch;
-      justify-content: center;
-      transition: opacity 0.35s ease;
-      pointer-events: auto;
-    }
-    #mfSplashScreen img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      display: block;
-    }
-    #mfSplashScreen.mf-splash--hide {
-      opacity: 0;
-      pointer-events: none;
-    }
-
     #mfMapLoading.is-visible {
       display: flex;
     }
@@ -657,34 +629,6 @@
   </style>
 </head>
 <body>
-  <div id="mfSplashScreen" aria-hidden="true">
-    <img src="/manifesttest.png" alt="" width="1920" height="1080" decoding="async" fetchpriority="high" />
-  </div>
-  <script>
-    (function () {
-      var splash = document.getElementById('mfSplashScreen');
-      if (!splash) return;
-      var hidden = false;
-      var shownAt = Date.now();
-      var minMs = 500;
-      var maxMs = 6000;
-      function hideSplash() {
-        if (hidden || !splash) return;
-        hidden = true;
-        var run = function () {
-          splash.classList.add('mf-splash--hide');
-          setTimeout(function () {
-            if (splash.parentNode) splash.parentNode.removeChild(splash);
-          }, 380);
-        };
-        var wait = minMs - (Date.now() - shownAt);
-        if (wait > 0) setTimeout(run, wait);
-        else run();
-      }
-      window.mfHideSplashScreen = hideSplash;
-      setTimeout(hideSplash, maxMs);
-    })();
-  </script>
   <div id="map" aria-label="RoamRaven national map (United States)"></div>
   <div id="mfMapLoading" aria-live="polite" aria-busy="true"><span>Loading U.S. counties…</span></div>
   <div id="mfMapLoadError" role="alert" aria-live="assertive"></div>
@@ -1788,7 +1732,6 @@
       } catch (_) {}
 
       map.once('load', function () {
-        if (typeof window.mfHideSplashScreen === 'function') window.mfHideSplashScreen();
         try {
           mfInstallServicePreviewLayer();
         } catch (_) {}
