@@ -1430,7 +1430,7 @@ function parseRealtimeTripsJsonToTripUpdates(json, feedRouteId, routeData) {
       const tSec =
         su.arrival != null ? Number(su.arrival) : su.departure != null ? Number(su.departure) : null;
       if (!Number.isFinite(tSec)) continue;
-      if (tSec < nowSec - 120) continue;
+      if (tSec < nowSec - 30) continue;
       const updateEntry = {
         time: tSec,
         tripId: tid || null,
@@ -1544,22 +1544,27 @@ function metrofeedNormalizeOccupancyRaw(raw) {
 /**
  * Format ETA time to human-readable string
  * @param {Date} etaDate - ETA date object
- * @returns {string} Formatted time (e.g., "2m 30s", "Now")
+ * @param {object} [options]
+ * @param {number} [options.gracePastMs=45000] - past predictions within this window → "Arriving"
+ * @returns {string|null} Formatted time, or null if expired (caller should skip)
  */
-function formatETA(etaDate) {
-  const now = new Date();
-  const diffMs = etaDate - now;
-  
-  if (diffMs < 0) return 'Now';
-  
+function formatETA(etaDate, options) {
+  options = options || {};
+  const gracePastMs = options.gracePastMs != null ? options.gracePastMs : 45000;
+  const now = Date.now();
+  const diffMs = etaDate.getTime() - now;
+
+  if (diffMs < -gracePastMs) return null;
+
+  if (diffMs < 0) return 'Arriving';
+
   const minutes = Math.floor(diffMs / 60000);
   const seconds = Math.floor((diffMs % 60000) / 1000);
-  
+
   if (minutes < 1) {
-    return `${seconds}s`;
-  } else {
-    return `${minutes}m ${seconds > 0 ? seconds + 's' : ''}`.trim();
+    return seconds > 0 ? `${seconds}s` : 'Arriving';
   }
+  return `${minutes}m ${seconds > 0 ? seconds + 's' : ''}`.trim();
 }
 
 function metrofeedStopUpdateTimeSec(su) {
@@ -1581,13 +1586,15 @@ function metrofeedNextStopFromRealtimeTrip(trip, stopIdToName) {
   for (let i = 0; i < stops.length; i++) {
     const tSec = metrofeedStopUpdateTimeSec(stops[i]);
     if (!Number.isFinite(tSec)) continue;
-    if (tSec < nowSec - 90) continue;
+    if (tSec < nowSec - 30) continue;
     const sid = stops[i].stop_id != null ? String(stops[i].stop_id) : "";
     const name =
       sid && stopIdToName && stopIdToName[sid] ? stopIdToName[sid] : sid || "Next stop";
+    const eta = formatETA(new Date(tSec * 1000));
+    if (!eta) continue;
     return {
       stopName: name,
-      eta: formatETA(new Date(tSec * 1000)),
+      eta: eta,
       stopId: sid,
       timeSec: tSec
     };
@@ -2902,8 +2909,9 @@ function attachRouteToMap(map, routeId, directionId, options) {
           const stopIdKey = String(stop.stop_id || stopId);
           const nowSecEta = Math.floor(Date.now() / 1000);
           const tuListRaw = metrofeedLookupStopUpdates(tu && tu.updatesByStopId, stopIdKey);
+          const etaGraceSec = 30;
           const tuList = tuListRaw
-            .filter(u => Number.isFinite(Number(u.time)) && Number(u.time) >= nowSecEta)
+            .filter(u => Number.isFinite(Number(u.time)) && Number(u.time) >= nowSecEta - etaGraceSec)
             .filter(u => !u.routeId || String(u.routeId) === String(routeId))
             .filter(u => u.directionId === null || u.directionId === undefined || u.directionId == directionId)
             .slice(0, 2)
@@ -2923,6 +2931,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               const stopsAwayN = trip ? metrofeedStopsAwayOnTrip(trip, stopIdKey, nowSecEta) : null;
               const stopsAway = metrofeedFormatStopsAway(stopsAwayN);
               const etaStr = formatETA(new Date((u.time || 0) * 1000));
+              if (!etaStr) return null;
               const latenessStr = metrofeedFormatLateness(
                 metrofeedLatenessMinutes(allTimes, u.time, agencyTimezone)
               );
@@ -2934,7 +2943,8 @@ function attachRouteToMap(map, routeId, directionId, options) {
                 muted: stopPopupMuted,
                 fg: stopPopupFg
               });
-            });
+            })
+            .filter(Boolean);
 
           if (tuList.length === 0) {
             if (tu && tu.etaSource === "realtime-trips") {
@@ -2943,7 +2953,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               let msg = "No buses predicted at this stop right now.";
               if (tu.futureUpdateCount === 0) {
                 msg =
-                  "Live arrivals unavailable — trip feed has no upcoming times (may be stale). Scheduled times below.";
+                  "No upcoming live predictions for this route right now. Scheduled times below.";
               }
               return `
             <hr style="border:none;border-top:1px solid ${fg}44;margin:6px 0;">

@@ -3737,7 +3737,7 @@
 <!-- -- SHARED CAMERA ICON -- -->
 <script src="cameraIcon.js"></script>
 <!-- -- ROUTE OVERLAY (map + live vehicles; deploy this one file). Bump ?v= after changes. -- -->
-<script src="routeOverlay.js?v=20260622stopDisclaimer"></script>
+<script src="routeOverlay.js?v=20260623etaAlerts"></script>
 <script src="trafficIncidents.js"></script>
 <!-- -- OTP INTEGRATION MODULE -- -->
 <script src="otp.js?v=20260602noWalkOnly"></script>
@@ -14176,35 +14176,189 @@
     return u.replace(/"/g, '&quot;').replace(/</g, '');
   }
 
-  /** Rich Cincinnati alert card: title + description + optional legacy text + link */
+  /** Extract explicit "Route N" references from text (fallback when routes[] missing). */
+  function mfExtractExplicitRouteNums(text) {
+    const t = String(text || '');
+    const nums = new Set();
+    const re = /\broute(?:\s*\(s\))?\s*([0-9]{1,3}(?:\s*(?:,|&|and|\/)\s*[0-9]{1,3})*)\b/gi;
+    let m;
+    while ((m = re.exec(t)) !== null) {
+      const chunk = m[1] || '';
+      (chunk.match(/[0-9]{1,3}/g) || []).forEach((n) => nums.add(String(n)));
+    }
+    return nums;
+  }
+
+  /** Route numbers from enriched routes[] or text fallback. */
+  function mfCincyAlertRouteNums(a) {
+    if (!a || typeof a !== 'object') return [];
+    if (Array.isArray(a.routes) && a.routes.length) {
+      return a.routes.map((n) => String(n).trim()).filter(Boolean);
+    }
+    return Array.from(mfExtractExplicitRouteNums(mfCincyAlertSearchBlob(a)));
+  }
+
+  function mfCincyAlertMatchesRoute(a, agency, routeNum) {
+    if (!a || !mfCincyAlertHasContent(a)) return false;
+    if (agency && String(a.agency || '').toLowerCase() !== agency) return false;
+    const nums = mfCincyAlertRouteNums(a);
+    if (!nums.length) return false;
+    return nums.indexOf(String(routeNum)) !== -1;
+  }
+
+  function mfCincyAlertSeverity(a) {
+    const t = String((a && a.type) || '').toLowerCase();
+    if (t === 'stop_closure' || t === 'no_service') return 'severe';
+    if (t === 'detour' || t === 'delay') return 'moderate';
+    return 'minor';
+  }
+
+  function mfCincyAlertTypeMeta(a) {
+    const t = String((a && a.type) || '').toLowerCase();
+    const map = {
+      detour: { label: 'Detour', color: '#fb923c' },
+      stop_closure: { label: 'Stop closed', color: '#f87171' },
+      delay: { label: 'Delay', color: '#fbbf24' },
+      service_notice: { label: 'Notice', color: '#a78bfa' }
+    };
+    return map[t] || { label: 'Alert', color: '#ffa500' };
+  }
+
+  function mfCincyAlertFormatIso(iso, tz) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime()) || d.getFullYear() >= 2999) return '';
+      return d.toLocaleString('en-US', {
+        timeZone: tz || 'America/New_York',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function mfCincyAlertDateRangeText(a, tz) {
+    if (!a) return '';
+    const start = mfCincyAlertFormatIso(a.starts_at, tz);
+    const openEnded = a.ends_at && String(a.ends_at).indexOf('3000') === 0;
+    const end = openEnded ? '' : mfCincyAlertFormatIso(a.ends_at, tz);
+    if (start && end) return start + ' – ' + end;
+    if (end) return 'Until ' + end;
+    if (start) return 'From ' + start;
+    if (openEnded) return 'Ongoing';
+    return '';
+  }
+
+  function mfCincyAlertAgencyLabel(agency) {
+    const ag = String(agency || '').toLowerCase();
+    if (ag === 'sorta') return 'Metro';
+    if (ag === 'tank') return 'TANK';
+    if (ag === 'bcrta') return 'BCRTA';
+    return ag ? ag.toUpperCase() : '';
+  }
+
+  /** Rich Cincinnati alert card — enriched GTFS-RT fields + legacy text fallback */
   function mfCincyAlertCardInnerHtml(a) {
+    const tz =
+      (window.CITY_CONFIG && window.CITY_CONFIG.timezone) || 'America/New_York';
     const title = String(a.title || a.header || '').trim();
     const detail = String(a.description || a.body || a.detail || '').trim();
+    const summary = String(a.summary || '').trim();
     const text = String(a.text || '').trim();
     const href = mfCincyAlertSafeHref(a);
+    const typeMeta = mfCincyAlertTypeMeta(a);
+    const routeNums = mfCincyAlertRouteNums(a);
+    const dateRange = mfCincyAlertDateRangeText(a, tz);
+    const agencyLabel = mfCincyAlertAgencyLabel(a.agency);
 
     const titleEsc = title ? mfCincyAlertEscapeHtml(title) : '';
     const detailEsc = detail ? mfCincyAlertEscapeHtml(detail) : '';
-    const textEsc = text ? mfCincyAlertEscapeHtml(text) : '';
+    const summaryEsc =
+      summary && summary !== title && summary !== detail
+        ? mfCincyAlertEscapeHtml(summary)
+        : '';
+    const textEsc =
+      text && text !== title && text !== detail && text !== summary
+        ? mfCincyAlertEscapeHtml(text)
+        : '';
 
-    let html = '';
-    if (titleEsc && detailEsc) {
-      html += `<div style="font-weight:700;color:#fff;line-height:1.3;margin-bottom:0.45rem;">${titleEsc}</div>`;
-      html += `<div style="color:#ccc;line-height:1.45;font-size:0.93rem;white-space:pre-wrap;">${detailEsc}</div>`;
-      if (textEsc && text !== title && text !== detail) {
-        html += `<div style="color:#aaa;line-height:1.45;font-size:0.88rem;white-space:pre-wrap;margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid #333;">${textEsc}</div>`;
-      }
-    } else if (titleEsc && textEsc) {
-      html += `<div style="font-weight:700;color:#fff;line-height:1.3;margin-bottom:0.45rem;">${titleEsc}</div>`;
-      html += `<div style="color:#ccc;line-height:1.45;font-size:0.93rem;white-space:pre-wrap;">${textEsc}</div>`;
-    } else if (titleEsc) {
-      html += `<div style="color:#fff;line-height:1.38;font-size:0.95rem;white-space:pre-wrap;">${titleEsc}</div>`;
-    } else {
-      html += `<div style="color:#fff;line-height:1.38;font-size:0.95rem;white-space:pre-wrap;">${textEsc || detailEsc || mfCincyAlertEscapeHtml('No details')}</div>`;
+    let html = '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:0.5rem;">';
+    html +=
+      '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;background:' +
+      typeMeta.color +
+      '33;color:' +
+      typeMeta.color +
+      ';border:1px solid ' +
+      typeMeta.color +
+      '88;">' +
+      mfCincyAlertEscapeHtml(typeMeta.label) +
+      '</span>';
+    if (agencyLabel) {
+      html +=
+        '<span style="font-size:0.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">' +
+        mfCincyAlertEscapeHtml(agencyLabel) +
+        '</span>';
     }
+    if (routeNums.length) {
+      html +=
+        '<span style="font-size:0.78rem;font-weight:700;color:#e2e8f0;">Route' +
+        (routeNums.length > 1 ? 's' : '') +
+        ' ' +
+        mfCincyAlertEscapeHtml(routeNums.join(', ')) +
+        '</span>';
+    }
+    html += '</div>';
 
+    if (titleEsc) {
+      html +=
+        '<div style="font-weight:700;color:#fff;line-height:1.3;margin-bottom:0.4rem;">' +
+        titleEsc +
+        '</div>';
+    }
+    if (summaryEsc) {
+      html +=
+        '<div style="color:#cbd5e1;line-height:1.35;font-size:0.88rem;margin-bottom:0.35rem;">' +
+        summaryEsc +
+        '</div>';
+    }
+    if (detailEsc) {
+      html +=
+        '<div style="color:#ccc;line-height:1.45;font-size:0.93rem;white-space:pre-wrap;">' +
+        detailEsc +
+        '</div>';
+    } else if (!titleEsc && textEsc) {
+      html +=
+        '<div style="color:#ccc;line-height:1.45;font-size:0.93rem;white-space:pre-wrap;">' +
+        textEsc +
+        '</div>';
+    } else if (!titleEsc && !detailEsc) {
+      html +=
+        '<div style="color:#fff;line-height:1.38;font-size:0.95rem;">' +
+        mfCincyAlertEscapeHtml('No details') +
+        '</div>';
+    }
+    if (detailEsc && textEsc) {
+      html +=
+        '<div style="color:#aaa;line-height:1.45;font-size:0.85rem;white-space:pre-wrap;margin-top:0.45rem;padding-top:0.45rem;border-top:1px solid #333;">' +
+        textEsc +
+        '</div>';
+    }
+    if (dateRange) {
+      html +=
+        '<div style="margin-top:0.5rem;font-size:0.8rem;color:#94a3b8;font-weight:600;">' +
+        mfCincyAlertEscapeHtml(dateRange) +
+        '</div>';
+    }
     if (href) {
-      html += `<div style="margin-top:0.65rem;"><a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#93c5fd;font-weight:600;text-decoration:underline;">Official link →</a></div>`;
+      html +=
+        '<div style="margin-top:0.65rem;"><a href="' +
+        href +
+        '" target="_blank" rel="noopener noreferrer" style="color:#93c5fd;font-weight:600;text-decoration:underline;">Official link →</a></div>';
     }
     return html;
   }
@@ -14240,41 +14394,21 @@
       return { agency: null, num: m ? String(m[0]) : s };
     }
 
-    // Extract only explicit "Route N" references. Avoid matching dates/addresses/random numbers.
-    function mfExtractExplicitRouteNums(text) {
-      const t = String(text || '');
-      const nums = new Set();
-
-      // Normalize some common variants: Route(s)
-      // Matches:
-      // - "Route 4"
-      // - "Route(s) 36"
-      // - "on Route 22"
-      // - "Inbound Route 3"
-      const re = /\broute(?:\s*\(s\))?\s*([0-9]{1,3}(?:\s*(?:,|&|and|\/)\s*[0-9]{1,3})*)\b/gi;
-      let m;
-      while ((m = re.exec(t)) !== null) {
-        const chunk = m[1] || '';
-        (chunk.match(/[0-9]{1,3}/g) || []).forEach((n) => nums.add(String(n)));
-      }
-
-      return nums;
-    }
-
     if (isCincySchema) {
       const { agency, num } = mfRouteIdAgencyAndNumber(normalizedRouteId);
-      const routeAlerts = alerts.filter((a) => {
-        if (!a || !mfCincyAlertHasContent(a)) return false;
-        if (agency && String(a.agency || '').toLowerCase() !== agency) return false;
-        const explicit = mfExtractExplicitRouteNums(mfCincyAlertSearchBlob(a));
-        // For per-route badges: ONLY show when alert explicitly references Route N.
-        if (!explicit.size) return false;
-        return explicit.has(String(num));
-      });
+      const routeAlerts = alerts.filter((a) => mfCincyAlertMatchesRoute(a, agency, num));
 
       console.log(`[getRouteAlerts] Found ${routeAlerts.length} alerts for route "${normalizedRouteId}"`);
       if (!routeAlerts.length) return null;
-      return { count: routeAlerts.length, severity: 'moderate', alerts: routeAlerts };
+
+      let highestSeverity = 'minor';
+      routeAlerts.forEach((a) => {
+        const sev = mfCincyAlertSeverity(a);
+        if (sev === 'severe') highestSeverity = 'severe';
+        else if (sev === 'moderate' && highestSeverity !== 'severe') highestSeverity = 'moderate';
+      });
+
+      return { count: routeAlerts.length, severity: highestSeverity, alerts: routeAlerts };
     }
     
     // MBTA V3 API stores route IDs in informed_entity array, not relationships.route.data
@@ -14407,27 +14541,11 @@
           return { agency: null, num: m ? String(m[0]) : s };
         };
 
-        const extractExplicitRouteNums = (text) => {
-          const t = String(text || '');
-          const nums = new Set();
-          const re = /\broute(?:\s*\(s\))?\s*([0-9]{1,3}(?:\s*(?:,|&|and|\/)\s*[0-9]{1,3})*)\b/gi;
-          let m;
-          while ((m = re.exec(t)) !== null) {
-            const chunk = m[1] || '';
-            (chunk.match(/[0-9]{1,3}/g) || []).forEach((n) => nums.add(String(n)));
-          }
-          return nums;
-        };
-
         const selected = rf.map(routeIdAgencyAndNumber);
 
         const matchesRouteFilter = (a) => {
           if (!rf.length) return true;
-          const ag = String(a && a.agency ? a.agency : '').toLowerCase();
-          // When filtered, require explicit Route N match; do NOT include agency-wide/no-route alerts.
-          const explicit = extractExplicitRouteNums(mfCincyAlertSearchBlob(a));
-          if (!explicit.size) return false;
-          return selected.some((s) => (!s.agency || s.agency === ag) && explicit.has(String(s.num)));
+          return selected.some((s) => mfCincyAlertMatchesRoute(a, s.agency, s.num));
         };
 
         // Apply route filter (if any)
@@ -16005,7 +16123,7 @@
   </div>
   <p class="mf-tv-admin-hint">Ctrl+Shift+P · Panel hidden from normal UI</p>
 </div>
-<script src="obs-director.js?v=20260618weathersep"></script>
+<script src="obs-director.js?v=20260623etaAlerts"></script>
 <!-- 2026-04-16 Next: verify stop times vs GTFS for sorta_4 dir0 at stop X -->
 </body>
 </html>
