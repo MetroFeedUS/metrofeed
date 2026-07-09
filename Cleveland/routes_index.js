@@ -14,7 +14,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_1",
+        "id": "metro_1-30",
         "label": "1 - W. Market / Montrose",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -32,7 +32,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_2",
+        "id": "metro_2-30",
         "label": "2 - Arlington / Interstate Prkwy",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -50,7 +50,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_3",
+        "id": "metro_3-30",
         "label": "3 - Copley Rd / Barberton",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -74,7 +74,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_6",
+        "id": "metro_6-30",
         "label": "6 - E. Exchange / Canton Rd",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -104,7 +104,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_8",
+        "id": "metro_8-30",
         "label": "8 - Barberton",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -122,7 +122,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_9",
+        "id": "metro_9-30",
         "label": "9 - East Ave / Battles Ave",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -140,7 +140,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_10",
+        "id": "metro_10-30",
         "label": "10 - Howard / Portage Trl. / ITC",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -170,7 +170,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_13",
+        "id": "metro_13-30",
         "label": "13 - Grant Ave / Firestone",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -194,7 +194,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_15",
+        "id": "metro_15-30",
         "label": "15 - Brown / Inman",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -206,7 +206,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_16",
+        "id": "metro_16-30",
         "label": "16 - Euclid Ave / Vernon Odom Blvd",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -224,13 +224,13 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_19",
+        "id": "metro_19-30",
         "label": "19 - E. Exchange / Eastland / ITC",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
-        "id": "metro_20",
+        "id": "metro_20-30",
         "label": "20 - Tallmadge Ave / Brimfield Wal Mart",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -242,13 +242,13 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_22",
+        "id": "metro_22-32",
         "label": "22 - Howe Ave / ITC / Stow",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
-        "id": "metro_23",
+        "id": "metro_23-30",
         "label": "23 - Goodyear Hts. / Gilchrist Rd",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -260,7 +260,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_25",
+        "id": "metro_25-30",
         "label": "25 - Kelly Ave / Triplett Blvd",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -272,13 +272,13 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_26",
+        "id": "metro_26-30",
         "label": "26 - Delia / White Pond",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
-        "id": "metro_27",
+        "id": "metro_27-30",
         "label": "27 - W. Exchange / Merriman Valley",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -290,7 +290,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_29",
+        "id": "metro_29-30",
         "label": "29 - S. Main / Manchester Rd",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -302,13 +302,13 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_31",
+        "id": "metro_31-30",
         "label": "31 - Cuyahoga Falls / Macedonia",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
-        "id": "metro_32",
+        "id": "metro_32-30",
         "label": "32 - Stow-Hudson / Twinsburg",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -344,7 +344,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_40",
+        "id": "metro_40-30",
         "label": "40 - Manchester / W. Thornton Rd",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -398,13 +398,13 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_55",
+        "id": "metro_55-30",
         "label": "55 - U of A Roo Express",
         "dir0": "Outbound",
         "dir1": "Inbound"
       },
       {
-        "id": "metro_61",
+        "id": "metro_61-30",
         "label": "61 - Cleveland / Wade Park",
         "dir0": "Outbound",
         "dir1": "Inbound"
@@ -476,7 +476,7 @@ window.ROUTES = {
         "dir1": "Inbound"
       },
       {
-        "id": "metro_600",
+        "id": "metro_600-30",
         "label": "600 - Late Night Zone",
         "dir0": "Outbound",
         "dir1": "Inbound"
