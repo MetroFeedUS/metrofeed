@@ -10,6 +10,7 @@ outside dist/ and therefore cannot be served by Netlify.
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
@@ -34,6 +35,11 @@ ROOT_FILES = [
     "manifest.json",
     "_redirects",
     "_headers",
+]
+
+# Copied when present. Index.html already falls back to the remote county file if
+# this local copy is absent from the GitHub/Netlify checkout.
+OPTIONAL_ROOT_FILES = [
     "national/metro_counties.geojson",
 ]
 
@@ -112,6 +118,15 @@ def copy_required(relative_path: str, destination_relative: str | None = None) -
     shutil.copy2(source, destination)
 
 
+def copy_optional(relative_path: str) -> bool:
+    source = ROOT / relative_path
+    if not source.is_file():
+        print(f"Warning: optional production file missing: {relative_path}")
+        return False
+    copy_required(relative_path)
+    return True
+
+
 def copy_cincinnati_file(relative_path: str) -> None:
     copy_required(
         f"Cincinnati/{relative_path}",
@@ -176,13 +191,31 @@ def verify_exclusions() -> None:
         )
 
 
-def main() -> None:
-    if DIST.exists():
+def clear_dist() -> None:
+    if not DIST.exists():
+        return
+    # Windows may briefly lock dist/ after a local preview server. Prefer rename
+    # over a hard delete when the folder is busy.
+    try:
         shutil.rmtree(DIST)
+        return
+    except OSError:
+        stale = ROOT / f".dist_stale_{os.getpid()}"
+        if stale.exists():
+            shutil.rmtree(stale, ignore_errors=True)
+        DIST.rename(stale)
+        shutil.rmtree(stale, ignore_errors=True)
+
+
+def main() -> None:
+    clear_dist()
     DIST.mkdir()
 
     for relative_path in ROOT_FILES:
         copy_required(relative_path)
+
+    for relative_path in OPTIONAL_ROOT_FILES:
+        copy_optional(relative_path)
 
     for relative_path in CINCINNATI_FILES:
         copy_cincinnati_file(relative_path)

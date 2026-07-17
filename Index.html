@@ -6,13 +6,21 @@
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#000000" />
   <title>RoamRaven | National map</title>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4"></script>
 <script>
+  /* Analytics loads only after cookie consent (see mfEnableAnalytics). */
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-EL337T4JX4', { page_title: 'RoamRaven – National Map', page_path: '/Index.html' });
+  window.gtag = gtag;
+  window.mfEnableAnalytics = function () {
+    if (window.__mfAnalyticsLoaded) return;
+    window.__mfAnalyticsLoaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-EL337T4JX4', { page_title: 'RoamRaven – National Map', page_path: '/Index.html' });
+  };
 </script>
 
   <script>
@@ -674,7 +682,7 @@
         We use cookies <strong style="color: var(--rr-silver);">to save your personal settings</strong> (not only for GPS). With your browser’s permission, we can also use <strong style="color: var(--rr-silver);">location</strong> to show where you are on the map. You can search for a city or explore without sharing location.
       </p>
       <p style="margin: 0 auto 12px; line-height: 1.45; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(147, 51, 234, 0.45); background: rgba(147, 51, 234, 0.12); color: #f1f5f9; font-weight: 700; font-size: 0.84rem; text-align: center;">
-        We use limited cookies and analytics to improve the service. We do not intentionally collect personal account information or sell personal data. <a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">Privacy Policy</a>
+        Allowing enables limited cookies, analytics, and GPS attempts. We do not intentionally collect personal account information or sell personal data. <a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">Privacy Policy</a>
       </p>
       <div class="mf-cookie-actions">
         <button type="button" id="mfCookieDecline">Decline</button>
@@ -2175,10 +2183,14 @@
       if (bar) {
         bar.classList.remove('is-visible');
       }
+      if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
       mfStartGeolocationWatchWhenReady();
     }
 
     function mfConsentDeclined() {
+      try {
+        localStorage.setItem(MF_COOKIE_KEY, 'false');
+      } catch (_) {}
       var bar = document.getElementById('mfCookieBar');
       if (bar) {
         bar.classList.remove('is-visible');
@@ -2192,6 +2204,7 @@
     function mfBootCookieUi() {
       try {
         if (localStorage.getItem(MF_COOKIE_KEY) === 'true') {
+          if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
           return;
         }
       } catch (_) {}

@@ -55,7 +55,13 @@
     var ret = params.get('return');
     if (!ret) return;
     try {
-      window.location.replace(decodeURIComponent(ret));
+      var decoded = decodeURIComponent(ret);
+      // Same-origin relative paths only (block open redirects / javascript: URLs).
+      if (!decoded || decoded.charAt(0) !== '/' || decoded.indexOf('//') === 0) return;
+      if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(decoded)) return;
+      var target = new URL(decoded, window.location.origin);
+      if (target.origin !== window.location.origin) return;
+      window.location.replace(target.pathname + target.search + target.hash);
     } catch (_) {}
   })();
   </script>
