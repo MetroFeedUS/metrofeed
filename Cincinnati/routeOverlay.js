@@ -2741,7 +2741,18 @@ function attachRouteToMap(map, routeId, directionId, options) {
       }
       
       // Build display: 2 before, next (highlighted), 3 after (6 total, no repeats)
+      // Times are escaped here; highlight wrappers are fixed markup (do not re-escape later).
       const highlightedTimes = [];
+      const pushSchedTime = (displayTime, highlight) => {
+        const safe = mfEscapeHtml(String(displayTime || ""));
+        if (highlight) {
+          highlightedTimes.push(
+            `<span style="background:${stopPopupFg};color:${stopPopupFill};padding:2px 6px;border-radius:6px;font-weight:bold;">${safe}</span>`
+          );
+        } else {
+          highlightedTimes.push(safe);
+        }
+      };
       const timesToShow = 6;
       const timesBefore = 2;
       const timesAfter = 3;
@@ -2758,33 +2769,25 @@ function attachRouteToMap(map, routeId, directionId, options) {
         
         // Add before times (most recent past times first)
         beforeTimes.reverse().forEach(timeData => {
-          highlightedTimes.push(timeData.displayTime);
+          pushSchedTime(timeData.displayTime, false);
         });
         
         // Add next time (highlighted)
-        highlightedTimes.push(
-          `<span style="background:${stopPopupFg};color:${stopPopupFill};padding:2px 6px;border-radius:6px;font-weight:bold;">${allTimes[nextTimeIndex].displayTime}</span>`
-        );
+        pushSchedTime(allTimes[nextTimeIndex].displayTime, true);
         
         // Add after times (up to 3, no wrap-around)
         const afterEnd = Math.min(allTimes.length, nextTimeIndex + 1 + timesAfter);
         const afterTimes = allTimes.slice(nextTimeIndex + 1, afterEnd);
         
         afterTimes.forEach(timeData => {
-          highlightedTimes.push(timeData.displayTime);
+          pushSchedTime(timeData.displayTime, false);
         });
         
         // No wrap-around - just show what we have (max 6 times)
       } else if (allTimes.length > 0) {
         // No next time found, just show first 6 times
         allTimes.slice(0, timesToShow).forEach((timeData, index) => {
-          if (index === 0) {
-            highlightedTimes.push(
-              `<span style="background:${stopPopupFg};color:${stopPopupFill};padding:2px 6px;border-radius:6px;font-weight:bold;">${timeData.displayTime}</span>`
-            );
-          } else {
-            highlightedTimes.push(timeData.displayTime);
-          }
+          pushSchedTime(timeData.displayTime, index === 0);
         });
       }
 
@@ -2996,7 +2999,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const etaDisplay = getETADisplay();
         const stopDisplayName = stop.name || `Stop ${stop.stop_id}`;
         const stopNameEsc = mfEscapeHtml(stopDisplayName);
-        const timesSafe = highlightedTimes.map((t) => mfEscapeHtml(t)).join("<br>");
+        const timesSafe = highlightedTimes.join("<br>");
         popupContent.innerHTML = `
           <div style="border:2px solid ${stopPopupFg};border-radius:8px;padding:10px;background:${stopPopupFill};color:${stopPopupFg};min-width:200px;">
             <strong style="color:${stopPopupFg};">${stopNameEsc}</strong>
