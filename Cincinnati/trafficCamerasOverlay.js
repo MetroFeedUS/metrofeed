@@ -26,6 +26,20 @@
 const TrafficCamerasOverlay = (function() {
   'use strict';
 
+  function mfEscapeHtml(s) {
+    if (typeof window !== 'undefined' && typeof window.mfEscapeHtml === 'function') {
+      try {
+        return window.mfEscapeHtml(s);
+      } catch (_) {}
+    }
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // Inject CSS to prevent marker lag/float during zoom
   if (!document.getElementById('metrofeed-camera-icon-styles')) {
     const style = document.createElement('style');
@@ -185,19 +199,29 @@ const TrafficCamerasOverlay = (function() {
   function createPopupContent(camera) {
     const popupContent = document.createElement('div');
     const hasUrl = !!(camera && camera.url);
+    const nameEsc = mfEscapeHtml(camera.name || '');
+    const descEsc = mfEscapeHtml(camera.description || '');
     popupContent.innerHTML = `
       <div style='border:1px solid var(--rr-silver-edge, rgba(226,232,240,0.42)); border-radius:8px; padding:10px; background:linear-gradient(180deg, var(--rr-charcoal-raised, #1a1b20) 0%, var(--rr-charcoal, #121214) 100%); color:var(--rr-silver, #e2e8f0); min-width:200px;'>
-        <strong style='color:var(--rr-silver, #e2e8f0);'>📹 ${camera.name}</strong>
-        ${camera.description && camera.description !== camera.name ? `<div style='font-size:0.85rem; color:var(--rr-silver-muted, #94a3b8); margin-top:4px;'>${camera.description}</div>` : ''}
+        <strong style='color:var(--rr-silver, #e2e8f0);'>📹 ${nameEsc}</strong>
+        ${camera.description && camera.description !== camera.name ? `<div style='font-size:0.85rem; color:var(--rr-silver-muted, #94a3b8); margin-top:4px;'>${descEsc}</div>` : ''}
         <hr style='border:none; border-top:1px solid var(--rr-silver-dim, rgba(226,232,240,0.14)); margin:6px 0;'>
         ${hasUrl ? `
-        <button onclick='TrafficCamerasOverlay.showCameraFeed("${camera.id}", "${camera.name}", "${String(camera.url).replace(/'/g, "\\'")}"); event.stopPropagation();' 
+        <button type="button" class="mf-camera-view-btn"
                 style='background:var(--rr-accent, #9333ea); color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; width:100%; margin-top:6px;'>
           View Camera
         </button>
         ` : `<div style="font-size:0.85rem;color:var(--rr-silver-muted, #94a3b8);margin-top:6px;">Camera feed not available yet.</div>`}
       </div>
     `;
+    const viewBtn = popupContent.querySelector('.mf-camera-view-btn');
+    if (viewBtn && hasUrl) {
+      viewBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        TrafficCamerasOverlay.showCameraFeed(camera.id, camera.name, camera.url);
+      });
+    }
     return popupContent;
   }
 

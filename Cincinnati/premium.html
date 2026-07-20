@@ -1495,6 +1495,16 @@
   const CITY_CONFIG = getCityConfig();
   window.CITY_CONFIG = CITY_CONFIG; // Expose globally for otp.js and other modules
 
+  function mfEscapeHtmlText(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  window.mfEscapeHtml = mfEscapeHtmlText;
+
   window.getRouteOverlayMount = function (map) {
     const root = document.getElementById('mapRouteOverlayRoot');
     if (root) return root;
@@ -1986,14 +1996,15 @@
     if (nextTime) selectedTimes.push(nextTime);
     selectedTimes.push(...futureTimes);
     
-    // Convert to HTML
+    // Convert to HTML (escape schedule text; wrappers are fixed markup)
     return selectedTimes.map(time => {
+      const safe = mfEscapeHtmlText(time.original);
       if (time.isNext) {
-        return `<span style='background:#1E90FF;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${time.original}</span>`;
+        return `<span style='background:#1E90FF;color:#000;padding:2px 6px;border-radius:6px;font-weight:bold;'>${safe}</span>`;
       } else if (time.isPast) {
-        return `<span style='color:#888;'>${time.original}</span>`;
+        return `<span style='color:#888;'>${safe}</span>`;
       } else {
-        return time.original;
+        return safe;
       }
     });
   }
@@ -3213,12 +3224,12 @@
       const popupContent = document.createElement('div');
       popupContent.innerHTML = `
         <div style='border:1px solid #1E90FF; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-            <strong style='color:#1E90FF;'>${stop.name}</strong>
+            <strong style='color:#1E90FF;'>${mfEscapeHtmlText(stop.name || '')}</strong>
             <hr style='border:none; border-top:1px solid #1E90FF; margin:6px 0;'>
             ${
               highlightedTimes.map(t =>
-                `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-              ).join('') || '<div>' + translateText('no_scheduled_times') + '</div>'
+                `<div style='padding:2px 0; color:${String(t).includes('background') ? '#000' : '#fff'};'>${t}</div>`
+              ).join('') || '<div>' + mfEscapeHtmlText(translateText('no_scheduled_times')) + '</div>'
             }
           </div>
       `;
@@ -3594,12 +3605,12 @@
           const popupContent = document.createElement('div');
           popupContent.innerHTML = `
             <div style='border:1px solid #1E90FF; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-                <strong style='color:#1E90FF;'>${stop.name}</strong>
+                <strong style='color:#1E90FF;'>${mfEscapeHtmlText(stop.name || '')}</strong>
                 <hr style='border:none; border-top:1px solid #1E90FF; margin:6px 0;'>
                 ${
                   highlightedTimes.map(t =>
-                    `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-                  ).join('') || '<div>' + translateText('no_scheduled_times') + '</div>'
+                    `<div style='padding:2px 0; color:${String(t).includes('background') ? '#000' : '#fff'};'>${t}</div>`
+                  ).join('') || '<div>' + mfEscapeHtmlText(translateText('no_scheduled_times')) + '</div>'
                 }
               </div>
           `;
@@ -4264,7 +4275,7 @@
       markerElement.className = pulseClass;
       markerElement.innerHTML = `<div style='text-align:center;'>
         <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
-          <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${routeNumber}</span>${displayVehicleID}
+          <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${mfEscapeHtmlText(routeNumber)}</span>${mfEscapeHtmlText(displayVehicleID)}
         </div>
         <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
       </div>`;
@@ -4692,13 +4703,20 @@
             
             // Clean vehicle ID (remove non-numeric characters, visual only)
             const displayVehicleID = String(bus.vehicleID || '').replace(/^[^0-9]+/, '') || bus.vehicleID;
+            const safeRouteNum = String(trimetRouteNumber || '').replace(/[^a-zA-Z0-9_-]/g, '');
+            const busDirNum = Number(bus.direction);
+            const safeDir = Number.isFinite(busDirNum) ? busDirNum : 0;
+            const railRoutes = ['90', '100', '190', '200', '290', '203'];
+            const detailsHref = railRoutes.includes(safeRouteNum)
+              ? 'Rail routes/route-' + safeRouteNum + '-dir' + safeDir
+              : 'pythonbusroutes/route-' + safeRouteNum + '-dir' + safeDir + '.html';
             
             // Create OTP bus marker
             const otpMarkerElement = document.createElement('div');
             otpMarkerElement.className = 'otp-bus-marker';
             otpMarkerElement.innerHTML = `<div style='text-align:center;'>
               <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;border:3px solid #fff;'>
-                <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:10px;margin-right:4px;'>${trimetRouteNumber}</span>${displayVehicleID}
+                <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:10px;margin-right:4px;'>${mfEscapeHtmlText(trimetRouteNumber)}</span>${mfEscapeHtmlText(displayVehicleID)}
               </div>
               <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;'></div>
             </div>`;
@@ -4711,22 +4729,32 @@
             
             // Create popup content
             const popupContent = document.createElement('div');
+            const routeDesc = route.description || `Route ${trimetRouteNumber}`;
             popupContent.innerHTML = `
               <div style='border:2px solid ${routeColor}; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
                 <div style='text-align:center; margin-bottom:8px;'>
-                  <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
+                  <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${mfEscapeHtmlText(bus.vehicleID)}</div>
                 </div>
-                <div style='margin-bottom:6px;'><strong>${translateText('route')}:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
-                <div style='margin-bottom:6px;'><strong>${translateText('direction')}:</strong> ${bus.direction}</div>
-                <div style='margin-bottom:6px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
-                <div style='margin-bottom:6px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:6px;'><strong>${mfEscapeHtmlText(translateText('route'))}:</strong> ${mfEscapeHtmlText(routeDesc)}</div>
+                <div style='margin-bottom:6px;'><strong>${mfEscapeHtmlText(translateText('direction'))}:</strong> ${mfEscapeHtmlText(bus.direction)}</div>
+                <div style='margin-bottom:6px;'><strong>${mfEscapeHtmlText(translateText('speed'))}:</strong> ${Math.round(bus.speed || 0)} ${mfEscapeHtmlText(translateText('mph'))}</div>
+                <div style='margin-bottom:6px;'><strong>${mfEscapeHtmlText(translateText('block'))}:</strong> ${mfEscapeHtmlText(bus.blockID)}</div>
                 <div style='color:#1E90FF; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                 <div style='margin-top:10px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
-                  <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${trimetRouteNumber}", "direction:", ${bus.direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${trimetRouteNumber}", ${bus.direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>${translateText('view_route_details')}</a>
+                  <button type="button" class="mf-legacy-show-route-btn" style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
+                  <a href='${mfEscapeHtmlText(detailsHref)}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>${mfEscapeHtmlText(translateText('view_route_details'))}</a>
                 </div>
               </div>
             `;
+            const showRouteBtn = popupContent.querySelector('.mf-legacy-show-route-btn');
+            if (showRouteBtn) {
+              showRouteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (typeof showRouteOverlay === 'function') {
+                  showRouteOverlay(safeRouteNum || trimetRouteNumber, safeDir);
+                }
+              });
+            }
             
             const popup = new maplibregl.Popup().setDOMContent(popupContent);
             busMarker.setPopup(popup);
@@ -4772,23 +4800,40 @@
             // Set position and add popup
             busMarker.setLngLat([bus.longitude, bus.latitude]);
             
+            const safeRouteNum = String(routeNumber || '').replace(/[^a-zA-Z0-9_-]/g, '');
+            const dirNum = Number(direction);
+            const safeDir = Number.isFinite(dirNum) ? dirNum : 0;
+            const railRoutes = ['90', '100', '190', '200', '290', '203'];
+            const detailsHref = railRoutes.includes(safeRouteNum)
+              ? 'Rail routes/route-' + safeRouteNum + '-dir' + safeDir
+              : 'pythonbusroutes/route-' + safeRouteNum + '-dir' + safeDir + '.html';
+
             // Create popup content
             const popupContent = document.createElement('div');
             popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                 <div style='text-align:center; margin-bottom:6px;'>
-                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${bus.vehicleID}</div>
+                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${mfEscapeHtmlText(bus.vehicleID)}</div>
                 </div>
-                <div style='margin-bottom:4px;'><strong>${translateText('route')}:</strong> ${routeNumber}</div>
-                <div style='margin-bottom:4px;'><strong>${translateText('direction')}:</strong> ${direction}</div>
-                <div style='margin-bottom:4px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
-                <div style='margin-bottom:4px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:4px;'><strong>${mfEscapeHtmlText(translateText('route'))}:</strong> ${mfEscapeHtmlText(routeNumber)}</div>
+                <div style='margin-bottom:4px;'><strong>${mfEscapeHtmlText(translateText('direction'))}:</strong> ${mfEscapeHtmlText(direction)}</div>
+                <div style='margin-bottom:4px;'><strong>${mfEscapeHtmlText(translateText('speed'))}:</strong> ${Math.round(bus.speed || 0)} ${mfEscapeHtmlText(translateText('mph'))}</div>
+                <div style='margin-bottom:4px;'><strong>${mfEscapeHtmlText(translateText('block'))}:</strong> ${mfEscapeHtmlText(bus.blockID)}</div>
                 <div style='margin-top:8px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
-                  <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${routeNumber}", "direction:", ${direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${routeNumber}", ${direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>${translateText('view_route_details')}</a>
+                  <button type="button" class="mf-legacy-show-route-btn" style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
+                  <a href='${mfEscapeHtmlText(detailsHref)}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>${mfEscapeHtmlText(translateText('view_route_details'))}</a>
                 </div>
               </div>
             `;
+            const showRouteBtn = popupContent.querySelector('.mf-legacy-show-route-btn');
+            if (showRouteBtn) {
+              showRouteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (typeof showRouteOverlay === 'function') {
+                  showRouteOverlay(safeRouteNum || routeNumber, safeDir);
+                }
+              });
+            }
             
             const popup = new maplibregl.Popup().setDOMContent(popupContent);
             busMarker.setPopup(popup);
@@ -5080,26 +5125,39 @@
             nwsUrl = alertId.replace('api.weather.gov', 'www.weather.gov');
           }
           
-          // Escape alert data for use in onclick
-          const alertEvent = (alert.event || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-          const alertHeadline = (alert.headline || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-          const alertDesc = (alert.description || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;").substring(0, 500);
-          const alertInstruction = (alert.instruction || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-          const alertArea = (alert.areaDesc || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+          // Escape alert data for HTML body + onclick attributes
+          const alertIdEsc = mfEscapeHtmlText(alertId);
+          const nwsUrlSafe = /^https?:\/\//i.test(String(nwsUrl || ''))
+            ? String(nwsUrl)
+            : 'https://www.weather.gov/alerts';
+          const nwsUrlEsc = mfEscapeHtmlText(nwsUrlSafe);
+          const alertEvent = mfEscapeHtmlText(alert.event || '');
+          const alertHeadline = mfEscapeHtmlText(alert.headline || '');
+          const alertDesc = mfEscapeHtmlText((alert.description || '').substring(0, 500));
+          const alertInstruction = mfEscapeHtmlText(alert.instruction || '');
+          const alertArea = mfEscapeHtmlText(alert.areaDesc || '');
+          const headlinePreview = alert.headline
+            || (alert.description ? String(alert.description).substring(0, 200) + '...' : 'No description available');
+          const instructionPreview = alert.instruction
+            ? mfEscapeHtmlText(
+                String(alert.instruction).substring(0, 150) +
+                (String(alert.instruction).length > 150 ? '...' : '')
+              )
+            : '';
           
           html += `
             <div style="margin-bottom: ${index < data.features.length - 1 ? '1rem' : '0'}; padding-bottom: ${index < data.features.length - 1 ? '1rem' : '0'}; border-bottom: ${index < data.features.length - 1 ? '1px solid #333' : 'none'};">
               <div style="color:#f44336; font-weight:bold; font-size:1.1rem; margin-bottom:0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;" 
                    onmouseover="this.style.background='#222'" 
                    onmouseout="this.style.background='transparent'"
-                   onclick="showAlertDetails('${alertId}', '${alertEvent}', '${alertHeadline}', '${alertDesc}', '${alertInstruction}', '${alertArea}', '${nwsUrl}')">
-                <span>⚠️ ${alert.event}</span>
+                   onclick="showAlertDetails('${alertIdEsc}', '${alertEvent}', '${alertHeadline}', '${alertDesc}', '${alertInstruction}', '${alertArea}', '${nwsUrlEsc}')">
+                <span>⚠️ ${mfEscapeHtmlText(alert.event || '')}</span>
                 <span style="font-size:0.85rem; color:#888;">${typeof translateText !== 'undefined' ? translateText('viewDetails') : 'View Details'} →</span>
               </div>
-              <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${alert.headline || (alert.description ? alert.description.substring(0, 200) + '...' : 'No description available')}</div>
-              ${alert.instruction ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${alert.instruction.substring(0, 150)}${alert.instruction.length > 150 ? '...' : ''}</div>` : ''}
+              <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${mfEscapeHtmlText(headlinePreview)}</div>
+              ${instructionPreview ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${instructionPreview}</div>` : ''}
               <div style="margin-top:0.5rem;">
-                <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">${typeof translateText !== 'undefined' ? translateText('viewOnWeatherGov') : 'View on weather.gov'} →</a>
+                <a href="${nwsUrlEsc}" target="_blank" rel="noopener noreferrer" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">${typeof translateText !== 'undefined' ? translateText('viewOnWeatherGov') : 'View on weather.gov'} →</a>
               </div>
             </div>
           `;
@@ -5143,15 +5201,18 @@
     alertsContent.querySelectorAll('[data-alert-id]').forEach(el => el.remove());
     
     // Create full details section
+    const nwsHref = /^https?:\/\//i.test(String(nwsUrl || ''))
+      ? String(nwsUrl)
+      : 'https://www.weather.gov/alerts';
     const fullDetails = `
-      <div data-alert-id="${alertId}" style="background: #111; border: 2px solid #f44336; border-radius: 8px; padding: 1rem; margin-top: 0.75rem; margin-bottom: 0.75rem;">
-        <div style="color:#f44336; font-weight:bold; font-size:1.2rem; margin-bottom:0.75rem;">⚠️ ${event}</div>
-        ${headline ? `<div style="color:#fff; font-weight:bold; font-size:1rem; margin-bottom:0.5rem;">${headline}</div>` : ''}
-        <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.75rem; white-space: pre-wrap; line-height:1.5;">${description || 'No description available'}</div>
-        ${instruction ? `<div style="color:#aaa; font-size:0.9rem; font-style:italic; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333; line-height:1.4;">${instruction}</div>` : ''}
-        ${areaDesc ? `<div style="color:#888; font-size:0.85rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333;">Areas affected: ${areaDesc}</div>` : ''}
+      <div data-alert-id="${mfEscapeHtmlText(alertId)}" style="background: #111; border: 2px solid #f44336; border-radius: 8px; padding: 1rem; margin-top: 0.75rem; margin-bottom: 0.75rem;">
+        <div style="color:#f44336; font-weight:bold; font-size:1.2rem; margin-bottom:0.75rem;">⚠️ ${mfEscapeHtmlText(event)}</div>
+        ${headline ? `<div style="color:#fff; font-weight:bold; font-size:1rem; margin-bottom:0.5rem;">${mfEscapeHtmlText(headline)}</div>` : ''}
+        <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.75rem; white-space: pre-wrap; line-height:1.5;">${mfEscapeHtmlText(description || 'No description available')}</div>
+        ${instruction ? `<div style="color:#aaa; font-size:0.9rem; font-style:italic; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333; line-height:1.4;">${mfEscapeHtmlText(instruction)}</div>` : ''}
+        ${areaDesc ? `<div style="color:#888; font-size:0.85rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333;">Areas affected: ${mfEscapeHtmlText(areaDesc)}</div>` : ''}
         <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #333; text-align:center;">
-          <a href="${nwsUrl}" target="_blank" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">${typeof translateText !== 'undefined' ? translateText('viewOnWeatherGov') : 'View full alert on weather.gov'} →</a>
+          <a href="${mfEscapeHtmlText(nwsHref)}" target="_blank" rel="noopener noreferrer" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">${typeof translateText !== 'undefined' ? translateText('viewOnWeatherGov') : 'View full alert on weather.gov'} →</a>
         </div>
       </div>
     `;
@@ -5271,10 +5332,10 @@
           html += `
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 0.6rem 0;">
               <div style="flex: 1;">
-                <div style="color:#F7630C; font-weight:bold; font-size:1rem;">${period.name} ${emoji}</div>
-                <div style="font-size:0.9rem; color:#ccc; margin-top:0.25rem;">${period.shortForecast}</div>
+                <div style="color:#F7630C; font-weight:bold; font-size:1rem;">${mfEscapeHtmlText(period.name)} ${emoji}</div>
+                <div style="font-size:0.9rem; color:#ccc; margin-top:0.25rem;">${mfEscapeHtmlText(period.shortForecast)}</div>
               </div>
-              <div style="color:#1DA1F2; font-weight:bold; font-size:1.1rem; margin-left:1rem;">${period.temperature}°${period.temperatureUnit}</div>
+              <div style="color:#1DA1F2; font-weight:bold; font-size:1.1rem; margin-left:1rem;">${mfEscapeHtmlText(period.temperature)}°${mfEscapeHtmlText(period.temperatureUnit)}</div>
             </div>
           `;
         });
@@ -5344,8 +5405,8 @@
           html += `
             <div style="background: linear-gradient(135deg, #1E90FF 0%, #1C7AE6 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: #fff;">
               <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">${typeof translateText !== 'undefined' ? translateText('currentConditions') : 'Current Conditions'} ${emoji}</div>
-              <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem;">${temp}°F</div>
-              <div style="font-size: 0.9rem; opacity: 0.9;">${textDesc}</div>
+              <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem;">${mfEscapeHtmlText(temp)}°F</div>
+              <div style="font-size: 0.9rem; opacity: 0.9;">${mfEscapeHtmlText(textDesc)}</div>
             </div>
           `;
         }
@@ -5366,10 +5427,10 @@
             
             html += `
               <div style="background: #222; border: 1px solid #333; border-radius: 6px; padding: 0.75rem; text-align: center;">
-                <div style="font-size: 0.85rem; color: #888; margin-bottom: 0.25rem;">${timeStr}</div>
+                <div style="font-size: 0.85rem; color: #888; margin-bottom: 0.25rem;">${mfEscapeHtmlText(timeStr)}</div>
                 <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">${emoji}</div>
-                <div style="font-size: 1.1rem; font-weight: bold; color: #1DA1F2;">${temp}°${tempUnit}</div>
-                <div style="font-size: 0.75rem; color: #aaa; margin-top: 0.25rem; line-height: 1.2;">${period.shortForecast}</div>
+                <div style="font-size: 1.1rem; font-weight: bold; color: #1DA1F2;">${mfEscapeHtmlText(temp)}°${mfEscapeHtmlText(tempUnit)}</div>
+                <div style="font-size: 0.75rem; color: #aaa; margin-top: 0.25rem; line-height: 1.2;">${mfEscapeHtmlText(period.shortForecast)}</div>
               </div>
             `;
           });
@@ -6470,7 +6531,7 @@
       
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;';
-      routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      routeHeader.innerHTML = `<span>${mfEscapeHtmlText(routeLabel)}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
       routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = 'rgba(30, 144, 255, 0.1)';
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
@@ -6622,7 +6683,7 @@
       
       const routeHeader = document.createElement('div');
       routeHeader.style.cssText = 'font-weight: bold; color: #1E90FF; margin-bottom: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;';
-      routeHeader.innerHTML = `<span>${routeLabel}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      routeHeader.innerHTML = `<span>${mfEscapeHtmlText(routeLabel)}</span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
       routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = 'rgba(30, 144, 255, 0.1)';
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       

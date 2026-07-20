@@ -147,11 +147,12 @@ async function resolveOtpTripDateTimeMs(departureType, departureTime) {
 }
 
 function escapeHtml(s) {
-  return String(s)
+  return String(s == null ? '' : s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function otpLegModeIsWalk(mode) {
@@ -1181,7 +1182,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     console.error('OTP Error:', e);
     if (itinList) {
       const cfgUrl = (window.CITY_CONFIG && (window.CITY_CONFIG.otpApi || window.CITY_CONFIG.otpGtfsGraphql)) || '';
-      const hint = cfgUrl ? ` Please check connectivity/CORS for <code>${cfgUrl}</code>.` : '';
+      const hint = cfgUrl ? ` Please check connectivity/CORS for <code>${escapeHtml(cfgUrl)}</code>.` : '';
       itinList.innerHTML = `<em style="color:#f55">Error connecting to OTP server.${hint}</em>`;
       try {
         if (typeof window.metrofeedAnnounceKey === 'function') window.metrofeedAnnounceKey('sr_otp_error_connecting');
@@ -1277,7 +1278,7 @@ function renderItinListVisual(itins) {
         label = leg.mode;
       }
       let mins = Math.round((leg.duration || 0) / 60);
-      return `<span class='${segClass}' title='${label}'>
+      return `<span class='${segClass}' title='${escapeHtml(label)}'>
         <span class='seg-icon'>${icon}</span>
         <span>${mins}m</span>
       </span>`;
@@ -1291,8 +1292,8 @@ function renderItinListVisual(itins) {
       
       // Build route/line information
       if (leg.mode !== 'WALK' && leg.mode !== 'FOOT') {
-        const routeNumber = leg.routeShortName || leg.route || '';
-        const routeName = leg.routeLongName || routeNumber;
+        const routeNumber = escapeHtml(leg.routeShortName || leg.route || '');
+        const routeName = escapeHtml(leg.routeLongName || leg.routeShortName || leg.route || '');
         
         // Get unit numbers (bus/tram numbers) from live data
         if (window.otpBusInfo && leg.route && window.otpBusInfo[leg.route]) {
@@ -1301,7 +1302,7 @@ function renderItinListVisual(itins) {
             // Clean vehicle ID (remove 'y' prefix if present)
             const vid = String(b.vehicleID || '').replace(/^[^0-9]+/, '');
             return vid;
-          }).filter(v => v).join(', ');
+          }).filter(v => v).map(escapeHtml).join(', ');
           if (unitNumbers) {
             unitInfo = ` <span style="color:#4CAF50;">Unit${buses.length > 1 ? 's' : ''}: ${unitNumbers}</span>`;
           }
@@ -1317,14 +1318,14 @@ function renderItinListVisual(itins) {
         } else if (leg.mode === 'RAIL' || leg.mode === 'TRAIN') {
           lineInfo = ` <b>Train ${routeNumber}</b>${routeName && routeName !== routeNumber ? ` - ${routeName}` : ''}`;
         } else if (leg.route) {
-          lineInfo = ` <b>${leg.mode} ${routeNumber}</b>${routeName && routeName !== routeNumber ? ` - ${routeName}` : ''}`;
+          lineInfo = ` <b>${escapeHtml(leg.mode)} ${routeNumber}</b>${routeName && routeName !== routeNumber ? ` - ${routeName}` : ''}`;
         }
       }
       
       // Build stop list from estimated calls
       if (leg.estimatedCalls && Array.isArray(leg.estimatedCalls) && leg.estimatedCalls.length > 0) {
         const stops = leg.estimatedCalls.map((call, idx) => {
-          const stopName = call.quay?.name || 'Unknown Stop';
+          const stopName = escapeHtml(call.quay?.name || 'Unknown Stop');
           const arrivalTime = call.expectedArrivalTime || call.aimedArrivalTime;
           const departureTime = call.expectedDepartureTime || call.aimedDepartureTime;
           const timeStr = arrivalTime || departureTime;
@@ -1333,7 +1334,7 @@ function renderItinListVisual(itins) {
           if (timeStr) {
             try {
               const time = new Date(timeStr);
-              timeDisplay = getPortlandTimeString(time);
+              timeDisplay = escapeHtml(getPortlandTimeString(time));
             } catch (e) {
               // Ignore time parsing errors
             }
@@ -1357,14 +1358,14 @@ function renderItinListVisual(itins) {
         // Fallback: show from/to places if no estimated calls
         if (leg.fromPlace && leg.toPlace) {
           stopList = `<div style="margin-top:5px; font-size:0.9em; color:#ccc;">
-            <div style="margin-left:15px;">📍 ${leg.fromPlace.name || 'Start'}</div>
-            <div style="margin-left:15px;">🎯 ${leg.toPlace.name || 'End'}</div>
+            <div style="margin-left:15px;">📍 ${escapeHtml(leg.fromPlace.name || 'Start')}</div>
+            <div style="margin-left:15px;">🎯 ${escapeHtml(leg.toPlace.name || 'End')}</div>
           </div>`;
         }
       }
       
       return `<div style="margin-bottom:8px;">
-        → <b>${modeTxt}${lineInfo}</b>${unitInfo}
+        → <b>${escapeHtml(modeTxt)}${lineInfo}</b>${unitInfo}
         <span style="color:#ffc107;">${Math.round((leg.duration||0)/60)} min</span>
         ${stopList}
       </div>`;
@@ -1375,7 +1376,7 @@ function renderItinListVisual(itins) {
     return `<div class="itinListOption ${window.selectedTripIndex === idx ? 'selected' : ''}" data-idx="${idx}" role="listitem">
       <button class="itin-dropdown-btn" onclick="event.stopPropagation();toggleDropdown(${idx})">&#9660;</button>
       <button type="button" style="display:block;width:100%;text-align:left;background:transparent;border:0;padding:0;margin:0;cursor:pointer;" aria-label="${escapeHtml(srLabel)}" onclick="showRoute(${idx})">
-        <div class="itin-toptimes">Option ${idx+1}: ${start}–${end}</div>
+        <div class="itin-toptimes">Option ${idx+1}: ${escapeHtml(start)}–${escapeHtml(end)}</div>
         <div class="itin-segments">${segs}</div>
         <div class="itin-total">Total: ${Math.round(itin.duration/60)} min</div>
       </button>

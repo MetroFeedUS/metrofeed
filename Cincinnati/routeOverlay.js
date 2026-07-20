@@ -40,6 +40,21 @@
 
 "use strict";
 
+/** Escape text for HTML body / attributes (feed-derived strings). */
+function mfEscapeHtml(s) {
+  if (typeof window !== "undefined" && typeof window.mfEscapeHtml === "function" && window.mfEscapeHtml !== mfEscapeHtml) {
+    try {
+      return window.mfEscapeHtml(s);
+    } catch (_) {}
+  }
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /** Modal / panel accent (reads --rr-accent from home.html; fallback if missing). */
 function metrofeedUiAccent() {
   try {
@@ -1225,12 +1240,12 @@ function metrofeedBuildStopArrivalRowHtml(opts) {
   if (stopsAway) parts.push(stopsAway);
   const left = parts.length ? parts.join(" · ") : "Live";
   const latenessHtml = latenessStr
-    ? `<div style="font-size:11px;color:${muted};margin-top:2px;">${latenessStr}</div>`
+    ? `<div style="font-size:11px;color:${muted};margin-top:2px;">${mfEscapeHtml(latenessStr)}</div>`
     : "";
   return `<div style="padding:5px 0;border-bottom:1px solid ${fg}22;">
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-      <span style="color:${fg};font-size:12px;line-height:1.35;">${left}</span>
-      <span style="color:${fg};font-weight:bold;white-space:nowrap;">${etaStr}</span>
+      <span style="color:${fg};font-size:12px;line-height:1.35;">${mfEscapeHtml(left)}</span>
+      <span style="color:${fg};font-weight:bold;white-space:nowrap;">${mfEscapeHtml(etaStr)}</span>
     </div>${latenessHtml}
   </div>`;
 }
@@ -1773,9 +1788,9 @@ function buildMbtaBusMarkerElementNewbus(routeColor, routeNum, displayVehicleID)
     '<span style="background:rgba(0,0,0,0.18);color:' +
     labelFg +
     ';padding:1px 4px;border-radius:3px;font-size:9px;margin-right:4px;">' +
-    String(routeNum) +
+    mfEscapeHtml(routeNum) +
     "</span>" +
-    String(displayVehicleID);
+    mfEscapeHtml(displayVehicleID);
 
   const pin = document.createElement("div");
   pin.className = "mf-bus-marker-pin";
@@ -1825,7 +1840,7 @@ function buildMbtaBusMarkerElement(routeColor, routeNum, displayVehicleID, headi
 
   const label = document.createElement("div");
   label.style.cssText = `margin-bottom:6px;background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.95);white-space:nowrap;`;
-  label.innerHTML = `<span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${String(routeNum)}</span>${String(displayVehicleID)}`;
+  label.innerHTML = `<span style="background:${badgeBg};color:${badgeFg};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;">${mfEscapeHtml(routeNum)}</span>${mfEscapeHtml(displayVehicleID)}`;
 
   const dialWrap = document.createElement("div");
   dialWrap.style.cssText = `position:relative;width:${dc}px;height:${dc}px;flex-shrink:0;`;
@@ -2574,7 +2589,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
         const name = stop.name || `Stop ${stop.stop_id}`;
         const popupHtml = `
           <div style="border:1px solid #888;border-radius:8px;padding:10px;background:#222;color:#ccc;min-width:180px;">
-            <strong style="color:#aaa;">${name}</strong>
+            <strong style="color:#aaa;">${mfEscapeHtml(name)}</strong>
             <div style="margin-top:8px;font-size:12px;color:#888;">Other direction — switch direction in Bus Routes to see times for this stop.</div>
           </div>
         `;
@@ -2980,17 +2995,19 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const updatePopupContent = () => {
         const etaDisplay = getETADisplay();
         const stopDisplayName = stop.name || `Stop ${stop.stop_id}`;
+        const stopNameEsc = mfEscapeHtml(stopDisplayName);
+        const timesSafe = highlightedTimes.map((t) => mfEscapeHtml(t)).join("<br>");
         popupContent.innerHTML = `
           <div style="border:2px solid ${stopPopupFg};border-radius:8px;padding:10px;background:${stopPopupFill};color:${stopPopupFg};min-width:200px;">
-            <strong style="color:${stopPopupFg};">${stopDisplayName}</strong>
+            <strong style="color:${stopPopupFg};">${stopNameEsc}</strong>
             ${etaDisplay}
             ${
               highlightedTimes.length
                 ? `
               <hr style="border:none;border-top:1px solid ${stopPopupFg}44;margin:6px 0;">
-              ${highlightedTimes.join("<br>")}
+              ${timesSafe}
               <hr style="border:none;border-top:1px solid ${stopPopupFg}44;margin:8px 0;">
-              <button onclick="window.showStopTimesModal && window.showStopTimesModal('${routeId}', ${directionId}, '${stopId}', '${stopDisplayName.replace(/'/g, "\\'")}')" style="width:100%;background:${stopPopupFg};color:${stopPopupFill};border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
+              <button type="button" class="mf-stop-all-times-btn" style="width:100%;background:${stopPopupFg};color:${stopPopupFill};border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-top:4px;">See all times</button>
             `
                 : ""
             }
@@ -2998,6 +3015,16 @@ function attachRouteToMap(map, routeId, directionId, options) {
             <p style="margin:8px 0 0;font-size:10px;line-height:1.35;color:${stopPopupMuted};">Live arrivals and bus positions are estimates from agency feeds and may not match exactly. RoamRaven is not an official transit source.</p>
           </div>
         `;
+        const allTimesBtn = popupContent.querySelector(".mf-stop-all-times-btn");
+        if (allTimesBtn) {
+          allTimesBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof window.showStopTimesModal === "function") {
+              window.showStopTimesModal(routeId, directionId, stopId, stopDisplayName);
+            }
+          });
+        }
         const exploreBtn = popupContent.querySelector(".mf-stop-explore-btn");
         if (exploreBtn) {
           exploreBtn.addEventListener("click", (e) => {
@@ -3227,7 +3254,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
       const routePanelAccent = metrofeedUiAccent();
       contentDiv.innerHTML = `
         <div style="margin-bottom:12px; padding-right:20px;">
-          <strong style="color:#e2e8f0;font-size:1em;">${routeTitle}</strong>
+          <strong style="color:#e2e8f0;font-size:1em;">${mfEscapeHtml(routeTitle)}</strong>
         </div>
         <button id="close-route-btn" style="background:${routePanelAccent};color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:0.9em;width:100%;">Close</button>
       `;
@@ -3971,7 +3998,7 @@ function attachRouteToMap(map, routeId, directionId, options) {
               const hasRealtimeTrips = tuLive && tuLive.etaSource === "realtime-trips";
               let nextStopHTML = "";
               if (nextStopETA) {
-                nextStopHTML = `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${nextStopETA.stopName}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${nextStopETA.eta}</div>`;
+                nextStopHTML = `<div style='margin-bottom:4px;'><strong>Next Stop:</strong> ${mfEscapeHtml(nextStopETA.stopName)}</div><div style='margin-bottom:4px; color:#4CAF50;'><strong>ETA:</strong> ${mfEscapeHtml(nextStopETA.eta)}</div>`;
               } else if (hasRealtimeTrips) {
                 nextStopHTML =
                   '<div style="margin-bottom:4px; color:#888;"><strong>Next Stop:</strong> —</div><div style="margin-bottom:4px; color:#888;"><strong>ETA:</strong> —</div>';
@@ -3982,12 +4009,12 @@ function attachRouteToMap(map, routeId, directionId, options) {
               popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                 <div style='text-align:center; margin-bottom:6px;'>
-                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${displayVehicleID}</div>
+                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${mfEscapeHtml(displayVehicleID)}</div>
                 </div>
-                <div style='margin-bottom:4px;'><strong>Route:</strong> ${routeNum}</div>
-                <div style='margin-bottom:4px;'><strong>Direction:</strong> ${dirLabel}</div>
+                <div style='margin-bottom:4px;'><strong>Route:</strong> ${mfEscapeHtml(routeNum)}</div>
+                <div style='margin-bottom:4px;'><strong>Direction:</strong> ${mfEscapeHtml(dirLabel)}</div>
                 ${nextStopHTML}
-                <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${getOccupancyTextLive()}</div>
+                <div style='margin-bottom:4px;'><strong>Occupancy:</strong> ${mfEscapeHtml(getOccupancyTextLive())}</div>
               </div>
             `;
             };

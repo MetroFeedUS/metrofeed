@@ -7,6 +7,20 @@
 
   if (!window.MF_TV_MODE) return;
 
+  function mfEscapeHtml(s) {
+    if (typeof window !== 'undefined' && typeof window.mfEscapeHtml === 'function') {
+      try {
+        return window.mfEscapeHtml(s);
+      } catch (_) {}
+    }
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   const MODES = {
     ROUTE: 'ROUTE_MODE',
     TRAFFIC: 'INCIDENT_MODE',
@@ -1933,7 +1947,7 @@
       );
     }
     if (typeof window.mfCincyAlertCardDetailsHtml === 'function') {
-      const title = String((a && (a.title || a.header || a.text)) || 'Alert').trim();
+      const title = mfEscapeHtml(String((a && (a.title || a.header || a.text)) || 'Alert').trim());
       return (
         '<div class="mf-tv-alerts-panel__card"><div style="font-weight:700;color:#fff;margin-bottom:0.35rem;">' +
         title +
@@ -1942,9 +1956,11 @@
         '</div>'
       );
     }
-    const txt = String(
-      (a && (a.title || a.header || a.text || a.description || a.body || a.detail)) || ''
-    ).trim();
+    const txt = mfEscapeHtml(
+      String(
+        (a && (a.title || a.header || a.text || a.description || a.body || a.detail)) || ''
+      ).trim()
+    );
     return (
       '<div class="mf-tv-alerts-panel__card"><div style="color:#fff;white-space:pre-wrap;line-height:1.35;">' +
       (txt || 'Alert') +
@@ -2447,18 +2463,18 @@
                 html +=
                   '<div class="mf-tv-weather-hour">' +
                   '<div class="mf-tv-weather-hour-time">' +
-                  timeStr +
+                  mfEscapeHtml(timeStr) +
                   '</div>' +
                   '<div class="mf-tv-weather-hour-emoji">' +
                   weatherEmoji(p.shortForecast) +
                   '</div>' +
                   '<div class="mf-tv-weather-hour-temp">' +
-                  p.temperature +
+                  mfEscapeHtml(p.temperature) +
                   '°' +
-                  (p.temperatureUnit || 'F') +
+                  mfEscapeHtml(p.temperatureUnit || 'F') +
                   '</div>' +
                   '<div class="mf-tv-weather-hour-label">' +
-                  (p.shortForecast || '') +
+                  mfEscapeHtml(p.shortForecast || '') +
                   '</div></div>';
               });
               hourlyEl.innerHTML = html;

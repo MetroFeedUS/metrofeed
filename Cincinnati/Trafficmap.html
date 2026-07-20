@@ -140,12 +140,12 @@
 
   <!-- Disclaimer -->
   <div class="disclaimer">
-    Traffic data is provided by third-party sources (e.g., TomTom) and may not reflect real-time or official road conditions. Use caution and verify with local authorities when needed.
+    This traffic map page is legacy / unused. Live traffic on RoamRaven uses agency and MetroFeed traffic APIs, not TomTom.
   </div>
 
   <!-- Map Container -->
   <div id="map"></div>
-  <div class="attribution">Map & Traffic &copy; TomTom</div>
+  <div class="attribution">Base map &copy; CARTO / OpenStreetMap</div>
 
   <script>
     const map = L.map('map', {
@@ -164,27 +164,12 @@
       maxBoundsViscosity: 0.1
     });
 
-    L.tileLayer('https://api.tomtom.com/map/1/tile/basic/main/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU', {
+    // No TomTom keys or tiles — unused legacy page.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       tileSize: 256,
-      maxZoom: 20
+      maxZoom: 20,
+      subdomains: 'abcd'
     }).addTo(map);
-
-    let trafficLayer;
-
-    function addTrafficLayer() {
-      if (trafficLayer) {
-        map.removeLayer(trafficLayer);
-      }
-
-      trafficLayer = L.tileLayer('https://api.tomtom.com/traffic/map/4/tile/flow/relative0-dark/{z}/{x}/{y}.png?key=9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU', {
-        tileSize: 256,
-        opacity: 0.7,
-        maxZoom: 20
-      }).addTo(map);
-    }
-
-    addTrafficLayer();
-    setInterval(addTrafficLayer, 300000); // refresh every 5 min
   </script>
 
   <!-- Footer -->

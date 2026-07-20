@@ -477,10 +477,20 @@
         var wrap = document.createElement('div');
         wrap.className = 'mf-explore-cat-wrap';
         wrap.style.cssText = 'display:flex;align-items:center;gap:0.35rem;';
-        wrap.innerHTML =
-          '<input type="checkbox" class="mf-explore-cat-cb" id="mfExploreCat_' + cat.id + '" value="' + cat.id + '" style="margin:0;">' +
-          '<label for="mfExploreCat_' + cat.id + '" style="margin:0;color:#fff;font-size:0.9rem;cursor:pointer;">' +
-          (cat.icon ? cat.icon + ' ' : '') + cat.label + '</label>';
+        var catId = String(cat.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!catId) return;
+        var input = document.createElement('input');
+        input.type = 'checkbox';
+        input.className = 'mf-explore-cat-cb';
+        input.id = 'mfExploreCat_' + catId;
+        input.value = catId;
+        input.style.margin = '0';
+        var label = document.createElement('label');
+        label.htmlFor = input.id;
+        label.style.cssText = 'margin:0;color:#fff;font-size:0.9rem;cursor:pointer;';
+        label.textContent = (cat.icon ? String(cat.icon) + ' ' : '') + String(cat.label || catId);
+        wrap.appendChild(input);
+        wrap.appendChild(label);
         catHost.appendChild(wrap);
       });
       catHost.addEventListener('change', function (e) {

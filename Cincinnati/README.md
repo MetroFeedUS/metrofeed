@@ -26,8 +26,6 @@ const CITIES = {
     apiKey: "YOUR_API_KEY",
     otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
     busApi: "YOUR_BUS_API_URL",
-    trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
-    tomtomKey: "YOUR_TOMTOM_KEY",
     defaultCenter: [-longitude, latitude], // [lon, lat]
     defaultZoom: 10.5,
     bounds: {
@@ -78,8 +76,7 @@ Add your city to the dropdown in `Index.html`:
 - `gtfsRtTripUpdatesUrl`: GTFS-RT TripUpdates (Boston / MBTA)
 - See **`REALTIME_CITY_CONFIG.md`** for how config maps to realtime behavior in `routeOverlay.js`
 - `otpApi`: OpenTripPlanner API endpoint
-- `trafficApi`: Traffic data API
-- `tomtomKey`: TomTom API key
+- `trafficApi`: Traffic data API (MetroFeed / agency — not TomTom)
 
 ## File Structure
 

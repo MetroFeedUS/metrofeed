@@ -9,6 +9,20 @@
   const CITY = (window.CITY_CONFIG && window.CITY_CONFIG.cityName) || 'Cincinnati';
   const STATE = (window.CITY_CONFIG && window.CITY_CONFIG.state) || 'OH';
 
+  function escapeHtml(s) {
+    if (typeof window !== 'undefined' && typeof window.mfEscapeHtml === 'function') {
+      try {
+        return window.mfEscapeHtml(s);
+      } catch (_) {}
+    }
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   const EVENT_RANK = {
     'Tornado Warning': 100,
     'Tornado Watch': 95,
@@ -484,14 +498,14 @@
         (i === 0 ? ' rr-hourly__card--now' : '') +
         '">' +
         '<div class="rr-hourly__time">' +
-        (i === 0 ? 'Now' : timeStr) +
+        (i === 0 ? 'Now' : escapeHtml(timeStr)) +
         '</div>' +
         '<div class="rr-hourly__main">' +
         '<div class="rr-hourly__emoji">' +
         weatherEmoji(p.shortForecast) +
         '</div>' +
         '<div class="rr-hourly__temp">' +
-        p.temperature +
+        escapeHtml(Number.isFinite(Number(p.temperature)) ? Number(p.temperature) : '') +
         '°</div>' +
         '</div>' +
         '</div>';

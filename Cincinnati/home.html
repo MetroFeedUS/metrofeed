@@ -2,24 +2,36 @@
 <html lang="en" data-tier="free">
 <head>
 <script>
-  /* Analytics only after cookie consent (Index.html sets cookieConsent). Skip on OBS/TV. */
+  /* Analytics only after cookie consent. Skip on OBS/TV. Accept persists; Decline is per-session. */
   (function () {
-    var q = location.search;
-    if (q.indexOf('tv=1') !== -1 || q.indexOf('tv=true') !== -1) return;
-    try {
-      if (localStorage.getItem('cookieConsent') !== 'true') return;
-    } catch (_) {
-      return;
+    var MF_GA_ID = 'G-EL337T4JX4';
+    function mfIsTvMode() {
+      var q = location.search;
+      return q.indexOf('tv=1') !== -1 || q.indexOf('tv=true') !== -1;
     }
-    var s = document.createElement('script');
-    s.async = true;
-    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-EL337T4JX4';
-    document.head.appendChild(s);
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    window.gtag = gtag;
-    gtag('js', new Date());
-    gtag('config', 'G-EL337T4JX4', { page_title: 'Cincinnati – RoamRaven Map', page_path: '/Cincinnati/home.html' });
+    window.mfEnableAnalytics = function () {
+      if (mfIsTvMode() || window.__mfAnalyticsLoaded) return;
+      try {
+        if (localStorage.getItem('cookieConsent') !== 'true') return;
+      } catch (_) {
+        return;
+      }
+      window.__mfAnalyticsLoaded = true;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + MF_GA_ID;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', MF_GA_ID, { page_title: 'Cincinnati – RoamRaven Map', page_path: '/Cincinnati/home.html' });
+    };
+    try {
+      if (!mfIsTvMode() && localStorage.getItem('cookieConsent') === 'true') {
+        window.mfEnableAnalytics();
+      }
+    } catch (_) {}
   })();
 </script>
 
@@ -68,7 +80,7 @@
   </script>
 
   <!-- Language System -->
-  <script src="translations.js?v=24"></script>
+  <script src="translations.js?v=25"></script>
   <style>
     /* Roam Raven UI — purple primary + silver/charcoal chrome (map route colors unchanged) */
     :root {
@@ -85,6 +97,67 @@
       --rr-charcoal: #121214;
       --rr-charcoal-raised: #1a1b20;
       --rr-charcoal-panel: rgba(22, 23, 28, 0.96);
+    }
+
+    /* Cookie prompt (city page — for bookmarked visits / declined session) */
+    #mfCookieBar {
+      display: none;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      z-index: 10060;
+      pointer-events: none;
+      box-sizing: border-box;
+      --mf-cookie-pad-y: max(16px, env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px));
+      padding: var(--mf-cookie-pad-y) max(16px, env(safe-area-inset-right, 0px)) var(--mf-cookie-pad-y)
+        max(16px, env(safe-area-inset-left, 0px));
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    #mfCookieBar.is-visible {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+    #mfCookieBar .mf-cookie-card {
+      pointer-events: auto;
+      width: min(520px, 100%);
+      background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.97) 100%);
+      border: 1px solid var(--rr-silver-edge);
+      border-radius: 16px;
+      padding: 18px 20px 20px;
+      font-size: 0.82rem;
+      color: var(--rr-silver-muted);
+      box-shadow: 0 20px 56px rgba(0, 0, 0, 0.72), inset 0 1px 0 var(--rr-silver-dim);
+      text-align: center;
+    }
+    #mfCookieBar .mf-cookie-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+    #mfCookieBar .mf-cookie-card button {
+      appearance: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid var(--rr-silver-edge);
+      background: var(--rr-charcoal-raised);
+      color: var(--rr-silver);
+    }
+    #mfCookieBar .mf-cookie-card button.accept {
+      background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
+      border-color: rgba(147, 51, 234, 0.55);
+      color: #fff;
     }
 
     /* -- MAIN PAGE, MAP, & BUTTONS -- */
@@ -2447,6 +2520,22 @@
   <button onclick="localStorage.setItem('neverShowInstallPrompt', 'true'); document.getElementById('installPrompt').style.display='none'" data-translate="done_dont_ask">Done / Don't ask again</button>
 </div>
 
+<div id="mfCookieBar" class="" role="presentation">
+  <div class="mf-cookie-card" role="dialog" aria-modal="true" aria-labelledby="mfCookieTitle">
+    <strong id="mfCookieTitle" style="color: var(--rr-silver); display: block; margin: 0 auto 10px; font-size: 0.95rem; text-align: center;">Cookies &amp; location</strong>
+    <p style="margin: 0 auto 10px; line-height: 1.45; text-align: center;">
+      We use cookies <strong style="color: var(--rr-silver);">to save your personal settings</strong> (not only for GPS). With your browser’s permission, we can also use <strong style="color: var(--rr-silver);">location</strong> for map features. You can use the app without sharing location.
+    </p>
+    <p style="margin: 0 auto 12px; line-height: 1.45; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(147, 51, 234, 0.45); background: rgba(147, 51, 234, 0.12); color: #f1f5f9; font-weight: 700; font-size: 0.84rem; text-align: center;">
+      Allowing enables limited cookies, analytics, and GPS attempts. We do not intentionally collect personal account information or sell personal data. <a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">Privacy Policy</a>
+    </p>
+    <div class="mf-cookie-actions">
+      <button type="button" id="mfCookieDecline">Decline</button>
+      <button type="button" class="accept" id="mfCookieAccept">Allow cookies &amp; try GPS</button>
+    </div>
+  </div>
+</div>
+
 <!-- -- MAIN MAP DIV -- -->
 <div id="map"></div>
 <div id="mapRouteOverlayRoot" aria-hidden="true"></div>
@@ -2657,10 +2746,19 @@
     });
 
     const sponsorImg = document.getElementById('sponsorImage');
-    const sponsorModalImg = document.getElementById('sponsorModalImage');
-    if (typeof SPONSOR_IMAGE !== 'undefined') {
-      if (sponsorImg) sponsorImg.src = SPONSOR_IMAGE;
-      if (sponsorModalImg) sponsorModalImg.src = SPONSOR_IMAGE;
+    if (typeof SPONSOR_IMAGE !== 'undefined' && sponsorImg) {
+      sponsorImg.src = SPONSOR_IMAGE;
+    }
+    // Modal markup loads later — sync when #sponsorModalImage exists (and again on show)
+    function mfSyncSponsorModalLogo() {
+      const sponsorModalImg = document.getElementById('sponsorModalImage');
+      if (!sponsorModalImg || typeof SPONSOR_IMAGE === 'undefined') return;
+      sponsorModalImg.src = SPONSOR_IMAGE;
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mfSyncSponsorModalLogo);
+    } else {
+      mfSyncSponsorModalLogo();
     }
   })();
 </script>
@@ -2989,29 +3087,29 @@
     let title = '';
     let sub = '';
     if (step.kind === 'walk_to_board') {
-      title = tg('tg_walk_to', { stop: String(step.stopName || 'your stop') });
+      title = tg('tg_walk_to', { stop: mfEscapeHtmlText(step.stopName || 'your stop') });
       sub =
         '<div style="margin-top:6px;color:#9aa0a6;">' + tg('tg_distance') + ' <span id="mfTripGuideDistance">—</span></div>' +
         (Number.isFinite(step.arriveBeforeMs)
-          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_arrive_before', { time: '<strong style="color:#e8eaed;">' + mfFmtTime(step.arriveBeforeMs) + '</strong>' }) + '</div>'
+          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_arrive_before', { time: '<strong style="color:#e8eaed;">' + mfEscapeHtmlText(mfFmtTime(step.arriveBeforeMs)) + '</strong>' }) + '</div>'
           : '');
     } else if (step.kind === 'board') {
       const towardTxt = step.toward
-        ? tg('tg_toward', { name: '<strong style="color:#e8eaed;">' + String(step.toward).replace(/</g, '&lt;') + '</strong>' })
+        ? tg('tg_toward', { name: '<strong style="color:#e8eaed;">' + mfEscapeHtmlText(step.toward) + '</strong>' })
         : '';
-      title = tg('tg_board_route', { route: String(step.route || '').replace(/</g, '&lt;') }) + towardTxt;
+      title = tg('tg_board_route', { route: mfEscapeHtmlText(step.route || '') }) + towardTxt;
       sub =
-        '<div style="margin-top:6px;color:#9aa0a6;">' + tg('tg_at', { stop: '<strong style="color:#e8eaed;">' + String(step.boardStop || 'your stop').replace(/</g, '&lt;') + '</strong>' }) + '</div>' +
+        '<div style="margin-top:6px;color:#9aa0a6;">' + tg('tg_at', { stop: '<strong style="color:#e8eaed;">' + mfEscapeHtmlText(step.boardStop || 'your stop') + '</strong>' }) + '</div>' +
         '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_distance') + ' <span id="mfTripGuideDistance">—</span></div>' +
         (Number.isFinite(step.boardMs)
-          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_board_around', { time: '<strong style="color:#e8eaed;">' + mfFmtTime(step.boardMs) + '</strong>' }) + '</div>'
+          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_board_around', { time: '<strong style="color:#e8eaed;">' + mfEscapeHtmlText(mfFmtTime(step.boardMs)) + '</strong>' }) + '</div>'
           : '');
     } else if (step.kind === 'alight') {
-      title = tg('tg_get_off', { stop: String(step.alightStop || 'your stop').replace(/</g, '&lt;') });
+      title = tg('tg_get_off', { stop: mfEscapeHtmlText(step.alightStop || 'your stop') });
       sub =
         '<div style="margin-top:6px;color:#9aa0a6;">' + tg('tg_distance') + ' <span id="mfTripGuideDistance">—</span></div>' +
         (Number.isFinite(step.alightMs)
-          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_arrive_around', { time: '<strong style="color:#e8eaed;">' + mfFmtTime(step.alightMs) + '</strong>' }) + '</div>'
+          ? '<div style="margin-top:4px;color:#9aa0a6;">' + tg('tg_arrive_around', { time: '<strong style="color:#e8eaed;">' + mfEscapeHtmlText(mfFmtTime(step.alightMs)) + '</strong>' }) + '</div>'
           : '');
     }
 
@@ -3745,7 +3843,7 @@
       </p>
       <div style="width: 100%; max-width: 100%; background: #1a1a1a; border-radius: 8px; padding: 1.5rem; border: 1px solid #333; text-align: center; box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 200px;">
         <a id="sponsorModalLink" href="https://metrofeedus.com/" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; justify-content: center; max-width: 100%;">
-          <img id="sponsorModalImage" src="" alt="MetroFeed sponsor" data-translate-alt="sponsor_logo_alt" style="max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; display: block;" onerror="this.style.display='none'">
+          <img id="sponsorModalImage" src="cornerlogo2.png" alt="MetroFeed sponsor" data-translate-alt="sponsor_logo_alt" style="max-width: 100%; max-height: 280px; width: auto; height: auto; object-fit: contain; display: block;" onerror="this.style.display='none'">
         </a>
       </div>
       <p style="margin-top: 1rem; width: 100%;">
@@ -3859,8 +3957,10 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
+  window.mfEscapeHtml = mfEscapeHtmlText;
 
   function mfHideSevereWeatherModal() {
     var modal = document.getElementById('mfSevereWeatherModal');
@@ -4863,14 +4963,15 @@
     if (nextTime) selectedTimes.push(nextTime);
     selectedTimes.push(...futureTimes);
     
-    // Convert to HTML
+    // Convert to HTML (escape schedule text; wrappers are fixed markup)
     return selectedTimes.map(time => {
+      const safe = mfEscapeHtmlText(time.original);
       if (time.isNext) {
-        return `<span style='background:var(--rr-accent);color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${time.original}</span>`;
+        return `<span style='background:var(--rr-accent);color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;'>${safe}</span>`;
       } else if (time.isPast) {
-        return `<span style='color:#888;'>${time.original}</span>`;
+        return `<span style='color:#888;'>${safe}</span>`;
       } else {
-        return time.original;
+        return safe;
       }
     });
   }
@@ -5443,8 +5544,8 @@
           "otp-autocomplete-loc otp-autocomplete-loc--saved otp-autocomplete-loc--" + place.slot;
         opt.setAttribute("role", "option");
         opt.tabIndex = 0;
-        const safeLabel = String(place.label || "").replace(/</g, "&lt;");
-        const safeIcon = String(place.icon || "•").replace(/</g, "&lt;");
+        const safeLabel = mfEscapeHtmlText(place.label || "");
+        const safeIcon = mfEscapeHtmlText(place.icon || "•");
         opt.innerHTML =
           '<span class="otp-autocomplete-loc-icon" aria-hidden="true">' +
           safeIcon +
@@ -5453,7 +5554,7 @@
           safeLabel +
           "</span>" +
           '<span class="otp-autocomplete-loc-hint">' +
-          savedHint.replace(/</g, "&lt;") +
+          mfEscapeHtmlText(savedHint) +
           "</span>";
         const pickPlace = function () {
           dropdown.style.display = "none";
@@ -5497,7 +5598,7 @@
       const option = document.createElement("div");
       option.className = "otp-autocomplete-option otp-autocomplete-option--place";
       option.setAttribute("role", "option");
-      const safeLabel = String(place.label || "").replace(/</g, "&lt;");
+      const safeLabel = mfEscapeHtmlText(place.label || "");
       option.innerHTML = '<span>' + safeLabel + "</span>";
       const pickPlace = function () {
         input.value = place.label;
@@ -8110,12 +8211,12 @@
       const popupContent = document.createElement('div');
       popupContent.innerHTML = `
         <div style='border:1px solid #1E90FF; border-radius:8px; padding:10px; background:#222; color:#fff;'>
-            <strong style='color:#1E90FF;'>${stop.name}</strong>
+            <strong style='color:#1E90FF;'>${mfEscapeHtmlText(stop.name || '')}</strong>
             <hr style='border:none; border-top:1px solid #1E90FF; margin:6px 0;'>
             ${
               highlightedTimes.map(t =>
-                `<div style='padding:2px 0; color:${t.includes('background') ? '#000' : '#fff'};'>${t}</div>`
-              ).join('') || '<div>' + translateText('no_scheduled_times') + '</div>'
+                `<div style='padding:2px 0; color:${String(t).includes('background') ? '#000' : '#fff'};'>${t}</div>`
+              ).join('') || '<div>' + mfEscapeHtmlText(translateText('no_scheduled_times')) + '</div>'
             }
           </div>
       `;
@@ -8971,7 +9072,7 @@
         : '#fff';
       markerElement.innerHTML = `<div style='text-align:center;'>
         <div style='background:${routeColor};color:${fg};padding:3px 8px;border-radius:8px;font-weight:bold;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:2px solid #fff;'>
-          <span style='background:${fg};color:${fg === "#ffffff" ? "#0d0d0d" : "#ffffff"};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${badgeText}</span>${displayMain}
+          <span style='background:${fg};color:${fg === "#ffffff" ? "#0d0d0d" : "#ffffff"};padding:1px 3px;border-radius:2px;font-size:9px;margin-right:4px;'>${mfEscapeHtmlText(badgeText)}</span>${mfEscapeHtmlText(displayMain)}
         </div>
         <div style='width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid ${routeColor};margin:auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.3));'></div>
       </div>`;
@@ -9434,13 +9535,16 @@
             
             // Clean vehicle ID (remove non-numeric characters, visual only)
             const displayVehicleID = String(bus.vehicleID || '').replace(/^[^0-9]+/, '') || bus.vehicleID;
+            const safeRouteNum = String(trimetRouteNumber || '').replace(/[^a-zA-Z0-9_-]/g, '');
+            const busDirNum = Number(bus.direction);
+            const safeDir = Number.isFinite(busDirNum) ? busDirNum : 0;
             
             // Create OTP bus marker
             const otpMarkerElement = document.createElement('div');
             otpMarkerElement.className = 'otp-bus-marker';
             otpMarkerElement.innerHTML = `<div style='text-align:center;'>
               <div style='background:${routeColor};color:#fff;padding:4px 10px;border-radius:10px;font-weight:bold;font-size:12px;border:3px solid #fff;'>
-                <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:10px;margin-right:4px;'>${trimetRouteNumber}</span>${displayVehicleID}
+                <span style='background:#fff;color:${routeColor};padding:1px 3px;border-radius:2px;font-size:10px;margin-right:4px;'>${mfEscapeHtmlText(trimetRouteNumber)}</span>${mfEscapeHtmlText(displayVehicleID)}
               </div>
               <div style='width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:16px solid ${routeColor};margin:auto;'></div>
             </div>`;
@@ -9453,22 +9557,36 @@
             
             // Create popup content
             const popupContent = document.createElement('div');
+            const routeDesc = route.description || `Route ${trimetRouteNumber}`;
+            const railRoutes = ['90', '100', '190', '200', '290', '203'];
+            const detailsHref = railRoutes.includes(safeRouteNum)
+              ? 'Rail routes/route-' + safeRouteNum + '-dir' + safeDir
+              : 'pythonbusroutes/route-' + safeRouteNum + '-dir' + safeDir + '.html';
             popupContent.innerHTML = `
               <div style='border:2px solid ${routeColor}; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
                 <div style='text-align:center; margin-bottom:8px;'>
-                  <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${bus.vehicleID}</div>
+                  <div style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Your Bus ${mfEscapeHtmlText(bus.vehicleID)}</div>
                 </div>
-                <div style='margin-bottom:6px;'><strong>${translateText('route')}:</strong> ${route.description || `Route ${trimetRouteNumber}`}</div>
-                <div style='margin-bottom:6px;'><strong>${translateText('direction')}:</strong> ${bus.direction}</div>
-                <div style='margin-bottom:6px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
-                <div style='margin-bottom:6px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:6px;'><strong>${mfEscapeHtmlText(translateText('route'))}:</strong> ${mfEscapeHtmlText(routeDesc)}</div>
+                <div style='margin-bottom:6px;'><strong>${mfEscapeHtmlText(translateText('direction'))}:</strong> ${mfEscapeHtmlText(bus.direction)}</div>
+                <div style='margin-bottom:6px;'><strong>${mfEscapeHtmlText(translateText('speed'))}:</strong> ${Math.round(bus.speed || 0)} ${mfEscapeHtmlText(translateText('mph'))}</div>
+                <div style='margin-bottom:6px;'><strong>${mfEscapeHtmlText(translateText('block'))}:</strong> ${mfEscapeHtmlText(bus.blockID)}</div>
                 <div style='color:#1E90FF; font-size:12px; margin-top:8px;'>✨ This bus is part of your planned trip!</div>
                 <div style='margin-top:10px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
-                  <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${trimetRouteNumber}", "direction:", ${bus.direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${trimetRouteNumber}", ${bus.direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(trimetRouteNumber) ? 'Rail routes/route-' + trimetRouteNumber + '-dir' + bus.direction : 'pythonbusroutes/route-' + trimetRouteNumber + '-dir' + bus.direction + '.html'}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>${translateText('view_route_details')}</a>
+                  <button type="button" class="mf-legacy-show-route-btn" style='background:#1E90FF;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;'>Show Route</button>
+                  <a href='${mfEscapeHtmlText(detailsHref)}' style='background:${routeColor};color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:12px;display:inline-block;'>${mfEscapeHtmlText(translateText('view_route_details'))}</a>
                 </div>
               </div>
             `;
+            const showRouteBtn = popupContent.querySelector('.mf-legacy-show-route-btn');
+            if (showRouteBtn) {
+              showRouteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (typeof showRouteOverlay === 'function') {
+                  showRouteOverlay(safeRouteNum || trimetRouteNumber, safeDir);
+                }
+              });
+            }
             
             const popup = new maplibregl.Popup().setDOMContent(popupContent);
             busMarker.setPopup(popup);
@@ -9514,23 +9632,40 @@
             // Set position and add popup
             busMarker.setLngLat([bus.longitude, bus.latitude]);
             
+            const safeRouteNum = String(routeNumber || '').replace(/[^a-zA-Z0-9_-]/g, '');
+            const dirNum = Number(direction);
+            const safeDir = Number.isFinite(dirNum) ? dirNum : 0;
+            const railRoutes = ['90', '100', '190', '200', '290', '203'];
+            const detailsHref = railRoutes.includes(safeRouteNum)
+              ? 'Rail routes/route-' + safeRouteNum + '-dir' + safeDir
+              : 'pythonbusroutes/route-' + safeRouteNum + '-dir' + safeDir + '.html';
+
             // Create popup content
             const popupContent = document.createElement('div');
             popupContent.innerHTML = `
               <div style='border:1px solid ${routeColor}; border-radius:8px; padding:10px; background:#222; color:#fff; min-width:180px;'>
                 <div style='text-align:center; margin-bottom:6px;'>
-                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${bus.vehicleID}</div>
+                  <div style='background:${routeColor};color:#fff;padding:3px 8px;border-radius:6px;font-weight:bold;font-size:12px;'>🚌 Bus ${mfEscapeHtmlText(bus.vehicleID)}</div>
                 </div>
-                <div style='margin-bottom:4px;'><strong>${translateText('route')}:</strong> ${routeNumber}</div>
-                <div style='margin-bottom:4px;'><strong>${translateText('direction')}:</strong> ${direction}</div>
-                <div style='margin-bottom:4px;'><strong>${translateText('speed')}:</strong> ${Math.round(bus.speed || 0)} ${translateText('mph')}</div>
-                <div style='margin-bottom:4px;'><strong>${translateText('block')}:</strong> ${bus.blockID}</div>
+                <div style='margin-bottom:4px;'><strong>${mfEscapeHtmlText(translateText('route'))}:</strong> ${mfEscapeHtmlText(routeNumber)}</div>
+                <div style='margin-bottom:4px;'><strong>${mfEscapeHtmlText(translateText('direction'))}:</strong> ${mfEscapeHtmlText(direction)}</div>
+                <div style='margin-bottom:4px;'><strong>${mfEscapeHtmlText(translateText('speed'))}:</strong> ${Math.round(bus.speed || 0)} ${mfEscapeHtmlText(translateText('mph'))}</div>
+                <div style='margin-bottom:4px;'><strong>${mfEscapeHtmlText(translateText('block'))}:</strong> ${mfEscapeHtmlText(bus.blockID)}</div>
                 <div style='margin-top:8px; text-align:center; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;'>
-                  <button onclick='event.stopPropagation(); console.log("Button clicked - route:", "${routeNumber}", "direction:", ${direction}); if(typeof showRouteOverlay === "function") { console.log("Calling showRouteOverlay..."); showRouteOverlay("${routeNumber}", ${direction}); } else { console.error("❌ showRouteOverlay not available, type:", typeof showRouteOverlay); alert("showRouteOverlay function not found. Check console."); }' style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
-                  <a href='${['90', '100', '190', '200', '290', '203'].includes(routeNumber) ? 'Rail routes/route-' + routeNumber + '-dir' + direction : 'pythonbusroutes/route-' + routeNumber + '-dir' + direction + '.html'}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>${translateText('view_route_details')}</a>
+                  <button type="button" class="mf-legacy-show-route-btn" style='background:#1E90FF;color:#fff;padding:4px 8px;border:none;border-radius:4px;font-weight:bold;font-size:11px;cursor:pointer;'>Show Route</button>
+                  <a href='${mfEscapeHtmlText(detailsHref)}' style='background:${routeColor};color:#fff;padding:4px 8px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;display:inline-block;'>${mfEscapeHtmlText(translateText('view_route_details'))}</a>
                 </div>
               </div>
             `;
+            const showRouteBtn = popupContent.querySelector('.mf-legacy-show-route-btn');
+            if (showRouteBtn) {
+              showRouteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (typeof showRouteOverlay === 'function') {
+                  showRouteOverlay(safeRouteNum || routeNumber, safeDir);
+                }
+              });
+            }
             
             const popup = new maplibregl.Popup().setDOMContent(popupContent);
             busMarker.setPopup(popup);
@@ -9798,6 +9933,8 @@
   function mfEscapeWeatherModalAttr(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
   }
@@ -9867,7 +10004,16 @@
               : rawArea;
           const alertArea = mfEscapeWeatherModalAttr(filteredArea);
           const areaLine = filteredArea
-            ? `<div style="color:#aaa;font-size:0.85rem;margin-top:0.35rem;">In service area: ${filteredArea}</div>`
+            ? `<div style="color:#aaa;font-size:0.85rem;margin-top:0.35rem;">In service area: ${alertArea}</div>`
+            : '';
+          const headlinePreview = alert.headline
+            || (alert.description ? String(alert.description).substring(0, 200) + '...' : 'No description available');
+          const headlinePreviewEsc = mfEscapeHtmlText(headlinePreview);
+          const instructionPreview = alert.instruction
+            ? mfEscapeHtmlText(
+                String(alert.instruction).substring(0, 150) +
+                (String(alert.instruction).length > 150 ? '...' : '')
+              )
             : '';
 
           html += `
@@ -9876,12 +10022,12 @@
                    onmouseover="this.style.background='#222'" 
                    onmouseout="this.style.background='transparent'"
                    onclick="showAlertDetails('${alertIdEsc}', '${alertEvent}', '${alertHeadline}', '${alertDesc}', '${alertInstruction}', '${alertArea}', '${nwsUrlEsc}')">
-                <span>⚠️ ${alert.event}</span>
+                <span>⚠️ ${mfEscapeHtmlText(alert.event || '')}</span>
                 <span style="font-size:0.85rem; color:#888;">${typeof translateText !== 'undefined' ? translateText('viewDetails') : 'View Details'} →</span>
               </div>
-              <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${alert.headline || (alert.description ? alert.description.substring(0, 200) + '...' : 'No description available')}</div>
+              <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.5rem;">${headlinePreviewEsc}</div>
               ${areaLine}
-              ${alert.instruction ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${alert.instruction.substring(0, 150)}${alert.instruction.length > 150 ? '...' : ''}</div>` : ''}
+              ${instructionPreview ? `<div style="color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.5rem;">${instructionPreview}</div>` : ''}
               <div style="margin-top:0.5rem;">
                 <a href="${nwsUrlEsc}" target="_blank" rel="noopener noreferrer" style="color:#1DA1F2; text-decoration: none; font-size:0.85rem;" onclick="event.stopPropagation();">View on NWS →</a>
               </div>
@@ -9931,14 +10077,14 @@
     // Remove any other expanded details
     alertsContent.querySelectorAll('[data-alert-id]').forEach(el => el.remove());
     
-    // Create full details section
+    // Create full details section (values may arrive already attr-escaped from onclick)
     const fullDetails = `
       <div data-alert-id="${mfEscapeWeatherModalAttr(alertId)}" style="background: #111; border: 2px solid #f44336; border-radius: 8px; padding: 1rem; margin-top: 0.75rem; margin-bottom: 0.75rem;">
-        <div style="color:#f44336; font-weight:bold; font-size:1.2rem; margin-bottom:0.75rem;">⚠️ ${event}</div>
-        ${headline ? `<div style="color:#fff; font-weight:bold; font-size:1rem; margin-bottom:0.5rem;">${headline}</div>` : ''}
-        <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.75rem; white-space: pre-wrap; line-height:1.5;">${description || 'No description available'}</div>
-        ${instruction ? `<div style="color:#aaa; font-size:0.9rem; font-style:italic; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333; line-height:1.4;">${instruction}</div>` : ''}
-        ${areaDesc ? `<div style="color:#888; font-size:0.85rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333;">Areas affected: ${areaDesc}</div>` : ''}
+        <div style="color:#f44336; font-weight:bold; font-size:1.2rem; margin-bottom:0.75rem;">⚠️ ${mfEscapeHtmlText(event)}</div>
+        ${headline ? `<div style="color:#fff; font-weight:bold; font-size:1rem; margin-bottom:0.5rem;">${mfEscapeHtmlText(headline)}</div>` : ''}
+        <div style="color:#ccc; font-size:0.95rem; margin-bottom:0.75rem; white-space: pre-wrap; line-height:1.5;">${mfEscapeHtmlText(description || 'No description available')}</div>
+        ${instruction ? `<div style="color:#aaa; font-size:0.9rem; font-style:italic; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333; line-height:1.4;">${mfEscapeHtmlText(instruction)}</div>` : ''}
+        ${areaDesc ? `<div style="color:#888; font-size:0.85rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #333;">Areas affected: ${mfEscapeHtmlText(areaDesc)}</div>` : ''}
         <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #333; text-align:center;">
           <a href="${mfEscapeWeatherModalAttr(nwsUrl)}" target="_blank" rel="noopener noreferrer" style="color:#1DA1F2; text-decoration: none; font-weight:bold; font-size:0.95rem;">View on NWS →</a>
         </div>
@@ -10051,10 +10197,10 @@
           html += `
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 0.6rem 0;">
               <div style="flex: 1;">
-                <div style="color:#F7630C; font-weight:bold; font-size:1rem;">${period.name} ${emoji}</div>
-                <div style="font-size:0.9rem; color:#ccc; margin-top:0.25rem;">${period.shortForecast}</div>
+                <div style="color:#F7630C; font-weight:bold; font-size:1rem;">${mfEscapeHtmlText(period.name)} ${emoji}</div>
+                <div style="font-size:0.9rem; color:#ccc; margin-top:0.25rem;">${mfEscapeHtmlText(period.shortForecast)}</div>
               </div>
-              <div style="color:#1DA1F2; font-weight:bold; font-size:1.1rem; margin-left:1rem;">${period.temperature}°${period.temperatureUnit}</div>
+              <div style="color:#1DA1F2; font-weight:bold; font-size:1.1rem; margin-left:1rem;">${mfEscapeHtmlText(period.temperature)}°${mfEscapeHtmlText(period.temperatureUnit)}</div>
             </div>
           `;
         });
@@ -10123,8 +10269,8 @@
           html += `
             <div style="background: linear-gradient(135deg, #a855f7 0%, var(--rr-accent) 55%, var(--rr-accent-hover) 100%); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: #fff;">
               <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">Current Conditions ${emoji}</div>
-              <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem;">${temp}°F</div>
-              <div style="font-size: 0.9rem; opacity: 0.9;">${textDesc}</div>
+              <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem;">${mfEscapeHtmlText(temp)}°F</div>
+              <div style="font-size: 0.9rem; opacity: 0.9;">${mfEscapeHtmlText(textDesc)}</div>
             </div>
           `;
         }
@@ -10145,10 +10291,10 @@
             
             html += `
               <div style="background: #222; border: 1px solid #333; border-radius: 6px; padding: 0.75rem; text-align: center;">
-                <div style="font-size: 0.85rem; color: #888; margin-bottom: 0.25rem;">${timeStr}</div>
+                <div style="font-size: 0.85rem; color: #888; margin-bottom: 0.25rem;">${mfEscapeHtmlText(timeStr)}</div>
                 <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">${emoji}</div>
-                <div style="font-size: 1.1rem; font-weight: bold; color: #1DA1F2;">${temp}°${tempUnit}</div>
-                <div style="font-size: 0.75rem; color: #aaa; margin-top: 0.25rem; line-height: 1.2;">${period.shortForecast}</div>
+                <div style="font-size: 1.1rem; font-weight: bold; color: #1DA1F2;">${mfEscapeHtmlText(temp)}°${mfEscapeHtmlText(tempUnit)}</div>
+                <div style="font-size: 0.75rem; color: #aaa; margin-top: 0.25rem; line-height: 1.2;">${mfEscapeHtmlText(period.shortForecast)}</div>
               </div>
             `;
           });
@@ -10860,7 +11006,7 @@
       const message = props.message || props.name || 'No message available';
       new maplibregl.Popup()
         .setLngLat(e.lngLat)
-        .setHTML(`<div style="color: #000; padding: 4px;"><strong>Traffic Sign</strong><br>${message}</div>`)
+        .setHTML(`<div style="color: #000; padding: 4px;"><strong>Traffic Sign</strong><br>${mfEscapeHtmlText(message)}</div>`)
         .addTo(map);
     });
     
@@ -12449,10 +12595,23 @@
         errorDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(200,0,0,0.9);color:#fff;padding:20px;border-radius:8px;z-index:10000;text-align:center;max-width:400px;';
         errorDiv.innerHTML = `
         <div style="margin-bottom:15px;font-weight:bold;">Error Loading Route</div>
-        <div style="margin-bottom:15px;font-size:14px;">${error.message}</div>
-        <button onclick="this.parentElement.remove(); window.showRouteOverlay('${routeId}', ${directionId});" style="background:var(--rr-accent);color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;margin-right:10px;">Retry</button>
-        <button onclick="this.parentElement.remove();" style="background:#666;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Close</button>
+        <div style="margin-bottom:15px;font-size:14px;">${mfEscapeHtmlText(error && error.message)}</div>
+        <button type="button" class="mf-route-error-retry" style="background:var(--rr-accent);color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;margin-right:10px;">Retry</button>
+        <button type="button" class="mf-route-error-close" style="background:#666;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Close</button>
       `;
+        const retryBtn = errorDiv.querySelector('.mf-route-error-retry');
+        const closeBtn = errorDiv.querySelector('.mf-route-error-close');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', () => {
+            errorDiv.remove();
+            if (typeof window.showRouteOverlay === 'function') {
+              window.showRouteOverlay(routeId, directionId);
+            }
+          });
+        }
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => errorDiv.remove());
+        }
         document.body.appendChild(errorDiv);
       }
       return;
@@ -13034,8 +13193,8 @@
             const dir1To = metrofeedDecodeHtmlEntities(dir1Terminal || 'Unknown');
             const dir1Label = directionLabelFromRouteTitle(routeData1.route_title, (route && route.dir1) ? route.dir1 : 'Direction 1');
             dir1Btn.innerHTML =
-              `<div style="font-weight:800; font-size:0.95rem;">To ${dir1To}</div>` +
-              `<div style="margin-top:2px; font-size:0.78rem; color:#cfe8ff;">${dir1Label} · From ${dir1Start}</div>`;
+              `<div style="font-weight:800; font-size:0.95rem;">To ${mfEscapeHtmlText(dir1To)}</div>` +
+              `<div style="margin-top:2px; font-size:0.78rem; color:#cfe8ff;">${mfEscapeHtmlText(dir1Label)} · From ${mfEscapeHtmlText(dir1Start)}</div>`;
             dir1Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: var(--rr-accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
             dir1Btn.onclick = () => selectRoute(route.id, 1);
             const star1Btn = createFavoriteStar(route.id, 1, route.label);
@@ -13055,8 +13214,8 @@
         const dir0To = metrofeedDecodeHtmlEntities(dir0Terminal || 'Unknown');
         const dir0Label = directionLabelFromRouteTitle(routeData0.route_title, (route && route.dir0) ? route.dir0 : 'Direction 0');
         dir0Btn.innerHTML =
-          `<div style="font-weight:800; font-size:0.95rem;">To ${dir0To}</div>` +
-          `<div style="margin-top:2px; font-size:0.78rem; color:#cfe8ff;">${dir0Label} · From ${dir0Start}</div>`;
+          `<div style="font-weight:800; font-size:0.95rem;">To ${mfEscapeHtmlText(dir0To)}</div>` +
+          `<div style="margin-top:2px; font-size:0.78rem; color:#cfe8ff;">${mfEscapeHtmlText(dir0Label)} · From ${mfEscapeHtmlText(dir0Start)}</div>`;
         dir0Btn.style.cssText = 'flex: 1; padding: 0.5rem; background: var(--rr-accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-align: left;';
         dir0Btn.onclick = () => selectRoute(route.id, 0);
         const star0Btn = createFavoriteStar(route.id, 0, route.label);
@@ -13419,7 +13578,18 @@
       const fav = favorites[i];
       if (fav) {
         const parts = parseFavoriteRouteLabelParts(fav.routeId);
-        favBtn.innerHTML = `<div class="favorite-route-label"><div class="favorite-route-label__agency">${parts.agency || '&nbsp;'}</div><div class="favorite-route-label__route">${parts.route}</div></div>`;
+        favBtn.innerHTML = '';
+        const labelWrap = document.createElement('div');
+        labelWrap.className = 'favorite-route-label';
+        const agencyEl = document.createElement('div');
+        agencyEl.className = 'favorite-route-label__agency';
+        agencyEl.textContent = parts.agency || '\u00a0';
+        const routeEl = document.createElement('div');
+        routeEl.className = 'favorite-route-label__route';
+        routeEl.textContent = parts.route || '';
+        labelWrap.appendChild(agencyEl);
+        labelWrap.appendChild(routeEl);
+        favBtn.appendChild(labelWrap);
         favBtn.style.cursor = 'pointer';
         const titleRoute = parts.agency ? `${parts.agency} ${parts.route}` : parts.route;
         favBtn.title = `Show ${titleRoute} on map`;
@@ -13628,7 +13798,7 @@
       const alertBadge = createAlertBadge(route.id, routeAlertInfo);
       const rb = busModalBadgeText(route);
       const rbWrap = rb.length > 7 ? ' bus-route-modal-badge--wrap' : '';
-      routeHeader.innerHTML = `<span style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">${alertBadge}<span class="bus-route-modal-badge${rbWrap}">${rb}</span><span style="color: ${routeColor}; min-width: 0;">${routeLabel}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      routeHeader.innerHTML = `<span style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">${alertBadge}<span class="bus-route-modal-badge${rbWrap}">${mfEscapeHtmlText(rb)}</span><span style="color: ${routeColor}; min-width: 0;">${mfEscapeHtmlText(routeLabel)}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
       routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = `${routeColor}15`; // 15 = ~8% opacity
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
@@ -13673,7 +13843,7 @@
         // Check for alerts for this branch route
         const alerts = await fetchAlertsData();
         // Alert badges removed - alerts now shown via indicator when route is selected
-        branchLabel.innerHTML = `<span>${branchLabelText}</span>`;
+        branchLabel.innerHTML = `<span>${mfEscapeHtmlText(branchLabelText)}</span>`;
         branchLabel.style.cssText = `font-weight: 600; color: ${branchColor}; margin-bottom: 0.5rem; font-size: 0.9em; display: flex; align-items: center;`;
         branchDiv.appendChild(branchLabel);
         
@@ -13821,7 +13991,7 @@
       const alertBadge = createAlertBadge(route.id, routeAlertInfo);
       const rb = busModalBadgeText(route);
       const rbWrap = rb.length > 7 ? ' bus-route-modal-badge--wrap' : '';
-      routeHeader.innerHTML = `<span style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">${alertBadge}<span class="bus-route-modal-badge${rbWrap}">${rb}</span><span style="color: ${routeColor}; min-width: 0;">${routeLabel}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
+      routeHeader.innerHTML = `<span style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">${alertBadge}<span class="bus-route-modal-badge${rbWrap}">${mfEscapeHtmlText(rb)}</span><span style="color: ${routeColor}; min-width: 0;">${mfEscapeHtmlText(routeLabel)}</span></span><span style="font-size: 0.9rem; opacity: 0.7;">▼</span>`;
       routeHeader.onmouseenter = () => routeHeader.style.backgroundColor = `${routeColor}15`; // 15 = ~8% opacity
       routeHeader.onmouseleave = () => routeHeader.style.backgroundColor = 'transparent';
       
@@ -14735,11 +14905,14 @@
     else if (alertInfo.severity === 'moderate') severityColor = '#ffa500';
     else if (alertInfo.severity === 'minor') severityColor = '#ffd700';
 
-    const badgeId = `alert-badge-${routeId.replace(/[^a-zA-Z0-9]/g, '-')}`;
+    const badgeId = `alert-badge-${String(routeId || '').replace(/[^a-zA-Z0-9]/g, '-')}`;
+    const countNum = Number(alertInfo.count) || 0;
+    const countLabel = countNum > 1 ? String(countNum) : '⚠';
     return `
       <span 
         id="${badgeId}"
-        onclick="event.stopPropagation(); openAlertsForRoute('${routeId}');"
+        data-route-id="${mfEscapeHtmlText(routeId)}"
+        onclick="event.stopPropagation(); openAlertsForRoute(this.getAttribute('data-route-id'));"
         style="
           display: inline-flex;
           align-items: center;
@@ -14758,9 +14931,9 @@
         "
         onmouseover="this.style.transform='scale(1.1)'; this.style.opacity='0.9';"
         onmouseout="this.style.transform='scale(1)'; this.style.opacity='1';"
-        title="Click to view ${alertInfo.count} alert${alertInfo.count > 1 ? 's' : ''} for this route"
+        title="Click to view ${countNum} alert${countNum > 1 ? 's' : ''} for this route"
       >
-        ${alertInfo.count > 1 ? alertInfo.count : '⚠'}
+        ${mfEscapeHtmlText(countLabel)}
       </span>
     `;
   }
@@ -15841,12 +16014,26 @@
   }
   
   /**
-   * Show the sponsor modal
+   * Show the sponsor modal (same logo as the corner sponsor box)
    */
   function showSponsorModal() {
     if (typeof SPONSOR_LOGO_ENABLED !== 'undefined' && !SPONSOR_LOGO_ENABLED) return;
     if (typeof updatePageLanguage === 'function') updatePageLanguage();
     const modal = document.getElementById('sponsorModal');
+    const modalImg = document.getElementById('sponsorModalImage');
+    const cornerImg = document.getElementById('sponsorImage');
+    if (modalImg) {
+      var logoSrc = '';
+      if (cornerImg && cornerImg.getAttribute('src')) {
+        logoSrc = cornerImg.getAttribute('src');
+      } else if (typeof SPONSOR_IMAGE !== 'undefined' && SPONSOR_IMAGE) {
+        logoSrc = SPONSOR_IMAGE;
+      } else {
+        logoSrc = 'cornerlogo2.png';
+      }
+      modalImg.src = logoSrc;
+      modalImg.style.display = 'block';
+    }
     if (modal) {
       modal.style.display = 'flex';
     }
@@ -16359,6 +16546,69 @@
     
     console.log('[DOMContentLoaded] Map and event listeners initialization complete');
   });
+</script>
+
+<script>
+(function () {
+  var MF_COOKIE_KEY = 'cookieConsent';
+  var MF_COOKIE_SESSION_DECLINED = 'cookieConsentSession';
+
+  function mfIsTvMode() {
+    var q = location.search;
+    return q.indexOf('tv=1') !== -1 || q.indexOf('tv=true') !== -1;
+  }
+
+  function mfHideCookieBar() {
+    var bar = document.getElementById('mfCookieBar');
+    if (bar) bar.classList.remove('is-visible');
+  }
+
+  function mfConsentAccepted() {
+    try {
+      localStorage.setItem(MF_COOKIE_KEY, 'true');
+      sessionStorage.removeItem(MF_COOKIE_SESSION_DECLINED);
+    } catch (_) {}
+    mfHideCookieBar();
+    if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
+  }
+
+  function mfConsentDeclined() {
+    try {
+      sessionStorage.setItem(MF_COOKIE_SESSION_DECLINED, 'declined');
+      if (localStorage.getItem(MF_COOKIE_KEY) !== 'true') {
+        localStorage.removeItem(MF_COOKIE_KEY);
+      }
+    } catch (_) {}
+    mfHideCookieBar();
+  }
+
+  function mfBootCookieUi() {
+    if (mfIsTvMode()) return;
+    try {
+      if (localStorage.getItem(MF_COOKIE_KEY) === 'true') {
+        if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
+        return;
+      }
+      if (sessionStorage.getItem(MF_COOKIE_SESSION_DECLINED) === 'declined') return;
+    } catch (_) {}
+    var bar = document.getElementById('mfCookieBar');
+    if (bar) bar.classList.add('is-visible');
+  }
+
+  function mfWireCookieUi() {
+    var accept = document.getElementById('mfCookieAccept');
+    var decline = document.getElementById('mfCookieDecline');
+    if (accept) accept.addEventListener('click', mfConsentAccepted);
+    if (decline) decline.addEventListener('click', mfConsentDeclined);
+    mfBootCookieUi();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mfWireCookieUi);
+  } else {
+    mfWireCookieUi();
+  }
+})();
 </script>
 
 <!-- OBS TV director overlays (home.html?tv=1) -->

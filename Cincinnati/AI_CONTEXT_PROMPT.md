@@ -20,7 +20,7 @@
 - **APIs Used**:
   - TriMet API (live bus tracking, alerts, route validation)
   - Open Trip Planner (OTP) - Self-hosted at `https://otp.metrofeedus.com/otp/routers/default/plan`
-  - TomTom Traffic API
+  - MetroFeed traffic API
   - National Weather Service
 - **Data Storage**: LocalStorage, SessionStorage for user preferences
 - **Translation System**: Custom `translations.js` with multi-language support
@@ -154,7 +154,7 @@ All dropdown menu SVGs are **white** (`fill="#ffffff"` or `filter: brightness(0)
 2. **DIVIDER**
 3. Bus Routes - Opens modal with route list
 4. Rail Routes - Opens modal with route list
-5. Traffic Overlay - Toggles TomTom traffic layer
+5. Traffic Overlay - Toggles MetroFeed traffic layer
 6. Traffic Cameras - Toggles camera markers overlay
 7. Weather - Links to weather page
 8. ADA and Official Resources - Opens `resources.html` in new window
@@ -299,8 +299,7 @@ All dropdown menu SVGs are **white** (`fill="#ffffff"` or `filter: brightness(0)
   apiKey: "2C4447D4A42083BCD84DE3B8E",
   otpApi: "https://otp.metrofeedus.com/otp/routers/default/plan",
   busApi: "https://developer.trimet.org/ws/v2/vehicles",
-  trafficApi: "https://api.tomtom.com/traffic/map/4/tile/flow/relative",
-  tomtomKey: "9TeeDQJH1C2OrWARNwqFRDBOzVhatnkU",
+  trafficApi: null,
   defaultCenter: [-122.6784, 45.5152],
   defaultZoom: 10.5,
   bounds: { west: -123.0, east: -122.4, south: 45.4, north: 45.65 }

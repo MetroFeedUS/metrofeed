@@ -260,18 +260,26 @@
     }
 
     const alertUrl = 'https://api.weather.gov/alerts/active?zone=ORZ006';
+    function mfEscapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
     fetch(alertUrl)
       .then(res => res.json())
       .then(data => {
         const box = document.getElementById('alertBox');
         if (!data.features || data.features.length === 0) {
-          box.innerHTML = '<div style="color:#1DA1F2;font-weight:bold;">' + translateText('noActiveAlerts') + '</div>';
+          box.innerHTML = '<div style="color:#1DA1F2;font-weight:bold;">' + mfEscapeHtml(translateText('noActiveAlerts')) + '</div>';
           return;
         }
         const alert = data.features[0].properties;
         box.innerHTML = `
-          <div style="color:#F7630C; font-weight:bold; font-size:1.1rem;">⚠️ ${alert.event}</div>
-          <div style="margin-top:0.5rem; color:#ccc; font-size:0.95rem;">${alert.headline || alert.description}</div>
+          <div style="color:#F7630C; font-weight:bold; font-size:1.1rem;">⚠️ ${mfEscapeHtml(alert.event)}</div>
+          <div style="margin-top:0.5rem; color:#ccc; font-size:0.95rem;">${mfEscapeHtml(alert.headline || alert.description)}</div>
         `;
       })
       .catch(() => {
@@ -321,10 +329,10 @@
           el.style.padding = '0.4rem 0';
           el.innerHTML = `
             <div>
-              <div style="color:#F7630C; font-weight:bold;">${period.name} ${emoji}</div>
-              <div style="font-size:0.9rem; color:#ccc;">${period.shortForecast}</div>
+              <div style="color:#F7630C; font-weight:bold;">${mfEscapeHtml(period.name)} ${emoji}</div>
+              <div style="font-size:0.9rem; color:#ccc;">${mfEscapeHtml(period.shortForecast)}</div>
             </div>
-            <div style="color:#1DA1F2;">${period.temperature}°${period.temperatureUnit}</div>
+            <div style="color:#1DA1F2;">${mfEscapeHtml(period.temperature)}°${mfEscapeHtml(period.temperatureUnit)}</div>
           `;
           forecastEl.appendChild(el);
         });
