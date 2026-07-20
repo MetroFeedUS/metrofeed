@@ -1785,7 +1785,10 @@
     } else if (TV.mode === MODES.WEATHER) {
       schedulePhase(wait, function () {
         const panel = el('mfTvWeatherPanel');
-        if (panel) panel.classList.add('mf-tv-hidden');
+        if (panel) {
+          panel.classList.add('mf-tv-hidden');
+          panel.setAttribute('aria-hidden', 'true');
+        }
         enterRouteMode();
       });
     }
@@ -2398,6 +2401,8 @@
     const panel = el('mfTvWeatherPanel');
     if (!panel) return;
     panel.classList.remove('mf-tv-hidden');
+    panel.removeAttribute('hidden');
+    panel.setAttribute('aria-hidden', 'false');
 
     const tempEl = el('mfTvWeatherTemp');
     const feelsEl = el('mfTvWeatherFeels');

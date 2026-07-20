@@ -36,16 +36,22 @@
 </script>
 
   <script>
-    /* TV FOUC: hide director panels before any body markup paints (~200ms flash fix) */
+    /* Hide OBS/TV chrome immediately (normal loads never load obs-tv.css).
+       Prevents a brief flash of "Loading weather…" / NWS text before map paint. */
     (function () {
       var q = location.search;
-      if (q.indexOf('tv=1') === -1 && q.indexOf('tv=true') === -1) return;
-      document.documentElement.classList.add('tv-mode');
+      var isTv = q.indexOf('tv=1') !== -1 || q.indexOf('tv=true') !== -1;
+      if (isTv) document.documentElement.classList.add('tv-mode');
       var s = document.createElement('style');
       s.id = 'mfTvInstantHide';
       s.textContent =
-        'html.tv-mode:not(.tv-ready) #mfTvAdminPanel,html.tv-mode:not(.tv-ready) #mfTvAlertsPanel{display:none!important;visibility:hidden!important;}' +
-        '#mfTvAdminPanel[hidden],#mfTvAlertsPanel[hidden],#mfTvAdminToggle[hidden],#mfTvAlertsToggle[hidden]{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}';
+        '.mf-tv-hidden{display:none!important;visibility:hidden!important;}' +
+        '#mfTvAdminPanel[hidden],#mfTvAlertsPanel[hidden],#mfTvAdminToggle[hidden],#mfTvAlertsToggle[hidden]' +
+        '{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}' +
+        (isTv
+          ? 'html.tv-mode:not(.tv-ready) #mfTvAdminPanel,html.tv-mode:not(.tv-ready) #mfTvAlertsPanel' +
+            '{display:none!important;visibility:hidden!important;}'
+          : '');
       (document.head || document.documentElement).appendChild(s);
     })();
   </script>
@@ -97,6 +103,12 @@
       --rr-charcoal: #121214;
       --rr-charcoal-raised: #1a1b20;
       --rr-charcoal-panel: rgba(22, 23, 28, 0.96);
+    }
+
+    /* OBS/TV panels: hidden unless director removes .mf-tv-hidden (obs-tv.css may not load) */
+    .mf-tv-hidden {
+      display: none !important;
+      visibility: hidden !important;
     }
 
     /* Cookie prompt (city page — for bookmarked visits / declined session) */
