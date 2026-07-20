@@ -5,7 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#000000" />
-  <title>RoamRaven | National map</title>
+  <title>RoamRaven | Free live transit maps</title>
+  <meta name="description" content="RoamRaven is a free live transit map. Track buses in real time, check traffic cameras and road incidents, and plan trips — no app download, no account required." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://roamravenapp.com/" />
+
+  <!-- Open Graph / Facebook Ads link preview (do not let scrapers fall back to cookie banner copy) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="RoamRaven" />
+  <meta property="og:title" content="RoamRaven" />
+  <meta property="og:description" content="Free live transit maps. Track buses in real time, check traffic cameras and road incidents, and plan trips — no app download, no account required." />
+  <meta property="og:url" content="https://roamravenapp.com/" />
+  <meta property="og:image" content="https://roamravenapp.com/websitepicture.png" />
+  <meta property="og:image:alt" content="RoamRaven live transit map on phone" />
+  <meta property="og:locale" content="en_US" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="RoamRaven" />
+  <meta name="twitter:description" content="Free live transit maps. Track buses in real time, check traffic and plan trips — no app, no account." />
+  <meta name="twitter:image" content="https://roamravenapp.com/websitepicture.png" />
+
 <script>
   /* Analytics loads only after cookie consent (see mfEnableAnalytics). */
   window.dataLayer = window.dataLayer || [];
@@ -2177,8 +2196,13 @@
       mfCitySuggestSetOpen(false);
     }
 
+    const MF_COOKIE_SESSION_DECLINED = 'cookieConsentSession';
+
     function mfConsentAccepted() {
-      localStorage.setItem(MF_COOKIE_KEY, 'true');
+      try {
+        localStorage.setItem(MF_COOKIE_KEY, 'true');
+        sessionStorage.removeItem(MF_COOKIE_SESSION_DECLINED);
+      } catch (_) {}
       var bar = document.getElementById('mfCookieBar');
       if (bar) {
         bar.classList.remove('is-visible');
@@ -2188,8 +2212,12 @@
     }
 
     function mfConsentDeclined() {
+      /* Decline lasts this browser session only; banner returns next visit until Accept. */
       try {
-        localStorage.setItem(MF_COOKIE_KEY, 'false');
+        sessionStorage.setItem(MF_COOKIE_SESSION_DECLINED, 'declined');
+        if (localStorage.getItem(MF_COOKIE_KEY) !== 'true') {
+          localStorage.removeItem(MF_COOKIE_KEY);
+        }
       } catch (_) {}
       var bar = document.getElementById('mfCookieBar');
       if (bar) {
@@ -2205,6 +2233,9 @@
       try {
         if (localStorage.getItem(MF_COOKIE_KEY) === 'true') {
           if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
+          return;
+        }
+        if (sessionStorage.getItem(MF_COOKIE_SESSION_DECLINED) === 'declined') {
           return;
         }
       } catch (_) {}
