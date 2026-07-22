@@ -418,8 +418,8 @@
       padding: var(--mf-cookie-pad-y) max(16px, env(safe-area-inset-right, 0px)) var(--mf-cookie-pad-y)
         max(16px, env(safe-area-inset-left, 0px));
       background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(1px);
+      -webkit-backdrop-filter: blur(1px);
     }
     #mfCookieBar.is-visible {
       display: flex;
@@ -771,10 +771,10 @@
       </div>
       <div class="mf-cookie-legal">
         <ul>
-          <li>Limited cookies, analytics &amp; GPS</li>
+          <li>Saves settings and favorite routes</li>
           <li>We do <strong style="color: #fff; letter-spacing: 0.02em;">NOT</strong> <strong style="color: #fff; letter-spacing: 0.02em;">collect</strong> personal account information</li>
           <li>We <strong style="color: #fff; letter-spacing: 0.02em;">DO NOT SELL</strong> personal data</li>
-          <li><a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">Privacy Policy</a></li>
+          <li><a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">See Privacy for full details</a></li>
         </ul>
       </div>
       <div class="mf-cookie-actions">
@@ -1686,10 +1686,19 @@
           if (!mfDidGpsRecenter) {
             mfDidGpsRecenter = true;
             try {
-              var inRegion = mfUserInAnySupportedRegion(lat, lon);
+              var cityKey = mfCityKeyAtPoint(lon, lat);
+              /* If they already visited a city this session (back to national), don't force-open again. */
+              var stayOnNational = false;
+              try {
+                stayOnNational = !!sessionStorage.getItem('mfNationalView');
+              } catch (_) {}
+              if (cityKey && mfCityIsLive(cityKey) && !stayOnNational) {
+                mfRedirectToCity(cityKey);
+                return;
+              }
               map.easeTo({
                 center: [lon, lat],
-                zoom: inRegion ? MF_ZOOM_IN_SERVICE : MF_ZOOM_NATIONAL,
+                zoom: cityKey ? MF_ZOOM_IN_SERVICE : MF_ZOOM_NATIONAL,
                 duration: 700
               });
               mfSyncCityMarkerVisibility();
@@ -2059,7 +2068,26 @@
       var city = MF_SUPPORTED_CITIES[key];
       if (!city || !map) return;
       try {
-        map.easeTo({ center: city.defaultView.center, zoom: city.defaultView.zoom, duration: 650 });
+        var b = city.bbox;
+        if (b && Number.isFinite(b.west) && Number.isFinite(b.south) && Number.isFinite(b.east) && Number.isFinite(b.north)) {
+          map.fitBounds(
+            [
+              [b.west, b.south],
+              [b.east, b.north]
+            ],
+            {
+              padding: { top: 56, bottom: 72, left: 40, right: 40 },
+              duration: 650,
+              maxZoom: 11
+            }
+          );
+        } else if (city.defaultView) {
+          map.easeTo({
+            center: city.defaultView.center,
+            zoom: city.defaultView.zoom,
+            duration: 650
+          });
+        }
         mfSyncCityMarkerVisibility();
       } catch (_) {}
     }
