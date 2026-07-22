@@ -418,8 +418,8 @@
       padding: var(--mf-cookie-pad-y) max(16px, env(safe-area-inset-right, 0px)) var(--mf-cookie-pad-y)
         max(16px, env(safe-area-inset-left, 0px));
       background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
     #mfCookieBar.is-visible {
       display: flex;
@@ -496,10 +496,21 @@
       font-weight: 700;
       font-size: 0.84rem;
       line-height: 1.45;
-      text-align: center;
+      text-align: left;
     }
-    .mf-cookie-legal p {
+    .mf-cookie-legal ul {
       margin: 0;
+      padding: 0 0 0 1.15rem;
+      list-style: disc;
+    }
+    .mf-cookie-legal li {
+      margin: 0.35em 0;
+    }
+    .mf-cookie-legal li:first-child {
+      margin-top: 0;
+    }
+    .mf-cookie-legal li:last-child {
+      margin-bottom: 0;
     }
     .mf-cookie-card .mf-cookie-actions {
       margin: 0;
@@ -754,21 +765,21 @@
       <div class="mf-cookie-hello">
         <img class="mf-cookie-logo" src="/RoamRavenNamelogo.svg" alt="" width="168" height="40" decoding="async" />
         <strong id="mfCookieTitle" style="color: var(--rr-silver); display: block; margin: 0 auto 10px; text-align: center;">Welcome to RoamRaven!</strong>
-        <p style="margin: 0 auto 10px; line-height: 1.45; text-align: center;">
+        <p style="margin: 0 auto; line-height: 1.45; text-align: center;">
           We just need a quick OK for <strong style="color: var(--rr-silver);">GPS</strong> and saving things like your <strong style="color: var(--rr-silver);">settings</strong> and favorite routes so the app runs smoothly for you :)
-        </p>
-        <p class="mf-cookie-hello-note" style="margin: 0 auto; line-height: 1.45; text-align: center;">
-          Cookies save personal settings. Location is optional — you can search for a city or explore without sharing it.
         </p>
       </div>
       <div class="mf-cookie-legal">
-        <p>
-          Allowing enables limited cookies, analytics, and GPS attempts. We do <strong style="color: #fff; letter-spacing: 0.02em;">NOT</strong> intentionally <strong style="color: #fff; letter-spacing: 0.02em;">collect</strong> personal account information and <strong style="color: #fff; letter-spacing: 0.02em;">DO NOT SELL</strong> personal data. <a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">Privacy Policy</a>
-        </p>
+        <ul>
+          <li>Limited cookies, analytics &amp; GPS</li>
+          <li>We do <strong style="color: #fff; letter-spacing: 0.02em;">NOT</strong> <strong style="color: #fff; letter-spacing: 0.02em;">collect</strong> personal account information</li>
+          <li>We <strong style="color: #fff; letter-spacing: 0.02em;">DO NOT SELL</strong> personal data</li>
+          <li><a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">Privacy Policy</a></li>
+        </ul>
       </div>
       <div class="mf-cookie-actions">
         <button type="button" id="mfCookieDecline">Decline</button>
-        <button type="button" class="accept" id="mfCookieAccept">Allow cookies &amp; try GPS</button>
+        <button type="button" class="accept" id="mfCookieAccept">Continue</button>
       </div>
     </div>
   </div>
