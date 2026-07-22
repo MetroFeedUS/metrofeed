@@ -32,6 +32,26 @@ const translations = {
     "favorites": "Favorites",
     "favorite_routes": "Favorite Routes",
     "no_favorites": "No favorites yet",
+    "saved_place_home": "Home",
+    "saved_place_work": "Work",
+    "saved_place_other": "Place",
+    "saved_place_set_home": "Set home",
+    "saved_place_set_work": "Set work",
+    "saved_place_set_other": "Set a place",
+    "saved_place_pick_instructions": "Tap the map to place the pin. Tap Set to save, or Cancel.",
+    "saved_place_set": "Set",
+    "saved_place_start_here": "Start here",
+    "saved_place_go_here": "Go here",
+    "saved_place_center_map": "Center on map",
+    "saved_place_change": "Change location",
+    "saved_place_remove": "Remove",
+    "saved_place_remove_confirm": "Remove this saved place?",
+    "saved_place_name_prompt": "Name this place (e.g. Gym)",
+    "fav_route_tutorial_title": "Save a favorite route",
+    "fav_route_tutorial_body": "Open a route, choose a direction, then tap the star next to that direction to save it here. You need both the route and the direction.",
+    "fav_route_tutorial_rail_note": "For subway or commuter rail, open Rail Routes from the menu and use the same star on a direction.",
+    "fav_route_tutorial_never": "Don't show this again",
+    "fav_route_tutorial_got_it": "Got it — pick a route",
     
     // Itinerary
     "itinerary": "Itinerary",
@@ -39,11 +59,11 @@ const translations = {
     "restore": "Restore",
     
     // Footer
-    "terms": "Terms of Use",
+    "terms": "Terms", // UPDATED v15 - Shortened from "Terms of Use"
     "contact": "Contact Us",
     "report": "Report a Problem", 
     "dmca": "DMCA",
-    "privacy": "Privacy Policy",
+    "privacy": "Privacy", // UPDATED v15 - Shortened from "Privacy Policy"
     
     // Popups and messages
     "live_bus": "Live Bus",
@@ -111,10 +131,10 @@ const translations = {
     "alerts": "Alerts",
     "earthquakes": "Earthquakes",
     "changeCity": "Change City",
-    "termsOfUse": "Terms of Use",
+    "termsOfUse": "Terms",
     "contactUs": "Contact Us",
     "reportProblem": "Report a Problem",
-    "privacyPolicy": "Privacy Policy",
+    "privacyPolicy": "Privacy",
     "cookieMessage": "📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our",
     "ok": "OK",
     
@@ -158,7 +178,13 @@ const translations = {
     "trafficCamerasTitle": "Live Traffic Cameras – MetroFeed Portland",
     "liveTrafficCameras": "Live Traffic Cameras – Portland, OR",
     "cameraCourtesy": "Camera courtesy of ODOT",
-    "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of the Oregon Department of Transportation (ODOT)."
+    "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of the Oregon Department of Transportation (ODOT).",
+
+    // Spanish WIP notice (shown when ES is selected)
+    "esWipNoticeTitle": "Spanish / Español",
+    "esWipNoticeBody": "Spanish is a work in progress.\n\nSome parts of RoamRaven may still appear in English, and some translations may be incomplete or inaccurate.\n\nThe English version is the official version of RoamRaven.\n\nWe appreciate your feedback as we continue improving the Spanish experience.",
+    "esWipNoticeBodyEs": "El español es un trabajo en progreso.\n\nAlgunas partes de RoamRaven pueden seguir apareciendo en inglés, y algunas traducciones pueden estar incompletas o ser inexactas.\n\nLa versión en inglés es la versión oficial de RoamRaven.\n\nAgradecemos tus comentarios mientras seguimos mejorando la experiencia en español.",
+    "esWipNoticeOk": "Got it / Entendido"
   },
   
   es: {
@@ -184,6 +210,26 @@ const translations = {
     "favorites": "Favoritos",
     "favorite_routes": "Rutas Favoritas",
     "no_favorites": "Sin favoritos aún",
+    "saved_place_home": "Casa",
+    "saved_place_work": "Trabajo",
+    "saved_place_other": "Lugar",
+    "saved_place_set_home": "Definir casa",
+    "saved_place_set_work": "Definir trabajo",
+    "saved_place_set_other": "Definir un lugar",
+    "saved_place_pick_instructions": "Toca el mapa para colocar el pin. Pulsa Guardar para confirmar o Cancelar.",
+    "saved_place_set": "Guardar",
+    "saved_place_start_here": "Inicio aquí",
+    "saved_place_go_here": "Destino aquí",
+    "saved_place_center_map": "Centrar mapa",
+    "saved_place_change": "Cambiar ubicación",
+    "saved_place_remove": "Quitar",
+    "saved_place_remove_confirm": "¿Quitar este lugar guardado?",
+    "saved_place_name_prompt": "Nombre del lugar (ej. Gimnasio)",
+    "fav_route_tutorial_title": "Guardar una ruta favorita",
+    "fav_route_tutorial_body": "Abre una ruta, elige una dirección y toca la estrella junto a esa dirección para guardarla aquí. Necesitas la ruta y la dirección.",
+    "fav_route_tutorial_rail_note": "Para metro o cercanías, abre Rutas de tren en el menú y usa la misma estrella en una dirección.",
+    "fav_route_tutorial_never": "No volver a mostrar",
+    "fav_route_tutorial_got_it": "Entendido — elegir ruta",
     
     // Itinerary
     "itinerary": "Itinerario",
@@ -191,11 +237,11 @@ const translations = {
     "restore": "Restaurar",
     
     // Footer
-    "terms": "Términos de Uso",
+    "terms": "Términos",
     "contact": "Contáctenos",
     "report": "Reportar Problema",
     "dmca": "DMCA", 
-    "privacy": "Política de Privacidad",
+    "privacy": "Privacidad",
     
     // Popups and messages
     "live_bus": "Autobús en Vivo",
@@ -262,10 +308,10 @@ const translations = {
     "alerts": "Alertas",
     "earthquakes": "Terremotos",
     "changeCity": "Cambiar Ciudad",
-    "termsOfUse": "Términos de Uso",
+    "termsOfUse": "Términos",
     "contactUs": "Contáctenos",
     "reportProblem": "Reportar Problema",
-    "privacyPolicy": "Política de Privacidad",
+    "privacyPolicy": "Privacidad",
     "cookieMessage": "📢 Usamos cookies para mejorar la funcionalidad y analizar el tráfico. Al usar MetroFeed, aceptas nuestra",
     "ok": "OK",
     
@@ -310,7 +356,13 @@ const translations = {
     "trafficCamerasTitle": "Cámaras de Tráfico en Vivo – MetroFeed Portland",
     "liveTrafficCameras": "Cámaras de Tráfico en Vivo – Portland, OR",
     "cameraCourtesy": "Cámara cortesía de ODOT",
-    "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía del Departamento de Transporte de Oregon (ODOT)."
+    "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía del Departamento de Transporte de Oregon (ODOT).",
+
+    // Spanish WIP notice (shown when ES is selected)
+    "esWipNoticeTitle": "Spanish / Español",
+    "esWipNoticeBody": "Spanish is a work in progress.\n\nSome parts of RoamRaven may still appear in English, and some translations may be incomplete or inaccurate.\n\nThe English version is the official version of RoamRaven.\n\nWe appreciate your feedback as we continue improving the Spanish experience.",
+    "esWipNoticeBodyEs": "El español es un trabajo en progreso.\n\nAlgunas partes de RoamRaven pueden seguir apareciendo en inglés, y algunas traducciones pueden estar incompletas o ser inexactas.\n\nLa versión en inglés es la versión oficial de RoamRaven.\n\nAgradecemos tus comentarios mientras seguimos mejorando la experiencia en español.",
+    "esWipNoticeOk": "Got it / Entendido"
   }
 };
 
@@ -345,8 +397,13 @@ function translateText(key) {
   }
   
   if (translations[currentLanguage] && translations[currentLanguage][key]) {
-    console.log('✅ Found translation for', key, ':', translations[currentLanguage][key]);
-    return translations[currentLanguage][key];
+    const translation = translations[currentLanguage][key];
+    console.log('✅ Found translation for', key, ':', translation);
+    // Debug footer translations
+    if (key === 'terms' || key === 'privacy') {
+      console.log('🔍 FOOTER DEBUG - Key:', key, 'Translation:', translation, 'Current lang:', currentLanguage);
+    }
+    return translation;
   } else if (translations.en && translations.en[key]) {
     console.log('⚠️ Key not found in', currentLanguage, 'using English:', key);
     return translations.en[key];
@@ -381,7 +438,7 @@ function updatePageLanguage() {
     console.log('🔍 Element original text:', element.textContent);
     const translation = translateText(key);
     console.log('📄 Translation result:', translation);
-    if (translation) {
+    if (translation && translation !== key) {
       // Check if this element should preserve HTML formatting
       const preserveHTML = element.hasAttribute('data-translate-html');
       console.log('🔍 Preserve HTML:', preserveHTML);
@@ -389,6 +446,15 @@ function updatePageLanguage() {
         console.log('🔍 Setting innerHTML to:', translation);
         element.innerHTML = translation;
       } else {
+        // Special handling for footer links - ALWAYS use short version
+        if (key === 'terms' || key === 'privacy') {
+          // Force short version regardless of what translation says
+          const shortVersion = key === 'terms' ? 'Terms' : 'Privacy';
+          const spanishVersion = key === 'terms' ? 'Términos' : 'Privacidad';
+          element.textContent = currentLanguage === 'es' ? spanishVersion : shortVersion;
+          console.log('✅ Forced short footer text for:', key, '=', element.textContent);
+          return;
+        }
         element.textContent = translation;
       }
       console.log('✅ Applied translation to element');
@@ -405,13 +471,77 @@ function updatePageLanguage() {
   });
 }
 
+function showSpanishWipNotice() {
+  try {
+    if (sessionStorage.getItem('metrofeed_es_wip_notice_shown') === '1') return;
+    if (document.getElementById('mfEsWipNotice')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'mfEsWipNotice';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'mfEsWipNoticeTitle');
+    overlay.style.cssText =
+      'position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;' +
+      'padding:16px;box-sizing:border-box;background:rgba(0,0,0,0.55);';
+
+    const card = document.createElement('div');
+    card.style.cssText =
+      'max-width:420px;width:100%;background:#111;color:#eee;border:1px solid #444;border-radius:10px;' +
+      'padding:1.1rem 1.2rem;box-shadow:0 12px 40px rgba(0,0,0,0.45);font-family:inherit;';
+
+    const title = document.createElement('div');
+    title.id = 'mfEsWipNoticeTitle';
+    title.style.cssText = 'font-weight:700;font-size:1.05rem;margin-bottom:0.75rem;color:#fff;';
+    title.textContent = translations.en.esWipNoticeTitle || 'Spanish / Español';
+
+    const bodyEn = document.createElement('p');
+    bodyEn.style.cssText = 'margin:0 0 0.75rem;font-size:0.92rem;line-height:1.45;color:#ddd;white-space:pre-line;';
+    bodyEn.textContent = translations.en.esWipNoticeBody || translateText('esWipNoticeBody');
+
+    const bodyEs = document.createElement('p');
+    bodyEs.style.cssText = 'margin:0 0 1rem;font-size:0.92rem;line-height:1.45;color:#bbb;white-space:pre-line;';
+    bodyEs.textContent = translations.es.esWipNoticeBodyEs || translations.en.esWipNoticeBodyEs || '';
+
+    const okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.style.cssText =
+      'width:100%;padding:0.65rem 1rem;border:none;border-radius:8px;cursor:pointer;' +
+      'background:var(--rr-accent,#9333ea);color:#fff;font-weight:700;font-size:0.95rem;';
+    okBtn.textContent = translations.en.esWipNoticeOk || 'Got it / Entendido';
+
+    const dismiss = () => {
+      try {
+        sessionStorage.setItem('metrofeed_es_wip_notice_shown', '1');
+      } catch (_) {}
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
+
+    okBtn.addEventListener('click', dismiss);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) dismiss();
+    });
+
+    card.appendChild(title);
+    card.appendChild(bodyEn);
+    card.appendChild(bodyEs);
+    card.appendChild(okBtn);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+  } catch (_) {}
+}
+
 function setLanguage(lang) {
   if (!translations[lang]) {
     lang = 'en';
   }
+  const previous = currentLanguage;
   currentLanguage = lang;
   localStorage.setItem('metrofeed_language', lang);
   updatePageLanguage();
+  if (lang === 'es' && previous !== 'es') {
+    showSpanishWipNotice();
+  }
 }
 
 // SIMPLE DROPDOWN FUNCTION - THIS IS ALL WE NEED
@@ -457,4 +587,6 @@ document.addEventListener('DOMContentLoaded', function() {
   updatePageLanguage();
 });
 
-console.log('✅ translations.js loaded completely! (v14)'); 
+console.log('✅ translations.js loaded completely! (v15)');
+console.log('🔍 FOOTER VERIFICATION - terms:', translations.en.terms, 'privacy:', translations.en.privacy);
+console.log('🔍 FOOTER VERIFICATION ES - terms:', translations.es.terms, 'privacy:', translations.es.privacy); 

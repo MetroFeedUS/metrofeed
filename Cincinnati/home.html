@@ -34,6 +34,59 @@
     } catch (_) {}
   })();
 </script>
+<script>
+  /* Persist settings/favorites only after Accept. Decline = no app local/session writes (except consent flags). */
+  (function () {
+    var LS_ALLOW = { cookieConsent: 1 };
+    var SS_ALLOW = { cookieConsentSession: 1, metrofeedLocationSkipped: 1 };
+    var _lsSet = localStorage.setItem.bind(localStorage);
+    var _ssSet = sessionStorage.setItem.bind(sessionStorage);
+    var _lsRemove = localStorage.removeItem.bind(localStorage);
+    var _ssRemove = sessionStorage.removeItem.bind(sessionStorage);
+
+    function mfIsTvMode() {
+      var q = location.search || '';
+      return q.indexOf('tv=1') !== -1 || q.indexOf('tv=true') !== -1;
+    }
+
+    window.mfHasCookieConsent = function () {
+      try {
+        if (mfIsTvMode()) return true;
+        return localStorage.getItem('cookieConsent') === 'true';
+      } catch (_) {
+        return false;
+      }
+    };
+
+    window.mfClearPersistedAppData = function () {
+      try {
+        for (var i = localStorage.length - 1; i >= 0; i--) {
+          var key = localStorage.key(i);
+          if (!key || LS_ALLOW[key]) continue;
+          _lsRemove(key);
+        }
+      } catch (_) {}
+      try {
+        for (var j = sessionStorage.length - 1; j >= 0; j--) {
+          var sk = sessionStorage.key(j);
+          if (!sk || SS_ALLOW[sk]) continue;
+          _ssRemove(sk);
+        }
+      } catch (_) {}
+    };
+
+    localStorage.setItem = function (k, v) {
+      if (LS_ALLOW[k] || window.mfHasCookieConsent()) return _lsSet(k, v);
+    };
+    sessionStorage.setItem = function (k, v) {
+      if (SS_ALLOW[k] || window.mfHasCookieConsent()) return _ssSet(k, v);
+    };
+
+    try {
+      if (!window.mfHasCookieConsent()) window.mfClearPersistedAppData();
+    } catch (_) {}
+  })();
+</script>
 
   <script>
     /* Hide OBS/TV chrome immediately (normal loads never load obs-tv.css).
@@ -3311,6 +3364,7 @@
   function mfTripGuideStartGps() {
     const st = window.__mfTripGuide;
     if (!st || !navigator.geolocation) return;
+    if (typeof window.mfHasCookieConsent === 'function' && !window.mfHasCookieConsent()) return;
     if (st.gps.watchId != null) return;
     try {
       st.gps.watchId = navigator.geolocation.watchPosition(
@@ -5609,6 +5663,10 @@
       const pickLocation = async () => {
         dropdown.style.display = "none";
         try {
+          if (typeof window.mfHasCookieConsent === 'function' && !window.mfHasCookieConsent()) {
+            alert("Allow cookies & location first to use GPS.");
+            return;
+          }
           if (!navigator.geolocation) {
             alert("Geolocation is not available in this browser.");
             return;
@@ -8350,10 +8408,26 @@
     }, 15000);
   }
 
-  if (navigator.geolocation) {
+  window.mfStartCityGeolocation = function () {
+    if (window.__mfCityGeoWatchStarted) return;
+    if (typeof window.mfHasCookieConsent === 'function' && !window.mfHasCookieConsent()) {
+      // No consent: still load a useful default route (same as GPS-denied path).
+      try {
+        if (CITY_CONFIG && CITY_CONFIG.startupDefaultRouteId && !window.MF_TV_MODE) {
+          metrofeedQueueStartupRoute(String(CITY_CONFIG.startupDefaultRouteId), Number(CITY_CONFIG.startupDefaultDirectionId) || 0);
+          metrofeedFireQueuedStartupRouteIfReady();
+        }
+      } catch (_) {}
+      return;
+    }
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    window.__mfCityGeoWatchStarted = true;
     // Track if we've already done the initial route setup
     let hasInitializedRoute = false;
-    
+
     navigator.geolocation.watchPosition(function(pos) {
       const userLat = pos.coords.latitude;
       const userLon = pos.coords.longitude;
@@ -8472,9 +8546,8 @@
         console.log('Unable to get your location:', error.message);
       }
     });
-  } else {
-    alert('Geolocation is not supported by your browser.');
-  }
+  };
+  window.mfStartCityGeolocation();
 
   // === SECTION: LIVE BUS MARKERS ===
   let busMarkers = {};
@@ -16678,6 +16751,7 @@
     } catch (_) {}
     mfHideCookieBar();
     if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
+    if (typeof window.mfStartCityGeolocation === 'function') window.mfStartCityGeolocation();
   }
 
   function mfConsentDeclined() {
@@ -16686,6 +16760,10 @@
       if (localStorage.getItem(MF_COOKIE_KEY) !== 'true') {
         localStorage.removeItem(MF_COOKIE_KEY);
       }
+    } catch (_) {}
+    if (typeof window.mfClearPersistedAppData === 'function') window.mfClearPersistedAppData();
+    try {
+      sessionStorage.setItem('metrofeedLocationSkipped', '1');
     } catch (_) {}
     mfHideCookieBar();
   }

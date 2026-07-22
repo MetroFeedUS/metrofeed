@@ -41,6 +41,53 @@
     gtag('config', 'G-EL337T4JX4', { page_title: 'RoamRaven – National Map', page_path: '/Index.html' });
   };
 </script>
+<script>
+  /* Persist settings only after Accept. Decline = no app local/session writes (except consent flags). */
+  (function () {
+    var LS_ALLOW = { cookieConsent: 1 };
+    var SS_ALLOW = { cookieConsentSession: 1, metrofeedLocationSkipped: 1 };
+    var _lsSet = localStorage.setItem.bind(localStorage);
+    var _ssSet = sessionStorage.setItem.bind(sessionStorage);
+    var _lsRemove = localStorage.removeItem.bind(localStorage);
+    var _ssRemove = sessionStorage.removeItem.bind(sessionStorage);
+
+    window.mfHasCookieConsent = function () {
+      try {
+        return localStorage.getItem('cookieConsent') === 'true';
+      } catch (_) {
+        return false;
+      }
+    };
+
+    window.mfClearPersistedAppData = function () {
+      try {
+        for (var i = localStorage.length - 1; i >= 0; i--) {
+          var key = localStorage.key(i);
+          if (!key || LS_ALLOW[key]) continue;
+          _lsRemove(key);
+        }
+      } catch (_) {}
+      try {
+        for (var j = sessionStorage.length - 1; j >= 0; j--) {
+          var sk = sessionStorage.key(j);
+          if (!sk || SS_ALLOW[sk]) continue;
+          _ssRemove(sk);
+        }
+      } catch (_) {}
+    };
+
+    localStorage.setItem = function (k, v) {
+      if (LS_ALLOW[k] || window.mfHasCookieConsent()) return _lsSet(k, v);
+    };
+    sessionStorage.setItem = function (k, v) {
+      if (SS_ALLOW[k] || window.mfHasCookieConsent()) return _ssSet(k, v);
+    };
+
+    try {
+      if (!window.mfHasCookieConsent()) window.mfClearPersistedAppData();
+    } catch (_) {}
+  })();
+</script>
 
   <script>
     (function () {
@@ -2321,6 +2368,7 @@
           localStorage.removeItem(MF_COOKIE_KEY);
         }
       } catch (_) {}
+      if (typeof window.mfClearPersistedAppData === 'function') window.mfClearPersistedAppData();
       var bar = document.getElementById('mfCookieBar');
       if (bar) {
         bar.classList.remove('is-visible');
