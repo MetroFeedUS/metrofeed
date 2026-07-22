@@ -872,6 +872,7 @@
     </div>
   </div>
 
+  <script src="/mfOpsStats.js?v=1"></script>
   <script>
     const MF_COOKIE_KEY = 'cookieConsent';
     const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
@@ -2095,6 +2096,7 @@
         var z = map.getZoom();
         sessionStorage.setItem('mfNationalView', JSON.stringify({ center: [c.lng, c.lat], zoom: z }));
       } catch (_) {}
+      if (cityKey === 'cincinnati' && typeof mfTrack === 'function') mfTrack('city_open_cincinnati');
       window.location.href = city.href + '?from=national';
     }
 
@@ -2357,6 +2359,7 @@
       if (bar) {
         bar.classList.remove('is-visible');
       }
+      if (typeof mfTrack === 'function') mfTrack('cookie_accept');
       if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
       mfStartGeolocationWatchWhenReady();
     }
@@ -2378,6 +2381,7 @@
       try {
         sessionStorage.setItem('metrofeedLocationSkipped', '1');
       } catch (_) {}
+      if (typeof mfTrack === 'function') mfTrack('cookie_decline');
     }
 
     function mfBootCookieUi() {
