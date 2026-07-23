@@ -154,6 +154,7 @@
 
   <!-- Language System -->
   <script src="translations.js?v=25"></script>
+  <script src="mfOpsStats.js?v=1"></script>
   <style>
     /* Roam Raven UI — purple primary + silver/charcoal chrome (map route colors unchanged) */
     :root {
@@ -2706,7 +2707,7 @@
 <button id="themeToggleBtn" class="side-buttons"><img src="008-night.svg" alt="Theme Toggle" /></button>
 <!-- Purchase Ticket button (moved to top left where Account was) -->
 <button id="aiChatBtn" class="side-buttons">
-  <a href="tickets.html"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
+  <a href="tickets.html" onclick="typeof mfTrack==='function'&&mfTrack('tickets_open')"><img src="010-ticket.svg" alt="Purchase Ticket" /></a>
 </button>
 <!-- Language button (positioned directly below Theme button) -->
 <div id="languageControlsWrap" style="position: absolute; top: 60px; right: 10px; z-index: 1001;">
@@ -3502,7 +3503,7 @@
   <a href="#" id="dropdownCamerasBtn" onclick="toggleTrafficCamerasFromDropdown()"><img src="004-cctv-camera.svg" alt="Traffic Cameras"></a>
   <a href="#" id="dropdownWeatherBtn" onclick="event.preventDefault(); showWeatherForecastModal();"><img src="005-weather-radar.svg" alt="Weather"></a>
   <!-- ADA, Deaf & Official Resources button in dropdown -->
-  <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA, Deaf &amp; Official Resources" data-translate-aria="ada_resources" onclick="event.preventDefault(); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA, Deaf &amp; Official Resources" data-translate-alt="ada_resources"></a>
+  <a href="resources.html" id="dropdownAiChatBtn" aria-label="ADA, Deaf &amp; Official Resources" data-translate-aria="ada_resources" onclick="event.preventDefault(); typeof mfTrack==='function'&&mfTrack('resources_open'); window.chatWindow = window.open('resources.html', '_blank'); updateDropdownButtonStates(); setInterval(function(){updateDropdownButtonStates();}, 1000);"><img src="information-button.svg" alt="ADA, Deaf &amp; Official Resources" data-translate-alt="ada_resources"></a>
   <a href="#" id="dropdownAlertsBtn" onclick="event.preventDefault(); showMBTAAlertsModal();"><img src="008-danger.svg" alt="Alerts"></a>
   <div class="dropdown-divider"></div>
   <a href="#" id="dropdownBackToNationalBtn" onclick="event.preventDefault(); window.metrofeedBackToNational && window.metrofeedBackToNational();"><img src="global.svg" alt="Back to National Map"></a>
@@ -6019,6 +6020,7 @@
   menuBtn.addEventListener('click', () => {
     const isOpening = dropdownMenu.style.display !== 'flex';
     dropdownMenu.style.display = isOpening ? 'flex' : 'none';
+    if (isOpening && typeof mfTrack === 'function') mfTrack('menu_open');
 
     if (isOpening) {
       positionDropdownMenu();
@@ -7788,6 +7790,7 @@
     if (findMeBtn) {
       findMeBtn.addEventListener('click', function() {
         console.log('[Find Me] Button clicked!');
+        if (typeof mfTrack === 'function') mfTrack('find_me');
         // Toggle Find Me state
         if (findMeActive) {
           // Turn off Find Me
@@ -10067,6 +10070,7 @@
   // ==== MODAL CONTROLS ====
   // Weather Forecast Modal Functions
   function showWeatherForecastModal() {
+    if (typeof mfTrack === 'function') mfTrack('weather_open');
     const modal = document.getElementById('weatherForecastModal');
     if (modal) {
       modal.style.display = 'flex';
@@ -12348,6 +12352,7 @@
   
   function toggleTrafficFromDropdown() {
     console.log('[toggleTrafficFromDropdown] Function called');
+    if (typeof mfTrack === 'function') mfTrack('traffic_open');
     toggleTrafficOverlay();
     // Don't close dropdown menu - let user keep it open
   }
@@ -13612,6 +13617,7 @@
    * Show the bus routes modal (starts with category selection)
    */
   function showBusRoutesModal() {
+    if (typeof mfTrack === 'function') mfTrack('buses_open');
     // Initialize routes if not already done
     if (BUS_ROUTES_REGULAR.length === 0 && BUS_ROUTES_SHUTTLE.length === 0) {
       initializeBusRoutes();
@@ -14272,6 +14278,7 @@
    * Show the rail routes modal (starts with category selection)
    */
   function showRailRoutesModal() {
+    if (typeof mfTrack === 'function') mfTrack('rail_open');
     // Initialize routes if not already done
     if (RAIL_ROUTES_SUBWAY.length === 0 && RAIL_ROUTES_COMMUTER.length === 0) {
       initializeBusRoutes();
@@ -14424,6 +14431,7 @@
   // Function to toggle traffic cameras from dropdown menu
   async function toggleTrafficCamerasFromDropdown() {
     console.log('[toggleTrafficCamerasFromDropdown] Function called');
+    if (typeof mfTrack === 'function') mfTrack('cameras_open');
     await TrafficCamerasOverlay.toggle();
     // Update button active state after toggle completes
     updateDropdownButtonStates();
@@ -14435,6 +14443,7 @@
 
   // Function to show MBTA Alerts modal
   function showMBTAAlertsModal() {
+    if (typeof mfTrack === 'function') mfTrack('alerts_open');
     const modal = document.getElementById('mbtaAlertsModal');
     if (modal) {
       modal.style.display = 'flex';
@@ -16509,6 +16518,7 @@
         // Backup menu item callback
         window.metrofeedBackToNational = () => {
           // Deliberate action; no prompt required.
+          if (typeof mfTrack === 'function') mfTrack('back_to_national');
           goNational();
         };
 
@@ -16692,6 +16702,7 @@
         
         // Store coordinates for OTP
         if (window.startCoords && window.endCoords) {
+          if (typeof mfTrack === 'function') mfTrack('trip_go');
           window.otpStartCoords = { lat: window.startCoords.lat, lng: window.startCoords.lng };
           window.otpEndCoords = { lat: window.endCoords.lat, lng: window.endCoords.lng };
           console.log('[goBtn] Stored coordinates for OTP:', window.otpStartCoords, window.otpEndCoords);
@@ -16751,6 +16762,7 @@
       sessionStorage.removeItem(MF_COOKIE_SESSION_DECLINED);
     } catch (_) {}
     mfHideCookieBar();
+    if (typeof window.mfTrack === 'function') window.mfTrack('cookie_accept');
     if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
     if (typeof window.mfStartCityGeolocation === 'function') window.mfStartCityGeolocation();
   }
@@ -16767,6 +16779,7 @@
       sessionStorage.setItem('metrofeedLocationSkipped', '1');
     } catch (_) {}
     mfHideCookieBar();
+    if (typeof window.mfTrack === 'function') window.mfTrack('cookie_decline');
   }
 
   function mfBootCookieUi() {
