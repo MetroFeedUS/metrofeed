@@ -954,7 +954,7 @@
       [-125.0, 24.2],
       [-66.5, 51.2]
     ];
-    /** After fitBounds, small south-on-screen nudge (midpoint of prior too-high / too-low). */
+    /** After fitBounds base nudge; then +10% viewport height moves the country toward the top. */
     const MF_NATIONAL_VISUAL_NUDGE_Y = -55;
     const MF_ZOOM_IN_SERVICE = 10.8;
     const MF_CITY_MARKER_MIN_ZOOM = 7.5;
@@ -1935,22 +1935,25 @@
     function mfFitNationalUsa(opts) {
       if (!map) return;
       var duration = opts && typeof opts.duration === 'number' ? opts.duration : 0;
+      function nudge() {
+        try {
+          var h =
+            (map.getContainer() && map.getContainer().clientHeight) ||
+            window.innerHeight ||
+            800;
+          /* Base optical nudge, then +10% of viewport toward the top of the screen. */
+          var y = MF_NATIONAL_VISUAL_NUDGE_Y + Math.round(h * 0.1);
+          map.panBy([0, y], { duration: 0 });
+        } catch (_) {}
+      }
       try {
         map.fitBounds(MF_CONTIGUOUS_US_BOUNDS, {
           padding: mfNationalMapPadding(),
           duration: duration,
           maxZoom: 5.5
         });
-        /* Negative Y pans features downward on screen (country was sitting ~1 Florida too high). */
-        if (duration <= 0) {
-          map.panBy([0, MF_NATIONAL_VISUAL_NUDGE_Y], { duration: 0 });
-        } else {
-          window.setTimeout(function () {
-            try {
-              map.panBy([0, MF_NATIONAL_VISUAL_NUDGE_Y], { duration: 0 });
-            } catch (_) {}
-          }, duration + 20);
-        }
+        if (duration <= 0) nudge();
+        else window.setTimeout(nudge, duration + 20);
       } catch (_) {
         try {
           map.jumpTo({ center: [-98.35, 39.5], zoom: MF_ZOOM_NATIONAL });

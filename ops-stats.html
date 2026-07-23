@@ -183,12 +183,25 @@
       gap: 8px;
     }
     .chip {
+      appearance: none;
       border: 1px solid var(--rr-silver-edge);
       background: var(--rr-raised);
       border-radius: 999px;
       padding: 7px 12px;
       font-size: 0.82rem;
+      font-weight: 600;
       color: var(--rr-silver);
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .chip:hover {
+      border-color: rgba(147, 51, 234, 0.55);
+      background: rgba(147, 51, 234, 0.12);
+    }
+    .chip.is-active {
+      border-color: rgba(147, 51, 234, 0.75);
+      box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.35);
+      background: rgba(147, 51, 234, 0.18);
     }
     .chip strong { color: #e9d5ff; }
     .hidden { display: none !important; }
@@ -237,7 +250,7 @@
 
       <div class="panel">
         <div class="toolbar" style="justify-content: space-between; margin-bottom: 8px;">
-          <h2 style="margin: 0;">Breakdown</h2>
+          <h2 style="margin: 0;">Breakdown <span id="scopeLabel" style="font-weight:600;color:var(--rr-silver-muted);font-size:0.85rem;"></span></h2>
           <select id="scopeSelect" aria-label="Time scope">
             <option value="today">Today</option>
             <option value="month">This month</option>
@@ -250,12 +263,13 @@
       <div class="panel">
         <h2>Last 14 days</h2>
         <div class="chips" id="dayChips"></div>
+        <p class="footnote">Click a day to see that day’s feature counts above.</p>
       </div>
 
       <div class="panel">
         <h2>Recent months</h2>
         <div class="chips" id="monthChips"></div>
-        <p class="footnote">Totals are anonymous aggregates only — no user IDs, no personal data.</p>
+        <p class="footnote">Click a month to see that month’s feature counts (e.g. Traffic). Totals are anonymous aggregates only — no user IDs, no personal data.</p>
       </div>
     </div>
   </div>
@@ -283,6 +297,8 @@
       };
       var KEY_STORE = "mfOpsStatsKey";
       var data = null;
+      /** null | { kind: 'day'|'month', key: 'YYYY-MM-DD'|'YYYY-MM' } */
+      var customScope = null;
 
       var gateForm = document.getElementById("gateForm");
       var keyInput = document.getElementById("keyInput");
@@ -292,6 +308,7 @@
       var errBox = document.getElementById("errBox");
       var dash = document.getElementById("dash");
       var scopeSelect = document.getElementById("scopeSelect");
+      var scopeLabel = document.getElementById("scopeLabel");
 
       function showErr(msg) {
         errBox.textContent = msg || "";
@@ -310,15 +327,52 @@
         return (keyInput.value || sessionStorage.getItem(KEY_STORE) || "").trim();
       }
 
+      function findDayPack(date) {
+        var days = (data && data.days) || [];
+        for (var i = 0; i < days.length; i++) {
+          if (days[i].date === date) return days[i];
+        }
+        return null;
+      }
+
+      function findMonthPack(month) {
+        var months = (data && data.months) || [];
+        for (var i = 0; i < months.length; i++) {
+          if (months[i].month === month) return months[i];
+        }
+        if (data && data.thisMonth && data.thisMonth.month === month) return data.thisMonth;
+        return null;
+      }
+
       function countsForScope() {
         if (!data) return {};
+        if (customScope && customScope.kind === "day") {
+          var d = findDayPack(customScope.key);
+          return (d && d.counts) || {};
+        }
+        if (customScope && customScope.kind === "month") {
+          var m = findMonthPack(customScope.key);
+          return (m && m.counts) || {};
+        }
         var s = scopeSelect.value;
         if (s === "today") return (data.today && data.today.counts) || {};
         if (s === "month") return (data.thisMonth && data.thisMonth.counts) || {};
         return data.lifetime || data.counts || {};
       }
 
+      function updateScopeLabel() {
+        if (!scopeLabel) return;
+        if (customScope && customScope.kind === "day") {
+          scopeLabel.textContent = "· " + customScope.key;
+        } else if (customScope && customScope.kind === "month") {
+          scopeLabel.textContent = "· " + customScope.key;
+        } else {
+          scopeLabel.textContent = "";
+        }
+      }
+
       function renderRows() {
+        updateScopeLabel();
         var counts = countsForScope();
         var max = 0;
         Object.keys(LABELS).forEach(function (k) {
@@ -339,31 +393,75 @@
         document.getElementById("eventRows").innerHTML = html;
       }
 
+      function setCustomScope(kind, key) {
+        customScope = { kind: kind, key: key };
+        renderRows();
+        renderChips();
+        try {
+          document.getElementById("eventRows").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (_) {}
+      }
+
+      function clearCustomScope() {
+        customScope = null;
+        renderRows();
+        renderChips();
+      }
+
       function renderChips() {
         var days = data.days || [];
         document.getElementById("dayChips").innerHTML = days
           .map(function (d) {
+            var active =
+              customScope && customScope.kind === "day" && customScope.key === d.date
+                ? " is-active"
+                : "";
             return (
-              '<div class="chip">' +
+              '<button type="button" class="chip' +
+              active +
+              '" data-kind="day" data-key="' +
+              d.date +
+              '">' +
               d.date +
               ' · <strong>' +
               (d.total || 0) +
-              "</strong></div>"
+              "</strong></button>"
             );
           })
           .join("");
         var months = data.months || [];
         document.getElementById("monthChips").innerHTML = months
           .map(function (m) {
+            var active =
+              customScope && customScope.kind === "month" && customScope.key === m.month
+                ? " is-active"
+                : "";
             return (
-              '<div class="chip">' +
+              '<button type="button" class="chip' +
+              active +
+              '" data-kind="month" data-key="' +
+              m.month +
+              '">' +
               m.month +
               ' · <strong>' +
               (m.total || 0) +
-              "</strong></div>"
+              "</strong></button>"
             );
           })
           .join("");
+      }
+
+      function onChipClick(e) {
+        var btn = e.target && e.target.closest ? e.target.closest(".chip") : null;
+        if (!btn || !btn.dataset) return;
+        var kind = btn.dataset.kind;
+        var key = btn.dataset.key;
+        if (!kind || !key) return;
+        if (customScope && customScope.kind === kind && customScope.key === key) {
+          clearCustomScope();
+          return;
+        }
+        setCustomScope(kind, key);
       }
 
       function render() {
@@ -436,10 +534,17 @@
         sessionStorage.removeItem(KEY_STORE);
         keyInput.value = "";
         data = null;
+        customScope = null;
         setUnlocked(false);
         showErr("");
       });
-      scopeSelect.addEventListener("change", renderRows);
+      scopeSelect.addEventListener("change", function () {
+        customScope = null;
+        renderRows();
+        renderChips();
+      });
+      document.getElementById("dayChips").addEventListener("click", onChipClick);
+      document.getElementById("monthChips").addEventListener("click", onChipClick);
 
       var saved = sessionStorage.getItem(KEY_STORE);
       if (saved) {
