@@ -38,7 +38,15 @@
   /* Persist settings/favorites only after Accept. Decline = no app local/session writes (except consent flags). */
   (function () {
     var LS_ALLOW = { cookieConsent: 1 };
-    var SS_ALLOW = { cookieConsentSession: 1, metrofeedLocationSkipped: 1 };
+    var SS_ALLOW = {
+      cookieConsentSession: 1,
+      metrofeedLocationSkipped: 1,
+      metrofeedLocationDenied: 1,
+      mfTutorialShown: 1,
+      mfPostTutorialHintsShown: 1,
+      dropdownTooltipsShown: 1,
+      dropdownTooltipsShownCollapsed: 1
+    };
     var _lsSet = localStorage.setItem.bind(localStorage);
     var _ssSet = sessionStorage.setItem.bind(sessionStorage);
     var _lsRemove = localStorage.removeItem.bind(localStorage);
@@ -210,8 +218,12 @@
       padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
         max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
     }
+    #mfCookieBar.is-minimized {
+      display: none !important;
+    }
     #mfCookieBar .mf-cookie-card {
       pointer-events: auto;
+      position: relative;
       width: min(440px, 100%);
       background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.97) 100%);
       border: 1px solid var(--rr-silver-edge);
@@ -224,38 +236,90 @@
       overflow: hidden;
       animation: mfCookieCardIn 0.35s ease-out;
     }
+    #mfCookieBar .mf-cookie-compact-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 0 0 8px;
+    }
+    #mfCookieBar .mf-cookie-compact-head #mfCookieTitle {
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+    }
+    #mfCookieBar .mf-cookie-min-btn {
+      appearance: none;
+      flex: none;
+      width: 28px;
+      height: 28px;
+      margin: -2px -4px 0 0;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid var(--rr-silver-edge);
+      background: var(--rr-charcoal-raised);
+      color: var(--rr-silver);
+      font-size: 1.1rem;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+    }
+    #mfCookieBar .mf-cookie-min-btn:hover,
+    #mfCookieBar .mf-cookie-min-btn:focus-visible {
+      border-color: rgba(147, 51, 234, 0.55);
+      color: #e9d5ff;
+      outline: none;
+    }
+    /* Minimized privacy chip — OSM-attrib sized, bottom-right between favorites & attribution */
+    #mfCookieFab {
+      display: none;
+      position: fixed;
+      z-index: 1105;
+      right: max(36px, calc(32px + env(safe-area-inset-right, 0px)));
+      bottom: calc(5px + var(--mf-footer-h, 30px));
+      width: 24px;
+      height: 24px;
+      padding: 2px;
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.45);
+      background: rgba(255, 255, 255, 0.82);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+    #mfCookieFab.is-visible {
+      display: inline-flex;
+    }
+    #mfCookieFab img {
+      display: block;
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    #mfCookieFab:hover,
+    #mfCookieFab:focus-visible {
+      background: #fff;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.55);
+    }
     #mfCookieBar .mf-cookie-card.is-expanded {
       width: min(520px, 100%);
       max-height: min(90vh, 720px);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
-    #mfCookieBar .mf-cookie-card.is-pulse {
-      animation: mfCookiePulse 0.55s ease;
-    }
     @keyframes mfCookieCardIn {
       from { opacity: 0; transform: translateY(18px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes mfCookiePulse {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 var(--rr-silver-dim);
-      }
-      40% {
-        transform: scale(1.04);
-        box-shadow:
-          0 0 0 3px rgba(147, 51, 234, 0.65),
-          0 18px 48px rgba(147, 51, 234, 0.35),
-          inset 0 1px 0 var(--rr-silver-dim);
-      }
     }
     #mfCookieBar .mf-cookie-compact {
       padding: 16px 16px 14px;
     }
     #mfCookieBar .mf-cookie-card #mfCookieTitle {
       display: block;
-      margin: 0 0 8px;
       color: var(--rr-silver);
       font-size: 1rem;
       letter-spacing: 0.01em;
@@ -359,6 +423,13 @@
       background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
       border-color: rgba(147, 51, 234, 0.55);
       color: #fff;
+    }
+    #mfCookieBar .mf-cookie-card button.mf-cookie-min-btn {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      font-size: 1.1rem;
+      line-height: 1;
     }
     #mfCookieBar .mf-cookie-card button.mf-cookie-more {
       background: transparent;
@@ -2738,7 +2809,10 @@
 <div id="mfCookieBar" class="" role="presentation">
   <div class="mf-cookie-card" id="mfCookieCard" role="dialog" aria-modal="true" aria-labelledby="mfCookieTitle">
     <div class="mf-cookie-compact">
-      <strong id="mfCookieTitle">Privacy &amp; Cookies</strong>
+      <div class="mf-cookie-compact-head">
+        <strong id="mfCookieTitle">Privacy &amp; Cookies</strong>
+        <button type="button" class="mf-cookie-min-btn" id="mfCookieMinimize" aria-label="Minimize privacy notice" title="Minimize">−</button>
+      </div>
       <p class="mf-cookie-compact-copy">
         We use GPS for location services and cookies to save your settings and optional analytics. Anonymous operational statistics help us improve the service.
       </p>
@@ -2768,6 +2842,9 @@
     </div>
   </div>
 </div>
+<button type="button" id="mfCookieFab" class="" hidden aria-label="Open privacy &amp; cookies" title="Privacy &amp; Cookies">
+  <img src="008-danger.svg" width="16" height="16" alt="" decoding="async" />
+</button>
 
 <!-- -- MAIN MAP DIV -- -->
 <div id="map"></div>
@@ -16836,9 +16913,49 @@
     return q.indexOf('tv=1') !== -1 || q.indexOf('tv=true') !== -1;
   }
 
+  function mfHideCookieFab() {
+    var fab = document.getElementById('mfCookieFab');
+    if (!fab) return;
+    fab.classList.remove('is-visible');
+    fab.hidden = true;
+  }
+
+  function mfShowCookieFab() {
+    var fab = document.getElementById('mfCookieFab');
+    if (!fab) return;
+    fab.hidden = false;
+    fab.classList.add('is-visible');
+  }
+
   function mfHideCookieBar() {
     var bar = document.getElementById('mfCookieBar');
-    if (bar) bar.classList.remove('is-visible');
+    if (bar) bar.classList.remove('is-visible', 'is-expanded', 'is-minimized');
+    mfHideCookieFab();
+  }
+
+  function mfMinimizeCookieBanner() {
+    var bar = document.getElementById('mfCookieBar');
+    var card = document.getElementById('mfCookieCard');
+    var more = document.getElementById('mfCookieLearnMore');
+    if (card) card.classList.remove('is-expanded');
+    if (bar) {
+      bar.classList.remove('is-expanded', 'is-visible');
+      bar.classList.add('is-minimized');
+    }
+    if (more) {
+      more.setAttribute('aria-expanded', 'false');
+      more.textContent = '▾ Learn more';
+    }
+    mfShowCookieFab();
+  }
+
+  function mfRestoreCookieBanner() {
+    var bar = document.getElementById('mfCookieBar');
+    mfHideCookieFab();
+    if (bar) {
+      bar.classList.remove('is-minimized');
+      bar.classList.add('is-visible');
+    }
   }
 
   function mfConsentAccepted() {
@@ -16878,9 +16995,11 @@
     } catch (_) {}
     var bar = document.getElementById('mfCookieBar');
     if (bar) {
+      bar.classList.remove('is-minimized', 'is-expanded');
       bar.classList.add('is-visible');
       if (typeof window.mfTrack === 'function') window.mfTrack('cookie_banner_shown');
     }
+    mfHideCookieFab();
   }
 
   function mfWireCookieUi() {
@@ -16888,6 +17007,8 @@
     var decline = document.getElementById('mfCookieDecline');
     var more = document.getElementById('mfCookieLearnMore');
     var card = document.getElementById('mfCookieCard');
+    var minBtn = document.getElementById('mfCookieMinimize');
+    var fab = document.getElementById('mfCookieFab');
     if (accept) accept.addEventListener('click', mfConsentAccepted);
     if (decline) decline.addEventListener('click', mfConsentDeclined);
     if (more && card) {
@@ -16899,6 +17020,8 @@
         more.textContent = open ? '▴ Show less' : '▾ Learn more';
       });
     }
+    if (minBtn) minBtn.addEventListener('click', mfMinimizeCookieBanner);
+    if (fab) fab.addEventListener('click', mfRestoreCookieBanner);
     mfBootCookieUi();
   }
 

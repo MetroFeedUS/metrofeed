@@ -45,7 +45,11 @@
   /* Persist settings only after Accept. Decline = no app local/session writes (except consent flags). */
   (function () {
     var LS_ALLOW = { cookieConsent: 1 };
-    var SS_ALLOW = { cookieConsentSession: 1, metrofeedLocationSkipped: 1 };
+    var SS_ALLOW = {
+      cookieConsentSession: 1,
+      metrofeedLocationSkipped: 1,
+      mfNationalView: 1
+    };
     var _lsSet = localStorage.setItem.bind(localStorage);
     var _ssSet = sessionStorage.setItem.bind(sessionStorage);
     var _lsRemove = localStorage.removeItem.bind(localStorage);
@@ -480,8 +484,12 @@
       padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
         max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
     }
+    #mfCookieBar.is-minimized {
+      display: none !important;
+    }
     .mf-cookie-card {
       pointer-events: auto;
+      position: relative;
       width: min(440px, 100%);
       background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.97) 100%);
       border: 1px solid var(--rr-silver-edge);
@@ -494,38 +502,90 @@
       overflow: hidden;
       animation: mfCookieCardIn 0.35s ease-out;
     }
+    .mf-cookie-compact-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 0 0 8px;
+    }
+    .mf-cookie-compact-head #mfCookieTitle {
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+    }
+    .mf-cookie-min-btn {
+      appearance: none;
+      flex: none;
+      width: 28px;
+      height: 28px;
+      margin: -2px -4px 0 0;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid var(--rr-silver-edge);
+      background: var(--rr-charcoal-raised);
+      color: var(--rr-silver);
+      font-size: 1.1rem;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .mf-cookie-min-btn:hover,
+    .mf-cookie-min-btn:focus-visible {
+      border-color: rgba(147, 51, 234, 0.55);
+      color: #e9d5ff;
+      outline: none;
+    }
+    /* Minimized privacy chip — OSM-attrib sized, bottom-right above attribution */
+    #mfCookieFab {
+      display: none;
+      position: fixed;
+      z-index: 1105;
+      right: max(8px, env(safe-area-inset-right, 0px));
+      bottom: calc(var(--mf-national-footer-slab) + var(--mf-national-stack-gap) + 26px);
+      width: 24px;
+      height: 24px;
+      padding: 2px;
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.45);
+      background: rgba(255, 255, 255, 0.82);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+    #mfCookieFab.is-visible {
+      display: inline-flex;
+    }
+    #mfCookieFab img {
+      display: block;
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    #mfCookieFab:hover,
+    #mfCookieFab:focus-visible {
+      background: #fff;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.55);
+    }
     .mf-cookie-card.is-expanded {
       width: min(520px, 100%);
       max-height: min(90vh, 720px);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
-    .mf-cookie-card.is-pulse {
-      animation: mfCookiePulse 0.55s ease;
-    }
     @keyframes mfCookieCardIn {
       from { opacity: 0; transform: translateY(18px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes mfCookiePulse {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 var(--rr-silver-dim);
-      }
-      40% {
-        transform: scale(1.04);
-        box-shadow:
-          0 0 0 3px rgba(147, 51, 234, 0.65),
-          0 18px 48px rgba(147, 51, 234, 0.35),
-          inset 0 1px 0 var(--rr-silver-dim);
-      }
     }
     .mf-cookie-compact {
       padding: 16px 16px 14px;
     }
     .mf-cookie-card #mfCookieTitle {
       display: block;
-      margin: 0 0 8px;
       color: var(--rr-silver);
       font-size: 1rem;
       letter-spacing: 0.01em;
@@ -628,6 +688,13 @@
       background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
       border-color: rgba(147, 51, 234, 0.55);
       color: #fff;
+    }
+    .mf-cookie-card button.mf-cookie-min-btn {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      font-size: 1.1rem;
+      line-height: 1;
     }
     .mf-cookie-card button.mf-cookie-more {
       background: transparent;
@@ -872,7 +939,10 @@
   <div id="mfCookieBar" class="" role="presentation">
     <div class="mf-cookie-card" id="mfCookieCard" role="dialog" aria-modal="true" aria-labelledby="mfCookieTitle">
       <div class="mf-cookie-compact">
-        <strong id="mfCookieTitle">Privacy &amp; Cookies</strong>
+        <div class="mf-cookie-compact-head">
+          <strong id="mfCookieTitle">Privacy &amp; Cookies</strong>
+          <button type="button" class="mf-cookie-min-btn" id="mfCookieMinimize" aria-label="Minimize privacy notice" title="Minimize">−</button>
+        </div>
         <p class="mf-cookie-compact-copy">
           We use GPS for location services and cookies to save your settings and optional analytics. Anonymous operational statistics help us improve the service.
         </p>
@@ -902,6 +972,9 @@
       </div>
     </div>
   </div>
+  <button type="button" id="mfCookieFab" class="" hidden aria-label="Open privacy &amp; cookies" title="Privacy &amp; Cookies">
+    <img src="Cincinnati/008-danger.svg" width="16" height="16" alt="" decoding="async" />
+  </button>
 
   <div id="mfGpsRegionBar" role="status" aria-live="polite">
     <strong>Your location isn’t in a RoamRaven service county yet</strong>
@@ -2145,7 +2218,6 @@
     }
 
     function mfOnHotspotCityInteraction(cityKey) {
-      if (mfRequireCookieChoice()) return;
       if (!MF_SUPPORTED_CITIES[cityKey] || !map) return;
       if (mfHotspotArmedKey === cityKey) {
         if (mfCityIsLive(cityKey)) {
@@ -2215,7 +2287,6 @@
     }
 
     function mfRedirectToCity(cityKey) {
-      if (mfRequireCookieChoice()) return;
       if (!mfCityIsLive(cityKey)) return;
       var city = MF_SUPPORTED_CITIES[cityKey];
       if (!city || !map) return;
@@ -2235,7 +2306,6 @@
     }
 
     function mfEvalCenterRedirect() {
-      if (mfRequireCookieChoice()) return;
       if (!map) return;
       var k = mfCityKeyAtMapCenter();
       if (k && mfCityIsLive(k)) mfRedirectToCity(k);
@@ -2244,7 +2314,6 @@
     }
 
     function mfPanToCity(key) {
-      if (mfRequireCookieChoice()) return;
       var city = MF_SUPPORTED_CITIES[key];
       if (!city || !map) return;
       try {
@@ -2359,7 +2428,6 @@
     }
 
     function mfApplyCityPick(key) {
-      if (mfRequireCookieChoice()) return;
       if (!MF_SUPPORTED_CITIES[key]) return;
       var inp = document.getElementById('mfCitySearch');
       mfHotspotArmedKey = null;
@@ -2481,53 +2549,50 @@
 
     const MF_COOKIE_SESSION_DECLINED = 'cookieConsentSession';
 
-    function mfCookieChoicePending() {
+    function mfHideCookieFab() {
+      var fab = document.getElementById('mfCookieFab');
+      if (!fab) return;
+      fab.classList.remove('is-visible');
+      fab.hidden = true;
+    }
+
+    function mfShowCookieFab() {
+      var fab = document.getElementById('mfCookieFab');
+      if (!fab) return;
+      fab.hidden = false;
+      fab.classList.add('is-visible');
+    }
+
+    function mfMinimizeCookieBanner() {
       var bar = document.getElementById('mfCookieBar');
-      return !!(bar && bar.classList.contains('is-visible'));
-    }
-
-    function mfPulseCookieBanner() {
       var card = document.getElementById('mfCookieCard');
-      if (!card) return;
-      card.classList.remove('is-pulse');
-      try {
-        void card.offsetWidth;
-      } catch (_) {}
-      card.classList.add('is-pulse');
-      window.setTimeout(function () {
-        try {
-          card.classList.remove('is-pulse');
-        } catch (_) {}
-      }, 600);
+      var more = document.getElementById('mfCookieLearnMore');
+      if (card) card.classList.remove('is-expanded');
+      if (bar) {
+        bar.classList.remove('is-expanded');
+        bar.classList.add('is-minimized');
+        bar.classList.remove('is-visible');
+      }
+      if (more) {
+        more.setAttribute('aria-expanded', 'false');
+        more.textContent = '▾ Learn more';
+      }
+      mfShowCookieFab();
     }
 
-    /** True if cookie choice still required — pulses banner and blocks leaving Index. */
-    function mfRequireCookieChoice() {
-      if (!mfCookieChoicePending()) return false;
-      mfPulseCookieBanner();
-      return true;
+    function mfRestoreCookieBanner() {
+      var bar = document.getElementById('mfCookieBar');
+      mfHideCookieFab();
+      if (bar) {
+        bar.classList.remove('is-minimized');
+        bar.classList.add('is-visible');
+      }
     }
 
-    /** Block chrome / exit clicks while banner is up; map pan & zoom stay free. */
-    function mfBindCookieGateClicks() {
-      document.addEventListener(
-        'click',
-        function (e) {
-          if (!mfCookieChoicePending()) return;
-          var el = e.target;
-          if (!el || !el.closest) return;
-          if (el.closest('#mfCookieBar')) return;
-          if (el.closest('.maplibregl-ctrl')) return;
-          var interactive = el.closest(
-            'a[href], button, input, select, textarea, label, [role="button"], [role="option"], .mf-hotspot-marker, .mf-city-suggest, .mf-city-combobox'
-          );
-          if (!interactive) return;
-          e.preventDefault();
-          e.stopPropagation();
-          mfPulseCookieBanner();
-        },
-        true
-      );
+    function mfDismissCookieUi() {
+      var bar = document.getElementById('mfCookieBar');
+      if (bar) bar.classList.remove('is-visible', 'is-expanded', 'is-minimized');
+      mfHideCookieFab();
     }
 
     function mfConsentAccepted() {
@@ -2536,10 +2601,7 @@
         localStorage.setItem(MF_COOKIE_KEY, 'true');
         sessionStorage.removeItem(MF_COOKIE_SESSION_DECLINED);
       } catch (_) {}
-      var bar = document.getElementById('mfCookieBar');
-      if (bar) {
-        bar.classList.remove('is-visible', 'is-expanded');
-      }
+      mfDismissCookieUi();
       if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
       mfStartGeolocationWatchWhenReady();
     }
@@ -2554,10 +2616,7 @@
         }
       } catch (_) {}
       if (typeof window.mfClearPersistedAppData === 'function') window.mfClearPersistedAppData();
-      var bar = document.getElementById('mfCookieBar');
-      if (bar) {
-        bar.classList.remove('is-visible', 'is-expanded');
-      }
+      mfDismissCookieUi();
       mfStopGeolocationWatch();
       try {
         sessionStorage.setItem('metrofeedLocationSkipped', '1');
@@ -2574,14 +2633,17 @@
           return;
         }
       } catch (_) {}
+      /* Fresh visit always starts with the full banner (minimize is in-memory only). */
       var bar = document.getElementById('mfCookieBar');
       if (bar) {
+        bar.classList.remove('is-minimized', 'is-expanded');
         bar.classList.add('is-visible');
         if (typeof mfTrack === 'function') mfTrack('cookie_banner_shown');
         if (mfPreferNationalFit && map && typeof map.loaded === 'function' && map.loaded()) {
           mfFitNationalUsa({ duration: 0 });
         }
       }
+      mfHideCookieFab();
     }
 
     /* ---- Init ---- */
@@ -2589,7 +2651,6 @@
     mfFillCitySelectModal();
     mfInitMap();
     mfBootCookieUi();
-    mfBindCookieGateClicks();
 
     document.getElementById('mfCookieAccept').addEventListener('click', mfConsentAccepted);
     document.getElementById('mfCookieDecline').addEventListener('click', mfConsentDeclined);
@@ -2597,13 +2658,18 @@
       var more = document.getElementById('mfCookieLearnMore');
       var card = document.getElementById('mfCookieCard');
       var bar = document.getElementById('mfCookieBar');
-      if (!more || !card) return;
-      more.addEventListener('click', function () {
-        var open = card.classList.toggle('is-expanded');
-        if (bar) bar.classList.toggle('is-expanded', open);
-        more.setAttribute('aria-expanded', open ? 'true' : 'false');
-        more.textContent = open ? '▴ Show less' : '▾ Learn more';
-      });
+      var minBtn = document.getElementById('mfCookieMinimize');
+      var fab = document.getElementById('mfCookieFab');
+      if (more && card) {
+        more.addEventListener('click', function () {
+          var open = card.classList.toggle('is-expanded');
+          if (bar) bar.classList.toggle('is-expanded', open);
+          more.setAttribute('aria-expanded', open ? 'true' : 'false');
+          more.textContent = open ? '▴ Show less' : '▾ Learn more';
+        });
+      }
+      if (minBtn) minBtn.addEventListener('click', mfMinimizeCookieBanner);
+      if (fab) fab.addEventListener('click', mfRestoreCookieBanner);
     })();
 
     document.getElementById('mfUseMapLocationBtn').addEventListener('click', function () {
