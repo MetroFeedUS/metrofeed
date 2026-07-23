@@ -1,8 +1,9 @@
 /**
  * Read anonymous operational counters.
  * Requires header: X-MF-Stats-Key: <MF_OPS_STATS_KEY env>
+ * Functions v2 (default export) so Netlify Blobs auto-configures.
  */
-const { getStore } = require("@netlify/blobs");
+import { getStore } from "@netlify/blobs";
 
 const EVENT_NAMES = [
   "menu_open",
@@ -27,27 +28,21 @@ const JSON_HEADERS = {
   "Cache-Control": "no-store",
 };
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== "GET") {
-    return {
-      statusCode: 405,
+export default async (req) => {
+  if (req.method !== "GET") {
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
+      status: 405,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ error: "method_not_allowed" }),
-    };
+    });
   }
 
   const expected = process.env.MF_OPS_STATS_KEY || "";
-  const headers = event.headers || {};
-  const got =
-    headers["x-mf-stats-key"] ||
-    headers["X-MF-Stats-Key"] ||
-    "";
+  const got = req.headers.get("x-mf-stats-key") || "";
   if (!expected || got !== expected) {
-    return {
-      statusCode: 401,
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ error: "unauthorized" }),
-    };
+    });
   }
 
   try {
@@ -58,20 +53,18 @@ exports.handler = async (event) => {
       const n = parseInt(raw || "0", 10);
       counts[name] = Number.isFinite(n) ? n : 0;
     }
-    return {
-      statusCode: 200,
+    return new Response(JSON.stringify({ ok: true, counts }), {
+      status: 200,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ ok: true, counts }),
-    };
+    });
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({
+    return new Response(
+      JSON.stringify({
         ok: false,
         error: "store_unavailable",
         detail: String(err && err.message ? err.message : err),
       }),
-    };
+      { status: 500, headers: JSON_HEADERS }
+    );
   }
 };

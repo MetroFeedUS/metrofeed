@@ -4,7 +4,7 @@
  * No user IDs, cookies, or fingerprints — POST { name } only.
  */
 (function (w) {
-  var ENDPOINT = "/api/event";
+  var ENDPOINT = "/.netlify/functions/event";
   var ALLOWED = {
     menu_open: 1,
     weather_open: 1,

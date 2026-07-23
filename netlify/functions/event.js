@@ -1,8 +1,8 @@
 /**
  * Anonymous aggregate operational stats — POST { "name": "weather_open" }.
- * No cookies, no user IDs, no fingerprints. Allowlisted event names only.
+ * Functions v2 (default export) so Netlify Blobs auto-configures.
  */
-const { getStore } = require("@netlify/blobs");
+import { getStore } from "@netlify/blobs";
 
 const ALLOWLIST = new Set([
   "menu_open",
@@ -27,36 +27,33 @@ const JSON_HEADERS = {
   "Cache-Control": "no-store",
 };
 
-exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers: JSON_HEADERS, body: "" };
+export default async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("", { status: 204, headers: JSON_HEADERS });
   }
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
+      status: 405,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ error: "method_not_allowed" }),
-    };
+    });
   }
 
   let name = "";
   try {
-    const body = JSON.parse(event.body || "{}");
+    const body = await req.json();
     name = body && body.name != null ? String(body.name).trim() : "";
   } catch (_) {
-    return {
-      statusCode: 400,
+    return new Response(JSON.stringify({ error: "bad_json" }), {
+      status: 400,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ error: "bad_json" }),
-    };
+    });
   }
 
   if (!ALLOWLIST.has(name)) {
-    return {
-      statusCode: 400,
+    return new Response(JSON.stringify({ error: "unknown_event" }), {
+      status: 400,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ error: "unknown_event" }),
-    };
+    });
   }
 
   try {
@@ -65,16 +62,14 @@ exports.handler = async (event) => {
     const prev = parseInt(prevRaw || "0", 10);
     const next = (Number.isFinite(prev) ? prev : 0) + 1;
     await store.set(name, String(next));
-    return {
-      statusCode: 200,
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ ok: true }),
-    };
+    });
   } catch (_) {
-    return {
-      statusCode: 200,
+    return new Response(JSON.stringify({ ok: false }), {
+      status: 200,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ ok: false }),
-    };
+    });
   }
 };
