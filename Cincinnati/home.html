@@ -203,6 +203,13 @@
       align-items: center;
       justify-content: flex-end;
     }
+    #mfCookieBar.is-visible.is-expanded {
+      top: 0;
+      bottom: 0;
+      justify-content: center;
+      padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+        max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    }
     #mfCookieBar .mf-cookie-card {
       pointer-events: auto;
       width: min(440px, 100%);
@@ -219,8 +226,9 @@
     }
     #mfCookieBar .mf-cookie-card.is-expanded {
       width: min(520px, 100%);
-      max-height: min(70vh, 560px);
+      max-height: min(90vh, 720px);
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     #mfCookieBar .mf-cookie-card.is-pulse {
       animation: mfCookiePulse 0.55s ease;
@@ -16870,6 +16878,8 @@
     if (more && card) {
       more.addEventListener('click', function () {
         var open = card.classList.toggle('is-expanded');
+        var bar = document.getElementById('mfCookieBar');
+        if (bar) bar.classList.toggle('is-expanded', open);
         more.setAttribute('aria-expanded', open ? 'true' : 'false');
         more.textContent = open ? '▴ Show less' : '▾ Learn more';
       });

@@ -449,7 +449,7 @@
       color: #fff;
     }
 
-    /* Cookie prompt: bottom dock, map fully visible above */
+    /* Cookie prompt: bottom dock; expands to screen center */
     #mfCookieBar {
       display: none;
       position: fixed;
@@ -473,6 +473,13 @@
       align-items: center;
       justify-content: flex-end;
     }
+    #mfCookieBar.is-visible.is-expanded {
+      top: 0;
+      bottom: 0;
+      justify-content: center;
+      padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+        max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    }
     .mf-cookie-card {
       pointer-events: auto;
       width: min(440px, 100%);
@@ -489,8 +496,9 @@
     }
     .mf-cookie-card.is-expanded {
       width: min(520px, 100%);
-      max-height: min(70vh, 560px);
+      max-height: min(90vh, 720px);
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .mf-cookie-card.is-pulse {
       animation: mfCookiePulse 0.55s ease;
@@ -941,11 +949,13 @@
     const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
     /** National “coverage map” zoom — city pins stay hidden below MF_CITY_MARKER_MIN_ZOOM. */
     const MF_ZOOM_NATIONAL = 3.6;
-    /** Contiguous USA — fit so the whole lower 48 reads on screen. */
+    /** Contiguous USA frame — north padded so the landmass (not the bbox mid) sits mid-screen. */
     const MF_CONTIGUOUS_US_BOUNDS = [
-      [-125.0, 24.3],
-      [-66.5, 49.4]
+      [-125.0, 24.2],
+      [-66.5, 53.0]
     ];
+    /** After fitBounds, nudge south on screen (~Florida) so the country shape is optically centered. */
+    const MF_NATIONAL_VISUAL_NUDGE_Y = -110;
     const MF_ZOOM_IN_SERVICE = 10.8;
     const MF_CITY_MARKER_MIN_ZOOM = 7.5;
 
@@ -1912,20 +1922,16 @@
     var mfPreferNationalFit = false;
 
     function mfNationalMapPadding() {
-      var cookieUp = false;
-      try {
-        var bar = document.getElementById('mfCookieBar');
-        cookieUp = !!(bar && bar.classList.contains('is-visible'));
-      } catch (_) {}
+      /* Cookie overlays the map — do not shove the country into the top half. */
       return {
-        top: 96,
-        bottom: cookieUp ? 210 : 72,
+        top: 88,
+        bottom: 64,
         left: 36,
         right: 36
       };
     }
 
-    /** Center contiguous USA in the viewport (accounts for top chrome + bottom cookie). */
+    /** Center contiguous USA landmass in the viewport (not just the map bbox midpoint). */
     function mfFitNationalUsa(opts) {
       if (!map) return;
       var duration = opts && typeof opts.duration === 'number' ? opts.duration : 0;
@@ -1935,6 +1941,16 @@
           duration: duration,
           maxZoom: 5.5
         });
+        /* Negative Y pans features downward on screen (country was sitting ~1 Florida too high). */
+        if (duration <= 0) {
+          map.panBy([0, MF_NATIONAL_VISUAL_NUDGE_Y], { duration: 0 });
+        } else {
+          window.setTimeout(function () {
+            try {
+              map.panBy([0, MF_NATIONAL_VISUAL_NUDGE_Y], { duration: 0 });
+            } catch (_) {}
+          }, duration + 20);
+        }
       } catch (_) {
         try {
           map.jumpTo({ center: [-98.35, 39.5], zoom: MF_ZOOM_NATIONAL });
@@ -2519,7 +2535,7 @@
       } catch (_) {}
       var bar = document.getElementById('mfCookieBar');
       if (bar) {
-        bar.classList.remove('is-visible');
+        bar.classList.remove('is-visible', 'is-expanded');
       }
       if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
       mfStartGeolocationWatchWhenReady();
@@ -2537,7 +2553,7 @@
       if (typeof window.mfClearPersistedAppData === 'function') window.mfClearPersistedAppData();
       var bar = document.getElementById('mfCookieBar');
       if (bar) {
-        bar.classList.remove('is-visible');
+        bar.classList.remove('is-visible', 'is-expanded');
       }
       mfStopGeolocationWatch();
       try {
@@ -2577,9 +2593,11 @@
     (function () {
       var more = document.getElementById('mfCookieLearnMore');
       var card = document.getElementById('mfCookieCard');
+      var bar = document.getElementById('mfCookieBar');
       if (!more || !card) return;
       more.addEventListener('click', function () {
         var open = card.classList.toggle('is-expanded');
+        if (bar) bar.classList.toggle('is-expanded', open);
         more.setAttribute('aria-expanded', open ? 'true' : 'false');
         more.textContent = open ? '▴ Show less' : '▾ Learn more';
       });
