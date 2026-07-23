@@ -1227,6 +1227,7 @@
       bottom: 40px; /* 10px from footer (footer is at bottom: 0, but has height) */
       left: 50%;
       transform: translateX(-50%);
+      z-index: 1100;
       background: linear-gradient(165deg, var(--rr-charcoal-raised) 0%, var(--rr-charcoal) 100%);
       padding: 8px 6px;
       border-radius: 12px;
@@ -6285,7 +6286,7 @@
     _mfOnboardingHighlightEl = el;
   }
 
-  function mfOnboardingMobileDockBottomPx() {
+  function mfOnboardingMobileDockBottomPx(targetEl) {
     const vb = mfViewportLayoutBox();
     let gap = 10;
     try {
@@ -6296,16 +6297,20 @@
           gap = Math.max(gap, vb.top + vb.height - fr.top + 8);
         }
       }
+      /* When the tip itself is about Favorites, sit a bit higher so the card isn’t flush/hidden. */
+      if (targetEl && fav && (targetEl === fav || fav.contains(targetEl))) {
+        gap += 56;
+      }
     } catch (_) {}
     return Math.max(72, Math.round(gap));
   }
 
-  function mfApplyOnboardingMobileDock(tooltip) {
+  function mfApplyOnboardingMobileDock(tooltip, targetEl) {
     if (!tooltip) return;
     tooltip.classList.add('mf-onboarding-hint--mobile-dock');
     tooltip.classList.remove('dropdown-tooltip--arrow-right', 'mf-onboarding-hint--stack-below');
     const vb = mfViewportLayoutBox();
-    const bottomPx = mfOnboardingMobileDockBottomPx();
+    const bottomPx = mfOnboardingMobileDockBottomPx(targetEl);
     tooltip.style.top = 'auto';
     tooltip.style.bottom = `${bottomPx}px`;
     tooltip.style.left = '50%';
@@ -6360,7 +6365,7 @@
     document.body.appendChild(tooltip);
     if (mfShouldUseOnboardingMobileDock(tooltip, opts)) {
       mfSetOnboardingHighlight(targetEl);
-      mfApplyOnboardingMobileDock(tooltip);
+      mfApplyOnboardingMobileDock(tooltip, targetEl);
       mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
       return tooltip;
     }
@@ -6372,6 +6377,23 @@
       const R0 = vb.left + vb.width - edge;
       const T0 = vb.top + edge;
       const B0 = vb.top + vb.height - edge;
+
+      mfSetOnboardingHighlight(targetEl);
+
+      /* Bottom-of-screen targets (Favorites): sit above the bar — side placement often leaves the screen. */
+      const nearBottom = vb.height > 0 && rect.top > vb.top + vb.height * 0.62;
+      if (nearBottom || (opts && opts.preferAbove)) {
+        let left = rect.left + rect.width / 2 - w / 2;
+        let t = rect.top - h - Math.max(10, pad);
+        left = Math.max(L0, Math.min(left, R0 - w));
+        if (t < T0) t = Math.min(rect.bottom + Math.max(8, pad), B0 - h);
+        if (t + h > B0) t = Math.max(T0, B0 - h);
+        tooltip.style.left = `${Math.round(left)}px`;
+        tooltip.style.top = `${Math.round(t)}px`;
+        tooltip.classList.remove('dropdown-tooltip--arrow-right');
+        mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
+        return tooltip;
+      }
 
       let left = rect.right + pad;
       let placedLeftOfTarget = false;
@@ -6530,7 +6552,7 @@
     document.body.appendChild(tooltip);
     if (mfShouldUseOnboardingMobileDock(tooltip, opts)) {
       mfSetOnboardingHighlight(targetEl);
-      mfApplyOnboardingMobileDock(tooltip);
+      mfApplyOnboardingMobileDock(tooltip, targetEl);
       mfScheduleOnboardingTooltipDismiss(tooltip, (opts && opts.ms) ? opts.ms : 3600);
       return tooltip;
     }
@@ -6549,6 +6571,8 @@
       const B0 = vb.top + vb.height - edge;
       const bottomPad =
         mobile && tooltip.classList.contains('mf-onboarding-hint') ? edge + 18 : edge;
+
+      mfSetOnboardingHighlight(targetEl);
 
       let left = rect.left + rect.width / 2 - w / 2;
       let top = rect.top - h - 10;
@@ -6628,15 +6652,19 @@
       const el = mfTutorialPickTarget(s.getEl);
       const prog = { progress: { current: progStart + i, total: progTotal } };
       const busOpts = Object.assign({}, baseBus, prog);
-      const anchOpts = Object.assign({}, baseAnch, prog);
+      const anchOpts = Object.assign({}, baseAnch, prog, s.key === 'favorites' ? { preferAbove: true } : {});
       const tipMs = s.key === 'bus' || s.key === 'stop' ? busStopMs : anchoredMs;
       if (i > 0) mfDismissOnboardingTooltips();
       if (s.key === 'bus' || s.key === 'stop') {
         if (el) mfShowTooltipAboveEl(el, s.text, busOpts);
         else mfShowCenteredTooltip(s.text, busOpts);
+      } else if (s.key === 'favorites') {
+        /* Favorites sits bottom-center — always pin above it (or center if missing). */
+        if (el) mfShowTooltipAboveEl(el, s.text, anchOpts);
+        else mfShowCenteredTooltip(s.text, anchOpts);
       } else {
-        if (!el) continue;
-        mfShowAnchoredTooltip(el, s.text, anchOpts);
+        if (el) mfShowAnchoredTooltip(el, s.text, anchOpts);
+        else mfShowCenteredTooltip(s.text, anchOpts);
       }
       await mfDelay(mfTutorialDesktopStepMs(tipMs));
     }
@@ -6710,7 +6738,7 @@
 
   function mfTutorialCoachPosition() {
     if (!_mfTutorialCoachEl) return;
-    const bottomPx = mfOnboardingMobileDockBottomPx();
+    const bottomPx = mfOnboardingMobileDockBottomPx(_mfTutorialCoachPendingTarget);
     _mfTutorialCoachEl.style.bottom = `${bottomPx}px`;
     _mfTutorialCoachEl.style.left = '50%';
     _mfTutorialCoachEl.style.right = 'auto';
