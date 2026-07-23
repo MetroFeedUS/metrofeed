@@ -6,6 +6,7 @@
 (function (w) {
   var ENDPOINT = "/.netlify/functions/event";
   var ALLOWED = {
+    city_open_cincinnati: 1,
     menu_open: 1,
     weather_open: 1,
     cameras_open: 1,
@@ -17,9 +18,9 @@
     resources_open: 1,
     find_me: 1,
     trip_go: 1,
+    sponsor_popup: 1,
     cookie_accept: 1,
     cookie_decline: 1,
-    city_open_cincinnati: 1,
     back_to_national: 1,
   };
 

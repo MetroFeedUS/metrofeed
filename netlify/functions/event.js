@@ -6,6 +6,7 @@
 import { getStore } from "@netlify/blobs";
 
 const ALLOWLIST = new Set([
+  "city_open_cincinnati",
   "menu_open",
   "weather_open",
   "cameras_open",
@@ -17,9 +18,9 @@ const ALLOWLIST = new Set([
   "resources_open",
   "find_me",
   "trip_go",
+  "sponsor_popup",
   "cookie_accept",
   "cookie_decline",
-  "city_open_cincinnati",
   "back_to_national",
 ]);
 

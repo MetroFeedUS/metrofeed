@@ -16209,6 +16209,7 @@
    */
   function showSponsorModal() {
     if (typeof SPONSOR_LOGO_ENABLED !== 'undefined' && !SPONSOR_LOGO_ENABLED) return;
+    if (typeof mfTrack === 'function') mfTrack('sponsor_popup');
     if (typeof updatePageLanguage === 'function') updatePageLanguage();
     const modal = document.getElementById('sponsorModal');
     const modalImg = document.getElementById('sponsorModalImage');
