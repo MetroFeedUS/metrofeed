@@ -6652,16 +6652,12 @@
       const el = mfTutorialPickTarget(s.getEl);
       const prog = { progress: { current: progStart + i, total: progTotal } };
       const busOpts = Object.assign({}, baseBus, prog);
-      const anchOpts = Object.assign({}, baseAnch, prog, s.key === 'favorites' ? { preferAbove: true } : {});
+      const anchOpts = Object.assign({}, baseAnch, prog);
       const tipMs = s.key === 'bus' || s.key === 'stop' ? busStopMs : anchoredMs;
       if (i > 0) mfDismissOnboardingTooltips();
       if (s.key === 'bus' || s.key === 'stop') {
         if (el) mfShowTooltipAboveEl(el, s.text, busOpts);
         else mfShowCenteredTooltip(s.text, busOpts);
-      } else if (s.key === 'favorites') {
-        /* Favorites sits bottom-center — always pin above it (or center if missing). */
-        if (el) mfShowTooltipAboveEl(el, s.text, anchOpts);
-        else mfShowCenteredTooltip(s.text, anchOpts);
       } else {
         if (el) mfShowAnchoredTooltip(el, s.text, anchOpts);
         else mfShowCenteredTooltip(s.text, anchOpts);
@@ -6927,7 +6923,7 @@
     const dropdownMenu = document.getElementById('dropdownMenu');
     const busesBtn = document.getElementById('dropdownBusesBtn');
     const hasBusStep = !!(dropdownMenu && busesBtn);
-    const totalSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 4 + 1;
+    const totalSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 3 + 1;
     let stepI = 0;
     const prog = () => ({ current: ++stepI, total: totalSteps });
 
@@ -6986,10 +6982,6 @@
       {
         text: 'Use this route tab for trip options and more.',
         getEl: () => document.querySelector('.route-info-panel, .otp-trip-route-chip')
-      },
-      {
-        text: 'Save favorites here — tap the star on a direction while viewing a route.',
-        getEl: () => document.getElementById('favoritesWrapper')
       }
     ];
 
@@ -8095,7 +8087,7 @@
         const dropdownMenu = document.getElementById('dropdownMenu');
         const busesBtn = document.getElementById('dropdownBusesBtn');
         const hasBusStep = !!(dropdownMenu && busesBtn);
-        const totalHintSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 4 + 1;
+        const totalHintSteps = 1 + (hasBusStep ? 1 : 0) + 1 + 3 + 1;
         let stepI = 0;
         const nextProg = () => ({ progress: { current: ++stepI, total: totalHintSteps } });
 
@@ -8168,11 +8160,6 @@
             key: 'chip',
             text: 'Use this route tab for trip options and more.',
             getEl: () => document.querySelector('.route-info-panel, .otp-trip-route-chip')
-          },
-          {
-            key: 'favorites',
-            text: 'Save favorites here — tap the star on a direction while viewing a route.',
-            getEl: () => document.getElementById('favoritesWrapper')
           }
         ];
         await mfRunOnboardingMapHintSteps(steps, {
