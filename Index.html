@@ -449,52 +449,97 @@
       color: #fff;
     }
 
-    /* Cookie prompt: fullscreen dim + centered card (symmetric safe-area so flex/grid center stays optical viewport center) */
+    /* Cookie prompt: bottom dock, map fully visible above */
     #mfCookieBar {
       display: none;
       position: fixed;
-      inset: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: auto;
       width: 100%;
-      min-height: 100vh;
-      min-height: 100dvh;
-      min-height: -webkit-fill-available;
       z-index: 1500;
       pointer-events: none;
       box-sizing: border-box;
-      --mf-cookie-pad-y: max(16px, env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px));
-      padding: var(--mf-cookie-pad-y) max(16px, env(safe-area-inset-right, 0px)) var(--mf-cookie-pad-y)
-        max(16px, env(safe-area-inset-left, 0px));
-      background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(1px);
-      -webkit-backdrop-filter: blur(1px);
+      padding: 0 max(16px, env(safe-area-inset-right, 0px))
+        max(10px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
     #mfCookieBar.is-visible {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
     }
     .mf-cookie-card {
       pointer-events: auto;
-      width: min(520px, 100%);
+      width: min(440px, 100%);
       background: linear-gradient(180deg, var(--rr-charcoal-panel) 0%, rgba(12, 12, 14, 0.97) 100%);
       border: 1px solid var(--rr-silver-edge);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 0;
       font-size: 0.82rem;
       color: var(--rr-silver-muted);
-      box-shadow: 0 20px 56px rgba(0, 0, 0, 0.72), inset 0 1px 0 var(--rr-silver-dim);
-      text-align: center;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 var(--rr-silver-dim);
+      text-align: left;
       overflow: hidden;
-      animation: mfCookieCardIn 0.45s ease-out;
+      animation: mfCookieCardIn 0.35s ease-out;
+    }
+    .mf-cookie-card.is-expanded {
+      width: min(520px, 100%);
+      max-height: min(70vh, 560px);
+      overflow-y: auto;
+    }
+    .mf-cookie-card.is-pulse {
+      animation: mfCookiePulse 0.55s ease;
     }
     @keyframes mfCookieCardIn {
-      from { opacity: 0; transform: translateY(12px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes mfCookiePulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 var(--rr-silver-dim);
+      }
+      40% {
+        transform: scale(1.04);
+        box-shadow:
+          0 0 0 3px rgba(147, 51, 234, 0.65),
+          0 18px 48px rgba(147, 51, 234, 0.35),
+          inset 0 1px 0 var(--rr-silver-dim);
+      }
+    }
+    .mf-cookie-compact {
+      padding: 16px 16px 14px;
+    }
+    .mf-cookie-card #mfCookieTitle {
+      display: block;
+      margin: 0 0 8px;
+      color: var(--rr-silver);
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+      text-align: left;
+    }
+    .mf-cookie-compact-copy {
+      margin: 0 0 14px;
+      line-height: 1.45;
+      color: #cbd5e1;
+      font-size: 0.88rem;
+    }
+    .mf-cookie-details {
+      display: none;
+      border-top: 1px solid rgba(226, 232, 240, 0.12);
+    }
+    .mf-cookie-card.is-expanded .mf-cookie-details {
+      display: block;
     }
     .mf-cookie-hello {
       position: relative;
-      padding: 22px 20px 16px;
+      padding: 18px 18px 14px;
+      text-align: center;
       background:
         radial-gradient(ellipse 80% 70% at 50% 0%, rgba(147, 51, 234, 0.22) 0%, transparent 70%),
         linear-gradient(180deg, rgba(30, 24, 42, 0.55) 0%, transparent 100%);
@@ -515,10 +560,12 @@
       margin: 0 auto 12px;
       filter: drop-shadow(0 0 12px rgba(147, 51, 234, 0.35));
     }
-    .mf-cookie-card #mfCookieTitle {
+    .mf-cookie-details #mfCookieWelcomeTitle {
+      display: block;
+      margin: 0 auto 10px;
+      color: var(--rr-silver);
+      font-size: 1.1rem;
       text-align: center;
-      font-size: 1.15rem;
-      letter-spacing: 0.01em;
       text-shadow: 0 0 18px rgba(147, 51, 234, 0.35);
     }
     .mf-cookie-hello > p {
@@ -526,15 +573,11 @@
       margin-left: auto;
       margin-right: auto;
       color: #dbe4f0;
-      font-size: 0.92rem;
-    }
-    .mf-cookie-hello-note {
-      color: #94a3b8 !important;
-      font-size: 0.84rem !important;
-      font-weight: 500;
+      font-size: 0.9rem;
+      text-align: center;
     }
     .mf-cookie-legal {
-      margin: 0 16px;
+      margin: 0 16px 14px;
       padding: 12px 14px;
       border-radius: 10px;
       border: 1px solid rgba(147, 51, 234, 0.45);
@@ -553,19 +596,14 @@
     .mf-cookie-legal li {
       margin: 0.35em 0;
     }
-    .mf-cookie-legal li:first-child {
-      margin-top: 0;
-    }
-    .mf-cookie-legal li:last-child {
-      margin-bottom: 0;
-    }
+    .mf-cookie-legal li:first-child { margin-top: 0; }
+    .mf-cookie-legal li:last-child { margin-bottom: 0; }
     .mf-cookie-card .mf-cookie-actions {
       margin: 0;
-      padding: 14px 20px 18px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
     }
     .mf-cookie-card button {
@@ -582,6 +620,22 @@
       background: linear-gradient(180deg, var(--rr-accent-hover) 0%, var(--rr-accent) 100%);
       border-color: rgba(147, 51, 234, 0.55);
       color: #fff;
+    }
+    .mf-cookie-card button.mf-cookie-more {
+      background: transparent;
+      border-color: transparent;
+      color: #c4b5fd;
+      font-weight: 700;
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+    .mf-cookie-card button.mf-cookie-more:hover,
+    .mf-cookie-card button.mf-cookie-more:focus-visible {
+      color: #e9d5ff;
+      outline: none;
+    }
+    .mf-cookie-card.is-expanded button.mf-cookie-more::before {
+      content: none;
     }
 
     .mf-national-footer {
@@ -808,26 +862,35 @@
   </div>
 
   <div id="mfCookieBar" class="" role="presentation">
-    <div class="mf-cookie-card" role="dialog" aria-modal="true" aria-labelledby="mfCookieTitle">
-      <div class="mf-cookie-hello">
-        <img class="mf-cookie-logo" src="/RoamRavenNamelogo.svg" alt="" width="168" height="40" decoding="async" />
-        <strong id="mfCookieTitle" style="color: var(--rr-silver); display: block; margin: 0 auto 10px; text-align: center;">Welcome to RoamRaven!</strong>
-        <p style="margin: 0 auto; line-height: 1.45; text-align: center;">
-          We just need a quick OK for <strong style="color: var(--rr-silver);">GPS</strong> and <strong style="color: var(--rr-silver);">cookies</strong> that save things like your settings, optional analytics, and favorite routes so the app runs smoothly for you. Glad you're here.
+    <div class="mf-cookie-card" id="mfCookieCard" role="dialog" aria-modal="true" aria-labelledby="mfCookieTitle">
+      <div class="mf-cookie-compact">
+        <strong id="mfCookieTitle">Privacy &amp; Cookies</strong>
+        <p class="mf-cookie-compact-copy">
+          We use cookies to save your settings and optional analytics. Anonymous operational statistics help us improve the service.
         </p>
+        <div class="mf-cookie-actions">
+          <button type="button" class="accept" id="mfCookieAccept">Accept</button>
+          <button type="button" id="mfCookieDecline">Decline</button>
+          <button type="button" class="mf-cookie-more" id="mfCookieLearnMore" aria-expanded="false" aria-controls="mfCookieDetails">▾ Learn more</button>
+        </div>
       </div>
-      <div class="mf-cookie-legal">
-        <ul>
-          <li>Saves settings, optional analytics, and favorite routes</li>
-          <li>We do <strong style="color: #fff; letter-spacing: 0.02em;">NOT</strong> <strong style="color: #fff; letter-spacing: 0.02em;">collect</strong> personal account information</li>
-          <li>We <strong style="color: #fff; letter-spacing: 0.02em;">DO NOT SELL</strong> personal data</li>
-          <li>Selecting <strong style="color: #fff;">Decline</strong> disables optional analytics. Anonymous operational statistics may still be collected</li>
-          <li><a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">See Privacy for full details</a></li>
-        </ul>
-      </div>
-      <div class="mf-cookie-actions">
-        <button type="button" id="mfCookieDecline">Decline</button>
-        <button type="button" class="accept" id="mfCookieAccept">Accept and continue</button>
+      <div class="mf-cookie-details" id="mfCookieDetails">
+        <div class="mf-cookie-hello">
+          <img class="mf-cookie-logo" src="/RoamRavenNamelogo.svg" alt="" width="168" height="40" decoding="async" />
+          <strong id="mfCookieWelcomeTitle">Welcome to RoamRaven!</strong>
+          <p style="margin: 0 auto; line-height: 1.45;">
+            We just need a quick OK for <strong style="color: var(--rr-silver);">GPS</strong> and <strong style="color: var(--rr-silver);">cookies</strong> that save things like your settings, optional analytics, and favorite routes so the app runs smoothly for you. Glad you're here.
+          </p>
+        </div>
+        <div class="mf-cookie-legal">
+          <ul>
+            <li>Saves settings, optional analytics, and favorite routes</li>
+            <li>We do <strong style="color: #fff; letter-spacing: 0.02em;">NOT</strong> <strong style="color: #fff; letter-spacing: 0.02em;">collect</strong> personal account information</li>
+            <li>We <strong style="color: #fff; letter-spacing: 0.02em;">DO NOT SELL</strong> personal data</li>
+            <li>Selecting <strong style="color: #fff;">Decline</strong> disables optional analytics. Anonymous operational statistics may still be collected</li>
+            <li><a href="privacy.html" style="color: #e9d5ff; text-decoration: underline;">See Privacy for full details</a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -872,12 +935,17 @@
     </div>
   </div>
 
-  <script src="/mfOpsStats.js?v=1"></script>
+  <script src="/mfOpsStats.js?v=2"></script>
   <script>
     const MF_COOKIE_KEY = 'cookieConsent';
     const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
     /** National “coverage map” zoom — city pins stay hidden below MF_CITY_MARKER_MIN_ZOOM. */
-    const MF_ZOOM_NATIONAL = 4.2;
+    const MF_ZOOM_NATIONAL = 3.6;
+    /** Contiguous USA — fit so the whole lower 48 reads on screen. */
+    const MF_CONTIGUOUS_US_BOUNDS = [
+      [-125.0, 24.3],
+      [-66.5, 49.4]
+    ];
     const MF_ZOOM_IN_SERVICE = 10.8;
     const MF_CITY_MARKER_MIN_ZOOM = 7.5;
 
@@ -1841,17 +1909,51 @@
       mfMapInteractResizeTimer = setTimeout(mfConfigureMapInteractions, 120);
     });
 
+    var mfPreferNationalFit = false;
+
+    function mfNationalMapPadding() {
+      var cookieUp = false;
+      try {
+        var bar = document.getElementById('mfCookieBar');
+        cookieUp = !!(bar && bar.classList.contains('is-visible'));
+      } catch (_) {}
+      return {
+        top: 96,
+        bottom: cookieUp ? 210 : 72,
+        left: 36,
+        right: 36
+      };
+    }
+
+    /** Center contiguous USA in the viewport (accounts for top chrome + bottom cookie). */
+    function mfFitNationalUsa(opts) {
+      if (!map) return;
+      var duration = opts && typeof opts.duration === 'number' ? opts.duration : 0;
+      try {
+        map.fitBounds(MF_CONTIGUOUS_US_BOUNDS, {
+          padding: mfNationalMapPadding(),
+          duration: duration,
+          maxZoom: 5.5
+        });
+      } catch (_) {
+        try {
+          map.jumpTo({ center: [-98.35, 39.5], zoom: MF_ZOOM_NATIONAL });
+        } catch (__) {}
+      }
+    }
+
     function mfInitMap() {
       if (map) return;
-      const defaultCenter = [-98, 39];
+      const defaultCenter = [-98.35, 39.5];
       const defaultZoom = MF_ZOOM_NATIONAL;
+      var useSavedOrQueryView = false;
 
       map = new maplibregl.Map({
         container: 'map',
         style: mfNationalMapStyle(),
         center: defaultCenter,
         zoom: defaultZoom,
-        minZoom: 3,
+        minZoom: 2.8,
         maxZoom: 14,
         attributionControl: false
       });
@@ -1878,19 +1980,24 @@
         var qLon = parseFloat(params.get('lon'));
         var qz = parseFloat(params.get('z'));
         if (Number.isFinite(qlat) && Number.isFinite(qLon) && Number.isFinite(qz)) {
+          useSavedOrQueryView = true;
           map.jumpTo({ center: [qLon, qlat], zoom: qz });
         } else {
           var saved = sessionStorage.getItem('mfNationalView');
           if (saved) {
             var v = JSON.parse(saved);
             if (v && Array.isArray(v.center) && v.center.length === 2 && typeof v.zoom === 'number') {
+              useSavedOrQueryView = true;
               map.jumpTo({ center: v.center, zoom: v.zoom });
             }
           }
         }
       } catch (_) {}
 
+      mfPreferNationalFit = !useSavedOrQueryView;
+
       map.once('load', function () {
+        if (mfPreferNationalFit) mfFitNationalUsa({ duration: 0 });
         try {
           mfInstallServicePreviewLayer();
         } catch (_) {}
@@ -2019,6 +2126,7 @@
     }
 
     function mfOnHotspotCityInteraction(cityKey) {
+      if (mfRequireCookieChoice()) return;
       if (!MF_SUPPORTED_CITIES[cityKey] || !map) return;
       if (mfHotspotArmedKey === cityKey) {
         if (mfCityIsLive(cityKey)) {
@@ -2088,6 +2196,7 @@
     }
 
     function mfRedirectToCity(cityKey) {
+      if (mfRequireCookieChoice()) return;
       if (!mfCityIsLive(cityKey)) return;
       var city = MF_SUPPORTED_CITIES[cityKey];
       if (!city || !map) return;
@@ -2107,6 +2216,7 @@
     }
 
     function mfEvalCenterRedirect() {
+      if (mfRequireCookieChoice()) return;
       if (!map) return;
       var k = mfCityKeyAtMapCenter();
       if (k && mfCityIsLive(k)) mfRedirectToCity(k);
@@ -2115,6 +2225,7 @@
     }
 
     function mfPanToCity(key) {
+      if (mfRequireCookieChoice()) return;
       var city = MF_SUPPORTED_CITIES[key];
       if (!city || !map) return;
       try {
@@ -2229,6 +2340,7 @@
     }
 
     function mfApplyCityPick(key) {
+      if (mfRequireCookieChoice()) return;
       if (!MF_SUPPORTED_CITIES[key]) return;
       var inp = document.getElementById('mfCitySearch');
       mfHotspotArmedKey = null;
@@ -2350,7 +2462,57 @@
 
     const MF_COOKIE_SESSION_DECLINED = 'cookieConsentSession';
 
+    function mfCookieChoicePending() {
+      var bar = document.getElementById('mfCookieBar');
+      return !!(bar && bar.classList.contains('is-visible'));
+    }
+
+    function mfPulseCookieBanner() {
+      var card = document.getElementById('mfCookieCard');
+      if (!card) return;
+      card.classList.remove('is-pulse');
+      try {
+        void card.offsetWidth;
+      } catch (_) {}
+      card.classList.add('is-pulse');
+      window.setTimeout(function () {
+        try {
+          card.classList.remove('is-pulse');
+        } catch (_) {}
+      }, 600);
+    }
+
+    /** True if cookie choice still required — pulses banner and blocks leaving Index. */
+    function mfRequireCookieChoice() {
+      if (!mfCookieChoicePending()) return false;
+      mfPulseCookieBanner();
+      return true;
+    }
+
+    /** Block chrome / exit clicks while banner is up; map pan & zoom stay free. */
+    function mfBindCookieGateClicks() {
+      document.addEventListener(
+        'click',
+        function (e) {
+          if (!mfCookieChoicePending()) return;
+          var el = e.target;
+          if (!el || !el.closest) return;
+          if (el.closest('#mfCookieBar')) return;
+          if (el.closest('.maplibregl-ctrl')) return;
+          var interactive = el.closest(
+            'a[href], button, input, select, textarea, label, [role="button"], [role="option"], .mf-hotspot-marker, .mf-city-suggest, .mf-city-combobox'
+          );
+          if (!interactive) return;
+          e.preventDefault();
+          e.stopPropagation();
+          mfPulseCookieBanner();
+        },
+        true
+      );
+    }
+
     function mfConsentAccepted() {
+      if (typeof mfTrack === 'function') mfTrack('cookie_accept');
       try {
         localStorage.setItem(MF_COOKIE_KEY, 'true');
         sessionStorage.removeItem(MF_COOKIE_SESSION_DECLINED);
@@ -2359,12 +2521,12 @@
       if (bar) {
         bar.classList.remove('is-visible');
       }
-      if (typeof mfTrack === 'function') mfTrack('cookie_accept');
       if (typeof window.mfEnableAnalytics === 'function') window.mfEnableAnalytics();
       mfStartGeolocationWatchWhenReady();
     }
 
     function mfConsentDeclined() {
+      if (typeof mfTrack === 'function') mfTrack('cookie_decline');
       /* Decline lasts this browser session only; banner returns next visit until Accept. */
       try {
         sessionStorage.setItem(MF_COOKIE_SESSION_DECLINED, 'declined');
@@ -2381,7 +2543,6 @@
       try {
         sessionStorage.setItem('metrofeedLocationSkipped', '1');
       } catch (_) {}
-      if (typeof mfTrack === 'function') mfTrack('cookie_decline');
     }
 
     function mfBootCookieUi() {
@@ -2398,6 +2559,9 @@
       if (bar) {
         bar.classList.add('is-visible');
         if (typeof mfTrack === 'function') mfTrack('cookie_banner_shown');
+        if (mfPreferNationalFit && map && typeof map.loaded === 'function' && map.loaded()) {
+          mfFitNationalUsa({ duration: 0 });
+        }
       }
     }
 
@@ -2406,9 +2570,20 @@
     mfFillCitySelectModal();
     mfInitMap();
     mfBootCookieUi();
+    mfBindCookieGateClicks();
 
     document.getElementById('mfCookieAccept').addEventListener('click', mfConsentAccepted);
     document.getElementById('mfCookieDecline').addEventListener('click', mfConsentDeclined);
+    (function () {
+      var more = document.getElementById('mfCookieLearnMore');
+      var card = document.getElementById('mfCookieCard');
+      if (!more || !card) return;
+      more.addEventListener('click', function () {
+        var open = card.classList.toggle('is-expanded');
+        more.setAttribute('aria-expanded', open ? 'true' : 'false');
+        more.textContent = open ? '▴ Show less' : '▾ Learn more';
+      });
+    })();
 
     document.getElementById('mfUseMapLocationBtn').addEventListener('click', function () {
       mfHotspotArmedKey = null;
