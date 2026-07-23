@@ -27,6 +27,7 @@ ROOT_FILES = [
     "report.html",
     "dmca.html",
     "mfOpsStats.js",
+    "ops-stats.html",
     "RoamRavenNamelogo.svg",
     "manifestbird.png",
     "favicon.ico",

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>RoamRaven — Operational stats</title>
+  <style>
+    :root {
+      --rr-accent: #9333ea;
+      --rr-accent-hover: #7c3aed;
+      --rr-accent-soft: rgba(147, 51, 234, 0.28);
+      --rr-silver: #e2e8f0;
+      --rr-silver-muted: #94a3b8;
+      --rr-silver-edge: rgba(226, 232, 240, 0.35);
+      --rr-charcoal: #0c0c0e;
+      --rr-panel: rgba(22, 23, 28, 0.96);
+      --rr-raised: #1a1b20;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--rr-silver-muted);
+      background:
+        radial-gradient(ellipse 90% 60% at 50% -10%, rgba(147, 51, 234, 0.22), transparent 55%),
+        linear-gradient(180deg, #121218 0%, var(--rr-charcoal) 100%);
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 64px;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 22px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--rr-silver-edge);
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .brand strong {
+      color: var(--rr-silver);
+      font-size: 1.35rem;
+      letter-spacing: 0.02em;
+    }
+    .brand span { font-size: 0.85rem; }
+    .gate, .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    input[type="password"], select {
+      appearance: none;
+      background: var(--rr-raised);
+      border: 1px solid var(--rr-silver-edge);
+      color: var(--rr-silver);
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-width: 220px;
+      font-size: 0.95rem;
+    }
+    button {
+      appearance: none;
+      border: 1px solid rgba(147, 51, 234, 0.55);
+      background: linear-gradient(180deg, var(--rr-accent-hover), var(--rr-accent));
+      color: #fff;
+      font-weight: 800;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: var(--rr-raised);
+      border-color: var(--rr-silver-edge);
+      color: var(--rr-silver);
+      font-weight: 700;
+    }
+    button:disabled { opacity: 0.55; cursor: wait; }
+    .err {
+      display: none;
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(248, 113, 113, 0.45);
+      background: rgba(127, 29, 29, 0.35);
+      color: #fecaca;
+    }
+    .err.is-on { display: block; }
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; }
+    }
+    .stat-card {
+      background: var(--rr-panel);
+      border: 1px solid var(--rr-silver-edge);
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: inset 0 1px 0 rgba(226, 232, 240, 0.08);
+    }
+    .stat-card .label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--rr-silver-muted);
+    }
+    .stat-card .value {
+      margin-top: 6px;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--rr-silver);
+      line-height: 1.1;
+    }
+    .stat-card .meta {
+      margin-top: 6px;
+      font-size: 0.82rem;
+    }
+    .panel {
+      background: var(--rr-panel);
+      border: 1px solid var(--rr-silver-edge);
+      border-radius: 14px;
+      padding: 16px 18px 18px;
+      margin-bottom: 16px;
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      color: var(--rr-silver);
+      font-size: 1.05rem;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: minmax(140px, 200px) 64px 1fr 48px;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 0;
+      border-top: 1px solid rgba(226, 232, 240, 0.08);
+    }
+    .row:first-of-type { border-top: 0; }
+    .row .name { color: var(--rr-silver); font-weight: 600; font-size: 0.92rem; }
+    .row .count {
+      color: #e9d5ff;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      text-align: right;
+    }
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(226, 232, 240, 0.08);
+      overflow: hidden;
+    }
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--rr-accent-hover), #c084fc);
+      transition: width 0.45s ease;
+    }
+    .pct {
+      font-size: 0.78rem;
+      text-align: right;
+      color: var(--rr-silver-muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      border: 1px solid var(--rr-silver-edge);
+      background: var(--rr-raised);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 0.82rem;
+      color: var(--rr-silver);
+    }
+    .chip strong { color: #e9d5ff; }
+    .hidden { display: none !important; }
+    .footnote {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--rr-silver-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <strong>Operational stats</strong>
+        <span>Anonymous feature counters · America/New_York</span>
+      </div>
+      <form class="gate" id="gateForm">
+        <input id="keyInput" type="password" placeholder="Stats key" autocomplete="current-password" />
+        <button type="submit" id="loadBtn">Load</button>
+        <button type="button" class="secondary hidden" id="refreshBtn">Refresh</button>
+        <button type="button" class="secondary hidden" id="clearBtn">Lock</button>
+      </form>
+    </header>
+
+    <p class="err" id="errBox"></p>
+
+    <div id="dash" class="hidden">
+      <div class="hero">
+        <div class="stat-card">
+          <div class="label">Today</div>
+          <div class="value" id="todayTotal">0</div>
+          <div class="meta" id="todayMeta">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">This month</div>
+          <div class="value" id="monthTotal">0</div>
+          <div class="meta" id="monthMeta">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Lifetime</div>
+          <div class="value" id="lifeTotal">0</div>
+          <div class="meta">All recorded events</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar" style="justify-content: space-between; margin-bottom: 8px;">
+          <h2 style="margin: 0;">Breakdown</h2>
+          <select id="scopeSelect" aria-label="Time scope">
+            <option value="today">Today</option>
+            <option value="month">This month</option>
+            <option value="lifetime" selected>Lifetime</option>
+          </select>
+        </div>
+        <div id="eventRows"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Last 14 days</h2>
+        <div class="chips" id="dayChips"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Recent months</h2>
+        <div class="chips" id="monthChips"></div>
+        <p class="footnote">Totals are anonymous aggregates only — no user IDs, no personal data.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var LABELS = {
+        menu_open: "Menu",
+        weather_open: "Weather",
+        cameras_open: "Cameras",
+        alerts_open: "Alerts",
+        buses_open: "Bus routes",
+        rail_open: "Rail routes",
+        traffic_open: "Traffic overlay",
+        tickets_open: "Tickets",
+        resources_open: "Resources",
+        find_me: "Find Me",
+        trip_go: "Trip Go",
+        cookie_accept: "Cookie accept",
+        cookie_decline: "Cookie decline",
+        city_open_cincinnati: "Open Cincinnati",
+        back_to_national: "Back to national",
+      };
+      var KEY_STORE = "mfOpsStatsKey";
+      var data = null;
+
+      var gateForm = document.getElementById("gateForm");
+      var keyInput = document.getElementById("keyInput");
+      var loadBtn = document.getElementById("loadBtn");
+      var refreshBtn = document.getElementById("refreshBtn");
+      var clearBtn = document.getElementById("clearBtn");
+      var errBox = document.getElementById("errBox");
+      var dash = document.getElementById("dash");
+      var scopeSelect = document.getElementById("scopeSelect");
+
+      function showErr(msg) {
+        errBox.textContent = msg || "";
+        errBox.classList.toggle("is-on", !!msg);
+      }
+
+      function setUnlocked(on) {
+        refreshBtn.classList.toggle("hidden", !on);
+        clearBtn.classList.toggle("hidden", !on);
+        dash.classList.toggle("hidden", !on);
+        keyInput.classList.toggle("hidden", on);
+        loadBtn.classList.toggle("hidden", on);
+      }
+
+      function getKey() {
+        return (keyInput.value || sessionStorage.getItem(KEY_STORE) || "").trim();
+      }
+
+      function countsForScope() {
+        if (!data) return {};
+        var s = scopeSelect.value;
+        if (s === "today") return (data.today && data.today.counts) || {};
+        if (s === "month") return (data.thisMonth && data.thisMonth.counts) || {};
+        return data.lifetime || data.counts || {};
+      }
+
+      function renderRows() {
+        var counts = countsForScope();
+        var max = 0;
+        Object.keys(LABELS).forEach(function (k) {
+          max = Math.max(max, counts[k] || 0);
+        });
+        var html = "";
+        Object.keys(LABELS).forEach(function (k) {
+          var n = counts[k] || 0;
+          var pct = max > 0 ? Math.round((n / max) * 100) : 0;
+          html +=
+            '<div class="row">' +
+            '<div class="name">' + LABELS[k] + "</div>" +
+            '<div class="count">' + n + "</div>" +
+            '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
+            '<div class="pct">' + (max ? pct + "%" : "—") + "</div>" +
+            "</div>";
+        });
+        document.getElementById("eventRows").innerHTML = html;
+      }
+
+      function renderChips() {
+        var days = data.days || [];
+        document.getElementById("dayChips").innerHTML = days
+          .map(function (d) {
+            return (
+              '<div class="chip">' +
+              d.date +
+              ' · <strong>' +
+              (d.total || 0) +
+              "</strong></div>"
+            );
+          })
+          .join("");
+        var months = data.months || [];
+        document.getElementById("monthChips").innerHTML = months
+          .map(function (m) {
+            return (
+              '<div class="chip">' +
+              m.month +
+              ' · <strong>' +
+              (m.total || 0) +
+              "</strong></div>"
+            );
+          })
+          .join("");
+      }
+
+      function render() {
+        if (!data) return;
+        document.getElementById("todayTotal").textContent = String(
+          (data.today && data.today.total) || 0
+        );
+        document.getElementById("todayMeta").textContent =
+          (data.today && data.today.date) || "—";
+        document.getElementById("monthTotal").textContent = String(
+          (data.thisMonth && data.thisMonth.total) || 0
+        );
+        document.getElementById("monthMeta").textContent =
+          (data.thisMonth && data.thisMonth.month) || "—";
+        document.getElementById("lifeTotal").textContent = String(
+          data.lifetimeTotal != null
+            ? data.lifetimeTotal
+            : Object.keys(data.lifetime || data.counts || {}).reduce(function (a, k) {
+                return a + ((data.lifetime || data.counts)[k] || 0);
+              }, 0)
+        );
+        renderRows();
+        renderChips();
+      }
+
+      async function load() {
+        var key = getKey();
+        if (!key) {
+          showErr("Enter your stats key.");
+          return;
+        }
+        showErr("");
+        loadBtn.disabled = true;
+        refreshBtn.disabled = true;
+        try {
+          var res = await fetch("/.netlify/functions/stats", {
+            headers: { "X-MF-Stats-Key": key },
+            cache: "no-store",
+          });
+          var json = await res.json().catch(function () {
+            return null;
+          });
+          if (!res.ok || !json || !json.ok) {
+            showErr(
+              (json && (json.error || json.detail)) ||
+                "Could not load stats (" + res.status + ")."
+            );
+            setUnlocked(false);
+            return;
+          }
+          sessionStorage.setItem(KEY_STORE, key);
+          data = json;
+          setUnlocked(true);
+          render();
+        } catch (e) {
+          showErr("Network error loading stats.");
+          setUnlocked(false);
+        } finally {
+          loadBtn.disabled = false;
+          refreshBtn.disabled = false;
+        }
+      }
+
+      gateForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        load();
+      });
+      refreshBtn.addEventListener("click", load);
+      clearBtn.addEventListener("click", function () {
+        sessionStorage.removeItem(KEY_STORE);
+        keyInput.value = "";
+        data = null;
+        setUnlocked(false);
+        showErr("");
+      });
+      scopeSelect.addEventListener("change", renderRows);
+
+      var saved = sessionStorage.getItem(KEY_STORE);
+      if (saved) {
+        keyInput.value = saved;
+        load();
+      }
+    })();
+  </script>
+</body>
+</html>

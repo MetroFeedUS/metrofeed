@@ -1,6 +1,7 @@
 /**
  * Anonymous aggregate operational stats — POST { "name": "weather_open" }.
- * Functions v2 (default export) so Netlify Blobs auto-configures.
+ * Increments lifetime + America/New_York day + month buckets.
+ * Functions v2 so Netlify Blobs auto-configures.
  */
 import { getStore } from "@netlify/blobs";
 
@@ -26,6 +27,19 @@ const JSON_HEADERS = {
   "Content-Type": "application/json",
   "Cache-Control": "no-store",
 };
+
+function etDayMonth() {
+  const day = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  return { day, month: day.slice(0, 7) };
+}
+
+async function bump(store, key) {
+  const prevRaw = await store.get(key);
+  const prev = parseInt(prevRaw || "0", 10);
+  const next = (Number.isFinite(prev) ? prev : 0) + 1;
+  await store.set(key, String(next));
+  return next;
+}
 
 export default async (req) => {
   if (req.method === "OPTIONS") {
@@ -58,11 +72,11 @@ export default async (req) => {
 
   try {
     const store = getStore("mf-ops-stats");
-    const prevRaw = await store.get(name);
-    const prev = parseInt(prevRaw || "0", 10);
-    const next = (Number.isFinite(prev) ? prev : 0) + 1;
-    await store.set(name, String(next));
-    return new Response(JSON.stringify({ ok: true }), {
+    const { day, month } = etDayMonth();
+    const lifetime = await bump(store, name);
+    await bump(store, "d:" + day + ":" + name);
+    await bump(store, "m:" + month + ":" + name);
+    return new Response(JSON.stringify({ ok: true, lifetime }), {
       status: 200,
       headers: JSON_HEADERS,
     });
