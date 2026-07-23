@@ -19,6 +19,7 @@
     find_me: 1,
     trip_go: 1,
     sponsor_popup: 1,
+    cookie_banner_shown: 1,
     cookie_accept: 1,
     cookie_decline: 1,
     back_to_national: 1,

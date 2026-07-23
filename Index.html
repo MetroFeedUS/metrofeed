@@ -2395,7 +2395,10 @@
         }
       } catch (_) {}
       var bar = document.getElementById('mfCookieBar');
-      if (bar) bar.classList.add('is-visible');
+      if (bar) {
+        bar.classList.add('is-visible');
+        if (typeof mfTrack === 'function') mfTrack('cookie_banner_shown');
+      }
     }
 
     /* ---- Init ---- */

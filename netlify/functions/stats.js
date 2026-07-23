@@ -18,6 +18,7 @@ const EVENT_NAMES = [
   "find_me",
   "trip_go",
   "sponsor_popup",
+  "cookie_banner_shown",
   "cookie_accept",
   "cookie_decline",
   "back_to_national",

@@ -16793,7 +16793,10 @@
       if (sessionStorage.getItem(MF_COOKIE_SESSION_DECLINED) === 'declined') return;
     } catch (_) {}
     var bar = document.getElementById('mfCookieBar');
-    if (bar) bar.classList.add('is-visible');
+    if (bar) {
+      bar.classList.add('is-visible');
+      if (typeof window.mfTrack === 'function') window.mfTrack('cookie_banner_shown');
+    }
   }
 
   function mfWireCookieUi() {
