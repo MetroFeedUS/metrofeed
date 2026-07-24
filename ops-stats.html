@@ -310,6 +310,12 @@
       var LABELS = {
         city_open_cincinnati: "Cincinnati opens",
         sponsor_popup: "Sponsor appreciation",
+        national_map_open: "National map open",
+        national_map_engage: "National map engage",
+        national_search_focus: "National search focus",
+        national_city_focus: "National city focus",
+        national_coming_soon: "National coming soon",
+        national_not_available: "National not available",
         menu_open: "Menu",
         weather_open: "Weather",
         cameras_open: "Cameras",
@@ -328,6 +334,15 @@
       };
       /** Always pinned at top of breakdown (users / return engagement). */
       var PRIMARY_KEYS = ["city_open_cincinnati", "sponsor_popup"];
+      /** National map funnel — pinned under primary metrics. */
+      var NATIONAL_KEYS = [
+        "national_map_open",
+        "national_map_engage",
+        "national_search_focus",
+        "national_city_focus",
+        "national_coming_soon",
+        "national_not_available",
+      ];
       var KEY_STORE = "mfOpsStatsKey";
       var data = null;
       /** null | { kind: 'day'|'month', key: 'YYYY-MM-DD'|'YYYY-MM' } */
@@ -452,12 +467,15 @@
         updateScopeLabel();
         renderPrimaryCards();
         var counts = countsForScope();
-        var primarySet = {};
+        var pinnedSet = {};
         PRIMARY_KEYS.forEach(function (k) {
-          primarySet[k] = 1;
+          pinnedSet[k] = 1;
+        });
+        NATIONAL_KEYS.forEach(function (k) {
+          pinnedSet[k] = 1;
         });
         var rest = Object.keys(LABELS).filter(function (k) {
-          return !primarySet[k];
+          return !pinnedSet[k];
         });
         rest.sort(function (a, b) {
           return (counts[b] || 0) - (counts[a] || 0);
@@ -469,6 +487,10 @@
         var html = "";
         PRIMARY_KEYS.forEach(function (k) {
           html += rowHtml(k, counts[k] || 0, max, true);
+        });
+        html += '<div class="row-divider" aria-hidden="true"></div>';
+        NATIONAL_KEYS.forEach(function (k) {
+          html += rowHtml(k, counts[k] || 0, max, false);
         });
         html += '<div class="row-divider" aria-hidden="true"></div>';
         rest.forEach(function (k) {

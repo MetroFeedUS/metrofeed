@@ -49,7 +49,10 @@
       cookieConsentSession: 1,
       metrofeedLocationSkipped: 1,
       mfNationalView: 1,
-      mfOpsBackToNational: 1
+      mfOpsBackToNational: 1,
+      mfOpsNationalMapOpen: 1,
+      mfOpsNationalEngage: 1,
+      mfOpsNationalSearchFocus: 1
     };
     var _lsSet = localStorage.setItem.bind(localStorage);
     var _ssSet = sessionStorage.setItem.bind(sessionStorage);
@@ -1017,8 +1020,18 @@
     </div>
   </div>
 
-  <script src="/mfOpsStats.js?v=4"></script>
+  <script src="/mfOpsStats.js?v=5"></script>
   <script>
+    /* Count national map open on Index load (once/session). */
+    (function () {
+      try {
+        if (sessionStorage.getItem('mfOpsNationalMapOpen') === '1') return;
+      } catch (_) {}
+      if (typeof mfTrack === 'function') mfTrack('national_map_open');
+      try {
+        sessionStorage.setItem('mfOpsNationalMapOpen', '1');
+      } catch (_) {}
+    })();
     /* Count return-to-national on Index load (city leave beacons were unreliable). */
     (function () {
       try {
@@ -1129,6 +1142,19 @@
     var mfHotspotArmedKey = null;
     var mfHotspotMarkerControls = [];
     var mfCityMarkerZoomBound = false;
+
+    function mfTrackOnceSession(ssKey, eventName) {
+      try {
+        if (sessionStorage.getItem(ssKey) === '1') return;
+        sessionStorage.setItem(ssKey, '1');
+      } catch (_) {}
+      if (typeof mfTrack === 'function') mfTrack(eventName);
+    }
+
+    function mfTrackNationalEngage(e) {
+      if (!e || !e.originalEvent) return;
+      mfTrackOnceSession('mfOpsNationalEngage', 'national_map_engage');
+    }
 
     function mfSyncCityMarkerVisibility() {
       if (!map) return;
@@ -2064,6 +2090,8 @@
       });
       map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
       mfConfigureMapInteractions();
+      map.on('zoomend', mfTrackNationalEngage);
+      map.on('dragend', mfTrackNationalEngage);
 
       const seen = new Set();
       map.on('styleimagemissing', function (e) {
@@ -2228,6 +2256,7 @@
         body.textContent = 'We are building RoamRaven for this area. It is not open to the public yet.';
       }
       mfOverlay('mfComingSoonOverlay', true);
+      if (typeof mfTrack === 'function') mfTrack('national_coming_soon');
     }
 
     function mfOnHotspotCityInteraction(cityKey) {
@@ -2241,6 +2270,7 @@
         mfHotspotArmedKey = null;
       } else {
         mfHotspotArmedKey = cityKey;
+        if (typeof mfTrack === 'function') mfTrack('national_city_focus');
         mfPanToCity(cityKey);
       }
       mfSyncHotspotMarkerArmState();
@@ -2322,7 +2352,10 @@
       var k = mfCityKeyAtMapCenter();
       if (k && mfCityIsLive(k)) mfRedirectToCity(k);
       else if (k && mfCityIsPlanned(k)) mfShowComingSoonOverlay(k);
-      else mfOverlay('mfNotAvailableOverlay', true);
+      else {
+        mfOverlay('mfNotAvailableOverlay', true);
+        if (typeof mfTrack === 'function') mfTrack('national_not_available');
+      }
     }
 
     function mfPanToCity(key) {
@@ -2443,6 +2476,7 @@
       if (!MF_SUPPORTED_CITIES[key]) return;
       var inp = document.getElementById('mfCitySearch');
       mfHotspotArmedKey = null;
+      if (typeof mfTrack === 'function') mfTrack('national_city_focus');
       mfPanToCity(key);
       mfSyncHotspotMarkerArmState();
       mfSyncArmedCountyStates();
@@ -2467,6 +2501,7 @@
 
       inp.addEventListener('focus', function () {
         clearTimeout(closeTimer);
+        mfTrackOnceSession('mfOpsNationalSearchFocus', 'national_search_focus');
         mfRebuildCitySuggestFromInput();
         mfCitySuggestSetOpen(true);
         mfPaintCitySuggestList();

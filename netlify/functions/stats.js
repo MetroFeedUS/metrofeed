@@ -22,6 +22,12 @@ const EVENT_NAMES = [
   "cookie_accept",
   "cookie_decline",
   "back_to_national",
+  "national_map_open",
+  "national_map_engage",
+  "national_search_focus",
+  "national_city_focus",
+  "national_coming_soon",
+  "national_not_available",
 ];
 
 const JSON_HEADERS = {

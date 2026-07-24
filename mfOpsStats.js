@@ -29,6 +29,12 @@
     cookie_accept: 1,
     cookie_decline: 1,
     back_to_national: 1,
+    national_map_open: 1,
+    national_map_engage: 1,
+    national_search_focus: 1,
+    national_city_focus: 1,
+    national_coming_soon: 1,
+    national_not_available: 1,
   };
 
   function mfIsTvMode() {
