@@ -10,6 +10,19 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Anonymous operational stats API (Netlify Functions)
+[[redirects]]
+  from = "/api/event"
+  to = "/.netlify/functions/event"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/stats"
+  to = "/.netlify/functions/stats"
+  status = 200
+  force = true
+
 # Legacy Portland route HTML under Cincinnati — not public Cincinnati routes
 [[redirects]]
   from = "/Cincinnati/pythonbusroutes/*"
@@ -20,6 +33,21 @@
   from = "/Cincinnati/Rail routes/*"
   to = "/Cincinnati/home.html"
   status = 302
+
+# Host-specific crawl files (same publish dir, two brands)
+[[redirects]]
+  from = "/robots.txt"
+  to = "/metrofeedus-robots.txt"
+  status = 200
+  force = true
+  conditions = {Host = ["metrofeedus.com", "www.metrofeedus.com"]}
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/metrofeedus-sitemap.xml"
+  status = 200
+  force = true
+  conditions = {Host = ["metrofeedus.com", "www.metrofeedus.com"]}
 
 # --- metrofeedus.com → corporate homepage (must beat default Index.html) ---
 [[redirects]]
