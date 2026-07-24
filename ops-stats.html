@@ -98,11 +98,14 @@
     .err.is-on { display: block; }
     .hero {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 22px;
     }
-    @media (max-width: 800px) {
+    @media (max-width: 1000px) {
+      .hero { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
       .hero { grid-template-columns: 1fr; }
     }
     .stat-card {
@@ -128,6 +131,29 @@
     .stat-card .meta {
       margin-top: 6px;
       font-size: 0.82rem;
+    }
+    .stat-card.is-primary {
+      border-color: rgba(147, 51, 234, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(226, 232, 240, 0.08),
+        0 0 0 1px rgba(147, 51, 234, 0.2);
+      background: linear-gradient(165deg, rgba(147, 51, 234, 0.18), var(--rr-panel) 55%);
+    }
+    .stat-card.is-primary .label { color: #e9d5ff; }
+    .stat-card.is-primary .value { color: #fff; }
+    .row.is-primary {
+      background: rgba(147, 51, 234, 0.1);
+      margin: 0 -10px;
+      padding-left: 10px;
+      padding-right: 10px;
+      border-radius: 10px;
+      border-top: 0;
+    }
+    .row.is-primary .name { color: #e9d5ff; font-weight: 800; }
+    .row-divider {
+      height: 1px;
+      margin: 10px 0 4px;
+      background: rgba(226, 232, 240, 0.14);
     }
     .panel {
       background: var(--rr-panel);
@@ -231,20 +257,25 @@
 
     <div id="dash" class="hidden">
       <div class="hero">
+        <div class="stat-card is-primary">
+          <div class="label">Cincinnati opens</div>
+          <div class="value" id="primaryCityOpen">0</div>
+          <div class="meta" id="primaryCityOpenMeta">Users · follows scope</div>
+        </div>
+        <div class="stat-card is-primary">
+          <div class="label">Sponsor appreciation</div>
+          <div class="value" id="primarySponsor">0</div>
+          <div class="meta" id="primarySponsorMeta">Return / engagement · follows scope</div>
+        </div>
         <div class="stat-card">
-          <div class="label">Today</div>
+          <div class="label">Today (all events)</div>
           <div class="value" id="todayTotal">0</div>
           <div class="meta" id="todayMeta">—</div>
         </div>
         <div class="stat-card">
-          <div class="label">This month</div>
-          <div class="value" id="monthTotal">0</div>
-          <div class="meta" id="monthMeta">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Lifetime</div>
-          <div class="value" id="lifeTotal">0</div>
-          <div class="meta">All recorded events</div>
+          <div class="label">Cookie funnel</div>
+          <div class="value" id="cookieFunnelValue">—</div>
+          <div class="meta" id="cookieFunnelMeta">Accept rate · follows scope</div>
         </div>
       </div>
 
@@ -277,7 +308,8 @@
   <script>
     (function () {
       var LABELS = {
-        city_open_cincinnati: "Open Cincinnati",
+        city_open_cincinnati: "Cincinnati opens",
+        sponsor_popup: "Sponsor appreciation",
         menu_open: "Menu",
         weather_open: "Weather",
         cameras_open: "Cameras",
@@ -289,12 +321,13 @@
         resources_open: "Resources",
         find_me: "Find Me",
         trip_go: "Trip Go",
-        sponsor_popup: "Sponsor appreciation",
         cookie_banner_shown: "Cookie banner shown",
         cookie_accept: "Cookie accept",
         cookie_decline: "Cookie decline",
         back_to_national: "Back to national",
       };
+      /** Always pinned at top of breakdown (users / return engagement). */
+      var PRIMARY_KEYS = ["city_open_cincinnati", "sponsor_popup"];
       var KEY_STORE = "mfOpsStatsKey";
       var data = null;
       /** null | { kind: 'day'|'month', key: 'YYYY-MM-DD'|'YYYY-MM' } */
@@ -371,24 +404,75 @@
         }
       }
 
+      function scopeMetaText() {
+        if (customScope && customScope.kind === "day") return customScope.key;
+        if (customScope && customScope.kind === "month") return customScope.key;
+        var s = scopeSelect.value;
+        if (s === "today") return (data.today && data.today.date) || "Today";
+        if (s === "month") return (data.thisMonth && data.thisMonth.month) || "This month";
+        return "Lifetime";
+      }
+
+      function renderPrimaryCards() {
+        var counts = countsForScope();
+        var meta = scopeMetaText();
+        var cityEl = document.getElementById("primaryCityOpen");
+        var sponsorEl = document.getElementById("primarySponsor");
+        var cityMeta = document.getElementById("primaryCityOpenMeta");
+        var sponsorMeta = document.getElementById("primarySponsorMeta");
+        if (cityEl) cityEl.textContent = String(counts.city_open_cincinnati || 0);
+        if (sponsorEl) sponsorEl.textContent = String(counts.sponsor_popup || 0);
+        if (cityMeta) cityMeta.textContent = "Users · " + meta;
+        if (sponsorMeta) sponsorMeta.textContent = "Return / engagement · " + meta;
+      }
+
+      function rowHtml(k, n, max, primary) {
+        var pct = max > 0 ? Math.round((n / max) * 100) : 0;
+        return (
+          '<div class="row' +
+          (primary ? " is-primary" : "") +
+          '">' +
+          '<div class="name">' +
+          LABELS[k] +
+          "</div>" +
+          '<div class="count">' +
+          n +
+          "</div>" +
+          '<div class="bar"><span style="width:' +
+          pct +
+          '%"></span></div>' +
+          '<div class="pct">' +
+          (max ? pct + "%" : "—") +
+          "</div>" +
+          "</div>"
+        );
+      }
+
       function renderRows() {
         updateScopeLabel();
+        renderPrimaryCards();
         var counts = countsForScope();
+        var primarySet = {};
+        PRIMARY_KEYS.forEach(function (k) {
+          primarySet[k] = 1;
+        });
+        var rest = Object.keys(LABELS).filter(function (k) {
+          return !primarySet[k];
+        });
+        rest.sort(function (a, b) {
+          return (counts[b] || 0) - (counts[a] || 0);
+        });
         var max = 0;
         Object.keys(LABELS).forEach(function (k) {
           max = Math.max(max, counts[k] || 0);
         });
         var html = "";
-        Object.keys(LABELS).forEach(function (k) {
-          var n = counts[k] || 0;
-          var pct = max > 0 ? Math.round((n / max) * 100) : 0;
-          html +=
-            '<div class="row">' +
-            '<div class="name">' + LABELS[k] + "</div>" +
-            '<div class="count">' + n + "</div>" +
-            '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
-            '<div class="pct">' + (max ? pct + "%" : "—") + "</div>" +
-            "</div>";
+        PRIMARY_KEYS.forEach(function (k) {
+          html += rowHtml(k, counts[k] || 0, max, true);
+        });
+        html += '<div class="row-divider" aria-hidden="true"></div>';
+        rest.forEach(function (k) {
+          html += rowHtml(k, counts[k] || 0, max, false);
         });
         document.getElementById("eventRows").innerHTML = html;
       }
@@ -396,6 +480,7 @@
       function setCustomScope(kind, key) {
         customScope = { kind: kind, key: key };
         renderRows();
+        renderCookieFunnel();
         renderChips();
         try {
           document.getElementById("eventRows").scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -405,6 +490,7 @@
       function clearCustomScope() {
         customScope = null;
         renderRows();
+        renderCookieFunnel();
         renderChips();
       }
 
@@ -464,6 +550,28 @@
         setCustomScope(kind, key);
       }
 
+      function renderCookieFunnel() {
+        var counts = countsForScope();
+        var shown = counts.cookie_banner_shown || 0;
+        var accept = counts.cookie_accept || 0;
+        var decline = counts.cookie_decline || 0;
+        var decided = accept + decline;
+        var rate = shown > 0 ? Math.round((accept / shown) * 100) : null;
+        var el = document.getElementById("cookieFunnelValue");
+        var meta = document.getElementById("cookieFunnelMeta");
+        if (el) el.textContent = rate == null ? "—" : rate + "%";
+        if (meta) {
+          meta.textContent =
+            "Shown " +
+            shown +
+            " · Accept " +
+            accept +
+            " · Decline " +
+            decline +
+            (shown > decided ? " · Open " + (shown - decided) : "");
+        }
+      }
+
       function render() {
         if (!data) return;
         document.getElementById("todayTotal").textContent = String(
@@ -471,19 +579,8 @@
         );
         document.getElementById("todayMeta").textContent =
           (data.today && data.today.date) || "—";
-        document.getElementById("monthTotal").textContent = String(
-          (data.thisMonth && data.thisMonth.total) || 0
-        );
-        document.getElementById("monthMeta").textContent =
-          (data.thisMonth && data.thisMonth.month) || "—";
-        document.getElementById("lifeTotal").textContent = String(
-          data.lifetimeTotal != null
-            ? data.lifetimeTotal
-            : Object.keys(data.lifetime || data.counts || {}).reduce(function (a, k) {
-                return a + ((data.lifetime || data.counts)[k] || 0);
-              }, 0)
-        );
         renderRows();
+        renderCookieFunnel();
         renderChips();
       }
 
@@ -541,6 +638,7 @@
       scopeSelect.addEventListener("change", function () {
         customScope = null;
         renderRows();
+        renderCookieFunnel();
         renderChips();
       });
       document.getElementById("dayChips").addEventListener("click", onChipClick);

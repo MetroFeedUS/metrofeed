@@ -56,7 +56,8 @@ export default async (req) => {
 
   let name = "";
   try {
-    const body = await req.json();
+    const raw = await req.text();
+    const body = raw ? JSON.parse(raw) : null;
     name = body && body.name != null ? String(body.name).trim() : "";
   } catch (_) {
     return new Response(JSON.stringify({ error: "bad_json" }), {

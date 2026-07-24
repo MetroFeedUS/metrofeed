@@ -48,7 +48,8 @@
     var SS_ALLOW = {
       cookieConsentSession: 1,
       metrofeedLocationSkipped: 1,
-      mfNationalView: 1
+      mfNationalView: 1,
+      mfOpsBackToNational: 1
     };
     var _lsSet = localStorage.setItem.bind(localStorage);
     var _ssSet = sessionStorage.setItem.bind(sessionStorage);
@@ -1016,7 +1017,19 @@
     </div>
   </div>
 
-  <script src="/mfOpsStats.js?v=2"></script>
+  <script src="/mfOpsStats.js?v=4"></script>
+  <script>
+    /* Count return-to-national on Index load (city leave beacons were unreliable). */
+    (function () {
+      try {
+        if (sessionStorage.getItem('mfOpsBackToNational') !== '1') return;
+        sessionStorage.removeItem('mfOpsBackToNational');
+      } catch (_) {
+        return;
+      }
+      if (typeof mfTrack === 'function') mfTrack('back_to_national');
+    })();
+  </script>
   <script>
     const MF_COOKIE_KEY = 'cookieConsent';
     const MF_STATES_TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
@@ -2295,7 +2308,6 @@
         var z = map.getZoom();
         sessionStorage.setItem('mfNationalView', JSON.stringify({ center: [c.lng, c.lat], zoom: z }));
       } catch (_) {}
-      if (cityKey === 'cincinnati' && typeof mfTrack === 'function') mfTrack('city_open_cincinnati');
       window.location.href = city.href + '?from=national';
     }
 
