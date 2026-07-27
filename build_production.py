@@ -4,13 +4,15 @@ Run from the repository root:
     python build_production.py
 
 Only files explicitly listed below, Cincinnati SVG assets, route JSON, and the
-camera fallback are copied. Development tools and unreleased city folders stay
-outside dist/ and therefore cannot be served by Netlify.
+camera fallback are copied. Development tools and unreleased *real-name* city
+folders stay outside dist/. Obscure in-dev city shells (tooltime, Browns, …)
+are allowlisted so they can be previewed by URL without unlocking Index.
 """
 
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -100,6 +102,22 @@ CINCINNATI_FILES = [
     "obs-live-badge.css",
 ]
 
+# In-dev city shells: obscure public paths (not linked from Index).
+# folder name on disk → routes_index.js top-level key used by getCityIdFromPath().
+DEV_CITY_SHELLS = [
+    ("tooltime", "tooltime", "allen"),
+    ("Browns", "browns", "cleveland"),
+    ("Bluejackets", "bluejackets", "columbus"),
+    ("Hotdog", "hotdog", "toledo"),
+    ("Stoops", "stoops", "youngstown"),
+]
+
+DEV_CITY_SHELL_FILES = [
+    "home.html",
+    "routes_index.js",
+    "routes_index.lazy.js",
+]
+
 # If a referenced asset is removed later, this list keeps the warning explicit
 # even when the asset is not otherwise required by a newly added page.
 KNOWN_MISSING_ASSETS = [
@@ -158,6 +176,50 @@ def copy_json_directory(source_relative: str, destination_relative: str) -> int:
     return count
 
 
+def rewrite_routes_index_key(text: str, path_key: str, build_key: str) -> str:
+    """Make ROUTES[getCityIdFromPath()] resolve for obscure folders."""
+    if f'"{path_key}"' in text and re.search(
+        rf'window\.ROUTES\s*=\s*\{{\s*"{re.escape(path_key)}"', text
+    ):
+        return text
+    rewritten = re.sub(
+        rf'(window\.ROUTES\s*=\s*\{{\s*)"{re.escape(build_key)}"',
+        rf'\1"{path_key}"',
+        text,
+        count=1,
+    )
+    if rewritten == text:
+        raise RuntimeError(
+            f'Could not rewrite routes_index key "{build_key}" → "{path_key}"'
+        )
+    return rewritten
+
+
+def copy_dev_city_shell(folder: str, path_key: str, build_key: str) -> int:
+    """Copy an obscure in-dev city shell into dist/ (home + indexes + route JSON)."""
+    source_root = ROOT / folder
+    if not source_root.is_dir():
+        raise FileNotFoundError(f"Dev city shell folder missing: {folder}")
+
+    for name in DEV_CITY_SHELL_FILES:
+        source = source_root / name
+        if not source.is_file():
+            if name == "routes_index.lazy.js":
+                continue
+            raise FileNotFoundError(f"Required shell file missing: {folder}/{name}")
+        destination = DIST / folder / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if name == "routes_index.js":
+            text = rewrite_routes_index_key(
+                source.read_text(encoding="utf-8"), path_key, build_key
+            )
+            destination.write_text(text, encoding="utf-8", newline="\n")
+        else:
+            shutil.copy2(source, destination)
+
+    return copy_json_directory(f"{folder}/route_data", f"{folder}/route_data")
+
+
 def verify_exclusions() -> None:
     forbidden_names = {
         "admin.html",
@@ -170,25 +232,34 @@ def verify_exclusions() -> None:
         "obs-route-tv.html",
     }
     forbidden_suffixes = {".md", ".py", ".ps1"}
+    # Real city names must not ship under guessable paths. Obscure shells are OK.
     forbidden_parts = {
-        "bluejackets",
-        "Columbus",
         "Allen",
+        "Cleveland",
+        "Columbus",
         "Toledo",
         "Youngstown",
+        "Boston",
+        "Portland",
+        "Louisville",
         "pythonbusroutes",
         "Rail routes",
     }
+    allowed_dev_roots = {folder for folder, _, _ in DEV_CITY_SHELLS}
 
     violations: list[str] = []
     for path in DIST.rglob("*"):
         if not path.is_file():
             continue
         relative = path.relative_to(DIST)
+        parts = relative.parts
+        if parts and parts[0] in allowed_dev_roots:
+            # Dev shells may only contain the allowlisted page/index/route JSON.
+            continue
         if (
             path.name in forbidden_names
             or path.suffix.lower() in forbidden_suffixes
-            or any(part in forbidden_parts for part in relative.parts)
+            or any(part in forbidden_parts for part in parts)
         ):
             violations.append(relative.as_posix())
 
@@ -208,15 +279,28 @@ def clear_dist() -> None:
         return
     except OSError:
         stale = ROOT / f".dist_stale_{os.getpid()}"
-        if stale.exists():
+        try:
+            if stale.exists():
+                shutil.rmtree(stale, ignore_errors=True)
+            DIST.rename(stale)
             shutil.rmtree(stale, ignore_errors=True)
-        DIST.rename(stale)
-        shutil.rmtree(stale, ignore_errors=True)
+            return
+        except OSError:
+            # Folder handle still open (preview server cwd) — wipe children only.
+            for child in list(DIST.iterdir()):
+                try:
+                    if child.is_dir():
+                        shutil.rmtree(child, ignore_errors=True)
+                    else:
+                        child.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            return
 
 
 def main() -> None:
     clear_dist()
-    DIST.mkdir()
+    DIST.mkdir(exist_ok=True)
 
     for relative_path in ROOT_FILES:
         copy_required(relative_path)
@@ -245,12 +329,19 @@ def main() -> None:
         "Cincinnati/data/cameras.json",
     )
 
+    dev_route_count = 0
+    for folder, path_key, build_key in DEV_CITY_SHELLS:
+        n = copy_dev_city_shell(folder, path_key, build_key)
+        dev_route_count += n
+        print(f"  Dev shell {folder}/ -> {n} route JSON (ROUTES key {build_key}->{path_key})")
+
     verify_exclusions()
 
     file_count = sum(1 for path in DIST.rglob("*") if path.is_file())
     print(
         f"Production build complete: {file_count} files "
-        f"({route_count} route JSON files, {svg_count} SVG assets)."
+        f"({route_count} Cincinnati + {dev_route_count} dev-shell route JSON, "
+        f"{svg_count} SVG assets)."
     )
 
     missing = [path for path in KNOWN_MISSING_ASSETS if not (ROOT / path).exists()]

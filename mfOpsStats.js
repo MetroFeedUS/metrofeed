@@ -13,6 +13,11 @@
   var ENDPOINT = "/.netlify/functions/event";
   var ALLOWED = {
     city_open_cincinnati: 1,
+    city_open_tooltime: 1,
+    city_open_browns: 1,
+    city_open_bluejackets: 1,
+    city_open_hotdog: 1,
+    city_open_stoops: 1,
     menu_open: 1,
     weather_open: 1,
     cameras_open: 1,
