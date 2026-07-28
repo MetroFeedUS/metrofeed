@@ -129,7 +129,7 @@ const translations = {
     "tg_board_around": "Board around {time}",
     "tg_arrive_around": "Arrive around {time}",
     "tg_cancel_confirm": "Are you sure you want to cancel your trip?",
-    "ada_resources": "ADA, Deaf & Official Resources",
+    "ada_resources": "ADA & Official Resources",
     "otp_loading": "Loading trip options...",
 
     // Sponsor modal
@@ -138,9 +138,9 @@ const translations = {
     "sponsor_modal_visit": "Visit MetroFeed — metrofeedus.com",
     "sponsor_logo_alt": "MetroFeed sponsor — visit metrofeedus.com",
 
-    // Resources page (ADA / Deaf / official links)
-    "resources_page_title": "ADA, Deaf & Official Resources - RoamRaven",
-    "resources_heading": "ADA, Deaf & Official Resources",
+    // Resources page (ADA / official links)
+    "resources_page_title": "ADA & Official Resources - RoamRaven",
+    "resources_heading": "ADA & Official Resources",
     "resources_intro": "Official links and accessibility resources for RoamRaven users, including deaf and hard-of-hearing riders.",
     "resources_disclaimer": "RoamRaven is an independent service and is not affiliated with, endorsed by, or partnered with the organizations listed below. These links are provided for convenience and direct access to official information.",
     "resources_section_sorta": "SORTA/METRO",
@@ -261,7 +261,13 @@ const translations = {
     "trafficCamerasTitle": "Live Traffic Cameras – RoamRaven Cincinnati",
     "liveTrafficCameras": "Live Traffic Cameras – Cincinnati, OH",
     "cameraCourtesy": "Camera courtesy of OHGO",
-    "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of OHGO."
+    "cameraDisclaimer": "Camera images are still frames updated periodically and may not reflect real-time traffic. All images courtesy of OHGO.",
+
+    // Spanish WIP notice (shown when ES is selected)
+    "esWipNoticeTitle": "Spanish / Español",
+    "esWipNoticeBody": "Spanish is a work in progress.\n\nSome parts of RoamRaven may still appear in English, and some translations may be incomplete or inaccurate.\n\nThe English version is the official version of RoamRaven.\n\nWe appreciate your feedback as we continue improving the Spanish experience.",
+    "esWipNoticeBodyEs": "El español es un trabajo en progreso.\n\nAlgunas partes de RoamRaven pueden seguir apareciendo en inglés, y algunas traducciones pueden estar incompletas o ser inexactas.\n\nLa versión en inglés es la versión oficial de RoamRaven.\n\nAgradecemos tus comentarios mientras seguimos mejorando la experiencia en español.",
+    "esWipNoticeOk": "Got it / Entendido"
   },
   
   es: {
@@ -387,7 +393,7 @@ const translations = {
     "tg_board_around": "Sube alrededor de las {time}",
     "tg_arrive_around": "Llega alrededor de las {time}",
     "tg_cancel_confirm": "¿Seguro que quieres cancelar tu viaje?",
-    "ada_resources": "ADA, Sordos y Recursos Oficiales",
+    "ada_resources": "ADA y Recursos Oficiales",
     "otp_loading": "Cargando opciones de viaje...",
 
     // Sponsor modal
@@ -396,9 +402,9 @@ const translations = {
     "sponsor_modal_visit": "Visitar MetroFeed — metrofeedus.com",
     "sponsor_logo_alt": "Patrocinador MetroFeed — visite metrofeedus.com",
 
-    // Resources page (ADA / Deaf / official links)
-    "resources_page_title": "ADA, Sordos y Recursos Oficiales - RoamRaven",
-    "resources_heading": "ADA, Sordos y Recursos Oficiales",
+    // Resources page (ADA / official links)
+    "resources_page_title": "ADA y Recursos Oficiales - RoamRaven",
+    "resources_heading": "ADA y Recursos Oficiales",
     "resources_intro": "Enlaces oficiales y recursos de accesibilidad para usuarios de RoamRaven, incluidos pasajeros sordos o con dificultad auditiva.",
     "resources_disclaimer": "RoamRaven es un servicio independiente y no está afiliado, respaldado ni asociado con las organizaciones que se enumeran a continuación. Estos enlaces se ofrecen por conveniencia y acceso directo a información oficial.",
     "resources_section_sorta": "SORTA/METRO",
@@ -518,7 +524,13 @@ const translations = {
     "trafficCamerasTitle": "Cámaras de Tráfico en Vivo – RoamRaven Cincinnati",
     "liveTrafficCameras": "Cámaras de Tráfico en Vivo – Cincinnati, OH",
     "cameraCourtesy": "Cámara cortesía de OHGO",
-    "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía de OHGO."
+    "cameraDisclaimer": "Las imágenes de las cámaras son fotogramas fijos actualizados periódicamente y pueden no reflejar el tráfico en tiempo real. Todas las imágenes son cortesía de OHGO.",
+
+    // Spanish WIP notice (shown when ES is selected)
+    "esWipNoticeTitle": "Spanish / Español",
+    "esWipNoticeBody": "Spanish is a work in progress.\n\nSome parts of RoamRaven may still appear in English, and some translations may be incomplete or inaccurate.\n\nThe English version is the official version of RoamRaven.\n\nWe appreciate your feedback as we continue improving the Spanish experience.",
+    "esWipNoticeBodyEs": "El español es un trabajo en progreso.\n\nAlgunas partes de RoamRaven pueden seguir apareciendo en inglés, y algunas traducciones pueden estar incompletas o ser inexactas.\n\nLa versión en inglés es la versión oficial de RoamRaven.\n\nAgradecemos tus comentarios mientras seguimos mejorando la experiencia en español.",
+    "esWipNoticeOk": "Got it / Entendido"
   }
 };
 
@@ -622,13 +634,77 @@ function updatePageLanguage() {
   } catch (_) {}
 }
 
+function showSpanishWipNotice() {
+  try {
+    if (sessionStorage.getItem('metrofeed_es_wip_notice_shown') === '1') return;
+    if (document.getElementById('mfEsWipNotice')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'mfEsWipNotice';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'mfEsWipNoticeTitle');
+    overlay.style.cssText =
+      'position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;' +
+      'padding:16px;box-sizing:border-box;background:rgba(0,0,0,0.55);';
+
+    const card = document.createElement('div');
+    card.style.cssText =
+      'max-width:420px;width:100%;background:#111;color:#eee;border:1px solid #444;border-radius:10px;' +
+      'padding:1.1rem 1.2rem;box-shadow:0 12px 40px rgba(0,0,0,0.45);font-family:inherit;';
+
+    const title = document.createElement('div');
+    title.id = 'mfEsWipNoticeTitle';
+    title.style.cssText = 'font-weight:700;font-size:1.05rem;margin-bottom:0.75rem;color:#fff;';
+    title.textContent = translations.en.esWipNoticeTitle || 'Spanish / Español';
+
+    const bodyEn = document.createElement('p');
+    bodyEn.style.cssText = 'margin:0 0 0.75rem;font-size:0.92rem;line-height:1.45;color:#ddd;white-space:pre-line;';
+    bodyEn.textContent = translations.en.esWipNoticeBody || translateText('esWipNoticeBody');
+
+    const bodyEs = document.createElement('p');
+    bodyEs.style.cssText = 'margin:0 0 1rem;font-size:0.92rem;line-height:1.45;color:#bbb;white-space:pre-line;';
+    bodyEs.textContent = translations.es.esWipNoticeBodyEs || translations.en.esWipNoticeBodyEs || '';
+
+    const okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.style.cssText =
+      'width:100%;padding:0.65rem 1rem;border:none;border-radius:8px;cursor:pointer;' +
+      'background:var(--rr-accent,#9333ea);color:#fff;font-weight:700;font-size:0.95rem;';
+    okBtn.textContent = translations.en.esWipNoticeOk || 'Got it / Entendido';
+
+    const dismiss = () => {
+      try {
+        sessionStorage.setItem('metrofeed_es_wip_notice_shown', '1');
+      } catch (_) {}
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
+
+    okBtn.addEventListener('click', dismiss);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) dismiss();
+    });
+
+    card.appendChild(title);
+    card.appendChild(bodyEn);
+    card.appendChild(bodyEs);
+    card.appendChild(okBtn);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+  } catch (_) {}
+}
+
 function setLanguage(lang) {
   if (!translations[lang]) {
     lang = 'en';
   }
+  const previous = currentLanguage;
   currentLanguage = lang;
   localStorage.setItem('metrofeed_language', lang);
   updatePageLanguage();
+  if (lang === 'es' && previous !== 'es') {
+    showSpanishWipNotice();
+  }
 }
 
 // SIMPLE DROPDOWN FUNCTION - THIS IS ALL WE NEED
