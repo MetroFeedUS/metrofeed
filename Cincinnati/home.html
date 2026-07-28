@@ -3874,10 +3874,26 @@
           <input type="radio" id="departNow" name="departureType" value="now" checked style="margin: 0;">
           <label for="departNow" style="margin: 0; color: #fff;" data-translate="depart_now">Depart Now</label>
         </div>
-        <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
           <input type="radio" id="departTime" name="departureType" value="time" style="margin: 0;">
           <label for="departTime" style="margin: 0; color: #fff;">Depart At:</label>
-          <input type="time" id="departureTime" style="padding: 0.3rem; background: #fff; color: #000; border: 1px solid var(--rr-accent); border-radius: 4px; font-family: 'Courier New', monospace; font-size: 1rem; -webkit-appearance: none; -moz-appearance: none; appearance: none;" disabled>
+          <span id="departureTimePickers" style="display: inline-flex; gap: 0.35rem; align-items: center;">
+            <select id="departureHour" aria-label="Hour" disabled style="padding: 0.35rem 0.4rem; background: #fff; color: #000; border: 1px solid var(--rr-accent); border-radius: 4px; font-size: 0.95rem;">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+              <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            </select>
+            <span style="color:#fff;font-weight:700;">:</span>
+            <select id="departureMinute" aria-label="Minute" disabled style="padding: 0.35rem 0.4rem; background: #fff; color: #000; border: 1px solid var(--rr-accent); border-radius: 4px; font-size: 0.95rem;">
+              <option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option>
+              <option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option>
+              <option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
+            </select>
+            <select id="departureAmPm" aria-label="AM or PM" disabled style="padding: 0.35rem 0.4rem; background: #fff; color: #000; border: 1px solid var(--rr-accent); border-radius: 4px; font-size: 0.95rem;">
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </span>
         </div>
       </div>
       
@@ -16184,7 +16200,9 @@
     
     const maxWalkDistance = document.getElementById('maxWalkDistance').value;
     const departureType = document.querySelector('input[name="departureType"]:checked').value;
-    const departureTime = document.getElementById('departureTime').value;
+    const departureTime = (typeof window.getOtpDepartureTimeValue === 'function')
+      ? window.getOtpDepartureTimeValue()
+      : '';
     
     const modeBus = document.getElementById('modeBus').checked;
     const modeRail = document.getElementById('modeRail').checked;
@@ -16906,21 +16924,86 @@
     setupButtonEventListeners();
     setupFindMeButton();
     
-    // Departure Time Radio Button Listeners
+    // Departure Time Radio Button Listeners + hour/minute/AM-PM dropdowns
+    window.getOtpDepartureTimeValue = function getOtpDepartureTimeValue() {
+      const hourEl = document.getElementById('departureHour');
+      const minEl = document.getElementById('departureMinute');
+      const ampmEl = document.getElementById('departureAmPm');
+      if (!hourEl || !minEl || !ampmEl) return '';
+      let h = parseInt(hourEl.value, 10);
+      const m = String(minEl.value || '00').padStart(2, '0');
+      const ap = String(ampmEl.value || 'AM').toUpperCase();
+      if (!isFinite(h) || h < 1 || h > 12) return '';
+      if (ap === 'AM') {
+        if (h === 12) h = 0;
+      } else {
+        if (h !== 12) h += 12;
+      }
+      return String(h).padStart(2, '0') + ':' + m;
+    };
+
+    window.setOtpDepartureDropdownsFromNow = function setOtpDepartureDropdownsFromNow() {
+      const hourEl = document.getElementById('departureHour');
+      const minEl = document.getElementById('departureMinute');
+      const ampmEl = document.getElementById('departureAmPm');
+      if (!hourEl || !minEl || !ampmEl) return;
+      const now = new Date();
+      let h24 = now.getHours();
+      let mins = now.getMinutes();
+      // Round up to next 5 minutes
+      mins = Math.ceil(mins / 5) * 5;
+      if (mins >= 60) {
+        mins = 0;
+        h24 = (h24 + 1) % 24;
+      }
+      const ap = h24 >= 12 ? 'PM' : 'AM';
+      let h12 = h24 % 12;
+      if (h12 === 0) h12 = 12;
+      hourEl.value = String(h12);
+      minEl.value = String(mins).padStart(2, '0');
+      ampmEl.value = ap;
+    };
+
     const departNowRadio = document.getElementById('departNow');
     const departTimeRadio = document.getElementById('departTime');
-    const departureTimeInput = document.getElementById('departureTime');
-    
-    if (departNowRadio && departTimeRadio && departureTimeInput) {
+    const departPickers = ['departureHour', 'departureMinute', 'departureAmPm']
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    function setDepartPickersEnabled(on) {
+      departPickers.forEach((el) => { el.disabled = !on; });
+    }
+
+    if (departNowRadio && departTimeRadio && departPickers.length) {
+      window.setOtpDepartureDropdownsFromNow();
+      setDepartPickersEnabled(false);
+
       departNowRadio.addEventListener('change', function() {
-        departureTimeInput.disabled = true;
+        setDepartPickersEnabled(false);
       });
-      
+
       departTimeRadio.addEventListener('change', function() {
-        departureTimeInput.disabled = false;
+        window.setOtpDepartureDropdownsFromNow();
+        setDepartPickersEnabled(true);
       });
-      
-      console.log('[DOMContentLoaded] Departure time radio button listeners added');
+
+      // Tapping a dropdown switches to "Depart At"
+      departPickers.forEach((el) => {
+        el.addEventListener('focus', function() {
+          if (departTimeRadio && !departTimeRadio.checked) {
+            departTimeRadio.checked = true;
+            setDepartPickersEnabled(true);
+          }
+        });
+        el.addEventListener('change', function() {
+          if (departTimeRadio && !departTimeRadio.checked) {
+            departTimeRadio.checked = true;
+            setDepartPickersEnabled(true);
+          }
+        });
+      });
+
+      console.log('[DOMContentLoaded] Departure time dropdown listeners added');
     }
     
     console.log('[DOMContentLoaded] Map and event listeners initialization complete');
