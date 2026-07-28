@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portland, OR Rail Routes - MetroFeed</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #cccccc;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      padding: 1rem;
+      text-align: center;
+      border-top: 4px solid #4dd0e1;
+      border-bottom: 4px solid #4dd0e1;
+    }
+
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    main {
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    h2 {
+      color: #f0f0f0;
+      margin-bottom: 1rem;
+    }
+
+    .route-list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .route-entry {
+      background-color: #1e1e1e;
+      color: #ffffff;
+      border-radius: 10px;
+      margin: 0.5rem 0;
+      padding: 0.8rem 1.2rem;
+      width: 90%;
+      max-width: 340px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* Line Colors */
+    .red-line { box-shadow: 0 0 10px #ff0000; }
+    .blue-line { box-shadow: 0 0 10px #0071ce; }
+    .yellow-line { box-shadow: 0 0 10px #ffcc00; }
+    .green-line { box-shadow: 0 0 10px #00cc66; }
+    .orange-line { box-shadow: 0 0 10px #ff6600; }
+    .silver-line { box-shadow: 0 0 10px #cccccc; }
+
+    .direction-buttons {
+      margin-top: 0.5rem;
+    }
+
+    .direction-link {
+      display: inline-block;
+      background-color: #1e1e1e;
+      color: #4dd0e1;
+      font-weight: bold;
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      margin: 0.2rem 0;
+      text-decoration: none;
+      box-shadow: 0 0 5px #4dd0e1;
+    }
+
+    .direction-link:hover {
+      background-color: #4dd0e1;
+      color: #0d0d0d;
+    }
+
+    .site-footer {
+      text-align: center;
+      margin-top: 2rem;
+      margin-bottom: 120px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .site-footer a {
+      color: #4dd0e1;
+      text-decoration: none;
+    }
+
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* BACK BUTTON */
+    .back-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
+      background-color: #4dd0e1;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      box-shadow: 0 0 10px #4dd0e1;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
+    }
+    .back-button:active, .back-button:focus {
+      background-color: #1976d2;
+    }
+    .back-button svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      display: block;
+    }
+    .back-button:active svg,
+    .back-button:focus svg {
+      fill: #fff;
+    }
+  </style>
+  <script src="../translations.js?v=15"></script>
+  <script>
+    // Fallback for translateText if not available yet
+    if (typeof window.translateText === 'undefined') {
+      window.translateText = function(key) {
+        console.warn('translateText not ready yet, returning key:', key);
+        return key;
+      };
+    }
+    
+    // Initialize language system
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof updatePageLanguage === 'function') {
+        updatePageLanguage();
+      }
+    });
+  </script>
+</head>
+
+<body>
+
+<header>
+  <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Logo" />
+</header>
+
+<!-- BACK BUTTON -->
+<button class="back-button" onclick="history.back()" aria-label="Go back">
+  <!-- Left Arrow SVG -->
+  <svg viewBox="0 0 24 24">
+    <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+  </svg>
+</button>
+
+<!-- Beta Disclaimer -->
+<div class="disclaimer" style="margin: 1rem auto 0.5rem; max-width: 600px; font-size: 0.8rem; color: #bbb; text-align: center; padding: 0.5rem 1rem; background-color: #111; border: 1px dashed #444; border-radius: 6px;">
+  <span data-translate="betaDisclaimer">⚠️ This is a Beta program, work in progress. Please REPORT bugs and pretend to be impressed.</span>
+</div>
+
+<main>
+  <h2 data-translate="portlandRailRoutes">Portland, OR - Rail Routes</h2>
+  <div class="route-list" id="railList"></div>
+</main>
+
+<script>
+  if (document.referrer === "" && performance.navigation.type === 0) {
+    // No referrer + user opened directly = likely a bookmark
+    window.location.href = "/index.html";
+  }
+
+  const railList = document.getElementById('railList');
+
+  const rails = [
+    { id: '90', label: 'MAX Red Line', className: 'red-line', dir0: 'To Portland International Airport', dir1: 'To Hillsboro' },
+    { id: '100', label: 'MAX Blue Line', className: 'blue-line', dir0: 'To Gresham', dir1: 'To Hillsboro' },
+    { id: '190', label: 'MAX Yellow Line', className: 'yellow-line', dir0: 'To Expo Center', dir1: 'To Portland City Center' },
+    { id: '200', label: 'MAX Green Line', className: 'green-line', dir0: 'To Clackamas Town Center', dir1: 'To Portland City Center/PSU' },
+    { id: '290', label: 'MAX Orange Line', className: 'orange-line', dir0: 'To Portland City Center', dir1: 'To Milwaukie' },
+    { id: '203', label: 'WES Commuter Rail', className: 'silver-line', dir0: 'To Wilsonville', dir1: 'To Beaverton' },
+  ];
+
+  rails.forEach(rail => {
+    const div = document.createElement('div');
+    div.className = `route-entry ${rail.className}`;
+    div.innerHTML = `
+      <div onclick="toggleDirections('${rail.id}')">${rail.label}</div>
+      <div id="directions-${rail.id}" class="direction-buttons" style="display: none;">
+        <a href="Rail routes/route-${rail.id}-dir0.html" class="direction-link">➡ ${rail.dir0}</a><br>
+        ${rail.dir1 ? `<a href="Rail routes/route-${rail.id}-dir1.html" class="direction-link">⬅ ${rail.dir1}</a>` : ''}
+      </div>
+    `;
+    railList.appendChild(div);
+  });
+
+  function toggleDirections(id) {
+    const elem = document.getElementById(`directions-${id}`);
+    elem.style.display = (elem.style.display === 'none') ? 'block' : 'none';
+  }
+</script>
+
+<footer class="site-footer">
+  <a href="terms.html" data-translate="termsOfUse">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html" data-translate="contactUs">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html" data-translate="reportProblem">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html" data-translate="dmca">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html" data-translate="privacyPolicy">Privacy Policy</a>
+</footer>
+
+<div id="cookie-banner" style="display:none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 1rem; z-index: 1000; font-size: 0.9rem; line-height: 1.4; text-align: center; box-sizing: border-box;">
+  <span data-translate="cookieMessage">📢 We use cookies to improve functionality and analyze traffic. By using MetroFeed, you agree to our</span>
+  <a href="privacy.html" style="color: #4dd0e1; text-decoration: underline;" data-translate="privacyPolicy">Privacy Policy</a>.<br>
+  <button onclick="acceptCookies()" style="margin-top: 0.5rem; background: #4dd0e1; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold;" data-translate="ok">OK</button>
+</div>
+
+<script>
+  function acceptCookies() {
+    localStorage.setItem("cookieConsent", "true");
+    document.getElementById("cookie-banner").style.display = "none";
+  }
+
+  window.onload = function () {
+    if (!localStorage.getItem("cookieConsent")) {
+      const banner = document.getElementById("cookie-banner");
+      if (banner) banner.style.display = "block";
+    }
+  };
+</script>
+
+</body>
+</html>

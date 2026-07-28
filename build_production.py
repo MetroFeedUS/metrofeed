@@ -103,19 +103,13 @@ CINCINNATI_FILES = [
 ]
 
 # In-dev city shells: obscure public paths (not linked from Index).
-# folder name on disk → routes_index.js top-level key used by getCityIdFromPath().
+# Full Cincinnati clones with local GTFS; folder name → getCityIdFromPath() key.
 DEV_CITY_SHELLS = [
-    ("tooltime", "tooltime", "allen"),
-    ("Browns", "browns", "cleveland"),
-    ("Bluejackets", "bluejackets", "columbus"),
-    ("Hotdog", "hotdog", "toledo"),
-    ("Stoops", "stoops", "youngstown"),
-]
-
-DEV_CITY_SHELL_FILES = [
-    "home.html",
-    "routes_index.js",
-    "routes_index.lazy.js",
+    ("tooltime", "tooltime"),
+    ("Browns", "browns"),
+    ("Bluejackets", "bluejackets"),
+    ("Hotdog", "hotdog"),
+    ("Stoops", "stoops"),
 ]
 
 # If a referenced asset is removed later, this list keeps the warning explicit
@@ -176,32 +170,28 @@ def copy_json_directory(source_relative: str, destination_relative: str) -> int:
     return count
 
 
-def rewrite_routes_index_key(text: str, path_key: str, build_key: str) -> str:
-    """Make ROUTES[getCityIdFromPath()] resolve for obscure folders."""
-    if f'"{path_key}"' in text and re.search(
-        rf'window\.ROUTES\s*=\s*\{{\s*"{re.escape(path_key)}"', text
-    ):
+def rewrite_routes_index_key(text: str, path_key: str) -> str:
+    """Ensure ROUTES[getCityIdFromPath()] resolves for obscure folders."""
+    if re.search(rf'window\.ROUTES\s*=\s*\{{\s*"{re.escape(path_key)}"', text):
         return text
     rewritten = re.sub(
-        rf'(window\.ROUTES\s*=\s*\{{\s*)"{re.escape(build_key)}"',
+        r'(window\.ROUTES\s*=\s*\{\s*)"[^"]+"',
         rf'\1"{path_key}"',
         text,
         count=1,
     )
     if rewritten == text:
-        raise RuntimeError(
-            f'Could not rewrite routes_index key "{build_key}" → "{path_key}"'
-        )
+        raise RuntimeError(f'Could not set routes_index key to "{path_key}"')
     return rewritten
 
 
-def copy_dev_city_shell(folder: str, path_key: str, build_key: str) -> int:
-    """Copy an obscure in-dev city shell into dist/ (home + indexes + route JSON)."""
+def copy_dev_city_shell(folder: str, path_key: str) -> int:
+    """Copy a full city clone (same allowlist as Cincinnati) + local route JSON."""
     source_root = ROOT / folder
     if not source_root.is_dir():
         raise FileNotFoundError(f"Dev city shell folder missing: {folder}")
 
-    for name in DEV_CITY_SHELL_FILES:
+    for name in CINCINNATI_FILES:
         source = source_root / name
         if not source.is_file():
             if name == "routes_index.lazy.js":
@@ -211,13 +201,29 @@ def copy_dev_city_shell(folder: str, path_key: str, build_key: str) -> int:
         destination.parent.mkdir(parents=True, exist_ok=True)
         if name == "routes_index.js":
             text = rewrite_routes_index_key(
-                source.read_text(encoding="utf-8"), path_key, build_key
+                source.read_text(encoding="utf-8"), path_key
             )
             destination.write_text(text, encoding="utf-8", newline="\n")
         else:
             shutil.copy2(source, destination)
 
-    return copy_json_directory(f"{folder}/route_data", f"{folder}/route_data")
+    svg_count = 0
+    for source in sorted(source_root.glob("*.svg")):
+        destination = DIST / folder / source.name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+        svg_count += 1
+
+    cameras = source_root / "data" / "cameras.json"
+    if cameras.is_file():
+        copy_required(f"{folder}/data/cameras.json", f"{folder}/data/cameras.json")
+
+    route_count = copy_json_directory(f"{folder}/route_data", f"{folder}/route_data")
+    print(
+        f"  Dev shell {folder}/ -> {route_count} route JSON, {svg_count} SVGs "
+        f"(ROUTES key={path_key})"
+    )
+    return route_count
 
 
 def verify_exclusions() -> None:
@@ -245,7 +251,7 @@ def verify_exclusions() -> None:
         "pythonbusroutes",
         "Rail routes",
     }
-    allowed_dev_roots = {folder for folder, _, _ in DEV_CITY_SHELLS}
+    allowed_dev_roots = {folder for folder, _ in DEV_CITY_SHELLS}
 
     violations: list[str] = []
     for path in DIST.rglob("*"):
@@ -254,7 +260,6 @@ def verify_exclusions() -> None:
         relative = path.relative_to(DIST)
         parts = relative.parts
         if parts and parts[0] in allowed_dev_roots:
-            # Dev shells may only contain the allowlisted page/index/route JSON.
             continue
         if (
             path.name in forbidden_names
@@ -330,10 +335,8 @@ def main() -> None:
     )
 
     dev_route_count = 0
-    for folder, path_key, build_key in DEV_CITY_SHELLS:
-        n = copy_dev_city_shell(folder, path_key, build_key)
-        dev_route_count += n
-        print(f"  Dev shell {folder}/ -> {n} route JSON (ROUTES key {build_key}->{path_key})")
+    for folder, path_key in DEV_CITY_SHELLS:
+        dev_route_count += copy_dev_city_shell(folder, path_key)
 
     verify_exclusions()
 

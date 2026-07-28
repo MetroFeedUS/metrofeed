@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en" data-tier="admin">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Tier Configuration -->
+  <script src="tierConfig.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d0d0d;
+      color: #cccccc;
+      padding: 20px;
+    }
+    
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #1E90FF;
+    }
+    
+    .admin-header h1 {
+      color: #1E90FF;
+      font-size: 2rem;
+    }
+    
+    .admin-nav {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .admin-nav a {
+      padding: 8px 16px;
+      background: #1E90FF;
+      color: #000;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    
+    .admin-nav a:hover {
+      background: #1976d2;
+      color: #fff;
+    }
+    
+    .admin-section {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .admin-section h2 {
+      color: #1E90FF;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+    
+    .preview-toggle {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .preview-toggle button {
+      padding: 8px 16px;
+      background: #1E90FF;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    
+    .preview-toggle button:hover {
+      background: #1976d2;
+      color: #fff;
+    }
+    
+    .preview-toggle button.active {
+      background: #4CAF50;
+      color: #fff;
+    }
+    
+    .preview-status {
+      padding: 8px 12px;
+      background: #2a2a2a;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    
+    .analytics-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #1E90FF;
+      color: #000;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    
+    .analytics-link:hover {
+      background: #1976d2;
+      color: #fff;
+    }
+    
+    .debug-logs {
+      max-height: 400px;
+      overflow-y: auto;
+      background: #0d0d0d;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+    }
+    
+    .log-entry {
+      margin-bottom: 8px;
+      padding: 6px;
+      border-left: 3px solid #333;
+      padding-left: 10px;
+    }
+    
+    .log-entry.error {
+      border-left-color: #ff4444;
+      color: #ff8888;
+    }
+    
+    .log-entry.warning {
+      border-left-color: #ffaa00;
+      color: #ffcc66;
+    }
+    
+    .log-entry.info {
+      border-left-color: #1E90FF;
+      color: #66aaff;
+    }
+    
+    .log-entry.success {
+      border-left-color: #4CAF50;
+      color: #88ff88;
+    }
+    
+    .log-timestamp {
+      color: #888;
+      font-size: 0.75rem;
+      margin-right: 10px;
+    }
+    
+    .csl-moderation {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+    }
+    
+    .csl-bus-card {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 15px;
+    }
+    
+    .csl-bus-card h3 {
+      color: #1E90FF;
+      margin-bottom: 10px;
+    }
+    
+    .csl-bus-card .bus-info {
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+    }
+    
+    .csl-bus-card button {
+      padding: 6px 12px;
+      background: #ff4444;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    
+    .csl-bus-card button:hover {
+      background: #cc0000;
+    }
+    
+    .access-gate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+    
+    .access-gate.hidden {
+      display: none;
+    }
+    
+    .access-form {
+      background: #1a1a1a;
+      border: 2px solid #1E90FF;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      max-width: 400px;
+    }
+    
+    .access-form h2 {
+      color: #1E90FF;
+      margin-bottom: 20px;
+    }
+    
+    .access-form input {
+      width: 100%;
+      padding: 12px;
+      background: #0d0d0d;
+      border: 1px solid #1E90FF;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+    
+    .access-form button {
+      width: 100%;
+      padding: 12px;
+      background: #1E90FF;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .access-form button:hover {
+      background: #1976d2;
+      color: #fff;
+    }
+    
+    .access-error {
+      color: #ff4444;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Access Gate -->
+  <div id="accessGate" class="access-gate hidden" aria-hidden="true" style="display:none">
+    <div class="access-form">
+      <h2>Admin Access</h2>
+      <input type="password" id="accessCode" placeholder="Enter access code" autocomplete="off" />
+      <button onclick="checkAccess()">Enter</button>
+      <div id="accessError" class="access-error"></div>
+    </div>
+  </div>
+  
+  <!-- Admin Dashboard -->
+  <div class="admin-container" id="adminContent">
+    <div class="admin-header">
+      <h1>MetroFeed Admin Dashboard</h1>
+      <div class="admin-nav">
+        <a href="home.html">Free</a>
+        <a href="premium.html">Premium</a>
+        <a href="admin.html">Admin</a>
+      </div>
+    </div>
+    
+    <!-- Preview Toggle Section -->
+    <div class="admin-section">
+      <h2>Preview Mode</h2>
+      <div class="preview-toggle">
+        <button id="previewFree" onclick="setPreviewTier('free')">Preview Free</button>
+        <button id="previewPremium" onclick="setPreviewTier('premium')">Preview Premium</button>
+        <button id="clearPreview" onclick="clearPreview()">Clear Preview</button>
+        <div class="preview-status" id="previewStatus">Current: Admin Mode</div>
+      </div>
+      <p style="color: #888; font-size: 0.9rem;">
+        Preview mode allows you to view the admin page as if it were Free or Premium tier. 
+        This does not affect public pages (home.html, premium.html).
+      </p>
+    </div>
+    
+    <!-- Analytics Section -->
+    <div class="admin-section">
+      <h2>Analytics</h2>
+      <p style="margin-bottom: 10px;">View detailed analytics in Google Analytics 4:</p>
+      <a href="https://analytics.google.com" target="_blank" class="analytics-link">
+        Open Google Analytics 4 →
+      </a>
+      <p style="color: #888; font-size: 0.9rem; margin-top: 10px;">
+        Analytics integration will be enhanced in future updates.
+      </p>
+    </div>
+    
+    <!-- Debug Logs Section -->
+    <div class="admin-section">
+      <h2>Debug Logs</h2>
+      <div class="debug-logs" id="debugLogs">
+        <div class="log-entry info">
+          <span class="log-timestamp">[System]</span>
+          <span>Admin dashboard initialized</span>
+        </div>
+      </div>
+      <button onclick="clearLogs()" style="margin-top: 10px; padding: 8px 16px; background: #666; color: #fff; border: none; border-radius: 6px; cursor: pointer;">
+        Clear Logs
+      </button>
+    </div>
+    
+    <!-- CSL Moderation Section -->
+    <div class="admin-section">
+      <h2>CSL Moderation</h2>
+      <p style="margin-bottom: 15px; color: #888;">
+        CSL moderation features will be available when the CSL backend is implemented.
+      </p>
+      <div class="csl-moderation" id="cslModeration">
+        <div class="csl-bus-card">
+          <h3>No Active CSL Buses</h3>
+          <div class="bus-info">CSL moderation UI placeholder</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Preview Toggle Functions
+    function setPreviewTier(tier) {
+      if (window.TIER_CONFIG) {
+        window.TIER_CONFIG.setPreviewTier(tier);
+      }
+    }
+    
+    function clearPreview() {
+      if (window.TIER_CONFIG) {
+        window.TIER_CONFIG.clearPreview();
+      }
+    }
+    
+    // Update preview status
+    function updatePreviewStatus() {
+      const status = document.getElementById('previewStatus');
+      const freeBtn = document.getElementById('previewFree');
+      const premiumBtn = document.getElementById('previewPremium');
+      
+      if (window.TIER_CONFIG) {
+        const effective = window.TIER_CONFIG.effective;
+        status.textContent = `Current: ${effective.charAt(0).toUpperCase() + effective.slice(1)} Mode`;
+        
+        freeBtn.classList.remove('active');
+        premiumBtn.classList.remove('active');
+        
+        if (effective === 'free') {
+          freeBtn.classList.add('active');
+        } else if (effective === 'premium') {
+          premiumBtn.classList.add('active');
+        }
+      }
+    }
+    
+    // Debug Logging
+    const logEntries = [];
+    const MAX_LOGS = 100;
+    
+    function addLog(type, message, data = null) {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = {
+        type,
+        message,
+        data,
+        timestamp
+      };
+      
+      logEntries.push(logEntry);
+      if (logEntries.length > MAX_LOGS) {
+        logEntries.shift();
+      }
+      
+      renderLogs();
+    }
+    
+    function renderLogs() {
+      const container = document.getElementById('debugLogs');
+      container.innerHTML = '';
+      
+      logEntries.forEach(entry => {
+        const div = document.createElement('div');
+        div.className = `log-entry ${entry.type}`;
+        div.innerHTML = `
+          <span class="log-timestamp">[${entry.timestamp}]</span>
+          <span>${entry.message}</span>
+          ${entry.data ? `<pre style="margin-top: 4px; color: #888; font-size: 0.8rem;">${JSON.stringify(entry.data, null, 2)}</pre>` : ''}
+        `;
+        container.appendChild(div);
+      });
+      
+      // Auto-scroll to bottom
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    function clearLogs() {
+      logEntries.length = 0;
+      renderLogs();
+      addLog('info', 'Logs cleared');
+    }
+    
+    // Intercept console errors and API failures
+    const originalError = console.error;
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addLog('error', args.join(' '));
+    };
+    
+    const originalWarn = console.warn;
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      addLog('warning', args.join(' '));
+    };
+    
+    // Catch unhandled errors
+    window.addEventListener('error', function(e) {
+      addLog('error', `Client Error: ${e.message}`, {
+        filename: e.filename,
+        lineno: e.lineno,
+        colno: e.colno,
+        stack: e.error ? e.error.stack : null
+      });
+    });
+    
+    // Catch unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(e) {
+      addLog('error', `Unhandled Promise Rejection: ${e.reason}`, {
+        reason: e.reason
+      });
+    });
+    
+    // Initialize
+    updatePreviewStatus();
+    addLog('info', 'Admin dashboard ready');
+    
+    // Update preview status when tier config changes
+    if (window.TIER_CONFIG) {
+      setInterval(updatePreviewStatus, 1000);
+    }
+  </script>
+</body>
+</html>
+

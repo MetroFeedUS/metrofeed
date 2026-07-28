@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Route 26 - To SW 18th & Salmon | MetroFeed Portland</title>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #cccccc;
+    overflow-y: auto;
+  }
+
+  .back-button-fixed {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 45px;
+    height: 45px;
+    background-color: #4dd0e1;
+    border: 2px solid #000;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 10px #4dd0e1;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+  }
+  .back-button-fixed:active, .back-button-fixed:focus {
+    background-color: #1976d2;
+  }
+  .back-button-fixed svg {
+    width: 24px;
+    height: 24px;
+    fill: #000;
+    display: block;
+  }
+  .back-button-fixed:active svg,
+  .back-button-fixed:focus svg {
+    fill: #fff;
+  }
+
+  .theme-toggle-fixed {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    background-color: #4dd0e1;
+    border: 2px solid #000;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 10px #4dd0e1;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+  }
+  .theme-toggle-fixed:active, .theme-toggle-fixed:focus {
+    background-color: #1976d2;
+  }
+  .theme-toggle-fixed img {
+    width: 16px;
+    height: 16px;
+  }
+
+  header {
+    background-color: #0d0d0d;
+    border-top: 4px solid #4dd0e1;
+    border-bottom: 3px solid #4dd0e1;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  header img {
+    max-height: 60px;
+  }
+
+  h1#route-title {
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 2rem;
+    color: #f0f0f0;
+  }
+
+  .content-box {
+    border-radius: 12px;
+    padding: 0;
+    margin: 0;
+    background-color: #1e1e1e;
+  }
+
+  #map {
+    width: 100%;
+    height: 85vh;
+    border: none;
+    margin: 0 auto;
+    display: block;
+    border-radius: 8px;
+  }
+
+  .button-bar {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+  }
+
+  .button-bar a, .back-button {
+    background: #4dd0e1;
+    color: #0d0d0d;
+    padding: 0.6rem 1.2rem;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 10px #4dd0e1;
+  }
+
+  .back-button:hover {
+    background-color: #35c0d6;
+  }
+
+  .site-footer {
+    text-align: center;
+    margin-top: 3rem;
+    margin-bottom: 120px;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+
+  .site-footer a {
+    color: #00BFFF;
+    text-decoration: none;
+  }
+
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
+
+.favorite-save-box {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+}
+
+.favorite-star {
+  width: 45px;
+  height: 45px;
+  background-color: #4dd0e1;
+  border: 2px solid #000;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  box-shadow: 0 0 10px #4dd0e1;
+  cursor: pointer;
+  transition: background 0.2s;
+  outline: none;
+  font-size: 1.2rem;
+  color: #000;
+}
+.favorite-star:active, .favorite-star:focus {
+  background-color: #1976d2;
+  color: #fff;
+}
+.fav-dropdown {
+  display: none;
+  position: absolute;
+  top: 65px;
+  right: 0;
+  z-index: 99999;
+  background: #222;
+  border: 2px solid #4dd0e1;
+  border-radius: 10px;
+  padding: 10px 20px;
+  text-align: center;
+  box-shadow: 0 2px 12px #2224;
+}
+.fav-dropdown button {
+  font-size: 1.1rem;
+  padding: 6px 16px;
+  background: #4dd0e1;
+  color: #222;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.fav-dropdown button:hover, .fav-dropdown button:focus {
+  background: #fff;
+  color: #0071ce;
+  outline: none;
+}
+
+/* MapLibre attribution positioning */
+.maplibregl-ctrl-attrib {
+  position: absolute !important;
+  bottom: 120px !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  max-width: 200px !important;
+  min-height: auto !important;
+  transform: translateY(-30px) !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  min-height: 20px !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
+  display: none !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+  display: block !important;
+}
+
+/* Mobile-specific attribution positioning */
+@media (max-width: 768px) {
+  .maplibregl-ctrl-attrib {
+    bottom: 50px !important;
+  }
+}
+
+/* Beta Banner Styles */
+.beta-banner {
+  position: relative;
+  background-color: #111;
+  color: #bbb;
+  border-bottom: 2px solid #4dd0e1;
+  padding: 8px 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.beta-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.beta-close {
+  color: #aaa;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-left: auto;
+}
+
+.beta-close:hover,
+.beta-close:focus {
+  color: #4dd0e1;
+}
+</style>
+</head>
+<body>
+  
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <!-- Beta Banner -->
+  <div id="betaBanner" class="beta-banner" style="display: flex;">
+    <div class="beta-banner-content">
+      <span style="font-weight: bold;">⚠️ Beta Test</span>
+      <span>This program is a beta test, please report any issues.</span>
+      <span class="beta-close" onclick="closeBetaBanner()">&times;</span>
+    </div>
+  </div>
+
+<!-- Favorite Route Button (Top Right) with Dropdown -->
+<div class="favorite-save-box">
+  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+  <div class="fav-dropdown" id="fav-dropdown">
+    <button id="fav-dropdown-btn">Add to Favorites</button>
+  </div>
+</div>
+
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
+
+  <!-- Theme Toggle Button - DISABLED FOR FREE VERSION -->
+  <!-- <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
+    <img src="008-night.svg" alt="Theme Toggle" />
+  </button> -->
+
+  <h1 id="route-title">Route 26 - To SW 18th & Salmon</h1>
+  <span id="route-type" style="display:none;"></span>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <!-- TriMet Disclaimer -->
+  <div class="disclaimer" style="margin: 2rem auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.5rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <script>
+    // Beta Banner Functions
+    function closeBetaBanner() {
+      document.getElementById('betaBanner').style.display = 'none';
+    }
+
+    // Theme toggle functionality - DISABLED FOR FREE VERSION
+    // let isNightMode = false;
+    // function toggleTheme() {
+    //   // Night mode functionality removed for free version
+    //   // Available in premium version
+    // }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = null;
+    const routeNumber = 26;
+    const direction = parseInt(1);
+
+    // Portland Metro Area Bounds
+    const PORTLAND_BOUNDS = {
+      north: 45.80,
+      south: 45.20,
+      east: -122.15,
+      west: -123.35
+    };
+
+    // Initialize MapLibre GL JS map with vector tiles
+    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
+    // const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json'; // DISABLED FOR FREE VERSION
+    
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: dayStyle,
+      center: [-122.67, 45.52],
+      zoom: 12,
+      maxZoom: 18,
+      minZoom: 8,
+      maxBounds: [
+        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
+        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
+      ],
+      attributionControl: true
+    });
+
+    // Force attribution to be collapsed by default
+    map.on('load', () => {
+      const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+      if (attributionControl) {
+        attributionControl.classList.add('maplibregl-compact');
+        attributionControl.classList.remove('maplibregl-compact-show');
+      }
+    });
+
+    // Also ensure attribution is collapsed after style changes
+    map.on('styledata', () => {
+      setTimeout(() => {
+        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+        if (attributionControl) {
+          attributionControl.classList.add('maplibregl-compact');
+          attributionControl.classList.remove('maplibregl-compact-show');
+        }
+      }, 100);
+    });
+
+    // Add route shape when map loads
+    map.on('load', () => {
+      const shapeOutbound = [
+  [45.538523, -122.719706],
+  [45.538488, -122.719659],
+  [45.538451, -122.719595],
+  [45.53842, -122.719532],
+  [45.538358, -122.719369],
+  [45.538304, -122.719193],
+  [45.538271, -122.719098],
+  [45.538239, -122.719028],
+  [45.538191, -122.718959],
+  [45.537932, -122.718641],
+  [45.537807, -122.718497],
+  [45.537716, -122.718403],
+  [45.537625, -122.718328],
+  [45.537528, -122.718265],
+  [45.537443, -122.718224],
+  [45.537372, -122.718203],
+  [45.537284, -122.718177],
+  [45.537097, -122.71815],
+  [45.537018, -122.718139],
+  [45.536884, -122.718102],
+  [45.536735, -122.71804],
+  [45.536625, -122.717976],
+  [45.536527, -122.717898],
+  [45.536414, -122.717794],
+  [45.536329, -122.717697],
+  [45.536224, -122.71755],
+  [45.536157, -122.717433],
+  [45.536107, -122.71733],
+  [45.536052, -122.717198],
+  [45.536018, -122.717108],
+  [45.53598, -122.716991],
+  [45.535951, -122.716876],
+  [45.535929, -122.716773],
+  [45.535921, -122.716727],
+  [45.535908, -122.716646],
+  [45.535897, -122.716578],
+  [45.535889, -122.716478],
+  [45.53589, -122.716258],
+  [45.535916, -122.7148],
+  [45.535916, -122.714775],
+  [45.535916, -122.71469],
+  [45.53591, -122.714605],
+  [45.535897, -122.714507],
+  [45.53579, -122.713968],
+  [45.535738, -122.713679],
+  [45.535699, -122.713449],
+  [45.53552, -122.712448],
+  [45.535438, -122.712007],
+  [45.535271, -122.711125],
+  [45.535267, -122.711079],
+  [45.535267, -122.711073],
+  [45.535267, -122.711009],
+  [45.535269, -122.710873],
+  [45.535313, -122.70881],
+  [45.535337, -122.707357],
+  [45.535343, -122.707035],
+  [45.535346, -122.706828],
+  [45.535353, -122.706507],
+  [45.535385, -122.704936],
+  [45.535386, -122.704835],
+  [45.535389, -122.704641],
+  [45.53542, -122.70285],
+  [45.53543, -122.7023],
+  [45.535456, -122.700966],
+  [45.535458, -122.700864],
+  [45.535475, -122.700099],
+  [45.535481, -122.699854],
+  [45.535488, -122.69945],
+  [45.535496, -122.69894],
+  [45.535498, -122.698838],
+  [45.5355, -122.698729],
+  [45.535503, -122.698433],
+  [45.535505, -122.698352],
+  [45.535533, -122.696798],
+  [45.535552, -122.695714],
+  [45.535568, -122.694975],
+  [45.535572, -122.694778],
+  [45.5356, -122.693263],
+  [45.535589, -122.693082],
+  [45.535578, -122.692972],
+  [45.535558, -122.692848],
+  [45.535533, -122.692737],
+  [45.535509, -122.692562],
+  [45.535481, -122.692322],
+  [45.535473, -122.692031],
+  [45.535641, -122.690715],
+  [45.535029, -122.690693],
+  [45.534939, -122.69069],
+  [45.534532, -122.690677],
+  [45.534379, -122.690671],
+  [45.534226, -122.690666],
+  [45.534025, -122.69066],
+  [45.533506, -122.690642],
+  [45.5328, -122.690614],
+  [45.532088, -122.69059],
+  [45.531819, -122.690582],
+  [45.531378, -122.690569],
+  [45.531364, -122.690568],
+  [45.530654, -122.690539],
+  [45.530437, -122.69053],
+  [45.529939, -122.690508],
+  [45.529927, -122.690508],
+  [45.529874, -122.690505],
+  [45.52959, -122.690495],
+  [45.529229, -122.690482],
+  [45.528909, -122.690469],
+  [45.528848, -122.690467],
+  [45.528518, -122.690454],
+  [45.52823, -122.690442],
+  [45.527803, -122.690426],
+  [45.527531, -122.690417],
+  [45.527456, -122.690415],
+  [45.527092, -122.690409],
+  [45.527016, -122.690402],
+  [45.526446, -122.690393],
+  [45.526375, -122.690388],
+  [45.526317, -122.690387],
+  [45.525665, -122.690365],
+  [45.525453, -122.690352],
+  [45.525329, -122.690345],
+  [45.525023, -122.690328],
+  [45.524956, -122.690322],
+  [45.524884, -122.690316],
+  [45.524253, -122.690294],
+  [45.524109, -122.690288],
+  [45.523965, -122.690283],
+  [45.52383, -122.690278],
+  [45.523697, -122.690273],
+  [45.523524, -122.690267],
+  [45.52328, -122.690258],
+  [45.523229, -122.690257],
+  [45.523093, -122.690252],
+  [45.523017, -122.690247],
+  [45.522867, -122.690215],
+  [45.522503, -122.690132],
+  [45.522446, -122.69012],
+  [45.522399, -122.690118],
+  [45.522339, -122.690073],
+  [45.522226, -122.690125],
+  [45.522163, -122.690155],
+  [45.522095, -122.690252],
+  [45.521882, -122.690367],
+  [45.521789, -122.690418],
+  [45.521579, -122.690559],
+  [45.521445, -122.690635],
+  [45.520913, -122.69092],
+  [45.520851, -122.690954],
+  [45.520791, -122.690992],
+  [45.520694, -122.691057],
+  [45.520655, -122.691086],
+  [45.52061, -122.691127],
+  [45.520574, -122.691174],
+  [45.520563, -122.691187],
+  [45.520395, -122.691314],
+  [45.520359, -122.691344]
+];
+
+const stopNames = {
+  "4787": "NW Thurman &amp; 21st",
+  "5824": "NW Thurman &amp; Gordon",
+  "5832": "NW Thurman &amp; 26th",
+  "5836": "NW Thurman &amp; 27th",
+  "5840": "NW Thurman &amp; 29th",
+  "5842": "NW Thurman &amp; 32nd",
+  "5844": "NW Thurman &amp; 34th",
+  "6911": "SW 18th &amp; Morrison",
+  "9553": "SW 18th &amp; Salmon",
+  "10808": "NW Thurman &amp; 24th",
+  "14032": "NW Thurman &amp; 23rd",
+  "14033": "NW 19th &amp; Raleigh",
+  "14034": "NW 19th &amp; Marshall",
+  "14035": "NW 19th &amp; Flanders"
+};
+
+const stops = [
+  { stop_id: "5824", name: "NW Thurman &amp; Gordon", lat: 45.538599, lon: -122.719585, times: ["7:42 AM"] },
+  { stop_id: "5844", name: "NW Thurman &amp; 34th", lat: 45.535861, lon: -122.716747, times: ["7:43 AM"] },
+  { stop_id: "5842", name: "NW Thurman &amp; 32nd", lat: 45.535859, lon: -122.714775, times: ["7:43 AM"] },
+  { stop_id: "5840", name: "NW Thurman &amp; 29th", lat: 45.535202, lon: -122.71107, times: ["7:44 AM"] },
+  { stop_id: "5836", name: "NW Thurman &amp; 27th", lat: 45.535293, lon: -122.706505, times: ["7:46 AM"] },
+  { stop_id: "5832", name: "NW Thurman &amp; 26th", lat: 45.535335, lon: -122.704638, times: ["7:46 AM"] },
+  { stop_id: "10808", name: "NW Thurman &amp; 24th", lat: 45.535396, lon: -122.700964, times: ["7:47 AM"] },
+  { stop_id: "14032", name: "NW Thurman &amp; 23rd", lat: 45.535446, lon: -122.698388, times: ["7:48 AM"] },
+  { stop_id: "4787", name: "NW Thurman &amp; 21st", lat: 45.535522, lon: -122.694973, times: ["7:49 AM"] },
+  { stop_id: "14033", name: "NW 19th &amp; Raleigh", lat: 45.534024, lon: -122.690726, times: ["7:51 AM"] },
+  { stop_id: "14034", name: "NW 19th &amp; Marshall", lat: 45.530436, lon: -122.690576, times: ["7:53 AM"] },
+  { stop_id: "14035", name: "NW 19th &amp; Flanders", lat: 45.525424, lon: -122.690417, times: ["7:55 AM"] },
+  { stop_id: "6911", name: "SW 18th &amp; Morrison", lat: 45.52188, lon: -122.690453, times: ["7:58 AM"] },
+  { stop_id: "9553", name: "SW 18th &amp; Salmon", lat: 45.520377, lon: -122.691399, times: ["7:59 AM"] },
+]
+
+      // Add route line
+      map.addSource('route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]]) // Convert lat/lon to lon/lat
+          }
+        }
+      });
+
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route-line',
+        paint: {
+          'line-color': '#0071CE',
+          'line-width': 4,
+          'line-opacity': 0.7
+        }
+      });
+
+      // Fit map to route bounds (but maintain minimum zoom level)
+      const bounds = new maplibregl.LngLatBounds();
+      shapeOutbound.forEach(coord => bounds.extend([coord[1], coord[0]]));
+      map.fitBounds(bounds, { padding: 20, maxZoom: 12 });
+
+      // Add stops
+      const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+      stops.forEach(stop => {
+        let highlightedTimes = [];
+        let foundNext = false;
+        stop.times.forEach(timeStr => {
+          let cleanTime = timeStr.trim();
+          let [h, m] = cleanTime.split(":");
+          let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+          if (schedMins < nowMins && nowMins - schedMins > 720) {
+            schedMins += 1440;
+          }
+          if (!foundNext && schedMins >= nowMins) {
+            highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+            foundNext = true;
+          } else {
+            highlightedTimes.push(cleanTime);
+          }
+        });
+
+        // Create stop marker element
+        const stopElement = document.createElement('div');
+        stopElement.style.width = '12px';
+        stopElement.style.height = '12px';
+        stopElement.style.backgroundColor = '#4dd0e1';
+        stopElement.style.borderRadius = '50%';
+        stopElement.style.border = '2px solid #4dd0e1';
+        stopElement.style.opacity = '0.9';
+
+        const stopMarker = new maplibregl.Marker({
+          element: stopElement
+        });
+        stopMarker.setLngLat([stop.lon, stop.lat]);
+        
+        // Create popup content
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+            <strong style='color:#4dd0e1;'>${stop.name}</strong>
+            <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+            ${highlightedTimes.join("<br>") || 'No scheduled times'}
+          </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        stopMarker.setPopup(popup);
+        stopMarker.addTo(map);
+      });
+    });
+
+    // Live bus tracking
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      // Remove existing bus markers
+      Object.values(busMarkers).forEach(marker => marker.remove());
+      busMarkers = {};
+      
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        
+        // Create bus marker element
+        const busElement = document.createElement('div');
+        busElement.style.textAlign = 'center';
+        busElement.innerHTML = `
+          <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
+          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #0071CE;margin:auto;"></div>
+        `;
+
+        const busMarker = new maplibregl.Marker({
+          element: busElement
+        });
+        busMarker.setLngLat([bus.longitude, bus.latitude]);
+        
+        // Create popup for bus
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:2px solid #0071CE; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
+            <div style='text-align:center; margin-bottom:8px;'>
+              <div style='background:#0071CE;color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
+            </div>
+            <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNumber}</div>
+            <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
+            <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
+            <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
+          </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        busMarker.setPopup(popup);
+        busMarker.addTo(map);
+        busMarkers[bus.vehicleID] = busMarker;
+      });
+    }
+
+    // Start bus tracking after map loads
+    map.on('load', () => {
+      fetchAndDisplay();
+      setInterval(fetchAndDisplay, 15000);
+    });
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<script>
+// ---- Favorite Star Dropdown: Auto-detect route info, menu UI ----
+
+function getRouteInfoFromPage() {
+  let routeNumber = "";
+  let routeType = "";
+  let routeLink = "";
+
+  let titleEl = document.getElementById('route-title');
+  if (titleEl) {
+    let match = titleEl.textContent.match(/Route\s+(\d+)[^\d]?/i);
+    if (match) routeNumber = match[1];
+  }
+  let typeEl = document.getElementById('route-type');
+  if (typeEl) {
+    routeType = typeEl.textContent.trim().toLowerCase();
+  }
+  routeLink = window.location.pathname + window.location.search;
+
+  if (!routeNumber) {
+    let titleMatch = document.title.match(/Route\s+(\d+)/i);
+    if (titleMatch) routeNumber = titleMatch[1];
+  }
+  if (!routeType) {
+    routeType = document.body.className.includes('rail') ? 'rail' : 
+                document.body.className.includes('max') ? 'max' :
+                document.body.className.includes('streetcar') ? 'streetcar' :
+                'bus';
+  }
+  if (!routeLink) routeLink = window.location.href;
+  if (!routeNumber) return null;
+  return {
+    number: routeNumber,
+    link: routeLink,
+    type: routeType
+  };
+}
+
+function updateStarIcon() {
+  const thisRoute = getRouteInfoFromPage();
+  if (!thisRoute) return;
+  let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+  const isFavorite = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+  const btn = document.getElementById('fav-star');
+  if (btn) btn.textContent = isFavorite ? "★" : "☆";
+
+  // Update dropdown button label
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) ddBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
+}
+
+// Show/hide dropdown on star click
+function showFavDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('fav-dropdown');
+  dd.style.display = dd.style.display === "block" ? "none" : "block";
+  updateStarIcon();
+
+  // When dropdown opens, add outside click listener
+  if (dd.style.display === "block") {
+    setTimeout(() => {
+      document.addEventListener('click', closeFavDropdown);
+    }, 10);
+  }
+}
+
+// Actually add/remove on dropdown click
+document.addEventListener("DOMContentLoaded", function() {
+  updateStarIcon();
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) {
+    ddBtn.onclick = function(e) {
+      e.stopPropagation();
+      const thisRoute = getRouteInfoFromPage();
+      if (!thisRoute) return;
+      let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+      const exists = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+      if (exists) {
+        favorites = favorites.filter(r => !(r.number === thisRoute.number && r.type === thisRoute.type));
+      } else {
+        favorites.unshift(thisRoute);
+        if (favorites.length > 4) favorites = favorites.slice(0, 4);
+      }
+      localStorage.setItem('metrofeed_favorites', JSON.stringify(favorites));
+      updateStarIcon();
+      document.getElementById('fav-dropdown').style.display = "none";
+    };
+  }
+});
+
+// Close dropdown if clicked anywhere else
+function closeFavDropdown(e) {
+  const dropdown = document.getElementById('fav-dropdown');
+  if (!dropdown.contains(e.target)) {
+    dropdown.style.display = "none";
+    document.removeEventListener('click', closeFavDropdown);
+  }
+}
+
+</script>
+</body>
+</html> 

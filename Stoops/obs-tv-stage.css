@@ -1,0 +1,187 @@
+/**
+ * RoamRaven TV stage — URL-driven sizing for OBS browser sources.
+ */
+html.tv-stage-mode,
+html.tv-stage-mode body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: var(--mf-tv-bw, 1920px);
+  height: var(--mf-tv-bh, 1080px);
+  max-width: var(--mf-tv-bw, 1920px);
+  max-height: var(--mf-tv-bh, 1080px);
+  background: #0a0a0c;
+}
+
+html.tv-stage-mode body {
+  position: relative;
+}
+
+/* --- panel=map on home.html --- */
+html.tv-stage-mode.tv-panel-map #map {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 1920px !important;
+  height: 1080px !important;
+  margin: 0 !important;
+}
+
+html.tv-stage-mode.tv-panel-map .mf-tv-alerts-panel,
+html.tv-stage-mode.tv-panel-map .mf-tv-alerts-toggle {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+html.tv-stage-mode.tv-panel-map .mf-tv-traffic-detail.mf-tv-camera-card {
+  position: absolute;
+  left: 1040px;
+  top: 100px;
+  width: 880px;
+  height: 880px;
+  right: auto;
+  bottom: auto;
+  max-height: none;
+  z-index: 10150;
+}
+
+html.tv-stage-mode.tv-panel-map .mf-tv-traffic-detail.mf-tv-incident-card,
+html.tv-stage-mode.tv-panel-map .mf-tv-traffic-detail.mf-tv-slowdown-card {
+  position: absolute;
+  left: 48px;
+  bottom: 120px;
+  right: 48px;
+  max-width: 880px;
+}
+
+html.tv-stage-mode.tv-panel-map .mf-tv-lower-third {
+  position: absolute;
+  left: 40px;
+  top: 40px;
+  bottom: auto;
+}
+
+html.tv-stage-mode.tv-panel-preview::after {
+  content: '';
+  position: fixed;
+  left: 1920px;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: rgba(147, 51, 234, 0.45);
+  z-index: 99999;
+  pointer-events: none;
+}
+
+html.tv-stage-mode.tv-panel-preview::before {
+  content: '';
+  position: fixed;
+  left: 0;
+  top: 1080px;
+  width: 100%;
+  height: 1px;
+  background: rgba(147, 51, 234, 0.45);
+  z-index: 99999;
+  pointer-events: none;
+}
+
+/* --- obs-tv.html slices --- */
+.mf-tv-slice {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+html.tv-slice-page,
+html.tv-slice-page body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: var(--mf-tv-bw, 480px);
+  height: var(--mf-tv-bh, 860px);
+  background: transparent;
+}
+
+html.tv-slice-page.tv-panel-ticker,
+html.tv-slice-page.tv-panel-ticker body {
+  background: #000;
+}
+
+html.tv-slice-page.tv-panel-live,
+html.tv-slice-page.tv-panel-live body {
+  background: transparent;
+}
+
+.mf-tv-slice-alerts {
+  position: relative;
+  flex-direction: column;
+  background: rgba(10, 10, 14, 0.96);
+  border: 1px solid rgba(147, 51, 234, 0.45);
+  border-radius: 10px;
+  color: #f1f5f9;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.mf-tv-slice-alerts__head {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(147, 51, 234, 0.25);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c084fc;
+}
+
+.mf-tv-slice-alerts__route {
+  padding: 10px 14px 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.mf-tv-slice-alerts__body {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 14px 14px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.mf-tv-alerts-panel__empty {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.mf-tv-alerts-panel__card {
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.mf-tv-alerts-panel__more {
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.mf-tv-alerts-panel__counter {
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.mf-tv-hidden {
+  display: none !important;
+}

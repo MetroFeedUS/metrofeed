@@ -1,0 +1,79 @@
+/**
+ * RoamRaven OBS — draggable LIVE badge (standalone browser source)
+ */
+:root {
+  --mf-live-w: 320px;
+  --mf-live-h: 120px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: var(--mf-live-w);
+  height: var(--mf-live-h);
+  overflow: hidden;
+  background: transparent;
+}
+
+.mf-live-badge {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px 7px 12px;
+  background: #dc2626;
+  color: #ffffff;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  white-space: nowrap;
+}
+
+.mf-live-badge:active {
+  cursor: grabbing;
+}
+
+.mf-live-badge__dot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: mf-live-dot-pulse 1.5s ease-in-out infinite;
+}
+
+.mf-live-badge__text {
+  display: block;
+}
+
+@keyframes mf-live-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(0.92);
+  }
+}
+
+.mf-live-badge.mf-live-badge--dragging {
+  opacity: 0.92;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}

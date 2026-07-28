@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Route 14 - To Foster & 94th | MetroFeed Portland</title>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #cccccc;
+    overflow-y: auto;
+  }
+
+  .back-button-fixed {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 45px;
+    height: 45px;
+    background-color: #4dd0e1;
+    border: 2px solid #000;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 10px #4dd0e1;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+  }
+  .back-button-fixed:active, .back-button-fixed:focus {
+    background-color: #1976d2;
+  }
+  .back-button-fixed svg {
+    width: 24px;
+    height: 24px;
+    fill: #000;
+    display: block;
+  }
+  .back-button-fixed:active svg,
+  .back-button-fixed:focus svg {
+    fill: #fff;
+  }
+
+  .theme-toggle-fixed {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    background-color: #4dd0e1;
+    border: 2px solid #000;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 10px #4dd0e1;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+  }
+  .theme-toggle-fixed:active, .theme-toggle-fixed:focus {
+    background-color: #1976d2;
+  }
+  .theme-toggle-fixed img {
+    width: 16px;
+    height: 16px;
+  }
+
+  header {
+    background-color: #0d0d0d;
+    border-top: 4px solid #4dd0e1;
+    border-bottom: 3px solid #4dd0e1;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  header img {
+    max-height: 60px;
+  }
+
+  h1#route-title {
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 2rem;
+    color: #f0f0f0;
+  }
+
+  .content-box {
+    border-radius: 12px;
+    padding: 0;
+    margin: 0;
+    background-color: #1e1e1e;
+  }
+
+  #map {
+    width: 100%;
+    height: 85vh;
+    border: none;
+    margin: 0 auto;
+    display: block;
+    border-radius: 8px;
+  }
+
+  .button-bar {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+  }
+
+  .button-bar a, .back-button {
+    background: #4dd0e1;
+    color: #0d0d0d;
+    padding: 0.6rem 1.2rem;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 10px #4dd0e1;
+  }
+
+  .back-button:hover {
+    background-color: #35c0d6;
+  }
+
+  .site-footer {
+    text-align: center;
+    margin-top: 3rem;
+    margin-bottom: 120px;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+
+  .site-footer a {
+    color: #00BFFF;
+    text-decoration: none;
+  }
+
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
+
+.favorite-save-box {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+}
+
+.favorite-star {
+  width: 45px;
+  height: 45px;
+  background-color: #4dd0e1;
+  border: 2px solid #000;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  box-shadow: 0 0 10px #4dd0e1;
+  cursor: pointer;
+  transition: background 0.2s;
+  outline: none;
+  font-size: 1.2rem;
+  color: #000;
+}
+.favorite-star:active, .favorite-star:focus {
+  background-color: #1976d2;
+  color: #fff;
+}
+.fav-dropdown {
+  display: none;
+  position: absolute;
+  top: 65px;
+  right: 0;
+  z-index: 99999;
+  background: #222;
+  border: 2px solid #4dd0e1;
+  border-radius: 10px;
+  padding: 10px 20px;
+  text-align: center;
+  box-shadow: 0 2px 12px #2224;
+}
+.fav-dropdown button {
+  font-size: 1.1rem;
+  padding: 6px 16px;
+  background: #4dd0e1;
+  color: #222;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.fav-dropdown button:hover, .fav-dropdown button:focus {
+  background: #fff;
+  color: #0071ce;
+  outline: none;
+}
+
+/* MapLibre attribution positioning */
+.maplibregl-ctrl-attrib {
+  position: absolute !important;
+  bottom: 120px !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  max-width: 200px !important;
+  min-height: auto !important;
+  transform: translateY(-30px) !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  min-height: 20px !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
+  display: none !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+  display: block !important;
+}
+
+/* Mobile-specific attribution positioning */
+@media (max-width: 768px) {
+  .maplibregl-ctrl-attrib {
+    bottom: 50px !important;
+  }
+}
+
+/* Beta Banner Styles */
+.beta-banner {
+  position: relative;
+  background-color: #111;
+  color: #bbb;
+  border-bottom: 2px solid #4dd0e1;
+  padding: 8px 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.beta-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.beta-close {
+  color: #aaa;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-left: auto;
+}
+
+.beta-close:hover,
+.beta-close:focus {
+  color: #4dd0e1;
+}
+</style>
+</head>
+<body>
+  
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <!-- Beta Banner -->
+  <div id="betaBanner" class="beta-banner" style="display: flex;">
+    <div class="beta-banner-content">
+      <span style="font-weight: bold;">⚠️ Beta Test</span>
+      <span>This program is a beta test, please report any issues.</span>
+      <span class="beta-close" onclick="closeBetaBanner()">&times;</span>
+    </div>
+  </div>
+
+<!-- Favorite Route Button (Top Right) with Dropdown -->
+<div class="favorite-save-box">
+  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+  <div class="fav-dropdown" id="fav-dropdown">
+    <button id="fav-dropdown-btn">Add to Favorites</button>
+  </div>
+</div>
+
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
+
+  <!-- Theme Toggle Button - DISABLED FOR FREE VERSION -->
+  <!-- <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
+    <img src="008-night.svg" alt="Theme Toggle" />
+  </button> -->
+
+  <h1 id="route-title">Route 14 - To Foster & 94th</h1>
+  <span id="route-type" style="display:none;"></span>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <!-- TriMet Disclaimer -->
+  <div class="disclaimer" style="margin: 2rem auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.5rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <script>
+    // Beta Banner Functions
+    function closeBetaBanner() {
+      document.getElementById('betaBanner').style.display = 'none';
+    }
+
+    // Theme toggle functionality - DISABLED FOR FREE VERSION
+    // let isNightMode = false;
+    // function toggleTheme() {
+    //   // Night mode functionality removed for free version
+    //   // Available in premium version
+    // }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = null;
+    const routeNumber = 14;
+    const direction = parseInt(0);
+
+    // Portland Metro Area Bounds
+    const PORTLAND_BOUNDS = {
+      north: 45.80,
+      south: 45.20,
+      east: -122.15,
+      west: -123.35
+    };
+
+    // Initialize MapLibre GL JS map with vector tiles
+    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
+    // const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json'; // DISABLED FOR FREE VERSION
+    
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: dayStyle,
+      center: [-122.67, 45.52],
+      zoom: 12,
+      maxZoom: 18,
+      minZoom: 8,
+      maxBounds: [
+        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
+        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
+      ],
+      attributionControl: true
+    });
+
+    // Force attribution to be collapsed by default
+    map.on('load', () => {
+      const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+      if (attributionControl) {
+        attributionControl.classList.add('maplibregl-compact');
+        attributionControl.classList.remove('maplibregl-compact-show');
+      }
+    });
+
+    // Also ensure attribution is collapsed after style changes
+    map.on('styledata', () => {
+      setTimeout(() => {
+        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+        if (attributionControl) {
+          attributionControl.classList.add('maplibregl-compact');
+          attributionControl.classList.remove('maplibregl-compact-show');
+        }
+      }, 100);
+    });
+
+    // Add route shape when map loads
+    map.on('load', () => {
+      const shapeOutbound = [
+  [45.515244, -122.678543],
+  [45.515197, -122.678366],
+  [45.514933, -122.677374],
+  [45.514662, -122.676356],
+  [45.514516, -122.675806],
+  [45.514413, -122.675421],
+  [45.51439, -122.675322],
+  [45.51435, -122.675187],
+  [45.514294, -122.675004],
+  [45.514157, -122.674551],
+  [45.51407, -122.674265],
+  [45.514066, -122.674144],
+  [45.514001, -122.673908],
+  [45.513941, -122.673684],
+  [45.513855, -122.673575],
+  [45.513742, -122.673138],
+  [45.51251, -122.668397],
+  [45.51244, -122.668122],
+  [45.512427, -122.667974],
+  [45.512396, -122.667827],
+  [45.512376, -122.667712],
+  [45.512351, -122.667559],
+  [45.512328, -122.667409],
+  [45.512304, -122.667241],
+  [45.512284, -122.66704],
+  [45.512273, -122.666843],
+  [45.512264, -122.666635],
+  [45.512262, -122.66635],
+  [45.512262, -122.665219],
+  [45.512261, -122.665113],
+  [45.51226, -122.664619],
+  [45.512271, -122.664238],
+  [45.512268, -122.663857],
+  [45.512265, -122.663015],
+  [45.512261, -122.662271],
+  [45.512257, -122.66171],
+  [45.512245, -122.661462],
+  [45.512242, -122.660911],
+  [45.512243, -122.660782],
+  [45.512243, -122.660725],
+  [45.512241, -122.659892],
+  [45.51224, -122.65977],
+  [45.512239, -122.65933],
+  [45.512237, -122.658717],
+  [45.512234, -122.65774],
+  [45.51223, -122.656736],
+  [45.512227, -122.655721],
+  [45.512224, -122.654699],
+  [45.512221, -122.654578],
+  [45.512218, -122.654413],
+  [45.512212, -122.654055],
+  [45.512201, -122.653991],
+  [45.512192, -122.653943],
+  [45.512191, -122.65369],
+  [45.512189, -122.653305],
+  [45.512215, -122.653214],
+  [45.512212, -122.65267],
+  [45.512205, -122.651856],
+  [45.512206, -122.65166],
+  [45.512206, -122.65157],
+  [45.512203, -122.650642],
+  [45.512199, -122.649634],
+  [45.512198, -122.649395],
+  [45.512197, -122.649124],
+  [45.512196, -122.648616],
+  [45.512193, -122.647597],
+  [45.512192, -122.647129],
+  [45.512191, -122.646866],
+  [45.51219, -122.646567],
+  [45.512188, -122.646119],
+  [45.512188, -122.645962],
+  [45.512187, -122.645668],
+  [45.512184, -122.645565],
+  [45.512177, -122.645509],
+  [45.512164, -122.645442],
+  [45.512133, -122.645304],
+  [45.51211, -122.645214],
+  [45.512095, -122.645123],
+  [45.512088, -122.64504],
+  [45.512087, -122.644944],
+  [45.512088, -122.644408],
+  [45.512088, -122.644147],
+  [45.512088, -122.643544],
+  [45.512086, -122.643171],
+  [45.512085, -122.642786],
+  [45.512084, -122.642537],
+  [45.512083, -122.642333],
+  [45.512083, -122.642199],
+  [45.51208, -122.641529],
+  [45.512079, -122.641261],
+  [45.512078, -122.640791],
+  [45.512077, -122.640389],
+  [45.512078, -122.640262],
+  [45.512078, -122.639964],
+  [45.512077, -122.639806],
+  [45.512077, -122.639603],
+  [45.512076, -122.639158],
+  [45.512076, -122.638654],
+  [45.512077, -122.638237],
+  [45.512076, -122.638153],
+  [45.512075, -122.638057],
+  [45.512072, -122.637134],
+  [45.512072, -122.637048],
+  [45.512072, -122.636769],
+  [45.512071, -122.636117],
+  [45.512069, -122.635248],
+  [45.512069, -122.634915],
+  [45.512069, -122.634884],
+  [45.512068, -122.634776],
+  [45.512067, -122.634677],
+  [45.512067, -122.634379],
+  [45.512067, -122.63376],
+  [45.512065, -122.633364],
+  [45.512063, -122.632702],
+  [45.512062, -122.631708],
+  [45.512062, -122.631593],
+  [45.512061, -122.630895],
+  [45.51206, -122.630587],
+  [45.51206, -122.630232],
+  [45.51206, -122.630093],
+  [45.512059, -122.629907],
+  [45.512059, -122.62977],
+  [45.512059, -122.629593],
+  [45.512059, -122.629338],
+  [45.512058, -122.62875],
+  [45.512057, -122.628656],
+  [45.512056, -122.628223],
+  [45.512054, -122.627633],
+  [45.512053, -122.627211],
+  [45.512053, -122.626844],
+  [45.512053, -122.626663],
+  [45.512052, -122.625884],
+  [45.512052, -122.625756],
+  [45.512051, -122.625458],
+  [45.512048, -122.624485],
+  [45.512048, -122.624448],
+  [45.512046, -122.623952],
+  [45.512045, -122.623445],
+  [45.512045, -122.623247],
+  [45.512045, -122.622836],
+  [45.512045, -122.622714],
+  [45.512044, -122.622457],
+  [45.512044, -122.622424],
+  [45.512044, -122.622387],
+  [45.512043, -122.622293],
+  [45.512041, -122.621551],
+  [45.51204, -122.621222],
+  [45.51204, -122.62094],
+  [45.51204, -122.620199],
+  [45.512039, -122.619919],
+  [45.512039, -122.61977],
+  [45.512039, -122.619488],
+  [45.512039, -122.619193],
+  [45.512037, -122.618362],
+  [45.512037, -122.618177],
+  [45.512036, -122.617998],
+  [45.512034, -122.617291],
+  [45.512033, -122.617108],
+  [45.512031, -122.616661],
+  [45.51203, -122.616164],
+  [45.512029, -122.615793],
+  [45.512027, -122.615139],
+  [45.512028, -122.614314],
+  [45.512028, -122.614126],
+  [45.512027, -122.613833],
+  [45.512026, -122.61364],
+  [45.512026, -122.613484],
+  [45.511987, -122.613363],
+  [45.511987, -122.613214],
+  [45.511987, -122.613162],
+  [45.512025, -122.613103],
+  [45.512024, -122.612662],
+  [45.512024, -122.612433],
+  [45.512022, -122.612365],
+  [45.51202, -122.612299],
+  [45.512019, -122.611937],
+  [45.512009, -122.611855],
+  [45.511987, -122.611764],
+  [45.511955, -122.6117],
+  [45.511924, -122.611645],
+  [45.511872, -122.611598],
+  [45.511828, -122.611579],
+  [45.511774, -122.611567],
+  [45.511564, -122.611551],
+  [45.51133, -122.611533],
+  [45.51069, -122.61149],
+  [45.510043, -122.611441],
+  [45.509394, -122.611393],
+  [45.508762, -122.611345],
+  [45.508115, -122.611298],
+  [45.508094, -122.611297],
+  [45.508025, -122.611289],
+  [45.50796, -122.611281],
+  [45.507379, -122.611266],
+  [45.506696, -122.611248],
+  [45.506007, -122.611227],
+  [45.505604, -122.611224],
+  [45.505522, -122.611211],
+  [45.505481, -122.611201],
+  [45.505454, -122.611194],
+  [45.505381, -122.611161],
+  [45.505307, -122.611118],
+  [45.505249, -122.611082],
+  [45.505187, -122.611042],
+  [45.505131, -122.611019],
+  [45.505073, -122.611004],
+  [45.505012, -122.610999],
+  [45.504989, -122.611],
+  [45.504764, -122.61101],
+  [45.504361, -122.611007],
+  [45.503604, -122.611009],
+  [45.503432, -122.611009],
+  [45.501745, -122.61102],
+  [45.501648, -122.611029],
+  [45.501584, -122.611044],
+  [45.501529, -122.611061],
+  [45.500973, -122.611266],
+  [45.500892, -122.611298],
+  [45.500811, -122.611325],
+  [45.500747, -122.611345],
+  [45.5007, -122.611351],
+  [45.500686, -122.611352],
+  [45.50064, -122.611356],
+  [45.500291, -122.611356],
+  [45.499607, -122.611355],
+  [45.499435, -122.611356],
+  [45.498918, -122.61136],
+  [45.498233, -122.611358],
+  [45.498163, -122.611358],
+  [45.497982, -122.611358],
+  [45.497913, -122.611359],
+  [45.497629, -122.611359],
+  [45.497511, -122.611358],
+  [45.497384, -122.611346],
+  [45.497345, -122.61133],
+  [45.497307, -122.611311],
+  [45.497248, -122.611273],
+  [45.497184, -122.611221],
+  [45.497117, -122.611157],
+  [45.497042, -122.611049],
+  [45.496998, -122.610987],
+  [45.496932, -122.610893],
+  [45.496789, -122.610676],
+  [45.496687, -122.610521],
+  [45.496577, -122.610356],
+  [45.496414, -122.610109],
+  [45.49578, -122.609148],
+  [45.495712, -122.609038],
+  [45.495652, -122.608939],
+  [45.495461, -122.608579],
+  [45.495392, -122.608448],
+  [45.494861, -122.607441],
+  [45.494804, -122.607315],
+  [45.494748, -122.607183],
+  [45.494466, -122.606523],
+  [45.494243, -122.606004],
+  [45.494066, -122.605591],
+  [45.494022, -122.60549],
+  [45.493975, -122.60538],
+  [45.493899, -122.605208],
+  [45.493763, -122.604884],
+  [45.493685, -122.604708],
+  [45.493599, -122.604523],
+  [45.493497, -122.60433],
+  [45.493156, -122.603717],
+  [45.493079, -122.603676],
+  [45.492985, -122.603493],
+  [45.492995, -122.603425],
+  [45.492907, -122.603266],
+  [45.492407, -122.602362],
+  [45.492189, -122.601967],
+  [45.491784, -122.601237],
+  [45.491732, -122.601233],
+  [45.49165, -122.601085],
+  [45.491652, -122.601],
+  [45.491417, -122.600572],
+  [45.49135, -122.600451],
+  [45.491122, -122.600037],
+  [45.490898, -122.599631],
+  [45.490854, -122.599553],
+  [45.490763, -122.599388],
+  [45.490715, -122.599303],
+  [45.490641, -122.599149],
+  [45.490582, -122.59901],
+  [45.490375, -122.59851],
+  [45.490321, -122.59838],
+  [45.490158, -122.597991],
+  [45.489999, -122.597626],
+  [45.489923, -122.597451],
+  [45.489738, -122.596979],
+  [45.489704, -122.596895],
+  [45.489659, -122.596782],
+  [45.489516, -122.596443],
+  [45.48933, -122.596015],
+  [45.48929, -122.595918],
+  [45.489083, -122.595405],
+  [45.488875, -122.594909],
+  [45.488641, -122.594336],
+  [45.488609, -122.594255],
+  [45.488406, -122.59378],
+  [45.488406, -122.593779],
+  [45.488301, -122.593535],
+  [45.488138, -122.593153],
+  [45.488085, -122.59313],
+  [45.488052, -122.593049],
+  [45.488001, -122.592933],
+  [45.488009, -122.592841],
+  [45.487971, -122.592749],
+  [45.487935, -122.59266],
+  [45.487355, -122.59127],
+  [45.48696, -122.590298],
+  [45.486667, -122.589567],
+  [45.486594, -122.589384],
+  [45.486501, -122.589141],
+  [45.486458, -122.589029],
+  [45.486386, -122.588838],
+  [45.486376, -122.588811],
+  [45.486334, -122.588688],
+  [45.486075, -122.587933],
+  [45.485799, -122.587119],
+  [45.485626, -122.586604],
+  [45.485496, -122.586212],
+  [45.485423, -122.586],
+  [45.485222, -122.585408],
+  [45.485199, -122.585343],
+  [45.48476, -122.584044],
+  [45.484627, -122.583645],
+  [45.484618, -122.583615],
+  [45.484591, -122.583544],
+  [45.484474, -122.583239],
+  [45.484434, -122.583135],
+  [45.48432, -122.582839],
+  [45.48413, -122.582346],
+  [45.48367, -122.581144],
+  [45.483593, -122.580949],
+  [45.483522, -122.580885],
+  [45.483478, -122.580774],
+  [45.483421, -122.580631],
+  [45.483416, -122.580496],
+  [45.483205, -122.579956],
+  [45.483157, -122.579833],
+  [45.483101, -122.579692],
+  [45.483041, -122.579537],
+  [45.482996, -122.579421],
+  [45.482985, -122.579395],
+  [45.482938, -122.579275],
+  [45.482875, -122.579114],
+  [45.48281, -122.578956],
+  [45.482751, -122.578813],
+  [45.482684, -122.578636],
+  [45.48265, -122.578546],
+  [45.48264, -122.578519],
+  [45.482535, -122.578242],
+  [45.482486, -122.578114],
+  [45.482442, -122.577991],
+  [45.482401, -122.577876],
+  [45.482354, -122.577758],
+  [45.482278, -122.577561],
+  [45.482247, -122.57748],
+  [45.482224, -122.577405],
+  [45.482206, -122.577339],
+  [45.482105, -122.576878],
+  [45.481971, -122.57632],
+  [45.481854, -122.575836],
+  [45.481736, -122.575366],
+  [45.48161, -122.574851],
+  [45.481493, -122.574367],
+  [45.481486, -122.574338],
+  [45.481462, -122.574241],
+  [45.481407, -122.574021],
+  [45.481246, -122.573363],
+  [45.481226, -122.573287],
+  [45.481209, -122.573217],
+  [45.481099, -122.572843],
+  [45.480943, -122.572336],
+  [45.480862, -122.572063],
+  [45.480732, -122.571631],
+  [45.480655, -122.571384],
+  [45.480631, -122.571305],
+  [45.480594, -122.571254],
+  [45.480568, -122.57121],
+  [45.480547, -122.571171],
+  [45.480528, -122.571129],
+  [45.480511, -122.571086],
+  [45.480501, -122.571061],
+  [45.480465, -122.570978],
+  [45.48042, -122.570896],
+  [45.480354, -122.570794],
+  [45.480278, -122.570713],
+  [45.480192, -122.570645],
+  [45.480047, -122.570545],
+  [45.479959, -122.570497],
+  [45.479695, -122.570355],
+  [45.479636, -122.57032],
+  [45.479579, -122.570278],
+  [45.479525, -122.570228],
+  [45.479468, -122.570169],
+  [45.479423, -122.570111],
+  [45.479357, -122.569998],
+  [45.479313, -122.569917],
+  [45.479299, -122.569876],
+  [45.479268, -122.569776],
+  [45.47923, -122.569614],
+  [45.47921, -122.569484],
+  [45.479128, -122.568778],
+  [45.47911, -122.56862],
+  [45.479086, -122.568414],
+  [45.479067, -122.56833],
+  [45.479044, -122.568261],
+  [45.479004, -122.568159],
+  [45.478873, -122.567855],
+  [45.478781, -122.567606],
+  [45.478715, -122.567378],
+  [45.478615, -122.567035],
+  [45.47858, -122.566911],
+  [45.478548, -122.566789],
+  [45.47838, -122.566157],
+  [45.478358, -122.566073],
+  [45.478014, -122.564783],
+  [45.477975, -122.564633],
+  [45.477922, -122.564444],
+  [45.477835, -122.564113],
+  [45.477794, -122.563942],
+  [45.477762, -122.563767],
+  [45.477746, -122.563586],
+  [45.477742, -122.563472],
+  [45.478197, -122.563468],
+  [45.478384, -122.563467],
+  [45.478603, -122.564224],
+  [45.478611, -122.564252],
+  [45.478734, -122.564678],
+  [45.478766, -122.564802],
+  [45.478946, -122.56546],
+  [45.479175, -122.566293]
+];
+
+const stopNames = {
+  "1775": "SE Foster &amp; Gladstone",
+  "1794": "SE Foster &amp; 52nd",
+  "1804": "SE Foster &amp; 67th",
+  "1810": "SE Foster &amp; 72nd",
+  "1819": "SE Foster &amp; 82nd",
+  "1823": "SE Foster &amp; 86th",
+  "1827": "SE Foster &amp; 89th",
+  "1831": "SE Foster &amp; 94th (I-205 Overpass)",
+  "2594": "SE Hawthorne &amp; 6th",
+  "2595": "SE Hawthorne &amp; Maple",
+  "2596": "SE Hawthorne &amp; Poplar",
+  "2599": "SE Hawthorne &amp; 12th",
+  "2603": "SE Hawthorne &amp; 16th",
+  "2608": "SE Hawthorne &amp; 23rd",
+  "2614": "SE Hawthorne &amp; 28th",
+  "2615": "SE Hawthorne &amp; 30th",
+  "2620": "SE Hawthorne &amp; 34th",
+  "2623": "SE Hawthorne &amp; 37th",
+  "2625": "SE Hawthorne &amp; Cesar Chavez Blvd",
+  "2630": "SE Hawthorne &amp; 44th",
+  "2633": "SE Hawthorne &amp; 47th",
+  "2641": "Hawthorne Bridge",
+  "3635": "SW Madison &amp; 1st",
+  "3639": "SW Madison &amp; 4th",
+  "6398": "SE Woodstock &amp; 94th (I-205 West End)",
+  "6427": "SE Woodstock &amp; 92nd",
+  "7651": "SE 50th &amp; Clay",
+  "7653": "SE 50th &amp; Clinton",
+  "7655": "SE 50th &amp; Division",
+  "7657": "SE 50th &amp; Haig",
+  "7660": "SE 50th &amp; Lincoln",
+  "7666": "SE 50th &amp; Kelly",
+  "8134": "SE 97th &amp; Foster",
+  "8241": "SE 50th &amp; Brooklyn",
+  "10196": "SE Foster &amp; 63rd",
+  "14482": "7800 Block SE Foster"
+};
+
+const stops = [
+  { stop_id: "3639", name: "SW Madison &amp; 4th", lat: 45.515185, lon: -122.678573, times: ["11:30 PM", "12:00 AM", "12:30 AM", "1:00 AM", "1:45 AM", "5:15 AM", "5:45 AM", "6:00 AM"] },
+  { stop_id: "3635", name: "SW Madison &amp; 1st", lat: 45.514455, lon: -122.675839, times: ["11:30 PM", "12:00 AM", "12:30 AM", "1:00 AM", "1:45 AM", "5:15 AM", "5:45 AM", "6:00 AM"] },
+  { stop_id: "2641", name: "Hawthorne Bridge", lat: 45.512153, lon: -122.665112, times: ["11:32 PM", "12:02 AM", "12:32 AM", "1:02 AM", "1:47 AM", "5:17 AM", "5:47 AM", "6:02 AM"] },
+  { stop_id: "2594", name: "SE Hawthorne &amp; 6th", lat: 45.512168, lon: -122.659894, times: ["11:33 PM", "12:03 AM", "12:33 AM", "1:03 AM", "1:48 AM", "5:18 AM", "5:48 AM", "6:03 AM"] },
+  { stop_id: "2599", name: "SE Hawthorne &amp; 12th", lat: 45.512141, lon: -122.654012, times: ["11:34 PM", "12:04 AM", "12:34 AM", "1:04 AM", "1:49 AM", "5:19 AM", "5:49 AM", "6:04 AM"] },
+  { stop_id: "2595", name: "SE Hawthorne &amp; Maple", lat: 45.512147, lon: -122.651563, times: ["11:34 PM", "12:04 AM", "12:34 AM", "1:04 AM", "1:49 AM", "5:19 AM", "5:49 AM", "6:04 AM"] },
+  { stop_id: "2603", name: "SE Hawthorne &amp; 16th", lat: 45.512129, lon: -122.649125, times: ["11:35 PM", "12:05 AM", "12:35 AM", "1:04 AM", "1:49 AM", "5:19 AM", "5:49 AM", "6:04 AM"] },
+  { stop_id: "2596", name: "SE Hawthorne &amp; Poplar", lat: 45.512119, lon: -122.647128, times: ["11:35 PM", "12:05 AM", "12:35 AM", "1:05 AM", "1:50 AM", "5:20 AM", "5:50 AM", "6:05 AM"] },
+  { stop_id: "2608", name: "SE Hawthorne &amp; 23rd", lat: 45.512003, lon: -122.642333, times: ["11:36 PM", "12:06 AM", "12:36 AM", "1:06 AM", "1:51 AM", "5:21 AM", "5:51 AM", "6:06 AM"] },
+  { stop_id: "2614", name: "SE Hawthorne &amp; 28th", lat: 45.512011, lon: -122.637048, times: ["11:37 PM", "12:07 AM", "12:37 AM", "1:07 AM", "1:52 AM", "5:22 AM", "5:52 AM", "6:07 AM"] },
+  { stop_id: "2615", name: "SE Hawthorne &amp; 30th", lat: 45.512007, lon: -122.634927, times: ["11:38 PM", "12:08 AM", "12:38 AM", "1:07 AM", "1:52 AM", "5:22 AM", "5:52 AM", "6:07 AM"] },
+  { stop_id: "2620", name: "SE Hawthorne &amp; 34th", lat: 45.511995, lon: -122.629338, times: ["11:39 PM", "12:09 AM", "12:39 AM", "1:08 AM", "1:53 AM", "5:23 AM", "5:53 AM", "6:08 AM"] },
+  { stop_id: "2623", name: "SE Hawthorne &amp; 37th", lat: 45.511987, lon: -122.625463, times: ["11:10 PM", "11:40 PM", "12:10 AM", "12:40 AM", "1:09 AM", "1:54 AM", "5:24 AM", "5:54 AM"] },
+  { stop_id: "2625", name: "SE Hawthorne &amp; Cesar Chavez Blvd", lat: 45.511971, lon: -122.622454, times: ["11:11 PM", "11:41 PM", "12:11 AM", "12:41 AM", "1:10 AM", "1:55 AM", "5:25 AM", "5:55 AM"] },
+  { stop_id: "2630", name: "SE Hawthorne &amp; 44th", lat: 45.511971, lon: -122.617293, times: ["11:12 PM", "11:42 PM", "12:12 AM", "12:42 AM", "1:11 AM", "1:56 AM", "5:26 AM", "5:56 AM"] },
+  { stop_id: "2633", name: "SE Hawthorne &amp; 47th", lat: 45.511966, lon: -122.613844, times: ["11:12 PM", "11:42 PM", "12:12 AM", "12:42 AM", "1:11 AM", "1:56 AM", "5:26 AM", "5:56 AM"] },
+  { stop_id: "7651", name: "SE 50th &amp; Clay", lat: 45.511561, lon: -122.611634, times: ["11:13 PM", "11:43 PM", "12:13 AM", "12:43 AM", "1:12 AM", "1:57 AM", "5:27 AM", "5:57 AM"] },
+  { stop_id: "7660", name: "SE 50th &amp; Lincoln", lat: 45.508121, lon: -122.61138, times: ["11:14 PM", "11:44 PM", "12:14 AM", "12:44 AM", "1:13 AM", "1:58 AM", "5:28 AM", "5:58 AM"] },
+  { stop_id: "7655", name: "SE 50th &amp; Division", lat: 45.505471, lon: -122.611283, times: ["11:14 PM", "11:44 PM", "12:14 AM", "12:44 AM", "1:13 AM", "1:58 AM", "5:28 AM", "5:59 AM"] },
+  { stop_id: "7653", name: "SE 50th &amp; Clinton", lat: 45.503604, lon: -122.611085, times: ["11:15 PM", "11:45 PM", "12:15 AM", "12:45 AM", "1:14 AM", "1:59 AM", "5:29 AM", "6:00 AM"] },
+  { stop_id: "8241", name: "SE 50th &amp; Brooklyn", lat: 45.500687, lon: -122.611464, times: ["11:16 PM", "11:46 PM", "12:16 AM", "12:46 AM", "1:15 AM", "2:00 AM", "5:30 AM", "6:01 AM"] },
+  { stop_id: "7666", name: "SE 50th &amp; Kelly", lat: 45.499432, lon: -122.611443, times: ["11:16 PM", "11:46 PM", "12:16 AM", "12:46 AM", "1:15 AM", "2:00 AM", "5:30 AM", "6:01 AM"] },
+  { stop_id: "7657", name: "SE 50th &amp; Haig", lat: 45.497988, lon: -122.611455, times: ["11:17 PM", "11:47 PM", "12:17 AM", "12:47 AM", "1:16 AM", "2:01 AM", "5:31 AM", "6:02 AM"] },
+  { stop_id: "1794", name: "SE Foster &amp; 52nd", lat: 45.495389, lon: -122.608653, times: ["11:18 PM", "11:48 PM", "12:18 AM", "12:48 AM", "1:17 AM", "2:02 AM", "5:32 AM", "6:03 AM"] },
+  { stop_id: "1775", name: "SE Foster &amp; Gladstone", lat: 45.492851, lon: -122.603362, times: ["11:19 PM", "11:49 PM", "12:19 AM", "12:49 AM", "1:18 AM", "2:03 AM", "5:33 AM", "6:04 AM"] },
+  { stop_id: "10196", name: "SE Foster &amp; 63rd", lat: 45.48993, lon: -122.597687, times: ["11:21 PM", "11:51 PM", "12:21 AM", "12:51 AM", "1:20 AM", "2:05 AM", "5:35 AM", "6:06 AM"] },
+  { stop_id: "1804", name: "SE Foster &amp; 67th", lat: 45.488339, lon: -122.593837, times: ["11:22 PM", "11:52 PM", "12:22 AM", "12:52 AM", "1:21 AM", "2:06 AM", "5:36 AM", "6:07 AM"] },
+  { stop_id: "1810", name: "SE Foster &amp; 72nd", lat: 45.48625, lon: -122.588743, times: ["11:24 PM", "11:54 PM", "12:24 AM", "12:54 AM", "1:23 AM", "2:07 AM", "5:37 AM", "6:08 AM"] },
+  { stop_id: "14482", name: "7800 Block SE Foster", lat: 45.484244, lon: -122.582898, times: ["11:25 PM", "11:55 PM", "12:25 AM", "12:55 AM", "1:24 AM", "2:09 AM", "5:39 AM", "6:10 AM"] },
+  { stop_id: "1819", name: "SE Foster &amp; 82nd", lat: 45.482474, lon: -122.578287, times: ["11:26 PM", "11:56 PM", "12:26 AM", "12:56 AM", "1:25 AM", "2:10 AM", "5:40 AM", "6:11 AM"] },
+  { stop_id: "1823", name: "SE Foster &amp; 86th", lat: 45.48143, lon: -122.574435, times: ["11:27 PM", "11:57 PM", "12:27 AM", "12:57 AM", "1:26 AM", "2:11 AM", "5:41 AM", "6:12 AM"] },
+  { stop_id: "1827", name: "SE Foster &amp; 89th", lat: 45.480483, lon: -122.571108, times: ["11:28 PM", "11:58 PM", "12:28 AM", "12:58 AM", "1:27 AM", "2:12 AM", "5:42 AM", "6:13 AM"] },
+  { stop_id: "6427", name: "SE Woodstock &amp; 92nd", lat: 45.479066, lon: -122.56879, times: ["11:29 PM", "11:59 PM", "12:29 AM", "12:59 AM", "1:28 AM", "2:12 AM", "5:42 AM", "6:13 AM"] },
+  { stop_id: "6398", name: "SE Woodstock &amp; 94th (I-205 West End)", lat: 45.478266, lon: -122.566121, times: ["11:30 PM", "12:00 AM", "12:30 AM", "1:00 AM", "1:29 AM", "2:13 AM", "5:43 AM", "6:14 AM"] },
+  { stop_id: "8134", name: "SE 97th &amp; Foster", lat: 45.478196, lon: -122.563366, times: ["11:31 PM", "12:01 AM", "12:31 AM", "1:01 AM", "1:30 AM", "2:14 AM", "5:44 AM", "6:15 AM"] },
+  { stop_id: "1831", name: "SE Foster &amp; 94th (I-205 Overpass)", lat: 45.479259, lon: -122.566246, times: ["11:32 PM", "12:02 AM", "12:32 AM", "1:02 AM", "1:31 AM", "2:15 AM", "5:45 AM", "6:16 AM"] },
+]
+
+      // Add route line
+      map.addSource('route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]]) // Convert lat/lon to lon/lat
+          }
+        }
+      });
+
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route-line',
+        paint: {
+          'line-color': '#0071CE',
+          'line-width': 4,
+          'line-opacity': 0.7
+        }
+      });
+
+      // Fit map to route bounds (but maintain minimum zoom level)
+      const bounds = new maplibregl.LngLatBounds();
+      shapeOutbound.forEach(coord => bounds.extend([coord[1], coord[0]]));
+      map.fitBounds(bounds, { padding: 20, maxZoom: 12 });
+
+      // Add stops
+      const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+      stops.forEach(stop => {
+        let highlightedTimes = [];
+        let foundNext = false;
+        stop.times.forEach(timeStr => {
+          let cleanTime = timeStr.trim();
+          let [h, m] = cleanTime.split(":");
+          let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+          if (schedMins < nowMins && nowMins - schedMins > 720) {
+            schedMins += 1440;
+          }
+          if (!foundNext && schedMins >= nowMins) {
+            highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+            foundNext = true;
+          } else {
+            highlightedTimes.push(cleanTime);
+          }
+        });
+
+        // Create stop marker element
+        const stopElement = document.createElement('div');
+        stopElement.style.width = '12px';
+        stopElement.style.height = '12px';
+        stopElement.style.backgroundColor = '#4dd0e1';
+        stopElement.style.borderRadius = '50%';
+        stopElement.style.border = '2px solid #4dd0e1';
+        stopElement.style.opacity = '0.9';
+
+        const stopMarker = new maplibregl.Marker({
+          element: stopElement
+        });
+        stopMarker.setLngLat([stop.lon, stop.lat]);
+        
+        // Create popup content
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+            <strong style='color:#4dd0e1;'>${stop.name}</strong>
+            <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+            ${highlightedTimes.join("<br>") || 'No scheduled times'}
+          </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        stopMarker.setPopup(popup);
+        stopMarker.addTo(map);
+      });
+    });
+
+    // Live bus tracking
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      // Remove existing bus markers
+      Object.values(busMarkers).forEach(marker => marker.remove());
+      busMarkers = {};
+      
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        
+        // Create bus marker element
+        const busElement = document.createElement('div');
+        busElement.style.textAlign = 'center';
+        busElement.innerHTML = `
+          <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
+          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #0071CE;margin:auto;"></div>
+        `;
+
+        const busMarker = new maplibregl.Marker({
+          element: busElement
+        });
+        busMarker.setLngLat([bus.longitude, bus.latitude]);
+        
+        // Create popup for bus
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:2px solid #0071CE; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
+            <div style='text-align:center; margin-bottom:8px;'>
+              <div style='background:#0071CE;color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
+            </div>
+            <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNumber}</div>
+            <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
+            <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
+            <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
+          </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        busMarker.setPopup(popup);
+        busMarker.addTo(map);
+        busMarkers[bus.vehicleID] = busMarker;
+      });
+    }
+
+    // Start bus tracking after map loads
+    map.on('load', () => {
+      fetchAndDisplay();
+      setInterval(fetchAndDisplay, 15000);
+    });
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<script>
+// ---- Favorite Star Dropdown: Auto-detect route info, menu UI ----
+
+function getRouteInfoFromPage() {
+  let routeNumber = "";
+  let routeType = "";
+  let routeLink = "";
+
+  let titleEl = document.getElementById('route-title');
+  if (titleEl) {
+    let match = titleEl.textContent.match(/Route\s+(\d+)[^\d]?/i);
+    if (match) routeNumber = match[1];
+  }
+  let typeEl = document.getElementById('route-type');
+  if (typeEl) {
+    routeType = typeEl.textContent.trim().toLowerCase();
+  }
+  routeLink = window.location.pathname + window.location.search;
+
+  if (!routeNumber) {
+    let titleMatch = document.title.match(/Route\s+(\d+)/i);
+    if (titleMatch) routeNumber = titleMatch[1];
+  }
+  if (!routeType) {
+    routeType = document.body.className.includes('rail') ? 'rail' : 
+                document.body.className.includes('max') ? 'max' :
+                document.body.className.includes('streetcar') ? 'streetcar' :
+                'bus';
+  }
+  if (!routeLink) routeLink = window.location.href;
+  if (!routeNumber) return null;
+  return {
+    number: routeNumber,
+    link: routeLink,
+    type: routeType
+  };
+}
+
+function updateStarIcon() {
+  const thisRoute = getRouteInfoFromPage();
+  if (!thisRoute) return;
+  let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+  const isFavorite = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+  const btn = document.getElementById('fav-star');
+  if (btn) btn.textContent = isFavorite ? "★" : "☆";
+
+  // Update dropdown button label
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) ddBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
+}
+
+// Show/hide dropdown on star click
+function showFavDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('fav-dropdown');
+  dd.style.display = dd.style.display === "block" ? "none" : "block";
+  updateStarIcon();
+
+  // When dropdown opens, add outside click listener
+  if (dd.style.display === "block") {
+    setTimeout(() => {
+      document.addEventListener('click', closeFavDropdown);
+    }, 10);
+  }
+}
+
+// Actually add/remove on dropdown click
+document.addEventListener("DOMContentLoaded", function() {
+  updateStarIcon();
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) {
+    ddBtn.onclick = function(e) {
+      e.stopPropagation();
+      const thisRoute = getRouteInfoFromPage();
+      if (!thisRoute) return;
+      let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+      const exists = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+      if (exists) {
+        favorites = favorites.filter(r => !(r.number === thisRoute.number && r.type === thisRoute.type));
+      } else {
+        favorites.unshift(thisRoute);
+        if (favorites.length > 4) favorites = favorites.slice(0, 4);
+      }
+      localStorage.setItem('metrofeed_favorites', JSON.stringify(favorites));
+      updateStarIcon();
+      document.getElementById('fav-dropdown').style.display = "none";
+    };
+  }
+});
+
+// Close dropdown if clicked anywhere else
+function closeFavDropdown(e) {
+  const dropdown = document.getElementById('fav-dropdown');
+  if (!dropdown.contains(e.target)) {
+    dropdown.style.display = "none";
+    document.removeEventListener('click', closeFavDropdown);
+  }
+}
+
+</script>
+</body>
+</html> 

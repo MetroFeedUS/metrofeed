@@ -1,0 +1,603 @@
+/**
+ * MetroFeed City Configuration
+ * 
+ * This file contains all city-specific configuration data.
+ * To add a new city, create a new entry in the CITIES object.
+ * 
+ * Usage in template:
+ *   const cityId = getCityIdFromPath(); // e.g., "portland", "louisville"
+ *   const CITY_CONFIG = CITIES[cityId];
+ */
+
+const CITIES = {
+  // Portland, Oregon
+  portland: {
+    // Basic Info
+    cityName: "Portland",
+    state: "OR",
+    timezone: "America/Los_Angeles",
+    
+    // APIs — use server proxies only; never ship API keys in client config.
+    apiKey: null,
+    busApi: "https://developer.trimet.org/ws/v2/vehicles",
+    // trafficApi: Removed - will use state DOT APIs in the future
+    
+    // Map Settings
+    defaultCenter: [-122.6784, 45.5152], // [longitude, latitude] for MapLibre GL JS
+    defaultZoom: 10.5,
+    bounds: {
+      north: 45.80,
+      south: 45.20,
+      east: -122.15,
+      west: -123.35
+    },
+    // Map Tile Styles (base map API)
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    
+    // File Paths
+    mastermapFile: "mastermap.js",
+    logoFile: "Sitelogo.png",
+    
+    // Bus API Type: "trimet" | "tarc-gtfs-rt" | "custom"
+    busApiType: "trimet",
+    
+    // GTFS-RT endpoint (if using GTFS-RT)
+    gtfsRtUrl: null
+  },
+  
+  // Louisville, Kentucky
+  louisville: {
+    // Basic Info
+    cityName: "Louisville",
+    state: "KY",
+    timezone: "America/New_York",
+    
+    // APIs — use server proxies only; never ship API keys in client config.
+    apiKey: null,
+    busApi: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition",
+    // trafficApi: Removed - will use state DOT APIs in the future
+    
+    // Map Settings
+    defaultCenter: [-85.76, 38.25], // [longitude, latitude] for MapLibre GL JS
+    defaultZoom: 10.5,
+    bounds: {
+      north: 38.5,
+      south: 38.0,
+      east: -85.4,
+      west: -85.9
+    },
+    // Map Tile Styles (base map API) - Louisville TileServer-GL (custom hosted OpenStreetMap)
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    
+    // File Paths
+    mastermapFile: "mastermap.js",
+    logoFile: "Sitelogo.png",
+    
+    // Bus API Type
+    busApiType: "tarc-gtfs-rt",
+    
+    // GTFS-RT endpoint
+    gtfsRtUrl: "https://tarc.rideralerts.com/InfoPoint/GTFS-Realtime.ashx?Type=VehiclePosition"
+  },
+  
+  // Boston, Massachusetts
+  boston: {
+    // Basic Info
+    cityName: "Boston",
+    state: "MA",
+    timezone: "America/New_York",
+    
+    // APIs — use server proxies only; never ship API keys in client config.
+    apiKey: null,
+    otpApi: "https://otp.metrofeedus.com/otp/transmodel/v3", // Direct endpoint (CORS fixed on server)
+    otpGtfsGraphql: "https://otp.metrofeedus.com/otp/gtfs/v1", // Fallback GraphQL endpoint when Transmodel returns no tripPatterns
+    busApi: "https://maps.metrofeedus.com/api/mbta/VehiclePositions.pb", // Proxied through VPS
+    // Do not put MassDOT or other private API keys in client-side config; use server proxies only.
+    // Single endpoint for Go Time link status (link-status-list with travel-time, delay, etc.)
+    massdotTrafficLinksUrl: "https://traffic-api.metrofeedus.com/traffic/links.json",
+    
+    // Map Settings
+    // Downtown Boston center (Park Street/Downtown Crossing area)
+    defaultCenter: [-71.0619, 42.3551], // [longitude, latitude] for MapLibre GL JS
+    defaultZoom: 11,
+    bounds: {
+      // Default bounds for 90% of use cases (core Boston metro area), then expanded +20% on lat/lon span (same center) for more pan room.
+      // - North: Alewife (Red Line), Wonderland (Blue Line)
+      // - South: Braintree (Red Line), Forest Hills (Orange Line)
+      // - East: Wonderland/Logan Airport (Blue/Silver Lines)
+      // - West: Riverside (Green Line D), Alewife (Red Line)
+      north: 42.595,
+      south: 42.055,
+      east: -70.684,
+      west: -71.356
+    },
+    // Maximum extended bounds for full service area (commuter rail, extended routes)
+    // Covers ALL MBTA commuter rail lines in ALL directions:
+    // - North: Fitchburg Line (Wachusett ~42.7°N), Lowell Line, Haverhill Line, Newburyport/Rockport Lines (~42.8°N)
+    // - South: Providence/Stoughton Line (Providence, RI ~41.8°N), Middleborough/Lakeville (~41.8°N), Kingston/Plymouth (~41.9°N), Greenbush (~42.2°N)
+    // - East: Greenbush Line (Scituate ~-70.7°E), Rockport Line (Rockport ~-70.6°E), Newburyport Line (~-70.8°E)
+    // - West: Worcester Line (Worcester ~-71.8°W), Fitchburg Line (Fitchburg ~-71.8°W), Fairmount Line
+    // These bounds ensure users can pan to see any commuter rail route while preventing panning to irrelevant areas
+    maxExtendedBounds: {
+      north: 43.0,    // Northernmost: Fitchburg Line (Wachusett), Newburyport/Rockport Lines
+      south: 41.2,    // Southernmost: Providence, RI (Providence/Stoughton Line), Middleborough/Lakeville, Kingston/Plymouth
+      east: -69.5,    // Easternmost: Rockport Line, Newburyport Line, Greenbush Line (Scituate)
+      west: -72.2     // Westernmost: Worcester Line (Worcester), Fitchburg Line (Fitchburg)
+    },
+    // Map Tile Styles (base map API)
+    // New England map (shared across multiple cities, bounds locked per city)
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    
+    // File Paths
+    mastermapFile: null, // Boston uses lazy-loading, not mastermap.js
+    routesIndexFile: "routes_index.js", // Boston uses routes_index.js
+    logoFile: "Sitelogo.png",
+    
+    // Bus API Type
+    busApiType: "mbta-gtfs-rt",
+    // GTFS-RT is the primary live-vehicle source; V3 is used for enrichment (ETAs/occupancy) when available
+    disableGtfsRt: false,
+    
+    // GTFS-RT endpoints (proxied through VPS to avoid CORS)
+    gtfsRtUrl: "https://maps.metrofeedus.com/api/mbta/VehiclePositions.pb",
+    // Additional GTFS-RT endpoints (ready for future use):
+    gtfsRtTripUpdatesUrl: "https://maps.metrofeedus.com/api/mbta/TripUpdates.pb",
+    gtfsRtAlertsUrl: "https://maps.metrofeedus.com/api/mbta/Alerts.pb",
+    
+    // Lazy loading flag
+    useLazyLoading: true
+  },
+
+  /**
+   * Greater Cincinnati + Northern Kentucky (launch shell).
+   * Replace OTP / GTFS-RT URLs when your Cincy+NKY graph and feeds are live.
+   * Map tile key: use referrer-restricted public token only; never ship server-only secrets here.
+   */
+  cincinnati: {
+    cityName: "Cincinnati",
+    state: "OH",
+    timezone: "America/New_York",
+
+    // APIs — Cincinnati uses VPS proxies; no client-side API keys.
+    apiKey: null,
+    // OTP endpoints (Cincinnati deployment).
+    otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
+    otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
+    busApi: null,
+
+    defaultCenter: [-84.512, 39.103],
+    defaultZoom: 11,
+    // Startup fallback route when GPS is denied/out-of-bounds or when we can't cheaply compute nearest-stop routes.
+    // Pick a central, always-available route (same behavior as selecting from route list).
+    startupDefaultRouteId: "sorta_4",
+    startupDefaultDirectionId: 0,
+    // maxBounds for the basemap (~25 statute miles beyond prior edges; lon scale uses center lat).
+    bounds: {
+      north: 39.7114,
+      south: 38.5886,
+      east: -83.8828,
+      west: -85.2172
+    },
+    // Cap for MapBoundsManager when routes extend (expanded by the same buffer).
+    maxExtendedBounds: {
+      north: 39.9114,
+      south: 38.3886,
+      east: -83.6828,
+      west: -85.5172
+    },
+    // NWS weather alerts: all RoamRaven service counties (matches Index.html cincinnati countyGeoids).
+    serviceCounties: [
+      { geoid: "39061", name: "Hamilton", state: "OH", nwsArea: "OHC061" },
+      { geoid: "39017", name: "Butler", state: "OH", nwsArea: "OHC017" },
+      { geoid: "39165", name: "Warren", state: "OH", nwsArea: "OHC165" },
+      { geoid: "21037", name: "Campbell", state: "KY", nwsArea: "KYC037" },
+      { geoid: "21117", name: "Kenton", state: "KY", nwsArea: "KYC117" },
+      { geoid: "21015", name: "Boone", state: "KY", nwsArea: "KYC015" }
+    ],
+    nwsAlertAreas: ["OHC061", "OHC017", "OHC165", "KYC037", "KYC117", "KYC015"],
+    /** VPS Geoapify proxy — OTP Start/Destination place search (key stays on server). */
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    /** VPS Geoapify Place Details — stop Explore (lat/lon + features; key stays on server). */
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    /** Stop popup Explore: walk-time isochrones + up to 2 POI categories per search. */
+    explore: {
+      maxCategories: 2,
+      defaultGeometry: "walk_10",
+      geometries: [
+        { id: "walk_5", label: "5 min walk" },
+        { id: "walk_10", label: "10 min walk" },
+        { id: "walk_15", label: "15 min walk" },
+        { id: "walk_30", label: "30 min walk" }
+      ],
+      categories: [
+        { id: "restaurant", label: "Restaurants", icon: "🍽️", minGeometry: "walk_5", color: "#E53935" },
+        { id: "cafe", label: "Cafés", icon: "☕", minGeometry: "walk_5", color: "#8D6E63" },
+        { id: "supermarket", label: "Supermarkets", icon: "🛒", minGeometry: "walk_5", color: "#43A047" },
+        { id: "shopping_mall", label: "Shopping malls", icon: "🏬", minGeometry: "walk_5", color: "#7B1FA2" },
+        { id: "tourism", label: "Tourism", icon: "🎡", minGeometry: "walk_5", color: "#00897B" },
+        { id: "atm", label: "ATMs", icon: "🏧", minGeometry: "walk_5", color: "#546E7A" },
+        { id: "school", label: "Schools", icon: "🏫", minGeometry: "walk_5", color: "#F9A825" },
+        { id: "playground", label: "Playgrounds", icon: "🛝", minGeometry: "walk_5", color: "#FB8C00" },
+        { id: "toilet", label: "Restrooms", icon: "🚻", minGeometry: "walk_5", color: "#78909C" },
+        { id: "hotel", label: "Hotels", icon: "🏨", minGeometry: "walk_5", color: "#5C6BC0" },
+        { id: "park", label: "Parks", icon: "🌳", minGeometry: "walk_10", color: "#2E7D32" },
+        { id: "pharmacy", label: "Pharmacies", icon: "💊", minGeometry: "walk_10", color: "#1E88E5" },
+        { id: "entertainment", label: "Entertainment", icon: "🎬", minGeometry: "walk_10", color: "#D81B60" }
+      ]
+    },
+    // Ohio road incidents (VPS JSON).
+    incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
+    // Ohio traffic flow / density (VPS JSON).
+    flowFeedUrl: "https://traffic-api.metrofeedus.com/flow/ohio",
+    // Ohio slowdowns (VPS JSON).
+    slowdownsFeedUrl: "https://traffic-api.metrofeedus.com/slowdowns/ohio",
+    // Ohio construction (VPS JSON).
+    constructionFeedUrl: "https://traffic-api.metrofeedus.com/construction/ohio",
+    // Ohio cameras (VPS JSON).
+    camerasFeedUrl: "https://traffic-api.metrofeedus.com/cameras/ohio",
+    // Pad the visible map bounds by this fraction of width/height when filtering cached incidents (no refetch on pan).
+    incidentsViewportPaddingRatio: 0.12,
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+
+    // Cincinnati: uses per-route JSON + window.ROUTES (NOT Boston lazy loader)
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+
+    // Realtime: Cincinnati merged GTFS-RT (decoded JSON via VPS proxy)
+    busApiType: "gtfs-rt",
+    disableGtfsRt: false,
+    gtfsRtUrl: null, // legacy single field (unused)
+    // Optional second JSON feed (merged with realtimeTripsUrl by trip_id; later URL wins). Use for a **full** trip-updates export so every vehicle trip_id resolves to real stop_updates.
+    gtfsRtTripUpdatesUrl: null,
+    gtfsRtAlertsUrl: null,
+    gtfsRtProxyUrls: [
+      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
+    ],
+    // Performance: fetch/parse vehicles once and fan-out to all open overlays.
+    // Reversible: set to false to return to per-overlay polling.
+    useSharedVehicleCache: true,
+    sharedVehiclePollMs: 12000,
+    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
+    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    // Cincinnati vehicles.json has no direction_id; strict TV filter would hide every bus.
+    gtfsRtStrictVehicleDirection: false,
+    // Legacy: used to flip bearing-only inference. Prefer polyline+tangent matching in routeOverlay instead.
+    gtfsRtFlipInferredDirection: false,
+    // Stop marker styling: directional "pin + fin" (rotates along route direction at each stop).
+    // Disabled for now (stop placement/shape alignment needs deeper work).
+    directionalStopMarkers: false,
+    // When direction is missing from the feed, do not show the bus unless GPS bearing can infer 0/1 (avoids "every dir" matches).
+    gtfsRtExcludeVehicleIfBearingUnknown: true,
+    // Only show vehicles whose live trip serves at least N stops on this route+direction sheet (Metro branch pages are narrower than "all route 4").
+    gtfsRtFilterVehiclesByTripStopOverlap: true,
+    gtfsRtTripStopOverlapMin: 1,
+    // Hard safety: only render vehicles within this distance of the route polyline (prevents out-of-area vehicles on same route number).
+    busMaxDistanceFromRouteMeters: 1500,
+
+    // Static per-route JSON: same folder as home.html (deploy route_data/ with the city site)
+    routeDataBase: "./route_data/",
+
+    // Multi-agency bus modal tabs (Metro / TANK / BCRTA Butler County)
+    busModalSystems: [
+      { id: "metro", label: "Metro", idPrefix: "sorta_", feedAgency: "sorta" },
+      { id: "tank", label: "TANK", idPrefix: "tank_", feedAgency: "tank" },
+      { id: "bcrta", label: "BCRTA", idPrefix: "bcrta_", feedAgency: "bcrta" }
+    ],
+
+    // Live vehicle marker SVG alignment. bus.svg faces WEST; flip 180° so it faces direction-of-travel.
+    busSvgHeadingOffsetDeg: 180,
+    /** Route-colored circle + newbus.svg (contrast matches vehicle ID pill). */
+    busMarkerNewbusSvg: true,
+    busMarkerSvgFile: "newbus.svg",
+    busMarkerSizeScale: 1.1,
+    /** Vehicle ID pill visible at this zoom and closer (route overview is usually ≤14). */
+    busMarkerLabelMinZoom: 15,
+
+    /** Direction comet: white dots behind bus from confirmed travel along route shape. */
+    busTracerEnabled: true,
+    busTracerLengthM: 48,
+    busTracerDotCount: 5,
+    busTracerDotMaxPx: 10,
+    busTracerDotMinPx: 4,
+    busTracerSizeScale: 1.2,
+
+    /** Dim buses only after move along shape proves opposite to overlay direction. */
+    busDimOppositeAfterMove: true,
+    busDirConfirmMoveM: 3,
+
+    showRailRoutes: false,
+
+    useLazyLoading: false,
+
+    /** Enable OBS TV at obs-tv.html / home.html?tv=1 */
+    tvModeEnabled: true
+  },
+
+  /**
+   * Dev shells (obscure public paths — not linked from Index).
+   * GTFS / OTP / realtime filled city-by-city later.
+   * Folder → config id: tooltime, Browns→browns, Bluejackets→bluejackets, Hotdog→hotdog, Stoops→stoops.
+   */
+  tooltime: {
+    cityName: "Allen County",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    defaultCenter: [-84.130, 40.742],
+    defaultZoom: 11,
+    startupDefaultRouteId: null,
+    startupDefaultDirectionId: 0,
+    bounds: { north: 41.05, south: 40.55, east: -83.85, west: -84.45 },
+    maxExtendedBounds: { north: 41.25, south: 40.35, east: -83.65, west: -84.65 },
+    serviceCounties: [
+      { geoid: "39003", name: "Allen", state: "OH", nwsArea: "OHC003" }
+    ],
+    nwsAlertAreas: ["OHC003"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "./route_data/",
+    busModalSystems: [],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  },
+
+  browns: {
+    cityName: "Cleveland",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    defaultCenter: [-81.694, 41.499],
+    defaultZoom: 11,
+    startupDefaultRouteId: null,
+    startupDefaultDirectionId: 0,
+    bounds: { north: 41.72, south: 41.15, east: -81.0, west: -81.95 },
+    maxExtendedBounds: { north: 41.92, south: 40.95, east: -80.8, west: -82.15 },
+    serviceCounties: [
+      { geoid: "39035", name: "Cuyahoga", state: "OH", nwsArea: "OHC035" },
+      { geoid: "39085", name: "Lake", state: "OH", nwsArea: "OHC085" },
+      { geoid: "39153", name: "Summit", state: "OH", nwsArea: "OHC153" }
+    ],
+    nwsAlertAreas: ["OHC035", "OHC085", "OHC153"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "./route_data/",
+    busModalSystems: [],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  },
+
+  bluejackets: {
+    cityName: "Columbus",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    defaultCenter: [-82.995, 39.961],
+    defaultZoom: 11,
+    startupDefaultRouteId: null,
+    startupDefaultDirectionId: 0,
+    bounds: { north: 40.15, south: 39.55, east: -82.75, west: -83.15 },
+    maxExtendedBounds: { north: 40.35, south: 39.35, east: -82.55, west: -83.35 },
+    serviceCounties: [
+      { geoid: "39049", name: "Franklin", state: "OH", nwsArea: "OHC049" }
+    ],
+    nwsAlertAreas: ["OHC049"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "./route_data/",
+    busModalSystems: [],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  },
+
+  hotdog: {
+    cityName: "Toledo",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    defaultCenter: [-83.555, 41.654],
+    defaultZoom: 11,
+    startupDefaultRouteId: null,
+    startupDefaultDirectionId: 0,
+    bounds: { north: 41.75, south: 41.15, east: -82.75, west: -84.35 },
+    maxExtendedBounds: { north: 41.95, south: 40.95, east: -82.55, west: -84.55 },
+    serviceCounties: [
+      { geoid: "39095", name: "Lucas", state: "OH", nwsArea: "OHC095" },
+      { geoid: "39173", name: "Wood", state: "OH", nwsArea: "OHC173" },
+      { geoid: "39123", name: "Ottawa", state: "OH", nwsArea: "OHC123" }
+    ],
+    nwsAlertAreas: ["OHC095", "OHC173", "OHC123"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "./route_data/",
+    busModalSystems: [],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  },
+
+  stoops: {
+    cityName: "Youngstown",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    // Downtown Youngstown start; pan limited to Mahoning+Trumbull (+pad).
+    defaultCenter: [-80.651, 41.100],
+    defaultZoom: 10,
+    startupDefaultRouteId: "wrta_1",
+    startupDefaultDirectionId: 0,
+    // Official county union (Mahoning + Trumbull) + 10% on width/height.
+    bounds: {
+      north: 41.5617,
+      south: 40.8396,
+      east: -80.4621,
+      west: -81.1435
+    },
+    // Same counties + 20% for MapBoundsManager when a route needs more room.
+    maxExtendedBounds: {
+      north: 41.6218,
+      south: 40.7795,
+      east: -80.4053,
+      west: -81.2003
+    },
+    serviceCounties: [
+      { geoid: "39155", name: "Mahoning", state: "OH", nwsArea: "OHC155" },
+      { geoid: "39099", name: "Trumbull", state: "OH", nwsArea: "OHC099" }
+    ],
+    nwsAlertAreas: ["OHC155", "OHC099"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "./route_data/",
+    busModalSystems: [
+      { id: "wrta", label: "WRTA", idPrefix: "wrta_", feedAgency: "wrta" }
+    ],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  }
+};
+
+/**
+ * Get city ID from current path or URL
+ * Assumes folder structure: /CityName/home.html
+ */
+function getCityIdFromPath() {
+  const path = window.location.pathname;
+  const match = path.match(/\/([^\/]+)\//);
+  if (match) {
+    return match[1].toLowerCase();
+  }
+  // Fallback: try to get from current directory name
+  const segments = path.split('/');
+  const citySegment = segments[segments.length - 2];
+  return citySegment ? citySegment.toLowerCase() : 'portland';
+}
+
+/**
+ * Get city configuration
+ * @param {string} cityId - Optional city ID, defaults to auto-detect
+ * @returns {Object} City configuration object
+ */
+function getCityConfig(cityId) {
+  cityId = cityId || getCityIdFromPath();
+  const config = CITIES[cityId];
+  
+  if (!config) {
+    console.warn(`[getCityConfig] City "${cityId}" not found, using Portland as default`);
+    return CITIES.portland;
+  }
+  
+  return config;
+}
+
+/**
+ * Cincinnati multi-agency route ids (sorta_, tank_, bcrta_) → display + realtime feed agency key.
+ * @param {string} routeId
+ * @returns {{ feedAgency: string, label: string, idPrefix: string, digits: string }|null}
+ */
+function metrofeedAgencyFromRouteId(routeId) {
+  const r = String(routeId || "");
+  const cfg = typeof getCityConfig === "function" ? getCityConfig() : null;
+  const systems = cfg && Array.isArray(cfg.busModalSystems) ? cfg.busModalSystems : [];
+  for (let i = 0; i < systems.length; i++) {
+    const sys = systems[i];
+    const pref = sys && sys.idPrefix ? String(sys.idPrefix) : "";
+    if (!pref || !r.startsWith(pref)) continue;
+    const feedAgency =
+      sys.feedAgency != null && String(sys.feedAgency).trim() !== ""
+        ? String(sys.feedAgency).toLowerCase()
+        : pref === "sorta_"
+          ? "sorta"
+          : pref === "tank_"
+            ? "tank"
+            : pref === "bcrta_"
+              ? "bcrta"
+              : String(sys.id || "").toLowerCase();
+    return {
+      feedAgency,
+      label: String(sys.label || sys.id || ""),
+      idPrefix: pref,
+      digits: r.slice(pref.length)
+    };
+  }
+  return null;
+}
+
+// Export for use in template
+window.CITIES = CITIES;
+window.getCityConfig = getCityConfig;
+window.getCityIdFromPath = getCityIdFromPath;
+window.metrofeedAgencyFromRouteId = metrofeedAgencyFromRouteId;
+

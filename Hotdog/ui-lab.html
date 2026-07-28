@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetroFeed UI Lab — Finished kit (Boston)</title>
+  <style>
+    :root {
+      --mf-bg: #0d0d0d;
+      --mf-surface-1: rgba(18, 18, 18, 0.92);
+      --mf-surface-2: rgba(26, 26, 26, 0.92);
+      --mf-surface-solid-1: #141414;
+      --mf-surface-solid-2: #1e1e1e;
+      --mf-text: #e9eef6;
+      --mf-text-muted: #a9b4c3;
+      --mf-text-dim: #7f8ba0;
+      --mf-accent: #1E90FF;
+      --mf-accent-soft: #7ec8ff;
+      --mf-accent-2: #36c2ff;
+      --mf-danger: #ff6b6b;
+      --mf-success: #4CAF50;
+      --mf-warn: #FF9800;
+      --mf-border: rgba(30, 144, 255, 0.65);
+      --mf-border-weak: rgba(255, 255, 255, 0.12);
+      --mf-radius-sm: 8px;
+      --mf-radius-md: 12px;
+      --mf-radius-lg: 16px;
+      --mf-shadow-sm: 0 2px 10px rgba(0,0,0,0.35);
+      --mf-shadow-md: 0 10px 28px rgba(0,0,0,0.55);
+      --mf-shadow-premium: 0 24px 56px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04) inset, 0 0 28px rgba(30, 144, 255, 0.14);
+      --mf-glow: 0 0 18px rgba(30,144,255,0.22);
+      --mf-font: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(30,144,255,0.14), transparent 55%),
+                  radial-gradient(1200px 800px at 80% 0%, rgba(255,152,0,0.10), transparent 55%),
+                  var(--mf-bg);
+      color: var(--mf-text);
+      font-family: var(--mf-font);
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 18px 72px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.3px;
+      font-weight: 800;
+    }
+    .title .subtitle {
+      color: var(--mf-text-muted);
+      font-size: 13px;
+      line-height: 1.45;
+      max-width: 560px;
+      margin-top: 6px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(20, 20, 20, 0.88);
+      border: 1px solid var(--mf-border-weak);
+      box-shadow: var(--mf-shadow-sm);
+      color: var(--mf-text-muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.35);
+      padding: 3px 6px;
+      border-radius: 8px;
+      color: var(--mf-text);
+    }
+
+    /* ---- Section layout ---- */
+    .lab-section {
+      margin-bottom: 20px;
+    }
+    .lab-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .lab-section-head h2 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mf-accent-soft);
+    }
+    .lab-section-head p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--mf-text-muted);
+      max-width: 520px;
+      line-height: 1.4;
+    }
+
+    .card {
+      background: var(--mf-surface-1);
+      border: 1px solid var(--mf-border-weak);
+      border-radius: var(--mf-radius-lg);
+      box-shadow: var(--mf-shadow-sm);
+      overflow: hidden;
+    }
+    .cardHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      background: linear-gradient(180deg, rgba(30,144,255,0.10), transparent 70%);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .cardHeader .h {
+      font-weight: 800;
+      font-size: 12.5px;
+      letter-spacing: 0.3px;
+      color: var(--mf-text);
+    }
+    .cardBody { padding: 16px; }
+
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.10);
+      margin: 14px 0;
+    }
+    .hint {
+      color: var(--mf-text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    /* ---- Fake map + map chrome ---- */
+    .lab-map-stage {
+      position: relative;
+      min-height: 200px;
+      border-radius: var(--mf-radius-lg);
+      border: 1px solid rgba(30, 144, 255, 0.25);
+      background:
+        linear-gradient(165deg, rgba(20, 35, 55, 0.5) 0%, transparent 45%),
+        linear-gradient(335deg, rgba(30, 50, 40, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 80% 60% at 50% 100%, rgba(30,144,255,0.08), transparent 70%),
+        #0a0b0e;
+      box-shadow: var(--mf-shadow-md), inset 0 0 0 1px rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
+    .lab-map-label {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      pointer-events: none;
+    }
+    .lab-map-chrome {
+      position: absolute;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: calc(100% - 32px);
+      max-width: 320px;
+      pointer-events: none;
+    }
+    .lab-map-chrome > * { pointer-events: auto; }
+
+    /* Favorites — finished premium strip */
+    .lab-favorites-shell {
+      width: fit-content;
+      max-width: 100%;
+      margin: 0 auto;
+      background: linear-gradient(165deg, rgba(42, 44, 52, 0.94) 0%, rgba(18, 19, 24, 0.96) 100%);
+      border: 1px solid rgba(30, 144, 255, 0.42);
+      border-radius: 12px;
+      padding: 8px 8px 10px;
+      box-shadow:
+        0 10px 36px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 1px 0 rgba(255, 255, 255, 0.07) inset;
+    }
+    .lab-favorites-title {
+      text-align: center;
+      font-size: 0.62rem;
+      font-weight: 750;
+      color: rgba(255, 255, 255, 0.92);
+      margin-bottom: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .lab-fav-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .lab-fav-row:last-child { margin-bottom: 0; }
+    .fav-slot {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-weight: 900;
+      font-size: 0.85rem;
+      line-height: 1;
+      background: linear-gradient(180deg, #121214 0%, #050506 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.88);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .fav-slot.filled {
+      color: var(--mf-accent);
+      text-shadow:
+        -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
+        0 0 2px #fff;
+    }
+    .fav-slot.empty {
+      border: 2px dashed rgba(255, 255, 255, 0.5);
+      color: rgba(200,210,230,0.95);
+      font-size: 1.35rem;
+      font-weight: 400;
+      background: linear-gradient(180deg, #0e0e10 0%, #060607 100%);
+    }
+    .fav-slot.empty .star-glyph {
+      filter: drop-shadow(0 0 6px rgba(30,144,255,0.35));
+    }
+    .fav-slot.place {
+      border: 2px dashed rgba(255, 255, 255, 0.45);
+      color: rgba(230, 236, 246, 0.92);
+      font-size: 0.95rem;
+      background: linear-gradient(180deg, #0e0e10 0%, #060607 100%);
+    }
+    .fav-slot.place.filled {
+      border-style: solid;
+      border-color: rgba(255, 255, 255, 0.88);
+      color: var(--mf-accent-soft);
+    }
+
+    /* Minimized itinerary chip */
+    .lab-mini-itin {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 10px;
+      min-height: 25px;
+      box-sizing: border-box;
+      background: linear-gradient(165deg, rgba(42, 44, 52, 0.96) 0%, rgba(18, 19, 24, 0.98) 100%);
+      border: 1px solid rgba(30, 144, 255, 0.45);
+      border-radius: 10px;
+      font-size: 0.65rem;
+      color: var(--mf-accent-soft);
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      width: 100%;
+      max-width: 280px;
+    }
+    .lab-mini-itin .t { font-weight: 800; letter-spacing: 0.04em; }
+    .lab-mini-itin .d { color: #c5ced8; font-size: 0.6rem; }
+    .lab-mini-itin .btn {
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #3aa7ff 0%, #1E90FF 100%);
+      color: #0a0a0c;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 0.6rem;
+      font-weight: 800;
+    }
+
+    /* ---- Modal scene (frosted backdrop) ---- */
+    .lab-modal-scene {
+      position: relative;
+      border-radius: var(--mf-radius-lg);
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(8, 10, 14, 0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 28px 16px;
+      min-height: 420px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lab-modal-scene,
+      .lab-bus-scene {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+    }
+
+    .lab-trip-modal {
+      width: 100%;
+      max-width: 560px;
+      background: linear-gradient(165deg, #18181c 0%, #0c0c0e 55%, #09090b 100%);
+      border: 1px solid rgba(30, 144, 255, 0.55);
+      border-radius: 18px;
+      box-shadow: var(--mf-shadow-premium);
+      padding: 14px 14px 16px;
+      text-align: left;
+      box-sizing: border-box;
+    }
+    .lab-trip-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .lab-trip-head h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #5eb8ff;
+      letter-spacing: 0.02em;
+    }
+    .lab-trip-head .min {
+      background: linear-gradient(180deg, #2a2a30 0%, #1a1a20 100%);
+      color: #e0e6ee;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: default;
+    }
+    .lab-beta {
+      background: rgba(20, 24, 30, 0.95);
+      border-left: 3px solid var(--mf-accent);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #9aa6b5;
+    }
+    .lab-beta strong { color: #c5d0dc; }
+
+    /* OTP itinerary cards — finished */
+    .itin-card {
+      background: linear-gradient(165deg, #1e1e24 0%, #141418 100%);
+      border: 1px solid rgba(30, 144, 255, 0.38);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      padding: 12px;
+      position: relative;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    }
+    .itin-card.selected {
+      border-color: rgba(30, 144, 255, 0.85);
+      background: linear-gradient(165deg, #1a2430 0%, #12161c 100%);
+      box-shadow:
+        0 8px 26px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(30, 144, 255, 0.25) inset,
+        0 0 22px rgba(30, 144, 255, 0.2);
+    }
+    .itin-card .times {
+      color: var(--mf-accent-soft);
+      font-weight: 800;
+      font-size: 1.05rem;
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+    .itin-seg-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 8px;
+      margin-bottom: 8px;
+    }
+    .lab-seg-walk {
+      background: linear-gradient(180deg, #6a6d74 0%, #4a4d54 100%);
+      color: #fff;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 650;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .lab-seg-bus {
+      background: linear-gradient(180deg, #0f7fd4 0%, #0556a8 100%);
+      color: #fff;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 650;
+      box-shadow: 0 2px 8px rgba(0, 80, 160, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .lab-seg-train {
+      background: linear-gradient(180deg, #ef5350 0%, #b71c1c 100%);
+      color: #fff;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 650;
+      box-shadow: 0 2px 8px rgba(180, 40, 40, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .badge-v1 {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      padding: 4px 7px;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(165deg, #1e5f9a 0%, #0a1a2e 55%, #071018 100%);
+      border: 1px solid rgba(30, 144, 255, 0.65);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 14px rgba(30, 144, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .itin-expand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .itin-expand {
+      font-size: 12px;
+      font-weight: 800;
+      color: #cfe6ff;
+    }
+    .itin-expand .chev { color: var(--mf-accent); margin-right: 4px; }
+    .itin-details {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+      font-size: 12px;
+      color: var(--mf-text-muted);
+    }
+    .itin-detail-row {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.10);
+    }
+    .itin-detail-row:last-child { border-bottom: none; }
+    .itin-detail-row .k {
+      color: var(--mf-text-dim);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 10px;
+      margin-top: 2px;
+    }
+    .itin-detail-row .v { color: #d8e6f6; font-weight: 650; }
+    .itin-total {
+      color: rgba(255,255,255,0.94);
+      font-weight: 750;
+      font-size: 0.92rem;
+    }
+    .itin-dd {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #3aa7ff 0%, #1E90FF 100%);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: #0a0a0c;
+      font-weight: 800;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(30, 144, 255, 0.35);
+    }
+
+    .lab-trip-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+    .mf-btn {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.82);
+      background: linear-gradient(180deg, #141418 0%, #0a0a0c 100%);
+      color: var(--mf-accent-soft);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-weight: 750;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(30, 144, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .mf-btn.primary {
+      background: linear-gradient(180deg, #2a9fff 0%, #1E90FF 100%);
+      color: #0a0a0c;
+      border-color: rgba(255,255,255,0.5);
+    }
+
+    /* Bus routes modal — finished */
+    .lab-bus-scene {
+      border-radius: var(--mf-radius-lg);
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(6, 8, 12, 0.62);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 28px 16px;
+      display: flex;
+      justify-content: center;
+      min-height: 380px;
+    }
+    .lab-bus-modal {
+      width: 100%;
+      max-width: 520px;
+      background: linear-gradient(165deg, #18181c 0%, #0c0c0e 100%);
+      border: 1px solid rgba(30, 144, 255, 0.55);
+      border-radius: 18px;
+      box-shadow: var(--mf-shadow-premium);
+      overflow: hidden;
+    }
+    .lab-bus-modal .inner { padding: 14px; }
+    .bus-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(16, 16, 20, 0.9);
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      transition: box-shadow 0.2s;
+    }
+    .bus-row:hover {
+      background: linear-gradient(90deg, rgba(30, 144, 255, 0.14) 0%, rgba(30, 144, 255, 0.05) 100%);
+      box-shadow: inset 0 0 0 1px rgba(30, 144, 255, 0.12);
+    }
+    .bus-row .name {
+      flex: 1;
+      min-width: 0;
+      font-weight: 600;
+      color: #c9dff3;
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+    .bus-row .chev { color: var(--mf-accent); font-weight: 900; opacity: 0.85; }
+
+    .mf-inputWrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(12,12,12,0.85);
+      border: 1px solid rgba(30,144,255,0.5);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      box-shadow: var(--mf-shadow-sm);
+    }
+    .mf-inputWrap input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--mf-text);
+      font-size: 13px;
+    }
+
+    /* Tutorial modal */
+    .lab-tutorial-scene {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 16px;
+      background: rgba(6, 8, 12, 0.5);
+      border-radius: var(--mf-radius-lg);
+      border: 1px solid rgba(255,255,255,0.06);
+      min-height: 220px;
+    }
+    .lab-tutorial {
+      max-width: 340px;
+      width: 100%;
+      background: linear-gradient(165deg, #18181c 0%, #0c0c0e 100%);
+      border: 1px solid rgba(30, 144, 255, 0.55);
+      border-radius: 16px;
+      padding: 16px 16px 14px;
+      box-shadow: var(--mf-shadow-premium);
+      text-align: left;
+    }
+    .lab-tutorial h4 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: #5eb8ff;
+      font-weight: 800;
+    }
+    .lab-tutorial p {
+      margin: 0 0 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #dceef8;
+    }
+    .lab-tutorial .mf-btn { width: 100%; box-sizing: border-box; }
+
+    /* Dropdown */
+    .lab-dd-wrap {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .lab-dd-shell {
+      width: 52px;
+      background: linear-gradient(165deg, rgba(28, 28, 32, 0.96) 0%, rgba(14, 14, 18, 0.98) 100%);
+      border: 1px solid rgba(30,144,255,0.45);
+      border-radius: 12px;
+      padding: 8px 6px;
+      box-shadow: var(--mf-shadow-md), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    }
+    .lab-dd-tile {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      margin: 0 auto 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(26,26,30,0.95);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-size: 18px;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .lab-dd-tile:last-child { margin-bottom: 0; }
+    .lab-dd-tile:hover {
+      border-color: rgba(30,144,255,0.55);
+      box-shadow: var(--mf-glow);
+    }
+    .lab-dd-tile.on {
+      border-color: rgba(255,107,53,0.85);
+      box-shadow: 0 0 0 2px rgba(255,107,53,0.25);
+    }
+    .lab-dd-tile.yt { background: #c00; border-color: rgba(255,255,255,0.2); }
+    .lab-dd-tile.x { background: #000; border-color: rgba(255,255,255,0.2); }
+    .lab-dd-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.15);
+      margin: 6px 2px;
+    }
+    .lab-dd-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: var(--mf-text-dim);
+      text-transform: uppercase;
+      margin: 2px 0 4px 2px;
+    }
+
+    /* Tokens + compact primitives */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 760px) {
+      .swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .sw {
+      border-radius: 14px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: var(--mf-shadow-sm);
+      background: rgba(20,20,20,0.75);
+    }
+    .sw .chip {
+      height: 36px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+    .sw .k { margin-top: 8px; font-size: 11px; font-weight: 800; }
+    .sw .v { margin-top: 2px; font-size: 11px; color: var(--mf-text-muted); font-family: ui-monospace, monospace; }
+
+    .row-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>MetroFeed UI Lab — finished kit</h1>
+        <div class="subtitle">
+          Static reference for the <strong>premium</strong> direction: map chrome, trip modal, route picker, tutorial, and menu.
+          Production pages are unchanged — this file is the single place to review the full picture.
+        </div>
+      </div>
+      <div class="pill">
+        <span>Boston</span>
+        <span class="kbd">ui-lab.html</span>
+      </div>
+    </div>
+
+    <!-- 1. Map chrome -->
+    <div class="lab-section">
+      <div class="lab-section-head">
+        <h2>1 · Map chrome</h2>
+        <p>Favorites (routes ☆ + places H/W/+), minimized itinerary strip above it.</p>
+      </div>
+      <div class="card">
+        <div class="cardBody" style="padding: 0;">
+          <div class="lab-map-stage">
+            <div class="lab-map-label">Map (mock)</div>
+            <div class="lab-map-chrome">
+              <div class="lab-mini-itin">
+                <div>
+                  <div class="t">ITINERARY</div>
+                  <div class="d">Tap to restore · 42 min</div>
+                </div>
+                <span class="btn">Open</span>
+              </div>
+              <div class="lab-favorites-shell">
+                <div class="lab-favorites-title">Favorites</div>
+                <div class="lab-fav-row">
+                  <div class="fav-slot filled">1</div>
+                  <div class="fav-slot empty"><span class="star-glyph">☆</span></div>
+                  <div class="fav-slot empty"><span class="star-glyph">☆</span></div>
+                </div>
+                <div class="lab-fav-row">
+                  <div class="fav-slot place filled" title="Home set">H</div>
+                  <div class="fav-slot place" title="Work unset">W</div>
+                  <div class="fav-slot place" title="Custom">+</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Trip options modal -->
+    <div class="lab-section">
+      <div class="lab-section-head">
+        <h2>2 · Trip options modal</h2>
+        <p>Frosted overlay, gradient panel, beta banner, itinerary list with expand + selected state.</p>
+      </div>
+      <div class="card">
+        <div class="cardBody" style="padding: 0;">
+          <div class="lab-modal-scene">
+            <div class="lab-trip-modal">
+              <div class="lab-trip-head">
+                <h3>🚌 Trip options</h3>
+                <span class="min">−</span>
+              </div>
+              <div class="lab-beta">
+                <strong>Trip planning (beta)</strong> — Routes and timing are refined over time.<br>
+                See something off? Use <strong>Report a Problem</strong> (link in real app).
+              </div>
+
+              <div class="itin-card selected">
+                <div class="itin-dd" title="Expand">▼</div>
+                <div class="times">42 min · Arrive 3:14 PM</div>
+                <div class="itin-seg-row">
+                  <span class="lab-seg-walk">🚶 6m</span>
+                  <span class="lab-seg-bus"><span class="badge-v1">9</span> 12m</span>
+                  <span class="lab-seg-walk">🚶 3m</span>
+                  <span class="lab-seg-train"><span class="badge-v1" style="min-width:34px;">Red</span> 8m</span>
+                  <span class="lab-seg-walk">🚶 2m</span>
+                </div>
+                <div class="itin-total">2 transfers · $2.40</div>
+                <div class="itin-expand-row">
+                  <span class="itin-expand"><span class="chev">▲</span> Expanded</span>
+                  <button type="button" class="mf-btn primary" style="padding:8px 12px;font-size:12px;">Show on map</button>
+                </div>
+                <div class="itin-details">
+                  <div class="itin-detail-row">
+                    <div class="k">Walk</div>
+                    <div class="v">6 min → Nubian</div>
+                  </div>
+                  <div class="itin-detail-row">
+                    <div class="k">Bus</div>
+                    <div class="v"><span class="badge-v1" style="font-size:10px;">9</span> Board Longwood → South Station</div>
+                  </div>
+                  <div class="itin-detail-row">
+                    <div class="k">Subway</div>
+                    <div class="v">Red · South Station → Park St</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="itin-card">
+                <div class="itin-dd">▼</div>
+                <div class="times">51 min · Arrive 3:23 PM</div>
+                <div class="itin-seg-row">
+                  <span class="lab-seg-walk">🚶 2m</span>
+                  <span class="lab-seg-bus"><span class="badge-v1">66</span> 18m</span>
+                  <span class="lab-seg-walk">🚶 4m</span>
+                  <span class="lab-seg-train"><span class="badge-v1" style="min-width:40px;">Green</span> 14m</span>
+                </div>
+                <div class="itin-total">Fewer walks</div>
+                <div class="itin-expand-row">
+                  <span class="itin-expand"><span class="chev">▼</span> Tap to expand</span>
+                  <button type="button" class="mf-btn" style="padding:8px 12px;font-size:12px;">Preview</button>
+                </div>
+              </div>
+
+              <div class="lab-trip-actions">
+                <button type="button" class="mf-btn">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Bus routes modal -->
+    <div class="lab-section">
+      <div class="lab-section-head">
+        <h2>3 · Route picker (bus)</h2>
+        <p>Search + rows with v1 badges separated from route names (same treatment as rail list).</p>
+      </div>
+      <div class="card">
+        <div class="cardBody" style="padding: 0;">
+          <div class="lab-bus-scene">
+            <div class="lab-bus-modal">
+              <div class="cardHeader" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <div class="h">🚌 Bus routes</div>
+              </div>
+              <div class="inner">
+                <div class="mf-inputWrap">
+                  <input type="text" value="Search routes…" readonly />
+                </div>
+                <div class="bus-row">
+                  <span class="badge-v1">1</span>
+                  <div class="name">Nubian → Massachusetts Ave opp Holyoke St</div>
+                  <div class="chev">▼</div>
+                </div>
+                <div class="bus-row">
+                  <span class="badge-v1">7</span>
+                  <div class="name">Federal St @ Matthews St → City Point Terminal</div>
+                  <div class="chev">▲</div>
+                </div>
+                <div class="row-btns" style="justify-content: flex-end; margin-top: 8px;">
+                  <button type="button" class="mf-btn">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Tutorial -->
+    <div class="lab-section">
+      <div class="lab-section-head">
+        <h2>4 · Favorite route tutorial</h2>
+        <p>Compact dialog; same modal shell as the rest of the system.</p>
+      </div>
+      <div class="card">
+        <div class="cardBody">
+          <div class="lab-tutorial-scene">
+            <div class="lab-tutorial">
+              <h4>Save a favorite route</h4>
+              <p>Pick a route and direction, then tap the star on the direction you use. Rail works the same from the rail picker.</p>
+              <button type="button" class="mf-btn primary">Got it — pick a route</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Dropdown -->
+    <div class="lab-section">
+      <div class="lab-section-head">
+        <h2>5 · Menu rail</h2>
+        <p>External links, then routes, then map tools — grouped dividers.</p>
+      </div>
+      <div class="card">
+        <div class="cardBody">
+          <div class="lab-dd-wrap">
+            <div class="lab-dd-shell" aria-hidden="true">
+              <div class="lab-dd-tile yt" title="YouTube">▶</div>
+              <div class="lab-dd-tile x" title="X">𝕏</div>
+              <div class="lab-dd-divider"></div>
+              <div class="lab-dd-label">Routes</div>
+              <div class="lab-dd-tile on" title="Active">🚌</div>
+              <div class="lab-dd-tile">🚆</div>
+              <div class="lab-dd-divider"></div>
+              <div class="lab-dd-label">Map</div>
+              <div class="lab-dd-tile">⚠</div>
+              <div class="lab-dd-tile">📷</div>
+              <div class="lab-dd-tile">🌤</div>
+            </div>
+            <div class="hint" style="flex: 1; min-width: 220px;">
+              Hover tiles pick up the blue edge glow; the active tool uses the warm ring (example: bus).
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Tokens + buttons -->
+    <div class="lab-section">
+      <div class="lab-section-head">
+        <h2>6 · Tokens &amp; controls</h2>
+        <p>Reference swatches and button states; tweak <span class="kbd">:root</span> at the top to test palette shifts.</p>
+      </div>
+      <div class="card">
+        <div class="cardHeader"><div class="h">Color tokens</div></div>
+        <div class="cardBody">
+          <div class="swatches">
+            <div class="sw"><div class="chip" style="background: var(--mf-bg)"></div><div class="k">Bg</div><div class="v">--mf-bg</div></div>
+            <div class="sw"><div class="chip" style="background: var(--mf-surface-solid-1)"></div><div class="k">Surface</div><div class="v">--mf-surface-solid-1</div></div>
+            <div class="sw"><div class="chip" style="background: var(--mf-accent)"></div><div class="k">Accent</div><div class="v">--mf-accent</div></div>
+            <div class="sw"><div class="chip" style="background: var(--mf-accent-soft)"></div><div class="k">Accent soft</div><div class="v">--mf-accent-soft</div></div>
+            <div class="sw"><div class="chip" style="background: var(--mf-success)"></div><div class="k">Success</div><div class="v">--mf-success</div></div>
+            <div class="sw"><div class="chip" style="background: var(--mf-danger)"></div><div class="k">Danger</div><div class="v">--mf-danger</div></div>
+          </div>
+          <div class="divider"></div>
+          <div class="row-btns">
+            <button type="button" class="mf-btn primary">Primary</button>
+            <button type="button" class="mf-btn">Default</button>
+            <button type="button" class="mf-btn" style="opacity:0.5;cursor:not-allowed;">Disabled</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

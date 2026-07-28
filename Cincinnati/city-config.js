@@ -316,6 +316,216 @@ const CITIES = {
 
     /** Enable OBS TV at obs-tv.html / home.html?tv=1 */
     tvModeEnabled: true
+  },
+
+  /**
+   * Dev shells (obscure public paths — not linked from Index).
+   * GTFS / OTP / realtime filled city-by-city later.
+   * Folder → config id: tooltime, Browns→browns, Bluejackets→bluejackets, Hotdog→hotdog, Stoops→stoops.
+   */
+  tooltime: {
+    cityName: "Allen County",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    defaultCenter: [-84.130, 40.742],
+    defaultZoom: 11,
+    startupDefaultRouteId: null,
+    startupDefaultDirectionId: 0,
+    bounds: { north: 41.05, south: 40.55, east: -83.85, west: -84.45 },
+    maxExtendedBounds: { north: 41.25, south: 40.35, east: -83.65, west: -84.65 },
+    serviceCounties: [
+      { geoid: "39003", name: "Allen", state: "OH", nwsArea: "OHC003" }
+    ],
+    nwsAlertAreas: ["OHC003"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "/tooltime/route_data/",
+    busModalSystems: [],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  },
+
+  browns: {
+    cityName: "Cleveland",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    defaultCenter: [-81.694, 41.499],
+    defaultZoom: 11,
+    startupDefaultRouteId: null,
+    startupDefaultDirectionId: 0,
+    bounds: { north: 41.72, south: 41.15, east: -81.0, west: -81.95 },
+    maxExtendedBounds: { north: 41.92, south: 40.95, east: -80.8, west: -82.15 },
+    serviceCounties: [
+      { geoid: "39035", name: "Cuyahoga", state: "OH", nwsArea: "OHC035" },
+      { geoid: "39085", name: "Lake", state: "OH", nwsArea: "OHC085" },
+      { geoid: "39153", name: "Summit", state: "OH", nwsArea: "OHC153" }
+    ],
+    nwsAlertAreas: ["OHC035", "OHC085", "OHC153"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "/Browns/route_data/",
+    busModalSystems: [],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  },
+
+  bluejackets: {
+    cityName: "Columbus",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    defaultCenter: [-82.995, 39.961],
+    defaultZoom: 11,
+    startupDefaultRouteId: null,
+    startupDefaultDirectionId: 0,
+    bounds: { north: 40.15, south: 39.55, east: -82.75, west: -83.15 },
+    maxExtendedBounds: { north: 40.35, south: 39.35, east: -82.55, west: -83.35 },
+    serviceCounties: [
+      { geoid: "39049", name: "Franklin", state: "OH", nwsArea: "OHC049" }
+    ],
+    nwsAlertAreas: ["OHC049"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "/Bluejackets/route_data/",
+    busModalSystems: [],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  },
+
+  hotdog: {
+    cityName: "Toledo",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    defaultCenter: [-83.555, 41.654],
+    defaultZoom: 11,
+    startupDefaultRouteId: null,
+    startupDefaultDirectionId: 0,
+    bounds: { north: 41.75, south: 41.15, east: -82.75, west: -84.35 },
+    maxExtendedBounds: { north: 41.95, south: 40.95, east: -82.55, west: -84.55 },
+    serviceCounties: [
+      { geoid: "39095", name: "Lucas", state: "OH", nwsArea: "OHC095" },
+      { geoid: "39173", name: "Wood", state: "OH", nwsArea: "OHC173" },
+      { geoid: "39123", name: "Ottawa", state: "OH", nwsArea: "OHC123" }
+    ],
+    nwsAlertAreas: ["OHC095", "OHC173", "OHC123"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "/Hotdog/route_data/",
+    busModalSystems: [],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
+  },
+
+  stoops: {
+    cityName: "Youngstown",
+    state: "OH",
+    timezone: "America/New_York",
+    apiKey: null,
+    otpApi: null,
+    otpGtfsGraphql: null,
+    busApi: null,
+    // Downtown Youngstown start; pan limited to Mahoning+Trumbull (+pad).
+    defaultCenter: [-80.651, 41.100],
+    defaultZoom: 10,
+    startupDefaultRouteId: "wrta_1",
+    startupDefaultDirectionId: 0,
+    // Official county union (Mahoning + Trumbull) + 10% on width/height.
+    bounds: {
+      north: 41.5617,
+      south: 40.8396,
+      east: -80.4621,
+      west: -81.1435
+    },
+    // Same counties + 20% for MapBoundsManager when a route needs more room.
+    maxExtendedBounds: {
+      north: 41.6218,
+      south: 40.7795,
+      east: -80.4053,
+      west: -81.2003
+    },
+    serviceCounties: [
+      { geoid: "39155", name: "Mahoning", state: "OH", nwsArea: "OHC155" },
+      { geoid: "39099", name: "Trumbull", state: "OH", nwsArea: "OHC099" }
+    ],
+    nwsAlertAreas: ["OHC155", "OHC099"],
+    geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
+    placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
+    nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+    mastermapFile: null,
+    routesIndexFile: "routes_index.js",
+    logoFile: "Sitelogo.png",
+    busApiType: "gtfs-rt",
+    disableGtfsRt: true,
+    gtfsRtProxyUrls: [],
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
+    routeDataBase: "/Stoops/route_data/",
+    busModalSystems: [
+      { id: "wrta", label: "WRTA", idPrefix: "wrta_", feedAgency: "wrta" }
+    ],
+    showRailRoutes: false,
+    useLazyLoading: false,
+    tvModeEnabled: false
   }
 };
 

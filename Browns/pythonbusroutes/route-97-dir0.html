@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Route 97 - To SW Langer Dr/Sherwood Plaza | MetroFeed Portland</title>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: #cccccc;
+    overflow-y: auto;
+  }
+
+  .back-button-fixed {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 45px;
+    height: 45px;
+    background-color: #4dd0e1;
+    border: 2px solid #000;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 10px #4dd0e1;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+  }
+  .back-button-fixed:active, .back-button-fixed:focus {
+    background-color: #1976d2;
+  }
+  .back-button-fixed svg {
+    width: 24px;
+    height: 24px;
+    fill: #000;
+    display: block;
+  }
+  .back-button-fixed:active svg,
+  .back-button-fixed:focus svg {
+    fill: #fff;
+  }
+
+  .theme-toggle-fixed {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    background-color: #4dd0e1;
+    border: 2px solid #000;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 0 10px #4dd0e1;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+  }
+  .theme-toggle-fixed:active, .theme-toggle-fixed:focus {
+    background-color: #1976d2;
+  }
+  .theme-toggle-fixed img {
+    width: 16px;
+    height: 16px;
+  }
+
+  header {
+    background-color: #0d0d0d;
+    border-top: 4px solid #4dd0e1;
+    border-bottom: 3px solid #4dd0e1;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  header img {
+    max-height: 60px;
+  }
+
+  h1#route-title {
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 2rem;
+    color: #f0f0f0;
+  }
+
+  .content-box {
+    border-radius: 12px;
+    padding: 0;
+    margin: 0;
+    background-color: #1e1e1e;
+  }
+
+  #map {
+    width: 100%;
+    height: 85vh;
+    border: none;
+    margin: 0 auto;
+    display: block;
+    border-radius: 8px;
+  }
+
+  .button-bar {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+  }
+
+  .button-bar a, .back-button {
+    background: #4dd0e1;
+    color: #0d0d0d;
+    padding: 0.6rem 1.2rem;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 10px #4dd0e1;
+  }
+
+  .back-button:hover {
+    background-color: #35c0d6;
+  }
+
+  .site-footer {
+    text-align: center;
+    margin-top: 3rem;
+    margin-bottom: 120px;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+
+  .site-footer a {
+    color: #00BFFF;
+    text-decoration: none;
+  }
+
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
+
+.favorite-save-box {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+}
+
+.favorite-star {
+  width: 45px;
+  height: 45px;
+  background-color: #4dd0e1;
+  border: 2px solid #000;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  box-shadow: 0 0 10px #4dd0e1;
+  cursor: pointer;
+  transition: background 0.2s;
+  outline: none;
+  font-size: 1.2rem;
+  color: #000;
+}
+.favorite-star:active, .favorite-star:focus {
+  background-color: #1976d2;
+  color: #fff;
+}
+.fav-dropdown {
+  display: none;
+  position: absolute;
+  top: 65px;
+  right: 0;
+  z-index: 99999;
+  background: #222;
+  border: 2px solid #4dd0e1;
+  border-radius: 10px;
+  padding: 10px 20px;
+  text-align: center;
+  box-shadow: 0 2px 12px #2224;
+}
+.fav-dropdown button {
+  font-size: 1.1rem;
+  padding: 6px 16px;
+  background: #4dd0e1;
+  color: #222;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.fav-dropdown button:hover, .fav-dropdown button:focus {
+  background: #fff;
+  color: #0071ce;
+  outline: none;
+}
+
+/* MapLibre attribution positioning */
+.maplibregl-ctrl-attrib {
+  position: absolute !important;
+  bottom: 120px !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  max-width: 200px !important;
+  min-height: auto !important;
+  transform: translateY(-30px) !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  min-height: 20px !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
+  display: none !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+  display: block !important;
+}
+
+/* Mobile-specific attribution positioning */
+@media (max-width: 768px) {
+  .maplibregl-ctrl-attrib {
+    bottom: 50px !important;
+  }
+}
+
+/* Beta Banner Styles */
+.beta-banner {
+  position: relative;
+  background-color: #111;
+  color: #bbb;
+  border-bottom: 2px solid #4dd0e1;
+  padding: 8px 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.beta-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.beta-close {
+  color: #aaa;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-left: auto;
+}
+
+.beta-close:hover,
+.beta-close:focus {
+  color: #4dd0e1;
+}
+</style>
+</head>
+<body>
+  
+  <header>
+    <img src="MetroFeedPortlandLogo.png" alt="MetroFeed Portland">
+  </header>
+
+  <!-- Beta Banner -->
+  <div id="betaBanner" class="beta-banner" style="display: flex;">
+    <div class="beta-banner-content">
+      <span style="font-weight: bold;">⚠️ Beta Test</span>
+      <span>This program is a beta test, please report any issues.</span>
+      <span class="beta-close" onclick="closeBetaBanner()">&times;</span>
+    </div>
+  </div>
+
+<!-- Favorite Route Button (Top Right) with Dropdown -->
+<div class="favorite-save-box">
+  <button class="favorite-star" id="fav-star" aria-label="Save route to favorites" onclick="showFavDropdown(event)">☆</button>
+  <div class="fav-dropdown" id="fav-dropdown">
+    <button id="fav-dropdown-btn">Add to Favorites</button>
+  </div>
+</div>
+
+  <!-- Back button -->
+  <button class="back-button-fixed" onclick="history.back()" aria-label="Go back">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 19c-.28 0-.53-.11-.71-.29l-6.5-6.5a1.003 1.003 0 010-1.42l6.5-6.5a1.003 1.003 0 011.42 1.42L10.41 12l6.3 6.29a1.003 1.003 0 01-1.21 1.54z"/>
+    </svg>
+  </button>
+
+  <!-- Theme Toggle Button - DISABLED FOR FREE VERSION -->
+  <!-- <button class="theme-toggle-fixed" onclick="toggleTheme()" aria-label="Toggle theme">
+    <img src="008-night.svg" alt="Theme Toggle" />
+  </button> -->
+
+  <h1 id="route-title">Route 97 - To SW Langer Dr/Sherwood Plaza</h1>
+  <span id="route-type" style="display:none;"></span>
+
+  <div class="content-box">
+    <div id="map"></div>
+    <div style="text-align:right; font-size: 0.7rem; color: #777; margin-top: 0.5rem;">
+      Data courtesy of TriMet.
+    </div>
+  </div>
+
+  <!-- TriMet Disclaimer -->
+  <div class="disclaimer" style="margin: 2rem auto 1rem; max-width: 600px; font-size: 0.75rem; color: #888; text-align: center; padding: 0.5rem 1rem;">
+    This tool is not affiliated with or endorsed by TriMet. For official schedules and service alerts, visit <a href="https://trimet.org" style="color:#4dd0e1;">trimet.org</a>.
+  </div>
+
+  <script>
+    // Beta Banner Functions
+    function closeBetaBanner() {
+      document.getElementById('betaBanner').style.display = 'none';
+    }
+
+    // Theme toggle functionality - DISABLED FOR FREE VERSION
+    // let isNightMode = false;
+    // function toggleTheme() {
+    //   // Night mode functionality removed for free version
+    //   // Available in premium version
+    // }
+    if (document.referrer === "" && performance.navigation.type === 0) {
+      window.location.href = "/index.html";
+    }
+
+    const apiKey = null;
+    const routeNumber = 97;
+    const direction = parseInt(0);
+
+    // Portland Metro Area Bounds
+    const PORTLAND_BOUNDS = {
+      north: 45.80,
+      south: 45.20,
+      east: -122.15,
+      west: -123.35
+    };
+
+    // Initialize MapLibre GL JS map with vector tiles
+    const dayStyle = 'https://maps.metrofeedus.com/styles/0/style.json';
+    // const nightStyle = 'https://maps.metrofeedus.com/styles/1/style.json'; // DISABLED FOR FREE VERSION
+    
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: dayStyle,
+      center: [-122.67, 45.52],
+      zoom: 12,
+      maxZoom: 18,
+      minZoom: 8,
+      maxBounds: [
+        [PORTLAND_BOUNDS.west, PORTLAND_BOUNDS.south],
+        [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
+      ],
+      attributionControl: true
+    });
+
+    // Force attribution to be collapsed by default
+    map.on('load', () => {
+      const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+      if (attributionControl) {
+        attributionControl.classList.add('maplibregl-compact');
+        attributionControl.classList.remove('maplibregl-compact-show');
+      }
+    });
+
+    // Also ensure attribution is collapsed after style changes
+    map.on('styledata', () => {
+      setTimeout(() => {
+        const attributionControl = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+        if (attributionControl) {
+          attributionControl.classList.add('maplibregl-compact');
+          attributionControl.classList.remove('maplibregl-compact-show');
+        }
+      }, 100);
+    });
+
+    // Add route shape when map loads
+    map.on('load', () => {
+      const shapeOutbound = [
+  [45.382866, -122.764249],
+  [45.382653, -122.764248],
+  [45.382083, -122.76424],
+  [45.381757, -122.764227],
+  [45.381399, -122.764242],
+  [45.381312, -122.764243],
+  [45.381309, -122.764444],
+  [45.381309, -122.764567],
+  [45.381301, -122.765029],
+  [45.381288, -122.76568],
+  [45.381269, -122.766345],
+  [45.381268, -122.766712],
+  [45.381267, -122.766862],
+  [45.381265, -122.767026],
+  [45.38126, -122.767204],
+  [45.381247, -122.767366],
+  [45.381233, -122.767486],
+  [45.381167, -122.767699],
+  [45.381143, -122.76787],
+  [45.381108, -122.768082],
+  [45.381073, -122.768246],
+  [45.381052, -122.768347],
+  [45.381014, -122.76849],
+  [45.380976, -122.768635],
+  [45.380915, -122.768832],
+  [45.380784, -122.769217],
+  [45.380602, -122.769764],
+  [45.380559, -122.769892],
+  [45.380308, -122.770645],
+  [45.380251, -122.77081],
+  [45.380066, -122.771374],
+  [45.3795, -122.773104],
+  [45.379159, -122.774146],
+  [45.379131, -122.774236],
+  [45.379032, -122.774558],
+  [45.378979, -122.77474],
+  [45.37893, -122.774911],
+  [45.378809, -122.77537],
+  [45.378803, -122.775396],
+  [45.378766, -122.775555],
+  [45.378732, -122.775703],
+  [45.378667, -122.775993],
+  [45.378608, -122.776279],
+  [45.378558, -122.776545],
+  [45.378539, -122.776663],
+  [45.378452, -122.77718],
+  [45.378405, -122.777516],
+  [45.378361, -122.777841],
+  [45.378311, -122.778198],
+  [45.37828, -122.778516],
+  [45.378259, -122.778774],
+  [45.378193, -122.77977],
+  [45.378157, -122.780453],
+  [45.378154, -122.780489],
+  [45.378125, -122.780824],
+  [45.378104, -122.781023],
+  [45.378101, -122.78105],
+  [45.378066, -122.781297],
+  [45.378025, -122.781543],
+  [45.377971, -122.781818],
+  [45.377917, -122.782033],
+  [45.377859, -122.782257],
+  [45.377785, -122.782523],
+  [45.377731, -122.782694],
+  [45.37767, -122.782873],
+  [45.377594, -122.783077],
+  [45.377575, -122.783129],
+  [45.377535, -122.783235],
+  [45.377457, -122.783419],
+  [45.3774, -122.78354],
+  [45.377338, -122.78367],
+  [45.37726, -122.783829],
+  [45.376403, -122.78542],
+  [45.37553, -122.787042],
+  [45.375251, -122.78756],
+  [45.372804, -122.792105],
+  [45.372746, -122.792208],
+  [45.372339, -122.792962],
+  [45.372021, -122.793551],
+  [45.371825, -122.793922],
+  [45.371644, -122.794286],
+  [45.37141, -122.794791],
+  [45.371279, -122.795104],
+  [45.371154, -122.795403],
+  [45.371063, -122.795618],
+  [45.370889, -122.796105],
+  [45.370596, -122.79701],
+  [45.370458, -122.797514],
+  [45.37033, -122.798007],
+  [45.370213, -122.798524],
+  [45.370075, -122.799214],
+  [45.369956, -122.799901],
+  [45.369904, -122.800284],
+  [45.369861, -122.80063],
+  [45.369395, -122.80536],
+  [45.369366, -122.805636],
+  [45.369346, -122.805829],
+  [45.369109, -122.808274],
+  [45.369043, -122.808946],
+  [45.369029, -122.809086],
+  [45.369014, -122.809224],
+  [45.368793, -122.811487],
+  [45.368589, -122.813585],
+  [45.368387, -122.81561],
+  [45.368329, -122.816197],
+  [45.368313, -122.816324],
+  [45.368335, -122.816485],
+  [45.368245, -122.817407],
+  [45.368207, -122.817789],
+  [45.368159, -122.817938],
+  [45.368007, -122.819482],
+  [45.367996, -122.819623],
+  [45.367983, -122.819787],
+  [45.367963, -122.820141],
+  [45.367948, -122.82041],
+  [45.367938, -122.8207],
+  [45.367931, -122.821011],
+  [45.367929, -122.821547],
+  [45.367925, -122.822263],
+  [45.367918, -122.823805],
+  [45.367915, -122.824341],
+  [45.367912, -122.824519],
+  [45.367911, -122.824687],
+  [45.367903, -122.826333],
+  [45.367902, -122.826444],
+  [45.367831, -122.83018],
+  [45.367823, -122.830664],
+  [45.367777, -122.833216],
+  [45.367755, -122.834406],
+  [45.367752, -122.834695],
+  [45.367757, -122.835225],
+  [45.367774, -122.83583],
+  [45.367786, -122.836251],
+  [45.367806, -122.837216],
+  [45.367816, -122.837688],
+  [45.367825, -122.837962],
+  [45.367843, -122.838243],
+  [45.367865, -122.838498],
+  [45.367893, -122.838726],
+  [45.367965, -122.839175],
+  [45.367829, -122.839237],
+  [45.367574, -122.839335],
+  [45.367485, -122.839364],
+  [45.367398, -122.839387],
+  [45.367313, -122.839406],
+  [45.367129, -122.839427],
+  [45.36712, -122.839569],
+  [45.367105, -122.839691],
+  [45.36709, -122.839796],
+  [45.367037, -122.840065],
+  [45.367024, -122.840169],
+  [45.367018, -122.840268],
+  [45.367018, -122.840366],
+  [45.367024, -122.840456],
+  [45.367037, -122.840542],
+  [45.367058, -122.840635],
+  [45.367117, -122.840837],
+  [45.367162, -122.840967],
+  [45.367202, -122.841087],
+  [45.367327, -122.841468],
+  [45.367594, -122.842285],
+  [45.367636, -122.842424],
+  [45.367698, -122.842688],
+  [45.367725, -122.842831],
+  [45.367751, -122.84298],
+  [45.367769, -122.843116],
+  [45.367777, -122.843176],
+  [45.367784, -122.843233],
+  [45.367801, -122.843389],
+  [45.36781, -122.84354],
+  [45.367816, -122.843658],
+  [45.367818, -122.843754],
+  [45.367817, -122.844177],
+  [45.367817, -122.844499],
+  [45.367816, -122.844668],
+  [45.367817, -122.844848],
+  [45.367818, -122.845421],
+  [45.367816, -122.845508],
+  [45.367812, -122.845578],
+  [45.367802, -122.845647],
+  [45.367788, -122.845708],
+  [45.36777, -122.845771],
+  [45.367752, -122.84582],
+  [45.367733, -122.845861],
+  [45.367711, -122.845902],
+  [45.367678, -122.845953],
+  [45.36737, -122.846423],
+  [45.367369, -122.846424]
+];
+
+const stopNames = {
+  "9188": "SW Langer &amp; Sherwood Plaza",
+  "13079": "SW Boones Ferry Rd &amp; Nyberg",
+  "13546": "SW Langer &amp; Holland",
+  "13827": "SW Tualatin-Sherwood Rd &amp; 90th",
+  "13828": "SW Tualatin-Sherwood Rd &amp; 95th",
+  "13829": "SW Tualatin-Sherwood Rd &amp; Teton",
+  "13830": "SW Tualatin-Sherwood Rd &amp; 112th",
+  "13831": "SW Tualatin-Sherwood Rd &amp; 115th",
+  "13833": "SW Tualatin-Sherwood Rd &amp; Cipole",
+  "13834": "SW Tualatin-Sherwood Rd &amp; Oregon St",
+  "13835": "SW Tualatin-Sherwood Rd &amp; Gerda Ln",
+  "13836": "SW Tualatin-Sherwood Rd &amp; Langer Farms"
+};
+
+const stops = [
+  { stop_id: "13079", name: "SW Boones Ferry Rd &amp; Nyberg", lat: 45.382861, lon: -122.764363, times: ["6:18 AM", "7:18 AM", "8:18 AM", "9:18 AM", "3:33 PM", "4:43 PM", "5:53 PM"] },
+  { stop_id: "13827", name: "SW Tualatin-Sherwood Rd &amp; 90th", lat: 45.380686, lon: -122.769978, times: ["6:19 AM", "7:19 AM", "8:19 AM", "9:19 AM", "3:34 PM", "4:44 PM", "5:54 PM"] },
+  { stop_id: "13828", name: "SW Tualatin-Sherwood Rd &amp; 95th", lat: 45.379232, lon: -122.774299, times: ["6:19 AM", "7:19 AM", "8:19 AM", "9:19 AM", "3:35 PM", "4:45 PM", "5:55 PM"] },
+  { stop_id: "13829", name: "SW Tualatin-Sherwood Rd &amp; Teton", lat: 45.377702, lon: -122.783166, times: ["6:21 AM", "7:21 AM", "8:21 AM", "9:21 AM", "3:36 PM", "4:46 PM", "5:56 PM"] },
+  { stop_id: "13830", name: "SW Tualatin-Sherwood Rd &amp; 112th", lat: 45.37241, lon: -122.793043, times: ["6:23 AM", "7:23 AM", "8:23 AM", "9:23 AM", "3:39 PM", "4:49 PM", "5:59 PM"] },
+  { stop_id: "13831", name: "SW Tualatin-Sherwood Rd &amp; 115th", lat: 45.371348, lon: -122.795163, times: ["6:23 AM", "7:23 AM", "8:23 AM", "9:23 AM", "3:39 PM", "4:49 PM", "5:59 PM"] },
+  { stop_id: "13833", name: "SW Tualatin-Sherwood Rd &amp; Cipole", lat: 45.369213, lon: -122.808294, times: ["6:25 AM", "7:25 AM", "8:25 AM", "9:25 AM", "3:42 PM", "4:52 PM", "6:02 PM"] },
+  { stop_id: "13834", name: "SW Tualatin-Sherwood Rd &amp; Oregon St", lat: 45.368471, lon: -122.815627, times: ["6:27 AM", "7:27 AM", "8:27 AM", "9:27 AM", "3:44 PM", "4:54 PM", "6:04 PM"] },
+  { stop_id: "13835", name: "SW Tualatin-Sherwood Rd &amp; Gerda Ln", lat: 45.368004, lon: -122.823805, times: ["6:28 AM", "7:28 AM", "8:28 AM", "9:28 AM", "3:45 PM", "4:55 PM", "6:05 PM"] },
+  { stop_id: "13836", name: "SW Tualatin-Sherwood Rd &amp; Langer Farms", lat: 45.367865, lon: -122.835822, times: ["6:30 AM", "7:30 AM", "8:30 AM", "9:30 AM", "3:48 PM", "4:58 PM", "6:08 PM"] },
+  { stop_id: "13546", name: "SW Langer &amp; Holland", lat: 45.3674, lon: -122.841417, times: ["6:32 AM", "7:32 AM", "8:32 AM", "9:32 AM", "3:49 PM", "4:59 PM", "6:09 PM"] },
+  { stop_id: "9188", name: "SW Langer &amp; Sherwood Plaza", lat: 45.367891, lon: -122.844499, times: ["6:32 AM", "7:32 AM", "8:32 AM", "9:32 AM", "3:50 PM", "5:00 PM", "6:10 PM"] },
+]
+
+      // Add route line
+      map.addSource('route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: shapeOutbound.map(coord => [coord[1], coord[0]]) // Convert lat/lon to lon/lat
+          }
+        }
+      });
+
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route-line',
+        paint: {
+          'line-color': '#0071CE',
+          'line-width': 4,
+          'line-opacity': 0.7
+        }
+      });
+
+      // Fit map to route bounds (but maintain minimum zoom level)
+      const bounds = new maplibregl.LngLatBounds();
+      shapeOutbound.forEach(coord => bounds.extend([coord[1], coord[0]]));
+      map.fitBounds(bounds, { padding: 20, maxZoom: 12 });
+
+      // Add stops
+      const nowPT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const nowMins = nowPT.getHours() * 60 + nowPT.getMinutes();
+
+      stops.forEach(stop => {
+        let highlightedTimes = [];
+        let foundNext = false;
+        stop.times.forEach(timeStr => {
+          let cleanTime = timeStr.trim();
+          let [h, m] = cleanTime.split(":");
+          let schedMins = parseInt(h, 10) * 60 + parseInt(m, 10);
+          if (schedMins < nowMins && nowMins - schedMins > 720) {
+            schedMins += 1440;
+          }
+          if (!foundNext && schedMins >= nowMins) {
+            highlightedTimes.push(`<span style="background:#4dd0e1; color:#000; padding:2px 6px; border-radius:6px; font-weight:bold;">${cleanTime}</span>`);
+            foundNext = true;
+          } else {
+            highlightedTimes.push(cleanTime);
+          }
+        });
+
+        // Create stop marker element
+        const stopElement = document.createElement('div');
+        stopElement.style.width = '12px';
+        stopElement.style.height = '12px';
+        stopElement.style.backgroundColor = '#4dd0e1';
+        stopElement.style.borderRadius = '50%';
+        stopElement.style.border = '2px solid #4dd0e1';
+        stopElement.style.opacity = '0.9';
+
+        const stopMarker = new maplibregl.Marker({
+          element: stopElement
+        });
+        stopMarker.setLngLat([stop.lon, stop.lat]);
+        
+        // Create popup content
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:1px solid #4dd0e1; border-radius:8px; padding:10px; background:#222; color:#fff;'>
+            <strong style='color:#4dd0e1;'>${stop.name}</strong>
+            <hr style='border:none; border-top:1px solid #4dd0e1; margin:6px 0;'>
+            ${highlightedTimes.join("<br>") || 'No scheduled times'}
+          </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        stopMarker.setPopup(popup);
+        stopMarker.addTo(map);
+      });
+    });
+
+    // Live bus tracking
+    let busMarkers = {};
+    async function fetchAndDisplay() {
+      const res = await fetch(`https://developer.trimet.org/ws/v2/vehicles?route=${routeNumber}&appID=${apiKey}&json=true`);
+      const data = await res.json();
+      const buses = (data.resultSet.vehicle || []).filter(v => v.routeNumber == routeNumber && v.direction == direction);
+
+      // Remove existing bus markers
+      Object.values(busMarkers).forEach(marker => marker.remove());
+      busMarkers = {};
+      
+      if (!buses.length) return;
+
+      buses.forEach(bus => {
+        if (!bus.latitude || !bus.longitude || !bus.blockID) return;
+        
+        // Create bus marker element
+        const busElement = document.createElement('div');
+        busElement.style.textAlign = 'center';
+        busElement.innerHTML = `
+          <div style="background:#0071CE;color:#fff;padding:2px 6px;border-radius:6px;font-weight:bold;font-size:12px;">${bus.vehicleID}</div>
+          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:10px solid #0071CE;margin:auto;"></div>
+        `;
+
+        const busMarker = new maplibregl.Marker({
+          element: busElement
+        });
+        busMarker.setLngLat([bus.longitude, bus.latitude]);
+        
+        // Create popup for bus
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <div style='border:2px solid #0071CE; border-radius:10px; padding:12px; background:#222; color:#fff; min-width:200px;'>
+            <div style='text-align:center; margin-bottom:8px;'>
+              <div style='background:#0071CE;color:#fff;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:14px;'>🚌 Bus ${bus.vehicleID}</div>
+            </div>
+            <div style='margin-bottom:6px;'><strong>Route:</strong> ${routeNumber}</div>
+            <div style='margin-bottom:6px;'><strong>Direction:</strong> ${bus.direction}</div>
+            <div style='margin-bottom:6px;'><strong>Speed:</strong> ${Math.round(bus.speed || 0)} mph</div>
+            <div style='margin-bottom:6px;'><strong>Block:</strong> ${bus.blockID}</div>
+          </div>
+        `;
+        
+        const popup = new maplibregl.Popup().setDOMContent(popupContent);
+        busMarker.setPopup(popup);
+        busMarker.addTo(map);
+        busMarkers[bus.vehicleID] = busMarker;
+      });
+    }
+
+    // Start bus tracking after map loads
+    map.on('load', () => {
+      fetchAndDisplay();
+      setInterval(fetchAndDisplay, 15000);
+    });
+  </script>
+
+<footer class="site-footer">
+  <a href="terms.html">Terms of Use</a> &nbsp;|&nbsp;
+  <a href="contact.html">Contact Us</a> &nbsp;|&nbsp;
+  <a href="report.html">Report a Problem</a> &nbsp;|&nbsp;
+  <a href="dmca.html">DMCA</a> &nbsp;|&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
+<script>
+// ---- Favorite Star Dropdown: Auto-detect route info, menu UI ----
+
+function getRouteInfoFromPage() {
+  let routeNumber = "";
+  let routeType = "";
+  let routeLink = "";
+
+  let titleEl = document.getElementById('route-title');
+  if (titleEl) {
+    let match = titleEl.textContent.match(/Route\s+(\d+)[^\d]?/i);
+    if (match) routeNumber = match[1];
+  }
+  let typeEl = document.getElementById('route-type');
+  if (typeEl) {
+    routeType = typeEl.textContent.trim().toLowerCase();
+  }
+  routeLink = window.location.pathname + window.location.search;
+
+  if (!routeNumber) {
+    let titleMatch = document.title.match(/Route\s+(\d+)/i);
+    if (titleMatch) routeNumber = titleMatch[1];
+  }
+  if (!routeType) {
+    routeType = document.body.className.includes('rail') ? 'rail' : 
+                document.body.className.includes('max') ? 'max' :
+                document.body.className.includes('streetcar') ? 'streetcar' :
+                'bus';
+  }
+  if (!routeLink) routeLink = window.location.href;
+  if (!routeNumber) return null;
+  return {
+    number: routeNumber,
+    link: routeLink,
+    type: routeType
+  };
+}
+
+function updateStarIcon() {
+  const thisRoute = getRouteInfoFromPage();
+  if (!thisRoute) return;
+  let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+  const isFavorite = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+  const btn = document.getElementById('fav-star');
+  if (btn) btn.textContent = isFavorite ? "★" : "☆";
+
+  // Update dropdown button label
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) ddBtn.textContent = isFavorite ? "Remove from Favorites" : "Add to Favorites";
+}
+
+// Show/hide dropdown on star click
+function showFavDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('fav-dropdown');
+  dd.style.display = dd.style.display === "block" ? "none" : "block";
+  updateStarIcon();
+
+  // When dropdown opens, add outside click listener
+  if (dd.style.display === "block") {
+    setTimeout(() => {
+      document.addEventListener('click', closeFavDropdown);
+    }, 10);
+  }
+}
+
+// Actually add/remove on dropdown click
+document.addEventListener("DOMContentLoaded", function() {
+  updateStarIcon();
+  const ddBtn = document.getElementById('fav-dropdown-btn');
+  if (ddBtn) {
+    ddBtn.onclick = function(e) {
+      e.stopPropagation();
+      const thisRoute = getRouteInfoFromPage();
+      if (!thisRoute) return;
+      let favorites = JSON.parse(localStorage.getItem('metrofeed_favorites') || '[]');
+      const exists = favorites.find(r => r.number === thisRoute.number && r.type === thisRoute.type);
+      if (exists) {
+        favorites = favorites.filter(r => !(r.number === thisRoute.number && r.type === thisRoute.type));
+      } else {
+        favorites.unshift(thisRoute);
+        if (favorites.length > 4) favorites = favorites.slice(0, 4);
+      }
+      localStorage.setItem('metrofeed_favorites', JSON.stringify(favorites));
+      updateStarIcon();
+      document.getElementById('fav-dropdown').style.display = "none";
+    };
+  }
+});
+
+// Close dropdown if clicked anywhere else
+function closeFavDropdown(e) {
+  const dropdown = document.getElementById('fav-dropdown');
+  if (!dropdown.contains(e.target)) {
+    dropdown.style.display = "none";
+    document.removeEventListener('click', closeFavDropdown);
+  }
+}
+
+</script>
+</body>
+</html> 

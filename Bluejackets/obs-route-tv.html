@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RoamRaven TV — OBS setup</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="manifestbird.png" sizes="512x512" />
+  <style>
+    :root { --rr-accent: #9333ea; --rr-bg: #0a0a0c; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--rr-bg);
+      color: #e8e8e8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .panel {
+      padding: 2rem;
+      background: #141418;
+      border: 1px solid rgba(147, 51, 234, 0.45);
+      border-radius: 12px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+    }
+    h1 { color: var(--rr-accent); font-size: 1.35rem; margin-bottom: 0.5rem; }
+    p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5; }
+    code { color: #e2e8f0; font-size: 0.82rem; word-break: break-all; }
+    a {
+      display: inline-block;
+      margin-top: 0.75rem;
+      color: var(--rr-accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>RoamRaven TV</h1>
+    <p>OBS uses one browser source URL per panel. No access code is required — use the full URL in OBS.</p>
+    <p>Map:<br><code>home.html?tv=1&panel=map&bw=1920&bh=1080</code></p>
+    <p>Weather bar:<br><code>obs-tv.html?tv=1&panel=ticker&bw=1920&bh=160</code></p>
+    <p>Alerts:<br><code>obs-tv.html?tv=1&panel=alerts&bw=480&bh=860</code></p>
+    <a href="obs-tv.html?tv=1&panel=ticker&bw=1920&bh=160">Open weather bar preview</a>
+  </div>
+  <script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var ret = params.get('return');
+    if (!ret) return;
+    try {
+      var decoded = decodeURIComponent(ret);
+      // Same-origin relative paths only (block open redirects / javascript: URLs).
+      if (!decoded || decoded.charAt(0) !== '/' || decoded.indexOf('//') === 0) return;
+      if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(decoded)) return;
+      var target = new URL(decoded, window.location.origin);
+      if (target.origin !== window.location.origin) return;
+      window.location.replace(target.pathname + target.search + target.hash);
+    } catch (_) {}
+  })();
+  </script>
+</body>
+</html>
