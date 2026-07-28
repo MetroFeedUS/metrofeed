@@ -143,13 +143,9 @@ const translations = {
     "resources_heading": "ADA & Official Resources",
     "resources_intro": "Official links and accessibility resources for RoamRaven users, including deaf and hard-of-hearing riders.",
     "resources_disclaimer": "RoamRaven is an independent service and is not affiliated with, endorsed by, or partnered with the organizations listed below. These links are provided for convenience and direct access to official information.",
-    "resources_section_sorta": "SORTA/METRO",
-    "resources_link_sorta_official": "SORTA/METRO Official Page",
-    "resources_link_paratransit": "Paratransit Service",
-    "resources_section_tank": "TANK",
-    "resources_link_tank_official": "TANK Official Page",
-    "resources_section_bcrta": "BCRTA",
-    "resources_link_bcrta_official": "BCRTA Official Page",
+    "resources_section_wrta": "WRTA",
+    "resources_link_wrta_official": "WRTA Official Page",
+    "resources_link_wrta_ada": "WRTA ADA / Accessibility",
     "resources_section_other": "Other",
     "resources_link_nws": "National Weather Service",
     "resources_link_ohgo": "OHGO — Traffic Data and Cameras",
@@ -188,7 +184,7 @@ const translations = {
     "location_error": "Location error",
     
     // Data attribution
-    "data_courtesy": "Data courtesy of SORTA, TANK, and BCRTA.",
+    "data_courtesy": "Data courtesy of WRTA.",
     "disclaimer": "RoamRaven is not affiliated with or endorsed by local transit agencies. For official schedules and service alerts, visit",
     
     // PortlandHome specific
@@ -407,13 +403,9 @@ const translations = {
     "resources_heading": "ADA y Recursos Oficiales",
     "resources_intro": "Enlaces oficiales y recursos de accesibilidad para usuarios de RoamRaven, incluidos pasajeros sordos o con dificultad auditiva.",
     "resources_disclaimer": "RoamRaven es un servicio independiente y no está afiliado, respaldado ni asociado con las organizaciones que se enumeran a continuación. Estos enlaces se ofrecen por conveniencia y acceso directo a información oficial.",
-    "resources_section_sorta": "SORTA/METRO",
-    "resources_link_sorta_official": "Página oficial de SORTA/METRO",
-    "resources_link_paratransit": "Servicio de paratransporte",
-    "resources_section_tank": "TANK",
-    "resources_link_tank_official": "Página oficial de TANK",
-    "resources_section_bcrta": "BCRTA",
-    "resources_link_bcrta_official": "Página oficial de BCRTA",
+    "resources_section_wrta": "WRTA",
+    "resources_link_wrta_official": "Página oficial de WRTA",
+    "resources_link_wrta_ada": "WRTA ADA / Accesibilidad",
     "resources_section_other": "Otros",
     "resources_link_nws": "Servicio Meteorológico Nacional",
     "resources_link_ohgo": "OHGO — Datos de tráfico y cámaras",
@@ -452,7 +444,7 @@ const translations = {
     "location_error": "Error de ubicación",
     
     // Data attribution
-    "data_courtesy": "Datos cortesía de SORTA, TANK y BCRTA.",
+    "data_courtesy": "Datos cortesía de WRTA.",
     
     // PortlandHome specific
     "upgrade": "Actualizar",
