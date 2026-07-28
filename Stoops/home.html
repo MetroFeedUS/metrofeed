@@ -4046,6 +4046,20 @@
   </div>
 </div>
 
+
+<!-- -- REALTIME UNAVAILABLE NOTICE (config-gated; Stoops/WRTA) -- -->
+<div id="mfRealtimeUnavailableModal" class="mf-overlay" style="display: none; z-index: 10070;" role="dialog" aria-modal="true" aria-labelledby="mfRealtimeUnavailableTitle" aria-describedby="mfRealtimeUnavailableDesc">
+  <div class="mf-modal" style="max-width: 420px;" tabindex="-1">
+    <h2 id="mfRealtimeUnavailableTitle" style="margin: 0 0 0.75rem 0; color: var(--rr-accent-text);">Live transit data unavailable</h2>
+    <p id="mfRealtimeUnavailableDesc" style="margin: 0 0 1.25rem 0; color: #ddd; line-height: 1.45; font-size: 0.95rem;">
+      This city does not provide live bus positions, trip updates, or transit alerts.
+    </p>
+    <div class="mf-actions">
+      <button type="button" class="mf-btn" id="mfRealtimeUnavailableOk" style="background: var(--rr-accent); border-color: var(--rr-accent); color: #000; font-weight: bold;">Got it</button>
+    </div>
+  </div>
+</div>
+
 <!-- -- BUS ROUTES MODAL -- -->
 <div id="busRoutesModal" class="mf-overlay" style="display: none;">
   <div class="mf-modal" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
@@ -12757,6 +12771,7 @@
    * Open alerts modal filtered to active routes with alerts
    */
   async function openAlertsForActiveRoutes() {
+    if (typeof showRealtimeUnavailableModal === 'function' && showRealtimeUnavailableModal()) return;
     const indicator = document.getElementById('routeAlertIndicator');
     if (!indicator) return;
     
@@ -14643,8 +14658,71 @@
   // === SECTION: MBTA ALERTS ===
   // MBTA Alerts modal - displays active alerts from MBTA V3 API
 
+
+  function metrofeedCityRealtimeUnavailable() {
+    try {
+      return !!(window.CITY_CONFIG && window.CITY_CONFIG.realtimeUnavailable);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function hideRealtimeUnavailableModal() {
+    const modal = document.getElementById('mfRealtimeUnavailableModal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  /** Popup when live buses / trip updates / agency alerts are stubbed for this city. */
+  function showRealtimeUnavailableModal(opts) {
+    opts = opts || {};
+    if (!metrofeedCityRealtimeUnavailable()) return false;
+    const modal = document.getElementById('mfRealtimeUnavailableModal');
+    if (!modal) return false;
+    const titleEl = document.getElementById('mfRealtimeUnavailableTitle');
+    const descEl = document.getElementById('mfRealtimeUnavailableDesc');
+    const cfg = window.CITY_CONFIG || {};
+    if (titleEl && cfg.realtimeUnavailableTitle) {
+      titleEl.textContent = String(cfg.realtimeUnavailableTitle);
+    }
+    if (descEl && cfg.realtimeUnavailableMessage) {
+      descEl.textContent = String(cfg.realtimeUnavailableMessage);
+    }
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    if (opts.oncePerSession) {
+      try {
+        sessionStorage.setItem('mfRealtimeUnavailableShown', '1');
+      } catch (_) {}
+    }
+    return true;
+  }
+
+  function maybeShowRealtimeUnavailableOnLoad() {
+    if (!metrofeedCityRealtimeUnavailable()) return;
+    try {
+      if (sessionStorage.getItem('mfRealtimeUnavailableShown') === '1') return;
+    } catch (_) {}
+    // After map is up; avoid stacking with other startup modals.
+    setTimeout(function () {
+      try {
+        if (sessionStorage.getItem('mfRealtimeUnavailableShown') === '1') return;
+      } catch (_) {}
+      showRealtimeUnavailableModal({ oncePerSession: true });
+    }, 900);
+  }
+
+  window.metrofeedCityRealtimeUnavailable = metrofeedCityRealtimeUnavailable;
+  window.showRealtimeUnavailableModal = showRealtimeUnavailableModal;
+  window.hideRealtimeUnavailableModal = hideRealtimeUnavailableModal;
+
   // Function to show MBTA Alerts modal
   function showMBTAAlertsModal() {
+    if (typeof showRealtimeUnavailableModal === 'function' && showRealtimeUnavailableModal()) {
+      return;
+    }
     const modal = document.getElementById('mbtaAlertsModal');
     if (modal) {
       modal.style.display = 'flex';
@@ -15332,6 +15410,7 @@
 
   // Open alerts modal and scroll to route's alerts
   async function openAlertsForRoute(routeId) {
+    if (typeof showRealtimeUnavailableModal === 'function' && showRealtimeUnavailableModal()) return;
     // Open alerts modal
     showMBTAAlertsModal();
     try {
@@ -16792,6 +16871,10 @@
         if (typeof TrafficCamerasOverlay !== 'undefined') {
           TrafficCamerasOverlay.init(map);
         }
+
+        if (typeof maybeShowRealtimeUnavailableOnLoad === 'function') {
+          maybeShowRealtimeUnavailableOnLoad();
+        }
         
         // MBTA Alerts modal (no initialization needed)
         
@@ -16925,6 +17008,14 @@
     setupButtonEventListeners();
     setupFindMeButton();
     
+
+    const mfRtUnavailOk = document.getElementById('mfRealtimeUnavailableOk');
+    if (mfRtUnavailOk) {
+      mfRtUnavailOk.addEventListener('click', function () {
+        if (typeof hideRealtimeUnavailableModal === 'function') hideRealtimeUnavailableModal();
+      });
+    }
+
     // Departure Time Radio Button Listeners + hour/minute/AM-PM dropdowns
     window.getOtpDepartureTimeValue = function getOtpDepartureTimeValue() {
       const hourEl = document.getElementById('departureHour');

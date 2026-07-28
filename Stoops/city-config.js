@@ -810,8 +810,7 @@ const CITIES = {
     state: "OH",
     timezone: "America/New_York",
 
-    // Backend = same Cincinnati VPS stack (OTP / realtime / geocode / traffic).
-    // Only map center, bounds, weather counties, local GTFS, and agency tabs differ.
+    // Backend = regional Ohio OTP / geocode / traffic. Live bus + agency alerts stubbed (WRTA).
     apiKey: null,
     otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
     otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
@@ -878,18 +877,20 @@ const CITIES = {
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
 
+    // WRTA does not publish live vehicles, trip updates, or agency alerts.
+    realtimeUnavailable: true,
+    realtimeUnavailableTitle: "Live transit data unavailable",
+    realtimeUnavailableMessage: "Youngstown (WRTA) does not provide live bus positions, trip updates, or transit alerts. Schedules, trip planning, traffic, and cameras still work.",
     busApiType: "gtfs-rt",
-    disableGtfsRt: false,
+    disableGtfsRt: true,
     gtfsRtUrl: null,
     gtfsRtTripUpdatesUrl: null,
     gtfsRtAlertsUrl: null,
-    gtfsRtProxyUrls: [
-      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
-    ],
-    useSharedVehicleCache: true,
+    gtfsRtProxyUrls: [],
+    useSharedVehicleCache: false,
     sharedVehiclePollMs: 12000,
-    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
-    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    realtimeTripsUrl: null,
+    realtimeAlertsUrl: null,
     gtfsRtStrictVehicleDirection: false,
     gtfsRtFlipInferredDirection: false,
     directionalStopMarkers: false,
