@@ -320,60 +320,156 @@ const CITIES = {
 
   /**
    * Dev shells (obscure public paths — not linked from Index).
-   * GTFS / OTP / realtime filled city-by-city later.
+   * Full Cincinnati backend clone; only map/GTFS/weather/agency tabs differ per city.
    * Folder → config id: tooltime, Browns→browns, Bluejackets→bluejackets, Hotdog→hotdog, Stoops→stoops.
    */
   tooltime: {
     cityName: "Allen County",
     state: "OH",
     timezone: "America/New_York",
+
+    // Backend = same Cincinnati VPS stack (OTP / realtime / geocode / traffic).
+    // Only map center, bounds, weather counties, local GTFS, and agency tabs differ.
     apiKey: null,
-    otpApi: null,
-    otpGtfsGraphql: null,
+    otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
+    otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
     busApi: null,
-    defaultCenter: [-84.130, 40.742],
+
+    defaultCenter: [-84.13, 40.742],
     defaultZoom: 11,
-    startupDefaultRouteId: null,
+    startupDefaultRouteId: "acrta_rt01",
     startupDefaultDirectionId: 0,
-    bounds: { north: 41.05, south: 40.55, east: -83.85, west: -84.45 },
-    maxExtendedBounds: { north: 41.25, south: 40.35, east: -83.65, west: -84.65 },
+    bounds: {
+      north: 41.05,
+      south: 40.55,
+      east: -83.85,
+      west: -84.45
+    },
+    maxExtendedBounds: {
+      north: 41.25,
+      south: 40.35,
+      east: -83.65,
+      west: -84.65
+    },
     serviceCounties: [
       { geoid: "39003", name: "Allen", state: "OH", nwsArea: "OHC003" }
     ],
     nwsAlertAreas: ["OHC003"],
     geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
     placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    explore: {
+      maxCategories: 2,
+      defaultGeometry: "walk_10",
+      geometries: [
+        { id: "walk_5", label: "5 min walk" },
+        { id: "walk_10", label: "10 min walk" },
+        { id: "walk_15", label: "15 min walk" },
+        { id: "walk_30", label: "30 min walk" }
+      ],
+      categories: [
+        { id: "restaurant", label: "Restaurants", icon: "🍽️", minGeometry: "walk_5", color: "#E53935" },
+        { id: "cafe", label: "Cafés", icon: "☕", minGeometry: "walk_5", color: "#8D6E63" },
+        { id: "supermarket", label: "Supermarkets", icon: "🛒", minGeometry: "walk_5", color: "#43A047" },
+        { id: "shopping_mall", label: "Shopping malls", icon: "🏬", minGeometry: "walk_5", color: "#7B1FA2" },
+        { id: "tourism", label: "Tourism", icon: "🎡", minGeometry: "walk_5", color: "#00897B" },
+        { id: "atm", label: "ATMs", icon: "🏧", minGeometry: "walk_5", color: "#546E7A" },
+        { id: "school", label: "Schools", icon: "🏫", minGeometry: "walk_5", color: "#F9A825" },
+        { id: "playground", label: "Playgrounds", icon: "🛝", minGeometry: "walk_5", color: "#FB8C00" },
+        { id: "toilet", label: "Restrooms", icon: "🚻", minGeometry: "walk_5", color: "#78909C" },
+        { id: "hotel", label: "Hotels", icon: "🏨", minGeometry: "walk_5", color: "#5C6BC0" },
+        { id: "park", label: "Parks", icon: "🌳", minGeometry: "walk_10", color: "#2E7D32" },
+        { id: "pharmacy", label: "Pharmacies", icon: "💊", minGeometry: "walk_10", color: "#1E88E5" },
+        { id: "entertainment", label: "Entertainment", icon: "🎬", minGeometry: "walk_10", color: "#D81B60" }
+      ]
+    },
+    incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
+    flowFeedUrl: "https://traffic-api.metrofeedus.com/flow/ohio",
+    slowdownsFeedUrl: "https://traffic-api.metrofeedus.com/slowdowns/ohio",
+    constructionFeedUrl: "https://traffic-api.metrofeedus.com/construction/ohio",
+    camerasFeedUrl: "https://traffic-api.metrofeedus.com/cameras/ohio",
+    incidentsViewportPaddingRatio: 0.12,
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+
     mastermapFile: null,
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
+
     busApiType: "gtfs-rt",
-    disableGtfsRt: true,
-    gtfsRtProxyUrls: [],
-    realtimeTripsUrl: null,
-    realtimeAlertsUrl: null,
+    disableGtfsRt: false,
+    gtfsRtUrl: null,
+    gtfsRtTripUpdatesUrl: null,
+    gtfsRtAlertsUrl: null,
+    gtfsRtProxyUrls: [
+      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
+    ],
+    useSharedVehicleCache: true,
+    sharedVehiclePollMs: 12000,
+    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
+    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    gtfsRtStrictVehicleDirection: false,
+    gtfsRtFlipInferredDirection: false,
+    directionalStopMarkers: false,
+    gtfsRtExcludeVehicleIfBearingUnknown: true,
+    gtfsRtFilterVehiclesByTripStopOverlap: true,
+    gtfsRtTripStopOverlapMin: 1,
+    busMaxDistanceFromRouteMeters: 1500,
+
     routeDataBase: "./route_data/",
-    busModalSystems: [],
+
+    busModalSystems: [
+      { id: "acrta", label: "ACRTA", idPrefix: "acrta_", feedAgency: "acrta" }
+    ],
+
+    busSvgHeadingOffsetDeg: 180,
+    busMarkerNewbusSvg: true,
+    busMarkerSvgFile: "newbus.svg",
+    busMarkerSizeScale: 1.1,
+    busMarkerLabelMinZoom: 15,
+
+    busTracerEnabled: true,
+    busTracerLengthM: 48,
+    busTracerDotCount: 5,
+    busTracerDotMaxPx: 10,
+    busTracerDotMinPx: 4,
+    busTracerSizeScale: 1.2,
+
+    busDimOppositeAfterMove: true,
+    busDirConfirmMoveM: 3,
+
     showRailRoutes: false,
     useLazyLoading: false,
-    tvModeEnabled: false
+    tvModeEnabled: true
   },
 
   browns: {
     cityName: "Cleveland",
     state: "OH",
     timezone: "America/New_York",
+
+    // Backend = same Cincinnati VPS stack (OTP / realtime / geocode / traffic).
+    // Only map center, bounds, weather counties, local GTFS, and agency tabs differ.
     apiKey: null,
-    otpApi: null,
-    otpGtfsGraphql: null,
+    otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
+    otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
     busApi: null,
+
     defaultCenter: [-81.694, 41.499],
     defaultZoom: 11,
-    startupDefaultRouteId: null,
+    startupDefaultRouteId: "gcrta_1",
     startupDefaultDirectionId: 0,
-    bounds: { north: 41.72, south: 41.15, east: -81.0, west: -81.95 },
-    maxExtendedBounds: { north: 41.92, south: 40.95, east: -80.8, west: -82.15 },
+    bounds: {
+      north: 41.72,
+      south: 41.15,
+      east: -81.0,
+      west: -81.95
+    },
+    maxExtendedBounds: {
+      north: 41.92,
+      south: 40.95,
+      east: -80.8,
+      west: -82.15
+    },
     serviceCounties: [
       { geoid: "39035", name: "Cuyahoga", state: "OH", nwsArea: "OHC035" },
       { geoid: "39085", name: "Lake", state: "OH", nwsArea: "OHC085" },
@@ -382,74 +478,240 @@ const CITIES = {
     nwsAlertAreas: ["OHC035", "OHC085", "OHC153"],
     geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
     placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    explore: {
+      maxCategories: 2,
+      defaultGeometry: "walk_10",
+      geometries: [
+        { id: "walk_5", label: "5 min walk" },
+        { id: "walk_10", label: "10 min walk" },
+        { id: "walk_15", label: "15 min walk" },
+        { id: "walk_30", label: "30 min walk" }
+      ],
+      categories: [
+        { id: "restaurant", label: "Restaurants", icon: "🍽️", minGeometry: "walk_5", color: "#E53935" },
+        { id: "cafe", label: "Cafés", icon: "☕", minGeometry: "walk_5", color: "#8D6E63" },
+        { id: "supermarket", label: "Supermarkets", icon: "🛒", minGeometry: "walk_5", color: "#43A047" },
+        { id: "shopping_mall", label: "Shopping malls", icon: "🏬", minGeometry: "walk_5", color: "#7B1FA2" },
+        { id: "tourism", label: "Tourism", icon: "🎡", minGeometry: "walk_5", color: "#00897B" },
+        { id: "atm", label: "ATMs", icon: "🏧", minGeometry: "walk_5", color: "#546E7A" },
+        { id: "school", label: "Schools", icon: "🏫", minGeometry: "walk_5", color: "#F9A825" },
+        { id: "playground", label: "Playgrounds", icon: "🛝", minGeometry: "walk_5", color: "#FB8C00" },
+        { id: "toilet", label: "Restrooms", icon: "🚻", minGeometry: "walk_5", color: "#78909C" },
+        { id: "hotel", label: "Hotels", icon: "🏨", minGeometry: "walk_5", color: "#5C6BC0" },
+        { id: "park", label: "Parks", icon: "🌳", minGeometry: "walk_10", color: "#2E7D32" },
+        { id: "pharmacy", label: "Pharmacies", icon: "💊", minGeometry: "walk_10", color: "#1E88E5" },
+        { id: "entertainment", label: "Entertainment", icon: "🎬", minGeometry: "walk_10", color: "#D81B60" }
+      ]
+    },
+    incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
+    flowFeedUrl: "https://traffic-api.metrofeedus.com/flow/ohio",
+    slowdownsFeedUrl: "https://traffic-api.metrofeedus.com/slowdowns/ohio",
+    constructionFeedUrl: "https://traffic-api.metrofeedus.com/construction/ohio",
+    camerasFeedUrl: "https://traffic-api.metrofeedus.com/cameras/ohio",
+    incidentsViewportPaddingRatio: 0.12,
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+
     mastermapFile: null,
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
+
     busApiType: "gtfs-rt",
-    disableGtfsRt: true,
-    gtfsRtProxyUrls: [],
-    realtimeTripsUrl: null,
-    realtimeAlertsUrl: null,
+    disableGtfsRt: false,
+    gtfsRtUrl: null,
+    gtfsRtTripUpdatesUrl: null,
+    gtfsRtAlertsUrl: null,
+    gtfsRtProxyUrls: [
+      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
+    ],
+    useSharedVehicleCache: true,
+    sharedVehiclePollMs: 12000,
+    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
+    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    gtfsRtStrictVehicleDirection: false,
+    gtfsRtFlipInferredDirection: false,
+    directionalStopMarkers: false,
+    gtfsRtExcludeVehicleIfBearingUnknown: true,
+    gtfsRtFilterVehiclesByTripStopOverlap: true,
+    gtfsRtTripStopOverlapMin: 1,
+    busMaxDistanceFromRouteMeters: 1500,
+
     routeDataBase: "./route_data/",
-    busModalSystems: [],
+
+    busModalSystems: [
+      { id: "gcrta", label: "GCRTA", idPrefix: "gcrta_", feedAgency: "gcrta" },
+      { id: "laketran", label: "Laketran", idPrefix: "laketran_", feedAgency: "laketran" },
+      { id: "metro", label: "METRO", idPrefix: "metro_", feedAgency: "metro" }
+    ],
+
+    busSvgHeadingOffsetDeg: 180,
+    busMarkerNewbusSvg: true,
+    busMarkerSvgFile: "newbus.svg",
+    busMarkerSizeScale: 1.1,
+    busMarkerLabelMinZoom: 15,
+
+    busTracerEnabled: true,
+    busTracerLengthM: 48,
+    busTracerDotCount: 5,
+    busTracerDotMaxPx: 10,
+    busTracerDotMinPx: 4,
+    busTracerSizeScale: 1.2,
+
+    busDimOppositeAfterMove: true,
+    busDirConfirmMoveM: 3,
+
     showRailRoutes: false,
     useLazyLoading: false,
-    tvModeEnabled: false
+    tvModeEnabled: true
   },
 
   bluejackets: {
     cityName: "Columbus",
     state: "OH",
     timezone: "America/New_York",
+
+    // Backend = same Cincinnati VPS stack (OTP / realtime / geocode / traffic).
+    // Only map center, bounds, weather counties, local GTFS, and agency tabs differ.
     apiKey: null,
-    otpApi: null,
-    otpGtfsGraphql: null,
+    otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
+    otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
     busApi: null,
+
     defaultCenter: [-82.995, 39.961],
     defaultZoom: 11,
-    startupDefaultRouteId: null,
+    startupDefaultRouteId: "cota_001",
     startupDefaultDirectionId: 0,
-    bounds: { north: 40.15, south: 39.55, east: -82.75, west: -83.15 },
-    maxExtendedBounds: { north: 40.35, south: 39.35, east: -82.55, west: -83.35 },
+    bounds: {
+      north: 40.15,
+      south: 39.55,
+      east: -82.75,
+      west: -83.15
+    },
+    maxExtendedBounds: {
+      north: 40.35,
+      south: 39.35,
+      east: -82.55,
+      west: -83.35
+    },
     serviceCounties: [
       { geoid: "39049", name: "Franklin", state: "OH", nwsArea: "OHC049" }
     ],
     nwsAlertAreas: ["OHC049"],
     geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
     placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    explore: {
+      maxCategories: 2,
+      defaultGeometry: "walk_10",
+      geometries: [
+        { id: "walk_5", label: "5 min walk" },
+        { id: "walk_10", label: "10 min walk" },
+        { id: "walk_15", label: "15 min walk" },
+        { id: "walk_30", label: "30 min walk" }
+      ],
+      categories: [
+        { id: "restaurant", label: "Restaurants", icon: "🍽️", minGeometry: "walk_5", color: "#E53935" },
+        { id: "cafe", label: "Cafés", icon: "☕", minGeometry: "walk_5", color: "#8D6E63" },
+        { id: "supermarket", label: "Supermarkets", icon: "🛒", minGeometry: "walk_5", color: "#43A047" },
+        { id: "shopping_mall", label: "Shopping malls", icon: "🏬", minGeometry: "walk_5", color: "#7B1FA2" },
+        { id: "tourism", label: "Tourism", icon: "🎡", minGeometry: "walk_5", color: "#00897B" },
+        { id: "atm", label: "ATMs", icon: "🏧", minGeometry: "walk_5", color: "#546E7A" },
+        { id: "school", label: "Schools", icon: "🏫", minGeometry: "walk_5", color: "#F9A825" },
+        { id: "playground", label: "Playgrounds", icon: "🛝", minGeometry: "walk_5", color: "#FB8C00" },
+        { id: "toilet", label: "Restrooms", icon: "🚻", minGeometry: "walk_5", color: "#78909C" },
+        { id: "hotel", label: "Hotels", icon: "🏨", minGeometry: "walk_5", color: "#5C6BC0" },
+        { id: "park", label: "Parks", icon: "🌳", minGeometry: "walk_10", color: "#2E7D32" },
+        { id: "pharmacy", label: "Pharmacies", icon: "💊", minGeometry: "walk_10", color: "#1E88E5" },
+        { id: "entertainment", label: "Entertainment", icon: "🎬", minGeometry: "walk_10", color: "#D81B60" }
+      ]
+    },
+    incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
+    flowFeedUrl: "https://traffic-api.metrofeedus.com/flow/ohio",
+    slowdownsFeedUrl: "https://traffic-api.metrofeedus.com/slowdowns/ohio",
+    constructionFeedUrl: "https://traffic-api.metrofeedus.com/construction/ohio",
+    camerasFeedUrl: "https://traffic-api.metrofeedus.com/cameras/ohio",
+    incidentsViewportPaddingRatio: 0.12,
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+
     mastermapFile: null,
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
+
     busApiType: "gtfs-rt",
-    disableGtfsRt: true,
-    gtfsRtProxyUrls: [],
-    realtimeTripsUrl: null,
-    realtimeAlertsUrl: null,
+    disableGtfsRt: false,
+    gtfsRtUrl: null,
+    gtfsRtTripUpdatesUrl: null,
+    gtfsRtAlertsUrl: null,
+    gtfsRtProxyUrls: [
+      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
+    ],
+    useSharedVehicleCache: true,
+    sharedVehiclePollMs: 12000,
+    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
+    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    gtfsRtStrictVehicleDirection: false,
+    gtfsRtFlipInferredDirection: false,
+    directionalStopMarkers: false,
+    gtfsRtExcludeVehicleIfBearingUnknown: true,
+    gtfsRtFilterVehiclesByTripStopOverlap: true,
+    gtfsRtTripStopOverlapMin: 1,
+    busMaxDistanceFromRouteMeters: 1500,
+
     routeDataBase: "./route_data/",
-    busModalSystems: [],
+
+    busModalSystems: [
+      { id: "cota", label: "COTA", idPrefix: "cota_", feedAgency: "cota" }
+    ],
+
+    busSvgHeadingOffsetDeg: 180,
+    busMarkerNewbusSvg: true,
+    busMarkerSvgFile: "newbus.svg",
+    busMarkerSizeScale: 1.1,
+    busMarkerLabelMinZoom: 15,
+
+    busTracerEnabled: true,
+    busTracerLengthM: 48,
+    busTracerDotCount: 5,
+    busTracerDotMaxPx: 10,
+    busTracerDotMinPx: 4,
+    busTracerSizeScale: 1.2,
+
+    busDimOppositeAfterMove: true,
+    busDirConfirmMoveM: 3,
+
     showRailRoutes: false,
     useLazyLoading: false,
-    tvModeEnabled: false
+    tvModeEnabled: true
   },
 
   hotdog: {
     cityName: "Toledo",
     state: "OH",
     timezone: "America/New_York",
+
+    // Backend = same Cincinnati VPS stack (OTP / realtime / geocode / traffic).
+    // Only map center, bounds, weather counties, local GTFS, and agency tabs differ.
     apiKey: null,
-    otpApi: null,
-    otpGtfsGraphql: null,
+    otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
+    otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
     busApi: null,
+
     defaultCenter: [-83.555, 41.654],
     defaultZoom: 11,
-    startupDefaultRouteId: null,
+    startupDefaultRouteId: "tarta_0200",
     startupDefaultDirectionId: 0,
-    bounds: { north: 41.75, south: 41.15, east: -82.75, west: -84.35 },
-    maxExtendedBounds: { north: 41.95, south: 40.95, east: -82.55, west: -84.55 },
+    bounds: {
+      north: 41.75,
+      south: 41.15,
+      east: -82.75,
+      west: -84.35
+    },
+    maxExtendedBounds: {
+      north: 41.95,
+      south: 40.95,
+      east: -82.55,
+      west: -84.55
+    },
     serviceCounties: [
       { geoid: "39095", name: "Lucas", state: "OH", nwsArea: "OHC095" },
       { geoid: "39173", name: "Wood", state: "OH", nwsArea: "OHC173" },
@@ -458,44 +720,113 @@ const CITIES = {
     nwsAlertAreas: ["OHC095", "OHC173", "OHC123"],
     geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
     placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    explore: {
+      maxCategories: 2,
+      defaultGeometry: "walk_10",
+      geometries: [
+        { id: "walk_5", label: "5 min walk" },
+        { id: "walk_10", label: "10 min walk" },
+        { id: "walk_15", label: "15 min walk" },
+        { id: "walk_30", label: "30 min walk" }
+      ],
+      categories: [
+        { id: "restaurant", label: "Restaurants", icon: "🍽️", minGeometry: "walk_5", color: "#E53935" },
+        { id: "cafe", label: "Cafés", icon: "☕", minGeometry: "walk_5", color: "#8D6E63" },
+        { id: "supermarket", label: "Supermarkets", icon: "🛒", minGeometry: "walk_5", color: "#43A047" },
+        { id: "shopping_mall", label: "Shopping malls", icon: "🏬", minGeometry: "walk_5", color: "#7B1FA2" },
+        { id: "tourism", label: "Tourism", icon: "🎡", minGeometry: "walk_5", color: "#00897B" },
+        { id: "atm", label: "ATMs", icon: "🏧", minGeometry: "walk_5", color: "#546E7A" },
+        { id: "school", label: "Schools", icon: "🏫", minGeometry: "walk_5", color: "#F9A825" },
+        { id: "playground", label: "Playgrounds", icon: "🛝", minGeometry: "walk_5", color: "#FB8C00" },
+        { id: "toilet", label: "Restrooms", icon: "🚻", minGeometry: "walk_5", color: "#78909C" },
+        { id: "hotel", label: "Hotels", icon: "🏨", minGeometry: "walk_5", color: "#5C6BC0" },
+        { id: "park", label: "Parks", icon: "🌳", minGeometry: "walk_10", color: "#2E7D32" },
+        { id: "pharmacy", label: "Pharmacies", icon: "💊", minGeometry: "walk_10", color: "#1E88E5" },
+        { id: "entertainment", label: "Entertainment", icon: "🎬", minGeometry: "walk_10", color: "#D81B60" }
+      ]
+    },
+    incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
+    flowFeedUrl: "https://traffic-api.metrofeedus.com/flow/ohio",
+    slowdownsFeedUrl: "https://traffic-api.metrofeedus.com/slowdowns/ohio",
+    constructionFeedUrl: "https://traffic-api.metrofeedus.com/construction/ohio",
+    camerasFeedUrl: "https://traffic-api.metrofeedus.com/cameras/ohio",
+    incidentsViewportPaddingRatio: 0.12,
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+
     mastermapFile: null,
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
+
     busApiType: "gtfs-rt",
-    disableGtfsRt: true,
-    gtfsRtProxyUrls: [],
-    realtimeTripsUrl: null,
-    realtimeAlertsUrl: null,
+    disableGtfsRt: false,
+    gtfsRtUrl: null,
+    gtfsRtTripUpdatesUrl: null,
+    gtfsRtAlertsUrl: null,
+    gtfsRtProxyUrls: [
+      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
+    ],
+    useSharedVehicleCache: true,
+    sharedVehiclePollMs: 12000,
+    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
+    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    gtfsRtStrictVehicleDirection: false,
+    gtfsRtFlipInferredDirection: false,
+    directionalStopMarkers: false,
+    gtfsRtExcludeVehicleIfBearingUnknown: true,
+    gtfsRtFilterVehiclesByTripStopOverlap: true,
+    gtfsRtTripStopOverlapMin: 1,
+    busMaxDistanceFromRouteMeters: 1500,
+
     routeDataBase: "./route_data/",
-    busModalSystems: [],
+
+    busModalSystems: [
+      { id: "tarta", label: "TARTA", idPrefix: "tarta_", feedAgency: "tarta" }
+    ],
+
+    busSvgHeadingOffsetDeg: 180,
+    busMarkerNewbusSvg: true,
+    busMarkerSvgFile: "newbus.svg",
+    busMarkerSizeScale: 1.1,
+    busMarkerLabelMinZoom: 15,
+
+    busTracerEnabled: true,
+    busTracerLengthM: 48,
+    busTracerDotCount: 5,
+    busTracerDotMaxPx: 10,
+    busTracerDotMinPx: 4,
+    busTracerSizeScale: 1.2,
+
+    busDimOppositeAfterMove: true,
+    busDirConfirmMoveM: 3,
+
     showRailRoutes: false,
     useLazyLoading: false,
-    tvModeEnabled: false
+    tvModeEnabled: true
   },
 
   stoops: {
     cityName: "Youngstown",
     state: "OH",
     timezone: "America/New_York",
+
+    // Backend = same Cincinnati VPS stack (OTP / realtime / geocode / traffic).
+    // Only map center, bounds, weather counties, local GTFS, and agency tabs differ.
     apiKey: null,
-    otpApi: null,
-    otpGtfsGraphql: null,
+    otpApi: "https://otp.metrofeedus.com/cincinnati/otp/transmodel/v3",
+    otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
     busApi: null,
-    // Downtown Youngstown start; pan limited to Mahoning+Trumbull (+pad).
-    defaultCenter: [-80.651, 41.100],
+
+    defaultCenter: [-80.651, 41.1],
     defaultZoom: 10,
     startupDefaultRouteId: "wrta_1",
     startupDefaultDirectionId: 0,
-    // Official county union (Mahoning + Trumbull) + 10% on width/height.
     bounds: {
       north: 41.5617,
       south: 40.8396,
       east: -80.4621,
       west: -81.1435
     },
-    // Same counties + 20% for MapBoundsManager when a route needs more room.
     maxExtendedBounds: {
       north: 41.6218,
       south: 40.7795,
@@ -509,23 +840,89 @@ const CITIES = {
     nwsAlertAreas: ["OHC155", "OHC099"],
     geocodeAutocompleteUrl: "https://location-api.metrofeedus.com/autocomplete",
     placeDetailsUrl: "https://location-api.metrofeedus.com/place-details",
+    explore: {
+      maxCategories: 2,
+      defaultGeometry: "walk_10",
+      geometries: [
+        { id: "walk_5", label: "5 min walk" },
+        { id: "walk_10", label: "10 min walk" },
+        { id: "walk_15", label: "15 min walk" },
+        { id: "walk_30", label: "30 min walk" }
+      ],
+      categories: [
+        { id: "restaurant", label: "Restaurants", icon: "🍽️", minGeometry: "walk_5", color: "#E53935" },
+        { id: "cafe", label: "Cafés", icon: "☕", minGeometry: "walk_5", color: "#8D6E63" },
+        { id: "supermarket", label: "Supermarkets", icon: "🛒", minGeometry: "walk_5", color: "#43A047" },
+        { id: "shopping_mall", label: "Shopping malls", icon: "🏬", minGeometry: "walk_5", color: "#7B1FA2" },
+        { id: "tourism", label: "Tourism", icon: "🎡", minGeometry: "walk_5", color: "#00897B" },
+        { id: "atm", label: "ATMs", icon: "🏧", minGeometry: "walk_5", color: "#546E7A" },
+        { id: "school", label: "Schools", icon: "🏫", minGeometry: "walk_5", color: "#F9A825" },
+        { id: "playground", label: "Playgrounds", icon: "🛝", minGeometry: "walk_5", color: "#FB8C00" },
+        { id: "toilet", label: "Restrooms", icon: "🚻", minGeometry: "walk_5", color: "#78909C" },
+        { id: "hotel", label: "Hotels", icon: "🏨", minGeometry: "walk_5", color: "#5C6BC0" },
+        { id: "park", label: "Parks", icon: "🌳", minGeometry: "walk_10", color: "#2E7D32" },
+        { id: "pharmacy", label: "Pharmacies", icon: "💊", minGeometry: "walk_10", color: "#1E88E5" },
+        { id: "entertainment", label: "Entertainment", icon: "🎬", minGeometry: "walk_10", color: "#D81B60" }
+      ]
+    },
+    incidentsFeedUrl: "https://traffic-api.metrofeedus.com/incidents/ohio",
+    flowFeedUrl: "https://traffic-api.metrofeedus.com/flow/ohio",
+    slowdownsFeedUrl: "https://traffic-api.metrofeedus.com/slowdowns/ohio",
+    constructionFeedUrl: "https://traffic-api.metrofeedus.com/construction/ohio",
+    camerasFeedUrl: "https://traffic-api.metrofeedus.com/cameras/ohio",
+    incidentsViewportPaddingRatio: 0.12,
     dayStyle: "https://tiles.metrofeedus.com/styles/0/style.json",
     nightStyle: "https://tiles.metrofeedus.com/styles/1/style.json",
+
     mastermapFile: null,
     routesIndexFile: "routes_index.js",
     logoFile: "Sitelogo.png",
+
     busApiType: "gtfs-rt",
-    disableGtfsRt: true,
-    gtfsRtProxyUrls: [],
-    realtimeTripsUrl: null,
-    realtimeAlertsUrl: null,
+    disableGtfsRt: false,
+    gtfsRtUrl: null,
+    gtfsRtTripUpdatesUrl: null,
+    gtfsRtAlertsUrl: null,
+    gtfsRtProxyUrls: [
+      "https://routes.metrofeedus.com/realtime/cincinnati/vehicles.json"
+    ],
+    useSharedVehicleCache: true,
+    sharedVehiclePollMs: 12000,
+    realtimeTripsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/trips.json",
+    realtimeAlertsUrl: "https://routes.metrofeedus.com/realtime/cincinnati/alerts.json",
+    gtfsRtStrictVehicleDirection: false,
+    gtfsRtFlipInferredDirection: false,
+    directionalStopMarkers: false,
+    gtfsRtExcludeVehicleIfBearingUnknown: true,
+    gtfsRtFilterVehiclesByTripStopOverlap: true,
+    gtfsRtTripStopOverlapMin: 1,
+    busMaxDistanceFromRouteMeters: 1500,
+
     routeDataBase: "./route_data/",
+
     busModalSystems: [
       { id: "wrta", label: "WRTA", idPrefix: "wrta_", feedAgency: "wrta" }
     ],
+
+    busSvgHeadingOffsetDeg: 180,
+    busMarkerNewbusSvg: true,
+    busMarkerSvgFile: "newbus.svg",
+    busMarkerSizeScale: 1.1,
+    busMarkerLabelMinZoom: 15,
+
+    busTracerEnabled: true,
+    busTracerLengthM: 48,
+    busTracerDotCount: 5,
+    busTracerDotMaxPx: 10,
+    busTracerDotMinPx: 4,
+    busTracerSizeScale: 1.2,
+
+    busDimOppositeAfterMove: true,
+    busDirConfirmMoveM: 3,
+
     showRailRoutes: false,
     useLazyLoading: false,
-    tvModeEnabled: false
+    tvModeEnabled: true
   }
 };
 

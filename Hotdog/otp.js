@@ -105,17 +105,51 @@ async function getOtpServiceTimeRangeSec() {
   return otpServiceRangePromise;
 }
 
+/** Trip Options radio uses value="time"; some callers may pass "departure". */
+function otpIsCustomDeparture(departureType) {
+  const t = String(departureType || '').toLowerCase();
+  return t === 'time' || t === 'departure' || t === 'depart' || t === 'at';
+}
+
+/**
+ * Parse UI departure time into epoch ms.
+ * Accepts: HTML time input "HH:MM" / "HH:MM:SS", ISO datetime, or Date-parseable string.
+ * Bare clock times are applied to today (local); if that moment already passed, roll to tomorrow.
+ */
+function otpParseDepartureTimeToMs(departureTime) {
+  const raw = String(departureTime == null ? '' : departureTime).trim();
+  if (!raw) return null;
+
+  const clock = raw.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (clock) {
+    const h = Number(clock[1]);
+    const m = Number(clock[2]);
+    const s = Number(clock[3] || 0);
+    if (!isFinite(h) || !isFinite(m) || h > 23 || m > 59 || s > 59) return null;
+    const d = new Date();
+    d.setHours(h, m, s, 0);
+    // If user picked a time earlier today, assume they mean the next occurrence.
+    if (d.getTime() < Date.now() - 60 * 1000) {
+      d.setDate(d.getDate() + 1);
+    }
+    return d.getTime();
+  }
+
+  const depDate = new Date(raw);
+  if (!isNaN(depDate.getTime())) return depDate.getTime();
+  return null;
+}
+
 /**
  * Pick a trip search time in ms, clamped to loaded GTFS service period.
  * When "now" is after the feed end (common when GTFS is stale), we clamp so routing still returns options.
  */
 async function resolveOtpTripDateTimeMs(departureType, departureTime) {
   let ms = Date.now();
-  if (departureType === 'departure' && departureTime) {
-    const depDate = new Date(departureTime);
-    if (!isNaN(depDate.getTime())) {
-      ms = depDate.getTime();
-    }
+  const customDepart = otpIsCustomDeparture(departureType);
+  if (customDepart && departureTime) {
+    const parsed = otpParseDepartureTimeToMs(departureTime);
+    if (parsed != null) ms = parsed;
   }
 
   // If user picked a specific departure time, do NOT clamp it.
@@ -123,8 +157,8 @@ async function resolveOtpTripDateTimeMs(departureType, departureTime) {
   // when the server's GTFS is stale.
   const allowClamp =
     typeof window !== 'undefined'
-      ? window.OTP_ALLOW_STALE_CLAMP === true && departureType !== 'departure'
-      : departureType !== 'departure';
+      ? window.OTP_ALLOW_STALE_CLAMP === true && !customDepart
+      : !customDepart;
 
   if (!allowClamp) {
     return { ms, clampNote: null, range: null };
@@ -200,12 +234,174 @@ function otpFmtCoord(n) {
 }
 
 /**
+ * Parse Trip Options modes string ("BUS,RAIL,WALK") into routing prefs.
+ * Default checkboxes produce BUS/RAIL/WALK — treat as full transit + walk access.
+ */
+function parseOtpModePrefs(modesInput) {
+  const raw = String(modesInput == null ? 'TRANSIT,WALK' : modesInput)
+    .split(',')
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+  const set = new Set(raw);
+  const wantBus = set.has('BUS') || set.has('TRANSIT');
+  const wantRail =
+    set.has('RAIL') ||
+    set.has('TRAIN') ||
+    set.has('SUBWAY') ||
+    set.has('TRAM') ||
+    set.has('TRANSIT');
+  const wantWalk = set.has('WALK') || set.has('FOOT') || (!set.has('BICYCLE') && raw.length === 0);
+  const wantBike = set.has('BICYCLE') || set.has('BIKE');
+
+  // If user unchecked everything transit-related, keep bus+rail so we still search.
+  const transitBus = wantBus || (!wantBus && !wantRail && !wantBike);
+  const transitRail = wantRail || (!wantBus && !wantRail && !wantBike);
+
+  const transitModes = [];
+  if (transitBus) {
+    transitModes.push('BUS');
+  }
+  if (transitRail) {
+    transitModes.push('RAIL', 'SUBWAY', 'TRAM', 'FERRY');
+  }
+
+  return {
+    wantBus: transitBus,
+    wantRail: transitRail,
+    wantWalk: wantWalk || !wantBike,
+    wantBike,
+    transitModes: transitModes.length ? transitModes : ['BUS', 'RAIL', 'SUBWAY', 'TRAM', 'FERRY'],
+    allowAnyTransit: set.has('TRANSIT') || (transitBus && transitRail)
+  };
+}
+
+/** Map UI max-walk meters → walkReluctance when prefs don't already set one. */
+function otpWalkReluctanceForMaxWalkM(maxWalkDistance) {
+  const m = Number(maxWalkDistance);
+  if (!isFinite(m) || m <= 0) return null;
+  if (m <= 400) return 12;
+  if (m <= 800) return 7;
+  if (m <= 1200) return 5;
+  if (m <= 1600) return 4;
+  return 3;
+}
+
+function otpLegModeUpper(leg) {
+  return String((leg && leg.mode) || '')
+    .toUpperCase()
+    .replace(/^FOOT$/, 'WALK');
+}
+
+function otpLegIsWalkLike(leg) {
+  const m = otpLegModeUpper(leg);
+  return m === 'WALK' || m === 'FOOT';
+}
+
+function otpLegIsBike(leg) {
+  const m = otpLegModeUpper(leg);
+  return m === 'BICYCLE' || m === 'BIKE';
+}
+
+function otpLegIsTransit(leg) {
+  const m = otpLegModeUpper(leg);
+  return !!m && m !== 'WALK' && m !== 'FOOT' && m !== 'BICYCLE' && m !== 'BIKE' && m !== 'CAR';
+}
+
+function otpPatternWalkDistanceM(pattern) {
+  const legs = (pattern && pattern.legs) || [];
+  let sum = 0;
+  for (let i = 0; i < legs.length; i++) {
+    if (!otpLegIsWalkLike(legs[i])) continue;
+    const d = Number(legs[i].distance);
+    if (isFinite(d) && d > 0) sum += d;
+  }
+  return sum;
+}
+
+/**
+ * Keep itineraries that match selected modes / max walk.
+ * Soft on walk: if filtering empties the list, return best walk-sorted originals.
+ */
+function filterOtpPatternsByUserPrefs(patterns, modePrefs, maxWalkDistance) {
+  const list = Array.isArray(patterns) ? patterns.slice() : [];
+  if (!list.length) return list;
+
+  const maxWalk = Number(maxWalkDistance);
+  const hasMaxWalk = isFinite(maxWalk) && maxWalk > 0;
+  const allowedTransit = new Set(
+    (modePrefs.transitModes || []).map((m) => String(m).toUpperCase())
+  );
+  // Rail family aliases
+  if (allowedTransit.has('RAIL')) {
+    ['TRAIN', 'SUBWAY', 'TRAM', 'FERRY', 'GONDOLA', 'CABLE_CAR'].forEach((m) =>
+      allowedTransit.add(m)
+    );
+  }
+
+  const modeFiltered = list.filter((pattern) => {
+    const legs = pattern.legs || [];
+    for (let i = 0; i < legs.length; i++) {
+      const leg = legs[i];
+      if (otpLegIsWalkLike(leg)) {
+        if (!modePrefs.wantWalk && !modePrefs.wantBike) return false;
+        continue;
+      }
+      if (otpLegIsBike(leg)) {
+        if (!modePrefs.wantBike) return false;
+        continue;
+      }
+      if (otpLegIsTransit(leg)) {
+        const m = otpLegModeUpper(leg);
+        if (modePrefs.allowAnyTransit) continue;
+        if (m === 'BUS' || m === 'COACH') {
+          if (!modePrefs.wantBus) return false;
+        } else if (!allowedTransit.has(m)) {
+          // Unknown transit type: keep if any transit allowed
+          if (!modePrefs.wantBus && !modePrefs.wantRail) return false;
+        }
+      }
+    }
+    return true;
+  });
+
+  const base = modeFiltered.length ? modeFiltered : list;
+
+  if (!hasMaxWalk) return base;
+
+  const withinWalk = base.filter((p) => otpPatternWalkDistanceM(p) <= maxWalk * 1.15);
+  if (withinWalk.length) return withinWalk;
+
+  // Soft fallback: prefer shortest walk among survivors
+  return base
+    .slice()
+    .sort((a, b) => otpPatternWalkDistanceM(a) - otpPatternWalkDistanceM(b));
+}
+
+function buildGtfsPlanModesGraphql(modePrefs) {
+  const transitParts = (modePrefs.transitModes || [])
+    .map((m) => `{ mode: ${m} }`)
+    .join(', ');
+  const direct = modePrefs.wantBike ? '[BICYCLE]' : '[WALK]';
+  return `modes: { direct: ${direct}, transit: { transit: [${transitParts}] } }`;
+}
+
+/**
  * GTFS GraphQL fallback: OTP 2.x uses planConnection(origin/destination, dateTime, modes) and returns edges { node { legs } }.
  * Older from/to/itineraries queries are invalid on current servers.
  */
-async function fetchGtfsPlanItineraries({ fromLat, fromLon, toLat, toLon, dateTimeIso }) {
+async function fetchGtfsPlanItineraries({
+  fromLat,
+  fromLon,
+  toLat,
+  toLon,
+  dateTimeIso,
+  modes,
+  maxWalkDistance
+}) {
   const endpoint = getOtpGtfsGraphqlEndpoint();
   const when = dateTimeIso || new Date().toISOString();
+  const modePrefs = parseOtpModePrefs(modes);
+  const modesGraphql = buildGtfsPlanModesGraphql(modePrefs);
 
   const query = `
     query GtfsPlanFallback($when: OffsetDateTime!) {
@@ -213,7 +409,7 @@ async function fetchGtfsPlanItineraries({ fromLat, fromLon, toLat, toLon, dateTi
         origin: { location: { coordinate: { latitude: ${otpFmtCoord(fromLat)}, longitude: ${otpFmtCoord(fromLon)} } } }
         destination: { location: { coordinate: { latitude: ${otpFmtCoord(toLat)}, longitude: ${otpFmtCoord(toLon)} } } }
         dateTime: { earliestDeparture: $when }
-        modes: { direct: [WALK], transit: { transit: [{ mode: BUS }, { mode: RAIL }, { mode: SUBWAY }, { mode: TRAM }, { mode: FERRY }] } }
+        ${modesGraphql}
         first: 8
       ) {
         routingErrors { code description }
@@ -240,7 +436,14 @@ async function fetchGtfsPlanItineraries({ fromLat, fromLon, toLat, toLon, dateTi
     }
   `;
 
-  logOtpDebug('GTFS_FETCH', { label: 'planConnection', endpoint, when });
+  logOtpDebug('GTFS_FETCH', {
+    label: 'planConnection',
+    endpoint,
+    when,
+    modes: modePrefs.transitModes,
+    direct: modePrefs.wantBike ? 'BICYCLE' : 'WALK',
+    maxWalkDistance: maxWalkDistance != null ? Number(maxWalkDistance) : null
+  });
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -593,12 +796,14 @@ function addLine(map, id, lngLatCoords, paint) {
  * @param {number} fromLon - Starting longitude
  * @param {number} toLat - Destination latitude
  * @param {number} toLon - Destination longitude
- * @param {number} maxWalkDistance - Maximum walking distance (not used in GraphQL, kept for compatibility)
+ * @param {number} maxWalkDistance - Max walk (meters); maps to walkReluctance + client filter
  * @param {string} departureType - Departure type ('now' or 'departure')
  * @param {string} departureTime - Departure time string
  * @param {string} modes - Transit modes
  */
 async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWalkDistance = 800, departureType = 'now', departureTime = '', modes = 'TRANSIT,WALK') {
+  const modePrefs = parseOtpModePrefs(modes);
+  const maxWalkM = Number(maxWalkDistance);
   logOtpDebug('START', {
     endpoint: typeof OTP_API !== 'undefined' ? OTP_API : '(OTP_API undefined — check script order / CITY_CONFIG)',
     fromLat,
@@ -606,27 +811,23 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     toLat,
     toLon,
     departureType,
-    dateTimeArgWillUse: departureType === 'departure' && departureTime ? 'yes' : 'no'
+    modes,
+    modePrefs,
+    maxWalkDistance: isFinite(maxWalkM) ? maxWalkM : 800,
+    dateTimeArgWillUse: otpIsCustomDeparture(departureType) && departureTime ? 'yes' : 'no'
   });
-  console.log('[fetchAndShowOtpItineraries] Function called with params:', { fromLat, fromLon, toLat, toLon, maxWalkDistance, departureType, departureTime, modes });
-  
-  // PHASE 2: Show messages for unsupported features
-  if (maxWalkDistance !== 800) {
-    const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#ffc107;color:#000;padding:10px 20px;border-radius:4px;z-index:10000;font-weight:bold;';
-    msg.textContent = 'Max walk distance not wired yet';
-    document.body.appendChild(msg);
-    setTimeout(() => msg.remove(), 3000);
-  }
-  
-  if (modes !== 'TRANSIT,WALK') {
-    const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#ffc107;color:#000;padding:10px 20px;border-radius:4px;z-index:10000;font-weight:bold;';
-    msg.textContent = 'Modes filtering not wired yet';
-    document.body.appendChild(msg);
-    setTimeout(() => msg.remove(), 3000);
-  }
-  
+  console.log('[fetchAndShowOtpItineraries] Function called with params:', {
+    fromLat,
+    fromLon,
+    toLat,
+    toLon,
+    maxWalkDistance,
+    departureType,
+    departureTime,
+    modes,
+    modePrefs
+  });
+
   // Transmodel trip query + variables are built inside try {} after await resolveOtpTripDateTimeMs(...)
   
   // Clear previous state for multiple trips
@@ -725,7 +926,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     }
     itinList.innerHTML = clampBanner + "<em style='color: var(--rr-accent, #9333ea);'>Loading trip options...</em>";
 
-    const buildTripPlanQuery = (withTuning) => {
+    const buildTripPlanQuery = (withTuning, withModes) => {
       const tuningArgs = withTuning
         ? `
         walkReluctance: $walkReluctance
@@ -736,6 +937,38 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       const tuningVars = withTuning
         ? `, $walkReluctance: Float!, $waitReluctance: Float!, $transferPenalty: Int!`
         : '';
+      // Entur/OTP Transmodel: filter transit modes + access/egress street mode.
+      let modesArgs = '';
+      if (withModes) {
+        const toTransmodelMode = (m) => {
+          const u = String(m || '').toUpperCase();
+          if (u === 'BUS' || u === 'COACH') return 'bus';
+          if (u === 'RAIL' || u === 'TRAIN') return 'rail';
+          if (u === 'SUBWAY' || u === 'METRO') return 'metro';
+          if (u === 'TRAM') return 'tram';
+          if (u === 'FERRY' || u === 'WATER') return 'water';
+          return null;
+        };
+        const transportModes = [...new Set(
+          (modePrefs.transitModes || [])
+            .map(toTransmodelMode)
+            .filter(Boolean)
+        )]
+          .map((tm) => `{ transportMode: ${tm} }`)
+          .join('\n          ');
+        if (transportModes) {
+          const access = modePrefs.wantBike ? 'bicycle' : 'foot';
+          modesArgs = `
+        modes: {
+          accessMode: ${access}
+          egressMode: ${access}
+          transportModes: [
+            ${transportModes}
+          ]
+        }
+        `;
+        }
+      }
       return `
     query TripPlan($fromLat: Float!, $fromLon: Float!, $toLat: Float!, $toLon: Float!, $dateTime: DateTime!, $searchWindow: Int!${tuningVars}) {
       trip(
@@ -745,6 +978,7 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
         searchWindow: $searchWindow
         numTripPatterns: 8
         ${tuningArgs}
+        ${modesArgs}
       ) {
         routingErrors { code description }
         tripPatterns {
@@ -804,15 +1038,24 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       dateTime: tripDateTimeIso,
       searchWindow: 120
     };
-    const variablesTuning =
-      otpPrefs && otpPrefs.walkReluctance != null && otpPrefs.waitReluctance != null && otpPrefs.transferPenalty != null
-        ? {
-            ...variablesBase,
-            walkReluctance: Number(otpPrefs.walkReluctance),
-            waitReluctance: Number(otpPrefs.waitReluctance),
-            transferPenalty: Math.round(Number(otpPrefs.transferPenalty))
-          }
-        : null;
+
+    const walkFromMax = otpWalkReluctanceForMaxWalkM(maxWalkM);
+    let variablesTuning = null;
+    if (otpPrefs && otpPrefs.walkReluctance != null && otpPrefs.waitReluctance != null && otpPrefs.transferPenalty != null) {
+      variablesTuning = {
+        ...variablesBase,
+        walkReluctance: Number(otpPrefs.walkReluctance),
+        waitReluctance: Number(otpPrefs.waitReluctance),
+        transferPenalty: Math.round(Number(otpPrefs.transferPenalty))
+      };
+    } else if (walkFromMax != null) {
+      variablesTuning = {
+        ...variablesBase,
+        walkReluctance: walkFromMax,
+        waitReluctance: 1.7,
+        transferPenalty: 0
+      };
+    }
 
     console.log('[fetchAndShowOtpItineraries] GraphQL query variables:', variablesTuning || variablesBase);
 
@@ -829,23 +1072,40 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       return await res.json();
     };
 
+    const isUnknownArgError = (response) => {
+      const errs = Array.isArray(response && response.errors) ? response.errors : [];
+      const msg = errs.map((e) => String(e && (e.message || e)).toLowerCase()).join(' | ');
+      return msg.includes('unknown argument') || msg.includes('unknown field') || msg.includes('cannot query field') || msg.includes('unknown type');
+    };
+
     let response = null;
-    if (variablesTuning) {
+    // Prefer: modes + tuning → modes only → base
+    const attempts = [
+      { withTuning: !!variablesTuning, withModes: true, vars: variablesTuning || variablesBase },
+      { withTuning: false, withModes: true, vars: variablesBase },
+      { withTuning: !!variablesTuning, withModes: false, vars: variablesTuning || variablesBase },
+      { withTuning: false, withModes: false, vars: variablesBase }
+    ];
+    for (let i = 0; i < attempts.length; i++) {
+      const a = attempts[i];
       try {
-        response = await postGraphql(buildTripPlanQuery(true), variablesTuning);
-        const errs = Array.isArray(response && response.errors) ? response.errors : [];
-        const msg = errs.map((e) => String(e && (e.message || e)).toLowerCase()).join(' | ');
-        const unknownArg = msg.includes('unknown argument') || msg.includes('unknown field') || msg.includes('cannot query field');
-        if (unknownArg) {
-          console.warn('[OTP] Tuned args not supported by server; falling back to base query.');
-          response = await postGraphql(buildTripPlanQuery(false), variablesBase);
+        response = await postGraphql(buildTripPlanQuery(a.withTuning, a.withModes), a.vars);
+        if (isUnknownArgError(response)) {
+          console.warn('[OTP] Query args not fully supported; trying next fallback.', {
+            withTuning: a.withTuning,
+            withModes: a.withModes
+          });
+          response = null;
+          continue;
         }
+        break;
       } catch (e) {
-        console.warn('[OTP] Tuned query failed; falling back to base query.', e);
-        response = await postGraphql(buildTripPlanQuery(false), variablesBase);
+        console.warn('[OTP] Query attempt failed; trying next fallback.', e);
+        response = null;
       }
-    } else {
-      response = await postGraphql(buildTripPlanQuery(false), variablesBase);
+    }
+    if (!response) {
+      response = await postGraphql(buildTripPlanQuery(false, false), variablesBase);
     }
 
     logOtpDebug('RESPONSE_SHAPE', {
@@ -891,9 +1151,26 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
       });
 
       try {
-        const gtfsConverted = await fetchGtfsPlanItineraries({ fromLat, fromLon, toLat, toLon, dateTimeIso: tripDateTimeIso });
-        const gtfsTransit = gtfsConverted.filter(otpItineraryHasTransit);
-        logOtpDebug('GTFS_CONVERTED', { count: gtfsConverted.length, withTransit: gtfsTransit.length });
+        const gtfsConverted = await fetchGtfsPlanItineraries({
+          fromLat,
+          fromLon,
+          toLat,
+          toLon,
+          dateTimeIso: tripDateTimeIso,
+          modes,
+          maxWalkDistance: isFinite(maxWalkM) ? maxWalkM : 800
+        });
+        const gtfsPrefFiltered = filterOtpPatternsByUserPrefs(
+          gtfsConverted,
+          modePrefs,
+          isFinite(maxWalkM) ? maxWalkM : 800
+        );
+        const gtfsTransit = gtfsPrefFiltered.filter(otpItineraryHasTransit);
+        logOtpDebug('GTFS_CONVERTED', {
+          count: gtfsConverted.length,
+          afterPrefs: gtfsPrefFiltered.length,
+          withTransit: gtfsTransit.length
+        });
         if (!gtfsTransit.length) {
           otpRenderNoTransitFound(itinList, tripRoutingErrors);
           return;
@@ -920,8 +1197,13 @@ async function fetchAndShowOtpItineraries(fromLat, fromLon, toLat, toLon, maxWal
     }
 
     // Work directly with GraphQL response structure
-    // PHASE 1: Limit client-side if numTripPatterns doesn't exist in schema
-    const tripPatterns = response.data.trip.tripPatterns;
+    // Prefer user modes / max-walk, then limit client-side
+    const tripPatternsRaw = response.data.trip.tripPatterns;
+    const tripPatterns = filterOtpPatternsByUserPrefs(
+      tripPatternsRaw,
+      modePrefs,
+      isFinite(maxWalkM) ? maxWalkM : 800
+    );
     const numItineraries = 4; // Default limit
     const limitedPatterns = tripPatterns.slice(0, numItineraries);
     

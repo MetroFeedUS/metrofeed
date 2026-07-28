@@ -129,7 +129,7 @@ const translations = {
     "tg_board_around": "Board around {time}",
     "tg_arrive_around": "Arrive around {time}",
     "tg_cancel_confirm": "Are you sure you want to cancel your trip?",
-    "ada_resources": "ADA, Deaf & Official Resources",
+    "ada_resources": "ADA & Official Resources",
     "otp_loading": "Loading trip options...",
 
     // Sponsor modal
@@ -138,9 +138,9 @@ const translations = {
     "sponsor_modal_visit": "Visit MetroFeed — metrofeedus.com",
     "sponsor_logo_alt": "MetroFeed sponsor — visit metrofeedus.com",
 
-    // Resources page (ADA / Deaf / official links)
-    "resources_page_title": "ADA, Deaf & Official Resources - RoamRaven",
-    "resources_heading": "ADA, Deaf & Official Resources",
+    // Resources page (ADA / official links)
+    "resources_page_title": "ADA & Official Resources - RoamRaven",
+    "resources_heading": "ADA & Official Resources",
     "resources_intro": "Official links and accessibility resources for RoamRaven users, including deaf and hard-of-hearing riders.",
     "resources_disclaimer": "RoamRaven is an independent service and is not affiliated with, endorsed by, or partnered with the organizations listed below. These links are provided for convenience and direct access to official information.",
     "resources_section_sorta": "SORTA/METRO",
@@ -393,7 +393,7 @@ const translations = {
     "tg_board_around": "Sube alrededor de las {time}",
     "tg_arrive_around": "Llega alrededor de las {time}",
     "tg_cancel_confirm": "¿Seguro que quieres cancelar tu viaje?",
-    "ada_resources": "ADA, Sordos y Recursos Oficiales",
+    "ada_resources": "ADA y Recursos Oficiales",
     "otp_loading": "Cargando opciones de viaje...",
 
     // Sponsor modal
@@ -402,9 +402,9 @@ const translations = {
     "sponsor_modal_visit": "Visitar MetroFeed — metrofeedus.com",
     "sponsor_logo_alt": "Patrocinador MetroFeed — visite metrofeedus.com",
 
-    // Resources page (ADA / Deaf / official links)
-    "resources_page_title": "ADA, Sordos y Recursos Oficiales - RoamRaven",
-    "resources_heading": "ADA, Sordos y Recursos Oficiales",
+    // Resources page (ADA / official links)
+    "resources_page_title": "ADA y Recursos Oficiales - RoamRaven",
+    "resources_heading": "ADA y Recursos Oficiales",
     "resources_intro": "Enlaces oficiales y recursos de accesibilidad para usuarios de RoamRaven, incluidos pasajeros sordos o con dificultad auditiva.",
     "resources_disclaimer": "RoamRaven es un servicio independiente y no está afiliado, respaldado ni asociado con las organizaciones que se enumeran a continuación. Estos enlaces se ofrecen por conveniencia y acceso directo a información oficial.",
     "resources_section_sorta": "SORTA/METRO",
