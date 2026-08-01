@@ -816,21 +816,24 @@ const CITIES = {
     otpGtfsGraphql: "https://otp.metrofeedus.com/cincinnati/otp/gtfs/v1",
     busApi: null,
 
-    defaultCenter: [-80.651, 41.1],
-    defaultZoom: 10,
+    // TEMP proof (national tiles): Downtown Dallas, TX — revert to Youngstown when done.
+    // Youngstown was: defaultCenter [-80.6495, 41.0998], zoom 12 / 12.4.
+    defaultCenter: [-96.7970, 32.7767],
+    defaultZoom: 12,
+    mobileDefaultZoom: 12.4,
     startupDefaultRouteId: "wrta_1",
     startupDefaultDirectionId: 0,
     bounds: {
-      north: 41.5617,
-      south: 40.8396,
-      east: -80.4621,
-      west: -81.1435
+      north: 33.15,
+      south: 32.45,
+      east: -96.45,
+      west: -97.15
     },
     maxExtendedBounds: {
-      north: 41.6218,
-      south: 40.7795,
-      east: -80.4053,
-      west: -81.2003
+      north: 33.35,
+      south: 32.25,
+      east: -96.25,
+      west: -97.35
     },
     serviceCounties: [
       { geoid: "39155", name: "Mahoning", state: "OH", nwsArea: "OHC155" },

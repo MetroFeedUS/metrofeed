@@ -16732,9 +16732,16 @@
         [PORTLAND_BOUNDS.east, PORTLAND_BOUNDS.north]
       ]);
       
+      const isMobileMap = (typeof window.matchMedia === 'function')
+        ? window.matchMedia('(max-width: 768px)').matches
+        : (window.innerWidth || 0) <= 768;
+      const mapZoom = (isMobileMap && CITY_CONFIG.mobileDefaultZoom != null)
+        ? Number(CITY_CONFIG.mobileDefaultZoom)
+        : CITY_CONFIG.defaultZoom;
+
       const mapSetup = initMetroFeedMap('map', {
         defaultCenter: CITY_CONFIG.defaultCenter,
-        defaultZoom: CITY_CONFIG.defaultZoom,
+        defaultZoom: mapZoom,
         bounds: PORTLAND_BOUNDS,
         dayStyle: CITY_CONFIG.dayStyle,
         nightStyle: CITY_CONFIG.nightStyle,
@@ -16875,6 +16882,23 @@
         if (typeof maybeShowRealtimeUnavailableOnLoad === 'function') {
           maybeShowRealtimeUnavailableOnLoad();
         }
+        // On phones, shift camera so defaultCenter sits in the clear map area under the trip planner.
+        try {
+          const mobile = (typeof window.matchMedia === 'function')
+            ? window.matchMedia('(max-width: 768px)').matches
+            : (window.innerWidth || 0) <= 768;
+          if (mobile && map && CITY_CONFIG && CITY_CONFIG.defaultCenter && typeof map.easeTo === 'function') {
+            const z = (CITY_CONFIG.mobileDefaultZoom != null)
+              ? Number(CITY_CONFIG.mobileDefaultZoom)
+              : CITY_CONFIG.defaultZoom;
+            map.easeTo({
+              center: CITY_CONFIG.defaultCenter,
+              zoom: z,
+              offset: [0, 56],
+              duration: 0
+            });
+          }
+        } catch (_) {}
         
         // MBTA Alerts modal (no initialization needed)
         
@@ -16948,9 +16972,15 @@
     } catch (error) {
       console.error('[Map Init] Error creating map:', error);
       // Fallback to a basic map if vector tiles fail
+      const isMobileMapFb = (typeof window.matchMedia === 'function')
+        ? window.matchMedia('(max-width: 768px)').matches
+        : (window.innerWidth || 0) <= 768;
+      const mapZoomFb = (isMobileMapFb && CITY_CONFIG.mobileDefaultZoom != null)
+        ? Number(CITY_CONFIG.mobileDefaultZoom)
+        : CITY_CONFIG.defaultZoom;
       const fallbackMapSetup = initMetroFeedMap('map', {
         defaultCenter: CITY_CONFIG.defaultCenter,
-        defaultZoom: CITY_CONFIG.defaultZoom,
+        defaultZoom: mapZoomFb,
         bounds: PORTLAND_BOUNDS,
         dayStyle: CITY_CONFIG.dayStyle,
         nightStyle: CITY_CONFIG.nightStyle,
